@@ -4,7 +4,7 @@ import com.huawei.java.compilation.database.api.CompilationDatabase
 
 object CompilationDatabaseFactory {
 
-    suspend fun newDatabase(isPersisted: Boolean): CompilationDatabase {
+    suspend fun newDatabase(persistent: Boolean): CompilationDatabase {
         TODO("implement me")
     }
 
