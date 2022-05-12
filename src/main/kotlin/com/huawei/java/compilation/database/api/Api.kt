@@ -4,7 +4,7 @@ import java.io.File
 
 interface DatabaseClass {
 
-    val location: CodeLocation
+    val location: ByteCodeLocation
 
     val name: String
     val simpleName: String
@@ -16,28 +16,34 @@ interface DatabaseClass {
     val annotations: List<DatabaseClass>
 }
 
-interface CodeLocation {
+interface ByteCodeLocation {
 
     var isJar: Boolean
 
     val file: File
-    val hash: String
 }
 
 interface DatabaseClassMethod {
 
     val name: String
-    val signature: Any
-    val annotations: List<DatabaseClass>
+    val signature: Any // todo return something meaning full
 
+    val annotations: List<DatabaseClass>
     suspend fun readBody(): Any //TODO return something
+
+}
+
+interface ClasspathSet {
+
+    val locations: List<ByteCodeLocation>
+
+    suspend fun findClass(name: String): DatabaseClass?
 }
 
 
 interface CompilationDatabase {
 
-    suspend fun findClass(location: CodeLocation, name: String): DatabaseClass?
-    suspend fun findClass(name: String): DatabaseClass?
+    suspend fun classpathSet(locations: List<File>): ClasspathSet
 
     suspend fun load(dirOrJar: File)
     suspend fun load(dirOrJars: List<File>)
@@ -45,16 +51,4 @@ interface CompilationDatabase {
     suspend fun refresh()
 
     fun watchFileSystemChanges()
-}
-
-object CompilationDatabaseFactory {
-
-    suspend fun newInMemoryDatabase(vararg locations: File): CompilationDatabase {
-        TODO("implement me")
-    }
-
-    suspend fun newPersistedDatabase(vararg locations: File): CompilationDatabase {
-        TODO("implement me")
-    }
-
 }
