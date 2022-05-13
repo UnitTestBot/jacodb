@@ -168,7 +168,7 @@ loaded.
     }
 
     thread(start = true) {
-        // maybe created when lib2 is not loaded into lib2
+        // maybe created when lib2 or both are not loaded into lib2
         // but buildDir will be loaded anyway
         val cp = database.classpathSet(buildDir)  
     }
