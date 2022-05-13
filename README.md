@@ -41,8 +41,8 @@ interface ClasspathSet {
 }
 ```
 
-`findClass` method will return instance of `ClassId` found for `locations` or null otherwise. Where `ClassId` represents
-JVM Class from some jar-file:
+`findClass` method will return instance of `ClassId` found in `locations` or null otherwise. Where `ClassId` represents
+JVM Class:
 
 ```kotlin
 interface ClassId {
@@ -60,7 +60,10 @@ interface ClassId {
 }
 ```
 
+Example of usage:
+
 ```kotlin
+fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
@@ -71,24 +74,26 @@ interface ClassId {
 
     // this method just refresh the libraries inside database. If there are any changes in libs then database just 
     // update old data with new results
-    database.loadJars(listOf(commonsMath32, commonsMath36, buildDir))
+    database.loadJars(listOf(buildDir))
 
     // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
-    val classId = database.classpathSet(commonsMath32, buildDir).findClass("org.apache.commons.math3.distribution.NormalDistribution")
+    val classId = database.classpathSet(commonsMath32, buildDir)
+        .findClass("org.apache.commons.math3.distribution.NormalDistribution")
     println(classId.methods.size)
     println(classId.constructors.size)
     println(classId.annotations.size)
 
-    classId.methods[0].readBody() // here database will call ASM to read method bytecode and return the result  
+    return classId.methods[0].readBody() // here database will call ASM to read method bytecode and return the result
+}
 ```
 
 If underling jar file is removed from file system then exception will be thrown only when method `readBody` is called.
-Database can watch for file system changes in a background or refresh jars:
+Database can watch for file system changes in a background or refresh jars explicitly:
 
 ```kotlin
     val database = CompilationDatabaseFactory.newDatabase(persistent = true)
-    .watchFileSystemChanges()
-    .loadJars(listOf(lib1, buildDir))
+        .watchFileSystemChanges()
+        .loadJars(listOf(lib1, buildDir))
     // user rebuilds buildDir folder
     // database rereads rebuild directory in a background
 ```
