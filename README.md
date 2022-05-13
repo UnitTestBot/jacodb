@@ -54,7 +54,7 @@ interface ClassId {
 
     val methods: List<MethodId>
 
-    val parents: List<ClassId>
+    val superclass: ClassId?
     val interfaces: List<ClassId>
     val annotations: List<ClassId>
 }
@@ -63,7 +63,7 @@ interface MethodId {
     val name: String
 
     val classId: ClassId
-    val returnType: ClassId
+    val returnType: ClassId?
     val parameters: List<ClassId>
     val annotations: List<ClassId>
 
@@ -99,12 +99,13 @@ suspend fun findNormalDistribution(): Any {
     println(classId.annotations.size)
 
     // here database will call ASM to read method bytecode and return the result
-    return classId.methods[0].readBody() 
+    return classId.methods[0].readBody()
 }
 ```
 
 If underling jar file is removed from file system then exception will be thrown only when method `readBody` is called.
-Database can watch for file system changes in a background or refresh jars explicitly:
+If classpath is inconsistent you may receive `ClassNotFoundException` in runtime. Database can watch for file system 
+changes in a background or refresh jars explicitly:
 
 ```kotlin
     val database = compilationDatabase {
@@ -117,9 +118,14 @@ Database can watch for file system changes in a background or refresh jars expli
     // database rereads rebuild directory in a background
 ```
 
-### Open questions
+### Multithreading
 
-Should we sync changes from database to ClasspathSet?
+Instances of `ClassId`, `MethodId`, `ClasspathSet` are thread-safe. Methods of these classes return immutable structures 
+and are thread-safe as result. 
+
+`ClasspathSet` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
+library files will not affect `ClasspathSet` instance structure. `ClasspathSet#close` method will release all snapshots and will 
+clean up persistent store in case of some libraries are outdated.
 
 ```kotlin
     val database = compilationDatabase {
@@ -129,5 +135,41 @@ Should we sync changes from database to ClasspathSet?
     }
     
     val cp = database.classpathSet(buildDir)
-    database.refresh() // does this call updates state of cp?
+    database.refresh() // does not affect cp classes
+
+    val cp1 = database.classpathSet(buildDir) // will use new version of compiled results in buildDir
+```
+
+If `ClasspathSet` requested with libraries which are not indexed yet, then they will be indexed before and then 
+returned new instance of set. 
+
+```kotlin
+    val database = compilationDatabase {
+        watchFileSystemChanges = true
+        predefinendJars = listOf(lib1)
+        persistent()
+    }
+    
+    val cp = database.classpathSet(buildDir) // database will automatically process buildDir
+```
+
+`CompilationDatabase` is thread safe. If someone requested `ClasspathSet` instance during loading jars from different
+thread then `ClasspathSet` will be created on a consistent state of loaded jars. That means that jar can't appear in 
+`ClasspathSet` in partly loaded state. Apart from that there is no guarantee that all submitted for loading jars will be 
+loaded.
+
+```kotlin
+    val database = compilationDatabase {
+        persistent()
+    }
+
+    thread(start = true) {
+        database.loadJar(listOf(lib1, lib2))            
+    }
+
+    thread(start = true) {
+        // maybe created when lib2 is not loaded into lib2
+        // but buildDir will be loaded anyway
+        val cp = database.classpathSet(buildDir)  
+    }
 ```
