@@ -63,17 +63,21 @@ interface ClassId {
 Example of usage:
 
 ```kotlin
-fun findNormalDistribution(): Any {
+suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
-    val database = CompilationDatabaseFactory.newDatabase(persistent = true)
+    val database = compilationDatabase {
+        persistent {
+            location = "/tmp/compilation-db/${System.currentTimeMillis()}"
+        }
+    }
 
     // let's index this 3 byte-code sources
     database.loadJars(listOf(commonsMath32, commonsMath36, buildDir))
 
-    // this method just refresh the libraries inside database. If there are any changes in libs then database just 
-    // update old data with new results
+    // this method just refresh the libraries inside database. If there are any changes in libs then 
+    // database just update old data with new results
     database.loadJars(listOf(buildDir))
 
     // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
@@ -83,7 +87,8 @@ fun findNormalDistribution(): Any {
     println(classId.constructors.size)
     println(classId.annotations.size)
 
-    return classId.methods[0].readBody() // here database will call ASM to read method bytecode and return the result
+    // here database will call ASM to read method bytecode and return the result
+    return classId.methods[0].readBody() 
 }
 ```
 
@@ -91,9 +96,12 @@ If underling jar file is removed from file system then exception will be thrown 
 Database can watch for file system changes in a background or refresh jars explicitly:
 
 ```kotlin
-    val database = CompilationDatabaseFactory.newDatabase(persistent = true)
-        .watchFileSystemChanges()
-        .loadJars(listOf(lib1, buildDir))
+    val database = compilationDatabase {
+        watchFileSystemChanges = true
+        predefinendJars = listOf(lib1, buildDir) 
+        persistent()
+    }
+
     // user rebuilds buildDir folder
     // database rereads rebuild directory in a background
 ```
@@ -103,10 +111,12 @@ Database can watch for file system changes in a background or refresh jars expli
 Should we sync changes from database to ClasspathSet?
 
 ```kotlin
-    val database = CompilationDatabaseFactory.newDatabase(persistent = true)
-    .watchFileSystemChanges()
-    .loadJars(listOf(lib1, lib2))
+    val database = compilationDatabase {
+        watchFileSystemChanges = true
+        predefinendJars = listOf(lib1, buildDir)
+        persistent()
+    }
     
-    val cp = database.classpathSet(commonsMath32, buildDir)
+    val cp = database.classpathSet(buildDir)
     database.refresh() // does this call updates state of cp?
 ```
