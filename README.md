@@ -58,6 +58,17 @@ interface ClassId {
     val interfaces: List<ClassId>
     val annotations: List<ClassId>
 }
+
+interface MethodId {
+    val name: String
+
+    val classId: ClassId
+    val returnType: ClassId
+    val parameters: List<ClassId>
+    val annotations: List<ClassId>
+
+    suspend fun readBody(): Any // ASM parsed structure
+}
 ```
 
 Example of usage:
