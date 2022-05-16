@@ -32,6 +32,10 @@ dependencies {
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-collections-immutable-jvm', version: collections_version
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: kotlin_version
+    implementation group: 'org.ow2.asm', name: 'asm', version: asm_version
+
+    testImplementation(platform('org.junit:junit-bom:5.8.2'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
 }
 
 compileKotlin {
@@ -47,6 +51,13 @@ compileTestKotlin {
         jvmTarget = JavaVersion.VERSION_1_8
         freeCompilerArgs += ["-Xallow-result-return-type", "-Xinline-classes"]
         allWarningsAsErrors = false
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
     }
 }
 

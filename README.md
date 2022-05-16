@@ -37,7 +37,7 @@ interface ClasspathSet {
 
     val locations: List<ByteCodeLocation>
 
-    suspend fun findClass(name: String): ClassId?
+    suspend fun findClassOrNull(name: String): ClassId?
 }
 ```
 
