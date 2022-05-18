@@ -4,7 +4,7 @@ import com.huawei.java.compilation.database.api.ByteCodeLocation
 import com.huawei.java.compilation.database.api.ClassId
 import com.huawei.java.compilation.database.api.ClasspathSet
 import com.huawei.java.compilation.database.impl.tree.ClassTree
-import com.huawei.java.compilation.database.impl.tree.LimitedClassTree
+import com.huawei.java.compilation.database.impl.tree.ClasspathClassTree
 import kotlinx.collections.immutable.PersistentList
 
 class ClasspathSetImpl(
@@ -12,10 +12,11 @@ class ClasspathSetImpl(
     classTree: ClassTree
 ) : ClasspathSet {
 
-    private val limitedClassTree = LimitedClassTree(classTree, locations)
+    private val classpathClassTree = ClasspathClassTree(classTree, locations)
+    private val classIdService = ClassIdService(classpathClassTree)
 
     override suspend fun findClassOrNull(name: String): ClassId? {
-        TODO("Not yet implemented")
+        return classIdService.toClassId(classpathClassTree.findClassOrNull(name))
     }
 
     override fun close() {
