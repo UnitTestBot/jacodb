@@ -1,4 +1,4 @@
-package com.huawei.java.compilation.database.impl.reader
+package com.huawei.java.compilation.database.impl.fs
 
 import kotlinx.collections.immutable.PersistentList
 
@@ -17,13 +17,12 @@ class ClassMetaInfo(
 
 class MethodMetaInfo(
     val name: String,
+    val desc: String,
     val access: Int,
     val returnType: String,
     val parameters: PersistentList<String>,
-    annotationsGetter: () -> PersistentList<AnnotationMetaInfo>
-){
-    val annotations by lazy(LazyThreadSafetyMode.NONE, annotationsGetter)
-}
+    val annotations: PersistentList<AnnotationMetaInfo>
+)
 
 class FieldMetaInfo(
     val name: String,
@@ -32,6 +31,5 @@ class FieldMetaInfo(
 )
 
 class AnnotationMetaInfo(
-    val visible: Boolean,
-    val type: String
+    val className: String
 )

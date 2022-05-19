@@ -1,6 +1,8 @@
 package com.huawei.java.compilation.database.impl
 
-import com.huawei.java.compilation.database.impl.reader.readClasses
+import com.huawei.java.compilation.database.ApiLevel
+import com.huawei.java.compilation.database.impl.fs.asByteCodeLocation
+import com.huawei.java.compilation.database.impl.fs.sources
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -15,7 +17,7 @@ class ByteCodeReaderTest {
         val lib = guavaLib
         benchmark(20, "read bytecode") {
             runBlocking {
-                lib.byteCodeLocation.readClasses().toList()
+                lib.asByteCodeLocation(ApiLevel.ASM8).sources().toList()
             }
         }
     }
@@ -26,7 +28,7 @@ class ByteCodeReaderTest {
         val jars = allJars
         benchmark(10, "reading libraries bytecode") {
             runBlocking {
-                CompilationDatabaseImpl().load(jars)
+                CompilationDatabaseImpl(ApiLevel.ASM8).load(jars)
             }
         }
     }
@@ -60,6 +62,8 @@ class ByteCodeReaderTest {
         get() {
             val cl = ClassLoader.getSystemClassLoader()
             val jars = (cl as URLClassLoader).urLs.filter { it.path.endsWith(".jar") }
-            return jars.map { File(it.file) }
+//            val jdks = File(System.getenv("JAVA_HOME") + "\\jre\\lib\\").listFiles { file -> file.name.endsWith(".jar") }
+//                .orEmpty().toList()
+            return jars.map { File(it.file) } //+ jdks
         }
 }

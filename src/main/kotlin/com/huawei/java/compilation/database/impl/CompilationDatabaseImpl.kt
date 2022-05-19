@@ -1,23 +1,30 @@
 package com.huawei.java.compilation.database.impl
 
+import com.huawei.java.compilation.database.ApiLevel
 import com.huawei.java.compilation.database.api.ClasspathSet
 import com.huawei.java.compilation.database.api.CompilationDatabase
-import com.huawei.java.compilation.database.impl.reader.readClasses
+import com.huawei.java.compilation.database.impl.fs.asByteCodeLocation
+import com.huawei.java.compilation.database.impl.fs.filterExisted
+import com.huawei.java.compilation.database.impl.fs.sources
 import com.huawei.java.compilation.database.impl.tree.ClassTree
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mu.KLogging
 import java.io.File
 
-class CompilationDatabaseImpl : CompilationDatabase {
+class CompilationDatabaseImpl(private val apiLevel: ApiLevel) : CompilationDatabase {
+
+    companion object : KLogging()
 
     private val classTree = ClassTree()
 
     override suspend fun classpathSet(locations: List<File>): ClasspathSet {
-        load(locations)
-        return ClasspathSetImpl(locations.map { it.byteCodeLocation }.toPersistentList(), classTree)
+        val existedLocations = locations.filterExisted()
+        load(existedLocations)
+        return ClasspathSetImpl(existedLocations.map { it.asByteCodeLocation(apiLevel) }.toPersistentList(), classTree)
     }
 
     override suspend fun load(dirOrJar: File) = apply {
@@ -25,17 +32,13 @@ class CompilationDatabaseImpl : CompilationDatabase {
     }
 
     override suspend fun load(dirOrJars: List<File>) = apply {
-        dirOrJars.forEach {
-            if (!it.exists()) {
-                throw IllegalStateException("file or folder does not exists: ${it.absolutePath}")
-            }
-        }
+        val validSources = dirOrJars.filterExisted()
         withContext(Dispatchers.IO) {
-            dirOrJars.map { dirOrJar ->
+            validSources.map { dirOrJar ->
                 launch(Dispatchers.IO) {
-                    val location = dirOrJar.byteCodeLocation
-                    location.readClasses().forEach {
-                        classTree.addClass(location, it.name, it)
+                    val location = dirOrJar.asByteCodeLocation(apiLevel)
+                    location.sources().forEach {
+                        classTree.addClass(it)
                     }
                 }
             }
