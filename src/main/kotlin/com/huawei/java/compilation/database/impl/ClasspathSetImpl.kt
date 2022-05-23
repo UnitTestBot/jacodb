@@ -5,10 +5,9 @@ import com.huawei.java.compilation.database.api.ClassId
 import com.huawei.java.compilation.database.api.ClasspathSet
 import com.huawei.java.compilation.database.impl.tree.ClassTree
 import com.huawei.java.compilation.database.impl.tree.ClasspathClassTree
-import kotlinx.collections.immutable.PersistentList
 
 class ClasspathSetImpl(
-    override val locations: PersistentList<ByteCodeLocation>,
+    override val locations: List<ByteCodeLocation>,
     classTree: ClassTree
 ) : ClasspathSet {
 

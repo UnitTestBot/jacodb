@@ -2,7 +2,6 @@ package com.huawei.java.compilation.database.impl.tree
 
 import com.huawei.java.compilation.database.api.ByteCodeLocation
 import com.huawei.java.compilation.database.impl.fs.ClassByteCodeSource
-import com.huawei.java.compilation.database.impl.fs.ClassMetaInfo
 import java.util.concurrent.ConcurrentHashMap
 
 class ClassTree {
@@ -115,6 +114,7 @@ class ClassNode(
     override val name: String = simpleName
 
     val location get() = source.location
-    val info: ClassMetaInfo get() = source.meta
+
+    suspend fun info() = source.meta()
 
 }

@@ -5,7 +5,7 @@ import com.huawei.java.compilation.database.impl.ClassIdService
 import com.huawei.java.compilation.database.impl.fs.FieldMetaInfo
 
 class FieldIdImpl(
-    val info: FieldMetaInfo,
+    private val info: FieldMetaInfo,
     private val classIdService: ClassIdService
 ) : FieldId {
 

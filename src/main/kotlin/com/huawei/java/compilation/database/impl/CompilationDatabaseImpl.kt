@@ -1,13 +1,14 @@
 package com.huawei.java.compilation.database.impl
 
 import com.huawei.java.compilation.database.ApiLevel
+import com.huawei.java.compilation.database.api.ByteCodeLocation
 import com.huawei.java.compilation.database.api.ClasspathSet
 import com.huawei.java.compilation.database.api.CompilationDatabase
+import com.huawei.java.compilation.database.impl.fs.JavaRuntime
 import com.huawei.java.compilation.database.impl.fs.asByteCodeLocation
 import com.huawei.java.compilation.database.impl.fs.filterExisted
 import com.huawei.java.compilation.database.impl.fs.sources
 import com.huawei.java.compilation.database.impl.tree.ClassTree
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -15,16 +16,20 @@ import kotlinx.coroutines.withContext
 import mu.KLogging
 import java.io.File
 
-class CompilationDatabaseImpl(private val apiLevel: ApiLevel) : CompilationDatabase {
-
+class CompilationDatabaseImpl(private val apiLevel: ApiLevel, javaLocation: File) : CompilationDatabase {
     companion object : KLogging()
 
     private val classTree = ClassTree()
+    private val javaRuntime = JavaRuntime(apiLevel, javaLocation)
 
-    override suspend fun classpathSet(locations: List<File>): ClasspathSet {
-        val existedLocations = locations.filterExisted()
+    suspend fun loadJavaLibraries() {
+        javaRuntime.allLocations.loadAll()
+    }
+
+    override suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet {
+        val existedLocations = dirOrJars.filterExisted()
         load(existedLocations)
-        return ClasspathSetImpl(existedLocations.map { it.asByteCodeLocation(apiLevel) }.toPersistentList(), classTree)
+        return ClasspathSetImpl(existedLocations.map { it.asByteCodeLocation(apiLevel) }.toList() + javaRuntime.allLocations, classTree)
     }
 
     override suspend fun load(dirOrJar: File) = apply {
@@ -32,11 +37,13 @@ class CompilationDatabaseImpl(private val apiLevel: ApiLevel) : CompilationDatab
     }
 
     override suspend fun load(dirOrJars: List<File>) = apply {
-        val validSources = dirOrJars.filterExisted()
+        dirOrJars.filterExisted().map { it.asByteCodeLocation(apiLevel) }.loadAll()
+    }
+
+    private suspend fun List<ByteCodeLocation>.loadAll() = this@CompilationDatabaseImpl.apply {
         withContext(Dispatchers.IO) {
-            validSources.map { dirOrJar ->
+            map { location ->
                 launch(Dispatchers.IO) {
-                    val location = dirOrJar.asByteCodeLocation(apiLevel)
                     location.sources().forEach {
                         classTree.addClass(it)
                     }
