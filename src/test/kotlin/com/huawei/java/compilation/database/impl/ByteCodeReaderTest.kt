@@ -3,7 +3,7 @@ package com.huawei.java.compilation.database.impl
 import com.huawei.java.compilation.database.ApiLevel
 import com.huawei.java.compilation.database.compilationDatabase
 import com.huawei.java.compilation.database.impl.fs.asByteCodeLocation
-import com.huawei.java.compilation.database.impl.fs.sources
+import com.huawei.java.compilation.database.impl.tree.ClassTree
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ class ByteCodeReaderTest {
         val lib = guavaLib
         benchmark(20, "read bytecode") {
             runBlocking {
-                lib.asByteCodeLocation(ApiLevel.ASM8).sources().toList()
+                lib.asByteCodeLocation(ApiLevel.ASM8).loader().load(ClassTree())
             }
         }
     }
@@ -61,6 +61,7 @@ class ByteCodeReaderTest {
             action()
             val end = System.currentTimeMillis()
             println("$it: $name took: ${end - start}ms")
+            Thread.sleep(1_000)
         }
 
     }

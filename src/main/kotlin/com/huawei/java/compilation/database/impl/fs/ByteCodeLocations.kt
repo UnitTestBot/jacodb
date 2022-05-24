@@ -3,7 +3,6 @@ package com.huawei.java.compilation.database.impl.fs
 import com.huawei.java.compilation.database.ApiLevel
 import com.huawei.java.compilation.database.api.ByteCodeLocation
 import com.huawei.java.compilation.database.impl.CompilationDatabaseImpl
-import kotlinx.collections.immutable.toPersistentList
 import java.io.File
 
 
@@ -12,7 +11,7 @@ fun File.asByteCodeLocation(apiLevel: ApiLevel, loadClassesOnlyFrom: List<String
         throw IllegalArgumentException("file $absolutePath doesn't exist")
     }
     if (isFile && name.endsWith(".jar")) {
-        return JarFileLocationImpl(this, apiLevel, loadClassesOnlyFrom?.toPersistentList())
+        return JarFileLocationImpl(this, apiLevel, loadClassesOnlyFrom?.toList())
     } else if (!isFile) {
         return BuildFolderLocationImpl(this, apiLevel, loadClassesOnlyFrom)
     }
