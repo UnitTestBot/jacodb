@@ -70,7 +70,7 @@ interface MethodId {
     suspend fun parameters(): List<ClassId>
     suspend fun annotations(): List<ClassId>
 
-    suspend fun readBody(): MethodNode
+    suspend fun readBody(): MethodNode?
 }
 ```
 

@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.utbot.java.compilation.database.compilationDatabase
 import org.utbot.java.compilation.database.impl.fs.asByteCodeLocation
+import org.utbot.java.compilation.database.impl.fs.load
 import org.utbot.java.compilation.database.impl.tree.ClassTree
 
 
