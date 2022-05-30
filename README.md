@@ -30,7 +30,7 @@ interface CompilationDatabase {
 ```
 
 `ClasspathSet` represents the set of classpath items. Which means that each class should be presented once there.
-Otherwise, in case of collission like in jar-hell only one random class will win.
+Otherwise, in case of collision like in jar-hell only one random class will win.
 
 ```kotlin
 interface ClasspathSet {
