@@ -52,13 +52,43 @@ class ClassTreeTest {
         assertNull(limitedTree.firstClassOrNull("xxx.zzz.Simple"))
     }
 
+    @Test
+    fun `dropping versions`() {
+        val limitedTree = ClasspathClassTree(classTree, persistentListOf(lib1))
+
+        classTree.addClass(lib2.classSource("xxx.Simple"))
+        classTree.addClass(lib1.classSource("xxx.Simple"))
+        classTree.addClass(lib2.classSource("xxx.zzz.Simple"))
+
+        classTree.visit(RemoveVersionsVisitor(setOf(lib2)))
+
+        with(limitedTree.firstClassOrNull("xxx.Simple")) {
+            assertNotNull(this!!)
+            assertEquals("Simple", name)
+            assertEquals(lib1, location)
+        }
+
+        assertNull(limitedTree.firstClassOrNull("xxx.zzz.Simple"))
+    }
+    @Test
+    fun `total version dropping`() {
+        val limitedTree = ClasspathClassTree(classTree, persistentListOf(lib1))
+
+        classTree.addClass(lib2.classSource("xxx.Simple"))
+        classTree.addClass(lib1.classSource("xxx.Simple"))
+        classTree.addClass(lib2.classSource("xxx.zzz.Simple"))
+
+        classTree.visit(RemoveVersionsVisitor(setOf(lib1, lib2)))
+
+        assertNull(limitedTree.firstClassOrNull("xxx.Simple"))
+    }
+
     private fun ByteCodeLocation.findNode(name: String): ClassNode? {
         return classTree.findClassNodeOrNull(this, name)
     }
 
     private fun ByteCodeLocation.classSource(name: String): ClassByteCodeSource {
         return ClassByteCodeSource(
-            apiLevel = apiLevel,
             className = name,
             location = this
         )

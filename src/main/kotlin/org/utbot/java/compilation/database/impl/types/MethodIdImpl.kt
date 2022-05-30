@@ -1,4 +1,4 @@
-package org.utbot.java.compilation.database.impl.meta
+package org.utbot.java.compilation.database.impl.types
 
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.java.compilation.database.api.ClassId
@@ -33,10 +33,10 @@ class MethodIdImpl(
 
     override suspend fun annotations() = lazyAnnotations
 
-    override suspend fun readBody(): MethodNode {
+    override suspend fun readBody(): MethodNode? {
         val location = classId.location
         if (location?.isChanged() == true) {
-            throw IllegalStateException("bytecode is changed")
+            return null
         }
         return classNode.source.loadMethod(name, methodInfo.desc)
     }

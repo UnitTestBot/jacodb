@@ -18,7 +18,7 @@ Java Compilation Database is ignited by number of jars or directories with build
 ```kotlin
 interface CompilationDatabase {
 
-    suspend fun classpathSet(locations: List<File>): ClasspathSet
+    suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet
 
     suspend fun load(dirOrJar: File)
     suspend fun load(dirOrJars: List<File>)
@@ -30,7 +30,7 @@ interface CompilationDatabase {
 ```
 
 `ClasspathSet` represents the set of classpath items. Which means that each class should be presented once there.
-Otherwise, in case of collission like in jar-hell only one random class will win.
+Otherwise, in case of collision like in jar-hell only one random class will win.
 
 ```kotlin
 interface ClasspathSet {
@@ -38,6 +38,8 @@ interface ClasspathSet {
     val locations: List<ByteCodeLocation>
 
     suspend fun findClassOrNull(name: String): ClassId?
+
+    suspend fun findSubTypesOf(name: String): List<ClassId>
 }
 ```
 
@@ -68,7 +70,7 @@ interface MethodId {
     suspend fun parameters(): List<ClassId>
     suspend fun annotations(): List<ClassId>
 
-    suspend fun readBody(): Any // ASM parsed structure
+    suspend fun readBody(): MethodNode?
 }
 ```
 
@@ -80,6 +82,7 @@ suspend fun findNormalDistribution(): Any {
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
     val database = compilationDatabase {
+        useProcessJRE()
         persistent {
             location = "/tmp/compilation-db/${System.currentTimeMillis()}"
         }
@@ -130,8 +133,8 @@ clean up persistent store in case of some libraries are outdated.
 
 ```kotlin
     val database = compilationDatabase {
-        watchFileSystemChanges = true
-        predefinendJars = listOf(lib1, buildDir)
+        watchFileSystemChanges()
+        predefinedDirOrJars = listOf(lib1, buildDir)
         persistent()
     }
     
@@ -146,8 +149,8 @@ returned new instance of set.
 
 ```kotlin
     val database = compilationDatabase {
-        watchFileSystemChanges = true
-        predefinendJars = listOf(lib1)
+        watchFileSystemChanges()
+        predefinedDirOrJars = listOf(lib1)
         persistent()
     }
     

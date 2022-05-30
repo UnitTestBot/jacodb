@@ -1,9 +1,9 @@
 package org.utbot.java.compilation.database.impl.fs
 
 import mu.KLogging
-import org.utbot.java.compilation.database.ApiLevel
-import org.utbot.java.compilation.database.api.ByteCodeLocation
+import org.utbot.java.compilation.database.api.ByteCodeLoader
 import org.utbot.java.compilation.database.api.md5
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 import java.util.jar.JarEntry
@@ -12,16 +12,15 @@ import kotlin.streams.toList
 
 class JarFileLocationImpl(
     val file: File,
-    override val apiLevel: ApiLevel,
     private val syncLoadClassesOnlyFrom: List<String>?
-) : ByteCodeLocation {
+) : AbstractByteCodeLocation() {
     companion object : KLogging()
 
-    override val currentVersion: String
-        get() = (file.absolutePath + file.lastModified()).md5()
+    override fun getCurrentId(): String {
+        return (file.absolutePath + file.lastModified()).md5()
+    }
 
-    override val version = currentVersion
-    override fun refreshed() = JarFileLocationImpl(file, apiLevel, syncLoadClassesOnlyFrom)
+    override fun createRefreshed() = JarFileLocationImpl(file, syncLoadClassesOnlyFrom)
 
     override suspend fun loader(): ByteCodeLoader? {
         try {
@@ -32,10 +31,10 @@ class JarFileLocationImpl(
                     else -> null // lazy
                 }
             }
-
-            return ByteCodeLoaderImpl(this, LoadingPortion(classes) { sync.first.close() }) {
+            val allClasses = LoadingContainerImpl(classes) { sync.first.close() }
+            return ByteCodeLoaderImpl(this, allClasses) {
                 val (jar, foundClasses) = jarClasses() ?: return@ByteCodeLoaderImpl null
-                LoadingPortion(foundClasses.filterKeys { className ->
+                LoadingContainerImpl(foundClasses.filterKeys { className ->
                     !className.matchesOneOf(syncLoadClassesOnlyFrom)
                 }.mapValues { (_, jar) ->
                     jar.first.getInputStream(jar.second)
@@ -53,7 +52,12 @@ class JarFileLocationImpl(
         val jar = jarFile() ?: return null
         val jarEntryName = classFullName.replace(".", "/") + ".class"
         val jarEntry = jar.getJarEntry(jarEntryName)
-        return jar.getInputStream(jarEntry)
+        return object : BufferedInputStream(jar.getInputStream(jarEntry)) {
+            override fun close() {
+                super.close()
+                jar.close()
+            }
+        }
     }
 
     private fun jarClasses(): Pair<JarFile, Map<String, Pair<JarFile, JarEntry>>>? {
