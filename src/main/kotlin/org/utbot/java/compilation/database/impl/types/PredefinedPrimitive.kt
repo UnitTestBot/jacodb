@@ -1,4 +1,4 @@
-package org.utbot.java.compilation.database.impl.meta
+package org.utbot.java.compilation.database.impl.types
 
 import kotlinx.collections.immutable.persistentListOf
 import org.objectweb.asm.Opcodes
@@ -6,6 +6,9 @@ import org.utbot.java.compilation.database.api.ClassId
 import org.utbot.java.compilation.database.api.FieldId
 import org.utbot.java.compilation.database.api.MethodId
 
+/**
+ * Predefined primitive types
+ */
 class PredefinedPrimitive(override val simpleName: String) : ClassId {
 
     companion object {

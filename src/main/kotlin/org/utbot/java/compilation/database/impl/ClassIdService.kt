@@ -3,18 +3,17 @@ package org.utbot.java.compilation.database.impl
 import kotlinx.collections.immutable.toImmutableMap
 import org.utbot.java.compilation.database.api.ClassId
 import org.utbot.java.compilation.database.api.MethodId
-import org.utbot.java.compilation.database.impl.meta.ClassIdImpl
-import org.utbot.java.compilation.database.impl.meta.MethodIdImpl
-import org.utbot.java.compilation.database.impl.meta.MethodMetaInfo
-import org.utbot.java.compilation.database.impl.meta.PredefinedPrimitive
 import org.utbot.java.compilation.database.impl.tree.ClassNode
 import org.utbot.java.compilation.database.impl.tree.ClasspathClassTree
+import org.utbot.java.compilation.database.impl.types.ClassIdImpl
+import org.utbot.java.compilation.database.impl.types.MethodIdImpl
+import org.utbot.java.compilation.database.impl.types.MethodMetaInfo
+import org.utbot.java.compilation.database.impl.types.PredefinedPrimitive
 
 class ClassIdService(internal val classpathClassTree: ClasspathClassTree) {
 
     companion object {
-        private val predefinedClasses: Map<String, ClassId> =
-            PredefinedPrimitive.values.associateBy { it.simpleName }.toImmutableMap()
+        private val predefinedClasses = PredefinedPrimitive.values.associateBy { it.simpleName }.toImmutableMap()
     }
 
     fun toClassId(node: ClassNode?): ClassId? {

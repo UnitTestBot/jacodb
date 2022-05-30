@@ -1,4 +1,4 @@
-package org.utbot.java.compilation.database.impl.meta
+package org.utbot.java.compilation.database.impl.types
 
 import org.utbot.java.compilation.database.api.ByteCodeLocation
 import org.utbot.java.compilation.database.api.ClassId
