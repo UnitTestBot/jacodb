@@ -43,7 +43,7 @@ interface ClasspathSet {
 }
 ```
 
-`findClass` method will return instance of `ClassId` found in `locations` or null otherwise. Where `ClassId` represents
+`findClass` method will return instance of `ClassId` from `locations` or null otherwise. Where `ClassId` represents
 JVM Class:
 
 ```kotlin
@@ -107,13 +107,14 @@ suspend fun findNormalDistribution(): Any {
 }
 ```
 
-If underling jar file is removed from file system then exception will be thrown only when method `readBody` is called.
+If underling jar file is removed or changed in file system then null will be returned `readBody` method.
 If classpath is inconsistent you may receive `ClassNotFoundException` in runtime. Database can watch for file system 
 changes in a background or refresh jars explicitly:
 
 ```kotlin
     val database = compilationDatabase {
         watchFileSystemChanges = true
+        useProcessJRE()
         predefinendJars = listOf(lib1, buildDir) 
         persistent()
     }
@@ -134,6 +135,7 @@ clean up persistent store in case of some libraries are outdated.
 ```kotlin
     val database = compilationDatabase {
         watchFileSystemChanges()
+        useProcessJRE()
         predefinedDirOrJars = listOf(lib1, buildDir)
         persistent()
     }
@@ -150,6 +152,7 @@ returned new instance of set.
 ```kotlin
     val database = compilationDatabase {
         watchFileSystemChanges()
+        useProcessJRE()
         predefinedDirOrJars = listOf(lib1)
         persistent()
     }
