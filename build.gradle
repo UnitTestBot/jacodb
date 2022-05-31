@@ -1,4 +1,4 @@
-group 'com.huawei.utbot'
+group 'org.utbot'
 
 apply plugin: 'java'
 
@@ -10,9 +10,8 @@ if (project.hasProperty('semVer')) {
 
 buildscript {
     repositories {
-        maven {
-            url "http://10.198.126.224:8081/repository/utbot-uber/"
-            allowInsecureProtocol true
+        repositories {
+            mavenCentral()
         }
     }
 
@@ -73,22 +72,14 @@ publishing {
     publications {
         jar(MavenPublication) {
             from components.java
-            groupId 'com.huawei.utdatabase'
+            groupId 'org.utbot'
             artifactId project.name
-        }
-    }
-    repositories {
-        maven {
-            name = 'InternalNexusRepository'
-            url "http://10.198.126.224:8081/repository/utbot-external/"
-            credentials(PasswordCredentials)
         }
     }
 }
 
 repositories {
-    maven {
-        url "http://10.198.126.224:8081/repository/utbot-uber/"
-        allowInsecureProtocol true
+    repositories {
+        mavenCentral()
     }
 }
