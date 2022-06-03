@@ -30,7 +30,7 @@ jobs:
         distribution: 'temurin'
     - name: Build and run tests
       run: |
-        gradlew clean build --no-daemon
+        ./gradlew clean build --no-daemon
         
   buildAndTestJDK8:
 
@@ -46,4 +46,4 @@ jobs:
         java-package: jdk+fx
     - name: Build and run tests
       run: |
-        gradlew clean build --no-daemon
+        ./gradlew clean build --no-daemon
