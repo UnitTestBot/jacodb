@@ -2,11 +2,11 @@ package org.utbot.java.compilation.database.impl.tree
 
 import org.utbot.java.compilation.database.api.ByteCodeLocation
 
-abstract class AbstractNode(open val name: String?, val parent: PackageNode?) {
+abstract class AbstractNode<T: AbstractNode<T>>(open val name: String?, val parent: T?) {
 
     val fullName: String by lazy(LazyThreadSafetyMode.NONE) {
         val reversedNames = arrayListOf(name)
-        var node: PackageNode? = parent
+        var node: T? = parent
         while (node != null) {
             node.name?.let {
                 reversedNames.add(it)
