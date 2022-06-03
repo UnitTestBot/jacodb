@@ -33,7 +33,7 @@ jobs:
         gradle-version: 7.0.2
     - name: Build and run tests
       run: |
-        ./gradlew clean build --no-daemon
+        gradle clean build --no-daemon
         
   buildAndTestJDK8:
 
@@ -52,4 +52,4 @@ jobs:
         gradle-version: 7.0.2
     - name: Build and run tests
       run: |
-        ./gradlew clean build --no-daemon
+        gradle clean build --no-daemon
