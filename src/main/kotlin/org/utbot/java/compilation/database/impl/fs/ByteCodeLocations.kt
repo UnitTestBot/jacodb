@@ -11,6 +11,8 @@ fun File.asByteCodeLocation(loadClassesOnlyFrom: List<String>? = null): ByteCode
     }
     if (isFile && name.endsWith(".jar")) {
         return JarFileLocationImpl(this, loadClassesOnlyFrom?.toList())
+    } else if (isFile && name.endsWith(".jmod")) {
+        return JmodByteCodeLocation(this, loadClassesOnlyFrom?.toList())
     } else if (!isFile) {
         return BuildFolderLocationImpl(this, loadClassesOnlyFrom)
     }
