@@ -8,7 +8,7 @@ import org.utbot.java.compilation.database.impl.fs.load
 import org.utbot.java.compilation.database.impl.tree.ClassTree
 
 
-class ByteCodeReaderTest : LibrariesMixin {
+class ByteCodeBenchmarkTest : LibrariesMixin {
 
     @Test
     fun `read byte-code benchmark`() {
@@ -24,11 +24,17 @@ class ByteCodeReaderTest : LibrariesMixin {
     fun `read all classpath byte-code benchmark`() {
         val jars = allJars
         benchmark(5, "reading libraries bytecode") {
-            runBlocking {
-                val db = compilationDatabase {
-                    useProcessJavaRuntime()
+            val db = measure("load db") {
+                runBlocking {
+                    compilationDatabase {
+                        useProcessJavaRuntime()
+                    }
                 }
-                db.load(jars)
+            }
+            measure("load jars") {
+                runBlocking {
+                    db.load(jars)
+                }
             }
         }
     }
@@ -53,12 +59,18 @@ class ByteCodeReaderTest : LibrariesMixin {
 
         // let's count
         repeat(repeats) {
-            val start = System.currentTimeMillis()
-            action()
-            val end = System.currentTimeMillis()
-            println("$it: $name took: ${end - start}ms")
+            measure("$it", action)
             Thread.sleep(1_000)
         }
+    }
+
+
+    private fun <T> measure(name: String, action: () -> T): T {
+        val start = System.currentTimeMillis()
+        val result = action()
+        val end = System.currentTimeMillis()
+        println("$name: took: ${end - start}ms")
+        return result
     }
 }
 //

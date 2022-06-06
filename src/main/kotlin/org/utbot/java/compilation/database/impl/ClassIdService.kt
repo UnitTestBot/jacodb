@@ -10,7 +10,7 @@ import org.utbot.java.compilation.database.impl.types.MethodIdImpl
 import org.utbot.java.compilation.database.impl.types.MethodMetaInfo
 import org.utbot.java.compilation.database.impl.types.PredefinedPrimitive
 
-class ClassIdService(internal val classpathClassTree: ClasspathClassTree) {
+class ClassIdService(private val classpathClassTree: ClasspathClassTree) {
 
     companion object {
         private val predefinedClasses = PredefinedPrimitive.values.associateBy { it.simpleName }.toImmutableMap()

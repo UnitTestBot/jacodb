@@ -57,25 +57,35 @@ class CompilationDatabaseImpl(private val settings: CompilationDatabaseSettings)
     private suspend fun List<ByteCodeLocation>.loadAll() = apply {
         val actions = ConcurrentLinkedQueue<Pair<ByteCodeLocation, suspend () -> Unit>>()
 
-        withContext(Dispatchers.IO) {
+        val libraryTrees = withContext(Dispatchers.IO) {
             map { location ->
                 async {
                     val loader = location.loader()
                     // here something may go wrong
                     if (loader != null) {
-                        val asyncJob = loader.load(classTree)
+                        val (libraryTree, asyncJob) = loader.load(classTree)
                         actions.add(location to asyncJob)
                         registry.addLocation(location)
+                        libraryTree
+                    } else {
+                        null
                     }
                 }
             }
-        }.joinAll()
+        }.awaitAll().filterNotNull()
+        val addedClasses = libraryTrees.flatMap {
+            it.pushInto(classTree).values
+        }
+
         backgroundJobs.add(BackgroundScope.launch {
-            actions.map { action ->
+            actions.map { (location, action) ->
                 async {
-                    action.second()
+                    action()
                 }
             }.joinAll()
+            addedClasses.forEach {
+                classTree.notifyOnByteCodeLoaded(it)
+            }
         })
     }
 
