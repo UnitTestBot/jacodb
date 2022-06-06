@@ -4,7 +4,7 @@ import org.utbot.java.compilation.database.api.FieldId
 import org.utbot.java.compilation.database.impl.ClassIdService
 
 class FieldIdImpl(
-    private val info: FieldMetaInfo,
+    private val info: FieldInfo,
     private val classIdService: ClassIdService
 ) : FieldId {
 
