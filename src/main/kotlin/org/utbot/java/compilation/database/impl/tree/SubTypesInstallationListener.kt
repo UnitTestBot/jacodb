@@ -2,7 +2,7 @@ package org.utbot.java.compilation.database.impl.tree
 
 object SubTypesInstallationListener : ClassTreeListener {
 
-    override suspend fun notifyOnMetaLoaded(classNodeWithLoadedMeta: ClassNode, classTree: ClassTree) {
+    override suspend fun notifyOnByteCodeLoaded(classNodeWithLoadedMeta: ClassNode, classTree: ClassTree) {
         val superClass = classNodeWithLoadedMeta.info().superClass?.takeIf {
             it != "java.lang.Object"
         } ?: return

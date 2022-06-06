@@ -8,7 +8,7 @@ import org.utbot.java.compilation.database.impl.fs.load
 import org.utbot.java.compilation.database.impl.tree.ClassTree
 
 
-class ByteCodeReaderTest : LibrariesMixin {
+class ByteCodeBenchmarkTest : LibrariesMixin {
 
     @Test
     fun `read byte-code benchmark`() {
