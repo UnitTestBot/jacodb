@@ -43,7 +43,7 @@ interface ClasspathSet {
 }
 ```
 
-`findClass` method will return instance of `ClassId` from `locations` or null otherwise. Where `ClassId` represents
+`findClassOrNull` method will return instance of `ClassId` from `locations` or null otherwise. Where `ClassId` represents
 JVM Class:
 
 ```kotlin
