@@ -7,7 +7,7 @@ somewhere in file system.
 This is basic requirements for database implementation: 
 
 * async and thread-safe api
-* each database instance binded to Java runtime version greater than 1.8 
+* each database instance binded to Java runtime version up from 1.8 
 * bytecode processing and analyzing up from Java 1.8
 * ability to update bytecode from location without breaking already processed data
 * ability to persist data on-disk and reuse it after application restart
