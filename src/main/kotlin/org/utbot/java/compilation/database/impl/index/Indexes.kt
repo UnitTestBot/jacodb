@@ -1,6 +1,8 @@
 package org.utbot.java.compilation.database.impl.index
 
 import org.utbot.java.compilation.database.api.ByteCodeLocation
+import org.utbot.java.compilation.database.api.ByteCodeLocationIndex
+import org.utbot.java.compilation.database.api.ByteCodeLocationIndexBuilder
 import org.utbot.java.compilation.database.impl.tree.ClassNode
 
 suspend fun <T> ByteCodeLocation.index(
