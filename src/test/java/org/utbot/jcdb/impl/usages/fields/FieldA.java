@@ -1,13 +1,12 @@
-package org.utbot.jcdb.impl.fields;
+package org.utbot.jcdb.impl.usages.fields;
 
-
-public class FakeFieldA {
+public class FieldA {
 
     public int a;
     public int b;
     private final FieldB fieldB = new FieldB(a);
 
-    public FakeFieldA(int a, int b) {
+    public FieldA(int a, int b) {
         this.a = a;
         this.b = b;
     }
@@ -28,3 +27,17 @@ public class FakeFieldA {
     }
 
 }
+
+
+class FieldAImpl extends FieldA {
+
+    public FieldAImpl() {
+        super(1, 1);
+    }
+
+    void hello() {
+        System.out.println(a);
+    }
+}
+
+

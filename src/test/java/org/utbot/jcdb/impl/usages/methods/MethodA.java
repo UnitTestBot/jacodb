@@ -1,4 +1,4 @@
-package org.utbot.jcdb.impl.methods;
+package org.utbot.jcdb.impl.usages.methods;
 
 public class MethodA {
 

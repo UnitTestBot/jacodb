@@ -1,4 +1,4 @@
-package org.utbot.jcdb.impl.fields;
+package org.utbot.jcdb.impl.usages.fields;
 
 public class FieldB {
 

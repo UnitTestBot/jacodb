@@ -1,9 +1,6 @@
 package org.utbot.jcdb.impl.index
 
-import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.relevantLocations
 
 class SubClassesExtension(private val db: CompilationDatabase, private val cp: ClasspathSet) {
@@ -19,6 +16,15 @@ class SubClassesExtension(private val db: CompilationDatabase, private val cp: C
         val relevantLocations = cp.locations.relevantLocations(classId.location)
 
         return relevantLocations.subClasses(name, allHierarchy).map { cp.findClassOrNull(it) }.filterNotNull()
+    }
+
+    suspend fun findOverrides(methodId: MethodId): List<MethodId> {
+        db.awaitBackgroundJobs()
+        return emptyList()
+//        val name = classId.name
+//        val relevantLocations = cp.locations.relevantLocations(classId.location)
+//
+//        return relevantLocations.subClasses(name, allHierarchy).map { cp.findClassOrNull(it) }.filterNotNull()
     }
 
     private suspend fun Collection<ByteCodeLocation>.subClasses(name: String, allHierarchy: Boolean): List<String> {

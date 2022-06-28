@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.compilationDatabase
-import org.utbot.jcdb.impl.fields.FieldA
-import org.utbot.jcdb.impl.fields.FieldB
 import org.utbot.jcdb.impl.index.ReversedUsagesIndex
 import org.utbot.jcdb.impl.index.reversedUsagesExt
-import org.utbot.jcdb.impl.methods.MethodA
+import org.utbot.jcdb.impl.usages.fields.FieldA
+import org.utbot.jcdb.impl.usages.fields.FieldB
+import org.utbot.jcdb.impl.usages.methods.MethodA
 
 class SearchReversedUsagesTest : LibrariesMixin {
 
@@ -32,7 +32,6 @@ class SearchReversedUsagesTest : LibrariesMixin {
             cp = db.classpathSet(allClasspath)
         }
     }
-
 
     @Test
     fun `classes read fields`() {
@@ -114,10 +113,6 @@ class SearchReversedUsagesTest : LibrariesMixin {
             usages
         )
     }
-
-
-
-
 
     private inline fun <reified T> fieldsUsages(mode: FieldUsageMode = FieldUsageMode.WRITE): Map<String, Set<String>> {
         return runBlocking {
