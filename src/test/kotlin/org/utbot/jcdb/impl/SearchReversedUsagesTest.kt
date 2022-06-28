@@ -40,17 +40,17 @@ class SearchReversedUsagesTest : LibrariesMixin {
         assertEquals(
             sortedMapOf(
                 "a" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#<init>",
-                    "org.utbot.jcdb.impl.fields.FieldA#isPositive",
-                    "org.utbot.jcdb.impl.fields.FieldA#useCPrivate",
-                    "org.utbot.jcdb.impl.fields.FieldAImpl#hello"
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#isPositive",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useCPrivate",
+                    "org.utbot.jcdb.impl.usages.fields.FieldAImpl#hello"
                 ),
                 "b" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#isPositive",
-                    "org.utbot.jcdb.impl.fields.FieldA#useA",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#isPositive",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useA",
                 ),
                 "fieldB" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#useCPrivate",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useCPrivate",
                 )
             ),
             usages
@@ -63,14 +63,14 @@ class SearchReversedUsagesTest : LibrariesMixin {
         assertEquals(
             sortedMapOf(
                 "a" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#<init>",
-                    "org.utbot.jcdb.impl.fields.FieldA#useA",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useA",
                 ),
                 "b" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#<init>"
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>"
                 ),
                 "fieldB" to setOf(
-                    "org.utbot.jcdb.impl.fields.FieldA#<init>",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>",
                 )
             ),
             usages
@@ -83,10 +83,10 @@ class SearchReversedUsagesTest : LibrariesMixin {
         assertEquals(
             sortedMapOf(
                 "c" to setOf(
-                    "org.utbot.jcdb.impl.fields.FakeFieldA#useCPrivate",
-                    "org.utbot.jcdb.impl.fields.FieldA#useCPrivate",
-                    "org.utbot.jcdb.impl.fields.FieldB#<init>",
-                    "org.utbot.jcdb.impl.fields.FieldB#useCPrivate",
+                    "org.utbot.jcdb.impl.usages.fields.FakeFieldA#useCPrivate",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useCPrivate",
+                    "org.utbot.jcdb.impl.usages.fields.FieldB#<init>",
+                    "org.utbot.jcdb.impl.usages.fields.FieldB#useCPrivate",
                 )
             ),
             usages
@@ -99,15 +99,15 @@ class SearchReversedUsagesTest : LibrariesMixin {
         assertEquals(
             sortedMapOf(
                 "<init>" to setOf(
-                    "org.utbot.jcdb.impl.methods.MethodB#hoho",
-                    "org.utbot.jcdb.impl.methods.MethodC#<init>"
+                    "org.utbot.jcdb.impl.usages.methods.MethodB#hoho",
+                    "org.utbot.jcdb.impl.usages.methods.MethodC#<init>"
                 ),
                 "hello" to setOf(
-                    "org.utbot.jcdb.impl.methods.MethodB#hoho",
-                    "org.utbot.jcdb.impl.methods.MethodC#hello",
+                    "org.utbot.jcdb.impl.usages.methods.MethodB#hoho",
+                    "org.utbot.jcdb.impl.usages.methods.MethodC#hello",
                 ),
                 "hello1" to setOf(
-                    "org.utbot.jcdb.impl.methods.MethodB#hoho"
+                    "org.utbot.jcdb.impl.usages.methods.MethodB#hoho"
                 )
             ),
             usages
