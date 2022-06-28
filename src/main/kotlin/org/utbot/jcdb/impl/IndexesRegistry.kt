@@ -5,9 +5,10 @@ import org.utbot.jcdb.api.ByteCodeLocationIndex
 import org.utbot.jcdb.api.IndexInstaller
 import org.utbot.jcdb.impl.index.index
 import org.utbot.jcdb.impl.tree.ClassNode
+import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 
-class IndexesRegistry(private val installers: List<IndexInstaller<*, *>>) {
+class IndexesRegistry(private val installers: List<IndexInstaller<*, *>>) : Closeable {
 
     private val indexes = ConcurrentHashMap<ByteCodeLocation, ConcurrentHashMap<String, ByteCodeLocationIndex<*>>>()
 
@@ -31,4 +32,7 @@ class IndexesRegistry(private val installers: List<IndexInstaller<*, *>>) {
         return indexes[location]?.get(key) as? ByteCodeLocationIndex<T>
     }
 
+    override fun close() {
+        indexes.clear()
+    }
 }
