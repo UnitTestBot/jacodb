@@ -2,39 +2,29 @@ package org.utbot.jcdb.impl
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
 import org.utbot.jcdb.compilationDatabase
+import org.utbot.jcdb.impl.index.ReversedUsagesIndex
+import org.utbot.jcdb.impl.index.findClassOrNull
 import org.utbot.jcdb.impl.index.findFieldsUsedIn
 import org.utbot.jcdb.impl.index.findMethodsUsedIn
 import org.utbot.jcdb.impl.usages.direct.DirectA
 
 class DirectUsagesTest : LibrariesMixin {
 
-    companion object : LibrariesMixin {
-
-        private lateinit var cp: ClasspathSet
-        private lateinit var db: CompilationDatabase
-
-        @BeforeAll
-        @JvmStatic
-        fun setup() = runBlocking {
-            db = compilationDatabase {
-                predefinedDirOrJars = allClasspath
-                useProcessJavaRuntime()
-            }
-            cp = db.classpathSet(allClasspath)
+    private val db = runBlocking {
+        compilationDatabase {
+            predefinedDirOrJars = allClasspath
+            useProcessJavaRuntime()
+            installIndexes(ReversedUsagesIndex)
         }
-
-        @AfterAll
-        @JvmStatic
-        fun close() {
-            db.close()
-        }
-
     }
+
+    private val cp = runBlocking { db.classpathSet(allClasspath) }
 
     @Test
     fun `find methods used in method`() {
@@ -119,7 +109,7 @@ class DirectUsagesTest : LibrariesMixin {
 
     private inline fun <reified T> ClasspathSet.fieldsUsages(): List<Pair<String, List<Pair<String, List<String>>>>> {
         return runBlocking {
-            val classId = cp.findClassOrNull(T::class.java.name)
+            val classId = cp.findClassOrNull<T>()
             Assertions.assertNotNull(classId!!)
 
             classId.methods().map {
@@ -137,7 +127,7 @@ class DirectUsagesTest : LibrariesMixin {
 
     private inline fun <reified T> ClasspathSet.methodsUsages(): List<Pair<String, List<String>>> {
         return runBlocking {
-            val classId = cp.findClassOrNull(T::class.java.name)
+            val classId = cp.findClassOrNull<T>()
             Assertions.assertNotNull(classId!!)
             val methods = classId.methods()
 
@@ -150,6 +140,7 @@ class DirectUsagesTest : LibrariesMixin {
     @AfterEach
     fun cleanup() {
         cp.close()
+        db.close()
     }
 
 }
