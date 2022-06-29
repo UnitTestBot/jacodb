@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.impl.fs.ClassByteCodeSource
+import org.utbot.jcdb.impl.fs.LazyByteCodeSource
 
 class ClassTreeTest {
 
@@ -88,7 +89,7 @@ class ClassTreeTest {
     }
 
     private fun ByteCodeLocation.classSource(name: String): ClassByteCodeSource {
-        return ClassByteCodeSource(
+        return LazyByteCodeSource(
             className = name,
             location = this
         )

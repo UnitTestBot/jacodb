@@ -1,13 +1,8 @@
 package org.utbot.jcdb.impl
 
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.FieldInsnNode
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.MethodId
-import org.utbot.jcdb.impl.fs.relevantLocations
-import org.utbot.jcdb.impl.index.ReversedUsagesIndex
 import org.utbot.jcdb.impl.index.subClassesExt
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
@@ -54,52 +49,8 @@ class ClasspathSetImpl(
         return indexesRegistry.findIndex<T>(key, location)?.query(term).orEmpty().toList()
     }
 
-
-
     override fun close() {
         locationsRegistrySnapshot.close()
-    }
-
-    private suspend fun List<String>.findUsages(
-        name: String,
-        ownerName: String,
-        opcode: Int,
-    ): List<MethodId> {
-        val result = hashSetOf<MethodId>()
-        forEach {
-            val classNode = classpathClassTree.firstClassOrNull(it)
-            classNode?.asmNode()?.methods?.forEach { method ->
-                for (inst in method.instructions) {
-                    if (inst is FieldInsnNode) {
-                        val matches = inst.name == name
-                                && Type.getObjectType(inst.owner).className == ownerName
-                                && inst.opcode == opcode
-                        if (matches) {
-                            val m = classNode.info().methods.firstOrNull {
-                                it.name == method.name && it.desc == method.desc
-                            }
-                            if (m != null) {
-                                result.add(classIdService.toMethodId(classNode, m))
-                            } else {
-                                println("Ouch")
-                            }
-                            break
-                        }
-                    }
-                }
-            }
-        }
-        return result.toList()
-    }
-
-    private suspend fun findPotentialCandidates(methodOrField: String, classId: ClassId): Pair<String, List<String>> {
-        db.awaitBackgroundJobs()
-        val ownerName = classId.name
-        val location = classId.location
-        val potentialCandidates = locations.relevantLocations(location).flatMap {
-            indexesRegistry.findIndex<String>(ReversedUsagesIndex.key, it)?.query(methodOrField).orEmpty()
-        }
-        return Pair(ownerName, potentialCandidates)
     }
 
 }

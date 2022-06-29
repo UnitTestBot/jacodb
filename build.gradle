@@ -58,7 +58,7 @@ compileTestKotlin {
 
 test {
     useJUnitPlatform()
-    jvmArgs = ['-Xmx2g']
+    jvmArgs = ['-Xmx2g', '-XX:+HeapDumpOnOutOfMemoryError', '-XX:HeapDumpPath=heapdump.hprof']
     testLogging {
         events "passed", "skipped", "failed"
     }

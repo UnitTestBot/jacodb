@@ -1,14 +1,16 @@
-package org.utbot.jcdb.impl
+package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.compilationDatabase
+import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.load
+import org.utbot.jcdb.impl.index.ReversedUsagesIndex
 import org.utbot.jcdb.impl.tree.ClassTree
 
 
-class ByteCodeBenchmarkTest : LibrariesMixin {
+class DBBenchmarkTest : LibrariesMixin {
 
     @Test
     fun `read byte-code benchmark`() {
@@ -27,6 +29,7 @@ class ByteCodeBenchmarkTest : LibrariesMixin {
             val db = measure("load db") {
                 runBlocking {
                     compilationDatabase {
+                        installIndexes(ReversedUsagesIndex)
                         useProcessJavaRuntime()
                     }
                 }
@@ -36,15 +39,36 @@ class ByteCodeBenchmarkTest : LibrariesMixin {
                     db.load(jars)
                 }
             }
+            db.close()
         }
     }
 
     @Test
-    fun `read jre libraries  benchmark`() {
-        benchmark(5, "reading libraries bytecode") {
+    fun `read jre libraries benchmark`() {
+        benchmark(5, "reading jvm bytecode") {
             runBlocking {
                 compilationDatabase {
                     useProcessJavaRuntime()
+
+                    installIndexes(ReversedUsagesIndex)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `read jre libraries benchmark and await indexing`() {
+        benchmark(5, "reading jvm bytecode") {
+            val db = runBlocking {
+                compilationDatabase {
+                    useProcessJavaRuntime()
+                    installIndexes(ReversedUsagesIndex)
+                }
+            }
+            measure("awaiting") {
+                runBlocking {
+                    db.awaitBackgroundJobs()
+                    db.close()
                 }
             }
         }
@@ -73,14 +97,3 @@ class ByteCodeBenchmarkTest : LibrariesMixin {
         return result
     }
 }
-//
-//val db = runBlocking {
-//    compilationDatabase {
-//        apiLevel = ApiLevel.ASM8
-//        useJavaHomeJRE()
-//    }
-//}
-//fun main() {
-//    println(db)
-//    Thread.sleep(Long.MAX_VALUE)
-//}
