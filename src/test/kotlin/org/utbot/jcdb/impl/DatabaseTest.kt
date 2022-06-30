@@ -5,12 +5,10 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.isFinal
-import org.utbot.jcdb.api.isInterface
-import org.utbot.jcdb.api.isPrivate
-import org.utbot.jcdb.api.isPublic
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.findClassOrNull
+import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.DocumentType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -70,6 +68,26 @@ class DatabaseTest : LibrariesMixin {
             assertTrue(parameters().isEmpty())
             assertTrue(isPrivate())
         }
+    }
+
+    @Test
+    fun `inner and static`() = runBlocking {
+        val cp = db.classpathSet(allClasspath)
+        val withInner = cp.findClassOrNull<WithInner>()
+        val inner = cp.findClassOrNull<WithInner.Inner>()
+        val staticInner = cp.findClassOrNull<WithInner.StaticInner>()
+
+        val local = cp.findClassOrNull("org.utbot.jcdb.impl.usages.WithInner$1")
+        assertNotNull(withInner!!)
+        assertNotNull(inner!!)
+        assertNotNull(staticInner!!)
+        assertNotNull(local!!)
+
+        assertEquals(withInner, local.outerClass())
+        assertEquals(withInner, inner.outerClass())
+        assertEquals(withInner, staticInner.outerClass())
+        assertEquals(withInner.findMethodOrNull("sayHello", "()V"), local.outerMethod())
+        assertNull(staticInner.outerMethod())
     }
 
     @Test
