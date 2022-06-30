@@ -2,6 +2,8 @@ package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode
@@ -20,6 +22,10 @@ class ClassIdImpl(private val node: ClassNode, private val classIdService: Class
 
     private val lazySuperclass = suspendableLazy {
         classIdService.toClassId(node.info().superClass)
+    }
+
+    private val lazyOuterClass = suspendableLazy {
+        classIdService.toClassId(node.info().outerClass)
     }
 
     private val lazyMethods = suspendableLazy {
@@ -43,6 +49,16 @@ class ClassIdImpl(private val node: ClassNode, private val classIdService: Class
     }
 
     override suspend fun access() = node.info().access
+
+    override suspend fun outerClass() = lazyOuterClass()
+
+    override suspend fun outerMethod(): MethodId? {
+        val info = node.info()
+        if (info.outerMethod != null && info.outerMethodDesc != null) {
+            return outerClass()?.findMethodOrNull(info.outerMethod, info.outerMethodDesc)
+        }
+        return null
+    }
 
     override suspend fun methods() = lazyMethods()
 
