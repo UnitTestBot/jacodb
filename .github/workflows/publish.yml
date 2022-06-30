@@ -22,5 +22,5 @@ jobs:
           gradle-version: 7.0.2
       - name: publish
         run: |
-          gradle -PgprUser=lehvolk -PgprToken=${{ secrets.PUBLISH_TOKEN }} publish --no-daemon --info
+          gradle -PgprUser=lehvolk -PgprKey=${{ secrets.PUBLISH_TOKEN }} publish --no-daemon --info
 
