@@ -10,10 +10,7 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.impl.suspendableLazy
-import org.utbot.jcdb.impl.types.AnnotationInfo
-import org.utbot.jcdb.impl.types.ClassInfo
-import org.utbot.jcdb.impl.types.FieldInfo
-import org.utbot.jcdb.impl.types.MethodInfo
+import org.utbot.jcdb.impl.types.*
 import java.io.InputStream
 
 abstract class ClassByteCodeSource(val location: ByteCodeLocation, val className: String) {
@@ -46,15 +43,16 @@ abstract class ClassByteCodeSource(val location: ByteCodeLocation, val className
         annotations = visibleAnnotations.orEmpty().map { it.asAnnotationInfo() }.toImmutableList()
     )
 
-    private fun ClassNode.outerClassName(): String? {
+    private fun ClassNode.outerClassName(): OuterClassRef? {
+        val innerRef = innerClasses.firstOrNull { it.name == name }
+
         val direct = outerClass?.let { Type.getObjectType(it).className }
-        if (direct == null && innerClasses.size == 1) {
-            val outerClass = innerClasses.firstOrNull { it.name == name }
-            if (outerClass != null) {
-                return Type.getObjectType(outerClass.outerName).className
-            }
+        if (direct == null && innerRef != null) {
+            return OuterClassRef(Type.getObjectType(innerRef.outerName).className, innerRef.innerName)
         }
-        return direct
+        return direct?.let {
+            OuterClassRef(it, innerRef?.innerName)
+        }
     }
 
     private fun AnnotationNode.asAnnotationInfo() = AnnotationInfo(
