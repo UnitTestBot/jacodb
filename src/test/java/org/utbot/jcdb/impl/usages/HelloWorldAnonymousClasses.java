@@ -2,7 +2,7 @@ package org.utbot.jcdb.impl.usages;
 
 public class HelloWorldAnonymousClasses {
   
-    interface HelloWorld {
+    public interface HelloWorld {
         public void greet();
         public void greetSomeone(String someone);
     }
