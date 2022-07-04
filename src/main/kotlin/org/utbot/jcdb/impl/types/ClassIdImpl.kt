@@ -1,16 +1,13 @@
 package org.utbot.jcdb.impl.types
 
-import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.MethodId
-import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.TypeResolution
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode
 
-class ClassIdImpl(private val node: ClassNode, private val classIdService: ClassIdService) : ClassId {
+class ClassIdImpl(override val cp: ClasspathSet, private val node: ClassNode, private val classIdService: ClassIdService) : ClassId {
 
     override val location: ByteCodeLocation get() = node.location
     override val name: String get() = node.fullName
@@ -57,7 +54,7 @@ class ClassIdImpl(private val node: ClassNode, private val classIdService: Class
     }
 
     override suspend fun signature(): TypeResolution {
-        return TypeSignature.extract(node.info().signature)
+        return TypeSignature.extract(node.info().signature, cp)
     }
 
     override suspend fun access() = node.info().access

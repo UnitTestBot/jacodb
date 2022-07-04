@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl
 
 import kotlinx.collections.immutable.toImmutableMap
 import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.impl.tree.ClassNode
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
@@ -10,7 +11,7 @@ import org.utbot.jcdb.impl.types.MethodIdImpl
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.PredefinedPrimitive
 
-class ClassIdService(private val classpathClassTree: ClasspathClassTree) {
+class ClassIdService(private val cp: ClasspathSet, private val classpathClassTree: ClasspathClassTree) {
 
     companion object {
         private val predefinedClasses = PredefinedPrimitive.values.associateBy { it.simpleName }.toImmutableMap()
@@ -21,7 +22,7 @@ class ClassIdService(private val classpathClassTree: ClasspathClassTree) {
         return node.asClassId()
     }
 
-    private fun ClassNode.asClassId() = ClassIdImpl(this, this@ClassIdService)
+    private fun ClassNode.asClassId() = ClassIdImpl(cp, this, this@ClassIdService)
 
     fun toClassId(fullName: String?): ClassId? {
         fullName ?: return null

@@ -3,6 +3,7 @@ package org.utbot.jcdb.impl.types
 import kotlinx.collections.immutable.persistentListOf
 import org.objectweb.asm.Opcodes
 import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.FieldId
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.impl.signature.Raw
@@ -30,6 +31,8 @@ class PredefinedPrimitive(override val simpleName: String) : ClassId {
 
     override val name: String get() = simpleName
     override val location = null
+
+    override val cp: ClasspathSet get() = throw UnsupportedOperationException()
 
     override suspend fun signature() = Raw
 
