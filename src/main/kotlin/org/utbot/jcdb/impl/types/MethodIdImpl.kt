@@ -4,6 +4,8 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.impl.ClassIdService
+import org.utbot.jcdb.impl.signature.MethodResolution
+import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.tree.ClassNode
 
 class MethodIdImpl(
@@ -16,10 +18,9 @@ class MethodIdImpl(
     override val name: String get() = methodInfo.name
     override suspend fun access() = methodInfo.access
 
-    override suspend fun signature(): String? {
-        return methodInfo.signature
+    override suspend fun signature(): MethodResolution {
+        return MethodSignature.extract(methodInfo.signature)
     }
-
 
     private val lazyParameters by lazy(LazyThreadSafetyMode.NONE) {
         methodInfo.parameters.mapNotNull {

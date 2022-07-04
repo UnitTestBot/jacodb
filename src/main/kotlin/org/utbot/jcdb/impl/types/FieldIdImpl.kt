@@ -3,6 +3,8 @@ package org.utbot.jcdb.impl.types
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.FieldId
 import org.utbot.jcdb.impl.ClassIdService
+import org.utbot.jcdb.impl.signature.FieldResolution
+import org.utbot.jcdb.impl.signature.FieldSignature
 
 class FieldIdImpl(
     override val classId: ClassId,
@@ -21,8 +23,8 @@ class FieldIdImpl(
         info.annotations.mapNotNull { classIdService.toClassId(it.className) }
     }
 
-    override suspend fun signature(): String? {
-        return info.signature
+    override suspend fun signature(): FieldResolution {
+        return FieldSignature.extract(info.signature)
     }
 
     override suspend fun access() = info.access

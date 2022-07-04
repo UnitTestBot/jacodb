@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.findClassOrNull
+import org.utbot.jcdb.impl.usages.Generics
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -93,10 +94,21 @@ class DatabaseTest : LibrariesMixin {
     }
 
     @Test
-    fun `get signature`() = runBlocking {
+    fun `get signature of class and methods`() = runBlocking {
         val cp = db.classpathSet(allClasspath)
-        val a = cp.findClassOrNull("org.utbot.jcdb.impl.usages.A")
+        val a = cp.findClassOrNull<Generics<*>>()
+
         assertNotNull(a!!)
+        val classSignature = a.signature()
+        val methodSignatures = a.methods().map { it.signature() }
+        val fieldSignatures = a.fields().map { it.signature() }
+        methodSignatures.forEach {
+            println(it)
+        }
+        fieldSignatures.forEach {
+            println(it)
+        }
+        println(classSignature)
     }
 
     @Test

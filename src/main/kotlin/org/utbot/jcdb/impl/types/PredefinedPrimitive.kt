@@ -5,6 +5,7 @@ import org.objectweb.asm.Opcodes
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.FieldId
 import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.impl.signature.Raw
 
 /**
  * Predefined primitive types
@@ -30,7 +31,7 @@ class PredefinedPrimitive(override val simpleName: String) : ClassId {
     override val name: String get() = simpleName
     override val location = null
 
-    override suspend fun signature() = null
+    override suspend fun signature() = Raw
 
     override suspend fun outerClass() = null
 

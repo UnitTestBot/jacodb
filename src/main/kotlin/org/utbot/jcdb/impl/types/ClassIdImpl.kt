@@ -5,6 +5,8 @@ import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.impl.ClassIdService
+import org.utbot.jcdb.impl.signature.TypeResolution
+import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode
 
@@ -54,8 +56,8 @@ class ClassIdImpl(private val node: ClassNode, private val classIdService: Class
         return node.fullByteCode()
     }
 
-    override suspend fun signature(): String? {
-        return node.info().signature
+    override suspend fun signature(): TypeResolution {
+        return TypeSignature.extract(node.info().signature)
     }
 
     override suspend fun access() = node.info().access
