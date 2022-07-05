@@ -6,6 +6,7 @@ import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.impl.index.subClassesExt
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
+import org.utbot.jcdb.impl.types.ArrayClassIdImpl
 
 class ClasspathSetImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
@@ -28,6 +29,12 @@ class ClasspathSetImpl(
     }
 
     override suspend fun findClassOrNull(name: String): ClassId? {
+        if (name.endsWith("[]")) {
+            val targetName = name.removeSuffix("[]")
+            return findClassOrNull(targetName)?.let {
+                ArrayClassIdImpl(it)
+            }
+        }
         return classIdService.toClassId(classpathClassTree.firstClassOrNull(name))
     }
 

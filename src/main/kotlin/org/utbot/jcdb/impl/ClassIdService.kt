@@ -6,10 +6,7 @@ import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.impl.tree.ClassNode
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
-import org.utbot.jcdb.impl.types.ClassIdImpl
-import org.utbot.jcdb.impl.types.MethodIdImpl
-import org.utbot.jcdb.impl.types.MethodInfo
-import org.utbot.jcdb.impl.types.PredefinedPrimitive
+import org.utbot.jcdb.impl.types.*
 
 class ClassIdService(private val cp: ClasspathSet, private val classpathClassTree: ClasspathClassTree) {
 
@@ -30,6 +27,13 @@ class ClassIdService(private val cp: ClasspathSet, private val classpathClassTre
         if (predefinedClass != null) {
             return predefinedClass
         }
+        if (fullName.endsWith("[]")) {
+            val targetName = fullName.removeSuffix("[]")
+            return toClassId(targetName)?.let {
+                ArrayClassIdImpl(it)
+            }
+        }
+
         return toClassId(classpathClassTree.firstClassOrNull(fullName))
     }
 

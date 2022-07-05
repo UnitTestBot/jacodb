@@ -9,6 +9,8 @@ import org.utbot.jcdb.api.*
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.findClassOrNull
 import org.utbot.jcdb.impl.signature.*
+import org.utbot.jcdb.impl.types.ArrayClassIdImpl
+import org.utbot.jcdb.impl.types.PredefinedPrimitive
 import org.utbot.jcdb.impl.usages.Generics
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
@@ -71,6 +73,45 @@ class DatabaseTest : LibrariesMixin {
         with(methods.first { it.name == "smthPrivate" }) {
             assertTrue(parameters().isEmpty())
             assertTrue(isPrivate())
+        }
+    }
+
+    @Test
+    fun `array types`() = runBlocking {
+        val cp = db.classpathSet(allClasspath)
+        val clazz = cp.findClassOrNull<Bar>()
+        assertNotNull(clazz!!)
+        assertEquals(Bar::class.java.name, clazz.name)
+
+        val fields = clazz.fields()
+        assertEquals(3, fields.size)
+
+        with(fields.first()) {
+            assertEquals("byteArray", name)
+            assertEquals("byte[]", type().name)
+            assertEquals(PredefinedPrimitive.byte, (type() as ArrayClassIdImpl).classId)
+        }
+
+        with(fields.get(1)) {
+            assertEquals("objectArray", name)
+            assertEquals("Object[]", type().name)
+            assertEquals(cp.findClassOrNull<Any>(), (type() as ArrayClassIdImpl).classId)
+        }
+
+        with(fields.get(2)) {
+            assertEquals("objectObjectArray", name)
+            assertEquals("Object[][]", type().name)
+            assertEquals(cp.findClassOrNull<Any>(), ((type() as ArrayClassIdImpl).classId as ArrayClassIdImpl).classId)
+        }
+
+        val methods = clazz.methods()
+        assertEquals(2, methods.size)
+
+        with(methods.first { it.name == "smth" }) {
+            val parameters = parameters()
+            assertEquals(1, parameters.size)
+            assertEquals("byte[]", parameters.first().name)
+            assertEquals("byte[]", returnType().name)
         }
     }
 

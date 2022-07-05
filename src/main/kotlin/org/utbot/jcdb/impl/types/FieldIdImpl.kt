@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.FieldId
+import org.utbot.jcdb.api.classNotFound
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.FieldResolution
 import org.utbot.jcdb.impl.signature.FieldSignature

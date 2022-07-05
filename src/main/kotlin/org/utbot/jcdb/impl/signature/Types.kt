@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl.signature
 
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.classNotFound
 import org.utbot.jcdb.impl.types.PredefinedPrimitive
 
 
