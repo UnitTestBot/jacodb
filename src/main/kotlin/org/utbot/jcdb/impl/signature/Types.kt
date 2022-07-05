@@ -1,10 +1,17 @@
 package org.utbot.jcdb.impl.signature
 
+import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.impl.types.PredefinedPrimitive
 
 
-abstract class GenericType(val cp: ClasspathSet)
+abstract class GenericType(val classpath: ClasspathSet) {
+
+    suspend fun findClass(name: String): ClassId {
+        return classpath.findClassOrNull(name) ?: classNotFound(name)
+    }
+
+}
 
 class GenericArray(cp: ClasspathSet, val componentType: GenericType) : GenericType(cp)
 
@@ -19,10 +26,22 @@ class ParameterizedType(
         val name: String,
         val parameterTypes: List<GenericType>,
         val ownerType: GenericType
-    ) : GenericType(cp)
+    ) : GenericType(cp) {
+        suspend fun findClass(): ClassId {
+            return findClass(name)
+        }
+    }
+
+    suspend fun findClass(): ClassId {
+        return findClass(name)
+    }
 }
 
-class RawType(cp: ClasspathSet, val name: String) : GenericType(cp)
+class RawType(cp: ClasspathSet, val name: String) : GenericType(cp){
+    suspend fun findClass(): ClassId {
+        return findClass(name)
+    }
+}
 class TypeVariable(cp: ClasspathSet, val symbol: String) : GenericType(cp)
 
 sealed class BoundWildcard(cp: ClasspathSet, val boundType: GenericType) : GenericType(cp) {
