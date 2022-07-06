@@ -7,6 +7,7 @@ import org.utbot.jcdb.impl.index.subClassesExt
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
+import org.utbot.jcdb.impl.types.PredefinedPrimitives
 
 class ClasspathSetImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
@@ -34,6 +35,10 @@ class ClasspathSetImpl(
             return findClassOrNull(targetName)?.let {
                 ArrayClassIdImpl(it)
             }
+        }
+        val predefined = PredefinedPrimitives.of(name, this)
+        if (predefined != null) {
+            return predefined
         }
         return classIdService.toClassId(classpathClassTree.firstClassOrNull(name))
     }
