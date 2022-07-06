@@ -7,6 +7,9 @@ import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.index.findClassOrNull
 import org.utbot.jcdb.impl.signature.Raw
 
+/**
+ * Predefined arrays of primitive types
+ */
 object PredefinedArrays {
 
     val boolean = ArrayClassIdImpl(PredefinedPrimitive.boolean)
@@ -50,7 +53,7 @@ class ArrayClassIdImpl(override val elementClass: ClassId) : ArrayClassId {
     override suspend fun methods() = emptyList<MethodId>()
 
     override suspend fun superclass(): ClassId {
-        return elementClass.classpath.findClassOrNull<Any>() ?: classNotFound("java.lang.Object")
+        return elementClass.classpath.findClassOrNull<Any>() ?: throwClassNotFound<Any>()
     }
 
     override suspend fun interfaces() = emptyList<ClassId>()

@@ -2,19 +2,19 @@ package org.utbot.jcdb.impl.signature
 
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.classNotFound
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.PredefinedPrimitive
 
 
 abstract class GenericType(val classpath: ClasspathSet) {
 
     suspend fun findClass(name: String): ClassId {
-        return classpath.findClassOrNull(name) ?: classNotFound(name)
+        return classpath.findClassOrNull(name) ?: name.throwClassNotFound()
     }
 
 }
 
-class GenericArray(cp: ClasspathSet, val componentType: GenericType) : GenericType(cp)
+class GenericArray(cp: ClasspathSet, val elementType: GenericType) : GenericType(cp)
 
 class ParameterizedType(
     cp: ClasspathSet,

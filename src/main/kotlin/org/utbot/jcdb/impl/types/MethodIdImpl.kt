@@ -3,7 +3,7 @@ package org.utbot.jcdb.impl.types
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.MethodId
-import org.utbot.jcdb.api.classNotFound
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.MethodResolution
 import org.utbot.jcdb.impl.signature.MethodSignature
@@ -27,7 +27,7 @@ class MethodIdImpl(
     private val lazyAnnotations by lazy(LazyThreadSafetyMode.NONE) {
         methodInfo.annotations.map {
             val className = it.className
-            classIdService.toClassId(className) ?: classNotFound(className)
+            classIdService.toClassId(className) ?: className.throwClassNotFound()
         }
     }
 
@@ -35,7 +35,7 @@ class MethodIdImpl(
         return MethodSignature.of(methodInfo.signature, classId.classpath)
     }
 
-    override suspend fun returnType() = classIdService.toClassId(methodInfo.returnType) ?: classNotFound(methodInfo.returnType)
+    override suspend fun returnType() = classIdService.toClassId(methodInfo.returnType) ?: methodInfo.returnType.throwClassNotFound()
 
     override suspend fun parameters() = lazyParameters
 

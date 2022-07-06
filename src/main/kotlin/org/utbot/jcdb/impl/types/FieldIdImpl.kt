@@ -2,7 +2,7 @@ package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.FieldId
-import org.utbot.jcdb.api.classNotFound
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.FieldResolution
 import org.utbot.jcdb.impl.signature.FieldSignature
@@ -21,7 +21,7 @@ class FieldIdImpl(
     }
 
     private val lazyAnnotations by lazy(LazyThreadSafetyMode.NONE) {
-        info.annotations.map { classIdService.toClassId(it.className) ?: classNotFound(it.className) }
+        info.annotations.map { classIdService.toClassId(it.className) ?: it.className.throwClassNotFound() }
     }
 
     override suspend fun signature(): FieldResolution {
@@ -29,7 +29,7 @@ class FieldIdImpl(
     }
 
     override suspend fun access() = info.access
-    override suspend fun type() = lazyType ?: classNotFound(info.type)
+    override suspend fun type() = lazyType ?: info.type.throwClassNotFound()
 
     override suspend fun annotations() = lazyAnnotations
 
