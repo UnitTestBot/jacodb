@@ -2,13 +2,13 @@ package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.utbot.jcdb.compilationDatabase
-import org.utbot.jcdb.impl.index.ReversedUsagesIndex
+import org.utbot.jcdb.impl.index.ReversedUsages
 import java.lang.management.ManagementFactory
 
 
 val db = runBlocking {
     compilationDatabase {
-        installIndexes(ReversedUsagesIndex)
+        installIndexes(ReversedUsages)
         useProcessJavaRuntime()
     }.also {
         it.awaitBackgroundJobs()

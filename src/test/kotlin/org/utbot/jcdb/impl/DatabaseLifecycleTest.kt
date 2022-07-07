@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.findClass
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
 import org.utbot.jcdb.impl.index.findClassOrNull
@@ -46,8 +47,7 @@ class DatabaseLifecycleTest : LibrariesMixin {
     @Test
     fun `refresh is working when build dir is removed`() = runBlocking {
         val cp = db.classpathSet(listOf(testDirClone))
-        val fooClass = cp.findClassOrNull<Foo>()
-        assertNotNull(fooClass!!)
+        val fooClass = cp.findClass<Foo>()
 
         assertTrue(testDirClone.deleteRecursively())
         assertNull(fooClass.methods().first().readBody())

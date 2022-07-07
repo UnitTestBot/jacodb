@@ -3,13 +3,12 @@ package org.utbot.jcdb.impl
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.findClass
 import org.utbot.jcdb.compilationDatabase
-import org.utbot.jcdb.impl.index.ReversedUsagesIndex
-import org.utbot.jcdb.impl.index.findClassOrNull
+import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.index.findFieldsUsedIn
 import org.utbot.jcdb.impl.index.findMethodsUsedIn
 import org.utbot.jcdb.impl.usages.direct.DirectA
@@ -20,7 +19,7 @@ class DirectUsagesTest : LibrariesMixin {
         compilationDatabase {
             predefinedDirOrJars = allClasspath
             useProcessJavaRuntime()
-            installIndexes(ReversedUsagesIndex)
+            installIndexes(ReversedUsages)
         }
     }
 
@@ -109,8 +108,7 @@ class DirectUsagesTest : LibrariesMixin {
 
     private inline fun <reified T> ClasspathSet.fieldsUsages(): List<Pair<String, List<Pair<String, List<String>>>>> {
         return runBlocking {
-            val classId = cp.findClassOrNull<T>()
-            Assertions.assertNotNull(classId!!)
+            val classId = cp.findClass<T>()
 
             classId.methods().map {
                 val usages = findFieldsUsedIn(it)
@@ -127,8 +125,8 @@ class DirectUsagesTest : LibrariesMixin {
 
     private inline fun <reified T> ClasspathSet.methodsUsages(): List<Pair<String, List<String>>> {
         return runBlocking {
-            val classId = cp.findClassOrNull<T>()
-            Assertions.assertNotNull(classId!!)
+            val classId = cp.findClass<T>()
+
             val methods = classId.methods()
 
             methods.map {

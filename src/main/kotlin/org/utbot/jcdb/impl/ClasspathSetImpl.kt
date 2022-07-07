@@ -3,7 +3,7 @@ package org.utbot.jcdb.impl
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.impl.index.subClassesExt
+import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
@@ -44,11 +44,11 @@ class ClasspathSetImpl(
     }
 
     override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
-        return subClassesExt.findSubClasses(name, allHierarchy)
+        return hierarchyExt.findSubClasses(name, allHierarchy)
     }
 
     override suspend fun findSubClasses(classId: ClassId, allHierarchy: Boolean): List<ClassId> {
-        return subClassesExt.findSubClasses(classId, allHierarchy)
+        return hierarchyExt.findSubClasses(classId, allHierarchy)
     }
 
     override suspend fun <T> query(key: String, term: String): List<T> {

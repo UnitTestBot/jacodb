@@ -8,7 +8,7 @@ import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.load
-import org.utbot.jcdb.impl.index.ReversedUsagesIndex
+import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.tree.ClassTree
 import java.util.concurrent.TimeUnit
 
@@ -37,7 +37,7 @@ class DBBenchmarks : LibrariesMixin {
             compilationDatabase {
                 useProcessJavaRuntime()
 
-                installIndexes(ReversedUsagesIndex)
+                installIndexes(ReversedUsages)
             }
         }
     }
@@ -48,7 +48,7 @@ class DBBenchmarks : LibrariesMixin {
             compilationDatabase {
                 useProcessJavaRuntime()
                 predefinedDirOrJars = allJars
-                installIndexes(ReversedUsagesIndex)
+                installIndexes(ReversedUsages)
             }
         }
     }

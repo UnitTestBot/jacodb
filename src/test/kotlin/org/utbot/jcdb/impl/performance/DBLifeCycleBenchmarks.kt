@@ -5,7 +5,7 @@ import org.openjdk.jmh.annotations.*
 import org.utbot.jcdb.api.CompilationDatabase
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.LibrariesMixin
-import org.utbot.jcdb.impl.index.ReversedUsagesIndex
+import org.utbot.jcdb.impl.index.ReversedUsages
 import java.util.concurrent.TimeUnit
 
 @State(Scope.Benchmark)
@@ -22,7 +22,7 @@ class DBLifeCycleBenchmarks : LibrariesMixin {
     fun setup() {
         db = runBlocking {
             compilationDatabase {
-                installIndexes(ReversedUsagesIndex)
+                installIndexes(ReversedUsages)
                 useProcessJavaRuntime()
             }
         }

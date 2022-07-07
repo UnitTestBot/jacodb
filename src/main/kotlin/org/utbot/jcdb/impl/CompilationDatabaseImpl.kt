@@ -10,7 +10,7 @@ import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.filterExisted
 import org.utbot.jcdb.impl.fs.load
-import org.utbot.jcdb.impl.index.SubClassIndex
+import org.utbot.jcdb.impl.index.Hierarchy
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.RemoveLocationsVisitor
 import java.io.File
@@ -29,7 +29,7 @@ class CompilationDatabaseImpl(private val settings: CompilationDatabaseSettings)
     private val classTree = ClassTree()
     internal val javaRuntime = JavaRuntime(settings.jre)
 
-    private val indexesRegistry = IndexesRegistry(listOf(SubClassIndex) + settings.additionalIndexes)
+    private val indexesRegistry = IndexesRegistry(listOf(Hierarchy) + settings.additionalIndexes)
     internal val registry = LocationsRegistry(indexesRegistry)
 
     private val backgroundJobs = ConcurrentHashMap<Int, Job>()
