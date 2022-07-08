@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ByteCodeLocationIndex
 import org.utbot.jcdb.api.ByteCodeLocationIndexBuilder
-import org.utbot.jcdb.api.IndexInstaller
+import org.utbot.jcdb.api.Feature
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -72,7 +72,7 @@ class HierarchyIndex(
 }
 
 
-object Hierarchy : IndexInstaller<String, HierarchyIndex> {
+object Hierarchy : Feature<String, HierarchyIndex> {
 
     override val key = "hierarchy"
 
