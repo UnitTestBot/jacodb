@@ -44,9 +44,15 @@ In the end of second async step database triggers event for setup indexes for ne
 
 Each bytecode location may have number of indexes (like parent classes index etc). Index is identified by index key. Indexes should be not aware of `ClassTree` and bytecode itself. Index should hold only serializable data optimized by memory consumption. 
 
-## Persistence
+# Persistence
 
-To Be Done
+Indexes and class information may be persisted on disk regarding relative settings.
+
+Database has 2 schemes of working:
+* read/write mode: in this case information about loaded classes and indexes is persisted on disk and can be reused between starts.
+* readonly mode: in this case database can't be modified (i.e. load libraries etc.) and is initialized based on data from disk.   
+
+This schemes provides ability to work with database from few processes when one process has ability to write data to database and another works only in readonly mode.
 
 # Implementation details
 
