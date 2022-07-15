@@ -40,6 +40,8 @@ jobs:
           path: build/test-results/
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2.0.0-beta.2
+        with:
+          files: "test-results/**/*.xml"
 
   jdk8:
 
@@ -62,4 +64,6 @@ jobs:
           path: build/test-results/
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2.0.0-beta.2
+        with:
+          files: "test-results/**/*.xml"
 
