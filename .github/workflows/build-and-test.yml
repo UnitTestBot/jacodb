@@ -32,11 +32,7 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       - uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.0.2
-      - name: Build and run tests
-        run: |
-          gradle clean build --no-daemon --info
+        run: ./gradlew clean build --no-daemon --info
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
@@ -58,11 +54,7 @@ jobs:
           distribution: 'zulu'
           java-package: jdk+fx
       - uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.0.2
-      - name: Build and run tests
-        run: |
-          gradle clean build --no-daemon --info
+        run: ./gradlew clean build --no-daemon --info
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
