@@ -31,10 +31,12 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Run build with Gradle wrapper
-        run: ./gradlew clean build --no-daemon --info
+      - uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.0.2
+      - name: Build and run tests
+        run: |
+          gradle clean build --no-daemon --info
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
@@ -57,10 +59,12 @@ jobs:
           java-version: '8'
           distribution: 'zulu'
           java-package: jdk+fx
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Run build with Gradle wrapper
-        run: ./gradlew clean build --no-daemon --info
+      - uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.0.2
+      - name: Build and run tests
+        run: |
+          gradle clean build --no-daemon --info
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
