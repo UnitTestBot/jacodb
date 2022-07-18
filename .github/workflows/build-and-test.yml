@@ -18,6 +18,8 @@ on:
 
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   jdk11:
@@ -40,8 +42,13 @@ jobs:
       - name: Upload build reports
         uses: actions/upload-artifact@v3
         with:
-          name: build-reports
-          path: build/reports/
+          name: test-results
+          path: build/test-results/
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "test-results/**/*.xml"
 
   jdk8:
 
@@ -64,6 +71,10 @@ jobs:
       - name: Upload build reports
         uses: actions/upload-artifact@v3
         with:
-          name: build-reports
-          path: build/reports/
-
+          name: test-results
+          path: build/test-results/
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "test-results/**/*.xml"
