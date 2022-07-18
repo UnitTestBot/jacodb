@@ -39,16 +39,16 @@ jobs:
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: build/test-results/
+#      - name: Upload build reports
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: test-results
+#          path: build/test-results/
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "test-results/**/*.xml"
+          files: "build/test-results/**/*.xml"
 
   jdk8:
 
@@ -68,13 +68,13 @@ jobs:
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: build/test-results/
+#      - name: Upload build reports
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: test-results
+#          path: build/test-results/
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "test-results/**/*.xml"
+          files: "build/test-results/**/*.xml"
