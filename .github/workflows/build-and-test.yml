@@ -37,15 +37,11 @@ jobs:
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
-      - name: Upload test results
+      - name: Upload build reports
         uses: actions/upload-artifact@v3
         with:
-          name: test-results
-          path: build/test-results/
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2.0.0-beta.2
-        with:
-          files: "test-results/**/*.xml"
+          name: build-reports
+          path: build/reports/
 
   jdk8:
 
@@ -65,13 +61,9 @@ jobs:
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
-      - name: Upload test results
+      - name: Upload build reports
         uses: actions/upload-artifact@v3
         with:
-          name: test-results
-          path: build/test-results/
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2.0.0-beta.2
-        with:
-          files: "test-results/**/*.xml"
+          name: build-reports
+          path: build/reports/
 
