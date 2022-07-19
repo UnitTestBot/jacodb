@@ -1,6 +1,8 @@
 package org.utbot.jcdb
 
 import org.utbot.jcdb.api.Feature
+import org.utbot.jcdb.api.Hook
+import org.utbot.jcdb.impl.CompilationDatabaseImpl
 import org.utbot.jcdb.impl.index.Hierarchy
 import java.io.File
 
@@ -16,6 +18,8 @@ class CompilationDatabaseSettings {
 
     /** jar files which should be loaded right after database is created */
     var predefinedDirOrJars: List<File> = emptyList()
+
+    var hooks: MutableList<(CompilationDatabaseImpl) -> Hook> = arrayListOf()
 
     /** mandatory setting for java location */
     lateinit var jre: File
@@ -33,6 +37,11 @@ class CompilationDatabaseSettings {
     /** builder for watching file system changes */
     fun watchFileSystem(settings: (CompilationDatabaseWatchFileSystemSettings.() -> Unit) = {}) {
         watchFileSystemChanges = CompilationDatabaseWatchFileSystemSettings().also(settings)
+    }
+
+    /** builder for hooks */
+    fun withHook(hook: (CompilationDatabaseImpl) -> Hook) {
+        hooks += hook
     }
 
     /**

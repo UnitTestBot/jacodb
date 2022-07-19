@@ -27,6 +27,7 @@ suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit)
             )
             database.restoreDataFrom(restoredLocations.toMap())
             database.loadLocations(notLoaded.toList())
+            database.afterStart()
             return database
         }
     }
@@ -38,6 +39,7 @@ suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit)
     if (settings.watchFileSystemChanges != null) {
         database.watchFileSystemChanges()
     }
+    database.afterStart()
     return database
 }
 

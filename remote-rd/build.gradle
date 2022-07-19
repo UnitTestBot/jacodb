@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(":core")
+
+
+    implementation group: 'org.ow2.asm', name: 'asm', version: asm_version
+    implementation group: 'org.ow2.asm', name: 'asm-tree', version: asm_version
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: coroutines_version
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-collections-immutable-jvm', version: collections_version
+    implementation group: 'com.jetbrains.rd', name: 'rd-core', version: '2022.3.1'
+    implementation group: 'com.jetbrains.rd', name: 'rd-framework', version: '2022.3.1'
+}

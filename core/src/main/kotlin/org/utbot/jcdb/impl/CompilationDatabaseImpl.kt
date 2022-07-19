@@ -25,6 +25,7 @@ class CompilationDatabaseImpl(
 
     private val classTree = ClassTree()
     internal val javaRuntime = JavaRuntime(settings.jre)
+    private val hooks = settings.hooks.map { it(this) }
 
     internal val featureRegistry = FeaturesRegistry(persistentEnvironment, settings.fullFeatures)
     internal val locationsRegistry = LocationsRegistry(featureRegistry)
@@ -152,6 +153,10 @@ class CompilationDatabaseImpl(
         backgroundJobs.values.toList().joinAll()
     }
 
+    fun afterStart() {
+        hooks.forEach { it.afterStart() }
+    }
+
     override fun close() {
         isClosed.set(true)
         locationsRegistry.close()
@@ -160,6 +165,7 @@ class CompilationDatabaseImpl(
         }
         backgroundJobs.clear()
         persistentEnvironment?.close()
+        hooks.forEach { it.afterStop() }
     }
 
     private fun assertNotClosed() {
