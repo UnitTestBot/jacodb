@@ -9,11 +9,12 @@ import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
+import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.CompilationDatabaseImpl
-import org.utbot.jcdb.impl.types.ClassIdImpl
+import org.utbot.jcdb.impl.types.*
 import org.utbot.jcdb.remote.rd.client.RemoteCompilationDatabase
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -53,13 +54,13 @@ class RDServer(port: Int, val db: CompilationDatabaseImpl) : Hook {
         val key = req.cpKey
         val cp = classpaths[key] ?: throw IllegalStateException("No classpath found by key $key. \n Create it first")
         runBlocking {
-            val classId = cp.findClassOrNull(req.className) as? ClassIdImpl
-            if (classId != null) {
-                val bytes = Cbor.encodeToByteArray(classId.info())
-                val url = classId.location.locationURL
-                GetClassRes(url.toString(), bytes)
-            } else {
-                null
+            when (val classId = cp.findClassOrNull(req.className)) {
+                is ClassId -> {
+                    val bytes = Cbor.encodeToByteArray(classId.convertToContainer())
+                    val url = classId.location?.locationURL
+                    GetClassRes(url?.toString(), bytes)
+                }
+                else -> null
             }
         }
     }.makeAsync()
@@ -84,6 +85,15 @@ class RDServer(port: Int, val db: CompilationDatabaseImpl) : Hook {
     private fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {
         x.bind(lifetimeDef, this, name)
         return x
+    }
+
+    private suspend fun ClassId.convertToContainer(): ClassInfoContainer {
+        return when (this) {
+            is ArrayClassIdImpl -> ArrayClassInfo(elementClass.convertToContainer())
+            is ClassIdImpl -> info()
+            is PredefinedPrimitive -> info
+            else -> throw IllegalStateException("Can't convert class ${name} to serializable class info")
+        }
     }
 
 }

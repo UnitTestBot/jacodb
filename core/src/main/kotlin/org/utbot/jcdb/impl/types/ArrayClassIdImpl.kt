@@ -8,7 +8,7 @@ import org.utbot.jcdb.impl.signature.Raw
 
 class ArrayClassIdImpl(override val elementClass: ClassId) : ArrayClassId {
 
-    override val name = elementClass.simpleName + "[]"
+    override val name = elementClass.name + "[]"
     override val simpleName = elementClass.simpleName + "[]"
 
     override val location: ByteCodeLocation?

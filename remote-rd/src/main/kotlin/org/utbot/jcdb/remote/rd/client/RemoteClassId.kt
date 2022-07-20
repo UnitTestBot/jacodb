@@ -13,7 +13,7 @@ import java.net.URL
 import java.nio.file.Paths
 
 class RemoteClassId(
-    private val locationURL: String,
+    private val locationURL: String?,
     private val classInfo: ClassInfo,
     override val classpath: ClasspathSet
 ) : ClassId, ByteCodeConverter {
@@ -24,11 +24,12 @@ class RemoteClassId(
     override suspend fun access() = classInfo.access
 
     override val location: ByteCodeLocation? by lazy(LazyThreadSafetyMode.NONE) {
-        Paths.get(URL(locationURL).toURI()).toFile().asByteCodeLocation(isRuntime = false)
+        locationURL?.let {
+            Paths.get(URL(it).toURI()).toFile().asByteCodeLocation(isRuntime = false)
+        }
     }
 
-    override val simpleName: String
-        get() = classInfo.name
+    override val simpleName = classInfo.name.substringAfterLast(".")
 
     private val lazyInterfaces = suspendableLazy {
         classInfo.interfaces.map {

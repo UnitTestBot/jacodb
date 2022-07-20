@@ -7,7 +7,7 @@ import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.impl.types.ClassInfo
+import org.utbot.jcdb.impl.types.*
 import org.utbot.jcdb.remote.rd.GetClassReq
 import org.utbot.jcdb.remote.rd.GetClassRes
 
@@ -27,8 +27,8 @@ class RemoteClasspathSet(
 
     override suspend fun findClassOrNull(name: String): ClassId? {
         val res = getClass.startSuspending(GetClassReq(key, name)) ?: return null
-        val info = Cbor.decodeFromByteArray<ClassInfo>(res.bytes)
-        return RemoteClassId(res.location, info, this)
+        val info = Cbor.decodeFromByteArray<ClassInfoContainer>(res.serializedClassInfo)
+        return info.asClassId(res.location)
     }
 
     override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
@@ -49,6 +49,15 @@ class RemoteClasspathSet(
 
     override fun close() {
         close.start(key)
+    }
+
+    private fun ClassInfoContainer.asClassId(location: String?): ClassId {
+        return when (this) {
+            is ArrayClassInfo -> ArrayClassIdImpl(elementInfo.asClassId(location))
+            is ClassInfo -> RemoteClassId(location, this, this@RemoteClasspathSet)
+            is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspathSet) ?: throw IllegalStateException("unsupported predefined name $name")
+            else -> throw IllegalStateException("unsupported class info container type ${this.javaClass.name}")
+        }
     }
 
 }

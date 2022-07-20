@@ -67,6 +67,8 @@ class PredefinedPrimitive(override val classpath: ClasspathSet, override val sim
 
     override suspend fun access() = Opcodes.ACC_PUBLIC
 
+    val info = PredefinedClassInfo(name = name)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

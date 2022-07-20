@@ -3,6 +3,9 @@ package org.utbot.jcdb.impl.types
 import kotlinx.serialization.Serializable
 
 @Serializable
+sealed class ClassInfoContainer
+
+@Serializable
 class ClassInfo(
     val name: String,
 
@@ -20,7 +23,7 @@ class ClassInfo(
     val innerClasses: List<String>,
     val interfaces: List<String>,
     val annotations: List<AnnotationInfo>
-)
+) : ClassInfoContainer()
 
 @Serializable
 class OuterClassRef(
@@ -57,3 +60,11 @@ class AnnotationInfo(
 class LocationClasses(
     val classes: List<ClassInfo>
 )
+
+@Serializable
+class PredefinedClassInfo(val name: String): ClassInfoContainer()
+
+@Serializable
+class ArrayClassInfo(
+    val elementInfo: ClassInfoContainer
+) : ClassInfoContainer()
