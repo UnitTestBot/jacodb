@@ -100,6 +100,8 @@ class ClassIdImpl(
 
     override suspend fun fields() = lazyFields()
 
+    suspend fun info() = node.info()
+
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is ClassIdImpl) {
             return false

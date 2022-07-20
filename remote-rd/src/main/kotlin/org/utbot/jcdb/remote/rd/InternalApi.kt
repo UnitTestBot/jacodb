@@ -52,7 +52,7 @@ class GetClassReq(val cpKey: String, val className: String) {
     }
 }
 
-class GetClassRes(val bytes: ByteArray) {
+class GetClassRes(val location: String, val bytes: ByteArray) {
 
     companion object : IMarshaller<GetClassRes> {
 
@@ -60,11 +60,13 @@ class GetClassRes(val bytes: ByteArray) {
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): GetClassRes {
             return GetClassRes(
+                buffer.readString(),
                 buffer.readByteArray()
             )
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetClassRes) {
+            buffer.writeString(value.location)
             buffer.writeByteArray(value.bytes)
         }
     }

@@ -7,10 +7,14 @@ import com.jetbrains.rd.framework.impl.RdCall
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.encodeToByteArray
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.CompilationDatabaseImpl
+import org.utbot.jcdb.impl.types.ClassIdImpl
+import org.utbot.jcdb.remote.rd.client.RemoteCompilationDatabase
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,36 +36,49 @@ class RDServer(port: Int, val db: CompilationDatabaseImpl) : Hook {
     )
 
     private val getClasspath = RdCall<GetClasspathReq, String>(null, null) { req ->
-        val key = req.locations.joinToString()
+        val key = req.locations.sorted().joinToString()
         val cp = runBlocking {
             db.classpathSet(req.locations.map { File(it) })
         }
         classpaths[key] = cp
         key
-    }
+    }.makeAsync()
 
     private val closeClasspath = RdCall<String, Unit>(null, null) { req ->
         classpaths[req]?.close()
-    }
+        classpaths.remove(req)
+    }.makeAsync()
 
-    private val getClass = RdCall<GetClassReq, GetClassRes>(null, null) { req ->
+    private val getClass = RdCall<GetClassReq, GetClassRes?>(null, null) { req ->
         val key = req.cpKey
         val cp = classpaths[key] ?: throw IllegalStateException("No classpath found by key $key. \n Create it first")
-        GetClassRes(ByteArray(1))
-    }
+        runBlocking {
+            val classId = cp.findClassOrNull(req.className) as? ClassIdImpl
+            if (classId != null) {
+                val bytes = Cbor.encodeToByteArray(classId.info())
+                val url = classId.location.locationURL
+                GetClassRes(url.toString(), bytes)
+            } else {
+                null
+            }
+        }
+    }.makeAsync()
 
     override fun afterStart() {
-        getClasspath.static(1)
-        closeClasspath.static(3)
-        getClass.static(2)
+        scheduler.invokeOrQueue {
+            getClasspath.static(1)
+            closeClasspath.static(3)
+            getClass.static(2)
 
-        serverProtocol.bindStatic(getClasspath, "get-classpath")
-        serverProtocol.bindStatic(closeClasspath, "close-classpath")
-        serverProtocol.bindStatic(getClass, "get-class")
+            serverProtocol.bindStatic(getClasspath, "get-classpath")
+            serverProtocol.bindStatic(closeClasspath, "close-classpath")
+            serverProtocol.bindStatic(getClass, "get-class")
+        }
+        scheduler.flush()
     }
 
     override fun afterStop() {
-        lifetimeDef.terminate()
+        println("TERMINATED: " + lifetimeDef.terminate(true))
     }
 
     private fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {
@@ -69,6 +86,11 @@ class RDServer(port: Int, val db: CompilationDatabaseImpl) : Hook {
         return x
     }
 
+}
+
+fun <T, X> RdCall<T, X>.makeAsync(): RdCall<T, X> {
+    async = true
+    return this
 }
 
 fun main() {
@@ -79,7 +101,7 @@ fun main() {
     }
     RDServer(8080, db).afterStart()
 
-    val client = RDClient(8080)
+    val client = RemoteCompilationDatabase(8080)
     runBlocking {
         val classpathSet = client.classpathSet(emptyList())
         println(classpathSet)

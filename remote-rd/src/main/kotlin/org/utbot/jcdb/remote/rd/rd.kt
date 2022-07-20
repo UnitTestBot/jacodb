@@ -2,13 +2,14 @@ package org.utbot.jcdb.remote.rd
 
 import org.utbot.jcdb.CompilationDatabaseSettings
 import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.remote.rd.client.RemoteCompilationDatabase
 
-fun CompilationDatabaseSettings.rd(port: Int) {
+fun CompilationDatabaseSettings.exposeRd(port: Int) {
     withHook {
         RDServer(port, it)
     }
 }
 
-fun remoteRdDatabase(port: Int): CompilationDatabase {
-    return RDClient(port)
+fun rdDatabase(port: Int): CompilationDatabase {
+    return RemoteCompilationDatabase(port)
 }
