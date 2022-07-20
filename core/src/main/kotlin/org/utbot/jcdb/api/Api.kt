@@ -311,6 +311,8 @@ enum class FieldUsageMode {
  */
 interface CompilationDatabase : Closeable {
 
+    val globalIdStore: GlobalIdsStore
+
     /**
      * create classpath instance
      *
@@ -361,4 +363,12 @@ interface CompilationDatabase : Closeable {
      * await background jobs
      */
     suspend fun awaitBackgroundJobs()
+}
+
+/**
+ * database store for storing indexes mappings between ids -> name
+ */
+interface GlobalIdsStore {
+    suspend fun getId(name: String): Int
+    suspend fun getName(id: Int): String?
 }

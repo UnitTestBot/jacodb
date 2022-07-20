@@ -36,7 +36,7 @@ class RemoteClientTest {
             }
         }
 
-        private val db = rdDatabase(8080)
+        private val db = remoteRdClient(8080)
 
         private val cp = runBlocking { db.classpathSet(allClasspath) }
 

@@ -6,10 +6,10 @@ import org.utbot.jcdb.remote.rd.client.RemoteCompilationDatabase
 
 fun CompilationDatabaseSettings.exposeRd(port: Int) {
     withHook {
-        RDServer(port, it)
+        RemoteRdServer(port, it)
     }
 }
 
-fun rdDatabase(port: Int): CompilationDatabase {
+fun remoteRdClient(port: Int): CompilationDatabase {
     return RemoteCompilationDatabase(port)
 }

@@ -3,12 +3,7 @@ package org.utbot.jcdb.remote.rd
 import com.jetbrains.rd.framework.*
 import kotlin.reflect.KClass
 
-val serializers = Serializers().also {
-    it.register(GetClasspathReq)
-    it.register(GetClassReq)
-    it.register(GetClassRes)
-}
-
+val serializers = Serializers()
 
 class GetClasspathReq(val locations: List<String>) {
 
@@ -17,11 +12,9 @@ class GetClasspathReq(val locations: List<String>) {
         override val _type: KClass<GetClasspathReq> = GetClasspathReq::class
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): GetClasspathReq {
-            return GetClasspathReq(
-                buffer.readArray {
-                    buffer.readString()
-                }.toList()
-            )
+            return GetClasspathReq(buffer.readArray {
+                buffer.readString()
+            }.toList())
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetClasspathReq) {
@@ -118,3 +111,45 @@ class GetSubClassesRes(val classes: List<GetClassRes>) {
         }
     }
 }
+
+class CallIndexReq(cpKey: String, val indexKey: String, val location: String, val term: String): ClasspathBasedReq(cpKey) {
+
+    companion object : IMarshaller<CallIndexReq> {
+
+        override val _type: KClass<CallIndexReq> = CallIndexReq::class
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CallIndexReq {
+            return CallIndexReq(
+                buffer.readString(),
+                buffer.readString(),
+                buffer.readString(),
+                buffer.readString()
+            )
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexReq) {
+            buffer.writeString(value.cpKey)
+            buffer.writeString(value.indexKey)
+            buffer.writeString(value.location)
+            buffer.writeString(value.term)
+        }
+    }
+}
+//
+//class CallIndexRes(val type: String, val result: List<*>) {
+//
+//    companion object : IMarshaller<CallIndexRes> {
+//
+//        override val _type: KClass<CallIndexRes> = CallIndexRes::class
+//
+//        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CallIndexRes {
+//            return CallIndexRes(emptyList<Any>())
+//        }
+//
+//        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexRes) {
+//            buffer.writeString(value.type)
+//            buffer.writeString(value.indexKey)
+//            buffer.writeString(value.term)
+//        }
+//    }
+//}

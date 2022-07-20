@@ -3,6 +3,7 @@ package org.utbot.jcdb.impl
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ByteCodeLocationIndex
 import org.utbot.jcdb.api.Feature
+import org.utbot.jcdb.api.GlobalIdsStore
 import org.utbot.jcdb.impl.index.index
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.tree.ClassNode
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class FeaturesRegistry(
     private val persistence: PersistentEnvironment? = null,
+    val globalIdsStore: GlobalIdsStore,
     val features: List<Feature<*, *>>
 ) : Closeable {
     private val indexes: ConcurrentHashMap<ByteCodeLocation, ConcurrentHashMap<String, ByteCodeLocationIndex<*>>> = ConcurrentHashMap()
@@ -38,7 +40,7 @@ class FeaturesRegistry(
         location: ByteCodeLocation,
         classes: Collection<ClassNode>
     ) {
-        val builder = newBuilder()
+        val builder = newBuilder(globalIdsStore)
         classes.forEach { node ->
             index(node, builder)
         }

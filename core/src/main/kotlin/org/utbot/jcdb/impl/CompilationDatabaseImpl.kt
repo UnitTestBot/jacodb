@@ -5,6 +5,7 @@ import mu.KLogging
 import org.utbot.jcdb.CompilationDatabaseSettings
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.*
+import org.utbot.jcdb.impl.index.GlobalIds
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.storage.scheme.LocationEntity
 import org.utbot.jcdb.impl.tree.ClassTree
@@ -18,7 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class CompilationDatabaseImpl(
     private val persistentEnvironment: PersistentEnvironment? = null,
-    private val settings: CompilationDatabaseSettings
+    private val settings: CompilationDatabaseSettings,
+    override val globalIdStore: GlobalIds = GlobalIds()
 ) : CompilationDatabase {
 
     companion object : KLogging()
@@ -27,7 +29,7 @@ class CompilationDatabaseImpl(
     internal val javaRuntime = JavaRuntime(settings.jre)
     private val hooks = settings.hooks.map { it(this) }
 
-    internal val featureRegistry = FeaturesRegistry(persistentEnvironment, settings.fullFeatures)
+    internal val featureRegistry = FeaturesRegistry(persistentEnvironment, globalIdStore, settings.fullFeatures)
     internal val locationsRegistry = LocationsRegistry(featureRegistry)
     private val backgroundJobs = ConcurrentHashMap<Int, Job>()
 
@@ -122,7 +124,7 @@ class CompilationDatabaseImpl(
                     }
                 }
             }.joinAll()
-            persistentEnvironment?.globalIds?.sync()
+            persistentEnvironment?.globalIds?.sync(globalIdStore)
             backgroundJobs.remove(backgroundJobId)
         }
     }
@@ -176,7 +178,7 @@ class CompilationDatabaseImpl(
 
     internal suspend fun restoreDataFrom(locations: Map<LocationEntity, ByteCodeLocation>) {
         val env = persistentEnvironment ?: return
-        env.globalIds.restore()
+        env.globalIds.restore(globalIdStore)
         val trees = withContext(Dispatchers.IO) {
             locations.map { (entity, location) ->
                 async {
@@ -206,7 +208,7 @@ class CompilationDatabaseImpl(
         val data = entity.index(key)
         if (data != null) {
             val index = try {
-                deserialize(location, data)
+                deserialize(globalIdStore, location, data)
             } catch (e: Exception) {
                 logger.warn(e) { "can't parse location" }
                 null

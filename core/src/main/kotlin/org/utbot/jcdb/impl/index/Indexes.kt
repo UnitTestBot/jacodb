@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl.index
 
 import org.utbot.jcdb.api.ByteCodeLocationIndexBuilder
+import org.utbot.jcdb.api.GlobalIdsStore
 import org.utbot.jcdb.impl.tree.ClassNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -14,7 +15,7 @@ suspend fun index(node: ClassNode, builder: ByteCodeLocationIndexBuilder<*, *>) 
 }
 
 
-object GlobalIds {
+class GlobalIds : GlobalIdsStore {
 
     private val counter = AtomicInteger()
 
@@ -24,7 +25,7 @@ object GlobalIds {
     @Volatile
     private var locked = false
 
-    fun getId(name: String): Int {
+    override suspend fun getId(name: String): Int {
         val id = all.getOrPut(name) {
             if (locked) {
                 throw IllegalStateException("writing is locked")
@@ -35,7 +36,7 @@ object GlobalIds {
         return id
     }
 
-    fun getName(id: Int): String? {
+    override suspend fun getName(id: Int): String? {
         return reversed.get(id)
     }
 

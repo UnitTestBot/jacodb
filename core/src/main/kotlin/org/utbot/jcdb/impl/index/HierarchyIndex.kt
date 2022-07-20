@@ -4,19 +4,17 @@ import kotlinx.collections.immutable.toImmutableMap
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.ByteCodeLocationIndex
-import org.utbot.jcdb.api.ByteCodeLocationIndexBuilder
-import org.utbot.jcdb.api.Feature
+import org.utbot.jcdb.api.*
 import java.io.InputStream
 import java.io.OutputStream
 
-class HierarchyIndexBuilder : ByteCodeLocationIndexBuilder<String, HierarchyIndex> {
+class HierarchyIndexBuilder(private val globalIdsStore: GlobalIdsStore) :
+    ByteCodeLocationIndexBuilder<String, HierarchyIndex> {
 
     // super class -> implementations
     private val parentToSubClasses = hashMapOf<Int, HashSet<Int>>()
 
-    override fun index(classNode: ClassNode) {
+    override suspend fun index(classNode: ClassNode) {
         val superClass = classNode.superName?.takeIf {
             it != "java/lang/Object"
         }
@@ -28,27 +26,27 @@ class HierarchyIndexBuilder : ByteCodeLocationIndexBuilder<String, HierarchyInde
         }
     }
 
-    override fun index(classNode: ClassNode, methodNode: MethodNode) {
+    override suspend fun index(classNode: ClassNode, methodNode: MethodNode) {
         // nothing to do here
     }
 
-    private fun addToIndex(parentInternalName: String, subClassInternalName: String) {
-        val parentName = parentInternalName.intId
-        val subClassName = subClassInternalName.intId
+    private suspend fun addToIndex(parentInternalName: String, subClassInternalName: String) {
+        val parentName = parentInternalName.intId()
+        val subClassName = subClassInternalName.intId()
         val subClasses = parentToSubClasses.getOrPut(parentName) {
             HashSet()
         }
         subClasses.add(subClassName)
     }
 
-    private val String.intId: Int
-        get() {
-            val pureName = Type.getObjectType(this).className
-            return GlobalIds.getId(pureName)
-        }
+    private suspend fun String.intId(): Int {
+        val pureName = Type.getObjectType(this).className
+        return globalIdsStore.getId(pureName)
+    }
 
     override fun build(location: ByteCodeLocation): HierarchyIndex {
         return HierarchyIndex(
+            globalIdsStore = globalIdsStore,
             location = location,
             parentToSubClasses = parentToSubClasses.toImmutableMap()
         )
@@ -58,14 +56,15 @@ class HierarchyIndexBuilder : ByteCodeLocationIndexBuilder<String, HierarchyInde
 
 
 class HierarchyIndex(
+    private val globalIdsStore: GlobalIdsStore,
     override val location: ByteCodeLocation,
     internal val parentToSubClasses: Map<Int, Set<Int>>
 ) : ByteCodeLocationIndex<String> {
 
-    override fun query(term: String): Sequence<String> {
-        val parentClassId = GlobalIds.getId(term)
+    override suspend fun query(term: String): Sequence<String> {
+        val parentClassId = globalIdsStore.getId(term)
         return parentToSubClasses[parentClassId]?.map {
-            GlobalIds.getName(it)
+            globalIdsStore.getName(it)
         }?.asSequence()?.filterNotNull() ?: emptySequence()
     }
 
@@ -75,9 +74,13 @@ object Hierarchy : Feature<String, HierarchyIndex> {
 
     override val key = "hierarchy"
 
-    override fun newBuilder() = HierarchyIndexBuilder()
+    override fun newBuilder(globalIdsStore: GlobalIdsStore) = HierarchyIndexBuilder(globalIdsStore)
 
-    override fun deserialize(location: ByteCodeLocation, stream: InputStream): HierarchyIndex {
+    override fun deserialize(
+        globalIdsStore: GlobalIdsStore,
+        location: ByteCodeLocation,
+        stream: InputStream
+    ): HierarchyIndex {
         val reader = stream.reader()
         val result = hashMapOf<Int, Set<Int>>()
         reader.use {
@@ -86,7 +89,7 @@ object Hierarchy : Feature<String, HierarchyIndex> {
                 result[key] = value
             }
         }
-        return HierarchyIndex(location, result)
+        return HierarchyIndex(globalIdsStore, location, result)
     }
 
     override fun serialize(index: HierarchyIndex, out: OutputStream) {

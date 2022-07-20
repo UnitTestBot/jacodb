@@ -65,6 +65,12 @@ About 80% of initialization time consumed by IO from file system in reading jar-
 Splitting bytecode processing into sync/async step gives performance improvement for startup. For example Java 1.8 rt.jar contains about 60mb of compressed bytecode.
 Main idea is to scan runtime locations depending on basic usage rules. Not so many applications using classes from `org.w3c.dom.*` or `jdk.*` packages. The idea is to move processing bytecode of rarely used classes to async step and release database instance faster. 
 
+# Hooks
+
+Compilation database can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
+
+Hook is called twice: after called twice when database is created and initialized properly and when it is closed. That means that     
+
 ## Performance
 
 `ClassTree` uses immutable lock-free structures from [Xodus database](https://github.com/JetBrains/xodus). This brings 10% lower memory footprint of application (`CompilationDatabaseImpl` created only with Java 8 runtime consumes about ~300Mb of heap memory). `ClassTree` implementation based on java concurrent collections consumes ~330Mb of memory.

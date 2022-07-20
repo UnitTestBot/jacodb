@@ -31,9 +31,14 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
     private val closeClasspath = CloseClasspathResource().clientCall(clientProtocol)
     private val getSubClasses = GetSubClassesResource().clientCall(clientProtocol)
 
+    private val getId = GetGlobalId().clientCall(clientProtocol)
+    private val getName = GetGlobalName().clientCall(clientProtocol)
+
     init {
         scheduler.flush()
     }
+
+    override val globalIdStore = RemoteGlobalIds(getName, getId)
 
     override suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet {
         val id = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))

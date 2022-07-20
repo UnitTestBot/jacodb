@@ -20,11 +20,11 @@ class GlobalIdStore(private val env: Environment) {
         )
     }
 
-    fun sync() = synchronized(this) {
+    fun sync(globalIds: GlobalIds) = synchronized(this) {
         val current = counter.get()
-        val inMemoryCounter = GlobalIds.count
+        val inMemoryCounter = globalIds.count
         if (inMemoryCounter != current) {
-            val keys = GlobalIds.all(current, inMemoryCounter).toList()
+            val keys = globalIds.all(current, inMemoryCounter).toList()
             keys.windowed(10_000, step = 10_000, partialWindows = true) {
                 env.executeInTransaction { txn ->
                     it.forEach {
@@ -35,23 +35,23 @@ class GlobalIdStore(private val env: Environment) {
                     }
                 }
             }
-            counter.set(GlobalIds.count)
+            counter.set(globalIds.count)
         }
     }
 
-    fun restore() {
-        GlobalIds.restore {
+    fun restore(globalIds: GlobalIds) {
+        globalIds.restore {
             env.executeInTransaction { txn ->
                 store.openCursor(txn).use { cursor ->
                     while (cursor.next) {
-                        GlobalIds.append(
+                        globalIds.append(
                             IntegerBinding.entryToInt(cursor.key),
                             StringBinding.entryToString(cursor.value)
                         )
                     }
                 }
             }
-            counter.set(GlobalIds.count)
+            counter.set(globalIds.count)
         }
     }
 }

@@ -5,20 +5,19 @@ import kotlinx.collections.immutable.toImmutableMap
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.index.Hierarchy
-import org.utbot.jcdb.impl.index.HierarchyIndex
-import org.utbot.jcdb.impl.index.ReversedUsageIndex
-import org.utbot.jcdb.impl.index.ReversedUsages
+import org.utbot.jcdb.impl.index.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class IndexSerializationTest : LibrariesMixin {
 
+    val globalIds = GlobalIds()
+
     @Test
     fun `hierarchy index serialization`() {
         val location = guavaLib.asByteCodeLocation()
         val index = HierarchyIndex(
-            location, mapOf(
+            globalIds, location, mapOf(
                 1 to persistentSetOf(1, 3, 4),
                 2 to persistentSetOf(7, 8),
             )
@@ -27,7 +26,7 @@ class IndexSerializationTest : LibrariesMixin {
         Hierarchy.serialize(index, out)
 
         val input = ByteArrayInputStream(out.toByteArray())
-        val result = Hierarchy.deserialize(location, input)
+        val result = Hierarchy.deserialize(globalIds, location, input)
         with(result.parentToSubClasses) {
             assertEquals(2, size)
             assertEquals(sortedSetOf(1, 3, 4), get(1)?.toSortedSet())
@@ -40,6 +39,7 @@ class IndexSerializationTest : LibrariesMixin {
         val location = guavaLib.asByteCodeLocation()
         val index = ReversedUsageIndex(
             location,
+            globalIds,
             fieldsUsages = mapOf(
                 1 to persistentSetOf(1, 3, 4),
                 2 to persistentSetOf(7, 8),
@@ -54,7 +54,7 @@ class IndexSerializationTest : LibrariesMixin {
         ReversedUsages.serialize(index, out)
 
         val input = ByteArrayInputStream(out.toByteArray())
-        val result = ReversedUsages.deserialize(location, input)
+        val result = ReversedUsages.deserialize(globalIds, location, input)
         with(result.methodsUsages) {
             assertEquals(2, size)
             assertEquals(sortedSetOf(11, 13, 14), get(11)?.toSortedSet())

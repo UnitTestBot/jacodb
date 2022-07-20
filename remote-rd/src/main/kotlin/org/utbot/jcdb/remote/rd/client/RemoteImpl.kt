@@ -1,10 +1,17 @@
 package org.utbot.jcdb.remote.rd.client
 
+import mu.KLogging
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.signature.*
+import org.utbot.jcdb.impl.signature.FieldResolution
+import org.utbot.jcdb.impl.signature.FieldSignature
+import org.utbot.jcdb.impl.signature.MethodSignature
+import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.ClassInfo
 import org.utbot.jcdb.impl.types.FieldInfo
@@ -88,9 +95,7 @@ class RemoteClassId(
         return outerClass != null && outerClass.name == null
     }
 
-    override suspend fun signature(): TypeResolution {
-        return TypeSignature.of(classInfo.signature, classpath)
-    }
+    override suspend fun signature() = TypeSignature.of(classInfo.signature, classpath)
 
     override suspend fun outerMethod(): MethodId? {
         val outerMethod = classInfo.outerMethod
@@ -125,8 +130,13 @@ class RemoteClassId(
 
 }
 
-class RemoteMethodId(override val classId: ClassId, private val methodInfo: MethodInfo, val classpath: ClasspathSet) :
-    MethodId {
+class RemoteMethodId(
+    override val classId: ClassId,
+    private val methodInfo: MethodInfo,
+    private val classpath: ClasspathSet
+) : MethodId {
+
+    companion object : KLogging()
 
     override val name: String
         get() = methodInfo.name
@@ -150,9 +160,7 @@ class RemoteMethodId(override val classId: ClassId, private val methodInfo: Meth
         }
     }
 
-    override suspend fun signature(): MethodResolution {
-        return MethodSignature.of(methodInfo.signature, classId.classpath)
-    }
+    override suspend fun signature() = MethodSignature.of(methodInfo.signature, classId.classpath)
 
     override suspend fun returnType() = lazyReturnType()
 
@@ -165,7 +173,11 @@ class RemoteMethodId(override val classId: ClassId, private val methodInfo: Meth
     }
 
     override suspend fun readBody(): MethodNode? {
-        TODO("Not yet implemented")
+        logger.error("GETTING BYTECODE IN REMOTE CLIENT")
+        val byteCode = classId.location?.resolve(classId.name) ?: return null
+        val classNode = ClassNode(Opcodes.ASM9)
+        ClassReader(byteCode).accept(classNode, ClassReader.EXPAND_FRAMES)
+        return classNode.methods.firstOrNull { it.name == methodInfo.name && it.desc == methodInfo.desc }
     }
 
     override suspend fun access() = methodInfo.access
