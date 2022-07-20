@@ -25,7 +25,7 @@ class HierarchyExtension(private val db: CompilationDatabase, private val cp: Cl
     suspend fun findOverrides(methodId: MethodId): List<MethodId> {
         val desc = methodId.description()
         val name = methodId.name
-        val subClasses = findSubClasses(methodId.classId, allHierarchy = true)
+        val subClasses = cp.findSubClasses(methodId.classId, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc)
         }

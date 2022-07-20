@@ -2,7 +2,6 @@ package org.utbot.jcdb.remote.rd
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -25,6 +24,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class RemoteClientTest {
+
     companion object : LibrariesMixin {
         private var serverDB: CompilationDatabase? = runBlocking {
             compilationDatabase {
@@ -56,7 +56,7 @@ class RemoteClientTest {
         assertEquals(Foo::class.java.name, clazz.name)
         assertTrue(clazz.isFinal())
         assertTrue(clazz.isPublic())
-        Assertions.assertFalse(clazz.isInterface())
+        assertFalse(clazz.isInterface())
 
         val annotations = clazz.annotations()
         assertTrue(annotations.size > 1)
@@ -140,7 +140,7 @@ class RemoteClientTest {
         assertEquals(withInner, inner.outerClass())
         assertEquals(withInner, staticInner.outerClass())
         assertEquals(withInner.findMethodOrNull("sayHello", "()V"), anon.outerMethod())
-        Assertions.assertNull(staticInner.outerMethod())
+        assertNull(staticInner.outerMethod())
     }
 
     @Test
@@ -263,12 +263,12 @@ class RemoteClientTest {
         val notHelloWorld = innerClasses.filterNot { it.name.contains("\$HelloWorld") }
         val englishGreetings = notHelloWorld.first { it.name.contains("EnglishGreeting") }
         assertTrue(englishGreetings.isLocal())
-        Assertions.assertFalse(englishGreetings.isAnonymous())
+        assertFalse(englishGreetings.isAnonymous())
 
         (notHelloWorld - englishGreetings).forEach {
-            Assertions.assertFalse(it.isLocal())
+            assertFalse(it.isLocal())
             assertTrue(it.isAnonymous())
-            Assertions.assertFalse(it.isMemberClass())
+            assertFalse(it.isMemberClass())
         }
     }
 

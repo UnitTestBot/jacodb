@@ -1,9 +1,9 @@
 package org.utbot.jcdb.remote.rd.client
 
-import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.IRdBindable
-import com.jetbrains.rd.framework.base.static
-import com.jetbrains.rd.framework.impl.RdCall
+import com.jetbrains.rd.framework.IdKind
+import com.jetbrains.rd.framework.Identities
+import com.jetbrains.rd.framework.Protocol
+import com.jetbrains.rd.framework.SocketWire
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.utbot.jcdb.api.ByteCodeLocation
@@ -26,16 +26,12 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
         lifetimeDef.lifetime
     )
 
-    private val getClasspath = RdCall<GetClasspathReq, String>().static(1).makeAsync()
-    private val getClass = RdCall<GetClassReq, GetClassRes?>().static(2).makeAsync()
-    private val closeClasspath = RdCall<String, Unit>().static(3).makeAsync()
+    private val getClasspath = GetClasspathResource().clientCall(clientProtocol)
+    private val getClass = GetClassResource().clientCall(clientProtocol)
+    private val closeClasspath = CloseClasspathResource().clientCall(clientProtocol)
+    private val getSubClasses = GetSubClassesResource().clientCall(clientProtocol)
 
     init {
-        scheduler.queue {
-            clientProtocol.bindStatic(getClasspath, "client-get-classpath")
-            clientProtocol.bindStatic(getClass, "client-get-class")
-            clientProtocol.bindStatic(closeClasspath, "client-close-classpath")
-        }
         scheduler.flush()
     }
 
@@ -43,8 +39,10 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
         val id = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))
         return RemoteClasspathSet(
             id,
+            this,
             close = closeClasspath,
-            getClass = getClass
+            getClass = getClass,
+            getSubClasses = getSubClasses
         )
     }
 
@@ -66,11 +64,6 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
     override fun watchFileSystemChanges() = this
 
     override suspend fun awaitBackgroundJobs() {
-    }
-
-    private fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {
-        x.bind(lifetimeDef.lifetime, this, name)
-        return x
     }
 
     override fun close() {

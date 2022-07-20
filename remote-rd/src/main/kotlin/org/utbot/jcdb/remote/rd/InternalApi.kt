@@ -32,7 +32,9 @@ class GetClasspathReq(val locations: List<String>) {
     }
 }
 
-class GetClassReq(val cpKey: String, val className: String) {
+abstract class ClasspathBasedReq(val cpKey: String)
+
+open class GetClassReq(cpKey: String, val className: String) : ClasspathBasedReq(cpKey) {
 
     companion object : IMarshaller<GetClassReq> {
 
@@ -68,6 +70,51 @@ class GetClassRes(val location: String?, val serializedClassInfo: ByteArray) {
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetClassRes) {
             buffer.writeNullableString(value.location)
             buffer.writeByteArray(value.serializedClassInfo)
+        }
+    }
+}
+
+class GetSubClassesReq(cpKey: String, className: String, val allHierarchy: Boolean) :
+    GetClassReq(cpKey, className) {
+
+    companion object : IMarshaller<GetSubClassesReq> {
+
+        override val _type: KClass<GetSubClassesReq> = GetSubClassesReq::class
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): GetSubClassesReq {
+            return GetSubClassesReq(
+                buffer.readString(),
+                buffer.readString(),
+                buffer.readBoolean()
+            )
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetSubClassesReq) {
+            buffer.writeString(value.cpKey)
+            buffer.writeString(value.className)
+            buffer.writeBoolean(value.allHierarchy)
+        }
+    }
+}
+
+class GetSubClassesRes(val classes: List<GetClassRes>) {
+
+    companion object : IMarshaller<GetSubClassesRes> {
+
+        override val _type: KClass<GetSubClassesRes> = GetSubClassesRes::class
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): GetSubClassesRes {
+            return GetSubClassesRes(
+                buffer.readArray {
+                    GetClassRes.read(ctx, buffer)
+                }.toList()
+            )
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetSubClassesRes) {
+            buffer.writeArray(value.classes.toTypedArray()) {
+                GetClassRes.write(ctx, buffer, it)
+            }
         }
     }
 }

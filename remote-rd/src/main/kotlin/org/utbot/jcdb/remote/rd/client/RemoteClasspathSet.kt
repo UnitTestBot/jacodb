@@ -10,33 +10,33 @@ import org.utbot.jcdb.api.CompilationDatabase
 import org.utbot.jcdb.impl.types.*
 import org.utbot.jcdb.remote.rd.GetClassReq
 import org.utbot.jcdb.remote.rd.GetClassRes
+import org.utbot.jcdb.remote.rd.GetSubClassesReq
+import org.utbot.jcdb.remote.rd.GetSubClassesRes
 
 class RemoteClasspathSet(
     private val key: String,
+    override val db: CompilationDatabase,
     private val getClass: RdCall<GetClassReq, GetClassRes?>,
-    private val close: RdCall<String, Unit>
+    private val close: RdCall<String, Unit>,
+    private val getSubClasses: RdCall<GetSubClassesReq, GetSubClassesRes>
 ) : ClasspathSet {
 
     override val locations: List<ByteCodeLocation>
         get() = emptyList()
 
-    override val db: CompilationDatabase
-        get() = TODO("Not yet implemented")
-
     override suspend fun refreshed(closeOld: Boolean) = this
 
     override suspend fun findClassOrNull(name: String): ClassId? {
-        val res = getClass.startSuspending(GetClassReq(key, name)) ?: return null
-        val info = Cbor.decodeFromByteArray<ClassInfoContainer>(res.serializedClassInfo)
-        return info.asClassId(res.location)
+        return getClass.startSuspending(GetClassReq(key, name))?.asClassId() ?: return null
     }
 
     override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
-        TODO("Not yet implemented")
+        val res = getSubClasses.startSuspending(GetSubClassesReq(key, name, allHierarchy))
+        return res.classes.map { it.asClassId() }
     }
 
     override suspend fun findSubClasses(classId: ClassId, allHierarchy: Boolean): List<ClassId> {
-        TODO("Not yet implemented")
+        return findSubClasses(classId.name, allHierarchy)
     }
 
     override suspend fun <T> query(key: String, term: String): List<T> {
@@ -55,9 +55,15 @@ class RemoteClasspathSet(
         return when (this) {
             is ArrayClassInfo -> ArrayClassIdImpl(elementInfo.asClassId(location))
             is ClassInfo -> RemoteClassId(location, this, this@RemoteClasspathSet)
-            is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspathSet) ?: throw IllegalStateException("unsupported predefined name $name")
+            is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspathSet)
+                ?: throw IllegalStateException("unsupported predefined name $name")
             else -> throw IllegalStateException("unsupported class info container type ${this.javaClass.name}")
         }
+    }
+
+    private fun GetClassRes.asClassId(): ClassId {
+        val info = Cbor.decodeFromByteArray<ClassInfoContainer>(serializedClassInfo)
+        return info.asClassId(location)
     }
 
 }
