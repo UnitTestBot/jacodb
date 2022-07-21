@@ -11,7 +11,7 @@ This is basic requirements for database implementation:
 * bytecode processing and analyzing up from Java 1.8
 * ability to update bytecode from location without breaking already processed data
 * ability to persist data on-disk and reuse it after application restart
-* fast startup: `compilationDatabase` factory method should balance between returning instance as soon as possible and fast operations of querying data from database
+* fast startup: `jcdb ` factory method should balance between returning instance as soon as possible and fast operations of querying data from database
 * ability to extend querying api by indexes
 
 # Architecture
@@ -73,5 +73,5 @@ Hook is called twice: after called twice when database is created and initialize
 
 ## Performance
 
-`ClassTree` uses immutable lock-free structures from [Xodus database](https://github.com/JetBrains/xodus). This brings 10% lower memory footprint of application (`CompilationDatabaseImpl` created only with Java 8 runtime consumes about ~300Mb of heap memory). `ClassTree` implementation based on java concurrent collections consumes ~330Mb of memory.
+`ClassTree` uses immutable lock-free structures from [Xodus database](https://github.com/JetBrains/xodus). This brings 10% lower memory footprint of application (`JCDBImpl` created only with Java 8 runtime consumes about ~300Mb of heap memory). `ClassTree` implementation based on java concurrent collections consumes ~330Mb of memory.
 Initialization performance is almost the same between Xodus-structures and java concurrent structures.

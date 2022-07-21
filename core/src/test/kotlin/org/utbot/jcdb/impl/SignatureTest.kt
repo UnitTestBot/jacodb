@@ -5,17 +5,17 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.Raw
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.signature.*
 import org.utbot.jcdb.impl.usages.Generics
+import org.utbot.jcdb.jcdb
 
 class SignatureTest {
     companion object : LibrariesMixin {
-        var db: CompilationDatabase? = runBlocking {
-            compilationDatabase {
+        var db: JCDB? = runBlocking {
+            jcdb {
                 predefinedDirOrJars = allClasspath
                 useProcessJavaRuntime()
             }.also {

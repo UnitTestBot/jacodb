@@ -2,9 +2,7 @@ package org.utbot.jcdb.impl.tests
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.*
@@ -36,12 +34,12 @@ abstract class DatabaseEnvTest {
     fun `find class from build dir folder`() = runBlocking {
         val clazz = cp.findClass<Foo>()
         assertEquals(Foo::class.java.name, clazz.name)
-        Assertions.assertTrue(clazz.isFinal())
-        Assertions.assertTrue(clazz.isPublic())
-        Assertions.assertFalse(clazz.isInterface())
+        assertTrue(clazz.isFinal())
+        assertTrue(clazz.isPublic())
+        assertFalse(clazz.isInterface())
 
         val annotations = clazz.annotations()
-        Assertions.assertTrue(annotations.size > 1)
+        assertTrue(annotations.size > 1)
         assertNotNull(annotations.firstOrNull { it.name == Nested::class.java.name })
 
         val fields = clazz.fields()
@@ -61,12 +59,12 @@ abstract class DatabaseEnvTest {
         with(methods.first { it.name == "smthPublic" }) {
             assertEquals(1, parameters().size)
             assertEquals("int", parameters().first().name)
-            Assertions.assertTrue(isPublic())
+            assertTrue(isPublic())
         }
 
         with(methods.first { it.name == "smthPrivate" }) {
-            Assertions.assertTrue(parameters().isEmpty())
-            Assertions.assertTrue(isPrivate())
+            assertTrue(parameters().isEmpty())
+            assertTrue(isPrivate())
         }
     }
 
@@ -125,7 +123,7 @@ abstract class DatabaseEnvTest {
         assertEquals(withInner, inner.outerClass())
         assertEquals(withInner, staticInner.outerClass())
         assertEquals(withInner.findMethodOrNull("sayHello", "()V"), anon.outerMethod())
-        Assertions.assertNull(staticInner.outerMethod())
+        assertNull(staticInner.outerMethod())
     }
 
     @Test
@@ -133,19 +131,19 @@ abstract class DatabaseEnvTest {
         val withAnonymous = cp.findClass<HelloWorldAnonymousClasses>()
 
         val helloWorld = cp.findClass<HelloWorldAnonymousClasses.HelloWorld>()
-        Assertions.assertTrue(helloWorld.isMemberClass())
+        assertTrue(helloWorld.isMemberClass())
 
         val innerClasses = withAnonymous.innerClasses()
         assertEquals(4, innerClasses.size)
         val notHelloWorld = innerClasses.filterNot { it.name.contains("\$HelloWorld") }
         val englishGreetings = notHelloWorld.first { it.name.contains("EnglishGreeting") }
-        Assertions.assertTrue(englishGreetings.isLocal())
-        Assertions.assertFalse(englishGreetings.isAnonymous())
+        assertTrue(englishGreetings.isLocal())
+        assertFalse(englishGreetings.isAnonymous())
 
         (notHelloWorld - englishGreetings).forEach {
-            Assertions.assertFalse(it.isLocal())
-            Assertions.assertTrue(it.isAnonymous())
-            Assertions.assertFalse(it.isMemberClass())
+            assertFalse(it.isLocal())
+            assertTrue(it.isAnonymous())
+            assertFalse(it.isMemberClass())
         }
     }
 
@@ -153,22 +151,22 @@ abstract class DatabaseEnvTest {
     fun `find lazy-loaded class`() = runBlocking {
         val domClass = cp.findClass<Document>()
 
-        Assertions.assertTrue(domClass.isPublic())
-        Assertions.assertTrue(domClass.isInterface())
+        assertTrue(domClass.isPublic())
+        assertTrue(domClass.isInterface())
 
         val methods = domClass.methods()
-        Assertions.assertTrue(methods.isNotEmpty())
+        assertTrue(methods.isNotEmpty())
         with(methods.first { it.name == "getDoctype" }) {
-            Assertions.assertTrue(parameters().isEmpty())
+            assertTrue(parameters().isEmpty())
             assertEquals(DocumentType::class.java.name, returnType().name)
-            Assertions.assertTrue(isPublic())
+            assertTrue(isPublic())
         }
     }
 
     @Test
     fun `find sub-types from lazy loaded classes`() = runBlocking {
         with(cp.findSubClasses<AbstractMap<*, *>>()) {
-            Assertions.assertTrue(size > 10) {
+            assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
             }
 
@@ -180,7 +178,7 @@ abstract class DatabaseEnvTest {
         }
 
         with(cp.findSubClasses(Document::class.java.name)) {
-            Assertions.assertTrue(isNotEmpty())
+            assertTrue(isNotEmpty())
         }
     }
 
@@ -189,7 +187,7 @@ abstract class DatabaseEnvTest {
         val stringArray = cp.findClass("java.lang.String[]")
 
         with(cp.findSubClasses(stringArray, true)) {
-            Assertions.assertTrue(isEmpty())
+            assertTrue(isEmpty())
         }
     }
 

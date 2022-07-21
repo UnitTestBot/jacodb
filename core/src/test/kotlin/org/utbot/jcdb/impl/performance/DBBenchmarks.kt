@@ -3,13 +3,13 @@ package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
-import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.compilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.load
 import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.tree.ClassTree
+import org.utbot.jcdb.jcdb
 import java.util.concurrent.TimeUnit
 
 
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class DBBenchmarks : LibrariesMixin {
 
-    private var db: CompilationDatabase? = null
+    private var db: JCDB? = null
 
     @Benchmark
     fun readBytecode() {
@@ -34,7 +34,7 @@ class DBBenchmarks : LibrariesMixin {
     @Benchmark
     fun readingJVMbytecode() {
         db = runBlocking {
-            compilationDatabase {
+            jcdb {
                 useProcessJavaRuntime()
 
                 installFeatures(ReversedUsages)
@@ -45,7 +45,7 @@ class DBBenchmarks : LibrariesMixin {
     @Benchmark
     fun readingJVMbytecodeWithProjectClasspath() {
         db = runBlocking {
-            compilationDatabase {
+            jcdb {
                 useProcessJavaRuntime()
                 predefinedDirOrJars = allJars
                 installFeatures(ReversedUsages)

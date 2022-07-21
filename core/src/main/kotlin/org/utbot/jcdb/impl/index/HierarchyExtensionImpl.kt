@@ -5,7 +5,7 @@ import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.impl.fs.relevantLocations
 
-class HierarchyExtensionImpl(private val db: CompilationDatabase, private val cp: ClasspathSet) : HierarchyExtension {
+class HierarchyExtensionImpl(private val db: JCDB, private val cp: ClasspathSet) : HierarchyExtension {
 
     override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
         val classId = cp.findClassOrNull(name) ?: return emptyList()

@@ -2,10 +2,10 @@ package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
-import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.compilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.impl.index.ReversedUsages
+import org.utbot.jcdb.jcdb
 import java.util.concurrent.TimeUnit
 
 @State(Scope.Benchmark)
@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class DBLifeCycleBenchmarks : LibrariesMixin {
 
-    private lateinit var db: CompilationDatabase
+    private lateinit var db: JCDB
 
     @Setup(Level.Iteration)
     fun setup() {
         db = runBlocking {
-            compilationDatabase {
+            jcdb {
                 installFeatures(ReversedUsages)
                 useProcessJavaRuntime()
             }

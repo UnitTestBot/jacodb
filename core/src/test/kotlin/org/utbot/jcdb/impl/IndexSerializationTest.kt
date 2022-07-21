@@ -11,7 +11,7 @@ import java.io.ByteArrayOutputStream
 
 class IndexSerializationTest : LibrariesMixin {
 
-    val globalIds = GlobalIds()
+    val globalIds = InMemeoryGlobalIdsStore()
 
     @Test
     fun `hierarchy index serialization`() {

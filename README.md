@@ -16,7 +16,7 @@ stored data from different processes simultaneously.
 Java Compilation Database is ignited by number of jars or directories with build classes:
 
 ```kotlin
-interface CompilationDatabase {
+interface JCDB {
 
     suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet
 
@@ -81,7 +81,7 @@ suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
-    val database = compilationDatabase {
+    val database = jcdb  {
         useProcessJRE()
         persistent {
             location = "/tmp/compilation-db/${System.currentTimeMillis()}"
@@ -112,7 +112,7 @@ If classpath is inconsistent you may receive `ClassNotFoundException` in runtime
 changes in a background or refresh jars explicitly:
 
 ```kotlin
-    val database = compilationDatabase {
+    val database = jcdb  {
         watchFileSystemChanges = true
         useProcessJRE()
         predefinendJars = listOf(lib1, buildDir) 
@@ -133,7 +133,7 @@ library files will not affect `ClasspathSet` instance structure. `ClasspathSet#c
 clean up persistent store in case of some libraries are outdated.
 
 ```kotlin
-    val database = compilationDatabase {
+    val database = jcdb  {
         watchFileSystemChanges()
         useProcessJRE()
         predefinedDirOrJars = listOf(lib1, buildDir)
@@ -150,7 +150,7 @@ If `ClasspathSet` requested with libraries which are not indexed yet, then they 
 returned new instance of set. 
 
 ```kotlin
-    val database = compilationDatabase {
+    val database = jcdb  {
         watchFileSystemChanges()
         useProcessJRE()
         predefinedDirOrJars = listOf(lib1)
@@ -160,13 +160,13 @@ returned new instance of set.
     val cp = database.classpathSet(buildDir) // database will automatically process buildDir
 ```
 
-`CompilationDatabase` is thread safe. If someone requested `ClasspathSet` instance during loading jars from different
+`JCDB` is thread safe. If someone requested `ClasspathSet` instance during loading jars from different
 thread then `ClasspathSet` will be created on a consistent state of loaded jars. That means that jar can't appear in 
 `ClasspathSet` in partly loaded state. Apart from that there is no guarantee that all submitted for loading jars will be 
 loaded.
 
 ```kotlin
-    val database = compilationDatabase {
+    val database = jcdb  {
         persistent()
     }
 

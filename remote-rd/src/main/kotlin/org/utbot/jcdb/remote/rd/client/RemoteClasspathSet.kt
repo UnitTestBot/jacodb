@@ -1,21 +1,23 @@
 package org.utbot.jcdb.remote.rd.client
 
 import com.jetbrains.rd.framework.impl.RdCall
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.types.*
 import org.utbot.jcdb.remote.rd.GetClassReq
 import org.utbot.jcdb.remote.rd.GetClassRes
 import org.utbot.jcdb.remote.rd.GetSubClassesReq
 import org.utbot.jcdb.remote.rd.GetSubClassesRes
+import java.io.Serializable
 
 class RemoteClasspathSet(
     private val key: String,
-    override val db: CompilationDatabase,
+    override val db: JCDB,
     private val getClass: RdCall<GetClassReq, GetClassRes?>,
     private val close: RdCall<String, Unit>,
     private val getSubClasses: RdCall<GetSubClassesReq, GetSubClassesRes>
@@ -39,16 +41,18 @@ class RemoteClasspathSet(
         return findSubClasses(classId.name, allHierarchy)
     }
 
-    override suspend fun <T> query(key: String, term: String): List<T> {
+    override suspend fun <T: Serializable> query(key: String, term: String): List<T> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun <T> query(key: String, location: ByteCodeLocation, term: String): List<T> {
+    override suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T> {
         TODO("Not yet implemented")
     }
 
     override fun close() {
-        close.start(key)
+        runBlocking {
+            close.startSuspending(key)
+        }
     }
 
     private fun ClassInfoContainer.asClassId(location: String?): ClassId {

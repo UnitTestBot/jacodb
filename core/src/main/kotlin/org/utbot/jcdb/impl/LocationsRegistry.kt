@@ -5,7 +5,7 @@ import org.utbot.jcdb.api.ByteCodeLocation
 import java.io.Closeable
 
 /**
- * registry of locations for CompilationDatabase
+ * registry of locations for JCDB
  */
 class LocationsRegistry(private val featuresRegistry: FeaturesRegistry): Closeable {
 

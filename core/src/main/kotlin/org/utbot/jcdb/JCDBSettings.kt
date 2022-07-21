@@ -2,24 +2,24 @@ package org.utbot.jcdb
 
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.Hook
-import org.utbot.jcdb.impl.CompilationDatabaseImpl
+import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.index.Hierarchy
 import java.io.File
 
 /**
  * Settings for database
  */
-class CompilationDatabaseSettings {
+class JCDBSettings {
     /** watch file system changes setting */
-    var watchFileSystemChanges: CompilationDatabaseWatchFileSystemSettings? = null
+    var watchFileSystemChanges: JCDBWatchFileSystemSettings? = null
 
     /** persisted  */
-    var persistentSettings: CompilationDatabasePersistentSettings? = null
+    var persistentSettings: JCDBPersistentSettings? = null
 
     /** jar files which should be loaded right after database is created */
     var predefinedDirOrJars: List<File> = emptyList()
 
-    var hooks: MutableList<(CompilationDatabaseImpl) -> Hook> = arrayListOf()
+    var hooks: MutableList<(JCDBImpl) -> Hook> = arrayListOf()
 
     /** mandatory setting for java location */
     lateinit var jre: File
@@ -30,17 +30,17 @@ class CompilationDatabaseSettings {
     val fullFeatures get() = listOf(Hierarchy) + features
 
     /** builder for persistent settings */
-    fun persistent(settings: (CompilationDatabasePersistentSettings.() -> Unit) = {}) {
-        persistentSettings = CompilationDatabasePersistentSettings().also(settings)
+    fun persistent(settings: (JCDBPersistentSettings.() -> Unit) = {}) {
+        persistentSettings = JCDBPersistentSettings().also(settings)
     }
 
     /** builder for watching file system changes */
-    fun watchFileSystem(settings: (CompilationDatabaseWatchFileSystemSettings.() -> Unit) = {}) {
-        watchFileSystemChanges = CompilationDatabaseWatchFileSystemSettings().also(settings)
+    fun watchFileSystem(settings: (JCDBWatchFileSystemSettings.() -> Unit) = {}) {
+        watchFileSystemChanges = JCDBWatchFileSystemSettings().also(settings)
     }
 
     /** builder for hooks */
-    fun withHook(hook: (CompilationDatabaseImpl) -> Hook) {
+    fun withHook(hook: (JCDBImpl) -> Hook) {
         hooks += hook
     }
 
@@ -77,7 +77,7 @@ class CompilationDatabaseSettings {
 }
 
 
-class CompilationDatabasePersistentSettings {
+class JCDBPersistentSettings {
     /** location folder for persisting data */
     var location: String? = null
 
@@ -88,7 +88,7 @@ class CompilationDatabasePersistentSettings {
     var clearOnStart: Boolean = false
 }
 
-class CompilationDatabaseWatchFileSystemSettings {
+class JCDBWatchFileSystemSettings {
     /** delay between looking up for new changes */
     var delay: Long? = 10_000 // 10 seconds
 }

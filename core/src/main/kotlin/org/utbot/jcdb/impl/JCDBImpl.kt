@@ -2,10 +2,10 @@ package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.*
 import mu.KLogging
-import org.utbot.jcdb.CompilationDatabaseSettings
+import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.*
-import org.utbot.jcdb.impl.index.GlobalIds
+import org.utbot.jcdb.impl.index.InMemeoryGlobalIdsStore
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.storage.scheme.LocationEntity
 import org.utbot.jcdb.impl.tree.ClassTree
@@ -17,11 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class CompilationDatabaseImpl(
+class JCDBImpl(
     private val persistentEnvironment: PersistentEnvironment? = null,
-    private val settings: CompilationDatabaseSettings,
-    override val globalIdStore: GlobalIds = GlobalIds()
-) : CompilationDatabase {
+    private val settings: JCDBSettings,
+    override val globalIdStore: InMemeoryGlobalIdsStore = InMemeoryGlobalIdsStore()
+) : JCDB {
 
     companion object : KLogging()
 
@@ -102,7 +102,7 @@ class CompilationDatabaseImpl(
                 }
             }
         }.awaitAll().filterNotNull()
-        persistentEnvironment?.databaseStore?.save(this@CompilationDatabaseImpl, false)
+        persistentEnvironment?.databaseStore?.save(this@JCDBImpl, false)
 
         val locationClasses = libraryTrees.map {
             it.location to it.pushInto(classTree).values
@@ -138,7 +138,7 @@ class CompilationDatabaseImpl(
         classTree.visit(RemoveLocationsVisitor(outdatedLocations))
     }
 
-    override fun watchFileSystemChanges(): CompilationDatabase {
+    override fun watchFileSystemChanges(): JCDB {
         val delay = settings.watchFileSystemChanges?.delay
         if (delay != null) { // just paranoid check
             BackgroundScope.launch {
@@ -220,6 +220,5 @@ class CompilationDatabaseImpl(
             }
         }
     }
-
 
 }

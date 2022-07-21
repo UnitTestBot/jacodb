@@ -13,18 +13,18 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
-import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
+import org.utbot.jcdb.jcdb
 import java.io.File
 import java.nio.file.Files
 import java.util.*
 
 class DatabaseLifecycleTest : LibrariesMixin {
 
-    private var db: CompilationDatabaseImpl? = runBlocking {
-        compilationDatabase {
+    private var db: JCDBImpl? = runBlocking {
+        jcdb {
             useProcessJavaRuntime()
-        } as CompilationDatabaseImpl
+        } as JCDBImpl
     }
     private val tempFolder = Files.createTempDirectory("classpath-copy-" + UUID.randomUUID()).toFile()
 

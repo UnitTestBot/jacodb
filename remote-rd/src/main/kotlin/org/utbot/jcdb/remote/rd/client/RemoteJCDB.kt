@@ -8,11 +8,11 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.remote.rd.*
 import java.io.File
 
-class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
+class RemoteJCDB(port: Int) : JCDB {
 
     private val lifetimeDef = Lifetime.Eternal.createNested()
     private val scheduler = SingleThreadScheduler(lifetimeDef.lifetime, "rd-scheduler")
@@ -30,15 +30,16 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
     private val getClass = GetClassResource().clientCall(clientProtocol)
     private val closeClasspath = CloseClasspathResource().clientCall(clientProtocol)
     private val getSubClasses = GetSubClassesResource().clientCall(clientProtocol)
+    private val stopServer = StopServerResource().clientCall(clientProtocol)
 
-    private val getId = GetGlobalId().clientCall(clientProtocol)
-    private val getName = GetGlobalName().clientCall(clientProtocol)
+    private val getId = GetGlobalIdResource().clientCall(clientProtocol)
+    private val getName = GetGlobalNameResource().clientCall(clientProtocol)
 
     init {
         scheduler.flush()
     }
 
-    override val globalIdStore = RemoteGlobalIds(getName, getId)
+    override val globalIdStore = RemoteGlobalIdsStore(getName, getId)
 
     override suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet {
         val id = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))
@@ -51,15 +52,15 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
         )
     }
 
-    override suspend fun load(dirOrJar: File): CompilationDatabase {
+    override suspend fun load(dirOrJar: File): JCDB {
         TODO("Not yet implemented")
     }
 
-    override suspend fun load(dirOrJars: List<File>): CompilationDatabase {
+    override suspend fun load(dirOrJars: List<File>): JCDB {
         TODO("Not yet implemented")
     }
 
-    override suspend fun loadLocations(locations: List<ByteCodeLocation>): CompilationDatabase {
+    override suspend fun loadLocations(locations: List<ByteCodeLocation>): JCDB {
         TODO("Not yet implemented")
     }
 
@@ -72,6 +73,10 @@ class RemoteCompilationDatabase(port: Int) : CompilationDatabase {
     }
 
     override fun close() {
+        scheduler.queue {
+            stopServer.start(lifetimeDef, Unit)
+        }
+        scheduler.flush()
         lifetimeDef.terminate()
     }
 }

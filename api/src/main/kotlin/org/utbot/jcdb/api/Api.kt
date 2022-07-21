@@ -5,6 +5,7 @@ import org.objectweb.asm.tree.MethodNode
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
+import java.io.Serializable
 import java.net.URL
 
 /**
@@ -237,7 +238,7 @@ interface ClasspathSet : Closeable {
     val locations: List<ByteCodeLocation>
 
     /** reference to database */
-    val db: CompilationDatabase
+    val db: JCDB
 
     /**
      * in case if some locations are outdated it's required to call this method which will create new instance
@@ -274,7 +275,7 @@ interface ClasspathSet : Closeable {
      * @param key index key
      * @param term term for index
      */
-    suspend fun <T> query(key: String, term: String): List<T>
+    suspend fun <T: Serializable> query(key: String, term: String): List<T>
 
     /**
      * query index by specified term
@@ -283,7 +284,7 @@ interface ClasspathSet : Closeable {
      * @param location to limit location
      * @param term term for index
      */
-    suspend fun <T> query(key: String, location: ByteCodeLocation, term: String): List<T>
+    suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T>
 
 }
 
@@ -302,11 +303,11 @@ enum class FieldUsageMode {
 
 
 /**
- * Compilation database for
+ * Compilation database
  *
  * `close` method should be called when database is not needed anymore
  */
-interface CompilationDatabase : Closeable {
+interface JCDB : Closeable {
 
     val globalIdStore: GlobalIdsStore
 
@@ -323,21 +324,21 @@ interface CompilationDatabase : Closeable {
      * @param dirOrJar build folder or jar file
      * @return current database instance
      */
-    suspend fun load(dirOrJar: File): CompilationDatabase
+    suspend fun load(dirOrJar: File): JCDB
 
     /**
      * process and index byte-code resources
      * @param dirOrJars list of build folder or jar file
      * @return current database instance
      */
-    suspend fun load(dirOrJars: List<File>): CompilationDatabase
+    suspend fun load(dirOrJars: List<File>): JCDB
 
     /**
      * load locations
      * @param locations locations to load
      * @return current database instance
      */
-    suspend fun loadLocations(locations: List<ByteCodeLocation>): CompilationDatabase
+    suspend fun loadLocations(locations: List<ByteCodeLocation>): JCDB
 
     /**
      * explicitly refreshes the state of resources from file-system.
@@ -354,7 +355,7 @@ interface CompilationDatabase : Closeable {
      *
      * @return current database instance
      */
-    fun watchFileSystemChanges(): CompilationDatabase
+    fun watchFileSystemChanges(): JCDB
 
     /**
      * await background jobs
@@ -366,6 +367,13 @@ interface CompilationDatabase : Closeable {
  * database store for storing indexes mappings between ids -> name
  */
 interface GlobalIdsStore {
+    /**
+     * get unique id for this string
+     */
     suspend fun getId(name: String): Int
+
+    /**
+     * get name based on id
+     */
     suspend fun getName(id: Int): String?
 }

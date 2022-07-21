@@ -8,11 +8,12 @@ import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
 import org.utbot.jcdb.impl.types.PredefinedPrimitives
+import java.io.Serializable
 
 class ClasspathSetImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     private val featuresRegistry: FeaturesRegistry,
-    override val db: CompilationDatabaseImpl,
+    override val db: JCDBImpl,
     classTree: ClassTree
 ) : ClasspathSet {
 
@@ -51,12 +52,12 @@ class ClasspathSetImpl(
         return hierarchyExt.findSubClasses(classId, allHierarchy)
     }
 
-    override suspend fun <T> query(key: String, term: String): List<T> {
+    override suspend fun <T: Serializable> query(key: String, term: String): List<T> {
         db.awaitBackgroundJobs()
         return locations.flatMap { featuresRegistry.findIndex<T>(key, it)?.query(term).orEmpty() }
     }
 
-    override suspend fun <T> query(key: String, location: ByteCodeLocation, term: String): List<T> {
+    override suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T> {
         db.awaitBackgroundJobs()
         return featuresRegistry.findIndex<T>(key, location)?.query(term).orEmpty().toList()
     }

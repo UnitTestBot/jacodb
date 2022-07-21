@@ -11,7 +11,7 @@ import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.types.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -20,7 +20,7 @@ abstract class CallResource<REQUEST, RESPONSE>(val id: Int, val name: String) {
 
     private val clientProperty: RdCall<REQUEST, RESPONSE> get() = RdCall<REQUEST, RESPONSE>().static(id).makeAsync()
 
-    private fun serverProperty(db: CompilationDatabase): RdCall<REQUEST, RESPONSE> {
+    private fun serverProperty(db: JCDB): RdCall<REQUEST, RESPONSE> {
         val call = RdCall<REQUEST, RESPONSE>(null, null) { _ -> throw Error() }
         call.setSuspend { _, request ->
             db.handler(request)
@@ -28,14 +28,14 @@ abstract class CallResource<REQUEST, RESPONSE>(val id: Int, val name: String) {
         return call.makeAsync().static(id)
     }
 
-    abstract suspend fun CompilationDatabase.handler(req: REQUEST): RESPONSE
+    abstract suspend fun JCDB.handler(req: REQUEST): RESPONSE
     open val serializers: List<IMarshaller<*>> = emptyList()
 
     fun clientCall(protocol: Protocol): RdCall<REQUEST, RESPONSE> {
         return protocol.register("client") { clientProperty }
     }
 
-    fun serverCall(protocol: Protocol, db: CompilationDatabase): RdCall<REQUEST, RESPONSE> {
+    fun serverCall(protocol: Protocol, db: JCDB): RdCall<REQUEST, RESPONSE> {
         return protocol.register("server") { serverProperty(db) }
     }
 
@@ -68,7 +68,7 @@ class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, Cla
 
     override val serializers = listOf(GetClasspathReq)
 
-    override suspend fun CompilationDatabase.handler(req: GetClasspathReq): String {
+    override suspend fun JCDB.handler(req: GetClasspathReq): String {
         val key = req.locations.sorted().joinToString()
         val cp = classpathSet(req.locations.map { File(it) })
         classpaths[key] = cp
@@ -79,7 +79,7 @@ class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, Cla
 class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
     CallResource<String, Unit>(2, "close-classpath") {
 
-    override suspend fun CompilationDatabase.handler(req: String) {
+    override suspend fun JCDB.handler(req: String) {
         classpaths[req]?.close()
         classpaths.remove(req)
     }
@@ -89,7 +89,7 @@ abstract class AbstractClasspathResource<REQUEST : ClasspathBasedReq, RESPONSE>(
     id: Int, name: String, private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()
 ) : CallResource<REQUEST, RESPONSE>(id, name) {
 
-    override suspend fun CompilationDatabase.handler(req: REQUEST): RESPONSE {
+    override suspend fun JCDB.handler(req: REQUEST): RESPONSE {
         val key = req.cpKey
         val cp = classpaths[key] ?: throw IllegalStateException("No classpath found by key $key. \n Create it first")
         return cp.handler(req)
@@ -128,17 +128,24 @@ class GetSubClassesResource(classpaths: ConcurrentHashMap<String, ClasspathSet> 
 }
 
 
-class GetGlobalId : CallResource<String, Int>(5, "get-global-id") {
+class GetGlobalIdResource : CallResource<String, Int>(5, "get-global-id") {
 
-    override suspend fun CompilationDatabase.handler(req: String): Int {
+    override suspend fun JCDB.handler(req: String): Int {
         return globalIdStore.getId(req)
     }
 }
 
-class GetGlobalName : CallResource<Int, String?>(6, "get-global-name") {
+class GetGlobalNameResource : CallResource<Int, String?>(6, "get-global-name") {
 
-    override suspend fun CompilationDatabase.handler(req: Int): String? {
+    override suspend fun JCDB.handler(req: Int): String? {
         return globalIdStore.getName(req)
+    }
+}
+
+class StopServerResource(private val server: RemoteRdServer? = null) : CallResource<Unit, Unit>(7, "stop-server") {
+
+    override suspend fun JCDB.handler(req: Unit) {
+        return server!!.awaitFinishAndShutdown()
     }
 }
 

@@ -3,7 +3,7 @@ package org.utbot.jcdb.impl.storage.scheme
 import jetbrains.exodus.entitystore.Entity
 import jetbrains.exodus.entitystore.StoreTransaction
 import mu.KLogging
-import org.utbot.jcdb.impl.CompilationDatabaseImpl
+import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 
 class DatabaseEntity(internal val entity: Entity) {
@@ -34,7 +34,7 @@ class DatabaseEntity(internal val entity: Entity) {
 class DatabaseStore(private val dbStore: PersistentEnvironment) {
 
     companion object : KLogging() {
-        const val type = "CompilationDatabase"
+        const val type = "JCDB"
     }
 
     fun get(tx: StoreTransaction): DatabaseEntity {
@@ -42,7 +42,7 @@ class DatabaseStore(private val dbStore: PersistentEnvironment) {
         return DatabaseEntity(entity)
     }
 
-    fun save(db: CompilationDatabaseImpl, clearOnStart: Boolean): DatabaseEntity {
+    fun save(db: JCDBImpl, clearOnStart: Boolean): DatabaseEntity {
         return dbStore.transactional {
             var existed = getAll(type).first
             if (clearOnStart && existed != null) {

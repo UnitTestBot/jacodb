@@ -15,7 +15,7 @@ suspend fun index(node: ClassNode, builder: ByteCodeLocationIndexBuilder<*, *>) 
 }
 
 
-class GlobalIds : GlobalIdsStore {
+class InMemeoryGlobalIdsStore : GlobalIdsStore {
 
     private val counter = AtomicInteger()
 

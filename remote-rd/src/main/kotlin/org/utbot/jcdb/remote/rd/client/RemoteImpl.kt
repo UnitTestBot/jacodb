@@ -24,6 +24,8 @@ class RemoteClassId(
     override val classpath: ClasspathSet
 ) : ClassId, ByteCodeConverter {
 
+    companion object : KLogging()
+
     override val name: String
         get() = classInfo.name
 
@@ -83,7 +85,14 @@ class RemoteClassId(
         classInfo.fields.map { RemoteFieldId(this, it, classpath) }
     }
 
-    override suspend fun byteCode() = null
+    override suspend fun byteCode(): ClassNode? {
+        logger.error("GETTING BYTECODE IN REMOTE CLIENT")
+        val byteCode = location?.resolve(name) ?: return null
+        val classNode = ClassNode(Opcodes.ASM9)
+        ClassReader(byteCode).accept(classNode, ClassReader.EXPAND_FRAMES)
+        return classNode
+
+    }
 
     override suspend fun innerClasses() = lazyInnerClasses()
 
@@ -135,8 +144,6 @@ class RemoteMethodId(
     private val classpath: ClasspathSet
 ) : MethodId {
 
-    companion object : KLogging()
-
     override val name: String
         get() = methodInfo.name
 
@@ -172,11 +179,7 @@ class RemoteMethodId(
     }
 
     override suspend fun readBody(): MethodNode? {
-        logger.error("GETTING BYTECODE IN REMOTE CLIENT")
-        val byteCode = classId.location?.resolve(classId.name) ?: return null
-        val classNode = ClassNode(Opcodes.ASM9)
-        ClassReader(byteCode).accept(classNode, ClassReader.EXPAND_FRAMES)
-        return classNode.methods.firstOrNull { it.name == methodInfo.name && it.desc == methodInfo.desc }
+        return classId.byteCode()?.methods?.firstOrNull { it.name == methodInfo.name && it.desc == methodInfo.desc }
     }
 
     override suspend fun access() = methodInfo.access

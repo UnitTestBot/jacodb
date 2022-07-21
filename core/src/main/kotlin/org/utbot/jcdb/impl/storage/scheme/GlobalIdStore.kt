@@ -4,7 +4,7 @@ import jetbrains.exodus.bindings.IntegerBinding
 import jetbrains.exodus.bindings.StringBinding
 import jetbrains.exodus.env.Environment
 import jetbrains.exodus.env.StoreConfig
-import org.utbot.jcdb.impl.index.GlobalIds
+import org.utbot.jcdb.impl.index.InMemeoryGlobalIdsStore
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -20,7 +20,7 @@ class GlobalIdStore(private val env: Environment) {
         )
     }
 
-    fun sync(globalIds: GlobalIds) = synchronized(this) {
+    fun sync(globalIds: InMemeoryGlobalIdsStore) = synchronized(this) {
         val current = counter.get()
         val inMemoryCounter = globalIds.count
         if (inMemoryCounter != current) {
@@ -39,7 +39,7 @@ class GlobalIdStore(private val env: Environment) {
         }
     }
 
-    fun restore(globalIds: GlobalIds) {
+    fun restore(globalIds: InMemeoryGlobalIdsStore) {
         globalIds.restore {
             env.executeInTransaction { txn ->
                 store.openCursor(txn).use { cursor ->

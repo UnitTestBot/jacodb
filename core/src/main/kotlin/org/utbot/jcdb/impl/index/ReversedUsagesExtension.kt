@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.MethodInsnNode
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.relevantLocations
 
-class ReversedUsagesExtension(private val db: CompilationDatabase, private val cp: ClasspathSet) {
+class ReversedUsagesExtension(private val db: JCDB, private val cp: ClasspathSet) {
 
     /**
      * find all methods that directly modifies field

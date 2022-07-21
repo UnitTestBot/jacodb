@@ -7,20 +7,20 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.CompilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findFieldsUsedIn
 import org.utbot.jcdb.api.ext.findMethodsUsedIn
-import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.usages.direct.DirectA
+import org.utbot.jcdb.jcdb
 
 class DirectUsagesTest : LibrariesMixin {
 
     companion object : LibrariesMixin {
 
-        private var db: CompilationDatabase? = runBlocking {
-            compilationDatabase {
+        private var db: JCDB? = runBlocking {
+            jcdb {
                 predefinedDirOrJars = allClasspath
                 useProcessJavaRuntime()
                 installFeatures(ReversedUsages)

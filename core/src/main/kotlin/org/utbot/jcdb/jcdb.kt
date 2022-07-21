@@ -1,14 +1,14 @@
 package org.utbot.jcdb
 
-import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.impl.CompilationDatabaseImpl
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import java.io.File
 
-suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit): CompilationDatabase {
-    val settings = CompilationDatabaseSettings().also(builder)
+suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
+    val settings = JCDBSettings().also(builder)
     val persistentSettings = settings.persistentSettings
     if (persistentSettings != null) {
         val environment = persistentSettings.toEnvironment()
@@ -21,7 +21,7 @@ suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit)
                                 .filter { it.exists() }
                                 .map { it.asByteCodeLocation(isRuntime = false) }
                     ).toSet() - byteCodeLocations.toSet()
-            val database = CompilationDatabaseImpl(
+            val database = JCDBImpl(
                 persistentEnvironment = environment,
                 settings = settings
             )
@@ -31,7 +31,7 @@ suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit)
             return database
         }
     }
-    val database = CompilationDatabaseImpl(null, settings)
+    val database = JCDBImpl(null, settings)
     database.loadJavaLibraries()
     if (settings.predefinedDirOrJars.isNotEmpty()) {
         database.load(settings.predefinedDirOrJars)
@@ -43,7 +43,7 @@ suspend fun compilationDatabase(builder: CompilationDatabaseSettings.() -> Unit)
     return database
 }
 
-private fun CompilationDatabasePersistentSettings.toEnvironment(): PersistentEnvironment? {
+private fun JCDBPersistentSettings.toEnvironment(): PersistentEnvironment? {
     return this.location?.let {
         PersistentEnvironment(key, File(it))
     }

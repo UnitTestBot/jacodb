@@ -2,9 +2,9 @@ package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
-import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.compilationDatabase
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.LibrariesMixin
+import org.utbot.jcdb.jcdb
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +20,7 @@ class RestoreDBBenchmark : LibrariesMixin {
         private val jdbcLocation = Files.createTempDirectory("jdbc").toFile().absolutePath
     }
 
-    var db: CompilationDatabase? = null
+    var db: JCDB? = null
 
     @Setup
     fun setup() {
@@ -39,9 +39,9 @@ class RestoreDBBenchmark : LibrariesMixin {
         db = null
     }
 
-    private fun newDB(): CompilationDatabase {
+    private fun newDB(): JCDB {
         return runBlocking {
-            compilationDatabase {
+            jcdb {
                 persistent {
                     location = jdbcLocation
                 }

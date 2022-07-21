@@ -6,17 +6,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.index.reversedUsagesExt
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA
+import org.utbot.jcdb.jcdb
 
 class SearchReversedUsagesTest : LibrariesMixin {
 
     private val db = runBlocking {
-        compilationDatabase {
+        jcdb {
             predefinedDirOrJars = allClasspath
             useProcessJavaRuntime()
             installFeatures(ReversedUsages)
