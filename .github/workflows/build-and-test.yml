@@ -49,7 +49,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "build/test-results/**/*.xml"
+          files: "build/**/test-results/**/*.xml"
 
   jdk8:
 
@@ -78,4 +78,4 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "build/test-results/**/*.xml"
+          files: "build/**/test-results/**/*.xml"
