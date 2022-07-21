@@ -32,7 +32,7 @@ class HierarchyExtensionImpl(private val db: CompilationDatabase, private val cp
         }
     }
 
-    override suspend fun Collection<ByteCodeLocation>.subClasses(name: String, allHierarchy: Boolean): List<String> {
+    private suspend fun Collection<ByteCodeLocation>.subClasses(name: String, allHierarchy: Boolean): List<String> {
         val subTypes = flatMap {
             cp.query<String>(Hierarchy.key, it, name)
         }.toHashSet()

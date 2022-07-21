@@ -23,9 +23,9 @@ class RemoteClientTest: DatabaseEnvTest() {
             }
         }
 
-        private val db = remoteRdClient(8080)
+        private val remoteDB = remoteRdClient(8080)
 
-        private val remoteCp = runBlocking { db.classpathSet(allClasspath) }
+        private val remoteCp = runBlocking { remoteDB.classpathSet(allClasspath) }
 
         @AfterAll
         @JvmStatic
@@ -33,7 +33,7 @@ class RemoteClientTest: DatabaseEnvTest() {
             serverDB?.close()
             serverDB = null
             remoteCp.close()
-            db.close()
+            remoteDB.close()
         }
     }
 
