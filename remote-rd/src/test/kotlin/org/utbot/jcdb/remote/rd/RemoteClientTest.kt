@@ -8,9 +8,9 @@ import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.impl.index.hierarchyExt
-import org.utbot.jcdb.impl.tests.CommonLookupTest
+import org.utbot.jcdb.impl.tests.DatabaseEnvTest
 
-class RemoteClientTest: CommonLookupTest() {
+class RemoteClientTest: DatabaseEnvTest() {
 
     companion object : LibrariesMixin {
         private var serverDB: CompilationDatabase? = runBlocking {

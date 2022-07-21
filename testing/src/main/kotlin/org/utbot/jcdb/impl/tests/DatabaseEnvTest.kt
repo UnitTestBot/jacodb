@@ -22,7 +22,7 @@ import org.w3c.dom.DocumentType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class CommonLookupTest {
+abstract class DatabaseEnvTest {
 
     abstract val cp: ClasspathSet
     abstract val hierarchyExt: HierarchyExtension
@@ -95,7 +95,7 @@ abstract class CommonLookupTest {
 
         with(fields.get(2)) {
             assertEquals("objectObjectArray", name)
-            assertEquals("Object[][]", type().name)
+            assertEquals("java.lang.Object[][]", type().name)
             assertEquals(
                 cp.findClass<Any>(),
                 ((type() as ArrayClassId).elementClass as ArrayClassId).elementClass
