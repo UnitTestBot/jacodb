@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - main
+      - 'feature-**'
       - '*/feature-**'
   pull_request:
     branches:
