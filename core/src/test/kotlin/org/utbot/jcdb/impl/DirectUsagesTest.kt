@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.CompilationDatabase
-import org.utbot.jcdb.api.findClass
+import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.ext.findFieldsUsedIn
+import org.utbot.jcdb.api.ext.findMethodsUsedIn
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.ReversedUsages
-import org.utbot.jcdb.impl.index.findFieldsUsedIn
-import org.utbot.jcdb.impl.index.findMethodsUsedIn
 import org.utbot.jcdb.impl.usages.direct.DirectA
 
 class DirectUsagesTest : LibrariesMixin {

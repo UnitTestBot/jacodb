@@ -2,6 +2,9 @@ package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Malformed
+import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.TypeResolution
 
 class TypeSignature(cp: ClasspathSet) : Signature<TypeResolution>(cp) {
 

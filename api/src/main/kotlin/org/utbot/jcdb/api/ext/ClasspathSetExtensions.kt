@@ -1,4 +1,4 @@
-package org.utbot.jcdb.impl.index
+package org.utbot.jcdb.api.ext
 
 import kotlinx.collections.immutable.toImmutableList
 import org.objectweb.asm.Opcodes
@@ -75,4 +75,25 @@ suspend fun ClasspathSet.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
 
 suspend inline fun <reified T> ClasspathSet.findClassOrNull(): ClassId? {
     return findClassOrNull(T::class.java.name)
+}
+
+
+/**
+ * find class. Tf there are none then throws `NoClassInClasspathException`
+ * @throws NoClassInClasspathException
+ */
+suspend fun ClasspathSet.findClass(name: String): ClassId {
+    return findClassOrNull(name) ?: name.throwClassNotFound()
+}
+
+/**
+ * find class. Tf there are none then throws `NoClassInClasspathException`
+ * @throws NoClassInClasspathException
+ */
+suspend inline fun <reified T> ClasspathSet.findClass(): ClassId {
+    return findClassOrNull<T>() ?: throwClassNotFound<T>()
+}
+
+suspend inline fun <reified T> ClasspathSet.findSubClasses(): List<ClassId> {
+    return findSubClasses(T::class.java.name)
 }

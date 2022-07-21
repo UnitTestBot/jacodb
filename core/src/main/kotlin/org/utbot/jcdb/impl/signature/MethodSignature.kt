@@ -2,6 +2,9 @@ package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Malformed
+import org.utbot.jcdb.api.MethodResolution
+import org.utbot.jcdb.api.Raw
 
 open class MethodSignature(cp: ClasspathSet) : Signature<MethodResolution>(cp) {
 

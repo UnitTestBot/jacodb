@@ -2,16 +2,17 @@ package org.utbot.jcdb.impl.index
 
 import kotlinx.collections.immutable.toPersistentList
 import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.impl.fs.relevantLocations
 
-class HierarchyExtension(private val db: CompilationDatabase, private val cp: ClasspathSet) {
+class HierarchyExtensionImpl(private val db: CompilationDatabase, private val cp: ClasspathSet) : HierarchyExtension {
 
-    suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
+    override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
         val classId = cp.findClassOrNull(name) ?: return emptyList()
         return findSubClasses(classId, allHierarchy)
     }
 
-    suspend fun findSubClasses(classId: ClassId, allHierarchy: Boolean): List<ClassId> {
+    override suspend fun findSubClasses(classId: ClassId, allHierarchy: Boolean): List<ClassId> {
         if (classId is ArrayClassId) {
             return emptyList()
         }
@@ -22,7 +23,7 @@ class HierarchyExtension(private val db: CompilationDatabase, private val cp: Cl
         return relevantLocations.subClasses(name, allHierarchy).map { cp.findClassOrNull(it) }.filterNotNull()
     }
 
-    suspend fun findOverrides(methodId: MethodId): List<MethodId> {
+    override suspend fun findOverrides(methodId: MethodId): List<MethodId> {
         val desc = methodId.description()
         val name = methodId.name
         val subClasses = cp.findSubClasses(methodId.classId, allHierarchy = true)
@@ -31,7 +32,7 @@ class HierarchyExtension(private val db: CompilationDatabase, private val cp: Cl
         }
     }
 
-    private suspend fun Collection<ByteCodeLocation>.subClasses(name: String, allHierarchy: Boolean): List<String> {
+    override suspend fun Collection<ByteCodeLocation>.subClasses(name: String, allHierarchy: Boolean): List<String> {
         val subTypes = flatMap {
             cp.query<String>(Hierarchy.key, it, name)
         }.toHashSet()
@@ -44,7 +45,7 @@ class HierarchyExtension(private val db: CompilationDatabase, private val cp: Cl
 }
 
 
-val ClasspathSet.hierarchyExt: HierarchyExtension
+val ClasspathSet.hierarchyExt: HierarchyExtensionImpl
     get() {
-        return HierarchyExtension(db, this)
+        return HierarchyExtensionImpl(db, this)
     }

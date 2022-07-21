@@ -3,28 +3,13 @@ package org.utbot.jcdb.api
 import kotlinx.collections.immutable.toPersistentList
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.impl.index.findClassOrNull
+import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.impl.types.*
-
-/**
- * find class. Tf there are none then throws `NoClassInClasspathException`
- * @throws NoClassInClasspathException
- */
-suspend fun ClasspathSet.findClass(name: String): ClassId {
-    return findClassOrNull(name) ?: name.throwClassNotFound()
-}
-
-/**
- * find class. Tf there are none then throws `NoClassInClasspathException`
- * @throws NoClassInClasspathException
- */
-suspend inline fun <reified T> ClasspathSet.findClass(): ClassId {
-    return findClassOrNull<T>() ?: throwClassNotFound<T>()
-}
-
-suspend inline fun <reified T> ClasspathSet.findSubClasses(): List<ClassId> {
-    return findSubClasses(T::class.java.name)
-}
+import java.lang.Byte
+import java.lang.Double
+import java.lang.Float
+import java.lang.Long
+import java.lang.Short
 
 /**
  * is item has `public` modifier
@@ -187,13 +172,13 @@ fun ClassId.unboxIfNeeded(): ClassId {
 suspend fun ClassId.autoboxIfNeeded(): ClassId {
     return when (this) {
         classpath.boolean -> classpath.findClassOrNull<java.lang.Boolean>() ?: throwClassNotFound<java.lang.Boolean>()
-        classpath.byte -> classpath.findClassOrNull<java.lang.Byte>() ?: throwClassNotFound<java.lang.Byte>()
+        classpath.byte -> classpath.findClassOrNull<java.lang.Byte>() ?: throwClassNotFound<Byte>()
         classpath.char -> classpath.findClassOrNull<Character>() ?: throwClassNotFound<Character>()
-        classpath.short -> classpath.findClassOrNull<java.lang.Short>() ?: throwClassNotFound<java.lang.Short>()
+        classpath.short -> classpath.findClassOrNull<java.lang.Short>() ?: throwClassNotFound<Short>()
         classpath.int -> classpath.findClassOrNull<Integer>() ?: throwClassNotFound<Integer>()
-        classpath.long -> classpath.findClassOrNull<java.lang.Long>() ?: throwClassNotFound<java.lang.Long>()
-        classpath.float -> classpath.findClassOrNull<java.lang.Float>() ?: throwClassNotFound<java.lang.Float>()
-        classpath.double -> classpath.findClassOrNull<java.lang.Double>() ?: throwClassNotFound<java.lang.Double>()
+        classpath.long -> classpath.findClassOrNull<java.lang.Long>() ?: throwClassNotFound<Long>()
+        classpath.float -> classpath.findClassOrNull<java.lang.Float>() ?: throwClassNotFound<Float>()
+        classpath.double -> classpath.findClassOrNull<java.lang.Double>() ?: throwClassNotFound<Double>()
         else -> this
     }
 }

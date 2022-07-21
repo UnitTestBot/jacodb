@@ -2,9 +2,6 @@ package org.utbot.jcdb.api
 
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.impl.signature.FieldResolution
-import org.utbot.jcdb.impl.signature.MethodResolution
-import org.utbot.jcdb.impl.signature.TypeResolution
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream

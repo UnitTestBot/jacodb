@@ -3,9 +3,9 @@ package org.utbot.jcdb.impl.types
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.ClassIdService
-import org.utbot.jcdb.impl.signature.MethodResolution
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.tree.ClassNode
 

@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.ext.findClassOrNull
+import org.utbot.jcdb.api.ext.findSubClasses
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.hierarchies.Creature
 import org.utbot.jcdb.impl.hierarchies.Creature.*
-import org.utbot.jcdb.impl.index.findClassOrNull
 import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.signature.*
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
@@ -103,7 +105,7 @@ class ClassesTest {
 
         with(fields.get(1)) {
             assertEquals("objectArray", name)
-            assertEquals("Object[]", type().name)
+            assertEquals("java.lang.Object[]", type().name)
             assertEquals(cp.findClass<Any>(), (type() as ArrayClassIdImpl).elementClass)
         }
 

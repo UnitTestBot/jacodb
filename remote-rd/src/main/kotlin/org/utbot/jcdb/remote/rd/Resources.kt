@@ -146,7 +146,7 @@ private suspend fun ClassId.convertToContainer(): ClassInfoContainer {
     return when (this) {
         is ArrayClassIdImpl -> ArrayClassInfo(elementClass.convertToContainer())
         is ClassIdImpl -> info()
-        is PredefinedPrimitive -> info
+        is PredefinedPrimitive -> PredefinedClassInfo(name)
         else -> throw IllegalStateException("Can't convert class $name to serializable class info")
     }
 }

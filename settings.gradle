@@ -1,5 +1,6 @@
 rootProject.name = 'jcdb'
 
-include 'testing'
+include 'api'
 include 'core'
+include 'testing'
 include 'remote-rd'

@@ -2,7 +2,6 @@ package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.ClassIdService
-import org.utbot.jcdb.impl.signature.TypeResolution
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode

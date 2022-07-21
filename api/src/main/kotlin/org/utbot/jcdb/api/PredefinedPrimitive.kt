@@ -2,11 +2,7 @@ package org.utbot.jcdb.impl.types
 
 import kotlinx.collections.immutable.persistentListOf
 import org.objectweb.asm.Opcodes
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.FieldId
-import org.utbot.jcdb.api.MethodId
-import org.utbot.jcdb.impl.signature.Raw
+import org.utbot.jcdb.api.*
 
 object PredefinedPrimitives {
 
@@ -67,8 +63,6 @@ class PredefinedPrimitive(override val classpath: ClasspathSet, override val sim
 
     override suspend fun access() = Opcodes.ACC_PUBLIC
 
-    val info = PredefinedClassInfo(name = name)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -83,7 +77,6 @@ class PredefinedPrimitive(override val classpath: ClasspathSet, override val sim
     override fun hashCode(): Int {
         return name.hashCode()
     }
-
 
 }
 

@@ -3,6 +3,7 @@ package org.utbot.jcdb.impl.signature
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Resolution
 
 abstract class Signature<T : Resolution>(protected val cp: ClasspathSet) :
     GenericTypeRegistrant.RejectingSignatureVisitor(), GenericTypeRegistrant {

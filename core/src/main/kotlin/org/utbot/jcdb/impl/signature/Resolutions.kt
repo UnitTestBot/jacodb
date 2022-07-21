@@ -1,14 +1,9 @@
 package org.utbot.jcdb.impl.signature
 
-
-interface Resolution
-interface MethodResolution : Resolution
-interface RecordComponentResolution : Resolution
-interface FieldResolution : Resolution
-interface TypeResolution : Resolution
-
-object Malformed : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
-object Raw : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
+import org.utbot.jcdb.api.FieldResolution
+import org.utbot.jcdb.api.MethodResolution
+import org.utbot.jcdb.api.RecordComponentResolution
+import org.utbot.jcdb.api.TypeResolution
 
 class FieldResolutionImpl(val fieldType: GenericType) : FieldResolution
 

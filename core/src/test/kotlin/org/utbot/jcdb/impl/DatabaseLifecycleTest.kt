@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.findClass
+import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
-import org.utbot.jcdb.impl.index.findClassOrNull
 import java.io.File
 import java.nio.file.Files
 import java.util.*
@@ -47,10 +47,10 @@ class DatabaseLifecycleTest : LibrariesMixin {
     @Test
     fun `refresh is working when build dir is removed`() = runBlocking {
         val cp = db!!.classpathSet(listOf(testDirClone))
-        val fooClass = cp.findClass<Foo>()
+        val barKt = cp.findClass<BarKt>()
 
         assertTrue(testDirClone.deleteRecursively())
-        assertNull(fooClass.methods().first().readBody())
+        assertNull(barKt.methods().first().readBody())
 
         db!!.refresh()
 
@@ -60,7 +60,7 @@ class DatabaseLifecycleTest : LibrariesMixin {
             assertEquals(1, locations.filterIsInstance<BuildFolderLocation>().size)
         }
 
-        assertNotNull(cp.findClassOrNull(Foo::class.java.name))
+        assertNotNull(cp.findClassOrNull<BarKt>())
         cp.close()
         db!!.refresh()
         withRegistry {
@@ -73,12 +73,12 @@ class DatabaseLifecycleTest : LibrariesMixin {
     @Test
     fun `method could be read from build dir`() = runBlocking {
         val cp = db!!.classpathSet(listOf(testDirClone))
-        val fooClass = cp.findClassOrNull<Foo>()
-        assertNotNull(fooClass!!)
+        val barKt = cp.findClassOrNull<BarKt>()
+        assertNotNull(barKt!!)
 
         assertNotNull {
             runBlocking {
-                fooClass.methods().first().readBody()
+                barKt.methods().first().readBody()
             }
         }
     }
@@ -155,6 +155,7 @@ class DatabaseLifecycleTest : LibrariesMixin {
         val clazz = cp.findClassOrNull<Iterators>()
         assertNotNull(clazz!!)
         assertNotNull(clazz.methods().first().readBody())
+        db!!.awaitBackgroundJobs()
         assertTrue(guavaLibClone.delete())
     }
 

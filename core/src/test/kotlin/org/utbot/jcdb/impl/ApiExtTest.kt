@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.hierarchies.Creature
 import org.utbot.jcdb.impl.hierarchies.Creature.*

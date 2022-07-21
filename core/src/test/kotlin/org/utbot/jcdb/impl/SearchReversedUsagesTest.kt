@@ -5,7 +5,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
-import org.utbot.jcdb.api.findClass
+import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.compilationDatabase
 import org.utbot.jcdb.impl.index.ReversedUsages
 import org.utbot.jcdb.impl.index.reversedUsagesExt

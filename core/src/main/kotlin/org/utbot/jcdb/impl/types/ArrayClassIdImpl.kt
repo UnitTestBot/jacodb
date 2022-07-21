@@ -3,8 +3,7 @@ package org.utbot.jcdb.impl.types
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.utbot.jcdb.api.*
-import org.utbot.jcdb.impl.index.findClassOrNull
-import org.utbot.jcdb.impl.signature.Raw
+import org.utbot.jcdb.api.ext.findClassOrNull
 
 class ArrayClassIdImpl(override val elementClass: ClassId) : ArrayClassId {
 

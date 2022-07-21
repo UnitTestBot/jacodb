@@ -8,7 +8,6 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.signature.FieldResolution
 import org.utbot.jcdb.impl.signature.FieldSignature
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.signature.TypeSignature

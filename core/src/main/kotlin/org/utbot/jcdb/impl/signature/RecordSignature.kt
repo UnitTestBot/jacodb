@@ -2,6 +2,9 @@ package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Malformed
+import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.RecordComponentResolution
 
 class RecordSignature(private val cp: ClasspathSet) : GenericTypeRegistrant {
 
