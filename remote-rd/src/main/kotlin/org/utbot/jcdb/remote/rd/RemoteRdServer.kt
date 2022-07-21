@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 
-class RemoteRdServer(private val port: Int, val db: JCDBImpl) : Hook {
+class RemoteRdServer(private val port: Int, private val db: JCDBImpl) : Hook {
 
     companion object : KLogging()
 
@@ -42,7 +42,8 @@ class RemoteRdServer(private val port: Int, val db: JCDBImpl) : Hook {
             CloseClasspathResource(classpaths),
             GetClassResource(classpaths),
             GetSubClassesResource(classpaths),
-            StopServerResource(this)
+            StopServerResource(this),
+            LoadLocationsResource()
         )
     }
 

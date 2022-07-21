@@ -11,6 +11,7 @@ import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.remote.rd.*
 import java.io.File
+import java.nio.file.Paths
 
 class RemoteJCDB(port: Int) : JCDB {
 
@@ -34,6 +35,7 @@ class RemoteJCDB(port: Int) : JCDB {
 
     private val getId = GetGlobalIdResource().clientCall(clientProtocol)
     private val getName = GetGlobalNameResource().clientCall(clientProtocol)
+    private val loadLocations = LoadLocationsResource().clientCall(clientProtocol)
 
     init {
         scheduler.flush()
@@ -52,16 +54,20 @@ class RemoteJCDB(port: Int) : JCDB {
         )
     }
 
-    override suspend fun load(dirOrJar: File): JCDB {
-        TODO("Not yet implemented")
+    override suspend fun load(dirOrJar: File): JCDB = apply {
+        loadLocations.startSuspending(GetClasspathReq(listOf(dirOrJar.absolutePath)))
     }
 
-    override suspend fun load(dirOrJars: List<File>): JCDB {
-        TODO("Not yet implemented")
+    override suspend fun load(dirOrJars: List<File>): JCDB = apply {
+        loadLocations.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }))
     }
 
-    override suspend fun loadLocations(locations: List<ByteCodeLocation>): JCDB {
-        TODO("Not yet implemented")
+    override suspend fun loadLocations(locations: List<ByteCodeLocation>): JCDB = apply {
+        loadLocations.startSuspending(
+            GetClasspathReq(
+                locations.map { Paths.get(it.locationURL.toURI()).toFile().absolutePath }
+            )
+        )
     }
 
     override suspend fun refresh() {

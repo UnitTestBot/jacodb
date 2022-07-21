@@ -6,6 +6,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.jcdb
 import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 @State(Scope.Benchmark)
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit
 class RestoreDBBenchmark : LibrariesMixin {
 
     companion object {
-        private val jdbcLocation = Files.createTempDirectory("jdbc").toFile().absolutePath
+        private val jdbcLocation = Files.createTempDirectory("jdbc-${UUID.randomUUID()}").toFile().absolutePath
     }
 
     var db: JCDB? = null

@@ -76,6 +76,15 @@ class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, Cla
     }
 }
 
+class LoadLocationsResource() : CallResource<GetClasspathReq, Unit>(10, "load-locations") {
+
+    override val serializers = listOf(GetClasspathReq)
+
+    override suspend fun JCDB.handler(req: GetClasspathReq) {
+        load(req.locations.map { File(it) }.filter { it.exists() })
+    }
+}
+
 class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
     CallResource<String, Unit>(2, "close-classpath") {
 
