@@ -44,5 +44,9 @@ class RemoteClientTest: DatabaseEnvTest() {
         get() = cp.hierarchyExt
 
 
+    override fun close() {
+        // do nothing
+    }
+
 }
 

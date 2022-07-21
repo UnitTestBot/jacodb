@@ -28,7 +28,7 @@ abstract class DatabaseEnvTest {
     abstract val hierarchyExt: HierarchyExtension
 
     @AfterEach
-    fun close() {
+    open fun close() {
         cp.close()
     }
 
