@@ -42,6 +42,7 @@ class RemoteRdServer(private val port: Int, private val db: JCDB) : Hook {
             CloseClasspathResource(classpaths),
             GetClassResource(classpaths),
             GetSubClassesResource(classpaths),
+            CallIndexResource(classpaths),
             StopServerResource(this),
             LoadLocationsResource()
         )

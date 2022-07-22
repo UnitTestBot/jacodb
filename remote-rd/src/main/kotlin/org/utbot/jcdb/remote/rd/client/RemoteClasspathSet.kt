@@ -9,22 +9,18 @@ import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.types.*
-import org.utbot.jcdb.remote.rd.GetClassReq
-import org.utbot.jcdb.remote.rd.GetClassRes
-import org.utbot.jcdb.remote.rd.GetSubClassesReq
-import org.utbot.jcdb.remote.rd.GetSubClassesRes
+import org.utbot.jcdb.remote.rd.*
 import java.io.Serializable
 
 class RemoteClasspathSet(
     private val key: String,
     override val db: JCDB,
+    override val locations: List<ByteCodeLocation>,
     private val getClass: RdCall<GetClassReq, GetClassRes?>,
     private val close: RdCall<String, Unit>,
-    private val getSubClasses: RdCall<GetSubClassesReq, GetSubClassesRes>
+    private val getSubClasses: RdCall<GetSubClassesReq, GetSubClassesRes>,
+    private val callIndex: RdCall<CallIndexReq, CallIndexRes>
 ) : ClasspathSet {
-
-    override val locations: List<ByteCodeLocation>
-        get() = emptyList()
 
     override suspend fun refreshed(closeOld: Boolean) = this
 
@@ -42,11 +38,11 @@ class RemoteClasspathSet(
     }
 
     override suspend fun <T: Serializable> query(key: String, term: String): List<T> {
-        TODO("Not yet implemented")
+        return callIndex.startSuspending(CallIndexReq(this.key, key, null, term)).result as List<T>
     }
 
     override suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T> {
-        TODO("Not yet implemented")
+        return callIndex.startSuspending(CallIndexReq(this.key, key, location.path, term)).result as List<T>
     }
 
     override fun close() {

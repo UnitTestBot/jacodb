@@ -20,13 +20,13 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: ClasspathSet)
         val name = classId.name
         val relevantLocations = cp.locations.relevantLocations(classId.location)
 
-        return relevantLocations.subClasses(name, allHierarchy).map { cp.findClassOrNull(it) }.filterNotNull()
+        return relevantLocations.subClasses(name, allHierarchy).mapNotNull { cp.findClassOrNull(it) }
     }
 
     override suspend fun findOverrides(methodId: MethodId): List<MethodId> {
         val desc = methodId.description()
         val name = methodId.name
-        val subClasses = cp.findSubClasses(methodId.classId, allHierarchy = true)
+        val subClasses = findSubClasses(methodId.classId, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc)
         }

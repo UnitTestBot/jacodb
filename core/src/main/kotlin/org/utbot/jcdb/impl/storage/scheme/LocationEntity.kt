@@ -16,7 +16,7 @@ class LocationEntity(internal val entity: Entity) {
 
     companion object {
         private const val CLASSES = "classes"
-        private const val URL = "url"
+        private const val PATH = "path"
         private const val ID = "id"
         private const val IS_RUNTIME = "isRuntime"
 
@@ -28,10 +28,10 @@ class LocationEntity(internal val entity: Entity) {
             entity.setProperty(ID, value)
         }
 
-    var url: String
-        get() = entity.getProperty(URL) as String
+    var path: String
+        get() = entity.getProperty(PATH) as String
         set(value) {
-            entity.setProperty(URL, value)
+            entity.setProperty(PATH, value)
         }
 
     var classes: List<ClassInfo>
@@ -82,7 +82,7 @@ class LocationStore(private val dbStore: PersistentEnvironment) {
         return if (found == null) {
             LocationEntity(tx.newEntity(type)).also {
                 it.id = location.id
-                it.url = location.locationURL.toString()
+                it.path = location.path
                 it.isRuntime = location.scope == LocationScope.RUNTIME
                 dbStore.databaseStore.get(tx).addLocation(it)
             }

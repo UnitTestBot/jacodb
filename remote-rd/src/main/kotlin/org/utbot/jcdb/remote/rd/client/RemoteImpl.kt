@@ -15,11 +15,10 @@ import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.ClassInfo
 import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.MethodInfo
-import java.net.URL
-import java.nio.file.Paths
+import java.io.File
 
 class RemoteClassId(
-    private val locationURL: String?,
+    private val locationPath: String?,
     private val classInfo: ClassInfo,
     override val classpath: ClasspathSet
 ) : ClassId, ByteCodeConverter {
@@ -32,8 +31,8 @@ class RemoteClassId(
     override suspend fun access() = classInfo.access
 
     override val location: ByteCodeLocation? by lazy(LazyThreadSafetyMode.NONE) {
-        locationURL?.let {
-            Paths.get(URL(it).toURI()).toFile().asByteCodeLocation(isRuntime = false)
+        locationPath?.let {
+            File(it).asByteCodeLocation(isRuntime = false)
         }
     }
 

@@ -9,9 +9,10 @@ import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.LocationScope
+import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.remote.rd.*
 import java.io.File
-import java.nio.file.Paths
 
 class RemoteJCDB(port: Int) : JCDB {
 
@@ -31,6 +32,7 @@ class RemoteJCDB(port: Int) : JCDB {
     private val getClass = GetClassResource().clientCall(clientProtocol)
     private val closeClasspath = CloseClasspathResource().clientCall(clientProtocol)
     private val getSubClasses = GetSubClassesResource().clientCall(clientProtocol)
+    private val callIndex = CallIndexResource().clientCall(clientProtocol)
     private val stopServer = StopServerResource().clientCall(clientProtocol)
 
     private val getId = GetGlobalIdResource().clientCall(clientProtocol)
@@ -44,13 +46,17 @@ class RemoteJCDB(port: Int) : JCDB {
     override val globalIdStore = RemoteGlobalIdsStore(getName, getId)
 
     override suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet {
-        val id = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))
+        val resp = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))
         return RemoteClasspathSet(
-            id,
-            this,
+            resp.key,
+            locations = resp.locations.mapIndexed { index, path ->
+                File(path).asByteCodeLocation(isRuntime = resp.scopes.get(index) == LocationScope.RUNTIME)
+            },
+            db = this,
             close = closeClasspath,
             getClass = getClass,
-            getSubClasses = getSubClasses
+            getSubClasses = getSubClasses,
+            callIndex = callIndex
         )
     }
 
@@ -64,9 +70,7 @@ class RemoteJCDB(port: Int) : JCDB {
 
     override suspend fun loadLocations(locations: List<ByteCodeLocation>): JCDB = apply {
         loadLocations.startSuspending(
-            GetClasspathReq(
-                locations.map { Paths.get(it.locationURL.toURI()).toFile().absolutePath }
-            )
+            GetClasspathReq(locations.map { it.path })
         )
     }
 

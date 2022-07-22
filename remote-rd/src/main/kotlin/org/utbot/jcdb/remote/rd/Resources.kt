@@ -14,7 +14,11 @@ import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.types.*
 import java.io.File
+import java.io.Serializable
+import java.security.MessageDigest
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+
 
 abstract class CallResource<REQUEST, RESPONSE>(val id: Int, val name: String) {
 
@@ -64,15 +68,15 @@ abstract class CallResource<REQUEST, RESPONSE>(val id: Int, val name: String) {
 }
 
 class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
-    CallResource<GetClasspathReq, String>(1, "get-classpath") {
+    CallResource<GetClasspathReq, GetClasspathRes>(1, "get-classpath") {
 
-    override val serializers = listOf(GetClasspathReq)
+    override val serializers = listOf(GetClasspathReq, GetClasspathRes)
 
-    override suspend fun JCDB.handler(req: GetClasspathReq): String {
-        val key = req.locations.sorted().joinToString()
+    override suspend fun JCDB.handler(req: GetClasspathReq): GetClasspathRes {
+        val key = req.locations.sorted().joinToString().sha1Hash
         val cp = classpathSet(req.locations.map { File(it) })
         classpaths[key] = cp
-        return key
+        return GetClasspathRes(key, cp.locations.map { it.path }, cp.locations.map { it.scope })
     }
 }
 
@@ -108,8 +112,7 @@ abstract class AbstractClasspathResource<REQUEST : ClasspathBasedReq, RESPONSE>(
 
     protected suspend fun ClassId.toGetClass(): GetClassRes {
         val bytes = Cbor.encodeToByteArray(convertToContainer())
-        val url = location?.locationURL
-        return GetClassRes(url?.toString(), bytes)
+        return GetClassRes(location?.path, bytes)
     }
 
 }
@@ -158,6 +161,35 @@ class StopServerResource(private val server: RemoteRdServer? = null) : CallResou
     }
 }
 
+class CallIndexResource(classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+    AbstractClasspathResource<CallIndexReq, CallIndexRes>(8, "call-index", classpaths) {
+
+    override val serializers = listOf(CallIndexReq, CallIndexRes)
+
+    override suspend fun ClasspathSet.handler(req: CallIndexReq): CallIndexRes {
+        val location = req.location
+        val result = if (location == null) {
+            query(req.indexKey, req.term)
+        } else {
+            val byteCodeLocation = locations.first { it.path == location }
+            query<Serializable>(req.indexKey, byteCodeLocation, req.term)
+        }
+        val first = result.firstOrNull() ?: return CallIndexRes("unknown", emptyList<Serializable>())
+        return when (first::class.java) {
+            java.lang.String::class.java -> CallIndexRes("string", result as List<String>)
+
+            java.lang.Boolean::class.java -> CallIndexRes(PredefinedPrimitives.boolean, result as List<Boolean>)
+            java.lang.Byte::class.java -> CallIndexRes(PredefinedPrimitives.byte, result as List<Byte>)
+            java.lang.Character::class.java -> CallIndexRes(PredefinedPrimitives.char, result as List<Char>)
+            java.lang.Integer::class.java -> CallIndexRes(PredefinedPrimitives.int, result as List<Int>)
+            java.lang.Long::class.java -> CallIndexRes(PredefinedPrimitives.long, result as List<Long>)
+            java.lang.Float::class.java -> CallIndexRes(PredefinedPrimitives.float, result as List<Float>)
+            java.lang.Double::class.java -> CallIndexRes(PredefinedPrimitives.double, result as List<Double>)
+            else -> CallIndexRes("unknown", emptyList<Serializable>())
+        }
+    }
+}
+
 private suspend fun ClassId.convertToContainer(): ClassInfoContainer {
     return when (this) {
         is ArrayClassIdImpl -> ArrayClassInfo(elementClass.convertToContainer())
@@ -167,3 +199,8 @@ private suspend fun ClassId.convertToContainer(): ClassInfoContainer {
     }
 }
 
+private val String.sha1Hash: String
+    get() {
+        val md = MessageDigest.getInstance("SHA-1")
+        return Base64.getEncoder().encodeToString(md.digest(toByteArray()))
+    }

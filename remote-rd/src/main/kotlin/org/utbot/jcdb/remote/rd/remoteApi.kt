@@ -1,6 +1,8 @@
 package org.utbot.jcdb.remote.rd
 
 import com.jetbrains.rd.framework.*
+import org.utbot.jcdb.api.LocationScope
+import org.utbot.jcdb.impl.types.PredefinedPrimitives
 import kotlin.reflect.KClass
 
 val serializers = Serializers()
@@ -20,6 +22,36 @@ class GetClasspathReq(val locations: List<String>) {
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetClasspathReq) {
             buffer.writeArray(value.locations.toTypedArray()) {
                 buffer.writeString(it)
+            }
+        }
+    }
+}
+
+class GetClasspathRes(val key: String, val locations: List<String>, val scopes: List<LocationScope>) {
+
+    companion object : IMarshaller<GetClasspathRes> {
+
+        override val _type: KClass<GetClasspathRes> = GetClasspathRes::class
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): GetClasspathRes {
+            return GetClasspathRes(
+                buffer.readString(),
+                buffer.readArray {
+                    buffer.readString()
+                }.toList(),
+                buffer.readArray {
+                    LocationScope.values()[buffer.readInt()]
+                }.toList(),
+            )
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: GetClasspathRes) {
+            buffer.writeString(value.key)
+            buffer.writeArray(value.locations.toTypedArray()) {
+                buffer.writeString(it)
+            }
+            buffer.writeArray(value.scopes.toTypedArray()) {
+                buffer.writeInt(it.ordinal)
             }
         }
     }
@@ -112,7 +144,8 @@ class GetSubClassesRes(val classes: List<GetClassRes>) {
     }
 }
 
-class CallIndexReq(cpKey: String, val indexKey: String, val location: String, val term: String): ClasspathBasedReq(cpKey) {
+class CallIndexReq(cpKey: String, val indexKey: String, val location: String?, val term: String) :
+    ClasspathBasedReq(cpKey) {
 
     companion object : IMarshaller<CallIndexReq> {
 
@@ -122,7 +155,7 @@ class CallIndexReq(cpKey: String, val indexKey: String, val location: String, va
             return CallIndexReq(
                 buffer.readString(),
                 buffer.readString(),
-                buffer.readString(),
+                buffer.readNullableString(),
                 buffer.readString()
             )
         }
@@ -130,26 +163,53 @@ class CallIndexReq(cpKey: String, val indexKey: String, val location: String, va
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexReq) {
             buffer.writeString(value.cpKey)
             buffer.writeString(value.indexKey)
-            buffer.writeString(value.location)
+            buffer.writeNullableString(value.location)
             buffer.writeString(value.term)
         }
     }
 }
-//
-//class CallIndexRes(val type: String, val result: List<*>) {
-//
-//    companion object : IMarshaller<CallIndexRes> {
-//
-//        override val _type: KClass<CallIndexRes> = CallIndexRes::class
-//
-//        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CallIndexRes {
-//            return CallIndexRes(emptyList<Any>())
-//        }
-//
-//        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexRes) {
-//            buffer.writeString(value.type)
-//            buffer.writeString(value.indexKey)
-//            buffer.writeString(value.term)
-//        }
-//    }
-//}
+
+class CallIndexRes(val type: String, val result: List<*>) {
+
+    companion object : IMarshaller<CallIndexRes> {
+
+        override val _type: KClass<CallIndexRes> = CallIndexRes::class
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CallIndexRes {
+            val type = buffer.readString()
+            val array = when (type) {
+                PredefinedPrimitives.boolean -> buffer.readBooleanArray().toList()
+                PredefinedPrimitives.byte -> buffer.readByteArray().toList()
+                PredefinedPrimitives.short -> buffer.readShortArray().toList()
+                PredefinedPrimitives.int -> buffer.readIntArray().toList()
+                PredefinedPrimitives.long -> buffer.readLongArray().toList()
+                PredefinedPrimitives.float -> buffer.readFloatArray().toList()
+                PredefinedPrimitives.double -> buffer.readDoubleArray().toList()
+                "string" -> buffer.readArray { buffer.readString() }.toList()
+                "unknown" -> buffer.readBooleanArray().toList() // will be empty list
+                else -> throw UnsupportedOperationException("$type is unsupported")
+            }
+            return CallIndexRes(type, array)
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexRes) {
+            val type = value.type
+            buffer.writeString(type)
+            when (type) {
+                PredefinedPrimitives.boolean -> buffer.writeBooleanArray((value.result as List<Boolean>).toBooleanArray())
+                PredefinedPrimitives.byte -> buffer.writeByteArray((value.result as List<Byte>).toByteArray())
+                PredefinedPrimitives.char -> buffer.writeCharArray((value.result as List<Char>).toCharArray())
+                PredefinedPrimitives.short -> buffer.writeShortArray((value.result as List<Short>).toShortArray())
+                PredefinedPrimitives.int -> buffer.writeIntArray((value.result as List<Int>).toIntArray())
+                PredefinedPrimitives.long -> buffer.writeLongArray((value.result as List<Long>).toLongArray())
+                PredefinedPrimitives.float -> buffer.writeFloatArray((value.result as List<Float>).toFloatArray())
+                PredefinedPrimitives.double -> buffer.writeDoubleArray((value.result as List<Double>).toDoubleArray())
+                "string" -> buffer.writeArray((value.result as List<String>).toTypedArray()) {
+                    buffer.writeString(it)
+                }
+                "unknown" -> buffer.writeBooleanArray(BooleanArray(0))
+                else -> throw UnsupportedOperationException("$type is unsupported")
+            }
+        }
+    }
+}

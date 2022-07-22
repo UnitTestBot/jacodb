@@ -2,7 +2,6 @@ package org.utbot.jcdb.impl.fs
 
 import org.utbot.jcdb.api.ByteCodeLocation
 import java.io.File
-import java.net.URL
 
 abstract class AbstractByteCodeLocation(protected val file: File) : ByteCodeLocation {
 
@@ -10,8 +9,8 @@ abstract class AbstractByteCodeLocation(protected val file: File) : ByteCodeLoca
         getCurrentId()
     }
 
-    override val locationURL: URL
-        get() = file.toURI().toURL()
+    override val path: String
+        get() = file.absolutePath
 
     abstract fun getCurrentId(): String
 

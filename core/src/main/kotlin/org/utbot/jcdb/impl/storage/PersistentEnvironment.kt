@@ -13,7 +13,6 @@ import org.utbot.jcdb.impl.storage.scheme.LocationEntity
 import org.utbot.jcdb.impl.storage.scheme.LocationStore
 import java.io.Closeable
 import java.io.File
-import java.net.URL
 import java.nio.file.Paths
 
 class PersistentEnvironment(id: String, location: File? = null) : Closeable {
@@ -40,7 +39,7 @@ class PersistentEnvironment(id: String, location: File? = null) : Closeable {
             return transactional {
                 locationStore.all.mapNotNull {
                     try {
-                        it to Paths.get(URL(it.url).toURI()).toFile().asByteCodeLocation(isRuntime = it.isRuntime)
+                        it to File(it.path).asByteCodeLocation(isRuntime = it.isRuntime)
                     } catch (e: Exception) {
                         null
                     }
