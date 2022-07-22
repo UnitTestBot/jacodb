@@ -2,7 +2,7 @@ package org.utbot.jcdb
 
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.Hook
-import org.utbot.jcdb.impl.JCDBImpl
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.index.Hierarchy
 import java.io.File
 
@@ -19,7 +19,7 @@ class JCDBSettings {
     /** jar files which should be loaded right after database is created */
     var predefinedDirOrJars: List<File> = emptyList()
 
-    var hooks: MutableList<(JCDBImpl) -> Hook> = arrayListOf()
+    var hooks: MutableList<(JCDB) -> Hook> = arrayListOf()
 
     /** mandatory setting for java location */
     lateinit var jre: File
@@ -40,7 +40,7 @@ class JCDBSettings {
     }
 
     /** builder for hooks */
-    fun withHook(hook: (JCDBImpl) -> Hook) {
+    fun withHook(hook: (JCDB) -> Hook) {
         hooks += hook
     }
 

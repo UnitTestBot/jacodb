@@ -9,12 +9,12 @@ import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import mu.KLogging
 import org.utbot.jcdb.api.ClasspathSet
 import org.utbot.jcdb.api.Hook
-import org.utbot.jcdb.impl.JCDBImpl
+import org.utbot.jcdb.api.JCDB
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 
-class RemoteRdServer(private val port: Int, private val db: JCDBImpl) : Hook {
+class RemoteRdServer(private val port: Int, private val db: JCDB) : Hook {
 
     companion object : KLogging()
 
