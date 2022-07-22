@@ -8,13 +8,8 @@
 name: Run benchmarks
 
 on:
-  push:
-    branches:
-      - main
-      - '*/feature-**'
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: '30 23 * * 1,2,3,4,5'
 
 permissions:
   contents: read
