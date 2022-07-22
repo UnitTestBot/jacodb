@@ -192,6 +192,17 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
+    fun `enum values`() = runBlocking {
+        val enum = cp.findClass<Enums>()
+        assertTrue(enum.isEnum())
+        assertEquals(listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(), enum.enumValues()?.map { it.name }?.sorted())
+
+        val notEnum = cp.findClass<String>()
+        assertFalse(notEnum.isEnum())
+        assertNull(notEnum.enumValues())
+    }
+
+    @Test
     fun `find sub-types with all hierarchy`() = runBlocking {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)

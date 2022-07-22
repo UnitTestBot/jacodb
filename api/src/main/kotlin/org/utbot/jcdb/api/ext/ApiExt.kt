@@ -125,6 +125,10 @@ suspend fun ClassId.isMemberClass(): Boolean {
     return simpleBinaryName() != null && !isLocalOrAnonymous()
 }
 
+suspend fun ClassId.isEnum(): Boolean {
+    return access() and Opcodes.ACC_ENUM != 0 && superclass()?.name == Enum::class.java.name
+}
+
 private suspend fun ClassId.simpleBinaryName(): String? {
     // top level class
     val enclosingClass = outerClass() ?: return null
@@ -248,3 +252,13 @@ suspend fun ClassId.findMethodOrNull(name: String, desc: String): MethodId? =
 suspend fun ClassId.findMethodOrNull(methodNode: MethodNode): MethodId? =
     methods().firstOrNull { it.name == methodNode.name && it.description() == methodNode.desc }
 
+
+/**
+ * @return null if ClassId is not enum and enum value names otherwise
+ */
+suspend fun ClassId.enumValues(): List<FieldId>? {
+    if (isEnum()) {
+        return fields().filter { it.isStatic() && it.type().name == name}
+    }
+    return null
+}

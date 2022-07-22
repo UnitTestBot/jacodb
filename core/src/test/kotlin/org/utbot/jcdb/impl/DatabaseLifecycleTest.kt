@@ -24,6 +24,7 @@ class DatabaseLifecycleTest : LibrariesMixin {
     private var db: JCDBImpl? = runBlocking {
         jcdb {
             useProcessJavaRuntime()
+
         } as JCDBImpl
     }
     private val tempFolder = Files.createTempDirectory("classpath-copy-" + UUID.randomUUID()).toFile()
