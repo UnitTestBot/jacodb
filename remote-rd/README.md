@@ -11,7 +11,7 @@ Rd protocol implies 1-1 communication between server and client. That means that
 Create server:
 
 ```kotlin
-    val db = jcdb  {
+    val db = jcdb {
         useProcessJavaRuntime()
         exposeRd(port = 9090) // this will expose rd based server api
     }

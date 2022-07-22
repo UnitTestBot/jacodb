@@ -14,7 +14,7 @@ import org.utbot.jcdb.jcdb
 class RemoteClientTest: DatabaseEnvTest() {
 
     companion object : LibrariesMixin {
-        val port = NetUtils.findFreePort(8080)
+        private val port = NetUtils.findFreePort(8080)
 
         private var serverDB: JCDB? = runBlocking {
             jcdb {

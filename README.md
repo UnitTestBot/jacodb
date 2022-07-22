@@ -81,7 +81,7 @@ suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
-    val database = jcdb  {
+    val database = jcdb {
         useProcessJRE()
         persistent {
             location = "/tmp/compilation-db/${System.currentTimeMillis()}"
@@ -112,7 +112,7 @@ If classpath is inconsistent you may receive `ClassNotFoundException` in runtime
 changes in a background or refresh jars explicitly:
 
 ```kotlin
-    val database = jcdb  {
+    val database = jcdb {
         watchFileSystemChanges = true
         useProcessJRE()
         predefinendJars = listOf(lib1, buildDir) 
@@ -133,7 +133,7 @@ library files will not affect `ClasspathSet` instance structure. `ClasspathSet#c
 clean up persistent store in case of some libraries are outdated.
 
 ```kotlin
-    val database = jcdb  {
+    val database = jcdb {
         watchFileSystemChanges()
         useProcessJRE()
         predefinedDirOrJars = listOf(lib1, buildDir)
@@ -150,7 +150,7 @@ If `ClasspathSet` requested with libraries which are not indexed yet, then they 
 returned new instance of set. 
 
 ```kotlin
-    val database = jcdb  {
+    val database = jcdb {
         watchFileSystemChanges()
         useProcessJRE()
         predefinedDirOrJars = listOf(lib1)
@@ -166,7 +166,7 @@ thread then `ClasspathSet` will be created on a consistent state of loaded jars.
 loaded.
 
 ```kotlin
-    val database = jcdb  {
+    val database = jcdb {
         persistent()
     }
 
