@@ -20,8 +20,14 @@ class RemoteClientCloseTest : LibrariesMixin {
         }
         val remoteDB = remoteRdClient(port)
         remoteDB.close()
-        delay(1000)
-        assertTrue(NetUtils.findFreePort(port) == port)
+        var portIsFree = NetUtils.findFreePort(port) == port
+        repeat(10) {
+            if (!portIsFree) {
+                delay(500)
+                portIsFree = NetUtils.findFreePort(port) == port
+            }
+        }
+        assertTrue(portIsFree, "port $port is not released for 5 sec")
     }
 
     @Test
