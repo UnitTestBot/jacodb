@@ -192,6 +192,11 @@ val ArrayClassId.isPrimitiveArray: Boolean
         return PredefinedPrimitives.matches(elementClass.name)
     }
 
+val ClassId.isPrimitive: Boolean
+    get() {
+        return PredefinedPrimitives.matches(name)
+    }
+
 /**
  * @return all interfaces and classes retrieved recursively from this ClassId
  */
