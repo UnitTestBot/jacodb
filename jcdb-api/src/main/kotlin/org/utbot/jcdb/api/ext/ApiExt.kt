@@ -189,7 +189,7 @@ suspend fun ClassId.autoboxIfNeeded(): ClassId {
 
 val ArrayClassId.isPrimitiveArray: Boolean
     get() {
-        return PredefinedPrimitives.matches(elementClass.name)
+        return elementClass.isPrimitive
     }
 
 val ClassId.isPrimitive: Boolean
