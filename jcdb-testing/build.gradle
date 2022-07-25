@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 dependencies {
-    api project(":api")
+    api project(":jcdb-api")
 
     api(platform('org.junit:junit-bom:5.8.2'))
 
