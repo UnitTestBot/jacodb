@@ -102,7 +102,7 @@ class RemoteClassId(
         return outerClass != null && outerClass.name == null
     }
 
-    override suspend fun signature() = TypeSignature.of(classInfo.signature, classpath)
+    override suspend fun resolution() = TypeSignature.of(classInfo.signature, classpath)
 
     override suspend fun outerMethod(): MethodId? {
         val outerMethod = classInfo.outerMethod
@@ -165,7 +165,7 @@ class RemoteMethodId(
         }
     }
 
-    override suspend fun signature() = MethodSignature.of(methodInfo.signature, classId.classpath)
+    override suspend fun resolution() = MethodSignature.of(methodInfo.signature, classId.classpath)
 
     override suspend fun returnType() = lazyReturnType()
 
@@ -176,6 +176,8 @@ class RemoteMethodId(
     override suspend fun description(): String {
         return methodInfo.desc
     }
+
+    override suspend fun signature(internalNames: Boolean) = methodInfo.signature(internalNames)
 
     override suspend fun readBody(): MethodNode? {
         return classId.byteCode()?.methods?.firstOrNull { it.name == methodInfo.name && it.desc == methodInfo.desc }
@@ -216,7 +218,7 @@ class RemoteFieldId(
         }
     }
 
-    override suspend fun signature(): FieldResolution {
+    override suspend fun resolution(): FieldResolution {
         return FieldSignature.extract(info.signature, classId.classpath)
     }
 

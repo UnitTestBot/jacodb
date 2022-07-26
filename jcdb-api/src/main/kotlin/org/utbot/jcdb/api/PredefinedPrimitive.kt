@@ -39,7 +39,7 @@ class PredefinedPrimitive(override val classpath: ClasspathSet, override val sim
     override val name: String get() = simpleName
     override val location = null
 
-    override suspend fun signature() = Raw
+    override suspend fun resolution() = Raw
 
     override suspend fun outerClass() = null
 

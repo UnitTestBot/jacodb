@@ -40,7 +40,7 @@ interface ClassId : Accessible {
 
     suspend fun isAnonymous(): Boolean
 
-    suspend fun signature(): TypeResolution
+    suspend fun resolution(): TypeResolution
 
     suspend fun outerMethod(): MethodId?
 
@@ -170,8 +170,9 @@ interface MethodId : Accessible {
     /** reference to class */
     val classId: ClassId
 
-    suspend fun signature(): MethodResolution
+    suspend fun resolution(): MethodResolution
 
+    suspend fun signature(internalNames: Boolean): String
     /**
      * @return return type of the method or null in case of void methods
      */
@@ -213,7 +214,7 @@ interface FieldId : Accessible {
     /** class of this field */
     val classId: ClassId
 
-    suspend fun signature(): FieldResolution
+    suspend fun resolution(): FieldResolution
 
     /** field type */
     suspend fun type(): ClassId

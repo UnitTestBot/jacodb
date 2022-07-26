@@ -17,6 +17,7 @@ import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
 import org.w3c.dom.DocumentType
+import org.w3c.dom.Element
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -159,7 +160,17 @@ abstract class DatabaseEnvTest {
         with(methods.first { it.name == "getDoctype" }) {
             assertTrue(parameters().isEmpty())
             assertEquals(DocumentType::class.java.name, returnType().name)
+            assertEquals("getDoctype()org.w3c.dom.DocumentType;", signature(false))
+            assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", signature(true))
             assertTrue(isPublic())
+        }
+
+        with(methods.first { it.name == "createElement" }) {
+            assertEquals(listOf(cp.findClass<String>()), parameters())
+            assertEquals(Element::class.java.name, returnType().name)
+            assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", signature(false))
+            assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", signature(true))
+
         }
     }
 
@@ -195,7 +206,10 @@ abstract class DatabaseEnvTest {
     fun `enum values`() = runBlocking {
         val enum = cp.findClass<Enums>()
         assertTrue(enum.isEnum())
-        assertEquals(listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(), enum.enumValues()?.map { it.name }?.sorted())
+        assertEquals(
+            listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(),
+            enum.enumValues()?.map { it.name }?.sorted()
+        )
 
         val notEnum = cp.findClass<String>()
         assertFalse(notEnum.isEnum())
