@@ -7,6 +7,7 @@ import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.MethodSignature
+import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode
 
 class MethodIdImpl(
@@ -19,12 +20,12 @@ class MethodIdImpl(
     override val name: String get() = methodInfo.name
     override suspend fun access() = methodInfo.access
 
-    private val lazyParameters by lazy(LazyThreadSafetyMode.NONE) {
+    private val lazyParameters = suspendableLazy {
         methodInfo.parameters.map {
             classIdService.toClassId(it) ?: throw org.utbot.jcdb.api.NoClassInClasspathException(it)
         }
     }
-    private val lazyAnnotations by lazy(LazyThreadSafetyMode.NONE) {
+    private val lazyAnnotations = suspendableLazy {
         methodInfo.annotations.map {
             val className = it.className
             classIdService.toClassId(className) ?: className.throwClassNotFound()
@@ -38,9 +39,9 @@ class MethodIdImpl(
     override suspend fun returnType() =
         classIdService.toClassId(methodInfo.returnType) ?: methodInfo.returnType.throwClassNotFound()
 
-    override suspend fun parameters() = lazyParameters
+    override suspend fun parameters() = lazyParameters()
 
-    override suspend fun annotations() = lazyAnnotations
+    override suspend fun annotations() = lazyAnnotations()
 
     override suspend fun description() = methodInfo.desc
 
