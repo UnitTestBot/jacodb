@@ -1,10 +1,11 @@
 package org.utbot.jcdb.api
 
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toCollection
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ext.findClassOrNull
-import org.utbot.jcdb.impl.types.*
 import java.lang.Byte
 import java.lang.Double
 import java.lang.Float
@@ -105,9 +106,10 @@ suspend fun MethodId.isStrict(): Boolean {
 /**
  * return true if method is constructor
  */
-fun MethodId.isConstructor(): Boolean {
-    return name == "<init>"
-}
+val MethodId.isConstructor: Boolean
+    get() {
+        return name == "<init>"
+    }
 
 suspend fun Accessible.isSynthetic(): Boolean {
     return access() and Opcodes.ACC_SYNTHETIC != 0
@@ -263,7 +265,24 @@ suspend fun ClassId.findMethodOrNull(methodNode: MethodNode): MethodId? =
  */
 suspend fun ClassId.enumValues(): List<FieldId>? {
     if (isEnum()) {
-        return fields().filter { it.isStatic() && it.type().name == name}
+        return fields().filter { it.isStatic() && it.type().name == name }
     }
     return null
+}
+
+
+suspend fun ClassId.allMethods(): List<MethodId> {
+    return flow {
+        var clazz: ClassId? = this@allMethods
+        while (clazz != null) {
+            clazz.methods().filter { !it.isConstructor }.forEach {
+                emit(it)
+            }
+            clazz = clazz.superclass()
+        }
+    }.toCollection(arrayListOf())
+}
+
+suspend fun ClassId.allConstructors(): List<MethodId> {
+    return methods().filter { it.isConstructor }
 }

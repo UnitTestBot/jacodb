@@ -9,9 +9,7 @@ import com.jetbrains.rd.framework.impl.RdCall
 import com.jetbrains.rd.framework.util.setSuspend
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.types.*
 import java.io.File
 import java.io.Serializable

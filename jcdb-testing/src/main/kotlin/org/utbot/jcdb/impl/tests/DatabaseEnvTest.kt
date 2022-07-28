@@ -12,7 +12,6 @@ import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.api.ext.findSubClasses
 import org.utbot.jcdb.impl.*
 import org.utbot.jcdb.impl.hierarchies.Creature
-import org.utbot.jcdb.impl.types.byte
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -231,6 +230,17 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.name == C::class.java.name })
             assertNotNull(firstOrNull { it.name == D::class.java.name })
         }
+    }
+
+    @Test
+    fun `get all methods`() = runBlocking {
+        val c = cp.findClass<C>()
+        val signatures = c.allMethods().map { it.signature(false) }
+        assertTrue(c.allMethods().size > 15)
+        assertTrue(signatures.contains("saySmth(java.lang.String;)void;"))
+        assertTrue(signatures.contains("saySmth()void;"))
+        assertFalse(signatures.contains("<init>()void;"))
+        assertEquals(3, c.allConstructors().size)
     }
 
     @Test

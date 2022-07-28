@@ -1,9 +1,6 @@
 package org.utbot.jcdb.impl.signature
 
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.throwClassNotFound
-import org.utbot.jcdb.impl.types.*
+import org.utbot.jcdb.api.*
 
 
 abstract class GenericType(val classpath: ClasspathSet) {

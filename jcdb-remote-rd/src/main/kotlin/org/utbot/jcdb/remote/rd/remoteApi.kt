@@ -2,7 +2,7 @@ package org.utbot.jcdb.remote.rd
 
 import com.jetbrains.rd.framework.*
 import org.utbot.jcdb.api.LocationScope
-import org.utbot.jcdb.impl.types.PredefinedPrimitives
+import org.utbot.jcdb.api.PredefinedPrimitives
 import kotlin.reflect.KClass
 
 val serializers = Serializers()

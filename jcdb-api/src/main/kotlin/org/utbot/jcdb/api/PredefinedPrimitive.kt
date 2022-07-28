@@ -1,8 +1,7 @@
-package org.utbot.jcdb.impl.types
+package org.utbot.jcdb.api
 
 import kotlinx.collections.immutable.persistentListOf
 import org.objectweb.asm.Opcodes
-import org.utbot.jcdb.api.*
 
 object PredefinedPrimitives {
 

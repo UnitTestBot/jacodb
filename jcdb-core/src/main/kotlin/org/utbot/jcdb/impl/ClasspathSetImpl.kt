@@ -3,11 +3,11 @@ package org.utbot.jcdb.impl
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
-import org.utbot.jcdb.impl.types.PredefinedPrimitives
 import java.io.Serializable
 
 class ClasspathSetImpl(

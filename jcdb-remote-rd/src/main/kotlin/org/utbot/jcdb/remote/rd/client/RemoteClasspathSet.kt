@@ -4,10 +4,7 @@ import com.jetbrains.rd.framework.impl.RdCall
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
-import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
-import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.types.*
 import org.utbot.jcdb.remote.rd.*
 import java.io.Serializable
