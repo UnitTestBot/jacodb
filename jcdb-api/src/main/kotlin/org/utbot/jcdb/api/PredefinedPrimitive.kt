@@ -56,7 +56,7 @@ class PredefinedPrimitive(override val classpath: ClasspathSet, override val sim
 
     override suspend fun interfaces() = emptyList<ClassId>()
 
-    override suspend fun annotations() = emptyList<ClassId>()
+    override suspend fun annotations() = emptyList<AnnotationId>()
 
     override suspend fun fields() = emptyList<FieldId>()
 

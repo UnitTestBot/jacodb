@@ -54,7 +54,7 @@ interface ClassId : Accessible {
     suspend fun interfaces(): List<ClassId>
 
     /** list of annotations. Annotations are not inherited from super classes. */
-    suspend fun annotations(): List<ClassId>
+    suspend fun annotations(): List<AnnotationId>
 
     /** list of fields. Fields are not inherited from super classes. */
     suspend fun fields(): List<FieldId>
@@ -184,9 +184,14 @@ interface MethodId : Accessible {
     suspend fun parameters(): List<ClassId>
 
     /**
+     * @return parameters with names and annotations
+     */
+    suspend fun parameterIds(): List<MethodParameterId>
+
+    /**
      * list of annotations for this methods
      */
-    suspend fun annotations(): List<ClassId>
+    suspend fun annotations(): List<AnnotationId>
 
     /**
      * method description
@@ -219,11 +224,23 @@ interface FieldId : Accessible {
     /** field type */
     suspend fun type(): ClassId
 
-    /**
-     * list of annotations for this field
-     */
-    suspend fun annotations(): List<ClassId>
+    /** list of annotations for this field */
+    suspend fun annotations(): List<AnnotationId>
 
+}
+
+interface AnnotationId {
+    val visible: Boolean
+    suspend fun annotationClassId(): ClassId?
+    suspend fun values(): Map<String, Any?>
+
+    suspend fun matches(annotationClass: String): Boolean
+}
+
+interface MethodParameterId: Accessible {
+    val name: String?
+    suspend fun type(): ClassId
+    suspend fun annotations(): List<AnnotationId>
 }
 
 /**

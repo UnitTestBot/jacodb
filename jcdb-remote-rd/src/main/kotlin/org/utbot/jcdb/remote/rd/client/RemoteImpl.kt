@@ -12,9 +12,7 @@ import org.utbot.jcdb.impl.signature.FieldSignature
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
-import org.utbot.jcdb.impl.types.ClassInfo
-import org.utbot.jcdb.impl.types.FieldInfo
-import org.utbot.jcdb.impl.types.MethodInfo
+import org.utbot.jcdb.impl.types.*
 import java.io.File
 
 class RemoteClassId(
@@ -76,7 +74,7 @@ class RemoteClassId(
 
     private val lazyAnnotations = suspendableLazy {
         classInfo.annotations.map {
-            classpath.findClassOrNull(it.className) ?: it.className.throwClassNotFound()
+            AnnotationIdImpl(it, classpath)
         }
     }
 
@@ -160,8 +158,12 @@ class RemoteMethodId(
 
     private val lazyAnnotations = suspendableLazy {
         methodInfo.annotations.map {
-            val className = it.className
-            classpath.findClassOrNull(className) ?: className.throwClassNotFound()
+            AnnotationIdImpl(it, classpath)
+        }
+    }
+    private val lazyParamInfo = suspendableLazy {
+        methodInfo.parametersInfo.map {
+            MethodParameterIdImpl(it, classpath)
         }
     }
 
@@ -170,6 +172,8 @@ class RemoteMethodId(
     override suspend fun returnType() = lazyReturnType()
 
     override suspend fun parameters() = lazyParameters()
+
+    override suspend fun parameterIds() = lazyParamInfo()
 
     override suspend fun annotations() = lazyAnnotations()
 
@@ -214,7 +218,7 @@ class RemoteFieldId(
 
     private val lazyAnnotations = suspendableLazy {
         info.annotations.map {
-            classpath.findClassOrNull(it.className) ?: it.className.throwClassNotFound()
+            AnnotationIdImpl(it, classpath)
         }
     }
 

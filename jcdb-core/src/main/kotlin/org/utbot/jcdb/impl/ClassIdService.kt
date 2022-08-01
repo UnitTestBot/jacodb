@@ -9,7 +9,7 @@ import org.utbot.jcdb.impl.types.ClassIdImpl
 import org.utbot.jcdb.impl.types.MethodIdImpl
 import org.utbot.jcdb.impl.types.MethodInfo
 
-class ClassIdService(private val cp: ClasspathSet, private val classpathClassTree: ClasspathClassTree) {
+class ClassIdService(internal val cp: ClasspathSet, private val classpathClassTree: ClasspathClassTree) {
 
     fun toClassId(node: ClassNode?): ClassId? {
         node ?: return null

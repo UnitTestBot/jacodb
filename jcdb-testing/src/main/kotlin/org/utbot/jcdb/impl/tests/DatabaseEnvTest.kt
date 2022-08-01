@@ -40,7 +40,7 @@ abstract class DatabaseEnvTest {
 
         val annotations = clazz.annotations()
         assertTrue(annotations.size > 1)
-        assertNotNull(annotations.firstOrNull { it.name == Nested::class.java.name })
+        assertNotNull(annotations.firstOrNull { it.matches(Nested::class.java.name) })
 
         val fields = clazz.fields()
         assertEquals(2, fields.size)
@@ -48,10 +48,12 @@ abstract class DatabaseEnvTest {
         with(fields.first()) {
             assertEquals("foo", name)
             assertEquals("int", type().name)
+            assertFalse(isNullable())
         }
         with(fields[1]) {
             assertEquals("bar", name)
             assertEquals(String::class.java.name, type().name)
+            assertFalse(isNullable())
         }
 
         val methods = clazz.methods()

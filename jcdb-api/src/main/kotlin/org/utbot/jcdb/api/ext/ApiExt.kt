@@ -326,3 +326,17 @@ fun String.jcdbName(): String {
         else -> this
     }
 }
+
+const val NotNull = "org.jetbrains.annotations.NotNull"
+
+suspend fun MethodId.isNullable(): Boolean {
+    return annotations().any { it.matches(NotNull) }
+}
+
+suspend fun FieldId.isNullable(): Boolean {
+    return annotations().any { it.matches(NotNull) }
+}
+
+suspend fun MethodParameterId.isNullable(): Boolean {
+    return annotations().any { it.matches(NotNull) }
+}
