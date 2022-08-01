@@ -301,7 +301,7 @@ fun String.jvmName(): String {
             val elementName = substring(0, length - 2)
             "[" + elementName.jvmName()
         }
-        else -> this
+        else -> "L$this;"
     }
 }
 
