@@ -286,3 +286,43 @@ suspend fun ClassId.allMethods(): List<MethodId> {
 suspend fun ClassId.allConstructors(): List<MethodId> {
     return methods().filter { it.isConstructor }
 }
+
+fun String.jvmName(): String {
+    return when {
+        this == PredefinedPrimitives.boolean -> "Z"
+        this == PredefinedPrimitives.byte -> "B"
+        this == PredefinedPrimitives.char -> "C"
+        this == PredefinedPrimitives.short -> "S"
+        this == PredefinedPrimitives.int -> "I"
+        this == PredefinedPrimitives.long -> "L"
+        this == PredefinedPrimitives.float -> "F"
+        this == PredefinedPrimitives.double -> "D"
+        endsWith("[]") -> {
+            val elementName = substring(0, length - 2)
+            "[" + elementName.jvmName()
+        }
+        else -> this
+    }
+}
+
+fun String.jcdbName(): String {
+    return when {
+        this == "Z" -> PredefinedPrimitives.boolean
+        this == "B" -> PredefinedPrimitives.byte
+        this == "C" -> PredefinedPrimitives.char
+        this == "S" -> PredefinedPrimitives.short
+        this == "I" -> PredefinedPrimitives.int
+        this == "L" -> PredefinedPrimitives.long
+        this == "F" -> PredefinedPrimitives.float
+        this == "D" -> PredefinedPrimitives.double
+        this == "void" -> PredefinedPrimitives.void
+        startsWith("[") -> {
+            val elementName = substring(1, length)
+            elementName.jcdbName() + "[]"
+        }
+        startsWith("L") -> {
+            substring(1, length - 1)
+        }
+        else -> this
+    }
+}
