@@ -294,9 +294,10 @@ fun String.jvmName(): String {
         this == PredefinedPrimitives.char -> "C"
         this == PredefinedPrimitives.short -> "S"
         this == PredefinedPrimitives.int -> "I"
-        this == PredefinedPrimitives.long -> "L"
         this == PredefinedPrimitives.float -> "F"
+        this == PredefinedPrimitives.long -> "J"
         this == PredefinedPrimitives.double -> "D"
+        this == PredefinedPrimitives.void -> "V"
         endsWith("[]") -> {
             val elementName = substring(0, length - 2)
             "[" + elementName.jvmName()
@@ -312,10 +313,10 @@ fun String.jcdbName(): String {
         this == "C" -> PredefinedPrimitives.char
         this == "S" -> PredefinedPrimitives.short
         this == "I" -> PredefinedPrimitives.int
-        this == "L" -> PredefinedPrimitives.long
         this == "F" -> PredefinedPrimitives.float
+        this == "J" -> PredefinedPrimitives.long
         this == "D" -> PredefinedPrimitives.double
-        this == "void" -> PredefinedPrimitives.void
+        this == "V" -> PredefinedPrimitives.void
         startsWith("[") -> {
             val elementName = substring(1, length)
             elementName.jcdbName() + "[]"

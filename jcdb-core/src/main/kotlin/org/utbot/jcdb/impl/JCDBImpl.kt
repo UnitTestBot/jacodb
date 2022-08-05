@@ -1,7 +1,6 @@
 package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.*
-import mu.KLogging
 import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.fs.*
@@ -22,12 +21,6 @@ class JCDBImpl(
     private val settings: JCDBSettings,
     override val globalIdStore: InMemeoryGlobalIdsStore = InMemeoryGlobalIdsStore()
 ) : JCDB {
-
-    companion object : KLogging() {
-        private val parallelism: Int = System.getProperty("jcdb.parallelism")?.toInt() ?: (Runtime.getRuntime().availableProcessors() * 2)
-
-        private val ioDispatcher = Dispatchers.IO.limitedParallelism(parallelism)
-    }
 
     private val classTree = ClassTree()
     internal val javaRuntime = JavaRuntime(settings.jre)
@@ -89,7 +82,7 @@ class JCDBImpl(
         val actions = ConcurrentLinkedQueue<Pair<ByteCodeLocation, suspend () -> Unit>>()
         val locationStore = persistentEnvironment?.locationStore
 
-        val libraryTrees = withContext(ioDispatcher) {
+        val libraryTrees = withContext(Dispatchers.IO) {
             map { location ->
                 async {
                     val loader = location.loader()
