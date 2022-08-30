@@ -6,11 +6,21 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.impl.types.*
+import org.utbot.jcdb.impl.types.AnnotationInfo
+import org.utbot.jcdb.impl.types.AnnotationValue
+import org.utbot.jcdb.impl.types.AnnotationValues
+import org.utbot.jcdb.impl.types.ClassInfo
+import org.utbot.jcdb.impl.types.ClassRef
+import org.utbot.jcdb.impl.types.EnumRef
+import org.utbot.jcdb.impl.types.FieldInfo
+import org.utbot.jcdb.impl.types.MethodInfo
+import org.utbot.jcdb.impl.types.OuterClassRef
+import org.utbot.jcdb.impl.types.ParameterInfo
+import org.utbot.jcdb.impl.types.PrimitiveValue
 
 interface ByteCodeConverter {
 
-    fun ClassNode.asClassInfo() = ClassInfo(
+    fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
         name = Type.getObjectType(name).className,
         signature = signature,
         access = access,
@@ -25,7 +35,8 @@ interface ByteCodeConverter {
         interfaces = interfaces.map { Type.getObjectType(it).className }.toImmutableList(),
         methods = methods.map { it.asMethodInfo() }.toImmutableList(),
         fields = fields.map { it.asFieldInfo() }.toImmutableList(),
-        annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
+        annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
+        bytecode = bytecode
     )
 
     private fun ClassNode.outerClassName(): OuterClassRef? {

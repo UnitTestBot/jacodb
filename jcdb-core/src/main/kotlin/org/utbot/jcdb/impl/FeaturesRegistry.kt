@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl
 
+import kotlinx.coroutines.async
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ByteCodeLocationIndex
 import org.utbot.jcdb.api.Feature
@@ -7,7 +8,6 @@ import org.utbot.jcdb.api.GlobalIdsStore
 import org.utbot.jcdb.impl.index.index
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.tree.ClassNode
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
@@ -46,13 +46,16 @@ class FeaturesRegistry(
         }
         val index = builder.build(location)
         location.indexes[key] = index
-        val entity = persistence?.locationStore?.findOrNew(location)
+
+        val entity = SQLWriteScope.async {
+            persistence?.locationStore?.findOrNewTx(location)
+        }.await()
         if (entity != null) {
             val out = ByteArrayOutputStream()
             serialize(index, out)
-            persistence?.transactional {
-                entity.index(key, ByteArrayInputStream(out.toByteArray()))
-            }
+//            persistence?.transactional {
+//                entity.index(key, ByteArrayInputStream(out.toByteArray()))
+//            }
         }
     }
 

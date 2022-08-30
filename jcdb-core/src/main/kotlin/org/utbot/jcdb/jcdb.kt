@@ -45,6 +45,6 @@ suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
 
 private fun JCDBPersistentSettings.toEnvironment(): PersistentEnvironment? {
     return this.location?.let {
-        PersistentEnvironment(key, File(it))
+        PersistentEnvironment(key, File(it), clearOnStart)
     }
 }

@@ -9,6 +9,13 @@ public interface Creature {
     }
 
     interface Animal extends Creature {
+        class X {
+
+            class Z {
+
+            }
+
+        }
     }
 
     interface Fish extends Creature {

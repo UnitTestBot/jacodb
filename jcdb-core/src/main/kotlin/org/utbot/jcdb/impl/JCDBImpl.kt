@@ -1,14 +1,26 @@
 package org.utbot.jcdb.impl
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.utbot.jcdb.JCDBSettings
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.impl.fs.*
+import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.impl.fs.JavaRuntime
+import org.utbot.jcdb.impl.fs.asByteCodeLocation
+import org.utbot.jcdb.impl.fs.filterExisted
+import org.utbot.jcdb.impl.fs.load
 import org.utbot.jcdb.impl.index.InMemeoryGlobalIdsStore
+import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
-import org.utbot.jcdb.impl.storage.scheme.LocationEntity
 import org.utbot.jcdb.impl.tree.ClassTree
-import org.utbot.jcdb.impl.tree.LibraryClassTree
 import org.utbot.jcdb.impl.tree.RemoveLocationsVisitor
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -91,7 +103,9 @@ class JCDBImpl(
                         val (libraryTree, asyncJob) = loader.load(classTree)
                         actions.add(location to asyncJob)
                         locationsRegistry.addLocation(location)
-                        locationStore?.findOrNew(location)
+                        SQLWriteScope.launch {
+                            locationStore?.findOrNewTx(location)
+                        }
                         libraryTree
                     } else {
                         null
@@ -99,7 +113,9 @@ class JCDBImpl(
                 }
             }
         }.awaitAll().filterNotNull()
-        persistentEnvironment?.databaseStore?.save(this@JCDBImpl, false)
+        SQLWriteScope.launch {
+            persistentEnvironment?.save(this@JCDBImpl, false)
+        }
 
         val locationClasses = libraryTrees.map {
             it.location to it.pushInto(classTree).values
@@ -115,13 +131,15 @@ class JCDBImpl(
                     val addedClasses = locationClasses[location]
                     if (addedClasses != null) {
                         if (parentScope.isActive) {
-                            locationStore?.saveClasses(location, addedClasses.map { it.info() })
+                            SQLWriteScope.launch {
+                                locationStore?.saveClasses(location, addedClasses.map { it.info() })
+                            }
                             featureRegistry.index(location, addedClasses)
                         }
                     }
                 }
             }.joinAll()
-            persistentEnvironment?.globalIds?.sync(globalIdStore)
+//            persistentEnvironment?.globalIds?.sync(globalIdStore)
             backgroundJobs.remove(backgroundJobId)
         }
     }
@@ -173,49 +191,49 @@ class JCDBImpl(
         }
     }
 
-    internal suspend fun restoreDataFrom(locations: Map<LocationEntity, ByteCodeLocation>) {
+    internal suspend fun restoreDataFrom(locations: Map<BytecodeLocationEntity, ByteCodeLocation>) {
         val env = persistentEnvironment ?: return
-        env.globalIds.restore(globalIdStore)
-        val trees = withContext(Dispatchers.IO) {
-            locations.map { (entity, location) ->
-                async {
-                    env.transactional {
-                        val libraryClasses = LibraryClassTree(location)
-                        val classes = entity.classes
-                        classes.forEach { libraryClasses.addClass(LazyByteCodeSource(location, it)) }
-                        restoreIndexes(location, entity)
-                        libraryClasses
-                    }
-                }
-            }
-        }.awaitAll()
-        trees.forEach {
-            it.pushInto(classTree)
-        }
+//        env.globalIds.restore(globalIdStore)
+//        val trees = withContext(Dispatchers.IO) {
+//            locations.map { (entity, location) ->
+//                async {
+//                    transaction {
+//                        val libraryClasses = LibraryClassTree(location)
+//                        val classes = entity.classes
+//                        classes.forEach { libraryClasses.addClass(LazyByteCodeSource(location, it)) }
+//                        restoreIndexes(location, entity)
+//                        libraryClasses
+//                    }
+//                }
+//            }
+//        }.awaitAll()
+//        trees.forEach {
+//            it.pushInto(classTree)
+//        }
     }
 
-    private fun restoreIndexes(location: ByteCodeLocation, entity: LocationEntity) {
-        featureRegistry.features.forEach { it.restore(location, entity) }
-    }
+//    private fun restoreIndexes(location: ByteCodeLocation, entity: LocationEntity) {
+//        featureRegistry.features.forEach { it.restore(location, entity) }
+//    }
 
-    private fun <T, INDEX : ByteCodeLocationIndex<T>> Feature<T, INDEX>.restore(
-        location: ByteCodeLocation,
-        entity: LocationEntity
-    ) {
-        val data = entity.index(key)
-        if (data != null) {
-            val index = try {
-                deserialize(globalIdStore, location, data)
-            } catch (e: Exception) {
-                logger.warn(e) { "can't parse location" }
-                null
-            }
-            if (index != null) {
-                featureRegistry.append(location, this, index)
-            } else {
-                logger.warn("index ${key} is not restored for $location")
-            }
-        }
-    }
+//    private fun <T, INDEX : ByteCodeLocationIndex<T>> Feature<T, INDEX>.restore(
+//        location: ByteCodeLocation,
+//        entity: LocationEntity
+//    ) {
+//        val data = entity.index(key)
+//        if (data != null) {
+//            val index = try {
+//                deserialize(globalIdStore, location, data)
+//            } catch (e: Exception) {
+//                logger.warn(e) { "can't parse location" }
+//                null
+//            }
+//            if (index != null) {
+//                featureRegistry.append(location, this, index)
+//            } else {
+//                logger.warn("index ${key} is not restored for $location")
+//            }
+//        }
+//    }
 
 }

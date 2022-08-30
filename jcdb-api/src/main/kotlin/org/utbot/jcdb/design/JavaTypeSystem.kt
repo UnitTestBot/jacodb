@@ -1,52 +1,95 @@
 package org.utbot.jcdb.design
 
+import java.io.File
 
-// -------- symbols
-class JcSymbol(val location:JcDeclaration) {}
+// -------- symbols -> persisted
 
-class JcBytecodeLocation {
+interface JcBytecodeLocation {
     // cvc
     // jar or file
+    val jarOrFolder: File
+    val cvc: String
 }
 
-class JcDeclaration {
+interface JcDeclaration {
+    val location: JcBytecodeLocation
+    val path: String
     // bytecodeLocation
     // offset
 }
 
-class JcClassOrInterface {} //Symbol
-//JcParametrizedType getType()
-
-class JcParameter {
-//type JcType
+interface JcSymbol {
+    val location: JcDeclaration
 }
 
-class JcMethod {
+interface JcClassOrInterface : JcSymbol {
+    val annotations: List<JcAnnotation>
+    val name: String
+}
+
+interface JcParameter {
+    val type: JcType
+    val annotations: List<JcAnnotation>
+}
+
+interface JcAnnotation {
+
+    val visible: Boolean
+    val className: String
+    val jcClass: JcClassOrInterface?
+
+    val values: Map<String, Any?>
+
+}
+
+interface JcMethod : JcSymbol {
     //returnType: JcType
     //parameters: JcParameter
     //declared exceptions: JcExceptionTypes
-} //Symbol
 
-class JcField {} //Symbol
+    /** method name */
+    val name: String
+
+    /** reference to class */
+    val jcClass: JcClassOrInterface
+
+    val returnType: JcType
+
+    val parameters: List<JcParameter>
+
+    val declaredExceptions: List<JcClassOrInterface>
+
+}
+
+interface JcField : JcSymbol {
+    val jcClass: JcClassOrInterface
+    val name: String
+    val type: JcType
+}
 
 // types ---------------------
 
-
+// dynamic data
 open class JcType
 
 open class JcPrimitiveType : JcType()
 
+abstract class JcRefType : JcType() {
+    val jcClass: JcClassOrInterface get() = TODO()
+}
 
-open class JcRefType : JcType()
-
-open class JcArrayType() : JcRefType()
-
+open class JcArrayType() : JcRefType() {
+    val elementType: JcType get() = TODO()
+}
 
 open class JcParametrizedType : JcRefType() { //List<String> -> List
     // T1 -> S1, T2 -> S2
+    val parameterTypes: List<JcType> get() = TODO()
 }
 
-open class TypeVariable() : JcRefType()
+open class JcClassType : JcRefType()
+
+open class JcTypeVariable() : JcRefType()
 
 //typeBound?
 
@@ -75,11 +118,3 @@ open class TypeVariable() : JcRefType()
 //onLocRemoved:
 
 // classpath : {loc1, loc2, loc3}   classpath: {loc1, loc3}
-
-
-
-
-
-
-
-

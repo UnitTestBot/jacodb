@@ -1,19 +1,62 @@
 package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
-import org.utbot.jcdb.impl.index.ReversedUsages
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.junit.jupiter.api.Assertions
+import org.utbot.jcdb.impl.storage.ClassEntity
+import org.utbot.jcdb.impl.storage.FieldEntity
+import org.utbot.jcdb.impl.storage.MethodEntity
+import org.utbot.jcdb.impl.storage.MethodParameterEntity
 import org.utbot.jcdb.jcdb
-import java.lang.management.ManagementFactory
+import java.io.File
 
-
-val db = runBlocking {
-    jcdb {
-        installFeatures(ReversedUsages)
-        useProcessJavaRuntime()
-    }.also {
-        it.awaitBackgroundJobs()
+val allClasspath: List<File>
+    get() {
+        return classpath.map { File(it) }
     }
-}
+
+val guavaLib: File
+    get() {
+        val guavaUrl = classpath.first { it.contains("guava-31.1-jre.jar") }
+        return File(guavaUrl).also {
+            Assertions.assertTrue(it.isFile && it.exists())
+        }
+    }
+
+val allJars: List<File>
+    get() {
+        return classpath.filter { it.endsWith(".jar") }.map { File(it) }
+    }
+
+
+private val classpath: List<String>
+    get() {
+        val classpath = System.getProperty("java.class.path")
+        return classpath.split(File.pathSeparatorChar).toList()
+    }
+
+fun main() {
+    var start = System.currentTimeMillis()
+    runBlocking {
+        jcdb {
+            useProcessJavaRuntime()
+            predefinedDirOrJars = allClasspath
+            persistent {
+                location = "D:\\work\\sqlite-db"
+            }
+        }.also {
+            println("AWAITING db took ${System.currentTimeMillis() - start}ms")
+            start = System.currentTimeMillis()
+            it.awaitBackgroundJobs()
+            println("AWAITING jobs took ${System.currentTimeMillis() - start}ms")
+        }
+        transaction {
+            println("Classes " + ClassEntity.count())
+            println("Methods " + MethodEntity.count())
+            println("Methods params " + MethodParameterEntity.count())
+            println("Field " + FieldEntity.count())
+        }
+    }
 
 
 fun main() {

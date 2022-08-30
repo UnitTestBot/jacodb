@@ -6,4 +6,7 @@ dependencies {
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-collections-immutable-jvm', version: collections_version
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: coroutines_version
 
+    api group: 'org.jetbrains.exposed', name: 'exposed-core', version: exposedVersion
+    api group: 'org.jetbrains.exposed', name: 'exposed-dao', version: exposedVersion
+    api group: 'org.jetbrains.exposed', name: 'exposed-jdbc', version: exposedVersion
 }
