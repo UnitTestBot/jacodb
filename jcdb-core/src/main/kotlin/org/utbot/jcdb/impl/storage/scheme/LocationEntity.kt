@@ -15,7 +15,6 @@ import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
 import org.utbot.jcdb.impl.storage.BytecodeLocations
 import org.utbot.jcdb.impl.storage.ClassInnerClasses
 import org.utbot.jcdb.impl.storage.ClassInterfaces
-import org.utbot.jcdb.impl.storage.ClassNames
 import org.utbot.jcdb.impl.storage.Classes
 import org.utbot.jcdb.impl.storage.Fields
 import org.utbot.jcdb.impl.storage.MethodParameters
@@ -23,6 +22,7 @@ import org.utbot.jcdb.impl.storage.Methods
 import org.utbot.jcdb.impl.storage.OuterClasses
 import org.utbot.jcdb.impl.storage.PackageEntity
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
+import org.utbot.jcdb.impl.storage.Symbols
 import org.utbot.jcdb.impl.types.ClassInfo
 
 val classNameCache = HashMap<String, EntityID<Int>>()
@@ -155,8 +155,8 @@ class LocationStore(private val dbStore: PersistentEnvironment) {
 
     private fun String.findClassName(classCache: HashMap<String, EntityID<Int>>): EntityID<Int> {
         return classCache.getOrPut(this) {
-            ClassNames.select { ClassNames.name eq this@findClassName }.firstOrNull()?.get(ClassNames.id)
-                ?: ClassNames.insertAndGetId {
+            Symbols.select { Symbols.name eq this@findClassName }.firstOrNull()?.get(Symbols.id)
+                ?: Symbols.insertAndGetId {
                     it[name] = this@findClassName
                 }
         }
