@@ -1,6 +1,5 @@
 package org.utbot.jcdb.impl
 
-import kotlinx.coroutines.async
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ByteCodeLocationIndex
 import org.utbot.jcdb.api.Feature
@@ -47,9 +46,9 @@ class FeaturesRegistry(
         val index = builder.build(location)
         location.indexes[key] = index
 
-        val entity = SQLWriteScope.async {
+        val entity = SQL.write {
             persistence?.locationStore?.findOrNewTx(location)
-        }.await()
+        }
         if (entity != null) {
             val out = ByteArrayOutputStream()
             serialize(index, out)

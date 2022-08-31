@@ -103,7 +103,7 @@ class JCDBImpl(
                         val (libraryTree, asyncJob) = loader.load(classTree)
                         actions.add(location to asyncJob)
                         locationsRegistry.addLocation(location)
-                        SQLWriteScope.launch {
+                        SQL.write {
                             locationStore?.findOrNewTx(location)
                         }
                         libraryTree
@@ -113,7 +113,7 @@ class JCDBImpl(
                 }
             }
         }.awaitAll().filterNotNull()
-        SQLWriteScope.launch {
+        SQL.write {
             persistentEnvironment?.save(this@JCDBImpl, false)
         }
 
@@ -131,8 +131,9 @@ class JCDBImpl(
                     val addedClasses = locationClasses[location]
                     if (addedClasses != null) {
                         if (parentScope.isActive) {
-                            SQLWriteScope.launch {
-                                locationStore?.saveClasses(location, addedClasses.map { it.info() })
+                            val classes = addedClasses.map { it.info() }
+                            SQL.write {
+                                locationStore?.saveClasses(location, classes)
                             }
                             featureRegistry.index(location, addedClasses)
                         }
