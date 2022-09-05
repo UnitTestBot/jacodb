@@ -5,13 +5,17 @@ import kotlinx.collections.immutable.toImmutableMap
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.index.*
+import org.utbot.jcdb.impl.index.Hierarchy
+import org.utbot.jcdb.impl.index.HierarchyIndex
+import org.utbot.jcdb.impl.index.InMemoryGlobalIdsStore
+import org.utbot.jcdb.impl.index.ReversedUsageIndex
+import org.utbot.jcdb.impl.index.ReversedUsages
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class IndexSerializationTest : LibrariesMixin {
 
-    val globalIds = InMemeoryGlobalIdsStore()
+    val globalIds = InMemoryGlobalIdsStore()
 
     @Test
     fun `hierarchy index serialization`() {

@@ -8,31 +8,29 @@ import java.io.OutputStream
 /**
  * index builder
  */
-interface ByteCodeLocationIndexBuilder<T, INDEX: ByteCodeLocationIndex<T>> {
+interface ByteCodeIndexBuilder<T, INDEX : Index<T>> {
 
     suspend fun index(classNode: ClassNode)
 
     suspend fun index(classNode: ClassNode, methodNode: MethodNode)
 
-    fun build(location: ByteCodeLocation): INDEX
+    fun build(): INDEX
 
 }
 
-interface ByteCodeLocationIndex<T> {
-
-    val location: ByteCodeLocation
+interface Index<T> {
 
     suspend fun query(term: String): Sequence<T>
 }
 
-interface Feature<T, INDEX: ByteCodeLocationIndex<T>> {
+interface Feature<T, INDEX : Index<T>> {
 
     val key: String
 
-    fun newBuilder(globalIdsStore: GlobalIdsStore) : ByteCodeLocationIndexBuilder<T, INDEX>
+    fun newBuilder(): ByteCodeIndexBuilder<T, INDEX>
 
     fun serialize(index: INDEX, out: OutputStream)
 
-    fun deserialize(globalIdsStore: GlobalIdsStore, location: ByteCodeLocation, stream: InputStream): INDEX?
+    fun deserialize(stream: InputStream): INDEX?
 
 }

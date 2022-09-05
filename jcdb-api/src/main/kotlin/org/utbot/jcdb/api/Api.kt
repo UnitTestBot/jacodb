@@ -367,6 +367,11 @@ interface JCDB : Closeable {
     suspend fun refresh()
 
     /**
+     * rebuilds indexes
+     */
+    suspend fun rebuildIndexes()
+
+    /**
      * watch file system for changes and refreshes the state of database in case loaded resources and resources from
      * file systems are different.
      *

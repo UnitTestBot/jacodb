@@ -17,7 +17,7 @@ import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.filterExisted
 import org.utbot.jcdb.impl.fs.load
-import org.utbot.jcdb.impl.index.InMemeoryGlobalIdsStore
+import org.utbot.jcdb.impl.index.InMemoryGlobalIdsStore
 import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
 import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.tree.ClassTree
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class JCDBImpl(
     private val persistentEnvironment: PersistentEnvironment? = null,
     private val settings: JCDBSettings,
-    override val globalIdStore: InMemeoryGlobalIdsStore = InMemeoryGlobalIdsStore()
+    override val globalIdStore: InMemoryGlobalIdsStore = InMemoryGlobalIdsStore()
 ) : JCDB {
 
     private val classTree = ClassTree()
@@ -103,7 +103,7 @@ class JCDBImpl(
                         val (libraryTree, asyncJob) = loader.load(classTree)
                         actions.add(location to asyncJob)
                         locationsRegistry.addLocation(location)
-                        SQL.write {
+                        sql {
                             locationStore?.findOrNewTx(location)
                         }
                         libraryTree
@@ -113,8 +113,8 @@ class JCDBImpl(
                 }
             }
         }.awaitAll().filterNotNull()
-        SQL.write {
-            persistentEnvironment?.save(this@JCDBImpl, false)
+        sql {
+            persistentEnvironment?.save(this@JCDBImpl)
         }
 
         val locationClasses = libraryTrees.map {
@@ -132,7 +132,7 @@ class JCDBImpl(
                     if (addedClasses != null) {
                         if (parentScope.isActive) {
                             val classes = addedClasses.map { it.info() }
-                            SQL.write {
+                            sql {
                                 locationStore?.saveClasses(location, classes)
                             }
                             featureRegistry.index(location, addedClasses)
@@ -140,7 +140,6 @@ class JCDBImpl(
                     }
                 }
             }.joinAll()
-//            persistentEnvironment?.globalIds?.sync(globalIdStore)
             backgroundJobs.remove(backgroundJobId)
         }
     }
@@ -152,6 +151,11 @@ class JCDBImpl(
         }
         val outdatedLocations = locationsRegistry.cleanup()
         classTree.visit(RemoveLocationsVisitor(outdatedLocations))
+    }
+
+    override suspend fun rebuildIndexes() {
+        awaitBackgroundJobs()
+        // todo implement me
     }
 
     override fun watchFileSystemChanges(): JCDB {

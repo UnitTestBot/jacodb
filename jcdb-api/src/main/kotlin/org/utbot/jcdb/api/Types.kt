@@ -1,12 +1,13 @@
 package org.utbot.jcdb.api
 
+import org.objectweb.asm.tree.MethodNode
+
 interface JcTypeField {
     val name: String
     val type: JcType
 
-    val declaringClass: JcClassOrInterface
-    val declaringType: JcType
-
+    val jcClass: JcClassOrInterface
+    val jcType: JcType
 }
 
 interface JcTypeMethod {
@@ -16,9 +17,9 @@ interface JcTypeMethod {
 
     val method: JcMethod
 
-    suspend fun body() // something that matches this type
+    suspend fun body(): MethodNode
 
-    val declaringClass: JcClassOrInterface
+    val jcClass: JcClassOrInterface
     val declaringType: JcType
 }
 
@@ -65,18 +66,18 @@ interface JcArrayType : JcRefType {
 // -----------
 // class A<T> -> JcParametrizedType(JcTypeVariable())
 interface JcParametrizedType : JcRefType {
-    val parameterTypes: List<JcType>
+    val parameterTypes: List<JcRefType>
 }
 
 // java.lang.String -> JcClassType()
 interface JcClassType : JcRefType {
-    val superType: JcType
-    val interfaces: JcType
+    val superType: JcRefType
+    val interfaces: JcRefType
 
-    val outerType: JcType?
+    val outerType: JcRefType?
     val outerMethod: JcTypeMethod?
 
-    val innerTypes: List<JcClassType>
+    val innerTypes: List<JcRefType>
 }
 
 // -----------

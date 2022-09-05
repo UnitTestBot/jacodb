@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl.index
 
-import org.utbot.jcdb.api.ByteCodeLocationIndexBuilder
+import org.utbot.jcdb.api.ByteCodeIndexBuilder
 import org.utbot.jcdb.api.GlobalIdsStore
 import org.utbot.jcdb.impl.tree.ClassNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-suspend fun index(node: ClassNode, builder: ByteCodeLocationIndexBuilder<*, *>) {
+suspend fun index(node: ClassNode, builder: ByteCodeIndexBuilder<*, *>) {
     val asmNode = node.fullByteCode()
     builder.index(asmNode)
     asmNode.methods.forEach {
@@ -15,7 +15,7 @@ suspend fun index(node: ClassNode, builder: ByteCodeLocationIndexBuilder<*, *>) 
 }
 
 
-class InMemeoryGlobalIdsStore : GlobalIdsStore {
+class InMemoryGlobalIdsStore : GlobalIdsStore {
 
     private val counter = AtomicInteger()
 
@@ -37,7 +37,7 @@ class InMemeoryGlobalIdsStore : GlobalIdsStore {
     }
 
     override suspend fun getName(id: Int): String? {
-        return reversed.get(id)
+        return reversed[id]
     }
 
     fun all(since: Int, to: Int): Map<Int, String> {
@@ -54,8 +54,8 @@ class InMemeoryGlobalIdsStore : GlobalIdsStore {
     }
 
     fun append(key: Int, value: String) {
-        all.put(value, key)
-        reversed.put(key, value)
+        all[value] = key
+        reversed[key] = value
         val current = counter.get()
         if (key > current) {
             counter.set(key)
