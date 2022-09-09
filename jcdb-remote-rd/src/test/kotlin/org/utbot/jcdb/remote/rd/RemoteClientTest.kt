@@ -3,7 +3,7 @@ package org.utbot.jcdb.remote.rd
 import com.jetbrains.rd.framework.util.NetUtils
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.impl.LibrariesMixin
@@ -40,7 +40,7 @@ class RemoteClientTest: DatabaseEnvTest() {
         }
     }
 
-    override val cp: ClasspathSet
+    override val cp: Classpath
         get() = remoteCp
 
     override val hierarchyExt: HierarchyExtension

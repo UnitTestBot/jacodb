@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.Raw
 
-open class MethodSignature(cp: ClasspathSet) : Signature<MethodResolution>(cp) {
+open class MethodSignature(cp: Classpath) : Signature<MethodResolution>(cp) {
 
     private val parameterTypes = ArrayList<GenericType>()
     private val exceptionTypes = ArrayList<GenericType>()
@@ -54,7 +54,7 @@ open class MethodSignature(cp: ClasspathSet) : Signature<MethodResolution>(cp) {
     }
 
     companion object {
-        fun of(signature: String?, cp: ClasspathSet): MethodResolution {
+        fun of(signature: String?, cp: Classpath): MethodResolution {
             signature ?: return Raw
             return try {
                 of(signature, MethodSignature(cp))

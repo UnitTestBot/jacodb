@@ -3,7 +3,6 @@ package org.utbot.jcdb
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
-import org.utbot.jcdb.impl.index.Hierarchy
 import java.io.File
 
 /**
@@ -27,7 +26,7 @@ class JCDBSettings {
     /** feature to add */
     var features: List<Feature<*, *>> = emptyList()
 
-    val fullFeatures get() = listOf(Hierarchy) + features
+    val fullFeatures get() = features
 
     /** builder for persistent settings */
     fun persistent(settings: (JCDBPersistentSettings.() -> Unit) = {}) {

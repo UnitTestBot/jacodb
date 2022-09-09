@@ -2,7 +2,7 @@ package org.utbot.jcdb.impl.tree
 
 import org.utbot.jcdb.impl.fs.ClassByteCodeSource
 
-abstract class AbstractClassTree<PACKAGE_NODE : AbstractNode<PACKAGE_NODE>, CLASS_NODE: AbstractNode<PACKAGE_NODE>> {
+abstract class AbstractClassTree<PACKAGE_NODE : AbstractNode<PACKAGE_NODE>, CLASS_NODE : AbstractNode<PACKAGE_NODE>> {
 
     protected abstract val rootNode: PACKAGE_NODE
 

@@ -1,14 +1,14 @@
 package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.AnnotationId
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.impl.SuspendableLazy
 import org.utbot.jcdb.impl.suspendableLazy
 
 class AnnotationIdImpl(
     private val info: AnnotationInfo,
-    private val classpath: ClasspathSet
+    private val classpath: Classpath
 ) : AnnotationId {
 
     private val lazyAnnotationClass = suspendableLazy {

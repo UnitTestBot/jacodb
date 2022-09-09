@@ -30,7 +30,7 @@ interface ClassId : Accessible {
     /** simple class name */
     val simpleName: String
 
-    val classpath: ClasspathSet
+    val classpath: Classpath
 
     suspend fun byteCode(): ClassNode?
 
@@ -154,7 +154,7 @@ interface ByteCodeLoader {
 interface ClassLoadingContainer : Closeable {
 
     /** map name -> resources */
-    val classesToLoad: Map<String, InputStream?>
+    val classesToLoad: Map<String, InputStream>
 
     override fun close() {
     }
@@ -249,7 +249,7 @@ interface MethodParameterId: Accessible {
  * Classpath **must be** closed when it's not needed anymore.
  * This will release references from database to possibly outdated libraries
  */
-interface ClasspathSet : Closeable {
+interface Classpath : Closeable {
 
     /** locations of this classpath */
     val locations: List<ByteCodeLocation>
@@ -263,7 +263,7 @@ interface ClasspathSet : Closeable {
      *
      * @return new instance with refreshed locations
      */
-    suspend fun refreshed(closeOld: Boolean = true): ClasspathSet
+    suspend fun refreshed(closeOld: Boolean = true): Classpath
 
     /**
      *  @param name full name of the class
@@ -292,7 +292,7 @@ interface ClasspathSet : Closeable {
      * @param key index key
      * @param term term for index
      */
-    suspend fun <T: Serializable> query(key: String, term: String): List<T>
+    suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, term: REQ): List<T>
 
     /**
      * query index by specified term
@@ -301,7 +301,7 @@ interface ClasspathSet : Closeable {
      * @param location to limit location
      * @param term term for index
      */
-    suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T>
+    suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, location: ByteCodeLocation, term: REQ): List<T>
 
 }
 
@@ -326,7 +326,7 @@ enum class FieldUsageMode {
  */
 interface JCDB : Closeable {
 
-    val globalIdStore: GlobalIdsStore
+//    val symbolIdStorage: SymbolIdsStorage
 
     /**
      * create classpath instance
@@ -334,7 +334,7 @@ interface JCDB : Closeable {
      * @param dirOrJars list of byte-code resources to be processed and included in classpath
      * @return new classpath instance associated with specified byte-code locations
      */
-    suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet
+    suspend fun classpathSet(dirOrJars: List<File>): Classpath
 
     /**
      * process and index single byte-code resource
@@ -386,16 +386,14 @@ interface JCDB : Closeable {
 }
 
 /**
- * database store for storing indexes mappings between ids -> name
+ * store for storing symbols ids -> name
  */
-interface GlobalIdsStore {
-    /**
-     * get unique id for this string
-     */
-    suspend fun getId(name: String): Int
+interface SymbolIdsStorage {
+
+    suspend fun findOrNull(name: String): Int?
 
     /**
      * get name based on id
      */
-    suspend fun getName(id: Int): String?
+    suspend fun findNameOrNull(id: Int): String?
 }

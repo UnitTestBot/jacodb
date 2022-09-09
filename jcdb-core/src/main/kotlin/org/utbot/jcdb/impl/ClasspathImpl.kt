@@ -2,7 +2,8 @@ package org.utbot.jcdb.impl
 
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.IndexRequest
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.tree.ClassTree
@@ -10,19 +11,19 @@ import org.utbot.jcdb.impl.tree.ClasspathClassTree
 import org.utbot.jcdb.impl.types.ArrayClassIdImpl
 import java.io.Serializable
 
-class ClasspathSetImpl(
+class ClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     private val featuresRegistry: FeaturesRegistry,
     override val db: JCDBImpl,
     classTree: ClassTree
-) : ClasspathSet {
+) : Classpath {
 
     override val locations: List<ByteCodeLocation> = locationsRegistrySnapshot.locations
 
     private val classpathClassTree = ClasspathClassTree(classTree, locationsRegistrySnapshot)
     private val classIdService = ClassIdService(this, classpathClassTree)
 
-    override suspend fun refreshed(closeOld: Boolean): ClasspathSet {
+    override suspend fun refreshed(closeOld: Boolean): Classpath {
         return db.classpathSet(locationsRegistrySnapshot.locations).also {
             if (closeOld) {
                 close()
@@ -52,14 +53,14 @@ class ClasspathSetImpl(
         return hierarchyExt.findSubClasses(classId, allHierarchy)
     }
 
-    override suspend fun <T: Serializable> query(key: String, term: String): List<T> {
+    override suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, term: REQ): List<T> {
         db.awaitBackgroundJobs()
-        return locations.flatMap { featuresRegistry.findIndex<T>(key, it)?.query(term).orEmpty() }
+        return featuresRegistry.findIndex<T, REQ>(key)?.query(term).orEmpty().toList()
     }
 
-    override suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T> {
+    override suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, location: ByteCodeLocation, term: REQ): List<T> {
         db.awaitBackgroundJobs()
-        return featuresRegistry.findIndex<T>(key, location)?.query(term).orEmpty().toList()
+        return featuresRegistry.findIndex<T, REQ>(key)?.query(term).orEmpty().toList()
     }
 
     override fun close() {

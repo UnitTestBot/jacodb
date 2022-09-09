@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Raw
 import org.utbot.jcdb.api.TypeResolution
 
-class TypeSignature(cp: ClasspathSet) : Signature<TypeResolution>(cp) {
+class TypeSignature(cp: Classpath) : Signature<TypeResolution>(cp) {
 
     private val interfaceTypes = ArrayList<GenericType>()
     private lateinit var superClass: GenericType
@@ -40,7 +40,7 @@ class TypeSignature(cp: ClasspathSet) : Signature<TypeResolution>(cp) {
 
 
     companion object {
-        fun of(signature: String?, cp: ClasspathSet): TypeResolution {
+        fun of(signature: String?, cp: Classpath): TypeResolution {
             return try {
                 if (signature == null) Raw else of(signature, TypeSignature(cp))
             } catch (ignored: RuntimeException) {

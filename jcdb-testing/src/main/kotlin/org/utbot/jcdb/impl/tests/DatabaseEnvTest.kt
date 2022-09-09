@@ -2,15 +2,40 @@ package org.utbot.jcdb.impl.tests
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ArrayClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.allConstructors
+import org.utbot.jcdb.api.allMethods
+import org.utbot.jcdb.api.byte
+import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.api.ext.findSubClasses
-import org.utbot.jcdb.impl.*
+import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.isEnum
+import org.utbot.jcdb.api.isFinal
+import org.utbot.jcdb.api.isInterface
+import org.utbot.jcdb.api.isLocal
+import org.utbot.jcdb.api.isMemberClass
+import org.utbot.jcdb.api.isNullable
+import org.utbot.jcdb.api.isPrivate
+import org.utbot.jcdb.api.isPublic
+import org.utbot.jcdb.impl.A
+import org.utbot.jcdb.impl.B
+import org.utbot.jcdb.impl.Bar
+import org.utbot.jcdb.impl.C
+import org.utbot.jcdb.impl.D
+import org.utbot.jcdb.impl.Enums
+import org.utbot.jcdb.impl.Foo
+import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
@@ -22,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 abstract class DatabaseEnvTest {
 
-    abstract val cp: ClasspathSet
+    abstract val cp: Classpath
     abstract val hierarchyExt: HierarchyExtension
 
     @AfterEach

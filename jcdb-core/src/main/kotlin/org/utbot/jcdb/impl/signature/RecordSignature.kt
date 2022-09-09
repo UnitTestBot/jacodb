@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureReader
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Raw
 import org.utbot.jcdb.api.RecordComponentResolution
 
-class RecordSignature(private val cp: ClasspathSet) : GenericTypeRegistrant {
+class RecordSignature(private val cp: Classpath) : GenericTypeRegistrant {
 
     private lateinit var recordComponentType: GenericType
 
@@ -19,7 +19,7 @@ class RecordSignature(private val cp: ClasspathSet) : GenericTypeRegistrant {
     }
 
     companion object {
-        fun of(signature: String?, cp: ClasspathSet): RecordComponentResolution {
+        fun of(signature: String?, cp: Classpath): RecordComponentResolution {
             signature ?: return Raw
             val signatureReader = SignatureReader(signature)
             val visitor = RecordSignature(cp)

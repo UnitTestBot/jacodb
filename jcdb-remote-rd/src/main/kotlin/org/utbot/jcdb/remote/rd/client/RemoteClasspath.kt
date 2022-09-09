@@ -4,12 +4,25 @@ import com.jetbrains.rd.framework.impl.RdCall
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.impl.types.*
-import org.utbot.jcdb.remote.rd.*
+import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.impl.types.ArrayClassIdImpl
+import org.utbot.jcdb.impl.types.ArrayClassInfo
+import org.utbot.jcdb.impl.types.ClassInfo
+import org.utbot.jcdb.impl.types.ClassInfoContainer
+import org.utbot.jcdb.impl.types.PredefinedClassInfo
+import org.utbot.jcdb.remote.rd.CallIndexReq
+import org.utbot.jcdb.remote.rd.CallIndexRes
+import org.utbot.jcdb.remote.rd.GetClassReq
+import org.utbot.jcdb.remote.rd.GetClassRes
+import org.utbot.jcdb.remote.rd.GetSubClassesReq
+import org.utbot.jcdb.remote.rd.GetSubClassesRes
 import java.io.Serializable
 
-class RemoteClasspathSet(
+class RemoteClasspath(
     private val key: String,
     override val db: JCDB,
     override val locations: List<ByteCodeLocation>,
@@ -17,7 +30,7 @@ class RemoteClasspathSet(
     private val close: RdCall<String, Unit>,
     private val getSubClasses: RdCall<GetSubClassesReq, GetSubClassesRes>,
     private val callIndex: RdCall<CallIndexReq, CallIndexRes>
-) : ClasspathSet {
+) : Classpath {
 
     override suspend fun refreshed(closeOld: Boolean) = this
 
@@ -51,8 +64,8 @@ class RemoteClasspathSet(
     private fun ClassInfoContainer.asClassId(location: String?): ClassId {
         return when (this) {
             is ArrayClassInfo -> ArrayClassIdImpl(elementInfo.asClassId(location))
-            is ClassInfo -> RemoteClassId(location, this, this@RemoteClasspathSet)
-            is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspathSet)
+            is ClassInfo -> RemoteClassId(location, this, this@RemoteClasspath)
+            is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspath)
                 ?: throw IllegalStateException("unsupported predefined name $name")
             else -> throw IllegalStateException("unsupported class info container type ${this.javaClass.name}")
         }

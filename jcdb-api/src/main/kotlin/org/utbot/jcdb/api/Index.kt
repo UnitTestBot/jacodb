@@ -2,13 +2,11 @@ package org.utbot.jcdb.api
 
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
-import java.io.InputStream
-import java.io.OutputStream
 
 /**
  * index builder
  */
-interface ByteCodeIndexBuilder<T, INDEX : Index<T>> {
+interface ByteCodeIndexBuilder<T, INDEX : Index<T, *>> {
 
     suspend fun index(classNode: ClassNode)
 
@@ -18,19 +16,21 @@ interface ByteCodeIndexBuilder<T, INDEX : Index<T>> {
 
 }
 
-interface Index<T> {
+interface Index<T, REQ: IndexRequest> {
 
-    suspend fun query(term: String): Sequence<T>
+    suspend fun query(req: REQ): Sequence<T>
 }
 
-interface Feature<T, INDEX : Index<T>> {
+interface IndexRequest
+
+interface Feature<T, INDEX : Index<T, *>> {
 
     val key: String
 
-    fun newBuilder(): ByteCodeIndexBuilder<T, INDEX>
+    fun newBuilder(location: ByteCodeLocation): ByteCodeIndexBuilder<T, INDEX>
 
-    fun serialize(index: INDEX, out: OutputStream)
+    fun persist(index: INDEX)
 
-    fun deserialize(stream: InputStream): INDEX?
+    fun onRestore(): INDEX?
 
 }

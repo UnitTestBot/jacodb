@@ -7,11 +7,21 @@ import com.jetbrains.rd.framework.SocketWire
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.LocationScope
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.remote.rd.*
+import org.utbot.jcdb.remote.rd.CallIndexResource
+import org.utbot.jcdb.remote.rd.CloseClasspathResource
+import org.utbot.jcdb.remote.rd.GetClassResource
+import org.utbot.jcdb.remote.rd.GetClasspathReq
+import org.utbot.jcdb.remote.rd.GetClasspathResource
+import org.utbot.jcdb.remote.rd.GetGlobalIdResource
+import org.utbot.jcdb.remote.rd.GetGlobalNameResource
+import org.utbot.jcdb.remote.rd.GetSubClassesResource
+import org.utbot.jcdb.remote.rd.LoadLocationsResource
+import org.utbot.jcdb.remote.rd.StopServerResource
+import org.utbot.jcdb.remote.rd.serializers
 import java.io.File
 
 class RemoteJCDB(port: Int) : JCDB {
@@ -43,11 +53,11 @@ class RemoteJCDB(port: Int) : JCDB {
         scheduler.flush()
     }
 
-    override val globalIdStore = RemoteGlobalIdsStore(getName, getId)
+    override val symbolIdStorage = RemoteSymbolIdsStorage(getName, getId)
 
-    override suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet {
+    override suspend fun classpathSet(dirOrJars: List<File>): Classpath {
         val resp = getClasspath.startSuspending(GetClasspathReq(dirOrJars.map { it.absolutePath }.sorted()))
-        return RemoteClasspathSet(
+        return RemoteClasspath(
             resp.key,
             locations = resp.locations.mapIndexed { index, path ->
                 File(path).asByteCodeLocation(isRuntime = resp.scopes.get(index) == LocationScope.RUNTIME)

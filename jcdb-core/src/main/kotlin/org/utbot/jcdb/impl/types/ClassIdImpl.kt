@@ -1,13 +1,19 @@
 package org.utbot.jcdb.impl.types
 
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.TypeResolution
+import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.tree.ClassNode
 
 class ClassIdImpl(
-    override val classpath: ClasspathSet,
+    override val classpath: Classpath,
     private val node: ClassNode,
     private val classIdService: ClassIdService
 ) : ClassId {

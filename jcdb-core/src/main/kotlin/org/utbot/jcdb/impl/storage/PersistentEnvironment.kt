@@ -10,7 +10,6 @@ import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.LocationScope
 import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.storage.scheme.LocationStore
 import java.io.Closeable
 import java.io.File
 

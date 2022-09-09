@@ -1,18 +1,18 @@
 package org.utbot.jcdb.remote.rd.client
 
 import com.jetbrains.rd.framework.impl.RdCall
-import org.utbot.jcdb.api.GlobalIdsStore
+import org.utbot.jcdb.api.SymbolIdsStorage
 
-class RemoteGlobalIdsStore(
+class RemoteSymbolIdsStorage(
     private val getName: RdCall<Int, String?>,
     private val getId: RdCall<String, Int>
-) : GlobalIdsStore {
+) : SymbolIdsStorage {
 
-    override suspend fun getId(name: String): Int {
+    override suspend fun findOrNewId(name: String): Int {
         return getId.startSuspending(name)
     }
 
-    override suspend fun getName(id: Int): String? {
+    override suspend fun findNameOrNull(id: Int): String? {
         return getName.startSuspending(id)
     }
 }

@@ -1,11 +1,11 @@
 package org.utbot.jcdb.impl.types
 
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.MethodParameterId
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.suspendableLazy
 
-class MethodParameterIdImpl(private val info: ParameterInfo, private val classpath: ClasspathSet) :
+class MethodParameterIdImpl(private val info: ParameterInfo, private val classpath: Classpath) :
     MethodParameterId {
 
     override suspend fun access() = info.access

@@ -1,7 +1,7 @@
 package org.utbot.jcdb.impl
 
 import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.impl.tree.ClassNode
 import org.utbot.jcdb.impl.tree.ClasspathClassTree
@@ -9,7 +9,7 @@ import org.utbot.jcdb.impl.types.ClassIdImpl
 import org.utbot.jcdb.impl.types.MethodIdImpl
 import org.utbot.jcdb.impl.types.MethodInfo
 
-class ClassIdService(internal val cp: ClasspathSet, private val classpathClassTree: ClasspathClassTree) {
+class ClassIdService(internal val cp: Classpath, private val classpathClassTree: ClasspathClassTree) {
 
     fun toClassId(node: ClassNode?): ClassId? {
         node ?: return null

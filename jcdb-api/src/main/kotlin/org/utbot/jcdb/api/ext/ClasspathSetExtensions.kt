@@ -5,13 +5,20 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.FieldId
+import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.NoClassInClasspathException
+import org.utbot.jcdb.api.findFieldOrNull
+import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.throwClassNotFound
 
 /**
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun ClasspathSet.findMethodsUsedIn(method: MethodId): List<MethodId> {
+suspend fun Classpath.findMethodsUsedIn(method: MethodId): List<MethodId> {
     val methodNode = method.readBody() ?: return emptyList()
     val result = LinkedHashSet<MethodId>()
     methodNode.instructions.forEach { instruction ->
@@ -43,7 +50,7 @@ class FieldUsagesResult(
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun ClasspathSet.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
+suspend fun Classpath.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
     val methodNode = method.readBody() ?: return FieldUsagesResult.EMPTY
     val reads = LinkedHashSet<FieldId>()
     val writes = LinkedHashSet<FieldId>()
@@ -73,7 +80,7 @@ suspend fun ClasspathSet.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
 }
 
 
-suspend inline fun <reified T> ClasspathSet.findClassOrNull(): ClassId? {
+suspend inline fun <reified T> Classpath.findClassOrNull(): ClassId? {
     return findClassOrNull(T::class.java.name)
 }
 
@@ -82,7 +89,7 @@ suspend inline fun <reified T> ClasspathSet.findClassOrNull(): ClassId? {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend fun ClasspathSet.findClass(name: String): ClassId {
+suspend fun Classpath.findClass(name: String): ClassId {
     return findClassOrNull(name) ?: name.throwClassNotFound()
 }
 
@@ -90,10 +97,10 @@ suspend fun ClasspathSet.findClass(name: String): ClassId {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend inline fun <reified T> ClasspathSet.findClass(): ClassId {
+suspend inline fun <reified T> Classpath.findClass(): ClassId {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
 }
 
-suspend inline fun <reified T> ClasspathSet.findSubClasses(): List<ClassId> {
+suspend inline fun <reified T> Classpath.findSubClasses(): List<ClassId> {
     return findSubClasses(T::class.java.name)
 }

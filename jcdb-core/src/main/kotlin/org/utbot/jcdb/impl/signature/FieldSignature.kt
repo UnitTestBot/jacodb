@@ -1,7 +1,7 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureReader
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Raw
@@ -19,7 +19,7 @@ class FieldSignature : GenericTypeRegistrant {
     }
 
     companion object {
-        fun extract(signature: String?, cp: ClasspathSet): FieldResolution {
+        fun extract(signature: String?, cp: Classpath): FieldResolution {
             signature ?: return Raw
             val signatureReader = SignatureReader(signature)
             val visitor = FieldSignature()

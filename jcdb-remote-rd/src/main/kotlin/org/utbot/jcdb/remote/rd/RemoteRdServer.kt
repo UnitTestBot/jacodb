@@ -7,7 +7,7 @@ import com.jetbrains.rd.framework.SocketWire
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import mu.KLogging
-import org.utbot.jcdb.api.ClasspathSet
+import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
 import java.util.concurrent.ConcurrentHashMap
@@ -20,7 +20,7 @@ class RemoteRdServer(private val port: Int, private val db: JCDB) : Hook {
 
     private val lifetimeDef = Lifetime.Eternal.createNested()
 
-    private val classpaths = ConcurrentHashMap<String, ClasspathSet>()
+    private val classpaths = ConcurrentHashMap<String, Classpath>()
     private val scheduler = SingleThreadScheduler(lifetimeDef, "rd-scheduler")
 
     private val serverProtocol: Protocol

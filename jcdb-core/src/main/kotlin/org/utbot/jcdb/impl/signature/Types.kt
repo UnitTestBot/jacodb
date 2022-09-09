@@ -1,9 +1,21 @@
 package org.utbot.jcdb.impl.signature
 
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.PredefinedPrimitive
+import org.utbot.jcdb.api.boolean
+import org.utbot.jcdb.api.byte
+import org.utbot.jcdb.api.char
+import org.utbot.jcdb.api.double
+import org.utbot.jcdb.api.float
+import org.utbot.jcdb.api.int
+import org.utbot.jcdb.api.long
+import org.utbot.jcdb.api.short
+import org.utbot.jcdb.api.throwClassNotFound
+import org.utbot.jcdb.api.void
 
 
-abstract class GenericType(val classpath: ClasspathSet) {
+abstract class GenericType(val classpath: Classpath) {
 
     suspend fun findClass(name: String): ClassId {
         return classpath.findClassOrNull(name) ?: name.throwClassNotFound()
@@ -11,13 +23,13 @@ abstract class GenericType(val classpath: ClasspathSet) {
 
 }
 
-abstract class GenericClassType(classpath: ClasspathSet) : GenericType(classpath) {
+abstract class GenericClassType(classpath: Classpath) : GenericType(classpath) {
 
     abstract suspend fun findClass(): ClassId
 
 }
 
-class GenericArray(cp: ClasspathSet, val elementType: GenericType) : GenericClassType(cp) {
+class GenericArray(cp: Classpath, val elementType: GenericType) : GenericClassType(cp) {
 
     override suspend fun findClass(): ClassId {
         if (elementType is GenericClassType) {
@@ -28,13 +40,13 @@ class GenericArray(cp: ClasspathSet, val elementType: GenericType) : GenericClas
 }
 
 class ParameterizedType(
-    cp: ClasspathSet,
+    cp: Classpath,
     val name: String,
     val parameterTypes: List<GenericType>
 ) : GenericClassType(cp) {
 
     class Nested(
-        cp: ClasspathSet,
+        cp: Classpath,
         val name: String,
         val parameterTypes: List<GenericType>,
         val ownerType: GenericType
@@ -49,25 +61,25 @@ class ParameterizedType(
     }
 }
 
-class RawType(cp: ClasspathSet, val name: String) : GenericClassType(cp) {
+class RawType(cp: Classpath, val name: String) : GenericClassType(cp) {
     override suspend fun findClass(): ClassId {
         return findClass(name)
     }
 }
 
-class TypeVariable(cp: ClasspathSet, val symbol: String) : GenericType(cp)
+class TypeVariable(cp: Classpath, val symbol: String) : GenericType(cp)
 
-sealed class BoundWildcard(cp: ClasspathSet, val boundType: GenericType) : GenericType(cp) {
-    class UpperBoundWildcard(cp: ClasspathSet, boundType: GenericType) : BoundWildcard(cp, boundType)
-    class LowerBoundWildcard(cp: ClasspathSet, boundType: GenericType) : BoundWildcard(cp, boundType)
+sealed class BoundWildcard(cp: Classpath, val boundType: GenericType) : GenericType(cp) {
+    class UpperBoundWildcard(cp: Classpath, boundType: GenericType) : BoundWildcard(cp, boundType)
+    class LowerBoundWildcard(cp: Classpath, boundType: GenericType) : BoundWildcard(cp, boundType)
 }
 
-class UnboundWildcard(cp: ClasspathSet) : GenericType(cp)
+class UnboundWildcard(cp: Classpath) : GenericType(cp)
 
-class PrimitiveType(cp: ClasspathSet, val ref: PredefinedPrimitive) : GenericClassType(cp) {
+class PrimitiveType(cp: Classpath, val ref: PredefinedPrimitive) : GenericClassType(cp) {
 
     companion object {
-        fun of(descriptor: Char, cp: ClasspathSet): GenericType {
+        fun of(descriptor: Char, cp: Classpath): GenericType {
             return when (descriptor) {
                 'V' -> PrimitiveType(cp, cp.void)
                 'Z' -> PrimitiveType(cp, cp.boolean)

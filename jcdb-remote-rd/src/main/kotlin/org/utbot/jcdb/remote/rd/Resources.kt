@@ -9,8 +9,16 @@ import com.jetbrains.rd.framework.impl.RdCall
 import com.jetbrains.rd.framework.util.setSuspend
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.impl.types.*
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.PredefinedPrimitive
+import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.impl.types.ArrayClassIdImpl
+import org.utbot.jcdb.impl.types.ArrayClassInfo
+import org.utbot.jcdb.impl.types.ClassIdImpl
+import org.utbot.jcdb.impl.types.ClassInfoContainer
+import org.utbot.jcdb.impl.types.PredefinedClassInfo
 import java.io.File
 import java.io.Serializable
 import java.security.MessageDigest
@@ -65,7 +73,7 @@ abstract class CallResource<REQUEST, RESPONSE>(val id: Int, val name: String) {
 
 }
 
-class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+class GetClasspathResource(private val classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     CallResource<GetClasspathReq, GetClasspathRes>(1, "get-classpath") {
 
     override val serializers = listOf(GetClasspathReq, GetClasspathRes)
@@ -87,7 +95,7 @@ class LoadLocationsResource() : CallResource<GetClasspathReq, Unit>(10, "load-lo
     }
 }
 
-class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     CallResource<String, Unit>(2, "close-classpath") {
 
     override suspend fun JCDB.handler(req: String) {
@@ -97,7 +105,7 @@ class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, C
 }
 
 abstract class AbstractClasspathResource<REQUEST : ClasspathBasedReq, RESPONSE>(
-    id: Int, name: String, private val classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()
+    id: Int, name: String, private val classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()
 ) : CallResource<REQUEST, RESPONSE>(id, name) {
 
     override suspend fun JCDB.handler(req: REQUEST): RESPONSE {
@@ -106,7 +114,7 @@ abstract class AbstractClasspathResource<REQUEST : ClasspathBasedReq, RESPONSE>(
         return cp.handler(req)
     }
 
-    protected abstract suspend fun ClasspathSet.handler(req: REQUEST): RESPONSE
+    protected abstract suspend fun Classpath.handler(req: REQUEST): RESPONSE
 
     protected suspend fun ClassId.toGetClass(): GetClassRes {
         val bytes = Cbor.encodeToByteArray(convertToContainer())
@@ -116,22 +124,22 @@ abstract class AbstractClasspathResource<REQUEST : ClasspathBasedReq, RESPONSE>(
 }
 
 
-class GetClassResource(classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+class GetClassResource(classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     AbstractClasspathResource<GetClassReq, GetClassRes?>(3, "get-class", classpaths) {
 
     override val serializers = listOf(GetClassReq, GetClassRes)
 
-    override suspend fun ClasspathSet.handler(req: GetClassReq): GetClassRes? {
+    override suspend fun Classpath.handler(req: GetClassReq): GetClassRes? {
         return findClassOrNull(req.className)?.toGetClass()
     }
 }
 
-class GetSubClassesResource(classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+class GetSubClassesResource(classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     AbstractClasspathResource<GetSubClassesReq, GetSubClassesRes>(4, "get-sub-classes", classpaths) {
 
     override val serializers = listOf(GetSubClassesRes, GetSubClassesReq)
 
-    override suspend fun ClasspathSet.handler(req: GetSubClassesReq): GetSubClassesRes {
+    override suspend fun Classpath.handler(req: GetSubClassesReq): GetSubClassesRes {
         val subclasses = findSubClasses(req.className, req.allHierarchy).map { it.toGetClass() }
         return GetSubClassesRes(subclasses)
     }
@@ -141,14 +149,14 @@ class GetSubClassesResource(classpaths: ConcurrentHashMap<String, ClasspathSet> 
 class GetGlobalIdResource : CallResource<String, Int>(5, "get-global-id") {
 
     override suspend fun JCDB.handler(req: String): Int {
-        return globalIdStore.getId(req)
+        return symbolIdStorage.findOrNewId(req)
     }
 }
 
 class GetGlobalNameResource : CallResource<Int, String?>(6, "get-global-name") {
 
     override suspend fun JCDB.handler(req: Int): String? {
-        return globalIdStore.getName(req)
+        return symbolIdStorage.findNameOrNull(req)
     }
 }
 
@@ -159,12 +167,12 @@ class StopServerResource(private val server: RemoteRdServer? = null) : CallResou
     }
 }
 
-class CallIndexResource(classpaths: ConcurrentHashMap<String, ClasspathSet> = ConcurrentHashMap()) :
+class CallIndexResource(classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     AbstractClasspathResource<CallIndexReq, CallIndexRes>(8, "call-index", classpaths) {
 
     override val serializers = listOf(CallIndexReq, CallIndexRes)
 
-    override suspend fun ClasspathSet.handler(req: CallIndexReq): CallIndexRes {
+    override suspend fun Classpath.handler(req: CallIndexReq): CallIndexRes {
         val location = req.location
         val result = if (location == null) {
             query(req.indexKey, req.term)

@@ -7,15 +7,15 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.index.Hierarchy
 import org.utbot.jcdb.impl.index.HierarchyIndex
-import org.utbot.jcdb.impl.index.InMemoryGlobalIdsStore
-import org.utbot.jcdb.impl.index.ReversedUsageIndex
+import org.utbot.jcdb.impl.index.InMemorySymbolIdsStorage
 import org.utbot.jcdb.impl.index.ReversedUsages
+import org.utbot.jcdb.impl.index.UsageIndex
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class IndexSerializationTest : LibrariesMixin {
 
-    val globalIds = InMemoryGlobalIdsStore()
+    val globalIds = InMemorySymbolIdsStorage()
 
     @Test
     fun `hierarchy index serialization`() {
@@ -41,7 +41,7 @@ class IndexSerializationTest : LibrariesMixin {
     @Test
     fun `reversed usages index serialization`() {
         val location = guavaLib.asByteCodeLocation()
-        val index = ReversedUsageIndex(
+        val index = UsageIndex(
             location,
             globalIds,
             fieldsUsages = mapOf(
@@ -55,7 +55,7 @@ class IndexSerializationTest : LibrariesMixin {
 
             )
         val out = ByteArrayOutputStream()
-        ReversedUsages.serialize(index, out)
+        ReversedUsages.persist(index, out)
 
         val input = ByteArrayInputStream(out.toByteArray())
         val result = ReversedUsages.deserialize(globalIds, location, input)

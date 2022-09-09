@@ -5,20 +5,31 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.ClassId
+import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.FieldId
+import org.utbot.jcdb.api.FieldResolution
+import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.signature.FieldSignature
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
-import org.utbot.jcdb.impl.types.*
+import org.utbot.jcdb.impl.types.AnnotationIdImpl
+import org.utbot.jcdb.impl.types.ClassInfo
+import org.utbot.jcdb.impl.types.FieldInfo
+import org.utbot.jcdb.impl.types.MethodInfo
+import org.utbot.jcdb.impl.types.MethodParameterIdImpl
 import java.io.File
 
 class RemoteClassId(
     private val locationPath: String?,
     private val classInfo: ClassInfo,
-    override val classpath: ClasspathSet
+    override val classpath: Classpath
 ) : ClassId, ByteCodeConverter {
 
     companion object : KLogging()
@@ -138,7 +149,7 @@ class RemoteClassId(
 class RemoteMethodId(
     override val classId: ClassId,
     private val methodInfo: MethodInfo,
-    private val classpath: ClasspathSet
+    private val classpath: Classpath
 ) : MethodId {
 
     override val name: String
@@ -206,7 +217,7 @@ class RemoteMethodId(
 class RemoteFieldId(
     override val classId: ClassId,
     private val info: FieldInfo,
-    private val classpath: ClasspathSet
+    private val classpath: Classpath
 ) : FieldId {
 
     override val name: String
