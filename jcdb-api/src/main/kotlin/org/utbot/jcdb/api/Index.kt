@@ -33,4 +33,6 @@ interface Feature<T, INDEX : Index<T, *>> {
 
     fun onRestore(): INDEX?
 
+    fun onLocationRemoved(location: ByteCodeLocation, index: INDEX)
+
 }

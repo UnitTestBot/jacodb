@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.index.ReversedUsages
+import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.index.reversedUsagesExt
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
@@ -19,7 +19,7 @@ class SearchReversedUsagesTest : LibrariesMixin {
         jcdb {
             predefinedDirOrJars = allClasspath
             useProcessJavaRuntime()
-            installFeatures(ReversedUsages)
+            installFeatures(Usages)
         }
     }
 

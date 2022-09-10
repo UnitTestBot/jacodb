@@ -11,7 +11,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findFieldsUsedIn
 import org.utbot.jcdb.api.ext.findMethodsUsedIn
-import org.utbot.jcdb.impl.index.ReversedUsages
+import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.usages.direct.DirectA
 import org.utbot.jcdb.jcdb
 
@@ -23,7 +23,7 @@ class DirectUsagesTest : LibrariesMixin {
             jcdb {
                 predefinedDirOrJars = allClasspath
                 useProcessJavaRuntime()
-                installFeatures(ReversedUsages)
+                installFeatures(Usages)
             }
         }
 

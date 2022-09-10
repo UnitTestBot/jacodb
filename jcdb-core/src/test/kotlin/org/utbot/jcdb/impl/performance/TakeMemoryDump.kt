@@ -3,6 +3,7 @@ package org.utbot.jcdb.impl.performance
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Assertions
+import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.storage.ClassEntity
 import org.utbot.jcdb.impl.storage.FieldEntity
 import org.utbot.jcdb.impl.storage.MethodEntity
@@ -42,8 +43,9 @@ fun main() {
             useProcessJavaRuntime()
 //            predefinedDirOrJars = allClasspath
             persistent {
-                location = "D:\\work\\sqlite-db"
+                location = "D:\\work\\jcdb\\sqlite-db.db"
             }
+            installFeatures(Usages)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")
             start = System.currentTimeMillis()
