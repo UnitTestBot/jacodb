@@ -11,14 +11,12 @@ Database could be in-memory or persistent. In-memory means that it can be used a
 and makes data be reused after process is restarted. By design Java Compilation Database do not support accessing disk 
 stored data from different processes simultaneously.
 
-## Design
-
 Java Compilation Database is ignited by number of jars or directories with build classes:
 
 ```kotlin
 interface JCDB {
 
-    suspend fun classpathSet(dirOrJars: List<File>): ClasspathSet
+    suspend fun JcClasspath(dirOrJars: List<File>): JcClasspath
 
     suspend fun load(dirOrJar: File)
     suspend fun load(dirOrJars: List<File>)
@@ -29,46 +27,46 @@ interface JCDB {
 }
 ```
 
-`ClasspathSet` represents the set of classpath items. Which means that each class should be presented once there.
+`JcClasspath` represents the set of classpath items. Which means that each class should be presented once there.
 Otherwise, in case of collision like in jar-hell only one random class will win.
 
 ```kotlin
-interface ClasspathSet {
+interface JcClasspath {
 
     val locations: List<ByteCodeLocation>
 
-    suspend fun findClassOrNull(name: String): ClassId?
+    suspend fun findClassOrNull(name: String): JcClass?
 
-    suspend fun findSubTypesOf(name: String): List<ClassId>
+    suspend fun findSubTypesOf(name: String): List<JcClass>
 }
 ```
 
-`findClassOrNull` method will return instance of `ClassId` from `locations` or null otherwise. Where `ClassId` represents
+`findClassOrNull` method will return instance of `JcClass` from `locations` or null otherwise. Where `JcClass` represents
 JVM Class:
 
 ```kotlin
-interface ClassId {
+interface JcClass {
 
     val location: ByteCodeLocation
 
     val name: String
     val simpleName: String
 
-    suspend fun methods(): List<MethodId>
+    suspend fun methods(): List<JcMethod>
 
-    suspend fun superclass(): ClassId?
-    suspend fun interfaces(): List<ClassId>
-    suspend fun annotations(): List<ClassId>
+    suspend fun superclass(): JcClass?
+    suspend fun interfaces(): List<JcClass>
+    suspend fun annotations(): List<JcClass>
 
 }
 
-interface MethodId {
+interface JcMethod {
     val name: String
 
-    val classId: ClassId
-    suspend fun returnType(): ClassId?
-    suspend fun parameters(): List<ClassId>
-    suspend fun annotations(): List<ClassId>
+    val jcClass: JcClass
+    suspend fun returnClass(): JcClass?
+    suspend fun parameters(): List<JcClass>
+    suspend fun annotations(): List<JcClass>
 
     suspend fun readBody(): MethodNode?
 }
@@ -96,14 +94,14 @@ suspend fun findNormalDistribution(): Any {
     database.loadJars(listOf(buildDir))
 
     // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
-    val classId = database.classpathSet(commonsMath32, buildDir)
+    val jcClass = database.classpath(commonsMath32, buildDir)
         .findClass("org.apache.commons.math3.distribution.NormalDistribution")
-    println(classId.methods.size)
-    println(classId.constructors.size)
-    println(classId.annotations.size)
+    println(jcClass.methods().size)
+    println(jcClass.constructors().size)
+    println(jcClass.annotations().size)
 
     // here database will call ASM to read method bytecode and return the result
-    return classId.methods[0].readBody()
+    return jcClass.methods[0].readBody()
 }
 ```
 
@@ -125,11 +123,11 @@ changes in a background or refresh jars explicitly:
 
 ### Multithreading
 
-Instances of `ClassId`, `MethodId`, `ClasspathSet` are thread-safe. Methods of these classes return immutable structures 
+Instances of `JcClass`, `JcMethod`, `JcClasspath` are thread-safe. Methods of these classes return immutable structures 
 and are thread-safe as result. 
 
-`ClasspathSet` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
-library files will not affect `ClasspathSet` instance structure. `ClasspathSet#close` method will release all snapshots and will 
+`JcClasspath` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
+library files will not affect `JcClasspath` instance structure. `JcClasspath#close` method will release all snapshots and will 
 clean up persistent store in case of some libraries are outdated.
 
 ```kotlin
@@ -140,13 +138,13 @@ clean up persistent store in case of some libraries are outdated.
         persistent()
     }
     
-    val cp = database.classpathSet(buildDir)
+    val cp = database.classpath(buildDir)
     database.refresh() // does not affect cp classes
 
-    val cp1 = database.classpathSet(buildDir) // will use new version of compiled results in buildDir
+    val cp1 = database.classpath(buildDir) // will use new version of compiled results in buildDir
 ```
 
-If `ClasspathSet` requested with libraries which are not indexed yet, then they will be indexed before and then 
+If `JcClasspath` requested with libraries which are not indexed yet, then they will be indexed before and then 
 returned new instance of set. 
 
 ```kotlin
@@ -157,12 +155,12 @@ returned new instance of set.
         persistent()
     }
     
-    val cp = database.classpathSet(buildDir) // database will automatically process buildDir
+    val cp = database.classpath(buildDir) // database will automatically process buildDir
 ```
 
-`JCDB` is thread safe. If someone requested `ClasspathSet` instance during loading jars from different
-thread then `ClasspathSet` will be created on a consistent state of loaded jars. That means that jar can't appear in 
-`ClasspathSet` in partly loaded state. Apart from that there is no guarantee that all submitted for loading jars will be 
+`JCDB` is thread safe. If someone requested `JcClasspath` instance during loading jars from different
+thread then `JcClasspath` will be created on a consistent state of loaded jars. That means that jar can't appear in 
+`JcClasspath` in partly loaded state. Apart from that there is no guarantee that all submitted for loading jars will be 
 loaded.
 
 ```kotlin
@@ -177,6 +175,8 @@ loaded.
     thread(start = true) {
         // maybe created when lib2 or both are not loaded into database
         // but buildDir will be loaded anyway
-        val cp = database.classpathSet(buildDir)  
+        val cp = database.classpath(buildDir)  
     }
 ```
+
+For architecture and other technical information please visit [design page](./design.md)

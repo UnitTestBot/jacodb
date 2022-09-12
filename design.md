@@ -1,77 +1,117 @@
 # Requirements
 
-Java Compilation Database is a pure Java database which stores information about Java compiled byte-code located outside
-the JVM process. Like `Reflection` do this for runtime Java Compilation Database is doing this for byte-code stored
-somewhere in file system.
+Java Compilation Database is a library which stores information about Java byte-code located outside the JVM process. Like `Reflection` do this for runtime Java Compilation Database is doing this for byte-code stored somewhere in file system.
 
 This is basic requirements for database implementation: 
 
 * async and thread-safe api
-* each database instance binded to Java runtime version up from 1.8 
+* each database instance is binded to Java runtime version up from 1.8 
 * bytecode processing and analyzing up from Java 1.8
 * ability to update bytecode from location without breaking already processed data
 * ability to persist data on-disk and reuse it after application restart
-* fast startup: `jcdb ` factory method should balance between returning instance as soon as possible and fast operations of querying data from database
-* ability to extend querying api by indexes
+* fast startup: `jcdb ` should balance between returning instance as soon as possible and fast operations of querying data from database
+* ability to extend api
 
-# Architecture
+## API basics
 
-Application lifecycle parts: 
-* initialization and reading bytecode
-* in-memory tree storage
-* indexes based on bytecode
-* persistence for data and indexes.
+Bytecode has two representations in filesystem (classes) and in runtime (types).
 
-## Initialization and reading bytecode
+**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as 
+**types** - represent types of structures in runtime which can be nullable, get parameterized etc.
+
+Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generics parameterization.   
+
+**Types** hierarchy
+```mermaid
+classDiagram
+    JcType <|-- JcPrimitiveType
+    JcType <|-- JcRefType
+    JcRefType <|-- JcArrayType
+    JcRefType <|-- JcClassType
+    JcRefType <|-- JcParameterizedType
+    JcRefType <|-- JcTypeVariable
+    class JcType {
+      +bool nullable
+      +String typeName
+    }
+
+    class JcRefType {
+      +JcClass jcClass 
+    }
+    class JcArrayType {
+       +JcType elementType
+    }
+
+    class JcTypedMethod {
+      +JcType[] parameters
+      +JcType returnType
+      +JcMethod method
+    }
+
+    class JcTypedField {
+      +JcType[] parameters
+      +JcType returnType
+      +JcField field
+    }
+``` 
+
+Entry point for both of them is `JcClasspath`
+
+## Loading bytecode
 
 It's intended that bytecode of Java runtime is not changed and is read on startup along with bytecode of `predefined` bytecode locations.
 
-Reading of bytecode splits into two steps:
-* sync step: all classes files are read from jars/folders and only bytecode of some classes are processed  
-* async step: all bytecode is processed. Done in a background
+Loading of bytecode:
 
-When first step is done database is treated as initialized and it's instance becomes available. Some api calls may wait till step 2 is done. This scheme brings balance for call simple api in a fast way.  
-In the end of second async step database triggers event for setup indexes for new or updated locations. 
+```mermaid
+sequenceDiagram
+autonumber
+participant user
+    participant thread as main thread
+    participant background as background scope
+    participant storage as persistent storage
+    Note over thread: current thread
+    user->>thread: load jars
+    thread-->>storage: check for previously stored data
+    thread-->thread: read and parse bytecode
+    thread-->>background: analyze and store bytecode
+    thread-->>user: loading is finished
+    background-->>storage: write class data
+    background-->>storage: build and store indexes
+    background-->>thread: searching api is ready
+```
 
-## Class tree
+## Memory usage
 
-`ClassTree` is in-memory storage of classes from **all** bytecode locations organized in tree structure based on package names and location identifiers. `ClassTree` is not serializable and caches ASM structures based on bytecode.  
-`ClassTree` by design uses lock-free collections for storing data. In case of persistent scheme part of data retrieved from underling persistent store other data retrieved from jar files itself.
+```mermaid
+flowchart LR
 
-`ClasspathSet` represents the set of classpath items. `ClasspathSet` limits `ClassTree` based on its locations. `ClasspathSet` should be closed after it becomes unused. This reduces usage of outdated bytecode locations and cleanup data from them. Which means that each class should be presented once there. Otherwise, in case of collision like in jar-hell only one random class will win.
+    subgraph hcloud[Memory]
 
-## Indexes
+        subgraph heap[JVM heap]
+            class_tree[Class tree]
+            caches[low-level cashes]
+        end
 
-Each bytecode location may have number of indexes (like parent classes index etc). Index is identified by index key. Indexes should be not aware of `ClassTree` and bytecode itself. Index should hold only serializable data optimized by memory consumption. 
+        subgraph sqlite[SQLite]
+            storage[off heap memory]
+        end
+    end
+```
 
-# Persistence
+Application uses inmemory `ClassTree` for classes that are in loading state. When classes are loaded, analyzed and persisted in database data from `ClassTree` is evicted. 
+Pure bytecode is stored in underling database as well. Underling database is using off heap memory.
 
-Indexes and class information may be persisted on disk regarding relative settings.
+`JcClasspath` represents the set of classpath items with bytecode. `JcClasspath` should be closed after it becomes unused. This reduces usage of outdated bytecode locations and cleanup data from them. Which means that each class should be presented once there. Otherwise, in case of collision like in jar-hell only one random class will win.
 
-Database has 2 schemes of working:
-* read/write mode: in this case information about loaded classes and indexes is persisted on disk and can be reused between starts.
-* readonly mode: in this case database can't be modified (i.e. load libraries etc.) and is initialized based on data from disk.   
+# Extension points
 
-This schemes provides ability to work with database from few processes when one process has ability to write data to database and another works only in readonly mode.
+## Features
 
-# Implementation details
-
-## IO
-
-About 80% of initialization time consumed by IO from file system in reading jar-file content or class-file content.
-
-![database initialization for Java runtime only](./img/flamegraph.png)
-
-Splitting bytecode processing into sync/async step gives performance improvement for startup. For example Java 1.8 rt.jar contains about 60mb of compressed bytecode.
-Main idea is to scan runtime locations depending on basic usage rules. Not so many applications using classes from `org.w3c.dom.*` or `jdk.*` packages. The idea is to move processing bytecode of rarely used classes to async step and release database instance faster. 
+`Features` should be added on database startup. No additional feature could be added after. `Feature` could store information in database and extend basic api based on this data. It's expected that `Feature` uses database for storing data.    
 
 # Hooks
 
 Compilation database can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
 
-Hook is called twice: after called twice when database is created and initialized properly and when it is closed. That means that     
-
-## Performance
-
-`ClassTree` uses immutable lock-free structures from [Xodus database](https://github.com/JetBrains/xodus). This brings 10% lower memory footprint of application (`JCDBImpl` created only with Java 8 runtime consumes about ~300Mb of heap memory). `ClassTree` implementation based on java concurrent collections consumes ~330Mb of memory.
-Initialization performance is almost the same between Xodus-structures and java concurrent structures.
+Hook is called twice: after called twice when database is created and initialized properly and when it is closed.

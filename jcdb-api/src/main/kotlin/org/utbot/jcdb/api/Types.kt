@@ -2,7 +2,7 @@ package org.utbot.jcdb.api
 
 import org.objectweb.asm.tree.MethodNode
 
-interface JcTypeField {
+interface JcTypedField {
     val name: String
     val type: JcType
 
@@ -10,11 +10,13 @@ interface JcTypeField {
     val jcType: JcType
 }
 
-interface JcTypeMethod {
+interface JcTypedMethod {
     val name: String
     val returnType: JcType
     val parameters: List<JcTypeMethodParameter>
+    val parameterization: List<JcType>
 
+    val exceptions: List<JcClassOrInterface>
     val method: JcMethod
 
     suspend fun body(): MethodNode
@@ -28,7 +30,7 @@ interface JcTypeMethodParameter {
     val type: JcType
     val name: String?
 
-    val typeMethod: JcTypeMethod
+    val typeMethod: JcTypedMethod
 
 }
 
@@ -47,8 +49,8 @@ interface JcPrimitiveType : JcType {
 interface JcRefType : JcType {
     val jcClass: JcClassOrInterface
 
-    val methods: List<JcTypeMethod>
-    val fields: List<JcTypeField>
+    val methods: List<JcTypedMethod>
+    val fields: List<JcTypedField>
 
     fun notNullable() : JcRefType
 }
@@ -75,7 +77,7 @@ interface JcClassType : JcRefType {
     val interfaces: JcRefType
 
     val outerType: JcRefType?
-    val outerMethod: JcTypeMethod?
+    val outerMethod: JcTypedMethod?
 
     val innerTypes: List<JcRefType>
 }
