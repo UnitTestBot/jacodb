@@ -9,7 +9,7 @@ This is basic requirements for database implementation:
 * bytecode processing and analyzing up from Java 1.8
 * ability to update bytecode from location without breaking already processed data
 * ability to persist data on-disk and reuse it after application restart
-* fast startup: `jcdb ` should balance between returning instance as soon as possible and fast operations of querying data from database
+* fast startup: `jcdb` should balance between returning instance as soon as possible and fast operations of querying data from database
 * ability to extend api
 
 ## API basics
@@ -17,7 +17,7 @@ This is basic requirements for database implementation:
 Bytecode has two representations in filesystem (classes) and in runtime (types).
 
 **classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as 
-**types** - represent types of structures in runtime which can be nullable, get parameterized etc.
+**types** - represent types which can be nullable, get parameterized etc.
 
 Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generics parameterization.   
 
@@ -30,6 +30,7 @@ classDiagram
     JcRefType <|-- JcClassType
     JcRefType <|-- JcParameterizedType
     JcRefType <|-- JcTypeVariable
+    JcParameterizedType <|-- JcNestedType
     class JcType {
       +bool nullable
       +String typeName
@@ -108,9 +109,10 @@ Pure bytecode is stored in underling database as well. Underling database is usi
 
 ## Features
 
-`Features` should be added on database startup. No additional feature could be added after. `Feature` could store information in database and extend basic api based on this data. It's expected that `Feature` uses database for storing data.    
+`Features` should be added on database startup. No additional feature could be added after. `Feature` could store information in database and extend basic api based on this data. It's expected that `Feature` uses database for storing data.
 
-# Hooks
+
+## Hooks
 
 Compilation database can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
 

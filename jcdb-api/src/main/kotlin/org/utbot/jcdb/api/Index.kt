@@ -6,33 +6,46 @@ import org.objectweb.asm.tree.MethodNode
 /**
  * index builder
  */
-interface ByteCodeIndexBuilder<T, INDEX : Index<T, *>> {
+interface ByteCodeIndexer {
 
     suspend fun index(classNode: ClassNode)
 
     suspend fun index(classNode: ClassNode, methodNode: MethodNode)
 
-    fun build(): INDEX
-
+    fun flush()
 }
 
-interface Index<T, REQ: IndexRequest> {
+interface JCDBFeature<REQ, RES> {
 
-    suspend fun query(req: REQ): Sequence<T>
-}
-
-interface IndexRequest
-
-interface Feature<T, INDEX : Index<T, *>> {
+    val jcdb: JCDB
 
     val key: String
 
-    fun newBuilder(location: ByteCodeLocation): ByteCodeIndexBuilder<T, INDEX>
+    suspend fun query(req: REQ): Sequence<RES>
 
-    fun persist(index: INDEX)
+    fun newIndexer(location: ByteCodeLocation): ByteCodeIndexer
 
-    fun onRestore(): INDEX?
+    fun onLocationRemoved(location: ByteCodeLocation)
 
-    fun onLocationRemoved(location: ByteCodeLocation, index: INDEX)
+    val persistence: FeaturePersistence?
 
+}
+
+interface Feature<REQ, RES> {
+
+    val key: String
+
+    fun featureOf(jcdb: JCDB): JCDBFeature<REQ, RES>
+
+}
+
+interface FeaturePersistence {
+
+    val jcdbPersistence: JCDBPersistence
+
+    /** executed after jcdb instance creating and before processing of bytecode */
+    fun beforeIndexing(clearOnStart: Boolean)
+
+    /** can be used to create database indexes */
+    fun onBatchLoadingEnd()
 }

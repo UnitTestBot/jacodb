@@ -47,12 +47,8 @@ class RemoteClasspath(
         return findSubClasses(classId.name, allHierarchy)
     }
 
-    override suspend fun <T: Serializable> query(key: String, term: String): List<T> {
-        return callIndex.startSuspending(CallIndexReq(this.key, key, null, term)).result as List<T>
-    }
-
-    override suspend fun <T: Serializable> query(key: String, location: ByteCodeLocation, term: String): List<T> {
-        return callIndex.startSuspending(CallIndexReq(this.key, key, location.path, term)).result as List<T>
+    override suspend fun <RES: Serializable, REQ: Serializable> query(key: String, req: REQ): Sequence<RES> {
+        return (callIndex.startSuspending(CallIndexReq(this.key, key, req)).result as List<RES>).asSequence()
     }
 
     override fun close() {

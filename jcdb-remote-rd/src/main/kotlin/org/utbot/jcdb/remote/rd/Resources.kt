@@ -95,6 +95,15 @@ class LoadLocationsResource() : CallResource<GetClasspathReq, Unit>(10, "load-lo
     }
 }
 
+class GetLocationsResource() : CallResource<GetClasspathReq, Unit>(11, "get-locations") {
+
+    override val serializers = listOf(GetClasspathReq)
+
+    override suspend fun JCDB.handler(req: GetClasspathReq) {
+        load(req.locations.map { File(it) }.filter { it.exists() })
+    }
+}
+
 class CloseClasspathResource(private val classpaths: ConcurrentHashMap<String, Classpath> = ConcurrentHashMap()) :
     CallResource<String, Unit>(2, "close-classpath") {
 
@@ -145,21 +154,6 @@ class GetSubClassesResource(classpaths: ConcurrentHashMap<String, Classpath> = C
     }
 }
 
-
-class GetGlobalIdResource : CallResource<String, Int>(5, "get-global-id") {
-
-    override suspend fun JCDB.handler(req: String): Int {
-        return symbolIdStorage.findOrNewId(req)
-    }
-}
-
-class GetGlobalNameResource : CallResource<Int, String?>(6, "get-global-name") {
-
-    override suspend fun JCDB.handler(req: Int): String? {
-        return symbolIdStorage.findNameOrNull(req)
-    }
-}
-
 class StopServerResource(private val server: RemoteRdServer? = null) : CallResource<Unit, Unit>(7, "stop-server") {
 
     override suspend fun JCDB.handler(req: Unit) {
@@ -173,13 +167,7 @@ class CallIndexResource(classpaths: ConcurrentHashMap<String, Classpath> = Concu
     override val serializers = listOf(CallIndexReq, CallIndexRes)
 
     override suspend fun Classpath.handler(req: CallIndexReq): CallIndexRes {
-        val location = req.location
-        val result = if (location == null) {
-            query(req.indexKey, req.term)
-        } else {
-            val byteCodeLocation = locations.first { it.path == location }
-            query<Serializable>(req.indexKey, byteCodeLocation, req.term)
-        }
+        val result = query<Serializable, Serializable>(req.indexKey, req.term)
         val first = result.firstOrNull() ?: return CallIndexRes("unknown", emptyList<Serializable>())
         return when (first::class.java) {
             java.lang.String::class.java -> CallIndexRes("string", result as List<String>)

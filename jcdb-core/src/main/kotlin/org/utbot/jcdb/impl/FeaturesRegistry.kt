@@ -1,63 +1,50 @@
 package org.utbot.jcdb.impl
 
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.Feature
-import org.utbot.jcdb.api.Index
-import org.utbot.jcdb.api.IndexRequest
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JCDBFeature
 import org.utbot.jcdb.impl.index.index
-import org.utbot.jcdb.impl.storage.PersistentEnvironment
 import org.utbot.jcdb.impl.tree.ClassNode
 import java.io.Closeable
-import java.util.concurrent.ConcurrentHashMap
 
-class FeaturesRegistry(
-    private val persistence: PersistentEnvironment? = null,
-    val features: List<Feature<*, *>>
-) : Closeable {
+class FeaturesRegistry(val features: List<Feature<*, *>>) : Closeable {
 
-    private val indexes = ConcurrentHashMap<String, Index<*, *>>()
+    lateinit var jcdbFeatures: List<JCDBFeature<*, *>>
 
-    fun <T, INDEX : Index<T, *>> append(feature: Feature<T, INDEX>, index: INDEX) {
-        indexes[feature.key] = index
+    fun bind(jcdb: JCDB) {
+        jcdbFeatures = features.map { it.featureOf(jcdb) }
     }
 
     suspend fun index(location: ByteCodeLocation, classes: Collection<ClassNode>) {
-        features.forEach { feature ->
+        jcdbFeatures.forEach { feature ->
             feature.index(location, classes)
         }
     }
 
-    private suspend fun <T, INDEX : Index<T, *>> Feature<T, INDEX>.index(
+    private suspend fun <REQ, RES> JCDBFeature<RES, REQ>.index(
         location: ByteCodeLocation,
         classes: Collection<ClassNode>
     ) {
-        val builder = newBuilder(location)
+        val indexer = newIndexer(location)
         classes.forEach { node ->
-            index(node, builder)
+            index(node, indexer)
         }
-        val index = builder.build()
-        indexes[key] = index
-
-        val store = persistence?.locationStore
-        if (store != null) {
-            persistentOperation {
-                transaction {
-                    persist(index)
-                }
-            }
+        persistence?.jcdbPersistence?.write {
+            indexer.flush()
         }
     }
 
-    fun <T, REQ : IndexRequest> findIndex(key: String): Index<T, REQ>? {
-        return indexes[key] as? Index<T, REQ>?
+    fun <REQ, RES> findIndex(key: String): JCDBFeature<RES, REQ>? {
+        return jcdbFeatures.firstOrNull { it.key == key } as? JCDBFeature<RES, REQ>?
     }
 
     fun onLocationRemove(location: ByteCodeLocation) {
-
+        jcdbFeatures.forEach {
+            it.onLocationRemoved(location)
+        }
     }
 
     override fun close() {
-        indexes.clear()
     }
 }

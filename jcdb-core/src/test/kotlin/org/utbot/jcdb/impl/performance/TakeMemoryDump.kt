@@ -43,7 +43,7 @@ fun main() {
             useProcessJavaRuntime()
 //            predefinedDirOrJars = allClasspath
             persistent {
-                location = "D:\\work\\jcdb\\sqlite-db.db"
+                location = "D:\\work\\jcdb\\jcdb.db"
             }
             installFeatures(Usages)
         }.also {

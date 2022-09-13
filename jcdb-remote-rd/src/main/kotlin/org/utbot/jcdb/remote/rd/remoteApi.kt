@@ -1,8 +1,17 @@
 package org.utbot.jcdb.remote.rd
 
-import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.IMarshaller
+import com.jetbrains.rd.framework.SerializationCtx
+import com.jetbrains.rd.framework.Serializers
+import com.jetbrains.rd.framework.readArray
+import com.jetbrains.rd.framework.writeArray
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import org.utbot.jcdb.api.LocationScope
 import org.utbot.jcdb.api.PredefinedPrimitives
+import java.io.Serializable
 import kotlin.reflect.KClass
 
 val serializers = Serializers()
@@ -144,7 +153,7 @@ class GetSubClassesRes(val classes: List<GetClassRes>) {
     }
 }
 
-class CallIndexReq(cpKey: String, val indexKey: String, val location: String?, val term: String) :
+class CallIndexReq(cpKey: String, val indexKey: String, val term: Serializable) :
     ClasspathBasedReq(cpKey) {
 
     companion object : IMarshaller<CallIndexReq> {
@@ -155,16 +164,14 @@ class CallIndexReq(cpKey: String, val indexKey: String, val location: String?, v
             return CallIndexReq(
                 buffer.readString(),
                 buffer.readString(),
-                buffer.readNullableString(),
-                buffer.readString()
+                Cbor.decodeFromByteArray(buffer.readByteArray())
             )
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CallIndexReq) {
             buffer.writeString(value.cpKey)
             buffer.writeString(value.indexKey)
-            buffer.writeNullableString(value.location)
-            buffer.writeString(value.term)
+            buffer.writeByteArray(Cbor.encodeToByteArray(value.term))
         }
     }
 }

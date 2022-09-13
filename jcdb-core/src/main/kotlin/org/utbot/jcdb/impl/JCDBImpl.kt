@@ -13,12 +13,12 @@ import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.filterExisted
 import org.utbot.jcdb.impl.fs.load
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
-import org.utbot.jcdb.impl.storage.PersistentEnvironment
+import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
 import org.utbot.jcdb.impl.tree.ClassTree
 import org.utbot.jcdb.impl.tree.RemoveLocationsVisitor
 import java.io.File
@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class JCDBImpl(
-    private val persistentEnvironment: PersistentEnvironment? = null,
+    override val persistence: JCDBPersistence? = null,
+    val featureRegistry: FeaturesRegistry,
     private val settings: JCDBSettings
 ) : JCDB {
 
@@ -36,12 +37,18 @@ class JCDBImpl(
     internal val javaRuntime = JavaRuntime(settings.jre)
     private val hooks = settings.hooks.map { it(this) }
 
-    internal val featureRegistry = FeaturesRegistry(persistentEnvironment, settings.fullFeatures)
     internal val locationsRegistry = LocationsRegistry(featureRegistry)
     private val backgroundJobs = ConcurrentHashMap<Int, Job>()
 
     private val isClosed = AtomicBoolean()
     private val jobId = AtomicInteger()
+
+    init {
+        featureRegistry.bind(this)
+    }
+
+    override val locations: List<ByteCodeLocation>
+        get() = locationsRegistry.locations.toList()
 
     suspend fun loadJavaLibraries() {
         assertNotClosed()
@@ -90,7 +97,6 @@ class JCDBImpl(
 
     private suspend fun List<ByteCodeLocation>.loadAll() = apply {
         val actions = ConcurrentLinkedQueue<ByteCodeLocation>()
-        val locationStore = persistentEnvironment?.locationStore
 
         val libraryTrees = withContext(Dispatchers.IO) {
             map { location ->
@@ -101,8 +107,8 @@ class JCDBImpl(
                         val libraryTree = loader.load()
                         actions.add(location)
                         locationsRegistry.addLocation(location)
-                        persistentOperation {
-                            locationStore?.findOrNewTx(location)
+                        persistence?.write {
+                            location.findOrNew()
                         }
                         libraryTree
                     } else {
@@ -111,13 +117,13 @@ class JCDBImpl(
                 }
             }
         }.awaitAll().filterNotNull()
-        persistentOperation {
-            persistentEnvironment?.save(this@JCDBImpl)
+        persistence?.write {
+            persistence.save(this@JCDBImpl)
         }
 
-        val locationClasses = libraryTrees.map {
+        val locationClasses = libraryTrees.associate {
             it.location to it.pushInto(classTree).values
-        }.toMap()
+        }
         val backgroundJobId = jobId.incrementAndGet()
         backgroundJobs[backgroundJobId] = BackgroundScope.launch {
             val parentScope = this
@@ -127,9 +133,8 @@ class JCDBImpl(
                         val addedClasses = locationClasses[location]
                         if (addedClasses != null) {
                             if (parentScope.isActive) {
-                                val classes = addedClasses.map { it.info() }
-                                persistentOperation {
-                                    locationStore?.saveClasses(location, classes)
+                                persistence?.write {
+                                    persistence.persist(location, addedClasses.toList())
                                 }
                                 featureRegistry.index(location, addedClasses)
                             }
@@ -137,6 +142,7 @@ class JCDBImpl(
                     }
                 }
             }.joinAll()
+
             backgroundJobs.remove(backgroundJobId)
         }
     }
@@ -150,7 +156,7 @@ class JCDBImpl(
         classTree.visit(RemoveLocationsVisitor(outdatedLocations))
     }
 
-    override suspend fun rebuildIndexes() {
+    override suspend fun rebuildFeatures() {
         awaitBackgroundJobs()
         // todo implement me
     }
@@ -183,7 +189,7 @@ class JCDBImpl(
             it.cancel()
         }
         backgroundJobs.clear()
-        persistentEnvironment?.close()
+        persistence?.close()
         hooks.forEach { it.afterStop() }
     }
 
@@ -192,50 +198,5 @@ class JCDBImpl(
             throw IllegalStateException("Database is already closed")
         }
     }
-
-    internal suspend fun restoreDataFrom(locations: Map<BytecodeLocationEntity, ByteCodeLocation>) {
-        val env = persistentEnvironment ?: return
-//        env.globalIds.restore(globalIdStore)
-//        val trees = withContext(Dispatchers.IO) {
-//            locations.map { (entity, location) ->
-//                async {
-//                    transaction {
-//                        val libraryClasses = LibraryClassTree(location)
-//                        val classes = entity.classes
-//                        classes.forEach { libraryClasses.addClass(LazyByteCodeSource(location, it)) }
-//                        restoreIndexes(location, entity)
-//                        libraryClasses
-//                    }
-//                }
-//            }
-//        }.awaitAll()
-//        trees.forEach {
-//            it.pushInto(classTree)
-//        }
-    }
-
-//    private fun restoreIndexes(location: ByteCodeLocation, entity: LocationEntity) {
-//        featureRegistry.features.forEach { it.restore(location, entity) }
-//    }
-
-//    private fun <T, INDEX : ByteCodeLocationIndex<T>> Feature<T, INDEX>.restore(
-//        location: ByteCodeLocation,
-//        entity: LocationEntity
-//    ) {
-//        val data = entity.index(key)
-//        if (data != null) {
-//            val index = try {
-//                deserialize(globalIdStore, location, data)
-//            } catch (e: Exception) {
-//                logger.warn(e) { "can't parse location" }
-//                null
-//            }
-//            if (index != null) {
-//                featureRegistry.append(location, this, index)
-//            } else {
-//                logger.warn("index ${key} is not restored for $location")
-//            }
-//        }
-//    }
 
 }

@@ -160,6 +160,11 @@ interface ClassLoadingContainer : Closeable {
     }
 }
 
+interface ByteCodeContainer {
+    val binary: ByteArray
+    val classNode: ClassNode
+}
+
 /**
  * represents jvm class method
  */
@@ -173,6 +178,7 @@ interface MethodId : Accessible {
     suspend fun resolution(): MethodResolution
 
     suspend fun signature(internalNames: Boolean): String
+
     /**
      * @return return type of the method or null in case of void methods
      */
@@ -237,14 +243,14 @@ interface AnnotationId {
     suspend fun matches(annotationClass: String): Boolean
 }
 
-interface MethodParameterId: Accessible {
+interface MethodParameterId : Accessible {
     val name: String?
-    suspend fun type(): ClassId
+    suspend fun paramClassId(): ClassId
     suspend fun annotations(): List<AnnotationId>
 }
 
 /**
- * Represents classpath i.e number of locations of byte code.
+ * Represents classpath, i.e. number of locations of byte code.
  *
  * Classpath **must be** closed when it's not needed anymore.
  * This will release references from database to possibly outdated libraries
@@ -290,18 +296,9 @@ interface Classpath : Closeable {
      * query index by specified term
      *
      * @param key index key
-     * @param term term for index
+     * @param req term for index
      */
-    suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, term: REQ): List<T>
-
-    /**
-     * query index by specified term
-     *
-     * @param key index key
-     * @param location to limit location
-     * @param term term for index
-     */
-    suspend fun <T: Serializable, REQ: IndexRequest> query(key: String, location: ByteCodeLocation, term: REQ): List<T>
+    suspend fun <RES : Serializable, REQ : Serializable> query(key: String, req: REQ): Sequence<RES>
 
 }
 
@@ -326,7 +323,7 @@ enum class FieldUsageMode {
  */
 interface JCDB : Closeable {
 
-//    val symbolIdStorage: SymbolIdsStorage
+    val locations: List<ByteCodeLocation>
 
     /**
      * create classpath instance
@@ -369,7 +366,7 @@ interface JCDB : Closeable {
     /**
      * rebuilds indexes
      */
-    suspend fun rebuildIndexes()
+    suspend fun rebuildFeatures()
 
     /**
      * watch file system for changes and refreshes the state of database in case loaded resources and resources from
@@ -383,17 +380,20 @@ interface JCDB : Closeable {
      * await background jobs
      */
     suspend fun awaitBackgroundJobs()
+
+    val persistence: JCDBPersistence?
 }
 
-/**
- * store for storing symbols ids -> name
- */
-interface SymbolIdsStorage {
 
-    suspend fun findOrNull(name: String): Int?
+interface JCDBPersistence : Closeable {
 
-    /**
-     * get name based on id
-     */
-    suspend fun findNameOrNull(id: Int): String?
+    val locations: List<ByteCodeLocation>
+
+    fun setup()
+
+    fun <T> write(newTx: Boolean = true, action: () -> T): T
+
+    fun persist(location: ByteCodeLocation, classes: List<ByteCodeContainer>)
+
+    fun save(jcdb: JCDB)
 }

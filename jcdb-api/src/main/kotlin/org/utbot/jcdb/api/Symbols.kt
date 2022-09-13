@@ -31,6 +31,8 @@ interface JcClassOrInterface : JcAnnotatedSymbol {
     val methods: List<JcMethod>
 
     val signature: String?
+
+    val type: JcType
 }
 
 interface JcParameter : JcAnnotated {
