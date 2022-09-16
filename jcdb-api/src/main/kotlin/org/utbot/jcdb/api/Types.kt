@@ -95,38 +95,3 @@ interface JcClassType : JcRefType {
 interface JcTypeVariable : JcRefType {
     val typeSymbol: String
 }
-
-
-// Enter points:
-// * create reference from JcClassOrInterface
-// * byte code: no actual information for local variable. But information from fields and methods.
-
-// case:
-// no information inside code. abstract value T
-open class Case1A<T> {
-    var x: T? = null
-}
-
-// but we have information from subclasses
-class Case1B : Case1A<String>()
-
-// case
-// no information about parametrization inside method body
-open class Case2 {
-
-    fun smth() {
-        val z = Case1A<ByteArray>()
-        z.toString()
-    }
-}
-
-// case 3
-// types for methods
-open class Case3<T> {
-
-    var x: T? = null
-
-    fun <W> smth(y: W) { // <- y has type here
-        y.toString()
-    }
-}

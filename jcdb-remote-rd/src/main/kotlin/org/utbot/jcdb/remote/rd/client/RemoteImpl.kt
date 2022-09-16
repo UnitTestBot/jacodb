@@ -162,7 +162,7 @@ class RemoteMethodId(
     }
 
     private val lazyReturnType = suspendableLazy {
-        methodInfo.returnType.let {
+        methodInfo.returnClass.let {
             classpath.findClassOrNull(it) ?: it.throwClassNotFound()
         }
     }
