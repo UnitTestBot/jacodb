@@ -1,28 +1,13 @@
 package org.utbot.jcdb.impl.fs
 
-import org.utbot.jcdb.api.ByteCodeLoader
-import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.ClassLoadingContainer
-import org.utbot.jcdb.api.LocationScope
-import org.utbot.jcdb.impl.tree.LibraryClassTree
+import org.utbot.jcdb.api.JcByteCodeLocation
+import org.utbot.jcdb.api.LocationType
+import org.utbot.jcdb.impl.vfs.LibraryClassVfs
 import java.io.InputStream
 
-class ByteCodeLoaderImpl(
-    override val location: ByteCodeLocation,
-    private val sync: ClassLoadingContainer
-) : ByteCodeLoader {
-
-    constructor(location: ByteCodeLocation, sync: Map<String, InputStream>) :
-            this(location, ClassLoadingContainerImpl(sync))
-
-    override suspend fun allResources() = sync
-
-    override suspend fun asyncResources(): suspend () -> ClassLoadingContainer? = { null }
-
-}
-
 class ClassLoadingContainerImpl(
-    override val classesToLoad: Map<String, InputStream>,
+    override val classes: Map<String, InputStream>,
     val onClose: () -> Unit = {}
 ) : ClassLoadingContainer {
 
@@ -31,18 +16,17 @@ class ClassLoadingContainerImpl(
     }
 }
 
-
 /**
  * load sync part into the tree and returns lambda that will do async part
  */
-suspend fun ByteCodeLoader.load(): LibraryClassTree {
-    val libraryTree = LibraryClassTree(location)
-    val sync = allResources()
-    sync.classesToLoad.forEach {
-        val source = ClassByteCodeSource(location, it.key, it.value.readBytes())
+suspend fun JcByteCodeLocation.load(): LibraryClassVfs {
+    val libraryTree = LibraryClassVfs(this)
+    val container = classes()
+    container?.classes?.forEach {
+        val source = ClassByteCodeSource(this, it.key, it.value.readBytes())
         libraryTree.addClass(source)
     }
-    sync.close()
+    container?.close()
     return libraryTree
 }
 
@@ -52,9 +36,9 @@ suspend fun ByteCodeLoader.load(): LibraryClassTree {
  *
  * @param location target location
  */
-fun Collection<ByteCodeLocation>.relevantLocations(location: ByteCodeLocation?): Collection<ByteCodeLocation> {
-    if (location?.scope != LocationScope.APP) {
+fun Collection<JcByteCodeLocation>.relevantLocations(location: JcByteCodeLocation?): Collection<JcByteCodeLocation> {
+    if (location?.type != LocationType.APP) {
         return this
     }
-    return filter { it.scope == LocationScope.APP }
+    return filter { it.type == LocationType.APP }
 }

@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl.index
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
@@ -14,20 +15,18 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ByteCodeIndexer
-import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.FeaturePersistence
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBFeature
 import org.utbot.jcdb.api.JCDBPersistence
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNull
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
 import org.utbot.jcdb.impl.storage.Symbols
 import org.utbot.jcdb.impl.storage.longHash
 
 
-class ReversedUsageIndexer(private val jcdb: JCDB, private val location: ByteCodeLocation) : ByteCodeIndexer {
+class ReversedUsageIndexer(private val jcdb: JCDB, private val location: RegisteredLocation) : ByteCodeIndexer {
 
     // class method -> usages of methods|fields
     private val fieldsUsages = hashMapOf<Pair<Long, Long>, HashSet<Long>>()
@@ -62,7 +61,6 @@ class ReversedUsageIndexer(private val jcdb: JCDB, private val location: ByteCod
     override fun flush() {
         jcdb.persistence as SQLitePersistenceImpl
         transaction((jcdb.persistence as SQLitePersistenceImpl).db) {
-            val locationEntity = location.findOrNew()
             Calls.batchInsert(
                 fieldsUsages.entries.flatMap { entry -> entry.value.map { Pair(entry.key, it) } },
                 shouldReturnGeneratedValues = false
@@ -70,7 +68,7 @@ class ReversedUsageIndexer(private val jcdb: JCDB, private val location: ByteCod
                 this[Calls.callerClassHash] = it.first.first
                 this[Calls.callerFieldHash] = it.first.second
                 this[Calls.ownerClassHash] = it.second
-                this[Calls.locationId] = locationEntity.id.value
+                this[Calls.locationId] = location.id
             }
             Calls.batchInsert(
                 methodsUsages.entries.flatMap { entry -> entry.value.map { Pair(entry.key, it) } },
@@ -79,18 +77,19 @@ class ReversedUsageIndexer(private val jcdb: JCDB, private val location: ByteCod
                 this[Calls.callerClassHash] = it.first.first
                 this[Calls.callerMethodHash] = it.first.second
                 this[Calls.ownerClassHash] = it.second
-                this[Calls.locationId] = locationEntity.id.value
+                this[Calls.locationId] = location.id
             }
         }
     }
 
 }
 
+@Serializable
 data class UsageIndexRequest(
     val method: String?,
     val field: String?,
     val className: String
-)
+): java.io.Serializable
 
 
 private class JCDBUsageFeature(override val jcdb: JCDB) : JCDBFeature<UsageIndexRequest, String> {
@@ -98,7 +97,8 @@ private class JCDBUsageFeature(override val jcdb: JCDB) : JCDBFeature<UsageIndex
     override val persistence = object : FeaturePersistence {
 
         override val jcdbPersistence: JCDBPersistence
-            get() = jcdb.persistence ?: throw IllegalStateException("JCDB persistence is required for using feature persistence")
+            get() = jcdb.persistence
+                ?: throw IllegalStateException("JCDB persistence is required for using feature persistence")
 
         override fun beforeIndexing(clearOnStart: Boolean) {
             if (clearOnStart) {
@@ -134,16 +134,12 @@ private class JCDBUsageFeature(override val jcdb: JCDB) : JCDBFeature<UsageIndex
 
     }
 
-    override fun newIndexer(location: ByteCodeLocation) = ReversedUsageIndexer(jcdb, location)
+    override fun newIndexer(location: RegisteredLocation) = ReversedUsageIndexer(jcdb, location)
 
-    override fun onLocationRemoved(location: ByteCodeLocation) {
+    override fun onLocationRemoved(location: RegisteredLocation) {
         jcdb.persistence?.write {
-            val loc = location.findOrNull()
-            if (loc != null) {
-                Calls.deleteWhere { Calls.locationId eq loc.id.value }
-            }
+            Calls.deleteWhere { Calls.locationId eq location.id }
         }
-
     }
 }
 
@@ -161,7 +157,7 @@ object Calls : Table() {
     val callerFieldHash = long("caller_field_hash").nullable()
     val callerMethodHash = long("caller_method_hash").nullable()
     val ownerClassHash = long("owner_class_hash")
-    val locationId = integer("location_id")
+    val locationId = long("location_id")
 
 }
 

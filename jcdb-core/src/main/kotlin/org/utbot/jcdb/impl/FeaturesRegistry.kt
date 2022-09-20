@@ -1,14 +1,14 @@
 package org.utbot.jcdb.impl
 
-import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBFeature
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.index.index
-import org.utbot.jcdb.impl.tree.ClassNode
+import org.utbot.jcdb.impl.vfs.ClassVfsItem
 import java.io.Closeable
 
-class FeaturesRegistry(val features: List<Feature<*, *>>) : Closeable {
+class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
 
     lateinit var jcdbFeatures: List<JCDBFeature<*, *>>
 
@@ -16,15 +16,15 @@ class FeaturesRegistry(val features: List<Feature<*, *>>) : Closeable {
         jcdbFeatures = features.map { it.featureOf(jcdb) }
     }
 
-    suspend fun index(location: ByteCodeLocation, classes: Collection<ClassNode>) {
+    suspend fun index(location: RegisteredLocation, classes: Collection<ClassVfsItem>) {
         jcdbFeatures.forEach { feature ->
             feature.index(location, classes)
         }
     }
 
     private suspend fun <REQ, RES> JCDBFeature<RES, REQ>.index(
-        location: ByteCodeLocation,
-        classes: Collection<ClassNode>
+        location: RegisteredLocation,
+        classes: Collection<ClassVfsItem>
     ) {
         val indexer = newIndexer(location)
         classes.forEach { node ->
@@ -39,7 +39,7 @@ class FeaturesRegistry(val features: List<Feature<*, *>>) : Closeable {
         return jcdbFeatures.firstOrNull { it.key == key } as? JCDBFeature<RES, REQ>?
     }
 
-    fun onLocationRemove(location: ByteCodeLocation) {
+    fun onLocationRemove(location: RegisteredLocation) {
         jcdbFeatures.forEach {
             it.onLocationRemoved(location)
         }

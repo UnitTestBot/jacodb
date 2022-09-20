@@ -10,7 +10,7 @@ import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
-import org.utbot.jcdb.api.LocationScope
+import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.remote.rd.CallIndexResource
 import org.utbot.jcdb.remote.rd.CloseClasspathResource
@@ -63,7 +63,7 @@ class RemoteJCDB(port: Int) : JCDB {
         return RemoteClasspath(
             resp.key,
             locations = resp.locations.mapIndexed { index, path ->
-                File(path).asByteCodeLocation(isRuntime = resp.scopes.get(index) == LocationScope.RUNTIME)
+                File(path).asByteCodeLocation(isRuntime = resp.scopes.get(index) == LocationType.RUNTIME)
             },
             db = this,
             close = closeClasspath,

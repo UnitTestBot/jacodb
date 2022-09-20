@@ -1,14 +1,18 @@
 package org.utbot.jcdb.impl.tree
 
-import org.utbot.jcdb.api.ByteCodeLocation
-import org.utbot.jcdb.api.LocationScope
-import org.utbot.jcdb.impl.fs.ByteCodeLoaderImpl
+import org.utbot.jcdb.api.JcByteCodeLocation
+import org.utbot.jcdb.api.LocationType
+import java.io.File
 
-open class DummyCodeLocation(override val id: String) : ByteCodeLocation {
+open class DummyCodeLocation(val id: String) : JcByteCodeLocation {
+    override val hash: String
+        get() = id
+    override val type=  LocationType.APP
 
-    override val scope: LocationScope
-        get() = LocationScope.APP
+    override suspend fun classes() = null
 
+    override val jarOrFolder: File
+        get() = TODO("Not yet implemented")
     override val path: String
         get() = TODO("")
 
@@ -18,6 +22,5 @@ open class DummyCodeLocation(override val id: String) : ByteCodeLocation {
 
     override suspend fun resolve(classFullName: String) = null
 
-    override suspend fun loader() = ByteCodeLoaderImpl(this, emptyMap())
 }
 

@@ -4,38 +4,34 @@ import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.utbot.jcdb.api.ArrayClassId
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
-import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.impl.storage.Classes
 import org.utbot.jcdb.impl.storage.SymbolEntity
 import org.utbot.jcdb.impl.storage.Symbols
 
-class HierarchyExtensionImpl(private val db: JCDB, private val cp: Classpath) : HierarchyExtension {
+class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) : HierarchyExtension {
 
-    override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<ClassId> {
+    override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {
         val classId = cp.findClassOrNull(name) ?: return emptyList()
         return findSubClasses(classId, allHierarchy)
     }
 
-    override suspend fun findSubClasses(classId: ClassId, allHierarchy: Boolean): List<ClassId> {
-        if (classId is ArrayClassId) {
-            return emptyList()
-        }
+    override suspend fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
         db.awaitBackgroundJobs()
         val name = classId.name
 
         return subClasses(name, allHierarchy).mapNotNull { cp.findClassOrNull(it) }
     }
 
-    override suspend fun findOverrides(methodId: MethodId): List<MethodId> {
-        val desc = methodId.description()
+    override suspend fun findOverrides(methodId: JcMethod): List<JcMethod> {
+        val desc = methodId.description
         val name = methodId.name
-        val subClasses = cp.findSubClasses(methodId.classId, allHierarchy = true)
+        val subClasses = cp.findSubClasses(methodId.jcClass, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc) // todo this is wrong
         }
@@ -67,7 +63,7 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: Classpath) : 
 }
 
 
-val Classpath.hierarchyExt: HierarchyExtensionImpl
+val JcClasspath.hierarchyExt: HierarchyExtensionImpl
     get() {
         return HierarchyExtensionImpl(db, this)
     }

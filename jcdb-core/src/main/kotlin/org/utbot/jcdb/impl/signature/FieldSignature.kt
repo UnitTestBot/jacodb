@@ -1,30 +1,29 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureReader
-import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Raw
 
-class FieldSignature : GenericTypeRegistrant {
+internal class FieldSignature : TypeRegistrant {
 
-    private lateinit var fieldType: GenericType
+    private lateinit var fieldType: SType
 
-    override fun register(token: GenericType) {
+    override fun register(token: SType) {
         fieldType = token
     }
 
-    protected fun resolve(): FieldResolution {
+    fun resolve(): FieldResolution {
         return FieldResolutionImpl(fieldType)
     }
 
     companion object {
-        fun extract(signature: String?, cp: Classpath): FieldResolution {
+        fun of(signature: String?): FieldResolution {
             signature ?: return Raw
             val signatureReader = SignatureReader(signature)
             val visitor = FieldSignature()
             return try {
-                signatureReader.acceptType(GenericTypeExtractor(cp, visitor))
+                signatureReader.acceptType(TypeExtractor(visitor))
                 visitor.resolve()
             } catch (ignored: RuntimeException) {
                 Malformed

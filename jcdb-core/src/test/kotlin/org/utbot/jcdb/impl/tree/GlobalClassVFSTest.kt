@@ -5,18 +5,22 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.impl.fs.ClassByteCodeSource
+import org.utbot.jcdb.impl.vfs.ClassVfsItem
+import org.utbot.jcdb.impl.vfs.ClasspathClassTree
+import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
+import org.utbot.jcdb.impl.vfs.RemoveLocationsVisitor
 
-class ClassTreeTest {
+class GlobalClassVFSTest {
 
-    private val classTree = ClassTree()
+    private val globalClassVFS = GlobalClassesVfs()
     private val lib1 = DummyCodeLocation("xxx")
     private val lib2 = DummyCodeLocation("yyy")
 
     @Test
     fun `handle classes at top level`() {
-        classTree.addClass(lib1.classSource("Simple"))
+        globalClassVFS.addClass(lib1.classSource("Simple"))
         assertNull(lib1.findNode("Simple1"))
         assertEquals("Simple", lib1.findNode("Simple")?.name)
         assertNull(lib2.findNode("Simple"))
@@ -24,9 +28,9 @@ class ClassTreeTest {
 
     @Test
     fun `handle classes at intermediate level`() {
-        classTree.addClass(lib1.classSource("xxx.Simple"))
-        classTree.addClass(lib2.classSource("xxx.Simple"))
-        classTree.addClass(lib1.classSource("xxx.yyy.Simple"))
+        globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib1.classSource("xxx.yyy.Simple"))
 
         assertEquals("Simple", lib1.findNode("xxx.Simple")?.name)
         assertEquals("Simple", lib2.findNode("xxx.Simple")?.name)
@@ -40,10 +44,10 @@ class ClassTreeTest {
 
     @Test
     fun `handle classes at limited tree`() {
-        val limitedTree = ClasspathClassTree(classTree, persistentListOf(lib1))
-        classTree.addClass(lib2.classSource("xxx.Simple"))
-        classTree.addClass(lib1.classSource("xxx.Simple"))
-        classTree.addClass(lib2.classSource("xxx.zzz.Simple"))
+        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
+        globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.zzz.Simple"))
 
         with(limitedTree.firstClassOrNull("xxx.Simple")) {
             assertNotNull(this!!)
@@ -56,13 +60,13 @@ class ClassTreeTest {
 
     @Test
     fun `dropping locations`() {
-        val limitedTree = ClasspathClassTree(classTree, persistentListOf(lib1))
+        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
 
-        classTree.addClass(lib2.classSource("xxx.Simple"))
-        classTree.addClass(lib1.classSource("xxx.Simple"))
-        classTree.addClass(lib2.classSource("xxx.zzz.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.zzz.Simple"))
 
-        classTree.visit(RemoveLocationsVisitor(setOf(lib2)))
+        globalClassVFS.visit(RemoveLocationsVisitor(setOf(lib2)))
 
         with(limitedTree.firstClassOrNull("xxx.Simple")) {
             assertNotNull(this!!)
@@ -74,22 +78,22 @@ class ClassTreeTest {
     }
     @Test
     fun `total locations dropping`() {
-        val limitedTree = ClasspathClassTree(classTree, persistentListOf(lib1))
+        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
 
-        classTree.addClass(lib2.classSource("xxx.Simple"))
-        classTree.addClass(lib1.classSource("xxx.Simple"))
-        classTree.addClass(lib2.classSource("xxx.zzz.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
+        globalClassVFS.addClass(lib2.classSource("xxx.zzz.Simple"))
 
-        classTree.visit(RemoveLocationsVisitor(setOf(lib1, lib2)))
+        globalClassVFS.visit(RemoveLocationsVisitor(setOf(lib1, lib2)))
 
         assertNull(limitedTree.firstClassOrNull("xxx.Simple"))
     }
 
-    private fun ByteCodeLocation.findNode(name: String): ClassNode? {
-        return classTree.findClassNodeOrNull(this, name)
+    private fun JcByteCodeLocation.findNode(name: String): ClassVfsItem? {
+        return globalClassVFS.findClassNodeOrNull(this, name)
     }
 
-    private fun ByteCodeLocation.classSource(name: String): ClassByteCodeSource {
+    private fun JcByteCodeLocation.classSource(name: String): ClassByteCodeSource {
         return ClassByteCodeSource(
             className = name,
             location = this,

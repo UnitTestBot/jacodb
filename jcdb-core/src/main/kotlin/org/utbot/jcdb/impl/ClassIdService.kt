@@ -1,30 +1,29 @@
 package org.utbot.jcdb.impl
 
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.Classpath
-import org.utbot.jcdb.api.MethodId
-import org.utbot.jcdb.impl.tree.ClassNode
-import org.utbot.jcdb.impl.tree.ClasspathClassTree
-import org.utbot.jcdb.impl.types.ClassIdImpl
-import org.utbot.jcdb.impl.types.MethodIdImpl
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
+import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.types.MethodInfo
+import org.utbot.jcdb.impl.vfs.ClassVfsItem
 
-class ClassIdService(internal val cp: Classpath, private val classpathClassTree: ClasspathClassTree) {
+class ClassIdService(internal val cp: JcClasspath) {
 
-    fun toClassId(node: ClassNode?): ClassId? {
+    fun toClassId(node: ClassVfsItem?): JcClassOrInterface? {
         node ?: return null
         return node.asClassId()
     }
 
-    private fun ClassNode.asClassId() = ClassIdImpl(cp, this, this@ClassIdService)
+    private fun ClassVfsItem.asClassId() = JcClassOrInterfaceImpl(cp, this, this@ClassIdService)
 
-    suspend fun toClassId(fullName: String?): ClassId? {
+    suspend fun toClassId(fullName: String?): JcClassOrInterface? {
         fullName ?: return null
         return cp.findClassOrNull(fullName)
     }
 
-    fun toMethodId(classId: ClassId, methodInfo: MethodInfo, node: ClassNode): MethodId {
-        return MethodIdImpl(methodInfo, node, classId, this)
+    fun toMethodId(classId: JcClassOrInterface, methodInfo: MethodInfo, node: ClassVfsItem): JcMethod {
+        return JcMethodImpl(methodInfo, node, classId, this)
     }
 
 

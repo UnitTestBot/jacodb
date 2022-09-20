@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl.fs
 
 import mu.KLogging
-import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.JcByteCodeLocation
 import java.io.File
 
 val logger = object : KLogging() {}.logger
 
-fun File.asByteCodeLocation(loadClassesOnlyFrom: List<String>? = null, isRuntime: Boolean = false): ByteCodeLocation {
+fun File.asByteCodeLocation(isRuntime: Boolean = false): JcByteCodeLocation {
     if (!exists()) {
         throw IllegalArgumentException("file $absolutePath doesn't exist")
     }

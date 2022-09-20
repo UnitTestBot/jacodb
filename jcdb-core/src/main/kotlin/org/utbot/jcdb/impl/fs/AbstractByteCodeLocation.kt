@@ -1,20 +1,18 @@
 package org.utbot.jcdb.impl.fs
 
-import org.utbot.jcdb.api.ByteCodeLocation
+import org.utbot.jcdb.api.JcByteCodeLocation
 import java.io.File
 
-abstract class AbstractByteCodeLocation(protected val file: File) : ByteCodeLocation {
 
-    override val id: String by lazy(LazyThreadSafetyMode.NONE) {
-        getCurrentId()
-    }
+abstract class AbstractByteCodeLocation(override val jarOrFolder: File) : JcByteCodeLocation {
 
     override val path: String
-        get() = file.absolutePath
+        get() = jarOrFolder.absolutePath
 
-    abstract fun getCurrentId(): String
+    abstract fun currentHash(): String
 
     override fun isChanged(): Boolean {
-        return id != getCurrentId()
+        return hash != currentHash()
     }
+
 }

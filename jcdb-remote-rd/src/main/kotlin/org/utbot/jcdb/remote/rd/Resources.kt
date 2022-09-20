@@ -14,10 +14,10 @@ import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.PredefinedPrimitive
 import org.utbot.jcdb.api.PredefinedPrimitives
-import org.utbot.jcdb.impl.types.ArrayClassIdImpl
+import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.types.ArrayClassInfo
-import org.utbot.jcdb.impl.types.ClassIdImpl
 import org.utbot.jcdb.impl.types.ClassInfoContainer
+import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
 import org.utbot.jcdb.impl.types.PredefinedClassInfo
 import java.io.File
 import java.io.Serializable
@@ -186,8 +186,8 @@ class CallIndexResource(classpaths: ConcurrentHashMap<String, Classpath> = Concu
 
 private suspend fun ClassId.convertToContainer(): ClassInfoContainer {
     return when (this) {
-        is ArrayClassIdImpl -> ArrayClassInfo(elementClass.convertToContainer())
-        is ClassIdImpl -> info()
+        is JcArrayClassTypesImpl -> ArrayClassInfo(elementClass.convertToContainer())
+        is JcClassOrInterfaceImpl -> info()
         is PredefinedPrimitive -> PredefinedClassInfo(name)
         else -> throw IllegalStateException("Can't convert class $name to serializable class info")
     }

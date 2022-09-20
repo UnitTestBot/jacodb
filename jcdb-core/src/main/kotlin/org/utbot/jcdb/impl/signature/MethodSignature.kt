@@ -1,29 +1,28 @@
 package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
-import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.Raw
 
-open class MethodSignature(cp: Classpath) : Signature<MethodResolution>(cp) {
+internal class MethodSignature : Signature<MethodResolution>() {
 
-    private val parameterTypes = ArrayList<GenericType>()
-    private val exceptionTypes = ArrayList<GenericType>()
+    private val parameterTypes = ArrayList<SType>()
+    private val exceptionTypes = ArrayList<SClassRefType>()
 
-    private lateinit var returnType: GenericType
+    private lateinit var returnType: SType
 
     override fun visitParameterType(): SignatureVisitor {
-        return GenericTypeExtractor(cp, ParameterTypeRegistrant())
+        return TypeExtractor(ParameterTypeRegistrant())
     }
 
     override fun visitReturnType(): SignatureVisitor {
         collectTypeParameter()
-        return GenericTypeExtractor(cp, ReturnTypeTypeRegistrant())
+        return TypeExtractor(ReturnTypeTypeRegistrant())
     }
 
     override fun visitExceptionType(): SignatureVisitor {
-        return GenericTypeExtractor(cp, ExceptionTypeRegistrant())
+        return TypeExtractor(ExceptionTypeRegistrant())
     }
 
     override fun resolve(): MethodResolution {
@@ -35,29 +34,29 @@ open class MethodSignature(cp: Classpath) : Signature<MethodResolution>(cp) {
         )
     }
 
-    private inner class ParameterTypeRegistrant : GenericTypeRegistrant {
-        override fun register(token: GenericType) {
+    private inner class ParameterTypeRegistrant : TypeRegistrant {
+        override fun register(token: SType) {
             parameterTypes.add(token)
         }
     }
 
-    private inner class ReturnTypeTypeRegistrant : GenericTypeRegistrant {
-        override fun register(token: GenericType) {
+    private inner class ReturnTypeTypeRegistrant : TypeRegistrant {
+        override fun register(token: SType) {
             returnType = token
         }
     }
 
-    private inner class ExceptionTypeRegistrant : GenericTypeRegistrant {
-        override fun register(token: GenericType) {
-            exceptionTypes.add(token)
+    private inner class ExceptionTypeRegistrant : TypeRegistrant {
+        override fun register(token: SType) {
+            exceptionTypes.add(token as SClassRefType)
         }
     }
 
     companion object {
-        fun of(signature: String?, cp: Classpath): MethodResolution {
+        fun of(signature: String?): MethodResolution {
             signature ?: return Raw
             return try {
-                of(signature, MethodSignature(cp))
+                of(signature, MethodSignature())
             } catch (ignored: RuntimeException) {
                 Malformed
             }

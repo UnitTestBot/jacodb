@@ -23,9 +23,9 @@ interface JCDBFeature<REQ, RES> {
 
     suspend fun query(req: REQ): Sequence<RES>
 
-    fun newIndexer(location: ByteCodeLocation): ByteCodeIndexer
+    fun newIndexer(location: RegisteredLocation): ByteCodeIndexer
 
-    fun onLocationRemoved(location: ByteCodeLocation)
+    fun onLocationRemoved(location: RegisteredLocation)
 
     val persistence: FeaturePersistence?
 

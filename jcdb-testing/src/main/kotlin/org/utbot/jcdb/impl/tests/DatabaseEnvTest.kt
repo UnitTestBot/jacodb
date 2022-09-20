@@ -9,11 +9,9 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.ArrayClassId
-import org.utbot.jcdb.api.Classpath
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.allConstructors
 import org.utbot.jcdb.api.allMethods
-import org.utbot.jcdb.api.byte
 import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
@@ -47,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 abstract class DatabaseEnvTest {
 
-    abstract val cp: Classpath
+    abstract val cp: JcClasspath
     abstract val hierarchyExt: HierarchyExtension
 
     @AfterEach
@@ -59,39 +57,39 @@ abstract class DatabaseEnvTest {
     fun `find class from build dir folder`() = runBlocking {
         val clazz = cp.findClass<Foo>()
         assertEquals(Foo::class.java.name, clazz.name)
-        assertTrue(clazz.isFinal())
-        assertTrue(clazz.isPublic())
-        assertFalse(clazz.isInterface())
+        assertTrue(clazz.isFinal)
+        assertTrue(clazz.isPublic)
+        assertFalse(clazz.isInterface)
 
-        val annotations = clazz.annotations()
+        val annotations = clazz.annotations
         assertTrue(annotations.size > 1)
         assertNotNull(annotations.firstOrNull { it.matches(Nested::class.java.name) })
 
-        val fields = clazz.fields()
+        val fields = clazz.fields
         assertEquals(2, fields.size)
 
         with(fields.first()) {
             assertEquals("foo", name)
-            assertEquals("int", type().name)
-            assertFalse(isNullable())
+            assertEquals("int", type.typeName)
+            assertFalse(isNullable)
         }
         with(fields[1]) {
             assertEquals("bar", name)
-            assertEquals(String::class.java.name, type().name)
-            assertFalse(isNullable())
+            assertEquals(String::class.java.name, type.typeName)
+            assertFalse(isNullable)
         }
 
-        val methods = clazz.methods()
+        val methods = clazz.methods
         assertEquals(5, methods.size)
         with(methods.first { it.name == "smthPublic" }) {
-            assertEquals(1, parameters().size)
-            assertEquals("int", parameters().first().name)
-            assertTrue(isPublic())
+            assertEquals(1, parameters.size)
+            assertEquals("int", parameters.first().name)
+            assertTrue(isPublic)
         }
 
         with(methods.first { it.name == "smthPrivate" }) {
-            assertTrue(parameters().isEmpty())
-            assertTrue(isPrivate())
+            assertTrue(parameters.isEmpty())
+            assertTrue(isPrivate)
         }
     }
 
@@ -100,41 +98,32 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClass<Bar>()
         assertEquals(Bar::class.java.name, clazz.name)
 
-        val fields = clazz.fields()
+        val fields = clazz.fields
         assertEquals(3, fields.size)
 
         with(fields.first()) {
             assertEquals("byteArray", name)
-            assertEquals("byte[]", type().name)
-            assertEquals(cp.byte, (type() as ArrayClassId).elementClass)
+            assertEquals("byte[]", type.typeName)
         }
 
         with(fields.get(1)) {
             assertEquals("objectArray", name)
-            assertEquals("java.lang.Object[]", type().name)
-            assertEquals(
-                cp.findClass<Any>(),
-                (type() as ArrayClassId).elementClass
-            )
+            assertEquals("java.lang.Object[]", type.typeName)
         }
 
         with(fields.get(2)) {
             assertEquals("objectObjectArray", name)
-            assertEquals("java.lang.Object[][]", type().name)
-            assertEquals(
-                cp.findClass<Any>(),
-                ((type() as ArrayClassId).elementClass as ArrayClassId).elementClass
-            )
+            assertEquals("java.lang.Object[][]", type.typeName)
         }
 
-        val methods = clazz.methods()
+        val methods = clazz.methods
         assertEquals(2, methods.size)
 
         with(methods.first { it.name == "smth" }) {
-            val parameters = parameters()
+            val parameters = parameters
             assertEquals(1, parameters.size)
             assertEquals("byte[]", parameters.first().name)
-            assertEquals("byte[]", returnType().name)
+            assertEquals("byte[]", returnType.typeName)
         }
     }
 
@@ -165,11 +154,11 @@ abstract class DatabaseEnvTest {
         val notHelloWorld = innerClasses.filterNot { it.name.contains("\$HelloWorld") }
         val englishGreetings = notHelloWorld.first { it.name.contains("EnglishGreeting") }
         assertTrue(englishGreetings.isLocal())
-        assertFalse(englishGreetings.isAnonymous())
+        assertFalse(englishGreetings.isAnonymous)
 
         (notHelloWorld - englishGreetings).forEach {
             assertFalse(it.isLocal())
-            assertTrue(it.isAnonymous())
+            assertTrue(it.isAnonymous)
             assertFalse(it.isMemberClass())
         }
     }
@@ -178,25 +167,24 @@ abstract class DatabaseEnvTest {
     fun `find lazy-loaded class`() = runBlocking {
         val domClass = cp.findClass<Document>()
 
-        assertTrue(domClass.isPublic())
-        assertTrue(domClass.isInterface())
+        assertTrue(domClass.isPublic)
+        assertTrue(domClass.isInterface)
 
-        val methods = domClass.methods()
+        val methods = domClass.methods
         assertTrue(methods.isNotEmpty())
         with(methods.first { it.name == "getDoctype" }) {
-            assertTrue(parameters().isEmpty())
-            assertEquals(DocumentType::class.java.name, returnType().name)
+            assertTrue(parameters.isEmpty())
+            assertEquals(DocumentType::class.java.name, returnType.typeName)
             assertEquals("getDoctype()org.w3c.dom.DocumentType;", signature(false))
             assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", signature(true))
-            assertTrue(isPublic())
+            assertTrue(isPublic)
         }
 
         with(methods.first { it.name == "createElement" }) {
-            assertEquals(listOf(cp.findClass<String>()), parameters())
-            assertEquals(Element::class.java.name, returnType().name)
+            assertEquals(listOf("java.lang.String"), parameters.map { it.type.typeName })
+            assertEquals(Element::class.java.name, returnType.typeName)
             assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", signature(false))
             assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", signature(true))
-
         }
     }
 
@@ -267,32 +255,32 @@ abstract class DatabaseEnvTest {
         assertTrue(signatures.contains("saySmth(java.lang.String;)void;"))
         assertTrue(signatures.contains("saySmth()void;"))
         assertFalse(signatures.contains("<init>()void;"))
-        assertEquals(3, c.allConstructors().size)
+        assertEquals(3, c.allConstructors.size)
     }
 
     @Test
     fun `find method overrides`() = runBlocking {
         val creatureClass = cp.findClass<Creature>()
 
-        assertEquals(2, creatureClass.methods().size)
-        val sayMethod = creatureClass.methods().first { it.name == "say" }
-        val helloMethod = creatureClass.methods().first { it.name == "hello" }
+        assertEquals(2, creatureClass.methods.size)
+        val sayMethod = creatureClass.methods.first { it.name == "say" }
+        val helloMethod = creatureClass.methods.first { it.name == "hello" }
 
         var overrides = hierarchyExt.findOverrides(sayMethod)
 
         with(overrides) {
             assertEquals(4, size)
 
-            assertNotNull(firstOrNull { it.classId == cp.findClass<Creature.DinosaurImpl>() })
-            assertNotNull(firstOrNull { it.classId == cp.findClass<Creature.Fish>() })
-            assertNotNull(firstOrNull { it.classId == cp.findClass<Creature.TRex>() })
-            assertNotNull(firstOrNull { it.classId == cp.findClass<Creature.Pterodactyl>() })
+            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.DinosaurImpl>() })
+            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.Fish>() })
+            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.TRex>() })
+            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.Pterodactyl>() })
         }
         overrides = hierarchyExt.findOverrides(helloMethod)
         with(overrides) {
             assertEquals(1, size)
 
-            assertNotNull(firstOrNull { it.classId == cp.findClass<Creature.TRex>() })
+            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.TRex>() })
 
         }
     }

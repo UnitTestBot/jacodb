@@ -9,7 +9,7 @@ import com.jetbrains.rd.framework.writeArray
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
-import org.utbot.jcdb.api.LocationScope
+import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import java.io.Serializable
 import kotlin.reflect.KClass
@@ -36,7 +36,7 @@ class GetClasspathReq(val locations: List<String>) {
     }
 }
 
-class GetClasspathRes(val key: String, val locations: List<String>, val scopes: List<LocationScope>) {
+class GetClasspathRes(val key: String, val locations: List<String>, val scopes: List<LocationType>) {
 
     companion object : IMarshaller<GetClasspathRes> {
 
@@ -49,7 +49,7 @@ class GetClasspathRes(val key: String, val locations: List<String>, val scopes: 
                     buffer.readString()
                 }.toList(),
                 buffer.readArray {
-                    LocationScope.values()[buffer.readInt()]
+                    LocationType.values()[buffer.readInt()]
                 }.toList(),
             )
         }

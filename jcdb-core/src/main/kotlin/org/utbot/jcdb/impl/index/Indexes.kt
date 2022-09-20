@@ -1,9 +1,9 @@
 package org.utbot.jcdb.impl.index
 
 import org.utbot.jcdb.api.ByteCodeIndexer
-import org.utbot.jcdb.impl.tree.ClassNode
+import org.utbot.jcdb.impl.vfs.ClassVfsItem
 
-suspend fun index(node: ClassNode, builder: ByteCodeIndexer) {
+suspend fun index(node: ClassVfsItem, builder: ByteCodeIndexer) {
     val asmNode = node.fullByteCode()
     builder.index(asmNode)
     asmNode.methods.forEach {

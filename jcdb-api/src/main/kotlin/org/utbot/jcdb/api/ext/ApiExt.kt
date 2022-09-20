@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.toCollection
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ext.findClassOrNull
+import org.utbot.jcdb.api.ext.findTypeOrNull
 import java.lang.Byte
 import java.lang.Double
 import java.lang.Float
@@ -15,123 +16,137 @@ import java.lang.Short
 /**
  * is item has `public` modifier
  */
-suspend fun Accessible.isPublic(): Boolean {
-    return access() and Opcodes.ACC_PUBLIC != 0
-}
+val JcAccessible.isPublic: Boolean
+    get() {
+        return access and Opcodes.ACC_PUBLIC != 0
+    }
 
 /**
  * is item has `private` modifier
  */
-suspend fun Accessible.isPrivate(): Boolean {
-    return access() and Opcodes.ACC_PRIVATE != 0
-}
+val JcAccessible.isPrivate: Boolean
+    get() {
+        return access and Opcodes.ACC_PRIVATE != 0
+    }
 
 /**
  * is item has `protected` modifier
  */
-suspend fun Accessible.isProtected(): Boolean {
-    return access() and Opcodes.ACC_PROTECTED != 0
-}
+val JcAccessible.isProtected: Boolean
+    get() {
+        return access and Opcodes.ACC_PROTECTED != 0
+    }
 
 /**
  * is item has `package` modifier
  */
-suspend fun Accessible.isPackagePrivate(): Boolean {
-    return !isPublic() && !isProtected() && !isPrivate()
-}
+val JcAccessible.isPackagePrivate: Boolean
+    get() {
+        return !isPublic && !isProtected && !isPrivate
+    }
 
 /**
  * is item has `static` modifier
  */
-suspend fun Accessible.isStatic(): Boolean {
-    return access() and Opcodes.ACC_STATIC != 0
-}
+val JcAccessible.isStatic: Boolean
+    get() {
+        return access and Opcodes.ACC_STATIC != 0
+    }
 
 /**
  * is item has `final` modifier
  */
-suspend fun Accessible.isFinal(): Boolean {
-    return access() and Opcodes.ACC_FINAL != 0
-}
+val JcAccessible.isFinal: Boolean
+    get() {
+        return access and Opcodes.ACC_FINAL != 0
+    }
 
 /**
  * is item has `synchronized` modifier
  */
-suspend fun MethodId.isSynchronized(): Boolean {
-    return access() and Opcodes.ACC_SYNCHRONIZED != 0
-}
+val JcMethod.isSynchronized: Boolean
+    get() {
+        return access and Opcodes.ACC_SYNCHRONIZED != 0
+    }
 
 /**
  * is item has `volatile` modifier
  */
-suspend fun FieldId.isVolatile(): Boolean {
-    return access() and Opcodes.ACC_VOLATILE != 0
-}
+val JcField.isVolatile: Boolean
+    get() {
+        return access and Opcodes.ACC_VOLATILE != 0
+    }
 
 /**
  * is field has `transient` modifier
  */
-suspend fun FieldId.isTransient(): Boolean {
-    return access() and Opcodes.ACC_TRANSIENT != 0
-}
+val JcField.isTransient: Boolean
+    get() {
+        return access and Opcodes.ACC_TRANSIENT != 0
+    }
 
 /**
  * is method has `native` modifier
  */
-suspend fun MethodId.isNative(): Boolean {
-    return access() and Opcodes.ACC_NATIVE != 0
-}
+val JcMethod.isNative: Boolean
+    get() {
+        return access and Opcodes.ACC_NATIVE != 0
+    }
 
 /**
  * is class is interface
  */
-suspend fun ClassId.isInterface(): Boolean {
-    return access() and Opcodes.ACC_INTERFACE != 0
-}
+val JcClassOrInterface.isInterface: Boolean
+    get() {
+        return access and Opcodes.ACC_INTERFACE != 0
+    }
 
 /**
  * is item has `abstract` modifier
  */
-suspend fun Accessible.isAbstract(): Boolean {
-    return access() and Opcodes.ACC_ABSTRACT != 0
-}
+val JcAccessible.isAbstract: Boolean
+    get() {
+        return access and Opcodes.ACC_ABSTRACT != 0
+    }
 
 /**
  * is method has `strictfp` modifier
  */
-suspend fun MethodId.isStrict(): Boolean {
-    return access() and Opcodes.ACC_STRICT != 0
-}
+val JcMethod.isStrict: Boolean
+    get() {
+        return access and Opcodes.ACC_STRICT != 0
+    }
 
 /**
  * return true if method is constructor
  */
-val MethodId.isConstructor: Boolean
+val JcMethod.isConstructor: Boolean
     get() {
         return name == "<init>"
     }
 
-suspend fun Accessible.isSynthetic(): Boolean {
-    return access() and Opcodes.ACC_SYNTHETIC != 0
-}
+val JcAccessible.isSynthetic: Boolean
+    get() {
+        return access and Opcodes.ACC_SYNTHETIC != 0
+    }
 
-suspend fun ClassId.isLocalOrAnonymous(): Boolean {
+suspend fun JcClassOrInterface.isLocalOrAnonymous(): Boolean {
     return outerMethod() != null
 }
 
-suspend fun ClassId.isLocal(): Boolean {
-    return outerClass() != null && !isAnonymous()
+suspend fun JcClassOrInterface.isLocal(): Boolean {
+    return outerClass() != null && !isAnonymous
 }
 
-suspend fun ClassId.isMemberClass(): Boolean {
+suspend fun JcClassOrInterface.isMemberClass(): Boolean {
     return simpleBinaryName() != null && !isLocalOrAnonymous()
 }
 
-suspend fun ClassId.isEnum(): Boolean {
-    return access() and Opcodes.ACC_ENUM != 0 && superclass()?.name == Enum::class.java.name
+suspend fun JcClassOrInterface.isEnum(): Boolean {
+    return access and Opcodes.ACC_ENUM != 0 && superclass()?.name == Enum::class.java.name
 }
 
-private suspend fun ClassId.simpleBinaryName(): String? {
+private suspend fun JcClassOrInterface.simpleBinaryName(): String? {
     // top level class
     val enclosingClass = outerClass() ?: return null
     // Otherwise, strip the enclosing class' name
@@ -145,9 +160,9 @@ private suspend fun ClassId.simpleBinaryName(): String? {
 /**
  * @return element class in case of `this` is ArrayClass
  */
-fun ClassId.ifArrayGetElementClass(): ClassId? {
+fun JcType.ifArrayGetElementClass(): JcType? {
     return when (this) {
-        is ArrayClassId -> elementClass
+        is JcArrayType -> elementType
         else -> null
     }
 }
@@ -156,8 +171,8 @@ fun ClassId.ifArrayGetElementClass(): ClassId? {
  * unboxes `this` class. That means that for 'java.lang.Integet' will be returned `PredefinedPrimitive.int`
  * and for `java.lang.String` will be returned `java.lang.String`
  */
-fun ClassId.unboxIfNeeded(): ClassId {
-    return when (name) {
+fun JcType.unboxIfNeeded(): JcType {
+    return when (typeName) {
         "java.lang.Boolean" -> classpath.boolean
         "java.lang.Byte" -> classpath.byte
         "java.lang.Char" -> classpath.char
@@ -175,34 +190,25 @@ fun ClassId.unboxIfNeeded(): ClassId {
  * and for `java.lang.String` will be returned `java.lang.String`
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-suspend fun ClassId.autoboxIfNeeded(): ClassId {
+suspend fun JcType.autoboxIfNeeded(): JcType {
     return when (this) {
-        classpath.boolean -> classpath.findClassOrNull<java.lang.Boolean>() ?: throwClassNotFound<java.lang.Boolean>()
-        classpath.byte -> classpath.findClassOrNull<java.lang.Byte>() ?: throwClassNotFound<Byte>()
-        classpath.char -> classpath.findClassOrNull<Character>() ?: throwClassNotFound<Character>()
-        classpath.short -> classpath.findClassOrNull<java.lang.Short>() ?: throwClassNotFound<Short>()
-        classpath.int -> classpath.findClassOrNull<Integer>() ?: throwClassNotFound<Integer>()
-        classpath.long -> classpath.findClassOrNull<java.lang.Long>() ?: throwClassNotFound<Long>()
-        classpath.float -> classpath.findClassOrNull<java.lang.Float>() ?: throwClassNotFound<Float>()
-        classpath.double -> classpath.findClassOrNull<java.lang.Double>() ?: throwClassNotFound<Double>()
+        classpath.boolean -> classpath.findTypeOrNull<java.lang.Boolean>() ?: throwClassNotFound<java.lang.Boolean>()
+        classpath.byte -> classpath.findTypeOrNull<java.lang.Byte>() ?: throwClassNotFound<Byte>()
+        classpath.char -> classpath.findTypeOrNull<Character>() ?: throwClassNotFound<Character>()
+        classpath.short -> classpath.findTypeOrNull<java.lang.Short>() ?: throwClassNotFound<Short>()
+        classpath.int -> classpath.findTypeOrNull<Integer>() ?: throwClassNotFound<Integer>()
+        classpath.long -> classpath.findTypeOrNull<java.lang.Long>() ?: throwClassNotFound<Long>()
+        classpath.float -> classpath.findTypeOrNull<java.lang.Float>() ?: throwClassNotFound<Float>()
+        classpath.double -> classpath.findTypeOrNull<java.lang.Double>() ?: throwClassNotFound<Double>()
         else -> this
     }
 }
 
-val ArrayClassId.isPrimitiveArray: Boolean
-    get() {
-        return elementClass.isPrimitive
-    }
-
-val ClassId.isPrimitive: Boolean
-    get() {
-        return PredefinedPrimitives.matches(name)
-    }
 
 /**
  * @return all interfaces and classes retrieved recursively from this ClassId
  */
-suspend fun ClassId.forEachSuperClasses(action: suspend (ClassId) -> Unit): List<ClassId> {
+suspend fun JcClassOrInterface.forEachSuperClasses(action: suspend (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
     val parents = (interfaces() + superclass()).filterNotNull()
     parents.forEach {
         action(it)
@@ -214,68 +220,56 @@ suspend fun ClassId.forEachSuperClasses(action: suspend (ClassId) -> Unit): List
     return result.toPersistentList()
 }
 
-suspend fun ClassId.findAllSuperClasses(): List<ClassId> {
-    val result = hashSetOf<ClassId>()
+suspend fun JcClassOrInterface.findAllSuperClasses(): List<JcClassOrInterface> {
+    val result = hashSetOf<JcClassOrInterface>()
     forEachSuperClasses {
         result.add(it)
     }
     return result.toPersistentList()
 }
 
-suspend infix fun ClassId.isSubtypeOf(another: ClassId): Boolean {
-    if (this is ArrayClassId && another is ArrayClassId) {
-        if ((isPrimitiveArray || another.isPrimitiveArray) && another != this) {
-            return false
-        }
-        return elementClass isSubtypeOf another.elementClass
-    }
+suspend infix fun JcClassOrInterface.isSubtypeOf(another: JcClassOrInterface): Boolean {
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    // unbox primitive types
-    val left = unboxIfNeeded()
-    val right = another.unboxIfNeeded()
-    if (left == right) {
-        return true
-    }
-    return right in findAllSuperClasses()
+    return this in findAllSuperClasses()
 }
 
 
 /**
  * find field by name
  */
-suspend fun ClassId.findFieldOrNull(name: String): FieldId? = fields().firstOrNull { it.name == name }
+fun JcClassOrInterface.findFieldOrNull(name: String): JcField? = fields.firstOrNull { it.name == name }
 
 /**
  * find method by name and description
  */
-suspend fun ClassId.findMethodOrNull(name: String, desc: String): MethodId? =
-    methods().firstOrNull { it.name == name && it.description() == desc }
+fun JcClassOrInterface.findMethodOrNull(name: String, desc: String): JcMethod? =
+    methods.firstOrNull { it.name == name && it.description == desc }
 
 /**
  * find method by ASM node
  */
-suspend fun ClassId.findMethodOrNull(methodNode: MethodNode): MethodId? =
-    methods().firstOrNull { it.name == methodNode.name && it.description() == methodNode.desc }
+fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
+    methods.firstOrNull { it.name == methodNode.name && it.description == methodNode.desc }
 
 
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
-suspend fun ClassId.enumValues(): List<FieldId>? {
+suspend fun JcClassOrInterface.enumValues(): List<JcField>? {
     if (isEnum()) {
-        return fields().filter { it.isStatic() && it.type().name == name }
+        return fields.filter { it.isStatic && it.type.typeName == name }
     }
     return null
 }
 
 
-suspend fun ClassId.allMethods(): List<MethodId> {
+suspend fun JcClassOrInterface.allMethods(): List<JcMethod> {
     return flow {
-        var clazz: ClassId? = this@allMethods
+        var clazz: JcClassOrInterface? = this@allMethods
         while (clazz != null) {
-            clazz.methods().filter { !it.isConstructor }.forEach {
+            clazz.methods.filter { !it.isConstructor }.forEach {
                 emit(it)
             }
             clazz = clazz.superclass()
@@ -283,9 +277,10 @@ suspend fun ClassId.allMethods(): List<MethodId> {
     }.toCollection(arrayListOf())
 }
 
-suspend fun ClassId.allConstructors(): List<MethodId> {
-    return methods().filter { it.isConstructor }
-}
+val JcClassOrInterface.allConstructors: List<JcMethod>
+    get() {
+        return methods.filter { it.isConstructor }
+    }
 
 fun String.jvmName(): String {
     return when {
@@ -302,6 +297,7 @@ fun String.jvmName(): String {
             val elementName = substring(0, length - 2)
             "[" + elementName.jvmName()
         }
+
         else -> "L$this;"
     }
 }
@@ -321,23 +317,30 @@ fun String.jcdbName(): String {
             val elementName = substring(1, length)
             elementName.jcdbName() + "[]"
         }
+
         startsWith("L") -> {
             substring(1, length - 1)
         }
+
         else -> this
     }
 }
 
 const val NotNull = "org.jetbrains.annotations.NotNull"
 
-suspend fun MethodId.isNullable(): Boolean {
-    return annotations().any { it.matches(NotNull) }
-}
+val JcMethod.isNullable: Boolean
+    get() {
+        return annotations.any { it.matches(NotNull) }
+    }
 
-suspend fun FieldId.isNullable(): Boolean {
-    return annotations().any { it.matches(NotNull) }
-}
+val JcField.isNullable: Boolean
+    get() {
+        return annotations.any { it.matches(NotNull) }
+    }
 
-suspend fun MethodParameterId.isNullable(): Boolean {
-    return annotations().any { it.matches(NotNull) }
-}
+val JcParameter.isNullable: Boolean
+    get() {
+        return annotations.any { it.matches(NotNull) }
+    }
+
+suspend fun JcClasspath.anyType(): JcClassType = findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()

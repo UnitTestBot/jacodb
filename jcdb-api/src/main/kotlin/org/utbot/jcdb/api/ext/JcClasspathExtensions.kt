@@ -5,10 +5,11 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.utbot.jcdb.api.ClassId
-import org.utbot.jcdb.api.Classpath
-import org.utbot.jcdb.api.FieldId
-import org.utbot.jcdb.api.MethodId
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcField
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.NoClassInClasspathException
 import org.utbot.jcdb.api.findFieldOrNull
 import org.utbot.jcdb.api.findMethodOrNull
@@ -18,9 +19,9 @@ import org.utbot.jcdb.api.throwClassNotFound
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun Classpath.findMethodsUsedIn(method: MethodId): List<MethodId> {
-    val methodNode = method.readBody() ?: return emptyList()
-    val result = LinkedHashSet<MethodId>()
+suspend fun JcClasspath.findMethodsUsedIn(method: JcMethod): List<JcMethod> {
+    val methodNode = method.body() ?: return emptyList()
+    val result = LinkedHashSet<JcMethod>()
     methodNode.instructions.forEach { instruction ->
         when (instruction) {
             is MethodInsnNode -> {
@@ -38,8 +39,8 @@ suspend fun Classpath.findMethodsUsedIn(method: MethodId): List<MethodId> {
 }
 
 class FieldUsagesResult(
-    val reads: List<FieldId>,
-    val writes: List<FieldId>
+    val reads: List<JcField>,
+    val writes: List<JcField>
 ) {
     companion object {
         val EMPTY = FieldUsagesResult(emptyList(), emptyList())
@@ -50,10 +51,10 @@ class FieldUsagesResult(
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun Classpath.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
-    val methodNode = method.readBody() ?: return FieldUsagesResult.EMPTY
-    val reads = LinkedHashSet<FieldId>()
-    val writes = LinkedHashSet<FieldId>()
+suspend fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
+    val methodNode = method.body() ?: return FieldUsagesResult.EMPTY
+    val reads = LinkedHashSet<JcField>()
+    val writes = LinkedHashSet<JcField>()
     methodNode.instructions.forEach { instruction ->
         when (instruction) {
             is FieldInsnNode -> {
@@ -80,8 +81,14 @@ suspend fun Classpath.findFieldsUsedIn(method: MethodId): FieldUsagesResult {
 }
 
 
-suspend inline fun <reified T> Classpath.findClassOrNull(): ClassId? {
+suspend inline fun <reified T> JcClasspath.findClassOrNull(): JcClassOrInterface? {
     return findClassOrNull(T::class.java.name)
+}
+
+suspend inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
+    return findClassOrNull(T::class.java.name)?.let {
+        typeOf(it)
+    }
 }
 
 
@@ -89,7 +96,7 @@ suspend inline fun <reified T> Classpath.findClassOrNull(): ClassId? {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend fun Classpath.findClass(name: String): ClassId {
+suspend fun JcClasspath.findClass(name: String): JcClassOrInterface {
     return findClassOrNull(name) ?: name.throwClassNotFound()
 }
 
@@ -97,10 +104,10 @@ suspend fun Classpath.findClass(name: String): ClassId {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend inline fun <reified T> Classpath.findClass(): ClassId {
+suspend inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
 }
 
-suspend inline fun <reified T> Classpath.findSubClasses(): List<ClassId> {
+suspend inline fun <reified T> JcClasspath.findSubClasses(): List<JcClassOrInterface> {
     return findSubClasses(T::class.java.name)
 }

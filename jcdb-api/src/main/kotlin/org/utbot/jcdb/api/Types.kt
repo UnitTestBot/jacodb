@@ -35,6 +35,7 @@ interface JcTypeMethodParameter {
 }
 
 interface JcType {
+    val classpath: JcClasspath
     val typeName: String
 
     val nullable: Boolean
@@ -73,13 +74,13 @@ interface JcParametrizedType : JcRefType {
 
 // java.lang.String -> JcClassType()
 interface JcClassType : JcRefType {
-    val superType: JcRefType
-    val interfaces: JcRefType
+    suspend fun superType(): JcRefType
+    suspend fun interfaces(): JcRefType
 
-    val outerType: JcRefType?
-    val outerMethod: JcTypedMethod?
+    suspend fun outerType(): JcRefType?
+    suspend fun outerMethod(): JcTypedMethod?
 
-    val innerTypes: List<JcRefType>
+    suspend fun innerTypes(): List<JcRefType>
 }
 
 // -----------
@@ -95,3 +96,11 @@ interface JcClassType : JcRefType {
 interface JcTypeVariable : JcRefType {
     val typeSymbol: String
 }
+
+
+sealed interface BoundWildcard : JcRefType {
+    val boundType: JcRefType
+}
+interface UpperBoundWildcard : BoundWildcard
+interface LowerBoundWildcard : BoundWildcard
+interface UnboundWildcard : JcRefType

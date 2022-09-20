@@ -2,8 +2,8 @@ package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
-import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.tests.DatabaseEnvTest
@@ -28,7 +28,7 @@ class ClassesTest : DatabaseEnvTest() {
         }
     }
 
-    override val cp: Classpath = runBlocking { db!!.classpathSet(allClasspath) }
+    override val cp: JcClasspath = runBlocking { db!!.classpath(allClasspath) }
 
     override val hierarchyExt: HierarchyExtension
         get() = cp.hierarchyExt

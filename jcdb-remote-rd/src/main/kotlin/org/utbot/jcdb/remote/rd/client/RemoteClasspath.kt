@@ -9,10 +9,10 @@ import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.PredefinedPrimitives
-import org.utbot.jcdb.impl.types.ArrayClassIdImpl
 import org.utbot.jcdb.impl.types.ArrayClassInfo
 import org.utbot.jcdb.impl.types.ClassInfo
 import org.utbot.jcdb.impl.types.ClassInfoContainer
+import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
 import org.utbot.jcdb.impl.types.PredefinedClassInfo
 import org.utbot.jcdb.remote.rd.CallIndexReq
 import org.utbot.jcdb.remote.rd.CallIndexRes
@@ -59,7 +59,7 @@ class RemoteClasspath(
 
     private fun ClassInfoContainer.asClassId(location: String?): ClassId {
         return when (this) {
-            is ArrayClassInfo -> ArrayClassIdImpl(elementInfo.asClassId(location))
+            is ArrayClassInfo -> JcArrayClassTypesImpl(elementInfo.asClassId(location))
             is ClassInfo -> RemoteClassId(location, this, this@RemoteClasspath)
             is PredefinedClassInfo -> PredefinedPrimitives.of(name, this@RemoteClasspath)
                 ?: throw IllegalStateException("unsupported predefined name $name")

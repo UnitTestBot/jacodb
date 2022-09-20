@@ -7,9 +7,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import org.utbot.jcdb.api.ByteCodeContainer
-import org.utbot.jcdb.api.ByteCodeLocation
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JcByteCodeLocation
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.FeaturesRegistry
 import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
@@ -71,7 +72,7 @@ class SQLitePersistenceImpl(
         persistenceService.setup()
     }
 
-    override val locations: List<ByteCodeLocation>
+    override val locations: List<JcByteCodeLocation>
         get() {
             return transaction(db) {
                 BytecodeLocationEntity.all().toList().mapNotNull {
@@ -104,10 +105,17 @@ class SQLitePersistenceImpl(
         }
     }
 
-    override fun persist(location: ByteCodeLocation, classes: List<ByteCodeContainer>) {
-        persistenceService.persist(location, classes.map {
-            it.classNode.asClassInfo(it.binary)
-        })
+    override fun persist(location: List<JcByteCodeLocation>): List<RegisteredLocation> {
+        TODO("Not yet implemented")
+    }
+
+    override fun persist(location: RegisteredLocation, classes: List<ByteCodeContainer>) {
+        val allClasses = classes.map {
+            it.asmNode.asClassInfo(it.binary)
+        }
+        write {
+            persistenceService.persist(location, allClasses)
+        }
     }
 
     override fun close() {

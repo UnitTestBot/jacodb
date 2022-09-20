@@ -1,7 +1,6 @@
 package org.utbot.jcdb.api
 
 import kotlinx.collections.immutable.persistentListOf
-import org.objectweb.asm.Opcodes
 
 object PredefinedPrimitives {
 
@@ -18,7 +17,7 @@ object PredefinedPrimitives {
     private val values = persistentListOf(boolean, byte, char, short, int, long, float, double, void)
     private val valueSet = values.toHashSet()
 
-    fun of(name: String, cp: Classpath): ClassId? {
+    fun of(name: String, cp: JcClasspath): JcPrimitiveType? {
         if (valueSet.contains(name)) {
             return PredefinedPrimitive(cp, name)
         }
@@ -33,34 +32,7 @@ object PredefinedPrimitives {
 /**
  * Predefined primitive types
  */
-class PredefinedPrimitive(override val classpath: Classpath, override val simpleName: String) : ClassId {
-
-    override val name: String get() = simpleName
-    override val location = null
-
-    override suspend fun resolution() = Raw
-
-    override suspend fun outerClass() = null
-
-    override suspend fun outerMethod() = null
-
-    override suspend fun isAnonymous() = false
-
-    override suspend fun innerClasses() = emptyList<ClassId>()
-
-    override suspend fun byteCode() = null
-
-    override suspend fun methods() = emptyList<MethodId>()
-
-    override suspend fun superclass() = null
-
-    override suspend fun interfaces() = emptyList<ClassId>()
-
-    override suspend fun annotations() = emptyList<AnnotationId>()
-
-    override suspend fun fields() = emptyList<FieldId>()
-
-    override suspend fun access() = Opcodes.ACC_PUBLIC
+class PredefinedPrimitive(override val classpath: JcClasspath, override val typeName: String) : JcPrimitiveType {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -68,23 +40,23 @@ class PredefinedPrimitive(override val classpath: Classpath, override val simple
 
         other as PredefinedPrimitive
 
-        if (name != other.name) return false
+        if (typeName != other.typeName) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return name.hashCode()
+        return typeName.hashCode()
     }
 
 }
 
-val Classpath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.void)
-val Classpath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.boolean)
-val Classpath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.short)
-val Classpath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.int)
-val Classpath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.long)
-val Classpath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.float)
-val Classpath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.double)
-val Classpath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.byte)
-val Classpath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.char)
+val JcClasspath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.void)
+val JcClasspath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.boolean)
+val JcClasspath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.short)
+val JcClasspath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.int)
+val JcClasspath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.long)
+val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.float)
+val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.double)
+val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.byte)
+val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.char)
