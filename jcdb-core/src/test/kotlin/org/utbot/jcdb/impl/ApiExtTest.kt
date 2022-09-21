@@ -3,12 +3,27 @@ package org.utbot.jcdb.impl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcType
+import org.utbot.jcdb.api.autoboxIfNeeded
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.ext.findTypeOrNull
+import org.utbot.jcdb.api.isSubtypeOf
+import org.utbot.jcdb.api.short
+import org.utbot.jcdb.api.unboxIfNeeded
 import org.utbot.jcdb.impl.hierarchies.Creature
-import org.utbot.jcdb.impl.hierarchies.Creature.*
+import org.utbot.jcdb.impl.hierarchies.Creature.Animal
+import org.utbot.jcdb.impl.hierarchies.Creature.Bird
+import org.utbot.jcdb.impl.hierarchies.Creature.Dinosaur
+import org.utbot.jcdb.impl.hierarchies.Creature.DinosaurImpl
+import org.utbot.jcdb.impl.hierarchies.Creature.Fish
+import org.utbot.jcdb.impl.hierarchies.Creature.Pterodactyl
+import org.utbot.jcdb.impl.hierarchies.Creature.TRex
 import org.utbot.jcdb.jcdb
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -36,66 +51,31 @@ class ApiExtTest : LibrariesMixin {
 
     @Test
     fun `unboxing primitive type`() = runBlocking {
-        val clazz = classOf<java.lang.Short>()
+        val clazz = typeOf<java.lang.Short>()
         assertEquals(cp.short, clazz.unboxIfNeeded())
     }
 
     @Test
     fun `unboxing regular type`() = runBlocking {
-        val clazz = classOf<String>()
+        val clazz = typeOf<String>()
         assertEquals(clazz, clazz.unboxIfNeeded())
     }
 
     @Test
     fun `autoboxing primitive type`() = runBlocking {
-        val clazz = cp.findClass("short")
+        val type = cp.findTypeOrNull("short")
 
-        assertEquals(classOf<java.lang.Short>(), clazz.autoboxIfNeeded())
+        assertEquals(typeOf<java.lang.Short>(), type?.autoboxIfNeeded())
     }
 
     @Test
     fun `autoboxing regular type`() = runBlocking {
-        val clazz = classOf<String>()
+        val clazz = typeOf<String>()
         assertEquals(clazz, clazz.autoboxIfNeeded())
     }
 
     @Test
-    fun `class array`() = runBlocking {
-        val clazz = arrayClassOf<String>()
-        assertTrue(clazz is ArrayClassId)
-        clazz as ArrayClassId
-        assertEquals(cp.findClass<String>(), clazz.elementClass)
-    }
-
-    @Test
-    fun `isSubtype for unboxing`() = runBlocking {
-        assertTrue(cp.boolean isSubtypeOf cp.boolean.autoboxIfNeeded())
-        assertTrue(cp.boolean.autoboxIfNeeded() isSubtypeOf cp.boolean)
-    }
-
-    @Test
-    fun `isSubtype for arrays`() = runBlocking {
-        assertTrue(arrayClassOf<String>() isSubtypeOf arrayClassOf<Any>())
-        assertFalse(arrayClassOf<Any>() isSubtypeOf arrayClassOf<String>())
-    }
-
-    @Test
-    fun `isSubtype for arrays with unboxing`() = runBlocking {
-        assertFalse(cp.findClass("short[]") isSubtypeOf arrayClassOf<java.lang.Short>())
-        assertFalse(arrayClassOf<java.lang.Short>() isSubtypeOf cp.findClass("short[]"))
-
-        assertFalse(arrayClassOf<Any>() isSubtypeOf arrayClassOf<java.lang.Short>())
-
-    }
-
-    @Test
-    fun `isSubtype for arrays with regular types`() = runBlocking {
-        assertTrue(arrayClassOf<Dinosaur>() isSubtypeOf arrayClassOf<Creature>())
-        assertFalse(arrayClassOf<Any>() isSubtypeOf arrayClassOf<java.lang.Short>())
-    }
-
-    @Test
-    fun `isSubtype for regular types`() = runBlocking {
+    fun `isSubtype for regular classes`() = runBlocking {
         assertTrue(classOf<Dinosaur>() isSubtypeOf classOf<Creature>())
 
         assertFalse(classOf<Dinosaur>() isSubtypeOf classOf<Fish>())
@@ -108,15 +88,12 @@ class ApiExtTest : LibrariesMixin {
         assertTrue(classOf<Pterodactyl>() isSubtypeOf classOf<Bird>())
     }
 
-    private inline fun <reified T> classOf(): ClassId = runBlocking {
-        cp.findClass<T>()
+    private inline fun <reified T> typeOf(): JcType = runBlocking {
+        cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
     }
 
-    private inline fun <reified T> arrayClassOf(): ClassId {
-        val name = T::class.java.name + "[]"
-        return runBlocking {
-            cp.findClass(name)
-        }
+    private inline fun <reified T> classOf(): JcClassOrInterface = runBlocking {
+        cp.findClass<T>()
     }
 
     @AfterEach

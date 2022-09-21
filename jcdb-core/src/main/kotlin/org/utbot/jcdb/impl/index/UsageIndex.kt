@@ -98,7 +98,6 @@ private class JCDBUsageFeature(override val jcdb: JCDB) : JCDBFeature<UsageIndex
 
         override val jcdbPersistence: JCDBPersistence
             get() = jcdb.persistence
-                ?: throw IllegalStateException("JCDB persistence is required for using feature persistence")
 
         override fun beforeIndexing(clearOnStart: Boolean) {
             if (clearOnStart) {
@@ -137,7 +136,7 @@ private class JCDBUsageFeature(override val jcdb: JCDB) : JCDBFeature<UsageIndex
     override fun newIndexer(location: RegisteredLocation) = ReversedUsageIndexer(jcdb, location)
 
     override fun onLocationRemoved(location: RegisteredLocation) {
-        jcdb.persistence?.write {
+        jcdb.persistence.write {
             Calls.deleteWhere { Calls.locationId eq location.id }
         }
     }

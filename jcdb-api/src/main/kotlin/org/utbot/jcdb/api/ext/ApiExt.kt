@@ -326,6 +326,18 @@ fun String.jcdbName(): String {
     }
 }
 
+
+val JcMethod.jvmSignature: String
+    get() {
+        return name + description
+    }
+
+val JcMethod.jcdbSignature: String
+    get() {
+        val params = parameters.joinToString(";") { it.type.typeName } + (";".takeIf { parameters.isNotEmpty() } ?: "")
+        return "$name($params)${returnType.typeName};"
+    }
+
 const val NotNull = "org.jetbrains.annotations.NotNull"
 
 val JcMethod.isNullable: Boolean
@@ -343,4 +355,5 @@ val JcParameter.isNullable: Boolean
         return annotations.any { it.matches(NotNull) }
     }
 
-suspend fun JcClasspath.anyType(): JcClassType = findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()
+suspend fun JcClasspath.anyType(): JcClassType =
+    findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()

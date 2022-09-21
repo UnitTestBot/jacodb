@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl.fs
 
 import mu.KLogging
+import org.utbot.jcdb.api.ClassLoadingContainer
 import org.utbot.jcdb.api.LocationType
 import java.io.File
 import java.io.InputStream
@@ -31,16 +32,16 @@ class BuildFolderLocation(folder: File) : AbstractByteCodeLocation(folder) {
 
     override fun createRefreshed() = BuildFolderLocation(jarOrFolder)
 
-    override suspend fun classes(): Map<String, InputStream> {
+    override suspend fun classes(): ClassLoadingContainer? {
         try {
             val classes = dirClasses()?.mapValues { (_, file) ->
                 Files.newInputStream(file.toPath())
-            } ?: return emptyMap()
+            } ?: return null
 
-            return classes
+            return ClassLoadingContainerImpl(classes)
         } catch (e: Exception) {
             logger.warn(e) { "error loading classes from build folder: ${jarOrFolder.absolutePath}. returning empty loader" }
-            return emptyMap()
+            return null
         }
     }
 

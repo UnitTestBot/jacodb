@@ -5,15 +5,13 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.TypeName
-import org.utbot.jcdb.impl.ClassIdService
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
 
 class JcFieldImpl(
     override val jcClass: JcClassOrInterface,
-    private val info: FieldInfo,
-    private val classIdService: ClassIdService
+    private val info: FieldInfo
 ) : JcField {
 
     override val name: String
@@ -23,7 +21,7 @@ class JcFieldImpl(
         get() = JcDeclarationImpl.of(location = jcClass.declaration.location, this)
 
     private val lazyAnnotations = suspendableLazy {
-        info.annotations.map { JcAnnotationImpl(it, classIdService.cp) }
+        info.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
     }
 
 //    override suspend fun resolution(): FieldResolution {
@@ -40,7 +38,7 @@ class JcFieldImpl(
         get() = info.signature
 
     override val annotations: List<JcAnnotation>
-        get() = info.annotations.map { JcAnnotationImpl(it, classIdService.cp) }
+        get() = info.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
 
 
     override fun equals(other: Any?): Boolean {

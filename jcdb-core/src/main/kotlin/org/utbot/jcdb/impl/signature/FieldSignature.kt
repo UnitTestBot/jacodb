@@ -3,7 +3,7 @@ package org.utbot.jcdb.impl.signature
 import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.Malformed
-import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.Pure
 
 internal class FieldSignature : TypeRegistrant {
 
@@ -19,7 +19,7 @@ internal class FieldSignature : TypeRegistrant {
 
     companion object {
         fun of(signature: String?): FieldResolution {
-            signature ?: return Raw
+            signature ?: return Pure
             val signatureReader = SignatureReader(signature)
             val visitor = FieldSignature()
             return try {

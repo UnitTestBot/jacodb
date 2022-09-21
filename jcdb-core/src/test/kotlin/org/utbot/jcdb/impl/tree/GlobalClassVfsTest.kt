@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JcByteCodeLocation
-import org.utbot.jcdb.impl.fs.ClassByteCodeSource
+import org.utbot.jcdb.impl.fs.ClassSource
+import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.vfs.ClassVfsItem
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import org.utbot.jcdb.impl.vfs.RemoveLocationsVisitor
 
-class GlobalClassVFSTest {
+class GlobalClassVfsTest {
 
     private val globalClassVFS = GlobalClassesVfs()
     private val lib1 = DummyCodeLocation("xxx")
@@ -76,6 +76,7 @@ class GlobalClassVFSTest {
 
         assertNull(limitedTree.firstClassOrNull("xxx.zzz.Simple"))
     }
+
     @Test
     fun `total locations dropping`() {
         val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
@@ -89,15 +90,15 @@ class GlobalClassVFSTest {
         assertNull(limitedTree.firstClassOrNull("xxx.Simple"))
     }
 
-    private fun JcByteCodeLocation.findNode(name: String): ClassVfsItem? {
+    private fun DummyCodeLocation.findNode(name: String): ClassVfsItem? {
         return globalClassVFS.findClassNodeOrNull(this, name)
     }
 
-    private fun JcByteCodeLocation.classSource(name: String): ClassByteCodeSource {
-        return ClassByteCodeSource(
+    private fun DummyCodeLocation.classSource(name: String): ClassSource {
+        return ClassSourceImpl(
             className = name,
             location = this,
-            binaryByteCode = ByteArray(10)
+            byteCode = ByteArray(10)
         )
     }
 

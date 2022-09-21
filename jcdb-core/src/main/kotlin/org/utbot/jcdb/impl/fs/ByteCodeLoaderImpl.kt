@@ -3,6 +3,7 @@ package org.utbot.jcdb.impl.fs
 import org.utbot.jcdb.api.ClassLoadingContainer
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.vfs.LibraryClassVfs
 import java.io.InputStream
 
@@ -19,11 +20,11 @@ class ClassLoadingContainerImpl(
 /**
  * load sync part into the tree and returns lambda that will do async part
  */
-suspend fun JcByteCodeLocation.load(): LibraryClassVfs {
+suspend fun RegisteredLocation.load(): LibraryClassVfs {
     val libraryTree = LibraryClassVfs(this)
-    val container = classes()
+    val container = jcLocation.classes()
     container?.classes?.forEach {
-        val source = ClassByteCodeSource(this, it.key, it.value.readBytes())
+        val source = ClassSourceImpl(this, it.key, it.value.readBytes())
         libraryTree.addClass(source)
     }
     container?.close()

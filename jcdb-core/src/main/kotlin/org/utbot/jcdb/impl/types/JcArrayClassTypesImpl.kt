@@ -9,7 +9,11 @@ import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
 
-class JcArrayClassTypesImpl(override val elementType: JcType, override val nullable: Boolean = true, val anyType: JcClassType) : JcArrayType {
+class JcArrayClassTypesImpl(
+    override val elementType: JcType,
+    override val nullable: Boolean = true,
+    private val anyType: JcClassType
+) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"
 

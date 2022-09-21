@@ -1,5 +1,6 @@
 package org.utbot.jcdb.api
 
+import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
@@ -13,6 +14,8 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val signature: String?
 
     val isAnonymous: Boolean
+
+    suspend fun bytecode(): ClassNode
 
     suspend fun superclass(): JcClassOrInterface?
     suspend fun outerMethod(): JcMethod?

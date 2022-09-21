@@ -1,7 +1,7 @@
 package org.utbot.jcdb.impl.vfs
 
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.fs.ClassByteCodeSource
+import org.utbot.jcdb.impl.fs.ClassSource
 import java.util.concurrent.ConcurrentHashMap
 
 open class GlobalClassesVfs : AbstractClassVfs<PackageVfsItem, ClassVfsItem>() {
@@ -10,12 +10,12 @@ open class GlobalClassesVfs : AbstractClassVfs<PackageVfsItem, ClassVfsItem>() {
 
     override fun PackageVfsItem.findClassOrNew(
         simpleClassName: String,
-        source: ClassByteCodeSource
+        source: ClassSource
     ): ClassVfsItem {
         val nameIndex = classes.getOrPut(simpleClassName) {
             ConcurrentHashMap<Long, ClassVfsItem>()
         }
-        return nameIndex.getOrPut(source.locationId) {
+        return nameIndex.getOrPut(source.location.id) {
             ClassVfsItem(simpleClassName, this, source)
         }
     }

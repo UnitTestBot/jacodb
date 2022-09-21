@@ -1,6 +1,6 @@
 package org.utbot.jcdb.impl.vfs
 
-import org.utbot.jcdb.api.JcByteCodeLocation
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.LocationsRegistrySnapshot
 
 /**
@@ -8,7 +8,7 @@ import org.utbot.jcdb.impl.LocationsRegistrySnapshot
  */
 class ClasspathClassTree(
     private val globalClassVFS: GlobalClassesVfs,
-    locations: List<JcByteCodeLocation>
+    locations: List<RegisteredLocation>
 ) {
 
     constructor(globalClassVFS: GlobalClassesVfs, locationsRegistrySnapshot: LocationsRegistrySnapshot) : this(
@@ -16,7 +16,7 @@ class ClasspathClassTree(
         locationsRegistrySnapshot.locations
     )
 
-    private val locationIds: Set<String> = locations.map { it.path }.toHashSet()
+    private val locationIds: Set<Long> = locations.map { it.id }.toHashSet()
 
     fun firstClassOrNull(fullName: String): ClassVfsItem? {
         return globalClassVFS.firstClassNodeOrNull(fullName) {

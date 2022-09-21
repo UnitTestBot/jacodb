@@ -26,6 +26,8 @@ import org.utbot.jcdb.api.isMemberClass
 import org.utbot.jcdb.api.isNullable
 import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.api.isPublic
+import org.utbot.jcdb.api.jcdbSignature
+import org.utbot.jcdb.api.jvmSignature
 import org.utbot.jcdb.impl.A
 import org.utbot.jcdb.impl.B
 import org.utbot.jcdb.impl.Bar
@@ -175,16 +177,16 @@ abstract class DatabaseEnvTest {
         with(methods.first { it.name == "getDoctype" }) {
             assertTrue(parameters.isEmpty())
             assertEquals(DocumentType::class.java.name, returnType.typeName)
-            assertEquals("getDoctype()org.w3c.dom.DocumentType;", signature(false))
-            assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", signature(true))
+            assertEquals("getDoctype()org.w3c.dom.DocumentType;", jcdbSignature)
+            assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", jvmSignature)
             assertTrue(isPublic)
         }
 
         with(methods.first { it.name == "createElement" }) {
             assertEquals(listOf("java.lang.String"), parameters.map { it.type.typeName })
             assertEquals(Element::class.java.name, returnType.typeName)
-            assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", signature(false))
-            assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", signature(true))
+            assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", jcdbSignature)
+            assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", jvmSignature)
         }
     }
 
@@ -250,7 +252,7 @@ abstract class DatabaseEnvTest {
     @Test
     fun `get all methods`() = runBlocking {
         val c = cp.findClass<C>()
-        val signatures = c.allMethods().map { it.signature(false) }
+        val signatures = c.allMethods().map { it.jcdbSignature }
         assertTrue(c.allMethods().size > 15)
         assertTrue(signatures.contains("saySmth(java.lang.String;)void;"))
         assertTrue(signatures.contains("saySmth()void;"))

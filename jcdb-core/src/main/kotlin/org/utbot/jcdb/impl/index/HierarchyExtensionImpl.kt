@@ -3,7 +3,6 @@ package org.utbot.jcdb.impl.index
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
@@ -38,7 +37,7 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
     }
 
     private fun subClasses(name: String, allHierarchy: Boolean): List<String> {
-        val subTypes = transaction {
+        val subTypes = db.persistence.read {
             val nameEntity = SymbolEntity.find { Symbols.name eq name }.firstOrNull()
             if (nameEntity == null) {
                 emptyList()

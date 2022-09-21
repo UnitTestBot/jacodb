@@ -1,18 +1,18 @@
 package org.utbot.jcdb.impl.vfs
 
-import org.utbot.jcdb.api.JcByteCodeLocation
-import org.utbot.jcdb.impl.fs.ClassByteCodeSource
+import org.utbot.jcdb.api.RegisteredLocation
+import org.utbot.jcdb.impl.fs.ClassSource
 import java.util.concurrent.ConcurrentHashMap
 
 
 /** this class vfs is NOT THREAD SAFE */
-class LibraryClassVfs(val location: JcByteCodeLocation) : AbstractClassVfs<LibraryPackageVfsItem, LibraryClassVfsItem>() {
+class LibraryClassVfs(val location: RegisteredLocation) : AbstractClassVfs<LibraryPackageVfsItem, LibraryClassVfsItem>() {
 
-    override val rootItem = LibraryPackageVfsItem(null, null, location.hash)
+    override val rootItem = LibraryPackageVfsItem(null, null)
 
     override fun LibraryPackageVfsItem.findClassOrNew(
         simpleClassName: String,
-        source: ClassByteCodeSource
+        source: ClassSource
     ): LibraryClassVfsItem {
         return classes.getOrPut(simpleClassName) {
             LibraryClassVfsItem(simpleClassName, this, source)
@@ -21,7 +21,7 @@ class LibraryClassVfs(val location: JcByteCodeLocation) : AbstractClassVfs<Libra
 
     override fun LibraryPackageVfsItem.findPackageOrNew(subfolderName: String): LibraryPackageVfsItem {
         return subpackages.getOrPut(subfolderName) {
-            LibraryPackageVfsItem(subfolderName, this, location.hash)
+            LibraryPackageVfsItem(subfolderName, this)
         }
     }
 
@@ -31,7 +31,7 @@ class LibraryClassVfs(val location: JcByteCodeLocation) : AbstractClassVfs<Libra
 
 }
 
-class LibraryPackageVfsItem(folderName: String?, parent: LibraryPackageVfsItem?, private val version: String) :
+class LibraryPackageVfsItem(folderName: String?, parent: LibraryPackageVfsItem?) :
     AbstractVfsItem<LibraryPackageVfsItem>(folderName, parent) {
 
     // folderName -> subpackage
@@ -55,7 +55,7 @@ class LibraryPackageVfsItem(folderName: String?, parent: LibraryPackageVfsItem?,
             val classVersions = global.classes.getOrPut(name) {
                 ConcurrentHashMap()
             }
-            classVersions[subNode.hash] = subNode.asClassNode(global).also {
+            classVersions[subNode.locationId] = subNode.asClassNode(global).also {
                 loadedClasses[it.fullName] = it
             }
         }
@@ -66,12 +66,12 @@ class LibraryPackageVfsItem(folderName: String?, parent: LibraryPackageVfsItem?,
 class LibraryClassVfsItem(
     simpleName: String,
     packageNode: LibraryPackageVfsItem,
-    val source: ClassByteCodeSource
+    private val source: ClassSource
 ) : AbstractVfsItem<LibraryPackageVfsItem>(simpleName, packageNode) {
 
     override val name: String = simpleName
 
-    val hash get() = source.location.hash
+    val locationId get() = source.location.id
 
     fun asClassNode(parent: PackageVfsItem) = ClassVfsItem(name, parent, source)
 }

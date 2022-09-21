@@ -3,7 +3,7 @@ package org.utbot.jcdb.impl.signature
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
-import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.Pure
 
 internal class MethodSignature : Signature<MethodResolution>() {
 
@@ -54,7 +54,7 @@ internal class MethodSignature : Signature<MethodResolution>() {
 
     companion object {
         fun of(signature: String?): MethodResolution {
-            signature ?: return Raw
+            signature ?: return Pure
             return try {
                 of(signature, MethodSignature())
             } catch (ignored: RuntimeException) {

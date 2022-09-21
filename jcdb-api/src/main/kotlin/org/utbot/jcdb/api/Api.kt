@@ -114,7 +114,7 @@ interface JCDB : Closeable {
      */
     suspend fun awaitBackgroundJobs()
 
-    val persistence: JCDBPersistence?
+    val persistence: JCDBPersistence
 }
 
 
@@ -125,9 +125,10 @@ interface JCDBPersistence : Closeable {
     fun setup()
 
     fun <T> write(newTx: Boolean = true, action: () -> T): T
+    fun <T> read(newTx: Boolean = true, action: () -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ByteCodeContainer>)
-    fun persist(location: List<JcByteCodeLocation>): List<RegisteredLocation>
+    fun findByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): JcClassOrInterface?
 
     fun save(jcdb: JCDB)
 }

@@ -2,7 +2,7 @@ package org.utbot.jcdb.impl.signature
 
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.Malformed
-import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.TypeResolution
 
 internal class TypeSignature : Signature<TypeResolution>() {
@@ -41,7 +41,7 @@ internal class TypeSignature : Signature<TypeResolution>() {
     companion object {
         fun of(signature: String?): TypeResolution {
             return try {
-                if (signature == null) Raw else of(signature, TypeSignature())
+                if (signature == null) Pure else of(signature, TypeSignature())
             } catch (ignored: RuntimeException) {
                 Malformed
             }

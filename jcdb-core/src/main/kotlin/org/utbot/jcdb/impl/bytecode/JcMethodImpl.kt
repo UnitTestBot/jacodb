@@ -8,18 +8,16 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.ClassIdService
+import org.utbot.jcdb.impl.fs.ClassSource
 import org.utbot.jcdb.impl.signature.MethodResolutionImpl
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
-import org.utbot.jcdb.impl.vfs.ClassVfsItem
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
-    private val classNode: ClassVfsItem,
-    override val jcClass: JcClassOrInterface,
-    private val classIdService: ClassIdService
+    private val source: ClassSource,
+    override val jcClass: JcClassOrInterface
 ) : JcMethod {
 
     override val name: String get() = methodInfo.name
@@ -41,18 +39,15 @@ class JcMethodImpl(
         get() = JcDeclarationImpl.of(location = jcClass.declaration.location, this)
 
     override val parameters: List<JcParameter>
-        get() = methodInfo.parametersInfo.map { JcParameterImpl(it, classIdService.cp) }
+        get() = methodInfo.parametersInfo.map { JcParameterImpl(this, it) }
 
     override val annotations: List<JcAnnotation>
-        get() = methodInfo.annotations.map { JcAnnotationImpl(it, classIdService.cp) }
-
+        get() = methodInfo.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
 
     override val description get() = methodInfo.desc
 
-    fun signature(internalNames: Boolean) = methodInfo.signature(internalNames)
-
     override suspend fun body(): MethodNode {
-        return classNode.fullByteCode().methods.first { it.name == name && it.desc == methodInfo.desc }
+        return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
     override fun equals(other: Any?): Boolean {

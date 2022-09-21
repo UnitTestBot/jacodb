@@ -9,7 +9,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
-import org.utbot.jcdb.api.Raw
+import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.signature.FieldResolutionImpl
 import org.utbot.jcdb.impl.signature.FieldSignature
@@ -73,7 +73,7 @@ class SignatureTest {
         with(methodSignatures[0]) {
             val (name, signature) = this
             Assertions.assertEquals("<init>", name)
-            Assertions.assertEquals(Raw, signature)
+            Assertions.assertEquals(Pure, signature)
         }
         with(methodSignatures[1]) {
             val (name, signature) = this

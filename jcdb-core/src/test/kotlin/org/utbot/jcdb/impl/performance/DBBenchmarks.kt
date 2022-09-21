@@ -15,8 +15,6 @@ import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.LibrariesMixin
-import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.fs.load
 import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.jcdb
 import java.util.concurrent.TimeUnit
@@ -31,14 +29,6 @@ import java.util.concurrent.TimeUnit
 class DBBenchmarks : LibrariesMixin {
 
     private var db: JCDB? = null
-
-    @Benchmark
-    fun readBytecode() {
-        val lib = guavaLib
-        runBlocking {
-            lib.asByteCodeLocation().loader()!!.load()
-        }
-    }
 
     @Benchmark
     fun readingJVMbytecode() {

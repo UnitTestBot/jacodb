@@ -2,12 +2,23 @@ package org.utbot.jcdb.impl.tree
 
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
+import org.utbot.jcdb.api.RegisteredLocation
+import org.utbot.jcdb.impl.storage.longHash
 import java.io.File
 
-open class DummyCodeLocation(val id: String) : JcByteCodeLocation {
+open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, RegisteredLocation {
+
+    override val id: Long
+        get() = name.longHash
+
     override val hash: String
-        get() = id
-    override val type=  LocationType.APP
+        get() = name
+
+    override val jcLocation: JcByteCodeLocation
+        get() = this
+
+
+    override val type = LocationType.APP
 
     override suspend fun classes() = null
 

@@ -10,6 +10,8 @@ import org.utbot.jcdb.api.ClassId
 import org.utbot.jcdb.api.Classpath
 import org.utbot.jcdb.api.FieldId
 import org.utbot.jcdb.api.FieldResolution
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.MethodId
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.throwClassNotFound
@@ -29,8 +31,8 @@ import java.io.File
 class RemoteClassId(
     private val locationPath: String?,
     private val classInfo: ClassInfo,
-    override val classpath: Classpath
-) : ClassId, ByteCodeConverter {
+    override val classpath: JcClasspath
+) : JcClassOrInterface, ByteCodeConverter {
 
     companion object : KLogging()
 

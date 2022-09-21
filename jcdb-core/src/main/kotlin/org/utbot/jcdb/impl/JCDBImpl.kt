@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class JCDBImpl(
-    override val persistence: JCDBPersistence? = null,
+    override val persistence: JCDBPersistence,
     val featureRegistry: FeaturesRegistry,
     private val settings: JCDBSettings
 ) : JCDB {
@@ -47,12 +47,8 @@ class JCDBImpl(
 
     init {
         featureRegistry.bind(this)
-        locationsRegistry = if (persistence == null) {
-            InMemoryLocationsRegistry(featureRegistry)
-        } else {
-            // todo rewrite in more elegant way
-            PersistentLocationRegistry(persistence as SQLitePersistenceImpl, featureRegistry)
-        }
+        // todo rewrite in more elegant way
+        locationsRegistry =  PersistentLocationRegistry(persistence as SQLitePersistenceImpl, featureRegistry)
     }
 
     private lateinit var runtimeLocations: List<RegisteredLocation>
@@ -112,13 +108,13 @@ class JCDBImpl(
             registeredLocations.map { location ->
                 async {
                     // here something may go wrong
-                    val libraryTree = location.jcLocation.load()
+                    val libraryTree = location.load()
                     actions.add(location)
                     libraryTree
                 }
             }
         }.awaitAll()
-        persistence?.write {
+        persistence.write {
             persistence.save(this@JCDBImpl)
         }
 
@@ -131,10 +127,10 @@ class JCDBImpl(
             actions.map { location ->
                 async {
                     if (parentScope.isActive) {
-                        val addedClasses = locationClasses[location.jcLocation]
+                        val addedClasses = locationClasses[location]
                         if (addedClasses != null) {
                             if (parentScope.isActive) {
-                                persistence?.persist(location, addedClasses.toList())
+                                persistence.persist(location, addedClasses.toList())
                                 featureRegistry.index(location, addedClasses)
                             }
                         }
@@ -189,7 +185,7 @@ class JCDBImpl(
             it.cancel()
         }
         backgroundJobs.clear()
-        persistence?.close()
+        persistence.close()
         hooks.forEach { it.afterStop() }
     }
 

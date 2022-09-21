@@ -8,4 +8,4 @@ interface FieldResolution : Resolution
 interface TypeResolution : Resolution
 
 object Malformed : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
-object Raw : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
+object Pure : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
