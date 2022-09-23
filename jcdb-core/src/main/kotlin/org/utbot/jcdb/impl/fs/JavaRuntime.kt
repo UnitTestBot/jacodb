@@ -6,10 +6,6 @@ import java.nio.file.Paths
 
 class JavaRuntime(val javaHome: File) {
 
-    companion object {
-        private val loadedPackages = listOf("java.", "javax.")
-    }
-
     val allLocations: List<JcByteCodeLocation> = modules.takeIf { it.isNotEmpty() } ?: (bootstrapJars + extJars)
 
     val modules: List<JcByteCodeLocation> get() = locations("jmods")

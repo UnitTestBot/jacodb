@@ -26,6 +26,10 @@ Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retr
 classDiagram
     JcType <|-- JcPrimitiveType
     JcType <|-- JcRefType
+    JcRefType <|-- JcBoundWildcard
+    JcRefType <|-- JcUnboundWildcard
+    JcBoundWildcard <|-- JcUpperBoundWildcard
+    JcBoundWildcard <|-- JcLowerBoundWildcard
     JcRefType <|-- JcArrayType
     JcRefType <|-- JcClassType
     JcRefType <|-- JcParameterizedType

@@ -98,9 +98,9 @@ interface JcTypeVariable : JcRefType {
 }
 
 
-sealed interface BoundWildcard : JcRefType {
+sealed interface JcBoundWildcard : JcRefType {
     val boundType: JcRefType
 }
-interface UpperBoundWildcard : BoundWildcard
-interface LowerBoundWildcard : BoundWildcard
-interface UnboundWildcard : JcRefType
+interface JcUpperBoundWildcard : JcBoundWildcard
+interface JcLowerBoundWildcard : JcBoundWildcard
+interface JcUnboundWildcard : JcRefType

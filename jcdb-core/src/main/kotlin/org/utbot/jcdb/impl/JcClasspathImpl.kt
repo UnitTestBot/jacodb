@@ -7,6 +7,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.index.hierarchyExt
@@ -24,11 +25,12 @@ class JcClasspathImpl(
 ) : JcClasspath {
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
+    val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathClassTree = ClasspathClassTree(globalClassVFS, locationsRegistrySnapshot)
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
-        return db.classpath(locationsRegistrySnapshot.locations).also {
+        return db.new(this).also {
             if (closeOld) {
                 close()
             }

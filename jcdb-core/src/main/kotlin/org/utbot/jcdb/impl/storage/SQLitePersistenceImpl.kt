@@ -11,7 +11,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import org.utbot.jcdb.api.ByteCodeContainer
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -22,7 +21,6 @@ import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
@@ -92,14 +90,6 @@ class SQLitePersistenceImpl(
                 }.toList()
             }
         }
-
-    override fun save(jcdb: JCDB) {
-        transaction(db) {
-            jcdb.locations.forEach { location ->
-                location.findOrNew()
-            }
-        }
-    }
 
     override fun <T> write(newTx: Boolean, action: () -> T): T {
         return lock.withLock {
