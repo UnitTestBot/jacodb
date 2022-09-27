@@ -4,7 +4,6 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.FeaturesRegistry
 import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
-import java.io.File
 
 suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
     val settings = JCDBSettings().also(builder)
@@ -12,7 +11,7 @@ suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
     val featureRegistry = FeaturesRegistry(settings.fullFeatures)
     val environment = SQLitePersistenceImpl(
         featureRegistry,
-        location = File(persistentSettings?.location ?: ":memory:"),
+        location = persistentSettings?.location,
         clearOnStart = persistentSettings?.clearOnStart ?: true
     )
     return JCDBImpl(

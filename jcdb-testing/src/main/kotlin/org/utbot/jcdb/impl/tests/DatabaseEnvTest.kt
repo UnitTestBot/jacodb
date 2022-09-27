@@ -96,7 +96,7 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `array types`() = runBlocking {
+    fun `array type names`() = runBlocking {
         val clazz = cp.findClass<Bar>()
         assertEquals(Bar::class.java.name, clazz.name)
 
