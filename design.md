@@ -16,10 +16,59 @@ This is basic requirements for database implementation:
 
 Bytecode has two representations in filesystem (classes) and in runtime (types).
 
-**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as 
+**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as ASM ClassNode
 **types** - represent types which can be nullable, get parameterized etc.
 
 Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generics parameterization.   
+
+**Classes**
+```mermaid
+classDiagram
+    JcByteCodeLocation  *-- JcClassOrInterface
+    JcClassOrInterface  *-- JcMethod
+    JcClassOrInterface  *-- JcField
+    JcMethod  *-- JcParameter
+    
+    
+    class TypeName{
+      +String typeName
+    }
+
+    class JcByteCodeLocation {
+       +Map~String, InputStream~ classes 
+    }
+
+    class JcDeclaration {
+        +JcByteCodeLocation location
+        +String relativePath 
+    }
+
+    class JcClassOrInterface {
+      +JcMethod methods
+      +JcField fields
+      +JcDeclaration declaration
+    }
+
+    class JcParameter {
+      +[] parameters
+      +TypeName type
+    }
+
+
+    class JcMethod {
+      +JcClassOrInterface jcClass
+      +JcParameter[] parameters
+      +TypeName returnType
+      +JcDeclaration declaration
+    }
+
+    class JcField {
+      +JcClassOrInterface jcClass
+      +TypeName type
+      +JcField field
+      +JcDeclaration declaration
+    }
+``` 
 
 **Types** hierarchy
 ```mermaid
@@ -54,8 +103,7 @@ classDiagram
     }
 
     class JcTypedField {
-      +JcType[] parameters
-      +JcType returnType
+      +JcType type
       +JcField field
     }
 ``` 
