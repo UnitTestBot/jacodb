@@ -50,7 +50,8 @@ classDiagram
     }
 
     class JcParameter {
-      +[] parameters
+      +Int index
+      +String name
       +TypeName type
     }
 
