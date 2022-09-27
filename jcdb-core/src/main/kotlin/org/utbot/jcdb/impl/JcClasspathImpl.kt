@@ -25,7 +25,7 @@ class JcClasspathImpl(
 ) : JcClasspath {
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
-    val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
+    override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathClassTree = ClasspathClassTree(globalClassVFS, locationsRegistrySnapshot)
 
@@ -42,7 +42,7 @@ class JcClasspathImpl(
         if (inMemoryClass != null) {
             return inMemoryClass
         }
-        return db.persistence.findByName(this, locationsRegistrySnapshot.locations, name)
+        return db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)
     }
 
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {

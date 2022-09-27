@@ -128,7 +128,7 @@ interface JCDBPersistence : Closeable {
     fun <T> read(newTx: Boolean = true, action: () -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ByteCodeContainer>)
-    fun findByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): JcClassOrInterface?
+    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): JcClassOrInterface?
 }
 
 interface RegisteredLocation {

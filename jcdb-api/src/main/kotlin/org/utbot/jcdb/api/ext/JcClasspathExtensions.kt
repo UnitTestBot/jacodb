@@ -20,7 +20,7 @@ import org.utbot.jcdb.api.throwClassNotFound
  * @param method method to analyze
  */
 suspend fun JcClasspath.findMethodsUsedIn(method: JcMethod): List<JcMethod> {
-    val methodNode = method.body() ?: return emptyList()
+    val methodNode = method.body()
     val result = LinkedHashSet<JcMethod>()
     methodNode.instructions.forEach { instruction ->
         when (instruction) {
@@ -108,6 +108,6 @@ suspend inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
 }
 
-suspend inline fun <reified T> JcClasspath.findSubClasses(): List<JcClassOrInterface> {
-    return findSubClasses(T::class.java.name)
+suspend inline fun <reified T> JcClasspath.findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
+    return findSubClasses(T::class.java.name, allHierarchy)
 }

@@ -166,7 +166,7 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `find lazy-loaded class`() = runBlocking {
+    fun `find interface`() = runBlocking {
         val domClass = cp.findClass<Document>()
 
         assertTrue(domClass.isPublic)
@@ -191,8 +191,8 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `find sub-types from lazy loaded classes`() = runBlocking {
-        with(cp.findSubClasses<AbstractMap<*, *>>()) {
+    fun `find sub-types for class`() = runBlocking {
+        with(cp.findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
             assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
             }
@@ -203,18 +203,12 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.name == TreeMap::class.java.name })
             assertNotNull(firstOrNull { it.name == ConcurrentHashMap::class.java.name })
         }
-
-        with(cp.findSubClasses(Document::class.java.name)) {
-            assertTrue(isNotEmpty())
-        }
     }
 
     @Test
-    fun `find sub-types of array`() = runBlocking {
-        val stringArray = cp.findClass("java.lang.String[]")
-
-        with(cp.findSubClasses(stringArray, true)) {
-            assertTrue(isEmpty())
+    fun `find sub-types for interface`() = runBlocking {
+        with(cp.findSubClasses(Document::class.java.name)) {
+            assertTrue(isNotEmpty())
         }
     }
 
@@ -239,7 +233,7 @@ abstract class DatabaseEnvTest {
 
         with(cp.findSubClasses(clazz, allHierarchy = true)) {
             assertEquals(4, size) {
-                "expected more then 10 but got only: ${joinToString { it.name }}"
+                "expected 4 but got only: ${joinToString { it.name }}"
             }
 
             assertNotNull(firstOrNull { it.name == A::class.java.name })

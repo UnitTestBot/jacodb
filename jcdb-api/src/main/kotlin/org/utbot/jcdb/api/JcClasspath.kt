@@ -16,6 +16,7 @@ interface JcClasspath : Closeable {
 
     /** locations of this classpath */
     val locations: List<JcByteCodeLocation>
+    val registeredLocations: List<RegisteredLocation>
 
     /**
      *  @param name full name of the type
