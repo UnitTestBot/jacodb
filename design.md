@@ -19,7 +19,7 @@ Bytecode has two representations in filesystem (classes) and in runtime (types).
 **classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as ASM ClassNode
 **types** - represent types which can be nullable, get parameterized etc.
 
-Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generics parameterization.   
+Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generic's parameterization.   
 
 **Classes**
 ```mermaid
@@ -153,7 +153,7 @@ flowchart LR
     end
 ```
 
-Application uses inmemory `ClassTree` for classes that are in loading state. When classes are loaded, analyzed and persisted in database data from `ClassTree` is evicted. 
+Application uses in-memory `ClassTree` for classes that are in loading state. When classes are loaded, analyzed and persisted in database data from `ClassTree` is evicted. 
 Pure bytecode is stored in underling database as well. Underling database is using off heap memory.
 
 `JcClasspath` represents the set of classpath items with bytecode. `JcClasspath` should be closed after it becomes unused. This reduces usage of outdated bytecode locations and cleanup data from them. Which means that each class should be presented once there. Otherwise, in case of collision like in jar-hell only one random class will win.
