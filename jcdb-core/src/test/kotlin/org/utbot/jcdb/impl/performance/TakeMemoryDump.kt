@@ -10,6 +10,7 @@ import org.utbot.jcdb.impl.storage.MethodEntity
 import org.utbot.jcdb.impl.storage.MethodParameterEntity
 import org.utbot.jcdb.jcdb
 import java.io.File
+import java.lang.management.ManagementFactory
 
 val allClasspath: List<File>
     get() {
@@ -39,7 +40,7 @@ private val classpath: List<String>
 fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
-        jcdb {
+        val db = jcdb {
             useProcessJavaRuntime()
 //            predefinedDirOrJars = allClasspath
             persistent {
@@ -58,6 +59,13 @@ fun main() {
             println("Methods params " + MethodParameterEntity.count())
             println("Fields " + FieldEntity.count())
         }
+
+        val name = ManagementFactory.getRuntimeMXBean().name
+        val pid = name.split("@")[0]
+        println("Taking memory dump from $pid....")
+        val process = Runtime.getRuntime().exec("jmap -dump:live,format=b,file=db.hprof $pid")
+        process.waitFor()
+        println(db)
     }
 }
 //
