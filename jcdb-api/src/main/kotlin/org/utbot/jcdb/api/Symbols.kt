@@ -32,7 +32,7 @@ interface JcByteCodeLocation {
     /**
      * @return new refreshed version of this `location`
      */
-    fun createRefreshed(): JcByteCodeLocation
+    fun createRefreshed(): JcByteCodeLocation?
 
     /**
      * resolve byte-code based on class name
