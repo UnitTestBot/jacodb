@@ -1,10 +1,11 @@
 package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
+import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.index.reversedUsagesExt
@@ -13,17 +14,28 @@ import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA
 import org.utbot.jcdb.jcdb
 
-class SearchReversedUsagesTest : LibrariesMixin {
+class SearchUsagesTest : LibrariesMixin {
 
-    private val db = runBlocking {
-        jcdb {
-            predefinedDirOrJars = allClasspath
-            useProcessJavaRuntime()
-            installFeatures(Usages)
+    companion object : LibrariesMixin {
+        var db: JCDB? = runBlocking {
+            jcdb {
+                predefinedDirOrJars = allClasspath
+                useProcessJavaRuntime()
+                installFeatures(Usages)
+            }.also {
+                it.awaitBackgroundJobs()
+            }
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun cleanup() {
+            db?.close()
+            db = null
         }
     }
 
-    private val cp = runBlocking { db.classpath(allClasspath) }
+    private val cp = runBlocking { db!!.classpath(allClasspath) }
 
     @Test
     fun `classes read fields`() {
@@ -113,12 +125,9 @@ class SearchReversedUsagesTest : LibrariesMixin {
             val fields = classId.fields
             val usageExt = cp.reversedUsagesExt
 
-            fields.map {
+            fields.associate {
                 it.name to usageExt.findUsages(it, mode).map { it.jcClass.name + "#" + it.name }.toSortedSet()
-            }
-                .toMap()
-                .filterNot { it.value.isEmpty() }
-                .toSortedMap()
+            }.filterNot { it.value.isEmpty() }.toSortedMap()
         }
     }
 
@@ -137,9 +146,4 @@ class SearchReversedUsagesTest : LibrariesMixin {
         }
     }
 
-    @AfterEach
-    fun cleanup() {
-        cp.close()
-        db.close()
-    }
 }
