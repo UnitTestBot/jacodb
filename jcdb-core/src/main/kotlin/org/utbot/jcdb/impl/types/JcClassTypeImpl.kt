@@ -31,4 +31,23 @@ class JcClassTypeImpl(override val jcClass: JcClassOrInterface, override val nul
         get() = TODO("Not yet implemented")
 
     override fun notNullable() = JcClassTypeImpl(jcClass, false)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcClassTypeImpl
+
+        if (nullable != other.nullable) return false
+        if (typeName != other.typeName) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = nullable.hashCode()
+        result = 31 * result + typeName.hashCode()
+        return result
+    }
+
 }

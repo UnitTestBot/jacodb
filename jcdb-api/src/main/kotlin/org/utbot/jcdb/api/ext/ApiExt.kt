@@ -232,7 +232,7 @@ suspend infix fun JcClassOrInterface.isSubtypeOf(another: JcClassOrInterface): B
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    return this in findAllSuperClasses()
+    return another in findAllSuperClasses()
 }
 
 

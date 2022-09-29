@@ -3,12 +3,14 @@ package org.utbot.jcdb.impl
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.anyType
+import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
@@ -46,11 +48,11 @@ class JcClasspathImpl(
     }
 
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
-        TODO("Not yet implemented")
+        return JcClassTypeImpl(jcClass, true)
     }
 
     override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {
-        TODO("Not yet implemented")
+        return JcArrayClassTypesImpl(elementType, true, typeOf(findClass("java.lang.Object")) as JcClassType)
     }
 
     override suspend fun findTypeOrNull(name: String): JcType? {
