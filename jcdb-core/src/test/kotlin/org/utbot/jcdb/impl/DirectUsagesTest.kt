@@ -21,7 +21,7 @@ class DirectUsagesTest : LibrariesMixin {
 
         private var db: JCDB? = runBlocking {
             jcdb {
-                predefinedDirOrJars = allClasspath
+                loadByteCode(allClasspath)
                 useProcessJavaRuntime()
                 installFeatures(Usages)
             }

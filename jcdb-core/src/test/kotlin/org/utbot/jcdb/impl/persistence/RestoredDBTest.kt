@@ -27,10 +27,8 @@ class RestoredDBTest : DatabaseEnvTest() {
             before()
             return runBlocking {
                 jcdb {
-                    persistent {
-                        location = jdbcLocation
-                    }
-                    predefinedDirOrJars = allClasspath
+                    persistent(jdbcLocation)
+                    loadByteCode(allClasspath)
                     useProcessJavaRuntime()
                 }.also {
                     it.awaitBackgroundJobs()

@@ -13,10 +13,7 @@ class ClassesTest : DatabaseEnvTest() {
     companion object : LibrariesMixin {
         var db: JCDB? = runBlocking {
             jcdb {
-                persistent {
-                    clearOnStart = false
-                }
-                predefinedDirOrJars = allClasspath
+                loadByteCode(allClasspath)
                 useProcessJavaRuntime()
             }.also {
                 it.awaitBackgroundJobs()

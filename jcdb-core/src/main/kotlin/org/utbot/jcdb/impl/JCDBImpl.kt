@@ -151,7 +151,7 @@ class JCDBImpl(
     }
 
     override fun watchFileSystemChanges(): JCDB {
-        val delay = settings.watchFileSystemChanges?.delay
+        val delay = settings.watchFileSystemDelay?.toLong()
         if (delay != null) { // just paranoid check
             backgroundScope.launch {
                 while (true) {

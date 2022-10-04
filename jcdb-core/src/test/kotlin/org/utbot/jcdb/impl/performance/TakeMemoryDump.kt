@@ -41,11 +41,8 @@ fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
         val db = jcdb {
-            useProcessJavaRuntime()
 //            predefinedDirOrJars = allClasspath
-            persistent {
-                location = "D:\\work\\jcdb\\jcdb.db"
-            }
+            persistent("D:\\work\\jcdb\\jcdb.db")
             installFeatures(Usages)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")

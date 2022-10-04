@@ -32,8 +32,8 @@ class ApiExtTest : LibrariesMixin {
     companion object : LibrariesMixin {
         var db: JCDB? = runBlocking {
             jcdb {
+                loadByteCode(allClasspath)
                 useProcessJavaRuntime()
-                predefinedDirOrJars = allClasspath
             }.also {
                 it.awaitBackgroundJobs()
             }

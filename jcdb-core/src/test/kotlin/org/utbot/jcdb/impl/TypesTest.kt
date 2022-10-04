@@ -22,10 +22,7 @@ class TypesTest {
     companion object : LibrariesMixin {
         var db: JCDB? = runBlocking {
             jcdb {
-                persistent {
-                    clearOnStart = false
-                }
-                predefinedDirOrJars = allClasspath
+                loadByteCode(allClasspath)
                 useProcessJavaRuntime()
             }.also {
                 it.awaitBackgroundJobs()
@@ -103,11 +100,8 @@ class TypesTest {
 
 suspend fun main() {
     val db = jcdb {
-        persistent {
-            clearOnStart = false
-            location = "d:\\haha.db"
-        }
-        predefinedDirOrJars = TypesTest.allClasspath
+        persistent("d:\\haha.db")
+        loadByteCode(TypesTest.allClasspath)
         useProcessJavaRuntime()
     }
 
