@@ -3,9 +3,7 @@ package org.utbot.jcdb.api
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * index builder
- */
+/** index builder */
 interface ByteCodeIndexer {
 
     suspend fun index(classNode: ClassNode)
@@ -15,37 +13,21 @@ interface ByteCodeIndexer {
     fun flush()
 }
 
-interface JCDBFeature<REQ, RES> {
-
-    val jcdb: JCDB
-
-    val key: String
-
-    suspend fun query(req: REQ): Sequence<RES>
-
-    fun newIndexer(location: RegisteredLocation): ByteCodeIndexer
-
-    fun onLocationRemoved(location: RegisteredLocation)
-
-    val persistence: FeaturePersistence?
-
-}
-
 interface Feature<REQ, RES> {
 
     val key: String
 
-    fun featureOf(jcdb: JCDB): JCDBFeature<REQ, RES>
+    suspend fun query(jcdb: JCDB, req: REQ): Sequence<RES>
 
-}
+    fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer
 
-interface FeaturePersistence {
-
-    val jcdbPersistence: JCDBPersistence
+    /** this method will be called when location is removed */
+    fun onRemoved(jcdb: JCDB, location: RegisteredLocation)
 
     /** executed after jcdb instance creating and before processing of bytecode */
-    fun beforeIndexing(clearOnStart: Boolean)
+    fun beforeIndexing(jcdb: JCDB, clearOnStart: Boolean)
 
     /** can be used to create database indexes */
-    fun onBatchLoadingEnd()
+    fun afterIndexing(jcdb: JCDB)
+
 }

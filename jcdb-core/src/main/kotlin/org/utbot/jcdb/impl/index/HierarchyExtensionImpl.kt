@@ -75,7 +75,7 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
     override suspend fun findOverrides(methodId: JcMethod): List<JcMethod> {
         val desc = methodId.description
         val name = methodId.name
-        val subClasses = cp.findSubClasses(methodId.jcClass, allHierarchy = true)
+        val subClasses = cp.findSubClasses(methodId.enclosingClass, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc) // todo this is wrong
         }
@@ -87,7 +87,6 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
             val query = if (allHierarchy) allHierarchyQuery(locationIds) else directSubClassesQuery(locationIds)
             query.query(listOf(VarCharColumnType() to name)) {
                 ClassRecord(
-                    id = it.getLong("id"),
                     byteCode = it.getBytes("bytecode"),
                     locationId = it.getLong("location_id"),
                     name = it.getString("name_name")
@@ -97,8 +96,7 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
     }
 }
 
-private data class ClassRecord(
-    val id: Long,
+private class ClassRecord(
     val byteCode: ByteArray,
     val locationId: Long,
     val name: String

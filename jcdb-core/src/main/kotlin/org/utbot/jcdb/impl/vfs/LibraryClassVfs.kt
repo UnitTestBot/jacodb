@@ -1,7 +1,7 @@
 package org.utbot.jcdb.impl.vfs
 
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.fs.ClassSource
 import java.util.concurrent.ConcurrentHashMap
 
 

@@ -6,8 +6,15 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.TypeResolution
+import org.utbot.jcdb.impl.signature.TypeResolutionImpl
+import org.utbot.jcdb.impl.signature.TypeSignature
 
-class JcClassTypeImpl(override val jcClass: JcClassOrInterface, override val nullable: Boolean) : JcClassType {
+class JcClassTypeImpl(
+    override val jcClass: JcClassOrInterface,
+    private val resolution: TypeResolution = TypeSignature.of(jcClass.signature),
+    override val nullable: Boolean
+) : JcClassType {
 
     override val classpath: JcClasspath
         get() = jcClass.classpath
@@ -15,9 +22,17 @@ class JcClassTypeImpl(override val jcClass: JcClassOrInterface, override val nul
     override val typeName: String
         get() = jcClass.name
 
-    override suspend fun superType(): JcRefType = TODO("Not yet implemented")
+    override suspend fun superType(): JcRefType? {
+        return ifSignature {
+            classpath.typeOf(it.superClass) as? JcRefType
+        } ?: jcClass.superclass()?.let { classpath.typeOf(it) }
+    }
 
-    override suspend fun interfaces(): JcRefType = TODO("Not yet implemented")
+    override suspend fun interfaces(): List<JcRefType> {
+        return ifSignature {
+            jcClass.interfaces().map { classpath.typeOf(it) }
+        } ?: emptyList()
+    }
 
     override suspend fun outerType(): JcRefType? = TODO("Not yet implemented")
 
@@ -26,11 +41,14 @@ class JcClassTypeImpl(override val jcClass: JcClassOrInterface, override val nul
     override suspend fun innerTypes(): List<JcRefType> = TODO("Not yet implemented")
 
     override val methods: List<JcTypedMethod>
-        get() = TODO("Not yet implemented")
+        get() = jcClass.methods.map {
+            JcTypedMethodImpl(ownerType = this, it)
+        }
+
     override val fields: List<JcTypedField>
         get() = TODO("Not yet implemented")
 
-    override fun notNullable() = JcClassTypeImpl(jcClass, false)
+    override fun notNullable() = JcClassTypeImpl(jcClass, resolution, false)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -45,9 +63,16 @@ class JcClassTypeImpl(override val jcClass: JcClassOrInterface, override val nul
     }
 
     override fun hashCode(): Int {
-        var result = nullable.hashCode()
-        result = 31 * result + typeName.hashCode()
-        return result
+        val result = nullable.hashCode()
+        return 31 * result + typeName.hashCode()
     }
+
+    private suspend fun <T> ifSignature(map: suspend (TypeResolutionImpl) -> T?): T? {
+        return when (resolution) {
+            is TypeResolutionImpl -> map(resolution)
+            else -> null
+        }
+    }
+
 
 }

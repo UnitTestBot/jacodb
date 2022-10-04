@@ -132,8 +132,8 @@ class DirectUsagesTest : LibrariesMixin {
             classId.methods.map {
                 val usages = findFieldsUsedIn(it)
                 it.name to listOf(
-                    "reads" to usages.reads.map { it.jcClass.name + "#" + it.name },
-                    "writes" to usages.writes.map { it.jcClass.name + "#" + it.name }
+                    "reads" to usages.reads.map { it.enclosingClass.name + "#" + it.name },
+                    "writes" to usages.writes.map { it.enclosingClass.name + "#" + it.name }
                 )
             }
                 .toMap()
@@ -144,12 +144,12 @@ class DirectUsagesTest : LibrariesMixin {
 
     private inline fun <reified T> JcClasspath.methodsUsages(): List<Pair<String, List<String>>> {
         return runBlocking {
-            val classId = cp.findClass<T>()
+            val jcClass = cp.findClass<T>()
 
-            val methods = classId.methods
+            val methods = jcClass.methods
 
             methods.map {
-                it.name to findMethodsUsedIn(it).map { it.jcClass.name + "#" + it.name }.toImmutableList()
+                it.name to findMethodsUsedIn(it).map { it.enclosingClass.name + "#" + it.name }.toImmutableList()
             }.filterNot { it.second.isEmpty() }
         }
     }

@@ -267,16 +267,16 @@ abstract class DatabaseEnvTest {
         with(overrides) {
             assertEquals(4, size)
 
-            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.DinosaurImpl>() })
-            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.Fish>() })
-            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.TRex>() })
-            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.Pterodactyl>() })
+            assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.DinosaurImpl>() })
+            assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.Fish>() })
+            assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
+            assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.Pterodactyl>() })
         }
         overrides = hierarchyExt.findOverrides(helloMethod)
         with(overrides) {
             assertEquals(1, size)
 
-            assertNotNull(firstOrNull { it.jcClass == cp.findClass<Creature.TRex>() })
+            assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
 
         }
     }

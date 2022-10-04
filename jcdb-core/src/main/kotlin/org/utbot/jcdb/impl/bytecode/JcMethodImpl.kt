@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl.bytecode
 
 import org.objectweb.asm.tree.MethodNode
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcDeclaration
@@ -8,7 +9,7 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.fs.ClassSource
+import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.signature.MethodResolutionImpl
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.types.MethodInfo
@@ -17,7 +18,7 @@ import org.utbot.jcdb.impl.types.TypeNameImpl
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
     private val source: ClassSource,
-    override val jcClass: JcClassOrInterface
+    override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
 
     override val name: String get() = methodInfo.name
@@ -29,20 +30,20 @@ class JcMethodImpl(
         val methodSignature = MethodSignature.of(methodInfo.signature)
         if (methodSignature is MethodResolutionImpl) {
             return methodSignature.exceptionTypes.map {
-                jcClass.classpath.findClass(it.name)
+                enclosingClass.classpath.findClass(it.name)
             }
         }
         return emptyList()
     }
 
     override val declaration: JcDeclaration
-        get() = JcDeclarationImpl.of(location = jcClass.declaration.location, this)
+        get() = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 
     override val parameters: List<JcParameter>
         get() = methodInfo.parametersInfo.map { JcParameterImpl(this, it) }
 
     override val annotations: List<JcAnnotation>
-        get() = methodInfo.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
+        get() = methodInfo.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
 
     override val description get() = methodInfo.desc
 
@@ -54,11 +55,11 @@ class JcMethodImpl(
         if (other == null || other !is JcMethodImpl) {
             return false
         }
-        return other.name == name && jcClass == other.jcClass && methodInfo.desc == other.methodInfo.desc
+        return other.name == name && enclosingClass == other.enclosingClass && methodInfo.desc == other.methodInfo.desc
     }
 
     override fun hashCode(): Int {
-        return 31 * jcClass.hashCode() + name.hashCode()
+        return 31 * enclosingClass.hashCode() + name.hashCode()
     }
 
 

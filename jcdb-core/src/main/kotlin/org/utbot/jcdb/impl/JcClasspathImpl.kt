@@ -3,18 +3,22 @@ package org.utbot.jcdb.impl
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.anyType
-import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.throwClassNotFound
+import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.index.hierarchyExt
+import org.utbot.jcdb.impl.signature.TypeResolutionImpl
+import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
+import org.utbot.jcdb.impl.types.JcParameterizedTypeImpl
+import org.utbot.jcdb.impl.types.typeDeclarations
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import java.io.Serializable
@@ -44,15 +48,26 @@ class JcClasspathImpl(
         if (inMemoryClass != null) {
             return inMemoryClass
         }
-        return db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)
+        return db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
+            JcClassOrInterfaceImpl(this, it)
+        }
     }
 
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
-        return JcClassTypeImpl(jcClass, true)
+        val signature = TypeSignature.of(jcClass.signature)
+        when (signature) {
+            is Pure -> return JcClassTypeImpl(jcClass, signature, true)
+            is TypeResolutionImpl -> return JcParameterizedTypeImpl(jcClass,
+                originParametrization = typeDeclarations(signature.typeVariable),
+                emptyList(),
+                true
+            )
+        }
+        return JcClassTypeImpl(jcClass, signature, true)
     }
 
     override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {
-        return JcArrayClassTypesImpl(elementType, true, typeOf(findClass("java.lang.Object")) as JcClassType)
+        return JcArrayClassTypesImpl(elementType, true, anyType())
     }
 
     override suspend fun findTypeOrNull(name: String): JcType? {
@@ -80,7 +95,7 @@ class JcClasspathImpl(
 
     override suspend fun <RES : Serializable, REQ : Serializable> query(key: String, req: REQ): Sequence<RES> {
         db.awaitBackgroundJobs()
-        return featuresRegistry.findIndex<RES, REQ>(key)?.query(req).orEmpty()
+        return featuresRegistry.query<REQ, RES>(key, req).orEmpty()
     }
 
     override fun close() {

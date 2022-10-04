@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.impl.fs.ClassSource
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.vfs.ClassVfsItem
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree

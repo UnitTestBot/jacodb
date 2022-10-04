@@ -4,6 +4,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.update
+import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
@@ -17,7 +18,7 @@ import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
 import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 
 class PersistentLocationRegistry(
-    private val persistence: SQLitePersistenceImpl,
+    private val persistence: JCDBPersistence,
     private val featuresRegistry: FeaturesRegistry
 ) : LocationsRegistry {
 

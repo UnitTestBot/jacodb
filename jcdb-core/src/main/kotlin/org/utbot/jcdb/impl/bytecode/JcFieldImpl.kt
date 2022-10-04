@@ -10,7 +10,7 @@ import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
 
 class JcFieldImpl(
-    override val jcClass: JcClassOrInterface,
+    override val enclosingClass: JcClassOrInterface,
     private val info: FieldInfo
 ) : JcField {
 
@@ -18,10 +18,10 @@ class JcFieldImpl(
         get() = info.name
 
     override val declaration: JcDeclaration
-        get() = JcDeclarationImpl.of(location = jcClass.declaration.location, this)
+        get() = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 
     private val lazyAnnotations = suspendableLazy {
-        info.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
+        info.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
     }
 
 //    override suspend fun resolution(): FieldResolution {
@@ -38,17 +38,17 @@ class JcFieldImpl(
         get() = info.signature
 
     override val annotations: List<JcAnnotation>
-        get() = info.annotations.map { JcAnnotationImpl(it, jcClass.classpath) }
+        get() = info.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
 
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcFieldImpl) {
             return false
         }
-        return other.name == name && other.jcClass == jcClass
+        return other.name == name && other.enclosingClass == enclosingClass
     }
 
     override fun hashCode(): Int {
-        return 31 * jcClass.hashCode() + name.hashCode()
+        return 31 * enclosingClass.hashCode() + name.hashCode()
     }
 }

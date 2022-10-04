@@ -15,15 +15,15 @@ class JcDeclarationImpl(override val location: JcByteCodeLocation, override val 
         }
 
         fun of(location: JcByteCodeLocation, method: JcMethod): JcDeclarationImpl {
-            return JcDeclarationImpl(location, "${method.jcClass.name}#${method.name}")
+            return JcDeclarationImpl(location, "${method.enclosingClass.name}#${method.name}")
         }
 
         fun of(location: JcByteCodeLocation, field: JcField): JcDeclarationImpl {
-            return JcDeclarationImpl(location, "${field.jcClass.name}#${field.name}")
+            return JcDeclarationImpl(location, "${field.enclosingClass.name}#${field.name}")
         }
 
         fun of(location: JcByteCodeLocation, param: JcParameter): JcDeclarationImpl {
-            return JcDeclarationImpl(location, "${param.method.jcClass.name}#${param.name}:${param.index}")
+            return JcDeclarationImpl(location, "${param.method.enclosingClass.name}#${param.name}:${param.index}")
         }
     }
 

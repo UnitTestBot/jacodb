@@ -1,18 +1,8 @@
 package org.utbot.jcdb.api
 
-import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
-
-/**
- * represents structure which has access modifiers like field, class, method
- */
-interface Accessible {
-    /** byte-code access value */
-    suspend fun access(): Int
-
-}
 
 enum class LocationType {
     RUNTIME,
@@ -31,9 +21,10 @@ interface ClassLoadingContainer : Closeable {
     }
 }
 
-interface ByteCodeContainer {
-    val binary: ByteArray
-    val asmNode: ClassNode
+interface ClassSource {
+    val className: String
+    val byteCode: ByteArray
+    val location: RegisteredLocation
 }
 
 /**
@@ -127,8 +118,8 @@ interface JCDBPersistence : Closeable {
     fun <T> write(newTx: Boolean = true, action: () -> T): T
     fun <T> read(newTx: Boolean = true, action: () -> T): T
 
-    fun persist(location: RegisteredLocation, classes: List<ByteCodeContainer>)
-    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): JcClassOrInterface?
+    fun persist(location: RegisteredLocation, classes: List<ClassSource>)
+    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
 }
 
 interface RegisteredLocation {

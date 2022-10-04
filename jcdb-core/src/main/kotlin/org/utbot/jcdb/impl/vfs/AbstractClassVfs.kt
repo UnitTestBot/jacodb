@@ -1,6 +1,6 @@
 package org.utbot.jcdb.impl.vfs
 
-import org.utbot.jcdb.impl.fs.ClassSource
+import org.utbot.jcdb.api.ClassSource
 
 abstract class AbstractClassVfs<PACKAGE_ITEM : AbstractVfsItem<PACKAGE_ITEM>, CLASS_ITEM : AbstractVfsItem<PACKAGE_ITEM>> {
 

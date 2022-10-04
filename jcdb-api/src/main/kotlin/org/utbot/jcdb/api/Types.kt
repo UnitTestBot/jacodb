@@ -1,37 +1,35 @@
 package org.utbot.jcdb.api
 
-import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.LocalVariableNode
 
 interface JcTypedField {
     val name: String
-    val type: JcType
 
-    val jcClass: JcClassOrInterface
-    val jcType: JcType
+    val field: JcField
+    val fieldType: JcType
+    val ownerType: JcRefType
 }
 
 interface JcTypedMethod {
     val name: String
-    val returnType: JcType
-    val parameters: List<JcTypeMethodParameter>
-    val parameterization: List<JcType>
+    suspend fun returnType(): JcType
 
-    val exceptions: List<JcClassOrInterface>
+    suspend fun parameterization(): List<JcTypeVariableDeclaration>
+    suspend fun parameters(): List<JcTypedMethodParameter>
+    suspend fun exceptions(): List<JcClassOrInterface>
     val method: JcMethod
 
-    suspend fun body(): MethodNode
+    val ownerType: JcRefType
 
-    val jcClass: JcClassOrInterface
-    val declaringType: JcType
+    suspend fun typeOf(inst: LocalVariableNode): JcType
+
 }
 
-interface JcTypeMethodParameter {
-    val annotations: List<JcAnnotation>
-    val type: JcType
+interface JcTypedMethodParameter {
+    suspend fun type(): JcType
     val name: String?
-
-    val typeMethod: JcTypedMethod
-
+    val ownerMethod: JcTypedMethod
+    val nullable: Boolean
 }
 
 interface JcType {
@@ -53,7 +51,7 @@ interface JcRefType : JcType {
     val methods: List<JcTypedMethod>
     val fields: List<JcTypedField>
 
-    fun notNullable() : JcRefType
+    fun notNullable(): JcRefType
 }
 
 // -----------
@@ -67,15 +65,16 @@ interface JcArrayType : JcRefType {
 }
 
 // -----------
-// class A<T> -> JcParametrizedType(JcTypeVariable())
+// class A<T> -> JcParametrizedType(JcTypeVariableDeclaration('T', emptyList()))
 interface JcParametrizedType : JcRefType {
-    val parameterTypes: List<JcRefType>
+    val originParametrization: List<JcTypeVariableDeclaration>
+    val parametrization: List<JcRefType>
 }
 
 // java.lang.String -> JcClassType()
 interface JcClassType : JcRefType {
-    suspend fun superType(): JcRefType
-    suspend fun interfaces(): JcRefType
+    suspend fun superType(): JcRefType?
+    suspend fun interfaces(): List<JcRefType>
 
     suspend fun outerType(): JcRefType?
     suspend fun outerMethod(): JcTypedMethod?
@@ -98,9 +97,16 @@ interface JcTypeVariable : JcRefType {
 }
 
 
-sealed interface JcBoundWildcard : JcRefType {
+interface JcBoundWildcard : JcRefType {
     val boundType: JcRefType
 }
+
 interface JcUpperBoundWildcard : JcBoundWildcard
 interface JcLowerBoundWildcard : JcBoundWildcard
 interface JcUnboundWildcard : JcRefType
+
+
+interface JcTypeVariableDeclaration {
+    val symbol: String
+    val bounds: List<JcRefType>
+}

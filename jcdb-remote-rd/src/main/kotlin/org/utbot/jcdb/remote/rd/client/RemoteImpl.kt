@@ -17,7 +17,6 @@ import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.bytecode.JcAnnotationImpl
 import org.utbot.jcdb.impl.bytecode.JcParameterImpl
-import org.utbot.jcdb.impl.fs.ByteCodeConverter
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.signature.FieldSignature
 import org.utbot.jcdb.impl.signature.MethodSignature
@@ -32,7 +31,7 @@ class RemoteClassId(
     private val locationPath: String?,
     private val classInfo: ClassInfo,
     override val classpath: JcClasspath
-) : JcClassOrInterface, ByteCodeConverter {
+) : JcClassOrInterface {
 
     companion object : KLogging()
 

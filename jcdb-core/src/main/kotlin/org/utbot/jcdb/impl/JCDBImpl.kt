@@ -21,7 +21,6 @@ import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.filterExisted
 import org.utbot.jcdb.impl.fs.load
 import org.utbot.jcdb.impl.storage.PersistentLocationRegistry
-import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import org.utbot.jcdb.impl.vfs.RemoveLocationsVisitor
 import java.io.File
@@ -50,8 +49,7 @@ class JCDBImpl(
 
     init {
         featureRegistry.bind(this)
-        // todo rewrite in more elegant way
-        locationsRegistry = PersistentLocationRegistry(persistence as SQLitePersistenceImpl, featureRegistry)
+        locationsRegistry = PersistentLocationRegistry(persistence, featureRegistry)
     }
 
     override val locations: List<JcByteCodeLocation>
@@ -128,7 +126,7 @@ class JCDBImpl(
                 async {
                     val addedClasses = locationClasses[location]
                     if (parentScope.isActive && addedClasses != null) {
-                        persistence.persist(location, addedClasses.toList())
+                        persistence.persist(location, addedClasses.map { it.source })
                         classesVfs.visit(RemoveLocationsVisitor(listOf(location)))
                         featureRegistry.index(location, addedClasses)
                     }

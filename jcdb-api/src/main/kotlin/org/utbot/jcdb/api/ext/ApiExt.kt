@@ -204,7 +204,6 @@ suspend fun JcType.autoboxIfNeeded(): JcType {
     }
 }
 
-
 /**
  * @return all interfaces and classes retrieved recursively from this ClassId
  */

@@ -23,10 +23,10 @@ class JcParameterImpl(
         get() = info.index
 
     override val declaration: JcDeclaration
-        get() = JcDeclarationImpl.of(method.jcClass.declaration.location, this)
+        get() = JcDeclarationImpl.of(method.enclosingClass.declaration.location, this)
 
     override val annotations: List<JcAnnotation>
-        get() = info.annotations.map { JcAnnotationImpl(it, method.jcClass.classpath) }
+        get() = info.annotations.map { JcAnnotationImpl(it, method.enclosingClass.classpath) }
 
     override val type: TypeName
         get() = TypeNameImpl(info.type)

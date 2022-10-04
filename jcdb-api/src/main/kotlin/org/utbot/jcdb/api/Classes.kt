@@ -39,7 +39,7 @@ interface JcAnnotation : JcSymbol {
 interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 
     /** reference to class */
-    val jcClass: JcClassOrInterface
+    val enclosingClass: JcClassOrInterface
 
     val description: String
 
@@ -55,7 +55,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {
 
-    val jcClass: JcClassOrInterface
+    val enclosingClass: JcClassOrInterface
     val type: TypeName
 
     val signature: String?

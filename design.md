@@ -44,8 +44,8 @@ classDiagram
     }
 
     class JcClassOrInterface {
-      +JcMethod methods
-      +JcField fields
+      +JcMethod[] methods
+      +JcField[] fields
       +JcDeclaration declaration
     }
 
@@ -57,14 +57,14 @@ classDiagram
 
 
     class JcMethod {
-      +JcClassOrInterface jcClass
+      +JcClassOrInterface enclosingClass
       +JcParameter[] parameters
       +TypeName returnType
       +JcDeclaration declaration
     }
 
     class JcField {
-      +JcClassOrInterface jcClass
+      +JcClassOrInterface enclosingClass
       +TypeName type
       +JcField field
       +JcDeclaration declaration
