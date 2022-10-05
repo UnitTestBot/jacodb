@@ -57,7 +57,6 @@ interface JcField : JcAnnotatedSymbol, JcAccessible {
 
     val enclosingClass: JcClassOrInterface
     val type: TypeName
-
     val signature: String?
 }
 

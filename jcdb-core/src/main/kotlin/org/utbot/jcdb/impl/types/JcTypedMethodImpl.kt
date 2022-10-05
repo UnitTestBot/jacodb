@@ -14,28 +14,30 @@ import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.suspendableLazy
 
 class JcTypedMethodImpl(
-    override val ownerType: JcRefType,
+    override val enclosingType: JcRefType,
     override val method: JcMethod,
     classBindings: JcTypeBindings = JcTypeBindings()
 ) : JcTypedMethod {
 
-
+    private val resolution = MethodSignature.of(method.signature)
     private val classpath = method.enclosingClass.classpath
 
     private val methodBindingsGetter = suspendableLazy {
-        classBindings.join(
-            when (resolution) {
-                is MethodResolutionImpl -> classpath.typeDeclarations(resolution.typeVariables)
-                else -> emptyList()
-            }
-        )
+        classBindings.override(ifSignature {
+            it.typeVariables.map { it.symbol  }.toSet()
+        } ?: emptySet())
     }
-    private val resolution = MethodSignature.of(method.signature)
 
     override val name: String
         get() = method.name
 
     private suspend fun methodBindings() = methodBindingsGetter()
+
+    override suspend fun originalParameterization(): List<JcTypeVariableDeclaration> {
+        return ifSignature {
+            classpath.typeDeclarations(it.typeVariables)
+        } ?: emptyList()
+    }
 
     override suspend fun exceptions(): List<JcClassOrInterface> = ifSignature {
         it.exceptionTypes.map {
@@ -43,10 +45,8 @@ class JcTypedMethodImpl(
         }
     } ?: emptyList()
 
-    override suspend fun parameterization(): List<JcTypeVariableDeclaration> {
-        return ifSignature {
-            classpath.typeDeclarations(it.typeVariables)
-        } ?: emptyList()
+    override suspend fun parameterization(): Map<String, JcRefType> {
+        return emptyMap()
     }
 
     override suspend fun parameters(): List<JcTypedMethodParameter> {
@@ -54,7 +54,7 @@ class JcTypedMethodImpl(
         return method.parameters.mapIndexed { index, jcParameter ->
             val stype = ifSignature { it.parameterTypes[index] }
             JcTypedMethodParameterImpl(
-                ownerMethod = this,
+                enclosingMethod = this,
                 bindings = bindings,
                 parameter = jcParameter,
                 stype = stype
@@ -65,7 +65,7 @@ class JcTypedMethodImpl(
     override suspend fun returnType(): JcType {
         val typeName = method.returnType.typeName
         return ifSignature {
-            classpath.typeOf(it.returnType)
+            classpath.typeOf(it.returnType.apply(methodBindings()))
         } ?: classpath.findTypeOrNull(typeName) ?: throw IllegalStateException("Can't resolve type by name $typeName")
     }
 

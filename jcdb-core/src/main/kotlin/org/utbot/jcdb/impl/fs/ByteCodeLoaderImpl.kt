@@ -1,33 +1,19 @@
 package org.utbot.jcdb.impl.fs
 
-import org.utbot.jcdb.api.ClassLoadingContainer
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.vfs.LibraryClassVfs
-import java.io.InputStream
-
-class ClassLoadingContainerImpl(
-    override val classes: Map<String, InputStream>,
-    val onClose: () -> Unit = {}
-) : ClassLoadingContainer {
-
-    override fun close() {
-        onClose()
-    }
-}
 
 /**
  * load sync part into the tree and returns lambda that will do async part
  */
-suspend fun RegisteredLocation.load(): LibraryClassVfs {
+fun RegisteredLocation.load(): LibraryClassVfs {
     val libraryTree = LibraryClassVfs(this)
-    val container = jcLocation.classes()
-    container?.classes?.forEach {
-        val source = ClassSourceImpl(this, it.key, it.value.readBytes())
+    jcLocation.classes?.forEach {
+        val source = ClassSourceImpl(this, it.key, it.value)
         libraryTree.addClass(source)
     }
-    container?.close()
     return libraryTree
 }
 

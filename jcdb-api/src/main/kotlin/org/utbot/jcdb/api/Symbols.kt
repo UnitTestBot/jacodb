@@ -1,7 +1,6 @@
 package org.utbot.jcdb.api
 
 import java.io.File
-import java.io.InputStream
 
 
 /**
@@ -40,9 +39,9 @@ interface JcByteCodeLocation {
      * @param classFullName full name of the class to be resolved
      * @return input stream with byte-code or null if class is not found in this location
      */
-    suspend fun resolve(classFullName: String): InputStream?
+    suspend fun resolve(classFullName: String): ByteArray?
 
-    suspend fun classes(): ClassLoadingContainer?
+    val classes: Map<String, ByteArray>?
 
 }
 

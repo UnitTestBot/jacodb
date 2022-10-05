@@ -17,28 +17,13 @@ import org.utbot.jcdb.impl.signature.SPrimitiveType
 import org.utbot.jcdb.impl.signature.SType
 import org.utbot.jcdb.impl.signature.STypeVariable
 import org.utbot.jcdb.impl.signature.SUnboundWildcard
-import org.utbot.jcdb.impl.signature.TypeResolutionImpl
-import org.utbot.jcdb.impl.signature.TypeSignature
 
-class JcTypeBindings(internal val bindings: Map<String, JcTypeVariableDeclaration> = emptyMap()) {
+class JcTypeBindings(internal val bindings: Map<String, SType> = emptyMap()) {
 
-    fun join(incoming: List<JcTypeVariableDeclaration>): JcTypeBindings {
-        return JcTypeBindings(
-            bindings + incoming.associateBy { it.symbol }
-        )
+    fun override(incoming: Set<String>): JcTypeBindings {
+        return JcTypeBindings(bindings.filterKeys { !incoming.contains(it) })
     }
 }
-
-
-class SignatureTypeResolution(val original: SType, bindings: JcTypeBindings) {
-
-    val resolved: SType by lazy(LazyThreadSafetyMode.NONE) {
-        original.apply(bindings)
-    }
-
-
-}
-
 
 internal suspend fun JcClasspath.typeOf(stype: SType): JcType {
     return when (stype) {
@@ -51,11 +36,9 @@ internal suspend fun JcClasspath.typeOf(stype: SType): JcType {
         is SArrayType -> arrayTypeOf(typeOf(stype.elementType))
         is SParameterizedType -> {
             val clazz = findClass(stype.name)
-            val signature = TypeSignature.of(clazz.signature)
-            JcParameterizedTypeImpl(
+            JcClassTypeImpl(
                 clazz,
-                originParametrization = if (signature is TypeResolutionImpl) typeDeclarations(signature.typeVariable) else emptyList(),
-                parametrization = stype.parameterTypes.map { typeOf(it) as JcRefType },
+                parametrization = stype.parameterTypes,
                 nullable = true
             )
         }

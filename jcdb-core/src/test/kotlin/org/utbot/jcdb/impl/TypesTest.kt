@@ -11,8 +11,8 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.JcParametrizedType
 import org.utbot.jcdb.api.JcPrimitiveType
+import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.impl.types.PrimitiveAndArrays
 import org.utbot.jcdb.impl.types.SuperFoo
 import org.utbot.jcdb.jcdb
@@ -40,7 +40,7 @@ class TypesTest {
     private val cp: JcClasspath = runBlocking { db!!.classpath(allClasspath) }
 
     @AfterEach
-    open fun close() {
+    fun close() {
         cp.close()
     }
 
@@ -53,13 +53,14 @@ class TypesTest {
         with(superFooType.superType()) {
             assertNotNull(this)
             this!!
-            assertTrue(this is JcParametrizedType)
-            val fields = fields
+            assertTrue(this is JcClassType)
+            this as JcClassType
+            val fields = fields()
             assertEquals(2, fields.size)
 
             with(fields.first()) {
                 assertEquals("state", name)
-                assertTrue(fieldType is JcClassType)
+                assertTrue(fieldType() is JcClassType)
             }
         }
     }
@@ -69,40 +70,31 @@ class TypesTest {
         val primitiveAndArrays = cp.findTypeOrNull(PrimitiveAndArrays::class.java.name)
         assertTrue(primitiveAndArrays is JcClassType)
         primitiveAndArrays as JcClassType
-        val fields = primitiveAndArrays.fields
+        val fields = primitiveAndArrays.fields()
         assertEquals(2, fields.size)
 
         with(fields.first()) {
-            assertTrue(fieldType is JcPrimitiveType)
+            assertTrue(fieldType() is JcPrimitiveType)
             assertEquals("int", name)
-            assertEquals("int", fieldType.typeName)
+            assertEquals("int", fieldType().typeName)
         }
         with(fields.get(1)) {
-            assertTrue(fieldType is JcArrayType)
+            assertTrue(fieldType() is JcArrayType)
             assertEquals("intArray", name)
-            assertEquals("String[]", fieldType.typeName)
+            assertEquals("int[]", fieldType().typeName)
         }
 
 
-        val methods = primitiveAndArrays.methods
+        val methods = primitiveAndArrays.methods().filterNot { it.method.isConstructor }
         with(methods.first()) {
             assertTrue(returnType() is JcArrayType)
-            assertEquals("Integer[]", returnType().typeName)
+            assertEquals("int[]", returnType().typeName)
 
             assertEquals(1, parameters().size)
             with(parameters().get(0)) {
                 assertTrue(type() is JcArrayType)
-                assertEquals("String[]", type().typeName)
+                assertEquals("java.lang.String[]", type().typeName)
             }
         }
     }
-}
-
-suspend fun main() {
-    val db = jcdb {
-        persistent("d:\\haha.db")
-        loadByteCode(TypesTest.allClasspath)
-        useProcessJavaRuntime()
-    }
-
 }

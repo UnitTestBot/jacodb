@@ -17,10 +17,10 @@ open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, Reg
     override val jcLocation: JcByteCodeLocation
         get() = this
 
-
     override val type = LocationType.APP
 
-    override suspend fun classes() = null
+    override val classes: Map<String, ByteArray>?
+        get() = null
 
     override val jarOrFolder: File
         get() = TODO("Not yet implemented")

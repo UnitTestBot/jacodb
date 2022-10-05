@@ -2,23 +2,10 @@ package org.utbot.jcdb.api
 
 import java.io.Closeable
 import java.io.File
-import java.io.InputStream
 
 enum class LocationType {
     RUNTIME,
     APP
-}
-
-/**
- * Classes container
- */
-interface ClassLoadingContainer : Closeable {
-
-    /** map name -> resources */
-    val classes: Map<String, InputStream>
-
-    override fun close() {
-    }
 }
 
 interface ClassSource {

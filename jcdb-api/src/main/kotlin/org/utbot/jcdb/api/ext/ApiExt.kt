@@ -356,3 +356,8 @@ val JcParameter.isNullable: Boolean
 
 suspend fun JcClasspath.anyType(): JcClassType =
     findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()
+
+
+suspend fun JcClassOrInterface.toType(): JcClassType {
+    return classpath.typeOf(this) as JcClassType
+}

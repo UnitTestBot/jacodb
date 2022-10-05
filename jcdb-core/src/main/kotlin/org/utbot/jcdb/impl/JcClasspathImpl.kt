@@ -7,7 +7,6 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
-import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.throwClassNotFound
@@ -17,8 +16,6 @@ import org.utbot.jcdb.impl.signature.TypeResolutionImpl
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
-import org.utbot.jcdb.impl.types.JcParameterizedTypeImpl
-import org.utbot.jcdb.impl.types.typeDeclarations
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import java.io.Serializable
@@ -55,15 +52,15 @@ class JcClasspathImpl(
 
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
         val signature = TypeSignature.of(jcClass.signature)
-        when (signature) {
-            is Pure -> return JcClassTypeImpl(jcClass, signature, true)
-            is TypeResolutionImpl -> return JcParameterizedTypeImpl(jcClass,
-                originParametrization = typeDeclarations(signature.typeVariable),
-                emptyList(),
-                true
+        if (signature is TypeResolutionImpl) {
+            return JcClassTypeImpl(
+                jcClass,
+                resolution = signature,
+                parametrization = null,
+                nullable = true
             )
         }
-        return JcClassTypeImpl(jcClass, signature, true)
+        return JcClassTypeImpl(jcClass, signature, null, true)
     }
 
     override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {

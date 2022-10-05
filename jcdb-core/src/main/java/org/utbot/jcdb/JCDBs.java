@@ -11,19 +11,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class JCDBs {
 
-    private final JCDBSettings settings;
-
-    private JCDBs(JCDBSettings settings) {
-        this.settings = settings;
-    }
-
     /**
      * create {@link JCDB} instance with default settings
      *
      @return not null {@link JCDB} instance or throws {@link IllegalStateException}
      */
     public static JCDB newDefault() {
-        return new JCDBs(new JCDBSettings()).build();
+        return build(new JCDBSettings());
     }
 
     /**
@@ -33,10 +27,10 @@ public class JCDBs {
      * @return not null {@link JCDB} instance or throws {@link IllegalStateException}
      */
     public static JCDB newFrom(JCDBSettings settings) {
-        return new JCDBs(settings).build();
+        return build(settings);
     }
 
-    public JCDB build() {
+    private static JCDB build(JCDBSettings settings) {
         AtomicReference<Object> result = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
         JcdbKt.jcdb(settings, new Continuation<JCDB>() {

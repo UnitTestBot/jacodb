@@ -1,13 +1,10 @@
 package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.JcArrayType
-import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.JcTypedField
-import org.utbot.jcdb.api.JcTypedMethod
 
 class JcArrayClassTypesImpl(
     override val elementType: JcType,
@@ -16,15 +13,6 @@ class JcArrayClassTypesImpl(
 ) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"
-
-    override val methods: List<JcTypedMethod>
-        get() = anyType.methods
-
-    override val fields: List<JcTypedField>
-        get() = emptyList()
-
-    override val jcClass: JcClassOrInterface
-        get() = anyType.jcClass
 
     override fun notNullable(): JcRefType {
         return JcArrayClassTypesImpl(elementType, false, anyType)
