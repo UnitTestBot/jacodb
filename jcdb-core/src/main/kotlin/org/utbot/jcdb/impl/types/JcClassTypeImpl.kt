@@ -47,12 +47,12 @@ open class JcClassTypeImpl(
     }
 
     private val parametrizationGetter = suspendableLazy {
-        originParametrization().mapIndexed { index, declaration ->
+        originalParametrization().mapIndexed { index, declaration ->
             declaration.symbol to (parametrization?.get(index)?.let { classpath.typeOf(it) as JcRefType} ?: JcTypeVariableImpl(declaration.symbol, true, classpath.anyType()))
         }.toMap()
     }
 
-    override suspend fun originParametrization() = originParametrizationGetter()
+    override suspend fun originalParametrization() = originParametrizationGetter()
 
     override suspend fun parametrization() = parametrizationGetter()
 

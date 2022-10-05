@@ -5,13 +5,13 @@ open class FooFunction<T> {
     private var state: T? = null
     private var stateList: ArrayList<T> = arrayListOf()
 
-    fun run(incoming: T): T {
+    fun run1(incoming: T): T {
         state = incoming
         stateList.add(incoming)
         return incoming
     }
 
-    fun <W : T> run(incoming: List<W>): W {
+    fun <W : T> run2(incoming: List<W>): W {
         state = incoming.firstOrNull()
         stateList.addAll(incoming)
         return incoming.firstOrNull()!!

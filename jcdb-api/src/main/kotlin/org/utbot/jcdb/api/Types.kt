@@ -61,7 +61,7 @@ interface JcClassType : JcRefType {
     suspend fun methods(): List<JcTypedMethod>
     suspend fun fields(): List<JcTypedField>
 
-    suspend fun originParametrization(): List<JcTypeVariableDeclaration>
+    suspend fun originalParametrization(): List<JcTypeVariableDeclaration>
     suspend fun parametrization(): Map<String, JcRefType>
 
     suspend fun superType(): JcRefType?

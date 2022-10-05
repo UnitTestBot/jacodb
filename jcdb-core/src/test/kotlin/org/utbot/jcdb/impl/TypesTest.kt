@@ -12,6 +12,9 @@ import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcPrimitiveType
+import org.utbot.jcdb.api.JcType
+import org.utbot.jcdb.api.JcTypeVariable
+import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.impl.types.PrimitiveAndArrays
 import org.utbot.jcdb.impl.types.SuperFoo
@@ -45,31 +48,52 @@ class TypesTest {
     }
 
     @Test
-    fun `generics for parent types`() = runBlocking {
-        val superFooType = cp.findTypeOrNull(SuperFoo::class.java.name)
-        assertNotNull(superFooType!!)
-        assertTrue(superFooType is JcClassType)
-        superFooType as JcClassType
-        with(superFooType.superType()) {
-            assertNotNull(this)
-            this!!
-            assertTrue(this is JcClassType)
-            this as JcClassType
+    fun `generics for super types`() = runBlocking {
+        val superFooType = findClassType<SuperFoo>()
+        with(superFooType.superType().assertClassType()) {
             val fields = fields()
             assertEquals(2, fields.size)
 
             with(fields.first()) {
                 assertEquals("state", name)
-                assertTrue(fieldType() is JcClassType)
+                fieldType().assertType<String>()
             }
         }
     }
 
     @Test
+    fun `generics for methods 1`() = runBlocking {
+        val superFooType = findClassType<SuperFoo>()
+        val superType = superFooType.superType().assertClassType()
+        val methods = superType.methods().filterNot { it.method.isConstructor }
+        assertEquals(2, methods.size)
+
+        with(methods.first { it.method.name == "run1" }) {
+            returnType().assertType<String>()
+            parameters().first().type().assertType<String>()
+        }
+    }
+
+//    @Test
+    fun `generics for methods 2`() = runBlocking {
+        val superFooType = findClassType<SuperFoo>()
+        val superType = superFooType.superType().assertClassType()
+        val methods = superType.methods().filterNot { it.method.isConstructor }
+        assertEquals(2, methods.size)
+
+        with(methods.first { it.method.name == "run2" }) {
+            val returnType = returnType()
+            val params = parameters().first()
+            val w = originalParameterization().first()
+            assertEquals("W", (params.type() as? JcTypeVariable)?.typeSymbol)
+            assertEquals("W", w.symbol)
+            assertEquals(cp.findTypeOrNull<String>(), w.bounds.first())
+        }
+    }
+
+    @Test
     fun `primitive and array types`() = runBlocking {
-        val primitiveAndArrays = cp.findTypeOrNull(PrimitiveAndArrays::class.java.name)
-        assertTrue(primitiveAndArrays is JcClassType)
-        primitiveAndArrays as JcClassType
+        val primitiveAndArrays = findClassType<PrimitiveAndArrays>()
         val fields = primitiveAndArrays.fields()
         assertEquals(2, fields.size)
 
@@ -97,4 +121,26 @@ class TypesTest {
             }
         }
     }
+
+    private suspend inline fun <reified T> findClassType(): JcClassType {
+        val found = cp.findTypeOrNull(T::class.java.name)
+        assertNotNull(found)
+        assertTrue(found is JcClassType)
+        return found as JcClassType
+    }
+
+    private fun JcType?.assertClassType(): JcClassType {
+        assertNotNull(this)
+        assertTrue(this is JcClassType)
+        return this as JcClassType
+    }
+
+    private suspend inline fun <reified T> JcType?.assertType() {
+        val expected = findClassType<T>()
+        assertNotNull(this)
+        assertTrue(this is JcClassType)
+        assertEquals(expected.typeName, this?.typeName)
+    }
+
+    private val stringType get() = runBlocking { findClassType<String>() }
 }
