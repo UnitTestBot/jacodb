@@ -12,7 +12,7 @@ import org.utbot.jcdb.impl.suspendableLazy
 class JcTypedFieldImpl(
     override val enclosingType: JcRefType,
     override val field: JcField,
-    private val classBindings: JcTypeBindings = JcTypeBindings()
+    private val typeBindings: JcTypeBindings = JcTypeBindings.empty
 ) : JcTypedField {
 
     private val resolution = FieldSignature.of(field.signature)
@@ -23,7 +23,7 @@ class JcTypedFieldImpl(
     private val fieldTypeGetter = suspendableLazy {
         val typeName = field.type.typeName
         ifSignature {
-            classpath.typeOf(it.fieldType.apply(classBindings))
+            typeBindings.toJcRefType(it.fieldType, classpath)
         } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
     }
 

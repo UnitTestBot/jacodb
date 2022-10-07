@@ -5,6 +5,7 @@ import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.isNullable
+import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.signature.SType
 
 class JcTypedMethodParameterImpl(
@@ -14,10 +15,11 @@ class JcTypedMethodParameterImpl(
     private val bindings: JcTypeBindings
 ) : JcTypedMethodParameter {
 
+    val classpath = enclosingMethod.method.enclosingClass.classpath
+
     override suspend fun type(): JcType {
-        val cp = enclosingMethod.method.enclosingClass.classpath
-        val st = stype ?: return cp.findTypeOrNull(parameter.type.typeName) ?: throw IllegalStateException("")
-        return cp.typeOf(st.apply(bindings))
+        val st = stype ?: return classpath.findTypeOrNull(parameter.type.typeName) ?: parameter.type.typeName.throwClassNotFound()
+        return classpath.typeOf(st.apply(bindings, null), bindings)
     }
 
     override val nullable: Boolean

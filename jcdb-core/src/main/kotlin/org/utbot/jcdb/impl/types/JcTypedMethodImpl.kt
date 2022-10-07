@@ -9,6 +9,7 @@ import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.impl.signature.Formal
 import org.utbot.jcdb.impl.signature.MethodResolutionImpl
 import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.suspendableLazy
@@ -16,7 +17,7 @@ import org.utbot.jcdb.impl.suspendableLazy
 class JcTypedMethodImpl(
     override val enclosingType: JcRefType,
     override val method: JcMethod,
-    classBindings: JcTypeBindings = JcTypeBindings()
+    private val classBindings: JcTypeBindings = JcTypeBindings(emptyMap(), emptyMap())
 ) : JcTypedMethod {
 
     private val resolution = MethodSignature.of(method.signature)
@@ -24,8 +25,8 @@ class JcTypedMethodImpl(
 
     private val methodBindingsGetter = suspendableLazy {
         classBindings.override(ifSignature {
-            it.typeVariables.map { it.symbol  }.toSet()
-        } ?: emptySet())
+            it.typeVariables
+        }.orEmpty())
     }
 
     override val name: String
@@ -35,7 +36,7 @@ class JcTypedMethodImpl(
 
     override suspend fun originalParameterization(): List<JcTypeVariableDeclaration> {
         return ifSignature {
-            classpath.typeDeclarations(it.typeVariables)
+            classpath.typeDeclarations(it.typeVariables.map { Formal(it.symbol, it.boundTypeTokens?.map { it.apply(methodBindings(), null) }) }, JcTypeBindings.empty)
         } ?: emptyList()
     }
 
@@ -64,8 +65,9 @@ class JcTypedMethodImpl(
 
     override suspend fun returnType(): JcType {
         val typeName = method.returnType.typeName
+        val bindings = methodBindings()
         return ifSignature {
-            classpath.typeOf(it.returnType.apply(methodBindings()))
+            classpath.typeOf(it.returnType.apply(bindings, null), bindings)
         } ?: classpath.findTypeOrNull(typeName) ?: throw IllegalStateException("Can't resolve type by name $typeName")
     }
 

@@ -1,24 +1,22 @@
 package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.JcBoundWildcard
-import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcLowerBoundWildcard
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypeVariable
+import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcUnboundWildcard
 import org.utbot.jcdb.api.JcUpperBoundWildcard
 
-class JcUnboundWildcardImpl(private val anyType: JcClassType, override val nullable: Boolean = true) :
+class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nullable: Boolean = true) :
     JcUnboundWildcard {
 
-    override val classpath: JcClasspath
-        get() = anyType.classpath
     override val typeName: String
         get() = "*"
 
     override fun notNullable(): JcRefType {
-        return JcUnboundWildcardImpl(anyType, false)
+        return JcUnboundWildcardImpl(classpath, false)
     }
 }
 
@@ -52,18 +50,20 @@ class JcLowerBoundWildcardImpl(boundType: JcRefType, nullable: Boolean) : Abstra
 }
 
 class JcTypeVariableImpl(
-    override val typeSymbol: String,
-    override val nullable: Boolean,
-    private val anyType: JcClassType
+    override val classpath: JcClasspath,
+    private val declaration: JcTypeVariableDeclaration,
+    override val nullable: Boolean
 ) : JcTypeVariable {
 
-    override val classpath: JcClasspath
-        get() = anyType.classpath
-
     override val typeName: String
-        get() = typeSymbol
+        get() = symbol
+
+    override val symbol: String get() = declaration.symbol
+
+    override val bounds: List<JcRefType>
+        get() = declaration.bounds
 
     override fun notNullable(): JcRefType {
-        return JcTypeVariableImpl(typeSymbol, false, anyType)
+        return JcTypeVariableImpl(classpath, declaration, nullable)
     }
 }

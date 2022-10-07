@@ -74,7 +74,9 @@ interface JcClassType : JcRefType {
 }
 
 interface JcTypeVariable : JcRefType {
-    val typeSymbol: String
+    val symbol: String
+
+    val bounds: List<JcRefType>
 }
 
 interface JcBoundWildcard : JcRefType {

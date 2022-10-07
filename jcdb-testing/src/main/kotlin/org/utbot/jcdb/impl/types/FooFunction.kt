@@ -21,3 +21,6 @@ open class FooFunction<T> {
 
 class SuperFoo : FooFunction<String>()
 
+
+
+

@@ -82,16 +82,13 @@ classDiagram
     JcBoundWildcard <|-- JcLowerBoundWildcard
     JcRefType <|-- JcArrayType
     JcRefType <|-- JcClassType
-    JcRefType <|-- JcParameterizedType
     JcRefType <|-- JcTypeVariable
-    JcParameterizedType <|-- JcNestedType
     class JcType {
       +bool nullable
       +String typeName
     }
 
     class JcRefType {
-      +JcClass jcClass 
     }
     class JcArrayType {
        +JcType elementType
