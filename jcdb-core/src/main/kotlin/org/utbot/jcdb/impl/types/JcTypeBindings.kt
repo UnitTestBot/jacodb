@@ -99,12 +99,7 @@ internal suspend fun JcClasspath.typeOf(stype: SType, bindings: JcTypeBindings):
         }
 
         is SUnboundWildcard -> JcUnboundWildcardImpl(this)
-        is SBoundWildcard.SUpperBoundWildcard -> JcUpperBoundWildcardImpl(
-            typeOf(
-                stype.bound,
-                bindings
-            ) as JcRefType, true
-        )
+        is SBoundWildcard.SUpperBoundWildcard -> typeOf(stype.bound,bindings)
 
         is SBoundWildcard.SLowerBoundWildcard -> JcLowerBoundWildcardImpl(
             typeOf(

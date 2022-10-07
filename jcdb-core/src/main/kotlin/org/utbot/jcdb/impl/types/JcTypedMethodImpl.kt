@@ -36,7 +36,11 @@ class JcTypedMethodImpl(
 
     override suspend fun originalParameterization(): List<JcTypeVariableDeclaration> {
         return ifSignature {
-            classpath.typeDeclarations(it.typeVariables.map { Formal(it.symbol, it.boundTypeTokens?.map { it.apply(methodBindings(), null) }) }, JcTypeBindings.empty)
+            classpath.typeDeclarations(it.typeVariables.map {
+                Formal(
+                    it.symbol,
+                    it.boundTypeTokens?.map { it.apply(methodBindings(), null) })
+            }, JcTypeBindings.empty)
         } ?: emptyList()
     }
 

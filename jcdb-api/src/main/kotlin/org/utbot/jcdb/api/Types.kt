@@ -79,12 +79,9 @@ interface JcTypeVariable : JcRefType {
     val bounds: List<JcRefType>
 }
 
-interface JcBoundWildcard : JcRefType {
+interface JcLowerBoundWildcard : JcRefType {
     val boundType: JcRefType
 }
-
-interface JcUpperBoundWildcard : JcBoundWildcard
-interface JcLowerBoundWildcard : JcBoundWildcard
 interface JcUnboundWildcard : JcRefType
 
 interface JcTypeVariableDeclaration {

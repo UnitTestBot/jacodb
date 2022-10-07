@@ -14,9 +14,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcPrimitiveType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypeVariable
-import org.utbot.jcdb.api.JcUpperBoundWildcard
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.impl.types.PartialParametrization
 import org.utbot.jcdb.impl.types.PrimitiveAndArrays
@@ -78,7 +76,7 @@ class TypesTest {
             with(originalParametrization()[1]) {
                 assertEquals("W", symbol)
                 assertEquals(1, bounds.size)
-                assertEquals("java.util.List<? extends T>", bounds[0].typeName)
+                assertEquals("java.util.List<T>", bounds[0].typeName)
             }
 
             with(parametrization()["T"]!!) {
@@ -89,7 +87,7 @@ class TypesTest {
                 this as JcTypeVariable
                 assertEquals("W", symbol)
                 assertEquals(1, bounds.size)
-                assertEquals("java.util.List<? extends java.lang.String>", bounds[0].typeName)
+                assertEquals("java.util.List<java.lang.String>", bounds[0].typeName)
             }
 
             val fields = fields()
@@ -101,14 +99,14 @@ class TypesTest {
             }
             with(fields[1]) {
                 assertEquals("stateW", name)
-                assertEquals("java.util.List<? extends java.lang.String>", (fieldType() as JcTypeVariable).bounds.first().typeName)
+                assertEquals("java.util.List<java.lang.String>", (fieldType() as JcTypeVariable).bounds.first().typeName)
             }
             with(fields[2]) {
                 assertEquals("stateListW", name)
                 val resolvedType = fieldType().assertClassType()
                 assertEquals(cp.findClass<List<*>>(), resolvedType.jcClass)
-                val shouldBeW = (resolvedType.parametrization().values.first() as JcUpperBoundWildcard).boundType as JcTypeVariable
-                assertEquals("java.util.List<? extends java.lang.String>", shouldBeW.bounds.first().typeName)
+                val shouldBeW = (resolvedType.parametrization().values.first() as JcTypeVariable)
+                assertEquals("java.util.List<java.lang.String>", shouldBeW.bounds.first().typeName)
             }
         }
     }
@@ -129,23 +127,24 @@ class TypesTest {
     }
 
     @Test
-    fun `generics for methods 2`() = runBlocking {
-        val superFooType = findClassType<SuperFoo>()
-        val superType = superFooType.superType().assertClassType()
-        val methods = superType.methods().filterNot { it.method.isConstructor }
-        assertEquals(2, methods.size)
+    fun `generics for methods 2`() {
+        runBlocking {
+            val superFooType = findClassType<SuperFoo>()
+            val superType = superFooType.superType().assertClassType()
+            val methods = superType.methods().filterNot { it.method.isConstructor }
+            assertEquals(2, methods.size)
 
-        with(methods.first { it.method.name == "run2" }) {
-            val returnType = returnType()
-            val params = parameters().first()
-            val w = originalParameterization().first()
+            with(methods.first { it.method.name == "run2" }) {
+                val returnType = returnType()
+                val params = parameters().first()
+                val w = originalParameterization().first()
 
-            val bound = ((params.type() as JcClassType).parametrization().values.first() as JcUpperBoundWildcard).boundType
-            assertEquals("W", (bound as? JcTypeVariable)?.symbol)
-            assertEquals("W", w.symbol)
-            bound as JcTypeVariable
-            bound.bounds.first().assertType<String>()
-            assertEquals(cp.findTypeOrNull<String>(), w.bounds.first())
+                val bound = (params.type() as JcClassType).parametrization().values.first()
+                assertEquals("W", (bound as? JcTypeVariable)?.symbol)
+                assertEquals("W", w.symbol)
+                bound as JcTypeVariable
+                bound.bounds.first().assertType<String>()
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 package org.utbot.jcdb.impl.types
 
-open class Generics1<T, W : List<T>> {
+open class LinkedGenerics<T, W : List<T>> {
 
     var state: T? = null
     var stateW: W? = null
@@ -8,4 +8,4 @@ open class Generics1<T, W : List<T>> {
 }
 
 
-class PartialParametrization<W : List<String>> : Generics1<String, W>()
+class PartialParametrization<W : List<String>> : LinkedGenerics<String, W>()
