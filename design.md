@@ -76,10 +76,8 @@ classDiagram
 classDiagram
     JcType <|-- JcPrimitiveType
     JcType <|-- JcRefType
-    JcRefType <|-- JcBoundWildcard
     JcRefType <|-- JcUnboundWildcard
-    JcBoundWildcard <|-- JcUpperBoundWildcard
-    JcBoundWildcard <|-- JcLowerBoundWildcard
+    JcRefType <|-- JcLowerBoundWildcard
     JcRefType <|-- JcArrayType
     JcRefType <|-- JcClassType
     JcRefType <|-- JcTypeVariable
