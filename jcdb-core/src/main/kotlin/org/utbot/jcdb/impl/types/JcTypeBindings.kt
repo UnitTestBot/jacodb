@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl.types
 
+import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
@@ -17,58 +18,81 @@ import org.utbot.jcdb.impl.signature.SResolvedTypeVariable
 import org.utbot.jcdb.impl.signature.SType
 import org.utbot.jcdb.impl.signature.STypeVariable
 import org.utbot.jcdb.impl.signature.SUnboundWildcard
+import org.utbot.jcdb.impl.signature.TypeResolutionImpl
+import org.utbot.jcdb.impl.signature.TypeSignature
 
 class JcTypeBindings(
-    incoming: Map<String, SType>,
-    private val declarations: Map<String, FormalTypeVariable>
+    internal val parametrization: List<SType>? = null,
+    bindings: Map<String, SType>,
+    private val declarations: Map<String, FormalTypeVariable>,
+    private val parent: JcTypeBindings? = null
 ) {
     companion object {
-        val empty = JcTypeBindings(emptyMap(), emptyMap())
+
+        val empty = JcTypeBindings(null, emptyMap(), emptyMap(), null)
+
+        fun ofClass(
+            jcClass: JcClassOrInterface,
+            parent: JcTypeBindings?,
+            parametrization: List<SType>? = null
+        ): JcTypeBindings {
+            val resolution = TypeSignature.of(jcClass.signature)
+            if (parametrization != null && resolution is TypeResolutionImpl && resolution.typeVariables.size != parametrization.size) {
+                val msg = "Expected ${resolution.typeVariables.joinToString()} but " +
+                        "was ${parametrization.joinToString()}"
+                throw IllegalStateException(msg)
+            }
+
+            val resolutionImpl = resolution as? TypeResolutionImpl
+
+            val bindings = resolutionImpl?.typeVariables?.mapIndexed { index, declaration ->
+                declaration.symbol to (parametrization?.get(index) ?: STypeVariable(declaration.symbol))
+            }?.toMap() ?: emptyMap()
+
+            val declarations = resolutionImpl?.let {
+                it.typeVariables.associateBy { it.symbol }
+            } ?: emptyMap()
+            return parent?.override(JcTypeBindings(parametrization, bindings, declarations), true)
+                ?: JcTypeBindings(parametrization, bindings, declarations)
+        }
     }
 
-    internal val bindings = incoming.filterValues { it !is STypeVariable }
+    internal val typeBindings = bindings.filterValues { it !is STypeVariable }
 
-    fun override(overrides: List<FormalTypeVariable>): JcTypeBindings {
-        val newDeclarations = declarations + overrides.associateBy { it.symbol }
-        val newSymbols = overrides.map { it.symbol }.toSet()
-        val newBindings = bindings.filterKeys { !newSymbols.contains(it) }
-        return JcTypeBindings(newBindings, newDeclarations)
+    fun override(overrides: JcTypeBindings, join: Boolean = false): JcTypeBindings {
+        return JcTypeBindings(
+            overrides.parametrization,
+            overrides.typeBindings,
+            overrides.declarations,
+            takeIf { join })
     }
 
-    fun findDirectBinding(symbol: String): SType? {
-        return bindings[symbol]
+    fun override(typeVariables: List<FormalTypeVariable>): JcTypeBindings {
+        return JcTypeBindings(
+            null,
+            emptyMap(),
+            typeVariables.associateBy { it.symbol },
+            this
+        )
+    }
+
+    fun findTypeBinding(symbol: String): SType? {
+        return typeBindings[symbol] ?: parent?.findTypeBinding(symbol)
     }
 
     fun resolve(symbol: String): SResolvedTypeVariable {
-        val bounds = declarations[symbol]?.boundTypeTokens?.map { it.applyTypeDeclarations(this, null) }
+        val typeVariable = declarations[symbol]
+        if (typeVariable == null && parent != null) {
+            return parent.resolve(symbol)
+        }
+        val bounds = typeVariable?.boundTypeTokens?.map {
+            it.applyTypeDeclarations(this, null)
+        }
         return SResolvedTypeVariable(symbol, bounds.orEmpty())
     }
 
     suspend fun toJcRefType(stype: SType, classpath: JcClasspath): JcRefType {
         return classpath.typeOf(stype.apply(this, null), this) as JcRefType
-//        val bindings = this
-//
-//        suspend fun SType.toJcRefType(): JcRefType {
-//            return classpath.typeOf(this, bindings) as JcRefType
-//        }
-
-//        if (stype is STypeVariable) {
-//            val symbol = stype.symbol
-//            val direct = findDirectBinding(symbol)
-//            if (direct != null) {
-//                return direct.toJcRefType()
-//            }
-//            val resolved = resolve(symbol)
-//            return JcTypeVariableImpl(
-//                classpath,
-//                JcTypeVariableDeclarationImpl(
-//                    symbol,
-//                    resolved.boundTypeTokens?.map { it.toJcRefType() }.orEmpty()
-//                ), true
-//            )
-//        }
-//        return stype.apply(bindings, null).toJcRefType()
-
     }
 }
 
@@ -85,7 +109,20 @@ internal suspend fun JcClasspath.typeOf(stype: SType, bindings: JcTypeBindings):
             val clazz = findClass(stype.name)
             JcClassTypeImpl(
                 clazz,
-                parametrization = stype.parameterTypes,
+                null,
+                JcTypeBindings.ofClass(clazz, bindings, stype.parameterTypes),
+                nullable = true
+            )
+        }
+
+        is SParameterizedType.SNestedType -> {
+            val clazz = findClass(stype.name)
+            val outerType = typeOf(stype.ownerType, bindings)
+            val outerParameters = (stype.ownerType as? SParameterizedType)?.parameterTypes
+            JcClassTypeImpl(
+                clazz,
+                outerType as JcClassTypeImpl,
+                JcTypeBindings.ofClass(clazz, bindings, outerParameters),
                 nullable = true
             )
         }
@@ -94,12 +131,13 @@ internal suspend fun JcClasspath.typeOf(stype: SType, bindings: JcTypeBindings):
             val resolved = stype.boundaries.map { typeOf(it, bindings) as JcRefType }
             JcTypeVariableImpl(this, JcTypeVariableDeclarationImpl(stype.symbol, resolved), true)
         }
+
         is STypeVariable -> {
             JcTypeVariableImpl(this, JcTypeVariableDeclarationImpl(stype.symbol, emptyList()), true)
         }
 
         is SUnboundWildcard -> JcUnboundWildcardImpl(this)
-        is SBoundWildcard.SUpperBoundWildcard -> typeOf(stype.bound,bindings)
+        is SBoundWildcard.SUpperBoundWildcard -> typeOf(stype.bound, bindings)
 
         is SBoundWildcard.SLowerBoundWildcard -> JcLowerBoundWildcardImpl(
             typeOf(
@@ -124,7 +162,7 @@ internal suspend fun JcClasspath.typeDeclaration(
     return when (formal) {
         is Formal -> JcTypeVariableDeclarationImpl(
             formal.symbol,
-            formal.boundTypeTokens?.map { typeOf(it, bindings) as JcRefType }.orEmpty()
+            formal.boundTypeTokens?.map { typeOf(it.applyKnownBindings(bindings), bindings) as JcRefType }.orEmpty()
         )
 
         else -> throw IllegalStateException("Unknown type $formal")

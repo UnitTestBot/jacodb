@@ -102,6 +102,18 @@ classDiagram
       +JcType type
       +JcField field
     }
+    class JcClassType {
+      +JcClassOrInterface jcClass
+      +JcRefType[] parametrization
+      +JcRefType[] originalParametrization
+    }
+    class JcTypeVariable {
+      +String symbol
+      +JcRefType[] bounds
+    }
+    class JcLowerBoundWildcard {
+      +JcRefType bound
+    }
 ``` 
 
 Entry point for both of them is `JcClasspath`

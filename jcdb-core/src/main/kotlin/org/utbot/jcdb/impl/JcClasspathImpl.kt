@@ -10,12 +10,12 @@ import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.throwClassNotFound
+import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.index.hierarchyExt
-import org.utbot.jcdb.impl.signature.TypeResolutionImpl
-import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
+import org.utbot.jcdb.impl.types.JcTypeBindings
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import java.io.Serializable
@@ -51,16 +51,12 @@ class JcClasspathImpl(
     }
 
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
-        val signature = TypeSignature.of(jcClass.signature)
-        if (signature is TypeResolutionImpl) {
-            return JcClassTypeImpl(
-                jcClass,
-                resolution = signature,
-                parametrization = null,
-                nullable = true
-            )
-        }
-        return JcClassTypeImpl(jcClass, signature, null, true)
+        return JcClassTypeImpl(
+            jcClass,
+            jcClass.outerClass()?.toType(),
+            JcTypeBindings.ofClass(jcClass, null),
+            nullable = true
+        )
     }
 
     override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {
@@ -78,8 +74,7 @@ class JcClasspathImpl(
         if (predefined != null) {
             return predefined
         }
-        val jcClass = findClassOrNull(name) ?: return null
-        return JcClassTypeImpl(jcClass, nullable = true)
+        return typeOf(findClassOrNull(name) ?: return null)
     }
 
     override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {

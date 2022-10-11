@@ -5,62 +5,42 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
-import org.utbot.jcdb.api.TypeResolution
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.signature.SType
-import org.utbot.jcdb.impl.signature.STypeVariable
 import org.utbot.jcdb.impl.signature.TypeResolutionImpl
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.suspendableLazy
 
 open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
-    private val resolution: TypeResolution = TypeSignature.of(jcClass.signature),
-    private val parametrization: List<SType>? = null,
+    private val outerType: JcClassType? = null,
+    private val typeBindings: JcTypeBindings,
     override val nullable: Boolean
 ) : JcClassType {
 
-    private val typeBindings: JcTypeBindings
-
-    init {
-        if (parametrization != null && resolution is TypeResolutionImpl && resolution.typeVariables.size != parametrization.size) {
-            val msg = "Expected ${resolution.typeVariables.joinToString()} but was ${parametrization.joinToString()}"
-            throw IllegalStateException(msg)
-        }
-
-        val bindings = ifSyncSignature {
-            it.typeVariables.mapIndexed { index, declaration ->
-                declaration.symbol to (parametrization?.get(index) ?: STypeVariable(declaration.symbol))
-            }.toMap()
-        } ?: emptyMap()
-
-        val declarations = ifSyncSignature {
-            it.typeVariables.associateBy { it.symbol }
-        } ?: emptyMap()
-
-        typeBindings = JcTypeBindings(bindings, declarations)
-    }
+    private val resolutionImpl = TypeSignature.of(jcClass.signature) as? TypeResolutionImpl
 
     override val classpath get() = jcClass.classpath
 
     override val typeName: String
         get() {
-            if (parametrization == null) {
-                val generics = ifSyncSignature { it.typeVariables.joinToString() } ?: return jcClass.name
+            if (typeBindings.parametrization == null) {
+                val generics = resolutionImpl?.typeVariables?.joinToString() ?: return jcClass.name
                 return jcClass.name + ("<$generics>".takeIf { generics.isNotEmpty() } ?: "")
             }
-            return jcClass.name + ("<${parametrization.joinToString { it.displayName }}>".takeIf { parametrization.isNotEmpty() } ?: "")
+            return jcClass.name + ("<${typeBindings.parametrization.joinToString { it.displayName }}>".takeIf { typeBindings.parametrization.isNotEmpty() }
+                ?: "")
         }
 
     private val originParametrizationGetter = suspendableLazy {
-        ifSignature {
+        resolutionImpl?.let {
             classpath.typeDeclarations(it.typeVariables, JcTypeBindings.empty)
         } ?: emptyList()
     }
 
     private val parametrizationGetter = suspendableLazy {
         originalParametrization().associate { original ->
-            val direct = typeBindings.findDirectBinding(original.symbol)
+            val direct = typeBindings.findTypeBinding(original.symbol)
             if (direct != null) {
                 original.symbol to direct.apply(typeBindings, original.symbol).toJcRefType()
             } else {
@@ -73,19 +53,19 @@ open class JcClassTypeImpl(
 
     override suspend fun parametrization() = parametrizationGetter()
 
-    override suspend fun superType(): JcRefType? {
-        return ifSignature {
-            classpath.typeOf(it.superClass, typeBindings) as? JcRefType
+    override suspend fun superType(): JcClassType? {
+        return resolutionImpl?.let {
+            classpath.typeOf(it.superClass, typeBindings) as? JcClassType
         } ?: jcClass.superclass()?.toType()
     }
 
     override suspend fun interfaces(): List<JcRefType> {
-        return ifSignature {
-            jcClass.interfaces().map { it.toType() }
-        } ?: emptyList()
+        return resolutionImpl?.let {
+            it.interfaceType.map { classpath.typeOf(it, typeBindings) as JcRefType }
+        } ?: jcClass.interfaces().map { it.toType() } ?: emptyList()
     }
 
-    override suspend fun outerType(): JcRefType? {
+    override suspend fun outerType(): JcClassType? {
         return jcClass.outerClass()?.toType()
     }
 
@@ -95,7 +75,12 @@ open class JcClassTypeImpl(
         }
     }
 
-    override suspend fun innerTypes(): List<JcRefType> = TODO("Not yet implemented")
+    override suspend fun innerTypes(): List<JcClassType> {
+        return jcClass.innerClasses().map {
+            val resolution = TypeSignature.of(it.signature)
+            JcClassTypeImpl(it, this, JcTypeBindings.ofClass(it, typeBindings), true)
+        }
+    }
 
     override suspend fun methods(): List<JcTypedMethod> {
         return jcClass.methods.map {
@@ -109,7 +94,7 @@ open class JcClassTypeImpl(
         }
     }
 
-    override fun notNullable() = JcClassTypeImpl(jcClass, resolution, parametrization, false)
+    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, typeBindings, false)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -126,20 +111,6 @@ open class JcClassTypeImpl(
     override fun hashCode(): Int {
         val result = nullable.hashCode()
         return 31 * result + typeName.hashCode()
-    }
-
-    private suspend fun <T> ifSignature(map: suspend (TypeResolutionImpl) -> T?): T? {
-        return when (resolution) {
-            is TypeResolutionImpl -> map(resolution)
-            else -> null
-        }
-    }
-
-    private fun <T> ifSyncSignature(map: (TypeResolutionImpl) -> T?): T? {
-        return when (resolution) {
-            is TypeResolutionImpl -> map(resolution)
-            else -> null
-        }
     }
 
     private suspend fun SType.toJcRefType(): JcRefType {

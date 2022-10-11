@@ -16,10 +16,12 @@ import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.isConstructor
+import org.utbot.jcdb.impl.types.ClassWithInners
 import org.utbot.jcdb.impl.types.PartialParametrization
 import org.utbot.jcdb.impl.types.PrimitiveAndArrays
 import org.utbot.jcdb.impl.types.SuperFoo
 import org.utbot.jcdb.jcdb
+import java.io.InputStream
 
 class TypesTest {
 
@@ -99,7 +101,10 @@ class TypesTest {
             }
             with(fields[1]) {
                 assertEquals("stateW", name)
-                assertEquals("java.util.List<java.lang.String>", (fieldType() as JcTypeVariable).bounds.first().typeName)
+                assertEquals(
+                    "java.util.List<java.lang.String>",
+                    (fieldType() as JcTypeVariable).bounds.first().typeName
+                )
             }
             with(fields[2]) {
                 assertEquals("stateListW", name)
@@ -144,6 +149,40 @@ class TypesTest {
                 assertEquals("W", w.symbol)
                 bound as JcTypeVariable
                 bound.bounds.first().assertType<String>()
+            }
+        }
+    }
+
+    @Test
+    fun `inner classes`() {
+        runBlocking {
+            val classWithInners = findClassType<ClassWithInners<*>>().assertClassType()
+            val inners = classWithInners.innerTypes()
+            assertEquals(2, inners.size)
+            assertEquals("org.utbot.jcdb.impl.types.ClassWithInners\$Inner", inners.first().typeName)
+            with(inners.first().fields()) {
+                with(first { it.name == "state" }) {
+                    fieldType().assertType<Int>()
+                }
+                with(first { it.name == "stateT" }) {
+                    assertEquals("T", (fieldType() as JcTypeVariable).symbol)
+                }
+                with(first { it.name == "stateListT" }) {
+                    assertEquals("java.util.List<T>", fieldType().typeName)
+                }
+            }
+
+            assertEquals("org.utbot.jcdb.impl.types.ClassWithInners\$Static", inners[1].typeName)
+            with((inners[1].superType()!!.fields().first().fieldType() as JcClassType).fields()) {
+                with(first { it.name == "state" }) {
+                    fieldType().assertType<Int>()
+                }
+                with(first { it.name == "stateT" }) {
+                    fieldType().assertType<InputStream>()
+                }
+                with(first { it.name == "stateListT" }) {
+                    assertEquals("java.util.List<java.io.InputStream>", fieldType().typeName)
+                }
             }
         }
     }

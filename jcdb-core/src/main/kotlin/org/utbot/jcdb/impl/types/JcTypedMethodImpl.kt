@@ -17,7 +17,7 @@ import org.utbot.jcdb.impl.suspendableLazy
 class JcTypedMethodImpl(
     override val enclosingType: JcRefType,
     override val method: JcMethod,
-    private val classBindings: JcTypeBindings = JcTypeBindings(emptyMap(), emptyMap())
+    private val classBindings: JcTypeBindings
 ) : JcTypedMethod {
 
     private val resolution = MethodSignature.of(method.signature)

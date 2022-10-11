@@ -64,13 +64,13 @@ interface JcClassType : JcRefType {
     suspend fun originalParametrization(): List<JcTypeVariableDeclaration>
     suspend fun parametrization(): Map<String, JcRefType>
 
-    suspend fun superType(): JcRefType?
+    suspend fun superType(): JcClassType?
     suspend fun interfaces(): List<JcRefType>
 
-    suspend fun outerType(): JcRefType?
+    suspend fun outerType(): JcClassType?
     suspend fun outerMethod(): JcTypedMethod?
 
-    suspend fun innerTypes(): List<JcRefType>
+    suspend fun innerTypes(): List<JcClassType>
 }
 
 interface JcTypeVariable : JcRefType {
