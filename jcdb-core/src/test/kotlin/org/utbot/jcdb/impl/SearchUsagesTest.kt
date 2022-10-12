@@ -1,41 +1,19 @@
 package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.index.findUsages
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA
-import org.utbot.jcdb.jcdb
 
-class SearchUsagesTest : LibrariesMixin {
+class SearchUsagesTest : BaseTest() {
 
-    companion object : LibrariesMixin {
-        var db: JCDB? = runBlocking {
-            jcdb {
-                loadByteCode(allClasspath)
-                useProcessJavaRuntime()
-                installFeatures(Usages)
-            }.also {
-                it.awaitBackgroundJobs()
-            }
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun cleanup() {
-            db?.close()
-            db = null
-        }
-    }
-
-    private val cp = runBlocking { db!!.classpath(allClasspath) }
+    companion object : WithDB(Usages)
 
     @Test
     fun `classes read fields`() {

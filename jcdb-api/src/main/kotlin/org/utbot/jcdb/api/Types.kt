@@ -62,7 +62,7 @@ interface JcClassType : JcRefType {
     suspend fun fields(): List<JcTypedField>
 
     suspend fun originalParametrization(): List<JcTypeVariableDeclaration>
-    suspend fun parametrization(): Map<String, JcRefType>
+    suspend fun parametrization(): List<JcRefType>
 
     suspend fun superType(): JcClassType?
     suspend fun interfaces(): List<JcRefType>
@@ -79,9 +79,12 @@ interface JcTypeVariable : JcRefType {
     val bounds: List<JcRefType>
 }
 
-interface JcLowerBoundWildcard : JcRefType {
+interface JcBoundedWildcard : JcRefType {
     val boundType: JcRefType
 }
+interface JcUpperBoundWildcard : JcBoundedWildcard
+interface JcLowerBoundWildcard : JcBoundedWildcard
+
 interface JcUnboundWildcard : JcRefType
 
 interface JcTypeVariableDeclaration {

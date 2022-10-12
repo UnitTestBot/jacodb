@@ -2,47 +2,19 @@ package org.utbot.jcdb.impl
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findFieldsUsedIn
 import org.utbot.jcdb.api.ext.findMethodsUsedIn
 import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.impl.usages.direct.DirectA
-import org.utbot.jcdb.jcdb
 
-class DirectUsagesTest : LibrariesMixin {
+class DirectUsagesTest : BaseTest() {
 
-    companion object : LibrariesMixin {
-
-        private var db: JCDB? = runBlocking {
-            jcdb {
-                loadByteCode(allClasspath)
-                useProcessJavaRuntime()
-                installFeatures(Usages)
-            }
-        }
-
-        @JvmStatic
-        @AfterAll
-        fun close() {
-            runBlocking {
-                with(db!!) {
-                    awaitBackgroundJobs()
-                    close()
-                }
-                db = null
-            }
-        }
-
-    }
-
-
-    private val cp = runBlocking { db!!.classpath(allClasspath) }
+    companion object : WithDB(Usages)
 
     @Test
     fun `find methods used in method`() {

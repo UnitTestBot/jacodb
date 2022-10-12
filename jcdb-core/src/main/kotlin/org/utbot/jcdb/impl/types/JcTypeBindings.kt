@@ -77,7 +77,11 @@ class JcTypeBindings(
     }
 
     fun findTypeBinding(symbol: String): SType? {
-        return typeBindings[symbol] ?: parent?.findTypeBinding(symbol)
+        val found = typeBindings[symbol]
+        if (found == null && !declarations.contains(symbol)) {
+            return parent?.findTypeBinding(symbol)
+        }
+        return found
     }
 
     fun resolve(symbol: String): SResolvedTypeVariable {
@@ -137,13 +141,12 @@ internal suspend fun JcClasspath.typeOf(stype: SType, bindings: JcTypeBindings):
         }
 
         is SUnboundWildcard -> JcUnboundWildcardImpl(this)
-        is SBoundWildcard.SUpperBoundWildcard -> typeOf(stype.bound, bindings)
+        is SBoundWildcard.SUpperBoundWildcard -> JcUpperBoundWildcardImpl(
+            typeOf(stype.bound, bindings) as JcRefType, true
+        )
 
         is SBoundWildcard.SLowerBoundWildcard -> JcLowerBoundWildcardImpl(
-            typeOf(
-                stype.bound,
-                bindings
-            ) as JcRefType, true
+            typeOf(stype.bound, bindings) as JcRefType, true
         )
 
         else -> throw IllegalStateException("unknown type")

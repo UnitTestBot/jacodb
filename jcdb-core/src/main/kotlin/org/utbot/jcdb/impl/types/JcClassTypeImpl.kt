@@ -39,13 +39,10 @@ open class JcClassTypeImpl(
     }
 
     private val parametrizationGetter = suspendableLazy {
-        originalParametrization().associate { original ->
+        originalParametrization().map { original ->
             val direct = typeBindings.findTypeBinding(original.symbol)
-            if (direct != null) {
-                original.symbol to direct.apply(typeBindings, original.symbol).toJcRefType()
-            } else {
-                original.symbol to typeBindings.resolve(original.symbol).apply(typeBindings, null).toJcRefType()
-            }
+            direct?.apply(typeBindings, original.symbol)?.toJcRefType()
+                ?: typeBindings.resolve(original.symbol).apply(typeBindings, null).toJcRefType()
         }
     }
 
@@ -77,7 +74,6 @@ open class JcClassTypeImpl(
 
     override suspend fun innerTypes(): List<JcClassType> {
         return jcClass.innerClasses().map {
-            val resolution = TypeSignature.of(it.signature)
             JcClassTypeImpl(it, this, JcTypeBindings.ofClass(it, typeBindings), true)
         }
     }
@@ -114,7 +110,7 @@ open class JcClassTypeImpl(
     }
 
     private suspend fun SType.toJcRefType(): JcRefType {
-        return classpath.typeOf(this, typeBindings) as JcRefType
+        return typeBindings.toJcRefType(this, classpath)
     }
 
 }

@@ -1,11 +1,8 @@
 package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
@@ -24,33 +21,10 @@ import org.utbot.jcdb.impl.signature.STypeVariable
 import org.utbot.jcdb.impl.signature.TypeResolutionImpl
 import org.utbot.jcdb.impl.signature.TypeSignature
 import org.utbot.jcdb.impl.usages.Generics
-import org.utbot.jcdb.jcdb
 
-class SignatureTest {
-    companion object : LibrariesMixin {
-        var db: JCDB? = runBlocking {
-            jcdb {
-                loadByteCode(allClasspath)
-                useProcessJavaRuntime()
-            }.also {
-                it.awaitBackgroundJobs()
-            }
-        }
+class SignatureTest: BaseTest() {
 
-        @AfterAll
-        @JvmStatic
-        fun cleanup() {
-            db?.close()
-            db = null
-        }
-    }
-
-    private val cp = runBlocking { db!!.classpath(allClasspath) }
-
-    @AfterEach
-    fun close() {
-        cp.close()
-    }
+    companion object : WithDB()
 
     @Test
     fun `get signature of class`() = runBlocking {

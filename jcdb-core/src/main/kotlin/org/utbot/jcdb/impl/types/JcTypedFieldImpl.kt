@@ -12,28 +12,22 @@ import org.utbot.jcdb.impl.suspendableLazy
 class JcTypedFieldImpl(
     override val enclosingType: JcRefType,
     override val field: JcField,
-    private val typeBindings: JcTypeBindings = JcTypeBindings.empty
+    val typeBindings: JcTypeBindings = JcTypeBindings.empty
 ) : JcTypedField {
 
-    private val resolution = FieldSignature.of(field.signature)
+    private val resolution = FieldSignature.of(field.signature) as? FieldResolutionImpl
     private val classpath = field.enclosingClass.classpath
+    private val resolvedType = resolution?.fieldType?.apply(typeBindings, null)
 
     override val name: String get() = this.field.name
 
     private val fieldTypeGetter = suspendableLazy {
         val typeName = field.type.typeName
-        ifSignature {
-            typeBindings.toJcRefType(it.fieldType, classpath)
-        } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
+        resolvedType?.let { classpath.typeOf(it, typeBindings) }
+            ?: classpath.findTypeOrNull(field.type.typeName)
+            ?: typeName.throwClassNotFound()
     }
 
     override suspend fun fieldType(): JcType = fieldTypeGetter()
-
-    private suspend fun <T> ifSignature(map: suspend (FieldResolutionImpl) -> T?): T? {
-        return when (resolution) {
-            is FieldResolutionImpl -> map(resolution)
-            else -> null
-        }
-    }
 
 }
