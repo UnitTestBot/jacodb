@@ -30,4 +30,4 @@ suspend fun jcdb(settings: JCDBSettings): JCDB {
 }
 
 /** bridge for Java */
-fun futureJcdb(settings: JCDBSettings) = GlobalScope.future(Dispatchers.Main) { jcdb(settings) }
+fun futureJcdb(settings: JCDBSettings) = GlobalScope.future(Dispatchers.Default) { jcdb(settings) }
