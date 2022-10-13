@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl
 
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.index.index
 import org.utbot.jcdb.impl.vfs.ClassVfsItem
@@ -32,10 +33,8 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
         }
     }
 
-    fun onLocationRemove(location: RegisteredLocation) {
-        features.forEach {
-            it.onRemoved(jcdb, location)
-        }
+    fun broadcast(signal: JcInternalSignal) {
+        features.forEach { it.onSignal(signal.asJcSignal(jcdb)) }
     }
 
     fun forEach(action: (JCDB, Feature<*, *>) -> Unit) {
@@ -43,6 +42,23 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
     }
 
     override fun close() {
+    }
+
+}
+
+
+sealed class JcInternalSignal {
+
+    class BeforeIndexing(val clearOnStart: Boolean) : JcInternalSignal()
+    object AfterIndexing : JcInternalSignal()
+    class LocationRemoved(val location: RegisteredLocation) : JcInternalSignal()
+
+    fun asJcSignal(jcdb: JCDB): JcSignal {
+        return when (this) {
+            is BeforeIndexing -> JcSignal.BeforeIndexing(jcdb, clearOnStart)
+            is AfterIndexing -> JcSignal.AfterIndexing(jcdb)
+            is LocationRemoved -> JcSignal.LocationRemoved(jcdb, location)
+        }
     }
 
 }

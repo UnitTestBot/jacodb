@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ByteCodeIndexer
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.Symbols
 import org.utbot.jcdb.impl.storage.longHash
@@ -97,17 +98,21 @@ data class UsageIndexRequest(
 
 object Usages : Feature<UsageIndexRequest, String> {
 
-    override val key = "usages"
-
-    override fun beforeIndexing(jcdb: JCDB, clearOnStart: Boolean) {
-        if (clearOnStart) {
-            SchemaUtils.drop(Calls)
+    override fun onSignal(signal: JcSignal) {
+        when (signal) {
+            is JcSignal.BeforeIndexing -> {
+                if (signal.clearOnStart) {
+                    SchemaUtils.drop(Calls)
+                }
+                SchemaUtils.create(Calls)
+            }
+            is JcSignal.LocationRemoved -> {
+                signal.jcdb.persistence.write {
+                    Calls.deleteWhere { Calls.locationId eq signal.location.id }
+                }
+            }
+            else -> Unit
         }
-        SchemaUtils.create(Calls)
-    }
-
-    override fun afterIndexing(jcdb: JCDB) {
-        TODO("Not yet implemented")
     }
 
     override suspend fun query(jcdb: JCDB, req: UsageIndexRequest): Sequence<String> {
@@ -126,16 +131,10 @@ object Usages : Feature<UsageIndexRequest, String> {
             }
             Symbols.select { Symbols.hash inList classHashes }.map { it[Symbols.name] }.asSequence()
         }
-
     }
 
     override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(location)
 
-    override fun onRemoved(jcdb: JCDB, location: RegisteredLocation) {
-        jcdb.persistence.write {
-            Calls.deleteWhere { Calls.locationId eq location.id }
-        }
-    }
 }
 
 

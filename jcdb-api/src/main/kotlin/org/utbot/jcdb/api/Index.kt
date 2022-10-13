@@ -15,20 +15,24 @@ interface ByteCodeIndexer {
 
 interface Feature<REQ, RES> {
 
-    val key: String
-
     suspend fun query(jcdb: JCDB, req: REQ): Sequence<RES>
 
     fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer
 
-    /** this method will be called when location is removed */
-    fun onRemoved(jcdb: JCDB, location: RegisteredLocation)
+    fun onSignal(signal: JcSignal)
 
-    /** executed after jcdb instance creating and before processing of bytecode */
-    fun beforeIndexing(jcdb: JCDB, clearOnStart: Boolean)
+}
 
-    /** can be used to create database indexes */
-    fun afterIndexing(jcdb: JCDB)
+
+sealed class JcSignal(val jcdb: JCDB) {
+
+    /** can be used for creating persistence scheme */
+    class BeforeIndexing(jcdb: JCDB, val clearOnStart: Boolean) : JcSignal(jcdb)
+    /** can be used to create persistence indexes after data batch upload */
+    class AfterIndexing(jcdb: JCDB) : JcSignal(jcdb)
+    /** can be used for cleanup index data when location is removed */
+    class LocationRemoved(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
+    class ProcessLocation(jcdb: JCDB, val location: RegisteredLocation, ) : JcSignal(jcdb)
 
 }
 

@@ -72,7 +72,6 @@ class JCDBImpl(
             .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
         return JcClasspathImpl(
             locationsRegistry.newSnapshot(processed),
-            featureRegistry,
             this,
             classesVfs
         )
@@ -82,7 +81,6 @@ class JCDBImpl(
         assertNotClosed()
         return JcClasspathImpl(
             locationsRegistry.newSnapshot(cp.registeredLocations),
-            featureRegistry,
             cp.db,
             classesVfs
         )

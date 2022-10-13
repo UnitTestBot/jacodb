@@ -103,8 +103,8 @@ private suspend fun JcClasspath.findPotentialCandidates(
     db.awaitBackgroundJobs()
 
     return hierarchy.flatMap { jcClass ->
-        val classNames = query<String, UsageIndexRequest>(
-            Usages.key, UsageIndexRequest(
+        val classNames = query(
+            Usages, UsageIndexRequest(
                 method = method,
                 field = field,
                 className = jcClass.name

@@ -10,6 +10,7 @@ import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.CleanupResult
 import org.utbot.jcdb.impl.FeaturesRegistry
+import org.utbot.jcdb.impl.JcInternalSignal
 import org.utbot.jcdb.impl.LocationsRegistry
 import org.utbot.jcdb.impl.LocationsRegistrySnapshot
 import org.utbot.jcdb.impl.RefreshResult
@@ -82,7 +83,7 @@ class PersistentLocationRegistry(
 
     private fun deprecate(locations: List<RegisteredLocation>) {
         locations.forEach {
-            featuresRegistry.onLocationRemove(it)
+            featuresRegistry.broadcast(JcInternalSignal.LocationRemoved(it))
         }
         BytecodeLocations.deleteWhere { BytecodeLocations.id inList locations.map { it.id } }
     }
