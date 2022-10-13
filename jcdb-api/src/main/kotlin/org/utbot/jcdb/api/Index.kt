@@ -31,3 +31,8 @@ interface Feature<REQ, RES> {
     fun afterIndexing(jcdb: JCDB)
 
 }
+
+
+suspend fun <REQ, RES> JcClasspath.query(feature: Feature<REQ, RES>, req: REQ): Sequence<RES> {
+    return feature.query(db, req)
+}

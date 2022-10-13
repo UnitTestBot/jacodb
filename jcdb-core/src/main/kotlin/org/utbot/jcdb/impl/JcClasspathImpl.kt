@@ -18,11 +18,9 @@ import org.utbot.jcdb.impl.types.JcClassTypeImpl
 import org.utbot.jcdb.impl.types.JcTypeBindings
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
-import java.io.Serializable
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
-    private val featuresRegistry: FeaturesRegistry,
     override val db: JCDBImpl,
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
@@ -83,11 +81,6 @@ class JcClasspathImpl(
 
     override suspend fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
         return hierarchyExt.findSubClasses(jcClass, allHierarchy)
-    }
-
-    override suspend fun <RES : Serializable, REQ : Serializable> query(key: String, req: REQ): Sequence<RES> {
-        db.awaitBackgroundJobs()
-        return featuresRegistry.query<REQ, RES>(key, req).orEmpty()
     }
 
     override fun close() {

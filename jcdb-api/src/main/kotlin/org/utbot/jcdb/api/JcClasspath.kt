@@ -1,7 +1,6 @@
 package org.utbot.jcdb.api
 
 import java.io.Closeable
-import java.io.Serializable
 
 /**
  * Represents classpath, i.e. number of locations of byte code.
@@ -52,11 +51,4 @@ interface JcClasspath : Closeable {
      */
     suspend fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean = false): List<JcClassOrInterface>
 
-    /**
-     * query index by specified term
-     *
-     * @param key index key
-     * @param req term for index
-     */
-    suspend fun <RES : Serializable, REQ : Serializable> query(key: String, req: REQ): Sequence<RES>
 }
