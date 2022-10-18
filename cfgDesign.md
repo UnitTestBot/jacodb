@@ -9,163 +9,170 @@ class JcGraph {
      * internally I think this will be represented just as an ArrayList
      * there is no need to store it as basic array
      */
-    val instructions: List<JcInstruction>
+    val instructions: List<JcInst>
+
+    /**
+     * previous instruction in the raw instruction list
+     */
+    fun previous(jcInst: JcInst): JcInst
+
+    /**
+     * next instruction in the raw instruction list
+     */
+    fun next(jcInst: JcInst): JcInst
+
+    /**
+     * incoming edges in the control flow of a method
+     */
+    fun predecessors(jcInst: JcInst): List<JcInst>
+
+    /**
+     * outgoing edges in the control flow of a method
+     */
+    fun successors(jcInst: JcInst): List<JcInst>
+
+    /**
+     * implicit outgoing edges, that indicate control
+     * flow during exception occurrence
+     */
+    fun implicitSuccessors(): List<JcExceptionReceiver>
 
     /**
      * simple way to access all entries/exits of a graph
      */
-    val instructionEntry: JcInstruction
-    val instructionExits: List<JcInstruction>
+    val instructionEntry: JcInst
+    val instructionExits: List<JcInst>
     val exceptionExits: List<JcExceptionReceiver>
 
     /**
-     * basic blocks of a graph, computed on request
+     * basic blocks of a graph 
+     * computed lazily once for each graph
      */
     val basicBlocks: List<JcBasicBlock>
-    // todo
-    // maybe this should be converted into a function
-    // that explicitly states that basic blocks are computed on request
-    
-    // todo
-    //need to decide how to keep basic blocks synced with
-    // the JcGraph in case it has been changed
-    
+
+    /**
+     * instructions that belong to a giver block
+     * boundries of blocks are stored in the JcGraph to simplify
+     * the process of their synchronization when graph is modified
+     */
+    fun instructions(basicBlock: JcBasicBlock): List<JcInst>
+
     // todo
     // also we need to provide entry/exit access for
     // basic block API, but we need to decide about handling exceptions
     // in basic blocks first
 }
 
-class JcBasicBlock { // todo: maybe JcBlock is better?
-    // internal implementation details
-    /**
-     * still considering storing a reference to a JcGraph in blocks
-     * I think that if we store it inside CFG elements, the API will be much better
-     */
-    internal var graph: JcGraph? = null
-    
-    /**
-     * internally basic block just stores the range of indices
-     */
-    internal var startIndexInclusive: Int
-    internal var endIndexExclusive: Int
-    
-    // API
-    /**
-     * instructions that belong to this block
-     */
-    val instructions: List<JcInstruction>
-
+class JcBasicBlock {
     /**
      * incoming edges of a control flow graph
      */
     val predecessors: List<JcBasicBlock>
-    
+
     /**
      * outgoing edges of a control flow graph
      */
     val successors: List<JcBasicBlock>
-    
+
     // todo 
     // need to think about exceptions in the basic
     // block API. Should we represent exception edges
     // as implicit edges, or explicit edges? Should we
     // explicitly distinguish catch blocks from the
     // usual blocks?
-    
-    // todo
-    // also, should basic blocks provide a way to modify
-    // the CFG, or should just be 'views' that do not have
-    // modification interface? In my opinion, latter is better
 }
 
 /**
  * represents an exception receiver in a method. It can be
- * either a JcCatchInstruction (if there is a catch instruction in a method
+ * either a JcCatchInst (if there is a catch instruction in a method
  * that handles thrown exception) or a synthetic exit node in a graph
  */
 interface JcExceptionReceiver
 
 /**
  * represents an instruction of control flow graph
- * example implementations:
- * - JcAssignInstruction
- * - JcGotoInstruction
- * - JcIfInstruction
- * - JcCallInstruction
- * - JcReturnInstruction
- * - etc.
  */
-sealed class JcInstruction { // todo: maybe JcInst is better?
-    // internal implementation details
-    /**
-     * still considering storing a reference to a JcGraph in instructions
-     * it does complicate the serialization/deserialization a little and has
-     * other small disadvantages. But I think that if we store it inside
-     * CFG elements, the API will be much better
-     */
-    internal var graph: JcGraph? = null
-
-    /**
-     * index of an instruction in the JcGraph
-     */
-    internal var index: Int = -1
-
+sealed class JcInst {
     // API
     /**
      * simple way to get *all* the JcExpressions of an instruction
      * sometimes it is convenient, need to think do we need it or not
      */
-    val operands: List<JcExpression>
-
-    // 'raw' instruction list api
-    /**
-     * previous instruction in the raw instruction list
-     */
-    val previous: JcInstruction
-
-    /**
-     * next instruction in the raw instruction list
-     */
-    val next: JcInstruction
-
-    // control flow api
-    /**
-     * incoming edges in the control flow of a method
-     */
-    val predecessors: List<JcInstruction>
-
-    /**
-     * outgoing edges in the control flow of a method
-     */
-    val successors: List<JcInstruction>
-
-    /**
-     * implicit outgoing edges, that indicate control
-     * flow during exception occurrence
-     */
-    val implicitSuccessors: List<JcExceptionReceiver>
+    val operands: List<JcExpr>
     
-    // todo
-    // need to decide do we want instructions to be mutable or not
+    abstract fun clone(): JcInst
+    
+    // internal function to keep all the indices inside the instruction
+    // synced with the JcGraph in case it has been changed
+    // mainly required for jump instructions
+    internal open fun updateIndices(start: Int, offset: Int) {}
 }
 
+// JcInst implementations
+class JcAssignInst : JcInst()
+class JcEnterMonitorInst : JcInst()
+class JcExitMonitorInst : JcInst()
+class JcCallInst : JcInst()
+class JcCatchInst : JcInst()
+class JcGotoInst : JcInst()
+class JcIfInst : JcInst()
+
+// todo
+// do we need this kind of instruction for declaring variables of a method?
+// added this for more similarity with Jimple
+class JcIdentityInst : JcInst() 
+
+class JcNopInst : JcInst()
+class JcReturnInst : JcInst()
+class JcSwitchInst : JcInst()
+
 /**
- * represents an expression used in the JcInstruction
- * example implementations:
- * - JcAddExpression, JcSubExpression, etc.
- * - JcValue
- * - etc.
+ * represents an expression used in the JcInst
  */
-sealed class JcExpression // todo: maybe JcExpr is better?
+sealed class JcExpr {
+    /**
+     * simple way to get *all* the JcExpressions of an instruction
+     * sometimes it is convenient, need to think do we need it or not
+     */
+    val operands: List<JcValue>
+}
+
+// JcExpr implementations
+class JcAddExpr : JcExpr()
+class JcAndExpr : JcAnd()
+// ... all binary operations
+class JcCastExpr : JcCastExpr()
+class JcCmpExpr : JcExpr()
+class JcCmpgExpr : JcExpr()
+class JcCmplExpr : JcExpr()
+class JcEqExpr : JcExpr()
+// ... all binary cmp operations
+class JcLengthExpr : JcExpr()
+class JcNegExpr : JcExpr()
+class JcNewExpr : JcExpr()
+class JcNewArrayExpr : JcExpr()
+class JcInstanceOfExpr : JcExpr()
+class JcDynamicCallExpr : JcExpr()
+class JcVirtualCallExpr : JcExpr()
+class JcStaticCallExpr : JcExpr()
+class JcSpecialCallExpr : JcExpr()
 
 /**
  * represents a single value
- * example implementations:
- * - JcConstant
- * - JcLocalVariable
- * - JcArgument
- * - JcThis
  */
-sealed class JcValue : JcExpression()
+sealed class JcValue
+
+// JcValue implementations
+sealed class JcConstant : JcValue()
+class JcBoolConstant : JcConstant()
+class JcByteConstant : JcConstant()
+// ... all primitive constants
+class JcStringConstant : JcConstant()
+class JcClassConstant : JcConstant()
+class JcMethodHandle : JcConstant()
+class JcNullConstant : JcConstant()
+
+class JcThisRef : JcValue()
+class JcArgument : JcValue()
+class JcLocalVariable : JcValue()
 ```
