@@ -1,6 +1,6 @@
 # Design draft for JCDB control flow graph implementation
 
-### features
+## features
 
 * IR for modification, transformation and analysis with 3-addr instructions
   * 3-addr instructions are easier for analysis, transformation and construction
@@ -12,12 +12,13 @@
     * each instruction has an implicit edge to the exception receiver (either
     catch or method exit)
       * requires type resolving during cfg construction
+      * allows to resolve all method exits: normal ones and exception exits
     * instructions do not store exception path information, it is only stored
     in catch instructions (each catch stores a list of throwing instructions)
       * does not require type resolving, we can't provide more thorough information
       about exception paths
   * instructions store their mapping to the bytecode
-* additional basic block API 
+* basic block API 
   * basic blocks are just 'views' that are mapped to the range of instructions
   in the original cfg
   * exception paths are represented in basic block API similarly to instructions
@@ -27,13 +28,28 @@
 * graph visualization
   * export to dot format at least
 * 'dsl' for runtime CFG construction
-* API for IR modification, aka 'visitor'
+  * something like
+  ```kotlin
+  buildCfg {
+    val a = param(IntType)
+    val b = param(IntType)
+    `if`(a > b)
+        .goto(label("l1"))
+        .`else`(label("l2"))
+    label("l1")
+    `return`(a)
+    label("l2")
+    `return`(b)
+  }
+  ```
+* API for IR modification
 * built-in IR transformations (like replacing `invokedynamic` for `String.concat`)
+  * need to think about other options
 
 ### potential ideas
 
 * split `calls` into two separate instructions
-* come up with the way to build CFG without needing to resolve all types
+* option to add phantom nodes or to extend API with custom node types
 
 ## API design draft
 
