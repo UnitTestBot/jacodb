@@ -1,5 +1,42 @@
 # Design draft for JCDB control flow graph implementation
 
+### features
+
+* IR for modification, transformation and analysis with 3-addr instructions
+  * 3-addr instructions are easier for analysis, transformation and construction
+* CFG for JVM bytecode built on top of ASM representation
+* bidirectional transformation: bytecode -> IR -> bytecode
+  * allows to modify the classes during runtime and use the IR to construct new classes
+* instructions are CFG nodes
+  * exception paths are stores in some way in cfg
+    * each instruction has an implicit edge to the exception receiver (either
+    catch or method exit)
+      * requires type resolving during cfg construction
+    * instructions do not store exception path information, it is only stored
+    in catch instructions (each catch stores a list of throwing instructions)
+      * does not require type resolving, we can't provide more thorough information
+      about exception paths
+  * instructions store their mapping to the bytecode
+* additional basic block API 
+  * basic blocks are just 'views' that are mapped to the range of instructions
+  in the original cfg
+  * exception paths are represented in basic block API similarly to instructions
+
+## lower priority features
+
+* graph visualization
+  * export to dot format at least
+* 'dsl' for runtime CFG construction
+* API for IR modification, aka 'visitor'
+* built-in IR transformations (like replacing `invokedynamic` for `String.concat`)
+
+### potential ideas
+
+* split `calls` into two separate instructions
+* come up with the way to build CFG without needing to resolve all types
+
+## API design draft
+
 ```kotlin
 /**
  * class that represents CFG of a method
@@ -32,6 +69,12 @@ class JcGraph {
     fun successors(jcInst: JcInst): List<JcInst>
 
     /**
+     * implicit incoming edges, that indicate control
+     * flow during exception occurrence, needed to identify
+     */
+    fun implicitPredecessors(): List<JcExceptionReceiver>
+
+    /**
      * implicit outgoing edges, that indicate control
      * flow during exception occurrence
      */
@@ -52,7 +95,7 @@ class JcGraph {
 
     /**
      * instructions that belong to a giver block
-     * boundries of blocks are stored in the JcGraph to simplify
+     * boundaries of blocks are stored in the JcGraph to simplify
      * the process of their synchronization when graph is modified
      */
     fun instructions(basicBlock: JcBasicBlock): List<JcInst>
