@@ -1,21 +1,19 @@
 package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.JcArrayType
-import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 
-class JcArrayClassTypesImpl(
+class JcArrayTypeImpl(
     override val elementType: JcType,
-    override val nullable: Boolean = true,
-    private val anyType: JcClassType
+    override val nullable: Boolean = true
 ) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"
 
     override fun notNullable(): JcRefType {
-        return JcArrayClassTypesImpl(elementType, false, anyType)
+        return JcArrayTypeImpl(elementType, false)
     }
 
     override val classpath: JcClasspath
@@ -25,7 +23,7 @@ class JcArrayClassTypesImpl(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as JcArrayClassTypesImpl
+        other as JcArrayTypeImpl
 
         if (elementType != other.elementType) return false
 

@@ -16,7 +16,7 @@ public class InnerClasses<W> {
     public class InnerStateOverriden<W> {
         private W stateW;
 
-        private <W extends List<Closeable>> W method() {
+        private <W extends List<Integer>> W method() {
             return null;
         }
     }

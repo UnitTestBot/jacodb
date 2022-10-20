@@ -2,13 +2,10 @@ package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.JcBoundedWildcard
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.JcLowerBoundWildcard
-
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcUnboundWildcard
-import org.utbot.jcdb.api.JcUpperBoundWildcard
 
 class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nullable: Boolean = true) :
     JcUnboundWildcard {
@@ -21,35 +18,31 @@ class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nu
     }
 }
 
-abstract class JcAbstractBoundedWildcard(override val boundType: JcRefType, override val nullable: Boolean) :
-    JcBoundedWildcard {
+class JcBoundedWildcardImpl(
+    override val upperBounds: List<JcRefType>,
+    override val lowerBounds: List<JcRefType>,
+    override val nullable: Boolean
+) : JcBoundedWildcard {
+
     override val classpath: JcClasspath
-        get() = boundType.classpath
-
-}
-
-
-class JcLowerBoundWildcardImpl(boundType: JcRefType, nullable: Boolean) :
-    JcAbstractBoundedWildcard(boundType, nullable), JcLowerBoundWildcard {
+        get() = upperBounds.firstOrNull()?.classpath ?: lowerBounds.firstOrNull()?.classpath
+        ?: throw IllegalStateException("Upper or lower bound should be specified")
 
     override val typeName: String
-        get() = "? extends ${boundType.typeName}"
+        get() {
+            val (name, bounds) = when{
+                upperBounds.isNotEmpty() -> "extends" to upperBounds
+                else -> "super" to lowerBounds
+            }
+            return "? $name ${bounds.joinToString(" & ") { it.typeName }}"
+        }
+
 
     override fun notNullable(): JcRefType {
-        return JcLowerBoundWildcardImpl(boundType, false)
+        return JcBoundedWildcardImpl(upperBounds, lowerBounds, false)
     }
 }
 
-class JcUpperBoundWildcardImpl(boundType: JcRefType, nullable: Boolean) :
-    JcAbstractBoundedWildcard(boundType, nullable), JcUpperBoundWildcard {
-
-    override val typeName: String
-        get() = "? super ${boundType.typeName}"
-
-    override fun notNullable(): JcRefType {
-        return JcUpperBoundWildcardImpl(boundType, false)
-    }
-}
 
 class JcTypeVariableImpl(
     override val classpath: JcClasspath,

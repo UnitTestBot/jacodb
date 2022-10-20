@@ -10,63 +10,71 @@ import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.api.throwClassNotFound
-import org.utbot.jcdb.impl.signature.FieldResolutionImpl
-import org.utbot.jcdb.impl.signature.FieldSignature
-import org.utbot.jcdb.impl.signature.Formal
-import org.utbot.jcdb.impl.signature.MethodResolutionImpl
-import org.utbot.jcdb.impl.signature.MethodSignature
+import org.utbot.jcdb.impl.types.signature.FieldResolutionImpl
+import org.utbot.jcdb.impl.types.signature.FieldSignature
+import org.utbot.jcdb.impl.types.signature.MethodResolutionImpl
+import org.utbot.jcdb.impl.types.signature.MethodSignature
+import org.utbot.jcdb.impl.types.substition.JcSubstitutor
 
 class JcTypedMethodImpl(
     override val enclosingType: JcRefType,
     override val method: JcMethod,
-    classBindings: JcTypeBindings
+    jcSubstitutor: JcSubstitutor
 ) : JcTypedMethod {
 
-    private val resolution = MethodSignature.of(method.signature) as? MethodResolutionImpl
+    private val resolution = MethodSignature.of(method)
+    private val impl = resolution as? MethodResolutionImpl
     private val classpath = method.enclosingClass.classpath
 
     override val name: String
         get() = method.name
 
-    private val methodBindings = classBindings.override(resolution?.typeVariables.orEmpty())
+    private val substitutor = resolveSubstitutor(jcSubstitutor)
 
-    override suspend fun originalParameterization(): List<JcTypeVariableDeclaration> {
-        if (resolution == null) {
-            return emptyList()
+    private fun resolveSubstitutor(parent: JcSubstitutor): JcSubstitutor {
+        return if (!method.isStatic) {
+            parent.newScope(impl?.typeVariables.orEmpty())
+        } else {
+            JcSubstitutor.empty.newScope(impl?.typeVariables.orEmpty())
         }
-        return classpath.typeDeclarations(resolution.typeVariables.map {
-            Formal(it.symbol, it.boundTypeTokens?.map { it.apply(methodBindings, null) })
-        }, JcTypeBindings.empty)
     }
 
-    override suspend fun exceptions(): List<JcClassOrInterface> = resolution?.exceptionTypes?.map {
+    override suspend fun typeParameters(): List<JcTypeVariableDeclaration> {
+        if (impl == null) {
+            return emptyList()
+        }
+        return impl.typeVariables.map { it.asJcDeclaration(method) }
+    }
+
+    override suspend fun exceptions(): List<JcClassOrInterface> = impl?.exceptionTypes?.map {
         classpath.findClass(it.name)
     } ?: emptyList()
 
-    override suspend fun parameterization(): Map<String, JcRefType> {
-        return emptyMap()
+    override suspend fun typeArguments(): List<JcRefType> {
+        return emptyList()
     }
 
     override suspend fun parameters(): List<JcTypedMethodParameter> {
         return method.parameters.mapIndexed { index, jcParameter ->
-            val stype = resolution?.parameterTypes?.get(index)
+            val stype = impl?.parameterTypes?.get(index)
             JcTypedMethodParameterImpl(
                 enclosingMethod = this,
-                bindings = methodBindings,
+                substitutor = substitutor,
                 parameter = jcParameter,
-                stype = stype
+                jvmType = stype
             )
         }
     }
 
     override suspend fun returnType(): JcType {
         val typeName = method.returnType.typeName
-        if(resolution == null) {
+        if (impl == null) {
             return classpath.findTypeOrNull(typeName)
                 ?: throw IllegalStateException("Can't resolve type by name $typeName")
         }
-        return methodBindings.toJcRefType(resolution.returnType, classpath)
+        return classpath.typeOf(substitutor.substitute(impl.returnType))
     }
 
     override suspend fun typeOf(inst: LocalVariableNode): JcType {
@@ -75,7 +83,7 @@ class JcTypedMethodImpl(
             val type = Type.getType(inst.desc)
             return classpath.findTypeOrNull(type.className) ?: type.className.throwClassNotFound()
         }
-        return methodBindings.toJcRefType(variableSignature.fieldType, classpath)
+        return classpath.typeOf(substitutor.substitute(variableSignature.fieldType))
     }
 
 }

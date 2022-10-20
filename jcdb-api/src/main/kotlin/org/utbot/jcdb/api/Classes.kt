@@ -12,7 +12,6 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     val simpleName: String
     val signature: String?
-
     val isAnonymous: Boolean
 
     suspend fun bytecode(): ClassNode

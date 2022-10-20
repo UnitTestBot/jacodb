@@ -3,10 +3,9 @@ package org.utbot.jcdb.impl.types
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.utbot.jcdb.api.JcBoundedWildcard
 import org.utbot.jcdb.api.JcClassType
-import org.utbot.jcdb.api.JcLowerBoundWildcard
 import org.utbot.jcdb.api.JcTypeVariable
-import org.utbot.jcdb.api.JcUpperBoundWildcard
 import org.utbot.jcdb.impl.types.WildcardBounds.DirectBound
 import org.utbot.jcdb.impl.types.WildcardBounds.DirectBoundString
 import org.utbot.jcdb.impl.types.WildcardBounds.WildcardLowerBound
@@ -50,8 +49,8 @@ class WildcardTypesTest : BaseTypesTest() {
                 assertEquals("field", name)
                 with(fieldType().assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? extends T>", typeName)
-                    with(parametrization().first().assertIs<JcUpperBoundWildcard>()) {
-                        boundType.assertIs<JcTypeVariable>()
+                    with(typeArguments().first().assertIs<JcBoundedWildcard>()) {
+                        upperBounds.first().assertIs<JcTypeVariable>()
                     }
                 }
             }
@@ -66,8 +65,8 @@ class WildcardTypesTest : BaseTypesTest() {
                 assertEquals("field", name)
                 with(fieldType().assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? extends java.lang.String>", typeName)
-                    with(parametrization().first().assertIs<JcUpperBoundWildcard>()) {
-                        boundType.assertType<String>()
+                    with(typeArguments().first().assertIs<JcBoundedWildcard>()) {
+                        upperBounds.first().assertType<String>()
                     }
                 }
             }
@@ -82,8 +81,8 @@ class WildcardTypesTest : BaseTypesTest() {
                 assertEquals("field", name)
                 with(fieldType().assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? super T>", typeName)
-                    with(parametrization().first().assertIs<JcLowerBoundWildcard>()) {
-                        boundType.assertIs<JcTypeVariable>()
+                    with(typeArguments().first().assertIs<JcBoundedWildcard>()) {
+                        lowerBounds.first().assertIs<JcTypeVariable>()
                     }
                 }
             }
@@ -98,8 +97,8 @@ class WildcardTypesTest : BaseTypesTest() {
                 assertEquals("field", name)
                 with(fieldType().assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? super java.lang.String>", typeName)
-                    with(parametrization().first().assertIs<JcLowerBoundWildcard>()) {
-                        boundType.assertType<String>()
+                    with(typeArguments().first().assertIs<JcBoundedWildcard>()) {
+                        lowerBounds.first().assertType<String>()
                     }
                 }
             }
