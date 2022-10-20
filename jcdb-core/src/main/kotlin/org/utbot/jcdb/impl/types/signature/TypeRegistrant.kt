@@ -1,11 +1,11 @@
-package org.utbot.jcdb.impl.signature
+package org.utbot.jcdb.impl.types.signature
 
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.signature.SignatureVisitor
 
 internal interface TypeRegistrant {
 
-    fun register(token: SType)
+    fun register(token: JvmType)
 
     open class RejectingSignatureVisitor : SignatureVisitor(Opcodes.ASM9) {
 

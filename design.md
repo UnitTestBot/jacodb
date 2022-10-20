@@ -77,7 +77,7 @@ classDiagram
     JcType <|-- JcPrimitiveType
     JcType <|-- JcRefType
     JcRefType <|-- JcUnboundWildcard
-    JcRefType <|-- JcLowerBoundWildcard
+    JcRefType <|-- JcBoundedWildcard
     JcRefType <|-- JcArrayType
     JcRefType <|-- JcClassType
     JcRefType <|-- JcTypeVariable
@@ -104,19 +104,30 @@ classDiagram
     }
     class JcClassType {
       +JcClassOrInterface jcClass
-      +JcRefType[] parametrization
-      +JcRefType[] originalParametrization
+      +JcRefType[] typeParameters
+      +JcRefType[] typeArguments
     }
     class JcTypeVariable {
       +String symbol
       +JcRefType[] bounds
     }
-    class JcLowerBoundWildcard {
-      +JcRefType bound
+    class JcBoundedWildcard {
+      +JcRefType lowerBound
+      +JcRefType upperBound
     }
 ``` 
 
-Entry point for both of them is `JcClasspath`
+Entry point for both of them is `JcClasspath`.
+
+`JcClassTypeRef#methods` returns: 
+- **all** public/protected/private methods of enclosing class 
+- all visible methods from inheritors
+- **only** constructors methods from declaring class 
+
+- `JcClassTypeRef#fields` returns: 
+- **all** public/protected/private fields of enclosing class 
+- all visible fields from inheritors
+
 
 ## Loading bytecode
 

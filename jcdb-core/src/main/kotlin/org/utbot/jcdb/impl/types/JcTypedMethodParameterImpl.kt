@@ -6,20 +6,23 @@ import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.isNullable
 import org.utbot.jcdb.api.throwClassNotFound
-import org.utbot.jcdb.impl.signature.SType
+import org.utbot.jcdb.impl.types.signature.JvmType
+import org.utbot.jcdb.impl.types.substition.JcSubstitutor
 
 class JcTypedMethodParameterImpl(
     override val enclosingMethod: JcTypedMethod,
     private val parameter: JcParameter,
-    private val stype: SType?,
-    private val bindings: JcTypeBindings
+    private val jvmType: JvmType?,
+    private val substitutor: JcSubstitutor
 ) : JcTypedMethodParameter {
 
     val classpath = enclosingMethod.method.enclosingClass.classpath
 
     override suspend fun type(): JcType {
-        val st = stype ?: return classpath.findTypeOrNull(parameter.type.typeName) ?: parameter.type.typeName.throwClassNotFound()
-        return classpath.typeOf(st.apply(bindings, null), bindings)
+        val typeName = parameter.type.typeName
+        return jvmType?.let {
+            classpath.typeOf(substitutor.substitute(jvmType))
+        } ?: classpath.findTypeOrNull(typeName) ?: typeName.throwClassNotFound()
     }
 
     override val nullable: Boolean

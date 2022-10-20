@@ -8,14 +8,14 @@ import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
+import org.utbot.jcdb.impl.bytecode.toJcClass
 import org.utbot.jcdb.impl.index.hierarchyExt
-import org.utbot.jcdb.impl.types.JcArrayClassTypesImpl
+import org.utbot.jcdb.impl.types.JcArrayTypeImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
-import org.utbot.jcdb.impl.types.JcTypeBindings
+import org.utbot.jcdb.impl.types.substition.JcSubstitutor
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 
@@ -51,21 +51,21 @@ class JcClasspathImpl(
     override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
         return JcClassTypeImpl(
             jcClass,
-            jcClass.outerClass()?.toType(),
-            JcTypeBindings.ofClass(jcClass, null),
+            jcClass.outerClass()?.toType() as? JcClassTypeImpl,
+            JcSubstitutor.empty,
             nullable = true
         )
     }
 
     override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {
-        return JcArrayClassTypesImpl(elementType, true, anyType())
+        return JcArrayTypeImpl(elementType, true)
     }
 
     override suspend fun findTypeOrNull(name: String): JcType? {
         if (name.endsWith("[]")) {
             val targetName = name.removeSuffix("[]")
             return findTypeOrNull(targetName)?.let {
-                JcArrayClassTypesImpl(it, true, anyType())
+                JcArrayTypeImpl(it, true)
             } ?: targetName.throwClassNotFound()
         }
         val predefined = PredefinedPrimitives.of(name, this)

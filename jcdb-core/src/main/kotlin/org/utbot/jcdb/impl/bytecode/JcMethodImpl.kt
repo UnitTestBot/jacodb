@@ -7,13 +7,12 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
-import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.fs.fullAsmNode
-import org.utbot.jcdb.impl.signature.MethodResolutionImpl
-import org.utbot.jcdb.impl.signature.MethodSignature
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
+import org.utbot.jcdb.impl.types.signature.MethodResolutionImpl
+import org.utbot.jcdb.impl.types.signature.MethodSignature
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
@@ -24,10 +23,10 @@ class JcMethodImpl(
     override val name: String get() = methodInfo.name
     override val access: Int get() = methodInfo.access
     override val signature: String? get() = methodInfo.signature
-    override val returnType: TypeName get() = TypeNameImpl(methodInfo.returnClass)
+    override val returnType = TypeNameImpl(methodInfo.returnClass)
 
     override suspend fun exceptions(): List<JcClassOrInterface> {
-        val methodSignature = MethodSignature.of(methodInfo.signature)
+        val methodSignature = MethodSignature.of(this)
         if (methodSignature is MethodResolutionImpl) {
             return methodSignature.exceptionTypes.map {
                 enclosingClass.classpath.findClass(it.name)
@@ -61,6 +60,5 @@ class JcMethodImpl(
     override fun hashCode(): Int {
         return 31 * enclosingClass.hashCode() + name.hashCode()
     }
-
 
 }

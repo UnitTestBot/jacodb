@@ -25,7 +25,7 @@ abstract class BaseTypesTest : BaseTest() {
 
     protected suspend inline fun <reified T> JcType?.assertType(): JcClassType {
         val expected = findClassType<T>()
-        assertEquals(expected.typeName, this?.typeName)
+        assertEquals(expected.jcClass.name, (this as? JcClassType)?.jcClass?.name)
         return this as JcClassType
     }
 

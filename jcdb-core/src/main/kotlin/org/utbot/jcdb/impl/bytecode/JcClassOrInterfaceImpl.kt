@@ -9,11 +9,9 @@ import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.throwClassNotFound
-import org.utbot.jcdb.impl.findAndWrap
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.fs.info
 import org.utbot.jcdb.impl.suspendableLazy
-import org.utbot.jcdb.impl.toJcMethod
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,

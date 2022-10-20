@@ -14,8 +14,8 @@ interface JcTypedMethod {
     val name: String
     suspend fun returnType(): JcType
 
-    suspend fun originalParameterization(): List<JcTypeVariableDeclaration>
-    suspend fun parameterization(): Map<String, JcRefType>
+    suspend fun typeParameters(): List<JcTypeVariableDeclaration>
+    suspend fun typeArguments(): List<JcRefType>
 
     suspend fun parameters(): List<JcTypedMethodParameter>
     suspend fun exceptions(): List<JcClassOrInterface>
@@ -61,14 +61,11 @@ interface JcClassType : JcRefType {
     suspend fun methods(): List<JcTypedMethod>
     suspend fun fields(): List<JcTypedField>
 
-    suspend fun originalParametrization(): List<JcTypeVariableDeclaration>
-    suspend fun parametrization(): List<JcRefType>
+    suspend fun typeParameters(): List<JcTypeVariableDeclaration>
+    suspend fun typeArguments(): List<JcRefType>
 
     suspend fun superType(): JcClassType?
-    suspend fun interfaces(): List<JcRefType>
-
-    suspend fun outerType(): JcClassType?
-    suspend fun outerMethod(): JcTypedMethod?
+    suspend fun interfaces(): List<JcClassType>
 
     suspend fun innerTypes(): List<JcClassType>
 }
@@ -80,14 +77,14 @@ interface JcTypeVariable : JcRefType {
 }
 
 interface JcBoundedWildcard : JcRefType {
-    val boundType: JcRefType
+    val upperBounds: List<JcRefType>
+    val lowerBounds: List<JcRefType>
 }
-interface JcUpperBoundWildcard : JcBoundedWildcard
-interface JcLowerBoundWildcard : JcBoundedWildcard
 
 interface JcUnboundWildcard : JcRefType
 
 interface JcTypeVariableDeclaration {
     val symbol: String
     val bounds: List<JcRefType>
+    val owner: JcAccessible
 }

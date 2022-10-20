@@ -1,4 +1,4 @@
-package org.utbot.jcdb.impl.signature
+package org.utbot.jcdb.impl.types.signature
 
 import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.Malformed
@@ -7,9 +7,9 @@ import org.utbot.jcdb.api.RecordComponentResolution
 
 internal class RecordSignature : TypeRegistrant {
 
-    private lateinit var recordComponentType: SType
+    private lateinit var recordComponentType: JvmType
 
-    override fun register(token: SType) {
+    override fun register(token: JvmType) {
         recordComponentType = token
     }
 
