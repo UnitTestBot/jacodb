@@ -58,12 +58,11 @@ class JcTypedMethodImpl(
 
     override suspend fun parameters(): List<JcTypedMethodParameter> {
         return method.parameters.mapIndexed { index, jcParameter ->
-            val stype = impl?.parameterTypes?.get(index)
             JcTypedMethodParameterImpl(
                 enclosingMethod = this,
                 substitutor = substitutor,
                 parameter = jcParameter,
-                jvmType = stype
+                jvmType = impl?.parameterTypes?.get(index)
             )
         }
     }
@@ -78,7 +77,7 @@ class JcTypedMethodImpl(
     }
 
     override suspend fun typeOf(inst: LocalVariableNode): JcType {
-        val variableSignature = FieldSignature.of(inst.signature) as? FieldResolutionImpl
+        val variableSignature = FieldSignature.of(inst.signature, method) as? FieldResolutionImpl
         if (variableSignature == null) {
             val type = Type.getType(inst.desc)
             return classpath.findTypeOrNull(type.className) ?: type.className.throwClassNotFound()

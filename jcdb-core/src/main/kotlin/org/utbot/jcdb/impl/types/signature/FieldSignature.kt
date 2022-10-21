@@ -3,9 +3,11 @@ package org.utbot.jcdb.impl.types.signature
 import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.JcField
+import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
+import org.utbot.jcdb.impl.types.substition.VisitorContext
 import org.utbot.jcdb.impl.types.typeParameters
 
 internal class FieldSignature : TypeRegistrant {
@@ -22,25 +24,31 @@ internal class FieldSignature : TypeRegistrant {
 
     companion object {
 
-        private fun FieldResolutionImpl.apply(visitor: JvmTypeVisitor) = FieldResolutionImpl(
-            visitor.visitType(fieldType),
-        )
+        private fun FieldResolutionImpl.apply(visitor: JvmTypeVisitor) =
+            FieldResolutionImpl(visitor.visitType(fieldType))
 
+        fun of(signature: String?, method: JcMethod): FieldResolution {
+            return of(signature, method.typeParameters)
+        }
 
         fun of(field: JcField): FieldResolution {
-            field.signature ?: return Pure
-            val signatureReader = SignatureReader(field.signature)
+            return of(field.signature, field.enclosingClass.typeParameters)
+        }
+
+        fun of(signature: String?, paramDeclarations: List<JvmTypeParameterDeclaration>): FieldResolution {
+            signature ?: return Pure
+            val signatureReader = SignatureReader(signature)
             val visitor = FieldSignature()
             return try {
                 signatureReader.acceptType(TypeExtractor(visitor))
                 val result = visitor.resolve()
                 result.let {
                     if (it is FieldResolutionImpl) {
-                        val declarations = (field.enclosingClass.typeParameters).associateBy { it.symbol }
+                        val declarations = paramDeclarations.associateBy { it.symbol }
                         val fixDeclarationVisitor = object : JvmTypeVisitor {
 
-                            override fun visitTypeVariable(type: JvmTypeVariable): JvmType {
-                                type.declaration = declarations[type.symbol]
+                            override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
+                                type.declaration = declarations[type.symbol]!!
                                 return type
                             }
                         }

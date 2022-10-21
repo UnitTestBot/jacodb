@@ -6,6 +6,7 @@ import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.TypeResolution
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
+import org.utbot.jcdb.impl.types.substition.VisitorContext
 
 internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass) {
 
@@ -57,8 +58,8 @@ internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolu
                         val declarations = it.typeVariables.associateBy { it.symbol }
                         val fixDeclarationVisitor = object : JvmTypeVisitor {
 
-                            override fun visitTypeVariable(type: JvmTypeVariable): JvmType {
-                                type.declaration = declarations[type.symbol]
+                            override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
+                                type.declaration = declarations[type.symbol]!!
                                 return type
                             }
                         }

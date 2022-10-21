@@ -4,7 +4,6 @@ import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.findMethodOrNull
@@ -20,8 +19,7 @@ class JcClassOrInterfaceImpl(
 
     private val info = classSource.info
 
-    override val declaration: JcDeclaration
-        get() = JcDeclarationImpl.of(location = classSource.location.jcLocation, this)
+    override val declaration = JcDeclarationImpl.of(location = classSource.location.jcLocation, this)
 
     override val name: String get() = classSource.className
     override val simpleName: String get() = classSource.className.substringAfterLast(".")
