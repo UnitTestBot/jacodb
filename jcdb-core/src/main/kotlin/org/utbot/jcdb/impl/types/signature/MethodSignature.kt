@@ -6,6 +6,7 @@ import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
+import org.utbot.jcdb.impl.types.substition.VisitorContext
 import org.utbot.jcdb.impl.types.typeParameters
 
 internal class MethodSignature(method: JcMethod) : Signature<MethodResolution>(method) {
@@ -74,8 +75,8 @@ internal class MethodSignature(method: JcMethod) : Signature<MethodResolution>(m
                             (jcMethod.enclosingClass.typeParameters + it.typeVariables).associateBy { it.symbol }
                         val fixDeclarationVisitor = object : JvmTypeVisitor {
 
-                            override fun visitTypeVariable(type: JvmTypeVariable): JvmType {
-                                type.declaration = declarations[type.symbol]
+                            override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
+                                type.declaration = declarations[type.symbol]!!
                                 return type
                             }
                         }
