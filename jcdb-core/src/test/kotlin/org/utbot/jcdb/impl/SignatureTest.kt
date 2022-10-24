@@ -20,6 +20,7 @@ import org.utbot.jcdb.impl.types.signature.MethodResolutionImpl
 import org.utbot.jcdb.impl.types.signature.MethodSignature
 import org.utbot.jcdb.impl.types.signature.TypeResolutionImpl
 import org.utbot.jcdb.impl.types.signature.TypeSignature
+import org.utbot.jcdb.impl.types.typeParameters
 import org.utbot.jcdb.impl.usages.Generics
 
 class SignatureTest: BaseTest() {
@@ -137,6 +138,6 @@ class SignatureTest: BaseTest() {
 
     private val JcClassOrInterface.resolution get() = TypeSignature.of(this)
     private val JcMethod.resolution get() = MethodSignature.of(this)
-    private val JcField.resolution get() = FieldSignature.of(this)
+    private val JcField.resolution get() = FieldSignature.of(signature, enclosingClass.typeParameters.associateBy { it.symbol })
 }
 

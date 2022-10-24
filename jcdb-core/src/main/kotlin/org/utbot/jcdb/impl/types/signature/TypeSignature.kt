@@ -5,8 +5,9 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.TypeResolution
+import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
-import org.utbot.jcdb.impl.types.substition.VisitorContext
+import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor
 
 internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass) {
 
@@ -53,17 +54,18 @@ internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolu
         fun of(jcClass: JcClassOrInterface): TypeResolution {
             val signature = jcClass.signature ?: return Pure
             return try {
+                of(signature, TypeSignature(jcClass))
+            } catch (ignored: RuntimeException) {
+                Malformed
+            }
+        }
+
+        suspend fun withDeclarations(jcClass: JcClassOrInterface): TypeResolution {
+            val signature = jcClass.signature ?: return Pure
+            return try {
                 of(signature, TypeSignature(jcClass)).let {
                     if (it is TypeResolutionImpl) {
-                        val declarations = it.typeVariables.associateBy { it.symbol }
-                        val fixDeclarationVisitor = object : JvmTypeVisitor {
-
-                            override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
-                                type.declaration = declarations[type.symbol]!!
-                                return type
-                            }
-                        }
-                        it.apply(fixDeclarationVisitor)
+                        it.apply(jcClass.allVisibleTypeParameters().fixDeclarationVisitor)
                     } else {
                         it
                     }

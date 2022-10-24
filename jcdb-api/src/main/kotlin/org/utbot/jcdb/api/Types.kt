@@ -58,7 +58,12 @@ interface JcClassType : JcRefType {
 
     val jcClass: JcClassOrInterface
 
+    suspend fun outerType(): JcClassType?
+
+    suspend fun declaredMethods(): List<JcTypedMethod>
     suspend fun methods(): List<JcTypedMethod>
+
+    suspend fun declaredFields(): List<JcTypedField>
     suspend fun fields(): List<JcTypedField>
 
     suspend fun typeParameters(): List<JcTypeVariableDeclaration>
