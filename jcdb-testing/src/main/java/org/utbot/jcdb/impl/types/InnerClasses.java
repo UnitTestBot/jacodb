@@ -44,10 +44,14 @@ public class InnerClasses<W> {
 
     private InnerClasses<String> innerClasses;
 
-    private InnerState state;
-    private InnerStateOverriden<Closeable> state2;
+    private InnerClasses<String>.InnerState stateString;
+    private InnerClasses<String>.InnerStateOverriden<Closeable> stateClosable;
 
-    public InnerClasses<String> use(InnerClasses<String> param) {
+    public static InnerClasses<String> use(InnerClasses<String>.InnerState param) {
+        return null;
+    }
+
+    public static InnerClasses<String> useOverriden(InnerClasses<String>.InnerStateOverriden<Closeable> param) {
         return null;
     }
 

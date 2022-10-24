@@ -16,7 +16,7 @@ class InnerTypesTest : BaseTypesTest() {
             val classWithInners = findClassType<InnerClasses<*>>()
             val inners = classWithInners.innerTypes()
             assertEquals(4, inners.size)
-            val methodLinked = inners.first { it.typeName == "org.utbot.jcdb.impl.types.InnerClasses\$1" }
+            val methodLinked = inners.first { it.typeName == "org.utbot.jcdb.impl.types.InnerClasses<W>.InnerClasses\$1" }
             with(methodLinked.fields()) {
                 with(first { it.name == "stateT" }) {
                     assertEquals("T", (fieldType() as JcTypeVariable).symbol)
@@ -75,7 +75,7 @@ class InnerTypesTest : BaseTypesTest() {
     @Test
     fun `parameterized inner type with parent type parameterization`() {
         runBlocking {
-            with(innerState()) {
+            with(field("stateString")) {
                 fields().first { it.name == "stateW" }.fieldType().assertType<String>()
             }
         }
@@ -84,7 +84,7 @@ class InnerTypesTest : BaseTypesTest() {
     @Test
     fun `custom parameterization of method overrides outer class parameterization`() {
         runBlocking {
-            with(innerState()) {
+            with(field("stateString")) {
                 with(methods().first { it.name == "method" }) {
                     with(returnType().assertIs<JcTypeVariable>()) {
                         assertEquals("W", symbol)
@@ -95,10 +95,16 @@ class InnerTypesTest : BaseTypesTest() {
         }
     }
 
+    private suspend fun field(fieldName: String): JcClassType {
+        return findClassType<InnerClasses<*>>().fields().first {
+            it.name == fieldName
+        }.fieldType().assertClassType()
+    }
+
     @Test
     fun `custom parameterization of inner type overrides outer class parameterization`() {
         runBlocking {
-            with(innerState("state2")) {
+            with(field("stateClosable")) {
                 with(fields().first { it.name == "stateW" }) {
                     fieldType().assertType<Closeable>()
                 }
@@ -110,13 +116,6 @@ class InnerTypesTest : BaseTypesTest() {
                 }
             }
         }
-    }
-
-    private suspend fun innerState(fieldName: String = "state"): JcClassType {
-        val stringInnerClasses = findClassType<InnerClasses<*>>().fields().first {
-            it.name == "innerClasses"
-        }.fieldType().assertClassType()
-        return stringInnerClasses.fields().first { it.name == fieldName }.fieldType().assertClassType()
     }
 
 }

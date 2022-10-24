@@ -1,6 +1,5 @@
 package org.utbot.jcdb.impl.types.substition
 
-import kotlinx.collections.immutable.toPersistentMap
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.impl.types.signature.JvmType
 import org.utbot.jcdb.impl.types.signature.JvmTypeParameterDeclaration
@@ -34,19 +33,21 @@ interface JcSubstitutor {
 
     fun newScope(declarations: List<JvmTypeParameterDeclaration>): JcSubstitutor
 
+    fun newScope(explicit: Map<JvmTypeParameterDeclaration, JvmType>): JcSubstitutor
+
     val substitutions: Map<JvmTypeParameterDeclaration, JvmType>
 
 }
 
-fun JcClassOrInterface.substitute(parameters: List<JvmType>): JcSubstitutor {
+fun JcClassOrInterface.substitute(parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor {
     val params = typeParameters
     require(params.size == parameters.size) {
         "Incorrect parameters specified for class $name: expected ${params.size} found ${parameters.size}"
     }
-    return JcSubstitutorImpl(
-        params.mapIndexed { index, declaration -> declaration to parameters[index] }
-            .toMap().toPersistentMap()
-    )
+    val substitution = params.mapIndexed { index, declaration ->
+        declaration to parameters[index]
+    }.toMap()
+    return (outer ?: JcSubstitutor.empty).newScope(substitution)
 }
 
 private suspend fun composeSubstitutors(
