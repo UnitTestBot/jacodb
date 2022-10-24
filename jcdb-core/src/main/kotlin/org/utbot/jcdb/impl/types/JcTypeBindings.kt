@@ -6,6 +6,7 @@ import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.types.signature.JvmArrayType
 import org.utbot.jcdb.impl.types.signature.JvmBoundWildcard
@@ -48,10 +49,12 @@ internal suspend fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmTy
         }
 
         is JvmTypeVariable -> {
-            val declaration = requireNotNull(jvmType.declaration) {
-                "Type variable ${jvmType.symbol} has no declaration"
+            val declaration = jvmType.declaration
+            if (declaration != null) {
+                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), true)
+            } else {
+                anyType()
             }
-            JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), true)
         }
 
         is JvmUnboundWildcard -> JcUnboundWildcardImpl(this)

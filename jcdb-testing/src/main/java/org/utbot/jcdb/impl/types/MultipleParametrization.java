@@ -6,12 +6,22 @@ import java.util.List;
 public class MultipleParametrization {
 
     public static class SuperTest1<T, W extends List<T>> {
+        T stateT;
+        W stateW;
+
+        T runT(T in) {
+            return null;
+        }
+
+        W runW(W in) {
+            return null;
+        }
     }
 
-    public static class SuperTest2<T, Z extends List<T>, W extends List<Z>> {
-        public W state;
+    public static class SuperTest2<W extends List<String>> extends SuperTest1<String, W> {
     }
 
-    public static class SuperTest3<Z extends ArrayList<String>, W extends List<Z>> extends SuperTest2<String, Z, W> {
+    public static class SuperTest3 extends SuperTest2<ArrayList<String>> {
     }
+
 }

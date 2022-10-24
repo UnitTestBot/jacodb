@@ -4,7 +4,6 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.ext.findClass
@@ -35,8 +34,7 @@ class JcMethodImpl(
         return emptyList()
     }
 
-    override val declaration: JcDeclaration
-        get() = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
+    override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 
     override val parameters: List<JcParameter>
         get() = methodInfo.parametersInfo.map { JcParameterImpl(this, it) }

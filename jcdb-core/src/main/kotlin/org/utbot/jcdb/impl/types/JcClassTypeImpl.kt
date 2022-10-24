@@ -7,6 +7,7 @@ import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.isProtected
 import org.utbot.jcdb.api.isPublic
+import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.signature.JvmClassRefType
@@ -31,7 +32,7 @@ open class JcClassTypeImpl(
         nullable: Boolean
     ) : this(jcClass, outerType, jcClass.substitute(parameters), nullable)
 
-    private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.of(jcClass) as? TypeResolutionImpl }
+    private val resolutionImpl = suspendableLazy { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
 
     override val classpath get() = jcClass.classpath
@@ -39,9 +40,9 @@ open class JcClassTypeImpl(
     override val typeName: String
         get() {
             val generics = if (substitutor.substitutions.isEmpty()) {
-                declaredTypeParameters.joinToString() { it.symbol }
+                declaredTypeParameters.joinToString { it.symbol }
             } else {
-                declaredTypeParameters.joinToString() {
+                declaredTypeParameters.joinToString {
                     substitutor.substitution(it)?.displayName ?: it.symbol
                 }
             }
@@ -69,7 +70,7 @@ open class JcClassTypeImpl(
 
     override suspend fun superType(): JcClassType? {
         val superClass = jcClass.superclass() ?: return null
-        return resolutionImpl?.let {
+        return resolutionImpl()?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
             JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
         } ?: superClass.toType()
@@ -77,7 +78,7 @@ open class JcClassTypeImpl(
 
     override suspend fun interfaces(): List<JcClassType> {
         return jcClass.interfaces().map { iface ->
-            val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
+            val ifaceType = resolutionImpl()?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
                 val newSubstitutor = superSubstitutor(iface, ifaceType)
                 JcClassTypeImpl(iface, null, newSubstitutor, nullable)
@@ -89,17 +90,39 @@ open class JcClassTypeImpl(
 
     override suspend fun innerTypes(): List<JcClassType> {
         return jcClass.innerClasses().map {
-            JcClassTypeImpl(it, this, substitutor, true)
+            val outerMethod = it.outerMethod()
+            val outerClass = it.outerClass()
+
+            val innerParameters =
+                (outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters())?.values?.toList()
+                    .orEmpty()
+            val innerSubstitutor = when {
+                it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
+                else -> substitutor.newScope(innerParameters)
+            }
+            JcClassTypeImpl(it, this, innerSubstitutor, true)
         }
+    }
+
+    override suspend fun outerType(): JcClassType? {
+        return outerType
+    }
+
+    override suspend fun declaredMethods(): List<JcTypedMethod> {
+        return jcClass.typedMethods(true, fromSuperTypes = false)
     }
 
     override suspend fun methods(): List<JcTypedMethod> {
         //let's calculate visible methods from super types
-        return jcClass.typedMethods(true)
+        return jcClass.typedMethods(true, fromSuperTypes = true)
+    }
+
+    override suspend fun declaredFields(): List<JcTypedField> {
+        return jcClass.typedFields(true, fromSuperTypes = false)
     }
 
     override suspend fun fields(): List<JcTypedField> {
-        return jcClass.typedFields(true)
+        return jcClass.typedFields(true, fromSuperTypes = true)
     }
 
     override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
@@ -121,18 +144,24 @@ open class JcClassTypeImpl(
         return 31 * result + typeName.hashCode()
     }
 
-    private suspend fun JcClassOrInterface.typedMethods(all: Boolean): List<JcTypedMethod> {
-        val methodSet = if (all) {
+    private suspend fun JcClassOrInterface.typedMethods(allMethods: Boolean, fromSuperTypes: Boolean): List<JcTypedMethod> {
+        val methodSet = if (allMethods) {
             methods
         } else {
             methods.filter { it.isPublic || it.isProtected } // add package check
         }
-        return methodSet.map {
+        val declaredMethods = methodSet.map {
             JcTypedMethodImpl(this@JcClassTypeImpl, it, substitutor)
         }
+        if (!fromSuperTypes) {
+            return declaredMethods
+        }
+        return declaredMethods +
+                interfaces().flatMap { it.typedMethods(false, fromSuperTypes = true) } +
+                superclass()?.typedMethods(false, fromSuperTypes = true).orEmpty()
     }
 
-    private suspend fun JcClassOrInterface.typedFields(all: Boolean): List<JcTypedField> {
+    private suspend fun JcClassOrInterface.typedFields(all: Boolean, fromSuperTypes: Boolean): List<JcTypedField> {
         val fieldSet = if (all) {
             fields
         } else {
@@ -141,12 +170,15 @@ open class JcClassTypeImpl(
         val directSet = fieldSet.map {
             JcTypedFieldImpl(this@JcClassTypeImpl, it, substitutor)
         }
+        if (fromSuperTypes) {
+            return directSet + superclass()?.typedFields(false, fromSuperTypes = true).orEmpty()
+        }
         return directSet
     }
 
 
-    private fun superSubstitutor(superClass: JcClassOrInterface, superType: JvmType): JcSubstitutor {
-        val superParameters = superClass.typeParameters
+    private suspend fun superSubstitutor(superClass: JcClassOrInterface, superType: JvmType): JcSubstitutor {
+        val superParameters = superClass.directTypeParameters()
         val substitutions = (superType as? JvmParameterizedType)?.parameterTypes
         if (substitutions == null || superParameters.size != substitutions.size) {
             return JcSubstitutor.empty
