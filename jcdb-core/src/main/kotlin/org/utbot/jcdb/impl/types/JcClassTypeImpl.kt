@@ -21,7 +21,7 @@ import org.utbot.jcdb.impl.types.substition.substitute
 open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
     private val outerType: JcClassTypeImpl? = null,
-    internal val substitutor: JcSubstitutor = JcSubstitutor.empty,
+    private val substitutor: JcSubstitutor = JcSubstitutor.empty,
     override val nullable: Boolean
 ) : JcClassType {
 
@@ -30,7 +30,7 @@ open class JcClassTypeImpl(
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
         nullable: Boolean
-    ) : this(jcClass, outerType, jcClass.substitute(parameters), nullable)
+    ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
 
     private val resolutionImpl = suspendableLazy { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
@@ -46,7 +46,12 @@ open class JcClassTypeImpl(
                     substitutor.substitution(it)?.displayName ?: it.symbol
                 }
             }
-            return jcClass.name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
+            val name = if (outerType != null) {
+                outerType.typeName + "." + jcClass.simpleName
+            } else {
+                jcClass.name
+            }
+            return name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
         }
 
     private val originParametrizationGetter = suspendableLazy {
@@ -93,9 +98,9 @@ open class JcClassTypeImpl(
             val outerMethod = it.outerMethod()
             val outerClass = it.outerClass()
 
-            val innerParameters =
-                (outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters())?.values?.toList()
-                    .orEmpty()
+            val innerParameters = (
+                    outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
+                    )?.values?.toList().orEmpty()
             val innerSubstitutor = when {
                 it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
                 else -> substitutor.newScope(innerParameters)
@@ -144,7 +149,10 @@ open class JcClassTypeImpl(
         return 31 * result + typeName.hashCode()
     }
 
-    private suspend fun JcClassOrInterface.typedMethods(allMethods: Boolean, fromSuperTypes: Boolean): List<JcTypedMethod> {
+    private suspend fun JcClassOrInterface.typedMethods(
+        allMethods: Boolean,
+        fromSuperTypes: Boolean
+    ): List<JcTypedMethod> {
         val methodSet = if (allMethods) {
             methods
         } else {
