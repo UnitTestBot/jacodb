@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.allConstructors
 import org.utbot.jcdb.api.allMethods
@@ -16,7 +17,6 @@ import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
-import org.utbot.jcdb.api.ext.findSubClasses
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.isEnum
 import org.utbot.jcdb.api.isFinal
@@ -137,11 +137,11 @@ abstract class DatabaseEnvTest {
 
         val anon = cp.findClass("org.utbot.jcdb.impl.usages.WithInner$1")
 
-        assertEquals(withInner, anon.outerClass())
-        assertEquals(withInner, inner.outerClass())
-        assertEquals(withInner, staticInner.outerClass())
-        assertEquals(withInner.findMethodOrNull("sayHello", "()V"), anon.outerMethod())
-        assertNull(staticInner.outerMethod())
+        assertEquals(withInner, anon.outerClass)
+        assertEquals(withInner, inner.outerClass)
+        assertEquals(withInner, staticInner.outerClass)
+        assertEquals(withInner.findMethodOrNull("sayHello", "()V"), anon.outerMethod)
+        assertNull(staticInner.outerMethod)
     }
 
     @Test
@@ -151,7 +151,7 @@ abstract class DatabaseEnvTest {
         val helloWorld = cp.findClass<HelloWorldAnonymousClasses.HelloWorld>()
         assertTrue(helloWorld.isMemberClass())
 
-        val innerClasses = withAnonymous.innerClasses()
+        val innerClasses = withAnonymous.innerClasses
         assertEquals(4, innerClasses.size)
         val notHelloWorld = innerClasses.filterNot { it.name.contains("\$HelloWorld") }
         val englishGreetings = notHelloWorld.first { it.name.contains("EnglishGreeting") }
@@ -192,7 +192,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `find sub-types for class`() = runBlocking {
-        with(cp.findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
+        with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
             assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
             }
@@ -207,7 +207,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `find sub-types for interface`() = runBlocking {
-        with(cp.findSubClasses(Document::class.java.name)) {
+        with(findSubClasses<Document>()) {
             assertTrue(isNotEmpty())
         }
     }
@@ -231,7 +231,7 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)
 
-        with(cp.findSubClasses(clazz, allHierarchy = true)) {
+        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true)) {
             assertEquals(4, size) {
                 "expected 4 but got only: ${joinToString { it.name }}"
             }
@@ -281,4 +281,8 @@ abstract class DatabaseEnvTest {
         }
     }
 
+
+    private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
+        return hierarchyExt.findSubClasses(T::class.java.name, allHierarchy)
+    }
 }

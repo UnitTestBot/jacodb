@@ -14,7 +14,7 @@ class ClassesTest : DatabaseEnvTest() {
     override val cp: JcClasspath = runBlocking { db!!.classpath(allClasspath) }
 
     override val hierarchyExt: HierarchyExtension
-        get() = cp.hierarchyExt
+        get() = runBlocking { cp.hierarchyExt() }
 
 }
 

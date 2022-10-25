@@ -22,33 +22,19 @@ interface JcClasspath : Closeable {
      *
      * @return class or interface or null if there is no such class found in locations
      */
-    suspend fun findClassOrNull(name: String): JcClassOrInterface?
+    fun findClassOrNull(name: String): JcClassOrInterface?
 
     /**
      *  @param name full name of the type
      *
      * @return class or interface or null if there is no such class found in locations
      */
-    suspend fun findTypeOrNull(name: String): JcType?
+    fun findTypeOrNull(name: String): JcType?
 
-    suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType
+    fun typeOf(jcClass: JcClassOrInterface): JcRefType
 
-    suspend fun arrayTypeOf(elementType: JcType): JcArrayType
+    fun arrayTypeOf(elementType: JcType): JcArrayType
 
     suspend fun refreshed(closeOld: Boolean): JcClasspath
-
-    /**
-     * @param name full name of the class
-     * @param allHierarchy search will return all subclasses through all hierarchy
-     * @return list of direct subclasses if they are exists in classpath or empty list
-     */
-    suspend fun findSubClasses(name: String, allHierarchy: Boolean = false): List<JcClassOrInterface>
-
-    /**
-     * @param jcClass class of super class
-     * @param allHierarchy search will return all subclasses through all hierarchy
-     * @return list of direct subclasses if they are exists in classpath or empty list
-     */
-    suspend fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean = false): List<JcClassOrInterface>
 
 }

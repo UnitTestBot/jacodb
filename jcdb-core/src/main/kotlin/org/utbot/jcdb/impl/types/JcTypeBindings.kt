@@ -17,7 +17,7 @@ import org.utbot.jcdb.impl.types.signature.JvmType
 import org.utbot.jcdb.impl.types.signature.JvmTypeVariable
 import org.utbot.jcdb.impl.types.signature.JvmUnboundWildcard
 
-internal suspend fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
+internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
     return when (jvmType) {
         is JvmPrimitiveType -> {
             PredefinedPrimitives.of(jvmType.ref, this)

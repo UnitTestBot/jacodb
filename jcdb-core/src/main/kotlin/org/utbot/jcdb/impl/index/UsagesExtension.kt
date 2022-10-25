@@ -19,7 +19,7 @@ suspend fun JcClasspath.findUsages(field: JcField, mode: FieldUsageMode): List<J
 
     val maybeHierarchy = when {
         field.isPrivate -> hashSetOf(field.enclosingClass)
-        else -> findSubClasses(className, true).toHashSet() + field.enclosingClass
+        else -> hierarchyExt().findSubClasses(className, true).toHashSet() + field.enclosingClass
     }
 
     val potentialCandidates = findPotentialCandidates(maybeHierarchy, field = field.name) + field.enclosingClass
@@ -51,7 +51,7 @@ suspend fun JcClasspath.findUsages(method: JcMethod): List<JcMethod> {
     val className = method.enclosingClass.name
     val maybeHierarchy = when {
         method.isPrivate -> hashSetOf(method.enclosingClass)
-        else -> findSubClasses(className, true).toHashSet() + method.enclosingClass
+        else -> hierarchyExt().findSubClasses(className, true).toHashSet() + method.enclosingClass
     }
 
     val potentialCandidates = findPotentialCandidates(maybeHierarchy, method = method.name) + method.enclosingClass

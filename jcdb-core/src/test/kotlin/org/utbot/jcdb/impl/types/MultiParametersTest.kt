@@ -74,16 +74,16 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test1 = findClassType<SuperTest1<*, *, *>>()
             with(test1.method(SuperTest1<*, *, *>::runT)) {
-                assertEquals("T", (returnType() as JcTypeVariable).symbol)
-                assertEquals("T", (parameters().first().type() as JcTypeVariable).symbol)
+                assertEquals("T", (returnType as JcTypeVariable).symbol)
+                assertEquals("T", (parameters.first().type as JcTypeVariable).symbol)
             }
             with(test1.method(SuperTest1<*, *, *>::runW)) {
-                assertEquals("W", (returnType() as JcTypeVariable).symbol)
-                assertEquals("W", (parameters().first().type() as JcTypeVariable).symbol)
+                assertEquals("W", (returnType as JcTypeVariable).symbol)
+                assertEquals("W", (parameters.first().type as JcTypeVariable).symbol)
             }
             with(test1.method(SuperTest1<*, *, *>::runZ)) {
-                assertEquals("Z", (returnType() as JcTypeVariable).symbol)
-                assertEquals("Z", (parameters().first().type() as JcTypeVariable).symbol)
+                assertEquals("Z", (returnType as JcTypeVariable).symbol)
+                assertEquals("Z", (parameters.first().type as JcTypeVariable).symbol)
             }
         }
     }
@@ -93,16 +93,16 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test2 = findClassType<SuperTest2<*, *>>()
             with(test2.method(SuperTest1<*, *, *>::runT)) {
-                parameters().first().type().assertType<String>()
-                returnType().assertType<String>()
+                parameters.first().type.assertType<String>()
+                returnType.assertType<String>()
             }
             with(test2.method(SuperTest1<*, *, *>::runW)) {
-                assertEquals("W", (returnType() as JcTypeVariable).symbol)
-                assertEquals("W", (parameters().first().type() as JcTypeVariable).symbol)
+                assertEquals("W", (returnType as JcTypeVariable).symbol)
+                assertEquals("W", (parameters.first().type as JcTypeVariable).symbol)
             }
             with(test2.method(SuperTest1<*, *, *>::runZ)) {
-                assertEquals("Z", (returnType() as JcTypeVariable).symbol)
-                assertEquals("Z", (parameters().first().type() as JcTypeVariable).symbol)
+                assertEquals("Z", (returnType as JcTypeVariable).symbol)
+                assertEquals("Z", (parameters.first().type as JcTypeVariable).symbol)
             }
         }
     }
@@ -112,26 +112,26 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test2 = findClassType<SuperTest3>()
             with(test2.method(SuperTest1<*, *, *>::runT)) {
-                parameters().first().type().assertType<String>()
-                returnType().assertType<String>()
+                parameters.first().type.assertType<String>()
+                returnType.assertType<String>()
             }
             with(test2.method(SuperTest1<*, *, *>::runW)) {
-                assertEquals(finalW, parameters().first().type().typeName)
-                assertEquals(finalW, returnType().typeName)
+                assertEquals(finalW, parameters.first().type.typeName)
+                assertEquals(finalW, returnType.typeName)
             }
             with(test2.method(SuperTest1<*, *, *>::runZ)) {
-                assertEquals(finalZ, parameters().first().type().typeName)
-                assertEquals(finalZ, returnType().typeName)
+                assertEquals(finalZ, parameters.first().type.typeName)
+                assertEquals(finalZ, returnType.typeName)
             }
         }
     }
 
     private suspend fun JcClassType.field(prop: KMutableProperty1<SuperTest1<*, *, *>, *>): JcTypedField {
-        return fields().first { it.name == prop.name }
+        return fields.first { it.name == prop.name }
     }
 
     private suspend fun JcClassType.method(prop: KFunction2<SuperTest1<*, *, *>, Nothing, *>): JcTypedMethod {
-        return methods().first { it.name == prop.name }
+        return methods.first { it.name == prop.name }
     }
 
 }
