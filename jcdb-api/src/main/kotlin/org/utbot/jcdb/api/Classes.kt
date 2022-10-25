@@ -14,22 +14,22 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val isAnonymous: Boolean
 
-    suspend fun bytecode(): ClassNode
+    fun bytecode(): ClassNode
 
-    suspend fun superclass(): JcClassOrInterface?
-    suspend fun outerMethod(): JcMethod?
-    suspend fun outerClass(): JcClassOrInterface?
-    suspend fun interfaces(): List<JcClassOrInterface>
-    suspend fun innerClasses(): List<JcClassOrInterface>
+    val superClass: JcClassOrInterface?
+    val outerMethod: JcMethod?
+    val outerClass: JcClassOrInterface?
+    val interfaces: List<JcClassOrInterface>
+    val innerClasses: List<JcClassOrInterface>
 
 }
 
 interface JcAnnotation : JcSymbol {
 
     val visible: Boolean
-    suspend fun jcClass(): JcClassOrInterface?
+    val jcClass: JcClassOrInterface?
 
-    suspend fun values(): Map<String, Any?>
+    val values: Map<String, Any?>
 
     fun matches(className: String): Boolean
 
@@ -47,9 +47,9 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val parameters: List<JcParameter>
 
-    suspend fun exceptions(): List<JcClassOrInterface>
+    fun exceptions(): List<JcClassOrInterface>
 
-    suspend fun body(): MethodNode // match type system
+    fun body(): MethodNode // match type system
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {

@@ -12,7 +12,7 @@ fun JcClasspath.toJcClass(item: ClassVfsItem?): JcClassOrInterface? {
     return JcClassOrInterfaceImpl(this, item.source)
 }
 
-suspend fun JcClasspath.findAndWrap(fullName: String?): JcClassOrInterface? {
+fun JcClasspath.findAndWrap(fullName: String?): JcClassOrInterface? {
     fullName ?: return null
     return findClassOrNull(fullName)
 }

@@ -6,29 +6,29 @@ interface JcTypedField {
     val name: String
 
     val field: JcField
-    suspend fun fieldType(): JcType
+    fun fieldType(): JcType
     val enclosingType: JcRefType
 }
 
 interface JcTypedMethod {
     val name: String
-    suspend fun returnType(): JcType
+    val returnType: JcType
 
-    suspend fun typeParameters(): List<JcTypeVariableDeclaration>
-    suspend fun typeArguments(): List<JcRefType>
+    val typeParameters: List<JcTypeVariableDeclaration>
+    val typeArguments: List<JcRefType>
 
-    suspend fun parameters(): List<JcTypedMethodParameter>
-    suspend fun exceptions(): List<JcClassOrInterface>
+    val parameters: List<JcTypedMethodParameter>
+    val exceptions: List<JcClassOrInterface>
     val method: JcMethod
 
     val enclosingType: JcRefType
 
-    suspend fun typeOf(inst: LocalVariableNode): JcType
+    fun typeOf(inst: LocalVariableNode): JcType
 
 }
 
 interface JcTypedMethodParameter {
-    suspend fun type(): JcType
+    val type: JcType
     val name: String?
     val enclosingMethod: JcTypedMethod
     val nullable: Boolean
@@ -58,21 +58,21 @@ interface JcClassType : JcRefType {
 
     val jcClass: JcClassOrInterface
 
-    suspend fun outerType(): JcClassType?
+    val outerType: JcClassType?
 
-    suspend fun declaredMethods(): List<JcTypedMethod>
-    suspend fun methods(): List<JcTypedMethod>
+    val declaredMethods: List<JcTypedMethod>
+    val methods: List<JcTypedMethod>
 
-    suspend fun declaredFields(): List<JcTypedField>
-    suspend fun fields(): List<JcTypedField>
+    val declaredFields: List<JcTypedField>
+    val fields: List<JcTypedField>
 
-    suspend fun typeParameters(): List<JcTypeVariableDeclaration>
-    suspend fun typeArguments(): List<JcRefType>
+    val typeParameters: List<JcTypeVariableDeclaration>
+    val typeArguments: List<JcRefType>
 
-    suspend fun superType(): JcClassType?
-    suspend fun interfaces(): List<JcClassType>
+    val superType: JcClassType?
+    val interfaces: List<JcClassType>
 
-    suspend fun innerTypes(): List<JcClassType>
+    val innerTypes: List<JcClassType>
 }
 
 interface JcTypeVariable : JcRefType {

@@ -31,7 +31,7 @@ private val classParamsCache = CacheBuilder.newBuilder()
     .expireAfterAccess(Duration.ofSeconds(10))
     .build<JcClassOrInterface, PersistentMap<String, JvmTypeParameterDeclaration>>()
 
-suspend fun JcClassOrInterface.directTypeParameters(): List<JvmTypeParameterDeclaration> {
+fun JcClassOrInterface.directTypeParameters(): List<JvmTypeParameterDeclaration> {
     val declaredSymbols = typeParameters.map { it.symbol }.toHashSet()
     return allVisibleTypeParameters().filterKeys { declaredSymbols.contains(it) }.values.toList()
 }
@@ -39,15 +39,15 @@ suspend fun JcClassOrInterface.directTypeParameters(): List<JvmTypeParameterDecl
 /**
  * returns all visible declaration without JvmTypeParameterDeclaration#declaration
  */
-suspend fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
+fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
     val result = classParamsCache.getIfPresent(this)
     if (result != null) {
         return result
     }
     val direct = typeParameters.associateBy { it.symbol }
     if (!isStatic) {
-        val fromOuter = outerClass()?.allVisibleTypeParameters()
-        val fromMethod = outerMethod()?.allVisibleTypeParameters()
+        val fromOuter = outerClass?.allVisibleTypeParameters()
+        val fromMethod = outerMethod?.allVisibleTypeParameters()
         val res = (direct + (fromMethod ?: fromOuter).orEmpty()).toPersistentMap()
         classParamsCache.put(this, res)
         return res
@@ -57,12 +57,12 @@ suspend fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypePa
     }
 }
 
-suspend fun JcMethod.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
+fun JcMethod.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
     return typeParameters.associateBy { it.symbol } + enclosingClass.allVisibleTypeParameters().takeIf { !isStatic }
         .orEmpty()
 }
 
-suspend fun JvmTypeParameterDeclaration.asJcDeclaration(owner: JcAccessible): JcTypeVariableDeclaration {
+fun JvmTypeParameterDeclaration.asJcDeclaration(owner: JcAccessible): JcTypeVariableDeclaration {
     val classpath = when (owner) {
         is JcClassOrInterface -> owner.classpath
         is JcMethod -> owner.enclosingClass.classpath

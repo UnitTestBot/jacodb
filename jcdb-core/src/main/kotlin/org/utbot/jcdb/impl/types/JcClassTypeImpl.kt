@@ -11,7 +11,6 @@ import org.utbot.jcdb.api.isPublic
 import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.api.toType
-import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.signature.JvmClassRefType
 import org.utbot.jcdb.impl.types.signature.JvmParameterizedType
 import org.utbot.jcdb.impl.types.signature.JvmType
@@ -22,7 +21,7 @@ import org.utbot.jcdb.impl.types.substition.substitute
 
 open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
-    private val outerType: JcClassTypeImpl? = null,
+    override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
     override val nullable: Boolean
 ) : JcClassType {
@@ -34,7 +33,7 @@ open class JcClassTypeImpl(
         nullable: Boolean
     ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
 
-    private val resolutionImpl = suspendableLazy { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
+    private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
 
     override val classpath get() = jcClass.classpath
@@ -48,89 +47,89 @@ open class JcClassTypeImpl(
                     substitutor.substitution(it)?.displayName ?: it.symbol
                 }
             }
-            val name = if (outerType != null) {
-                outerType.typeName + "." + jcClass.simpleName
+            val outer = outerType
+            val name = if (outer != null) {
+                outer.typeName + "." + jcClass.simpleName
             } else {
                 jcClass.name
             }
             return name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
         }
 
-    private val originParametrizationGetter = suspendableLazy {
-        declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
-    }
+    override val typeParameters get() = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
 
-    private val parametrizationGetter = suspendableLazy {
-        declaredTypeParameters.map { declaration ->
-            val jvmType = substitutor.substitution(declaration)
-            if (jvmType != null) {
-                classpath.typeOf(jvmType) as JcRefType
-            } else {
-                JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
+    override val typeArguments: List<JcRefType>
+        get() {
+            return declaredTypeParameters.map { declaration ->
+                val jvmType = substitutor.substitution(declaration)
+                if (jvmType != null) {
+                    classpath.typeOf(jvmType) as JcRefType
+                } else {
+                    JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
+                }
             }
         }
-    }
 
-    override suspend fun typeParameters() = originParametrizationGetter()
 
-    override suspend fun typeArguments() = parametrizationGetter()
+    override val superType: JcClassType?
+        get() {
+            val superClass = jcClass.superClass ?: return null
+            return resolutionImpl?.let {
+                val newSubstitutor = superSubstitutor(superClass, it.superClass)
+                JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
+            } ?: superClass.toType()
+        }
 
-    override suspend fun superType(): JcClassType? {
-        val superClass = jcClass.superclass() ?: return null
-        return resolutionImpl()?.let {
-            val newSubstitutor = superSubstitutor(superClass, it.superClass)
-            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
-        } ?: superClass.toType()
-    }
-
-    override suspend fun interfaces(): List<JcClassType> {
-        return jcClass.interfaces().map { iface ->
-            val ifaceType = resolutionImpl()?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
-            if (ifaceType != null) {
-                val newSubstitutor = superSubstitutor(iface, ifaceType)
-                JcClassTypeImpl(iface, null, newSubstitutor, nullable)
-            } else {
-                iface.toType()
+    override val interfaces: List<JcClassType>
+        get() {
+            return jcClass.interfaces.map { iface ->
+                val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
+                if (ifaceType != null) {
+                    val newSubstitutor = superSubstitutor(iface, ifaceType)
+                    JcClassTypeImpl(iface, null, newSubstitutor, nullable)
+                } else {
+                    iface.toType()
+                }
             }
         }
-    }
 
-    override suspend fun innerTypes(): List<JcClassType> {
-        return jcClass.innerClasses().map {
-            val outerMethod = it.outerMethod()
-            val outerClass = it.outerClass()
+    override val innerTypes: List<JcClassType>
+        get() {
+            return jcClass.innerClasses.map {
+                val outerMethod = it.outerMethod
+                val outerClass = it.outerClass
 
-            val innerParameters = (
-                    outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
-                    )?.values?.toList().orEmpty()
-            val innerSubstitutor = when {
-                it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
-                else -> substitutor.newScope(innerParameters)
+                val innerParameters = (
+                        outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
+                        )?.values?.toList().orEmpty()
+                val innerSubstitutor = when {
+                    it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
+                    else -> substitutor.newScope(innerParameters)
+                }
+                JcClassTypeImpl(it, this, innerSubstitutor, true)
             }
-            JcClassTypeImpl(it, this, innerSubstitutor, true)
         }
-    }
 
-    override suspend fun outerType(): JcClassType? {
-        return outerType
-    }
+    override val declaredMethods: List<JcTypedMethod>
+        get() {
+            return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
+        }
 
-    override suspend fun declaredMethods(): List<JcTypedMethod> {
-        return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
-    }
+    override val methods: List<JcTypedMethod>
+        get() {
+            //let's calculate visible methods from super types
+            return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
+        }
 
-    override suspend fun methods(): List<JcTypedMethod> {
-        //let's calculate visible methods from super types
-        return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
-    }
+    override val declaredFields: List<JcTypedField>
+        get() {
+            return typedFields(true, fromSuperTypes = false, jcClass.packageName)
+        }
 
-    override suspend fun declaredFields(): List<JcTypedField> {
-        return typedFields(true, fromSuperTypes = false, jcClass.packageName)
-    }
-
-    override suspend fun fields(): List<JcTypedField> {
-        return typedFields(true, fromSuperTypes = true, jcClass.packageName)
-    }
+    override val fields: List<JcTypedField>
+        get() {
+            return typedFields(true, fromSuperTypes = true, jcClass.packageName)
+        }
 
     override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
 
@@ -151,7 +150,7 @@ open class JcClassTypeImpl(
         return 31 * result + typeName.hashCode()
     }
 
-    private suspend fun typedMethods(
+    private fun typedMethods(
         allMethods: Boolean,
         fromSuperTypes: Boolean,
         packageName: String
@@ -169,13 +168,13 @@ open class JcClassTypeImpl(
             return declaredMethods
         }
         return declaredMethods +
-                interfaces().flatMap {
+                interfaces.flatMap {
                     (it as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
                 } +
-                (superType() as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
+                (superType as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
     }
 
-    private suspend fun typedFields(all: Boolean, fromSuperTypes: Boolean, packageName: String): List<JcTypedField> {
+    private fun typedFields(all: Boolean, fromSuperTypes: Boolean, packageName: String): List<JcTypedField> {
         val classPackageName = jcClass.packageName
 
         val fieldSet = if (all) {
@@ -187,7 +186,7 @@ open class JcClassTypeImpl(
             JcTypedFieldImpl(this@JcClassTypeImpl, it, substitutor)
         }
         if (fromSuperTypes) {
-            return directSet + (superType() as? JcClassTypeImpl)?.typedFields(
+            return directSet + (superType as? JcClassTypeImpl)?.typedFields(
                 false,
                 fromSuperTypes = true,
                 classPackageName
@@ -197,7 +196,7 @@ open class JcClassTypeImpl(
     }
 
 
-    private suspend fun superSubstitutor(superClass: JcClassOrInterface, superType: JvmType): JcSubstitutor {
+    private fun superSubstitutor(superClass: JcClassOrInterface, superType: JvmType): JcSubstitutor {
         val superParameters = superClass.directTypeParameters()
         val substitutions = (superType as? JvmParameterizedType)?.parameterTypes
         if (substitutions == null || superParameters.size != substitutions.size) {

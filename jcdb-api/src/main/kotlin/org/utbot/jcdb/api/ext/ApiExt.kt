@@ -1,8 +1,6 @@
 package org.utbot.jcdb.api
 
 import kotlinx.collections.immutable.toPersistentList
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toCollection
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ext.findClassOrNull
@@ -130,25 +128,25 @@ val JcAccessible.isSynthetic: Boolean
         return access and Opcodes.ACC_SYNTHETIC != 0
     }
 
-suspend fun JcClassOrInterface.isLocalOrAnonymous(): Boolean {
-    return outerMethod() != null
+fun JcClassOrInterface.isLocalOrAnonymous(): Boolean {
+    return outerMethod != null
 }
 
-suspend fun JcClassOrInterface.isLocal(): Boolean {
-    return outerClass() != null && !isAnonymous
+fun JcClassOrInterface.isLocal(): Boolean {
+    return outerClass != null && !isAnonymous
 }
 
-suspend fun JcClassOrInterface.isMemberClass(): Boolean {
+fun JcClassOrInterface.isMemberClass(): Boolean {
     return simpleBinaryName() != null && !isLocalOrAnonymous()
 }
 
-suspend fun JcClassOrInterface.isEnum(): Boolean {
-    return access and Opcodes.ACC_ENUM != 0 && superclass()?.name == Enum::class.java.name
+fun JcClassOrInterface.isEnum(): Boolean {
+    return access and Opcodes.ACC_ENUM != 0 && superClass?.name == Enum::class.java.name
 }
 
-private suspend fun JcClassOrInterface.simpleBinaryName(): String? {
+private fun JcClassOrInterface.simpleBinaryName(): String? {
     // top level class
-    val enclosingClass = outerClass() ?: return null
+    val enclosingClass = outerClass ?: return null
     // Otherwise, strip the enclosing class' name
     return try {
         name.substring(enclosingClass.name.length)
@@ -208,7 +206,7 @@ suspend fun JcType.autoboxIfNeeded(): JcType {
  * @return all interfaces and classes retrieved recursively from this ClassId
  */
 suspend fun JcClassOrInterface.forEachSuperClasses(action: suspend (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
-    val parents = (interfaces() + superclass()).filterNotNull()
+    val parents = (interfaces + superClass).filterNotNull()
     parents.forEach {
         action(it)
     }
@@ -256,7 +254,7 @@ fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
-suspend fun JcClassOrInterface.enumValues(): List<JcField>? {
+fun JcClassOrInterface.enumValues(): List<JcField>? {
     if (isEnum()) {
         return fields.filter { it.isStatic && it.type.typeName == name }
     }
@@ -264,16 +262,14 @@ suspend fun JcClassOrInterface.enumValues(): List<JcField>? {
 }
 
 
-suspend fun JcClassOrInterface.allMethods(): List<JcMethod> {
-    return flow {
-        var clazz: JcClassOrInterface? = this@allMethods
-        while (clazz != null) {
-            clazz.methods.filter { !it.isConstructor }.forEach {
-                emit(it)
-            }
-            clazz = clazz.superclass()
-        }
-    }.toCollection(arrayListOf())
+fun JcClassOrInterface.allMethods(): List<JcMethod> {
+    var clazz: JcClassOrInterface? = this@allMethods
+    val result = arrayListOf<JcMethod>()
+    while (clazz != null) {
+        result.addAll(clazz.methods.filter { !it.isConstructor })
+        clazz = clazz.superClass
+    }
+    return result
 }
 
 val JcClassOrInterface.allConstructors: List<JcMethod>
@@ -354,11 +350,11 @@ val JcParameter.isNullable: Boolean
         return annotations.any { it.matches(NotNull) }
     }
 
-suspend fun JcClasspath.anyType(): JcClassType =
+fun JcClasspath.anyType(): JcClassType =
     findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()
 
 
-suspend fun JcClassOrInterface.toType(): JcClassType {
+fun JcClassOrInterface.toType(): JcClassType {
     return classpath.typeOf(this) as JcClassType
 }
 

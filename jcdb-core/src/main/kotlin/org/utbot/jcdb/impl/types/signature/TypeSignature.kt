@@ -60,7 +60,7 @@ internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolu
             }
         }
 
-        suspend fun withDeclarations(jcClass: JcClassOrInterface): TypeResolution {
+        fun withDeclarations(jcClass: JcClassOrInterface): TypeResolution {
             val signature = jcClass.signature ?: return Pure
             return try {
                 of(signature, TypeSignature(jcClass)).let {

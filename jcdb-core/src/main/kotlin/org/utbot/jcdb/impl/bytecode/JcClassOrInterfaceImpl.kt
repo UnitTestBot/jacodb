@@ -10,7 +10,6 @@ import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.fs.info
-import org.utbot.jcdb.impl.suspendableLazy
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
@@ -30,13 +29,13 @@ class JcClassOrInterfaceImpl(
     override val annotations: List<JcAnnotation>
         get() = info.annotations.map { JcAnnotationImpl(it, classpath) }
 
-    private val lazyInterfaces = suspendableLazy {
+    override val interfaces by lazy(LazyThreadSafetyMode.NONE) {
         info.interfaces.map {
             classpath.findAndWrap(it) ?: it.throwClassNotFound()
         }
     }
 
-    private val lazySuperclass = suspendableLazy {
+    override val superClass by lazy(LazyThreadSafetyMode.NONE) {
         val superClass = info.superClass
         if (superClass != null) {
             classpath.findAndWrap(info.superClass) ?: superClass.throwClassNotFound()
@@ -45,7 +44,7 @@ class JcClassOrInterfaceImpl(
         }
     }
 
-    private val lazyOuterClass = suspendableLazy {
+    override val outerClass by lazy(LazyThreadSafetyMode.NONE) {
         val className = info.outerClass?.className
         if (className != null) {
             classpath.findAndWrap(className) ?: className.throwClassNotFound()
@@ -54,7 +53,7 @@ class JcClassOrInterfaceImpl(
         }
     }
 
-    private val lazyInnerClasses = suspendableLazy {
+    override val innerClasses by lazy(LazyThreadSafetyMode.NONE) {
         info.innerClasses.map {
             classpath.findAndWrap(it) ?: it.throwClassNotFound()
         }
@@ -63,9 +62,7 @@ class JcClassOrInterfaceImpl(
     override val access: Int
         get() = info.access
 
-    override suspend fun bytecode() = classSource.fullAsmNode
-
-    override suspend fun outerClass() = lazyOuterClass()
+    override fun bytecode() = classSource.fullAsmNode
 
     override val isAnonymous: Boolean
         get() {
@@ -73,27 +70,22 @@ class JcClassOrInterfaceImpl(
             return outerClass != null && outerClass.name == null
         }
 
-    override suspend fun outerMethod(): JcMethod? {
-        val info = info
-        if (info.outerMethod != null && info.outerMethodDesc != null) {
-            return outerClass()?.findMethodOrNull(info.outerMethod, info.outerMethodDesc)
+    override val outerMethod: JcMethod?
+        get() {
+            val info = info
+            if (info.outerMethod != null && info.outerMethodDesc != null) {
+                return outerClass?.findMethodOrNull(info.outerMethod, info.outerMethodDesc)
+            }
+            return null
         }
-        return null
+
+    override val fields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
+        info.fields.map { JcFieldImpl(this, it) }
     }
 
-    override val fields: List<JcField>
-        get() = info.fields.map { JcFieldImpl(this, it) }
-
-    override val methods: List<JcMethod>
-        get() = info.methods.map { toJcMethod(it, classSource) }
-
-
-
-    override suspend fun innerClasses() = lazyInnerClasses()
-
-    override suspend fun superclass() = lazySuperclass()
-
-    override suspend fun interfaces() = lazyInterfaces()
+    override val methods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
+        info.methods.map { toJcMethod(it, classSource) }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcClassOrInterfaceImpl) {

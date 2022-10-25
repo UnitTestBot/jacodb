@@ -4,7 +4,6 @@ import org.jetbrains.exposed.sql.IColumnType
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
@@ -14,7 +13,7 @@ import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import java.sql.ResultSet
 
-class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) : HierarchyExtension {
+class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 
     companion object {
         private fun allHierarchyQuery(locationIds: String) = """
@@ -52,13 +51,12 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
         }
     }
 
-    override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {
+    override fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {
         val classId = cp.findClassOrNull(name) ?: return emptyList()
         return findSubClasses(classId, allHierarchy)
     }
 
-    override suspend fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
-        db.awaitBackgroundJobs()
+    override fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
         val name = classId.name
 
         return cp.subClasses(name, allHierarchy).map { record ->
@@ -72,10 +70,10 @@ class HierarchyExtensionImpl(private val db: JCDB, private val cp: JcClasspath) 
         }
     }
 
-    override suspend fun findOverrides(methodId: JcMethod): List<JcMethod> {
+    override fun findOverrides(methodId: JcMethod): List<JcMethod> {
         val desc = methodId.description
         val name = methodId.name
-        val subClasses = cp.findSubClasses(methodId.enclosingClass, allHierarchy = true)
+        val subClasses = findSubClasses(methodId.enclosingClass, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc) // todo this is wrong
         }
@@ -102,7 +100,7 @@ private class ClassRecord(
     val name: String
 )
 
-val JcClasspath.hierarchyExt: HierarchyExtensionImpl
-    get() {
-        return HierarchyExtensionImpl(db, this)
-    }
+suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
+    db.awaitBackgroundJobs()
+    return HierarchyExtensionImpl(this)
+}

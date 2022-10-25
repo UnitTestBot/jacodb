@@ -75,7 +75,7 @@ internal class MethodSignature(method: JcMethod) : Signature<MethodResolution>(m
             }
         }
 
-        suspend fun withDeclarations(jcMethod: JcMethod): MethodResolution {
+        fun withDeclarations(jcMethod: JcMethod): MethodResolution {
             val signature = jcMethod.signature
             signature ?: return Pure
             return try {

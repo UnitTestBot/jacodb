@@ -19,7 +19,7 @@ import org.utbot.jcdb.api.throwClassNotFound
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun JcClasspath.findMethodsUsedIn(method: JcMethod): List<JcMethod> {
+fun JcClasspath.findMethodsUsedIn(method: JcMethod): List<JcMethod> {
     val methodNode = method.body()
     val result = LinkedHashSet<JcMethod>()
     methodNode.instructions.forEach { instruction ->
@@ -51,8 +51,8 @@ class FieldUsagesResult(
  * find all methods used in bytecode of specified `method`
  * @param method method to analyze
  */
-suspend fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
-    val methodNode = method.body() ?: return FieldUsagesResult.EMPTY
+fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
+    val methodNode = method.body()
     val reads = LinkedHashSet<JcField>()
     val writes = LinkedHashSet<JcField>()
     methodNode.instructions.forEach { instruction ->
@@ -81,11 +81,11 @@ suspend fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
 }
 
 
-suspend inline fun <reified T> JcClasspath.findClassOrNull(): JcClassOrInterface? {
+inline fun <reified T> JcClasspath.findClassOrNull(): JcClassOrInterface? {
     return findClassOrNull(T::class.java.name)
 }
 
-suspend inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
+inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
     return findClassOrNull(T::class.java.name)?.let {
         typeOf(it)
     }
@@ -96,7 +96,7 @@ suspend inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend fun JcClasspath.findClass(name: String): JcClassOrInterface {
+fun JcClasspath.findClass(name: String): JcClassOrInterface {
     return findClassOrNull(name) ?: name.throwClassNotFound()
 }
 
@@ -104,10 +104,6 @@ suspend fun JcClasspath.findClass(name: String): JcClassOrInterface {
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException
  */
-suspend inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
+inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
-}
-
-suspend inline fun <reified T> JcClasspath.findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
-    return findSubClasses(T::class.java.name, allHierarchy)
 }

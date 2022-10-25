@@ -12,7 +12,6 @@ import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.toJcClass
-import org.utbot.jcdb.impl.index.hierarchyExt
 import org.utbot.jcdb.impl.types.JcArrayTypeImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
 import org.utbot.jcdb.impl.types.substition.JcSubstitutor
@@ -38,7 +37,7 @@ class JcClasspathImpl(
         }
     }
 
-    override suspend fun findClassOrNull(name: String): JcClassOrInterface? {
+    override fun findClassOrNull(name: String): JcClassOrInterface? {
         val inMemoryClass = toJcClass(classpathClassTree.firstClassOrNull(name))
         if (inMemoryClass != null) {
             return inMemoryClass
@@ -48,20 +47,20 @@ class JcClasspathImpl(
         }
     }
 
-    override suspend fun typeOf(jcClass: JcClassOrInterface): JcRefType {
+    override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
         return JcClassTypeImpl(
             jcClass,
-            jcClass.outerClass()?.toType() as? JcClassTypeImpl,
+            jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = true
         )
     }
 
-    override suspend fun arrayTypeOf(elementType: JcType): JcArrayType {
+    override fun arrayTypeOf(elementType: JcType): JcArrayType {
         return JcArrayTypeImpl(elementType, true)
     }
 
-    override suspend fun findTypeOrNull(name: String): JcType? {
+    override fun findTypeOrNull(name: String): JcType? {
         if (name.endsWith("[]")) {
             val targetName = name.removeSuffix("[]")
             return findTypeOrNull(targetName)?.let {
@@ -73,14 +72,6 @@ class JcClasspathImpl(
             return predefined
         }
         return typeOf(findClassOrNull(name) ?: return null)
-    }
-
-    override suspend fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {
-        return hierarchyExt.findSubClasses(name, allHierarchy)
-    }
-
-    override suspend fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
-        return hierarchyExt.findSubClasses(jcClass, allHierarchy)
     }
 
     override fun close() {

@@ -3,8 +3,6 @@ package org.utbot.jcdb.impl.bytecode
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.enumValues
-import org.utbot.jcdb.impl.SuspendableLazy
-import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.AnnotationInfo
 import org.utbot.jcdb.impl.types.AnnotationValue
 import org.utbot.jcdb.impl.types.AnnotationValueList
@@ -17,11 +15,11 @@ class JcAnnotationImpl(
     private val classpath: JcClasspath
 ) : JcAnnotation {
 
-    private val lazyAnnotationClass = suspendableLazy {
+    override val jcClass by lazy(LazyThreadSafetyMode.NONE) {
         classpath.findClassOrNull(info.className)
     }
 
-    private val lazyValues: SuspendableLazy<Map<String, Any?>> = suspendableLazy {
+    override val values by lazy(LazyThreadSafetyMode.NONE) {
         val size = info.values.size
         if (size > 0) {
             info.values.associate { it.first to fixValue(it.second) }
@@ -33,15 +31,11 @@ class JcAnnotationImpl(
     override val visible: Boolean get() = info.visible
     override val name: String get() = info.className
 
-    override suspend fun jcClass() = lazyAnnotationClass()
-
-    override suspend fun values() = lazyValues()
-
     override fun matches(className: String): Boolean {
         return info.className == className
     }
 
-    private suspend fun fixValue(value: AnnotationValue): Any? {
+    private fun fixValue(value: AnnotationValue): Any? {
         return when (value) {
             is PrimitiveValue -> value.value
             is ClassRef -> classpath.findClassOrNull(value.className)
