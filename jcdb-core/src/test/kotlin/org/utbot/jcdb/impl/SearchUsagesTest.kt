@@ -86,9 +86,6 @@ class SearchUsagesTest : BaseTest() {
                 "hello" to setOf(
                     "org.utbot.jcdb.impl.usages.methods.MethodB#hoho",
                     "org.utbot.jcdb.impl.usages.methods.MethodC#hello",
-                ),
-                "hello1" to setOf(
-                    "org.utbot.jcdb.impl.usages.methods.MethodB#hoho"
                 )
             ),
             usages

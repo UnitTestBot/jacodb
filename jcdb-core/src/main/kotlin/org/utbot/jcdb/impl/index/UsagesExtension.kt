@@ -67,16 +67,15 @@ suspend fun JcClasspath.findUsages(method: JcMethod): List<JcMethod> {
     }
 }
 
-private suspend fun JcClasspath.findUsages(
+private fun findUsages(
     hierarchy: Set<JcClassOrInterface>,
     matcher: (AbstractInsnNode, Set<String>) -> Boolean
 ): List<JcMethod> {
     val result = hashSetOf<JcMethod>()
     val hierarchyNames = hierarchy.map { it.name }.toSet()
-    hierarchy.forEach {
-        val jcClass = findClassOrNull(it.name)
-        val asm = jcClass?.bytecode()
-        asm?.methods?.forEach { method ->
+    hierarchy.forEach { jcClass ->
+        val asm = jcClass.bytecode()
+        asm.methods?.forEach { method ->
             for (inst in method.instructions) {
                 val matches = matcher(inst, hierarchyNames)
                 if (matches) {
