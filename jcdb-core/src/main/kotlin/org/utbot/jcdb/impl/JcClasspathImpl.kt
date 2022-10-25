@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl
 
+import com.google.common.cache.CacheBuilder
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -17,12 +18,18 @@ import org.utbot.jcdb.impl.types.JcClassTypeImpl
 import org.utbot.jcdb.impl.types.substition.JcSubstitutor
 import org.utbot.jcdb.impl.vfs.ClasspathClassTree
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
+import java.time.Duration
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     override val db: JCDBImpl,
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
+
+    private val classCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(Duration.ofSeconds(10))
+        .maximumSize(1_000)
+        .build<String, JcClassOrInterface>()
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
@@ -38,12 +45,11 @@ class JcClasspathImpl(
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
-        val inMemoryClass = toJcClass(classpathClassTree.firstClassOrNull(name))
-        if (inMemoryClass != null) {
-            return inMemoryClass
-        }
-        return db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
-            JcClassOrInterfaceImpl(this, it)
+        return classCache.get(name) {
+            toJcClass(classpathClassTree.firstClassOrNull(name))
+                ?: db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
+                    JcClassOrInterfaceImpl(this, it)
+                }
         }
     }
 
