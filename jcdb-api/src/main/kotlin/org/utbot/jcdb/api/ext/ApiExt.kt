@@ -361,3 +361,5 @@ suspend fun JcClasspath.anyType(): JcClassType =
 suspend fun JcClassOrInterface.toType(): JcClassType {
     return classpath.typeOf(this) as JcClassType
 }
+
+val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")

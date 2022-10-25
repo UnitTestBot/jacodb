@@ -5,9 +5,11 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.isPackagePrivate
 import org.utbot.jcdb.api.isProtected
 import org.utbot.jcdb.api.isPublic
 import org.utbot.jcdb.api.isStatic
+import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.suspendableLazy
 import org.utbot.jcdb.impl.types.signature.JvmClassRefType
@@ -114,20 +116,20 @@ open class JcClassTypeImpl(
     }
 
     override suspend fun declaredMethods(): List<JcTypedMethod> {
-        return jcClass.typedMethods(true, fromSuperTypes = false)
+        return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
     }
 
     override suspend fun methods(): List<JcTypedMethod> {
         //let's calculate visible methods from super types
-        return jcClass.typedMethods(true, fromSuperTypes = true)
+        return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
     }
 
     override suspend fun declaredFields(): List<JcTypedField> {
-        return jcClass.typedFields(true, fromSuperTypes = false)
+        return typedFields(true, fromSuperTypes = false, jcClass.packageName)
     }
 
     override suspend fun fields(): List<JcTypedField> {
-        return jcClass.typedFields(true, fromSuperTypes = true)
+        return typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
     override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
@@ -149,14 +151,16 @@ open class JcClassTypeImpl(
         return 31 * result + typeName.hashCode()
     }
 
-    private suspend fun JcClassOrInterface.typedMethods(
+    private suspend fun typedMethods(
         allMethods: Boolean,
-        fromSuperTypes: Boolean
+        fromSuperTypes: Boolean,
+        packageName: String
     ): List<JcTypedMethod> {
+        val classPackageName = jcClass.packageName
         val methodSet = if (allMethods) {
-            methods
+            jcClass.methods
         } else {
-            methods.filter { it.isPublic || it.isProtected } // add package check
+            jcClass.methods.filter { it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName) }
         }
         val declaredMethods = methodSet.map {
             JcTypedMethodImpl(this@JcClassTypeImpl, it, substitutor)
@@ -165,21 +169,29 @@ open class JcClassTypeImpl(
             return declaredMethods
         }
         return declaredMethods +
-                interfaces().flatMap { it.typedMethods(false, fromSuperTypes = true) } +
-                superclass()?.typedMethods(false, fromSuperTypes = true).orEmpty()
+                interfaces().flatMap {
+                    (it as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
+                } +
+                (superType() as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
     }
 
-    private suspend fun JcClassOrInterface.typedFields(all: Boolean, fromSuperTypes: Boolean): List<JcTypedField> {
+    private suspend fun typedFields(all: Boolean, fromSuperTypes: Boolean, packageName: String): List<JcTypedField> {
+        val classPackageName = jcClass.packageName
+
         val fieldSet = if (all) {
-            fields
+            jcClass.fields
         } else {
-            fields.filter { it.isPublic || it.isProtected } // add package check
+            jcClass.fields.filter { it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName) }
         }
         val directSet = fieldSet.map {
             JcTypedFieldImpl(this@JcClassTypeImpl, it, substitutor)
         }
         if (fromSuperTypes) {
-            return directSet + superclass()?.typedFields(false, fromSuperTypes = true).orEmpty()
+            return directSet + (superType() as? JcClassTypeImpl)?.typedFields(
+                false,
+                fromSuperTypes = true,
+                classPackageName
+            ).orEmpty()
         }
         return directSet
     }
