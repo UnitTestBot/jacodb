@@ -6,7 +6,7 @@ import org.utbot.jcdb.impl.LocationsRegistrySnapshot
 /**
  * ClassTree view limited by number of `locations`
  */
-class ClasspathClassTree(
+class ClasspathVfs(
     private val globalClassVFS: GlobalClassesVfs,
     locations: List<RegisteredLocation>
 ) {

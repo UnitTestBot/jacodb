@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.vfs.ClassVfsItem
-import org.utbot.jcdb.impl.vfs.ClasspathClassTree
+import org.utbot.jcdb.impl.vfs.ClasspathVfs
 import org.utbot.jcdb.impl.vfs.GlobalClassesVfs
 import org.utbot.jcdb.impl.vfs.RemoveLocationsVisitor
 
@@ -44,7 +44,7 @@ class GlobalClassVfsTest {
 
     @Test
     fun `handle classes at limited tree`() {
-        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
+        val limitedTree = ClasspathVfs(globalClassVFS, persistentListOf(lib1))
         globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
         globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
         globalClassVFS.addClass(lib2.classSource("xxx.zzz.Simple"))
@@ -60,7 +60,7 @@ class GlobalClassVfsTest {
 
     @Test
     fun `dropping locations`() {
-        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
+        val limitedTree = ClasspathVfs(globalClassVFS, persistentListOf(lib1))
 
         globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
         globalClassVFS.addClass(lib1.classSource("xxx.Simple"))
@@ -79,7 +79,7 @@ class GlobalClassVfsTest {
 
     @Test
     fun `total locations dropping`() {
-        val limitedTree = ClasspathClassTree(globalClassVFS, persistentListOf(lib1))
+        val limitedTree = ClasspathVfs(globalClassVFS, persistentListOf(lib1))
 
         globalClassVFS.addClass(lib2.classSource("xxx.Simple"))
         globalClassVFS.addClass(lib1.classSource("xxx.Simple"))

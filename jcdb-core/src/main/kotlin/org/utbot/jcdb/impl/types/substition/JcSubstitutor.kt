@@ -49,29 +49,3 @@ fun JcClassOrInterface.substitute(parameters: List<JvmType>, outer: JcSubstituto
     }.toMap()
     return (outer ?: JcSubstitutor.empty).newScope(substitution)
 }
-
-private suspend fun composeSubstitutors(
-    outer: JcSubstitutor,
-    inner: JcSubstitutor,
-    onClass: JcClassOrInterface
-): JcSubstitutor {
-//    var answer: JcSubstitutor = JcSubstitutor.empty
-//    val outerMap = outer.substitutions
-//    val innerMap = inner.substitutions
-//    for (parameter in onClass.typeParameters()) {
-//        if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
-//            val innerType = inner.substitute(parameter)!!
-//            val paramCandidate =
-//                innerType as? JcClassType //if (PsiCapturedWildcardType.isCapture()) (innerType as? JcClassType)?.jcClass else null
-//            var targetType: JcType?
-//            if (paramCandidate != null && paramCandidate !== parameter) {
-//                targetType = outer.substitute(paramCandidate)
-//            } else {
-//                targetType = outer.substitute(innerType)
-//            }
-//            answer = answer.put(parameter, targetType)
-//        }
-//    }
-//    return answer
-    TODO()
-}
