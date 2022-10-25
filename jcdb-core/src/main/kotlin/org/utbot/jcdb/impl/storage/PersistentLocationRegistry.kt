@@ -48,6 +48,7 @@ class PersistentLocationRegistry(
                 it[state] = LocationState.PROCESSED
             }
         }
+        featuresRegistry.broadcast(JcInternalSignal.AfterIndexing)
     }
 
     override fun registerIfNeeded(locations: List<JcByteCodeLocation>): RegistrationResult {
