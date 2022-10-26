@@ -47,7 +47,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val parameters: List<JcParameter>
 
-    fun exceptions(): List<JcClassOrInterface>
+    val exceptions: List<JcClassOrInterface>
 
     fun body(): MethodNode // match type system
 }

@@ -35,9 +35,9 @@ interface JcClasspath {
 
     val locations: List<ByteCodeLocation>
 
-    suspend fun findClassOrNull(name: String): JcClass?
+    fun findClassOrNull(name: String): JcClassOrInterface?
 
-    suspend fun findSubTypesOf(name: String): List<JcClass>
+    fun findSubTypesOf(name: String): List<JcClassOrInterface>
 }
 ```
 
@@ -45,30 +45,31 @@ interface JcClasspath {
 JVM Class:
 
 ```kotlin
-interface JcClass {
+interface JcClassOrInterface {
 
     val location: ByteCodeLocation
 
     val name: String
     val simpleName: String
 
-    suspend fun methods(): List<JcMethod>
+    val methods: List<JcMethod>
+    val fields: List<JcField>
 
-    suspend fun superclass(): JcClass?
-    suspend fun interfaces(): List<JcClass>
-    suspend fun annotations(): List<JcClass>
+    val superClass: JcClassOrInterface?
+    val interfaces: List<JcClassOrInterface>
+    val interClasses: List<JcClassOrInterface>
+    val outerClass: JcClassOrInterface?
 
 }
 
 interface JcMethod {
     val name: String
 
-    val jcClass: JcClass
-    suspend fun returnClass(): JcClass?
-    suspend fun parameters(): List<JcClass>
-    suspend fun annotations(): List<JcClass>
+    val jcClass: JcClassOrInterface
+    val returnClass: JcClassOrInterface?
+    val parameters: List<JcParameter>
 
-    suspend fun readBody(): MethodNode?
+    fun body(): MethodNode?
 }
 ```
 
@@ -96,9 +97,9 @@ suspend fun findNormalDistribution(): Any {
     // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
     val jcClass = database.classpath(commonsMath32, buildDir)
         .findClass("org.apache.commons.math3.distribution.NormalDistribution")
-    println(jcClass.methods().size)
-    println(jcClass.constructors().size)
-    println(jcClass.annotations().size)
+    println(jcClass.methods.size)
+    println(jcClass.constructors.size)
+    println(jcClass.annotations.size)
 
     // here database will call ASM to read method bytecode and return the result
     return jcClass.methods[0].readBody()

@@ -12,11 +12,6 @@ fun JcClasspath.toJcClass(item: ClassVfsItem?): JcClassOrInterface? {
     return JcClassOrInterfaceImpl(this, item.source)
 }
 
-fun JcClasspath.findAndWrap(fullName: String?): JcClassOrInterface? {
-    fullName ?: return null
-    return findClassOrNull(fullName)
-}
-
 fun JcClassOrInterface.toJcMethod(methodInfo: MethodInfo, source: ClassSource): JcMethod {
     return JcMethodImpl(methodInfo, source, this)
 }
