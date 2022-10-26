@@ -6,8 +6,8 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.findMethodOrNull
-import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.fs.info
 
@@ -31,31 +31,25 @@ class JcClassOrInterfaceImpl(
 
     override val interfaces by lazy(LazyThreadSafetyMode.NONE) {
         info.interfaces.map {
-            classpath.findAndWrap(it) ?: it.throwClassNotFound()
+            classpath.findClass(it)
         }
     }
 
     override val superClass by lazy(LazyThreadSafetyMode.NONE) {
-        val superClass = info.superClass
-        if (superClass != null) {
-            classpath.findAndWrap(info.superClass) ?: superClass.throwClassNotFound()
-        } else {
-            null
+        info.superClass?.let {
+            classpath.findClass(it)
         }
     }
 
     override val outerClass by lazy(LazyThreadSafetyMode.NONE) {
-        val className = info.outerClass?.className
-        if (className != null) {
-            classpath.findAndWrap(className) ?: className.throwClassNotFound()
-        } else {
-            null
+        info.outerClass?.className?.let {
+            classpath.findClass(it)
         }
     }
 
     override val innerClasses by lazy(LazyThreadSafetyMode.NONE) {
         info.innerClasses.map {
-            classpath.findAndWrap(it) ?: it.throwClassNotFound()
+            classpath.findClass(it)
         }
     }
 

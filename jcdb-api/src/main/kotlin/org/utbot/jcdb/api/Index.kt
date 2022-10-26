@@ -6,9 +6,9 @@ import org.objectweb.asm.tree.MethodNode
 /** index builder */
 interface ByteCodeIndexer {
 
-    suspend fun index(classNode: ClassNode)
+    fun index(classNode: ClassNode)
 
-    suspend fun index(classNode: ClassNode, methodNode: MethodNode)
+    fun index(classNode: ClassNode, methodNode: MethodNode)
 
     fun flush()
 }
@@ -32,7 +32,12 @@ sealed class JcSignal(val jcdb: JCDB) {
     class AfterIndexing(jcdb: JCDB) : JcSignal(jcdb)
     /** can be used for cleanup index data when location is removed */
     class LocationRemoved(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
-    class ProcessLocation(jcdb: JCDB, val location: RegisteredLocation, ) : JcSignal(jcdb)
+    class ProcessLocation(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
+
+    /**
+     * rebuild all
+     */
+    class Rebuild(jcdb: JCDB) : JcSignal(jcdb)
 
 }
 

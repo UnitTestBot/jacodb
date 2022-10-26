@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.statements.StatementType
@@ -21,7 +22,6 @@ import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.Symbols
 import org.utbot.jcdb.impl.storage.longHash
-import kotlin.time.ExperimentalTime
 
 
 class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer {
@@ -30,10 +30,10 @@ class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer 
     private val fieldsUsages = hashMapOf<Pair<String, String>, HashSet<String>>()
     private val methodsUsages = hashMapOf<Pair<String, String>, HashSet<String>>()
 
-    override suspend fun index(classNode: ClassNode) {
+    override fun index(classNode: ClassNode) {
     }
 
-    override suspend fun index(classNode: ClassNode, methodNode: MethodNode) {
+    override fun index(classNode: ClassNode, methodNode: MethodNode) {
         val callerClass = Type.getObjectType(classNode.name).className
         methodNode.instructions.forEach {
             when (it) {
@@ -114,7 +114,6 @@ object Usages : Feature<UsageIndexRequest, String> {
         TransactionManager.current().exec(this, emptyList(), StatementType.CREATE)
     }
 
-    @OptIn(ExperimentalTime::class)
     override fun onSignal(signal: JcSignal) {
         when (signal) {
             is JcSignal.BeforeIndexing -> {
@@ -136,6 +135,11 @@ object Usages : Feature<UsageIndexRequest, String> {
                 }
             }
 
+            is JcSignal.Rebuild -> {
+                signal.jcdb.persistence.write {
+                    Calls.deleteAll()
+                }
+            }
             else -> Unit
         }
     }

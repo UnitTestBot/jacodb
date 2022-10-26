@@ -10,6 +10,7 @@ import org.utbot.jcdb.impl.index.findUsages
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA
+import kotlin.system.measureTimeMillis
 
 class SearchUsagesTest : BaseTest() {
 
@@ -40,6 +41,32 @@ class SearchUsagesTest : BaseTest() {
 
     @Test
     fun `classes write fields`() {
+        val usages = fieldsUsages<FieldA>()
+        assertEquals(
+            sortedMapOf(
+                "a" to setOf(
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>",
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#useA",
+                ),
+                "b" to setOf(
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>"
+                ),
+                "fieldB" to setOf(
+                    "org.utbot.jcdb.impl.usages.fields.FieldA#<init>",
+                )
+            ),
+            usages
+        )
+    }
+
+    @Test
+    fun `classes write fields with rebuild`() {
+        val time = measureTimeMillis {
+            runBlocking {
+                db!!.rebuildFeatures()
+            }
+        }
+        println("Features rebuild in ${time}ms")
         val usages = fieldsUsages<FieldA>()
         assertEquals(
             sortedMapOf(

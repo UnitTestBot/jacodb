@@ -1,11 +1,12 @@
 package org.utbot.jcdb.impl
 
+import org.utbot.jcdb.api.ByteCodeIndexer
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.index.index
-import org.utbot.jcdb.impl.vfs.ClassVfsItem
+import org.utbot.jcdb.impl.fs.fullAsmNode
 import java.io.Closeable
 
 class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
@@ -16,15 +17,15 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
         this.jcdb = jcdb
     }
 
-    suspend fun index(location: RegisteredLocation, classes: Collection<ClassVfsItem>) {
+    fun index(location: RegisteredLocation, classes: List<ClassSource>) {
         features.forEach { feature ->
             feature.index(location, classes)
         }
     }
 
-    private suspend fun <REQ, RES> Feature<RES, REQ>.index(
+    private fun <REQ, RES> Feature<RES, REQ>.index(
         location: RegisteredLocation,
-        classes: Collection<ClassVfsItem>
+        classes: Collection<ClassSource>
     ) {
         val indexer = newIndexer(jcdb, location)
         classes.forEach { index(it, indexer) }
@@ -44,13 +45,20 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
     override fun close() {
     }
 
+    private fun index(source: ClassSource, builder: ByteCodeIndexer) {
+        val asmNode = source.fullAsmNode
+        builder.index(asmNode)
+        asmNode.methods.forEach {
+            builder.index(asmNode, it)
+        }
+    }
 }
-
 
 sealed class JcInternalSignal {
 
     class BeforeIndexing(val clearOnStart: Boolean) : JcInternalSignal()
     object AfterIndexing : JcInternalSignal()
+    object Rebuild : JcInternalSignal()
     class LocationRemoved(val location: RegisteredLocation) : JcInternalSignal()
 
     fun asJcSignal(jcdb: JCDB): JcSignal {
@@ -58,6 +66,7 @@ sealed class JcInternalSignal {
             is BeforeIndexing -> JcSignal.BeforeIndexing(jcdb, clearOnStart)
             is AfterIndexing -> JcSignal.AfterIndexing(jcdb)
             is LocationRemoved -> JcSignal.LocationRemoved(jcdb, location)
+            is Rebuild -> JcSignal.Rebuild(jcdb)
         }
     }
 
