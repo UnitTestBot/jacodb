@@ -26,10 +26,12 @@ class JcClasspathImpl(
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
 
+    private class ClassHolder(val jcClass: JcClassOrInterface?)
+
     private val classCache = CacheBuilder.newBuilder()
         .expireAfterAccess(Duration.ofSeconds(10))
         .maximumSize(1_000)
-        .build<String, JcClassOrInterface>()
+        .build<String, ClassHolder>()
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
@@ -46,11 +48,12 @@ class JcClasspathImpl(
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
         return classCache.get(name) {
-            toJcClass(classpathVfs.firstClassOrNull(name))
+            val jcClass = toJcClass(classpathVfs.firstClassOrNull(name))
                 ?: db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
                     JcClassOrInterfaceImpl(this, it)
                 }
-        }
+            ClassHolder(jcClass)
+        }.jcClass
     }
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {

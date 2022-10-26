@@ -39,9 +39,10 @@ interface JcByteCodeLocation {
      * @param classFullName full name of the class to be resolved
      * @return input stream with byte-code or null if class is not found in this location
      */
-    suspend fun resolve(classFullName: String): ByteArray?
+    fun resolve(classFullName: String): ByteArray?
 
     val classes: Map<String, ByteArray>?
+    val classNames: Set<String>?
 
 }
 
