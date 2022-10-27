@@ -1,29 +1,22 @@
 # Java Compilation Database
 
-Java Compilation Database is a pure Java database which stores information about Java compiled byte-code located outside
-the JVM process. Like `Reflection` do this for runtime Java Compilation Database is doing this for byte-code stored 
-somewhere in file system.
+JCDB is a pure Java library which stores information about Java byte-code located outside the JVM process. Like Reflection do for runtime JCDB do this for byte-code stored in file system.
 
-Java Compilation Database uses ASM for reading and parsing jar-files (including build directories) and store information about
-classes, their hierarchies, methods, annotations etc.
+JCDB uses ASM for reading and parsing jar-files (including build directories) and store information about classes, their hierarchies, methods, annotations etc.
 
-Database could be in-memory or persistent. In-memory means that it can be used as a cache only. Persistent stores data on disk 
-and makes data be reused after process is restarted. By design Java Compilation Database do not support accessing disk 
-stored data from different processes simultaneously.
+Information is stored in SQLite database which could be in-memory or persistent. Persistence makes data be reused after process is restarted. Accessing persisted data from different processes simultaneously is not supported.
 
-Java Compilation Database is ignited by number of jars or directories with build classes:
+JCDB is ignited by number of jars or directories with build classes:
 
 ```kotlin
 interface JCDB {
 
-    suspend fun JcClasspath(dirOrJars: List<File>): JcClasspath
+    suspend fun classpath(dirOrJars: List<File>): JcClasspath
 
     suspend fun load(dirOrJar: File)
     suspend fun load(dirOrJars: List<File>)
 
     suspend fun refresh()
-
-    fun watchFileSystemChanges()
 }
 ```
 
@@ -36,8 +29,7 @@ interface JcClasspath {
     val locations: List<ByteCodeLocation>
 
     fun findClassOrNull(name: String): JcClassOrInterface?
-
-    fun findSubTypesOf(name: String): List<JcClassOrInterface>
+    fun findTypeOrNull(name: String): JcType?
 }
 ```
 
@@ -65,7 +57,7 @@ interface JcClassOrInterface {
 interface JcMethod {
     val name: String
 
-    val jcClass: JcClassOrInterface
+    val enclosingClass: JcClassOrInterface
     val returnClass: JcClassOrInterface?
     val parameters: List<JcParameter>
 
@@ -82,17 +74,15 @@ suspend fun findNormalDistribution(): Any {
     val buildDir = File("my-project/build/classes/java/main")
     val database = jcdb {
         useProcessJRE()
-        persistent {
-            location = "/tmp/compilation-db/${System.currentTimeMillis()}"
-        }
+        persistent("/tmp/compilation-db/${System.currentTimeMillis()}")
     }
 
     // let's index this 3 byte-code sources
-    database.loadJars(listOf(commonsMath32, commonsMath36, buildDir))
+    database.load(listOf(commonsMath32, commonsMath36, buildDir))
 
     // this method just refresh the libraries inside database. If there are any changes in libs then 
     // database just update old data with new results
-    database.loadJars(listOf(buildDir))
+    database.load(listOf(buildDir))
 
     // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
     val jcClass = database.classpath(commonsMath32, buildDir)
@@ -106,8 +96,8 @@ suspend fun findNormalDistribution(): Any {
 }
 ```
 
-If underling jar file is removed or changed in file system then null will be returned `readBody` method.
-If classpath is inconsistent you may receive `ClassNotFoundException` in runtime. Database can watch for file system 
+If underling jar file is removed or changed in file system then null will be returned by `readBody` method.
+If classpath is inconsistent you may receive `NoClassInClasspathException` in runtime. Database can watch for file system 
 changes in a background or refresh jars explicitly:
 
 ```kotlin
@@ -124,7 +114,7 @@ changes in a background or refresh jars explicitly:
 
 ### Multithreading
 
-Instances of `JcClass`, `JcMethod`, `JcClasspath` are thread-safe. Methods of these classes return immutable structures 
+Instances of `JcClassOrInterface`, `JcMethod`, `JcClasspath` are thread-safe. Methods of these classes return immutable structures 
 and are thread-safe as result. 
 
 `JcClasspath` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
@@ -134,8 +124,8 @@ clean up persistent store in case of some libraries are outdated.
 ```kotlin
     val database = jcdb {
         watchFileSystemChanges()
-        useProcessJRE()
-        predefinedDirOrJars = listOf(lib1, buildDir)
+        useProcessJavaRuntime()
+        loadByteCode(listOf(lib1, buildDir))
         persistent()
     }
     
@@ -150,9 +140,7 @@ returned new instance of set.
 
 ```kotlin
     val database = jcdb {
-        watchFileSystemChanges()
-        useProcessJRE()
-        predefinedDirOrJars = listOf(lib1)
+        loadByteCode(listOf(lib1))
         persistent()
     }
     
@@ -179,5 +167,13 @@ loaded.
         val cp = database.classpath(buildDir)  
     }
 ```
+
+### Bytecode loading
+
+Bytecode loading contains two steps:
+- retrieve information about classes from jars/build folders 
+- classes from jars/build folders are processed (indexes, persist information etc)
+
+`JCDB` or `JcClasspath` instance returned just after first step is done. Final representation of classes is done on second step.
 
 For architecture and other technical information please visit [design page](./design.md)
