@@ -5,9 +5,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.jcdb
 import kotlin.reflect.full.companionObjectInstance
 
@@ -38,7 +38,7 @@ abstract class BaseTest : LibrariesMixin {
         }
 }
 
-open class WithDB(vararg features: Feature<*, *>) : LibrariesMixin {
+open class WithDB(vararg features: JcFeature<*, *>) : LibrariesMixin {
 
     var db: JCDB? = runBlocking {
         jcdb {

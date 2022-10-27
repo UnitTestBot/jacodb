@@ -18,12 +18,12 @@ abstract class BaseTypesTest : BaseTest() {
         return found!!.assertIs()
     }
 
-    protected fun JcType?.assertClassType(): JcClassType {
+    protected fun JcType?.assertIsClass(): JcClassType {
         assertNotNull(this)
         return this!!.assertIs()
     }
 
-    protected inline fun <reified T> JcType?.assertType(): JcClassType {
+    protected inline fun <reified T> JcType?.assertClassType(): JcClassType {
         val expected = findClassType<T>()
         assertEquals(
             expected.jcClass.name,

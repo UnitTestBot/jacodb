@@ -2,14 +2,14 @@ package org.utbot.jcdb.impl
 
 import org.utbot.jcdb.api.ByteCodeIndexer
 import org.utbot.jcdb.api.ClassSource
-import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import java.io.Closeable
 
-class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
+class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable {
 
     private lateinit var jcdb: JCDB
 
@@ -23,7 +23,7 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
         }
     }
 
-    private fun <REQ, RES> Feature<RES, REQ>.index(
+    private fun <REQ, RES> JcFeature<RES, REQ>.index(
         location: RegisteredLocation,
         classes: Collection<ClassSource>
     ) {
@@ -38,7 +38,7 @@ class FeaturesRegistry(private val features: List<Feature<*, *>>) : Closeable {
         features.forEach { it.onSignal(signal.asJcSignal(jcdb)) }
     }
 
-    fun forEach(action: (JCDB, Feature<*, *>) -> Unit) {
+    fun forEach(action: (JCDB, JcFeature<*, *>) -> Unit) {
         features.forEach { action(jcdb, it) }
     }
 

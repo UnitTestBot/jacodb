@@ -16,8 +16,8 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ByteCodeIndexer
-import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.Symbols
@@ -99,7 +99,7 @@ data class UsageIndexRequest(
 ) : java.io.Serializable
 
 
-object Usages : Feature<UsageIndexRequest, String> {
+object Usages : JcFeature<UsageIndexRequest, String> {
 
     private val createIndexes = """
         CREATE INDEX IF NOT EXISTS 'Calls methods' ON Calls(callee_class_hash, callee_method_hash, location_id)
