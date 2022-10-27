@@ -205,9 +205,10 @@ loaded.
 ### Bytecode loading
 
 Bytecode loading contains two steps:
-- retrieve information about classes from jars/build folders 
-- classes from jars/build folders are processed (indexes, persist information etc)
+- retrieve information about class names from jars/build folders 
+- read classes bytecode from jars/build folders and process it (persist information, setup features indexes etc)
 
-`JCDB` or `JcClasspath` instance returned just after first step is done. Final representation of classes is done on second step.
+`JCDB` or `JcClasspath` instance returned just after first step is done. Final representation of classes is done on second step. 
+It's possible that class information is changed between first and second step if files changed accordingly.  
 
 For architecture and other technical information please visit [design page](./design.md)
