@@ -119,14 +119,14 @@ classDiagram
 
 Entry point for both of them is `JcClasspath`.
 
-`JcClassTypeRef#methods` returns: 
+`JcClassType#methods` contains: 
 - **all** public/protected/private methods of enclosing class 
-- all visible methods from inheritors
-- **only** constructors methods from declaring class 
+- all compile time visible methods from ancestors
+- **only** constructors methods from declaring class
 
-- `JcClassTypeRef#fields` returns: 
+`JcClassType#fields` contains: 
 - **all** public/protected/private fields of enclosing class 
-- all visible fields from inheritors
+- all compile time visible fields from ancestors
 
 
 ## Loading bytecode
@@ -180,11 +180,10 @@ Pure bytecode is stored in underling database as well. Underling database is usi
 
 ## Features
 
-`Features` should be added on database startup. No additional feature could be added after. `Feature` could store information in database and extend basic api based on this data. It's expected that `Feature` uses database for storing data.
-
+All `JcFeature` should be added on database startup. No additional features could be added after that. `JcFeature` could store information in database and extend basic api based on it.
 
 ## Hooks
 
-Compilation database can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
+JCDB can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
 
-Hook is called twice: after called twice when database is created and initialized properly and when it is closed.
+Hook is called twice: when database is created and initialized properly and when it is closed.
