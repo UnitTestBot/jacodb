@@ -17,6 +17,7 @@ import org.utbot.jcdb.impl.RefreshResult
 import org.utbot.jcdb.impl.RegistrationResult
 import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
 import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
+import java.util.concurrent.ConcurrentHashMap
 
 class PersistentLocationRegistry(
     private val persistence: JCDBPersistence,
@@ -24,7 +25,7 @@ class PersistentLocationRegistry(
 ) : LocationsRegistry {
 
     // all snapshot associated with classpaths
-    internal val snapshots = HashSet<LocationsRegistrySnapshot>()
+    internal val snapshots = ConcurrentHashMap.newKeySet<LocationsRegistrySnapshot>()
 
     override val actualLocations: List<PersistentByteCodeLocation>
         get() = persistence.read {
@@ -122,10 +123,8 @@ class PersistentLocationRegistry(
     }
 
     override fun newSnapshot(classpathSetLocations: List<RegisteredLocation>): LocationsRegistrySnapshot {
-        return synchronized(this) {
-            LocationsRegistrySnapshot(this, classpathSetLocations).also {
-                snapshots.add(it)
-            }
+        return LocationsRegistrySnapshot(this, classpathSetLocations).also {
+            snapshots.add(it)
         }
     }
 
