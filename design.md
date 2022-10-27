@@ -161,7 +161,7 @@ flowchart LR
     subgraph hcloud[Memory]
 
         subgraph heap[JVM heap]
-            class_tree[Class tree]
+            class_vfs[Class virtual file system]
             caches[low-level cashes]
         end
 

@@ -2,9 +2,9 @@ package org.utbot.jcdb
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-import org.utbot.jcdb.api.Feature
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JcFeature
 import java.io.File
 
 /**
@@ -33,7 +33,7 @@ class JCDBSettings {
     lateinit var jre: File
 
     /** feature to add */
-    var features: List<Feature<*, *>> = emptyList()
+    var features: List<JcFeature<*, *>> = emptyList()
         private set
 
     init {
@@ -93,7 +93,7 @@ class JCDBSettings {
     /**
      * install additional indexes
      */
-    fun installFeatures(vararg feature: Feature<*, *>) = apply {
+    fun installFeatures(vararg feature: JcFeature<*, *>) = apply {
         features = features + feature.toList()
     }
 

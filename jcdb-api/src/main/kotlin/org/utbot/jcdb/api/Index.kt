@@ -13,7 +13,7 @@ interface ByteCodeIndexer {
     fun flush()
 }
 
-interface Feature<REQ, RES> {
+interface JcFeature<REQ, RES> {
 
     suspend fun query(jcdb: JCDB, req: REQ): Sequence<RES>
 
@@ -42,6 +42,6 @@ sealed class JcSignal(val jcdb: JCDB) {
 }
 
 
-suspend fun <REQ, RES> JcClasspath.query(feature: Feature<REQ, RES>, req: REQ): Sequence<RES> {
+suspend fun <REQ, RES> JcClasspath.query(feature: JcFeature<REQ, RES>, req: REQ): Sequence<RES> {
     return feature.query(db, req)
 }
