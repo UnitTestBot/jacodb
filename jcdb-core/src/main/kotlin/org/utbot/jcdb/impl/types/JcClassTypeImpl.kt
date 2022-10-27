@@ -5,6 +5,7 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.api.isPackagePrivate
 import org.utbot.jcdb.api.isProtected
 import org.utbot.jcdb.api.isPublic
@@ -38,23 +39,22 @@ open class JcClassTypeImpl(
 
     override val classpath get() = jcClass.classpath
 
-    override val typeName: String
-        get() {
-            val generics = if (substitutor.substitutions.isEmpty()) {
-                declaredTypeParameters.joinToString { it.symbol }
-            } else {
-                declaredTypeParameters.joinToString {
-                    substitutor.substitution(it)?.displayName ?: it.symbol
-                }
+    override val typeName: String by lazy {
+        val generics = if (substitutor.substitutions.isEmpty()) {
+            declaredTypeParameters.joinToString { it.symbol }
+        } else {
+            declaredTypeParameters.joinToString {
+                substitutor.substitution(it)?.displayName ?: it.symbol
             }
-            val outer = outerType
-            val name = if (outer != null) {
-                outer.typeName + "." + jcClass.simpleName
-            } else {
-                jcClass.name
-            }
-            return name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
         }
+        val outer = outerType
+        val name = if (outer != null) {
+            outer.typeName + "." + jcClass.simpleName
+        } else {
+            jcClass.name
+        }
+        name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
+    }
 
     override val typeParameters get() = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
 
@@ -159,7 +159,7 @@ open class JcClassTypeImpl(
         val methodSet = if (allMethods) {
             jcClass.methods
         } else {
-            jcClass.methods.filter { it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName) }
+            jcClass.methods.filter { !it.isConstructor && (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
         }
         val declaredMethods = methodSet.map {
             JcTypedMethodImpl(this@JcClassTypeImpl, it, substitutor)

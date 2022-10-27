@@ -35,6 +35,7 @@ enum class FieldUsageMode {
 interface JCDB : Closeable {
 
     val locations: List<JcByteCodeLocation>
+    val persistence: JCDBPersistence
 
     /**
      * create classpath instance
@@ -75,7 +76,7 @@ interface JCDB : Closeable {
     suspend fun refresh()
 
     /**
-     * rebuilds indexes
+     * rebuilds features data (indexes)
      */
     suspend fun rebuildFeatures()
 
@@ -92,7 +93,6 @@ interface JCDB : Closeable {
      */
     suspend fun awaitBackgroundJobs()
 
-    val persistence: JCDBPersistence
 }
 
 

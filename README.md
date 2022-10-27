@@ -1,8 +1,6 @@
-# Java Compilation Database
-
 JCDB is a pure Java library which stores information about Java byte-code located outside the JVM process. Like Reflection do for runtime JCDB do this for byte-code stored in file system.
 
-JCDB uses ASM for reading and parsing jar-files (including build directories) and store information about classes, their hierarchies, methods, annotations etc.
+ASM is used for reading and parsing jar-files (including build directories) and store information about classes, their hierarchies, methods, annotations etc.
 
 Information is stored in SQLite database which could be in-memory or persistent. Persistence makes data be reused after process is restarted. Accessing persisted data from different processes simultaneously is not supported.
 
@@ -33,8 +31,19 @@ interface JcClasspath {
 }
 ```
 
-`findClassOrNull` method will return instance of `JcClass` from `locations` or null otherwise. Where `JcClass` represents
-JVM Class:
+## API
+
+Bytecode has two representations in filesystem (classes) and in runtime (types).
+
+**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM and represented as ClassNode
+**types** - represent types which can be nullable, get parameterized, receive parameters substitution etc.
+
+Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generic's parameterization.
+
+### Classes
+
+`JcClasspath#findClassOrNull` method will return instance of `JcClassOrInterface` from `locations` or null otherwise. Where `JcClassOrInterface` represents
+JVM:
 
 ```kotlin
 interface JcClassOrInterface {
@@ -92,11 +101,11 @@ suspend fun findNormalDistribution(): Any {
     println(jcClass.annotations.size)
 
     // here database will call ASM to read method bytecode and return the result
-    return jcClass.methods[0].readBody()
+    return jcClass.methods[0].body()
 }
 ```
 
-If underling jar file is removed or changed in file system then null will be returned by `readBody` method.
+If underling jar file is removed or changed in file system then null will be returned by `body` method.
 If classpath is inconsistent you may receive `NoClassInClasspathException` in runtime. Database can watch for file system 
 changes in a background or refresh jars explicitly:
 
@@ -112,7 +121,32 @@ changes in a background or refresh jars explicitly:
     // database rereads rebuild directory in a background
 ```
 
-### Multithreading
+### Types
+
+Types maybe:
+- primitive types
+- class types
+- array types
+- bounded and unbounded wildcards
+
+Types represent runtime behaviour according to generics substitution: 
+
+```kotlin
+    open class A<T> {
+        val x: T
+    }
+
+    class B: A<String>()
+
+    fun main() {
+        val b = classpath.findClass<B>().toType()
+        println(b.fields.first { it.name == "x"}.fieldType == cp.findClass<String>().toType()) // will print `true` 
+    }
+
+```
+
+
+## Multithreading
 
 Instances of `JcClassOrInterface`, `JcMethod`, `JcClasspath` are thread-safe. Methods of these classes return immutable structures 
 and are thread-safe as result. 
