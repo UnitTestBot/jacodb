@@ -140,14 +140,8 @@ class JCDBImpl(
     }
 
     override suspend fun rebuildFeatures() {
-        rebuildFeatures(true)
-    }
-
-    private suspend fun rebuildFeatures(await: Boolean) {
-        if (await) {
-            awaitBackgroundJobs()
-        }
-        featureRegistry.broadcast(JcInternalSignal.Rebuild)
+        awaitBackgroundJobs()
+        featureRegistry.broadcast(JcInternalSignal.Drop)
 
         withContext(Dispatchers.IO) {
             val locations = locationsRegistry.actualLocations

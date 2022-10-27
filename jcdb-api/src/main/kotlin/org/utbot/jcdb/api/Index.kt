@@ -32,12 +32,10 @@ sealed class JcSignal(val jcdb: JCDB) {
     class AfterIndexing(jcdb: JCDB) : JcSignal(jcdb)
     /** can be used for cleanup index data when location is removed */
     class LocationRemoved(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
-    class ProcessLocation(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
-
     /**
      * rebuild all
      */
-    class Rebuild(jcdb: JCDB) : JcSignal(jcdb)
+    class Drop(jcdb: JCDB) : JcSignal(jcdb)
 
 }
 

@@ -1,5 +1,7 @@
 package org.utbot.jcdb.api
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import java.io.Closeable
 import java.io.File
 
@@ -44,6 +46,7 @@ interface JCDB : Closeable {
      * @return new classpath instance associated with specified byte-code locations
      */
     suspend fun classpath(dirOrJars: List<File>): JcClasspath
+    fun asyncClasspath(dirOrJars: List<File>) = GlobalScope.future { classpath(dirOrJars) }
 
     /**
      * process and index single byte-code resource
@@ -51,6 +54,7 @@ interface JCDB : Closeable {
      * @return current database instance
      */
     suspend fun load(dirOrJar: File): JCDB
+    fun asyncLoad(dirOrJar: File) = GlobalScope.future { load(dirOrJar) }
 
     /**
      * process and index byte-code resources
@@ -58,6 +62,7 @@ interface JCDB : Closeable {
      * @return current database instance
      */
     suspend fun load(dirOrJars: List<File>): JCDB
+    fun asyncLoad(dirOrJars: List<File>) = GlobalScope.future { load(dirOrJars) }
 
     /**
      * load locations
@@ -65,6 +70,7 @@ interface JCDB : Closeable {
      * @return current database instance
      */
     suspend fun loadLocations(locations: List<JcByteCodeLocation>): JCDB
+    fun asyncLocations(locations: List<JcByteCodeLocation>) = GlobalScope.future { loadLocations(locations) }
 
     /**
      * explicitly refreshes the state of resources from file-system.
@@ -74,11 +80,13 @@ interface JCDB : Closeable {
      * according to file-system
      */
     suspend fun refresh()
+    fun asyncRefresh() = GlobalScope.future { refresh() }
 
     /**
      * rebuilds features data (indexes)
      */
     suspend fun rebuildFeatures()
+    fun asyncRebuildFeatures() = GlobalScope.future { rebuildFeatures() }
 
     /**
      * watch file system for changes and refreshes the state of database in case loaded resources and resources from
@@ -93,6 +101,7 @@ interface JCDB : Closeable {
      */
     suspend fun awaitBackgroundJobs()
 
+    fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
 }
 
 

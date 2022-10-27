@@ -1,6 +1,5 @@
 package org.utbot.jcdb
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import org.utbot.jcdb.api.JCDB
@@ -30,4 +29,4 @@ suspend fun jcdb(settings: JCDBSettings): JCDB {
 }
 
 /** bridge for Java */
-fun futureJcdb(settings: JCDBSettings) = GlobalScope.future(Dispatchers.Default) { jcdb(settings) }
+fun asyncJcdb(settings: JCDBSettings) = GlobalScope.future { jcdb(settings) }
