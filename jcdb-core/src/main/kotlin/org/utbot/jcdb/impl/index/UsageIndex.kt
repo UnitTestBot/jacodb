@@ -135,7 +135,7 @@ object Usages : JcFeature<UsageIndexRequest, String> {
                 }
             }
 
-            is JcSignal.Rebuild -> {
+            is JcSignal.Drop -> {
                 signal.jcdb.persistence.write {
                     Calls.deleteAll()
                 }

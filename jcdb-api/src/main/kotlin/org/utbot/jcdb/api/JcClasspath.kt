@@ -1,5 +1,7 @@
 package org.utbot.jcdb.api
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import java.io.Closeable
 
 /**
@@ -36,5 +38,6 @@ interface JcClasspath : Closeable {
     fun arrayTypeOf(elementType: JcType): JcArrayType
 
     suspend fun refreshed(closeOld: Boolean): JcClasspath
+    fun asyncRefreshed(closeOld: Boolean) = GlobalScope.future { refreshed(closeOld) }
 
 }
