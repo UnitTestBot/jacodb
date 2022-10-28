@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl.hierarchies;
 
+import java.io.Closeable;
 import java.util.List;
 
 public class Overrides {
@@ -7,6 +8,10 @@ public class Overrides {
     public interface Iface<T> {
 
         public T runMain(T in);
+
+        default public T runMain(Closeable in) {
+            return null;
+        }
     }
 
     public static class Main<T> {

@@ -10,14 +10,12 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.constructors
 import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.api.findMethodOrNull
-import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.api.isEnum
 import org.utbot.jcdb.api.isFinal
 import org.utbot.jcdb.api.isInterface
@@ -26,7 +24,6 @@ import org.utbot.jcdb.api.isMemberClass
 import org.utbot.jcdb.api.isNullable
 import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.api.isPublic
-import org.utbot.jcdb.api.isSynthetic
 import org.utbot.jcdb.api.jcdbSignature
 import org.utbot.jcdb.api.jvmSignature
 import org.utbot.jcdb.api.methods
@@ -39,8 +36,6 @@ import org.utbot.jcdb.impl.Enums
 import org.utbot.jcdb.impl.Foo
 import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
-import org.utbot.jcdb.impl.hierarchies.Overrides.Impl1
-import org.utbot.jcdb.impl.hierarchies.Overrides.Impl2
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -284,22 +279,6 @@ abstract class DatabaseEnvTest {
 
         }
     }
-
-    @Test
-    fun `class methods should respect overrides`() {
-        val impl1 = cp.findClass<Impl1>()
-        assertEquals(1, impl1.constructors.size)
-        assertEquals(2, impl1.declaredMethods.notSynthetic().size)
-        assertEquals(2, impl1.methods.notSynthetic().filter { it.name == "runMain" }.size)
-
-        val impl2 = cp.findClass<Impl2>()
-        assertEquals(1, impl2.constructors.size)
-        assertEquals(2, impl2.declaredMethods.notSynthetic().size)
-        assertEquals(2, impl2.methods.notSynthetic().filter { it.name == "runMain" }.size)
-
-    }
-
-    private fun List<JcMethod>.notSynthetic() = filterNot { it.isSynthetic || it.isConstructor }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
         return hierarchyExt.findSubClasses(T::class.java.name, allHierarchy)
