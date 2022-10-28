@@ -2,6 +2,10 @@
 
 ## features
 
+* two separate IR's:
+    1. "Raw" 3-address instructions list. Does not use type resolving or anything, just
+       plain conversion of bytecode to 3-addr instructions.
+  2. "CFG"
 * IR for modification, transformation and analysis with 3-addr instructions
     * 3-addr instructions are easier for analysis, transformation and construction
 * CFG for JVM bytecode built on top of ASM representation
@@ -20,7 +24,7 @@
         * special `Catch` instruction is introduced to explicitly distinguish the
           entry points of the catch blocks in a method
             * if this instruction is not introduced, then each instruction will have to store
-              potential exception catching paths and we will not be able to distinguish this kind of
+              potential exception catching paths, and we will not be able to distinguish this kind of
               instructions
         * either each instruction has an implicit edge to the exception receiver (either
           catch or method exit)
@@ -30,6 +34,8 @@
           in catch instructions (each catch stores a list of throwing instructions)
             * need to manually resolve all the information when it is needed
             * harder to determine connections of each separate instruction
+            * all resolving can be done later, after the resolving stage, with special
+              util functions
     * instructions store their mapping to the bytecode
         * don't know why
     * instructions are immutable
@@ -53,6 +59,7 @@
               from
             * downside &mdash; it is harder to sync the basic blocks with the instructions,
               especially when the CFG is modified
+* interop with java is necessary
 
 ## lower priority features
 
