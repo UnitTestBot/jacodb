@@ -6,7 +6,7 @@ interface JcTypedField {
     val name: String
 
     val field: JcField
-    fun fieldType(): JcType
+    val fieldType: JcType
     val enclosingType: JcRefType
 }
 

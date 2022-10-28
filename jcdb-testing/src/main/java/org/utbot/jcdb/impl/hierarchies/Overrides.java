@@ -16,6 +16,10 @@ public class Overrides {
 
     public static class Main<T> {
 
+        private T main;
+        protected T protectedMain;
+        public T publicMain;
+
         public T runMain(List<T> in) {
             return null;
         }
@@ -26,7 +30,6 @@ public class Overrides {
     }
 
     public static class Impl1 extends Main<String> {
-
         @Override
         public String runMain(List<String> in) {
             return super.runMain(in);
@@ -39,6 +42,10 @@ public class Overrides {
     }
 
     public static class Impl2 extends Impl1 implements Iface<String> {
+        private String main;
+        protected List<Closeable> protectedMain1;
+        public List<Closeable> publicMain1;
+
         @Override
         public String runMain(List<String> in) {
             return super.runMain(in);
