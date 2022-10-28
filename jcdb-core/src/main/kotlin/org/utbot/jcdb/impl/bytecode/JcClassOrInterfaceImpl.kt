@@ -73,11 +73,11 @@ class JcClassOrInterfaceImpl(
             return null
         }
 
-    override val fields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
         info.fields.map { JcFieldImpl(this, it) }
     }
 
-    override val methods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredMethods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
         info.methods.map { toJcMethod(it, classSource) }
     }
 

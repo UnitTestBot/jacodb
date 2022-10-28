@@ -113,7 +113,7 @@ changes in a background or refresh jars explicitly:
     val database = jcdb {
         watchFileSystemChanges = true
         useProcessJRE()
-        predefinendJars = listOf(lib1, buildDir) 
+        loadByteCode(listOf(lib1, buildDir)) 
         persistent()
     }
 
@@ -153,7 +153,7 @@ and are thread-safe as result.
 
 `JcClasspath` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
 library files will not affect `JcClasspath` instance structure. `JcClasspath#close` method will release all snapshots and will 
-clean up persistent store in case of some libraries are outdated.
+clean up persistence in case if some libraries are outdated.
 
 ```kotlin
     val database = jcdb {
@@ -187,18 +187,18 @@ thread then `JcClasspath` will be created on a consistent state of loaded jars. 
 loaded.
 
 ```kotlin
-    val database = jcdb {
+    val db = jcdb {
         persistent()
     }
-
+    
     thread(start = true) {
-        database.loadJar(listOf(lib1, lib2))            
+        db.load(listOf(lib1, lib2))
     }
-
+    
     thread(start = true) {
         // maybe created when lib2 or both are not loaded into database
         // but buildDir will be loaded anyway
-        val cp = database.classpath(buildDir)  
+        val cp = db.classpath(buildDir)
     }
 ```
 

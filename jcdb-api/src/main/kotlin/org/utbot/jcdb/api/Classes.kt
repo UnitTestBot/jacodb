@@ -7,8 +7,8 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     val classpath: JcClasspath
 
-    val fields: List<JcField>
-    val methods: List<JcMethod>
+    val declaredFields: List<JcField>
+    val declaredMethods: List<JcMethod>
 
     val simpleName: String
     val signature: String?
