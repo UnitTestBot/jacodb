@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.impl.LibrariesMixin
 import org.utbot.jcdb.jcdb
 
 class RemoteClientCloseTest : LibrariesMixin {

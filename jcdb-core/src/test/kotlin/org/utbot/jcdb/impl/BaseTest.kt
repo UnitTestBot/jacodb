@@ -12,7 +12,7 @@ import org.utbot.jcdb.jcdb
 import kotlin.reflect.full.companionObjectInstance
 
 @ExtendWith(CleanDB::class)
-abstract class BaseTest : LibrariesMixin {
+abstract class BaseTest {
 
     protected val cp: JcClasspath = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
@@ -38,7 +38,7 @@ abstract class BaseTest : LibrariesMixin {
         }
 }
 
-open class WithDB(vararg features: JcFeature<*, *>) : LibrariesMixin {
+open class WithDB(vararg features: JcFeature<*, *>) {
 
     var db: JCDB? = runBlocking {
         jcdb {

@@ -14,7 +14,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
-import org.utbot.jcdb.impl.LibrariesMixin
+import org.utbot.jcdb.impl.allJars
 import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.jcdb
 import java.util.concurrent.TimeUnit
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-class DBBenchmarks : LibrariesMixin {
+class DBBenchmarks  {
 
     private var db: JCDB? = null
 
@@ -35,7 +35,6 @@ class DBBenchmarks : LibrariesMixin {
         db = runBlocking {
             jcdb {
                 useProcessJavaRuntime()
-
                 installFeatures(Usages)
             }
         }

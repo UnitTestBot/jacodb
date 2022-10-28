@@ -10,6 +10,7 @@ import java.lang.Double
 import java.lang.Float
 import java.lang.Long
 import java.lang.Short
+import java.util.*
 
 /**
  * is item has `public` modifier
@@ -128,42 +129,48 @@ val JcAccessible.isSynthetic: Boolean
         return access and Opcodes.ACC_SYNTHETIC != 0
     }
 
-fun JcClassOrInterface.isLocalOrAnonymous(): Boolean {
-    return outerMethod != null
-}
-
-fun JcClassOrInterface.isLocal(): Boolean {
-    return outerClass != null && !isAnonymous
-}
-
-fun JcClassOrInterface.isMemberClass(): Boolean {
-    return simpleBinaryName() != null && !isLocalOrAnonymous()
-}
-
-fun JcClassOrInterface.isEnum(): Boolean {
-    return access and Opcodes.ACC_ENUM != 0 && superClass?.name == Enum::class.java.name
-}
-
-private fun JcClassOrInterface.simpleBinaryName(): String? {
-    // top level class
-    val enclosingClass = outerClass ?: return null
-    // Otherwise, strip the enclosing class' name
-    return try {
-        name.substring(enclosingClass.name.length)
-    } catch (ex: IndexOutOfBoundsException) {
-        throw InternalError("Malformed class name", ex)
+val JcClassOrInterface.isLocalOrAnonymous: Boolean
+    get() {
+        return outerMethod != null
     }
-}
+
+val JcClassOrInterface.isLocal: Boolean
+    get() {
+        return outerClass != null && !isAnonymous
+    }
+
+val JcClassOrInterface.isMemberClass: Boolean
+    get() {
+        return simpleBinaryName != null && !isLocalOrAnonymous
+    }
+
+val JcClassOrInterface.isEnum: Boolean
+    get() {
+        return access and Opcodes.ACC_ENUM != 0 && superClass?.name == Enum::class.java.name
+    }
+
+private val JcClassOrInterface.simpleBinaryName: String?
+    get() {
+        // top level class
+        val enclosingClass = outerClass ?: return null
+        // Otherwise, strip the enclosing class' name
+        return try {
+            name.substring(enclosingClass.name.length)
+        } catch (ex: IndexOutOfBoundsException) {
+            throw InternalError("Malformed class name", ex)
+        }
+    }
 
 /**
  * @return element class in case of `this` is ArrayClass
  */
-fun JcType.ifArrayGetElementClass(): JcType? {
-    return when (this) {
-        is JcArrayType -> elementType
-        else -> null
+val JcType.ifArrayGetElementClass: JcType?
+    get() {
+        return when (this) {
+            is JcArrayType -> elementType
+            else -> null
+        }
     }
-}
 
 /**
  * unboxes `this` class. That means that for 'java.lang.Integet' will be returned `PredefinedPrimitive.int`
@@ -188,7 +195,7 @@ fun JcType.unboxIfNeeded(): JcType {
  * and for `java.lang.String` will be returned `java.lang.String`
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-suspend fun JcType.autoboxIfNeeded(): JcType {
+fun JcType.autoboxIfNeeded(): JcType {
     return when (this) {
         classpath.boolean -> classpath.findTypeOrNull<java.lang.Boolean>() ?: throwClassNotFound<java.lang.Boolean>()
         classpath.byte -> classpath.findTypeOrNull<java.lang.Byte>() ?: throwClassNotFound<Byte>()
@@ -205,7 +212,7 @@ suspend fun JcType.autoboxIfNeeded(): JcType {
 /**
  * @return all interfaces and classes retrieved recursively from this ClassId
  */
-suspend fun JcClassOrInterface.forEachSuperClasses(action: suspend (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
+fun JcClassOrInterface.forEachSuperClasses(action: (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
     val parents = (interfaces + superClass).filterNotNull()
     parents.forEach {
         action(it)
@@ -217,64 +224,66 @@ suspend fun JcClassOrInterface.forEachSuperClasses(action: suspend (JcClassOrInt
     return result.toPersistentList()
 }
 
-suspend fun JcClassOrInterface.findAllSuperClasses(): List<JcClassOrInterface> {
-    val result = hashSetOf<JcClassOrInterface>()
-    forEachSuperClasses {
-        result.add(it)
+val JcClassOrInterface.allSuperHierarchy: List<JcClassOrInterface>
+    get() {
+        val result = hashSetOf<JcClassOrInterface>()
+        forEachSuperClasses {
+            result.add(it)
+        }
+        return result.toPersistentList()
     }
-    return result.toPersistentList()
-}
 
-suspend infix fun JcClassOrInterface.isSubtypeOf(another: JcClassOrInterface): Boolean {
+infix fun JcClassOrInterface.isSubtypeOf(another: JcClassOrInterface): Boolean {
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    return another in findAllSuperClasses()
+    return another in allSuperHierarchy
 }
 
 
 /**
  * find field by name
  */
-fun JcClassOrInterface.findFieldOrNull(name: String): JcField? = fields.firstOrNull { it.name == name }
+fun JcClassOrInterface.findFieldOrNull(name: String): JcField? = declaredFields.firstOrNull { it.name == name }
 
 /**
  * find method by name and description
  */
 fun JcClassOrInterface.findMethodOrNull(name: String, desc: String): JcMethod? =
-    methods.firstOrNull { it.name == name && it.description == desc }
+    declaredMethods.firstOrNull { it.name == name && it.description == desc }
 
 /**
  * find method by ASM node
  */
 fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
-    methods.firstOrNull { it.name == methodNode.name && it.description == methodNode.desc }
+    declaredMethods.firstOrNull { it.name == methodNode.name && it.description == methodNode.desc }
 
 
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
 fun JcClassOrInterface.enumValues(): List<JcField>? {
-    if (isEnum()) {
-        return fields.filter { it.isStatic && it.type.typeName == name }
+    if (isEnum) {
+        return declaredFields.filter { it.isStatic && it.type.typeName == name }
     }
     return null
 }
 
 
-fun JcClassOrInterface.allMethods(): List<JcMethod> {
-    var clazz: JcClassOrInterface? = this@allMethods
-    val result = arrayListOf<JcMethod>()
-    while (clazz != null) {
-        result.addAll(clazz.methods.filter { !it.isConstructor })
-        clazz = clazz.superClass
-    }
-    return result
-}
-
-val JcClassOrInterface.allConstructors: List<JcMethod>
+val JcClassOrInterface.methods: List<JcMethod>
     get() {
-        return methods.filter { it.isConstructor }
+        var clazz: JcClassOrInterface? = this@methods
+        val result = TreeSet(UnsafeHierarchyMethodComparator)
+        while (clazz != null) {
+            result.addAll(clazz.declaredMethods.filter { !it.isConstructor })
+            clazz = clazz.superClass
+        }
+        return result.toList()
+    }
+
+val JcClassOrInterface.constructors: List<JcMethod>
+    get() {
+        return declaredMethods.filter { it.isConstructor }
     }
 
 fun String.jvmName(): String {
@@ -359,3 +368,20 @@ fun JcClassOrInterface.toType(): JcClassType {
 }
 
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")
+
+
+// call with SAFE. comparator works only on methods from one hierarchy
+private object UnsafeHierarchyMethodComparator : Comparator<JcMethod> {
+
+    override fun compare(o1: JcMethod, o2: JcMethod): Int {
+        return (o1.name + o1.description).compareTo(o2.name + o2.description)
+    }
+}
+
+// call with SAFE. comparator works only on methods from one hierarchy
+private object UnsafeHierarchyTypedMethodComparator : Comparator<JcTypedMethod> {
+
+    override fun compare(o1: JcTypedMethod, o2: JcTypedMethod): Int {
+        return UnsafeHierarchyMethodComparator.compare(o1.method, o2.method)
+    }
+}

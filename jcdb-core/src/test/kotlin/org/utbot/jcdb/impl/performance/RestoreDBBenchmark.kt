@@ -14,7 +14,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
-import org.utbot.jcdb.impl.LibrariesMixin
+import org.utbot.jcdb.impl.allClasspath
 import org.utbot.jcdb.jcdb
 import java.nio.file.Files
 import java.util.*
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-class RestoreDBBenchmark : LibrariesMixin {
+class RestoreDBBenchmark {
 
     companion object {
         private val jdbcLocation = Files.createTempDirectory("jdbc-${UUID.randomUUID()}").toFile().absolutePath

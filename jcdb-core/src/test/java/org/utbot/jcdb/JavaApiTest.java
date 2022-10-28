@@ -6,12 +6,12 @@ import org.utbot.jcdb.api.JCDB;
 import org.utbot.jcdb.api.JcClassOrInterface;
 import org.utbot.jcdb.api.JcClasspath;
 import org.utbot.jcdb.impl.index.Usages;
-import org.utbot.jcdb.impl.performance.TakeMemoryDumpKt;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.utbot.jcdb.impl.LibrariesMixinKt.getAllClasspath;
 
 public class JavaApiTest {
 
@@ -40,7 +40,7 @@ public class JavaApiTest {
     public void jcdbOperations() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
         try (JCDB instance = JcdbKt.asyncJcdb(new JCDBSettings().installFeatures(Usages.INSTANCE)).get()) {
-            instance.asyncLoad(TakeMemoryDumpKt.getAllClasspath()).get();
+            instance.asyncLoad(getAllClasspath()).get();
             System.out.println("asyncLoad finished");
             instance.asyncRefresh().get();
             System.out.println("asyncRefresh finished");

@@ -9,6 +9,7 @@ import org.utbot.jcdb.impl.tests.DatabaseEnvTest
 
 @ExtendWith(CleanDB::class)
 class ClassesTest : DatabaseEnvTest() {
+
     companion object : WithDB()
 
     override val cp: JcClasspath = runBlocking { db!!.classpath(allClasspath) }

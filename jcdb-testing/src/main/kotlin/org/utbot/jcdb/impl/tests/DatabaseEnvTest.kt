@@ -1,6 +1,5 @@
 package org.utbot.jcdb.impl.tests
 
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -11,13 +10,14 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.allConstructors
-import org.utbot.jcdb.api.allMethods
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.constructors
 import org.utbot.jcdb.api.enumValues
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.api.isEnum
 import org.utbot.jcdb.api.isFinal
 import org.utbot.jcdb.api.isInterface
@@ -26,8 +26,10 @@ import org.utbot.jcdb.api.isMemberClass
 import org.utbot.jcdb.api.isNullable
 import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.api.isPublic
+import org.utbot.jcdb.api.isSynthetic
 import org.utbot.jcdb.api.jcdbSignature
 import org.utbot.jcdb.api.jvmSignature
+import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.impl.A
 import org.utbot.jcdb.impl.B
 import org.utbot.jcdb.impl.Bar
@@ -37,6 +39,8 @@ import org.utbot.jcdb.impl.Enums
 import org.utbot.jcdb.impl.Foo
 import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
+import org.utbot.jcdb.impl.hierarchies.Overrides.Impl1
+import org.utbot.jcdb.impl.hierarchies.Overrides.Impl2
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -56,7 +60,7 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `find class from build dir folder`() = runBlocking {
+    fun `find class from build dir folder`() {
         val clazz = cp.findClass<Foo>()
         assertEquals(Foo::class.java.name, clazz.name)
         assertTrue(clazz.isFinal)
@@ -67,7 +71,7 @@ abstract class DatabaseEnvTest {
         assertTrue(annotations.size > 1)
         assertNotNull(annotations.firstOrNull { it.matches(Nested::class.java.name) })
 
-        val fields = clazz.fields
+        val fields = clazz.declaredFields
         assertEquals(2, fields.size)
 
         with(fields.first()) {
@@ -81,7 +85,7 @@ abstract class DatabaseEnvTest {
             assertFalse(isNullable)
         }
 
-        val methods = clazz.methods
+        val methods = clazz.declaredMethods
         assertEquals(5, methods.size)
         with(methods.first { it.name == "smthPublic" }) {
             assertEquals(1, parameters.size)
@@ -96,11 +100,11 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `array type names`() = runBlocking {
+    fun `array type names`() {
         val clazz = cp.findClass<Bar>()
         assertEquals(Bar::class.java.name, clazz.name)
 
-        val fields = clazz.fields
+        val fields = clazz.declaredFields
         assertEquals(3, fields.size)
 
         with(fields.first()) {
@@ -118,7 +122,7 @@ abstract class DatabaseEnvTest {
             assertEquals("java.lang.Object[][]", type.typeName)
         }
 
-        val methods = clazz.methods
+        val methods = clazz.declaredMethods
         assertEquals(2, methods.size)
 
         with(methods.first { it.name == "smth" }) {
@@ -130,7 +134,7 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `inner and static`() = runBlocking {
+    fun `inner and static`() {
         val withInner = cp.findClass<WithInner>()
         val inner = cp.findClass<WithInner.Inner>()
         val staticInner = cp.findClass<WithInner.StaticInner>()
@@ -145,34 +149,34 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `local and anonymous classes`() = runBlocking {
+    fun `local and anonymous classes`() {
         val withAnonymous = cp.findClass<HelloWorldAnonymousClasses>()
 
         val helloWorld = cp.findClass<HelloWorldAnonymousClasses.HelloWorld>()
-        assertTrue(helloWorld.isMemberClass())
+        assertTrue(helloWorld.isMemberClass)
 
         val innerClasses = withAnonymous.innerClasses
         assertEquals(4, innerClasses.size)
         val notHelloWorld = innerClasses.filterNot { it.name.contains("\$HelloWorld") }
         val englishGreetings = notHelloWorld.first { it.name.contains("EnglishGreeting") }
-        assertTrue(englishGreetings.isLocal())
+        assertTrue(englishGreetings.isLocal)
         assertFalse(englishGreetings.isAnonymous)
 
         (notHelloWorld - englishGreetings).forEach {
-            assertFalse(it.isLocal())
+            assertFalse(it.isLocal)
             assertTrue(it.isAnonymous)
-            assertFalse(it.isMemberClass())
+            assertFalse(it.isMemberClass)
         }
     }
 
     @Test
-    fun `find interface`() = runBlocking {
+    fun `find interface`() {
         val domClass = cp.findClass<Document>()
 
         assertTrue(domClass.isPublic)
         assertTrue(domClass.isInterface)
 
-        val methods = domClass.methods
+        val methods = domClass.declaredMethods
         assertTrue(methods.isNotEmpty())
         with(methods.first { it.name == "getDoctype" }) {
             assertTrue(parameters.isEmpty())
@@ -191,7 +195,7 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `find sub-types for class`() = runBlocking {
+    fun `find subclasses for class`() {
         with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
             assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
@@ -206,28 +210,28 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `find sub-types for interface`() = runBlocking {
+    fun `find subclasses for interface`() {
         with(findSubClasses<Document>()) {
             assertTrue(isNotEmpty())
         }
     }
 
     @Test
-    fun `enum values`() = runBlocking {
+    fun `enum values`() {
         val enum = cp.findClass<Enums>()
-        assertTrue(enum.isEnum())
+        assertTrue(enum.isEnum)
         assertEquals(
             listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(),
             enum.enumValues()?.map { it.name }?.sorted()
         )
 
         val notEnum = cp.findClass<String>()
-        assertFalse(notEnum.isEnum())
+        assertFalse(notEnum.isEnum)
         assertNull(notEnum.enumValues())
     }
 
     @Test
-    fun `find sub-types with all hierarchy`() = runBlocking {
+    fun `find subclasses with all hierarchy`() {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)
 
@@ -244,23 +248,23 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `get all methods`() = runBlocking {
+    fun `get all methods`() {
         val c = cp.findClass<C>()
-        val signatures = c.allMethods().map { it.jcdbSignature }
-        assertTrue(c.allMethods().size > 15)
+        val signatures = c.methods.map { it.jcdbSignature }
+        assertTrue(c.methods.size > 15)
         assertTrue(signatures.contains("saySmth(java.lang.String;)void;"))
         assertTrue(signatures.contains("saySmth()void;"))
         assertFalse(signatures.contains("<init>()void;"))
-        assertEquals(3, c.allConstructors.size)
+        assertEquals(3, c.constructors.size)
     }
 
     @Test
-    fun `find method overrides`() = runBlocking {
+    fun `find method overrides`() {
         val creatureClass = cp.findClass<Creature>()
 
-        assertEquals(2, creatureClass.methods.size)
-        val sayMethod = creatureClass.methods.first { it.name == "say" }
-        val helloMethod = creatureClass.methods.first { it.name == "hello" }
+        assertEquals(2, creatureClass.declaredMethods.size)
+        val sayMethod = creatureClass.declaredMethods.first { it.name == "say" }
+        val helloMethod = creatureClass.declaredMethods.first { it.name == "hello" }
 
         var overrides = hierarchyExt.findOverrides(sayMethod)
 
@@ -281,6 +285,21 @@ abstract class DatabaseEnvTest {
         }
     }
 
+    @Test
+    fun `class methods should respect overrides`() {
+        val impl1 = cp.findClass<Impl1>()
+        assertEquals(1, impl1.constructors.size)
+        assertEquals(2, impl1.declaredMethods.notSynthetic().size)
+        assertEquals(2, impl1.methods.notSynthetic().filter { it.name == "runMain" }.size)
+
+        val impl2 = cp.findClass<Impl2>()
+        assertEquals(1, impl2.constructors.size)
+        assertEquals(2, impl2.declaredMethods.notSynthetic().size)
+        assertEquals(2, impl2.methods.notSynthetic().filter { it.name == "runMain" }.size)
+
+    }
+
+    private fun List<JcMethod>.notSynthetic() = filterNot { it.isSynthetic || it.isConstructor }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
         return hierarchyExt.findSubClasses(T::class.java.name, allHierarchy)

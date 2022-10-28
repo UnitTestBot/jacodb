@@ -157,9 +157,9 @@ open class JcClassTypeImpl(
     ): List<JcTypedMethod> {
         val classPackageName = jcClass.packageName
         val methodSet = if (allMethods) {
-            jcClass.methods
+            jcClass.declaredMethods
         } else {
-            jcClass.methods.filter { !it.isConstructor && (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
+            jcClass.declaredMethods.filter { !it.isConstructor && (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
         }
         val declaredMethods = methodSet.map {
             JcTypedMethodImpl(this@JcClassTypeImpl, it, substitutor)
@@ -178,9 +178,9 @@ open class JcClassTypeImpl(
         val classPackageName = jcClass.packageName
 
         val fieldSet = if (all) {
-            jcClass.fields
+            jcClass.declaredFields
         } else {
-            jcClass.fields.filter { it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName) }
+            jcClass.declaredFields.filter { it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName) }
         }
         val directSet = fieldSet.map {
             JcTypedFieldImpl(this@JcClassTypeImpl, it, substitutor)
