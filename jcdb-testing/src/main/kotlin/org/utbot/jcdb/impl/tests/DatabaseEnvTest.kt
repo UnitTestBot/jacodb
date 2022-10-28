@@ -249,7 +249,7 @@ abstract class DatabaseEnvTest {
         assertTrue(c.methods.size > 15)
         assertTrue(signatures.contains("saySmth(java.lang.String;)void;"))
         assertTrue(signatures.contains("saySmth()void;"))
-        assertFalse(signatures.contains("<init>()void;"))
+        assertTrue(signatures.contains("<init>()void;"))
         assertEquals(3, c.constructors.size)
     }
 

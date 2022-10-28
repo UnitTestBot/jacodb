@@ -23,9 +23,9 @@ class JcTypedFieldImpl(
 
     override val name: String get() = this.field.name
 
-    override fun fieldType(): JcType {
+    override val fieldType: JcType by lazy {
         val typeName = field.type.typeName
-        return resolvedType?.let {
+        resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))
         } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
     }
