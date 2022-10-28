@@ -165,7 +165,7 @@ class RawInstListBuilder {
     private data class Frame(
         val locals: PersistentMap<Int, JcRawValue>,
         val stack: PersistentList<JcRawValue>,
-        val nextLocal: (TypeName) -> JcRawLocal
+        val nextLocal: (TypeName) -> JcRawValue
     ) {
         fun put(variable: Int, value: JcRawValue): Frame = copy(locals = locals.put(variable, value), stack = stack)
         operator fun get(variable: Int) = locals[variable]
@@ -178,7 +178,7 @@ class RawInstListBuilder {
             val newLocals = insn.local.parseLocals()
             val newStack = insn.stack.parseStack()
             return copy(
-                locals = locals.filterKeys { it in newLocals.keys }.toPersistentMap(),
+                locals = locals.filter { it.key in newLocals.keys || it.value is JcRawLocal  }.toPersistentMap(),
                 stack = stack.withIndex().filter { it.index in newStack.keys }.map { it.value }.toPersistentList()
             )
         }
@@ -242,7 +242,7 @@ class RawInstListBuilder {
     }
 
 
-    private fun nextLocal(typeName: TypeName): JcRawLocal = JcRawLocal("%${localCounter++}", typeName)
+    private fun nextRegister(typeName: TypeName): JcRawValue = JcRawRegister(localCounter++, typeName)
     private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
 
     private fun buildGraph() {
@@ -298,7 +298,7 @@ class RawInstListBuilder {
             locals[local.index] = rawLocal
         }
 
-        return Frame(locals.toPersistentMap(), persistentListOf()) { nextLocal(it) }
+        return Frame(locals.toPersistentMap(), persistentListOf()) { nextRegister(it) }
     }
 
     fun build(method: JcMethod): JcRawInstList {
@@ -519,7 +519,7 @@ class RawInstListBuilder {
             in Opcodes.IXOR..Opcodes.LXOR -> JcRawXorExpr(lhv, rhv)
             else -> error("Unknown binary opcode: $opcode")
         }
-        val assignment = nextLocal(lhv.typeName)
+        val assignment = nextRegister(lhv.typeName)
         instructions += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -531,7 +531,7 @@ class RawInstListBuilder {
             Opcodes.ARRAYLENGTH -> JcRawLengthExpr(operand) to PredefinedPrimitives.int.typeName()
             else -> error("Unknown unary opcode $opcode")
         }
-        val assignment = nextLocal(typeName)
+        val assignment = nextRegister(typeName)
         instructions += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -548,7 +548,7 @@ class RawInstListBuilder {
             Opcodes.I2S -> PredefinedPrimitives.short.typeName()
             else -> error("Unknown cast opcode $opcode")
         }
-        val assignment = nextLocal(targetType)
+        val assignment = nextRegister(targetType)
         instructions += JcRawAssignInst(assignment, JcRawCastExpr(operand, targetType))
         push(assignment)
     }
@@ -562,7 +562,7 @@ class RawInstListBuilder {
             Opcodes.FCMPG, Opcodes.DCMPG -> JcRawCmpgExpr(lhv, rhv)
             else -> error("Unknown cmp opcode $opcode")
         }
-        val assignment = nextLocal(PredefinedPrimitives.int.typeName())
+        val assignment = nextRegister(PredefinedPrimitives.int.typeName())
         instructions += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -640,7 +640,7 @@ class RawInstListBuilder {
             Opcodes.SIPUSH -> push(JcRawInt(operand))
             Opcodes.NEWARRAY -> {
                 val expr = JcRawNewArrayExpr(pop(), operand.toPrimitiveType().asArray())
-                val assignment = nextLocal(expr.targetType)
+                val assignment = nextRegister(expr.targetType)
                 instructions += JcRawAssignInst(assignment, expr)
                 push(assignment)
             }
@@ -678,7 +678,7 @@ class RawInstListBuilder {
         if (Type.getReturnType(desc) == Type.VOID_TYPE) {
             instructions += JcRawCallInst(expr)
         } else {
-            val result = nextLocal(Type.getReturnType(desc).descriptor.typeName())
+            val result = nextRegister(Type.getReturnType(desc).descriptor.typeName())
             instructions += JcRawAssignInst(result, expr)
             push(result)
         }
@@ -710,10 +710,13 @@ class RawInstListBuilder {
                     Opcodes.IF_ACMPNE -> JcRawNeqExpr(pop(), rhv)
                     else -> error("Unknown jump opcode $opcode")
                 }
-                val cond = nextLocal(PredefinedPrimitives.boolean.typeName())
+                val cond = nextRegister(PredefinedPrimitives.boolean.typeName())
                 instructions += JcRawAssignInst(cond, expr)
                 instructions += JcRawIfInst(cond, target, falseTarget)
-                if (insnNode.next !is LabelNode) instructions += falseTarget
+                if (insnNode.next !is LabelNode) {
+                    instructions += falseTarget
+                    referenceCount[falseTarget] = 2
+                }
             }
         }
     }
@@ -723,7 +726,9 @@ class RawInstListBuilder {
         instructions += labelInst
         for (tryCatchNode in methodNode.tryCatchBlocks) {
             if (insnNode == tryCatchNode.handler) {
-                push(nextLocal(tryCatchNode.type.typeName()))
+                val throwable = nextRegister(tryCatchNode.type.typeName())
+                instructions += JcRawCatchInst(throwable)
+                push(throwable)
             }
         }
     }
@@ -781,7 +786,7 @@ class RawInstListBuilder {
         if (Type.getReturnType(methodDesc) == Type.VOID_TYPE) {
             instructions += JcRawCallInst(expr)
         } else {
-            val result = nextLocal(Type.getReturnType(methodDesc).descriptor.typeName())
+            val result = nextRegister(Type.getReturnType(methodDesc).descriptor.typeName())
             instructions += JcRawAssignInst(result, expr)
             push(result)
         }
@@ -793,7 +798,7 @@ class RawInstListBuilder {
             dimensions += pop()
         }
         val expr = JcRawNewArrayExpr(dimensions, insnNode.desc.typeName().asArray(dimensions.size))
-        val assignment = nextLocal(expr.targetType)
+        val assignment = nextRegister(expr.targetType)
         instructions += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -811,26 +816,26 @@ class RawInstListBuilder {
         val type = insnNode.desc.typeName()
         when (insnNode.opcode) {
             Opcodes.NEW -> {
-                val assignment = nextLocal(type)
+                val assignment = nextRegister(type)
                 instructions += JcRawAssignInst(assignment, JcRawNewExpr(type))
                 push(assignment)
             }
 
             Opcodes.ANEWARRAY -> {
                 val length = pop()
-                val assignment = nextLocal(type.asArray())
+                val assignment = nextRegister(type.asArray())
                 instructions += JcRawAssignInst(assignment, JcRawNewArrayExpr(length, type.asArray()))
                 push(assignment)
             }
 
             Opcodes.CHECKCAST -> {
-                val assignment = nextLocal(type)
+                val assignment = nextRegister(type)
                 instructions += JcRawAssignInst(assignment, JcRawCastExpr(pop(), type))
                 push(assignment)
             }
 
             Opcodes.INSTANCEOF -> {
-                val assignment = nextLocal(PredefinedPrimitives.boolean.typeName())
+                val assignment = nextRegister(PredefinedPrimitives.boolean.typeName())
                 instructions += JcRawAssignInst(assignment, JcRawInstanceOfExpr(pop(), type))
                 push(assignment)
             }

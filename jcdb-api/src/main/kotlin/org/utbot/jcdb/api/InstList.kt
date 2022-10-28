@@ -110,6 +110,15 @@ data class JcRawThrowInst(
     override fun toString(): String = "${offset}throw $throwable"
 }
 
+data class JcRawCatchInst(
+    val throwable: JcRawValue
+) : JcRawInst {
+    override val operands: List<JcRawExpr>
+        get() = listOf(throwable)
+
+    override fun toString(): String = "${offset}catch $throwable"
+}
+
 sealed interface JcRawBranchingInst : JcRawInst {
     val successors: List<JcRawLabelInst>
 }
@@ -502,6 +511,10 @@ data class JcRawArgument(val index: Int, val name: String?, override val typeNam
 }
 data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawValue(typeName) {
     override fun toString(): String = name
+}
+
+data class JcRawRegister(val index: Int, override val typeName: TypeName) : JcRawValue(typeName) {
+    override fun toString(): String = "%$index"
 }
 
 data class JcRawFieldRef(

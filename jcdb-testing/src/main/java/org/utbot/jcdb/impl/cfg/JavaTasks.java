@@ -353,5 +353,67 @@ public class JavaTasks {
     static <T extends Comparable<T>> void mergeArrays(T[] first, T[] second) {
         throw new NotImplementedError();
     }
+
+    static public String longestCommonSubstring(String first, String second) {
+        if (first.isEmpty() || second.isEmpty()) {
+            return "";
+        }
+        // Пусть twoDimArray[][] = A[][]
+        int[][] twoDimArray = new int[first.length() + 1][second.length() + 1];
+        int index = 0;   // индекс текущего символа в первой строке
+        int maxReps = 0; // максимальное число повторений
+        for (int i = 1; i <= first.length(); i++) {
+            for (int j = 1; j <= second.length(); j++) {
+                if (first.charAt(i - 1) != second.charAt(j - 1)) {
+                    twoDimArray[i][j] = 0;
+                }
+                else {
+                    twoDimArray[i][j] = twoDimArray[i - 1][j - 1] + 1;
+                    if (twoDimArray[i][j] > maxReps) {
+                        maxReps = twoDimArray[i][j];
+                        index = i;
+                    }
+                }
+
+            }
+        }
+        return first.substring(index - maxReps, index);
+    }
+    // n = first.length(); m = second.length();
+    // Трудоёмкость (Время) - O(n * m)
+    // Ресурсоёмкость (Память) - O(n * m)
+
+    /**
+     * Число простых чисел в интервале
+     * Простая
+     *
+     * Рассчитать количество простых чисел в интервале от 1 до limit (включительно).
+     * Если limit <= 1, вернуть результат 0.
+     *
+     * Справка: простым считается число, которое делится нацело только на 1 и на себя.
+     * Единица простым числом не считается.
+     */
+    static public int calcPrimesNumber(int limit) { // Решето Эратосфена
+        if (limit <= 1) return 0;
+        int p = 2;
+        int step = p;
+        int numberPrimes = 0;
+        boolean[] primeArray = new boolean[limit + 1]; // limit + 1, т.к. limit включительно
+        while (p * p <= limit) {
+            if (!primeArray[p]) {
+                for (int cycleP = p * p; cycleP <= limit; cycleP += step) {
+                    primeArray[cycleP] = true;
+                }
+            }
+            p++;
+            step = 2 * p;
+        }
+        for (int i = 2; i <= limit; i++) {
+            if (!primeArray[i]) {
+                numberPrimes++;
+            }
+        }
+        return numberPrimes;
+    }
 }
 

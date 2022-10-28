@@ -14,7 +14,7 @@ class IRTest : BaseTest() {
     fun `get ir of simple method`() = runBlocking {
         val a = cp.findClass<IRExamples>()
         a.methods.forEach { jcMethod ->
-            println(jcMethod)
+            println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
             println(RawInstListBuilder().build(jcMethod))
         }
     }

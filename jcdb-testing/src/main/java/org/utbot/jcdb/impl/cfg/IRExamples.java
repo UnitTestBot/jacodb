@@ -35,4 +35,8 @@ public class IRExamples {
         }
         return index;
     }
+
+    public boolean test(int element) {
+        return (element == 123);
+    }
 }
