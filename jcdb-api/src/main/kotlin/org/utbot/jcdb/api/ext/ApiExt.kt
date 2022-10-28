@@ -272,14 +272,35 @@ fun JcClassOrInterface.enumValues(): List<JcField>? {
 
 val JcClassOrInterface.methods: List<JcMethod>
     get() {
-        var clazz: JcClassOrInterface? = this@methods
-        val result = TreeSet(UnsafeHierarchyMethodComparator)
-        while (clazz != null) {
-            result.addAll(clazz.declaredMethods.filter { !it.isConstructor })
-            clazz = clazz.superClass
-        }
-        return result.toList()
+        return methods(allMethods = true, fromSuperTypes = true, packageName = packageName)
     }
+
+private fun JcClassOrInterface.methods(
+    allMethods: Boolean,
+    fromSuperTypes: Boolean,
+    packageName: String
+): List<JcMethod> {
+    val classPackageName = this.packageName
+    val methodSet = if (allMethods) {
+        declaredMethods
+    } else {
+        declaredMethods.filter { !it.isConstructor && (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
+    }
+
+    if (!fromSuperTypes) {
+        return methodSet
+    }
+    val result = declaredMethods.toSortedSet(UnsafeHierarchyMethodComparator)
+    result.addAll(
+        superClass?.methods(false, fromSuperTypes = true, packageName).orEmpty()
+    )
+    result.addAll(
+        interfaces.flatMap {
+            it.methods(false, fromSuperTypes = true, packageName).orEmpty()
+        }
+    )
+    return result.toList()
+}
 
 val JcClassOrInterface.constructors: List<JcMethod>
     get() {
@@ -367,21 +388,15 @@ fun JcClassOrInterface.toType(): JcClassType {
     return classpath.typeOf(this) as JcClassType
 }
 
+val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstructor }
+
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")
 
 
 // call with SAFE. comparator works only on methods from one hierarchy
-private object UnsafeHierarchyMethodComparator : Comparator<JcMethod> {
+internal object UnsafeHierarchyMethodComparator : Comparator<JcMethod> {
 
     override fun compare(o1: JcMethod, o2: JcMethod): Int {
         return (o1.name + o1.description).compareTo(o2.name + o2.description)
-    }
-}
-
-// call with SAFE. comparator works only on methods from one hierarchy
-private object UnsafeHierarchyTypedMethodComparator : Comparator<JcTypedMethod> {
-
-    override fun compare(o1: JcTypedMethod, o2: JcTypedMethod): Int {
-        return UnsafeHierarchyMethodComparator.compare(o1.method, o2.method)
     }
 }

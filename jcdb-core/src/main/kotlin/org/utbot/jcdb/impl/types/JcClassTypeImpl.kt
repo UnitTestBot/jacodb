@@ -110,26 +110,22 @@ open class JcClassTypeImpl(
             }
         }
 
-    override val declaredMethods: List<JcTypedMethod>
-        get() {
-            return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
-        }
+    override val declaredMethods by lazy(LazyThreadSafetyMode.NONE) {
+        typedMethods(true, fromSuperTypes = false, jcClass.packageName)
+    }
 
-    override val methods: List<JcTypedMethod>
-        get() {
-            //let's calculate visible methods from super types
-            return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
-        }
+    override val methods by lazy(LazyThreadSafetyMode.NONE) {
+        //let's calculate visible methods from super types
+        typedMethods(true, fromSuperTypes = true, jcClass.packageName)
+    }
 
-    override val declaredFields: List<JcTypedField>
-        get() {
-            return typedFields(true, fromSuperTypes = false, jcClass.packageName)
-        }
+    override val declaredFields by lazy(LazyThreadSafetyMode.NONE) {
+        typedFields(true, fromSuperTypes = false, jcClass.packageName)
+    }
 
-    override val fields: List<JcTypedField>
-        get() {
-            return typedFields(true, fromSuperTypes = true, jcClass.packageName)
-        }
+    override val fields by lazy(LazyThreadSafetyMode.NONE) {
+        typedFields(true, fromSuperTypes = true, jcClass.packageName)
+    }
 
     override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
 
@@ -161,17 +157,23 @@ open class JcClassTypeImpl(
         } else {
             jcClass.declaredMethods.filter { !it.isConstructor && (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
         }
-        val declaredMethods = methodSet.map {
+        val declaredMethods: List<JcTypedMethod> = methodSet.map {
             JcTypedMethodImpl(this@JcClassTypeImpl, it, substitutor)
         }
+
         if (!fromSuperTypes) {
             return declaredMethods
         }
-        return declaredMethods +
-                interfaces.flatMap {
-                    (it as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
-                } +
-                (superType as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
+        val result = declaredMethods.toSortedSet(UnsafeHierarchyTypedMethodComparator)
+        result.addAll(
+            (superType as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
+        )
+        result.addAll(
+            interfaces.flatMap {
+                (it as? JcClassTypeImpl)?.typedMethods(false, fromSuperTypes = true, packageName).orEmpty()
+            }
+        )
+        return result.toList()
     }
 
     private fun typedFields(all: Boolean, fromSuperTypes: Boolean, packageName: String): List<JcTypedField> {
@@ -215,5 +217,13 @@ fun JvmType.isReferencesClass(name: String): Boolean {
         is JvmParameterizedType -> type.name == name
         is JvmParameterizedType.JvmNestedType -> type.name == name
         else -> false
+    }
+}
+
+// call with SAFE. comparator works only on methods from one hierarchy
+private object UnsafeHierarchyTypedMethodComparator : Comparator<JcTypedMethod> {
+
+    override fun compare(o1: JcTypedMethod, o2: JcTypedMethod): Int {
+        return (o1.name + o1.method.description).compareTo(o2.name + o2.method.description)
     }
 }
