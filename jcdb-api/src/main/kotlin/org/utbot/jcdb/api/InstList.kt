@@ -32,20 +32,6 @@ sealed interface JcRawInst {
     val operands: List<JcRawExpr>
 }
 
-enum class IdentityType {
-    INSTANCE, ARGUMENT, LOCAL
-}
-
-data class JcRawIdentityInst(
-    val operand: JcRawValue,
-    val type: IdentityType
-) : JcRawInst {
-    override val operands: List<JcRawExpr>
-        get() = listOf(operand)
-
-    override fun toString(): String = "$offset$operand = ${type.name.lowercase()}"
-}
-
 data class JcRawAssignInst(
     val lhv: JcRawValue,
     val rhv: JcRawExpr

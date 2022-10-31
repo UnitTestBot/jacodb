@@ -1,5 +1,9 @@
 package org.utbot.jcdb.impl.cfg;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class IRExamples {
     public int testPrimitives(int a, int b) {
         int c = 0;
@@ -23,7 +27,7 @@ public class IRExamples {
         int index = Integer.MAX_VALUE;
 
         while (low <= high) {
-            int mid = low  + ((high - low) / 2);
+            int mid = low + ((high - low) / 2);
             if (sortedArray[mid] < key) {
                 low = mid + 1;
             } else if (sortedArray[mid] > key) {
@@ -38,5 +42,18 @@ public class IRExamples {
 
     public boolean test(int element) {
         return (element == 123);
+    }
+
+    static public void sortTimes(String inputName, String outputName) throws IOException {
+        String hour;
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                hour = line.substring(0, 2);
+                if (Integer.parseInt(hour) >= 60) {
+                    throw new NumberFormatException();
+                }
+            }
+        }
     }
 }

@@ -150,162 +150,34 @@ private val Type.asTypeName: Any
         else -> error("Unknown type: $this")
     }
 
-class RawInstListBuilder {
+class RawInstListBuilder(val method: JcMethod) {
     private lateinit var methodNode: MethodNode
     private val frames = mutableMapOf<AbstractInsnNode, Frame>()
     private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
-    private val referenceCount = mutableMapOf<JcRawLabelInst, Int>()
+    private lateinit var lastFrameState: FrameState
     private lateinit var currentFrame: Frame
-    private val instructions = mutableListOf<JcRawInst>()
+
     private val tryCatchBlocks = mutableListOf<JcRawTryCatchBlock>()
     private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
+    private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
+    private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private var labelCounter = 0
     private var localCounter = 0
 
-    private data class Frame(
-        val locals: PersistentMap<Int, JcRawValue>,
-        val stack: PersistentList<JcRawValue>,
-        val nextLocal: (TypeName) -> JcRawValue
-    ) {
-        fun put(variable: Int, value: JcRawValue): Frame = copy(locals = locals.put(variable, value), stack = stack)
-        operator fun get(variable: Int) = locals[variable]
-
-        fun push(value: JcRawValue) = copy(locals = locals, stack = stack.add(value))
-        fun peek() = stack.last()
-        fun pop(): Pair<Frame, JcRawValue> = copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
-
-        fun parseNew(insn: FrameNode): Frame {
-            val newLocals = insn.local.parseLocals()
-            val newStack = insn.stack.parseStack()
-            return copy(
-                locals = locals.filter { it.key in newLocals.keys || it.value is JcRawLocal  }.toPersistentMap(),
-                stack = stack.withIndex().filter { it.index in newStack.keys }.map { it.value }.toPersistentList()
-            )
-        }
-
-        fun appendFrame(insn: FrameNode): Frame {
-            val maxKey = this.locals.keys.maxOrNull() ?: -1
-            val lastType = locals[maxKey]?.typeName
-            val insertKey = when {
-                lastType == null -> 0
-                lastType.isDWord -> maxKey + 2
-                else -> maxKey + 1
-            }
-            val appendedLocals = insn.local.parseLocals()
-            val newLocals = this.locals.toMutableMap()
-            for ((index, type) in appendedLocals) {
-                newLocals[insertKey + index] = nextLocal(type)
-            }
-            return copy(locals = newLocals.toPersistentMap(), stack = persistentListOf())
-        }
-
-        fun dropFrame(inst: FrameNode): Frame {
-            val newLocals = this.locals.toList().dropLast(inst.local.size).toMap().toPersistentMap()
-            return copy(locals = newLocals, stack = persistentListOf())
-        }
-
-        fun copy0(): Frame = this.copy(stack = persistentListOf())
-
-        fun copy1(insn: FrameNode): Frame {
-            val newStack = insn.stack.parseStack()
-            return this.copy(stack = stack.withIndex().filter { it.index in newStack.keys }.map { it.value }.toPersistentList())
-        }
-    }
-
-    private fun pop(): JcRawValue {
-        val (frame, value) = currentFrame.pop()
-        currentFrame = frame
-        return value
-    }
-
-    private fun push(value: JcRawValue) {
-        currentFrame = currentFrame.push(value)
-    }
-
-    private fun peek(): JcRawValue = currentFrame.peek()
-
-    private fun local(variable: Int) = currentFrame.locals.getValue(variable)
-
-    private fun local(variable: Int, expr: JcRawValue) {
-        val oldVar = currentFrame.locals[variable]
-        if (oldVar != null) {
-            instructions += JcRawAssignInst(oldVar, expr)
-        } else {
-            currentFrame = currentFrame.put(variable, expr)
-        }
-    }
-
-    private fun label(insnNode: LabelNode): JcRawLabelInst {
-        val label = labels.getOrPut(insnNode, ::nextLabel)
-        referenceCount[label] = referenceCount.getOrDefault(label, 0) + 1
-        return label
-    }
-
-
-    private fun nextRegister(typeName: TypeName): JcRawValue = JcRawRegister(localCounter++, typeName)
-    private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
-
-    private fun buildGraph() {
-        for (insn in methodNode.instructions) {
-            if (insn is JumpInsnNode) {
-                predecessors.getOrPut(insn.label, ::mutableListOf).add(insn)
-                if (insn.opcode != Opcodes.GOTO) {
-                    predecessors.getOrPut(insn.next, ::mutableListOf).add(insn)
-                }
-            } else if (insn is TableSwitchInsnNode) {
-                predecessors.getOrPut(insn.dflt, ::mutableListOf).add(insn)
-                insn.labels.forEach {
-                    predecessors.getOrPut(it, ::mutableListOf).add(insn)
-                }
-            } else if (insn is LookupSwitchInsnNode) {
-                predecessors.getOrPut(insn.dflt, ::mutableListOf).add(insn)
-                insn.labels.forEach {
-                    predecessors.getOrPut(it, ::mutableListOf).add(insn)
-                }
-            } else if (insn.next != null) {
-                predecessors.getOrPut(insn.next, ::mutableListOf).add(insn)
-            }
-        }
-        for (tryCatchBlock in methodNode.tryCatchBlocks) {
-            var current: AbstractInsnNode = tryCatchBlock.start
-            while (current != tryCatchBlock.end) {
-                predecessors.getOrPut(tryCatchBlock.handler, ::mutableListOf).add(current)
-                current = current.next
-            }
-        }
-    }
-
-    private fun createInitialFrame(method: JcMethod): Frame {
-        val locals = hashMapOf<Int, JcRawValue>()
-        var localIndex = 0
-        if (!method.isStatic) {
-            val thisRef = JcRawThis(method.enclosingClass.name.typeName())
-            locals[localIndex++] = thisRef
-            instructions += JcRawIdentityInst(thisRef, IdentityType.INSTANCE)
-        }
-        for (parameter in method.parameters) {
-            val argument = JcRawArgument(parameter.index, null, parameter.type)
-            locals[localIndex] = argument
-            instructions += JcRawIdentityInst(argument, IdentityType.ARGUMENT)
-            if (argument.typeName.isDWord) localIndex += 2
-            else localIndex++
-        }
-
-        for (local in methodNode.localVariables) {
-            if (local.index < localIndex) continue
-            val rawLocal = JcRawLocal(local.name, local.desc.typeName())
-            instructions += JcRawIdentityInst(rawLocal, IdentityType.LOCAL)
-            locals[local.index] = rawLocal
-        }
-
-        return Frame(locals.toPersistentMap(), persistentListOf()) { nextRegister(it) }
-    }
-
-    fun build(method: JcMethod): JcRawInstList {
+    fun build(): JcRawInstList {
         methodNode = runBlocking { method.body() }
         buildGraph()
-        currentFrame = createInitialFrame(method)
 
+        buildInstructions()
+        buildRequiredAssignments()
+        buildTryCatchNodes()
+
+        return JcRawInstList(methodNode.instructions.flatMap { instructionList(it) }, tryCatchBlocks)
+    }
+
+    private fun buildInstructions() {
+        currentFrame = createInitialFrame(method)
         for (insn in methodNode.instructions) {
             when (insn) {
                 is InsnNode -> buildInsnNode(insn)
@@ -328,12 +200,174 @@ class RawInstListBuilder {
             }
             frames[insn] = currentFrame
         }
-        for (tryCatchNode in methodNode.tryCatchBlocks) {
-            buildTryCatchNode(tryCatchNode)
+    }
+
+    private fun buildRequiredAssignments() {
+        for ((insn, assignments) in laterAssignments) {
+            val insnList = instructionList(insn)
+            val frame = frames[insn]!!
+            for ((variable, value) in assignments) {
+                if (value != frame[variable]) {
+                    insnList += JcRawAssignInst(value, frame[variable]!!)
+                }
+            }
         }
-        val filteredInstructions = instructions
-            .filter { if (it is JcRawLabelInst) referenceCount.getOrDefault(it, 0) > 1 else true }
-        return JcRawInstList(filteredInstructions, tryCatchBlocks)
+        for ((insn, assignments) in laterStackAssignments) {
+            val insnList = instructionList(insn)
+            val frame = frames[insn]!!
+            for ((variable, value) in assignments) {
+                if (value != frame.stack[variable]) {
+                    insnList += JcRawAssignInst(value, frame.stack[variable])
+                }
+            }
+        }
+    }
+
+    private fun buildTryCatchNodes() {
+        for (tryCatchBlockNode in methodNode.tryCatchBlocks) {
+            tryCatchBlocks += JcRawTryCatchBlock(
+                tryCatchBlockNode.type.typeName(),
+                label(tryCatchBlockNode.handler),
+                label(tryCatchBlockNode.start),
+                label(tryCatchBlockNode.end)
+            )
+        }
+    }
+
+    // this class is required to handle FrameNode instructions of ASM
+    private data class FrameState(
+        val locals: Map<Int, TypeName>,
+        val stack: Map<Int, TypeName>
+    ) {
+        companion object {
+            fun parseNew(insn: FrameNode): FrameState {
+                return FrameState(insn.local.parseLocals(), insn.stack.parseStack())
+            }
+        }
+
+        fun appendFrame(insn: FrameNode): FrameState {
+            val maxKey = this.locals.keys.maxOrNull() ?: -1
+            val lastType = locals[maxKey]
+            val insertKey = when {
+                lastType == null -> 0
+                lastType.isDWord -> maxKey + 2
+                else -> maxKey + 1
+            }
+            val appendedLocals = insn.local.parseLocals()
+            val newLocals = this.locals.toMutableMap()
+            for ((index, type) in appendedLocals) {
+                newLocals[insertKey + index] = type
+            }
+            return copy(locals = newLocals, stack = emptyMap())
+        }
+
+        fun dropFrame(inst: FrameNode): FrameState {
+            val newLocals = this.locals.toList().dropLast(inst.local.size).toMap()
+            return copy(locals = newLocals, stack = emptyMap())
+        }
+
+        fun copy0(): FrameState = this.copy(stack = emptyMap())
+
+        fun copy1(insn: FrameNode): FrameState {
+            val newStack = insn.stack.parseStack()
+            return this.copy(stack = newStack)
+        }
+    }
+
+    private data class Frame(
+        val locals: PersistentMap<Int, JcRawValue>,
+        val stack: PersistentList<JcRawValue>
+    ) {
+        fun put(variable: Int, value: JcRawValue): Frame = copy(locals = locals.put(variable, value), stack = stack)
+        operator fun get(variable: Int) = locals[variable]
+
+        fun push(value: JcRawValue) = copy(locals = locals, stack = stack.add(value))
+        fun peek() = stack.last()
+        fun pop(): Pair<Frame, JcRawValue> =
+            copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
+    }
+
+    private fun pop(): JcRawValue {
+        val (frame, value) = currentFrame.pop()
+        currentFrame = frame
+        return value
+    }
+
+    private fun push(value: JcRawValue) {
+        currentFrame = currentFrame.push(value)
+    }
+
+    private fun peek(): JcRawValue = currentFrame.peek()
+
+    private fun local(variable: Int) = currentFrame.locals.getValue(variable)
+
+    private fun local(variable: Int, expr: JcRawValue): JcRawAssignInst {
+        val oldVar = currentFrame.locals[variable]
+        return if (oldVar != null) {
+            JcRawAssignInst(oldVar, expr)
+        } else {
+            val newLocal = nextRegister(expr.typeName)
+            val result = JcRawAssignInst(newLocal, expr)
+            currentFrame = currentFrame.put(variable, newLocal)
+            result
+        }
+    }
+
+    private fun label(insnNode: LabelNode): JcRawLabelInst = labels.getOrPut(insnNode, ::nextLabel)
+
+    private fun instructionList(insn: AbstractInsnNode) = instructions.getOrPut(insn, ::mutableListOf)
+
+
+    private fun nextRegister(typeName: TypeName): JcRawValue = JcRawRegister(localCounter++, typeName)
+    private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
+
+    private fun buildGraph() {
+        for (insn in methodNode.instructions) {
+            if (insn is JumpInsnNode) {
+                predecessors.getOrPut(insn.label, ::mutableListOf).add(insn)
+                if (insn.opcode != Opcodes.GOTO) {
+                    predecessors.getOrPut(insn.next, ::mutableListOf).add(insn)
+                }
+            } else if (insn is TableSwitchInsnNode) {
+                predecessors.getOrPut(insn.dflt, ::mutableListOf).add(insn)
+                insn.labels.forEach {
+                    predecessors.getOrPut(it, ::mutableListOf).add(insn)
+                }
+            } else if (insn is LookupSwitchInsnNode) {
+                predecessors.getOrPut(insn.dflt, ::mutableListOf).add(insn)
+                insn.labels.forEach {
+                    predecessors.getOrPut(it, ::mutableListOf).add(insn)
+                }
+            } else if (insn is InsnNode && (insn.opcode == Opcodes.ATHROW || insn.opcode in Opcodes.IRETURN..Opcodes.RETURN)) {
+                continue
+            } else if (insn.next != null) {
+                predecessors.getOrPut(insn.next, ::mutableListOf).add(insn)
+            }
+        }
+        for (tryCatchBlock in methodNode.tryCatchBlocks) {
+            var current: AbstractInsnNode = tryCatchBlock.start
+            while (current != tryCatchBlock.end) {
+                predecessors.getOrPut(tryCatchBlock.handler, ::mutableListOf).add(current)
+                current = current.next
+            }
+        }
+    }
+
+    private fun createInitialFrame(method: JcMethod): Frame {
+        val locals = hashMapOf<Int, JcRawValue>()
+        var localIndex = 0
+        if (!method.isStatic) {
+            val thisRef = JcRawThis(method.enclosingClass.name.typeName())
+            locals[localIndex++] = thisRef
+        }
+        for (parameter in method.parameters) {
+            val argument = JcRawArgument(parameter.index, null, parameter.type)
+            locals[localIndex] = argument
+            if (argument.typeName.isDWord) localIndex += 2
+            else localIndex++
+        }
+
+        return Frame(locals.toPersistentMap(), persistentListOf())
     }
 
     private fun buildInsnNode(insn: InsnNode) {
@@ -341,7 +375,7 @@ class RawInstListBuilder {
             Opcodes.NOP -> Unit
             in Opcodes.ACONST_NULL..Opcodes.DCONST_1 -> buildConstant(insn)
             in Opcodes.IALOAD..Opcodes.SALOAD -> buildArrayRead()
-            in Opcodes.IASTORE..Opcodes.SASTORE -> buildArrayStore()
+            in Opcodes.IASTORE..Opcodes.SASTORE -> buildArrayStore(insn)
             in Opcodes.POP..Opcodes.POP2 -> buildPop(insn)
             in Opcodes.DUP..Opcodes.DUP2_X2 -> buildDup(insn)
             Opcodes.SWAP -> buildSwap()
@@ -352,7 +386,7 @@ class RawInstListBuilder {
             in Opcodes.LCMP..Opcodes.DCMPG -> buildCmp(insn)
             in Opcodes.IRETURN..Opcodes.RETURN -> buildReturn(insn)
             Opcodes.ARRAYLENGTH -> buildUnary(insn)
-            Opcodes.ATHROW -> buildThrow()
+            Opcodes.ATHROW -> buildThrow(insn)
             in Opcodes.MONITORENTER..Opcodes.MONITOREXIT -> buildMonitor(insn)
             else -> error("Unknown insn opcode: ${insn.opcode}")
         }
@@ -377,11 +411,14 @@ class RawInstListBuilder {
         push(JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()))
     }
 
-    private fun buildArrayStore() {
+    private fun buildArrayStore(insn: InsnNode) {
         val value = pop()
         val index = pop()
         val arrayRef = pop()
-        instructions += JcRawAssignInst(JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()), value)
+        instructionList(insn) += JcRawAssignInst(
+            JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()),
+            value
+        )
     }
 
     private fun buildPop(insn: InsnNode) {
@@ -520,7 +557,7 @@ class RawInstListBuilder {
             else -> error("Unknown binary opcode: $opcode")
         }
         val assignment = nextRegister(lhv.typeName)
-        instructions += JcRawAssignInst(assignment, expr)
+        instructionList(insn) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
 
@@ -532,7 +569,7 @@ class RawInstListBuilder {
             else -> error("Unknown unary opcode $opcode")
         }
         val assignment = nextRegister(typeName)
-        instructions += JcRawAssignInst(assignment, expr)
+        instructionList(insn) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
 
@@ -549,7 +586,7 @@ class RawInstListBuilder {
             else -> error("Unknown cast opcode $opcode")
         }
         val assignment = nextRegister(targetType)
-        instructions += JcRawAssignInst(assignment, JcRawCastExpr(operand, targetType))
+        instructionList(insn) += JcRawAssignInst(assignment, JcRawCastExpr(operand, targetType))
         push(assignment)
     }
 
@@ -563,12 +600,12 @@ class RawInstListBuilder {
             else -> error("Unknown cmp opcode $opcode")
         }
         val assignment = nextRegister(PredefinedPrimitives.int.typeName())
-        instructions += JcRawAssignInst(assignment, expr)
+        instructionList(insn) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
 
     private fun buildReturn(insn: InsnNode) {
-        instructions += when (val opcode = insn.opcode) {
+        instructionList(insn) += when (val opcode = insn.opcode) {
             Opcodes.RETURN -> JcRawReturnInst(null)
             in Opcodes.IRETURN..Opcodes.ARETURN -> JcRawReturnInst(pop())
             else -> error("Unknown return opcode: $opcode")
@@ -577,16 +614,16 @@ class RawInstListBuilder {
 
     private fun buildMonitor(insn: InsnNode) {
         val monitor = pop()
-        instructions += when (val opcode = insn.opcode) {
+        instructionList(insn) += when (val opcode = insn.opcode) {
             Opcodes.MONITORENTER -> JcRawEnterMonitorInst(monitor)
             Opcodes.MONITOREXIT -> JcRawExitMonitorInst(monitor)
             else -> error("Unknown monitor opcode $opcode")
         }
     }
 
-    private fun buildThrow() {
+    private fun buildThrow(insn: InsnNode) {
         val throwable = pop()
-        instructions += JcRawThrowInst(throwable)
+        instructionList(insn) += JcRawThrowInst(throwable)
     }
 
     private fun buildFieldInsnNode(insnNode: FieldInsnNode) {
@@ -599,37 +636,119 @@ class RawInstListBuilder {
                 val value = pop()
                 val instance = pop()
                 val fieldRef = JcRawFieldRef(instance, declaringClass, fieldName, fieldType)
-                instructions += JcRawAssignInst(fieldRef, value)
+                instructionList(insnNode) += JcRawAssignInst(fieldRef, value)
             }
 
             Opcodes.GETSTATIC -> push(JcRawFieldRef(declaringClass, fieldName, fieldType))
             Opcodes.PUTSTATIC -> {
                 val value = pop()
                 val fieldRef = JcRawFieldRef(declaringClass, fieldName, fieldType)
-                instructions += JcRawAssignInst(fieldRef, value)
+                instructionList(insnNode) += JcRawAssignInst(fieldRef, value)
             }
         }
     }
 
     private fun buildFrameNode(insnNode: FrameNode) {
-        val predecessorFrames = predecessors[insnNode]!!.mapNotNull { frames[it] }
+        val (currentEntry, blockPredecessors) = run {
+            var current: AbstractInsnNode = insnNode
+            while (current !is LabelNode) current = current.previous
+            current to predecessors[current]!!
+        }
+        val predecessorFrames = blockPredecessors.associateWith { frames[it] }
         assert(predecessorFrames.isNotEmpty())
-        val predecessorFrame = predecessorFrames.first()
-        currentFrame = when (insnNode.type) {
-            Opcodes.F_NEW -> predecessorFrame.parseNew(insnNode)
-            Opcodes.F_FULL -> predecessorFrame.parseNew(insnNode)
-            Opcodes.F_APPEND -> predecessorFrame.appendFrame(insnNode)
-            Opcodes.F_CHOP -> predecessorFrame.dropFrame(insnNode)
-            Opcodes.F_SAME -> predecessorFrame.copy0()
-            Opcodes.F_SAME1 -> predecessorFrame.copy1(insnNode)
+        lastFrameState = when (insnNode.type) {
+            Opcodes.F_NEW -> FrameState.parseNew(insnNode)
+            Opcodes.F_FULL -> FrameState.parseNew(insnNode)
+            Opcodes.F_APPEND -> lastFrameState.appendFrame(insnNode)
+            Opcodes.F_CHOP -> lastFrameState.dropFrame(insnNode)
+            Opcodes.F_SAME -> lastFrameState.copy0()
+            Opcodes.F_SAME1 -> lastFrameState.copy1(insnNode)
             else -> error("Unknown frame node type: ${insnNode.type}")
+        }
+
+        fun FrameState.copyLocals(predFrames: Map<AbstractInsnNode, Frame?>): Map<Int, JcRawValue> = when {
+            predFrames.isEmpty() -> locals.mapValues { nextRegister(it.value) }
+
+            predFrames.size == 1 -> {
+                val frame = predFrames.values.first()
+                assert(frame != null)
+                frame!!.locals
+            }
+
+            else -> locals.mapNotNull { (variable, type) ->
+                val options = predFrames.values.map { it?.get(variable) }.toSet()
+                val value = when {
+                    type == TOP -> null
+                    options.size == 1 -> options.singleOrNull()
+                    else -> {
+                        val assignment = nextRegister(type)
+                        for ((node, frame) in predFrames) {
+                            if (frame != null) {
+                                instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
+                            } else {
+                                laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
+                            }
+                        }
+                        assignment
+                    }
+                }
+                value?.let { variable to it }
+            }.toMap()
+
+        }
+
+        fun FrameState.copyStack(predFrames: Map<AbstractInsnNode, Frame?>): List<JcRawValue> = when {
+            predFrames.isEmpty() -> stack.values.map { nextRegister(it) }
+
+            predFrames.size == 1 -> {
+                val frame = predFrames.values.first()
+                assert(frame != null)
+                frame!!.stack
+            }
+
+            else -> stack.mapNotNull { (variable, type) ->
+                val options = predFrames.values.map { it?.stack?.get(variable) }.toSet()
+                when (options.size) {
+                    1 -> options.singleOrNull()
+                    else -> {
+                        val assignment = nextRegister(type)
+                        for ((node, frame) in predFrames) {
+                            if (frame != null) {
+                                instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
+                            } else {
+                                laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
+                            }
+                        }
+                        assignment
+                    }
+                }
+            }
+        }
+
+        when (val catch = methodNode.tryCatchBlocks.firstOrNull { it.handler == currentEntry }) {
+            null -> {
+                currentFrame = Frame(
+                    lastFrameState.copyLocals(predecessorFrames).toPersistentMap(),
+                    lastFrameState.copyStack(predecessorFrames).toPersistentList()
+                )
+            }
+
+            else -> {
+                currentFrame = Frame(
+                    lastFrameState.copyLocals(predecessorFrames).toPersistentMap(),
+                    persistentListOf()
+                )
+                val throwable = nextRegister(catch.type.typeName())
+                instructionList(insnNode) += JcRawCatchInst(throwable)
+                push(throwable)
+            }
         }
     }
 
     private fun buildIincInsnNode(insnNode: IincInsnNode) {
         val local = local(insnNode.`var`)
         val add = JcRawAddExpr(local, JcRawInt(insnNode.incr))
-        instructions += JcRawAssignInst(local, add)
+        instructionList(insnNode) += JcRawAssignInst(local, add)
         local(insnNode.`var`, local)
     }
 
@@ -641,7 +760,7 @@ class RawInstListBuilder {
             Opcodes.NEWARRAY -> {
                 val expr = JcRawNewArrayExpr(pop(), operand.toPrimitiveType().asArray())
                 val assignment = nextRegister(expr.targetType)
-                instructions += JcRawAssignInst(assignment, expr)
+                instructionList(insnNode) += JcRawAssignInst(assignment, expr)
                 push(assignment)
             }
 
@@ -649,9 +768,10 @@ class RawInstListBuilder {
         }
     }
 
-    private val Handle.asMethodHandle get() = MethodHandle(
-        tag, owner.typeName(), name, desc, isInterface
-    )
+    private val Handle.asMethodHandle
+        get() = MethodHandle(
+            tag, owner.typeName(), name, desc, isInterface
+        )
 
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
         // todo: better invokedynamic handling
@@ -676,10 +796,10 @@ class RawInstListBuilder {
             bsmArgs
         )
         if (Type.getReturnType(desc) == Type.VOID_TYPE) {
-            instructions += JcRawCallInst(expr)
+            instructionList(insnNode) += JcRawCallInst(expr)
         } else {
             val result = nextRegister(Type.getReturnType(desc).descriptor.typeName())
-            instructions += JcRawAssignInst(result, expr)
+            instructionList(insnNode) += JcRawAssignInst(result, expr)
             push(result)
         }
     }
@@ -687,7 +807,7 @@ class RawInstListBuilder {
     private fun buildJumpInsnNode(insnNode: JumpInsnNode) {
         val target = label(insnNode.label)
         when (val opcode = insnNode.opcode) {
-            Opcodes.GOTO -> instructions += JcRawGotoInst(target)
+            Opcodes.GOTO -> instructionList(insnNode) += JcRawGotoInst(target)
             else -> {
                 val falseTarget = (insnNode.next as? LabelNode)?.let { label(it) } ?: nextLabel()
                 val rhv = pop()
@@ -711,11 +831,10 @@ class RawInstListBuilder {
                     else -> error("Unknown jump opcode $opcode")
                 }
                 val cond = nextRegister(PredefinedPrimitives.boolean.typeName())
-                instructions += JcRawAssignInst(cond, expr)
-                instructions += JcRawIfInst(cond, target, falseTarget)
+                instructionList(insnNode) += JcRawAssignInst(cond, expr)
+                instructionList(insnNode) += JcRawIfInst(cond, target, falseTarget)
                 if (insnNode.next !is LabelNode) {
-                    instructions += falseTarget
-                    referenceCount[falseTarget] = 2
+                    instructionList(insnNode) += falseTarget
                 }
             }
         }
@@ -723,14 +842,7 @@ class RawInstListBuilder {
 
     private fun buildLabelNode(insnNode: LabelNode) {
         val labelInst = label(insnNode)
-        instructions += labelInst
-        for (tryCatchNode in methodNode.tryCatchBlocks) {
-            if (insnNode == tryCatchNode.handler) {
-                val throwable = nextRegister(tryCatchNode.type.typeName())
-                instructions += JcRawCatchInst(throwable)
-                push(throwable)
-            }
-        }
+        instructionList(insnNode) += labelInst
     }
 
     private fun buildLdcInsnNode(insnNode: LdcInsnNode) {
@@ -761,17 +873,17 @@ class RawInstListBuilder {
         val branches = insnNode.keys
             .zip(insnNode.labels)
             .associate { (JcRawInt(it.first) as JcRawValue) to label(it.second) }
-        instructions += JcRawSwitchInst(key, branches, default)
+        instructionList(insnNode) += JcRawSwitchInst(key, branches, default)
     }
 
-    private fun buildMethodInsnNode(insn: MethodInsnNode) {
-        val owner = insn.owner.typeName()
-        val methodName = insn.name
-        val methodDesc = insn.desc
+    private fun buildMethodInsnNode(insnNode: MethodInsnNode) {
+        val owner = insnNode.owner.typeName()
+        val methodName = insnNode.name
+        val methodDesc = insnNode.desc
 
         val args = Type.getArgumentTypes(methodDesc).map { pop() }.reversed()
 
-        val expr = when (val opcode = insn.opcode) {
+        val expr = when (val opcode = insnNode.opcode) {
             Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(owner, methodName, methodDesc, args)
             else -> {
                 val instance = pop()
@@ -779,15 +891,15 @@ class RawInstListBuilder {
                     Opcodes.INVOKEVIRTUAL -> JcRawVirtualCallExpr(owner, methodName, methodDesc, instance, args)
                     Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(owner, methodName, methodDesc, instance, args)
                     Opcodes.INVOKEINTERFACE -> JcRawInterfaceCallExpr(owner, methodName, methodDesc, instance, args)
-                    else -> error("Unknown method insn opcode: ${insn.opcode}")
+                    else -> error("Unknown method insn opcode: ${insnNode.opcode}")
                 }
             }
         }
         if (Type.getReturnType(methodDesc) == Type.VOID_TYPE) {
-            instructions += JcRawCallInst(expr)
+            instructionList(insnNode) += JcRawCallInst(expr)
         } else {
             val result = nextRegister(Type.getReturnType(methodDesc).descriptor.typeName())
-            instructions += JcRawAssignInst(result, expr)
+            instructionList(insnNode) += JcRawAssignInst(result, expr)
             push(result)
         }
     }
@@ -799,7 +911,7 @@ class RawInstListBuilder {
         }
         val expr = JcRawNewArrayExpr(dimensions, insnNode.desc.typeName().asArray(dimensions.size))
         val assignment = nextRegister(expr.targetType)
-        instructions += JcRawAssignInst(assignment, expr)
+        instructionList(insnNode) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
 
@@ -809,7 +921,7 @@ class RawInstListBuilder {
         val branches = (insnNode.min..insnNode.max)
             .zip(insnNode.labels)
             .associate { (JcRawInt(it.first) as JcRawValue) to label(it.second) }
-        instructions += JcRawSwitchInst(index, branches, default)
+        instructionList(insnNode) += JcRawSwitchInst(index, branches, default)
     }
 
     private fun buildTypeInsnNode(insnNode: TypeInsnNode) {
@@ -817,26 +929,26 @@ class RawInstListBuilder {
         when (insnNode.opcode) {
             Opcodes.NEW -> {
                 val assignment = nextRegister(type)
-                instructions += JcRawAssignInst(assignment, JcRawNewExpr(type))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawNewExpr(type))
                 push(assignment)
             }
 
             Opcodes.ANEWARRAY -> {
                 val length = pop()
                 val assignment = nextRegister(type.asArray())
-                instructions += JcRawAssignInst(assignment, JcRawNewArrayExpr(length, type.asArray()))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawNewArrayExpr(length, type.asArray()))
                 push(assignment)
             }
 
             Opcodes.CHECKCAST -> {
                 val assignment = nextRegister(type)
-                instructions += JcRawAssignInst(assignment, JcRawCastExpr(pop(), type))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawCastExpr(pop(), type))
                 push(assignment)
             }
 
             Opcodes.INSTANCEOF -> {
                 val assignment = nextRegister(PredefinedPrimitives.boolean.typeName())
-                instructions += JcRawAssignInst(assignment, JcRawInstanceOfExpr(pop(), type))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawInstanceOfExpr(pop(), type))
                 push(assignment)
             }
 
@@ -846,18 +958,10 @@ class RawInstListBuilder {
 
     private fun buildVarInsnNode(insnNode: VarInsnNode) {
         when (insnNode.opcode) {
-            in Opcodes.ISTORE..Opcodes.ASTORE -> local(insnNode.`var`, pop())
+            in Opcodes.ISTORE..Opcodes.ASTORE -> instructionList(insnNode).add(local(insnNode.`var`, pop()))
+
             in Opcodes.ILOAD..Opcodes.ALOAD -> push(local(insnNode.`var`))
             else -> error("Unknown opcode ${insnNode.opcode} in VarInsnNode")
         }
-    }
-
-    private fun buildTryCatchNode(tryCatchBlockNode: TryCatchBlockNode) {
-        tryCatchBlocks += JcRawTryCatchBlock(
-            tryCatchBlockNode.type.typeName(),
-            label(tryCatchBlockNode.handler),
-            label(tryCatchBlockNode.start),
-            label(tryCatchBlockNode.end)
-        )
     }
 }
