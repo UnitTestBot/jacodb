@@ -150,6 +150,13 @@ private val Type.asTypeName: Any
         else -> error("Unknown type: $this")
     }
 
+private val AbstractInsnNode.isBranchingInst get() = when (this) {
+    is JumpInsnNode -> true
+    is TableSwitchInsnNode -> true
+    is LookupSwitchInsnNode -> true
+    else -> false
+}
+
 class RawInstListBuilder(val method: JcMethod) {
     private lateinit var methodNode: MethodNode
     private val frames = mutableMapOf<AbstractInsnNode, Frame>()
@@ -173,7 +180,9 @@ class RawInstListBuilder(val method: JcMethod) {
         buildRequiredAssignments()
         buildTryCatchNodes()
 
-        return JcRawInstList(methodNode.instructions.flatMap { instructionList(it) }, tryCatchBlocks)
+        val originalInstructionList = methodNode.instructions.flatMap { instructionList(it) }
+        val simplifiedInstructionList = Simplifier().simplify(originalInstructionList)
+        return JcRawInstList(simplifiedInstructionList, tryCatchBlocks)
     }
 
     private fun buildInstructions() {
@@ -684,7 +693,11 @@ class RawInstListBuilder(val method: JcMethod) {
                         val assignment = nextRegister(type)
                         for ((node, frame) in predFrames) {
                             if (frame != null) {
-                                instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
+                                if (node.isBranchingInst) {
+                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame[variable]!!))
+                                } else {
+                                    instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
+                                }
                             } else {
                                 laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
                             }
@@ -714,7 +727,11 @@ class RawInstListBuilder(val method: JcMethod) {
                         val assignment = nextRegister(type)
                         for ((node, frame) in predFrames) {
                             if (frame != null) {
-                                instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
+                                if (node.isBranchingInst) {
+                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame.stack[variable]))
+                                } else {
+                                    instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
+                                }
                             } else {
                                 laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
                             }
@@ -768,21 +785,27 @@ class RawInstListBuilder(val method: JcMethod) {
         }
     }
 
-    private val Handle.asMethodHandle
-        get() = MethodHandle(
-            tag, owner.typeName(), name, desc, isInterface
+    private val Handle.asMethodConstant
+        get() = JcRawMethodConstant(
+            tag,
+            owner.typeName(),
+            name,
+            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
+            Type.getReturnType(desc).descriptor.typeName(),
+            isInterface,
+            METHOD_HANDLE_CLASS.typeName()
         )
 
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
         // todo: better invokedynamic handling
         val desc = insnNode.desc
-        val bsmMethod = insnNode.bsm.asMethodHandle
+        val bsmMethod = insnNode.bsm.asMethodConstant
         val bsmArgs = insnNode.bsmArgs.map {
             when (it) {
                 is Number -> JcRawNumber(it)
                 is String -> JcRawString(it)
                 is Type -> it.asTypeName
-                is Handle -> it.asMethodHandle
+                is Handle -> it.asMethodConstant
                 else -> error("Unknown arg of bsm: $it")
             }
         }.reversed()
@@ -855,10 +878,12 @@ class RawInstListBuilder(val method: JcMethod) {
             is Type -> push(JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName()))
             is Handle -> push(
                 JcRawMethodConstant(
+                    0,
                     cst.owner.typeName(),
                     cst.name,
                     Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
                     Type.getReturnType(cst.desc).descriptor.typeName(),
+                    false,
                     METHOD_HANDLE_CLASS.typeName()
                 )
             )
