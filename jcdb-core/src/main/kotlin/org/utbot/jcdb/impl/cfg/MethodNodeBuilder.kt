@@ -46,8 +46,10 @@ private val TypeName.typeInt
         else -> error("$typeName is not primitive type")
     }
 
-class MethodNodeBuilder(val method: JcMethod, val instList: JcRawInstList) : JcRawInstVisitor<Unit>,
-    JcRawExprVisitor<Unit> {
+class MethodNodeBuilder(
+    val method: JcMethod,
+    val instList: JcRawInstList
+) : JcRawInstVisitor<Unit>, JcRawExprVisitor<Unit> {
     private var localIndex = 0
     private var stackSize = 0
     private var maxStack = 0
@@ -61,7 +63,8 @@ class MethodNodeBuilder(val method: JcMethod, val instList: JcRawInstList) : JcR
         val mn = MethodNode()
         mn.name = method.name
         mn.desc = method.description
-        mn.exceptions = runBlocking { method.exceptions().map { it.simpleName.jvmName() } }
+        mn.parameters = method.parameters.map { ParameterNode(it.name, it.access) }
+        mn.exceptions = method.exceptions.map { it.simpleName.jvmName() }
         mn.instructions = currentInsnList
         mn.tryCatchBlocks = buildTryCatchBlocks()
         mn.maxLocals = localIndex
