@@ -7,26 +7,12 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import org.utbot.jcdb.api.*
-import org.utbot.jcdb.impl.types.TypeNameImpl
+import org.utbot.jcdb.impl.cfg.util.*
+import org.utbot.jcdb.impl.cfg.util.NULL
+import org.utbot.jcdb.impl.cfg.util.STRING_CLASS
+import org.utbot.jcdb.impl.cfg.util.isDWord
+import org.utbot.jcdb.impl.cfg.util.typeName
 import java.util.*
-
-private const val STRING_CLASS = "java.lang.String"
-private const val CLASS_CLASS = "java.lang.Class"
-private const val METHOD_HANDLE_CLASS = "java.lang.invoke.MethodHandle"
-
-private val TypeName.isDWord
-    get() = when (typeName) {
-        PredefinedPrimitives.long -> true
-        PredefinedPrimitives.double -> true
-        else -> false
-    }
-
-private fun String.typeName(): TypeName = TypeNameImpl(jcdbName())
-private fun TypeName.asArray(dimensions: Int = 1) = "$typeName${"[]".repeat(dimensions)}".typeName()
-private fun TypeName.elementType() = when {
-    typeName.endsWith("[]") -> typeName.removeSuffix("[]").typeName()
-    else -> error("Attempting to get element type of non-array type $this")
-}
 
 private fun Int.toPrimitiveType(): TypeName = when (this) {
     Opcodes.T_CHAR -> PredefinedPrimitives.char
@@ -41,7 +27,6 @@ private fun Int.toPrimitiveType(): TypeName = when (this) {
 }.typeName()
 
 private val TOP = "TOP".typeName()
-private val NULL = "null".typeName()
 private val UNINIT_THIS = "UNINIT_THIS".typeName()
 
 private fun parsePrimitiveType(opcode: Int) = when (opcode) {
@@ -98,40 +83,6 @@ private fun List<*>?.parseStack(): SortedMap<Int, TypeName> {
     }
     return result.toSortedMap()
 }
-
-
-private fun JcRawNull() = JcRawNullConstant(NULL)
-private fun JcRawBool(value: Boolean) = JcRawBool(value, PredefinedPrimitives.boolean.typeName())
-private fun JcRawByte(value: Byte) = JcRawByte(value, PredefinedPrimitives.byte.typeName())
-private fun JcRawShort(value: Short) = JcRawShort(value, PredefinedPrimitives.short.typeName())
-private fun JcRawChar(value: Char) = JcRawChar(value, PredefinedPrimitives.char.typeName())
-private fun JcRawInt(value: Int) = JcRawInt(value, PredefinedPrimitives.int.typeName())
-private fun JcRawLong(value: Long) = JcRawLong(value, PredefinedPrimitives.long.typeName())
-private fun JcRawFloat(value: Float) = JcRawFloat(value, PredefinedPrimitives.float.typeName())
-private fun JcRawDouble(value: Double) = JcRawDouble(value, PredefinedPrimitives.double.typeName())
-
-private fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
-    PredefinedPrimitives.boolean -> JcRawBool(false)
-    PredefinedPrimitives.byte -> JcRawByte(0)
-    PredefinedPrimitives.char -> JcRawChar(0.toChar())
-    PredefinedPrimitives.short -> JcRawShort(0)
-    PredefinedPrimitives.int -> JcRawInt(0)
-    PredefinedPrimitives.long -> JcRawLong(0)
-    PredefinedPrimitives.float -> JcRawFloat(0.0f)
-    PredefinedPrimitives.double -> JcRawDouble(0.0)
-    else -> error("Unknown primitive type: $typeName")
-}
-
-private fun JcRawNumber(number: Number) = when (number) {
-    is Int -> JcRawInt(number)
-    is Float -> JcRawFloat(number)
-    is Long -> JcRawLong(number)
-    is Double -> JcRawDouble(number)
-    else -> error("Unknown number: $number")
-}
-
-private fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())
-
 
 private val Type.asTypeName: Any
     get() = when (this.sort) {
@@ -786,27 +737,19 @@ class RawInstListBuilder(val method: JcMethod) {
         }
     }
 
-    private val Handle.asMethodConstant
-        get() = JcRawMethodConstant(
-            tag,
-            owner.typeName(),
-            name,
-            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
-            Type.getReturnType(desc).descriptor.typeName(),
-            isInterface,
-            METHOD_HANDLE_CLASS.typeName()
-        )
+    private val Handle.jcRawHandle
+        get() = JcRawHandle(tag, owner.typeName(), name, desc, isInterface)
 
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
         // todo: better invokedynamic handling
         val desc = insnNode.desc
-        val bsmMethod = insnNode.bsm.asMethodConstant
+        val bsmMethod = insnNode.bsm.jcRawHandle
         val bsmArgs = insnNode.bsmArgs.map {
             when (it) {
                 is Number -> JcRawNumber(it)
                 is String -> JcRawString(it)
                 is Type -> it.asTypeName
-                is Handle -> it.asMethodConstant
+                is Handle -> it.jcRawHandle
                 else -> error("Unknown arg of bsm: $it")
             }
         }.reversed()
@@ -856,9 +799,7 @@ class RawInstListBuilder(val method: JcMethod) {
                     Opcodes.IF_ACMPNE -> JcRawNeqExpr(boolTypeName, pop(), rhv)
                     else -> error("Unknown jump opcode $opcode")
                 }
-                val cond = nextRegister(PredefinedPrimitives.boolean.typeName())
-                instructionList(insnNode) += JcRawAssignInst(cond, expr)
-                instructionList(insnNode) += JcRawIfInst(cond, target, falseTarget)
+                instructionList(insnNode) += JcRawIfInst(expr, target, falseTarget)
                 if (insnNode.next !is LabelNode) {
                     instructionList(insnNode) += falseTarget
                 }
@@ -881,12 +822,10 @@ class RawInstListBuilder(val method: JcMethod) {
             is Type -> push(JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName()))
             is Handle -> push(
                 JcRawMethodConstant(
-                    0,
                     cst.owner.typeName(),
                     cst.name,
                     Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
                     Type.getReturnType(cst.desc).descriptor.typeName(),
-                    false,
                     METHOD_HANDLE_CLASS.typeName()
                 )
             )

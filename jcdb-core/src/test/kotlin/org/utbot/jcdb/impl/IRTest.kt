@@ -3,9 +3,7 @@ package org.utbot.jcdb.impl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.cfg.JavaTasks
-import org.utbot.jcdb.impl.cfg.RawInstListBuilder
-import org.utbot.jcdb.impl.cfg.IRExamples
+import org.utbot.jcdb.impl.cfg.*
 
 class IRTest : BaseTest() {
     companion object : WithDB()
@@ -15,7 +13,10 @@ class IRTest : BaseTest() {
         val a = cp.findClass<IRExamples>()
         a.methods.forEach { jcMethod ->
             println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
-            println(RawInstListBuilder(jcMethod).build())
+            val instList = RawInstListBuilder(jcMethod).build()
+            println(instList)
+            val mn = MethodNodeBuilder(jcMethod, instList).build()
+            println(mn.print())
         }
     }
 

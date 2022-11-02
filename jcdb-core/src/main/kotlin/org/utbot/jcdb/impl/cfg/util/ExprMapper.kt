@@ -71,7 +71,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
     }
 
     override fun visitJcRawIfInst(inst: JcRawIfInst): JcRawInst {
-        val newCondition = inst.condition.accept(this) as JcRawValue
+        val newCondition = inst.condition.accept(this) as JcRawConditionExpr
         return when (inst.condition) {
             newCondition -> inst
             else -> JcRawIfInst(newCondition, inst.trueBranch, inst.falseBranch)
@@ -92,184 +92,94 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         return handler()
     }
 
-    override fun visitJcRawAddExpr(expr: JcRawAddExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawAddExpr(newLhv.typeName, newLhv, newRhv)
+    private fun <T : JcRawBinaryExpr> binaryHandler(expr: T, handler: (TypeName, JcRawValue, JcRawValue) -> T) =
+        exprHandler(expr) {
+            val newLhv = expr.lhv.accept(this) as JcRawValue
+            val newRhv = expr.rhv.accept(this) as JcRawValue
+            when {
+                expr.lhv == newLhv && expr.rhv == newRhv -> expr
+                else -> handler(newLhv.typeName, newLhv, newRhv)
+            }
         }
+
+    override fun visitJcRawAddExpr(expr: JcRawAddExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawAddExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawAndExpr(expr: JcRawAndExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawAndExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawAndExpr(expr: JcRawAndExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawAndExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmpExpr(expr: JcRawCmpExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmpExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawCmpExpr(expr: JcRawCmpExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawCmpExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmpgExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawCmpgExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmplExpr(expr: JcRawCmplExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmplExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawCmplExpr(expr: JcRawCmplExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawCmplExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawDivExpr(expr: JcRawDivExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawDivExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawDivExpr(expr: JcRawDivExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawDivExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawMulExpr(expr: JcRawMulExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawMulExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawMulExpr(expr: JcRawMulExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawMulExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawEqExpr(expr: JcRawEqExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawEqExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawEqExpr(expr: JcRawEqExpr) = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawEqExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawNeqExpr(expr: JcRawNeqExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawNeqExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawNeqExpr(expr: JcRawNeqExpr)  = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawNeqExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawGeExpr(expr: JcRawGeExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawGeExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawGeExpr(expr: JcRawGeExpr) = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawGeExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawGtExpr(expr: JcRawGtExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawGtExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawGtExpr(expr: JcRawGtExpr)  = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawGtExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawLeExpr(expr: JcRawLeExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawLeExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawLeExpr(expr: JcRawLeExpr) = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawLeExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawLtExpr(expr: JcRawLtExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawLtExpr(expr.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawLtExpr(expr: JcRawLtExpr) = binaryHandler(expr) { _, lhv, rhv ->
+        JcRawLtExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawOrExpr(expr: JcRawOrExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawOrExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawOrExpr(expr: JcRawOrExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawOrExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawRemExpr(expr: JcRawRemExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawRemExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawRemExpr(expr: JcRawRemExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawRemExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawShlExpr(expr: JcRawShlExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawShlExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawShlExpr(expr: JcRawShlExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawShlExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawShrExpr(expr: JcRawShrExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawShrExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawShrExpr(expr: JcRawShrExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawShrExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawSubExpr(expr: JcRawSubExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawSubExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawSubExpr(expr: JcRawSubExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawSubExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawUshrExpr(expr: JcRawUshrExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawUshrExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawUshrExpr(expr: JcRawUshrExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawUshrExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawXorExpr(expr: JcRawXorExpr) = exprHandler(expr) {
-        val newLhv = expr.lhv.accept(this) as JcRawValue
-        val newRhv = expr.rhv.accept(this) as JcRawValue
-        when {
-            expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawXorExpr(newLhv.typeName, newLhv, newRhv)
-        }
+    override fun visitJcRawXorExpr(expr: JcRawXorExpr) = binaryHandler(expr) { type, lhv, rhv ->
+        JcRawXorExpr(type, lhv, rhv)
     }
 
     override fun visitJcRawLengthExpr(expr: JcRawLengthExpr) = exprHandler(expr) {
