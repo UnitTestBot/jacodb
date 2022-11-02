@@ -97,7 +97,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawAddExpr(newLhv, newRhv)
+            else -> JcRawAddExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -106,7 +106,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawAndExpr(newLhv, newRhv)
+            else -> JcRawAndExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -115,7 +115,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmpExpr(newLhv, newRhv)
+            else -> JcRawCmpExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -124,7 +124,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmpgExpr(newLhv, newRhv)
+            else -> JcRawCmpgExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -133,7 +133,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawCmplExpr(newLhv, newRhv)
+            else -> JcRawCmplExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -142,7 +142,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawDivExpr(newLhv, newRhv)
+            else -> JcRawDivExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -151,7 +151,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawMulExpr(newLhv, newRhv)
+            else -> JcRawMulExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -160,7 +160,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawEqExpr(newLhv, newRhv)
+            else -> JcRawEqExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -169,7 +169,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawNeqExpr(newLhv, newRhv)
+            else -> JcRawNeqExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -178,7 +178,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawGeExpr(newLhv, newRhv)
+            else -> JcRawGeExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -187,7 +187,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawGtExpr(newLhv, newRhv)
+            else -> JcRawGtExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -196,7 +196,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawLeExpr(newLhv, newRhv)
+            else -> JcRawLeExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -205,7 +205,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawLtExpr(newLhv, newRhv)
+            else -> JcRawLtExpr(expr.typeName, newLhv, newRhv)
         }
     }
 
@@ -214,7 +214,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawOrExpr(newLhv, newRhv)
+            else -> JcRawOrExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -223,7 +223,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawRemExpr(newLhv, newRhv)
+            else -> JcRawRemExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -232,7 +232,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawShlExpr(newLhv, newRhv)
+            else -> JcRawShlExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -241,7 +241,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawShrExpr(newLhv, newRhv)
+            else -> JcRawShrExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -250,7 +250,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawSubExpr(newLhv, newRhv)
+            else -> JcRawSubExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -259,7 +259,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawUshrExpr(newLhv, newRhv)
+            else -> JcRawUshrExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -268,7 +268,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = expr.rhv.accept(this) as JcRawValue
         when {
             expr.lhv == newLhv && expr.rhv == newRhv -> expr
-            else -> JcRawXorExpr(newLhv, newRhv)
+            else -> JcRawXorExpr(newLhv.typeName, newLhv, newRhv)
         }
     }
 
@@ -276,7 +276,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newArray = expr.array.accept(this) as JcRawValue
         when (expr.array) {
             newArray -> expr
-            else -> JcRawLengthExpr(newArray)
+            else -> JcRawLengthExpr(expr.typeName, newArray)
         }
     }
 
@@ -284,7 +284,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newOperand = expr.operand.accept(this) as JcRawValue
         when (expr.operand) {
             newOperand -> expr
-            else -> JcRawNegExpr(newOperand)
+            else -> JcRawNegExpr(newOperand.typeName, newOperand)
         }
     }
 
@@ -292,7 +292,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newOperand = expr.operand.accept(this) as JcRawValue
         when (expr.operand) {
             newOperand -> expr
-            else -> JcRawCastExpr(newOperand, expr.targetType)
+            else -> JcRawCastExpr(expr.typeName, newOperand)
         }
     }
 
@@ -304,7 +304,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newOperand = expr.operand.accept(this) as JcRawValue
         when (expr.operand) {
             newOperand -> expr
-            else -> JcRawInstanceOfExpr(newOperand, expr.targetType)
+            else -> JcRawInstanceOfExpr(expr.typeName, newOperand, expr.targetType)
         }
     }
 
@@ -313,6 +313,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawDynamicCallExpr(
+                expr.typeName,
                 expr.declaringClass,
                 expr.methodName,
                 expr.methodDesc,
@@ -328,7 +329,9 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newArgs = expr.args.map { it.accept(this) as JcRawValue }
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
-            else -> JcRawVirtualCallExpr(expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs)
+            else -> JcRawVirtualCallExpr(
+                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+            )
         }
     }
 
@@ -337,7 +340,9 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newArgs = expr.args.map { it.accept(this) as JcRawValue }
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
-            else -> JcRawInterfaceCallExpr(expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs)
+            else -> JcRawInterfaceCallExpr(
+                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+            )
         }
     }
 
@@ -345,7 +350,9 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newArgs = expr.args.map { it.accept(this) as JcRawValue }
         when (expr.args) {
             newArgs -> expr
-            else -> JcRawStaticCallExpr(expr.declaringClass, expr.methodName, expr.methodDesc, newArgs)
+            else -> JcRawStaticCallExpr(
+                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newArgs
+            )
         }
     }
 
@@ -354,7 +361,9 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newArgs = expr.args.map { it.accept(this) as JcRawValue }
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
-            else -> JcRawSpecialCallExpr(expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs)
+            else -> JcRawSpecialCallExpr(
+                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+            )
         }
     }
 

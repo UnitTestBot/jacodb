@@ -150,12 +150,13 @@ private val Type.asTypeName: Any
         else -> error("Unknown type: $this")
     }
 
-private val AbstractInsnNode.isBranchingInst get() = when (this) {
-    is JumpInsnNode -> true
-    is TableSwitchInsnNode -> true
-    is LookupSwitchInsnNode -> true
-    else -> false
-}
+private val AbstractInsnNode.isBranchingInst
+    get() = when (this) {
+        is JumpInsnNode -> true
+        is TableSwitchInsnNode -> true
+        is LookupSwitchInsnNode -> true
+        else -> false
+    }
 
 class RawInstListBuilder(val method: JcMethod) {
     private lateinit var methodNode: MethodNode
@@ -552,17 +553,17 @@ class RawInstListBuilder(val method: JcMethod) {
         val rhv = pop()
         val lhv = pop()
         val expr = when (val opcode = insn.opcode) {
-            in Opcodes.IADD..Opcodes.DADD -> JcRawAddExpr(lhv, rhv)
-            in Opcodes.ISUB..Opcodes.DSUB -> JcRawSubExpr(lhv, rhv)
-            in Opcodes.IMUL..Opcodes.DMUL -> JcRawMulExpr(lhv, rhv)
-            in Opcodes.IDIV..Opcodes.DDIV -> JcRawDivExpr(lhv, rhv)
-            in Opcodes.IREM..Opcodes.DREM -> JcRawRemExpr(lhv, rhv)
-            in Opcodes.ISHL..Opcodes.LSHL -> JcRawShlExpr(lhv, rhv)
-            in Opcodes.ISHR..Opcodes.LSHR -> JcRawShrExpr(lhv, rhv)
-            in Opcodes.IUSHR..Opcodes.LUSHR -> JcRawUshrExpr(lhv, rhv)
-            in Opcodes.IAND..Opcodes.LAND -> JcRawAndExpr(lhv, rhv)
-            in Opcodes.IOR..Opcodes.LOR -> JcRawOrExpr(lhv, rhv)
-            in Opcodes.IXOR..Opcodes.LXOR -> JcRawXorExpr(lhv, rhv)
+            in Opcodes.IADD..Opcodes.DADD -> JcRawAddExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.ISUB..Opcodes.DSUB -> JcRawSubExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IMUL..Opcodes.DMUL -> JcRawMulExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IDIV..Opcodes.DDIV -> JcRawDivExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IREM..Opcodes.DREM -> JcRawRemExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.ISHL..Opcodes.LSHL -> JcRawShlExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.ISHR..Opcodes.LSHR -> JcRawShrExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IUSHR..Opcodes.LUSHR -> JcRawUshrExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IAND..Opcodes.LAND -> JcRawAndExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IOR..Opcodes.LOR -> JcRawOrExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IXOR..Opcodes.LXOR -> JcRawXorExpr(lhv.typeName, lhv, rhv)
             else -> error("Unknown binary opcode: $opcode")
         }
         val assignment = nextRegister(lhv.typeName)
@@ -572,12 +573,12 @@ class RawInstListBuilder(val method: JcMethod) {
 
     private fun buildUnary(insn: InsnNode) {
         val operand = pop()
-        val (expr, typeName) = when (val opcode = insn.opcode) {
-            in Opcodes.INEG..Opcodes.DNEG -> JcRawNegExpr(operand) to operand.typeName
-            Opcodes.ARRAYLENGTH -> JcRawLengthExpr(operand) to PredefinedPrimitives.int.typeName()
+        val expr = when (val opcode = insn.opcode) {
+            in Opcodes.INEG..Opcodes.DNEG -> JcRawNegExpr(operand.typeName, operand)
+            Opcodes.ARRAYLENGTH -> JcRawLengthExpr(PredefinedPrimitives.int.typeName(), operand)
             else -> error("Unknown unary opcode $opcode")
         }
-        val assignment = nextRegister(typeName)
+        val assignment = nextRegister(expr.typeName)
         instructionList(insn) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -595,7 +596,7 @@ class RawInstListBuilder(val method: JcMethod) {
             else -> error("Unknown cast opcode $opcode")
         }
         val assignment = nextRegister(targetType)
-        instructionList(insn) += JcRawAssignInst(assignment, JcRawCastExpr(operand, targetType))
+        instructionList(insn) += JcRawAssignInst(assignment, JcRawCastExpr(targetType, operand))
         push(assignment)
     }
 
@@ -603,9 +604,9 @@ class RawInstListBuilder(val method: JcMethod) {
         val rhv = pop()
         val lhv = pop()
         val expr = when (val opcode = insn.opcode) {
-            Opcodes.LCMP -> JcRawCmpExpr(lhv, rhv)
-            Opcodes.FCMPL, Opcodes.DCMPL -> JcRawCmplExpr(lhv, rhv)
-            Opcodes.FCMPG, Opcodes.DCMPG -> JcRawCmpgExpr(lhv, rhv)
+            Opcodes.LCMP -> JcRawCmpExpr(PredefinedPrimitives.int.typeName(), lhv, rhv)
+            Opcodes.FCMPL, Opcodes.DCMPL -> JcRawCmplExpr(PredefinedPrimitives.int.typeName(), lhv, rhv)
+            Opcodes.FCMPG, Opcodes.DCMPG -> JcRawCmpgExpr(PredefinedPrimitives.int.typeName(), lhv, rhv)
             else -> error("Unknown cmp opcode $opcode")
         }
         val assignment = nextRegister(PredefinedPrimitives.int.typeName())
@@ -764,7 +765,7 @@ class RawInstListBuilder(val method: JcMethod) {
 
     private fun buildIincInsnNode(insnNode: IincInsnNode) {
         val local = local(insnNode.`var`)
-        val add = JcRawAddExpr(local, JcRawInt(insnNode.incr))
+        val add = JcRawAddExpr(local.typeName, local, JcRawInt(insnNode.incr))
         instructionList(insnNode) += JcRawAssignInst(local, add)
         local(insnNode.`var`, local)
     }
@@ -775,8 +776,8 @@ class RawInstListBuilder(val method: JcMethod) {
             Opcodes.BIPUSH -> push(JcRawInt(operand))
             Opcodes.SIPUSH -> push(JcRawInt(operand))
             Opcodes.NEWARRAY -> {
-                val expr = JcRawNewArrayExpr(pop(), operand.toPrimitiveType().asArray())
-                val assignment = nextRegister(expr.targetType)
+                val expr = JcRawNewArrayExpr(operand.toPrimitiveType().asArray(), pop())
+                val assignment = nextRegister(expr.typeName)
                 instructionList(insnNode) += JcRawAssignInst(assignment, expr)
                 push(assignment)
             }
@@ -811,6 +812,7 @@ class RawInstListBuilder(val method: JcMethod) {
         }.reversed()
         val args = Type.getArgumentTypes(desc).map { pop() }
         val expr = JcRawDynamicCallExpr(
+            Type.getReturnType(desc).descriptor.typeName(),
             "".typeName(),
             "dynamic call",
             desc,
@@ -834,23 +836,24 @@ class RawInstListBuilder(val method: JcMethod) {
             else -> {
                 val falseTarget = (insnNode.next as? LabelNode)?.let { label(it) } ?: nextLabel()
                 val rhv = pop()
+                val boolTypeName = PredefinedPrimitives.boolean.typeName()
                 val expr = when (opcode) {
-                    Opcodes.IFNULL -> JcRawEqExpr(rhv, JcRawNull())
-                    Opcodes.IFNONNULL -> JcRawNeqExpr(rhv, JcRawNull())
-                    Opcodes.IFEQ -> JcRawEqExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IFNE -> JcRawNeqExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IFLT -> JcRawLtExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IFGE -> JcRawGeExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IFGT -> JcRawGtExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IFLE -> JcRawLeExpr(JcRawZero(rhv.typeName), rhv)
-                    Opcodes.IF_ICMPEQ -> JcRawEqExpr(pop(), rhv)
-                    Opcodes.IF_ICMPNE -> JcRawNeqExpr(pop(), rhv)
-                    Opcodes.IF_ICMPLT -> JcRawLtExpr(pop(), rhv)
-                    Opcodes.IF_ICMPGE -> JcRawGeExpr(pop(), rhv)
-                    Opcodes.IF_ICMPGT -> JcRawGtExpr(pop(), rhv)
-                    Opcodes.IF_ICMPLE -> JcRawLeExpr(pop(), rhv)
-                    Opcodes.IF_ACMPEQ -> JcRawEqExpr(pop(), rhv)
-                    Opcodes.IF_ACMPNE -> JcRawNeqExpr(pop(), rhv)
+                    Opcodes.IFNULL -> JcRawEqExpr(boolTypeName, rhv, JcRawNull())
+                    Opcodes.IFNONNULL -> JcRawNeqExpr(boolTypeName, rhv, JcRawNull())
+                    Opcodes.IFEQ -> JcRawEqExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IFNE -> JcRawNeqExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IFLT -> JcRawLtExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IFGE -> JcRawGeExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IFGT -> JcRawGtExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IFLE -> JcRawLeExpr(boolTypeName, JcRawZero(rhv.typeName), rhv)
+                    Opcodes.IF_ICMPEQ -> JcRawEqExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ICMPNE -> JcRawNeqExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ICMPLT -> JcRawLtExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ICMPGE -> JcRawGeExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ICMPGT -> JcRawGtExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ICMPLE -> JcRawLeExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ACMPEQ -> JcRawEqExpr(boolTypeName, pop(), rhv)
+                    Opcodes.IF_ACMPNE -> JcRawNeqExpr(boolTypeName, pop(), rhv)
                     else -> error("Unknown jump opcode $opcode")
                 }
                 val cond = nextRegister(PredefinedPrimitives.boolean.typeName())
@@ -908,14 +911,39 @@ class RawInstListBuilder(val method: JcMethod) {
 
         val args = Type.getArgumentTypes(methodDesc).map { pop() }.reversed()
 
+        val exprType = Type.getReturnType(methodDesc).descriptor.typeName()
         val expr = when (val opcode = insnNode.opcode) {
-            Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(owner, methodName, methodDesc, args)
+            Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(exprType, owner, methodName, methodDesc, args)
             else -> {
                 val instance = pop()
                 when (opcode) {
-                    Opcodes.INVOKEVIRTUAL -> JcRawVirtualCallExpr(owner, methodName, methodDesc, instance, args)
-                    Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(owner, methodName, methodDesc, instance, args)
-                    Opcodes.INVOKEINTERFACE -> JcRawInterfaceCallExpr(owner, methodName, methodDesc, instance, args)
+                    Opcodes.INVOKEVIRTUAL -> JcRawVirtualCallExpr(
+                        exprType,
+                        owner,
+                        methodName,
+                        methodDesc,
+                        instance,
+                        args
+                    )
+
+                    Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(
+                        exprType,
+                        owner,
+                        methodName,
+                        methodDesc,
+                        instance,
+                        args
+                    )
+
+                    Opcodes.INVOKEINTERFACE -> JcRawInterfaceCallExpr(
+                        exprType,
+                        owner,
+                        methodName,
+                        methodDesc,
+                        instance,
+                        args
+                    )
+
                     else -> error("Unknown method insn opcode: ${insnNode.opcode}")
                 }
             }
@@ -934,8 +962,8 @@ class RawInstListBuilder(val method: JcMethod) {
         repeat(insnNode.dims) {
             dimensions += pop()
         }
-        val expr = JcRawNewArrayExpr(dimensions, insnNode.desc.typeName().asArray(dimensions.size))
-        val assignment = nextRegister(expr.targetType)
+        val expr = JcRawNewArrayExpr(insnNode.desc.typeName().asArray(dimensions.size), dimensions)
+        val assignment = nextRegister(expr.typeName)
         instructionList(insnNode) += JcRawAssignInst(assignment, expr)
         push(assignment)
     }
@@ -961,19 +989,22 @@ class RawInstListBuilder(val method: JcMethod) {
             Opcodes.ANEWARRAY -> {
                 val length = pop()
                 val assignment = nextRegister(type.asArray())
-                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawNewArrayExpr(length, type.asArray()))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawNewArrayExpr(type.asArray(), length))
                 push(assignment)
             }
 
             Opcodes.CHECKCAST -> {
                 val assignment = nextRegister(type)
-                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawCastExpr(pop(), type))
+                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawCastExpr(type, pop()))
                 push(assignment)
             }
 
             Opcodes.INSTANCEOF -> {
                 val assignment = nextRegister(PredefinedPrimitives.boolean.typeName())
-                instructionList(insnNode) += JcRawAssignInst(assignment, JcRawInstanceOfExpr(pop(), type))
+                instructionList(insnNode) += JcRawAssignInst(
+                    assignment,
+                    JcRawInstanceOfExpr(PredefinedPrimitives.boolean.typeName(), pop(), type)
+                )
                 push(assignment)
             }
 
