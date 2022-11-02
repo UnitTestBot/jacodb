@@ -109,6 +109,8 @@ private val AbstractInsnNode.isBranchingInst
         else -> false
     }
 
+private val TryCatchBlockNode.typeOrDefault get() = this.type ?: THROWABLE_CLASS
+
 class RawInstListBuilder(val method: JcMethod) {
     private lateinit var methodNode: MethodNode
     private val frames = mutableMapOf<AbstractInsnNode, Frame>()
@@ -187,7 +189,7 @@ class RawInstListBuilder(val method: JcMethod) {
     private fun buildTryCatchNodes() {
         for (tryCatchBlockNode in methodNode.tryCatchBlocks) {
             tryCatchBlocks += JcRawTryCatchBlock(
-                tryCatchBlockNode.type.typeName(),
+                tryCatchBlockNode.typeOrDefault.typeName(),
                 label(tryCatchBlockNode.handler),
                 label(tryCatchBlockNode.start),
                 label(tryCatchBlockNode.end)
@@ -707,7 +709,7 @@ class RawInstListBuilder(val method: JcMethod) {
                     lastFrameState.copyLocals(predecessorFrames).toPersistentMap(),
                     persistentListOf()
                 )
-                val throwable = nextRegister(catch.type.typeName())
+                val throwable = nextRegister(catch.typeOrDefault.typeName())
                 instructionList(insnNode) += JcRawCatchInst(throwable)
                 push(throwable)
             }

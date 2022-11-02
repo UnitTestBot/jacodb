@@ -5,6 +5,7 @@ import org.utbot.jcdb.impl.types.TypeNameImpl
 
 internal val NULL = "null".typeName()
 internal const val STRING_CLASS = "java.lang.String"
+internal const val THROWABLE_CLASS = "java.lang.Throwable"
 internal const val CLASS_CLASS = "java.lang.Class"
 internal const val METHOD_HANDLE_CLASS = "java.lang.invoke.MethodHandle"
 
