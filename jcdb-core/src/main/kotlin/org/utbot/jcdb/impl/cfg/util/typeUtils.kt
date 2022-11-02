@@ -8,6 +8,16 @@ internal const val STRING_CLASS = "java.lang.String"
 internal const val CLASS_CLASS = "java.lang.Class"
 internal const val METHOD_HANDLE_CLASS = "java.lang.invoke.MethodHandle"
 
+// TODO: decide what to do with this
+data class MethodTypeNameImpl(
+    val argTypes: List<TypeName>,
+    val returnType: TypeName
+) : TypeName {
+    override val typeName: String
+        get() = "(${argTypes.joinToString(", ")})$returnType"
+
+}
+
 internal val TypeName.jvmTypeName get() = typeName.jvmName()
 
 internal val TypeName.isPrimitive get() = PredefinedPrimitives.matches(typeName)
@@ -21,18 +31,20 @@ internal val TypeName.isDWord
 
 internal fun String.typeName(): TypeName = TypeNameImpl(jcdbName())
 internal fun TypeName.asArray(dimensions: Int = 1) = "$typeName${"[]".repeat(dimensions)}".typeName()
-internal fun TypeName.elementType() = when {
+internal fun TypeName.elementType() = elementTypeOrNull() ?: error("Attempting to get element type of non-array type $this")
+
+internal fun TypeName.elementTypeOrNull() = when {
     typeName.endsWith("[]") -> typeName.removeSuffix("[]").typeName()
-    else -> error("Attempting to get element type of non-array type $this")
+    else -> null
 }
 internal fun TypeName.baseElementType(): TypeName {
-    var current = this
-    var next = current
+    var current: TypeName? = this
+    var next: TypeName? = current
     do {
         current = next
-        next = current.elementType()
-    } while (current != next)
-    return next
+        next = current!!.elementTypeOrNull()
+    } while (next != null)
+    return current!!
 }
 
 

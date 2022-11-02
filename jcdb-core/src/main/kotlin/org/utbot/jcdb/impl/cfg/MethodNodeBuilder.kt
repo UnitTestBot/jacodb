@@ -491,6 +491,8 @@ class MethodNodeBuilder(
             ) { it.jvmTypeName }
         )
 
+    private val TypeName.asAsmType: Type get() = Type.getType(this.jvmTypeName)
+
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr) {
         expr.args.forEach { it.accept(this) }
         currentInsnList.add(
@@ -505,7 +507,12 @@ class MethodNodeBuilder(
                         is JcRawLong -> it.value
                         is JcRawDouble -> it.value
                         is JcRawStringConstant -> it.value
-                        is TypeName -> it.jvmTypeName
+                        is MethodTypeNameImpl -> Type.getMethodType(
+                            it.returnType.asAsmType,
+                            *it.argTypes.map { it.asAsmType }.toTypedArray()
+                        )
+
+                        is TypeName -> it.asAsmType
                         is JcRawMethodConstant -> it.asAsmType
                         is JcRawHandle -> it.asAsmHandle
                         else -> error("Unknown arg of bsm: $it")

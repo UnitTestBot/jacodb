@@ -84,7 +84,7 @@ private fun List<*>?.parseStack(): SortedMap<Int, TypeName> {
     return result.toSortedMap()
 }
 
-private val Type.asTypeName: Any
+private val Type.asTypeName: TypeName
     get() = when (this.sort) {
         Type.VOID -> PredefinedPrimitives.void.typeName()
         Type.BOOLEAN -> PredefinedPrimitives.boolean.typeName()
@@ -95,9 +95,9 @@ private val Type.asTypeName: Any
         Type.FLOAT -> PredefinedPrimitives.float.typeName()
         Type.LONG -> PredefinedPrimitives.long.typeName()
         Type.DOUBLE -> PredefinedPrimitives.double.typeName()
-        Type.ARRAY -> (elementType.asTypeName as TypeName).asArray()
+        Type.ARRAY -> elementType.asTypeName.asArray()
         Type.OBJECT -> className.typeName()
-        Type.METHOD -> Pair(this.argumentTypes.map { it.asTypeName }, this.returnType.asTypeName)
+        Type.METHOD -> MethodTypeNameImpl(this.argumentTypes.map { it.asTypeName }, this.returnType.asTypeName)
         else -> error("Unknown type: $this")
     }
 
