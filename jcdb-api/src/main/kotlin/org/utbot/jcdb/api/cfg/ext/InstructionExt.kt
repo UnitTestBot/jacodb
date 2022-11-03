@@ -1,7 +1,9 @@
 package org.utbot.jcdb.api.cfg.ext
 
+import org.utbot.jcdb.api.JcRawExpr
 import org.utbot.jcdb.api.JcRawInst
 import org.utbot.jcdb.api.JcRawInstList
+import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 
 fun JcRawInstList.filter(visitor: JcRawInstVisitor<Boolean>) =
@@ -28,4 +30,15 @@ fun <R, E, T : JcRawInstVisitor<E>> JcRawInstList.applyAndGet(visitor: T, getter
 
 fun <T> JcRawInstList.collect(visitor: JcRawInstVisitor<T>): Collection<T> {
     return instructions.map { it.accept(visitor) }
+}
+
+
+fun <R, E, T : JcRawInstVisitor<E>> JcRawInst.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
+}
+
+fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
 }
