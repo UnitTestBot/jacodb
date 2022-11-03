@@ -62,7 +62,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newThrowable = inst.throwable.accept(this) as JcRawValue
         return when (inst.throwable) {
             newThrowable -> inst
-            else -> JcRawCatchInst(newThrowable)
+            else -> JcRawCatchInst(newThrowable, inst.handler, inst.startInclusive, inst.endExclusive)
         }
     }
 

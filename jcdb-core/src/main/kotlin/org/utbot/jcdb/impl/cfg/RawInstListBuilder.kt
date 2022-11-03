@@ -1,7 +1,6 @@
 package org.utbot.jcdb.impl.cfg
 
 import kotlinx.collections.immutable.*
-import kotlinx.coroutines.runBlocking
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -109,16 +108,20 @@ private val AbstractInsnNode.isBranchingInst
         else -> false
     }
 
+private val AbstractInsnNode.isTerminateInst
+    get() = this is InsnNode && (this.opcode == Opcodes.ATHROW || this.opcode in Opcodes.IRETURN..Opcodes.RETURN)
+
 private val TryCatchBlockNode.typeOrDefault get() = this.type ?: THROWABLE_CLASS
 
-class RawInstListBuilder(val method: JcMethod) {
-    private lateinit var methodNode: MethodNode
+class RawInstListBuilder(
+    val method: JcMethod,
+    private val methodNode: MethodNode)
+{
     private val frames = mutableMapOf<AbstractInsnNode, Frame>()
     private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
     private lateinit var lastFrameState: FrameState
     private lateinit var currentFrame: Frame
 
-    private val tryCatchBlocks = mutableListOf<JcRawTryCatchBlock>()
     private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
     private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
@@ -127,16 +130,13 @@ class RawInstListBuilder(val method: JcMethod) {
     private var localCounter = 0
 
     fun build(): JcRawInstList {
-        methodNode = runBlocking { method.body() }
         buildGraph()
 
         buildInstructions()
         buildRequiredAssignments()
-        buildTryCatchNodes()
 
-        val originalInstructionList = methodNode.instructions.flatMap { instructionList(it) }
-        val simplifiedInstructionList = Simplifier().simplify(originalInstructionList)
-        return JcRawInstList(simplifiedInstructionList, tryCatchBlocks)
+        val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
+        return Simplifier().simplify(originalInstructionList)
     }
 
     private fun buildInstructions() {
@@ -183,17 +183,6 @@ class RawInstListBuilder(val method: JcMethod) {
                     insnList += JcRawAssignInst(value, frame.stack[variable])
                 }
             }
-        }
-    }
-
-    private fun buildTryCatchNodes() {
-        for (tryCatchBlockNode in methodNode.tryCatchBlocks) {
-            tryCatchBlocks += JcRawTryCatchBlock(
-                tryCatchBlockNode.typeOrDefault.typeName(),
-                label(tryCatchBlockNode.handler),
-                label(tryCatchBlockNode.start),
-                label(tryCatchBlockNode.end)
-            )
         }
     }
 
@@ -301,7 +290,7 @@ class RawInstListBuilder(val method: JcMethod) {
                 insn.labels.forEach {
                     predecessors.getOrPut(it, ::mutableListOf).add(insn)
                 }
-            } else if (insn is InsnNode && (insn.opcode == Opcodes.ATHROW || insn.opcode in Opcodes.IRETURN..Opcodes.RETURN)) {
+            } else if (insn.isTerminateInst) {
                 continue
             } else if (insn.next != null) {
                 predecessors.getOrPut(insn.next, ::mutableListOf).add(insn)
@@ -710,7 +699,12 @@ class RawInstListBuilder(val method: JcMethod) {
                     persistentListOf()
                 )
                 val throwable = nextRegister(catch.typeOrDefault.typeName())
-                instructionList(insnNode) += JcRawCatchInst(throwable)
+                instructionList(insnNode) += JcRawCatchInst(
+                    throwable,
+                    label(catch.handler),
+                    label(catch.start),
+                    label(catch.end)
+                )
                 push(throwable)
             }
         }

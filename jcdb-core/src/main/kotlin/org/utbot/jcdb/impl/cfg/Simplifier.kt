@@ -3,7 +3,12 @@ package org.utbot.jcdb.impl.cfg
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.cfg.DefaultJcRawInstVisitor
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
+import org.utbot.jcdb.api.cfg.ext.applyAndGet
+import org.utbot.jcdb.api.cfg.ext.filter
+import org.utbot.jcdb.api.cfg.ext.map
+import org.utbot.jcdb.api.cfg.ext.mapNotNull
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
+import org.utbot.jcdb.impl.cfg.util.InstructionFilter
 
 private fun JcRawExpr.fullExprSet(): Set<JcRawExpr> = FullExprSetCollector().let {
     this.accept(it)
@@ -314,16 +319,6 @@ internal class RepeatedAssignmentCleaner : DefaultJcRawInstVisitor<JcRawInst?> {
     }
 }
 
-internal class InstructionFilterer(val predicate: (JcRawInst) -> Boolean) : DefaultJcRawInstVisitor<JcRawInst?> {
-    override val defaultInstHandler: (JcRawInst) -> JcRawInst?
-        get() = {
-            when {
-                predicate(it) -> it
-                else -> null
-            }
-        }
-}
-
 internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawInst>>) : DefaultJcRawInstVisitor<Unit> {
     val replacements = mutableMapOf<JcRawRegister, JcRawValue>()
     val replacedInsts = mutableSetOf<JcRawInst>()
@@ -341,46 +336,27 @@ internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawIn
 }
 
 internal class Simplifier {
-    fun simplify(instructionList: List<JcRawInst>): List<JcRawInst> {
-        var instructions = RepeatedAssignmentCleaner().let { visitor ->
-            instructionList.mapNotNull { it.accept(visitor) }
-        }
+    fun simplify(instList: JcRawInstList): JcRawInstList {
+        var instructionList = instList.mapNotNull(RepeatedAssignmentCleaner())
 
-        var deletions = true
-        while (deletions) {
-            deletions = false
-            val uses = UseCaseComputer().let { visitor ->
-                instructions.forEach { it.accept(visitor) }
-                visitor.uses
-            }
-            instructions = InstructionFilterer {
-                deletions = it is JcRawAssignInst && it.rhv is JcRawValue && uses.getOrDefault(it.lhv, 0) == 0
-                !deletions
-            }.let { visitor ->
-                instructions.mapNotNull { it.accept(visitor) }
-            }
-        }
+        do {
+            val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
+            val oldSize = instructionList.instructions.size
+            instructionList = instructionList.filter(InstructionFilter {
+                !(it is JcRawAssignInst && it.rhv is JcRawValue && uses.getOrDefault(it.lhv, 0) == 0)
+            })
+        } while (instructionList.instructions.size != oldSize)
 
-        deletions = true
-        while (deletions) {
-            deletions = false
-            val uses = UseCaseComputer().let { visitor ->
-                instructions.forEach { it.accept(visitor) }
-                visitor.uses
+        do {
+            val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
+            val (replacements, instructionsToDelete) = instructionList.applyAndGet(ReplacementComputer(uses)) {
+                it.replacements to it.replacedInsts
             }
-            val (replacements, deletionInsts) = ReplacementComputer(uses).let { visitor ->
-                instructions.forEach { it.accept(visitor) }
-                visitor.replacements to visitor.replacedInsts
-            }
-            deletions = replacements.isNotEmpty()
-            instructions = ExprMapper(replacements.toMap()).let { visitor ->
-                instructions.map { it.accept(visitor) }
-            }
-            instructions = InstructionFilterer { it !in deletionInsts }.let { visitor ->
-                instructions.mapNotNull { it.accept(visitor) }
-            }
-        }
+            instructionList = instructionList
+                .map(ExprMapper(replacements.toMap()))
+                .filter(InstructionFilter { it !in instructionsToDelete })
+        } while (replacements.isNotEmpty())
 
-        return instructions
+        return instructionList
     }
 }

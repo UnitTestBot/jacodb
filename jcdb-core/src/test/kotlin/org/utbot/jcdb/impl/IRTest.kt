@@ -14,7 +14,8 @@ class IRTest : BaseTest() {
         val a = cp.findClass<IRExamples>()
         a.methods.forEach { jcMethod ->
             println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
-            val instList = RawInstListBuilder(jcMethod).build()
+            val body = runBlocking { jcMethod.body() }
+            val instList = RawInstListBuilder(jcMethod, body).build()
             println(instList)
             val mn = MethodNodeBuilder(jcMethod, instList).build()
             println(mn.print())
@@ -26,7 +27,8 @@ class IRTest : BaseTest() {
         val a = cp.findClass<JavaTasks>()
         a.methods.forEach { jcMethod ->
             println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
-            val instList = RawInstListBuilder(jcMethod).build()
+            val body = runBlocking { jcMethod.body() }
+            val instList = RawInstListBuilder(jcMethod, body).build()
             println(instList)
             val mn = MethodNodeBuilder(jcMethod, instList).build()
             println(mn.print())

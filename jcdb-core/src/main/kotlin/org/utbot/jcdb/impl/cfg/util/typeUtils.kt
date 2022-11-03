@@ -47,36 +47,3 @@ internal fun TypeName.baseElementType(): TypeName {
     } while (next != null)
     return current!!
 }
-
-
-internal fun JcRawNull() = JcRawNullConstant(NULL)
-internal fun JcRawBool(value: Boolean) = JcRawBool(value, PredefinedPrimitives.boolean.typeName())
-internal fun JcRawByte(value: Byte) = JcRawByte(value, PredefinedPrimitives.byte.typeName())
-internal fun JcRawShort(value: Short) = JcRawShort(value, PredefinedPrimitives.short.typeName())
-internal fun JcRawChar(value: Char) = JcRawChar(value, PredefinedPrimitives.char.typeName())
-internal fun JcRawInt(value: Int) = JcRawInt(value, PredefinedPrimitives.int.typeName())
-internal fun JcRawLong(value: Long) = JcRawLong(value, PredefinedPrimitives.long.typeName())
-internal fun JcRawFloat(value: Float) = JcRawFloat(value, PredefinedPrimitives.float.typeName())
-internal fun JcRawDouble(value: Double) = JcRawDouble(value, PredefinedPrimitives.double.typeName())
-
-internal fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
-    PredefinedPrimitives.boolean -> JcRawBool(false)
-    PredefinedPrimitives.byte -> JcRawByte(0)
-    PredefinedPrimitives.char -> JcRawChar(0.toChar())
-    PredefinedPrimitives.short -> JcRawShort(0)
-    PredefinedPrimitives.int -> JcRawInt(0)
-    PredefinedPrimitives.long -> JcRawLong(0)
-    PredefinedPrimitives.float -> JcRawFloat(0.0f)
-    PredefinedPrimitives.double -> JcRawDouble(0.0)
-    else -> error("Unknown primitive type: $typeName")
-}
-
-internal fun JcRawNumber(number: Number) = when (number) {
-    is Int -> JcRawInt(number)
-    is Float -> JcRawFloat(number)
-    is Long -> JcRawLong(number)
-    is Double -> JcRawDouble(number)
-    else -> error("Unknown number: $number")
-}
-
-internal fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())

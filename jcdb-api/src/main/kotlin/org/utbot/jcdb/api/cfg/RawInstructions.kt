@@ -6,29 +6,13 @@ import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 private const val offset = "  "
 
 class JcRawInstList(
-    instructions: List<JcRawInst> = emptyList(),
-    tryCatchBlocks: List<JcRawTryCatchBlock> = emptyList()
+    val instructions: List<JcRawInst>
 ) {
-    val instructions_ = instructions.toMutableList()
-    val tryCatchBlocks = tryCatchBlocks.toMutableList()
-
-    override fun toString(): String = instructions_.joinToString(
+    override fun toString(): String = instructions.joinToString(
         prefix = "\n--------------------\n",
         postfix = "\n--------------------\n",
         separator = "\n"
-    ) + if (tryCatchBlocks.isNotEmpty()) tryCatchBlocks.joinToString(
-        postfix = "\n--------------------\n",
-        separator = "\n"
-    ) else ""
-}
-
-data class JcRawTryCatchBlock(
-    val throwable: TypeName,
-    val handler: JcRawLabelInst,
-    val startInclusive: JcRawLabelInst,
-    val endExclusive: JcRawLabelInst
-) {
-    override fun toString(): String = "${handler.name} catch $throwable: ${startInclusive.name} - ${endExclusive.name}"
+    )
 }
 
 sealed interface JcRawInst {
@@ -130,12 +114,15 @@ data class JcRawThrowInst(
 }
 
 data class JcRawCatchInst(
-    val throwable: JcRawValue
+    val throwable: JcRawValue,
+    val handler: JcRawLabelInst,
+    val startInclusive: JcRawLabelInst,
+    val endExclusive: JcRawLabelInst
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "${offset}catch $throwable"
+    override fun toString(): String = "${offset}catch ($throwable: ${throwable.typeName}) ${startInclusive.name} - ${endExclusive.name}"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCatchInst(this)

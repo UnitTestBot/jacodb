@@ -1,6 +1,5 @@
 package org.utbot.jcdb.impl.cfg
 
-import kotlinx.coroutines.runBlocking
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -56,6 +55,7 @@ class MethodNodeBuilder(
     private val locals = mutableMapOf<JcRawValue, Int>()
     private val labels = mutableMapOf<JcRawLabelInst, LabelNode>()
     private val currentInsnList = InsnList()
+    private val tryCatchNodeList = mutableListOf<TryCatchBlockNode>()
 
     fun build(): MethodNode {
         initializeFrame(method)
@@ -66,7 +66,7 @@ class MethodNodeBuilder(
         mn.parameters = method.parameters.map { ParameterNode(it.name, it.access) }
         mn.exceptions = method.exceptions.map { it.simpleName.jvmName() }
         mn.instructions = currentInsnList
-        mn.tryCatchBlocks = buildTryCatchBlocks()
+        mn.tryCatchBlocks = tryCatchNodeList
         mn.maxLocals = localIndex
         mn.maxStack = maxStack + 1
         return mn
@@ -86,22 +86,9 @@ class MethodNodeBuilder(
     }
 
     private fun buildInstructionList() {
-        for (inst in instList.instructions_) {
+        for (inst in instList.instructions) {
             inst.accept(this)
         }
-    }
-
-    private fun buildTryCatchBlocks(): List<TryCatchBlockNode> {
-        val catchBlocks = mutableListOf<TryCatchBlockNode>()
-        for (catchBlock in instList.tryCatchBlocks) {
-            catchBlocks += TryCatchBlockNode(
-                label(catchBlock.startInclusive),
-                label(catchBlock.endExclusive),
-                label(catchBlock.handler),
-                catchBlock.throwable.jvmTypeName
-            )
-        }
-        return catchBlocks
     }
 
     private fun local(jcRawValue: JcRawValue): Int = locals.getOrPut(jcRawValue) { localIndex++ }
@@ -171,6 +158,12 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst) {
+        tryCatchNodeList += TryCatchBlockNode(
+            label(inst.startInclusive),
+            label(inst.endExclusive),
+            label(inst.handler),
+            inst.throwable.typeName.jvmTypeName
+        )
         updateStackInfo(1)
         currentInsnList.add(storeValue(inst.throwable))
     }
@@ -509,7 +502,7 @@ class MethodNodeBuilder(
                         is JcRawStringConstant -> it.value
                         is MethodTypeNameImpl -> Type.getMethodType(
                             it.returnType.asAsmType,
-                            *it.argTypes.map { it.asAsmType }.toTypedArray()
+                            *it.argTypes.map { arg -> arg.asAsmType }.toTypedArray()
                         )
 
                         is TypeName -> it.asAsmType
