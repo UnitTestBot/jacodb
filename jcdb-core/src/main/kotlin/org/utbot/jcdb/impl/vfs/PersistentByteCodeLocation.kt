@@ -4,18 +4,18 @@ import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
+import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import java.io.File
 
 class PersistentByteCodeLocation(
-    internal val entity: BytecodeLocationEntity,
+    internal val entity: BytecodelocationsRecord,
     override val jcLocation: JcByteCodeLocation
 ) : RegisteredLocation {
 
-    constructor(entity: BytecodeLocationEntity) : this(entity, entity.toJcLocation())
+    constructor(entity: BytecodelocationsRecord) : this(entity, entity.toJcLocation())
 
     override val id: Long
-        get() = entity.id.value
+        get() = entity.id!!
 }
 
 
@@ -50,7 +50,7 @@ class RestoredJcByteCodeLocation(
 }
 
 
-fun BytecodeLocationEntity.toJcLocation() = RestoredJcByteCodeLocation(
-    path,
-    LocationType.RUNTIME.takeIf { runtime } ?: LocationType.APP,
-    hash)
+fun BytecodelocationsRecord.toJcLocation() = RestoredJcByteCodeLocation(
+    path!!,
+    LocationType.RUNTIME.takeIf { runtime!! } ?: LocationType.APP,
+    hash!!)

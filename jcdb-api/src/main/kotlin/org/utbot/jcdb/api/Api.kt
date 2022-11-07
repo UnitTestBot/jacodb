@@ -100,7 +100,6 @@ interface JCDB : Closeable {
      * await background jobs
      */
     suspend fun awaitBackgroundJobs()
-
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
 }
 

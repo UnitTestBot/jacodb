@@ -1,13 +1,7 @@
-package org.utbot.jcdb.impl.performance
+package org.utbot.jcdb
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.utbot.jcdb.impl.index.Usages
-import org.utbot.jcdb.impl.storage.ClassEntity
-import org.utbot.jcdb.impl.storage.FieldEntity
-import org.utbot.jcdb.impl.storage.MethodEntity
-import org.utbot.jcdb.impl.storage.MethodParameterEntity
-import org.utbot.jcdb.jcdb
 
 fun main() {
     var start = System.currentTimeMillis()
@@ -22,12 +16,12 @@ fun main() {
             it.awaitBackgroundJobs()
             println("AWAITING jobs took ${System.currentTimeMillis() - start}ms")
         }
-        transaction {
-            println("Classes " + ClassEntity.count())
-            println("Methods " + MethodEntity.count())
-            println("Methods params " + MethodParameterEntity.count())
-            println("Fields " + FieldEntity.count())
-        }
+//        transaction {
+//            println("Classes " + ClassEntity.count())
+//            println("Methods " + MethodEntity.count())
+//            println("Methods params " + MethodParameterEntity.count())
+//            println("Fields " + FieldEntity.count())
+//        }
 
 //        val name = ManagementFactory.getRuntimeMXBean().name
 //        val pid = name.split("@")[0]
