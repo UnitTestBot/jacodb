@@ -26,11 +26,6 @@ data class JcRawAssignInst(
     val rhv: JcRawExpr
 ) : JcRawInst {
 
-    init {
-        if (toString() == "$offset%11 = 0") {
-            val a = 1
-        }
-    }
     override val operands: List<JcRawExpr>
         get() = listOf(lhv, rhv)
 
@@ -704,7 +699,9 @@ sealed interface JcRawValue : JcRawExpr {
         get() = emptyList()
 }
 
-data class JcRawThis(override val typeName: TypeName) : JcRawValue {
+sealed interface JcRawSimpleValue : JcRawValue
+
+data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
     override fun toString(): String = "this"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -712,7 +709,7 @@ data class JcRawThis(override val typeName: TypeName) : JcRawValue {
     }
 }
 
-data class JcRawArgument(val index: Int, val name: String?, override val typeName: TypeName) : JcRawValue {
+data class JcRawArgument(val index: Int, val name: String?, override val typeName: TypeName) : JcRawSimpleValue {
     override fun toString(): String = name ?: "arg$$index"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -720,7 +717,7 @@ data class JcRawArgument(val index: Int, val name: String?, override val typeNam
     }
 }
 
-data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawValue {
+data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawSimpleValue {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -728,7 +725,7 @@ data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRaw
     }
 }
 
-data class JcRawRegister(val index: Int, override val typeName: TypeName) : JcRawValue {
+data class JcRawRegister(val index: Int, override val typeName: TypeName) : JcRawSimpleValue {
     override fun toString(): String = "%$index"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -736,12 +733,14 @@ data class JcRawRegister(val index: Int, override val typeName: TypeName) : JcRa
     }
 }
 
+sealed interface JcRawComplexValue : JcRawValue
+
 data class JcRawFieldRef(
     val instance: JcRawValue?,
     val declaringClass: TypeName,
     val fieldName: String,
     override val typeName: TypeName
-) : JcRawValue {
+) : JcRawComplexValue {
     constructor(declaringClass: TypeName, fieldName: String, typeName: TypeName) : this(
         null,
         declaringClass,
@@ -760,7 +759,7 @@ data class JcRawArrayAccess(
     val array: JcRawValue,
     val index: JcRawValue,
     override val typeName: TypeName
-) : JcRawValue {
+) : JcRawComplexValue {
     override fun toString(): String = "$array[$index]"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -768,7 +767,7 @@ data class JcRawArrayAccess(
     }
 }
 
-sealed interface JcRawConstant : JcRawValue
+sealed interface JcRawConstant : JcRawSimpleValue
 
 data class JcRawBool(val value: Boolean, override val typeName: TypeName) : JcRawConstant {
     override fun toString(): String = "$value"

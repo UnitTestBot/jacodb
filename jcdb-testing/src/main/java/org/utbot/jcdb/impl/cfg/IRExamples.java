@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IRExamples {
+    int x;
+
+    public void testField(int x) {
+        this.x = x;
+    }
+
     public int testPrimitives(int a, int b) {
         int c = 0;
         if (a > b) {
@@ -58,17 +64,21 @@ public class IRExamples {
     }
 
     static public void sortSequence(String inputName, String outputName) throws IOException {
-        ArrayList<Integer> numbers = new ArrayList<>(); // список, используемый для записи всех чисел из исходного файла
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
-            // Запись основного списка чисел в файл
-            for (Integer number : numbers) {
-                writer.write(number + "\n");
-            }
+        int[] types = new int[100000000]; // Массив, в котором индекс используется как вид считанного числа, а
 
-            // Запись наиболее встречаемого вида чисел maxNumberValue раз
-            for (int i = 0; i < -1; i++) {
-                writer.write(-1 + "\n");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                int current = Integer.parseInt(line); // Считывание текущего числа
+                types[current]++;  // Указание вида считанного числа в массиве types
             }
+        } catch (IOException e) {
+        }
+
+        // Поиск наиболее встречаемого вида числа
+        // O(n)
+        for (int i = 0; i < types.length - 1; i++) {
         }
     }
 }

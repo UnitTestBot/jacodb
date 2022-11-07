@@ -127,12 +127,42 @@ class MethodNodeBuilder(
         return VarInsnNode(opcode, local)
     }
 
-    override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
-        inst.rhv.accept(this)
-        if (inst.rhv.typeName.typeName == PredefinedPrimitives.int && !PredefinedPrimitives.matches(inst.lhv.typeName.typeName)) {
-            val a = 10
+    private fun complexStore(lhv: JcRawComplexValue, value: JcRawExpr) = when (lhv) {
+        is JcRawFieldRef -> {
+            lhv.instance?.accept(this)
+            value.accept(this)
+            val opcode = if (lhv.instance == null) Opcodes.PUTSTATIC else Opcodes.PUTFIELD
+            currentInsnList.add(
+                FieldInsnNode(
+                    opcode,
+                    lhv.declaringClass.jvmClassName,
+                    lhv.fieldName,
+                    lhv.typeName.jvmTypeName
+                )
+            )
+            val stackChange = 1 + if (lhv.instance == null) 1 else 0
+            updateStackInfo(-stackChange)
         }
-        currentInsnList.add(storeValue(inst.lhv))
+        is JcRawArrayAccess -> {
+            lhv.array.accept(this)
+            lhv.index.accept(this)
+            value.accept(this)
+            val opcode = Opcodes.IASTORE + lhv.typeName.longInt
+            currentInsnList.add(InsnNode(opcode))
+            updateStackInfo(-2)
+        }
+
+        else -> error("Unexpected complex value: ${lhv::class}")
+    }
+
+    override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
+        when (val lhv = inst.lhv) {
+            is JcRawComplexValue -> complexStore(lhv, inst.rhv)
+            else -> {
+                inst.rhv.accept(this)
+                currentInsnList.add(storeValue(lhv))
+            }
+        }
     }
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst) {

@@ -68,7 +68,11 @@ internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawIn
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
         val rhv = inst.rhv
-        if (rhv is JcRawRegister && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst && rhv !in reservedValues) {
+        if (inst.lhv is JcRawSimpleValue
+            && rhv is JcRawRegister
+            && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
+            && rhv !in reservedValues
+        ) {
             replacements[rhv] = inst.lhv
             reservedValues += inst.lhv
             replacedInsts += inst
@@ -84,7 +88,7 @@ internal class Simplifier {
             val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
             val oldSize = instructionList.instructions.size
             instructionList = instructionList.filter(InstructionFilter {
-                !(it is JcRawAssignInst && it.rhv is JcRawValue && uses.getOrDefault(it.lhv, 0) == 0)
+                !(it is JcRawAssignInst && it.lhv is JcRawSimpleValue && it.rhv is JcRawValue && uses.getOrDefault(it.lhv, 0) == 0)
             })
         } while (instructionList.instructions.size != oldSize)
 
