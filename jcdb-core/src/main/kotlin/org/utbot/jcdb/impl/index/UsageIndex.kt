@@ -48,7 +48,7 @@ class UsagesIndexer(private val location: RegisteredLocation, private val jcdb: 
     }
 
     override fun flush() {
-        (jcdb.persistence as SQLitePersistenceImpl).create.connection { conn ->
+        (jcdb.persistence as SQLitePersistenceImpl).jooq.connection { conn ->
             conn.insertElements(CALLS, fieldsUsages.flatme()) {
                 val (calleeClass, calleeField, caller) = it
                 setLong(1, calleeClass.longHash)
@@ -104,14 +104,14 @@ object Usages : JcFeature<UsageIndexRequest, String> {
 
             is JcSignal.LocationRemoved -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).create
+                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
                     create.delete(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
                 }
             }
 
             is JcSignal.AfterIndexing -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).create
+                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
                     create.execute(createIndexes)
 
                 }
@@ -119,7 +119,7 @@ object Usages : JcFeature<UsageIndexRequest, String> {
 
             is JcSignal.Drop -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).create
+                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
                     create.delete(CALLS).execute()
                 }
             }
@@ -131,7 +131,7 @@ object Usages : JcFeature<UsageIndexRequest, String> {
     override suspend fun query(jcdb: JCDB, req: UsageIndexRequest): Sequence<String> {
         val (method, field, className) = req
         return jcdb.persistence.read {
-            val create = (jcdb.persistence as SQLitePersistenceImpl).create
+            val create = (jcdb.persistence as SQLitePersistenceImpl).jooq
 
             val classHashes: List<Long> = if (method != null) {
                 create.select(CALLS.CALLER_CLASS_HASH).from(CALLS)

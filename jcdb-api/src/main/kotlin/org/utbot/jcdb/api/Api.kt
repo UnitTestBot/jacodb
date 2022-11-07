@@ -2,6 +2,7 @@ package org.utbot.jcdb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
 
@@ -110,8 +111,8 @@ interface JCDBPersistence : Closeable {
 
     fun setup()
 
-    fun <T> write(newTx: Boolean = true, action: () -> T): T
-    fun <T> read(newTx: Boolean = true, action: () -> T): T
+    fun <T> write(newTx: Boolean = true, action: (DSLContext) -> T): T
+    fun <T> read(newTx: Boolean = true, action: (DSLContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
     fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
