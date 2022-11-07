@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl.storage
 
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.update
 import org.utbot.jcdb.api.JCDBPersistence
@@ -18,11 +19,14 @@ import org.utbot.jcdb.impl.RegistrationResult
 import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
 import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 class PersistentLocationRegistry(
     private val persistence: JCDBPersistence,
     private val featuresRegistry: FeaturesRegistry
 ) : LocationsRegistry {
+
+    private val idGen = AtomicLong()
 
     // all snapshot associated with classpaths
     internal val snapshots = ConcurrentHashMap.newKeySet<LocationsRegistrySnapshot>()
@@ -34,7 +38,7 @@ class PersistentLocationRegistry(
 
     override lateinit var runtimeLocations: List<RegisteredLocation>
 
-    private fun add(location: JcByteCodeLocation) = PersistentByteCodeLocation(location.findOrNew(), location)
+    private fun add(location: JcByteCodeLocation) = PersistentByteCodeLocation(location.findOrNew().id.value, location)
 
     override fun setup(runtimeLocations: List<JcByteCodeLocation>): RegistrationResult {
         return registerIfNeeded(runtimeLocations).also {
@@ -66,20 +70,19 @@ class PersistentLocationRegistry(
                 if (found == null) {
                     toAdd += it
                 } else {
-                    result += PersistentByteCodeLocation(found, it)
+                    result += PersistentByteCodeLocation(found.id.value, it)
                 }
             }
-            val added = toAdd.map {
-                PersistentByteCodeLocation(
-                    BytecodeLocationEntity.new {
-                        hash = it.hash
-                        path = it.path
-                        runtime = it.type == LocationType.RUNTIME
-                    },
-                    it
-                )
+            val addedWithId = arrayListOf<PersistentByteCodeLocation>()
+            BytecodeLocations.batchInsert(toAdd, shouldReturnGeneratedValues = false) {
+                val id = idGen.incrementAndGet()
+                this[BytecodeLocations.id] = id
+                this[BytecodeLocations.runtime] = it.type == LocationType.RUNTIME
+                this[BytecodeLocations.path] = it.path
+                this[BytecodeLocations.hash] = it.hash
+                addedWithId.add(PersistentByteCodeLocation(id, it))
             }
-            RegistrationResult(result + added, added)
+            RegistrationResult(result + addedWithId, addedWithId)
         }
     }
 

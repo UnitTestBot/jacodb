@@ -8,14 +8,13 @@ import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
 import java.io.File
 
 class PersistentByteCodeLocation(
-    internal val entity: BytecodeLocationEntity,
+    override val id: Long,
     override val jcLocation: JcByteCodeLocation
 ) : RegisteredLocation {
 
-    constructor(entity: BytecodeLocationEntity) : this(entity, entity.toJcLocation())
+    constructor(entity: BytecodeLocationEntity) : this(entity.id.value, entity.toJcLocation())
 
-    override val id: Long
-        get() = entity.id.value
+    val entity get() = BytecodeLocationEntity.findById(id) ?: throw IllegalStateException("Can't find location by id $id")
 }
 
 

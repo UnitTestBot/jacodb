@@ -61,7 +61,7 @@ class SQLitePersistenceImpl(
                 it.url = url
             }
             //, databaseConfig = DatabaseConfig.invoke { sqlLogger = StdOutSqlLogger })
-            db = Database.connect(dataSource)
+            db = Database.connect(dataSource, setupConnection = { it.autoCommit = false })
         }
         write {
             if (clearOnStart) {
