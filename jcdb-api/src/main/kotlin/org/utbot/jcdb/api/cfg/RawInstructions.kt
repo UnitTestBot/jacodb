@@ -25,6 +25,12 @@ data class JcRawAssignInst(
     val lhv: JcRawValue,
     val rhv: JcRawExpr
 ) : JcRawInst {
+
+    init {
+        if (toString() == "$offset%11 = 0") {
+            val a = 1
+        }
+    }
     override val operands: List<JcRawExpr>
         get() = listOf(lhv, rhv)
 

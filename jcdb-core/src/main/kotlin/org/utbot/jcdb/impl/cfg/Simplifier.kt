@@ -2,7 +2,6 @@ package org.utbot.jcdb.impl.cfg
 
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.cfg.DefaultJcRawInstVisitor
-import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 import org.utbot.jcdb.api.cfg.ext.applyAndGet
 import org.utbot.jcdb.api.cfg.ext.filter
 import org.utbot.jcdb.api.cfg.ext.map
@@ -61,6 +60,7 @@ internal class RepeatedAssignmentCleaner : DefaultJcRawInstVisitor<JcRawInst?> {
 
 internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawInst>>) : DefaultJcRawInstVisitor<Unit> {
     val replacements = mutableMapOf<JcRawRegister, JcRawValue>()
+    val reservedValues = mutableSetOf<JcRawValue>()
     val replacedInsts = mutableSetOf<JcRawInst>()
 
     override val defaultInstHandler: (JcRawInst) -> Unit
@@ -68,8 +68,9 @@ internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawIn
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
         val rhv = inst.rhv
-        if (rhv is JcRawRegister && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst) {
+        if (rhv is JcRawRegister && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst && rhv !in reservedValues) {
             replacements[rhv] = inst.lhv
+            reservedValues += inst.lhv
             replacedInsts += inst
         }
     }

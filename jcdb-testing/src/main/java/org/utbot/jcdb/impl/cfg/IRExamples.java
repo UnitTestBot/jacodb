@@ -56,4 +56,19 @@ public class IRExamples {
             }
         }
     }
+
+    static public void sortSequence(String inputName, String outputName) throws IOException {
+        ArrayList<Integer> numbers = new ArrayList<>(); // список, используемый для записи всех чисел из исходного файла
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
+            // Запись основного списка чисел в файл
+            for (Integer number : numbers) {
+                writer.write(number + "\n");
+            }
+
+            // Запись наиболее встречаемого вида чисел maxNumberValue раз
+            for (int i = 0; i < -1; i++) {
+                writer.write(-1 + "\n");
+            }
+        }
+    }
 }

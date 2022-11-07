@@ -624,7 +624,7 @@ class RawInstListBuilder(
             predFrames.size == 1 -> {
                 val frame = predFrames.values.first()
                 assert(frame != null)
-                frame!!.locals
+                frame!!.locals.filterKeys { it in this.locals }
             }
 
             else -> locals.mapNotNull { (variable, type) ->
@@ -659,7 +659,7 @@ class RawInstListBuilder(
             predFrames.size == 1 -> {
                 val frame = predFrames.values.first()
                 assert(frame != null)
-                frame!!.stack
+                frame!!.stack.withIndex().filter { it.index in this.stack }.map { it.value }
             }
 
             else -> stack.mapNotNull { (variable, type) ->

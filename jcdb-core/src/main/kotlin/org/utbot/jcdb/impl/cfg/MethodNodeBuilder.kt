@@ -63,7 +63,13 @@ class MethodNodeBuilder(
         val mn = MethodNode()
         mn.name = method.name
         mn.desc = method.description
-        mn.parameters = method.parameters.map { ParameterNode(it.name, it.access) }
+        mn.access = method.access
+        mn.parameters = method.parameters.map {
+            ParameterNode(
+                if (it.name == it.type.typeName) null else it.name,
+                if (it.access == Opcodes.ACC_PUBLIC) 0 else it.access
+            )
+        }
         mn.exceptions = method.exceptions.map { it.simpleName.jvmName() }
         mn.instructions = currentInsnList
         mn.tryCatchBlocks = tryCatchNodeList
@@ -91,7 +97,14 @@ class MethodNodeBuilder(
         }
     }
 
-    private fun local(jcRawValue: JcRawValue): Int = locals.getOrPut(jcRawValue) { localIndex++ }
+    private fun local(jcRawValue: JcRawValue): Int = locals.getOrPut(jcRawValue) {
+        val index = localIndex
+        localIndex += when {
+            jcRawValue.typeName.isDWord -> 2
+            else -> 1
+        }
+        index
+    }
     private fun label(jcRawLabelInst: JcRawLabelInst): LabelNode = labels.getOrPut(jcRawLabelInst) { LabelNode() }
 
     private fun updateStackInfo(inc: Int) {
@@ -116,6 +129,9 @@ class MethodNodeBuilder(
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
         inst.rhv.accept(this)
+        if (inst.rhv.typeName.typeName == PredefinedPrimitives.int && !PredefinedPrimitives.matches(inst.lhv.typeName.typeName)) {
+            val a = 10
+        }
         currentInsnList.add(storeValue(inst.lhv))
     }
 
@@ -140,12 +156,10 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawReturnInst(inst: JcRawReturnInst) {
+        inst.returnValue?.accept(this)
         val opcode = when (inst.returnValue) {
             null -> Opcodes.RETURN
-            else -> {
-                currentInsnList.add(loadValue(inst.returnValue!!))
-                Opcodes.IRETURN + inst.returnValue!!.typeName.shortInt
-            }
+            else -> Opcodes.IRETURN + inst.returnValue!!.typeName.shortInt
         }
         currentInsnList.add(InsnNode(opcode))
         updateStackInfo(-stackSize)
@@ -162,7 +176,7 @@ class MethodNodeBuilder(
             label(inst.startInclusive),
             label(inst.endExclusive),
             label(inst.handler),
-            inst.throwable.typeName.jvmTypeName
+            inst.throwable.typeName.internalDesc
         )
         updateStackInfo(1)
         currentInsnList.add(storeValue(inst.throwable))
@@ -437,40 +451,37 @@ class MethodNodeBuilder(
                     InsnNode(opcode)
                 }
 
-                else -> TypeInsnNode(Opcodes.CHECKCAST, targetType.jvmTypeName)
+                else -> TypeInsnNode(Opcodes.CHECKCAST, targetType.internalDesc)
             }
         )
     }
 
     override fun visitJcRawNewExpr(expr: JcRawNewExpr) {
-        currentInsnList.add(TypeInsnNode(Opcodes.NEW, expr.typeName.jvmTypeName))
+        currentInsnList.add(TypeInsnNode(Opcodes.NEW, expr.typeName.internalDesc))
         updateStackInfo(1)
     }
 
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr) {
         val component = expr.typeName.baseElementType()
+        expr.dimensions.map { it.accept(this) }
         currentInsnList.add(when {
-            expr.dimensions.size > 1 -> {
-                expr.dimensions.map { it.accept(this) }
-                MultiANewArrayInsnNode(expr.typeName.jvmTypeName, expr.dimensions.size)
-            }
-
+            expr.dimensions.size > 1 -> MultiANewArrayInsnNode(expr.typeName.jvmTypeName, expr.dimensions.size)
             component.isPrimitive -> IntInsnNode(Opcodes.NEWARRAY, component.typeInt)
-            else -> TypeInsnNode(Opcodes.ANEWARRAY, component.jvmTypeName)
+            else -> TypeInsnNode(Opcodes.ANEWARRAY, component.internalDesc)
         })
         updateStackInfo(1)
     }
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr) {
         expr.operand.accept(this)
-        currentInsnList.add(TypeInsnNode(Opcodes.INSTANCEOF, expr.typeName.jvmTypeName))
+        currentInsnList.add(TypeInsnNode(Opcodes.INSTANCEOF, expr.typeName.internalDesc))
     }
 
 
     private val JcRawHandle.asAsmHandle: Handle
         get() = Handle(
             tag,
-            declaringClass.jvmTypeName,
+            declaringClass.jvmClassName,
             name,
             desc,
             isInterface
@@ -522,7 +533,7 @@ class MethodNodeBuilder(
         currentInsnList.add(
             MethodInsnNode(
                 Opcodes.INVOKEVIRTUAL,
-                expr.declaringClass.jvmTypeName,
+                expr.declaringClass.jvmClassName,
                 expr.methodName,
                 expr.methodDesc
             )
@@ -538,7 +549,7 @@ class MethodNodeBuilder(
         currentInsnList.add(
             MethodInsnNode(
                 Opcodes.INVOKEINTERFACE,
-                expr.declaringClass.jvmTypeName,
+                expr.declaringClass.jvmClassName,
                 expr.methodName,
                 expr.methodDesc
             )
@@ -553,7 +564,7 @@ class MethodNodeBuilder(
         currentInsnList.add(
             MethodInsnNode(
                 Opcodes.INVOKESTATIC,
-                expr.declaringClass.jvmTypeName,
+                expr.declaringClass.jvmClassName,
                 expr.methodName,
                 expr.methodDesc
             )
@@ -569,7 +580,7 @@ class MethodNodeBuilder(
         currentInsnList.add(
             MethodInsnNode(
                 Opcodes.INVOKESPECIAL,
-                expr.declaringClass.jvmTypeName,
+                expr.declaringClass.jvmClassName,
                 expr.methodName,
                 expr.methodDesc
             )
@@ -601,7 +612,7 @@ class MethodNodeBuilder(
         currentInsnList.add(
             FieldInsnNode(
                 opcode,
-                value.declaringClass.jvmTypeName,
+                value.declaringClass.jvmClassName,
                 value.fieldName,
                 value.typeName.jvmTypeName
             )
@@ -613,7 +624,7 @@ class MethodNodeBuilder(
     override fun visitJcRawArrayAccess(value: JcRawArrayAccess) {
         value.array.accept(this)
         value.index.accept(this)
-        val opcode = Opcodes.ILOAD + value.typeName.longInt
+        val opcode = Opcodes.IALOAD + value.typeName.longInt
         currentInsnList.add(InsnNode(opcode))
         updateStackInfo(-1)
     }
@@ -694,7 +705,7 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawClassConstant(value: JcRawClassConstant) {
-        currentInsnList.add(LdcInsnNode(value.className.jvmTypeName))
+        currentInsnList.add(LdcInsnNode(value.className.jvmClassName))
         updateStackInfo(1)
     }
 

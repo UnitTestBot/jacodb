@@ -1,7 +1,8 @@
 package org.utbot.jcdb.impl
 
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.objectweb.asm.util.CheckClassAdapter
+import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.impl.cfg.*
@@ -10,28 +11,32 @@ class IRTest : BaseTest() {
     companion object : WithDB()
 
     @Test
-    fun `get ir of simple method`() = runBlocking {
-        val a = cp.findClass<IRExamples>()
-        a.methods.forEach { jcMethod ->
-            println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
-            val body = runBlocking { jcMethod.body() }
-            val instList = RawInstListBuilder(jcMethod, body).build()
-            println(instList)
-            val mn = MethodNodeBuilder(jcMethod, instList).build()
-            println(mn.print())
-        }
+    fun `get ir of simple method`() {
+        val klass = cp.findClass<IRExamples>()
+        testClass(klass)
     }
 
     @Test
-    fun `get ir of algorithms lesson 1`() = runBlocking {
-        val a = cp.findClass<JavaTasks>()
-        a.methods.forEach { jcMethod ->
-            println("${jcMethod.enclosingClass.name}::${jcMethod.name}")
-            val body = runBlocking { jcMethod.body() }
-            val instList = RawInstListBuilder(jcMethod, body).build()
-            println(instList)
-            val mn = MethodNodeBuilder(jcMethod, instList).build()
-            println(mn.print())
+    fun `get ir of algorithms lesson 1`() {
+        val klass = cp.findClass<JavaTasks>()
+        testClass(klass)
+    }
+
+    private fun testClass(klass: JcClassOrInterface) {
+        val classNode = klass.bytecode()
+        classNode.methods = klass.methods.map {
+            val oldBody = it.body()
+            println()
+            println("Old body: ${oldBody.print()}")
+            val instrucionList = it.instructionList()
+            println("Instruction list: $instrucionList")
+            val newBody = MethodNodeBuilder(it, instrucionList).build()
+            println("New body: ${newBody.print()}")
+            println()
+            newBody
         }
+//        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+        val checker = CheckClassAdapter(classNode)
+        classNode.accept(checker)
     }
 }

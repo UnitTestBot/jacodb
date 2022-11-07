@@ -1,12 +1,9 @@
 package org.utbot.jcdb.impl.bytecode
 
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.api.ClassSource
-import org.utbot.jcdb.api.JcAnnotation
-import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.JcMethod
-import org.utbot.jcdb.api.JcParameter
+import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
@@ -47,6 +44,10 @@ class JcMethodImpl(
 
     override fun body(): MethodNode {
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
+    }
+
+    override fun instructionList(): JcRawInstList {
+        return RawInstListBuilder(this, body()).build()
     }
 
     override fun equals(other: Any?): Boolean {
