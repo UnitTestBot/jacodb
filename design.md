@@ -1,25 +1,24 @@
 # Requirements
 
-Java Compilation Database is a library which stores information about Java byte-code located outside the JVM process. Like `Reflection` do this for runtime Java Compilation Database is doing this for byte-code stored somewhere in file system.
+Java Compilation Database is a library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, Java Compilation Database does the same for bytecode stored in a file system.
 
-This is basic requirements for database implementation: 
+These are basic requirements for database implementation:
 
-* async and thread-safe api
-* each database instance is binded to Java runtime version up from 1.8 
-* bytecode processing and analyzing up from Java 1.8
-* ability to update bytecode from location without breaking already processed data
-* ability to persist data on-disk and reuse it after application restart
-* fast startup: `jcdb` should balance between returning instance as soon as possible and fast operations of querying data from database
-* ability to extend api
+* asynchronous, thread-safe and extendable API
+* binding each database instance to a specific Java runtime version (starting with Java 1.8)
+* bytecode processing and analyzing (starting with Java 1.8)
+* an ability to update bytecode from the given location while keeping the processed data intact
+* an ability to persist data on a disk and to reuse it after restarting the application
+* fast start-up: `JCDB` should balance between returning instance as soon as possible and querying data from database in the fastest way
 
 ## API basics
 
-Bytecode has two representations in filesystem (classes) and in runtime (types).
+Bytecode has two representations: the one stored in filesystem (**classes**) and the one appearing at runtime (**types**).
+* **classes** — represent data from `.class` files as is. Each `.class` file is parsed with ASM library and represented as ASM `ClassNode`.
+* **types** — represent types that can be nullable, parameterized, etc.
 
-**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM library and represented as ASM ClassNode
-**types** - represent types which can be nullable, get parameterized etc.
-
-Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generic's parameterization.   
+Both levels are connected to `JcClasspath` to avoid JAR hell.
+You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by parameterizing generics. 
 
 **Classes**
 ```mermaid
@@ -117,23 +116,25 @@ classDiagram
     }
 ``` 
 
-Entry point for both of them is `JcClasspath`.
+`JcClasspath` is an entry point for both **classes** and **types**.
 
-`JcClassType#methods` contains: 
-- **all** public/protected/private methods of enclosing class 
-- all compile time visible methods from ancestors
-- **only** constructors methods from declaring class
+`JcClassType#methods` contains:
 
-`JcClassType#fields` contains: 
-- **all** public/protected/private fields of enclosing class 
-- all compile time visible fields from ancestors
+* all the public/protected/private methods of an enclosing class
+* all the ancestor methods visible at compile time
+* only constructor methods from the declaring class
+
+`JcClassType#fields` contains:
+
+* all the public/protected/private fields of an enclosing class
+* all the ancestor fields visible at compile time
 
 
 ## Loading bytecode
 
-It's intended that bytecode of Java runtime is not changed and is read on startup along with bytecode of `predefined` bytecode locations.
+Bytecode at Java runtime is not supposed to be changed. It is read at start-up along with the bytecode obtained from the `predefined` bytecode locations.
 
-Loading of bytecode:
+Bytecode loading:
 
 ```mermaid
 sequenceDiagram
@@ -162,28 +163,27 @@ flowchart LR
 
         subgraph heap[JVM heap]
             class_vfs[Class virtual file system]
-            caches[low-level cashes]
+            caches[Low-level cashes]
         end
 
         subgraph sqlite[SQLite]
-            storage[off heap memory]
+            storage[Off-heap memory]
         end
     end
 ```
 
-Application uses in-memory `ClassTree` for classes that are in loading state. When classes are loaded, analyzed and persisted in database data from `ClassTree` is evicted. 
-Pure bytecode is stored in underling database as well. Underling database is using off heap memory.
+Application uses in-memory `ClassTree` for the classes being loaded. When **classes** are loaded, analyzed and persisted to a database, the corresponding data is deleted from `ClassTree`. Pure bytecode is stored in the same database, which uses off-heap memory.
 
-`JcClasspath` represents the set of classpath items with bytecode. `JcClasspath` should be closed after it becomes unused. This reduces usage of outdated bytecode locations and cleanup data from them. Which means that each class should be presented once there. Otherwise, in case of collision like in jar-hell only one random class will win.
+`JcClasspath` represents the set of `classpath` items with bytecode. `JcClasspath` should be closed as soon as it becomes needless. This reduces usage of outdated bytecode locations and cleans out data from them. Each class should be presented once in this set. Otherwise, in case of collision, like in JAR hell, only one random class could win.
 
 # Extension points
 
 ## Features
 
-All `JcFeature` should be added on database startup. No additional features could be added after that. `JcFeature` could store information in database and extend basic api based on it.
+All `JcFeature` extensions should be added at database start-up — it is impossible to add features later.  `JcFeature` can store additional information in database and extend the basic API accordingly.
 
 ## Hooks
 
-JCDB can be extended with hooks. Hook is an environment extension with brings ability to implement remote api or call specific code during database lifecycle. 
+One can extend `JCDB` with hooks. Hook is an environment extension which allows for implementing the remote API or calling the specific code during the database lifecycle.
 
-Hook is called twice: when database is created and initialized properly and when it is closed.
+Hook is called twice: when the database is created and initialized properly and when it is closed.

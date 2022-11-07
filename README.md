@@ -1,10 +1,10 @@
-JCDB is a pure Java library which stores information about Java byte-code located outside the JVM process. Like Reflection do for runtime JCDB do this for byte-code stored in file system.
+`JCDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JCDB` does the same for bytecode stored in a file system.
 
-ASM is used for reading and parsing jar-files (including build directories) and store information about classes, their hierarchies, methods, annotations etc.
+`JCDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing JAR-files as well as build directories.
 
-Information is stored in SQLite database which could be in-memory or persistent. Persistence makes data be reused after process is restarted. Accessing persisted data from different processes simultaneously is not supported.
+Information about classes, hierarchies, annotations, methods, fields, and their usages is stored in SQLite database — either in-memory or persistent. Persisted data can be reused between restarts. Accessing the persistent storage from multiple processes simultaneously is not supported.
 
-JCDB is ignited by number of jars or directories with build classes:
+To start creating database, `JCDB` gets a list of JAR-files or build directories:
 
 ```kotlin
 interface JCDB {
@@ -18,8 +18,7 @@ interface JCDB {
 }
 ```
 
-`JcClasspath` represents the set of classpath items. Which means that each class should be presented once there.
-Otherwise, in case of collision like in jar-hell only one random class will win.
+`JcClasspath` represents the set of classpath items. Each item occurs only once here — otherwise, in case of collision, like in JAR hell, only one random class could win.
 
 ```kotlin
 interface JcClasspath {
@@ -33,17 +32,20 @@ interface JcClasspath {
 
 ## API
 
-Bytecode has two representations in filesystem (classes) and in runtime (types).
+Bytecode has two representations: the one stored in filesystem (**classes**) and the one appearing at runtime (**types**).
 
-**classes** - represents data from `.class` files as it is. Each class file get parsed with ASM and represented as ClassNode
-**types** - represent types which can be nullable, get parameterized, receive parameters substitution etc.
+* **classes** — represent data from `.class` files as is. Each `.class` file is parsed with ASM library and represented as ASM `ClassNode`.
+* **types** — represent types that can be nullable, parameterized, etc.
 
-Both of levels connected to `JcClasspath` to avoid jar-hell. If **classes** retrieved from pure bytecode you can't modify them or construct something. **types** work in a different way. They may be constructed manually based on generic's parameterization.
+Both levels are connected to `JcClasspath` to avoid JAR hell.
+You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by parameterizing generics.
+
 
 ### Classes
 
-`JcClasspath#findClassOrNull` method will return instance of `JcClassOrInterface` from `locations` or null otherwise. Where `JcClassOrInterface` represents
-JVM:
+`JcClasspath#findClassOrNull` returns an instance of `JcClassOrInterface` from `locations`. If there is no class in `locations`, `findClassOrNull` returns `null`.
+
+`JcClassOrInterface` represents JVM bytecode:
 
 ```kotlin
 interface JcClassOrInterface {
@@ -74,7 +76,7 @@ interface JcMethod {
 }
 ```
 
-Example of usage:
+Usage example:
 
 ```kotlin
 suspend fun findNormalDistribution(): Any {
@@ -86,28 +88,29 @@ suspend fun findNormalDistribution(): Any {
         persistent("/tmp/compilation-db/${System.currentTimeMillis()}")
     }
 
-    // let's index this 3 byte-code sources
+    // Let's index these three bytecode sources.
     database.load(listOf(commonsMath32, commonsMath36, buildDir))
 
-    // this method just refresh the libraries inside database. If there are any changes in libs then 
-    // database just update old data with new results
+    // This method just refreshes the libraries inside the database. If there are any changes in libs then 
+    // the database updates data with the new results.
     database.load(listOf(buildDir))
 
-    // let's assume that we want to get byte-code info only for `commons-math3` version 3.2
+    // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
     val jcClass = database.classpath(commonsMath32, buildDir)
         .findClass("org.apache.commons.math3.distribution.NormalDistribution")
     println(jcClass.methods.size)
     println(jcClass.constructors.size)
     println(jcClass.annotations.size)
 
-    // here database will call ASM to read method bytecode and return the result
+    // At this point the database calls ASM to read the method bytecode and to return the result.
     return jcClass.methods[0].body()
 }
 ```
 
-If underling jar file is removed or changed in file system then null will be returned by `body` method.
-If classpath is inconsistent you may receive `NoClassInClasspathException` in runtime. Database can watch for file system 
-changes in a background or refresh jars explicitly:
+Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed.
+
+If a classpath item is inappropriate you may receive `NoClassInClasspathException` at runtime. The database can watch 
+for file system changes in the background and refresh the JAR-files explicitly:
 
 ```kotlin
     val database = jcdb {
@@ -117,19 +120,20 @@ changes in a background or refresh jars explicitly:
         persistent()
     }
 
-    // user rebuilds buildDir folder
-    // database rereads rebuild directory in a background
+    // A user rebuilds the buildDir folder.
+    // The database re-reads the rebuilt directory in the background.
 ```
 
 ### Types
 
-Types maybe:
-- primitive types
-- class types
-- array types
-- bounded and unbounded wildcards
+**types** representation includes information on
 
-Types represent runtime behaviour according to generics substitution: 
+* primitive types
+* classes
+* arrays
+* bounded and unbounded wildcards
+
+It represents runtime behavior according to parameter substitution in the given generic type: 
 
 ```kotlin
     open class A<T> {
@@ -148,12 +152,9 @@ Types represent runtime behaviour according to generics substitution:
 
 ## Multithreading
 
-Instances of `JcClassOrInterface`, `JcMethod`, `JcClasspath` are thread-safe. Methods of these classes return immutable structures 
-and are thread-safe as result. 
+The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-safe and immutable. 
 
-`JcClasspath` represents independent snapshot of classes and can't be modified since created. Removing or modifying 
-library files will not affect `JcClasspath` instance structure. `JcClasspath#close` method will release all snapshots and will 
-clean up persistence in case if some libraries are outdated.
+`JcClasspath` represents an independent snapshot of classes, which cannot be modified since it is created. Removing or modifying library files does not affect `JcClasspath` instance structure. The `JcClasspath#close` method releases all snapshots and cleans up the persisted data if some libraries are outdated.
 
 ```kotlin
     val database = jcdb {
@@ -169,8 +170,7 @@ clean up persistence in case if some libraries are outdated.
     val cp1 = database.classpath(buildDir) // will use new version of compiled results in buildDir
 ```
 
-If `JcClasspath` requested with libraries which are not indexed yet, then they will be indexed before and then 
-returned new instance of set. 
+If there is a request for a `JcClasspath` instance containing the libraries, which haven't been indexed yet, the indexing process is triggered and the new instance of the `JcClasspath` set is returned. 
 
 ```kotlin
     val database = jcdb {
@@ -181,10 +181,9 @@ returned new instance of set.
     val cp = database.classpath(buildDir) // database will automatically process buildDir
 ```
 
-`JCDB` is thread safe. If someone requested `JcClasspath` instance during loading jars from different
-thread then `JcClasspath` will be created on a consistent state of loaded jars. That means that jar can't appear in 
-`JcClasspath` in partly loaded state. Apart from that there is no guarantee that all submitted for loading jars will be 
-loaded.
+`JCDB` is thread-safe. If one requests `JcClasspath` instance while loading JAR-files from another thread, 
+`JcClasspath` can represent only a consistent state of the JAR-files being loaded. It is the completely loaded 
+JAR-file that appears in `JcClasspath`. Please note: there is no guarantee that all the JAR-files, submitted for loading, will be actually loaded.
 
 ```kotlin
     val db = jcdb {
@@ -204,11 +203,11 @@ loaded.
 
 ### Bytecode loading
 
-Bytecode loading contains two steps:
-- retrieve information about class names from jars/build folders 
-- read classes bytecode from jars/build folders and process it (persist information, setup features indexes etc)
+Bytecode loading consists of two steps:
 
-`JCDB` or `JcClasspath` instance returned just after first step is done. Final representation of classes is done on second step. 
-It's possible that class information is changed between first and second step if files changed accordingly.  
+* retrieving information about the class names from the JAR-files or build directories
+* reading **classes** bytecode from the JAR-files or build directories and processing it (persisting data, setting up `JcFeature` implementations, etc.)
 
-For architecture and other technical information please visit [design page](./design.md)
+`JCDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
+
+For architecture and other technical information please visit the [design page](./design.md).
