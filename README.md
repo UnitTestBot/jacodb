@@ -1,6 +1,6 @@
 `JCDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JCDB` does the same for bytecode stored in a file system.
 
-`JCDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing JAR-files as well as build directories.
+`JCDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing java bytecode.
 
 Information about classes, hierarchies, annotations, methods, fields, and their usages is stored in SQLite database — either in-memory or persistent. Persisted data can be reused between restarts. Accessing the persistent storage from multiple processes simultaneously is not supported.
 
@@ -32,13 +32,12 @@ interface JcClasspath {
 
 ## API
 
-Bytecode has two representations: the one stored in filesystem (**classes**) and the one appearing at runtime (**types**).
+API has two levels: the one representing in filesystem (**bytecode** and **classes**) and the one appearing at runtime (**types**).
 
-* **classes** — represent data from `.class` files as is. Each `.class` file is parsed with ASM library and represented as ASM `ClassNode`.
+* **bytecode** and **classes** — represent data from `class` files: class with methods, fields, etc. 
 * **types** — represent types that can be nullable, parameterized, etc.
 
-Both levels are connected to `JcClasspath` to avoid JAR hell.
-You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by parameterizing generics.
+Both levels are connected to `JcClasspath`. You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by generics substitution.
 
 
 ### Classes
@@ -88,7 +87,7 @@ suspend fun findNormalDistribution(): Any {
         persistent("/tmp/compilation-db/${System.currentTimeMillis()}")
     }
 
-    // Let's index these three bytecode sources.
+    // Let's load these three bytecode locations
     database.load(listOf(commonsMath32, commonsMath36, buildDir))
 
     // This method just refreshes the libraries inside the database. If there are any changes in libs then 
@@ -102,15 +101,16 @@ suspend fun findNormalDistribution(): Any {
     println(jcClass.constructors.size)
     println(jcClass.annotations.size)
 
-    // At this point the database calls ASM to read the method bytecode and to return the result.
+    // At this point the database read the method bytecode and return the result.
     return jcClass.methods[0].body()
 }
 ```
 
 Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed.
 
-If a classpath item is inappropriate you may receive `NoClassInClasspathException` at runtime. The database can watch 
-for file system changes in the background and refresh the JAR-files explicitly:
+If a classpath item is inappropriate you may receive `NoClassInClasspathException` at runtime. 
+
+The database can watch for file system changes in the background and refresh the JAR-files explicitly:
 
 ```kotlin
     val database = jcdb {
@@ -126,9 +126,9 @@ for file system changes in the background and refresh the JAR-files explicitly:
 
 ### Types
 
-**types** representation includes information on
+**type** can be represented as one of
 
-* primitive types
+* primitives
 * classes
 * arrays
 * bounded and unbounded wildcards
