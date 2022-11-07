@@ -115,8 +115,8 @@ private val TryCatchBlockNode.typeOrDefault get() = this.type ?: THROWABLE_CLASS
 
 class RawInstListBuilder(
     val method: JcMethod,
-    private val methodNode: MethodNode)
-{
+    private val methodNode: MethodNode
+) {
     private val frames = mutableMapOf<AbstractInsnNode, Frame>()
     private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
     private lateinit var lastFrameState: FrameState
@@ -128,6 +128,7 @@ class RawInstListBuilder(
     private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private var labelCounter = 0
     private var localCounter = 0
+    private var argCounter = 0
 
     fun build(): JcRawInstList {
         buildGraph()
@@ -140,7 +141,7 @@ class RawInstListBuilder(
     }
 
     private fun buildInstructions() {
-        currentFrame = createInitialFrame(method)
+        currentFrame = createInitialFrame()
         for (insn in methodNode.instructions) {
             when (insn) {
                 is InsnNode -> buildInsnNode(insn)
@@ -305,18 +306,18 @@ class RawInstListBuilder(
         }
     }
 
-    private fun createInitialFrame(method: JcMethod): Frame {
+    private fun createInitialFrame(): Frame {
         val locals = hashMapOf<Int, JcRawValue>()
-        var localIndex = 0
+        argCounter = 0
         if (!method.isStatic) {
             val thisRef = JcRawThis(method.enclosingClass.name.typeName())
-            locals[localIndex++] = thisRef
+            locals[argCounter++] = thisRef
         }
         for (parameter in method.parameters) {
             val argument = JcRawArgument(parameter.index, null, parameter.type)
-            locals[localIndex] = argument
-            if (argument.typeName.isDWord) localIndex += 2
-            else localIndex++
+            locals[argCounter] = argument
+            if (argument.typeName.isDWord) argCounter += 2
+            else argCounter++
         }
 
         return Frame(locals.toPersistentMap(), persistentListOf())
@@ -632,6 +633,10 @@ class RawInstListBuilder(
                 val value = when {
                     type == TOP -> null
                     options.size == 1 -> options.singleOrNull()
+                    variable < argCounter -> frames.values.mapNotNull { it[variable] }.firstOrNull {
+                        it is JcRawArgument || it is JcRawThis
+                    }
+
                     else -> {
                         val assignment = nextRegister(type)
                         for ((node, frame) in predFrames) {

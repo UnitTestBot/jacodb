@@ -28,9 +28,9 @@ class IRTest : BaseTest() {
             val oldBody = it.body()
             println()
             println("Old body: ${oldBody.print()}")
-            val instrucionList = it.instructionList()
-            println("Instruction list: $instrucionList")
-            val newBody = MethodNodeBuilder(it, instrucionList).build()
+            val instructionList = it.instructionList()
+            println("Instruction list: $instructionList")
+            val newBody = MethodNodeBuilder(it, instructionList).build()
             println("New body: ${newBody.print()}")
             println()
             newBody

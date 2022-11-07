@@ -88,7 +88,10 @@ internal class Simplifier {
             val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
             val oldSize = instructionList.instructions.size
             instructionList = instructionList.filter(InstructionFilter {
-                !(it is JcRawAssignInst && it.lhv is JcRawSimpleValue && it.rhv is JcRawValue && uses.getOrDefault(it.lhv, 0) == 0)
+                !(it is JcRawAssignInst
+                        && it.lhv is JcRawSimpleValue
+                        && it.rhv is JcRawValue
+                        && uses.getOrDefault(it.lhv, 0) == 0)
             })
         } while (instructionList.instructions.size != oldSize)
 

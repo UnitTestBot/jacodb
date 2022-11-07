@@ -64,21 +64,16 @@ public class IRExamples {
     }
 
     static public void sortSequence(String inputName, String outputName) throws IOException {
-        int[] types = new int[100000000]; // Массив, в котором индекс используется как вид считанного числа, а
-
         try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
-                int current = Integer.parseInt(line); // Считывание текущего числа
-                types[current]++;  // Указание вида считанного числа в массиве types
             }
         } catch (IOException e) {
         }
 
-        // Поиск наиболее встречаемого вида числа
-        // O(n)
-        for (int i = 0; i < types.length - 1; i++) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
+        } catch (IOException e) {
         }
     }
 }
