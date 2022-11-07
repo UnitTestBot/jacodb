@@ -115,8 +115,8 @@ interface JCDBPersistence : Closeable {
     fun <T> read(newTx: Boolean = true, action: (DSLContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
-    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
-    fun findClasses(location: RegisteredLocation): List<ClassSource>
+    fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
+    fun findClassSources(location: RegisteredLocation): List<ClassSource>
 }
 
 interface RegisteredLocation {
