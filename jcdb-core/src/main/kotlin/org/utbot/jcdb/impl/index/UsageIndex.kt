@@ -12,7 +12,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
+import org.utbot.jcdb.impl.storage.executeQueries
 import org.utbot.jcdb.impl.storage.insertElements
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CALLS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.SYMBOLS
@@ -20,7 +20,7 @@ import org.utbot.jcdb.impl.storage.longHash
 import java.sql.Types
 
 
-class UsagesIndexer(private val location: RegisteredLocation, private val jcdb: JCDB) : ByteCodeIndexer {
+class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer {
 
     // class method -> usages of methods|fields
     private val fieldsUsages = hashMapOf<Pair<String, String>, HashSet<String>>()
@@ -50,7 +50,7 @@ class UsagesIndexer(private val location: RegisteredLocation, private val jcdb: 
 
     override fun flush(jooq: DSLContext) {
         jooq.connection { conn ->
-            conn.insertElements(CALLS, fieldsUsages.flatme()) {
+            conn.insertElements(CALLS, fieldsUsages.flatten()) {
                 val (calleeClass, calleeField, caller) = it
                 setLong(1, calleeClass.longHash)
                 setLong(2, calleeField.longHash)
@@ -58,7 +58,7 @@ class UsagesIndexer(private val location: RegisteredLocation, private val jcdb: 
                 setLong(4, caller.longHash)
                 setLong(5, location.id)
             }
-            conn.insertElements(CALLS, methodsUsages.flatme()) {
+            conn.insertElements(CALLS, methodsUsages.flatten()) {
                 val (calleeClass, calleeMethod, caller) = it
                 setLong(1, calleeClass.longHash)
                 setNull(2, Types.BIGINT)
@@ -69,7 +69,7 @@ class UsagesIndexer(private val location: RegisteredLocation, private val jcdb: 
         }
     }
 
-    private fun Map<Pair<String, String>, HashSet<String>>.flatme(): List<Triple<String, String, String>> {
+    private fun Map<Pair<String, String>, HashSet<String>>.flatten(): List<Triple<String, String, String>> {
         return flatMap { entry ->
             entry.value.map { Triple(entry.key.first, entry.key.second, it) }
         }
@@ -86,7 +86,15 @@ data class UsageIndexRequest(
 
 object Usages : JcFeature<UsageIndexRequest, String> {
 
-    private val createIndexes = """
+    private val createScheme = """
+        CREATE TABLE IF NOT EXISTS "Calls"(
+            "callee_class_hash"  BIGINT NOT NULL,
+            "callee_field_hash"  BIGINT,
+            "callee_method_hash" BIGINT,
+            "caller_class_hash"  BIGINT NOT NULL,
+            "location_id"        BIGINT NOT NULL
+        );
+        
         CREATE INDEX IF NOT EXISTS 'Calls methods' ON Calls(callee_class_hash, callee_method_hash, location_id)
         WHERE callee_field_hash IS NULL;
 
@@ -94,77 +102,67 @@ object Usages : JcFeature<UsageIndexRequest, String> {
         WHERE callee_method_hash IS NULL;
     """.trimIndent()
 
+    private val dropScheme = """
+        DROP TABLE IF EXISTS "Calls";
+        DROP INDEX IF EXISTS "Calls methods";
+        DROP INDEX IF EXISTS "Calls fields";
+    """.trimIndent()
+
     override fun onSignal(signal: JcSignal) {
         when (signal) {
             is JcSignal.BeforeIndexing -> {
-//                if (signal.clearOnStart) {
-//                    SchemaUtils.drop(Calls)
-//                }
-//                SchemaUtils.create(Calls)
+                signal.jcdb.persistence.write {
+                    if (signal.clearOnStart) {
+                        it.executeQueries(dropScheme)
+                    }
+                    it.executeQueries(createScheme)
+                }
             }
 
             is JcSignal.LocationRemoved -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
-                    create.delete(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
+                    it.delete(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
                 }
             }
 
             is JcSignal.AfterIndexing -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
-                    create.execute(createIndexes)
-
+                    it.execute(createScheme)
                 }
             }
 
             is JcSignal.Drop -> {
                 signal.jcdb.persistence.write {
-                    val create = (signal.jcdb.persistence as SQLitePersistenceImpl).jooq
-                    create.delete(CALLS).execute()
+                    it.delete(CALLS).execute()
                 }
             }
-
             else -> Unit
         }
     }
 
     override suspend fun query(jcdb: JCDB, req: UsageIndexRequest): Sequence<String> {
         val (method, field, className) = req
-        return jcdb.persistence.read {
-            val create = (jcdb.persistence as SQLitePersistenceImpl).jooq
-
+        return jcdb.persistence.read { jooq ->
             val classHashes: List<Long> = if (method != null) {
-                create.select(CALLS.CALLER_CLASS_HASH).from(CALLS)
+                jooq.select(CALLS.CALLER_CLASS_HASH).from(CALLS)
                     .where(
                         CALLS.CALLEE_CLASS_HASH.eq(className.longHash).and(CALLS.CALLEE_METHOD_HASH.eq(method.longHash))
                     ).fetch().mapNotNull { it.component1() }
             } else if (field != null) {
-                create.select(CALLS.CALLER_CLASS_HASH).from(CALLS)
+                jooq.select(CALLS.CALLER_CLASS_HASH).from(CALLS)
                     .where(
                         CALLS.CALLEE_CLASS_HASH.eq(className.longHash).and(CALLS.CALLEE_FIELD_HASH.eq(field.longHash))
                     ).fetch().mapNotNull { it.component1() }
             } else {
                 emptyList()
             }
-            create.select(SYMBOLS.NAME).from(SYMBOLS)
+            jooq.select(SYMBOLS.NAME).from(SYMBOLS)
                 .where(SYMBOLS.HASH.`in`(classHashes))
                 .fetch()
                 .mapNotNull { it.component1() }.asSequence()
         }
     }
 
-    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(location, jcdb)
+    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(location)
 
 }
-
-//
-//object Calls : Table() {
-//
-//    val calleeClassHash = long("callee_class_hash")
-//    val calleeFieldHash = long("callee_field_hash").nullable()
-//    val calleeMethodHash = long("callee_method_hash").nullable()
-//    val callerClassHash = long("caller_class_hash")
-//    val locationId = long("location_id")
-//
-//}
