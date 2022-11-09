@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-class DBLifeCycleBenchmarks {
+class JcdbLifeCycleBenchmarks {
 
     private lateinit var db: JCDB
 
@@ -56,9 +56,6 @@ class DBLifeCycleBenchmarks {
 
     @TearDown(Level.Iteration)
     fun tearDown() {
-        runBlocking {
-            db.awaitBackgroundJobs()
-            db.close()
-        }
+        db.close()
     }
 }

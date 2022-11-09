@@ -50,8 +50,7 @@ class SQLitePersistenceImpl(
             it.setCacheSize(-8_000)
         }
         if (location == null) {
-            val url =
-                "jdbc:sqlite:file:jcdb-${UUID.randomUUID()}?mode=memory&cache=shared&rewriteBatchedStatements=true"
+            val url = "jdbc:sqlite:file:jcdb-${UUID.randomUUID()}?mode=memory&cache=shared&rewriteBatchedStatements=true"
             dataSource = SQLiteDataSource(config).also {
                 it.url = url
             }
