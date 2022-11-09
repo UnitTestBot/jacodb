@@ -22,14 +22,23 @@ data class MethodTypeNameImpl(
 internal val TypeName.jvmTypeName get() = typeName.jvmName()
 internal val TypeName.jvmClassName get() = jvmTypeName.removePrefix("L").removeSuffix(";")
 
+
 val TypeName.internalDesc: String
     get() = when {
         this.isPrimitive -> this.jvmTypeName
-        this.typeName.endsWith("[]") -> "[${this.elementType().internalDesc}"
+        this.isArray -> {
+            val element = this.elementType()
+            when {
+                element.isClass -> "[${element.jvmTypeName}"
+                else -> "[${element.internalDesc}"
+            }
+        }
         else -> this.jvmClassName
     }
 
-internal val TypeName.isPrimitive get() = PredefinedPrimitives.matches(typeName)
+val TypeName.isPrimitive get() = PredefinedPrimitives.matches(typeName)
+val TypeName.isArray get() = typeName.endsWith("[]")
+val TypeName.isClass get() = !this.isPrimitive && !this.isArray
 
 internal val TypeName.isDWord
     get() = when (typeName) {

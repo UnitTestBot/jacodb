@@ -140,7 +140,7 @@ class MethodNodeBuilder(
                     lhv.typeName.jvmTypeName
                 )
             )
-            val stackChange = 1 + if (lhv.instance == null) 1 else 0
+            val stackChange = 1 + if (lhv.instance == null) 0 else 1
             updateStackInfo(-stackChange)
         }
         is JcRawArrayAccess -> {
