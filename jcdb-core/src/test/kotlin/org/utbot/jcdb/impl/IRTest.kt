@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl
 
 import org.junit.jupiter.api.Test
+import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.ext.findClass
@@ -35,8 +36,9 @@ class IRTest : BaseTest() {
             println()
             newBody
         }
-//        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        val checker = CheckClassAdapter(classNode)
+        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+        val checker = CheckClassAdapter(cw)
         classNode.accept(checker)
+        cw.toByteArray()
     }
 }
