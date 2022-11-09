@@ -44,6 +44,11 @@ benchmark {
         soot {
             include("SootBenchmarks")
         }
+        awaitBackground {
+            include("JcdbJvmBackgroundBenchmarks")
+            include("JcdbAllClasspathBackgroundBenchmarks")
+            include("JcdbIdeaBackgroundBenchmarks")
+        }
     }
 }
 

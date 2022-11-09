@@ -9,7 +9,6 @@
 
 ### JCDB
 
-Run
 ```ssh
 ./gradlew jcdbBenchmark
 ```
@@ -40,6 +39,27 @@ Run
 | SootBenchmarks.jvmRuntimeWithIdeaCommunity | avgt | 5   | 10091.841 | 1233.834 | ms/op  |
 
 
-### Comparison
+### Soot comparison and differences
+
+Soot just read all jar files and stores bytecode in memory. Jcdb works in a bit different way. Jcdb read available .class from jars and build folders in a parallel and as a result 
+is faster in a situation when there are a lot of jar files (because of parallel execution). Keep in mind that Jcdb has a huge job processed 
+in a background while almost all api is ready (hierarchy and usages requires background activity to be finished).
+
+Jcdb performance for background activities without `Usages` feature:
+
+```ssh
+./gradlew awaitBackgroundBenchmark
+```
+
+
+| Benchmark                                            | Mode | Cnt | Score     | Error      | Units |
+|------------------------------------------------------|------|-----|-----------|------------|-------|
+| JcdbJvmBackgroundBenchmarks.awaitBackground          | avgt | 5   | 3182.435  | 457.025    | ms/op |
+| JcdbAllClasspathBackgroundBenchmarks.awaitBackground | avgt | 5   | 6696.840  | 1508.409   | ms/op |
+| JcdbIdeaBackgroundBenchmarks.awaitBackground         | avgt | 2   | 76734.555 |            | ms/op |
+
+For `Idea Community` code base result sqlite database file size is ~3.5Gb
+
+
 
 
