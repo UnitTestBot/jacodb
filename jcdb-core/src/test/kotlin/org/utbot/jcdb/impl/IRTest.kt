@@ -32,6 +32,11 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<BinarySearchTree<*>.BinarySearchTreeIterator>())
     }
 
+    @Test
+    fun `get ir of self`() {
+        testClass(cp.findClass<RawInstListBuilder>())
+    }
+
     private fun testClass(klass: JcClassOrInterface) {
         val classNode = klass.bytecode()
         classNode.methods = klass.methods.map {

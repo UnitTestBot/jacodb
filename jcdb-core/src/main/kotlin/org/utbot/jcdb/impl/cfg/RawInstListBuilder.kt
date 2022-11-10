@@ -254,10 +254,19 @@ class RawInstListBuilder(
 
     private fun local(variable: Int) = currentFrame.locals.getValue(variable)
 
-    private fun local(variable: Int, expr: JcRawValue): JcRawAssignInst {
+    private fun local(variable: Int, expr: JcRawValue): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
-            JcRawAssignInst(oldVar, expr)
+            if (oldVar.typeName == expr.typeName) {
+                JcRawAssignInst(oldVar, expr)
+            } else if (expr is JcRawSimpleValue) {
+                currentFrame = currentFrame.put(variable, expr)
+                null
+            } else {
+                val assignment = nextRegister(expr.typeName)
+                currentFrame = currentFrame.put(variable, assignment)
+                JcRawAssignInst(oldVar, expr)
+            }
         } else {
             val newLocal = nextRegister(expr.typeName)
             val result = JcRawAssignInst(newLocal, expr)
@@ -584,7 +593,12 @@ class RawInstListBuilder(
         val fieldType = insnNode.desc.typeName()
         val declaringClass = insnNode.owner.typeName()
         when (insnNode.opcode) {
-            Opcodes.GETFIELD -> push(JcRawFieldRef(pop(), declaringClass, fieldName, fieldType))
+            Opcodes.GETFIELD -> {
+                val assignment = nextRegister(fieldType)
+                val field = JcRawFieldRef(pop(), declaringClass, fieldName, fieldType)
+                instructionList(insnNode).add(JcRawAssignInst(assignment, field))
+                push(assignment)
+            }
             Opcodes.PUTFIELD -> {
                 val value = pop()
                 val instance = pop()
@@ -592,7 +606,12 @@ class RawInstListBuilder(
                 instructionList(insnNode) += JcRawAssignInst(fieldRef, value)
             }
 
-            Opcodes.GETSTATIC -> push(JcRawFieldRef(declaringClass, fieldName, fieldType))
+            Opcodes.GETSTATIC -> {
+                val assignment = nextRegister(fieldType)
+                val field = JcRawFieldRef(declaringClass, fieldName, fieldType)
+                instructionList(insnNode).add(JcRawAssignInst(assignment, field))
+                push(assignment)
+            }
             Opcodes.PUTSTATIC -> {
                 val value = pop()
                 val fieldRef = JcRawFieldRef(declaringClass, fieldName, fieldType)
@@ -954,7 +973,7 @@ class RawInstListBuilder(
 
     private fun buildVarInsnNode(insnNode: VarInsnNode) {
         when (insnNode.opcode) {
-            in Opcodes.ISTORE..Opcodes.ASTORE -> instructionList(insnNode).add(local(insnNode.`var`, pop()))
+            in Opcodes.ISTORE..Opcodes.ASTORE -> local(insnNode.`var`, pop())?.let { instructionList(insnNode).add(it) }
 
             in Opcodes.ILOAD..Opcodes.ALOAD -> push(local(insnNode.`var`))
             else -> error("Unknown opcode ${insnNode.opcode} in VarInsnNode")
