@@ -2,6 +2,7 @@ package org.utbot.jcdb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
 
@@ -100,7 +101,6 @@ interface JCDB : Closeable {
      * await background jobs
      */
     suspend fun awaitBackgroundJobs()
-
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
 }
 
@@ -111,12 +111,12 @@ interface JCDBPersistence : Closeable {
 
     fun setup()
 
-    fun <T> write(newTx: Boolean = true, action: () -> T): T
-    fun <T> read(newTx: Boolean = true, action: () -> T): T
+    fun <T> write(action: (DSLContext) -> T): T
+    fun <T> read(action: (DSLContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
-    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
-    fun findClasses(location: RegisteredLocation): List<ClassSource>
+    fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
+    fun findClassSources(location: RegisteredLocation): List<ClassSource>
 }
 
 interface RegisteredLocation {

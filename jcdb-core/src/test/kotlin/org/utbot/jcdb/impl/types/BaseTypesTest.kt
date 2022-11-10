@@ -12,7 +12,7 @@ abstract class BaseTypesTest : BaseTest() {
 
     companion object : WithDB()
 
-    protected inline fun <reified T> findClassType(): JcClassType {
+    protected inline fun <reified T> findType(): JcClassType {
         val found = cp.findTypeOrNull(T::class.java.name)
         assertNotNull(found)
         return found!!.assertIs()
@@ -24,7 +24,7 @@ abstract class BaseTypesTest : BaseTest() {
     }
 
     protected inline fun <reified T> JcType?.assertClassType(): JcClassType {
-        val expected = findClassType<T>()
+        val expected = findType<T>()
         assertEquals(
             expected.jcClass.name,
             (this as? JcClassType)?.jcClass?.name,

@@ -1,5 +1,6 @@
 package org.utbot.jcdb.api
 
+import org.jooq.DSLContext
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -10,7 +11,7 @@ interface ByteCodeIndexer {
 
     fun index(classNode: ClassNode, methodNode: MethodNode)
 
-    fun flush()
+    fun flush(jooq: DSLContext)
 }
 
 interface JcFeature<REQ, RES> {

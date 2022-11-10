@@ -262,12 +262,13 @@ fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
-fun JcClassOrInterface.enumValues(): List<JcField>? {
-    if (isEnum) {
-        return declaredFields.filter { it.isStatic && it.type.typeName == name }
+val JcClassOrInterface.enumValues: List<JcField>?
+    get() {
+        if (isEnum) {
+            return declaredFields.filter { it.isStatic && it.type.typeName == name }
+        }
+        return null
     }
-    return null
-}
 
 
 val JcClassOrInterface.methods: List<JcMethod>

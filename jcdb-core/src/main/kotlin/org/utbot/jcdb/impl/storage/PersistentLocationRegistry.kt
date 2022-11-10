@@ -1,10 +1,6 @@
 package org.utbot.jcdb.impl.storage
 
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.update
+import org.jooq.DSLContext
 import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
@@ -16,7 +12,8 @@ import org.utbot.jcdb.impl.LocationsRegistry
 import org.utbot.jcdb.impl.LocationsRegistrySnapshot
 import org.utbot.jcdb.impl.RefreshResult
 import org.utbot.jcdb.impl.RegistrationResult
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity.Companion.findOrNew
+import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
+import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -33,12 +30,21 @@ class PersistentLocationRegistry(
 
     override val actualLocations: List<PersistentByteCodeLocation>
         get() = persistence.read {
-            BytecodeLocationEntity.all().toList().map { PersistentByteCodeLocation(it) }
+            it.selectFrom(BYTECODELOCATIONS).fetch {
+                PersistentByteCodeLocation(it)
+            }
+        }
+
+    private val notRuntimeLocations: List<PersistentByteCodeLocation>
+        get() = persistence.read {
+            it.selectFrom(BYTECODELOCATIONS).where(BYTECODELOCATIONS.RUNTIME.ne(true)).fetch {
+                PersistentByteCodeLocation(it)
+            }
         }
 
     override lateinit var runtimeLocations: List<RegisteredLocation>
 
-    private fun add(location: JcByteCodeLocation) = PersistentByteCodeLocation(location.findOrNew().id.value, location)
+    private fun DSLContext.add(location: JcByteCodeLocation) = PersistentByteCodeLocation(location.findOrNew(this).id!!, location)
 
     override fun setup(runtimeLocations: List<JcByteCodeLocation>): RegistrationResult {
         return registerIfNeeded(runtimeLocations).also {
@@ -49,9 +55,9 @@ class PersistentLocationRegistry(
     override fun afterProcessing(locations: List<RegisteredLocation>) {
         val ids = locations.map { it.id }
         persistence.write {
-            BytecodeLocations.update({ BytecodeLocations.id inList ids }) {
-                it[state] = LocationState.PROCESSED
-            }
+            it.update(BYTECODELOCATIONS)
+                .set(BYTECODELOCATIONS.STATE, LocationState.PROCESSED.ordinal).where(BYTECODELOCATIONS.ID.`in`(ids))
+                .execute()
         }
         featuresRegistry.broadcast(JcInternalSignal.AfterIndexing)
     }
@@ -61,43 +67,48 @@ class PersistentLocationRegistry(
             val result = arrayListOf<RegisteredLocation>()
             val toAdd = arrayListOf<JcByteCodeLocation>()
             val hashes = locations.map { it.hash }
-            val existed = BytecodeLocationEntity.find {
-                BytecodeLocations.hash inList hashes and (BytecodeLocations.state neq LocationState.INITIAL)
-            }.associateBy { it.hash }
+            val existed = it.selectFrom(BYTECODELOCATIONS).where(
+                BYTECODELOCATIONS.HASH.`in`(hashes).and(BYTECODELOCATIONS.STATE.ne(LocationState.INITIAL.ordinal))
+            ).fetch().associateBy { it.hash }
 
             locations.forEach {
                 val found = existed[it.hash]
                 if (found == null) {
                     toAdd += it
                 } else {
-                    result += PersistentByteCodeLocation(found.id.value, it)
+                    result += PersistentByteCodeLocation(found.id!!, it)
                 }
             }
-            val addedWithId = arrayListOf<PersistentByteCodeLocation>()
-            BytecodeLocations.batchInsert(toAdd, shouldReturnGeneratedValues = false) {
-                val id = idGen.incrementAndGet()
-                this[BytecodeLocations.id] = id
-                this[BytecodeLocations.runtime] = it.type == LocationType.RUNTIME
-                this[BytecodeLocations.path] = it.path
-                this[BytecodeLocations.hash] = it.hash
-                addedWithId.add(PersistentByteCodeLocation(id, it))
+            val records = toAdd.map { add ->
+                idGen.incrementAndGet() to add
             }
+            it.connection {
+                it.insertElements(BYTECODELOCATIONS, records) {
+                    val (id, location) = it
+                    setLong(1, id)
+                    setString(2, location.path)
+                    setString(3, location.hash)
+                    setBoolean(4, location.type == LocationType.RUNTIME)
+                    setInt(5, LocationState.INITIAL.ordinal)
+                }
+            }
+            val added = records.map { PersistentByteCodeLocation(it.first, it.second) }
             RegistrationResult(result + addedWithId, addedWithId)
         }
     }
 
-    private fun deprecate(locations: List<RegisteredLocation>) {
+    private fun DSLContext.deprecate(locations: List<RegisteredLocation>) {
         locations.forEach {
             featuresRegistry.broadcast(JcInternalSignal.LocationRemoved(it))
         }
-        BytecodeLocations.deleteWhere { BytecodeLocations.id inList locations.map { it.id } }
+        deleteFrom(BYTECODELOCATIONS).where(BYTECODELOCATIONS.ID.`in`(locations.map { it.id })).execute()
     }
 
     override fun refresh(): RefreshResult {
         val deprecated = arrayListOf<PersistentByteCodeLocation>()
         val newLocations = arrayListOf<JcByteCodeLocation>()
         val updated = hashMapOf<JcByteCodeLocation, PersistentByteCodeLocation>()
-        actualLocations.forEach { location ->
+        notRuntimeLocations.forEach { location ->
             val jcLocation = location.jcLocation
             if (jcLocation.isChanged()) {
                 val refreshed = jcLocation.createRefreshed()
@@ -112,12 +123,14 @@ class PersistentLocationRegistry(
             }
         }
         val new = persistence.write {
-            deprecate(deprecated)
+            it.deprecate(deprecated)
             newLocations.map { location ->
-                val refreshed = add(location)
+                val refreshed = it.add(location)
                 val toUpdate = updated[location]
                 if (toUpdate != null) {
-                    toUpdate.entity.updated = refreshed.entity
+                    it.update(BYTECODELOCATIONS)
+                        .set(BYTECODELOCATIONS.UPDATED_ID, refreshed.id)
+                        .where(BYTECODELOCATIONS.ID.eq(toUpdate.id)).execute()
                 }
                 refreshed
             }
@@ -133,12 +146,12 @@ class PersistentLocationRegistry(
 
     override fun cleanup(): CleanupResult {
         return persistence.write {
-            val deprecated = BytecodeLocationEntity
-                .find(BytecodeLocations.updated neq null)
+            val deprecated = it.selectFrom(BYTECODELOCATIONS)
+                .where(BYTECODELOCATIONS.UPDATED_ID.isNotNull).fetch()
                 .toList()
-                .filterNot { entity -> snapshots.any { it.ids.contains(entity.id.value) } }
+                .filterNot { entity -> snapshots.any { it.ids.contains(entity.id) } }
                 .map { PersistentByteCodeLocation(it) }
-            deprecate(deprecated)
+            it.deprecate(deprecated)
             CleanupResult(deprecated)
         }
     }
@@ -151,4 +164,24 @@ class PersistentLocationRegistry(
     override fun close() {
         // do nothing
     }
+
+    private fun JcByteCodeLocation.findOrNew(dslContext: DSLContext): BytecodelocationsRecord {
+        val existed = findOrNull(dslContext)
+        if (existed != null) {
+            return existed
+        }
+        val record = BytecodelocationsRecord().also {
+            it.path = path
+            it.hash = hash
+            it.runtime = type == LocationType.RUNTIME
+        }
+        record.insert()
+        return record
+    }
+
+    private fun JcByteCodeLocation.findOrNull(dslContext: DSLContext): BytecodelocationsRecord? {
+        return dslContext.selectFrom(BYTECODELOCATIONS)
+            .where(BYTECODELOCATIONS.PATH.eq(path).and(BYTECODELOCATIONS.HASH.eq(hash))).fetchAny()
+    }
+
 }

@@ -2,11 +2,7 @@ package org.utbot.jcdb.impl.fs
 
 import mu.KLogging
 import org.utbot.jcdb.api.LocationType
-import java.io.BufferedInputStream
 import java.io.File
-import java.io.FileInputStream
-import java.security.MessageDigest
-import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import kotlin.streams.toList
@@ -23,7 +19,10 @@ open class JarLocation(file: File, private val isRuntime: Boolean) : AbstractByt
     override val hash by lazy { fileChecksum }
 
     override val type: LocationType
-        get() = LocationType.RUNTIME.takeIf { isRuntime } ?: LocationType.RUNTIME
+        get() = when {
+            isRuntime -> LocationType.RUNTIME
+            else -> LocationType.APP
+        }
 
     override fun createRefreshed() = JarLocation(jarOrFolder, isRuntime)
 
@@ -52,9 +51,9 @@ open class JarLocation(file: File, private val isRuntime: Boolean) : AbstractByt
         val jar = jarFile ?: return null
         val jarEntryName = classFullName.replace(".", "/") + ".class"
         val jarEntry = jar.getJarEntry(jarEntryName)
-        return jar.getInputStream(jarEntry)
-            .use { it.readBytes() }
-            .also { jar.close() }
+        return jar.use {
+            it.getInputStream(jarEntry).readBytes()
+        }
     }
 
     protected open val jarWithClasses: JarWithClasses?
@@ -78,7 +77,7 @@ open class JarLocation(file: File, private val isRuntime: Boolean) : AbstractByt
             return null
         }
 
-    protected val jarFile: JarFile?
+    private val jarFile: JarFile?
         get() {
             if (!jarOrFolder.exists() || !jarOrFolder.isFile) {
                 return null
@@ -107,15 +106,18 @@ open class JarLocation(file: File, private val isRuntime: Boolean) : AbstractByt
 
     private val fileChecksum: String
         get() {
-            val buffer = ByteArray(8192)
-            var count: Int
-            val digest = MessageDigest.getInstance("SHA-256")
-            val bis = BufferedInputStream(FileInputStream(jarOrFolder))
-            while (bis.read(buffer).also { count = it } > 0) {
-                digest.update(buffer, 0, count)
+            return jarOrFolder.let {
+                it.absolutePath + it.lastModified() + it.length()
             }
-            bis.close()
-            return Base64.getEncoder().encodeToString(digest.digest())
+//            val buffer = ByteArray(8192)
+//            var count: Int
+//            val digest = MessageDigest.getInstance("SHA-256")
+//            val bis = BufferedInputStream(FileInputStream(jarOrFolder))
+//            while (bis.read(buffer).also { count = it } > 0) {
+//                digest.update(buffer, 0, count)
+//            }
+//            bis.close()
+//            return Base64.getEncoder().encodeToString(digest.digest())
         }
 
 }

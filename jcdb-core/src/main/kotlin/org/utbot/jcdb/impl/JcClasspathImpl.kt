@@ -49,7 +49,7 @@ class JcClasspathImpl(
     override fun findClassOrNull(name: String): JcClassOrInterface? {
         return classCache.get(name) {
             val jcClass = toJcClass(classpathVfs.firstClassOrNull(name))
-                ?: db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
+                ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
                     JcClassOrInterfaceImpl(this, it)
                 }
             ClassHolder(jcClass)

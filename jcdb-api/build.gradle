@@ -6,4 +6,7 @@ dependencies {
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-collections-immutable-jvm', version: collections_version
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: coroutines_version
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: coroutines_version
+
+    implementation group: 'org.jooq', name: 'jooq', version: jooq_version
+
 }

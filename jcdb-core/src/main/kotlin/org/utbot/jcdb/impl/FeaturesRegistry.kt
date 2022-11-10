@@ -25,12 +25,12 @@ class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable 
 
     private fun <REQ, RES> JcFeature<RES, REQ>.index(
         location: RegisteredLocation,
-        classes: Collection<ClassSource>
+        classes: List<ClassSource>
     ) {
         val indexer = newIndexer(jcdb, location)
         classes.forEach { index(it, indexer) }
         jcdb.persistence.write {
-            indexer.flush()
+            indexer.flush(it)
         }
     }
 

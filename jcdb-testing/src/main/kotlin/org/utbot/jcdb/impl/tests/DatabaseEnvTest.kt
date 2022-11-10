@@ -217,12 +217,12 @@ abstract class DatabaseEnvTest {
         assertTrue(enum.isEnum)
         assertEquals(
             listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(),
-            enum.enumValues()?.map { it.name }?.sorted()
+            enum.enumValues?.map { it.name }?.sorted()
         )
 
         val notEnum = cp.findClass<String>()
         assertFalse(notEnum.isEnum)
-        assertNull(notEnum.enumValues())
+        assertNull(notEnum.enumValues)
     }
 
     @Test
