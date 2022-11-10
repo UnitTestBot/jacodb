@@ -7,6 +7,8 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.api.packageName
+import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
+import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.*
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -34,6 +36,9 @@ class IRTest : BaseTest() {
 
     @Test
     fun `get ir of self`() {
+        testClass(cp.findClass<JcClasspathImpl>())
+        testClass(cp.findClass<JcClassOrInterfaceImpl>())
+        testClass(cp.findClass<JcMethodImpl>())
         testClass(cp.findClass<RawInstListBuilder>())
     }
 

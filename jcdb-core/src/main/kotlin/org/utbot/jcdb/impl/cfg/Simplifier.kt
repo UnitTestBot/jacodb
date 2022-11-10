@@ -11,12 +11,12 @@ import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jcdb.impl.cfg.util.InstructionFilter
 
 internal class UseCaseComputer : DefaultJcRawInstVisitor<Unit> {
-    val uses = mutableMapOf<JcRawValue, MutableSet<JcRawInst>>()
+    val uses = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
     override val defaultInstHandler: (JcRawInst) -> Unit
         get() = { inst ->
             inst.operands
                 .flatMapTo(mutableSetOf()) { expr -> expr.applyAndGet(FullExprSetCollector()) { it.exprs } }
-                .filterIsInstance<JcRawValue>()
+                .filterIsInstance<JcRawSimpleValue>()
                 .filter { it !is JcRawConstant }
                 .forEach {
                     uses.getOrPut(it, ::mutableSetOf).add(inst)
@@ -24,8 +24,16 @@ internal class UseCaseComputer : DefaultJcRawInstVisitor<Unit> {
         }
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
+        if (inst.lhv is JcRawComplexValue) {
+            inst.lhv.applyAndGet(FullExprSetCollector()) { it.exprs }
+                .filterIsInstance<JcRawSimpleValue>()
+                .filter { it !is JcRawConstant }
+                .forEach {
+                    uses.getOrPut(it, ::mutableSetOf).add(inst)
+                }
+        }
         inst.rhv.applyAndGet(FullExprSetCollector()) { it.exprs }
-            .filterIsInstance<JcRawValue>()
+            .filterIsInstance<JcRawSimpleValue>()
             .filter { it !is JcRawConstant }
             .forEach {
                 uses.getOrPut(it, ::mutableSetOf).add(inst)
@@ -97,7 +105,7 @@ internal class Simplifier {
 
         do {
             val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
-            val (replacements, instructionsToDelete) = instructionList.applyAndGet(ReplacementComputer(uses)) {
+            val (replacements, instructionsToDelete) = instructionList.applyAndGet(ReplacementComputer(uses.toMap())) {
                 it.replacements to it.replacedInsts
             }
             instructionList = instructionList
