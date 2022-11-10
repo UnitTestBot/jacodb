@@ -93,7 +93,7 @@ class PersistentLocationRegistry(
                 }
             }
             val added = records.map { PersistentByteCodeLocation(it.first, it.second) }
-            RegistrationResult(result + addedWithId, addedWithId)
+            RegistrationResult(result + added, added)
         }
     }
 
