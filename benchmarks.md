@@ -14,15 +14,15 @@
 ```
 
 
-| Benchmark                                           | Mode | Cnt | Score    | Error    | Units  |
-|-----------------------------------------------------|------|-----|----------|----------|--------|
-| JcdbBenchmarks.jvmRuntime                           | avgt | 5   | 741.948  | 427.314  | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithUsages                 | avgt | 5   | 896.083  | 546.330  | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithGuava                  | avgt | 5   | 740.713  | 514.594  | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithGuavaWithUsages        | avgt | 5   | 929.675  | 774.685  | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithAllClasspath           | avgt | 5   | 1034.280 | 1425.528 | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithAllClasspathWithUsages | avgt | 5   | 1298.637 | 1355.756 | ms/op  |
-| JcdbBenchmarks.jvmRuntimeWithIdeaCommunity          | avgt | 5   | 2324.834 | 1324.016 | ms/op  |
+| Benchmark                                           | Repeats | Avg time per operation | 
+|-----------------------------------------------------|---------|------------------------|
+| JcdbBenchmarks.jvmRuntime                           | 5       | 741 ms                 |
+| JcdbBenchmarks.jvmRuntimeWithUsages                 | 5       | 896 ms                 |
+| JcdbBenchmarks.jvmRuntimeWithGuava                  | 5       | 740 ms                 |
+| JcdbBenchmarks.jvmRuntimeWithGuavaWithUsages        | 5       | 929 ms                 |
+| JcdbBenchmarks.jvmRuntimeWithAllClasspath           | 5       | 1034 ms                |
+| JcdbBenchmarks.jvmRuntimeWithAllClasspathWithUsages | 5       | 1298 ms                |
+| JcdbBenchmarks.jvmRuntimeWithIdeaCommunity          | 5       | 2324 ms                |
 
 ### Soot
 
@@ -31,12 +31,12 @@ Run
 ./gradlew sootBenchmark
 ```
 
-| Benchmark                                  | Mode | Cnt | Score     | Error    | Units  |
-|--------------------------------------------|------|-----|-----------|----------|--------|
-| SootBenchmarks.jvmRuntime                  | avgt | 5   | 827.527   | 225.962  | ms/op  |
-| SootBenchmarks.jvmRuntimeWithGuava         | avgt | 5   | 733.182   | 262.707  | ms/op  |
-| SootBenchmarks.jvmRuntimeWithAllClasspath  | avgt | 5   | 1839.610  | 186.369  | ms/op  |
-| SootBenchmarks.jvmRuntimeWithIdeaCommunity | avgt | 5   | 10091.841 | 1233.834 | ms/op  |
+| Benchmark                                  | Repeats  | Avg time per operation  |
+|--------------------------------------------|----------|-------------------------|
+| SootBenchmarks.jvmRuntime                  | 5        | 827 ms                  |
+| SootBenchmarks.jvmRuntimeWithGuava         | 5        | 733 ms                  |
+| SootBenchmarks.jvmRuntimeWithAllClasspath  | 5        | 1839 ms                 |
+| SootBenchmarks.jvmRuntimeWithIdeaCommunity | 5        | 10091 ms                |
 
 
 ### Soot comparison and differences
@@ -52,11 +52,11 @@ Jcdb performance for background activities without `Usages` feature:
 ```
 
 
-| Benchmark                                            | Mode | Cnt | Score     | Error      | Units |
-|------------------------------------------------------|------|-----|-----------|------------|-------|
-| JcdbJvmBackgroundBenchmarks.awaitBackground          | avgt | 5   | 3182.435  | 457.025    | ms/op |
-| JcdbAllClasspathBackgroundBenchmarks.awaitBackground | avgt | 5   | 6696.840  | 1508.409   | ms/op |
-| JcdbIdeaBackgroundBenchmarks.awaitBackground         | avgt | 2   | 76734.555 |            | ms/op |
+| Benchmark                                            | Repeats  | Avg time per operation  |
+|------------------------------------------------------|----------|-------------------------|
+| JcdbJvmBackgroundBenchmarks.awaitBackground          | 5        | 3182 ms                 |
+| JcdbAllClasspathBackgroundBenchmarks.awaitBackground | 5        | 6696 ms                 |
+| JcdbIdeaBackgroundBenchmarks.awaitBackground         | 2        | 76734 ms                |
 
 For `Idea Community` code base result sqlite database file size is ~3.5Gb
 
