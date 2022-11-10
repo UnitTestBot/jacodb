@@ -1,7 +1,7 @@
 package org.utbot.jcdb
 
 import kotlinx.coroutines.runBlocking
-import org.utbot.jcdb.impl.performance.allIdeaJarsMain
+import org.utbot.jcdb.impl.performance.allIdeaJarsAbsolute
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.FIELDS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODPARAMETERS
@@ -11,7 +11,7 @@ fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
         val db = jcdb {
-            loadByteCode(allIdeaJarsMain)
+            loadByteCode(allIdeaJarsAbsolute)
             persistent("D:\\work\\jcdb\\jcdb-idea.db")
 //            installFeatures(Usages)
         }.also {
