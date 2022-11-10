@@ -10,6 +10,7 @@ import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.*
+import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import java.net.URLClassLoader
 import java.nio.file.Files
 
@@ -40,6 +41,9 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcClassOrInterfaceImpl>())
         testClass(cp.findClass<JcMethodImpl>())
         testClass(cp.findClass<RawInstListBuilder>())
+        testClass(cp.findClass<Simplifier>())
+        testClass(cp.findClass<JCDBImpl>())
+        testClass(cp.findClass<ExprMapper>())
     }
 
     private fun testClass(klass: JcClassOrInterface) {
