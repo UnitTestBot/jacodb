@@ -9,7 +9,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findFieldsUsedIn
 import org.utbot.jcdb.api.ext.findMethodsUsedIn
-import org.utbot.jcdb.impl.index.Usages
+import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.impl.usages.direct.DirectA
 
 class DirectUsagesTest : BaseTest() {
@@ -40,7 +40,7 @@ class DirectUsagesTest : BaseTest() {
     @Test
     fun `find methods used in method with broken classpath`() {
         val cp = runBlocking {
-            db!!.classpath(allClasspath - guavaLib)
+            db.classpath(allClasspath - guavaLib)
         }
         cp.use {
             val usages = cp.methodsUsages<DirectA>()

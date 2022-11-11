@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.index.Usages
-import org.utbot.jcdb.impl.index.findUsages
+import org.utbot.jcdb.impl.features.Usages
+import org.utbot.jcdb.impl.features.findUsages
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA
@@ -63,7 +63,7 @@ class SearchUsagesTest : BaseTest() {
     fun `classes write fields with rebuild`() {
         val time = measureTimeMillis {
             runBlocking {
-                db!!.rebuildFeatures()
+                db.rebuildFeatures()
             }
         }
         println("Features rebuild in ${time}ms")

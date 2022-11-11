@@ -5,7 +5,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.jcdb
@@ -16,7 +15,7 @@ abstract class BaseTest {
 
     protected val cp: JcClasspath = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
-        withDB.db!!.classpath(allClasspath)
+        withDB.db.classpath(allClasspath)
     }
 
     @AfterEach
@@ -40,7 +39,7 @@ abstract class BaseTest {
 
 open class WithDB(vararg features: JcFeature<*, *>) {
 
-    var db: JCDB? = runBlocking {
+    var db = runBlocking {
         jcdb {
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
@@ -51,8 +50,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
     }
 
     open fun cleanup() {
-        db?.close()
-        db = null
+        db.close()
     }
 }
 

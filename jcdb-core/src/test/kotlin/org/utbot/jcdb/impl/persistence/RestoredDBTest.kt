@@ -5,7 +5,7 @@ import org.junit.jupiter.api.AfterAll
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.impl.allClasspath
-import org.utbot.jcdb.impl.index.hierarchyExt
+import org.utbot.jcdb.impl.features.hierarchyExt
 import org.utbot.jcdb.impl.tests.DatabaseEnvTest
 import org.utbot.jcdb.jcdb
 import java.nio.file.Files

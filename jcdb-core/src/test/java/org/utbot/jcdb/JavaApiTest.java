@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.utbot.jcdb.api.JCDB;
 import org.utbot.jcdb.api.JcClassOrInterface;
 import org.utbot.jcdb.api.JcClasspath;
-import org.utbot.jcdb.impl.index.Usages;
+import org.utbot.jcdb.impl.features.Usages;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;

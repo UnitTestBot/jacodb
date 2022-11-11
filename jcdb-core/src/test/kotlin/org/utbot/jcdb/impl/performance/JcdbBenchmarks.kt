@@ -15,8 +15,8 @@ import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.allClasspath
+import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.impl.guavaLib
-import org.utbot.jcdb.impl.index.Usages
 import org.utbot.jcdb.jcdb
 import java.io.File
 import java.util.concurrent.TimeUnit
