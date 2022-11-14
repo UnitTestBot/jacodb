@@ -23,7 +23,6 @@ import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.ParameterInfo
 import org.utbot.jcdb.impl.types.PrimitiveValue
-import java.sql.PreparedStatement
 import java.sql.Types
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -234,14 +233,6 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
     private fun String.findCachedSymbol(): Long {
         return symbolsCache[this]
             ?: throw IllegalStateException("Symbol $this is required in cache. Please setup cache first")
-    }
-
-    private fun PreparedStatement.setNullableLong(index: Int, value: Long?) {
-        if (value == null) {
-            setNull(index, Types.BIGINT)
-        } else {
-            setLong(index, value)
-        }
     }
 
     private val TableField<*, Long?>.maxId: Long?

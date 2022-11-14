@@ -1,10 +1,12 @@
 package org.utbot.jcdb.impl.vfs
 
+import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
+import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import java.io.File
 
 class PersistentByteCodeLocation(
@@ -13,6 +15,18 @@ class PersistentByteCodeLocation(
 ) : RegisteredLocation {
 
     constructor(entity: BytecodelocationsRecord) : this(entity.id!!, entity.toJcLocation())
+
+}
+
+class LazyPersistentByteCodeLocation(private val jcdbPersistence: JCDBPersistence, override val id: Long) :
+    RegisteredLocation {
+
+    override val jcLocation: JcByteCodeLocation
+        get() {
+            return jcdbPersistence.read {
+                it.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!.toJcLocation()
+            }
+        }
 
 }
 

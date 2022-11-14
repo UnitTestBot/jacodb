@@ -191,7 +191,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `find subclasses for class`() {
-        with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
+        with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true).toList()) {
             assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
             }
@@ -207,7 +207,14 @@ abstract class DatabaseEnvTest {
     @Test
     fun `find subclasses for interface`() {
         with(findSubClasses<Document>()) {
-            assertTrue(isNotEmpty())
+            assertTrue(toList().isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `find huge number of subclasses`() {
+        with(findSubClasses<Runnable>()) {
+            assertTrue(take(10).toList().size == 10)
         }
     }
 
@@ -230,7 +237,7 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)
 
-        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true)) {
+        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true).toList()) {
             assertEquals(4, size) {
                 "expected 4 but got only: ${joinToString { it.name }}"
             }
@@ -261,7 +268,7 @@ abstract class DatabaseEnvTest {
         val sayMethod = creatureClass.declaredMethods.first { it.name == "say" }
         val helloMethod = creatureClass.declaredMethods.first { it.name == "hello" }
 
-        var overrides = hierarchyExt.findOverrides(sayMethod)
+        var overrides = hierarchyExt.findOverrides(sayMethod).toList()
 
         with(overrides) {
             assertEquals(4, size)
@@ -271,7 +278,7 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.Pterodactyl>() })
         }
-        overrides = hierarchyExt.findOverrides(helloMethod)
+        overrides = hierarchyExt.findOverrides(helloMethod).toList()
         with(overrides) {
             assertEquals(1, size)
 
@@ -280,7 +287,7 @@ abstract class DatabaseEnvTest {
         }
     }
 
-    private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
+    private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
         return hierarchyExt.findSubClasses(T::class.java.name, allHierarchy)
     }
 }

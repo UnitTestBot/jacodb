@@ -13,7 +13,7 @@ interface HierarchyExtension {
      *
      * @return list with unique ClassId
      */
-    fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface>
+    fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface>
 
     /**
      * find all subclasses or implementations if name points to interface. If [allHierarchy] is true then search
@@ -21,12 +21,12 @@ interface HierarchyExtension {
      *
      * @return list with unique ClassId
      */
-    fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface>
+    fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface>
 
     /**
      * find overrides of current method
      * @return list with unique methods overriding current
      */
-    fun findOverrides(methodId: JcMethod): List<JcMethod>
+    fun findOverrides(methodId: JcMethod): Sequence<JcMethod>
 
 }

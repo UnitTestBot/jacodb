@@ -31,12 +31,18 @@ public class FieldA {
 
 class FieldAImpl extends FieldA {
 
+    public final FieldB fieldB = new FieldB(1);
+
     public FieldAImpl() {
         super(1, 1);
     }
 
     void hello() {
         System.out.println(a);
+    }
+
+    void fieldB() {
+        System.out.println(fieldB);
     }
 }
 

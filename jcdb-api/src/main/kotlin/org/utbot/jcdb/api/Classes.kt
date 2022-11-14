@@ -49,7 +49,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 
     val exceptions: List<JcClassOrInterface>
 
-    fun body(): MethodNode // match type system
+    fun body(): MethodNode
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {

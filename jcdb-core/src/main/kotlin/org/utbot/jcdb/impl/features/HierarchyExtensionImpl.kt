@@ -5,8 +5,10 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import kotlin.streams.asSequence
 
 @Suppress("SqlResolve")
 class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
@@ -38,12 +40,12 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 
     }
 
-    override fun findSubClasses(name: String, allHierarchy: Boolean): List<JcClassOrInterface> {
-        val classId = cp.findClassOrNull(name) ?: return emptyList()
+    override fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+        val classId = cp.findClassOrNull(name) ?: return emptySequence()
         return findSubClasses(classId, allHierarchy)
     }
 
-    override fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): List<JcClassOrInterface> {
+    override fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
         val name = classId.name
 
         return cp.subClasses(name, allHierarchy).map { record ->
@@ -57,20 +59,20 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }
     }
 
-    override fun findOverrides(methodId: JcMethod): List<JcMethod> {
+    override fun findOverrides(methodId: JcMethod): Sequence<JcMethod> {
         val desc = methodId.description
         val name = methodId.name
         val subClasses = findSubClasses(methodId.enclosingClass, allHierarchy = true)
         return subClasses.mapNotNull {
-            it.findMethodOrNull(name, desc) // todo this is wrong
-        }
+            it.findMethodOrNull(name, desc)
+        }.filter { !it.isPrivate }
     }
 
-    private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean): List<ClassRecord> {
+    private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean): Sequence<ClassRecord> {
         val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
+        val query = if (allHierarchy) allHierarchyQuery(locationIds) else directSubClassesQuery(locationIds)
         return db.persistence.read {
-            val query = if (allHierarchy) allHierarchyQuery(locationIds) else directSubClassesQuery(locationIds)
-            it.fetch(query, name).map {
+            it.fetchStream(query, name).asSequence().map {
                 ClassRecord(
                     byteCode = it.get("bytecode") as ByteArray,
                     locationId = it.get("location_id") as Long,
