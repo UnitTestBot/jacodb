@@ -1,36 +1,14 @@
+[![ci status](https://github.com/UnitTestBot/jcdb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jcdb/actions/workflows/build-and-test.yml)
+
+## Overview
+
 `JCDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JCDB` does the same for bytecode stored in a file system.
 
 `JCDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing java bytecode.
 
 Information about classes, hierarchies, annotations, methods, fields, and their usages is stored in SQLite database — either in-memory or persistent. Persisted data can be reused between restarts. Accessing the persistent storage from multiple processes simultaneously is not supported.
 
-To start creating database, `JCDB` gets a list of JAR-files or build directories:
-
-```kotlin
-interface JCDB {
-
-    suspend fun classpath(dirOrJars: List<File>): JcClasspath
-
-    suspend fun load(dirOrJar: File)
-    suspend fun load(dirOrJars: List<File>)
-
-    suspend fun refresh()
-}
-```
-
-`JcClasspath` represents the set of classpath items. Each item occurs only once here — otherwise, in case of collision, like in JAR hell, only one random class could win.
-
-```kotlin
-interface JcClasspath {
-
-    val locations: List<ByteCodeLocation>
-
-    fun findClassOrNull(name: String): JcClassOrInterface?
-    fun findTypeOrNull(name: String): JcType?
-}
-```
-
-## API
+## Examples
 
 API has two levels: the one representing in filesystem (**bytecode** and **classes**) and the one appearing at runtime (**types**).
 
@@ -39,43 +17,7 @@ API has two levels: the one representing in filesystem (**bytecode** and **class
 
 Both levels are connected to `JcClasspath`. You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by generics substitution.
 
-
-### Classes
-
-`JcClasspath#findClassOrNull` returns an instance of `JcClassOrInterface` from `locations`. If there is no class in `locations`, `findClassOrNull` returns `null`.
-
-`JcClassOrInterface` represents JVM bytecode:
-
-```kotlin
-interface JcClassOrInterface {
-
-    val location: ByteCodeLocation
-
-    val name: String
-    val simpleName: String
-
-    val methods: List<JcMethod>
-    val fields: List<JcField>
-
-    val superClass: JcClassOrInterface?
-    val interfaces: List<JcClassOrInterface>
-    val interClasses: List<JcClassOrInterface>
-    val outerClass: JcClassOrInterface?
-
-}
-
-interface JcMethod {
-    val name: String
-
-    val enclosingClass: JcClassOrInterface
-    val returnClass: JcClassOrInterface?
-    val parameters: List<JcParameter>
-
-    fun body(): MethodNode?
-}
-```
-
-Usage example:
+Design overview and technical information could be found [here](./design.md).
 
 ```kotlin
 suspend fun findNormalDistribution(): Any {
@@ -84,7 +26,7 @@ suspend fun findNormalDistribution(): Any {
     val buildDir = File("my-project/build/classes/java/main")
     val database = jcdb {
         useProcessJRE()
-        persistent("/tmp/compilation-db/${System.currentTimeMillis()}")
+        persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
     }
 
     // Let's load these three bytecode locations
@@ -95,8 +37,7 @@ suspend fun findNormalDistribution(): Any {
     database.load(listOf(buildDir))
 
     // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
-    val jcClass = database.classpath(commonsMath32, buildDir)
-        .findClass("org.apache.commons.math3.distribution.NormalDistribution")
+    val jcClass = database.classpath(commonsMath32, buildDir).findClass("org.apache.commons.math3.distribution.NormalDistribution")
     println(jcClass.methods.size)
     println(jcClass.constructors.size)
     println(jcClass.annotations.size)
@@ -106,9 +47,7 @@ suspend fun findNormalDistribution(): Any {
 }
 ```
 
-Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed.
-
-If a classpath item is inappropriate you may receive `NoClassInClasspathException` at runtime. 
+Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed. Class could be in incomplete environment (i.e super class, interface, return type or parameter of method is not found in classpath) then api will throw `NoClassInClasspathException` at runtime. 
 
 The database can watch for file system changes in the background and refresh the JAR-files explicitly:
 
@@ -116,7 +55,7 @@ The database can watch for file system changes in the background and refresh the
     val database = jcdb {
         watchFileSystemChanges = true
         useProcessJRE()
-        loadByteCode(listOf(lib1, buildDir)) 
+        load(listOf(lib1, buildDir)) 
         persistent()
     }
 
@@ -149,7 +88,6 @@ It represents runtime behavior according to parameter substitution in the given 
 
 ```
 
-
 ## Multithreading
 
 The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-safe and immutable. 
@@ -160,7 +98,7 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
     val database = jcdb {
         watchFileSystemChanges()
         useProcessJavaRuntime()
-        loadByteCode(listOf(lib1, buildDir))
+        load(listOf(lib1, buildDir))
         persistent()
     }
     
@@ -174,7 +112,7 @@ If there is a request for a `JcClasspath` instance containing the libraries, whi
 
 ```kotlin
     val database = jcdb {
-        loadByteCode(listOf(lib1))
+        load(listOf(lib1))
         persistent()
     }
     
@@ -210,4 +148,4 @@ Bytecode loading consists of two steps:
 
 `JCDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
 
-For architecture and other technical information please visit the [design page](./design.md).
+Benchmarks results and comparison with Soot is [here](./benchmarks.md).

@@ -168,7 +168,7 @@ class JCDBImpl(
     }
 
     override suspend fun awaitBackgroundJobs() {
-        backgroundJobs.values.toList().joinAll()
+        backgroundJobs.values.joinAll()
     }
 
     fun afterStart() {
