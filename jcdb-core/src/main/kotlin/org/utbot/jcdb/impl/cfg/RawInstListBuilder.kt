@@ -105,6 +105,7 @@ private val AbstractInsnNode.isBranchingInst
         is JumpInsnNode -> true
         is TableSwitchInsnNode -> true
         is LookupSwitchInsnNode -> true
+        is InsnNode -> opcode == Opcodes.ATHROW
         else -> false
     }
 
@@ -121,6 +122,7 @@ class RawInstListBuilder(
     private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
     private lateinit var lastFrameState: FrameState
     private lateinit var currentFrame: Frame
+    private val ENTRY = InsnNode(-1)
 
     private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
@@ -142,6 +144,7 @@ class RawInstListBuilder(
 
     private fun buildInstructions() {
         currentFrame = createInitialFrame()
+        frames[ENTRY] = currentFrame
         for (insn in methodNode.instructions) {
             when (insn) {
                 is InsnNode -> buildInsnNode(insn)
@@ -189,8 +192,8 @@ class RawInstListBuilder(
 
     // this class is required to handle FrameNode instructions of ASM
     private data class FrameState(
-        val locals: Map<Int, TypeName>,
-        val stack: Map<Int, TypeName>
+        val locals: SortedMap<Int, TypeName>,
+        val stack: SortedMap<Int, TypeName>
     ) {
         companion object {
             fun parseNew(insn: FrameNode): FrameState {
@@ -211,15 +214,15 @@ class RawInstListBuilder(
             for ((index, type) in appendedLocals) {
                 newLocals[insertKey + index] = type
             }
-            return copy(locals = newLocals, stack = emptyMap())
+            return copy(locals = newLocals.toSortedMap(), stack = sortedMapOf())
         }
 
         fun dropFrame(inst: FrameNode): FrameState {
             val newLocals = this.locals.toList().dropLast(inst.local.size).toMap()
-            return copy(locals = newLocals, stack = emptyMap())
+            return copy(locals = newLocals.toSortedMap(), stack = sortedMapOf())
         }
 
-        fun copy0(): FrameState = this.copy(stack = emptyMap())
+        fun copy0(): FrameState = this.copy(stack = sortedMapOf())
 
         fun copy1(insn: FrameNode): FrameState {
             val newStack = insn.stack.parseStack()
@@ -236,8 +239,7 @@ class RawInstListBuilder(
 
         fun push(value: JcRawValue) = copy(locals = locals, stack = stack.add(value))
         fun peek() = stack.last()
-        fun pop(): Pair<Frame, JcRawValue> =
-            copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
+        fun pop(): Pair<Frame, JcRawValue> = copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
     }
 
     private fun pop(): JcRawValue {
@@ -284,6 +286,9 @@ class RawInstListBuilder(
     private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
 
     private fun buildGraph() {
+        methodNode.instructions.first?.let {
+            predecessors.getOrPut(it, ::mutableListOf).add(ENTRY)
+        }
         for (insn in methodNode.instructions) {
             if (insn is JumpInsnNode) {
                 predecessors.getOrPut(insn.label, ::mutableListOf).add(insn)
@@ -307,6 +312,9 @@ class RawInstListBuilder(
             }
         }
         for (tryCatchBlock in methodNode.tryCatchBlocks) {
+            val preStart = predecessors.getOrDefault(tryCatchBlock.start, setOf(ENTRY))
+            predecessors.getOrPut(tryCatchBlock.handler, ::mutableListOf).addAll(preStart)
+
             var current: AbstractInsnNode = tryCatchBlock.start
             while (current != tryCatchBlock.end) {
                 predecessors.getOrPut(tryCatchBlock.handler, ::mutableListOf).add(current)
@@ -336,7 +344,7 @@ class RawInstListBuilder(
         when (insn.opcode) {
             Opcodes.NOP -> Unit
             in Opcodes.ACONST_NULL..Opcodes.DCONST_1 -> buildConstant(insn)
-            in Opcodes.IALOAD..Opcodes.SALOAD -> buildArrayRead()
+            in Opcodes.IALOAD..Opcodes.SALOAD -> buildArrayRead(insn)
             in Opcodes.IASTORE..Opcodes.SASTORE -> buildArrayStore(insn)
             in Opcodes.POP..Opcodes.POP2 -> buildPop(insn)
             in Opcodes.DUP..Opcodes.DUP2_X2 -> buildDup(insn)
@@ -367,10 +375,14 @@ class RawInstListBuilder(
         push(constant)
     }
 
-    private fun buildArrayRead() {
+    private fun buildArrayRead(insn: InsnNode) {
         val index = pop()
         val arrayRef = pop()
-        push(JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()))
+        val read = JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType())
+
+        val assignment = nextRegister(read.typeName)
+        instructionList(insn).add(JcRawAssignInst(assignment, read))
+        push(assignment)
     }
 
     private fun buildArrayStore(insn: InsnNode) {
@@ -577,7 +589,13 @@ class RawInstListBuilder(
     private fun buildMonitor(insn: InsnNode) {
         val monitor = pop()
         instructionList(insn) += when (val opcode = insn.opcode) {
-            Opcodes.MONITORENTER -> JcRawEnterMonitorInst(monitor)
+            Opcodes.MONITORENTER -> {
+                if ("SegmentPool" in monitor.toString()) {
+                    val a = 10
+                }
+                JcRawEnterMonitorInst(monitor)
+            }
+
             Opcodes.MONITOREXIT -> JcRawExitMonitorInst(monitor)
             else -> error("Unknown monitor opcode $opcode")
         }
@@ -599,6 +617,7 @@ class RawInstListBuilder(
                 instructionList(insnNode).add(JcRawAssignInst(assignment, field))
                 push(assignment)
             }
+
             Opcodes.PUTFIELD -> {
                 val value = pop()
                 val instance = pop()
@@ -612,10 +631,105 @@ class RawInstListBuilder(
                 instructionList(insnNode).add(JcRawAssignInst(assignment, field))
                 push(assignment)
             }
+
             Opcodes.PUTSTATIC -> {
                 val value = pop()
                 val fieldRef = JcRawFieldRef(declaringClass, fieldName, fieldType)
                 instructionList(insnNode) += JcRawAssignInst(fieldRef, value)
+            }
+        }
+    }
+
+    private fun SortedMap<Int, TypeName>.copyLocals(predFrames: Map<AbstractInsnNode, Frame?>): Map<Int, JcRawValue> =
+        when {
+            predFrames.isEmpty() -> this.mapValues { nextRegister(it.value) }
+
+            predFrames.size == 1 -> {
+                val (node, frame) = predFrames.toList().first()
+                when (frame) {
+                    null -> this.mapNotNull { (variable, type) ->
+                        when (type) {
+                            TOP -> null
+                            else -> variable to nextRegister(type).also {
+                                laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = it
+                            }
+                        }
+                    }.toMap()
+
+                    else -> frame.locals.filterKeys { it in this }
+                }
+            }
+
+            else -> this.mapNotNull { (variable, type) ->
+                val options = predFrames.values.map { it?.get(variable) }.toSet()
+                val value = when {
+                    type == TOP -> null
+                    options.size == 1 -> options.singleOrNull()
+                    variable < argCounter -> frames.values.mapNotNull { it[variable] }.firstOrNull {
+                        it is JcRawArgument || it is JcRawThis
+                    }
+
+                    else -> {
+                        val assignment = nextRegister(type)
+                        for ((node, frame) in predFrames) {
+                            if (frame != null) {
+                                if (node.isBranchingInst) {
+                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame[variable]!!))
+                                } else {
+                                    if (frame[variable] == null) {
+                                        val a = 10
+                                    }
+                                    instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
+                                }
+                            } else {
+                                laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
+                            }
+                        }
+                        assignment
+                    }
+                }
+                value?.let { variable to it }
+            }.toMap()
+        }
+
+    private fun SortedMap<Int, TypeName>.copyStack(predFrames: Map<AbstractInsnNode, Frame?>): List<JcRawValue> = when {
+        predFrames.isEmpty() -> this.values.map { nextRegister(it) }
+
+        predFrames.size == 1 -> {
+            val (node, frame) = predFrames.toList().first()
+            when (frame) {
+                null -> this.mapNotNull { (variable, type) ->
+                    when (type) {
+                        TOP -> null
+                        else -> nextRegister(type).also {
+                            laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = it
+                        }
+                    }
+                }
+
+                else -> frame.stack.withIndex().filter { it.index in this }.map { it.value }
+            }
+        }
+
+        else -> this.mapNotNull { (variable, type) ->
+            val options = predFrames.values.map { it?.stack?.get(variable) }.toSet()
+            when (options.size) {
+                1 -> options.singleOrNull()
+                else -> {
+                    val assignment = nextRegister(type)
+                    for ((node, frame) in predFrames) {
+                        if (frame != null) {
+                            if (node.isBranchingInst) {
+                                instructionList(node).add(0, JcRawAssignInst(assignment, frame.stack[variable]))
+                            } else {
+                                instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
+                            }
+                        } else {
+                            laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
+                        }
+                    }
+                    assignment
+                }
             }
         }
     }
@@ -638,88 +752,17 @@ class RawInstListBuilder(
             else -> error("Unknown frame node type: ${insnNode.type}")
         }
 
-        fun FrameState.copyLocals(predFrames: Map<AbstractInsnNode, Frame?>): Map<Int, JcRawValue> = when {
-            predFrames.isEmpty() -> locals.mapValues { nextRegister(it.value) }
-
-            predFrames.size == 1 -> {
-                val frame = predFrames.values.first()
-                assert(frame != null)
-                frame!!.locals.filterKeys { it in this.locals }
-            }
-
-            else -> locals.mapNotNull { (variable, type) ->
-                val options = predFrames.values.map { it?.get(variable) }.toSet()
-                val value = when {
-                    type == TOP -> null
-                    options.size == 1 -> options.singleOrNull()
-                    variable < argCounter -> frames.values.mapNotNull { it[variable] }.firstOrNull {
-                        it is JcRawArgument || it is JcRawThis
-                    }
-
-                    else -> {
-                        val assignment = nextRegister(type)
-                        for ((node, frame) in predFrames) {
-                            if (frame != null) {
-                                if (node.isBranchingInst) {
-                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame[variable]!!))
-                                } else {
-                                    instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
-                                }
-                            } else {
-                                laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
-                            }
-                        }
-                        assignment
-                    }
-                }
-                value?.let { variable to it }
-            }.toMap()
-
-        }
-
-        fun FrameState.copyStack(predFrames: Map<AbstractInsnNode, Frame?>): List<JcRawValue> = when {
-            predFrames.isEmpty() -> stack.values.map { nextRegister(it) }
-
-            predFrames.size == 1 -> {
-                val frame = predFrames.values.first()
-                assert(frame != null)
-                frame!!.stack.withIndex().filter { it.index in this.stack }.map { it.value }
-            }
-
-            else -> stack.mapNotNull { (variable, type) ->
-                val options = predFrames.values.map { it?.stack?.get(variable) }.toSet()
-                when (options.size) {
-                    1 -> options.singleOrNull()
-                    else -> {
-                        val assignment = nextRegister(type)
-                        for ((node, frame) in predFrames) {
-                            if (frame != null) {
-                                if (node.isBranchingInst) {
-                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame.stack[variable]))
-                                } else {
-                                    instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
-                                }
-                            } else {
-                                laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
-                            }
-                        }
-                        assignment
-                    }
-                }
-            }
-        }
-
         when (val catch = methodNode.tryCatchBlocks.firstOrNull { it.handler == currentEntry }) {
             null -> {
                 currentFrame = Frame(
-                    lastFrameState.copyLocals(predecessorFrames).toPersistentMap(),
-                    lastFrameState.copyStack(predecessorFrames).toPersistentList()
+                    lastFrameState.locals.copyLocals(predecessorFrames).toPersistentMap(),
+                    lastFrameState.stack.copyStack(predecessorFrames).toPersistentList()
                 )
             }
 
             else -> {
                 currentFrame = Frame(
-                    lastFrameState.copyLocals(predecessorFrames).toPersistentMap(),
+                    lastFrameState.locals.copyLocals(predecessorFrames).toPersistentMap(),
                     persistentListOf()
                 )
                 val throwable = nextRegister(catch.typeOrDefault.typeName())
@@ -827,9 +870,44 @@ class RawInstListBuilder(
         }
     }
 
+    private fun mergeFrames(frames: Map<AbstractInsnNode, Frame>): Frame {
+        val frameSet = frames.values
+        if (frames.isEmpty()) return currentFrame
+        if (frames.size == 1) return frameSet.first()
+
+        val allLocals = frameSet.flatMap { it.locals.keys }
+        val localTypes = allLocals
+            .filter { local -> frameSet.all { local in it.locals } }
+//            .filter { local -> frameSet.map { it[local]?.typeName }.toSet().size == 1 }
+            .associateWith { frameSet.first()[it]!!.typeName }
+            .toSortedMap()
+        val newLocals = localTypes.copyLocals(frames).toPersistentMap()
+
+        val stackIndices = frameSet.flatMap { it.stack.indices }.toSortedSet()
+        val stackRanges = stackIndices
+            .filter { stack -> frameSet.all { stack in it.stack.indices } }
+//            .filter { stack -> frameSet.map { it.stack.getOrNull(stack)?.typeName }.toSet().size == 1 }
+            .associateWith { frameSet.first().stack[it].typeName }
+            .toSortedMap()
+        val newStack = stackRanges.copyStack(frames).toPersistentList()
+
+        return Frame(newLocals, newStack)
+    }
+
     private fun buildLabelNode(insnNode: LabelNode) {
         val labelInst = label(insnNode)
         instructionList(insnNode) += labelInst
+        val predecessors = predecessors.getOrDefault(insnNode, emptySet())
+        val predecessorFrames = predecessors.mapNotNull { frames[it] }
+        if (predecessors.size == predecessorFrames.size) {
+            currentFrame = mergeFrames(predecessors.zip(predecessorFrames).toMap())
+        }
+        when (val tryCatch = methodNode.tryCatchBlocks.firstOrNull { it.handler == insnNode }) {
+            null -> {}
+            else -> {
+                push(nextRegister(tryCatch.typeOrDefault.typeName()))
+            }
+        }
     }
 
     private fun buildLdcInsnNode(insnNode: LdcInsnNode) {
@@ -839,16 +917,29 @@ class RawInstListBuilder(
             is Double -> push(JcRawDouble(cst))
             is Long -> push(JcRawLong(cst))
             is String -> push(JcRawStringConstant(cst, STRING_CLASS.typeName()))
-            is Type -> push(JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName()))
-            is Handle -> push(
-                JcRawMethodConstant(
-                    cst.owner.typeName(),
-                    cst.name,
-                    Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
-                    Type.getReturnType(cst.desc).descriptor.typeName(),
-                    METHOD_HANDLE_CLASS.typeName()
+            is Type -> {
+                val assignment = nextRegister(CLASS_CLASS.typeName())
+                instructionList(insnNode) += JcRawAssignInst(
+                    assignment,
+                    JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
                 )
-            )
+                push(assignment)
+            }
+
+            is Handle -> {
+                val assignment = nextRegister(CLASS_CLASS.typeName())
+                instructionList(insnNode) += JcRawAssignInst(
+                    assignment,
+                    JcRawMethodConstant(
+                        cst.owner.typeName(),
+                        cst.name,
+                        Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
+                        Type.getReturnType(cst.desc).descriptor.typeName(),
+                        METHOD_HANDLE_CLASS.typeName()
+                    )
+                )
+                push(assignment)
+            }
 
             else -> error("Unknown LDC constant: $cst")
         }
@@ -864,7 +955,10 @@ class RawInstListBuilder(
     }
 
     private fun buildMethodInsnNode(insnNode: MethodInsnNode) {
-        val owner = insnNode.owner.typeName()
+        val owner = when {
+            insnNode.owner.typeName().isArray -> OBJECT_CLASS.typeName()
+            else -> insnNode.owner.typeName()
+        }
         val methodName = insnNode.name
         val methodDesc = insnNode.desc
 
@@ -921,7 +1015,7 @@ class RawInstListBuilder(
         repeat(insnNode.dims) {
             dimensions += pop()
         }
-        val expr = JcRawNewArrayExpr(insnNode.desc.typeName().asArray(dimensions.size), dimensions)
+        val expr = JcRawNewArrayExpr(insnNode.desc.typeName(), dimensions)
         val assignment = nextRegister(expr.typeName)
         instructionList(insnNode) += JcRawAssignInst(assignment, expr)
         push(assignment)

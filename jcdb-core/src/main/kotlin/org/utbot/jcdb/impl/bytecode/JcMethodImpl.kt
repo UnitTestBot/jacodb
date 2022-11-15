@@ -47,7 +47,7 @@ class JcMethodImpl(
     }
 
     override fun instructionList(): JcRawInstList {
-        return RawInstListBuilder(this, body()).build()
+        return RawInstListBuilder(this, body().jsrInlined).build()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -9,6 +9,9 @@ import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 fun JcRawInstList.filter(visitor: JcRawInstVisitor<Boolean>) =
     JcRawInstList(instructions.filter { it.accept(visitor) })
 
+fun JcRawInstList.filterNot(visitor: JcRawInstVisitor<Boolean>) =
+    JcRawInstList(instructions.filterNot { it.accept(visitor) })
+
 fun JcRawInstList.map(visitor: JcRawInstVisitor<JcRawInst>) =
     JcRawInstList(instructions.map { it.accept(visitor) })
 

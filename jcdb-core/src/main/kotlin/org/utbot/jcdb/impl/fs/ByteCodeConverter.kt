@@ -9,6 +9,8 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassSource
+import org.utbot.jcdb.impl.bytecode.hasFrameInfo
+import org.utbot.jcdb.impl.bytecode.recomputeFrames
 import org.utbot.jcdb.impl.storage.AnnotationValueKind
 import org.utbot.jcdb.impl.types.AnnotationInfo
 import org.utbot.jcdb.impl.types.AnnotationValue
@@ -122,7 +124,14 @@ val ClassSource.asmNode: ClassNode get() {
     return newClassNode(ClassReader.SKIP_CODE)
 }
 
-val ClassSource.fullAsmNode: ClassNode get() = newClassNode(ClassReader.EXPAND_FRAMES)
+val ClassSource.fullAsmNode: ClassNode get() {
+    var classNode = newClassNode(ClassReader.EXPAND_FRAMES)
+    classNode = when {
+        classNode.hasFrameInfo -> classNode
+        else -> classNode.recomputeFrames()
+    }
+    return classNode
+}
 
 private fun ClassSource.newClassNode(level: Int): ClassNode {
     return ClassNode(Opcodes.ASM9).also {

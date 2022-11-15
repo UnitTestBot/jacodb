@@ -208,7 +208,13 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
 
     override fun visitJcRawNewExpr(expr: JcRawNewExpr) = exprHandler(expr) { expr }
 
-    override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr) = exprHandler(expr) { expr }
+    override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr) = exprHandler(expr) {
+        val newDimensions = expr.dimensions.map { it.accept(this) as JcRawValue }
+        when (expr.dimensions) {
+            newDimensions -> expr
+            else -> JcRawNewArrayExpr(expr.typeName, newDimensions)
+        }
+    }
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr) = exprHandler(expr) {
         val newOperand = expr.operand.accept(this) as JcRawValue

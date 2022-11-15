@@ -4,10 +4,11 @@ import org.utbot.jcdb.api.*
 import org.utbot.jcdb.impl.types.TypeNameImpl
 
 internal val NULL = "null".typeName()
-internal const val STRING_CLASS = "java.lang.String"
-internal const val THROWABLE_CLASS = "java.lang.Throwable"
-internal const val CLASS_CLASS = "java.lang.Class"
-internal const val METHOD_HANDLE_CLASS = "java.lang.invoke.MethodHandle"
+internal const val OBJECT_CLASS = "java/lang/Object"
+internal const val STRING_CLASS = "java/lang/String"
+internal const val THROWABLE_CLASS = "java/lang/Throwable"
+internal const val CLASS_CLASS = "java/lang/Class"
+internal const val METHOD_HANDLE_CLASS = "java/lang/invoke/MethodHandle"
 
 // TODO: decide what to do with this
 data class MethodTypeNameImpl(
@@ -49,9 +50,11 @@ internal val TypeName.isDWord
 
 internal fun String.typeName(): TypeName = TypeNameImpl(jcdbName())
 internal fun TypeName.asArray(dimensions: Int = 1) = "$typeName${"[]".repeat(dimensions)}".typeName()
-internal fun TypeName.elementType() = elementTypeOrNull() ?: error("Attempting to get element type of non-array type $this")
+internal fun TypeName.elementType() = elementTypeOrNull()
+    ?: error("Attempting to get element type of non-array type $this")
 
 internal fun TypeName.elementTypeOrNull() = when {
+    this == NULL -> NULL
     typeName.endsWith("[]") -> typeName.removeSuffix("[]").typeName()
     else -> null
 }

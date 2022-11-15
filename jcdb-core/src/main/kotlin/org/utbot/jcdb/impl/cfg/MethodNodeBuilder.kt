@@ -309,7 +309,7 @@ class MethodNodeBuilder(
     override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr) {
         expr.lhv.accept(this)
         expr.rhv.accept(this)
-        val opcode = when (expr.typeName.typeName) {
+        val opcode = when (expr.lhv.typeName.typeName) {
             PredefinedPrimitives.float -> Opcodes.FCMPG
             else -> Opcodes.DCMPG
         }
@@ -320,7 +320,7 @@ class MethodNodeBuilder(
     override fun visitJcRawCmplExpr(expr: JcRawCmplExpr) {
         expr.lhv.accept(this)
         expr.rhv.accept(this)
-        val opcode = when (expr.typeName.typeName) {
+        val opcode = when (expr.lhv.typeName.typeName) {
             PredefinedPrimitives.float -> Opcodes.FCMPL
             else -> Opcodes.DCMPL
         }

@@ -2,10 +2,7 @@ package org.utbot.jcdb.impl.cfg
 
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.cfg.DefaultJcRawInstVisitor
-import org.utbot.jcdb.api.cfg.ext.applyAndGet
-import org.utbot.jcdb.api.cfg.ext.filter
-import org.utbot.jcdb.api.cfg.ext.map
-import org.utbot.jcdb.api.cfg.ext.mapNotNull
+import org.utbot.jcdb.api.cfg.ext.*
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jcdb.impl.cfg.util.InstructionFilter
@@ -88,6 +85,21 @@ internal class ReplacementComputer(private val uses: Map<JcRawValue, Set<JcRawIn
     }
 }
 
+internal class AssignmentSimplifier : DefaultJcRawInstVisitor<Unit> {
+    val assignments = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawSimpleValue>>()
+
+    override val defaultInstHandler: (JcRawInst) -> Unit
+        get() = { }
+
+    override fun visitJcRawAssignInst(inst: JcRawAssignInst) {
+        val lhv = inst.lhv
+        val rhv = inst.rhv
+        if (lhv is JcRawRegister && rhv is JcRawRegister) {
+            assignments.getOrPut(lhv, ::mutableSetOf).add(rhv)
+        }
+    }
+}
+
 internal class Simplifier {
     fun simplify(instList: JcRawInstList): JcRawInstList {
         var instructionList = instList.mapNotNull(RepeatedAssignmentCleaner())
@@ -95,13 +107,23 @@ internal class Simplifier {
         do {
             val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
             val oldSize = instructionList.instructions.size
-            instructionList = instructionList.filter(InstructionFilter {
-                !(it is JcRawAssignInst
+            instructionList = instructionList.filterNot(InstructionFilter {
+                it is JcRawAssignInst
                         && it.lhv is JcRawSimpleValue
                         && it.rhv is JcRawValue
-                        && uses.getOrDefault(it.lhv, 0) == 0)
+                        && uses.getOrDefault(it.lhv, 0) == 0
             })
         } while (instructionList.instructions.size != oldSize)
+
+        do {
+            val uses = instructionList.applyAndGet(AssignmentSimplifier()) { it.assignments }
+            val replacements = uses.filterValues { it.size == 1 }.map { it.key to it.value.first() }
+            instructionList = instructionList
+                .map(ExprMapper(replacements.toMap()))
+                .filterNot(InstructionFilter {
+                    it is JcRawAssignInst && it.rhv == it.lhv
+                })
+        } while (replacements.isNotEmpty())
 
         do {
             val uses = instructionList.applyAndGet(UseCaseComputer()) { it.uses }
