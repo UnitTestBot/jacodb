@@ -368,17 +368,17 @@ const val NotNull = "org.jetbrains.annotations.NotNull"
 
 val JcMethod.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return annotations.all { !it.matches(NotNull) }
     }
 
 val JcField.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return annotations.all { !it.matches(NotNull) }
     }
 
 val JcParameter.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return annotations.all { !it.matches(NotNull) }
     }
 
 fun JcClasspath.anyType(): JcClassType =
