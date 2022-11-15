@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl.tests
 
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -285,6 +286,21 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
 
         }
+    }
+
+
+    @Test
+    fun `classes common methods usages`()  = runBlocking {
+        val runnable = cp.findClass<Runnable>()
+        val runMethod = runnable.declaredMethods.first { it.name == "run" }
+        assertTrue(hierarchyExt.findOverrides(runMethod).count() > 300)
+    }
+
+    @Test
+    fun `classes common hierarchy`()  = runBlocking {
+        val runnable = cp.findClass<Runnable>()
+        println("SIZE IS: " + hierarchyExt.findSubClasses(runnable, true).count())
+        assertTrue(hierarchyExt.findSubClasses(runnable, true).count() > 300)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
