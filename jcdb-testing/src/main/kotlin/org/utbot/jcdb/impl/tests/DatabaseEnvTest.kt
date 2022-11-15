@@ -37,6 +37,7 @@ import org.utbot.jcdb.impl.Enums
 import org.utbot.jcdb.impl.Foo
 import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
+import org.utbot.jcdb.impl.usages.Generics
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -262,6 +263,20 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
+    fun `method parameters`() {
+        val generics = cp.findClass<Generics<*>>()
+        val method = generics.methods.first { it.name == "merge" }
+
+        assertEquals(1, method.parameters.size)
+        with(method.parameters.first()) {
+            assertEquals(generics.name, type.typeName)
+            assertEquals(method, this.method)
+            assertEquals(0, index)
+            assertNull(name)
+        }
+    }
+
+    @Test
     fun `find method overrides`() {
         val creatureClass = cp.findClass<Creature>()
 
@@ -290,14 +305,14 @@ abstract class DatabaseEnvTest {
 
 
     @Test
-    fun `classes common methods usages`()  = runBlocking {
+    fun `classes common methods usages`() = runBlocking {
         val runnable = cp.findClass<Runnable>()
         val runMethod = runnable.declaredMethods.first { it.name == "run" }
         assertTrue(hierarchyExt.findOverrides(runMethod).count() > 300)
     }
 
     @Test
-    fun `classes common hierarchy`()  = runBlocking {
+    fun `classes common hierarchy`() = runBlocking {
         val runnable = cp.findClass<Runnable>()
         println("SIZE IS: " + hierarchyExt.findSubClasses(runnable, true).count())
         assertTrue(hierarchyExt.findSubClasses(runnable, true).count() > 300)
