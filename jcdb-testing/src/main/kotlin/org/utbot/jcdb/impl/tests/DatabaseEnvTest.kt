@@ -86,7 +86,7 @@ abstract class DatabaseEnvTest {
         assertEquals(5, methods.size)
         with(methods.first { it.name == "smthPublic" }) {
             assertEquals(1, parameters.size)
-            assertEquals("int", parameters.first().name)
+            assertEquals("int", parameters.first().type.typeName)
             assertTrue(isPublic)
         }
 
@@ -125,7 +125,7 @@ abstract class DatabaseEnvTest {
         with(methods.first { it.name == "smth" }) {
             val parameters = parameters
             assertEquals(1, parameters.size)
-            assertEquals("byte[]", parameters.first().name)
+            assertEquals("byte[]", parameters.first().type.typeName)
             assertEquals("byte[]", returnType.typeName)
         }
     }
@@ -314,7 +314,6 @@ abstract class DatabaseEnvTest {
     @Test
     fun `classes common hierarchy`() = runBlocking {
         val runnable = cp.findClass<Runnable>()
-        println("SIZE IS: " + hierarchyExt.findSubClasses(runnable, true).count())
         assertTrue(hierarchyExt.findSubClasses(runnable, true).count() > 300)
     }
 
