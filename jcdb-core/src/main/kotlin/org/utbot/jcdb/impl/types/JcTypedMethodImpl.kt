@@ -10,7 +10,9 @@ import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.MethodResolution
+import org.utbot.jcdb.api.PredefinedPrimitive
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.isNullable
 import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.FieldResolutionImpl
@@ -88,12 +90,17 @@ class JcTypedMethodImpl(
         val typeName = method.returnType.typeName
         val info = info
         val impl = info.impl
-        if (impl == null) {
+        val type = if (impl == null) {
             classpath.findTypeOrNull(typeName)
                 ?: throw IllegalStateException("Can't resolve type by name $typeName")
         } else {
             classpath.typeOf(info.substitutor.substitute(impl.returnType))
         }
+
+        if (!method.isNullable && type !is PredefinedPrimitive)
+            (type as JcRefType).notNullable()
+        else
+            type
     }
 
     override fun typeOf(inst: LocalVariableNode): JcType {
