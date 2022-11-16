@@ -17,6 +17,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
@@ -169,6 +170,10 @@ class JCDBImpl(
 
     override suspend fun awaitBackgroundJobs() {
         backgroundJobs.values.joinAll()
+    }
+
+    override fun isInstalled(feature: JcFeature<*, *>): Boolean {
+        return featureRegistry.has(feature)
     }
 
     fun afterStart() {

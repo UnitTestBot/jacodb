@@ -98,6 +98,10 @@ class SQLitePersistenceImpl(
         return action(jooq)
     }
 
+    override fun findSymbolId(symbol: String): Long? {
+        return persistenceService.findSymbolId(symbol)
+    }
+
     override fun findClassSourceByName(
         cp: JcClasspath,
         locations: List<RegisteredLocation>,

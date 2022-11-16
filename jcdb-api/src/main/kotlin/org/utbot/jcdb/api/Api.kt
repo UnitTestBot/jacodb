@@ -102,6 +102,8 @@ interface JCDB : Closeable {
      */
     suspend fun awaitBackgroundJobs()
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
+
+    fun isInstalled(feature: JcFeature<*,*>): Boolean
 }
 
 
@@ -115,6 +117,8 @@ interface JCDBPersistence : Closeable {
     fun <T> read(action: (DSLContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
+    fun findSymbolId(symbol: String): Long?
+
     fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
     fun findClassSources(location: RegisteredLocation): List<ClassSource>
 }

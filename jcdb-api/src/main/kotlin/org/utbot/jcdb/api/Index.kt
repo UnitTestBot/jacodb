@@ -2,21 +2,18 @@ package org.utbot.jcdb.api
 
 import org.jooq.DSLContext
 import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodNode
 
 /** index builder */
 interface ByteCodeIndexer {
 
     fun index(classNode: ClassNode)
 
-    fun index(classNode: ClassNode, methodNode: MethodNode)
-
     fun flush(jooq: DSLContext)
 }
 
 interface JcFeature<REQ, RES> {
 
-    suspend fun query(jcdb: JCDB, req: REQ): Sequence<RES>
+    suspend fun query(classpath: JcClasspath, req: REQ): Sequence<RES>
 
     fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer
 
@@ -42,5 +39,5 @@ sealed class JcSignal(val jcdb: JCDB) {
 
 
 suspend fun <REQ, RES> JcClasspath.query(feature: JcFeature<REQ, RES>, req: REQ): Sequence<RES> {
-    return feature.query(db, req)
+    return feature.query(this, req)
 }
