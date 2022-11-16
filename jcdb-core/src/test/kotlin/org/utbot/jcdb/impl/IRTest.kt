@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
 import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.NoClassInClasspathException
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.api.packageName
@@ -46,9 +47,9 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<ExprMapper>())
     }
 
-    private fun testClass(klass: JcClassOrInterface) {
+    private fun testClass(klass: JcClassOrInterface) = try {
         val classNode = klass.bytecode()
-        classNode.methods = klass.methods.map {
+        classNode.methods = klass.methods.filter { it.enclosingClass == klass }.map {
             val oldBody = it.body()
             println()
             println("Old body: ${oldBody.print()}")
@@ -60,9 +61,8 @@ class IRTest : BaseTest() {
             newBody
         }
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        val checker = CheckClassAdapter(cw)
+        val checker = CheckClassAdapter(classNode)
         classNode.accept(checker)
-        cw.toByteArray()
         val targetDir = target.resolve(klass.packageName.replace('.', '/'))
         val targetFile = targetDir.resolve("${klass.simpleName}.class").toFile().also {
             it.parentFile?.mkdirs()
@@ -71,5 +71,7 @@ class IRTest : BaseTest() {
 
         val classloader = URLClassLoader(arrayOf(target.toUri().toURL()))
         classloader.loadClass(klass.name)
+    } catch (e: NoClassInClasspathException) {
+        System.err.println(e.localizedMessage)
     }
 }

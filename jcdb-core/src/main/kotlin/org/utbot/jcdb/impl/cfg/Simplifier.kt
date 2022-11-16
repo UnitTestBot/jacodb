@@ -117,8 +117,14 @@ internal class Simplifier {
 
         do {
             val uses = instructionList.applyAndGet(AssignmentSimplifier()) { it.assignments }
-            val replacements = uses.filterValues { it.size == 1 }.map { it.key to it.value.first() }
+            val replacements = uses.filterValues { it.size == 1 }.map { it.key to it.value.first() }.toMap()
             instructionList = instructionList
+                .filterNot(InstructionFilter {
+                    if (it !is JcRawAssignInst) return@InstructionFilter false
+                    val lhv = it.lhv as? JcRawSimpleValue ?: return@InstructionFilter false
+                    val rhv = it.rhv as? JcRawSimpleValue ?: return@InstructionFilter false
+                    replacements[lhv] == rhv && replacements[rhv] == lhv
+                })
                 .map(ExprMapper(replacements.toMap()))
                 .filterNot(InstructionFilter {
                     it is JcRawAssignInst && it.rhv == it.lhv
