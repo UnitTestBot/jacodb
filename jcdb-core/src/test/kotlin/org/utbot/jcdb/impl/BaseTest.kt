@@ -59,7 +59,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
     }
 }
 
-open class WithRestoredDB(vararg features: JcFeature<*, *>): WithDB(*features) {
+open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 
     private val jdbcLocation = Files.createTempFile("jcdb-", null).toFile().absolutePath
 
@@ -85,7 +85,6 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>): WithDB(*features) {
     }
 
 }
-
 
 
 class CleanDB : AfterAllCallback {

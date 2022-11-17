@@ -1,7 +1,8 @@
 package org.utbot.jcdb.impl.storage
 
+import org.jooq.DSLContext
 import org.jooq.TableField
-import org.jooq.impl.DSL.max
+import org.utbot.jcdb.api.JCDBSymbolsInterner
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
@@ -23,6 +24,7 @@ import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.ParameterInfo
 import org.utbot.jcdb.impl.types.PrimitiveValue
+import java.sql.Connection
 import java.sql.Types
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -61,6 +63,8 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
         }
     }
 
+    fun newSymbolInterner() = JCDBSymbolsInternerImpl(jooq = persistence.jooq, symbolsIdGen, symbolsCache)
+
     fun persist(location: RegisteredLocation, classes: List<ClassInfo>) {
         val classCollector = ClassCollector(classIdGen)
         val annotationCollector = AnnotationCollector(annotationIdGen, annotationValueIdGen, symbolsCache)
@@ -92,44 +96,40 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
             it.fields.forEach { it.annotations.extractAllSymbolsTo(names) }
         }
         val namesToAdd = arrayListOf<Pair<Long, String>>()
-        persistence.write {
-            names.forEach {
-                if (!symbolsCache.containsKey(it)) {
-                    val id = symbolsIdGen.incrementAndGet()
-                    symbolsCache[it] = id
-                    namesToAdd.add(id to it)
+        persistence.write { jooq ->
+            jooq.connection { conn ->
+                names.forEach {
+                    symbolsCache.computeIfAbsent(it) {
+                        val id = symbolsIdGen.incrementAndGet()
+                        namesToAdd.add(id to it)
+                        id
+                    }
                 }
-            }
-        }
-        val locationId = location.id
-        classes.forEach { classCollector.collect(it) }
-        classCollector.classes.entries.forEach { (classInfo, storedClassId) ->
-            if (classInfo.interfaces.isNotEmpty()) {
-                classInfo.interfaces.forEach {
-                    classRefCollector.collectParent(storedClassId, it, isClass = false)
+                val locationId = location.id
+                classes.forEach { classCollector.collect(it) }
+                classCollector.classes.entries.forEach { (classInfo, storedClassId) ->
+                    if (classInfo.interfaces.isNotEmpty()) {
+                        classInfo.interfaces.forEach {
+                            classRefCollector.collectParent(storedClassId, it, isClass = false)
+                        }
+                    }
+                    classRefCollector.collectParent(storedClassId, classInfo.superClass, isClass = true)
+                    if (classInfo.innerClasses.isNotEmpty()) {
+                        classInfo.innerClasses.forEach {
+                            classRefCollector.collectInnerClass(storedClassId, it)
+                        }
+                    }
+                    classInfo.methods.forEach {
+                        methodsCollector.collect(storedClassId, it)
+                    }
+                    classInfo.fields.forEach {
+                        fieldCollector.collect(storedClassId, it)
+                    }
                 }
-            }
-            classRefCollector.collectParent(storedClassId, classInfo.superClass, isClass = true)
-            if (classInfo.innerClasses.isNotEmpty()) {
-                classInfo.innerClasses.forEach {
-                    classRefCollector.collectInnerClass(storedClassId, it)
-                }
-            }
-            classInfo.methods.forEach {
-                methodsCollector.collect(storedClassId, it)
-            }
-            classInfo.fields.forEach {
-                fieldCollector.collect(storedClassId, it)
-            }
-        }
 
-        persistence.write {
-            it.connection { conn ->
-
-                conn.insertElements(SYMBOLS, namesToAdd) { pair ->
-                    setLong(1, pair.first)
-                    setString(2, pair.second)
-                    setLong(3, pair.second.longHash)
+                conn.insertElements(SYMBOLS, namesToAdd) { (id, name) ->
+                    setLong(1, id)
+                    setString(2, name)
                 }
 
                 conn.insertElements(CLASSES, classCollector.classes.entries) {
@@ -231,7 +231,7 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
     }
 
     fun findSymbolId(symbol: String): Long? {
-        return symbolsCache.get(symbol)
+        return symbolsCache[symbol]
     }
 
     private fun String.findCachedSymbol(): Long {
@@ -241,9 +241,7 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
     private val TableField<*, Long?>.maxId: Long?
         get() {
-            val create = persistence.jooq
-            return create.select(max(this))
-                .from(table).fetchAny()?.component1()
+            return maxId(persistence.jooq)
         }
 }
 
@@ -429,4 +427,31 @@ private class MethodsCollector(
         annotationCollector.collect(method.annotations, methodId, RefKind.METHOD)
     }
 
+}
+
+class JCDBSymbolsInternerImpl(
+    override val jooq: DSLContext,
+    private val symbolsIdGen: AtomicLong,
+    private val symbolsCache: ConcurrentHashMap<String, Long>
+) : JCDBSymbolsInterner {
+
+    private val newElements = HashMap<String, Long>()
+
+    override fun findOrNew(symbol: String): Long {
+        return symbolsCache.computeIfAbsent(symbol) {
+            symbolsIdGen.incrementAndGet().also {
+                newElements[symbol] = it
+            }
+        }
+    }
+
+    override fun flush(conn: Connection) {
+        conn.runBatch(SYMBOLS) {
+            newElements.forEach { (value, id) ->
+                setLong(1, id)
+                setString(2, value)
+                addBatch()
+            }
+        }
+    }
 }

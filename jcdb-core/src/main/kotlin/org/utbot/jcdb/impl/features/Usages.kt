@@ -7,11 +7,13 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.utbot.jcdb.api.ByteCodeIndexer
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.className
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import org.utbot.jcdb.impl.storage.eqOrNull
 import org.utbot.jcdb.impl.storage.executeQueries
@@ -24,30 +26,34 @@ import org.utbot.jcdb.impl.storage.setNullableLong
 import org.utbot.jcdb.impl.vfs.LazyPersistentByteCodeLocation
 
 
-class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer {
+class UsagesIndexer(private val persistence: JCDBPersistence, private val location: RegisteredLocation) :
+    ByteCodeIndexer {
 
     // callee_class -> (callee_name, callee_desc, opcode) -> caller
-    private val usages = hashMapOf<String, HashMap<Triple<String, String?, Int>, HashMap<String, HashSet<Int>>>>()
+    private val usages = hashMapOf<String, HashMap<Triple<String, String?, Int>, HashMap<String, HashSet<Byte>>>>()
+    private val interner = persistence.newSymbolInterner()
 
     override fun index(classNode: ClassNode) {
         val callerClass = Type.getObjectType(classNode.name).className
-        var callerMethodOffset = 0
+        var callerMethodOffset: Byte = 0
         classNode.methods.forEach { methodNode ->
             methodNode.instructions.forEach {
                 var key: Triple<String, String?, Int>? = null
                 var callee: String? = null
                 when (it) {
                     is FieldInsnNode -> {
-                        callee = Type.getObjectType(it.owner).className
+                        callee = it.owner
                         key = Triple(it.name, null, it.opcode)
                     }
 
                     is MethodInsnNode -> {
-                        callee = Type.getObjectType(it.owner).className
+                        callee = it.owner
                         key = Triple(it.name, it.desc, it.opcode)
                     }
                 }
                 if (key != null && callee != null) {
+                    callee.symbolId
+                    key.first.symbolId
                     usages.getOrPut(callee) { hashMapOf() }
                         .getOrPut(key) { hashMapOf() }
                         .getOrPut(callerClass) { hashSetOf() }
@@ -60,17 +66,19 @@ class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer 
 
     override fun flush(jooq: DSLContext) {
         jooq.connection { conn ->
+            usages.keys.forEach { it.className.symbolId }
+            interner.flush(conn)
             conn.runBatch(CALLS) {
                 usages.forEach { (calleeClass, calleeEntry) ->
                     calleeEntry.forEach { (info, callers) ->
                         val (calleeName, calleeDesc, opcode) = info
                         callers.forEach { (caller, offsets) ->
-                            setLong(1, calleeClass.longHash)
-                            setString(2, calleeName)
+                            setLong(1, calleeClass.className.existedSymbolId)
+                            setLong(2, calleeName.existedSymbolId)
                             setNullableLong(3, calleeDesc?.longHash)
                             setInt(4, opcode)
-                            setLong(5, caller.longHash)
-                            setString(6, offsets.joinToString(","))
+                            setLong(5, caller.existedSymbolId)
+                            setBytes(6, offsets.toByteArray())
                             setLong(7, location.id)
                             addBatch()
                         }
@@ -79,6 +87,9 @@ class UsagesIndexer(private val location: RegisteredLocation) : ByteCodeIndexer 
             }
         }
     }
+
+    private inline val String.symbolId get() = interner.findOrNew(this)
+    private inline val String.existedSymbolId get() = persistence.findSymbolId(this)!!
 }
 
 
@@ -86,16 +97,20 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
     private val createScheme = """
         CREATE TABLE IF NOT EXISTS "Calls"(
-            "callee_class_hash"      BIGINT NOT NULL,
-            "callee_name"            VARCHAR(256),
-            "callee_desc_hash"       BIGINT,
-            "opcode"                 INTEGER,
-            "caller_class_hash"      BIGINT NOT NULL,
-            "caller_method_offsets"  VARCHAR(256),
-            "location_id"            BIGINT NOT NULL
+            "callee_class_symbol_id"      BIGINT NOT NULL,
+            "callee_name_symbol_id"       BIGINT NOT NULL,
+            "callee_desc_hash"            BIGINT,
+            "opcode"                      INTEGER,
+            "caller_class_symbol_id"      BIGINT NOT NULL,
+            "caller_method_offsets"       BLOB,
+            "location_id"                 BIGINT NOT NULL,
+            CONSTRAINT "fk_callee_class_symbol_id" FOREIGN KEY ("callee_class_symbol_id") REFERENCES "Symbols" ("id") ON DELETE CASCADE,
+            CONSTRAINT "fk_location_id" FOREIGN KEY ("caller_class_symbol_id") REFERENCES "BytecodeLocations" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
         );
-        
-        CREATE INDEX IF NOT EXISTS 'Calls search' ON Calls(location_id, opcode, callee_class_hash, callee_name, callee_desc_hash)
+    """.trimIndent()
+
+    private val createIndex = """
+        CREATE INDEX IF NOT EXISTS 'Calls search' ON Calls(opcode, location_id, callee_class_symbol_id, callee_name_symbol_id, callee_desc_hash)
     """.trimIndent()
 
     private val dropScheme = """
@@ -122,7 +137,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
             is JcSignal.AfterIndexing -> {
                 signal.jcdb.persistence.write {
-                    it.execute(createScheme)
+                    it.execute(createIndex)
                 }
             }
 
@@ -137,40 +152,40 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
     }
 
     override suspend fun query(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
-        val name = req.methodName ?: req.field
-        val desc = req.methodDesc
-        val className = req.className
+        return syncQuery(classpath, req)
+    }
+
+    fun syncQuery(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
         val locationIds = classpath.registeredLocations.map { it.id }
         val persistence = classpath.db.persistence
+        val name = (req.methodName ?: req.field).let { persistence.findSymbolId(it!!) }
+        val desc = req.description?.longHash
+        val className = persistence.findSymbolId(req.className)
         return BatchedSequence(50) { offset, batchSize ->
             persistence.read { jooq ->
                 var position = offset ?: 0
-                val classHashes: Map<Long, List<Int>> =
-                    jooq.select(CALLS.CALLER_CLASS_HASH, CALLS.CALLER_METHOD_OFFSETS).from(CALLS)
-                        .where(
-                            CALLS.CALLEE_CLASS_HASH.eq(className.longHash)
-                                .and(CALLS.CALLEE_NAME.eq(name))
-                                .and(CALLS.CALLEE_DESC_HASH.eqOrNull(desc?.longHash))
-                                .and(CALLS.OPCODE.`in`(req.opcodes))
-                                .and(CALLS.LOCATION_ID.`in`(locationIds))
-                        )
-                        .orderBy(CALLS.LOCATION_ID)
-                        .limit(batchSize).offset(position)
-                        .fetch()
-                        .map { it.component1()!! to it.component2()!!.split(",").map { it.toInt() } }.toMap()
-                jooq.select(SYMBOLS.NAME, CLASSES.BYTECODE, CLASSES.LOCATION_ID, SYMBOLS.HASH)
-                    .from(CLASSES)
+                jooq.select(CALLS.CALLER_METHOD_OFFSETS, SYMBOLS.NAME, CLASSES.BYTECODE, CLASSES.LOCATION_ID)
+                    .from(CALLS)
                     .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                    .where(SYMBOLS.HASH.`in`(classHashes.keys))
+                    .join(CLASSES).on(CLASSES.NAME.eq(CALLS.CALLER_CLASS_SYMBOL_ID))
+                    .where(
+                        CALLS.CALLEE_CLASS_SYMBOL_ID.eq(className)
+                            .and(CALLS.CALLEE_NAME_SYMBOL_ID.eq(name))
+                            .and(CALLS.CALLEE_DESC_HASH.eqOrNull(desc))
+                            .and(CALLS.OPCODE.`in`(req.opcodes))
+                            .and(CALLS.LOCATION_ID.`in`(locationIds))
+                    )
+                    .limit(batchSize).offset(offset ?: 0)
                     .fetch()
-                    .mapNotNull { (className, byteCode, locationId, symbolHash) ->
+                    .mapNotNull { (offset, className, byteCode, locationId) ->
                         position++ to
                                 UsageFeatureResponse(
                                     source = ClassSourceImpl(
                                         LazyPersistentByteCodeLocation(persistence, locationId!!),
-                                        className!!, byteCode!!
+                                        className!!,
+                                        byteCode!!
                                     ),
-                                    offsets = classHashes[symbolHash!!].orEmpty()
+                                    offsets = offset!!
                                 )
                     }
             }
@@ -178,6 +193,6 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
     }
 
-    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(location)
+    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(jcdb.persistence, location)
 
 }

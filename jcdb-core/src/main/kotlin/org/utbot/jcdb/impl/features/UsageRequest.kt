@@ -6,7 +6,7 @@ import org.utbot.jcdb.api.ClassSource
 @Serializable
 data class UsageFeatureRequest(
     val methodName: String?,
-    val methodDesc: String?,
+    val description: String?,
     val field: String?,
     val opcodes: Collection<Int>,
     val className: String
@@ -14,6 +14,6 @@ data class UsageFeatureRequest(
 
 class UsageFeatureResponse(
     val source: ClassSource,
-    val offsets: List<Int>
+    val offsets: ByteArray
 )
 

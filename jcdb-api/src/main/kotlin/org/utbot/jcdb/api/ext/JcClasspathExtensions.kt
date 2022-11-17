@@ -41,11 +41,7 @@ fun JcClasspath.findMethodsUsedIn(method: JcMethod): List<JcMethod> {
 class FieldUsagesResult(
     val reads: List<JcField>,
     val writes: List<JcField>
-) {
-    companion object {
-        val EMPTY = FieldUsagesResult(emptyList(), emptyList())
-    }
-}
+)
 
 /**
  * find all methods used in bytecode of specified `method`
@@ -61,12 +57,13 @@ fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
                 val owner = Type.getObjectType(instruction.owner).className
                 val clazz = findClassOrNull(owner)
                 if (clazz != null) {
-                    clazz.findFieldOrNull(instruction.name)?.also {
+                    val jcClass = clazz.findFieldOrNull(instruction.name)
+                    if (jcClass != null) {
                         when (instruction.opcode) {
-                            Opcodes.GETFIELD -> reads.add(it)
-                            Opcodes.GETSTATIC -> reads.add(it)
-                            Opcodes.PUTFIELD -> writes.add(it)
-                            Opcodes.PUTSTATIC -> writes.add(it)
+                            Opcodes.GETFIELD -> reads.add(jcClass)
+                            Opcodes.GETSTATIC -> reads.add(jcClass)
+                            Opcodes.PUTFIELD -> writes.add(jcClass)
+                            Opcodes.PUTSTATIC -> writes.add(jcClass)
                         }
                     }
                 }
@@ -77,7 +74,6 @@ fun JcClasspath.findFieldsUsedIn(method: JcMethod): FieldUsagesResult {
         reads = reads.toImmutableList(),
         writes = writes.toImmutableList()
     )
-
 }
 
 
