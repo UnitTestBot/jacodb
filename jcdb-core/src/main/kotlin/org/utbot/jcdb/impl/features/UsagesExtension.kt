@@ -87,7 +87,7 @@ private suspend fun JcClasspath.findMatches(
             JcClassOrInterfaceImpl(
                 this,
                 it.source
-            ).declaredMethods.filterIndexed { index, jcMethod -> it.offsets.contains(index) }
+            ).declaredMethods.filterIndexed { index, jcMethod -> it.offsets.contains(index.toByte()) }
         }
     }
 

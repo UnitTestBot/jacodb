@@ -2,7 +2,6 @@ package org.utbot.jcdb.impl.storage
 
 import org.jooq.DSLContext
 import org.jooq.TableField
-import org.jooq.impl.DSL.max
 import org.utbot.jcdb.api.JCDBSymbolsInterner
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.storage.jooq.tables.references.ANNOTATIONS
@@ -245,9 +244,7 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
     private val TableField<*, Long?>.maxId: Long?
         get() {
-            val create = persistence.jooq
-            return create.select(max(this))
-                .from(table).fetchAny()?.component1()
+            return maxId(persistence.jooq)
         }
 }
 
