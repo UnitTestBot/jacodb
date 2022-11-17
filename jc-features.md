@@ -34,26 +34,23 @@ It's recommended to install `InMemoryHierarchy` for performance purposes
         persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
         installFeatures(Usages, InMemoryHierarchy)
     }
-    val method = run // java.lang.Runnable::run method
-    val field = field // java.lang.Runnable::run method
+    val method = run // java.lang.Runnable#run method
+    val field = field // java.lang.String#value field
 
     val cp = db.classpath(allClasspath)
     cp.findUsages(method) // sequence of methods which calls `method`
     cp.findUsages(field, FieldUsageMode.READ) // sequence of fields which reads `field` value
 ```
 
-`Usages` indexer goes through all instructions and collect method calls or fields access and store it into table 
+`Usages` indexer goes through all instructions and collect method calls or fields access and store it into table: 
 
-| Column name            | Column description                                             |
-|------------------------|----------------------------------------------------------------|
-| callee_class_hash      | callee class name hash                                         |
-| callee_name            | method/field name                                              |
-| callee_desc_hash       | null for field usage. method bytecode `description` for methods |
-| opcode                 | instruction operation code                                     |
-| caller_class_hash      | caller class name hash                                         |
-| caller_method_offsets  | caller method                                                  |
-| location_id            | location identifier                                            |
-
-
-
+| Column name             | Column description                                                            |
+|-------------------------|-------------------------------------------------------------------------------|
+| callee_class_symbol_id  | callee class name unique identifier                                           |
+| callee_name_symbol_id   | method/field name unique identifier                                           |
+| callee_desc_hash        | null for field usage. `Sip` hash of method bytecode `description` for methods |
+| opcode                  | instruction operation code                                                    |
+| caller_class_symbols_id | caller class name unique identifier                                           |
+| caller_method_offsets   | method numbers for this usage                                                 |
+| location_id             | location identifier                                                           |
 
