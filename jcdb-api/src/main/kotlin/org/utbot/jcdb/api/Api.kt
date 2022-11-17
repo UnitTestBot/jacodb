@@ -5,6 +5,7 @@ import kotlinx.coroutines.future.future
 import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
+import java.sql.Connection
 
 enum class LocationType {
     RUNTIME,
@@ -119,6 +120,8 @@ interface JCDBPersistence : Closeable {
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
     fun findSymbolId(symbol: String): Long?
 
+    fun newSymbolInterner(): JCDBSymbolsInterner
+
     fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
     fun findClassSources(location: RegisteredLocation): List<ClassSource>
 }
@@ -126,4 +129,10 @@ interface JCDBPersistence : Closeable {
 interface RegisteredLocation {
     val jcLocation: JcByteCodeLocation
     val id: Long
+}
+
+interface JCDBSymbolsInterner {
+    val jooq: DSLContext
+    fun findOrNew(symbol: String): Long
+    fun flush(conn: Connection)
 }
