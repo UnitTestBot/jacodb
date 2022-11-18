@@ -8,5 +8,6 @@ dependencies {
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: coroutines_version
 
     implementation group: 'org.jooq', name: 'jooq', version: jooq_version
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-metadata-jvm', version: kmetadata_version
 
 }
