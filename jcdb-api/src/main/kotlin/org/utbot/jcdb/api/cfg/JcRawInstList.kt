@@ -4,6 +4,7 @@ import org.utbot.jcdb.api.cfg.JcGraph
 import org.utbot.jcdb.api.cfg.JcGraphBuilder
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
+import org.utbot.jcdb.api.ext.HierarchyExtension
 
 class JcRawInstList(
     instructions: List<JcRawInst>
@@ -41,7 +42,8 @@ class JcRawInstList(
         _instructions.addAll(index + 1, newInstructions)
     }
 
-    fun graph(classpath: JcClasspath): JcGraph = JcGraphBuilder(classpath, this).build()
+    fun graph(classpath: JcClasspath, hierarchy: HierarchyExtension): JcGraph =
+        JcGraphBuilder(classpath, hierarchy, this).build()
 }
 
 sealed interface JcRawInst {

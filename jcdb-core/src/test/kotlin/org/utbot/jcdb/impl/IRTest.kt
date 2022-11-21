@@ -1,5 +1,6 @@
 package org.utbot.jcdb.impl
 
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
@@ -13,11 +14,13 @@ import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.*
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
+import org.utbot.jcdb.impl.index.hierarchyExt
 import java.net.URLClassLoader
 import java.nio.file.Files
 
 class IRTest : BaseTest() {
     val target = Files.createTempDirectory("jcdb-temp")
+    val hierarchy = runBlocking { cp.hierarchyExt() }
 
     companion object : WithDB()
 
@@ -56,7 +59,7 @@ class IRTest : BaseTest() {
             println("Old body: ${oldBody.print()}")
             val instructionList = it.instructionList()
             println("Instruction list: $instructionList")
-            val graph = instructionList.graph(cp)
+            val graph = instructionList.graph(cp, hierarchy)
             println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
             val newBody = MethodNodeBuilder(it, instructionList).build()
