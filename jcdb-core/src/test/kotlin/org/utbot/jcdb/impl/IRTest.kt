@@ -5,6 +5,7 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.NoClassInClasspathException
+import org.utbot.jcdb.api.cfg.ext.view
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.api.packageName
@@ -57,6 +58,7 @@ class IRTest : BaseTest() {
             println("Instruction list: $instructionList")
             val graph = instructionList.graph(cp)
             println("Graph: $graph")
+//            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
             val newBody = MethodNodeBuilder(it, instructionList).build()
             println("New body: ${newBody.print()}")
             println()

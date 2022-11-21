@@ -169,7 +169,7 @@ sealed interface JcRawBranchingInst : JcRawInst {
     val successors: List<JcRawLabelRef>
 }
 
-data class JcRawGotoInst(
+class JcRawGotoInst(
     val target: JcRawLabelRef
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>

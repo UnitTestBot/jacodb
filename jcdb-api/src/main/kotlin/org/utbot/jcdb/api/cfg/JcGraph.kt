@@ -13,10 +13,12 @@ class JcGraph(
     private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
     private val successorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
 
-    private val throwPredecessors = mutableMapOf<JcInst, MutableSet<JcInst>>()
-    private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcInst>>()
+    private val throwPredecessors = mutableMapOf<JcCatchInst, MutableSet<JcInst>>()
+    private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
 
     val instructions: List<JcInst> get() = _instructions
+
+    val entry: JcInst get() = instructions.filter { predecessors(it).isEmpty() }.first { throwers(it).isEmpty() }
 
     init {
         for (inst in _instructions) {
@@ -33,7 +35,9 @@ class JcGraph(
 
             if (inst is JcCatchInst) {
                 throwPredecessors[inst] = inst.throwers.map { inst(it) }.toMutableSet()
-                throwSuccessors.getOrPut(inst, ::mutableSetOf).add(inst)
+                inst.throwers.forEach {
+                    throwSuccessors.getOrPut(inst(it), ::mutableSetOf).add(inst)
+                }
             }
         }
     }
@@ -48,6 +52,10 @@ class JcGraph(
 
     fun successors(inst: JcInst): Set<JcInst> = successorMap.getOrDefault(inst, emptySet())
     fun predecessors(inst: JcInst): Set<JcInst> = predecessorMap.getOrDefault(inst, emptySet())
+
+
+    fun throwers(inst: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(inst, emptySet())
+    fun catchers(inst: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(inst, emptySet())
 
     override fun toString(): String = instructions.joinToString("\n")
 }

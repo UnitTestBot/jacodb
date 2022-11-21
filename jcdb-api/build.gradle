@@ -5,6 +5,7 @@ dependencies {
     api group: 'org.ow2.asm', name: 'asm-tree', version: asm_version
     api group: 'org.ow2.asm', name: 'asm-commons', version: asm_version
     api group: 'org.ow2.asm', name: 'asm-util', version: asm_version
+    api group: 'info.leadinglight', name: 'jdot', version: '1.0'
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-collections-immutable-jvm', version: collections_version
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: coroutines_version
     api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: coroutines_version
