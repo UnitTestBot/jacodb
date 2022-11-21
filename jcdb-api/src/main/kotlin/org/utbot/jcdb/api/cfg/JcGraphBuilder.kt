@@ -221,8 +221,8 @@ class JcGraphBuilder(
     private val JcRawCallExpr.typedMethod: JcTypedMethod
         get() {
             val klass = declaringClass.asType as JcClassType
-            return klass.methods.firstOrNull {
-                val jcMethod = it.method
+            return klass.methods.firstOrNull { typedMethod ->
+                val jcMethod = typedMethod.method
                 jcMethod.name == methodName &&
                         jcMethod.returnType.typeName == this.returnType.typeName &&
                         jcMethod.parameters.map { param -> param.type.typeName } == this.argumentTypes.map { it.typeName }
@@ -232,8 +232,8 @@ class JcGraphBuilder(
     private val JcMethod.typedMethod: JcTypedMethod
         get() {
             val klass = enclosingClass.asType as JcClassType
-            return klass.methods.firstOrNull {
-                val jcMethod = it.method
+            return klass.methods.firstOrNull { typedMethod ->
+                val jcMethod = typedMethod.method
                 jcMethod.name == name &&
                         jcMethod.returnType.typeName == this.returnType.typeName &&
                         jcMethod.parameters.map { param -> param.type.typeName } == this.parameters.map { it.type.typeName }
@@ -246,8 +246,8 @@ class JcGraphBuilder(
 
         val base = lambdaBases.first()
         val klass = base.declaringClass.asType as JcClassType
-        val typedBase = klass.methods.firstOrNull {
-            val jcMethod = it.method
+        val typedBase = klass.methods.firstOrNull { typedMethod ->
+            val jcMethod = typedMethod.method
             jcMethod.name == base.name &&
                     jcMethod.returnType.typeName == base.returnType.typeName &&
                     jcMethod.parameters.map { param -> param.type.typeName } == base.argTypes.map { it.typeName }
@@ -257,22 +257,20 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
-        val method = expr.typedMethod
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            expr.typeName.asType, method, instance, args,
-            hierarchy.findOverrides(method.method).map { it.typedMethod }
+            expr.typeName.asType, expr.typedMethod, instance, args,
+            hierarchy.findOverrides(expr.typedMethod.method).map { it.typedMethod }
         )
     }
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
-        val method = expr.typedMethod
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            expr.typeName.asType, method, instance, args,
-            hierarchy.findOverrides(method.method).map { it.typedMethod }
+            expr.typeName.asType, expr.typedMethod, instance, args,
+            hierarchy.findOverrides(expr.typedMethod.method).map { it.typedMethod }
         )
     }
 
