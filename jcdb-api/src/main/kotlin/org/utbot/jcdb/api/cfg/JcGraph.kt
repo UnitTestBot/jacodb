@@ -64,7 +64,7 @@ class JcGraph(
 sealed interface JcInst {
     val operands: List<JcExpr>
 
-//    abstract fun <T> accept(visitor: JcInstVisitor<T>): T
+    fun <T> accept(visitor: JcInstVisitor<T>): T
 }
 
 data class JcInstRef internal constructor(
@@ -81,9 +81,9 @@ class JcAssignInst(
 
     override fun toString(): String = "$lhv = $rhv"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcAssignInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcAssignInst(this)
+    }
 }
 
 class JcEnterMonitorInst(
@@ -94,9 +94,9 @@ class JcEnterMonitorInst(
 
     override fun toString(): String = "enter monitor $monitor"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcEnterMonitorInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcEnterMonitorInst(this)
+    }
 }
 
 class JcExitMonitorInst(
@@ -107,9 +107,9 @@ class JcExitMonitorInst(
 
     override fun toString(): String = "exit monitor $monitor"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcExitMonitorInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcExitMonitorInst(this)
+    }
 }
 
 class JcCallInst(
@@ -120,9 +120,9 @@ class JcCallInst(
 
     override fun toString(): String = "$callExpr"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcCallInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcCallInst(this)
+    }
 }
 
 sealed interface JcTerminatingInst : JcInst
@@ -135,9 +135,9 @@ class JcReturnInst(
 
     override fun toString(): String = "return" + (returnValue?.let { " $it" } ?: "")
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcReturnInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcReturnInst(this)
+    }
 }
 
 class JcThrowInst(
@@ -148,9 +148,9 @@ class JcThrowInst(
 
     override fun toString(): String = "throw $throwable"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcThrowInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcThrowInst(this)
+    }
 }
 
 class JcCatchInst(
@@ -162,9 +162,9 @@ class JcCatchInst(
 
     override fun toString(): String = "catch ($throwable: ${throwable.type})"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcCatchInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcCatchInst(this)
+    }
 }
 
 sealed interface JcBranchingInst : JcInst {
@@ -182,9 +182,9 @@ class JcGotoInst(
 
     override fun toString(): String = "goto $target"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcGotoInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcGotoInst(this)
+    }
 }
 
 class JcIfInst(
@@ -200,9 +200,9 @@ class JcIfInst(
 
     override fun toString(): String = "if ($condition)"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcIfInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcIfInst(this)
+    }
 }
 
 class JcSwitchInst(
@@ -218,16 +218,16 @@ class JcSwitchInst(
 
     override fun toString(): String = "switch ($key)"
 
-//    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-//        return visitor.visitJcSwitchInst(this)
-//    }
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcSwitchInst(this)
+    }
 }
 
 sealed interface JcExpr {
     val type: JcType
     val operands: List<JcValue>
 
-//    fun <T> accept(visitor: JcExprVisitor<T>): T
+    fun <T> accept(visitor: JcExprVisitor<T>): T
 }
 
 interface JcBinaryExpr : JcExpr {
@@ -245,9 +245,9 @@ data class JcAddExpr(
 
     override fun toString(): String = "$lhv + $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcAddExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcAddExpr(this)
+    }
 }
 
 data class JcAndExpr(
@@ -260,9 +260,9 @@ data class JcAndExpr(
 
     override fun toString(): String = "$lhv & $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcAndExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcAndExpr(this)
+    }
 }
 
 data class JcCmpExpr(
@@ -275,9 +275,9 @@ data class JcCmpExpr(
 
     override fun toString(): String = "$lhv cmp $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcCmpExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcCmpExpr(this)
+    }
 }
 
 data class JcCmpgExpr(
@@ -290,9 +290,9 @@ data class JcCmpgExpr(
 
     override fun toString(): String = "$lhv cmpg $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcCmpgExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcCmpgExpr(this)
+    }
 }
 
 data class JcCmplExpr(
@@ -305,9 +305,9 @@ data class JcCmplExpr(
 
     override fun toString(): String = "$lhv cmpl $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcCmplExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcCmplExpr(this)
+    }
 }
 
 data class JcDivExpr(
@@ -320,9 +320,9 @@ data class JcDivExpr(
 
     override fun toString(): String = "$lhv / $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcDivExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcDivExpr(this)
+    }
 }
 
 data class JcMulExpr(
@@ -335,9 +335,9 @@ data class JcMulExpr(
 
     override fun toString(): String = "$lhv * $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcMulExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcMulExpr(this)
+    }
 }
 
 sealed interface JcConditionExpr : JcBinaryExpr
@@ -352,9 +352,9 @@ data class JcEqExpr(
 
     override fun toString(): String = "$lhv == $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcEqExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcEqExpr(this)
+    }
 }
 
 data class JcNeqExpr(
@@ -367,9 +367,9 @@ data class JcNeqExpr(
 
     override fun toString(): String = "$lhv != $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcNeqExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcNeqExpr(this)
+    }
 }
 
 data class JcGeExpr(
@@ -382,9 +382,9 @@ data class JcGeExpr(
 
     override fun toString(): String = "$lhv >= $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcGeExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcGeExpr(this)
+    }
 }
 
 data class JcGtExpr(
@@ -397,9 +397,9 @@ data class JcGtExpr(
 
     override fun toString(): String = "$lhv > $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcGtExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcGtExpr(this)
+    }
 }
 
 data class JcLeExpr(
@@ -412,9 +412,9 @@ data class JcLeExpr(
 
     override fun toString(): String = "$lhv <= $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcLeExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLeExpr(this)
+    }
 }
 
 data class JcLtExpr(
@@ -427,9 +427,9 @@ data class JcLtExpr(
 
     override fun toString(): String = "$lhv < $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcLtExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLtExpr(this)
+    }
 }
 
 data class JcOrExpr(
@@ -442,9 +442,9 @@ data class JcOrExpr(
 
     override fun toString(): String = "$lhv | $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcOrExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcOrExpr(this)
+    }
 }
 
 data class JcRemExpr(
@@ -457,9 +457,9 @@ data class JcRemExpr(
 
     override fun toString(): String = "$lhv % $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcRemExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcRemExpr(this)
+    }
 }
 
 data class JcShlExpr(
@@ -472,9 +472,9 @@ data class JcShlExpr(
 
     override fun toString(): String = "$lhv << $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcShlExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcShlExpr(this)
+    }
 }
 
 data class JcShrExpr(
@@ -487,9 +487,9 @@ data class JcShrExpr(
 
     override fun toString(): String = "$lhv >> $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcShrExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcShrExpr(this)
+    }
 }
 
 data class JcSubExpr(
@@ -502,9 +502,9 @@ data class JcSubExpr(
 
     override fun toString(): String = "$lhv - $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcSubExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcSubExpr(this)
+    }
 }
 
 data class JcUshrExpr(
@@ -517,9 +517,9 @@ data class JcUshrExpr(
 
     override fun toString(): String = "$lhv u<< $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcUshrExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcUshrExpr(this)
+    }
 }
 
 data class JcXorExpr(
@@ -532,9 +532,9 @@ data class JcXorExpr(
 
     override fun toString(): String = "$lhv ^ $rhv"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcXorExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcXorExpr(this)
+    }
 }
 
 data class JcLengthExpr(
@@ -546,9 +546,9 @@ data class JcLengthExpr(
 
     override fun toString(): String = "$array.length"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcLengthExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLengthExpr(this)
+    }
 }
 
 data class JcNegExpr(
@@ -560,9 +560,9 @@ data class JcNegExpr(
 
     override fun toString(): String = "-$operand"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcNegExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcNegExpr(this)
+    }
 }
 
 data class JcCastExpr(
@@ -574,9 +574,9 @@ data class JcCastExpr(
 
     override fun toString(): String = "($type) $operand"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcCastExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcCastExpr(this)
+    }
 }
 
 data class JcNewExpr(
@@ -587,9 +587,9 @@ data class JcNewExpr(
 
     override fun toString(): String = "new $type"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcNewExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcNewExpr(this)
+    }
 }
 
 data class JcNewArrayExpr(
@@ -603,9 +603,9 @@ data class JcNewArrayExpr(
 
     override fun toString(): String = "new $type${dimensions.joinToString("") { "[$it]" }}"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcNewArrayExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcNewArrayExpr(this)
+    }
 }
 
 data class JcInstanceOfExpr(
@@ -618,9 +618,9 @@ data class JcInstanceOfExpr(
 
     override fun toString(): String = "$operand instanceof $targetType"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcInstanceOfExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcInstanceOfExpr(this)
+    }
 }
 
 sealed interface JcCallExpr : JcExpr {
@@ -633,16 +633,7 @@ sealed interface JcCallExpr : JcExpr {
     val resolvedMethods: List<JcTypedMethod>
 }
 
-
-data class JcHandle(
-    val tag: Int,
-    val declaringClass: TypeName,
-    val name: String,
-    val desc: String,
-    val isInterface: Boolean,
-)
-
-data class JcLambdaCallExpr(
+data class JcLambdaExpr(
     override val type: JcType,
     override val method: JcTypedMethod,
     override val args: List<JcValue>,
@@ -650,9 +641,9 @@ data class JcLambdaCallExpr(
     override val resolvedMethods: List<JcTypedMethod>
         get() = listOf(method)
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcDynamicCallExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLambdaExpr(this)
+    }
 }
 
 data class JcVirtualCallExpr(
@@ -668,9 +659,9 @@ data class JcVirtualCallExpr(
     override fun toString(): String =
         "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcVirtualCallExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcVirtualCallExpr(this)
+    }
 }
 
 
@@ -691,9 +682,9 @@ data class JcStaticCallExpr(
             )
         }"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcStaticCallExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcStaticCallExpr(this)
+    }
 }
 
 data class JcSpecialCallExpr(
@@ -706,9 +697,9 @@ data class JcSpecialCallExpr(
     override fun toString(): String =
         "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcSpecialCallExpr(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcSpecialCallExpr(this)
+    }
 }
 
 
@@ -722,25 +713,25 @@ sealed interface JcSimpleValue : JcValue
 data class JcThis(override val type: JcType) : JcSimpleValue {
     override fun toString(): String = "this"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcThis(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcThis(this)
+    }
 }
 
 data class JcArgument(val index: Int, val name: String?, override val type: JcType) : JcSimpleValue {
     override fun toString(): String = name ?: "arg$$index"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcArgument(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcArgument(this)
+    }
 }
 
 data class JcRegister(val index: Int, override val type: JcType) : JcSimpleValue {
     override fun toString(): String = "%$index"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcRegister(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcRegister(this)
+    }
 }
 
 sealed interface JcComplexValue : JcValue
@@ -753,9 +744,9 @@ data class JcFieldRef(
 
     override fun toString(): String = "${instance ?: field.field.enclosingClass}.${field.name}"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcFieldRef(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcFieldRef(this)
+    }
 }
 
 data class JcArrayAccess(
@@ -765,9 +756,9 @@ data class JcArrayAccess(
 ) : JcComplexValue {
     override fun toString(): String = "$array[$index]"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcArrayAccess(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcArrayAccess(this)
+    }
 }
 
 sealed interface JcConstant : JcSimpleValue
@@ -775,89 +766,89 @@ sealed interface JcConstant : JcSimpleValue
 data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcBool(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcBool(this)
+    }
 }
 
 data class JcByte(val value: Byte, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcByte(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcByte(this)
+    }
 }
 
 data class JcChar(val value: Char, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcChar(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcChar(this)
+    }
 }
 
 data class JcShort(val value: Short, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcShort(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcShort(this)
+    }
 }
 
 data class JcInt(val value: Int, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcInt(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcInt(this)
+    }
 }
 
 data class JcLong(val value: Long, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcLong(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLong(this)
+    }
 }
 
 data class JcFloat(val value: Float, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcFloat(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcFloat(this)
+    }
 }
 
 data class JcDouble(val value: Double, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcDouble(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcDouble(this)
+    }
 }
 
 data class JcNullConstant(override val type: JcType) : JcConstant {
     override fun toString(): String = "null"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcNullConstant(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcNullConstant(this)
+    }
 }
 
 data class JcStringConstant(val value: String, override val type: JcType) : JcConstant {
     override fun toString(): String = "\"$value\""
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcStringConstant(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcStringConstant(this)
+    }
 }
 
 data class JcClassConstant(val klass: JcClassType, override val type: JcType) : JcConstant {
     override fun toString(): String = "${klass.jcClass.name}.class"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcClassConstant(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcClassConstant(this)
+    }
 }
 
 data class JcMethodConstant(
@@ -872,7 +863,7 @@ data class JcMethodConstant(
         )
     }:${method.returnType}"
 
-//    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-//        return visitor.visitJcMethodConstant(this)
-//    }
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcMethodConstant(this)
+    }
 }

@@ -253,7 +253,7 @@ class JcGraphBuilder(
                     jcMethod.parameters.map { param -> param.type.typeName } == base.argTypes.map { it.typeName }
         } ?: error("Could not find a method with correct signature")
 
-        return JcLambdaCallExpr(expr.returnType.asType, typedBase, expr.args.map { it.accept(this) as JcValue })
+        return JcLambdaExpr(expr.returnType.asType, typedBase, expr.args.map { it.accept(this) as JcValue })
     }
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
