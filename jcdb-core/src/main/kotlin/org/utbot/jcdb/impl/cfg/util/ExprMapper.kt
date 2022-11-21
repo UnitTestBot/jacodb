@@ -232,7 +232,8 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
                 expr.typeName,
                 expr.declaringClass,
                 expr.methodName,
-                expr.methodDesc,
+                expr.argumentTypes,
+                expr.returnType,
                 newArgs,
                 expr.bsm,
                 expr.bsmArgs
@@ -246,7 +247,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawVirtualCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+                expr.typeName, expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newInstance, newArgs
             )
         }
     }
@@ -257,7 +258,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawInterfaceCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+                expr.typeName, expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newInstance, newArgs
             )
         }
     }
@@ -267,7 +268,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawStaticCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newArgs
+                expr.typeName, expr.declaringClass, expr.methodName,  expr.argumentTypes, expr.returnType, newArgs
             )
         }
     }
@@ -278,7 +279,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawSpecialCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.methodDesc, newInstance, newArgs
+                expr.typeName, expr.declaringClass, expr.methodName,  expr.argumentTypes, expr.returnType, newInstance, newArgs
             )
         }
     }
@@ -286,7 +287,6 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
 
     override fun visitJcRawThis(value: JcRawThis) = exprHandler(value) { value }
     override fun visitJcRawArgument(value: JcRawArgument) = exprHandler(value) { value }
-    override fun visitJcRawLocal(value: JcRawLocal) = exprHandler(value) { value }
     override fun visitJcRawRegister(value: JcRawRegister) = exprHandler(value) { value }
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef) = exprHandler(value) {

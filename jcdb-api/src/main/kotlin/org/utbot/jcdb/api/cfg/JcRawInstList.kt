@@ -1,18 +1,47 @@
 package org.utbot.jcdb.api
 
+import org.utbot.jcdb.api.cfg.JcGraph
+import org.utbot.jcdb.api.cfg.JcGraphBuilder
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 
-private const val offset = "  "
-
 class JcRawInstList(
-    val instructions: List<JcRawInst>
-) {
-    override fun toString(): String = instructions.joinToString(
-        prefix = "\n--------------------\n",
-        postfix = "\n--------------------\n",
-        separator = "\n"
-    )
+    instructions: List<JcRawInst>
+) : Iterable<JcRawInst> {
+    private val _instructions = instructions.toMutableList()
+    val instructions: List<JcRawInst> get() = _instructions
+
+    val size get() = instructions.size
+    val indices get() = instructions.indices
+    val lastIndex get() = instructions.lastIndex
+
+    operator fun get(index: Int) = instructions[index]
+    fun getOrNull(index: Int) = instructions.getOrNull(index)
+    fun getOrElse(index: Int, defaultValue: (Int) -> JcRawInst) = instructions.getOrElse(index, defaultValue)
+    override fun iterator(): Iterator<JcRawInst> = instructions.iterator()
+
+    override fun toString(): String = _instructions.joinToString(separator = "\n") {
+        when (it) {
+            is JcRawLabelInst -> "$it"
+            else -> "  $it"
+        }
+    }
+
+    fun insertBefore(inst: JcRawInst, vararg newInstructions: JcRawInst) = insertBefore(inst, newInstructions.toList())
+    fun insertBefore(inst: JcRawInst, newInstructions: Collection<JcRawInst>) {
+        val index = _instructions.indexOf(inst)
+        assert(index >= 0)
+        _instructions.addAll(index, newInstructions)
+    }
+
+    fun insertAfter(inst: JcRawInst, vararg newInstructions: JcRawInst) = insertBefore(inst, newInstructions.toList())
+    fun insertAfter(inst: JcRawInst, newInstructions: Collection<JcRawInst>) {
+        val index = _instructions.indexOf(inst)
+        assert(index >= 0)
+        _instructions.addAll(index + 1, newInstructions)
+    }
+
+    fun graph(classpath: JcClasspath): JcGraph = JcGraphBuilder(classpath, this).build()
 }
 
 sealed interface JcRawInst {
@@ -21,7 +50,7 @@ sealed interface JcRawInst {
     abstract fun <T> accept(visitor: JcRawInstVisitor<T>): T
 }
 
-data class JcRawAssignInst(
+class JcRawAssignInst(
     val lhv: JcRawValue,
     val rhv: JcRawExpr
 ) : JcRawInst {
@@ -29,57 +58,63 @@ data class JcRawAssignInst(
     override val operands: List<JcRawExpr>
         get() = listOf(lhv, rhv)
 
-    override fun toString(): String = "$offset$lhv = $rhv"
+    override fun toString(): String = "$lhv = $rhv"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawAssignInst(this)
     }
 }
 
-data class JcRawEnterMonitorInst(
+class JcRawEnterMonitorInst(
     val monitor: JcRawValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
 
-    override fun toString(): String = "${offset}enter monitor $monitor"
+    override fun toString(): String = "enter monitor $monitor"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawEnterMonitorInst(this)
     }
 }
 
-data class JcRawExitMonitorInst(
+class JcRawExitMonitorInst(
     val monitor: JcRawValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
 
-    override fun toString(): String = "${offset}exit monitor $monitor"
+    override fun toString(): String = "exit monitor $monitor"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawExitMonitorInst(this)
     }
 }
 
-data class JcRawCallInst(
+class JcRawCallInst(
     val callExpr: JcRawCallExpr
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(callExpr)
 
-    override fun toString(): String = "$offset$callExpr"
+    override fun toString(): String = "$callExpr"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCallInst(this)
     }
 }
 
-data class JcRawLabelInst(
+data class JcRawLabelRef(val name: String) {
+    override fun toString() = name
+}
+
+class JcRawLabelInst(
     val name: String
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
+
+    val ref get() = JcRawLabelRef(name)
 
     override fun toString(): String = "label $name:"
 
@@ -88,42 +123,42 @@ data class JcRawLabelInst(
     }
 }
 
-data class JcRawReturnInst(
+class JcRawReturnInst(
     val returnValue: JcRawValue?
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOfNotNull(returnValue)
 
-    override fun toString(): String = "${offset}return" + (returnValue?.let { " $it" } ?: "")
+    override fun toString(): String = "return" + (returnValue?.let { " $it" } ?: "")
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawReturnInst(this)
     }
 }
 
-data class JcRawThrowInst(
+class JcRawThrowInst(
     val throwable: JcRawValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "${offset}throw $throwable"
+    override fun toString(): String = "throw $throwable"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawThrowInst(this)
     }
 }
 
-data class JcRawCatchInst(
+class JcRawCatchInst(
     val throwable: JcRawValue,
-    val handler: JcRawLabelInst,
-    val startInclusive: JcRawLabelInst,
-    val endExclusive: JcRawLabelInst
+    val handler: JcRawLabelRef,
+    val startInclusive: JcRawLabelRef,
+    val endExclusive: JcRawLabelRef
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "${offset}catch ($throwable: ${throwable.typeName}) ${startInclusive.name} - ${endExclusive.name}"
+    override fun toString(): String = "catch ($throwable: ${throwable.typeName}) $startInclusive - $endExclusive"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCatchInst(this)
@@ -131,19 +166,19 @@ data class JcRawCatchInst(
 }
 
 sealed interface JcRawBranchingInst : JcRawInst {
-    val successors: List<JcRawLabelInst>
+    val successors: List<JcRawLabelRef>
 }
 
 data class JcRawGotoInst(
-    val target: JcRawLabelInst
+    val target: JcRawLabelRef
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
 
-    override val successors: List<JcRawLabelInst>
+    override val successors: List<JcRawLabelRef>
         get() = listOf(target)
 
-    override fun toString(): String = "${offset}goto ${target.name}"
+    override fun toString(): String = "goto $target"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawGotoInst(this)
@@ -152,16 +187,16 @@ data class JcRawGotoInst(
 
 data class JcRawIfInst(
     val condition: JcRawConditionExpr,
-    val trueBranch: JcRawLabelInst,
-    val falseBranch: JcRawLabelInst
+    val trueBranch: JcRawLabelRef,
+    val falseBranch: JcRawLabelRef
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(condition)
 
-    override val successors: List<JcRawLabelInst>
+    override val successors: List<JcRawLabelRef>
         get() = listOf(trueBranch, falseBranch)
 
-    override fun toString(): String = "${offset}if ($condition) goto ${trueBranch.name} else ${falseBranch.name}"
+    override fun toString(): String = "if ($condition) goto $trueBranch else $falseBranch"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawIfInst(this)
@@ -170,20 +205,19 @@ data class JcRawIfInst(
 
 data class JcRawSwitchInst(
     val key: JcRawValue,
-    val branches: Map<JcRawValue, JcRawLabelInst>,
-    val default: JcRawLabelInst
+    val branches: Map<JcRawValue, JcRawLabelRef>,
+    val default: JcRawLabelRef
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(key) + branches.keys
 
-    override val successors: List<JcRawLabelInst>
+    override val successors: List<JcRawLabelRef>
         get() = branches.values + default
 
     override fun toString(): String = buildString {
-        appendLine("${offset}switch ($key) {")
-        branches.forEach { (option, label) -> appendLine("$offset  $option -> ${label.name}") }
-        appendLine("$offset  else -> ${default.name}")
-        append("${offset}}")
+        append("switch ($key) { ")
+        branches.forEach { (option, label) -> append("$option -> $label") }
+        append("else -> ${default.name} }")
     }
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
@@ -569,7 +603,7 @@ data class JcRawNewArrayExpr(
     override val operands: List<JcRawValue>
         get() = dimensions
 
-    override fun toString(): String = "new $typeName${dimensions.joinToString() { "[$it]" }}"
+    override fun toString(): String = "new $typeName${dimensions.joinToString("") { "[$it]" }}"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
@@ -594,7 +628,8 @@ data class JcRawInstanceOfExpr(
 sealed interface JcRawCallExpr : JcRawExpr {
     val declaringClass: TypeName
     val methodName: String
-    val methodDesc: String
+    val argumentTypes: List<TypeName>
+    val returnType: TypeName
     val args: List<JcRawValue>
 
     override val operands: List<JcRawValue>
@@ -614,7 +649,8 @@ data class JcRawDynamicCallExpr(
     override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
-    override val methodDesc: String,
+    override val argumentTypes: List<TypeName>,
+    override val returnType: TypeName,
     override val args: List<JcRawValue>,
     val bsm: JcRawHandle,
     val bsmArgs: List<Any>
@@ -628,7 +664,8 @@ data class JcRawVirtualCallExpr(
     override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
-    override val methodDesc: String,
+    override val argumentTypes: List<TypeName>,
+    override val returnType: TypeName,
     val instance: JcRawValue,
     override val args: List<JcRawValue>,
 ) : JcRawCallExpr {
@@ -647,7 +684,8 @@ data class JcRawInterfaceCallExpr(
     override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
-    override val methodDesc: String,
+    override val argumentTypes: List<TypeName>,
+    override val returnType: TypeName,
     val instance: JcRawValue,
     override val args: List<JcRawValue>,
 ) : JcRawCallExpr {
@@ -666,7 +704,8 @@ data class JcRawStaticCallExpr(
     override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
-    override val methodDesc: String,
+    override val argumentTypes: List<TypeName>,
+    override val returnType: TypeName,
     override val args: List<JcRawValue>,
 ) : JcRawCallExpr {
     override fun toString(): String =
@@ -681,7 +720,8 @@ data class JcRawSpecialCallExpr(
     override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
-    override val methodDesc: String,
+    override val argumentTypes: List<TypeName>,
+    override val returnType: TypeName,
     val instance: JcRawValue,
     override val args: List<JcRawValue>,
 ) : JcRawCallExpr {
@@ -714,14 +754,6 @@ data class JcRawArgument(val index: Int, val name: String?, override val typeNam
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawArgument(this)
-    }
-}
-
-data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawSimpleValue {
-    override fun toString(): String = name
-
-    override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
-        return visitor.visitJcRawLocal(this)
     }
 }
 

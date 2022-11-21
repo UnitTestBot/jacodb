@@ -191,10 +191,6 @@ class FullExprSetCollector : JcRawExprVisitor<Unit> {
         exprs.add(value)
     }
 
-    override fun visitJcRawLocal(value: JcRawLocal) {
-        exprs.add(value)
-    }
-
     override fun visitJcRawRegister(value: JcRawRegister) {
         exprs.add(value)
     }

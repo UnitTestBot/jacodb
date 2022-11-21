@@ -239,7 +239,8 @@ class RawInstListBuilder(
 
         fun push(value: JcRawValue) = copy(locals = locals, stack = stack.add(value))
         fun peek() = stack.last()
-        fun pop(): Pair<Frame, JcRawValue> = copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
+        fun pop(): Pair<Frame, JcRawValue> =
+            copy(locals = locals, stack = stack.removeAt(stack.lastIndex)) to stack.last()
     }
 
     private fun pop(): JcRawValue {
@@ -278,6 +279,8 @@ class RawInstListBuilder(
     }
 
     private fun label(insnNode: LabelNode): JcRawLabelInst = labels.getOrPut(insnNode, ::nextLabel)
+
+    private fun labelRef(insnNode: LabelNode): JcRawLabelRef = label(insnNode).ref
 
     private fun instructionList(insn: AbstractInsnNode) = instructions.getOrPut(insn, ::mutableListOf)
 
@@ -768,9 +771,9 @@ class RawInstListBuilder(
                 val throwable = nextRegister(catch.typeOrDefault.typeName())
                 instructionList(insnNode) += JcRawCatchInst(
                     throwable,
-                    label(catch.handler),
-                    label(catch.start),
-                    label(catch.end)
+                    labelRef(catch.handler),
+                    labelRef(catch.start),
+                    labelRef(catch.end)
                 )
                 push(throwable)
             }
@@ -821,7 +824,8 @@ class RawInstListBuilder(
             Type.getReturnType(desc).descriptor.typeName(),
             "".typeName(),
             "dynamic call",
-            desc,
+            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
+            Type.getReturnType(desc).descriptor.typeName(),
             args,
             bsmMethod,
             bsmArgs
@@ -836,7 +840,7 @@ class RawInstListBuilder(
     }
 
     private fun buildJumpInsnNode(insnNode: JumpInsnNode) {
-        val target = label(insnNode.label)
+        val target = labelRef(insnNode.label)
         when (val opcode = insnNode.opcode) {
             Opcodes.GOTO -> instructionList(insnNode) += JcRawGotoInst(target)
             else -> {
@@ -862,7 +866,7 @@ class RawInstListBuilder(
                     Opcodes.IF_ACMPNE -> JcRawNeqExpr(boolTypeName, pop(), rhv)
                     else -> error("Unknown jump opcode $opcode")
                 }
-                instructionList(insnNode) += JcRawIfInst(expr, target, falseTarget)
+                instructionList(insnNode) += JcRawIfInst(expr, target, falseTarget.ref)
                 if (insnNode.next !is LabelNode) {
                     instructionList(insnNode) += falseTarget
                 }
@@ -878,7 +882,6 @@ class RawInstListBuilder(
         val allLocals = frameSet.flatMap { it.locals.keys }
         val localTypes = allLocals
             .filter { local -> frameSet.all { local in it.locals } }
-//            .filter { local -> frameSet.map { it[local]?.typeName }.toSet().size == 1 }
             .associateWith { frameSet.first()[it]!!.typeName }
             .toSortedMap()
         val newLocals = localTypes.copyLocals(frames).toPersistentMap()
@@ -886,7 +889,6 @@ class RawInstListBuilder(
         val stackIndices = frameSet.flatMap { it.stack.indices }.toSortedSet()
         val stackRanges = stackIndices
             .filter { stack -> frameSet.all { stack in it.stack.indices } }
-//            .filter { stack -> frameSet.map { it.stack.getOrNull(stack)?.typeName }.toSet().size == 1 }
             .associateWith { frameSet.first().stack[it].typeName }
             .toSortedMap()
         val newStack = stackRanges.copyStack(frames).toPersistentList()
@@ -947,10 +949,10 @@ class RawInstListBuilder(
 
     private fun buildLookupSwitchInsnNode(insnNode: LookupSwitchInsnNode) {
         val key = pop()
-        val default = label(insnNode.dflt)
+        val default = labelRef(insnNode.dflt)
         val branches = insnNode.keys
             .zip(insnNode.labels)
-            .associate { (JcRawInt(it.first) as JcRawValue) to label(it.second) }
+            .associate { (JcRawInt(it.first) as JcRawValue) to labelRef(it.second) }
         instructionList(insnNode) += JcRawSwitchInst(key, branches, default)
     }
 
@@ -960,13 +962,22 @@ class RawInstListBuilder(
             else -> insnNode.owner.typeName()
         }
         val methodName = insnNode.name
-        val methodDesc = insnNode.desc
+        val argTypes = Type.getArgumentTypes(insnNode.desc).map { it.descriptor.typeName() }
+        val returnType = Type.getReturnType(insnNode.desc).descriptor.typeName()
 
-        val args = Type.getArgumentTypes(methodDesc).map { pop() }.reversed()
+        val args = Type.getArgumentTypes(insnNode.desc).map { pop() }.reversed()
 
-        val exprType = Type.getReturnType(methodDesc).descriptor.typeName()
+        val exprType = Type.getReturnType(insnNode.desc).descriptor.typeName()
         val expr = when (val opcode = insnNode.opcode) {
-            Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(exprType, owner, methodName, methodDesc, args)
+            Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(
+                exprType,
+                owner,
+                methodName,
+                argTypes,
+                returnType,
+                args
+            )
+
             else -> {
                 val instance = pop()
                 when (opcode) {
@@ -974,7 +985,8 @@ class RawInstListBuilder(
                         exprType,
                         owner,
                         methodName,
-                        methodDesc,
+                        argTypes,
+                        returnType,
                         instance,
                         args
                     )
@@ -983,7 +995,8 @@ class RawInstListBuilder(
                         exprType,
                         owner,
                         methodName,
-                        methodDesc,
+                        argTypes,
+                        returnType,
                         instance,
                         args
                     )
@@ -992,7 +1005,8 @@ class RawInstListBuilder(
                         exprType,
                         owner,
                         methodName,
-                        methodDesc,
+                        argTypes,
+                        returnType,
                         instance,
                         args
                     )
@@ -1001,10 +1015,10 @@ class RawInstListBuilder(
                 }
             }
         }
-        if (Type.getReturnType(methodDesc) == Type.VOID_TYPE) {
+        if (Type.getReturnType(insnNode.desc) == Type.VOID_TYPE) {
             instructionList(insnNode) += JcRawCallInst(expr)
         } else {
-            val result = nextRegister(Type.getReturnType(methodDesc).descriptor.typeName())
+            val result = nextRegister(Type.getReturnType(insnNode.desc).descriptor.typeName())
             instructionList(insnNode) += JcRawAssignInst(result, expr)
             push(result)
         }
@@ -1023,10 +1037,10 @@ class RawInstListBuilder(
 
     private fun buildTableSwitchInsnNode(insnNode: TableSwitchInsnNode) {
         val index = pop()
-        val default = label(insnNode.dflt)
+        val default = labelRef(insnNode.dflt)
         val branches = (insnNode.min..insnNode.max)
             .zip(insnNode.labels)
-            .associate { (JcRawInt(it.first) as JcRawValue) to label(it.second) }
+            .associate { (JcRawInt(it.first) as JcRawValue) to labelRef(it.second) }
         instructionList(insnNode) += JcRawSwitchInst(index, branches, default)
     }
 

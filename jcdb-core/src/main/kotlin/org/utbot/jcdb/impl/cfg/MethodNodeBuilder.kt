@@ -53,6 +53,7 @@ class MethodNodeBuilder(
     private var stackSize = 0
     private var maxStack = 0
     private val locals = mutableMapOf<JcRawValue, Int>()
+    private val labelRefMap = instList.instructions.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
     private val labels = mutableMapOf<JcRawLabelInst, LabelNode>()
     private val currentInsnList = InsnList()
     private val tryCatchNodeList = mutableListOf<TryCatchBlockNode>()
@@ -105,7 +106,9 @@ class MethodNodeBuilder(
         }
         index
     }
+
     private fun label(jcRawLabelInst: JcRawLabelInst): LabelNode = labels.getOrPut(jcRawLabelInst) { LabelNode() }
+    private fun label(jcRawLabelRef: JcRawLabelRef): LabelNode = label(labelRefMap.getValue(jcRawLabelRef))
 
     private fun updateStackInfo(inc: Int) {
         stackSize += inc
@@ -143,6 +146,7 @@ class MethodNodeBuilder(
             val stackChange = 1 + if (lhv.instance == null) 0 else 1
             updateStackInfo(-stackChange)
         }
+
         is JcRawArrayAccess -> {
             lhv.array.accept(this)
             lhv.index.accept(this)
@@ -494,11 +498,13 @@ class MethodNodeBuilder(
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr) {
         val component = expr.typeName.baseElementType()
         expr.dimensions.map { it.accept(this) }
-        currentInsnList.add(when {
-            expr.dimensions.size > 1 -> MultiANewArrayInsnNode(expr.typeName.jvmTypeName, expr.dimensions.size)
-            component.isPrimitive -> IntInsnNode(Opcodes.NEWARRAY, component.typeInt)
-            else -> TypeInsnNode(Opcodes.ANEWARRAY, component.internalDesc)
-        })
+        currentInsnList.add(
+            when {
+                expr.dimensions.size > 1 -> MultiANewArrayInsnNode(expr.typeName.jvmTypeName, expr.dimensions.size)
+                component.isPrimitive -> IntInsnNode(Opcodes.NEWARRAY, component.typeInt)
+                else -> TypeInsnNode(Opcodes.ANEWARRAY, component.internalDesc)
+            }
+        )
         updateStackInfo(1)
     }
 
@@ -557,6 +563,8 @@ class MethodNodeBuilder(
         updateStackInfo(-expr.args.size + 1)
     }
 
+    private val JcRawCallExpr.methodDesc get() = "(${argumentTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}"
+
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr) {
         expr.instance.accept(this)
         expr.args.forEach { it.accept(this) }
@@ -569,7 +577,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (Type.getReturnType(expr.methodDesc) != Type.VOID_TYPE)
+        if (expr.returnType != PredefinedPrimitives.void.typeName())
             updateStackInfo(1)
     }
 
@@ -585,7 +593,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (Type.getReturnType(expr.methodDesc) != Type.VOID_TYPE)
+        if (expr.returnType != PredefinedPrimitives.void.typeName())
             updateStackInfo(1)
     }
 
@@ -600,7 +608,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-expr.args.size)
-        if (Type.getReturnType(expr.methodDesc) != Type.VOID_TYPE)
+        if (expr.returnType != PredefinedPrimitives.void.typeName())
             updateStackInfo(1)
     }
 
@@ -616,7 +624,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (Type.getReturnType(expr.methodDesc) != Type.VOID_TYPE)
+        if (expr.returnType != PredefinedPrimitives.void.typeName())
             updateStackInfo(1)
     }
 
@@ -625,10 +633,6 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawArgument(value: JcRawArgument) {
-        currentInsnList.add(loadValue(value))
-    }
-
-    override fun visitJcRawLocal(value: JcRawLocal) {
         currentInsnList.add(loadValue(value))
     }
 

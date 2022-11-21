@@ -67,7 +67,6 @@ interface JcRawExprVisitor<T> {
 
     fun visitJcRawThis(value: JcRawThis): T
     fun visitJcRawArgument(value: JcRawArgument): T
-    fun visitJcRawLocal(value: JcRawLocal): T
     fun visitJcRawRegister(value: JcRawRegister): T
     fun visitJcRawFieldRef(value: JcRawFieldRef): T
     fun visitJcRawArrayAccess(value: JcRawArrayAccess): T
@@ -123,7 +122,6 @@ interface DefaultJcRawExprVisitor<T> : JcRawExprVisitor<T> {
 
     override fun visitJcRawThis(value: JcRawThis): T = defaultExprHandler(value)
     override fun visitJcRawArgument(value: JcRawArgument): T = defaultExprHandler(value)
-    override fun visitJcRawLocal(value: JcRawLocal): T = defaultExprHandler(value)
     override fun visitJcRawRegister(value: JcRawRegister): T = defaultExprHandler(value)
     override fun visitJcRawFieldRef(value: JcRawFieldRef): T = defaultExprHandler(value)
     override fun visitJcRawArrayAccess(value: JcRawArrayAccess): T = defaultExprHandler(value)

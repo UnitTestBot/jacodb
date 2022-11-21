@@ -55,6 +55,8 @@ class IRTest : BaseTest() {
             println("Old body: ${oldBody.print()}")
             val instructionList = it.instructionList()
             println("Instruction list: $instructionList")
+            val graph = instructionList.graph(cp)
+            println("Graph: $graph")
             val newBody = MethodNodeBuilder(it, instructionList).build()
             println("New body: ${newBody.print()}")
             println()

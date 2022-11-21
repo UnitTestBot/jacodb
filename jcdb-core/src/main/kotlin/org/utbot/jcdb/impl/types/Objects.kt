@@ -154,5 +154,5 @@ class EnumRef(val className: String, val enumName: String) : AnnotationValue()
 data class TypeNameImpl(private val jvmName: String) : TypeName {
     override val typeName: String = jvmName.jcdbName()
 
-    override fun toString(): String = jvmName
+    override fun toString(): String = typeName
 }

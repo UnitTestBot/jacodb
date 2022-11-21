@@ -5,15 +5,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.JcField
-import org.utbot.jcdb.api.JcMethod
-import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.NoClassInClasspathException
-import org.utbot.jcdb.api.findFieldOrNull
-import org.utbot.jcdb.api.findMethodOrNull
-import org.utbot.jcdb.api.throwClassNotFound
+import org.utbot.jcdb.api.*
 
 /**
  * find all methods used in bytecode of specified `method`
@@ -89,6 +81,10 @@ inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
     return findClassOrNull(T::class.java.name)?.let {
         typeOf(it)
     }
+}
+
+fun JcClasspath.findTypeOrNull(typeName: TypeName): JcType? {
+    return findTypeOrNull(typeName.typeName)
 }
 
 
