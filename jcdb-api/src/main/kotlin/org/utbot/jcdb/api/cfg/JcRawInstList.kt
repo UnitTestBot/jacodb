@@ -641,7 +641,8 @@ data class JcRawHandle(
     val tag: Int,
     val declaringClass: TypeName,
     val name: String,
-    val desc: String,
+    val argTypes: List<TypeName>,
+    val returnType: TypeName,
     val isInterface: Boolean,
 )
 

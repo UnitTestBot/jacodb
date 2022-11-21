@@ -804,7 +804,14 @@ class RawInstListBuilder(
     }
 
     private val Handle.jcRawHandle
-        get() = JcRawHandle(tag, owner.typeName(), name, desc, isInterface)
+        get() = JcRawHandle(
+            tag,
+            owner.typeName(),
+            name,
+            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
+            Type.getReturnType(desc).descriptor.typeName(),
+            isInterface
+        )
 
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
         // todo: better invokedynamic handling
@@ -819,7 +826,7 @@ class RawInstListBuilder(
                 else -> error("Unknown arg of bsm: $it")
             }
         }.reversed()
-        val args = Type.getArgumentTypes(desc).map { pop() }
+        val args = Type.getArgumentTypes(desc).map { pop() }.reversed()
         val expr = JcRawDynamicCallExpr(
             Type.getReturnType(desc).descriptor.typeName(),
             "".typeName(),

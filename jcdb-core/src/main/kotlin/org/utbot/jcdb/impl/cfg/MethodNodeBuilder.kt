@@ -519,7 +519,7 @@ class MethodNodeBuilder(
             tag,
             declaringClass.jvmClassName,
             name,
-            desc,
+            "(${argTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}",
             isInterface
         )
     private val JcRawMethodConstant.asAsmType: Type

@@ -53,8 +53,9 @@ class JcGraphBuilder(
 
     private val JcClassOrInterface.asType get() = classpath.typeOf(this)
 
-    private val TypeName.asType get() = classpath.findTypeOrNull(this)
-        ?: error("Could not find type $this")
+    private val TypeName.asType
+        get() = classpath.findTypeOrNull(this)
+            ?: error("Could not find type $this")
 
     private fun label2InstRef(labelRef: JcRawLabelRef) =
         label2InstRef.getOrPut(labels.getValue(labelRef)) { JcInstRef() }
@@ -216,17 +217,31 @@ class JcGraphBuilder(
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType)
 
-    private val JcRawCallExpr.typedMethod: JcTypedMethod get() {
-        val klass = declaringClass.asType as JcClassType
-        return klass.methods.firstOrNull {
-            val jcMethod = it.method
-            jcMethod.name == methodName && jcMethod.returnType.typeName == this.returnType.typeName && jcMethod.parameters.map { param -> param.type.typeName } == this.argumentTypes.map { it.typeName }
+    private val JcRawCallExpr.typedMethod: JcTypedMethod
+        get() {
+            val klass = declaringClass.asType as JcClassType
+            return klass.methods.firstOrNull {
+                val jcMethod = it.method
+                jcMethod.name == methodName &&
+                        jcMethod.returnType.typeName == this.returnType.typeName &&
+                        jcMethod.parameters.map { param -> param.type.typeName } == this.argumentTypes.map { it.typeName }
+            } ?: error("Could not find a method with correct signature")
         }
-            ?: error("a")
-    }
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
-        TODO("Not yet implemented")
+        val lambdaBases = expr.bsmArgs.filterIsInstance<JcRawHandle>()
+        assert(lambdaBases.size == 1) { "Unexpected number of lambda bases in dynamic call" }
+
+        val base = lambdaBases.first()
+        val klass = base.declaringClass.asType as JcClassType
+        val typedBase = klass.methods.firstOrNull {
+            val jcMethod = it.method
+            jcMethod.name == base.name &&
+                    jcMethod.returnType.typeName == base.returnType.typeName &&
+                    jcMethod.parameters.map { param -> param.type.typeName } == base.argTypes.map { it.typeName }
+        } ?: error("Could not find a method with correct signature")
+
+        return JcLambdaCallExpr(expr.returnType.asType, typedBase, expr.args.map { it.accept(this) as JcValue })
     }
 
     // todo: resolve virtual calls
@@ -268,8 +283,8 @@ class JcGraphBuilder(
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val klass = value.declaringClass.asType as JcClassType
-        val field = klass.fields.firstOrNull { it.name == value.fieldName && it.field.type.typeName == value.typeName.typeName }
-            ?: error("as")
+        val field =
+            klass.fields.first { it.name == value.fieldName && it.field.type.typeName == value.typeName.typeName }
         return JcFieldRef(value.instance?.accept(this) as? JcValue, field)
     }
 
