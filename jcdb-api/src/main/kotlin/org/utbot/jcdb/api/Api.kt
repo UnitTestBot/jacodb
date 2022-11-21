@@ -30,6 +30,10 @@ enum class FieldUsageMode {
     WRITE
 }
 
+interface JavaVersion {
+    val majorVersion: Int
+}
+
 
 /**
  * Compilation database
@@ -40,6 +44,8 @@ interface JCDB : Closeable {
 
     val locations: List<JcByteCodeLocation>
     val persistence: JCDBPersistence
+
+    val runtimeVersion: JavaVersion
 
     /**
      * create classpath instance

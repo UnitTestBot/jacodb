@@ -14,6 +14,7 @@ import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.FeaturesRegistry
 import org.utbot.jcdb.impl.JcInternalSignal
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.fs.info
 import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
@@ -28,6 +29,7 @@ import javax.sql.DataSource
 import kotlin.concurrent.withLock
 
 class SQLitePersistenceImpl(
+    private val javaRuntime: JavaRuntime,
     private val featuresRegistry: FeaturesRegistry,
     location: String? = null,
     private val clearOnStart: Boolean
@@ -81,7 +83,7 @@ class SQLitePersistenceImpl(
         get() {
             return jooq.selectFrom(BYTECODELOCATIONS).fetch().mapNotNull {
                 try {
-                    File(it.path!!).asByteCodeLocation(isRuntime = it.runtime!!)
+                    File(it.path!!).asByteCodeLocation(javaRuntime.version, isRuntime = it.runtime!!)
                 } catch (e: Exception) {
                     null
                 }

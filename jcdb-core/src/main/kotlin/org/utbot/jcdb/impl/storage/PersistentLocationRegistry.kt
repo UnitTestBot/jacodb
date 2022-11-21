@@ -12,6 +12,7 @@ import org.utbot.jcdb.impl.LocationsRegistry
 import org.utbot.jcdb.impl.LocationsRegistrySnapshot
 import org.utbot.jcdb.impl.RefreshResult
 import org.utbot.jcdb.impl.RegistrationResult
+import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 class PersistentLocationRegistry(
+    private val javaRuntime: JavaRuntime,
     private val persistence: JCDBPersistence,
     private val featuresRegistry: FeaturesRegistry
 ) : LocationsRegistry {
@@ -31,14 +33,14 @@ class PersistentLocationRegistry(
     override val actualLocations: List<PersistentByteCodeLocation>
         get() = persistence.read {
             it.selectFrom(BYTECODELOCATIONS).fetch {
-                PersistentByteCodeLocation(it)
+                PersistentByteCodeLocation(it, javaRuntime.version)
             }
         }
 
     private val notRuntimeLocations: List<PersistentByteCodeLocation>
         get() = persistence.read {
             it.selectFrom(BYTECODELOCATIONS).where(BYTECODELOCATIONS.RUNTIME.ne(true)).fetch {
-                PersistentByteCodeLocation(it)
+                PersistentByteCodeLocation(it, javaRuntime.version)
             }
         }
 
@@ -150,7 +152,7 @@ class PersistentLocationRegistry(
                 .where(BYTECODELOCATIONS.UPDATED_ID.isNotNull).fetch()
                 .toList()
                 .filterNot { entity -> snapshots.any { it.ids.contains(entity.id) } }
-                .map { PersistentByteCodeLocation(it) }
+                .map { PersistentByteCodeLocation(it, javaRuntime.version) }
             it.deprecate(deprecated)
             CleanupResult(deprecated)
         }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
@@ -33,13 +34,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class JCDBImpl(
+    internal val javaRuntime: JavaRuntime,
     override val persistence: JCDBPersistence,
     val featureRegistry: FeaturesRegistry,
     private val settings: JCDBSettings
 ) : JCDB {
 
     private val classesVfs = GlobalClassesVfs()
-    internal val javaRuntime = JavaRuntime(settings.jre)
     private val hooks = settings.hooks.map { it(this) }
 
     internal val locationsRegistry: LocationsRegistry
@@ -52,7 +53,7 @@ class JCDBImpl(
 
     init {
         featureRegistry.bind(this)
-        locationsRegistry = PersistentLocationRegistry(persistence, featureRegistry)
+        locationsRegistry = PersistentLocationRegistry(javaRuntime, persistence, featureRegistry)
     }
 
     override val locations: List<JcByteCodeLocation>
@@ -64,13 +65,13 @@ class JCDBImpl(
         val runtime = JavaRuntime(settings.jre).allLocations
         locationsRegistry.setup(runtime).new.process()
         locationsRegistry.registerIfNeeded(
-            settings.predefinedDirOrJars.filter { it.exists() }.map { it.asByteCodeLocation(isRuntime = false) }
+            settings.predefinedDirOrJars.filter { it.exists() }.map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
         ).new.process()
     }
 
     override suspend fun classpath(dirOrJars: List<File>): JcClasspath {
         assertNotClosed()
-        val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation() }
+        val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
             .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
         return JcClasspathImpl(
@@ -89,6 +90,9 @@ class JCDBImpl(
         )
     }
 
+    override val runtimeVersion: JavaVersion
+        get() = javaRuntime.version
+
     override suspend fun load(dirOrJar: File) = apply {
         assertNotClosed()
         load(listOf(dirOrJar))
@@ -96,7 +100,7 @@ class JCDBImpl(
 
     override suspend fun load(dirOrJars: List<File>) = apply {
         assertNotClosed()
-        loadLocations(dirOrJars.filterExisted().map { it.asByteCodeLocation() })
+        loadLocations(dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) })
     }
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {

@@ -5,6 +5,7 @@ import kotlinx.coroutines.future.future
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.FeaturesRegistry
 import org.utbot.jcdb.impl.JCDBImpl
+import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
 
 suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
@@ -13,12 +14,15 @@ suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
 
 suspend fun jcdb(settings: JCDBSettings): JCDB {
     val featureRegistry = FeaturesRegistry(settings.features)
+    val javaRuntime = JavaRuntime(settings.jre)
     val environment = SQLitePersistenceImpl(
+        javaRuntime,
         featureRegistry,
         location = settings.persistentLocation,
         clearOnStart = settings.persistentClearOnStart ?: true
     )
     return JCDBImpl(
+        javaRuntime = javaRuntime,
         persistence = environment,
         featureRegistry = featureRegistry,
         settings = settings

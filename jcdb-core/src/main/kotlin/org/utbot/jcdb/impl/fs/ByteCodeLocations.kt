@@ -1,19 +1,18 @@
 package org.utbot.jcdb.impl.fs
 
 import mu.KLogging
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
 import java.io.File
 
 val logger = object : KLogging() {}.logger
 
-fun File.asByteCodeLocation(isRuntime: Boolean = false): JcByteCodeLocation {
+fun File.asByteCodeLocation(runtimeVersion: JavaVersion, isRuntime: Boolean = false): JcByteCodeLocation {
     if (!exists()) {
         throw IllegalArgumentException("file $absolutePath doesn't exist")
     }
-    if (isFile && name.endsWith(".jar")) {
-        return JarLocation(this, isRuntime)
-    } else if (isFile && name.endsWith(".jmod")) {
-        return JmodLocation(this)
+    if (isFile && name.endsWith(".jar") || name.endsWith(".jmod")) {
+        return JarLocation(this, isRuntime, runtimeVersion)
     } else if (!isFile) {
         return BuildFolderLocation(this)
     }

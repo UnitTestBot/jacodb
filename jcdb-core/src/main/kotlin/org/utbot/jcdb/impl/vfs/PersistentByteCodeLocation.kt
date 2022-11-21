@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl.vfs
 
 import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.LocationType
 import org.utbot.jcdb.api.RegisteredLocation
@@ -14,17 +15,21 @@ class PersistentByteCodeLocation(
     override val jcLocation: JcByteCodeLocation
 ) : RegisteredLocation {
 
-    constructor(entity: BytecodelocationsRecord) : this(entity.id!!, entity.toJcLocation())
+    constructor(entity: BytecodelocationsRecord, javaVersion: JavaVersion) : this(entity.id!!, entity.toJcLocation(javaVersion))
 
 }
 
-class LazyPersistentByteCodeLocation(private val jcdbPersistence: JCDBPersistence, override val id: Long) :
+class LazyPersistentByteCodeLocation(
+    private val persistence: JCDBPersistence,
+    override val id: Long,
+    private val runtimeVersion: JavaVersion
+) :
     RegisteredLocation {
 
     override val jcLocation: JcByteCodeLocation
         get() {
-            return jcdbPersistence.read {
-                it.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!.toJcLocation()
+            return persistence.read {
+                it.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!.toJcLocation(runtimeVersion)
             }
         }
 
@@ -34,7 +39,8 @@ class LazyPersistentByteCodeLocation(private val jcdbPersistence: JCDBPersistenc
 class RestoredJcByteCodeLocation(
     override val path: String,
     override val type: LocationType,
-    override val hash: String
+    override val hash: String,
+    private val runtimeVersion: JavaVersion
 ) : JcByteCodeLocation {
 
     override val jarOrFolder: File
@@ -49,7 +55,7 @@ class RestoredJcByteCodeLocation(
         if (!jarOrFolder.exists()) {
             return null
         }
-        return jarOrFolder.asByteCodeLocation(type == LocationType.RUNTIME)
+        return jarOrFolder.asByteCodeLocation(runtimeVersion, type == LocationType.RUNTIME)
     }
 
     override fun resolve(classFullName: String) = null
@@ -62,7 +68,8 @@ class RestoredJcByteCodeLocation(
 }
 
 
-fun BytecodelocationsRecord.toJcLocation() = RestoredJcByteCodeLocation(
+fun BytecodelocationsRecord.toJcLocation(runtimeVersion: JavaVersion) = RestoredJcByteCodeLocation(
     path!!,
     LocationType.RUNTIME.takeIf { runtime!! } ?: LocationType.APP,
-    hash!!)
+    hash!!,
+    runtimeVersion)
