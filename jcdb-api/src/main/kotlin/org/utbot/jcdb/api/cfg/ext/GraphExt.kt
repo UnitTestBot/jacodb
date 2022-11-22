@@ -91,3 +91,80 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false): Path 
     Files.move(File(file).toPath(), resultingFile)
     return resultingFile
 }
+
+
+fun JcBlockGraph.view(dotCmd: String, viewerCmd: String) {
+    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd)}"))
+}
+
+fun JcBlockGraph.toFile(dotCmd: String): Path {
+    Graph.setDefaultCmd(dotCmd)
+
+    val graph = Graph("jcGraph")
+
+    val nodes = mutableMapOf<JcBasicBlock, Node>()
+    for ((index, block) in basicBlocks.withIndex()) {
+        val node = Node("$index")
+            .setShape(Shape.box)
+            .setLabel(instructions(block).joinToString("") { "$it\\l" }.replace("\"", "\\\""))
+            .setFontSize(12.0)
+        nodes[block] = node
+        graph.addNode(node)
+    }
+
+    graph.setBgColor(Color.X11.transparent)
+    graph.setFontSize(12.0)
+    graph.setFontName("Fira Mono")
+
+    for ((block, node) in nodes) {
+        val terminatingInst = instructions(block).last()
+        val successors = successors(block)
+        when (terminatingInst) {
+            is JcGotoInst -> for (successor in successors) {
+                graph.addEdge(Edge(node.name, nodes[successor]!!.name))
+            }
+
+            is JcIfInst -> {
+                graph.addEdge(
+                    Edge(node.name, nodes[successors.first { it.start == terminatingInst.trueBranch }]!!.name)
+                        .also {
+                            it.setLabel("true")
+                        }
+                )
+                graph.addEdge(
+                    Edge(node.name, nodes[successors.first { it.start == terminatingInst.falseBranch }]!!.name)
+                        .also {
+                            it.setLabel("false")
+                        }
+                )
+            }
+
+            is JcSwitchInst -> {
+                for ((key, branch) in terminatingInst.branches) {
+                    graph.addEdge(
+                        Edge(node.name, nodes[successors.first { it.start == branch }]!!.name)
+                            .also {
+                                it.setLabel("$key")
+                            }
+                    )
+                }
+                graph.addEdge(
+                    Edge(node.name, nodes[successors.first { it.start == terminatingInst.default }]!!.name)
+                        .also {
+                            it.setLabel("else")
+                        }
+                )
+            }
+
+            else -> for (successor in successors(block)) {
+                graph.addEdge(Edge(node.name, nodes[successor]!!.name))
+            }
+        }
+    }
+
+    val file = graph.dot2file("svg")
+    val newFile = "${file.removeSuffix("out")}svg"
+    val resultingFile = File(newFile).toPath()
+    Files.move(File(file).toPath(), resultingFile)
+    return resultingFile
+}
