@@ -16,6 +16,7 @@
 
 package org.utbot.jcdb.impl.types
 
+import kotlinx.metadata.KmTypeParameter
 import org.utbot.jcdb.api.JcAccessible
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
@@ -88,4 +89,11 @@ class JcTypeVariableDeclarationImpl(
     override val symbol: String,
     override val bounds: List<JcRefType>,
     override val owner: JcAccessible
-) : JcTypeVariableDeclaration
+) : JcTypeVariableDeclaration {
+    override fun relaxWithKmTypeParameter(param: KmTypeParameter): JcTypeVariableDeclaration {
+        val updatedBounds = bounds.mapIndexed { index, bound ->
+            bound.relaxNullabilityWith(param.upperBounds[index])
+        }
+        return JcTypeVariableDeclarationImpl(symbol, updatedBounds, owner)
+    }
+}

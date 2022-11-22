@@ -16,11 +16,13 @@
 
 package org.utbot.jcdb.impl.types
 
+import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.ext.isConstructor
 import org.utbot.jcdb.api.ext.isPackagePrivate
 import org.utbot.jcdb.api.ext.isProtected
@@ -40,7 +42,8 @@ open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
-    override val nullable: Boolean
+    override val nullable: Boolean,
+    private val kmType: KmType? = null,
 ) : JcClassType {
 
     constructor(
@@ -76,13 +79,20 @@ open class JcClassTypeImpl(
 
     override val typeArguments: List<JcRefType>
         get() {
-            return declaredTypeParameters.map { declaration ->
+            return declaredTypeParameters.mapIndexed { index, declaration ->
                 val jvmType = substitutor.substitution(declaration)
-                if (jvmType != null) {
-                    classpath.typeOf(jvmType) as JcRefType
-                } else {
+
+                val baseType = if (jvmType == null) {
                     JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
+                } else {
+                    classpath.typeOf(jvmType) as JcRefType
                 }
+
+                val argKmType = kmType?.arguments?.get(index)?.type
+                if (argKmType == null)
+                    baseType
+                else
+                    baseType.relaxNullabilityWith(argKmType)
             }
         }
 
@@ -140,7 +150,9 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
+    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false, kmType)
+
+    override fun relaxNullabilityWith(type: KmType) = JcClassTypeImpl(jcClass, outerType, substitutor, type.isNullable, type)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

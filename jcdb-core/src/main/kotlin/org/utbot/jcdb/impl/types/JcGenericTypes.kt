@@ -16,12 +16,14 @@
 
 package org.utbot.jcdb.impl.types
 
+import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.JcBoundedWildcard
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcUnboundWildcard
+import org.utbot.jcdb.api.ext.isNullable
 
 class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nullable: Boolean = true) :
     JcUnboundWildcard {
@@ -31,6 +33,10 @@ class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nu
 
     override fun notNullable(): JcRefType {
         return JcUnboundWildcardImpl(classpath, false)
+    }
+
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
+        return JcUnboundWildcardImpl(classpath, type.isNullable)
     }
 }
 
@@ -57,6 +63,10 @@ class JcBoundedWildcardImpl(
     override fun notNullable(): JcRefType {
         return JcBoundedWildcardImpl(upperBounds, lowerBounds, false)
     }
+
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
+        TODO("Not yet implemented")
+    }
 }
 
 
@@ -76,5 +86,9 @@ class JcTypeVariableImpl(
 
     override fun notNullable(): JcRefType {
         return JcTypeVariableImpl(classpath, declaration, nullable)
+    }
+
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
+        return JcTypeVariableImpl(classpath, declaration, type.isNullable)
     }
 }

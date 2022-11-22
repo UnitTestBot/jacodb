@@ -16,12 +16,15 @@
 
 package org.utbot.jcdb.api.ext
 
+import kotlinx.metadata.Flag
 import kotlinx.metadata.KmConstructor
 import kotlinx.metadata.KmFunction
+import kotlinx.metadata.KmType
 import kotlinx.metadata.jvm.KotlinClassHeader
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.signature
 import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcMethod
 
 /**
@@ -63,3 +66,10 @@ private val KotlinClassMetadata.functions: List<KmFunction>
 
 private val KotlinClassMetadata.constructors: List<KmConstructor>
     get() = (this as? KotlinClassMetadata.Class)?.toKmClass()?.constructors ?: emptyList()
+
+val KmType.isNullable: Boolean
+    get() = Flag.Type.IS_NULLABLE(flags)
+fun JcClassType.updateNullabilityFromKmType(kmType: KmType): JcClassType {
+    return this
+    //if !kmType.isNullable
+}
