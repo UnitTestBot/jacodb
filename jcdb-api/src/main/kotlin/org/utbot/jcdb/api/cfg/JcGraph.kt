@@ -18,7 +18,11 @@ class JcGraph(
 
     val instructions: List<JcInst> get() = _instructions
 
-    val entry: JcInst get() = instructions.filter { predecessors(it).isEmpty() }.first { throwers(it).isEmpty() }
+    val entry: JcInst get() = try {
+        instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
+    } catch (e: Throwable) {
+        TODO()
+    }
 
     init {
         for (inst in _instructions) {
@@ -53,9 +57,17 @@ class JcGraph(
     fun successors(inst: JcInst): Set<JcInst> = successorMap.getOrDefault(inst, emptySet())
     fun predecessors(inst: JcInst): Set<JcInst> = predecessorMap.getOrDefault(inst, emptySet())
 
-
     fun throwers(inst: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(inst, emptySet())
     fun catchers(inst: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(inst, emptySet())
+
+    fun previous(inst: JcInstRef): JcInst = previous(inst(inst))
+    fun next(inst: JcInstRef): JcInst = next(inst(inst))
+
+    fun successors(inst: JcInstRef): Set<JcInst> = successors(inst(inst))
+    fun predecessors(inst: JcInstRef): Set<JcInst> = predecessors(inst(inst))
+
+    fun throwers(inst: JcInstRef): Set<JcInst> = throwers(inst(inst))
+    fun catchers(inst: JcInstRef): Set<JcCatchInst> = catchers(inst(inst))
 
     fun blockGraph(): JcBlockGraph = JcBlockGraph(this)
 
@@ -72,6 +84,7 @@ class JcBlockGraph(
     private val successorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
     val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
+    val entry get() = basicBlocks.single { predecessors(it).isEmpty() && jcGraph.throwers(it.start).isEmpty() }
 
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
@@ -128,11 +141,10 @@ class JcBlockGraph(
             _basicBlocks.add(block)
         }
         for (block in _basicBlocks) {
-            val lastInst = jcGraph.inst(block.end)
             predecessorMap.getOrPut(block, ::mutableSetOf)
-                .addAll(jcGraph.predecessors(lastInst).map { inst2Block[it]!! })
+                .addAll(jcGraph.predecessors(block.start).map { inst2Block[it]!! })
             successorMap.getOrPut(block, ::mutableSetOf)
-                .addAll(jcGraph.successors(lastInst).map { inst2Block[it]!! })
+                .addAll(jcGraph.successors(block.end).map { inst2Block[it]!! })
         }
     }
 

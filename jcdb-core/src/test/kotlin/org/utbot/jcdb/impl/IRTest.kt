@@ -2,6 +2,7 @@ package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -63,6 +64,8 @@ class IRTest : BaseTest() {
             println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
+            assertDoesNotThrow { graph.entry }
+            assertDoesNotThrow { graph.blockGraph().entry }
             val newBody = MethodNodeBuilder(it, instructionList).build()
             println("New body: ${newBody.print()}")
             println()

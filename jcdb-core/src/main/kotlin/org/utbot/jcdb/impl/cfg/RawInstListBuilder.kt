@@ -176,7 +176,11 @@ class RawInstListBuilder(
             val frame = frames[insn]!!
             for ((variable, value) in assignments) {
                 if (value != frame[variable]) {
-                    insnList += JcRawAssignInst(value, frame[variable]!!)
+                    if (insn.isBranchingInst || insn.isTerminateInst) {
+                        insnList.add(insnList.lastIndex, JcRawAssignInst(value, frame[variable]!!))
+                    } else {
+                        insnList += JcRawAssignInst(value, frame[variable]!!)
+                    }
                 }
             }
         }
@@ -185,7 +189,11 @@ class RawInstListBuilder(
             val frame = frames[insn]!!
             for ((variable, value) in assignments) {
                 if (value != frame.stack[variable]) {
-                    insnList += JcRawAssignInst(value, frame.stack[variable])
+                    if (insn.isBranchingInst || insn.isTerminateInst) {
+                        insnList.add(insnList.lastIndex, JcRawAssignInst(value, frame.stack[variable]))
+                    } else {
+                        insnList += JcRawAssignInst(value, frame.stack[variable])
+                    }
                 }
             }
         }
@@ -700,13 +708,11 @@ class RawInstListBuilder(
                         val assignment = nextRegister(type)
                         for ((node, frame) in predFrames) {
                             if (frame != null) {
+                                val instList = instructionList(node)
                                 if (node.isBranchingInst) {
-                                    instructionList(node).add(0, JcRawAssignInst(assignment, frame[variable]!!))
+                                    instList.add(0, JcRawAssignInst(assignment, frame[variable]!!))
                                 } else {
-                                    if (frame[variable] == null) {
-                                        val a = 10
-                                    }
-                                    instructionList(node).add(JcRawAssignInst(assignment, frame[variable]!!))
+                                    instList.add(JcRawAssignInst(assignment, frame[variable]!!))
                                 }
                             } else {
                                 laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
@@ -746,10 +752,11 @@ class RawInstListBuilder(
                     val assignment = nextRegister(type)
                     for ((node, frame) in predFrames) {
                         if (frame != null) {
+                            val instList = instructionList(node)
                             if (node.isBranchingInst) {
-                                instructionList(node).add(0, JcRawAssignInst(assignment, frame.stack[variable]))
+                                instList.add(0, JcRawAssignInst(assignment, frame.stack[variable]))
                             } else {
-                                instructionList(node).add(JcRawAssignInst(assignment, frame.stack[variable]))
+                                instList.add(JcRawAssignInst(assignment, frame.stack[variable]))
                             }
                         } else {
                             laterStackAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
