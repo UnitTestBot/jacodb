@@ -42,8 +42,8 @@ class JcRawInstList(
         _instructions.addAll(index + 1, newInstructions)
     }
 
-    fun graph(classpath: JcClasspath, hierarchy: HierarchyExtension): JcGraph =
-        JcGraphBuilder(classpath, hierarchy, this).build()
+    fun graph(classpath: JcClasspath, hierarchy: HierarchyExtension, method: JcMethod): JcGraph =
+        JcGraphBuilder(classpath, hierarchy, this, method).build()
 }
 
 sealed interface JcRawInst {
@@ -620,7 +620,7 @@ data class JcRawInstanceOfExpr(
     override val operands: List<JcRawValue>
         get() = listOf(operand)
 
-    override fun toString(): String = "$operand instanceof $targetType"
+    override fun toString(): String = "$operand instanceof ${targetType.typeName}"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawInstanceOfExpr(this)

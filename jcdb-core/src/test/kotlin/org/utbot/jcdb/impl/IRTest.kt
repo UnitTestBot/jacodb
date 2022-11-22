@@ -59,7 +59,7 @@ class IRTest : BaseTest() {
             println("Old body: ${oldBody.print()}")
             val instructionList = it.instructionList()
             println("Instruction list: $instructionList")
-            val graph = instructionList.graph(cp, hierarchy)
+            val graph = instructionList.graph(cp, hierarchy, it)
             println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
             val newBody = MethodNodeBuilder(it, instructionList).build()

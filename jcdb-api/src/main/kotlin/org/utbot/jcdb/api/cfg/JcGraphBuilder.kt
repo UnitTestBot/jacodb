@@ -6,16 +6,24 @@ import org.utbot.jcdb.api.ext.*
 class JcGraphBuilder(
     val classpath: JcClasspath,
     val hierarchy: HierarchyExtension,
-    val instList: JcRawInstList
+    val instList: JcRawInstList,
+    val method: JcMethod
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
     private val inst2Ref = mutableMapOf<JcInst, JcInstRef>()
     private val label2InstRef = mutableMapOf<JcRawLabelInst, JcInstRef>()
     private var lastLabel: JcRawLabelInst? = null
+    private val defaultArguments = when (method.isStatic) {
+        true -> null
+        else -> JcThis(method.enclosingClass.toType())
+    } to method.parameters.map { JcArgument(it.index, null, it.type.asType) }
+    private lateinit var actualArguments: Pair<JcValue?, List<JcValue>>
+    private val variableMap = mutableMapOf<JcRawRegister, JcRegister>()
 
+    fun build(arguments: Pair<JcValue?, List<JcValue>> = defaultArguments): JcGraph {
+        actualArguments = arguments
 
-    fun build(): JcGraph {
         val instructions = instList.mapNotNull { convertRawInst(it) }
         for (i in instList.indices) {
             val current = instList[i]
@@ -62,7 +70,17 @@ class JcGraphBuilder(
         label2InstRef.getOrPut(labels.getValue(labelRef)) { JcInstRef() }
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
-        JcAssignInst(inst.lhv.accept(this) as JcValue, inst.rhv.accept(this))
+        var lhv = inst.lhv.accept(this) as JcValue
+        val rhv = inst.rhv.accept(this)
+        if (inst.lhv is JcRawRegister
+            && inst.lhv !in variableMap
+            && lhv.type != rhv.type
+            && rhv !is JcNullConstant
+        ) {
+            lhv = JcRegister(inst.lhv.index, rhv.type)
+            variableMap[inst.lhv] = lhv
+        }
+        JcAssignInst(lhv, rhv)
     }
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): JcInst = handle(inst) {
@@ -218,26 +236,25 @@ class JcGraphBuilder(
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType)
 
+    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
+        return methods.firstOrNull { typedMethod ->
+            val jcMethod = typedMethod.method
+            jcMethod.name == name &&
+                    jcMethod.returnType.typeName == returnType.typeName &&
+                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+        } ?: error("Could not find a method with correct signature")
+    }
+
     private val JcRawCallExpr.typedMethod: JcTypedMethod
         get() {
             val klass = declaringClass.asType as JcClassType
-            return klass.methods.firstOrNull { typedMethod ->
-                val jcMethod = typedMethod.method
-                jcMethod.name == methodName &&
-                        jcMethod.returnType.typeName == this.returnType.typeName &&
-                        jcMethod.parameters.map { param -> param.type.typeName } == this.argumentTypes.map { it.typeName }
-            } ?: error("Could not find a method with correct signature")
+            return klass.getMethod(methodName, argumentTypes, returnType)
         }
 
     private val JcMethod.typedMethod: JcTypedMethod
         get() {
             val klass = enclosingClass.asType as JcClassType
-            return klass.methods.firstOrNull { typedMethod ->
-                val jcMethod = typedMethod.method
-                jcMethod.name == name &&
-                        jcMethod.returnType.typeName == this.returnType.typeName &&
-                        jcMethod.parameters.map { param -> param.type.typeName } == this.parameters.map { it.type.typeName }
-            } ?: error("Could not find a method with correct signature")
+            return klass.getMethod(name, parameters.map { it.type }, returnType)
         }
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
@@ -246,31 +263,30 @@ class JcGraphBuilder(
 
         val base = lambdaBases.first()
         val klass = base.declaringClass.asType as JcClassType
-        val typedBase = klass.methods.firstOrNull { typedMethod ->
-            val jcMethod = typedMethod.method
-            jcMethod.name == base.name &&
-                    jcMethod.returnType.typeName == base.returnType.typeName &&
-                    jcMethod.parameters.map { param -> param.type.typeName } == base.argTypes.map { it.typeName }
-        } ?: error("Could not find a method with correct signature")
+        val typedBase = klass.getMethod(base.name, base.argTypes, base.returnType)
 
         return JcLambdaExpr(expr.returnType.asType, typedBase, expr.args.map { it.accept(this) as JcValue })
     }
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
+        val klass = instance.type as JcClassType
+        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            expr.typeName.asType, expr.typedMethod, instance, args,
-            hierarchy.findOverrides(expr.typedMethod.method).map { it.typedMethod }
+            method.returnType, method, instance, args,
+            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
+        val klass = instance.type as JcClassType
+        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            expr.typeName.asType, expr.typedMethod, instance, args,
-            hierarchy.findOverrides(expr.typedMethod.method).map { it.typedMethod }
+            method.returnType, method, instance, args,
+            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
@@ -285,22 +301,23 @@ class JcGraphBuilder(
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcSpecialCallExpr(
-            expr.typeName.asType, method, instance, args,
+            method.returnType, method, instance, args,
             hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
     override fun visitJcRawThis(value: JcRawThis): JcExpr =
-        JcThis(value.typeName.asType)
+        actualArguments.first!!
 
     override fun visitJcRawArgument(value: JcRawArgument): JcExpr =
-        JcArgument(value.index, value.name, value.typeName.asType)
+        actualArguments.second[value.index]
 
     override fun visitJcRawRegister(value: JcRawRegister): JcExpr =
-        JcRegister(value.index, value.typeName.asType)
+        variableMap[value] ?: JcRegister(value.index, value.typeName.asType)
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
-        val klass = value.declaringClass.asType as JcClassType
+        val instance = value.instance?.accept(this) as? JcValue
+        val klass = (instance?.type ?: value.declaringClass.asType) as JcClassType
         val field =
             klass.fields.first { it.name == value.fieldName && it.field.type.typeName == value.typeName.typeName }
         return JcFieldRef(value.instance?.accept(this) as? JcValue, field)

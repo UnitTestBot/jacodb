@@ -572,7 +572,7 @@ data class JcCastExpr(
     override val operands: List<JcValue>
         get() = listOf(operand)
 
-    override fun toString(): String = "($type) $operand"
+    override fun toString(): String = "(${type.typeName}) $operand"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcCastExpr(this)
@@ -585,7 +585,7 @@ data class JcNewExpr(
     override val operands: List<JcValue>
         get() = emptyList()
 
-    override fun toString(): String = "new $type"
+    override fun toString(): String = "new ${type.typeName}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcNewExpr(this)
@@ -601,7 +601,7 @@ data class JcNewArrayExpr(
     override val operands: List<JcValue>
         get() = dimensions
 
-    override fun toString(): String = "new $type${dimensions.joinToString("") { "[$it]" }}"
+    override fun toString(): String = "new ${type.typeName}${dimensions.joinToString("") { "[$it]" }}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcNewArrayExpr(this)
