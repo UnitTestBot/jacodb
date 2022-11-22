@@ -62,6 +62,7 @@ class IRTest : BaseTest() {
             val graph = instructionList.graph(cp, hierarchy, it)
             println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
+//            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
             val newBody = MethodNodeBuilder(it, instructionList).build()
             println("New body: ${newBody.print()}")
             println()

@@ -137,6 +137,7 @@ class RawInstListBuilder(
 
         buildInstructions()
         buildRequiredAssignments()
+        buildRequiredGotos()
 
         val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
         return Simplifier().simplify(originalInstructionList)
@@ -185,6 +186,29 @@ class RawInstListBuilder(
             for ((variable, value) in assignments) {
                 if (value != frame.stack[variable]) {
                     insnList += JcRawAssignInst(value, frame.stack[variable])
+                }
+            }
+        }
+    }
+
+    private fun buildRequiredGotos() {
+        for (insn in methodNode.instructions) {
+            if (methodNode.tryCatchBlocks.any { it.handler == insn }) continue
+
+            val predecessors = predecessors.getOrDefault(insn, emptyList())
+            if (predecessors.size > 1) {
+                for (predecessor in predecessors) {
+                    if (!predecessor.isBranchingInst) {
+                        val label = when (insn) {
+                            is LabelNode -> labelRef(insn)
+                            else -> {
+                                val newLabel = nextLabel()
+                                instructionList(insn).add(0, newLabel)
+                                newLabel.ref
+                            }
+                        }
+                        instructionList(predecessor).add(JcRawGotoInst(label))
+                    }
                 }
             }
         }
