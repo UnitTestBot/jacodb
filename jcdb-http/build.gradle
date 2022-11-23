@@ -1,0 +1,13 @@
+plugins {
+    id 'org.springframework.boot' version '2.5.14'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+dependencies {
+    api project(":jcdb-core")
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+
+}
