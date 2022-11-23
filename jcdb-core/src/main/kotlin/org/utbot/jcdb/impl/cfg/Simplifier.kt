@@ -1,7 +1,6 @@
 package org.utbot.jcdb.impl.cfg
 
 import org.utbot.jcdb.api.*
-import org.utbot.jcdb.api.cfg.DefaultJcRawInstVisitor
 import org.utbot.jcdb.api.cfg.ext.*
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector
@@ -47,7 +46,7 @@ internal class Simplifier {
                 .filter(InstructionFilter { it !in instructionsToDelete })
         } while (replacements.isNotEmpty())
 
-        return instructionList
+        return cleanSelfAssignments(instructionList)
     }
 
 
@@ -107,6 +106,21 @@ internal class Simplifier {
                 is JcRawLabelInst -> {
                     instructions += inst
                     equalities.clear()
+                }
+                else -> instructions += inst
+            }
+        }
+        return JcRawInstList(instructions)
+    }
+
+    private fun cleanSelfAssignments(instList: JcRawInstList): JcRawInstList {
+        val instructions = mutableListOf<JcRawInst>()
+        for (inst in instList) {
+            when (inst) {
+                is JcRawAssignInst -> {
+                    if (inst.lhv != inst.rhv) {
+                        instructions += inst
+                    }
                 }
                 else -> instructions += inst
             }

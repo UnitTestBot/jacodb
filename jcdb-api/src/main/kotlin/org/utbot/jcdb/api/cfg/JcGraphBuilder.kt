@@ -23,6 +23,7 @@ class JcGraphBuilder(
 
     fun build(arguments: Pair<JcValue?, List<JcValue>> = defaultArguments): JcGraph {
         actualArguments = arguments
+        normalizeTypes(instList)
 
         val instructions = instList.mapNotNull { convertRawInst(it) }
         for (i in instList.indices) {
@@ -44,6 +45,17 @@ class JcGraphBuilder(
             ref.index = instructions.indexOf(inst)
         }
         return JcGraph(classpath, instructions)
+    }
+
+    private fun normalizeTypes(instList: JcRawInstList) {
+        val types = mutableMapOf<JcRawRegister, MutableSet<JcType>>()
+        for (inst in instList) {
+            if (inst is JcRawAssignInst && inst.lhv is JcRawRegister && inst.rhv !is JcRawNullConstant) {
+                types.getOrPut(inst.lhv, ::mutableSetOf) += inst.rhv.typeName.asType
+            }
+        }
+        variableMap += types.filterValues { it.size > 1 }
+            .mapValues { JcRegister(it.key.index, classpath.findCommonSupertype(it.value)!!) }
     }
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
