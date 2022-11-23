@@ -328,6 +328,8 @@ fun String.jvmName(): String {
     }
 }
 
+val jvmPrimitiveNames = hashSetOf("Z", "B", "C", "S", "I", "F", "J", "D", "V")
+
 fun String.jcdbName(): String {
     return when {
         this == "Z" -> PredefinedPrimitives.boolean

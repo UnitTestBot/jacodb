@@ -1,12 +1,13 @@
-package org.utbot.jcdb.impl
+package org.utbot.jcdb.impl.features
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.impl.features.InMemoryHierarchy
-import org.utbot.jcdb.impl.features.findSubclassesInMemory
+import org.utbot.jcdb.impl.BaseTest
+import org.utbot.jcdb.impl.WithDB
+import org.utbot.jcdb.impl.WithRestoredDB
 import org.w3c.dom.Document
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

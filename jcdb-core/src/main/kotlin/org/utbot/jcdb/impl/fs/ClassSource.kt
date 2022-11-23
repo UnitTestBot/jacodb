@@ -16,6 +16,6 @@ class LazyClassSourceImpl(
 ) : ClassSource {
 
     override val byteCode by lazy {
-        location.jcLocation.resolve(className) ?: className.throwClassNotFound()
+        location.jcLocation?.resolve(className) ?: className.throwClassNotFound()
     }
 }

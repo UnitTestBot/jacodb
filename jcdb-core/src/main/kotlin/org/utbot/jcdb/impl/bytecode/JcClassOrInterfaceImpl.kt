@@ -18,7 +18,7 @@ class JcClassOrInterfaceImpl(
 
     private val info = classSource.info
 
-    override val declaration = JcDeclarationImpl.of(location = classSource.location.jcLocation, this)
+    override val declaration = JcDeclarationImpl.of(location = classSource.location, this)
 
     override val name: String get() = classSource.className
     override val simpleName: String get() = classSource.className.substringAfterLast(".")

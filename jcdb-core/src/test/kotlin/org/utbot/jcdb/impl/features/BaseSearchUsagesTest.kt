@@ -1,13 +1,12 @@
-package org.utbot.jcdb.impl
+package org.utbot.jcdb.impl.features
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.impl.features.InMemoryHierarchy
-import org.utbot.jcdb.impl.features.Usages
-import org.utbot.jcdb.impl.features.usagesExtension
+import org.utbot.jcdb.impl.BaseTest
+import org.utbot.jcdb.impl.WithDB
 import org.utbot.jcdb.impl.usages.fields.FieldA
 import org.utbot.jcdb.impl.usages.fields.FieldB
 import org.utbot.jcdb.impl.usages.methods.MethodA

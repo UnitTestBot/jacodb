@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl
 
 import com.google.common.cache.CacheBuilder
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -33,7 +34,7 @@ class JcClasspathImpl(
         .maximumSize(1_000)
         .build<String, ClassHolder>()
 
-    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
+    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull{ it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
@@ -50,7 +51,7 @@ class JcClasspathImpl(
         return classCache.get(name) {
             val jcClass = toJcClass(classpathVfs.firstClassOrNull(name))
                 ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
-                    JcClassOrInterfaceImpl(this, it)
+                    toJcClass(it)
                 }
             ClassHolder(jcClass)
         }.jcClass
@@ -67,6 +68,10 @@ class JcClasspathImpl(
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
         return JcArrayTypeImpl(elementType, true)
+    }
+
+    override fun toJcClass(source: ClassSource): JcClassOrInterface {
+        return JcClassOrInterfaceImpl(this, source)
     }
 
     override fun findTypeOrNull(name: String): JcType? {

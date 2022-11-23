@@ -36,6 +36,7 @@ interface JcClasspath : Closeable {
     fun typeOf(jcClass: JcClassOrInterface): JcRefType
 
     fun arrayTypeOf(elementType: JcType): JcArrayType
+    fun toJcClass(source: ClassSource): JcClassOrInterface
 
     suspend fun refreshed(closeOld: Boolean): JcClasspath
     fun asyncRefreshed(closeOld: Boolean) = GlobalScope.future { refreshed(closeOld) }

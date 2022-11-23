@@ -8,7 +8,6 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.isPrivate
-import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import java.util.concurrent.Future
@@ -59,8 +58,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         val name = classId.name
 
         return cp.subClasses(name, allHierarchy).map { record ->
-            JcClassOrInterfaceImpl(
-                cp, ClassSourceImpl(
+            cp.toJcClass(ClassSourceImpl(
                     location = cp.registeredLocations.first { it.id == record.locationId },
                     className = record.name,
                     byteCode = record.byteCode
@@ -81,8 +79,10 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean): Sequence<ClassRecord> {
         val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
         return BatchedSequence(50) { offset, batchSize ->
-            val query =
-                if (allHierarchy) allHierarchyQuery(locationIds, offset) else directSubClassesQuery(locationIds, offset)
+            val query = when {
+                allHierarchy -> allHierarchyQuery(locationIds, offset)
+                else -> directSubClassesQuery(locationIds, offset)
+            }
             db.persistence.read {
                 val cursor = it.fetchLazy(query, name)
                 cursor.fetchNext(batchSize).map {

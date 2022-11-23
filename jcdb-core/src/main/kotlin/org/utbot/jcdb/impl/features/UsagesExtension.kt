@@ -13,7 +13,6 @@ import org.utbot.jcdb.api.isPackagePrivate
 import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.api.packageName
-import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 
 class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, private val cp: JcClasspath) {
 
@@ -90,10 +89,9 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
                     className = it.name
                 )
             ).flatMap {
-                JcClassOrInterfaceImpl(
-                    cp,
-                    it.source
-                ).declaredMethods.slice(it.offsets.map { it.toInt() })
+                cp.toJcClass(it.source)
+                    .declaredMethods
+                    .slice(it.offsets.map { it.toInt() })
             }
         }
 
@@ -129,6 +127,9 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
 
 
 suspend fun JcClasspath.usagesExtension(): SyncUsagesExtension {
+    if (!db.isInstalled(Usages)) {
+        throw IllegalStateException("This extension requires `Usages` feature to be installed")
+    }
     return SyncUsagesExtension(hierarchyExt(), this)
 }
 

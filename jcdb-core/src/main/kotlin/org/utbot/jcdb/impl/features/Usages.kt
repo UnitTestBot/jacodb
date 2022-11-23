@@ -23,7 +23,7 @@ import org.utbot.jcdb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jcdb.impl.storage.longHash
 import org.utbot.jcdb.impl.storage.runBatch
 import org.utbot.jcdb.impl.storage.setNullableLong
-import org.utbot.jcdb.impl.vfs.LazyPersistentByteCodeLocation
+import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 
 
 private class MethodMap(size: Int) {
@@ -81,10 +81,10 @@ class UsagesIndexer(persistence: JCDBPersistence, private val location: Register
         jooq.connection { conn ->
             conn.runBatch(CALLS) {
                 usages.forEach { (calleeClass, calleeEntry) ->
+                    val calleeId = calleeClass.className.symbolId
                     calleeEntry.forEach { (info, callers) ->
                         val (calleeName, calleeDesc, opcode) = info
                         callers.forEach { (caller, offsets) ->
-                            val calleeId = calleeClass.className.symbolId
                             val callerId = if (calleeClass == caller) calleeId else caller.symbolId
                             setLong(1, calleeId)
                             setLong(2, calleeName.symbolId)
@@ -118,7 +118,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
             "caller_method_offsets"       BLOB,
             "location_id"                 BIGINT NOT NULL,
             CONSTRAINT "fk_callee_class_symbol_id" FOREIGN KEY ("callee_class_symbol_id") REFERENCES "Symbols" ("id") ON DELETE CASCADE,
-            CONSTRAINT "fk_location_id" FOREIGN KEY ("caller_class_symbol_id") REFERENCES "BytecodeLocations" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
+            CONSTRAINT "fk_location_id" FOREIGN KEY ("location_id") REFERENCES "BytecodeLocations" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
         );
     """.trimIndent()
 
@@ -144,19 +144,19 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
             is JcSignal.LocationRemoved -> {
                 signal.jcdb.persistence.write {
-                    it.delete(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
+                    it.deleteFrom(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
                 }
             }
 
             is JcSignal.AfterIndexing -> {
                 signal.jcdb.persistence.write {
-                    it.execute(createIndex)
+                    it.executeQueries(createIndex)
                 }
             }
 
             is JcSignal.Drop -> {
                 signal.jcdb.persistence.write {
-                    it.delete(CALLS).execute()
+                    it.deleteFrom(CALLS).execute()
                 }
             }
 
@@ -194,11 +194,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                         position++ to
                                 UsageFeatureResponse(
                                     source = ClassSourceImpl(
-                                        LazyPersistentByteCodeLocation(
-                                            persistence,
-                                            locationId!!,
-                                            classpath.db.runtimeVersion
-                                        ),
+                                        PersistentByteCodeLocation(classpath.db, locationId!!),
                                         className!!,
                                         byteCode!!
                                     ),

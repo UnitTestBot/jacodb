@@ -46,6 +46,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
 
     open var db = runBlocking {
         jcdb {
+//            persistent("D:\\work\\jcdb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             installFeatures(*allFeatures)

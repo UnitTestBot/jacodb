@@ -9,7 +9,7 @@ import org.utbot.jcdb.impl.vfs.ClassVfsItem
 
 fun JcClasspath.toJcClass(item: ClassVfsItem?): JcClassOrInterface? {
     item ?: return null
-    return JcClassOrInterfaceImpl(this, item.source)
+    return toJcClass(item.source)
 }
 
 fun JcClassOrInterface.toJcMethod(methodInfo: MethodInfo, source: ClassSource): JcMethod {

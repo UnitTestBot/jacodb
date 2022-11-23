@@ -18,7 +18,6 @@ import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
 import org.utbot.jcdb.impl.storage.PersistentLocationRegistry
-import org.utbot.jcdb.impl.vfs.RestoredJcByteCodeLocation
 import org.utbot.jcdb.jcdb
 import java.io.File
 import java.nio.file.Files
@@ -64,7 +63,7 @@ class DatabaseLifecycleTest {
             assertEquals(1, snapshots.size)
             assertEquals(
                 1,
-                actualLocations.filter { (it.jcLocation as RestoredJcByteCodeLocation).createRefreshed() == null }.size
+                actualLocations.filter { it.jcLocation?.createRefreshed() == null }.size
             )
         }
 

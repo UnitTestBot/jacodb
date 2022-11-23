@@ -53,11 +53,11 @@ class JCDBImpl(
 
     init {
         featureRegistry.bind(this)
-        locationsRegistry = PersistentLocationRegistry(javaRuntime, persistence, featureRegistry)
+        locationsRegistry = PersistentLocationRegistry(this, featureRegistry)
     }
 
     override val locations: List<JcByteCodeLocation>
-        get() = locationsRegistry.actualLocations.map { it.jcLocation }
+        get() = locationsRegistry.actualLocations.mapNotNull { it.jcLocation }
 
     suspend fun restore() {
         persistence.setup()

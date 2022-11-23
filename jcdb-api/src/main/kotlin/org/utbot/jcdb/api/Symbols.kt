@@ -47,7 +47,7 @@ interface JcByteCodeLocation {
 }
 
 interface JcDeclaration {
-    val location: JcByteCodeLocation
+    val location: RegisteredLocation
     val relativePath: String // relative to `location` path for declaration
 }
 

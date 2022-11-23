@@ -12,14 +12,13 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.fs.className
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.SYMBOLS
-import org.utbot.jcdb.impl.vfs.LazyPersistentByteCodeLocation
+import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 
@@ -120,7 +119,7 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
                         .fetch()
                         .mapNotNull { (classId, className, byteCode, locationId) ->
                             classId!! to ClassSourceImpl(
-                                LazyPersistentByteCodeLocation(persistence, locationId!!, classpath.db.runtimeVersion),
+                                PersistentByteCodeLocation(classpath.db, locationId!!),
                                 className!!, byteCode!!
                             )
                         }
@@ -165,14 +164,14 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
                 if (hashes.isEmpty()) {
                     emptyList()
                 } else {
-                    jooq.select(CLASSES.ID, SYMBOLS.NAME, CLASSES.BYTECODE, CLASSES.LOCATION_ID)
+                    jooq.select(SYMBOLS.NAME, CLASSES.BYTECODE, CLASSES.LOCATION_ID)
                         .from(CLASSES)
                         .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
                         .where(SYMBOLS.ID.`in`(hashes).and(CLASSES.LOCATION_ID.`in`(locationIds)))
                         .fetch()
-                        .mapNotNull { (classId, className, byteCode, locationId) ->
+                        .mapNotNull { (className, byteCode, locationId) ->
                             (index.toLong() + batchSize) to ClassSourceImpl(
-                                LazyPersistentByteCodeLocation(persistence, locationId!!, classpath.db.runtimeVersion),
+                                PersistentByteCodeLocation(classpath.db, locationId!!),
                                 className!!, byteCode!!
                             )
                         }
@@ -187,22 +186,8 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
 
 }
 
-class InMemoryHierarchyExtension(private val cp: JcClasspath) {
-
-    fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
-        return InMemoryHierarchy.syncQuery(cp, FastHierarchyReq(name, allHierarchy)).map {
-            JcClassOrInterfaceImpl(cp, it)
-        }
-    }
-}
-
-suspend fun JcClasspath.inMemoryHierarchyExt(): InMemoryHierarchyExtension {
-    db.awaitBackgroundJobs()
-    return InMemoryHierarchyExtension(this)
-}
-
 internal fun JcClasspath.findSubclassesInMemory(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
     return InMemoryHierarchy.syncQuery(this, FastHierarchyReq(name, allHierarchy)).map {
-        JcClassOrInterfaceImpl(this, it)
+        toJcClass(it)
     }
 }

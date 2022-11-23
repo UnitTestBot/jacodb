@@ -125,6 +125,7 @@ interface JCDBPersistence : Closeable {
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
     fun findSymbolId(symbol: String): Long?
+    fun findSymbolName(symbol: Long): String
 
     fun newSymbolInterner(): JCDBSymbolsInterner
 
@@ -133,7 +134,7 @@ interface JCDBPersistence : Closeable {
 }
 
 interface RegisteredLocation {
-    val jcLocation: JcByteCodeLocation
+    val jcLocation: JcByteCodeLocation?
     val id: Long
 }
 
