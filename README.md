@@ -19,7 +19,7 @@ Both levels are connected to `JcClasspath`. You can't modify **classes** retriev
 
 Design overview and technical information could be found [here](./design.md).
 
-Full api reference is available [here](./wiki/Api-reference) 
+Full api reference is available [here](../../wiki/Api-reference) 
 
 ```kotlin
 suspend fun findNormalDistribution(): Any {
