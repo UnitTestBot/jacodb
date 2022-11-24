@@ -51,11 +51,11 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         return findSubClasses(classId, allHierarchy)
     }
 
-    override fun findSubClasses(classId: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+    override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
         if (cp.db.isInstalled(InMemoryHierarchy)) {
-            return cp.findSubclassesInMemory(classId.name, allHierarchy)
+            return cp.findSubclassesInMemory(jcClass.name, allHierarchy)
         }
-        val name = classId.name
+        val name = jcClass.name
 
         return cp.subClasses(name, allHierarchy).map { record ->
             cp.toJcClass(ClassSourceImpl(
@@ -67,10 +67,10 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }
     }
 
-    override fun findOverrides(methodId: JcMethod): Sequence<JcMethod> {
-        val desc = methodId.description
-        val name = methodId.name
-        val subClasses = findSubClasses(methodId.enclosingClass, allHierarchy = true)
+    override fun findOverrides(jcMethod: JcMethod): Sequence<JcMethod> {
+        val desc = jcMethod.description
+        val name = jcMethod.name
+        val subClasses = findSubClasses(jcMethod.enclosingClass, allHierarchy = true)
         return subClasses.mapNotNull {
             it.findMethodOrNull(name, desc)
         }.filter { !it.isPrivate }
