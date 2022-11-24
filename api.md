@@ -274,8 +274,6 @@ classDiagram
 | outerType        | `JcClassType`           | outer type if any                              |
 | innerType        | List of `JcClassType`   | inner types if any                             |
 
-
-
 ### `JcTypedMethod`
 
 Represent typed method of `JcClassType`
@@ -310,7 +308,71 @@ Represent typed method parameter
 | type     | `JcType`   | parameter type                  |
 
 
-## Hierarchy
+## Features
+
+`JcFeature` is an additional feature which can collect data from bytecode, persist it in database and use it to find some specific places.
+`JcFeature` has parameterization of request/response types.
+
+### `JcFeature`
+
+Lifecycle of feature: 
+- before indexing step. Can be used for preparing database scheme or similar
+- indexing
+- flushing indexed data to persistence storage
+- after indexing step. Can be used to setup database specific indexes.
+- update index if bytecode location is outdated and removed.
+
+#### `onSignal(signal)`
+
+Call on each step of lifecycle with respected signal
+
+| property | type       | description                                                         |
+|----------|------------|---------------------------------------------------------------------|
+| signal   | `JcSignal` | on of `BeforeIndexing`, `AfterIndexing`, `LocationRemoved`, `Drop`  |
+
+
+#### `newIndexer(jcdb, location)`
+
+return new indexer for specific location
+
+| property | type                 | description                     |
+|----------|----------------------|---------------------------------|
+| jcdb     | `JCDB`               | database                        |
+| location | `RegisteredLocation` | location that should be indexed |
+
+#### `query(classpath, request)`
+
+Query index and return `Sequence` with results
+
+| property  | type           | description      |
+|-----------|----------------|------------------|
+| classpath | `JcClasspath`  | classpath        |
+| request   | Any            | request to index |
+
+
+### `ByteCodeIndexer`
+
+Indexer of bytecode. 
+
+#### `index(node)`
+
+Called for each ClassNode processed by `jcdb`. **Bytecode locations are processed in parallel. There is no strict order of processing locations.** 
+
+| property | type        | description                             |
+|----------|-------------|-----------------------------------------|
+| node     | `ClassNode` | ASM class node with method instructions |
+
+#### `flush(jooq)`
+
+Flush collected data for location into storage
+
+| property | type         | description                                                              |
+|----------|--------------|--------------------------------------------------------------------------|
+| jooq     | `DSLContext` | [Jooq](https://www.jooq.org/) - orm framework used by persistence engine |
+
+## Available features 
+
+### Hierarchy
 
 Suitable for search class hierarchies. There are two features for calculating hierarchy: one is build upon persistence of bytecode another one uses (small enough) in-memory tree called InMemoryHierarchy.
 
@@ -331,7 +393,7 @@ Finds all methods in Classpath that override specified method
 |---------------|---------------|-------------------------------------|
 | method        | `JcMethod`    | base method to search for overrides |
 
-### Examples
+#### Examples
 
 find classes that implements `java.lang.Runnable`:
 
@@ -348,7 +410,7 @@ find classes that implements `java.lang.Runnable`:
     extension.findOverrides(runMethod, allHierarchy = true) // all implementations of `Runnable#run` method
 ```
 
-## Usages (aka Call Graph)
+### Usages (aka Call Graph)
 
 Suitable to find fields and methods usages.
 
@@ -398,7 +460,7 @@ find usages of
     val result = ext.findUsages(systemOutField, FieldUsageMode.READ).toList()
 ```
 
-## Builders
+### Builders
 
 Find methods that may be used for created particular class instance with priorities.
 Heuristics used for this feature:
@@ -412,7 +474,7 @@ Priorities are:
 - non-static class with name `build`
 - all other
 
-### Examples
+#### Examples
 
 ```kotlin
     val extension = classpath.buildersExtension()
