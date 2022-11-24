@@ -4,9 +4,9 @@ JCDBSettings is used for creating instance of `JCDB` instance.
 
 #### `useJavaRuntime(file)`
 
-Use custom (not current process) java runtime for bytecode analysis. 
+Use custom (not current process) java runtime for bytecode analysis.
 
-There are two shortcuts `JCDBSettings#useProcessJavaRuntime` for using current process runtime (default option) and `JCDBSettings#useJavaHomeRuntime` for using Java runtime from JAVA_HOME environment variable  
+There are two shortcuts `JCDBSettings#useProcessJavaRuntime` for using current process runtime (default option) and `JCDBSettings#useJavaHomeRuntime` for using Java runtime from JAVA_HOME environment variable
 
 
 | parameter | type | description                           |
@@ -14,7 +14,7 @@ There are two shortcuts `JCDBSettings#useProcessJavaRuntime` for using current p
 | runtime   | File | Required. File points to java runtime |
 
 
-#### `persistent(location, clearOnStart)` 
+#### `persistent(location, clearOnStart)`
 
 Specify storing data properties
 
@@ -41,9 +41,9 @@ Should database look for filesystem changes
 |-----------|---------|---------------------------------------------------------------------|
 | delay     | integer | Optional. 10_000 by default. Watch interval for file system changes |
 
-#### `installFeatures(features)` 
+#### `installFeatures(features)`
 
-Which features jcdb will use 
+Which features jcdb will use
 
 | parameter | type                | description                                                          |
 |-----------|---------------------|----------------------------------------------------------------------|
@@ -86,7 +86,7 @@ Await background jobs
 
 #### `close()`
 
-Is used to clean up resources used by `jcdb` instance 
+Is used to clean up resources used by `jcdb` instance
 
 ## Classpath
 
@@ -125,7 +125,7 @@ Find type by name. Arrays, primitives are supported:
 
 
 ### `JcClassOrInterface`
-Represent bytecode from `.class` file  
+Represent bytecode from `.class` file
 
 | property        | type                         | description                                |
 |-----------------|------------------------------|--------------------------------------------|
@@ -207,7 +207,7 @@ Represent annotation
 
 #### `matches(className)`
 
-Return true if className equals annotation class. 
+Return true if className equals annotation class.
 
 ## Types
 
@@ -286,7 +286,7 @@ Represent typed method of `JcClassType`
 | returnType       | `JcType`                    | return type name          |
 | typeParameters   | List of `JcTypedParameter`  | list of typed parameters  |
 | typeArguments    | List of `JcRefType`         | generics substitution     |
-| enclosingType    | `JcClassOrInterface`        | enclosing class           |
+| enclosingType    | `JcClassOrInterface`        | enclosing type            |
 
 ### `JcTypedField`
 
@@ -306,16 +306,15 @@ Represent typed method parameter
 | property | type       | description                     |
 |----------|------------|---------------------------------|
 | method   | `JcMethod` | enclosing method                |
-| access   | int        | access flag of method           |
 | name     | string     | parameter name of present       |
-| type     | string     | string with parameter type name |
-| index    | int        | index of parameter in method    |
+| type     | `JcType`   | parameter type                  |
+
 
 ## Hierarchy
 
 Suitable for search class hierarchies. There are two features for calculating hierarchy: one is build upon persistence of bytecode another one uses (small enough) in-memory tree called InMemoryHierarchy.
 
-#### `findSubClasses(jcClass,allHierarchy)` 
+#### `findSubClasses(jcClass,allHierarchy)`
 
 Finds all classes in Classpath that are subclasses of `jcClass`
 
@@ -324,7 +323,7 @@ Finds all classes in Classpath that are subclasses of `jcClass`
 | jcClass      | `JcClassOrInterface` or class name  | base class                                  |
 | allHierarchy | boolean                             | if true then will be return whole hierarchy |
 
-#### `findOverrides(method)` 
+#### `findOverrides(method)`
 
 Finds all methods in Classpath that override specified method
 
@@ -405,7 +404,7 @@ Find methods that may be used for created particular class instance with priorit
 Heuristics used for this feature:
 - public method
 - method return type should be directly this class or one of subclasses
-- method parameters should not reference this class in any way (i.e we are looking for class A, then A, List<A>, B extends A are prohibited)   
+- method parameters should not reference this class in any way (i.e we are looking for class A, then A, List<A>, B extends A are prohibited)
 
 Priorities are:
 - static class with no parameters
