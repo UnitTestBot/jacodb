@@ -8,6 +8,11 @@
 
 Information about classes, hierarchies, annotations, methods, fields, and their usages is stored in SQLite database — either in-memory or persistent. Persisted data can be reused between restarts. Accessing the persistent storage from multiple processes simultaneously is not supported.
 
+## Useful links
+
+- [Design overview and technical information](./design.md).
+- [Full api reference](../../wiki/Api-reference)
+
 ## Examples
 
 API has two levels: the one representing in filesystem (**bytecode** and **classes**) and the one appearing at runtime (**types**).
@@ -16,10 +21,6 @@ API has two levels: the one representing in filesystem (**bytecode** and **class
 * **types** — represent types that can be nullable, parameterized, etc.
 
 Both levels are connected to `JcClasspath`. You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by generics substitution.
-
-Design overview and technical information could be found [here](./design.md).
-
-Full api reference is available [here](../../wiki/Api-reference) 
 
 ```kotlin
 suspend fun findNormalDistribution(): Any {
@@ -151,3 +152,5 @@ Bytecode loading consists of two steps:
 `JCDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
 
 Benchmarks results and comparison with Soot is [here](./benchmarks.md).
+
+
