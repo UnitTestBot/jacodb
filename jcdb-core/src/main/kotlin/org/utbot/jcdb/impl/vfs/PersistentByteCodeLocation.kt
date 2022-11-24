@@ -11,16 +11,33 @@ import java.io.File
 class PersistentByteCodeLocation(
     private val jcdb: JCDB,
     override val id: Long,
-    private val location: JcByteCodeLocation? = null
+    private val cachedRecord: BytecodelocationsRecord? = null,
+    private val cachedLocation: JcByteCodeLocation? = null
 ) : RegisteredLocation {
+
+    constructor(jcdb: JCDB, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
+        jcdb,
+        record.id!!,
+        record,
+        location
+    )
+
+    val record by lazy {
+        cachedRecord ?: jcdb.persistence.read { jooq ->
+            jooq.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!
+        }
+    }
 
     override val jcLocation: JcByteCodeLocation?
         get() {
-            return location ?: jcdb.persistence.read { jooq ->
-                jooq.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!.toJcLocation()
-            }
+            return cachedLocation ?: record.toJcLocation()
         }
 
+    override val path: String
+        get() = record.path!!
+
+    override val runtime: Boolean
+        get() = record.runtime!!
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

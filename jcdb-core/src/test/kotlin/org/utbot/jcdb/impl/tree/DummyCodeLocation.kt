@@ -14,6 +14,9 @@ open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, Reg
     override val hash: String
         get() = name
 
+    override val runtime: Boolean
+        get() = false
+
     override val jcLocation: JcByteCodeLocation
         get() = this
 

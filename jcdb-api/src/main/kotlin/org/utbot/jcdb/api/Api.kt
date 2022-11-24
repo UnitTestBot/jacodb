@@ -42,7 +42,7 @@ interface JavaVersion {
  */
 interface JCDB : Closeable {
 
-    val locations: List<JcByteCodeLocation>
+    val locations: List<RegisteredLocation>
     val persistence: JCDBPersistence
 
     val runtimeVersion: JavaVersion
@@ -136,6 +136,8 @@ interface JCDBPersistence : Closeable {
 interface RegisteredLocation {
     val jcLocation: JcByteCodeLocation?
     val id: Long
+    val path: String
+    val runtime: Boolean
 }
 
 interface JCDBSymbolsInterner {
