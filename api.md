@@ -328,7 +328,7 @@ Call on each step of lifecycle with respected signal
 
 | property | type       | description                                                         |
 |----------|------------|---------------------------------------------------------------------|
-| signal   | `JcSignal` | on of `BeforeIndexing`, `AfterIndexing`, `LocationRemoved`, `Drop`  |
+| signal   | `JcSignal` | one of `BeforeIndexing`, `AfterIndexing`, `LocationRemoved`, `Drop` |
 
 
 #### `newIndexer(jcdb, location)`
