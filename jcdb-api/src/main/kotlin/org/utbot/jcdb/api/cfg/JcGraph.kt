@@ -18,11 +18,7 @@ class JcGraph(
 
     val instructions: List<JcInst> get() = _instructions
 
-    val entry: JcInst get() = try {
-        instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
-    } catch (e: Throwable) {
-        TODO()
-    }
+    val entry: JcInst get() = instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
 
     init {
         for (inst in _instructions) {
@@ -47,6 +43,13 @@ class JcGraph(
     }
 
     private fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
+    private fun updateRefs(start: Int, offset: Int) {
+        for ((_, ref) in refs) {
+            if (ref.index >= start) {
+                ref.index += offset
+            }
+        }
+    }
 
     fun ref(inst: JcInst): JcInstRef = refs.getOrPut(inst) { JcInstRef(index(inst)) }
     fun inst(ref: JcInstRef) = _instructions[ref.index]
@@ -72,6 +75,22 @@ class JcGraph(
     fun blockGraph(): JcBlockGraph = JcBlockGraph(this)
 
     override fun toString(): String = instructions.joinToString("\n")
+
+    fun insertBefore(inst: JcInst, vararg newInstructions: JcInst) = insertBefore(inst, newInstructions.toList())
+    fun insertBefore(inst: JcInst, newInstructions: Collection<JcInst>) {
+        val index = index(inst)
+        assert(index >= 0)
+        _instructions.addAll(index, newInstructions)
+        updateRefs(index, newInstructions.size)
+    }
+
+    fun insertAfter(inst: JcInst, vararg newInstructions: JcInst) = insertBefore(inst, newInstructions.toList())
+    fun insertAfter(inst: JcInst, newInstructions: Collection<JcInst>) {
+        val index = _instructions.indexOf(inst)
+        assert(index >= 0)
+        _instructions.addAll(index + 1, newInstructions)
+        updateRefs(index + 1, newInstructions.size)
+    }
 }
 
 class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
