@@ -17,7 +17,6 @@
 package org.utbot.jcdb.impl.types
 
 import kotlinx.metadata.KmType
-import kotlinx.metadata.KmVariance
 import org.utbot.jcdb.api.JcBoundedWildcard
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
@@ -36,7 +35,7 @@ class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nu
         return JcUnboundWildcardImpl(classpath, false)
     }
 
-    override fun relaxNullabilityWith(type: KmType, variance: KmVariance?): JcRefType {
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
         return JcUnboundWildcardImpl(classpath, type.isNullable)
     }
 }
@@ -65,14 +64,11 @@ class JcBoundedWildcardImpl(
         return JcBoundedWildcardImpl(upperBounds, lowerBounds, false)
     }
 
-    override fun relaxNullabilityWith(type: KmType, variance: KmVariance?): JcRefType {
-        if (variance == null)
-            error("Bounded wildcard should have variance")
-
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
         return if (upperBounds.isEmpty())
-            JcBoundedWildcardImpl(emptyList(), listOf(lowerBounds.single().relaxNullabilityWith(type, variance)), type.isNullable)
+            JcBoundedWildcardImpl(emptyList(), listOf(lowerBounds.single().relaxNullabilityWith(type)), type.isNullable)
         else if (lowerBounds.isEmpty())
-            JcBoundedWildcardImpl(listOf(upperBounds.single().relaxNullabilityWith(type, variance)), emptyList(), type.isNullable)
+            JcBoundedWildcardImpl(listOf(upperBounds.single().relaxNullabilityWith(type)), emptyList(), type.isNullable)
         else
             error("Bounded wild card should have exactly one bound")
     }
@@ -97,7 +93,7 @@ class JcTypeVariableImpl(
         return JcTypeVariableImpl(classpath, declaration, nullable)
     }
 
-    override fun relaxNullabilityWith(type: KmType, variance: KmVariance?): JcRefType {
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
         return JcTypeVariableImpl(classpath, declaration, type.isNullable)
     }
 }

@@ -17,7 +17,6 @@
 package org.utbot.jcdb.impl.types
 
 import kotlinx.metadata.KmType
-import kotlinx.metadata.KmVariance
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
@@ -89,14 +88,12 @@ open class JcClassTypeImpl(
                     classpath.typeOf(jvmType) as JcRefType
                 }
 
-                if (kmType == null)
-                    return@mapIndexed baseType
+                val argKmType = kmType?.arguments?.get(index)?.type
 
-                val (argKmVariance, argKmType) = kmType.arguments[index]
                 if (argKmType == null)
                     baseType
                 else
-                    baseType.relaxNullabilityWith(argKmType, argKmVariance)
+                    baseType.relaxNullabilityWith(argKmType)
             }
         }
 
@@ -156,7 +153,7 @@ open class JcClassTypeImpl(
 
     override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false, kmType)
 
-    override fun relaxNullabilityWith(type: KmType, variance: KmVariance?) = JcClassTypeImpl(jcClass, outerType, substitutor, type.isNullable, type)
+    override fun relaxNullabilityWith(type: KmType) = JcClassTypeImpl(jcClass, outerType, substitutor, type.isNullable, type)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -17,7 +17,6 @@
 package org.utbot.jcdb.impl.types
 
 import kotlinx.metadata.KmType
-import kotlinx.metadata.KmVariance
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
@@ -35,11 +34,11 @@ class JcArrayTypeImpl(
         return JcArrayTypeImpl(elementType, false)
     }
 
-    override fun relaxNullabilityWith(type: KmType, variance: KmVariance?): JcRefType {
+    override fun relaxNullabilityWith(type: KmType): JcRefType {
         val elementKmType = type.arguments[0].type ?: return JcArrayTypeImpl(elementType, type.isNullable)
 
         return when (elementType) {
-            is JcRefType -> JcArrayTypeImpl(elementType.relaxNullabilityWith(elementKmType, type.arguments[0].variance), type.isNullable)
+            is JcRefType -> JcArrayTypeImpl(elementType.relaxNullabilityWith(elementKmType), type.isNullable)
             else -> JcArrayTypeImpl(elementType, type.isNullable)
         }
     }

@@ -20,6 +20,7 @@ import kotlinx.metadata.Flag
 import kotlinx.metadata.KmConstructor
 import kotlinx.metadata.KmFunction
 import kotlinx.metadata.KmType
+import kotlinx.metadata.KmValueParameter
 import kotlinx.metadata.jvm.KotlinClassHeader
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.signature
@@ -55,9 +56,22 @@ val JcMethod.kmConstructor: KmConstructor?
     get() =
         enclosingClass.kMetadata?.constructors?.firstOrNull { it.signature?.name == name && it.signature?.desc == description }
 
-val JcParameter.kmType: KmType?
-    get() =
-        method.kmFunction?.valueParameters?.get(index)?.type
+val JcParameter.kmParameter: KmValueParameter?
+    get() {
+        method.kmFunction?.let {
+            // Shift needed to properly handle extension functions
+            val shift = if (it.receiverParameterType != null) 1 else 0
+
+            if (index - shift < 0)
+                return null
+
+            return it.valueParameters[index - shift]
+        }
+
+        return method.kmConstructor?.let {
+            it.valueParameters[index]
+        }
+    }
 
 private val KotlinClassMetadata.functions: List<KmFunction>
     get() =
