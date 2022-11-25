@@ -92,7 +92,7 @@ class JcTypeVariableDeclarationImpl(
 ) : JcTypeVariableDeclaration {
     override fun relaxWithKmTypeParameter(param: KmTypeParameter): JcTypeVariableDeclaration {
         val updatedBounds = bounds.mapIndexed { index, bound ->
-            bound.relaxNullabilityWith(param.upperBounds[index])
+            bound.relaxNullabilityWith(param.upperBounds[index], null)
         }
         return JcTypeVariableDeclarationImpl(symbol, updatedBounds, owner)
     }

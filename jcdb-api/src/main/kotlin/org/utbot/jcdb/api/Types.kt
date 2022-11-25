@@ -18,6 +18,7 @@ package org.utbot.jcdb.api
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
+import kotlinx.metadata.KmVariance
 import org.objectweb.asm.tree.LocalVariableNode
 
 interface JcTypedField {
@@ -66,7 +67,7 @@ interface JcPrimitiveType : JcType {
 
 interface JcRefType : JcType {
     fun notNullable(): JcRefType
-    fun relaxNullabilityWith(type: KmType): JcRefType
+    fun relaxNullabilityWith(type: KmType, variance: KmVariance? = null): JcRefType
 }
 
 interface JcArrayType : JcRefType {
