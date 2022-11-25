@@ -15,6 +15,7 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val isAnonymous: Boolean
 
     fun bytecode(): ClassNode
+    fun binaryBytecode(): ByteArray
 
     val superClass: JcClassOrInterface?
     val outerMethod: JcMethod?

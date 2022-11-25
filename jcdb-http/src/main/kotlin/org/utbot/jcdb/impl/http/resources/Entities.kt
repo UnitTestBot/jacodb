@@ -30,6 +30,7 @@ data class ClassEntity(
 )
 
 data class ClassRefEntity(val name: String)
+data class MethodRefEntity(val name: String, val description: String, val offset: Int)
 
 data class MethodEntity(
     val access: Int,
@@ -51,3 +52,17 @@ data class FieldEntity(
     val name: String,
     val type: String
 )
+
+open class Paginator<T>(
+    val skip: Int,
+    val top: Int,
+    val items: List<T>? = null
+)
+
+class ClassRefPaginator(skip: Int, top: Int, items: List<ClassRefEntity>) : Paginator<ClassRefEntity>(skip, top, items)
+class MethodRefPaginator(skip: Int, top: Int, items: List<MethodRefEntity>) : Paginator<MethodRefEntity>(skip, top, items)
+
+inline fun <reified T, reified P : Paginator<T>> Sequence<T>.toPaginator(skip: Int, top: Int): P {
+    val constructor = P::class.java.getDeclaredConstructor(Int::class.java, Int::class.java, List::class.java)
+    return constructor.newInstance(skip, top, drop(skip).take(top).toList()) as P
+}
