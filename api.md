@@ -18,10 +18,10 @@ There are two shortcuts `JCDBSettings#useProcessJavaRuntime` for using current p
 
 Specify storing data properties
 
-| parameter    | type     | description                                                                                                  |
-|--------------|----------|--------------------------------------------------------------------------------------------------------------|
-| location     | string   | Optional. Location on file system to store Sqlite database file. Sqlite will be in-memory if null specified |
-| clearOnStart | boolean  | Force Sqlite database to cleanup stored data on startup. false by default                                    |
+| parameter    | type     | description                                                                                                   |
+|--------------|----------|---------------------------------------------------------------------------------------------------------------|
+| location     | string   | Optional. Location on file system to store Sqlite database file. Sqlite will be in-memory if null specified   |
+| clearOnStart | boolean  | Force Sqlite database to cleanup stored data on startup. false by default                                     |
 
 
 #### `loadByteCode(files)`
@@ -67,9 +67,9 @@ Which features jcdb will use
 
 Creates classpath instances
 
-| parameter  | type            | description                                                  |
-|------------|-----------------|--------------------------------------------------------------|
-| dirOrJars  | List of `File` | List of files with bytecode to be loaded in current instance |
+| parameter  | type            | description                                                   |
+|------------|-----------------|---------------------------------------------------------------|
+| dirOrJars  | List of `File`  | List of files with bytecode to be loaded in current instance  |
 
 
 #### `refresh()`
@@ -162,7 +162,7 @@ Represent method of `JcClassOrInterface`
 | returnType      | string                       | string with return type name            |
 | parameters      | List of `JcParameter`        | parameters                              |
 | exceptions      | List of `JcClassOrInterface` | exceptions that can be throws by method |
-| annotations     | List of `JcAnnotation`       | list of annotations                        |
+| annotations     | List of `JcAnnotation`       | list of annotations                     |
 
 #### `bytecode()`
 
@@ -172,14 +172,14 @@ return ASM MethodNode for this method
 
 Represent field of `JcClassOrInterface`
 
-| property       | type                 | description                    |
-|----------------|----------------------|--------------------------------|
-| enclosingClass | `JcClassOrInterface` | enclosing class                |
-| access         | int                  | access flag of method          |
-| name           | string               | human readable class name      |
-| signature      | string               | method signature from bytecode |
-| type           | string               | string with type of field      |
-| annotations    | List of `JcAnnotation`       | list of annotations                        |
+| property       | type                   | description                    |
+|----------------|------------------------|--------------------------------|
+| enclosingClass | `JcClassOrInterface`   | enclosing class                |
+| access         | int                    | access flag of method          |
+| name           | string                 | human readable class name      |
+| signature      | string                 | method signature from bytecode |
+| type           | string                 | string with type of field      |
+| annotations    | List of `JcAnnotation` | list of annotations            |
 
 ### `JcParameter`
 
