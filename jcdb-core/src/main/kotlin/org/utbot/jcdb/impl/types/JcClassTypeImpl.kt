@@ -20,9 +20,11 @@ import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
+import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.ext.isNullable
+import org.utbot.jcdb.api.ext.kmTypeParameters
 import org.utbot.jcdb.api.ext.isConstructor
 import org.utbot.jcdb.api.ext.isPackagePrivate
 import org.utbot.jcdb.api.ext.isProtected
@@ -75,25 +77,35 @@ open class JcClassTypeImpl(
         name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
     }
 
-    override val typeParameters get() = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
+    override val typeParameters: List<JcTypeVariableDeclaration>
+        get() {
+            val typeParameters = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
+            val kmTypeParameters = jcClass.kmTypeParameters ?: return typeParameters
+
+            return typeParameters.zip(kmTypeParameters) { parameter, kmTypeParameter ->
+                parameter.relaxWithKmTypeParameter(kmTypeParameter)
+            }
+        }
 
     override val typeArguments: List<JcRefType>
         get() {
-            return declaredTypeParameters.mapIndexed { index, declaration ->
+            val typeArguments = declaredTypeParameters.map { declaration ->
                 val jvmType = substitutor.substitution(declaration)
-
-                val baseType = if (jvmType == null) {
-                    JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
-                } else {
+                if (jvmType != null) {
                     classpath.typeOf(jvmType) as JcRefType
+                } else {
+                    JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
                 }
+            }
 
-                val argKmType = kmType?.arguments?.get(index)?.type
+            if (kmType == null)
+                return typeArguments
 
-                if (argKmType == null)
-                    baseType
+            return typeArguments.zip(kmType.arguments.map { it.type }) { argument, argumentType ->
+                if (argumentType == null)
+                    argument
                 else
-                    baseType.relaxNullabilityWith(argKmType)
+                    argument.relaxNullabilityWith(argumentType)
             }
         }
 

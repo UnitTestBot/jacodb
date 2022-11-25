@@ -35,9 +35,7 @@ class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nu
         return JcUnboundWildcardImpl(classpath, false)
     }
 
-    override fun relaxNullabilityWith(type: KmType): JcRefType {
-        return JcUnboundWildcardImpl(classpath, type.isNullable)
-    }
+    override fun relaxNullabilityWith(type: KmType) = error("Unbound wildcard should have kmType=null")
 }
 
 class JcBoundedWildcardImpl(
@@ -70,7 +68,7 @@ class JcBoundedWildcardImpl(
         else if (lowerBounds.isEmpty())
             JcBoundedWildcardImpl(listOf(upperBounds.single().relaxNullabilityWith(type)), emptyList(), type.isNullable)
         else
-            error("Bounded wild card should have exactly one bound")
+            error("Bounded wildcard should have exactly one bound")
     }
 }
 

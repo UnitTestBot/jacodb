@@ -35,7 +35,7 @@ class JcArrayTypeImpl(
     }
 
     override fun relaxNullabilityWith(type: KmType): JcRefType {
-        val elementKmType = type.arguments[0].type ?: return JcArrayTypeImpl(elementType, type.isNullable)
+        val elementKmType = type.arguments.single().type ?: return JcArrayTypeImpl(elementType, type.isNullable)
 
         return when (elementType) {
             is JcRefType -> JcArrayTypeImpl(elementType.relaxNullabilityWith(elementKmType), type.isNullable)

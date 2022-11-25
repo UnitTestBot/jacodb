@@ -112,5 +112,5 @@ interface JcTypeVariableDeclaration {
     val bounds: List<JcRefType>
     val owner: JcAccessible
 
-    fun relaxWithKmTypeParameter(param: KmTypeParameter): JcTypeVariableDeclaration
+    fun relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JcTypeVariableDeclaration
 }
