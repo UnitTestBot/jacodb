@@ -7,7 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 
 val BACKGROUND_PARALLELISM
     get() = Integer.getInteger(
-        "jcdb.background.parallelism",
+        "org.utbot.jcdb.background.parallelism",
         64.coerceAtLeast(Runtime.getRuntime().availableProcessors())
     )
 

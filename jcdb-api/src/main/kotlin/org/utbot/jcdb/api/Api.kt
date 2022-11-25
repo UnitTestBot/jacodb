@@ -56,6 +56,8 @@ interface JCDB : Closeable {
     suspend fun classpath(dirOrJars: List<File>): JcClasspath
     fun asyncClasspath(dirOrJars: List<File>) = GlobalScope.future { classpath(dirOrJars) }
 
+    fun classpathOf(locations: List<RegisteredLocation>): JcClasspath
+
     /**
      * process and index single byte-code resource
      * @param dirOrJar build folder or jar file

@@ -16,7 +16,11 @@ open class HttpHook(private val port: Int, private val jcdb: JCDB, private val s
     override fun afterStart() {
         springApplication = SpringApplication(Application::class.java).also {
             it.setDefaultProperties(
-                mapOf("server.port" to port)
+                mapOf(
+                    "server.port" to port,
+                    "spring.servlet.multipart.max-file-size" to "10MB",
+                    "spring.servlet.multipart.max-request-size" to "10MB"
+                )
             )
             it.addInitializers(object : ApplicationContextInitializer<ConfigurableApplicationContext> {
                 override fun initialize(applicationContext: ConfigurableApplicationContext) {
@@ -24,13 +28,6 @@ open class HttpHook(private val port: Int, private val jcdb: JCDB, private val s
                     applicationContext.beanFactory.registerSingleton("jcdbSettings", settings)
                 }
             })
-//            it.addBootstrapRegistryInitializer(object : BootstrapRegistryInitializer {
-//                override fun initialize(registry: BootstrapRegistry) {
-//                    registry.register(JCDB::class.java) { jcdb }
-//                    registry.register(JCDBSettings::class.java) { settings }
-//                }
-//
-//            })
             applicationContext = it.run()
         }
     }

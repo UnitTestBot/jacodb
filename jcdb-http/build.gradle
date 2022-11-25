@@ -5,11 +5,16 @@ plugins {
 
 dependencies {
     api project(":jcdb-core")
-    api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-reactive', version: coroutines_version
+
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-reactor', version: coroutines_version
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-jersey'
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.glassfish.jersey.media:jersey-media-multipart'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'
+    implementation 'org.springdoc:springdoc-openapi-kotlin:1.6.13'
+
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
 }
