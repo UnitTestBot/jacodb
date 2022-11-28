@@ -46,8 +46,8 @@ class JcMethodImpl(
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
-    override fun instructionList(): JcRawInstList {
-        return RawInstListBuilder(this, body().jsrInlined).build()
+    override fun instructionList(jcClasspath: JcClasspath): JcRawInstList {
+        return RawInstListBuilder(this, body().jsrInlined).build(jcClasspath)
     }
 
     override fun equals(other: Any?): Boolean {

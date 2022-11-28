@@ -50,7 +50,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val exceptions: List<JcClassOrInterface>
 
     fun body(): MethodNode // match type system
-    fun instructionList(): JcRawInstList
+    fun instructionList(jcClasspath: JcClasspath): JcRawInstList
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {

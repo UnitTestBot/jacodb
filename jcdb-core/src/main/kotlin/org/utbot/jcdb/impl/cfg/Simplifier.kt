@@ -2,13 +2,15 @@ package org.utbot.jcdb.impl.cfg
 
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.cfg.ext.*
+import org.utbot.jcdb.api.ext.findCommonSupertype
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jcdb.impl.cfg.util.InstructionFilter
+import org.utbot.jcdb.impl.cfg.util.typeName
 
 internal class Simplifier {
 
-    fun simplify(instList: JcRawInstList): JcRawInstList {
+    fun simplify(jcClasspath: JcClasspath, instList: JcRawInstList): JcRawInstList {
         var instructionList = cleanRepeatedAssignments(instList)
 
         do {
@@ -46,9 +48,11 @@ internal class Simplifier {
                 .filter(InstructionFilter { it !in instructionsToDelete })
         } while (replacements.isNotEmpty())
 
-        return cleanSelfAssignments(instructionList)
-    }
+        instructionList = cleanSelfAssignments(instructionList)
+        instructionList = normalizeTypes(jcClasspath, instructionList)
 
+        return instructionList
+    }
 
 
     private fun computeUseCases(instList: JcRawInstList): Map<JcRawSimpleValue, Set<JcRawInst>> {
@@ -71,6 +75,7 @@ internal class Simplifier {
                             uses.getOrPut(it, ::mutableSetOf).add(inst)
                         }
                 }
+
                 is JcRawCatchInst -> {}
                 else -> {
                     inst.operands
@@ -103,10 +108,12 @@ internal class Simplifier {
                         instructions += inst
                     }
                 }
+
                 is JcRawLabelInst -> {
                     instructions += inst
                     equalities.clear()
                 }
+
                 else -> instructions += inst
             }
         }
@@ -122,6 +129,7 @@ internal class Simplifier {
                         instructions += inst
                     }
                 }
+
                 else -> instructions += inst
             }
         }
@@ -166,5 +174,25 @@ internal class Simplifier {
             }
         }
         return assignments
+    }
+
+    private fun normalizeTypes(jcClasspath: JcClasspath, instList: JcRawInstList): JcRawInstList {
+        val types = mutableMapOf<JcRawRegister, MutableSet<JcType>>()
+        for (inst in instList) {
+            if (inst is JcRawAssignInst && inst.lhv is JcRawRegister && inst.rhv !is JcRawNullConstant) {
+                types.getOrPut(
+                    inst.lhv as JcRawRegister,
+                    ::mutableSetOf
+                ) += jcClasspath.findTypeOrNull(inst.rhv.typeName.typeName)
+                    ?: error("Could not fin type")
+            }
+        }
+        val replacement = types.filterValues { it.size > 1 }
+            .mapValues {
+                val supertype = jcClasspath.findCommonSupertype(it.value)
+                    ?: error("Could not find common supertype of ${it.value.joinToString { it.typeName }}")
+                JcRawRegister(it.key.index, supertype.typeName.typeName())
+            }
+        return instList.map(ExprMapper(replacement.toMap()))
     }
 }

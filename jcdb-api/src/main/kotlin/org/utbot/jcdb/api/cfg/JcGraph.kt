@@ -2,6 +2,9 @@ package org.utbot.jcdb.api.cfg
 
 import org.utbot.jcdb.api.*
 
+// todo: reaching definitions impl
+// todo: transforming String concat
+
 class JcGraph(
     val classpath: JcClasspath,
     instructions: List<JcInst>,
@@ -75,22 +78,6 @@ class JcGraph(
     fun blockGraph(): JcBlockGraph = JcBlockGraph(this)
 
     override fun toString(): String = instructions.joinToString("\n")
-
-    fun insertBefore(inst: JcInst, vararg newInstructions: JcInst) = insertBefore(inst, newInstructions.toList())
-    fun insertBefore(inst: JcInst, newInstructions: Collection<JcInst>) {
-        val index = index(inst)
-        assert(index >= 0)
-        _instructions.addAll(index, newInstructions)
-        updateRefs(index, newInstructions.size)
-    }
-
-    fun insertAfter(inst: JcInst, vararg newInstructions: JcInst) = insertBefore(inst, newInstructions.toList())
-    fun insertAfter(inst: JcInst, newInstructions: Collection<JcInst>) {
-        val index = _instructions.indexOf(inst)
-        assert(index >= 0)
-        _instructions.addAll(index + 1, newInstructions)
-        updateRefs(index + 1, newInstructions.size)
-    }
 }
 
 class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)

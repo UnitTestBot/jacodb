@@ -58,7 +58,7 @@ class IRTest : BaseTest() {
             val oldBody = it.body()
             println()
             println("Old body: ${oldBody.print()}")
-            val instructionList = it.instructionList()
+            val instructionList = it.instructionList(cp)
             println("Instruction list: $instructionList")
             val graph = instructionList.graph(cp, hierarchy, it)
             println("Graph: $graph")

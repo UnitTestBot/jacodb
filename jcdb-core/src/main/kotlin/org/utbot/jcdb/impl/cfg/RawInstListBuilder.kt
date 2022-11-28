@@ -132,7 +132,7 @@ class RawInstListBuilder(
     private var localCounter = 0
     private var argCounter = 0
 
-    fun build(): JcRawInstList {
+    fun build(jcClasspath: JcClasspath): JcRawInstList {
         buildGraph()
 
         buildInstructions()
@@ -140,7 +140,7 @@ class RawInstListBuilder(
         buildRequiredGotos()
 
         val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
-        return Simplifier().simplify(originalInstructionList)
+        return Simplifier().simplify(jcClasspath, originalInstructionList)
     }
 
     private fun buildInstructions() {

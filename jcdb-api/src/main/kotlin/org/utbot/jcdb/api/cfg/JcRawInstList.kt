@@ -42,6 +42,8 @@ class JcRawInstList(
         _instructions.addAll(index + 1, newInstructions)
     }
 
+    // todo API for deleting
+
     fun graph(classpath: JcClasspath, hierarchy: HierarchyExtension, method: JcMethod): JcGraph =
         JcGraphBuilder(classpath, hierarchy, this, method).build()
 }

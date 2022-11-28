@@ -14,17 +14,8 @@ class JcGraphBuilder(
     private val inst2Ref = mutableMapOf<JcInst, JcInstRef>()
     private val label2InstRef = mutableMapOf<JcRawLabelInst, JcInstRef>()
     private var lastLabel: JcRawLabelInst? = null
-    private val defaultArguments = when (method.isStatic) {
-        true -> null
-        else -> JcThis(method.enclosingClass.toType())
-    } to method.parameters.map { JcArgument(it.index, null, it.type.asType) }
-    private lateinit var actualArguments: Pair<JcValue?, List<JcValue>>
-    private val variableMap = mutableMapOf<JcRawRegister, JcRegister>()
 
-    fun build(arguments: Pair<JcValue?, List<JcValue>> = defaultArguments): JcGraph {
-        actualArguments = arguments
-        normalizeTypes(instList)
-
+    fun build(): JcGraph {
         val instructions = instList.mapNotNull { convertRawInst(it) }
         for (i in instList.indices) {
             val current = instList[i]
@@ -45,17 +36,6 @@ class JcGraphBuilder(
             ref.index = instructions.indexOf(inst)
         }
         return JcGraph(classpath, instructions)
-    }
-
-    private fun normalizeTypes(instList: JcRawInstList) {
-        val types = mutableMapOf<JcRawRegister, MutableSet<JcType>>()
-        for (inst in instList) {
-            if (inst is JcRawAssignInst && inst.lhv is JcRawRegister && inst.rhv !is JcRawNullConstant) {
-                types.getOrPut(inst.lhv, ::mutableSetOf) += inst.rhv.typeName.asType
-            }
-        }
-        variableMap += types.filterValues { it.size > 1 }
-            .mapValues { JcRegister(it.key.index, classpath.findCommonSupertype(it.value)!!) }
     }
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
@@ -82,16 +62,8 @@ class JcGraphBuilder(
         label2InstRef.getOrPut(labels.getValue(labelRef)) { JcInstRef() }
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
-        var lhv = inst.lhv.accept(this) as JcValue
+        val lhv = inst.lhv.accept(this) as JcValue
         val rhv = inst.rhv.accept(this)
-        if (inst.lhv is JcRawRegister
-            && inst.lhv !in variableMap
-            && lhv.type != rhv.type
-            && rhv !is JcNullConstant
-        ) {
-            lhv = JcRegister(inst.lhv.index, rhv.type)
-            variableMap[inst.lhv] = lhv
-        }
         JcAssignInst(lhv, rhv)
     }
 
@@ -319,13 +291,14 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawThis(value: JcRawThis): JcExpr =
-        actualArguments.first!!
+        JcThis(method.enclosingClass.toType())
 
-    override fun visitJcRawArgument(value: JcRawArgument): JcExpr =
-        actualArguments.second[value.index]
+    override fun visitJcRawArgument(value: JcRawArgument): JcExpr = method.parameters[value.index].let {
+        JcArgument(it.index, null, it.type.asType)
+    }
 
     override fun visitJcRawRegister(value: JcRawRegister): JcExpr =
-        variableMap[value] ?: JcRegister(value.index, value.typeName.asType)
+        JcRegister(value.index, value.typeName.asType)
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val instance = value.instance?.accept(this) as? JcValue
