@@ -15,7 +15,6 @@ class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFi
     companion object {
         private const val META_INF = "META-INF/"
         private const val META_INF_VERSIONS = META_INF + "versions/"
-        const val MANIFEST_NAME = META_INF + "MANIFEST.MF"
         private val MULTI_RELEASE = Attributes.Name("Multi-Release")
     }
 
@@ -60,7 +59,7 @@ class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFi
 
     fun inputStreamOf(className: String): InputStream? {
         return classes[className]?.let {
-            jarFile.get()?.getInputStream(it)
+            getter()?.getInputStream(it) // let's use new instance  `
         }
     }
 
@@ -69,7 +68,8 @@ class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFi
     }
 
     override fun close() {
-        jarFile.get()?.close()
+        val oldFile = jarFile.get()
         jarFile.set(getter())
+        oldFile?.close()
     }
 }

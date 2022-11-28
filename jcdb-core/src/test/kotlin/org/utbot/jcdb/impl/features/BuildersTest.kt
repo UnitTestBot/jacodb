@@ -4,7 +4,10 @@ import kotlinx.coroutines.runBlocking
 import org.jooq.DSLContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnJre
+import org.junit.jupiter.api.condition.JRE
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.BaseTest
@@ -43,10 +46,19 @@ class BuildersTest : BaseTest() {
     }
 
     @Test
+    @DisabledOnJre(JRE.JAVA_8)
     fun `works for DocumentBuilderFactory`() {
         val builders = ext.findBuildMethods(cp.findClass<DocumentBuilderFactory>()).toList()
-        assertEquals("javax.xml.parsers.DocumentBuilderFactory#newDefaultInstance", builders.first().loggable)
-        assertEquals("javax.xml.parsers.DocumentBuilderFactory#newInstance", builders[1].loggable)
+        val expected = builders.map { it.loggable }
+        assertTrue(expected.contains("javax.xml.parsers.DocumentBuilderFactory#newDefaultInstance"))
+        assertTrue(expected.contains("javax.xml.parsers.DocumentBuilderFactory#newInstance"))
+    }
+
+    @Test
+    fun `works for DocumentBuilderFactory for java 8`() {
+        val builders = ext.findBuildMethods(cp.findClass<DocumentBuilderFactory>()).toList()
+        val expected = builders.map { it.loggable }
+        assertTrue(expected.contains("javax.xml.parsers.DocumentBuilderFactory#newInstance"))
     }
 
     @Test
