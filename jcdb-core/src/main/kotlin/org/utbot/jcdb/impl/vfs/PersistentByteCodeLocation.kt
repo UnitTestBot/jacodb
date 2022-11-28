@@ -1,7 +1,10 @@
 package org.utbot.jcdb.impl.vfs
 
 import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
 import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
@@ -9,21 +12,31 @@ import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import java.io.File
 
 class PersistentByteCodeLocation(
-    private val jcdb: JCDB,
+    private val persistence: JCDBPersistence,
+    private val runtimeVersion: JavaVersion,
     override val id: Long,
     private val cachedRecord: BytecodelocationsRecord? = null,
     private val cachedLocation: JcByteCodeLocation? = null
 ) : RegisteredLocation {
 
     constructor(jcdb: JCDB, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
-        jcdb,
+        jcdb.persistence,
+        jcdb.runtimeVersion,
         record.id!!,
         record,
         location
     )
 
+    constructor(cp: JcClasspath, locationId: Long) : this(
+        cp.db.persistence,
+        cp.db.runtimeVersion,
+        locationId,
+        null,
+        null
+    )
+
     val record by lazy {
-        cachedRecord ?: jcdb.persistence.read { jooq ->
+        cachedRecord ?: persistence.read { jooq ->
             jooq.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!
         }
     }
@@ -55,7 +68,7 @@ class PersistentByteCodeLocation(
 
     private fun BytecodelocationsRecord.toJcLocation(): JcByteCodeLocation? {
         try {
-            val newOne = File(path!!).asByteCodeLocation(jcdb.runtimeVersion, isRuntime = runtime!!)
+            val newOne = File(path!!).asByteCodeLocation(runtimeVersion, isRuntime = runtime!!)
             if (newOne.hash != hash!!) {
                 return null
             }

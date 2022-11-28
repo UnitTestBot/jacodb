@@ -8,18 +8,25 @@ import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
 
-open class HttpHook(private val port: Int, private val jcdb: JCDB, private val settings: JCDBSettings) : Hook {
+open class HttpHook(
+    private val port: Int, private val jcdb: JCDB, private val settings: JCDBSettings,
+    private val exposureSettings: DefaultExposureSettings
+) : Hook {
 
     private lateinit var applicationContext: ConfigurableApplicationContext
     private lateinit var springApplication: SpringApplication
 
-    override fun afterStart() {
+    override suspend fun afterStart() {
+        if (exposureSettings.explicitRefresh) {
+            jcdb.refresh()
+        }
         springApplication = SpringApplication(Application::class.java).also {
             it.setDefaultProperties(
                 mapOf(
                     "server.port" to port,
-                    "spring.servlet.multipart.max-file-size" to "10MB",
-                    "spring.servlet.multipart.max-request-size" to "10MB"
+                    "server.servlet.contextPath" to exposureSettings.apiPrefix,
+                    "spring.servlet.multipart.max-file-size" to exposureSettings.maxUploadSize,
+                    "spring.servlet.multipart.max-request-size" to exposureSettings.maxUploadSize
                 )
             )
             it.addInitializers(object : ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -37,13 +44,16 @@ open class HttpHook(private val port: Int, private val jcdb: JCDB, private val s
     }
 }
 
-fun JCDBSettings.exposeRestApi(port: Int) {
-    withHook {
-        HttpHook(port, it, this)
-    }
+class DefaultExposureSettings {
+    var explicitRefresh: Boolean = true
+    var maxUploadSize: String = "10MB"
+    var apiPrefix: String = "/jcdb-api"
+}
+
+fun JCDBSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Unit = {}) = withHook {
+    val settings = DefaultExposureSettings().also(action)
+    HttpHook(port, it, this, settings)
 }
 
 @SpringBootApplication
-open class Application {
-
-}
+open class Application

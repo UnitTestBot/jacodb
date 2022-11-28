@@ -2,7 +2,7 @@ package org.utbot.jcdb.api
 
 interface Hook {
 
-    fun afterStart()
+    suspend fun afterStart()
 
     fun afterStop() {}
 }

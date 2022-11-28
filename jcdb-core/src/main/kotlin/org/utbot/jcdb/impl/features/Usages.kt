@@ -12,7 +12,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.PersistenceClassSource
 import org.utbot.jcdb.impl.fs.className
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import org.utbot.jcdb.impl.storage.eqOrNull
@@ -23,7 +23,6 @@ import org.utbot.jcdb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jcdb.impl.storage.longHash
 import org.utbot.jcdb.impl.storage.runBatch
 import org.utbot.jcdb.impl.storage.setNullableLong
-import org.utbot.jcdb.impl.vfs.PersistentByteCodeLocation
 
 
 private class MethodMap(size: Int) {
@@ -177,7 +176,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
         return BatchedSequence(50) { offset, batchSize ->
             persistence.read { jooq ->
                 var position = offset ?: 0
-                jooq.select(CALLS.CALLER_METHOD_OFFSETS, SYMBOLS.NAME, CLASSES.BYTECODE, CLASSES.LOCATION_ID)
+                jooq.select(CLASSES.ID, CALLS.CALLER_METHOD_OFFSETS, SYMBOLS.NAME, CLASSES.LOCATION_ID)
                     .from(CALLS)
                     .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
                     .join(CLASSES).on(CLASSES.NAME.eq(CALLS.CALLER_CLASS_SYMBOL_ID))
@@ -190,13 +189,14 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                     )
                     .limit(batchSize).offset(offset ?: 0)
                     .fetch()
-                    .mapNotNull { (offset, className, byteCode, locationId) ->
+                    .mapNotNull { (classId, offset, className, locationId) ->
                         position++ to
                                 UsageFeatureResponse(
-                                    source = ClassSourceImpl(
-                                        PersistentByteCodeLocation(classpath.db, locationId!!),
+                                    source = PersistenceClassSource(
+                                        classpath,
                                         className!!,
-                                        byteCode!!
+                                        classId = classId!!,
+                                        locationId = locationId!!
                                     ),
                                     offsets = offset!!
                                 )

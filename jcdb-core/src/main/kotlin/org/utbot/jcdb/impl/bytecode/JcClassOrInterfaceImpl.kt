@@ -16,7 +16,7 @@ class JcClassOrInterfaceImpl(
     private val classSource: ClassSource
 ) : JcClassOrInterface {
 
-    val info = classSource.info
+    val info by lazy { classSource.info }
 
     override val declaration = JcDeclarationImpl.of(location = classSource.location, this)
 

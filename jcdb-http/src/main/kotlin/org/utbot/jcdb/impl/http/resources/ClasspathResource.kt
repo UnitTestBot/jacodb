@@ -77,14 +77,14 @@ class ClasspathResource(val jcdb: JCDB) {
     }
 
     @GetMapping("")
-    fun getAll(): List<ClasspathEntity> {
+    fun all(): List<ClasspathEntity> {
         return classpaths.entries.map {
             ClasspathEntity(it.key)
         }
     }
 
     @GetMapping("/{classpathId}")
-    fun get(@PathVariable classpathId: String): ClasspathEntity {
+    fun single(@PathVariable classpathId: String): ClasspathEntity {
         val classpath = classpathId.findClassPath()
         return ClasspathEntity(
             classpathId,
@@ -94,14 +94,14 @@ class ClasspathResource(val jcdb: JCDB) {
     }
 
     @GetMapping("/{classpathId}/classes/{className}")
-    fun getClass(@PathVariable classpathId: String, @PathVariable className: String): ClassEntity {
+    fun findClass(@PathVariable classpathId: String, @PathVariable className: String): ClassEntity {
         val classpath = classpathId.findClassPath()
         val jcClass = classpath.findClassOrNull(className) ?: throw NotFoundException("Class not found by $className")
         return jcClass.toEntity()
     }
 
     @GetMapping("/{classpathId}/classes/{className}/bytecode")
-    fun getBytecode(@PathVariable classpathId: String, @PathVariable className: String): HttpEntity<ByteArray> {
+    fun classBytecode(@PathVariable classpathId: String, @PathVariable className: String): HttpEntity<ByteArray> {
         val classpath = classpathId.findClassPath()
         val jcClassOrInterface =
             classpath.findClassOrNull(className) ?: throw NotFoundException("Class not found by $className")

@@ -127,9 +127,11 @@ interface JCDBPersistence : Closeable {
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
     fun findSymbolId(symbol: String): Long?
-    fun findSymbolName(symbol: Long): String
+    fun findSymbolName(symbolId: Long): String
+    fun findLocation(locationId: Long): RegisteredLocation
 
     fun newSymbolInterner(): JCDBSymbolsInterner
+    fun findBytecode(classId: Long): ByteArray
 
     fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
     fun findClassSources(location: RegisteredLocation): List<ClassSource>

@@ -8,7 +8,7 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.api.isPrivate
-import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.PersistenceClassSource
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import java.util.concurrent.Future
 
@@ -34,7 +34,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         """.trimIndent()
 
         private fun directSubClassesQuery(locationIds: String, sinceId: Long?) = """
-            SELECT Classes.id, Classes.location_id, SymbolsName.name as name_name, Classes.bytecode FROM ClassHierarchies
+            SELECT Classes.id, Classes.location_id, SymbolsName.name as name_name FROM ClassHierarchies
                 JOIN Symbols ON Symbols.id = ClassHierarchies.super_id
                 JOIN Symbols as SymbolsName ON SymbolsName.id = Classes.name
                 JOIN Classes ON Classes.id = ClassHierarchies.class_id
@@ -58,10 +58,12 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         val name = classId.name
 
         return cp.subClasses(name, allHierarchy).map { record ->
-            cp.toJcClass(ClassSourceImpl(
-                    location = cp.registeredLocations.first { it.id == record.locationId },
-                    className = record.name,
-                    byteCode = record.byteCode
+            cp.toJcClass(
+                PersistenceClassSource(
+                    classpath = cp,
+                    locationId = record.locationId,
+                    classId = record.id,
+                    className = record.name
                 )
             )
         }
@@ -88,7 +90,6 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
                 cursor.fetchNext(batchSize).map {
                     val id = it.get("id") as Long
                     id to ClassRecord(
-                        byteCode = it.get("bytecode") as ByteArray,
                         locationId = it.get("location_id") as Long,
                         name = it.get("name_name") as String,
                         id = id
@@ -103,7 +104,6 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 }
 
 private class ClassRecord(
-    val byteCode: ByteArray,
     val locationId: Long,
     val name: String,
     val id: Long

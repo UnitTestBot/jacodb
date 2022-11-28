@@ -34,7 +34,7 @@ class JcClasspathImpl(
         .maximumSize(1_000)
         .build<String, ClassHolder>()
 
-    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull{ it.jcLocation }
+    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
