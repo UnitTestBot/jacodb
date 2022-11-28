@@ -8,10 +8,9 @@ import org.utbot.jcdb.api.*
 class JcGraph(
     val classpath: JcClasspath,
     instructions: List<JcInst>,
-) {
+) : Iterable<JcInst> {
     private val _instructions = instructions.toMutableList()
     private val indexMap = instructions.mapIndexed { index, jcInst -> jcInst to index }.toMap()
-    private val refs = mutableMapOf<JcInst, JcInstRef>()
 
     private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
     private val successorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
@@ -47,7 +46,7 @@ class JcGraph(
 
     private fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
 
-    fun ref(inst: JcInst): JcInstRef = refs.getOrPut(inst) { JcInstRef(index(inst)) }
+    fun ref(inst: JcInst): JcInstRef = JcInstRef(index(inst))
     fun inst(ref: JcInstRef) = _instructions[ref.index]
 
     fun previous(inst: JcInst): JcInst = _instructions[index(inst) - 1]
@@ -71,13 +70,15 @@ class JcGraph(
     fun blockGraph(): JcBlockGraph = JcBlockGraph(this)
 
     override fun toString(): String = instructions.joinToString("\n")
+
+    override fun iterator() = instructions.iterator()
 }
 
 class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
 
 class JcBlockGraph(
     val jcGraph: JcGraph
-) {
+) : Iterable<JcBasicBlock> {
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val successorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
@@ -151,6 +152,8 @@ class JcBlockGraph(
 
     fun catchers(block: JcBasicBlock) = catchersMap.getOrDefault(block, emptySet())
     fun throwers(block: JcBasicBlock) = throwersMap.getOrDefault(block, emptySet())
+
+    override fun iterator() = basicBlocks.iterator()
 }
 
 
@@ -722,8 +725,6 @@ sealed interface JcCallExpr : JcExpr {
 
     override val operands: List<JcValue>
         get() = args
-
-    val resolvedMethods: List<JcTypedMethod>
 }
 
 data class JcLambdaExpr(
@@ -731,9 +732,6 @@ data class JcLambdaExpr(
     override val method: JcTypedMethod,
     override val args: List<JcValue>,
 ) : JcCallExpr {
-    override val resolvedMethods: List<JcTypedMethod>
-        get() = listOf(method)
-
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLambdaExpr(this)
     }
@@ -744,7 +742,6 @@ data class JcVirtualCallExpr(
     override val method: JcTypedMethod,
     val instance: JcValue,
     override val args: List<JcValue>,
-    override val resolvedMethods: List<JcTypedMethod>
 ) : JcCallExpr {
     override val operands: List<JcValue>
         get() = listOf(instance) + args
@@ -763,9 +760,6 @@ data class JcStaticCallExpr(
     override val method: JcTypedMethod,
     override val args: List<JcValue>,
 ) : JcCallExpr {
-    override val resolvedMethods: List<JcTypedMethod>
-        get() = listOf(method)
-
     override fun toString(): String =
         "${method.method.enclosingClass.name}.${method.name}${
             args.joinToString(
@@ -785,7 +779,6 @@ data class JcSpecialCallExpr(
     override val method: JcTypedMethod,
     val instance: JcValue,
     override val args: List<JcValue>,
-    override val resolvedMethods: List<JcTypedMethod>
 ) : JcCallExpr {
     override fun toString(): String =
         "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"

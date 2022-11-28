@@ -44,8 +44,8 @@ class JcRawInstList(
 
     // todo API for deleting
 
-    fun graph(classpath: JcClasspath, hierarchy: HierarchyExtension, method: JcMethod): JcGraph =
-        JcGraphBuilder(classpath, hierarchy, this, method).build()
+    fun graph(classpath: JcClasspath, method: JcMethod): JcGraph =
+        JcGraphBuilder(classpath, this, method).build()
 }
 
 sealed interface JcRawInst {

@@ -21,7 +21,6 @@ import java.nio.file.Files
 
 class IRTest : BaseTest() {
     val target = Files.createTempDirectory("jcdb-temp")
-    val hierarchy = runBlocking { cp.hierarchyExt() }
 
     companion object : WithDB()
 
@@ -60,7 +59,7 @@ class IRTest : BaseTest() {
             println("Old body: ${oldBody.print()}")
             val instructionList = it.instructionList(cp)
             println("Instruction list: $instructionList")
-            val graph = instructionList.graph(cp, hierarchy, it)
+            val graph = instructionList.graph(cp, it)
             println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")

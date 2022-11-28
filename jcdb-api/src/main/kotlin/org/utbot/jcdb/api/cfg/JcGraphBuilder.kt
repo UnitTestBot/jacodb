@@ -5,7 +5,6 @@ import org.utbot.jcdb.api.ext.*
 
 class JcGraphBuilder(
     val classpath: JcClasspath,
-    val hierarchy: HierarchyExtension,
     val instList: JcRawInstList,
     val method: JcMethod
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
@@ -243,7 +242,7 @@ class JcGraphBuilder(
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
             method.returnType, method, instance, args,
-            hierarchy.findOverrides(method.method).map { it.typedMethod }
+//            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
@@ -254,7 +253,6 @@ class JcGraphBuilder(
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
             method.returnType, method, instance, args,
-            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
@@ -270,7 +268,6 @@ class JcGraphBuilder(
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcSpecialCallExpr(
             method.returnType, method, instance, args,
-            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
 
