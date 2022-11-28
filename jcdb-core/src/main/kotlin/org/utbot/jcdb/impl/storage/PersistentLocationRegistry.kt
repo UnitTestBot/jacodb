@@ -28,6 +28,14 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
     // all snapshot associated with classpaths
     internal val snapshots = ConcurrentHashMap.newKeySet<LocationsRegistrySnapshot>()
 
+    init {
+        persistence.write { jooq ->
+            jooq.deleteFrom(BYTECODELOCATIONS)
+                .where(BYTECODELOCATIONS.STATE.notEqual(LocationState.PROCESSED.ordinal))
+                .execute()
+        }
+    }
+
     override val actualLocations: List<PersistentByteCodeLocation>
         get() = persistence.read {
             it.selectFrom(BYTECODELOCATIONS).fetch {
@@ -67,13 +75,13 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
         return persistence.write {
             val result = arrayListOf<RegisteredLocation>()
             val toAdd = arrayListOf<JcByteCodeLocation>()
-            val hashes = locations.map { it.hash }
+            val hashes = locations.map { it.fsId }
             val existed = it.selectFrom(BYTECODELOCATIONS).where(
-                BYTECODELOCATIONS.HASH.`in`(hashes).and(BYTECODELOCATIONS.STATE.ne(LocationState.INITIAL.ordinal))
-            ).fetch().associateBy { it.hash }
+                BYTECODELOCATIONS.UNIQUEID.`in`(hashes).and(BYTECODELOCATIONS.STATE.ne(LocationState.INITIAL.ordinal))
+            ).fetch().associateBy { it.uniqueid }
 
             locations.forEach {
-                val found = existed[it.hash]
+                val found = existed[it.fsId]
                 if (found == null) {
                     toAdd += it
                 } else {
@@ -88,12 +96,20 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
                     val (id, location) = it
                     setLong(1, id)
                     setString(2, location.path)
-                    setString(3, location.hash)
+                    setString(3, location.fsId)
                     setBoolean(4, location.type == LocationType.RUNTIME)
                     setInt(5, LocationState.INITIAL.ordinal)
                 }
             }
-            val added = records.map { PersistentByteCodeLocation(jcdb.persistence, jcdb.runtimeVersion, it.first, null, it.second) }
+            val added = records.map {
+                PersistentByteCodeLocation(
+                    jcdb.persistence,
+                    jcdb.runtimeVersion,
+                    it.first,
+                    null,
+                    it.second
+                )
+            }
             RegistrationResult(result + added, added)
         }
     }
@@ -117,6 +133,7 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
                         deprecated.add(location)
                     }
                 }
+
                 jcLocation.isChanged() -> {
                     val refreshed = jcLocation.createRefreshed()
                     if (refreshed != null) {
@@ -138,6 +155,7 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
                 if (toUpdate != null) {
                     it.update(BYTECODELOCATIONS)
                         .set(BYTECODELOCATIONS.UPDATED_ID, refreshed.id)
+                        .set(BYTECODELOCATIONS.STATE, LocationState.OUTDATED.ordinal)
                         .where(BYTECODELOCATIONS.ID.eq(toUpdate.id)).execute()
                 }
                 refreshed
@@ -180,7 +198,7 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
         }
         val record = BytecodelocationsRecord().also {
             it.path = path
-            it.hash = hash
+            it.uniqueid = fsId
             it.runtime = type == LocationType.RUNTIME
         }
         record.insert()
@@ -189,7 +207,7 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
 
     private fun JcByteCodeLocation.findOrNull(dslContext: DSLContext): BytecodelocationsRecord? {
         return dslContext.selectFrom(BYTECODELOCATIONS)
-            .where(BYTECODELOCATIONS.PATH.eq(path).and(BYTECODELOCATIONS.HASH.eq(hash))).fetchAny()
+            .where(BYTECODELOCATIONS.PATH.eq(path).and(BYTECODELOCATIONS.UNIQUEID.eq(fsId))).fetchAny()
     }
 
 }

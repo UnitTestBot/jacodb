@@ -2,6 +2,7 @@ package org.utbot.jcdb
 
 import kotlinx.coroutines.runBlocking
 import org.utbot.jcdb.impl.allClasspath
+import org.utbot.jcdb.impl.features.Builders
 import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.FIELDS
@@ -14,7 +15,7 @@ fun main() {
         val db = jcdb {
             loadByteCode(allClasspath)
             persistent("D:\\work\\jcdb\\jcdb.db")
-            installFeatures(Usages)
+            installFeatures(Usages, Builders)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")
             start = System.currentTimeMillis()
