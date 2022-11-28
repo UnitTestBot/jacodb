@@ -51,6 +51,7 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
+          check_name: "JDK11 test results"
 
   jdk8:
 
@@ -76,8 +77,8 @@ jobs:
 #          name: test-results
 #          path: build/test-results/
       - name: Publish Test Results
-        check_name: "JDK8 test results"
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
+          check_name: "JDK8 test results"
