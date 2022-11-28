@@ -11,32 +11,17 @@ class JcGraphBuilder(
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
-    private val inst2Ref = mutableMapOf<JcInst, JcInstRef>()
-    private val label2InstRef = mutableMapOf<JcRawLabelInst, JcInstRef>()
-    private var lastLabel: JcRawLabelInst? = null
-
-    fun build(): JcGraph {
-        val instructions = instList.mapNotNull { convertRawInst(it) }
-        for (i in instList.indices) {
-            val current = instList[i]
-            if (current is JcRawLabelInst) {
-                val next: JcRawInst? = run {
-                    var j = i + 1
-                    while (j in instList.indices && instList[j] is JcRawLabelInst) {
-                        j++
-                    }
-                    instList.getOrNull(j)
-                }
-                next?.let {
-                    label2InstRef.getOrPut(current) { JcInstRef() }.index = instructions.indexOf(instMap[next])
-                }
-            }
+    private val inst2Index: Map<JcRawInst, Int> = run {
+        val res = mutableMapOf<JcRawInst, Int>()
+        var index = 0
+        for (inst in instList) {
+            res[inst] = index
+            if (inst !is JcRawLabelInst) ++index
         }
-        for ((inst, ref) in inst2Ref) {
-            ref.index = instructions.indexOf(inst)
-        }
-        return JcGraph(classpath, instructions)
+        res
     }
+
+    fun build(): JcGraph = JcGraph(classpath, instList.mapNotNull { convertRawInst(it) })
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
         instMap.getOrPut(inst) { handler() }
@@ -59,7 +44,7 @@ class JcGraphBuilder(
             ?: error("Could not find type $this")
 
     private fun label2InstRef(labelRef: JcRawLabelRef) =
-        label2InstRef.getOrPut(labels.getValue(labelRef)) { JcInstRef() }
+        JcInstRef(inst2Index[labels.getValue(labelRef)]!!)
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
         val lhv = inst.lhv.accept(this) as JcValue
@@ -80,7 +65,6 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): JcInst? {
-        lastLabel = inst
         return null
     }
 
@@ -100,7 +84,7 @@ class JcGraphBuilder(
             while (current != end) {
                 val jcInst = convertRawInst(instList[current])
                 jcInst?.let {
-                    result += inst2Ref.getOrPut(jcInst) { JcInstRef() }
+                    result += JcInstRef(inst2Index[instList[current]]!!)
                 }
                 ++current
             }

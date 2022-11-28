@@ -46,13 +46,6 @@ class JcGraph(
     }
 
     private fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
-    private fun updateRefs(start: Int, offset: Int) {
-        for ((_, ref) in refs) {
-            if (ref.index >= start) {
-                ref.index += offset
-            }
-        }
-    }
 
     fun ref(inst: JcInst): JcInstRef = refs.getOrPut(inst) { JcInstRef(index(inst)) }
     fun inst(ref: JcInstRef) = _instructions[ref.index]
@@ -88,6 +81,8 @@ class JcBlockGraph(
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val successorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
+    private val catchersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
+    private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
     val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
     val entry get() = basicBlocks.single { predecessors(it).isEmpty() && jcGraph.throwers(it.start).isEmpty() }
@@ -102,14 +97,22 @@ class JcBlockGraph(
             for (ref in currentRefs) {
                 inst2Block[jcGraph.inst(ref)] = block
             }
+//                instructions(block).map { jcGraph.catchers(it) }.toSet().single()
             currentRefs.clear()
             _basicBlocks.add(block)
         }
         for (inst in jcGraph.instructions) {
             val currentRef = jcGraph.ref(inst)
             val shouldBeAddedBefore = jcGraph.predecessors(inst).size <= 1 || currentRefs.isEmpty()
+            val shouldTerminate = when {
+                currentRefs.isEmpty() -> false
+                else -> jcGraph.catchers(currentRefs.first()) != jcGraph.catchers(currentRef)
+            }
             when {
-                inst is JcBranchingInst -> {
+                inst is JcBranchingInst
+                        || inst is JcTerminatingInst
+                        || jcGraph.predecessors(inst).size > 1
+                        || shouldTerminate -> {
                     if (shouldBeAddedBefore) currentRefs += currentRef
                     createBlock()
                     if (!shouldBeAddedBefore) {
@@ -117,22 +120,7 @@ class JcBlockGraph(
                         createBlock()
                     }
                 }
-                inst is JcTerminatingInst -> {
-                    if (shouldBeAddedBefore) currentRefs += currentRef
-                    createBlock()
-                    if (!shouldBeAddedBefore) {
-                        currentRefs += currentRef
-                        createBlock()
-                    }
-                }
-                jcGraph.predecessors(inst).size > 1 -> {
-                    if (shouldBeAddedBefore) currentRefs += currentRef
-                    createBlock()
-                    if (!shouldBeAddedBefore) {
-                        currentRefs += currentRef
-                        createBlock()
-                    }
-                }
+
                 else -> {
                     currentRefs += currentRef
                 }
@@ -147,16 +135,22 @@ class JcBlockGraph(
             _basicBlocks.add(block)
         }
         for (block in _basicBlocks) {
-            predecessorMap.getOrPut(block, ::mutableSetOf)
-                .addAll(jcGraph.predecessors(block.start).map { inst2Block[it]!! })
-            successorMap.getOrPut(block, ::mutableSetOf)
-                .addAll(jcGraph.successors(block.end).map { inst2Block[it]!! })
+            predecessorMap.getOrPut(block, ::mutableSetOf) += jcGraph.predecessors(block.start).map { inst2Block[it]!! }
+            successorMap.getOrPut(block, ::mutableSetOf) += jcGraph.successors(block.end).map { inst2Block[it]!! }
+            catchersMap.getOrPut(block, ::mutableSetOf) += jcGraph.catchers(block.start).map { inst2Block[it]!! }.also {
+                for (catcher in it) {
+                    throwersMap.getOrPut(catcher, ::mutableSetOf) += block
+                }
+            }
         }
     }
 
     fun instructions(block: JcBasicBlock) = (block.start.index..block.end.index).map { jcGraph.instructions[it] }
     fun predecessors(block: JcBasicBlock) = predecessorMap.getOrDefault(block, emptySet())
     fun successors(block: JcBasicBlock) = successorMap.getOrDefault(block, emptySet())
+
+    fun catchers(block: JcBasicBlock) = catchersMap.getOrDefault(block, emptySet())
+    fun throwers(block: JcBasicBlock) = throwersMap.getOrDefault(block, emptySet())
 }
 
 
@@ -167,7 +161,7 @@ sealed interface JcInst {
 }
 
 data class JcInstRef internal constructor(
-    internal var index: Int = -1
+    val index: Int
 )
 
 class JcAssignInst(

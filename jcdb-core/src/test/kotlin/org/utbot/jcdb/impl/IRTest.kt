@@ -62,8 +62,8 @@ class IRTest : BaseTest() {
             println("Instruction list: $instructionList")
             val graph = instructionList.graph(cp, hierarchy, it)
             println("Graph: $graph")
-//            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
-//            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
+            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
+            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
             assertDoesNotThrow { graph.entry }
             assertDoesNotThrow { graph.blockGraph().entry }
             val newBody = MethodNodeBuilder(it, instructionList).build()
