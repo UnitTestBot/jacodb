@@ -46,7 +46,6 @@ jobs:
 #          name: test-results
 #          path: build/test-results/
       - name: Publish Test Results
-        check_name: "JDK11 test results"
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
