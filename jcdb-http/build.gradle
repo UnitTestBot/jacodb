@@ -1,6 +1,7 @@
 plugins {
     id 'org.springframework.boot' version "2.7.5"
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id "com.palantir.docker" version "0.34.0"
 }
 
 dependencies {
@@ -20,4 +21,17 @@ dependencies {
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
+}
+
+def demoAppJar = "jcdb-http-demo.jar"
+
+bootJar {
+    archiveName= demoAppJar
+}
+
+tasks.docker.dependsOn('bootJar')
+
+docker {
+    name "${project.name}:${project.version}"
+    files demoAppJar
 }

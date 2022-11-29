@@ -10,10 +10,32 @@ import org.utbot.jcdb.impl.features.InMemoryHierarchy
 import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.jcdb
 import java.io.File
+import java.net.URISyntaxException
+
+val jar: File?
+    get() {
+        try {
+            // Get path of the JAR file
+            val jarPath = HttpHook::class.java
+                .protectionDomain
+                .codeSource
+                .location
+                .toURI()
+
+
+            println(jarPath)
+
+            // Get name of the JAR file
+            return null
+        } catch (e: URISyntaxException) {
+            e.printStackTrace()
+            return null
+        }
+    }
 
 val allClasspath: List<File>
     get() {
-        return classpath.map { File(it) }
+        return classpath.map { File(it) } + listOfNotNull(jar)
     }
 
 private val classpath: List<String>
@@ -30,10 +52,14 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
     private val refresh by option("--refresh", help = "do explicit refresh of the database")
         .flag(default = true)
 
-    private val location by option("--location", help = "location dor database ")
+    private val location by option("--location", help = "location dor database")
         .default("./jcdb-demo.db")
 
+    private val apiPrefix by option("--api-prefix", help = "api prefix")
+        .default("./jcdb-api")
+
     override fun run() {
+        val api = apiPrefix
         runBlocking {
             jcdb {
                 useProcessJavaRuntime()
@@ -42,6 +68,7 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
                 installFeatures(Usages, Builders, InMemoryHierarchy)
                 exposeRestApi(port.toInt()) {
                     explicitRefresh = refresh
+                    apiPrefix = api
                 }
             }
         }
