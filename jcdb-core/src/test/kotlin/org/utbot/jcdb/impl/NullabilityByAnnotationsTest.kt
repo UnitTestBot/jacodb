@@ -25,20 +25,20 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.ext.isNullable
+import org.utbot.jcdb.impl.usages.NullAnnotationExamples
 
-class SimpleNullabilityTest:  BaseTest() {
+class NullabilityByAnnotationsTest: BaseTest() {
 
     companion object : WithDB()
 
     @Test
     fun `Test field nullability`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
 
         val expectedNullability = mapOf(
             "refNullable" to true,
             "refNotNull" to false,
-            "primitiveNullable" to true,
-            "primitiveNotNull" to false,
+            "primitiveValue" to false,
         )
 
         val actualFieldNullability = clazz.declaredFields.associate { it.name to it.field.isNullable }
@@ -49,8 +49,8 @@ class SimpleNullabilityTest:  BaseTest() {
     }
 
     @Test
-    fun `Test method parameter isNullable`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+    fun `Test method parameter nullability`() = runBlocking {
+        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
         val expectedNullability = listOf(true, false)
@@ -62,8 +62,8 @@ class SimpleNullabilityTest:  BaseTest() {
     }
 
     @Test
-    fun `Test method isNullable`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+    fun `Test method nullability`() = runBlocking {
+        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
         assertTrue(nullableMethod.method.isNullable)
