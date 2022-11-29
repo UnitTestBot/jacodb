@@ -75,10 +75,10 @@ class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresReg
         return persistence.write {
             val result = arrayListOf<RegisteredLocation>()
             val toAdd = arrayListOf<JcByteCodeLocation>()
-            val hashes = locations.map { it.fsId }
-            val existed = it.selectFrom(BYTECODELOCATIONS).where(
-                BYTECODELOCATIONS.UNIQUEID.`in`(hashes).and(BYTECODELOCATIONS.STATE.ne(LocationState.INITIAL.ordinal))
-            ).fetch().associateBy { it.uniqueid }
+            val fsId = locations.map { it.fsId }
+            val existed = it.selectFrom(BYTECODELOCATIONS)
+                .where(BYTECODELOCATIONS.UNIQUEID.`in`(fsId))
+                .fetch().associateBy { it.uniqueid }
 
             locations.forEach {
                 val found = existed[it.fsId]

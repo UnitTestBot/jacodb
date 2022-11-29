@@ -8,15 +8,24 @@ import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.LazyClassSourceImpl
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.fs.info
+import org.utbot.jcdb.impl.types.ClassInfo
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource
 ) : JcClassOrInterface {
 
-    val info by lazy { classSource.info }
+    private val cachedInfo: ClassInfo? = when {
+        classSource is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
+        classSource is ClassSourceImpl -> classSource.info // we can easily read link let's do it
+        else -> null // maybe we do not need to do right now
+    }
+
+    val info by lazy { cachedInfo ?: classSource.info }
 
     override val declaration = JcDeclarationImpl.of(location = classSource.location, this)
 

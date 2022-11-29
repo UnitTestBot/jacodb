@@ -50,7 +50,7 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
-          check_name: "JDK11 test results"
+          check_name: "jdk 11 test results"
 
   jdk8:
 
@@ -80,4 +80,4 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
-          check_name: "JDK8 test results"
+          check_name: "jdk 8 test results"
