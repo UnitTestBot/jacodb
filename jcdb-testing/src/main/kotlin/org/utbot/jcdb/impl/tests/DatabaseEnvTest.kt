@@ -57,6 +57,19 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
+    fun `find class from String`() {
+        val clazz = cp.findClass<String>()
+
+        fun fieldType(name: String): String {
+            return clazz.declaredFields.first { it.name == name }.type.typeName
+        }
+
+        assertEquals("byte", fieldType("coder"))
+        assertEquals("long", fieldType("serialVersionUID"))
+        assertEquals("java.util.Comparator", fieldType("CASE_INSENSITIVE_ORDER"))
+    }
+
+        @Test
     fun `find class from build dir folder`() {
         val clazz = cp.findClass<Foo>()
         assertEquals(Foo::class.java.name, clazz.name)

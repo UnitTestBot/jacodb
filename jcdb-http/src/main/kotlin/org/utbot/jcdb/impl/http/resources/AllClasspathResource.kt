@@ -15,7 +15,7 @@ import java.util.*
 @RequestMapping("/classpaths/allJars")
 class AllClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
 
-    private lateinit var allClasspath: JcClasspath
+    private var allClasspath: JcClasspath = jcdb.allClasspath
 
     override fun intervalAction() {
         val old = allClasspath
