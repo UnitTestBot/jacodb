@@ -514,7 +514,7 @@ class MethodNodeBuilder(
     }
 
 
-    private val JcRawHandle.asAsmHandle: Handle
+    private val BsmHandle.asAsmHandle: Handle
         get() = Handle(
             tag,
             declaringClass.jvmClassName,
@@ -537,24 +537,23 @@ class MethodNodeBuilder(
         expr.args.forEach { it.accept(this) }
         currentInsnList.add(
             InvokeDynamicInsnNode(
-                expr.methodName,
-                expr.methodDesc,
+                expr.callCiteMethodName,
+                "(${expr.callCiteArgTypes.joinToString("") { it.jvmTypeName }})${expr.callCiteReturnType.jvmTypeName}",
                 expr.bsm.asAsmHandle,
                 *expr.bsmArgs.map {
                     when (it) {
-                        is JcRawInt -> it.value
-                        is JcRawFloat -> it.value
-                        is JcRawLong -> it.value
-                        is JcRawDouble -> it.value
-                        is JcRawStringConstant -> it.value
-                        is MethodTypeNameImpl -> Type.getMethodType(
+                        is BsmIntArg -> it.value
+                        is BsmFloatArg -> it.value
+                        is BsmLongArg -> it.value
+                        is BsmDoubleArg -> it.value
+                        is BsmStringArg -> it.value
+                        is BsmMethodTypeArg -> Type.getMethodType(
                             it.returnType.asAsmType,
-                            *it.argTypes.map { arg -> arg.asAsmType }.toTypedArray()
+                            *it.argumentTypes.map { arg -> arg.asAsmType }.toTypedArray()
                         )
 
-                        is TypeName -> it.asAsmType
-                        is JcRawMethodConstant -> it.asAsmType
-                        is JcRawHandle -> it.asAsmHandle
+                        is BsmTypeArg -> it.typeName.asAsmType
+                        is BsmHandle -> it.asAsmHandle
                         else -> error("Unknown arg of bsm: $it")
                     }
                 }.toTypedArray()

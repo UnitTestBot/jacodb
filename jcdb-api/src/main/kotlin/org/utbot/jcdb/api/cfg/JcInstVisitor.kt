@@ -56,6 +56,7 @@ interface JcExprVisitor<T> {
     fun visitJcNewArrayExpr(expr: JcNewArrayExpr): T
     fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr): T
     fun visitJcLambdaExpr(expr: JcLambdaExpr): T
+    fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): T
     fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): T
     fun visitJcStaticCallExpr(expr: JcStaticCallExpr): T
     fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): T

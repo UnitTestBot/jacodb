@@ -83,20 +83,24 @@ private fun List<*>?.parseStack(): SortedMap<Int, TypeName> {
     return result.toSortedMap()
 }
 
-private val Type.asTypeName: TypeName
+private val Type.asTypeName: BsmArg
     get() = when (this.sort) {
-        Type.VOID -> PredefinedPrimitives.void.typeName()
-        Type.BOOLEAN -> PredefinedPrimitives.boolean.typeName()
-        Type.CHAR -> PredefinedPrimitives.char.typeName()
-        Type.BYTE -> PredefinedPrimitives.byte.typeName()
-        Type.SHORT -> PredefinedPrimitives.short.typeName()
-        Type.INT -> PredefinedPrimitives.int.typeName()
-        Type.FLOAT -> PredefinedPrimitives.float.typeName()
-        Type.LONG -> PredefinedPrimitives.long.typeName()
-        Type.DOUBLE -> PredefinedPrimitives.double.typeName()
-        Type.ARRAY -> elementType.asTypeName.asArray()
-        Type.OBJECT -> className.typeName()
-        Type.METHOD -> MethodTypeNameImpl(this.argumentTypes.map { it.asTypeName }, this.returnType.asTypeName)
+        Type.VOID -> BsmTypeArg(PredefinedPrimitives.void.typeName())
+        Type.BOOLEAN -> BsmTypeArg(PredefinedPrimitives.boolean.typeName())
+        Type.CHAR -> BsmTypeArg(PredefinedPrimitives.char.typeName())
+        Type.BYTE -> BsmTypeArg(PredefinedPrimitives.byte.typeName())
+        Type.SHORT -> BsmTypeArg(PredefinedPrimitives.short.typeName())
+        Type.INT -> BsmTypeArg(PredefinedPrimitives.int.typeName())
+        Type.FLOAT -> BsmTypeArg(PredefinedPrimitives.float.typeName())
+        Type.LONG -> BsmTypeArg(PredefinedPrimitives.long.typeName())
+        Type.DOUBLE -> BsmTypeArg(PredefinedPrimitives.double.typeName())
+        Type.ARRAY -> BsmTypeArg((elementType.asTypeName as BsmTypeArg).typeName.asArray())
+        Type.OBJECT -> BsmTypeArg(className.typeName())
+        Type.METHOD -> BsmMethodTypeArg(
+            this.argumentTypes.map { (it.asTypeName as BsmTypeArg).typeName },
+            (this.returnType.asTypeName as BsmTypeArg).typeName
+        )
+
         else -> error("Unknown type: $this")
     }
 
@@ -834,8 +838,8 @@ class RawInstListBuilder(
         }
     }
 
-    private val Handle.jcRawHandle
-        get() = JcRawHandle(
+    private val Handle.bsmHandleArg
+        get() = BsmHandle(
             tag,
             owner.typeName(),
             name,
@@ -844,29 +848,34 @@ class RawInstListBuilder(
             isInterface
         )
 
+    private fun bsmNumberArg(number: Number) = when (number) {
+        is Int -> BsmIntArg(number)
+        is Float -> BsmFloatArg(number)
+        is Long -> BsmLongArg(number)
+        is Double -> BsmDoubleArg(number)
+        else -> error("Unknown number: $number")
+    }
+
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
-        // todo: better invokedynamic handling
         val desc = insnNode.desc
-        val bsmMethod = insnNode.bsm.jcRawHandle
+        val bsmMethod = insnNode.bsm.bsmHandleArg
         val bsmArgs = insnNode.bsmArgs.map {
             when (it) {
-                is Number -> JcRawNumber(it)
-                is String -> JcRawString(it)
+                is Number -> bsmNumberArg(it)
+                is String -> BsmStringArg(it)
                 is Type -> it.asTypeName
-                is Handle -> it.jcRawHandle
+                is Handle -> it.bsmHandleArg
                 else -> error("Unknown arg of bsm: $it")
             }
         }.reversed()
         val args = Type.getArgumentTypes(desc).map { pop() }.reversed()
         val expr = JcRawDynamicCallExpr(
-            Type.getReturnType(desc).descriptor.typeName(),
-            "".typeName(),
-            "dynamic call",
+            bsmMethod,
+            bsmArgs,
+            insnNode.name,
             Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
             Type.getReturnType(desc).descriptor.typeName(),
             args,
-            bsmMethod,
-            bsmArgs
         )
         if (Type.getReturnType(desc) == Type.VOID_TYPE) {
             instructionList(insnNode) += JcRawCallInst(expr)
@@ -1005,10 +1014,8 @@ class RawInstListBuilder(
 
         val args = Type.getArgumentTypes(insnNode.desc).map { pop() }.reversed()
 
-        val exprType = Type.getReturnType(insnNode.desc).descriptor.typeName()
         val expr = when (val opcode = insnNode.opcode) {
             Opcodes.INVOKESTATIC -> JcRawStaticCallExpr(
-                exprType,
                 owner,
                 methodName,
                 argTypes,
@@ -1020,7 +1027,6 @@ class RawInstListBuilder(
                 val instance = pop()
                 when (opcode) {
                     Opcodes.INVOKEVIRTUAL -> JcRawVirtualCallExpr(
-                        exprType,
                         owner,
                         methodName,
                         argTypes,
@@ -1030,7 +1036,6 @@ class RawInstListBuilder(
                     )
 
                     Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(
-                        exprType,
                         owner,
                         methodName,
                         argTypes,
@@ -1040,7 +1045,6 @@ class RawInstListBuilder(
                     )
 
                     Opcodes.INVOKEINTERFACE -> JcRawInterfaceCallExpr(
-                        exprType,
                         owner,
                         methodName,
                         argTypes,

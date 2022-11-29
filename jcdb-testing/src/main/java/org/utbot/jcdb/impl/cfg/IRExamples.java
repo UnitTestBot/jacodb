@@ -98,4 +98,8 @@ public class IRExamples {
         } catch (IOException e) {
         }
     }
+
+    public String concatTest(String s, int a) {
+        return s + a;
+    }
 }

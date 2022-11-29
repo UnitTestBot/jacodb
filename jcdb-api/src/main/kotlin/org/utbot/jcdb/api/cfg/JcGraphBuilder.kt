@@ -225,14 +225,28 @@ class JcGraphBuilder(
         }
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
-        val lambdaBases = expr.bsmArgs.filterIsInstance<JcRawHandle>()
-        assert(lambdaBases.size == 1) { "Unexpected number of lambda bases in dynamic call" }
+        val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
+        when (lambdaBases.size) {
+            1 -> {
+                val base = lambdaBases.first()
+                val klass = base.declaringClass.asType as JcClassType
+                val typedBase = klass.getMethod(base.name, base.argTypes, base.returnType)
 
-        val base = lambdaBases.first()
-        val klass = base.declaringClass.asType as JcClassType
-        val typedBase = klass.getMethod(base.name, base.argTypes, base.returnType)
+                return JcLambdaExpr(typedBase, expr.args.map { it.accept(this) as JcValue })
+            }
 
-        return JcLambdaExpr(expr.returnType.asType, typedBase, expr.args.map { it.accept(this) as JcValue })
+            else -> {
+                val bsm = expr.typedMethod
+                return JcDynamicCallExpr(
+                    bsm,
+                    expr.bsmArgs,
+                    expr.callCiteMethodName,
+                    expr.callCiteArgTypes.map { it.asType },
+                    expr.callCiteReturnType.asType,
+                    expr.args.map { it.accept(this) as JcValue }
+                )
+            }
+        }
     }
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
@@ -241,7 +255,7 @@ class JcGraphBuilder(
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method.returnType, method, instance, args,
+            method, instance, args,
 //            hierarchy.findOverrides(method.method).map { it.typedMethod }
         )
     }
@@ -252,14 +266,14 @@ class JcGraphBuilder(
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method.returnType, method, instance, args,
+            method, instance, args,
         )
     }
 
     override fun visitJcRawStaticCallExpr(expr: JcRawStaticCallExpr): JcExpr {
         val method = expr.typedMethod
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcStaticCallExpr(expr.typeName.asType, method, args)
+        return JcStaticCallExpr(method, args)
     }
 
     override fun visitJcRawSpecialCallExpr(expr: JcRawSpecialCallExpr): JcExpr {
@@ -267,7 +281,7 @@ class JcGraphBuilder(
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcSpecialCallExpr(
-            method.returnType, method, instance, args,
+            method, instance, args,
         )
     }
 

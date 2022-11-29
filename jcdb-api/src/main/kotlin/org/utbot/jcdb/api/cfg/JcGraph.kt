@@ -2,7 +2,6 @@ package org.utbot.jcdb.api.cfg
 
 import org.utbot.jcdb.api.*
 
-// todo: reaching definitions impl
 // todo: transforming String concat
 
 class JcGraph(
@@ -723,12 +722,13 @@ sealed interface JcCallExpr : JcExpr {
     val method: JcTypedMethod
     val args: List<JcValue>
 
+    override val type get() = method.returnType
+
     override val operands: List<JcValue>
         get() = args
 }
 
 data class JcLambdaExpr(
-    override val type: JcType,
     override val method: JcTypedMethod,
     override val args: List<JcValue>,
 ) : JcCallExpr {
@@ -737,8 +737,23 @@ data class JcLambdaExpr(
     }
 }
 
+data class JcDynamicCallExpr(
+    val bsm: JcTypedMethod,
+    val bsmArgs: List<BsmArg>,
+    val callCiteMethodName: String,
+    val callCiteArgTypes: List<JcType>,
+    val callCiteReturnType: JcType,
+    val callCiteArgs: List<JcValue>
+) : JcCallExpr {
+    override val method get() = bsm
+    override val args get() = callCiteArgs
+
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcDynamicCallExpr(this)
+    }
+}
+
 data class JcVirtualCallExpr(
-    override val type: JcType,
     override val method: JcTypedMethod,
     val instance: JcValue,
     override val args: List<JcValue>,
@@ -756,7 +771,6 @@ data class JcVirtualCallExpr(
 
 
 data class JcStaticCallExpr(
-    override val type: JcType,
     override val method: JcTypedMethod,
     override val args: List<JcValue>,
 ) : JcCallExpr {
@@ -775,7 +789,6 @@ data class JcStaticCallExpr(
 }
 
 data class JcSpecialCallExpr(
-    override val type: JcType,
     override val method: JcTypedMethod,
     val instance: JcValue,
     override val args: List<JcValue>,

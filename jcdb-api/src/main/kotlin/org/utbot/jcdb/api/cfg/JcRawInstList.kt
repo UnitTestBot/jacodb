@@ -4,7 +4,6 @@ import org.utbot.jcdb.api.cfg.JcGraph
 import org.utbot.jcdb.api.cfg.JcGraphBuilder
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
-import org.utbot.jcdb.api.ext.HierarchyExtension
 
 class JcRawInstList(
     instructions: List<JcRawInst>
@@ -636,37 +635,52 @@ sealed interface JcRawCallExpr : JcRawExpr {
     val returnType: TypeName
     val args: List<JcRawValue>
 
+    override val typeName get() = returnType
+
     override val operands: List<JcRawValue>
         get() = args
 }
 
+sealed interface BsmArg
 
-data class JcRawHandle(
+data class BsmIntArg(val value: Int) : BsmArg
+data class BsmFloatArg(val value: Float) : BsmArg
+data class BsmLongArg(val value: Long) : BsmArg
+data class BsmDoubleArg(val value: Double) : BsmArg
+data class BsmStringArg(val value: String) : BsmArg
+data class BsmTypeArg(val typeName: TypeName) : BsmArg
+data class BsmMethodTypeArg(val argumentTypes: List<TypeName>, val returnType: TypeName) : BsmArg
+
+data class BsmHandle(
     val tag: Int,
     val declaringClass: TypeName,
     val name: String,
     val argTypes: List<TypeName>,
     val returnType: TypeName,
     val isInterface: Boolean,
-)
+) : BsmArg
 
 data class JcRawDynamicCallExpr(
-    override val typeName: TypeName,
-    override val declaringClass: TypeName,
-    override val methodName: String,
-    override val argumentTypes: List<TypeName>,
-    override val returnType: TypeName,
-    override val args: List<JcRawValue>,
-    val bsm: JcRawHandle,
-    val bsmArgs: List<Any>
+    val bsm: BsmHandle,
+    val bsmArgs: List<BsmArg>,
+    val callCiteMethodName: String,
+    val callCiteArgTypes: List<TypeName>,
+    val callCiteReturnType: TypeName,
+    val callCiteArgs: List<JcRawValue>
 ) : JcRawCallExpr {
+    override val declaringClass get() = bsm.declaringClass
+    override val methodName get() = bsm.name
+    override val argumentTypes get() = bsm.argTypes
+    override val returnType get() = bsm.returnType
+    override val typeName get() = returnType
+    override val args get() = callCiteArgs
+
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawDynamicCallExpr(this)
     }
 }
 
 data class JcRawVirtualCallExpr(
-    override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
@@ -686,7 +700,6 @@ data class JcRawVirtualCallExpr(
 }
 
 data class JcRawInterfaceCallExpr(
-    override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
@@ -706,7 +719,6 @@ data class JcRawInterfaceCallExpr(
 }
 
 data class JcRawStaticCallExpr(
-    override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
@@ -722,7 +734,6 @@ data class JcRawStaticCallExpr(
 }
 
 data class JcRawSpecialCallExpr(
-    override val typeName: TypeName,
     override val declaringClass: TypeName,
     override val methodName: String,
     override val argumentTypes: List<TypeName>,

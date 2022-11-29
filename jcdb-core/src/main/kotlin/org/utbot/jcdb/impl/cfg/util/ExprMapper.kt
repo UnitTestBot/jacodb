@@ -110,15 +110,15 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         JcRawAndExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmpExpr(expr: JcRawCmpExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+    override fun visitJcRawCmpExpr(expr: JcRawCmpExpr) = binaryHandler(expr) { type, lhv, rhv ->
         JcRawCmpExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+    override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr) = binaryHandler(expr) { type, lhv, rhv ->
         JcRawCmpgExpr(type, lhv, rhv)
     }
 
-    override fun visitJcRawCmplExpr(expr: JcRawCmplExpr)  = binaryHandler(expr) { type, lhv, rhv ->
+    override fun visitJcRawCmplExpr(expr: JcRawCmplExpr) = binaryHandler(expr) { type, lhv, rhv ->
         JcRawCmplExpr(type, lhv, rhv)
     }
 
@@ -134,7 +134,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         JcRawEqExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawNeqExpr(expr: JcRawNeqExpr)  = binaryHandler(expr) { _, lhv, rhv ->
+    override fun visitJcRawNeqExpr(expr: JcRawNeqExpr) = binaryHandler(expr) { _, lhv, rhv ->
         JcRawNeqExpr(expr.typeName, lhv, rhv)
     }
 
@@ -142,7 +142,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         JcRawGeExpr(expr.typeName, lhv, rhv)
     }
 
-    override fun visitJcRawGtExpr(expr: JcRawGtExpr)  = binaryHandler(expr) { _, lhv, rhv ->
+    override fun visitJcRawGtExpr(expr: JcRawGtExpr) = binaryHandler(expr) { _, lhv, rhv ->
         JcRawGtExpr(expr.typeName, lhv, rhv)
     }
 
@@ -229,14 +229,12 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawDynamicCallExpr(
-                expr.typeName,
-                expr.declaringClass,
-                expr.methodName,
-                expr.argumentTypes,
-                expr.returnType,
-                newArgs,
                 expr.bsm,
-                expr.bsmArgs
+                expr.bsmArgs,
+                expr.callCiteMethodName,
+                expr.callCiteArgTypes,
+                expr.callCiteReturnType,
+                newArgs
             )
         }
     }
@@ -247,7 +245,12 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawVirtualCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newInstance, newArgs
+                expr.declaringClass,
+                expr.methodName,
+                expr.argumentTypes,
+                expr.returnType,
+                newInstance,
+                newArgs
             )
         }
     }
@@ -258,7 +261,12 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawInterfaceCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newInstance, newArgs
+                expr.declaringClass,
+                expr.methodName,
+                expr.argumentTypes,
+                expr.returnType,
+                newInstance,
+                newArgs
             )
         }
     }
@@ -268,7 +276,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawStaticCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName,  expr.argumentTypes, expr.returnType, newArgs
+                expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newArgs
             )
         }
     }
@@ -279,7 +287,12 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when {
             expr.instance == newInstance && expr.args == newArgs -> expr
             else -> JcRawSpecialCallExpr(
-                expr.typeName, expr.declaringClass, expr.methodName,  expr.argumentTypes, expr.returnType, newInstance, newArgs
+                expr.declaringClass,
+                expr.methodName,
+                expr.argumentTypes,
+                expr.returnType,
+                newInstance,
+                newArgs
             )
         }
     }
