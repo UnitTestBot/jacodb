@@ -2,6 +2,9 @@ name: Build Docker image for demo app
 
 on: [workflow_dispatch]
 
+permissions:
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   NAMESPACE: jcdb
