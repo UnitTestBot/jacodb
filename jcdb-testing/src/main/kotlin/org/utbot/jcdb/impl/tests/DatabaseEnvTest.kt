@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.JRE
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
@@ -60,7 +59,6 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    @DisabledOnJre
     fun `find class from String`() {
         val clazz = cp.findClass<String>()
 
