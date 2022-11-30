@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnJre
+import org.junit.jupiter.api.condition.JRE
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.constructors
@@ -37,6 +39,7 @@ import org.utbot.jcdb.impl.Enums
 import org.utbot.jcdb.impl.Foo
 import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
+import org.utbot.jcdb.impl.skipAssertionsOn
 import org.utbot.jcdb.impl.usages.Generics
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
@@ -57,19 +60,21 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
+    @DisabledOnJre
     fun `find class from String`() {
         val clazz = cp.findClass<String>()
 
         fun fieldType(name: String): String {
             return clazz.declaredFields.first { it.name == name }.type.typeName
         }
-
-        assertEquals("byte", fieldType("coder"))
+        skipAssertionsOn(JRE.JAVA_8) {
+            assertEquals("byte", fieldType("coder"))
+        }
         assertEquals("long", fieldType("serialVersionUID"))
         assertEquals("java.util.Comparator", fieldType("CASE_INSENSITIVE_ORDER"))
     }
 
-        @Test
+    @Test
     fun `find class from build dir folder`() {
         val clazz = cp.findClass<Foo>()
         assertEquals(Foo::class.java.name, clazz.name)

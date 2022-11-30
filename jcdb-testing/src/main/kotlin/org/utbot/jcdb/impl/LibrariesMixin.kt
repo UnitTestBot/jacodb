@@ -1,6 +1,7 @@
 package org.utbot.jcdb.impl
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.condition.JRE
 import java.io.File
 
 val allClasspath: List<File>
@@ -28,3 +29,10 @@ private val classpath: List<String>
         return classpath.split(File.pathSeparatorChar).toList()
     }
 
+
+inline fun skipAssertionsOn(jre: JRE, assertions: () -> Unit) {
+    val currentVersion = JRE.currentVersion()
+    if (currentVersion != jre) {
+        assertions()
+    }
+}

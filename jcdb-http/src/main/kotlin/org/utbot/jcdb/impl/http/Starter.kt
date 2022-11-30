@@ -16,17 +16,18 @@ val jar: File?
     get() {
         try {
             // Get path of the JAR file
-            val jarPath = HttpHook::class.java
+            val path = HttpHook::class.java
                 .protectionDomain
                 .codeSource
                 .location
                 .toURI()
+                .toString()
 
 
-            println(jarPath)
+            println(path)
 
             // Get name of the JAR file
-            return null
+            return File(path.substring(0, path.lastIndexOf('!')))
         } catch (e: URISyntaxException) {
             e.printStackTrace()
             return null
@@ -56,7 +57,7 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
         .default("./jcdb-demo.db")
 
     private val apiPrefix by option("--api-prefix", help = "api prefix")
-        .default("./jcdb-api")
+        .default("/jcdb-api")
 
     override fun run() {
         val api = apiPrefix
