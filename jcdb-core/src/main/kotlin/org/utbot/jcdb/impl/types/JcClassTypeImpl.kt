@@ -16,15 +16,11 @@
 
 package org.utbot.jcdb.impl.types
 
-import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcRefType
-import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.JcTypedMethod
-import org.utbot.jcdb.api.ext.isNullable
-import org.utbot.jcdb.api.ext.kmTypeParameters
 import org.utbot.jcdb.api.ext.isConstructor
 import org.utbot.jcdb.api.ext.isPackagePrivate
 import org.utbot.jcdb.api.ext.isProtected
@@ -45,7 +41,6 @@ open class JcClassTypeImpl(
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
     override val nullable: Boolean,
-    private val kmType: KmType? = null,
 ) : JcClassType {
 
     constructor(
@@ -77,35 +72,17 @@ open class JcClassTypeImpl(
         name + ("<${generics}>".takeIf { generics.isNotEmpty() } ?: "")
     }
 
-    override val typeParameters: List<JcTypeVariableDeclaration>
-        get() {
-            val typeParameters = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
-            val kmTypeParameters = jcClass.kmTypeParameters ?: return typeParameters
-
-            return typeParameters.zip(kmTypeParameters) { parameter, kmTypeParameter ->
-                parameter.relaxWithKmTypeParameter(kmTypeParameter)
-            }
-        }
+    override val typeParameters get() = declaredTypeParameters.map { it.asJcDeclaration(jcClass) }
 
     override val typeArguments: List<JcRefType>
         get() {
-            val typeArguments = declaredTypeParameters.map { declaration ->
+            return declaredTypeParameters.map { declaration ->
                 val jvmType = substitutor.substitution(declaration)
                 if (jvmType != null) {
                     classpath.typeOf(jvmType) as JcRefType
                 } else {
                     JcTypeVariableImpl(classpath, declaration.asJcDeclaration(jcClass), true)
                 }
-            }
-
-            if (kmType == null)
-                return typeArguments
-
-            return typeArguments.zip(kmType.arguments.map { it.type }) { argument, argumentType ->
-                if (argumentType == null)
-                    argument
-                else
-                    argument.relaxNullabilityWith(argumentType)
             }
         }
 
@@ -163,9 +140,7 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false, kmType)
-
-    override fun relaxNullabilityWith(type: KmType) = JcClassTypeImpl(jcClass, outerType, substitutor, type.isNullable, type)
+    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

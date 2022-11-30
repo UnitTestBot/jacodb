@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcBoundedWildcard
@@ -24,7 +23,7 @@ class KotlinNullabilityTest : BaseTest() {
         val params = clazz.declaredMethods.single { it.name == "simpleGenerics" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(
-            // SomeContainer<SomeContainer<Int>>
+            // receiver -- SomeContainer<SomeContainer<Int>>
             buildTree(false) {
                 +buildTree(false) {
                     +buildTree(false)
@@ -100,7 +99,6 @@ class KotlinNullabilityTest : BaseTest() {
         assertEquals(expectedNullability, actualNullability)
     }
 
-    @Disabled("Currently substitution of type parameters doesn't preserve nullability")
     @Test
     fun `Test nullability after instantiation`() = runBlocking {
         val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType

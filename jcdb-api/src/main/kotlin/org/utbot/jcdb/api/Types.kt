@@ -16,8 +16,6 @@
 
 package org.utbot.jcdb.api
 
-import kotlinx.metadata.KmType
-import kotlinx.metadata.KmTypeParameter
 import org.objectweb.asm.tree.LocalVariableNode
 
 interface JcTypedField {
@@ -66,7 +64,6 @@ interface JcPrimitiveType : JcType {
 
 interface JcRefType : JcType {
     fun notNullable(): JcRefType
-    fun relaxNullabilityWith(type: KmType): JcRefType
 }
 
 interface JcArrayType : JcRefType {
@@ -111,6 +108,4 @@ interface JcTypeVariableDeclaration {
     val symbol: String
     val bounds: List<JcRefType>
     val owner: JcAccessible
-
-    fun relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JcTypeVariableDeclaration
 }

@@ -34,10 +34,10 @@ class JcSubstitutorImpl(
         override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
             val direct = substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
             if (direct != null) {
-                return direct
+                return direct.setNullability(direct.isNullable || type.isNullable)
             }
             return type.declaration?.let {
-                JvmTypeVariable(visitDeclaration(it, context))
+                JvmTypeVariable(visitDeclaration(it, context), type.isNullable)
             } ?: type
         }
     }
@@ -90,8 +90,9 @@ class JcSubstitutorImpl(
                 if (ignoredSymbols.contains(type.symbol)) {
                     return type
                 }
-                return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
-                    ?: type
+                return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }?.let {
+                    it.setNullability(it.isNullable || type.isNullable)
+                } ?: type
             }
         }
         return JvmTypeParameterDeclarationImpl(

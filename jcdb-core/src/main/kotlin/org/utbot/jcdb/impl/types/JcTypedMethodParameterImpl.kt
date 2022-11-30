@@ -17,11 +17,10 @@
 package org.utbot.jcdb.impl.types
 
 import org.utbot.jcdb.api.JcParameter
+import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
-import org.utbot.jcdb.api.ext.kmType
-import org.utbot.jcdb.api.ext.updateNullability
 import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.JvmType
@@ -43,7 +42,10 @@ class JcTypedMethodParameterImpl(
                 classpath.typeOf(substitutor.substitute(jvmType))
             } ?: classpath.findTypeOrNull(typeName) ?: typeName.throwClassNotFound()
 
-            return type.updateNullability(parameter.kmType, parameter.isNullable)
+            return if (!parameter.isNullable && type is JcRefType)
+                type.notNullable()
+            else
+                type
         }
 
     override val nullable: Boolean

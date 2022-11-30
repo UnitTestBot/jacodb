@@ -16,12 +16,13 @@
 
 package org.utbot.jcdb.impl.types.signature
 
+import kotlinx.metadata.KmTypeParameter
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jcdb.api.JcAccessible
 import org.utbot.jcdb.api.Resolution
 
-internal abstract class Signature<T : Resolution>(val owner: JcAccessible) :
+internal abstract class Signature<T : Resolution>(val owner: JcAccessible, private val kmTypeParameters: List<KmTypeParameter>?) :
     TypeRegistrant.RejectingSignatureVisitor(), TypeRegistrant {
 
     protected val typeVariables = ArrayList<JvmTypeParameterDeclaration>()
@@ -50,7 +51,10 @@ internal abstract class Signature<T : Resolution>(val owner: JcAccessible) :
     protected fun collectTypeParameter() {
         val current = currentTypeParameter
         if (current != null) {
-            typeVariables.add(JvmTypeParameterDeclarationImpl(current, owner, currentBounds))
+            val toAdd = JvmTypeParameterDeclarationImpl(current, owner, currentBounds)
+            typeVariables.add(kmTypeParameters?.let {
+                toAdd.relaxWithKmTypeParameter(it[typeVariables.size])
+            } ?: toAdd)
         }
     }
 

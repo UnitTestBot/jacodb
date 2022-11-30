@@ -21,11 +21,14 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.Pure
+import org.utbot.jcdb.api.ext.kmFunction
+import org.utbot.jcdb.api.ext.kmReturnType
+import org.utbot.jcdb.api.ext.kmType
 import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor
 
-internal class MethodSignature(method: JcMethod) : Signature<MethodResolution>(method) {
+internal class MethodSignature(private val method: JcMethod) : Signature<MethodResolution>(method, method.kmFunction?.typeParameters) {
 
     private val parameterTypes = ArrayList<JvmType>()
     private val exceptionTypes = ArrayList<JvmClassRefType>()
@@ -56,13 +59,19 @@ internal class MethodSignature(method: JcMethod) : Signature<MethodResolution>(m
 
     private inner class ParameterTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            parameterTypes.add(token)
+            val outToken = method.parameters[parameterTypes.size].kmType?.let {
+                token.relaxWithKmType(it)
+            } ?: token
+            parameterTypes.add(outToken)
         }
     }
 
     private inner class ReturnTypeTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
             returnType = token
+            method.kmReturnType?.let {
+                returnType = returnType.relaxWithKmType(it)
+            }
         }
     }
 

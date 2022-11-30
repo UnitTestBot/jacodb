@@ -16,54 +16,102 @@
 
 package org.utbot.jcdb.impl.types.signature
 
+import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.ext.isNullable
 
-sealed class JvmType {
+sealed class JvmType(val isNullable: Boolean) {
 
     abstract val displayName: String
 
+    abstract fun setNullability(nullable: Boolean): JvmType
+
+    open fun relaxWithKmType(kmType: KmType): JvmType =
+        setNullability(kmType.isNullable)
 }
 
-internal sealed class JvmRefType : JvmType()
+internal sealed class JvmRefType(isNullable: Boolean) : JvmType(isNullable)
 
-internal class JvmArrayType(val elementType: JvmType) : JvmRefType() {
+internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean = true) : JvmRefType(isNullable) {
 
     override val displayName: String
         get() = elementType.displayName + "[]"
+
+    override fun setNullability(nullable: Boolean): JvmType =
+        JvmArrayType(elementType, nullable)
+
+    override fun relaxWithKmType(kmType: KmType): JvmType {
+        val updatedType = kmType.arguments.single().type?.let {
+            JvmArrayType(elementType.relaxWithKmType(kmType))
+        } ?: this
+
+        return updatedType.setNullability(kmType.isNullable)
+    }
 
 }
 
 internal class JvmParameterizedType(
     val name: String,
-    val parameterTypes: List<JvmType>
-) : JvmRefType() {
+    val parameterTypes: List<JvmType>,
+    isNullable: Boolean = true
+) : JvmRefType(isNullable) {
 
     override val displayName: String
         get() = name + "<${parameterTypes.joinToString { it.displayName }}>"
 
+    override fun setNullability(nullable: Boolean): JvmType =
+        JvmParameterizedType(name, parameterTypes, nullable)
+
+    override fun relaxWithKmType(kmType: KmType): JvmType {
+        val types = parameterTypes.zip(kmType.arguments.map { it.type }) { type, innerType ->
+            innerType?.let {
+                type.relaxWithKmType(it)
+            } ?: type
+        }
+        return JvmParameterizedType(name, types, kmType.isNullable)
+    }
+
     class JvmNestedType(
         val name: String,
         val parameterTypes: List<JvmType>,
-        val ownerType: JvmType
-    ) : JvmRefType() {
+        val ownerType: JvmType,
+        isNullable: Boolean = true
+    ) : JvmRefType(isNullable) {
 
         override val displayName: String
             get() = name + "<${parameterTypes.joinToString { it.displayName }}>"
+
+        override fun setNullability(nullable: Boolean): JvmType =
+            JvmNestedType(name, parameterTypes, ownerType, nullable)
+
+        override fun relaxWithKmType(kmType: KmType): JvmType {
+            val types = parameterTypes.zip(kmType.arguments.map { it.type }) { type, innerType ->
+                innerType?.let {
+                    type.relaxWithKmType(it)
+                } ?: type
+            }
+            return JvmNestedType(name, types, ownerType, kmType.isNullable)
+        }
 
     }
 
 }
 
-internal class JvmClassRefType(val name: String) : JvmRefType() {
+internal class JvmClassRefType(val name: String, isNullable: Boolean = true) : JvmRefType(isNullable) {
 
     override val displayName: String
         get() = name
 
+    override fun setNullability(nullable: Boolean): JvmType =
+        JvmClassRefType(name, nullable)
+
 }
 
-open class JvmTypeVariable(val symbol: String) : JvmType() {
+// By default, we think that type variable is not-nullable
+// If it is then substituted with nullable type, the resulting type will still be nullable
+open class JvmTypeVariable(val symbol: String, isNullable: Boolean = false) : JvmType(isNullable) {
 
-    constructor(declaration: JvmTypeParameterDeclaration) : this(declaration.symbol) {
+    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean = false) : this(declaration.symbol, isNullable) {
         this.declaration = declaration
     }
 
@@ -71,6 +119,11 @@ open class JvmTypeVariable(val symbol: String) : JvmType() {
 
     override val displayName: String
         get() = symbol
+
+    override fun setNullability(nullable: Boolean): JvmType =
+        JvmTypeVariable(symbol, nullable).also {
+            it.declaration = declaration
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -89,14 +142,26 @@ open class JvmTypeVariable(val symbol: String) : JvmType() {
         result = 31 * result + (declaration?.hashCode() ?: 0)
         return result
     }
-
-
 }
 
-internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmType() {
+internal sealed class JvmWildcard: JvmType(true) {
+    override fun setNullability(nullable: Boolean): JvmType {
+        if (!nullable)
+            error("Attempting to make wildcard not-nullable, which are always nullable by convention")
+        return this
+    }
+}
+
+// Nullability has no sense in wildcards, so we suppose them to be nullable by default
+internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
+
     internal class JvmUpperBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
         override val displayName: String
             get() = "? extends ${bound.displayName}"
+
+        override fun relaxWithKmType(kmType: KmType): JvmType {
+            return JvmUpperBoundWildcard(bound.relaxWithKmType(kmType))
+        }
 
     }
 
@@ -104,16 +169,20 @@ internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmType() {
         override val displayName: String
             get() = "? super ${bound.displayName}"
 
+        override fun relaxWithKmType(kmType: KmType): JvmType {
+            return JvmUpperBoundWildcard(bound.relaxWithKmType(kmType))
+        }
+
     }
 }
 
-internal object JvmUnboundWildcard : JvmType() {
+internal object JvmUnboundWildcard : JvmWildcard() {
 
     override val displayName: String
         get() = "*"
 }
 
-internal class JvmPrimitiveType(val ref: String) : JvmRefType() {
+internal class JvmPrimitiveType(val ref: String) : JvmRefType(isNullable = false) {
 
     companion object {
         fun of(descriptor: Char): JvmType {
@@ -134,5 +203,11 @@ internal class JvmPrimitiveType(val ref: String) : JvmRefType() {
 
     override val displayName: String
         get() = ref
+
+    override fun setNullability(nullable: Boolean): JvmType {
+        if (nullable)
+            error("Attempting to make a nullable primitive")
+        return this
+    }
 
 }

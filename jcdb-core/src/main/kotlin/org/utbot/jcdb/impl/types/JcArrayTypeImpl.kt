@@ -16,12 +16,10 @@
 
 package org.utbot.jcdb.impl.types
 
-import kotlinx.metadata.KmType
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.ext.isNullable
 
 class JcArrayTypeImpl(
     override val elementType: JcType,
@@ -32,15 +30,6 @@ class JcArrayTypeImpl(
 
     override fun notNullable(): JcRefType {
         return JcArrayTypeImpl(elementType, false)
-    }
-
-    override fun relaxNullabilityWith(type: KmType): JcRefType {
-        val elementKmType = type.arguments.single().type ?: return JcArrayTypeImpl(elementType, type.isNullable)
-
-        return when (elementType) {
-            is JcRefType -> JcArrayTypeImpl(elementType.relaxNullabilityWith(elementKmType), type.isNullable)
-            else -> JcArrayTypeImpl(elementType, type.isNullable)
-        }
     }
 
     override val classpath: JcClasspath

@@ -27,9 +27,6 @@ import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.ext.kmFunction
-import org.utbot.jcdb.api.ext.kmReturnType
-import org.utbot.jcdb.api.ext.updateNullability
 import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.ext.isStatic
 import org.utbot.jcdb.api.throwClassNotFound
@@ -75,12 +72,7 @@ class JcTypedMethodImpl(
     override val typeParameters: List<JcTypeVariableDeclaration>
         get() {
             val impl = info.impl ?: return emptyList()
-            val typeParameters = impl.typeVariables.map { it.asJcDeclaration(method) }
-            val kmTypeParameters = method.kmFunction?.typeParameters ?: return typeParameters
-
-            return typeParameters.zip(kmTypeParameters) { typeParameter, kmTypeParameter ->
-                typeParameter.relaxWithKmTypeParameter(kmTypeParameter)
-            }
+            return impl.typeVariables.map { it.asJcDeclaration(method) }
         }
 
     override val exceptions: List<JcClassOrInterface>
@@ -119,8 +111,10 @@ class JcTypedMethodImpl(
         } else {
             classpath.typeOf(info.substitutor.substitute(impl.returnType))
         }
-
-        type.updateNullability(method.kmReturnType, method.isNullable)
+        if (!method.isNullable && type is JcRefType)
+            type.notNullable()
+        else
+            type
     }
 
     override fun typeOf(inst: LocalVariableNode): JcType {

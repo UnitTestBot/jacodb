@@ -20,8 +20,6 @@ import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedField
-import org.utbot.jcdb.api.ext.kmType
-import org.utbot.jcdb.api.ext.updateNullability
 import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.FieldResolutionImpl
@@ -48,7 +46,10 @@ class JcTypedFieldImpl(
             classpath.typeOf(substitutor.substitute(it))
         } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
 
-        type.updateNullability(field.kmType, field.isNullable)
+        if (!field.isNullable && type is JcRefType)
+            type.notNullable()
+        else
+            type
     }
 
 
