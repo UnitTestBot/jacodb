@@ -38,12 +38,11 @@ class SQLitePersistenceImpl(
 ) : JCDBPersistence, Closeable {
 
     companion object : KLogging() {
+        private const val cachesPrefix = "org.utbot.jcdb.persistence.caches"
 
-        private val locationsCacheSize =
-            Integer.getInteger("org.utbot.jcdb.persistence.caches.locations", 1_000).toLong()
-        private val byteCodeCacheSize =
-            Integer.getInteger("org.utbot.jcdb.persistence.caches.bytecode", 10_000).toLong()
-        private val symbolsCacheSize = Integer.getInteger("org.utbot.jcdb.persistence.caches.symbols", 100_000).toLong()
+        private val locationsCacheSize = Integer.getInteger("$cachesPrefix.locations", 1_000).toLong()
+        private val byteCodeCacheSize = Integer.getInteger("$cachesPrefix.bytecode", 10_000).toLong()
+        private val symbolsCacheSize = Integer.getInteger("$cachesPrefix.symbols", 100_000).toLong()
     }
 
     private val lock = ReentrantLock()

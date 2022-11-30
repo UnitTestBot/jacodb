@@ -125,12 +125,12 @@ abstract class DatabaseEnvTest {
             assertEquals("byte[]", type.typeName)
         }
 
-        with(fields.get(1)) {
+        with(fields[1]) {
             assertEquals("objectArray", name)
             assertEquals("java.lang.Object[]", type.typeName)
         }
 
-        with(fields.get(2)) {
+        with(fields[2]) {
             assertEquals("objectObjectArray", name)
             assertEquals("java.lang.Object[][]", type.typeName)
         }
