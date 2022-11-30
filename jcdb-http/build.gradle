@@ -22,7 +22,7 @@ dependencies {
 
 }
 
-def demoAppJar = "jcdb-http-demo.jar"
+def demoAppJar = "jacodb-http-demo.jar"
 
 bootJar {
     archiveName= demoAppJar

@@ -1,4 +1,4 @@
-group 'org.utbot.jcdb'
+group 'org.utbot.jacodb'
 
 if (project.hasProperty('semVer')) {
     project.version = project.semVer

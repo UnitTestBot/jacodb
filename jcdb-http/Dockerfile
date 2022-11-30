@@ -12,4 +12,4 @@ RUN apt-get update && \
 
 COPY ${JAR_FILE} .
 
-ENTRYPOINT ["java","-jar","jcdb-http-demo.jar", "--api-prefix=/jcdb-demo" ]
+ENTRYPOINT ["java","-jar","jacodb-http-demo.jar", "--api-prefix=/jacodb-demo" ]

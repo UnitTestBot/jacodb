@@ -9,7 +9,7 @@ These are basic requirements for database implementation:
 * bytecode processing and analyzing (starting with Java 1.8)
 * an ability to update bytecode from the given location while keeping the processed data intact
 * an ability to persist data on a disk and to reuse it after restarting the application
-* fast start-up: `JCDB` should balance between returning instance as soon as possible and querying data from database in the fastest way
+* fast start-up: `JacoDB` should balance between returning instance as soon as possible and querying data from database in the fastest way
 
 ## API basics
 
@@ -184,6 +184,6 @@ All `JcFeature` extensions should be added at database start-up — it is imposs
 
 ## Hooks
 
-One can extend `JCDB` with hooks. Hook is an environment extension which allows for implementing the remote API or calling the specific code during the database lifecycle.
+One can extend `JacoDB` with hooks. Hook is an environment extension which allows for implementing the remote API or calling the specific code during the database lifecycle.
 
 Hook is called twice: when the database is created and initialized properly and when it is closed.

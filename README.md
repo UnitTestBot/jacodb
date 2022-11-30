@@ -1,10 +1,10 @@
-[![ci status](https://github.com/UnitTestBot/jcdb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jcdb/actions/workflows/build-and-test.yml)
+[![ci status](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml)
 
 ## Overview
 
-`JCDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JCDB` does the same for bytecode stored in a file system.
+`JacoDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JacoDB` does the same for bytecode stored in a file system.
 
-`JCDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing java bytecode.
+`JacoDB` uses [ASM](https://asm.ow2.io/) framework for reading and parsing java bytecode.
 
 Information about classes, hierarchies, annotations, methods, fields, and their usages is stored in SQLite database — either in-memory or persistent. Persisted data can be reused between restarts. Accessing the persistent storage from multiple processes simultaneously is not supported.
 
@@ -27,7 +27,7 @@ suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
-    val database = jcdb {
+    val database = jacodb {
         useProcessJRE()
         persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
     }
@@ -55,7 +55,7 @@ Note: the `body` method returns `null` if the to-be-processed JAR-file was chang
 The database can watch for file system changes in the background and refresh the JAR-files explicitly:
 
 ```kotlin
-    val database = jcdb {
+    val database = jacodb {
         watchFileSystemChanges = true
         useProcessJRE()
         load(listOf(lib1, buildDir)) 
@@ -98,7 +98,7 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
 `JcClasspath` represents an independent snapshot of classes, which cannot be modified since it is created. Removing or modifying library files does not affect `JcClasspath` instance structure. The `JcClasspath#close` method releases all snapshots and cleans up the persisted data if some libraries are outdated.
 
 ```kotlin
-    val database = jcdb {
+    val database = jacodb {
         watchFileSystemChanges()
         useProcessJavaRuntime()
         load(listOf(lib1, buildDir))
@@ -114,7 +114,7 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
 If there is a request for a `JcClasspath` instance containing the libraries, which haven't been indexed yet, the indexing process is triggered and the new instance of the `JcClasspath` set is returned. 
 
 ```kotlin
-    val database = jcdb {
+    val database = jacodb {
         load(listOf(lib1))
         persistent()
     }
@@ -122,12 +122,12 @@ If there is a request for a `JcClasspath` instance containing the libraries, whi
     val cp = database.classpath(buildDir) // database will automatically process buildDir
 ```
 
-`JCDB` is thread-safe. If one requests `JcClasspath` instance while loading JAR-files from another thread, 
+`JacoDB` is thread-safe. If one requests `JcClasspath` instance while loading JAR-files from another thread, 
 `JcClasspath` can represent only a consistent state of the JAR-files being loaded. It is the completely loaded 
 JAR-file that appears in `JcClasspath`. Please note: there is no guarantee that all the JAR-files, submitted for loading, will be actually loaded.
 
 ```kotlin
-    val db = jcdb {
+    val db = jacodb {
         persistent()
     }
     
@@ -149,7 +149,7 @@ Bytecode loading consists of two steps:
 * retrieving information about the class names from the JAR-files or build directories
 * reading **classes** bytecode from the JAR-files or build directories and processing it (persisting data, setting up `JcFeature` implementations, etc.)
 
-`JCDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
+`JacoDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
 
 Benchmarks results and comparison with Soot is [here](./benchmarks.md).
 

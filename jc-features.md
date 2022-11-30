@@ -1,19 +1,19 @@
 ## Overview
 
 Feature is an interface which provide ability to store and query additional information based on bytecode. Feature can
-be installed only when instance of `JCDB` is created.
+be installed only when instance of `JacoDB` is created.
 
 ```kotlin
-    val db = jcdb {
-    useProcessJRE()
-    persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
-    installFeatures(Usages, InMemoryHierarchy)
-}
+    val db = jacodb {
+        useProcessJRE()
+        persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
+        installFeatures(Usages, InMemoryHierarchy)
+    }
 ```
 
 ### `InMemoryHierarchy` feature
 
-By default `JCDB` stores information about class hierarchy in sql database (table `ClassHierarchies` with columns:
+By default `JacoDB` stores information about class hierarchy in sql database (table `ClassHierarchies` with columns:
 class_id, super_id, is_interface).
 This brings ability to retrieve whole hierarchy for particular class with recursive sql query. Recursive queries are
 quite common and quite slow.
@@ -31,18 +31,18 @@ Brings ability to find out places where methods and fields are used.
 It's recommended to install `InMemoryHierarchy` for performance purposes
 
 ```kotlin
-    val db = jcdb {
-    useProcessJRE()
-    load(allClasspath)
-    persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
-    installFeatures(Usages, InMemoryHierarchy)
-}
-val method = run // java.lang.Runnable#run method
-val field = field // java.lang.String#value field
-
-val cp = db.classpath(allClasspath)
-cp.findUsages(method) // sequence of methods which calls `method`
-cp.findUsages(field, FieldUsageMode.READ) // sequence of fields which reads `field` value
+    val db = jacodb {
+        useProcessJRE()
+        load(allClasspath)
+        persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
+        installFeatures(Usages, InMemoryHierarchy)
+    }
+    val method = run // java.lang.Runnable#run method
+    val field = field // java.lang.String#value field
+    
+    val cp = db.classpath(allClasspath)
+    cp.findUsages(method) // sequence of methods which calls `method`
+    cp.findUsages(field, FieldUsageMode.READ) // sequence of fields which reads `field` value
 ```
 
 `Usages` indexer goes through all instructions and collect method calls or fields access and store it into table:

@@ -1,6 +1,6 @@
 ## Settings
 
-JCDBSettings is used for creating instance of `JCDB` instance.
+JacoDBSettings is used for creating instance of `JacoDB` instance.
 
 #### `useJavaRuntime(file)`
 
@@ -52,7 +52,7 @@ Which features jcdb will use
 
 ## Database
 
-`JCDB` instance created based on settings. If instance is not needed yet then `close` method should be called.
+`JacoDB` instance created based on settings. If instance is not needed yet then `close` method should be called.
 
 #### Properties
 
@@ -60,7 +60,7 @@ Which features jcdb will use
 |----------------|------------------------------|----------------------------------------------------------------|
 | locations      | List of `JcByteCodeLocation` | List of locations processed by database                        |
 | persistence    | `JCDBPersistence`            | persistence which brings ability to read/write to database     |
-| runtimeVersion | `JavaRuntimeVersion`         | version of java runtime which is used for this `jcdb` instance |
+| runtimeVersion | `JavaRuntimeVersion`         | version of java runtime which is used for this `JacoDB` instance |
 
 
 #### `classpath(dirOrJars)`
@@ -74,11 +74,11 @@ Creates classpath instances
 
 #### `refresh()`
 
-Refreshes state of `jcdb` instance and state of file systen. Should be called to clean up jars/folders that loaded versions are out of data and which are not used by any classpaths created by `jcdb` instance
+Refreshes state of `JacoDB` instance and state of file systen. Should be called to clean up jars/folders that loaded versions are out of data and which are not used by any classpaths created by `JacoDB` instance
 
 #### `rebuildFeatures()`
 
-Rebuild indexes for features installed in `jcdb`
+Rebuild indexes for features installed in `JacoDB`
 
 #### `awaitBackgroundJobs()`
 
@@ -86,7 +86,7 @@ Await background jobs
 
 #### `close()`
 
-Is used to clean up resources used by `jcdb` instance
+Is used to clean up resources used by `JacoDB` instance
 
 ## Classpath
 
@@ -98,7 +98,7 @@ Is used to clean up resources used by `jcdb` instance
 | property  | type                          | description                             |
 |-----------|-------------------------------|-----------------------------------------|
 | locations | List of `JcByteCodeLocation`  | List of locations attached to classpath |
-| db        | `JCDB`                        | database instance                       |
+| db        | `JacoDB`                        | database instance                       |
 
 
 findClassOrNull(name: String): JcClassOrInterface?
@@ -337,7 +337,7 @@ return new indexer for specific location
 
 | property | type                 | description                     |
 |----------|----------------------|---------------------------------|
-| jcdb     | `JCDB`               | database                        |
+| jcdb     | `JacoDB`             | database                        |
 | location | `RegisteredLocation` | location that should be indexed |
 
 #### `query(classpath, request)`
@@ -356,7 +356,7 @@ Indexer of bytecode.
 
 #### `index(node)`
 
-Called for each ClassNode processed by `jcdb`. **Bytecode locations are processed in parallel. There is no strict order of processing locations.** 
+Called for each ClassNode processed by `JacoDB`. **Bytecode locations are processed in parallel. There is no strict order of processing locations.** 
 
 | property | type        | description                             |
 |----------|-------------|-----------------------------------------|
@@ -398,11 +398,11 @@ Finds all methods in Classpath that override specified method
 find classes that implements `java.lang.Runnable`:
 
 ```kotlin
-    val jcdb = jcdb {
+    val db = jacodb {
         loadByteCode(allClasspath) // all classpath for current process
         installFeatures(InMemoryHierarchy) // without that line memory footprint will be low as well as performance
     }
-    val classpath = jcdb.classpath(allClasspath)
+    val classpath = db.classpath(allClasspath)
     val extension = classpath.hierarchyExtension()
     extension.findSubClasses("java.lang.Runnable", allHierarchy = true) // all classes that implements `Runnable`
     
@@ -446,11 +446,11 @@ Finds all methods that instantiate instance of specified class
 
 find usages of 
 ```kotlin
-    val jcdb = jcdb {
+    val db = jacodb {
         loadByteCode(allClasspath) // all classpath of current process
         installFeatures(Usages, InMemoryHierarchy) // without that line memory footprint will be low as well as performance
     }
-    val classpath = jcdb.classpath(allClasspath)
+    val classpath = db.classpath(allClasspath)
     val extension = classpath.usagesExtension()
     
     val runMethod = classpath.findClassOrNull("java.lang.Runnable")!!.declaredMethods.first() // find run method

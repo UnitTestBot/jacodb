@@ -10,21 +10,21 @@
 Benchmark runs across different scopes of java bytecode with following meanings:
 - runtime - only java runtime without any additional dependencies
 - runtime + guava - java runtime with one jar for guava 
-- runtime + project classpath - java runtime with all visible dependencies of `jcdb` project
+- runtime + project classpath - java runtime with all visible dependencies of `JacoDB` project
 - runtime + Idea community - java runtime with all visible dependencies of `IDEA community` project
 
-`JCDB` benchmarks also include scheme when `Usages` feature is installed 
+`JacoDB` benchmarks also include scheme when `Usages` feature is installed 
 
-### JCDB
+### JacoDB
 
 ```ssh
-./gradlew jcdbBenchmark
+./gradlew jacodbBenchmark
 ```
 
 
 | Benchmark                                                                                                                                 | Repeats  | Avg time per operation  | 
 |-------------------------------------------------------------------------------------------------------------------------------------------|----------|-------------------------|
-| [runtime](../blob/main/jcdb-core/src/test/kotlin/org/utbot/jcdb/impl/performance/JcdbBenchmarks.kt#L36)                                   | 5        | 741 ms                  |
+| [runtime](../blob/main/jacodb-core/src/test/kotlin/org/utbot/jacodb/impl/performance/JcdbBenchmarks.kt#L36)                               | 5        | 741 ms                  |
 | [runtime + guava](../blob/main/jcdb-core/src/test/kotlin/org/utbot/jcdb/impl/performance/JcdbBenchmarks.kt#L76)                           | 5        | 740 ms                  |
 | [runtime + project dependencies](../blob/main/jcdb-core/src/test/kotlin/org/utbot/jcdb/impl/performance/JcdbBenchmarks.kt#L55)            | 5        | 1034 ms                 |
 | [runtime + IDEA community dependecies](../blob/main/jcdb-core/src/test/kotlin/org/utbot/jcdb/impl/performance/JcdbBenchmarks.kt#L97)      | 5        | 2324 ms                 |
