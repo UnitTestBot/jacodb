@@ -4,9 +4,8 @@ on: [workflow_dispatch]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  DOCKERHUB_NAMESPACE: jcdb
-  DOCKERHUB_IMAGE_NAME: jcdb-demo
+  NAMESPACE: jcdb
+  IMAGE_NAME: jcdb-demo
 
 jobs:
   build:
@@ -34,14 +33,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         if: ${{ github.event_name != 'pull_request' }}
         with:
           push: true
-          # read more about contexts at:
-          #   https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
-          tags: ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.DOCKERHUB_IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           context: .
           file: jcdb-http/Dockerfile
           build-args: |
