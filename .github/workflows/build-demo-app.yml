@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: jcdb-demo
+  IMAGE_NAME: unittestbot/jcdb
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
           context: .
           file: jcdb-http/Dockerfile
           build-args: |
