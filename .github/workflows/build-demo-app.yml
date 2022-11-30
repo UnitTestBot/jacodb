@@ -1,5 +1,4 @@
-name: build and demo app (Docker image)
-
+name: Build Docker image for demo app
 
 on: [workflow_dispatch]
 
@@ -29,14 +28,14 @@ jobs:
         run: gradle clean bootJar
 
       - name: Log in to the Container registry
-        uses: docker/login-action@2
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.PUBLISH_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         if: ${{ github.event_name != 'pull_request' }}
         with:
           push: true
