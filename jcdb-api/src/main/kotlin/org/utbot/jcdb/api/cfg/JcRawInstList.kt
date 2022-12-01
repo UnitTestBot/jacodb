@@ -643,13 +643,33 @@ sealed interface JcRawCallExpr : JcRawExpr {
 
 sealed interface BsmArg
 
-data class BsmIntArg(val value: Int) : BsmArg
-data class BsmFloatArg(val value: Float) : BsmArg
-data class BsmLongArg(val value: Long) : BsmArg
-data class BsmDoubleArg(val value: Double) : BsmArg
-data class BsmStringArg(val value: String) : BsmArg
-data class BsmTypeArg(val typeName: TypeName) : BsmArg
-data class BsmMethodTypeArg(val argumentTypes: List<TypeName>, val returnType: TypeName) : BsmArg
+data class BsmIntArg(val value: Int) : BsmArg {
+    override fun toString(): String = value.toString()
+}
+
+data class BsmFloatArg(val value: Float) : BsmArg {
+    override fun toString(): String = value.toString()
+}
+
+data class BsmLongArg(val value: Long) : BsmArg {
+    override fun toString(): String = value.toString()
+}
+
+data class BsmDoubleArg(val value: Double) : BsmArg {
+    override fun toString(): String = value.toString()
+}
+
+data class BsmStringArg(val value: String) : BsmArg {
+    override fun toString(): String = "\"$value\""
+}
+
+data class BsmTypeArg(val typeName: TypeName) : BsmArg {
+    override fun toString(): String = typeName.typeName
+}
+
+data class BsmMethodTypeArg(val argumentTypes: List<TypeName>, val returnType: TypeName) : BsmArg {
+    override fun toString(): String = "(${argumentTypes.joinToString { it.typeName }}:${returnType.typeName})"
+}
 
 data class BsmHandle(
     val tag: Int,
@@ -773,11 +793,11 @@ data class JcRawArgument(val index: Int, val name: String?, override val typeNam
     }
 }
 
-data class JcRawRegister(val index: Int, override val typeName: TypeName) : JcRawSimpleValue {
-    override fun toString(): String = "%$index"
+data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawSimpleValue {
+    override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
-        return visitor.visitJcRawRegister(this)
+        return visitor.visitJcRawLocal(this)
     }
 }
 

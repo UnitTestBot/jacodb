@@ -139,8 +139,8 @@ internal class Simplifier {
     private fun computeReplacements(
         instList: JcRawInstList,
         uses: Map<JcRawSimpleValue, Set<JcRawInst>>
-    ): Pair<Map<JcRawRegister, JcRawValue>, Set<JcRawInst>> {
-        val replacements = mutableMapOf<JcRawRegister, JcRawValue>()
+    ): Pair<Map<JcRawLocal, JcRawValue>, Set<JcRawInst>> {
+        val replacements = mutableMapOf<JcRawLocal, JcRawValue>()
         val reservedValues = mutableSetOf<JcRawValue>()
         val replacedInsts = mutableSetOf<JcRawInst>()
 
@@ -148,7 +148,7 @@ internal class Simplifier {
             if (inst is JcRawAssignInst) {
                 val rhv = inst.rhv
                 if (inst.lhv is JcRawSimpleValue
-                    && rhv is JcRawRegister
+                    && rhv is JcRawLocal
                     && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
                     && rhv !in reservedValues
                 ) {
@@ -168,7 +168,7 @@ internal class Simplifier {
             if (inst is JcRawAssignInst) {
                 val lhv = inst.lhv
                 val rhv = inst.rhv
-                if (lhv is JcRawRegister && rhv is JcRawRegister) {
+                if (lhv is JcRawLocal && rhv is JcRawLocal) {
                     assignments.getOrPut(lhv, ::mutableSetOf).add(rhv)
                 }
             }
@@ -177,11 +177,11 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(jcClasspath: JcClasspath, instList: JcRawInstList): JcRawInstList {
-        val types = mutableMapOf<JcRawRegister, MutableSet<JcType>>()
+        val types = mutableMapOf<JcRawLocal, MutableSet<JcType>>()
         for (inst in instList) {
-            if (inst is JcRawAssignInst && inst.lhv is JcRawRegister && inst.rhv !is JcRawNullConstant) {
+            if (inst is JcRawAssignInst && inst.lhv is JcRawLocal && inst.rhv !is JcRawNullConstant) {
                 types.getOrPut(
-                    inst.lhv as JcRawRegister,
+                    inst.lhv as JcRawLocal,
                     ::mutableSetOf
                 ) += jcClasspath.findTypeOrNull(inst.rhv.typeName.typeName)
                     ?: error("Could not fin type")
@@ -191,7 +191,7 @@ internal class Simplifier {
             .mapValues {
                 val supertype = jcClasspath.findCommonSupertype(it.value)
                     ?: error("Could not find common supertype of ${it.value.joinToString { it.typeName }}")
-                JcRawRegister(it.key.index, supertype.typeName.typeName())
+                JcRawLocal(it.key.name, supertype.typeName.typeName())
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }

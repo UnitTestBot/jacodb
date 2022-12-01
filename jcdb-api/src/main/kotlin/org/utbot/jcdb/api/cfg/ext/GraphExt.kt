@@ -106,7 +106,7 @@ fun JcBlockGraph.toFile(dotCmd: String): Path {
     for ((index, block) in basicBlocks.withIndex()) {
         val node = Node("$index")
             .setShape(Shape.box)
-            .setLabel(instructions(block).joinToString("") { "$it\\l" }.replace("\"", "\\\""))
+            .setLabel(instructions(block).joinToString("") { "$it\\l" }.replace("\"", "\\\"").replace("\n", "\\n"))
             .setFontSize(12.0)
         nodes[block] = node
         graph.addNode(node)
@@ -167,4 +167,44 @@ fun JcBlockGraph.toFile(dotCmd: String): Path {
     val resultingFile = File(newFile).toPath()
     Files.move(File(file).toPath(), resultingFile)
     return resultingFile
+}
+
+fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
+    JcGraph(classpath, instructions.filter { it.accept(visitor) })
+
+fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
+    JcGraph(classpath, instructions.filterNot { it.accept(visitor) })
+
+fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
+    JcGraph(classpath, instructions.map { it.accept(visitor) })
+
+fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
+    JcGraph(classpath, instructions.mapNotNull { it.accept(visitor) })
+
+fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
+    JcGraph(classpath, instructions.flatMap { it.accept(visitor) })
+
+fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
+    instructions.forEach { it.accept(visitor) }
+    return this
+}
+
+fun <R, E, T : JcInstVisitor<E>> JcGraph.applyAndGet(visitor: T, getter: (T) -> R): R {
+    instructions.forEach { it.accept(visitor) }
+    return getter(visitor)
+}
+
+fun <T> JcGraph.collect(visitor: JcInstVisitor<T>): Collection<T> {
+    return instructions.map { it.accept(visitor) }
+}
+
+
+fun <R, E, T : JcInstVisitor<E>> JcInst.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
+}
+
+fun <R, E, T : JcExprVisitor<E>> JcExpr.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
 }

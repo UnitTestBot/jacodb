@@ -6,9 +6,8 @@ import org.utbot.jcdb.api.*
 
 class JcGraph(
     val classpath: JcClasspath,
-    instructions: List<JcInst>,
+    val instructions: List<JcInst>,
 ) : Iterable<JcInst> {
-    private val _instructions = instructions.toMutableList()
     private val indexMap = instructions.mapIndexed { index, jcInst -> jcInst to index }.toMap()
 
     private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
@@ -17,18 +16,16 @@ class JcGraph(
     private val throwPredecessors = mutableMapOf<JcCatchInst, MutableSet<JcInst>>()
     private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
 
-    val instructions: List<JcInst> get() = _instructions
-
     val entry: JcInst get() = instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
 
     init {
-        for (inst in _instructions) {
+        for (inst in instructions) {
             val successors = when (inst) {
-                is JcTerminatingInst -> emptySet()
-                is JcBranchingInst -> inst.successors.map { inst(it) }.toSet()
-                else -> setOf(next(inst))
+                is JcTerminatingInst -> mutableSetOf()
+                is JcBranchingInst -> inst.successors.map { inst(it) }.toMutableSet()
+                else -> mutableSetOf(next(inst))
             }
-            successorMap[inst] = successors.toMutableSet()
+            successorMap[inst] = successors
 
             for (successor in successors) {
                 predecessorMap.getOrPut(successor, ::mutableSetOf) += inst
@@ -46,10 +43,10 @@ class JcGraph(
     private fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
 
     fun ref(inst: JcInst): JcInstRef = JcInstRef(index(inst))
-    fun inst(ref: JcInstRef) = _instructions[ref.index]
+    fun inst(ref: JcInstRef) = instructions[ref.index]
 
-    fun previous(inst: JcInst): JcInst = _instructions[index(inst) - 1]
-    fun next(inst: JcInst): JcInst = _instructions[index(inst) + 1]
+    fun previous(inst: JcInst): JcInst = instructions[ref(inst).index - 1]
+    fun next(inst: JcInst): JcInst = instructions[ref(inst).index + 1]
 
     fun successors(inst: JcInst): Set<JcInst> = successorMap.getOrDefault(inst, emptySet())
     fun predecessors(inst: JcInst): Set<JcInst> = predecessorMap.getOrDefault(inst, emptySet())
@@ -825,11 +822,11 @@ data class JcArgument(val index: Int, val name: String?, override val type: JcTy
     }
 }
 
-data class JcRegister(val index: Int, override val type: JcType) : JcSimpleValue {
-    override fun toString(): String = "%$index"
+data class JcLocal(val name: String, override val type: JcType) : JcSimpleValue {
+    override fun toString(): String = name
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
-        return visitor.visitJcRegister(this)
+        return visitor.visitJcLocal(this)
     }
 }
 

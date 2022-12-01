@@ -635,7 +635,7 @@ class MethodNodeBuilder(
         currentInsnList.add(loadValue(value))
     }
 
-    override fun visitJcRawRegister(value: JcRawRegister) {
+    override fun visitJcRawLocal(value: JcRawLocal) {
         currentInsnList.add(loadValue(value))
     }
 

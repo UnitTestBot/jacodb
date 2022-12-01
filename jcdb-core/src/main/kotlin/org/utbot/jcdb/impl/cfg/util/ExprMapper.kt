@@ -300,7 +300,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
 
     override fun visitJcRawThis(value: JcRawThis) = exprHandler(value) { value }
     override fun visitJcRawArgument(value: JcRawArgument) = exprHandler(value) { value }
-    override fun visitJcRawRegister(value: JcRawRegister) = exprHandler(value) { value }
+    override fun visitJcRawLocal(value: JcRawLocal) = exprHandler(value) { value }
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef) = exprHandler(value) {
         val newInstance = value.instance?.accept(this) as? JcRawValue

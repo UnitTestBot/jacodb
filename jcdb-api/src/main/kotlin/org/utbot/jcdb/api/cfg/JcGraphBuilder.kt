@@ -292,8 +292,8 @@ class JcGraphBuilder(
         JcArgument(it.index, null, it.type.asType)
     }
 
-    override fun visitJcRawRegister(value: JcRawRegister): JcExpr =
-        JcRegister(value.index, value.typeName.asType)
+    override fun visitJcRawLocal(value: JcRawLocal): JcExpr =
+        JcLocal(value.name, value.typeName.asType)
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val instance = value.instance?.accept(this) as? JcValue

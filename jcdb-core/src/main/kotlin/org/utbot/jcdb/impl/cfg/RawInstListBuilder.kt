@@ -321,7 +321,7 @@ class RawInstListBuilder(
     private fun instructionList(insn: AbstractInsnNode) = instructions.getOrPut(insn, ::mutableListOf)
 
 
-    private fun nextRegister(typeName: TypeName): JcRawValue = JcRawRegister(localCounter++, typeName)
+    private fun nextRegister(typeName: TypeName): JcRawValue = JcRawLocal("%${localCounter++}", typeName)
     private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
 
     private fun buildGraph() {

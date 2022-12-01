@@ -63,7 +63,7 @@ interface JcExprVisitor<T> {
 
     fun visitJcThis(value: JcThis): T
     fun visitJcArgument(value: JcArgument): T
-    fun visitJcRegister(value: JcRegister): T
+    fun visitJcLocal(value: JcLocal): T
     fun visitJcFieldRef(value: JcFieldRef): T
     fun visitJcArrayAccess(value: JcArrayAccess): T
     fun visitJcBool(value: JcBool): T
@@ -117,7 +117,7 @@ interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
 
     override fun visitJcThis(value: JcThis): T = defaultExprHandler(value)
     override fun visitJcArgument(value: JcArgument): T = defaultExprHandler(value)
-    override fun visitJcRegister(value: JcRegister): T = defaultExprHandler(value)
+    override fun visitJcLocal(value: JcLocal): T = defaultExprHandler(value)
     override fun visitJcFieldRef(value: JcFieldRef): T = defaultExprHandler(value)
     override fun visitJcArrayAccess(value: JcArrayAccess): T = defaultExprHandler(value)
     override fun visitJcBool(value: JcBool): T = defaultExprHandler(value)
