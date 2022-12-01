@@ -3,13 +3,10 @@ FROM openjdk:11
 WORKDIR /usr/src/
 
 ARG JAR_FILE
+ENV API_PREFIX="/utbot-online/jacodb-demo"
 
-RUN apt-get update && \
-    apt-get install -y docker.io \
-                       jq && \
-    apt-get clean && \
-    mkdir -p /usr/src/{logs,downloading}
+RUN mkdir -p /usr/src/{logs,downloading}
 
 COPY ${JAR_FILE} .
 
-ENTRYPOINT ["java","-jar","jacodb-http-demo.jar", "--api-prefix=/jacodb-demo" ]
+CMD ["java","-jar","jacodb-http-demo.jar", "--api-prefix=${API_PREFIX}" ]
