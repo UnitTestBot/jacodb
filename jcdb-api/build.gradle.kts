@@ -11,7 +11,7 @@ dependencies {
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = coroutinesVersion)
 
-    implementation(group = "org.jooq", name = "jooq", version = jooqVersion)
+    api(group = "org.jooq", name = "jooq", version = jooqVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version = kmetadataVersion)
 
 }
