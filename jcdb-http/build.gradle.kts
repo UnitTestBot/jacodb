@@ -9,6 +9,7 @@ plugins {
 
 dependencies {
     api(project(":jcdb-core"))
+    api(project(":jcdb-api"))
 
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = coroutinesVersion)
 
