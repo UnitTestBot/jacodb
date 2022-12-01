@@ -1,298 +1,155 @@
-# Design draft for JCDB control flow graph implementation
+# Control flow graph implementation for JCDB
 
-## features
+Control flow graph (CFG) is a model that represents all paths that can be executed in
+the program. JCDB implementation of the CFG is split into two API levels.
 
-* two separate IR's:
-    1. "Raw" 3-address instructions list. Does not use type resolving or anything, just
-       plain conversion of bytecode to 3-addr instructions.
-  2. "CFG"
-* IR for modification, transformation and analysis with 3-addr instructions
-    * 3-addr instructions are easier for analysis, transformation and construction
-* CFG for JVM bytecode built on top of ASM representation
-    * preferably without needing to resolve all the classpath for IR construction
-        * does not allow to resolve all method exits: normal ones and exception exits
-        * less information about potential paths in method
-    * CFG is built on request and is not stored anywhere in the system
-        * caching should be implemented on the user side
-    * effective serialization/deserialization for CFG is required, even if we do not
-      plan to store it in the database
-* bidirectional transformation: bytecode -> IR -> bytecode
-    * allows to modify the classes during runtime and use the IR to construct new classes
-* instructions are CFG nodes
-    * the idea is that basic block level representation is unnecessary in many cases
-    * exception paths are stored in some way in cfg
-        * special `Catch` instruction is introduced to explicitly distinguish the
-          entry points of the catch blocks in a method
-            * if this instruction is not introduced, then each instruction will have to store
-              potential exception catching paths, and we will not be able to distinguish this kind of
-              instructions
-        * either each instruction has an implicit edge to the exception receiver (either
-          catch or method exit)
-            * more complex API, harder to keep track of. Especially when constructing
-              completely new methods
-        * or instructions do not store exception path information, it is only stored
-          in catch instructions (each catch stores a list of throwing instructions)
-            * need to manually resolve all the information when it is needed
-            * harder to determine connections of each separate instruction
-            * all resolving can be done later, after the resolving stage, with special
-              util functions
-    * instructions store their mapping to the bytecode
-        * don't know why
-    * instructions are immutable
-* basic block API
-    * even if it is unnecessary, it is good to have it if we can make it 'free'
-    * basic blocks are just 'views' that are mapped to the range of instructions
-      in the original cfg
-    * exception paths are represented in basic block API similarly to instructions
-        * need to decide how to distinguish between normal basic blocks and exception
-          handling basic blocks, should we add explicit `CatchBlocks` to the API or not
-        * my proposal:
-            * basic blocks represents a continuous set of instructions in the CFG that are
-              **guaranteed** to be executed one after other
-            * that means, that basic block end either with branching instruction, or with
-              exception-throwing instruction
-            * similarly to the source code, usual basic blocks store normal execution paths
-              and do not store exception paths implicitly **or** explicitly
-            * special 'CatchBlocks' are introduced to represent catch blocks of a method,
-              Catch block is guaranteed to start with 'Catch' instruction and, similarly to it,
-              stores all the information about potential exception-throwing blocks that it catches
-              from
-            * downside &mdash; it is harder to sync the basic blocks with the instructions,
-              especially when the CFG is modified
-* interop with java is necessary
+## Raw instruction list API
 
-## lower priority features
+`JcRawInstList` represents "raw" 3-address instruction list representation of the Java
+bytecode. "Raw" means that this representation does not resolve any information about
+types and control flow of the program. This representation is more-or-less one-to-one
+matching of JVM bytecode instructions into the designed list of 3-address instructions.
 
-* graph visualization
-    * export to dot format at first, high priority for debug purposes
-    * better options (e.g. interactive view in browser etc.) later
-* 'dsl' for runtime CFG construction
-    * including builders for more effective CFG construction
-    * example
-      ```kotlin
-      buildCfg {
-      val a = param(IntType)
-      val b = param(IntType)
-      `if`(a > b)
-          .goto(label("l1"))
-          .`else`(label("l2"))
-      label("l1")
-      `return`(a)
-      label("l2")
-      `return`(b)
-      }
-      ```
-* API for IR modification
-    * basic 'visitor' implementation
-    * easy to use interface for combining multiple transformations:
-      ```kotlin
-      method
-          .apply(StringConcatFix())
-          .apply(SomeOtherTransformation())
-      ```
-* built-in IR transformations (like replacing `invokedynamic` for `String.concat`)
-    * need to think about other options
+The base class of this representation is `JcRawInstList`. It represents a list-like
+collection of instructions and allows to iterate over the instructions, access them by
+index and to modify the list of instructions.
 
-### potential ideas
+`JcRawInst` is the base interface for the raw instruction. All the instruction are identified
+by the object, they are not comparable using `equals`.
 
-* split `calls` into two separate instructions
-    * simplifies analysis for symbolic execution engines, complicates the workflow
-      for many other applications of jcdb
-* option to add phantom nodes or to extend API with custom node types
-    * gives users opportunity to extend the CFG with various kinds of nodes in the CFG,
-      e.g. implement the `call` instruction splitting customly. Potentially breaks the
-      API, increases the chance of error occurrence
+List of `JcRawInst` implementations:
 
-## analogues
+* `JcAssignInst` --- Assignment instruction. Left hand side of the instruction can only be a
+  `JcRawValue`, right hand side can be any expression (`JcRawExpression`).
+* `JcRawEnterMonitorInst`, `JcRawExitMonitorInst` --- Monitor instruction that correspond
+  directly to their existing analogs. `monitor` property can only be a `JcRawSimpleValue`.
+* `JcRawCallInst` --- Call instruction that represents a method that does not save it's returning
+  variable to any local variable. Method calls that return a value represented throug `JcRawAssignInst`.
+* `JcRawLabelInst` --- Label instruction, used to mark some program points in the code. Mainly required
+  to be used in the branching instructions. Label is identified by a name, all the references
+  to a label are represented using `JcRawLabelRef` class.
+* `JcRawReturnInst` --- Return instruction, `returnValue` property is null when method does not
+  return anything.
+* `JcRawThrowInst` --- Throw instruction.
+* `JcRawCatchInst` --- Catch instruction that represents an entry for `try-catch` block in the
+  code. Does not map directly to bytecode instruction, but represents a `TryCatchBlock` of a method.
+  Stores a value that corresponds to a caught exception `throwable` and a range of the instructions
+  that in catches from `startInclusive until endExclusive`.
+* `JcRawGotoInst` --- Jump instruction.
+* `JcRawIfInst` --- Conditional jump instruction. The condition of the instruction should
+  necessarily be `JcRawConditionExpr`, because not all the conditional expressions that we use
+  in higher-level programming languages can be easily expressed in JVM bytecode.
+* `JcRawSwitchInst` --- Switch instruction, combned representation of `LookupSwitch` and `TableSwitch`
+  bytecode instructions.
 
-* [Soot](https://github.com/soot-oss/soot) and Jimple
-    * 'reference' implementation
-    * bad licence
+`JcRawExpr` is a base interface for all the expression types and value types that can be
+expressed in the JVM bytecode. List of `JcRawExpr` implementations:
 
-## API design draft
+* `JcRawBinaryExpr` --- Binary expression, implementations implement all the arithmetic
+  expressions (e.g. `JcRawAdd`, `JcRawMul` etc.), conditional expressions (`JcRawEq`, `JcRawGt` etc.),
+  logical expressiongs (`JcRawAnd`, `JcRawOr`, `JcRawXor`).
+    * `JcRawConditionExpr` --- Conditional expressions, that can be used as a condition in `JcRawIfInst`.
+* `JcRawLengthExpr` --- Array length expression.
+* `JcRawNegExpr` --- Negation expression.
+* `JcRawCastExpr` --- Cast expression. Can be uset to cast both reference types and primitive types.
+* `JcRawNewExpr` --- New expression, creates a single object.
+* `JcRawNewArrayExpr` --- New array expression, creates a (multi)array of a given type.
+* `JcRawInstanceOfExpr` --- Instanceof check.
+* `JcRawCallExpr` --- Method call expression.
+    * `JcRawDynamicCallExpr` --- `invokedynamic` instruction representation, preserves all the info
+    * `JcRawVirtualCallExpr`
+    * `JcRawInterfaceCallExpr`
+    * `JcRawStaticCallExpr`
+    * `JcRawSpecialCallExpr`
+* `JcRawValue` --- Representation of a single value:
+    * `JcRawSimpleValue` --- Representation of a simple value that does not have any sub-values:
+        * `JcRawThis`
+        * `JcRawArgument`
+        * `JcRawLocal`
+        * `JcRawConstant`
+    * `JcRawComplexValue` --- Complex value that has a sub-values
+        * `JcRawFieldRef` --- Field reference. Can be used both as a field read access (e.g. `a = x.y`)
+          and field store access (e.g. `x.y = a`)
+        * `JcRawArrayAccess` --- Array element reference. Can be used both as an array read access (e.g. `a = x[y]`)
+          and array store access (e.g. `x[y] = a`)
 
-```kotlin
-/**
- * class that represents CFG of a method
- */
-class JcGraph {
-    /**
-     * internally I think this will be represented just as an ArrayList
-     * there is no need to store it as basic array
-     */
-    val instructions: List<JcInst>
+To get an 3-address instruction list representation of a method you need to call `JcMethod::instructionList`.
+Instruction list building requires a `JcClasspath`, because some stages require use of subtyping information.
 
-    /**
-     * previous instruction in the raw instruction list
-     */
-    fun previous(jcInst: JcInst): JcInst
+`RawInstListBuilder` is used to build a `JcRawInstList` from bytecode representation (i.e. from `MethodNode`).
+To build an instruction list representation, `MethodNode` **should** contain frame information (i.e. `FrameNode`'s)
+and **should not** contain any `JSR` (jump subroutine) instructions. Thus, each time a `ClassNode` is
+created, we invoke `ClassNode.computeFrames()` extension function that computes frame information
+for each method. `computeFrames` function uses ASM functionality for computing frames: converts
+the class node back to bytecode using `ClassWriter` (which actually performs frame computing during
+the conversion) and reads that bytecode again using `ClassReader`. This is not the most effective way of
+doing things, but the easiest one: manually computing frames is quite hard.
+Another thing is inlining `JSR` instructions. We do this by calling `MethodNode.jsrInlined` extension that
+returns a new `MethodNode` instance. It uses ASM `JSRInlinerAdapter` utility to create new method node with
+inlined jsr's.
 
-    /**
-     * next instruction in the raw instruction list
-     */
-    fun next(jcInst: JcInst): JcInst
+`RawInstListBuilder` converts JVM bytecode instruction list into a 3-address instruction list. Most of
+the coversion process is simple: bytecode instructions match one-to-one to 3-addr expressions and instructions.
+The most complex part is frame merging. JVM frame describes the state of the virtual machine at each instruction:
+declared local variables and stack state. When an instruction has multiple predecessors we need to merge several
+incoming frames into one. Sometimes JVM adds a special frame node before an instruction to describe how the
+frame should look like after merging. Frame merging process can be divided into four situations:
 
-    /**
-     * incoming edges in the control flow of a method
-     */
-    fun predecessors(jcInst: JcInst): List<JcInst>
+* There is only one incoming frame, and it is fully defined (i.e. we already collected all the frame information)
+  when converting previous stages. In that case everything is quite simple, we can just copy the frame info.
+  However, we can also refine type information for local variables. Consider following bytecode:
 
-    /**
-     * outgoing edges in the control flow of a method
-     */
-    fun successors(jcInst: JcInst): List<JcInst>
-
-    /**
-     * implicit incoming edges, that indicate control
-     * flow during exception occurrence, needed to identify
-     */
-    fun implicitPredecessors(): List<JcExceptionReceiver>
-
-    /**
-     * implicit outgoing edges, that indicate control
-     * flow during exception occurrence
-     */
-    fun implicitSuccessors(): List<JcExceptionReceiver>
-
-    /**
-     * simple way to access all entries/exits of a graph
-     */
-    val instructionEntry: JcInst
-    val instructionExits: List<JcInst>
-    val exceptionExits: List<JcExceptionReceiver>
-
-    /**
-     * basic blocks of a graph
-     * computed lazily once for each graph
-     */
-    val basicBlocks: List<JcBasicBlock>
-
-    /**
-     * instructions that belong to a giver block
-     * boundaries of blocks are stored in the JcGraph to simplify
-     * the process of their synchronization when graph is modified
-     */
-    fun instructions(basicBlock: JcBasicBlock): List<JcInst>
-
-    // todo
-    // also we need to provide entry/exit access for
-    // basic block API, but we need to decide about handling exceptions
-    // in basic blocks first
-}
-
-class JcBasicBlock {
-    /**
-     * incoming edges of a control flow graph
-     */
-    val predecessors: List<JcBasicBlock>
-
-    /**
-     * outgoing edges of a control flow graph
-     */
-    val successors: List<JcBasicBlock>
-
-    // todo 
-    // need to think about exceptions in the basic
-    // block API. Should we represent exception edges
-    // as implicit edges, or explicit edges? Should we
-    // explicitly distinguish catch blocks from the
-    // usual blocks?
-}
-
-/**
- * represents an exception receiver in a method. It can be
- * either a JcCatchInst (if there is a catch instruction in a method
- * that handles thrown exception) or a synthetic exit node in a graph
- */
-interface JcExceptionReceiver
-
-/**
- * represents an instruction of control flow graph
- */
-sealed class JcInst {// interface?
-    // API
-    /**
-     * simple way to get *all* the JcExpressions of an instruction
-     * sometimes it is convenient, need to think do we need it or not
-     */
-    val operands: List<JcExpr>
-
-    abstract fun clone(): JcInst
-
-    // internal function to keep all the indices inside the instruction
-    // synced with the JcGraph in case it has been changed
-    // mainly required for jump instructions
-    internal open fun updateIndices(start: Int, offset: Int) {}
-}
-
-// JcInst implementations
-class JcAssignInst : JcInst()
-class JcEnterMonitorInst : JcInst()
-class JcExitMonitorInst : JcInst()
-class JcCallInst : JcInst()
-class JcCatchInst : JcInst()
-class JcGotoInst : JcInst()
-class JcIfInst : JcInst()
-
-// todo
-// do we need this kind of instruction for declaring variables of a method?
-// added this for more similarity with Jimple
-class JcIdentityInst : JcInst()
-
-class JcNopInst : JcInst()
-class JcReturnInst : JcInst()
-class JcSwitchInst : JcInst()
-
-/**
- * represents an expression used in the JcInst
- */
-sealed class JcExpr { // interface?
-    /**
-     * simple way to get *all* the JcExpressions of an instruction
-     * sometimes it is convenient, need to think do we need it or not
-     */
-    val operands: List<JcValue>
-}
-
-// JcExpr implementations
-class JcAddExpr : JcExpr()
-class JcAndExpr : JcAnd()
-
-// ... all binary operations
-class JcCastExpr : JcCastExpr()
-class JcCmpExpr : JcExpr()
-class JcCmpgExpr : JcExpr()
-class JcCmplExpr : JcExpr()
-class JcEqExpr : JcExpr()
-
-// ... all binary cmp operations
-class JcLengthExpr : JcExpr()
-class JcNegExpr : JcExpr()
-class JcNewExpr : JcExpr()
-class JcNewArrayExpr : JcExpr()
-class JcInstanceOfExpr : JcExpr()
-class JcDynamicCallExpr : JcExpr()
-class JcVirtualCallExpr : JcExpr()
-class JcStaticCallExpr : JcExpr()
-class JcSpecialCallExpr : JcExpr()
-
-/**
- * represents a single value
- */
-sealed class JcValue
-
-// JcValue implementations
-sealed class JcConstant : JcValue() // interface?
-class JcBoolConstant : JcConstant()
-class JcByteConstant : JcConstant()
-
-// ... all primitive constants
-class JcStringConstant : JcConstant()
-class JcClassConstant : JcConstant()
-class JcMethodHandle : JcConstant()
-class JcNullConstant : JcConstant()
-
-class JcThisRef : JcValue()
-class JcArgument : JcValue()
-class JcLocalVariable : JcValue()
 ```
+NEW java/lang/ArrayList
+ASTORE 0
+...
+FRAME FULL [ java/lang/List ]
+...
+NEW java/lang/LinkedList
+ASTORE 0
+```
+
+When converting first two instructions, we created a local variable `%0` for cell 0 with type `java.lang.ArrayList`.
+However, when converting frame information we found that JVM considers the type of cell 0 to be `java.lang.List`
+and then uses cell 0 to store other implementations of Java List. We can refine the type of `%0` to be
+`java.lang.List` and then replace all the occurrences of `%0` with the new version. That is performed by
+using `localTypeRefinement` property of `RawInstListBuilder` and `ExprMapper` utility class.
+
+* There is only one incoming frame, and it is not yet defined. It is a rare case, but it can happen is
+  situation like:
+
+```
+GOTO L2
+L1
+FRAME FULL [ java/lang/List ]
+...
+GOTO L3
+L2
+...
+GOTO L1
+L3
+RETURN
+```
+
+In this situation we use frame info to create a new local variable with the defined type and remember to
+add an assignment that will assign out new variable a correct value in predecessor. It is performed in the
+end by using `laterAssignments` and `laterStackAssignments` maps and `buildRequiredAssignments` function. The
+process is similar for both stack variables and local variables.
+
+* There are several predecessor frames and all of them are defined (e.g. merge after if - else block). In
+  that case we create a new local variable with the defined type in current frame and add necessary assignments
+  into the predecessor blocks.
+
+* There are several predecessor frames and not all of them are defined (e.g. merge in the loop header).In
+  that case we create a new local variable with the defined type in current frame, add necessary assignments
+  into the predecessor blocks, and remember to add the required assignments to undefined predecessor blocks
+  in the end. 
+
+`RawInstListBuilder` also performs the simplification of the resulting instruction list. This process is
+required because the construction process naturally introduces a lot of redundancy in the instruction list.
+The main stages of simplification are:
+* deleting repeated assignments inside a basic block
+* deleting declarations of unused variables
+* deleting declarations of mutually dependent unused variables (e.g. `a = b` and `b = a`)
+* simple unit propagation
+* type normalization using `JcClasspath`

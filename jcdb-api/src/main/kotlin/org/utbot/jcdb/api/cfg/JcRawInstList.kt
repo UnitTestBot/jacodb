@@ -75,7 +75,7 @@ class JcRawAssignInst(
 }
 
 class JcRawEnterMonitorInst(
-    val monitor: JcRawValue
+    val monitor: JcRawSimpleValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
@@ -88,7 +88,7 @@ class JcRawEnterMonitorInst(
 }
 
 class JcRawExitMonitorInst(
-    val monitor: JcRawValue
+    val monitor: JcRawSimpleValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)

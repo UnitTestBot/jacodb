@@ -24,7 +24,7 @@ internal val MethodNode.jsrInlined: MethodNode
         return temp
     }
 
-internal fun ClassNode.recomputeFrames(): ClassNode {
+internal fun ClassNode.computeFrames(): ClassNode {
     val ba = this.toByteArray()
     return ba.toClassNode()
 }
@@ -43,7 +43,7 @@ internal fun ClassNode.inlineJsrs() {
 private fun ClassNode.toByteArray(
 ): ByteArray {
     this.inlineJsrs()
-    val cw = ClassWriter(0)
+    val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
     this.accept(cw)
     return cw.toByteArray()
 }

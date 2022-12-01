@@ -133,7 +133,7 @@ class RawInstListBuilder(
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
     private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val localsNormalizations = mutableMapOf<JcRawLocal, JcRawLocal>()
+    private val localTypeRefinement = mutableMapOf<JcRawLocal, JcRawLocal>()
     private var labelCounter = 0
     private var localCounter = 0
     private var argCounter = 0
@@ -149,7 +149,7 @@ class RawInstListBuilder(
 
         // after all the frame info resolution we can refine type info for some local variables,
         // so we replace all the old versions of the variables with the type refined ones
-        val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localsNormalizations.toMap()))
+        val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localTypeRefinement.toMap()))
         return Simplifier().simplify(jcClasspath, localsNormalizedInstructionList)
     }
 
@@ -645,7 +645,7 @@ class RawInstListBuilder(
     }
 
     private fun buildMonitor(insn: InsnNode) {
-        val monitor = pop()
+        val monitor = pop() as JcRawSimpleValue
         instructionList(insn) += when (val opcode = insn.opcode) {
             Opcodes.MONITORENTER -> {
                 JcRawEnterMonitorInst(monitor)
@@ -730,7 +730,7 @@ class RawInstListBuilder(
                                 (it.value as JcRawLocal).name,
                                 this[it.key]!!
                             ).also { newLocal ->
-                                localsNormalizations[it.value as JcRawLocal] = newLocal
+                                localTypeRefinement[it.value as JcRawLocal] = newLocal
                             }
 
                             else -> it.value
@@ -805,7 +805,7 @@ class RawInstListBuilder(
                             (it.value as JcRawLocal).name,
                             this[it.index]!!
                         ).also { newLocal ->
-                            localsNormalizations[it.value as JcRawLocal] = newLocal
+                            localTypeRefinement[it.value as JcRawLocal] = newLocal
                         }
 
                         else -> it.value

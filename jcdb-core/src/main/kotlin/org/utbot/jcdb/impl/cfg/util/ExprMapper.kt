@@ -15,7 +15,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
     }
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): JcRawInst {
-        val newMonitor = inst.monitor.accept(this) as JcRawValue
+        val newMonitor = inst.monitor.accept(this) as JcRawSimpleValue
         return when (inst.monitor) {
             newMonitor -> inst
             else -> JcRawEnterMonitorInst(newMonitor)
@@ -23,7 +23,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
     }
 
     override fun visitJcRawExitMonitorInst(inst: JcRawExitMonitorInst): JcRawInst {
-        val newMonitor = inst.monitor.accept(this) as JcRawValue
+        val newMonitor = inst.monitor.accept(this) as JcRawSimpleValue
         return when (inst.monitor) {
             newMonitor -> inst
             else -> JcRawExitMonitorInst(newMonitor)
