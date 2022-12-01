@@ -255,8 +255,7 @@ class JcGraphBuilder(
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args,
-//            hierarchy.findOverrides(method.method).map { it.typedMethod }
+            method, instance, args
         )
     }
 
@@ -266,7 +265,7 @@ class JcGraphBuilder(
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args,
+            method, instance, args
         )
     }
 

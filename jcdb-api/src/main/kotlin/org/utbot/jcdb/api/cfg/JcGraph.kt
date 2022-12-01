@@ -1,6 +1,7 @@
 package org.utbot.jcdb.api.cfg
 
 import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.cfg.ext.JcExceptionResolver
 
 class JcGraph(
     val classpath: JcClasspath,
@@ -13,8 +14,11 @@ class JcGraph(
 
     private val throwPredecessors = mutableMapOf<JcCatchInst, MutableSet<JcInst>>()
     private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
+    private val _throwExits = mutableMapOf<JcType, MutableSet<JcInstRef>>()
 
     val entry: JcInst get() = instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
+    val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
+    val throwExits: Map<JcType, List<JcInst>> get() = _throwExits.mapValues { (_, refs) -> refs.map { inst(it) } }
 
     init {
         for (inst in instructions) {
@@ -33,6 +37,14 @@ class JcGraph(
                 throwPredecessors[inst] = inst.throwers.map { inst(it) }.toMutableSet()
                 inst.throwers.forEach {
                     throwSuccessors.getOrPut(inst(it), ::mutableSetOf).add(inst)
+                }
+            }
+        }
+
+        for (inst in instructions) {
+            for (throwableType in inst.accept(JcExceptionResolver(classpath))) {
+                if (!catchers(inst).any { throwableType.jcClass isSubtypeOf (it.throwable.type as JcClassType).jcClass }) {
+                    _throwExits.getOrPut(throwableType, ::mutableSetOf) += ref(inst)
                 }
             }
         }
@@ -60,6 +72,11 @@ class JcGraph(
 
     fun throwers(inst: JcInstRef): Set<JcInst> = throwers(inst(inst))
     fun catchers(inst: JcInstRef): Set<JcCatchInst> = catchers(inst(inst))
+
+    fun exceptionExits(inst: JcInst): Set<JcClassType> =
+        inst.accept(JcExceptionResolver(classpath)).filter { it in _throwExits }.toSet()
+
+    fun exceptionExits(ref: JcInstRef): Set<JcClassType> = exceptionExits(inst(ref))
 
     fun blockGraph(): JcBlockGraph = JcBlockGraph(this)
 
