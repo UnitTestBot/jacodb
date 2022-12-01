@@ -111,6 +111,7 @@ interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
     override fun visitJcNewArrayExpr(expr: JcNewArrayExpr): T = defaultExprHandler(expr)
     override fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr): T = defaultExprHandler(expr)
     override fun visitJcLambdaExpr(expr: JcLambdaExpr): T = defaultExprHandler(expr)
+    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): T = defaultExprHandler(expr)
     override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): T = defaultExprHandler(expr)
     override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): T = defaultExprHandler(expr)
     override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): T = defaultExprHandler(expr)

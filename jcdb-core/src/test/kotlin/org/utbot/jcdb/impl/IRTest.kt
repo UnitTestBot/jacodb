@@ -1,24 +1,62 @@
 package org.utbot.jcdb.impl
 
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
-import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.NoClassInClasspathException
-import org.utbot.jcdb.api.cfg.StringConcatSimplifier
+import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.cfg.*
 import org.utbot.jcdb.api.cfg.ext.view
+import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.methods
-import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.*
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
-import org.utbot.jcdb.impl.index.hierarchyExt
 import java.net.URLClassLoader
 import java.nio.file.Files
+
+class OverridesResolver(
+    val hierarchyExtension: HierarchyExtension
+) : DefaultJcInstVisitor<List<JcTypedMethod>>, DefaultJcExprVisitor<List<JcTypedMethod>> {
+    override val defaultInstHandler: (JcInst) -> List<JcTypedMethod>
+        get() = { emptyList() }
+    override val defaultExprHandler: (JcExpr) -> List<JcTypedMethod>
+        get() = { emptyList() }
+
+    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
+        return methods.firstOrNull { typedMethod ->
+            val jcMethod = typedMethod.method
+            jcMethod.name == name &&
+                    jcMethod.returnType.typeName == returnType.typeName &&
+                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+        } ?: error("Could not find a method with correct signature")
+    }
+
+    private val JcMethod.typedMethod: JcTypedMethod
+        get() {
+            val klass = enclosingClass.toType()
+            return klass.getMethod(name, parameters.map { it.type }, returnType)
+        }
+
+    override fun visitJcAssignInst(inst: JcAssignInst): List<JcTypedMethod> {
+        if (inst.rhv is JcCallExpr) return inst.rhv.accept(this)
+        return emptyList()
+    }
+
+    override fun visitJcCallInst(inst: JcCallInst): List<JcTypedMethod> {
+        return inst.callExpr.accept(this)
+    }
+
+    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): List<JcTypedMethod> {
+        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
+    }
+
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): List<JcTypedMethod> {
+        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
+    }
+
+}
 
 class IRTest : BaseTest() {
     val target = Files.createTempDirectory("jcdb-temp")

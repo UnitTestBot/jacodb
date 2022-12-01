@@ -218,12 +218,6 @@ class JcGraphBuilder(
             return klass.getMethod(methodName, argumentTypes, returnType)
         }
 
-    private val JcMethod.typedMethod: JcTypedMethod
-        get() {
-            val klass = enclosingClass.asType as JcClassType
-            return klass.getMethod(name, parameters.map { it.type }, returnType)
-        }
-
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
         val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
         when (lambdaBases.size) {
