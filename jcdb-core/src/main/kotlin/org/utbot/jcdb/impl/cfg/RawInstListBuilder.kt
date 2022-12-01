@@ -146,6 +146,9 @@ class RawInstListBuilder(
         buildRequiredGotos()
 
         val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
+
+        // after all the frame info resolution we can refine type info for some local variables,
+        // so we replace all the old versions of the variables with the type refined ones
         val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localsNormalizations.toMap()))
         return Simplifier().simplify(jcClasspath, localsNormalizedInstructionList)
     }
@@ -177,6 +180,10 @@ class RawInstListBuilder(
         }
     }
 
+    // `laterAssignments` and `laterStackAssignments` are maps of variable assignments
+    // that we need to add to the instruction list after the construction process to ensure
+    // liveness of the variables on every step of the method. We cannot add them during the construction
+    // because some of them are unknown at that stage (e.g. because of loops)
     private fun buildRequiredAssignments() {
         for ((insn, assignments) in laterAssignments) {
             val insnList = instructionList(insn)
@@ -206,6 +213,8 @@ class RawInstListBuilder(
         }
     }
 
+    // adds the `goto` instructions to ensure consistency in the instruction list:
+    // every jump is show explicitly with some branching instruction
     private fun buildRequiredGotos() {
         for (insn in methodNode.instructions) {
             if (methodNode.tryCatchBlocks.any { it.handler == insn }) continue
@@ -229,7 +238,10 @@ class RawInstListBuilder(
         }
     }
 
-    // this class is required to handle FrameNode instructions of ASM
+    /**
+     * represets a frame state: information about types of local variables and stack variables
+     * needed to handle ASM FrameNode instructions
+     */
     private data class FrameState(
         val locals: SortedMap<Int, TypeName>,
         val stack: SortedMap<Int, TypeName>
@@ -269,6 +281,10 @@ class RawInstListBuilder(
         }
     }
 
+    /**
+     * represents the bytecode Frame: a set of active local variables and stack variables
+     * during the execution of the instruction
+     */
     private data class Frame(
         val locals: PersistentMap<Int, JcRawValue>,
         val stack: PersistentList<JcRawValue>
@@ -679,10 +695,23 @@ class RawInstListBuilder(
         }
     }
 
+    /**
+     * a helper function that helps to merge local variables from several predecessor frames into one map
+     * if all the predecessor frames are known (meaning we already visited all the corresponding instructions
+     * in the bytecode) --- merge process is trivial
+     * if some predecessor frames are unknown, we remebmer them and add requried assignment instructions after
+     * the full construction process is complete, see #buildRequiredAssignments function
+     */
     private fun SortedMap<Int, TypeName>.copyLocals(predFrames: Map<AbstractInsnNode, Frame?>): Map<Int, JcRawValue> =
         when {
+            // should not happen usually, but sometimes there are some "handing" blocks in the bytecode that are
+            // not connected to any other part of the code
             predFrames.isEmpty() -> this.mapValues { nextRegister(it.value) }
 
+            // simple case --- current block has only one predecessor, we can simply copy all the local variables from
+            // predecessor to new frame; however we sometimes can refine the information about types of local variables
+            // from the frame descriptor. In that case we create a new local variable with correct type and remember to
+            // normalize them afterwards
             predFrames.size == 1 -> {
                 val (node, frame) = predFrames.toList().first()
                 when (frame) {
@@ -710,6 +739,7 @@ class RawInstListBuilder(
                 }
             }
 
+            // complex case --- we have a multiple predecessor frames and some of them may be unknown
             else -> this.mapNotNull { (variable, type) ->
                 val options = predFrames.values.map { it?.get(variable) }.toSet()
                 val value = when {
@@ -740,9 +770,23 @@ class RawInstListBuilder(
             }.toMap()
         }
 
+    /**
+     * a helper function that helps to merge stack variables from several predecessor frames into one map
+     * if all the predecessor frames are known (meaning we already visited all the corresponding instructions
+     * in the bytecode) --- merge process is trivial
+     * if some predecessor frames are unknown, we remebmer them and add requried assignment instructions after
+     * the full construction process is complete, see #buildRequiredAssignments function
+     */
     private fun SortedMap<Int, TypeName>.copyStack(predFrames: Map<AbstractInsnNode, Frame?>): List<JcRawValue> = when {
+        // should not happen usually, but sometimes there are some "handing" blocks in the bytecode that are
+        // not connected to any other part of the code
         predFrames.isEmpty() -> this.values.map { nextRegister(it) }
 
+
+        // simple case --- current block has only one predecessor, we can simply copy all the local variables from
+        // predecessor to new frame; however we sometimes can refine the information about types of local variables
+        // from the frame descriptor. In that case we create a new local variable with correct type and remember to
+        // normalize them afterwards
         predFrames.size == 1 -> {
             val (node, frame) = predFrames.toList().first()
             when (frame) {
@@ -770,6 +814,7 @@ class RawInstListBuilder(
             }
         }
 
+        // complex case --- we have a multiple predecessor frames and some of them may be unknown
         else -> this.mapNotNull { (variable, type) ->
             val options = predFrames.values.map { it?.stack?.get(variable) }.toSet()
             when (options.size) {

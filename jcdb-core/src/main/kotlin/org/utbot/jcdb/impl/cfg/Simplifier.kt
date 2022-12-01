@@ -8,12 +8,22 @@ import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jcdb.impl.cfg.util.InstructionFilter
 import org.utbot.jcdb.impl.cfg.util.typeName
 
+/**
+ * a class that simplifies the instruction list after construction
+ * a simplification process is required, because the construction process
+ * naturally introduces some redundancy into the code (mainly because of
+ * the frames merging)
+ */
 internal class Simplifier {
 
     fun simplify(jcClasspath: JcClasspath, instList: JcRawInstList): JcRawInstList {
+        // clear the assignments that are repeated inside single basic block
         var instructionList = cleanRepeatedAssignments(instList)
 
         do {
+            // delete the assignments that are not used anywhere in the code
+            // need to run this repeatedly, because deleting one instruction may
+            // free another one
             val uses = computeUseCases(instructionList)
             val oldSize = instructionList.instructions.size
             instructionList = instructionList.filterNot(InstructionFilter {
@@ -25,6 +35,9 @@ internal class Simplifier {
         } while (instructionList.instructions.size != oldSize)
 
         do {
+            // delete the assignments that are mutually dependent only on one another
+            // (e.g. `a = b` and `b = a`) and not used anywhere else; also need to run several times
+            // because of potential dependencies between such variables
             val assignmentsMap = computeAssignments(instructionList)
             val replacements = assignmentsMap.filterValues { it.size == 1 }.map { it.key to it.value.first() }.toMap()
             instructionList = instructionList
@@ -41,6 +54,7 @@ internal class Simplifier {
         } while (replacements.isNotEmpty())
 
         do {
+            // trying to remove all the simple variables that are equivalent to some other simple variable
             val uses = computeUseCases(instructionList)
             val (replacements, instructionsToDelete) = computeReplacements(instructionList, uses)
             instructionList = instructionList
@@ -48,7 +62,9 @@ internal class Simplifier {
                 .filter(InstructionFilter { it !in instructionsToDelete })
         } while (replacements.isNotEmpty())
 
+        // remove instructions like `a = a`
         instructionList = cleanSelfAssignments(instructionList)
+        // fix some typing errors and normalize the types of all local variables
         instructionList = normalizeTypes(jcClasspath, instructionList)
 
         return instructionList
