@@ -41,7 +41,13 @@ class JcRawInstList(
         _instructions.addAll(index + 1, newInstructions)
     }
 
-    // todo API for deleting
+    fun remove(inst: JcRawInst): Boolean {
+        return _instructions.remove(inst)
+    }
+
+    fun removeAll(inst: Collection<JcRawInst>): Boolean {
+        return _instructions.removeAll(inst)
+    }
 
     fun graph(classpath: JcClasspath, method: JcMethod): JcGraph =
         JcGraphBuilder(classpath, this, method).build()

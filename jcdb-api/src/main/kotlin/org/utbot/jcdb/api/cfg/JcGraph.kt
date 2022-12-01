@@ -2,8 +2,6 @@ package org.utbot.jcdb.api.cfg
 
 import org.utbot.jcdb.api.*
 
-// todo: transforming String concat
-
 class JcGraph(
     val classpath: JcClasspath,
     val instructions: List<JcInst>,
