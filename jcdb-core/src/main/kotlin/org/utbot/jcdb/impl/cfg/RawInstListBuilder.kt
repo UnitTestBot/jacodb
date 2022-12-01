@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.cfg.ext.map
 import org.utbot.jcdb.impl.cfg.util.*
 import org.utbot.jcdb.impl.cfg.util.NULL
 import org.utbot.jcdb.impl.cfg.util.STRING_CLASS
@@ -132,6 +133,7 @@ class RawInstListBuilder(
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
     private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val localsNormalizations = mutableMapOf<JcRawLocal, JcRawLocal>()
     private var labelCounter = 0
     private var localCounter = 0
     private var argCounter = 0
@@ -144,7 +146,8 @@ class RawInstListBuilder(
         buildRequiredGotos()
 
         val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
-        return Simplifier().simplify(jcClasspath, originalInstructionList)
+        val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localsNormalizations.toMap()))
+        return Simplifier().simplify(jcClasspath, localsNormalizedInstructionList)
     }
 
     private fun buildInstructions() {
@@ -629,9 +632,6 @@ class RawInstListBuilder(
         val monitor = pop()
         instructionList(insn) += when (val opcode = insn.opcode) {
             Opcodes.MONITORENTER -> {
-                if ("SegmentPool" in monitor.toString()) {
-                    val a = 10
-                }
                 JcRawEnterMonitorInst(monitor)
             }
 
@@ -695,7 +695,18 @@ class RawInstListBuilder(
                         }
                     }.toMap()
 
-                    else -> frame.locals.filterKeys { it in this }
+                    else -> frame.locals.filterKeys { it in this }.mapValues {
+                        when {
+                            it.value is JcRawLocal && it.value.typeName != this[it.key]!! -> JcRawLocal(
+                                (it.value as JcRawLocal).name,
+                                this[it.key]!!
+                            ).also { newLocal ->
+                                localsNormalizations[it.value as JcRawLocal] = newLocal
+                            }
+
+                            else -> it.value
+                        }
+                    }
                 }
             }
 
@@ -744,7 +755,18 @@ class RawInstListBuilder(
                     }
                 }
 
-                else -> frame.stack.withIndex().filter { it.index in this }.map { it.value }
+                else -> frame.stack.withIndex().filter { it.index in this }.map {
+                    when {
+                        it.value is JcRawLocal && it.value.typeName != this[it.index]!! -> JcRawLocal(
+                            (it.value as JcRawLocal).name,
+                            this[it.index]!!
+                        ).also { newLocal ->
+                            localsNormalizations[it.value as JcRawLocal] = newLocal
+                        }
+
+                        else -> it.value
+                    }
+                }
             }
         }
 
@@ -929,14 +951,20 @@ class RawInstListBuilder(
         val allLocals = frameSet.flatMap { it.locals.keys }
         val localTypes = allLocals
             .filter { local -> frameSet.all { local in it.locals } }
-            .associateWith { frameSet.first()[it]!!.typeName }
+            .associateWith {
+                val types = frameSet.map { frame -> frame[it]!!.typeName }
+                types.firstOrNull { it != NULL } ?: NULL
+            }
             .toSortedMap()
         val newLocals = localTypes.copyLocals(frames).toPersistentMap()
 
         val stackIndices = frameSet.flatMap { it.stack.indices }.toSortedSet()
         val stackRanges = stackIndices
             .filter { stack -> frameSet.all { stack in it.stack.indices } }
-            .associateWith { frameSet.first().stack[it].typeName }
+            .associateWith {
+                val types = frameSet.map { frame -> frame.stack[it].typeName }
+                types.firstOrNull { it != NULL } ?: NULL
+            }
             .toSortedMap()
         val newStack = stackRanges.copyStack(frames).toPersistentList()
 

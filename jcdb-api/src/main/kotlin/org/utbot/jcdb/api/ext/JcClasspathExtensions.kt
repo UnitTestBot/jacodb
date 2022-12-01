@@ -124,6 +124,7 @@ fun JcClasspath.findCommonSupertype(types: Set<JcType>): JcType? = when {
         }
         result
     }
+
     types.all { it is JcRefType } -> when {
         types.any { it is JcClassType } -> findTypeOrNull<Any>()
         types.map { it as JcArrayType }.map { it.elementType }.toSet().size == 1 -> types.first()
@@ -134,16 +135,19 @@ fun JcClasspath.findCommonSupertype(types: Set<JcType>): JcType? = when {
                 else -> arrayTypeOf(merged)
             }
         }
+
         else -> findTypeOrNull<Any>()
     }
+
     else -> null
 }
 
-private val integersMap get() = mapOf(
-    PredefinedPrimitives.boolean to 1,
-    PredefinedPrimitives.byte to 8,
-    PredefinedPrimitives.char to 8,
-    PredefinedPrimitives.short to 16,
-    PredefinedPrimitives.int to 32,
-    PredefinedPrimitives.long to 64
-)
+private val integersMap
+    get() = mapOf(
+        PredefinedPrimitives.boolean to 1,
+        PredefinedPrimitives.byte to 8,
+        PredefinedPrimitives.char to 8,
+        PredefinedPrimitives.short to 16,
+        PredefinedPrimitives.int to 32,
+        PredefinedPrimitives.long to 64
+    )
