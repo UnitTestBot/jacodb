@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: unittestbot/jcdb
+  IMAGE_NAME: unittestbot/jacodb
 
 jobs:
   build:
@@ -42,4 +42,4 @@ jobs:
           context: .
           file: jcdb-http/Dockerfile
           build-args: |
-            JAR_FILE=jcdb-http/build/libs/jcdb-http-demo.jar
+            JAR_FILE=jcdb-http/build/libs/jacodb-http-demo.jar

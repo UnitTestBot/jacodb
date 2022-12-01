@@ -23,9 +23,6 @@ val jar: File?
                 .toURI()
                 .toString()
 
-
-            println(path)
-
             // Get name of the JAR file
             return File(path.substring(0, path.lastIndexOf('!')))
         } catch (e: URISyntaxException) {
