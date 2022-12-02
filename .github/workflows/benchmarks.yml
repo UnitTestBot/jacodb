@@ -28,7 +28,7 @@ jobs:
           distribution: 'temurin'
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.0.2
+          gradle-version: 7.4.2
       - name: Build and run tests
         run: |
           gradle benchmark --no-daemon --info
@@ -47,7 +47,7 @@ jobs:
           java-package: jdk+fx
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.0.2
+          gradle-version: 7.4.2
       - name: Build and run tests
         run: |
           gradle benchmark --no-daemon --info
