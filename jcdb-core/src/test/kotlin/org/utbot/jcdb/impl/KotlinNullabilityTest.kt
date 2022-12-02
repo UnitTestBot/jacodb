@@ -95,6 +95,33 @@ class KotlinNullabilityTest : BaseTest() {
             buildTree(false) {
                 +buildTree(false)
             },
+
+            // SomeContainer<*>
+            buildTree(false) {
+                +buildTree(true)
+            }
+        )
+
+        assertEquals(expectedNullability, actualNullability)
+    }
+
+    @Test
+    fun `Test nullability for arrays`() = runBlocking {
+        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val params = clazz.declaredMethods.single { it.name == "javaArrays" }.parameters
+        val actualNullability = params.map { it.type.nullabilityTree }
+        val expectedNullability = listOf(
+            // IntArray?
+            buildTree(true) {
+                +buildTree(false)
+            },
+
+            // Array<KotlinNullabilityExamples.SomeContainer<Int>>
+            buildTree(false) {
+                +buildTree(false) {
+                    +buildTree(false)
+                }
+            }
         )
 
         assertEquals(expectedNullability, actualNullability)

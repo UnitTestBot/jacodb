@@ -91,7 +91,7 @@ interface JcClassType : JcRefType {
     val innerTypes: List<JcClassType>
 }
 
-interface JcTypeVariable : JcRefType{
+interface JcTypeVariable : JcRefType {
     val symbol: String
 
     val bounds: List<JcRefType>

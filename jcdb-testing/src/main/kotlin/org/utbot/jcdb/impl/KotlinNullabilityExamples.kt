@@ -32,13 +32,19 @@ class KotlinNullabilityExamples {
 
     fun SomeContainer<SomeContainer<Int?>?>.extensionFunction() = Unit
 
-    fun genericsWithProjection(covariant: SomeContainer<out String?>, contravariant: SomeContainer<in String>) = Unit
+    fun genericsWithProjection(
+        covariant: SomeContainer<out String?>,
+        contravariant: SomeContainer<in String>,
+        star: SomeContainer<*>
+    ) = Unit
+
+    fun javaArrays(nullable: IntArray?, notNull: Array<SomeContainer<Int>>) = Unit
 
     fun <T> typeVariableParameters(notNull: T, nullable: T?) = Unit
 
     fun <A: List<Int?>, B: List<Int>?> typeVariableDeclarations() = Unit
 
-    fun instantiatedContainer(a: SomeContainer<String>, b: SomeContainer<String?>) = Unit
+    fun instantiatedContainer(byNotNull: SomeContainer<String>, byNullable: SomeContainer<String?>) = Unit
 
     interface SomeContainerProducerI<P> {
         fun produceContainer(): SomeContainer<P>

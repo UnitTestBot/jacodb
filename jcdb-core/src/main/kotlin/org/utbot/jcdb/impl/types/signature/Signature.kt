@@ -52,9 +52,11 @@ internal abstract class Signature<T : Resolution>(val owner: JcAccessible, priva
         val current = currentTypeParameter
         if (current != null) {
             val toAdd = JvmTypeParameterDeclarationImpl(current, owner, currentBounds)
-            typeVariables.add(kmTypeParameters?.let {
-                toAdd.relaxWithKmTypeParameter(it[typeVariables.size])
-            } ?: toAdd)
+            typeVariables.add(
+                kmTypeParameters?.let {
+                    toAdd.relaxWithKmTypeParameter(it[typeVariables.size])
+                } ?: toAdd
+            )
         }
     }
 

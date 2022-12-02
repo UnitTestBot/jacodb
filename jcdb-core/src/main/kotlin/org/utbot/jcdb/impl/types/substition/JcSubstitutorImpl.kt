@@ -34,6 +34,7 @@ class JcSubstitutorImpl(
         override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
             val direct = substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
             if (direct != null) {
+                // Substituted type is nullable iff type variable is nullable (declared as T?) or substituting type is nullable
                 return direct.setNullability(direct.isNullable || type.isNullable)
             }
             return type.declaration?.let {
@@ -91,6 +92,7 @@ class JcSubstitutorImpl(
                     return type
                 }
                 return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }?.let {
+                    // Substituted type is nullable iff type variable is nullable (declared as T?) or substituting type is nullable
                     it.setNullability(it.isNullable || type.isNullable)
                 } ?: type
             }

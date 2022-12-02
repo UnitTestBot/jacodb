@@ -41,11 +41,12 @@ internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean = true
         JvmArrayType(elementType, nullable)
 
     override fun relaxWithKmType(kmType: KmType): JvmType {
-        val updatedType = kmType.arguments.single().type?.let {
-            JvmArrayType(elementType.relaxWithKmType(kmType))
-        } ?: this
+        // NB: kmType may have zero (for primitive arrays) one (for object arrays) argument
+        val updatedElementType = kmType.arguments.singleOrNull()?.type?.let {
+            elementType.relaxWithKmType(it)
+        } ?: elementType
 
-        return updatedType.setNullability(kmType.isNullable)
+        return JvmArrayType(updatedElementType, kmType.isNullable)
     }
 
 }
@@ -63,10 +64,10 @@ internal class JvmParameterizedType(
         JvmParameterizedType(name, parameterTypes, nullable)
 
     override fun relaxWithKmType(kmType: KmType): JvmType {
-        val types = parameterTypes.zip(kmType.arguments.map { it.type }) { type, innerType ->
-            innerType?.let {
-                type.relaxWithKmType(it)
-            } ?: type
+        val types = parameterTypes.zip(kmType.arguments.map { it.type }) { parameterType, kmParameterType ->
+            kmParameterType?.let {
+                parameterType.relaxWithKmType(it)
+            } ?: parameterType
         }
         return JvmParameterizedType(name, types, kmType.isNullable)
     }
@@ -85,10 +86,10 @@ internal class JvmParameterizedType(
             JvmNestedType(name, parameterTypes, ownerType, nullable)
 
         override fun relaxWithKmType(kmType: KmType): JvmType {
-            val types = parameterTypes.zip(kmType.arguments.map { it.type }) { type, innerType ->
-                innerType?.let {
-                    type.relaxWithKmType(it)
-                } ?: type
+            val types = parameterTypes.zip(kmType.arguments.map { it.type }) { parameterType, kmParameterType ->
+                kmParameterType?.let {
+                    parameterType.relaxWithKmType(it)
+                } ?: parameterType
             }
             return JvmNestedType(name, types, ownerType, kmType.isNullable)
         }
@@ -107,7 +108,7 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean = true) : J
 
 }
 
-// By default, we think that type variable is not-nullable
+// Unless explicitly declared as T?, we think that type variable is not-nullable
 // If it is then substituted with nullable type, the resulting type will still be nullable
 open class JvmTypeVariable(val symbol: String, isNullable: Boolean = false) : JvmType(isNullable) {
 
@@ -144,6 +145,7 @@ open class JvmTypeVariable(val symbol: String, isNullable: Boolean = false) : Jv
     }
 }
 
+// Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
 internal sealed class JvmWildcard: JvmType(true) {
     override fun setNullability(nullable: Boolean): JvmType {
         if (!nullable)
@@ -152,7 +154,6 @@ internal sealed class JvmWildcard: JvmType(true) {
     }
 }
 
-// Nullability has no sense in wildcards, so we suppose them to be nullable by default
 internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 
     internal class JvmUpperBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
@@ -160,9 +161,11 @@ internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
             get() = "? extends ${bound.displayName}"
 
         override fun relaxWithKmType(kmType: KmType): JvmType {
+            // Kotlin metadata is constructed in terms of projections => there is no explicit type for wildcard.
+            // Therefore, we don't look for kmType.arguments and relax bound with kmType directly, not with kmType.arguments.single()
+            // Same applies to JvmLowerBoundWildcard.relaxWithKmType
             return JvmUpperBoundWildcard(bound.relaxWithKmType(kmType))
         }
-
     }
 
     internal class JvmLowerBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
@@ -170,7 +173,7 @@ internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
             get() = "? super ${bound.displayName}"
 
         override fun relaxWithKmType(kmType: KmType): JvmType {
-            return JvmUpperBoundWildcard(bound.relaxWithKmType(kmType))
+            return JvmLowerBoundWildcard(bound.relaxWithKmType(kmType))
         }
 
     }

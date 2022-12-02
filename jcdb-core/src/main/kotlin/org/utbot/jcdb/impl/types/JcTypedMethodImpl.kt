@@ -119,7 +119,7 @@ class JcTypedMethodImpl(
 
     override fun typeOf(inst: LocalVariableNode): JcType {
         val variableSignature =
-            FieldSignature.of(inst.signature, method.allVisibleTypeParameters()) as? FieldResolutionImpl
+            FieldSignature.of(inst.signature, method.allVisibleTypeParameters(), null) as? FieldResolutionImpl
         if (variableSignature == null) {
             val type = Type.getType(inst.desc)
             return classpath.findTypeOrNull(type.className) ?: type.className.throwClassNotFound()

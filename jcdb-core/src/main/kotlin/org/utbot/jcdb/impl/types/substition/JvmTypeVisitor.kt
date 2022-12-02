@@ -110,7 +110,7 @@ internal interface JvmTypeVisitor {
         return JvmTypeParameterDeclarationImpl(
             declaration.symbol,
             declaration.owner,
-            declaration.bounds?.map { visitType(it, context) },
+            declaration.bounds?.map { visitType(it, context) }
         )
     }
 }

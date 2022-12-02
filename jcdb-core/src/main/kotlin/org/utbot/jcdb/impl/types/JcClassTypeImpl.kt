@@ -40,7 +40,7 @@ open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
-    override val nullable: Boolean,
+    override val nullable: Boolean
 ) : JcClassType {
 
     constructor(
