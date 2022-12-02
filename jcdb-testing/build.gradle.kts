@@ -4,7 +4,7 @@ val coroutinesVersion: String by rootProject
 dependencies {
     api(project(":jcdb-api"))
 
-    api(platform("org.junit:junit-bom:5.8.2"))
+    api(platform("org.junit:junit-bom:5.9.0"))
     api(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = kotlinVersion)
     api(group = "org.junit.jupiter", name = "junit-jupiter")
     api(group = "com.google.guava", name = "guava", version = "31.1-jre")

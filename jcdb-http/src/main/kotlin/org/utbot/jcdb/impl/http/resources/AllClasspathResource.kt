@@ -16,6 +16,11 @@
 
 package org.utbot.jcdb.impl.http.resources
 
+import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -27,6 +32,11 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClasspath
 import java.util.*
 
+@Tag(
+    name = "2. All classpath resource",
+    description = "$h2 - operate with all bytecode loaded into database$h2end",
+    externalDocs = ExternalDocumentation(url = "$wikiLocation#classpath", description = seeGithub)
+)
 @RestController
 @RequestMapping("/classpaths/allJars")
 class AllClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
@@ -40,45 +50,91 @@ class AllClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
         old.close()
     }
 
+    @Operation(
+        summary = "get class by name",
+        description = "${h3}get class based on it's name: like `java.lang.String` or `java.util.List`. Primitives, arrays and others are not supported$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#findclassornullname")
+    )
     @GetMapping("/classes/{className}")
-    fun findClass(@PathVariable className: String): ClassEntity {
+    fun findClass(
+        @Parameter(
+            description = "name of Java class",
+            examples = [ExampleObject("java.lang.String"), ExampleObject("java.util.List")]
+        ) @PathVariable className: String
+    ): ClassEntity {
         return allClasspath.findClass(className)
     }
 
+    @Operation(
+        summary = "get class bytecode",
+        description = "${h3}get class bytecode$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#bytecode")
+    )
     @GetMapping("/classes/{className}/bytecode")
-    fun classBytecode(@PathVariable className: String): HttpEntity<ByteArray> {
+    fun classBytecode(
+        @Parameter(
+            description = "name of Java class",
+            examples = [ExampleObject("java.lang.String"), ExampleObject("java.util.List")]
+        ) @PathVariable className: String
+    ): HttpEntity<ByteArray> {
         return allClasspath.classBytecode(className)
     }
 
+    @Operation(
+        summary = "find sub-classes",
+        description = "${h3}return all classes that extends or implements specified class$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#findsubclassesjcclassallhierarchy")
+    )
     @GetMapping("/hierarchies")
     suspend fun findSubclasses(
-        @RequestParam("skip") optionalSkip: Int?,
-        @RequestParam("top") optionalTop: Int?,
-        @RequestParam("className") className: String,
+        @Parameter(description = "number of entities to skip (default is 0)") @RequestParam("skip") optionalSkip: Int?,
+        @Parameter(description = "number of entities to take (default is 50)") @RequestParam("take") optionalTop: Int?,
+        @Parameter(
+            description = "name of Java class",
+            examples = [ExampleObject("java.lang.String"), ExampleObject("java.util.List")]
+        ) @RequestParam("className") className: String,
         @RequestParam("allHierarchy") allHierarchy: Boolean?
     ): ClassRefPaginator {
         return allClasspath.findSubclasses(optionalSkip, optionalTop, className, allHierarchy)
     }
 
+    @Operation(
+        summary = "find field usages",
+        description = "${h3}find usages of class fields$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#findusagesfield-mode")
+    )
     @GetMapping("/usages/fields")
     suspend fun findFieldUsages(
-        @RequestParam("skip") optionalSkip: Int?,
-        @RequestParam("top") optionalTop: Int?,
-        @RequestParam("className") className: String,
-        @RequestParam("name") fieldName: String,
-        @RequestParam("mode") mode: FieldUsageMode
+        @Parameter(description = "number of entities to skip (default is 0)") @RequestParam("skip") optionalSkip: Int?,
+        @Parameter(description = "number of entities to take (default is 50)") @RequestParam("take") optionalTop: Int?,
+        @Parameter(
+            description = "name of Java class",
+            examples = [ExampleObject("java.lang.String"), ExampleObject("java.util.List")]
+        ) @RequestParam("className") className: String,
+        @Parameter(description = "field name") @RequestParam("name") fieldName: String,
+        @Parameter(description = "field usage mode: search for read or write") @RequestParam("mode") mode: FieldUsageMode
     ): MethodRefPaginator {
         return allClasspath.findFieldUsages(optionalSkip, optionalTop, className, fieldName, mode)
     }
 
+    @Operation(
+        summary = "find method usages",
+        description = "${h3}find usages of class methods$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#findusagesmethod")
+    )
     @GetMapping("/usages/methods")
     suspend fun findMethodsUsages(
-        @RequestParam("skip") optionalSkip: Int?,
-        @RequestParam("top") optionalTop: Int?,
-        @RequestParam("className") className: String,
-        @RequestParam("name") methodName: String,
-        @RequestParam("description") methodDescription: String?,
-        @RequestParam("offset") methodOffset: Int?,
+        @Parameter(description = "number of entities to skip (default is 0)") @RequestParam("skip") optionalSkip: Int?,
+        @Parameter(description = "number of entities to take (default is 50)") @RequestParam("take") optionalTop: Int?,
+        @Parameter(
+            description = "name of Java class",
+            examples = [ExampleObject("java.lang.String"), ExampleObject("java.util.List")]
+        ) @RequestParam("className") className: String,
+        @Parameter(description = "method name") @RequestParam("name") methodName: String,
+        @Parameter(description = "jvm method description. can be used instead of `offset` param") @RequestParam("description") methodDescription: String?,
+        @Parameter(description = "index of method in class. cane be used instead of method `description` param") @RequestParam(
+            "offset"
+        ) methodOffset: Int?,
     ): MethodRefPaginator {
         return allClasspath.findMethodsUsages(
             optionalSkip,

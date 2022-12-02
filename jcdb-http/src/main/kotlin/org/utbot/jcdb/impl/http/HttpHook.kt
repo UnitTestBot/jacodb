@@ -42,7 +42,9 @@ open class HttpHook(
                     "server.port" to port,
                     "server.servlet.contextPath" to exposureSettings.apiPrefix,
                     "spring.servlet.multipart.max-file-size" to exposureSettings.maxUploadSize,
-                    "spring.servlet.multipart.max-request-size" to exposureSettings.maxUploadSize
+                    "spring.servlet.multipart.max-request-size" to exposureSettings.maxUploadSize,
+                    "springdoc.swagger-ui.tagsSorter" to "alpha",
+                    "springdoc.swagger-ui.operationsSorter" to "method"
                 )
             )
             it.addInitializers(object : ApplicationContextInitializer<ConfigurableApplicationContext> {

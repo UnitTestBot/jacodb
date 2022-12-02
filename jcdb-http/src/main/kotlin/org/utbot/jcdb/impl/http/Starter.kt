@@ -26,7 +26,6 @@ import org.utbot.jcdb.impl.features.InMemoryHierarchy
 import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.jcdb
 import java.io.File
-import java.net.URISyntaxException
 
 val jar: File?
     get() {
@@ -41,7 +40,7 @@ val jar: File?
 
             // Get name of the JAR file
             return File(path.substring(0, path.lastIndexOf('!')))
-        } catch (e: URISyntaxException) {
+        } catch (e: Throwable) {
             e.printStackTrace()
             return null
         }

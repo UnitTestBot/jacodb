@@ -16,6 +16,9 @@
 
 package org.utbot.jcdb.impl.http.resources
 
+import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -27,7 +30,19 @@ import org.utbot.jcdb.api.JCDB
 import java.io.File
 import java.util.*
 
+const val wikiLocation = "https://github.com/UnitTestBot/jacodb/wiki/Api-reference"
+const val h2 = "<h2>"
+const val h2end = "</h2>"
+const val h3 = "<h3>"
+const val h3end = "</h3>"
 
+const val seeGithub = "see GitHub"
+
+
+@Tag(
+    name = "1. JacoDB", description = "$h2 - resource of JacoDB instance$h2end",
+    externalDocs = ExternalDocumentation(url = "$wikiLocation#database", description = seeGithub)
+)
 @RestController
 class RootResource(val jcdbSettings: JCDBSettings, val jcdb: JCDB) {
 
@@ -37,6 +52,11 @@ class RootResource(val jcdbSettings: JCDBSettings, val jcdb: JCDB) {
         }
     }
 
+    @Operation(
+        summary = "get common information about database",
+        description = "${h3}Gets common information about database instance: runtime, processed bytecode locations etc$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#database")
+    )
     @GetMapping("/")
     fun databaseEntity() = JCDBEntity(
         jvmRuntime = JCDBRuntimeEntity(
@@ -52,6 +72,11 @@ class RootResource(val jcdbSettings: JCDBSettings, val jcdb: JCDB) {
         }
     )
 
+    @Operation(
+        summary = "uploads jar file into database",
+        description = "${h3}Uploads new jar-file into database$h3end",
+        externalDocs = ExternalDocumentation(url = "$wikiLocation#loaddirorjars")
+    )
     @PostMapping("/locations")
     suspend fun handleFileUpload(@RequestParam("file") fileUpload: MultipartFile): ResponseEntity<SimpleResponseEntity> {
         val name = fileUpload.originalFilename
