@@ -1,9 +1,23 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcBoundedWildcard
@@ -23,7 +37,7 @@ class KotlinNullabilityTest : BaseTest() {
         val params = clazz.declaredMethods.single { it.name == "simpleGenerics" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(
-            // receiver -- SomeContainer<SomeContainer<Int>>
+            // SomeContainer<SomeContainer<Int>>
             buildTree(false) {
                 +buildTree(false) {
                     +buildTree(false)
@@ -44,6 +58,24 @@ class KotlinNullabilityTest : BaseTest() {
                 }
             }
         )
+
+        assertEquals(expectedNullability, actualNullability)
+    }
+
+    @Test
+    fun `Test nullability for extension function`() = runBlocking {
+        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val actualNullability = clazz.declaredMethods.single { it.name == "extensionFunction" }
+            .parameters.single()
+            .type
+            .nullabilityTree
+
+        // SomeContainer<SomeContainer<Int?>?>
+        val expectedNullability = buildTree(false) {
+            +buildTree(true) {
+                +buildTree(true)
+            }
+        }
 
         assertEquals(expectedNullability, actualNullability)
     }
@@ -100,21 +132,102 @@ class KotlinNullabilityTest : BaseTest() {
     }
 
     @Test
-    fun `Test nullability after instantiation`() = runBlocking {
+    fun `Test nullability after substitution with notNull type`() = runBlocking {
         val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
-        val paramWithNotNullArg = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[0]
-        val paramWithNullableArg = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[1]
+        val param = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[0]
 
-        val nullableFieldWithNotNullArg = (paramWithNotNullArg.type as JcClassType).fields.single { it.name == "nullableProperty" }
-        val notNullFieldWithNotNullArg = (paramWithNotNullArg.type as JcClassType).fields.single { it.name == "notNullProperty" }
-        val nullableFieldWithNullableArg = (paramWithNullableArg.type as JcClassType).fields.single { it.name == "nullableProperty" }
-        val notNullFieldWithNullableArg = (paramWithNullableArg.type as JcClassType).fields.single { it.name == "notNullProperty" }
+        val fieldsNullability = (param.type as JcClassType)
+            .fields
+            .sortedBy { it.name }
+            .map { it.fieldType.nullabilityTree }
 
-        assertTrue(nullableFieldWithNotNullArg.fieldType.nullable)
-        assertFalse(notNullFieldWithNotNullArg.fieldType.nullable)
-        assertTrue(nullableFieldWithNullableArg.fieldType.nullable)
-        assertTrue(notNullFieldWithNullableArg.fieldType.nullable)
+        // E -> String
+        val expectedNullability = listOf(
+            // List<E>
+            buildTree(false) {
+                +buildTree(false)
+            },
+
+            // List<E?>
+            buildTree(false) {
+                +buildTree(true)
+            },
+
+            // E
+            buildTree(false),
+
+            // E?
+            buildTree(true)
+        )
+
+        assertEquals(expectedNullability, fieldsNullability)
     }
+
+    @Test
+    fun `Test nullability after substitution with nullable type`() = runBlocking {
+        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val param = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[1]
+
+        val fieldsNullability = (param.type as JcClassType)
+            .fields
+            .sortedBy { it.name }
+            .map { it.fieldType.nullabilityTree }
+
+        // E -> String?
+        val expectedNullability = listOf(
+            // List<E>
+            buildTree(false) {
+                +buildTree(true)
+            },
+
+            // List<E?>
+            buildTree(false) {
+                +buildTree(true)
+            },
+
+            // E
+            buildTree(true),
+
+            // E?
+            buildTree(true)
+        )
+
+        assertEquals(expectedNullability, fieldsNullability)
+    }
+
+    @Test
+    fun `Test nullability after passing nullable type through chain of notnull type variables`() = runBlocking {
+        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val fieldType = clazz.declaredFields.single { it.name == "someContainerProducer" }.fieldType
+        val innerMethodType = (fieldType as JcClassType).declaredMethods.single { it.name == "produceContainer" }.returnType
+
+        val fieldsNullability = (innerMethodType as JcClassType)
+            .fields
+            .sortedBy { it.name }
+            .map { it.fieldType.nullabilityTree }
+
+        // P -> Int?, E -> P
+        val expectedNullability = listOf(
+            // List<E>
+            buildTree(false) {
+                +buildTree(true)
+            },
+
+            // List<E?>
+            buildTree(false) {
+                +buildTree(true)
+            },
+
+            // E
+            buildTree(true),
+
+            // E?
+            buildTree(true)
+        )
+
+        assertEquals(expectedNullability, fieldsNullability)
+    }
+
 
 
     private data class TypeNullabilityTree(val isNullable: Boolean, val innerTypes: List<TypeNullabilityTree>)
