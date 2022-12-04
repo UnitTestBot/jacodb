@@ -21,11 +21,12 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.utbot.jcdb.JCDBSettings
@@ -46,7 +47,7 @@ const val seeGithub = "see GitHub"
         title = "JacoDB",
         description = "`JacoDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JacoDB` does the same for bytecode stored in a file system.",
 
-    ),
+        ),
     externalDocs = ExternalDocumentation(url = "https://github.com/UnitTestBot/jacodb/wiki")
 )
 @Service
@@ -91,8 +92,11 @@ class RootResource(val jcdbSettings: JCDBSettings, val jcdb: JCDB) {
         description = "${h3}Uploads new jar-file into database$h3end",
         externalDocs = ExternalDocumentation(url = "$wikiLocation#loaddirorjars")
     )
-    @PostMapping("/locations")
-    suspend fun handleFileUpload(@RequestParam("file") fileUpload: MultipartFile): ResponseEntity<SimpleResponseEntity> {
+    @PostMapping(
+        "/locations",
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
+    suspend fun handleFileUpload(@RequestPart("file") fileUpload: MultipartFile): ResponseEntity<SimpleResponseEntity> {
         val name = fileUpload.originalFilename
         if (name != null && name.endsWith(".jar")) {
             val destination = name.destinationFile()
