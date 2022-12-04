@@ -33,8 +33,7 @@ import org.utbot.jcdb.api.JcClasspath
 import java.util.*
 
 @Tag(
-    name = "2. All classpath resource",
-    description = "$h2 - operate with all bytecode loaded into database$h2end",
+    name = "2. all bytecode loaded into database",
     externalDocs = ExternalDocumentation(url = "$wikiLocation#classpath", description = seeGithub)
 )
 @RestController

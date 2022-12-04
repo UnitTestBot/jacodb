@@ -53,8 +53,8 @@ private class LastAccessedClasspath(
 }
 
 @Tag(
-    name = "3. Custom classpath resource",
-    description = "$h2 - operating limited classpaths by some number of jars$h2end",
+    name = "3. classpaths limited by some jars",
+//    description = "$h2 - resource for managing classpaths limited by some number of jars$h2end",
     externalDocs = ExternalDocumentation(url = "$wikiLocation#classpath", description = seeGithub)
 )
 @RestController
@@ -79,7 +79,7 @@ class ClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
     }
 
     @Operation(
-        summary = "all classpaths",
+        summary = "get all existed classpaths",
         description = "${h3}return all currently available classpaths$h3end"
     )
     @GetMapping("")
@@ -123,7 +123,7 @@ class ClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
 
     @Operation(
         summary = "get class bytecode",
-        description = "${h3}get class bytecode",
+        description = "${h3}get class bytecode$h3end",
         externalDocs = ExternalDocumentation(url = "$wikiLocation#bytecode")
     )
     @GetMapping("/{classpathId}/classes/{className}/bytecode")
