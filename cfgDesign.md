@@ -211,29 +211,29 @@ Similar to `JcRawInstList`, JcGraph stores a list of method instructions. Howeve
 also tries to resolve all the execution paths in the method. JcGraph operates with
 `JcInst` class hierarchy (which is similar to `JcRawInst` in many cases) and provides
 following API:
-* `entry: JcInst` --- Get the entry point of a method, there can be only one entry point.
-* `exits: List<JcInst>` --- Get all the "normal" exit points of a method, i.e. all the return and trow
+* `entry: JcInst` &mdash; Get the entry point of a method, there can be only one entry point.
+* `exits: List<JcInst>` &mdash; Get all the "normal" exit points of a method, i.e. all the return and trow
  instructions.
-* `throwExits: Map<JcType, List<JcInst>>` --- All the potential exception exit points of a method.
-* `ref(inst: JcInst): JcInstRef` --- Get the `JcInstRef` for an instruction. It is a lightweight wrapper that
+* `throwExits: Map<JcType, List<JcInst>>` &mdash; All the potential exception exit points of a method.
+* `ref(inst: JcInst): JcInstRef` &mdash; Get the `JcInstRef` for an instruction. It is a lightweight wrapper that
 allows to reference an instruction anytime you need.
-* `inst(ref: JcInstRef): JcInst` --- Convert `JcInstRef` into a `JcInst`.
-* `previous(inst: JcInst): JcInst` --- Get the previous instruction in the list.
-* `next(inst: JcInst): JcInst` --- Get the next instruction in the list.
-* `successors(inst: JcInst): Set<JcInst>` --- Get all the successors of an instruction
+* `inst(ref: JcInstRef): JcInst` &mdash; Convert `JcInstRef` into a `JcInst`.
+* `previous(inst: JcInst): JcInst` &mdash; Get the previous instruction in the list.
+* `next(inst: JcInst): JcInst` &mdash; Get the next instruction in the list.
+* `successors(inst: JcInst): Set<JcInst>` &mdash; Get all the successors of an instruction
 in a CFG. **Does not include any exception control flow**.
-* `predecessors(inst: JcInst): Set<JcInst>` --- Get all the predecessors of an instruction
+* `predecessors(inst: JcInst): Set<JcInst>` &mdash; Get all the predecessors of an instruction
   in a CFG. **Does not include any exception control flow**.
-* `throwers(inst: JcInst): Set<JcInst>` --- Get all the instructions that may throw an
+* `throwers(inst: JcInst): Set<JcInst>` &mdash; Get all the instructions that may throw an
 exception that is caught by `inst`. Represents an exception control flow of
 a method. Will return an empty set for all instructions except `JcCatchInst`.
-* `catchers(inst: JcInst): Set<JcCatchInst>` --- Get all the instructions that may catch an
+* `catchers(inst: JcInst): Set<JcCatchInst>` &mdash; Get all the instructions that may catch an
   exception that is thrown by `inst`. Represents an exception control flow of
   a method.
-* `exceptionExits(inst: JcInst): Set<JcClassType>` --- Get all the exception types that
+* `exceptionExits(inst: JcInst): Set<JcClassType>` &mdash; Get all the exception types that
 an instruction can throw and method will not catch.
-* `blockGraph(): JcBlockGraph` --- Create a basic block representation of a CFG.
-* `iterator(): Iterator<JcInst>` --- Iterator over the instructions of a graph.
+* `blockGraph(): JcBlockGraph` &mdash; Create a basic block representation of a CFG.
+* `iterator(): Iterator<JcInst>` &mdash; Iterator over the instructions of a graph.
 
 ## `JcBlockGraph`
 
@@ -245,27 +245,27 @@ the normal execution (i.e. no exceptions are thrown).
 `jcGraph.catchers(inst)` for each instruction of a basic block will return the same result.
 
 `JcBlockGraph` provides following API:
-* `entry: JcBasicBlock` --- Entry of a method. There can be only one entry.
-* `exits: List<JcBasicBlock>` --- Exits of a method.
-* `instructions(block: JcBasicBlock): List<JcInst>` --- Get the instructions of a basic
+* `entry: JcBasicBlock` &mdash; Entry of a method. There can be only one entry.
+* `exits: List<JcBasicBlock>` &mdash; Exits of a method.
+* `instructions(block: JcBasicBlock): List<JcInst>` &mdash; Get the instructions of a basic
 block.
-* `predecessors(block: JcBasicBlock): Set<JcBasicBlock>` --- Get all the predecessors of a
+* `predecessors(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the predecessors of a
 basic block in a CFG. **Does not include any exception control flow**.
-* `successors(block: JcBasicBlock): Set<JcBasicBlock>` --- Get all the successors of a
+* `successors(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the successors of a
   basic block in a CFG. **Does not include any exception control flow**.
-* `throwers(block: JcBasicBlock): Set<JcBasicBlock>` --- Get all the basic blocks that may throw an
+* `throwers(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the basic blocks that may throw an
   exception that is caught by `block`. Represents an exception control flow of
   a method. Will return an empty set for all blocks except ones that start with `JcCatchInst`.
-* `catchers(block: JcBasicBlock): Set<JcBasicBlock>` --- Get all the basic blocks that may catch an
+* `catchers(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the basic blocks that may catch an
   exception that is thrown by `block`. Represents an exception control flow of
   a method.
 
 We also provide an API to visualize the `JcGraph` and `JcBlockGraph`:
-* `JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false)` ---
+* `JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false)` &mdash;
 Generate a svg file using DOT ('dotCmd' requires a path to executable of a DOT) and view
 it using `viewerCmd` program (e.g. executable of a browser). `viewCatchConnections` flag
 defines whether a throw-catch connections will be displayed in the graph.
-* `JcBlockGraph.view(dotCmd: String, viewerCmd: String)` --- Similar, but it displays
+* `JcBlockGraph.view(dotCmd: String, viewerCmd: String)` &mdash; Similar, but it displays
 `JcBlockGraph`.
 
 CFG API operates on `JcInst` instructions. `JcInst` is similar to `JcRawInst` with some
