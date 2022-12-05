@@ -241,6 +241,8 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<Simplifier>())
         testClass(cp.findClass<JCDBImpl>())
         testClass(cp.findClass<ExprMapper>())
+        testClass(cp.findClass<JcGraphBuilder>())
+        testClass(cp.findClass<JcBlockGraph>())
     }
 
     private fun testClass(klass: JcClassOrInterface) = try {
@@ -258,7 +260,7 @@ class IRTest : BaseTest() {
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
             val newBody = MethodNodeBuilder(it, instructionList).build()
 //            println("New body: ${newBody.print()}")
-            println()
+//            println()
             newBody
         }
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)

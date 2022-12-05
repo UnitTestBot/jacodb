@@ -36,8 +36,6 @@ class JcGraphBuilder(
         }
     }
 
-    private val JcClassOrInterface.asType get() = classpath.typeOf(this)
-
     private val TypeName.asType
         get() = classpath.findTypeOrNull(this)
             ?: error("Could not find type $this")

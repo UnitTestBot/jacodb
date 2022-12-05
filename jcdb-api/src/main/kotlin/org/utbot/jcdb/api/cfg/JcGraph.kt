@@ -53,7 +53,7 @@ class JcGraph(
     private fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
 
     fun ref(inst: JcInst): JcInstRef = JcInstRef(index(inst))
-    fun inst(ref: JcInstRef) = instructions[ref.index]
+    fun inst(ref: JcInstRef): JcInst = instructions[ref.index]
 
     fun previous(inst: JcInst): JcInst = instructions[ref(inst).index - 1]
     fun next(inst: JcInst): JcInst = instructions[ref(inst).index + 1]
@@ -82,7 +82,7 @@ class JcGraph(
 
     override fun toString(): String = instructions.joinToString("\n")
 
-    override fun iterator() = instructions.iterator()
+    override fun iterator(): Iterator<JcInst> = instructions.iterator()
 }
 
 class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
@@ -97,7 +97,11 @@ class JcBlockGraph(
     private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
     val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
-    val entry get() = basicBlocks.single { predecessors(it).isEmpty() && jcGraph.throwers(it.start).isEmpty() }
+    val entry: JcBasicBlock
+        get() = basicBlocks.single {
+            predecessors(it).isEmpty() && jcGraph.throwers(it.start).isEmpty()
+        }
+    val exits: List<JcBasicBlock> get() = basicBlocks.filter { successors(it).isEmpty() }
 
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
@@ -158,14 +162,16 @@ class JcBlockGraph(
         }
     }
 
-    fun instructions(block: JcBasicBlock) = (block.start.index..block.end.index).map { jcGraph.instructions[it] }
-    fun predecessors(block: JcBasicBlock) = predecessorMap.getOrDefault(block, emptySet())
-    fun successors(block: JcBasicBlock) = successorMap.getOrDefault(block, emptySet())
+    fun instructions(block: JcBasicBlock): List<JcInst> =
+        (block.start.index..block.end.index).map { jcGraph.instructions[it] }
 
-    fun catchers(block: JcBasicBlock) = catchersMap.getOrDefault(block, emptySet())
-    fun throwers(block: JcBasicBlock) = throwersMap.getOrDefault(block, emptySet())
+    fun predecessors(block: JcBasicBlock): Set<JcBasicBlock> = predecessorMap.getOrDefault(block, emptySet())
+    fun successors(block: JcBasicBlock): Set<JcBasicBlock> = successorMap.getOrDefault(block, emptySet())
 
-    override fun iterator() = basicBlocks.iterator()
+    fun catchers(block: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(block, emptySet())
+    fun throwers(block: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(block, emptySet())
+
+    override fun iterator(): Iterator<JcBasicBlock> = basicBlocks.iterator()
 }
 
 
