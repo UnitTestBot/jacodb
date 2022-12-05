@@ -80,7 +80,8 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
                     locationId = record.locationId,
                     classId = record.id,
                     className = record.name
-                )
+                ),
+                withCaching = true
             )
         }
     }
@@ -88,10 +89,9 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     override fun findOverrides(jcMethod: JcMethod): Sequence<JcMethod> {
         val desc = jcMethod.description
         val name = jcMethod.name
-        val subClasses = findSubClasses(jcMethod.enclosingClass, allHierarchy = true)
-        return subClasses.mapNotNull {
-            it.findMethodOrNull(name, desc)
-        }.filter { !it.isPrivate }
+        return findSubClasses(jcMethod.enclosingClass, allHierarchy = true)
+            .mapNotNull { it.findMethodOrNull(name, desc) }
+            .filter { !it.isPrivate }
     }
 
     private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean): Sequence<ClassRecord> {

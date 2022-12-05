@@ -94,26 +94,18 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
         field: JcField? = null,
         opcodes: Collection<Int>
     ): Sequence<JcMethod> {
-        val list: List<Sequence<JcMethod>> = hierarchy.map {
-            Usages.syncQuery(
-                cp, UsageFeatureRequest(
-                    methodName = method?.name,
-                    description = method?.description,
-                    field = field?.name,
-                    opcodes = opcodes,
-                    className = it.name
-                )
-            ).flatMap {
-                cp.toJcClass(it.source)
-                    .declaredMethods
-                    .slice(it.offsets.map { it.toInt() })
-            }
-        }
-
-        return sequence {
-            list.forEach {
-                yieldAll(it)
-            }
+        return Usages.syncQuery(
+            cp, UsageFeatureRequest(
+                methodName = method?.name,
+                description = method?.description,
+                field = field?.name,
+                opcodes = opcodes,
+                className = hierarchy.map { it.name }.toSet()
+            )
+        ).flatMap {
+            cp.toJcClass(it.source)
+                .declaredMethods
+                .slice(it.offsets.map { it.toInt() })
         }
     }
 

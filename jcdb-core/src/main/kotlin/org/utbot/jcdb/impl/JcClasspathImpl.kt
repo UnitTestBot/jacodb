@@ -29,7 +29,6 @@ import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
-import org.utbot.jcdb.impl.bytecode.toJcClass
 import org.utbot.jcdb.impl.types.JcArrayTypeImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl
 import org.utbot.jcdb.impl.types.substition.JcSubstitutor
@@ -65,9 +64,10 @@ class JcClasspathImpl(
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
         return classCache.get(name) {
-            val jcClass = toJcClass(classpathVfs.firstClassOrNull(name))
+            val source = classpathVfs.firstClassOrNull(name)
+            val jcClass = source?.let { toJcClass(it.source, false) }
                 ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
-                    toJcClass(it)
+                    toJcClass(it, false)
                 }
             ClassHolder(jcClass)
         }.jcClass
@@ -86,7 +86,12 @@ class JcClasspathImpl(
         return JcArrayTypeImpl(elementType, true)
     }
 
-    override fun toJcClass(source: ClassSource): JcClassOrInterface {
+    override fun toJcClass(source: ClassSource, withCaching: Boolean): JcClassOrInterface {
+        if (withCaching) {
+            return classCache.get(source.className) {
+                ClassHolder(JcClassOrInterfaceImpl(this, source))
+            }.jcClass!!
+        }
         return JcClassOrInterfaceImpl(this, source)
     }
 

@@ -47,7 +47,9 @@ class PersistenceClassSource(
 
     override val location = PersistentByteCodeLocation(classpath, locationId)
 
+    var cachedByteCode: ByteArray? = null
+
     override val byteCode by lazy {
-        classpath.db.persistence.findBytecode(classId)
+        cachedByteCode ?: classpath.db.persistence.findBytecode(classId)
     }
 }

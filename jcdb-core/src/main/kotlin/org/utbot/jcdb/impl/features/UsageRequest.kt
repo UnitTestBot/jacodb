@@ -25,7 +25,7 @@ data class UsageFeatureRequest(
     val description: String?,
     val field: String?,
     val opcodes: Collection<Int>,
-    val className: String
+    val className: Set<String>
 ) : java.io.Serializable
 
 class UsageFeatureResponse(
