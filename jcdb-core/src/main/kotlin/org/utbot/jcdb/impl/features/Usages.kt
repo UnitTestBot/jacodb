@@ -232,18 +232,23 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
         return BatchedSequence(50) { offset, batchSize ->
             var position = offset ?: 0
             val classes = calls.drop(position.toInt()).take(batchSize)
-            val classesMap = classes.associateBy { it.first.classId }
-            val classeId = classesMap.keys
-            persistence.read { jooq ->
+            val classIds = classes.map { it.first.classId }.toSet()
+            val byteCodes = persistence.read { jooq ->
                 jooq.select(CLASSES.ID, CLASSES.BYTECODE).from(CLASSES)
-                    .where(CLASSES.ID.`in`(classeId))
+                    .where(CLASSES.ID.`in`(classIds))
                     .fetch()
-                    .toList()
-                    .forEach { (classId, byteArray) ->
-                        classesMap[classId]?.first?.cachedByteCode = byteArray
-                    }
+                    .map { (classId, byteArray) ->
+                        classId!! to byteArray!!
+                    }.toMap()
             }
-            classes.map { position++ to UsageFeatureResponse(source = it.first, offsets = it.second) }
+            classes.map {
+                position++ to UsageFeatureResponse(
+                    source = PersistenceClassSource(
+                        it.first,
+                        byteCodes[it.first.classId]!!
+                    ), offsets = it.second
+                )
+            }
         }
     }
 

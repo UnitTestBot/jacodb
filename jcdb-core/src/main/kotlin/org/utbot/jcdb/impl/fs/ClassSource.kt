@@ -42,12 +42,19 @@ class PersistenceClassSource(
     private val classpath: JcClasspath,
     override val className: String,
     val classId: Long,
-    val locationId: Long
+    val locationId: Long,
+    private val cachedByteCode: ByteArray? = null
 ) : ClassSource {
 
-    override val location = PersistentByteCodeLocation(classpath, locationId)
+    constructor(persistenceClassSource: PersistenceClassSource, byteCode: ByteArray): this(
+        persistenceClassSource.classpath,
+        persistenceClassSource.className,
+        persistenceClassSource.classId,
+        persistenceClassSource.locationId,
+        byteCode
+    )
 
-    var cachedByteCode: ByteArray? = null
+    override val location = PersistentByteCodeLocation(classpath, locationId)
 
     override val byteCode by lazy {
         cachedByteCode ?: classpath.db.persistence.findBytecode(classId)
