@@ -1,12 +1,12 @@
 package org.utbot.jcdb.impl
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
 import org.utbot.jcdb.api.*
 import org.utbot.jcdb.api.cfg.*
-import org.utbot.jcdb.api.cfg.ext.view
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
@@ -58,6 +58,159 @@ class OverridesResolver(
 
 }
 
+class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
+    fun check() {
+        assertDoesNotThrow { jcGraph.entry }
+        assertTrue(jcGraph.exits.all { it is JcTerminatingInst })
+
+        jcGraph.forEach { it.accept(this) }
+
+        checkBlocks()
+    }
+
+    fun checkBlocks() {
+        val blockGraph = jcGraph.blockGraph()
+
+        val entry = assertDoesNotThrow { blockGraph.entry }
+        for (block in blockGraph) {
+            if (block != entry) {
+                when (jcGraph.inst(block.start)) {
+                    is JcCatchInst -> {
+                        assertTrue(blockGraph.predecessors(block).isEmpty())
+                        assertTrue(blockGraph.throwers(block).isNotEmpty())
+                    }
+                    else -> {
+                        assertTrue(blockGraph.predecessors(block).isNotEmpty())
+                        assertTrue(blockGraph.throwers(block).isEmpty())
+                    }
+                }
+            }
+            assertDoesNotThrow { blockGraph.instructions(block).map { jcGraph.catchers(it) }.toSet().single() }
+            if (jcGraph.inst(block.end) !is JcTerminatingInst) {
+                assertTrue(blockGraph.successors(block).isNotEmpty())
+            }
+        }
+    }
+
+    override fun visitJcAssignInst(inst: JcAssignInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(setOf(jcGraph.next(inst)), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcEnterMonitorInst(inst: JcEnterMonitorInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(setOf(jcGraph.next(inst)), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcExitMonitorInst(inst: JcExitMonitorInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(setOf(jcGraph.next(inst)), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcCallInst(inst: JcCallInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(setOf(jcGraph.next(inst)), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcReturnInst(inst: JcReturnInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(emptySet<JcInst>(), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcThrowInst(inst: JcThrowInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(emptySet<JcInst>(), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcCatchInst(inst: JcCatchInst) {
+        assertEquals(emptySet<JcInst>(), jcGraph.predecessors(inst))
+        assertTrue(jcGraph.successors(inst).isNotEmpty())
+        assertTrue(jcGraph.throwers(inst).all { thrower ->
+            inst in jcGraph.catchers(thrower)
+        })
+    }
+
+    override fun visitJcGotoInst(inst: JcGotoInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(setOf(jcGraph.inst(inst.target)), jcGraph.successors(inst))
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcIfInst(inst: JcIfInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(
+            setOf(
+                jcGraph.inst(inst.trueBranch),
+                jcGraph.inst(inst.falseBranch)
+            ),
+            jcGraph.successors(inst)
+        )
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+    override fun visitJcSwitchInst(inst: JcSwitchInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+        assertEquals(
+            inst.branches.values.map { jcGraph.inst(it) }.toSet() + jcGraph.inst(inst.default),
+            jcGraph.successors(inst)
+        )
+
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
+
+}
+
 class IRTest : BaseTest() {
     val target = Files.createTempDirectory("jcdb-temp")
 
@@ -93,19 +246,18 @@ class IRTest : BaseTest() {
     private fun testClass(klass: JcClassOrInterface) = try {
         val classNode = klass.bytecode()
         classNode.methods = klass.methods.filter { it.enclosingClass == klass }.map {
-            val oldBody = it.body()
-            println()
-            println("Old body: ${oldBody.print()}")
+//            val oldBody = it.body()
+//            println()
+//            println("Old body: ${oldBody.print()}")
             val instructionList = it.instructionList(cp)
-            println("Instruction list: $instructionList")
+//            println("Instruction list: $instructionList")
             val graph = instructionList.graph(cp, it)
-            println("Graph: $graph")
+            JcGraphChecker(graph).check()
+//            println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
-            assertDoesNotThrow { graph.entry }
-            assertDoesNotThrow { graph.blockGraph().entry }
             val newBody = MethodNodeBuilder(it, instructionList).build()
-            println("New body: ${newBody.print()}")
+//            println("New body: ${newBody.print()}")
             println()
             newBody
         }

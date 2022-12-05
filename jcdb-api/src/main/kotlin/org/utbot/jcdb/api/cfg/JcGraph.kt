@@ -109,7 +109,6 @@ class JcBlockGraph(
             for (ref in currentRefs) {
                 inst2Block[jcGraph.inst(ref)] = block
             }
-//                instructions(block).map { jcGraph.catchers(it) }.toSet().single()
             currentRefs.clear()
             _basicBlocks.add(block)
         }
@@ -120,11 +119,13 @@ class JcBlockGraph(
                 currentRefs.isEmpty() -> false
                 else -> jcGraph.catchers(currentRefs.first()) != jcGraph.catchers(currentRef)
             }
+            if (shouldTerminate) {
+                createBlock()
+            }
             when {
                 inst is JcBranchingInst
                         || inst is JcTerminatingInst
-                        || jcGraph.predecessors(inst).size > 1
-                        || shouldTerminate -> {
+                        || jcGraph.predecessors(inst).size > 1 -> {
                     if (shouldBeAddedBefore) currentRefs += currentRef
                     createBlock()
                     if (!shouldBeAddedBefore) {
