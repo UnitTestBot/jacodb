@@ -86,7 +86,7 @@ fun JCDBSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> 
 open class Application {
 
     @Bean
-    open fun springShopOpenAPI(@Value("\${server.servlet.context-path}") contextPath: String): OpenAPI {
+    open fun springOpenAPI(@Value("\${server.servlet.context-path}") contextPath: String): OpenAPI {
         return OpenAPI()
             .addServersItem(Server().url(contextPath))
             .info(
