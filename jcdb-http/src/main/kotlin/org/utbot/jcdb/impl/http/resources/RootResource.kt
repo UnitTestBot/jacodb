@@ -17,13 +17,10 @@
 package org.utbot.jcdb.impl.http.resources
 
 import io.swagger.v3.oas.annotations.ExternalDocumentation
-import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestPart
@@ -35,24 +32,10 @@ import java.io.File
 import java.util.*
 
 const val wikiLocation = "https://github.com/UnitTestBot/jacodb/wiki/Api-reference"
-const val h2 = "<h2>"
-const val h2end = "</h2>"
 const val h3 = "<h3>"
 const val h3end = "</h3>"
 
 const val seeGithub = "see GitHub"
-
-@OpenAPIDefinition(
-    info = Info(
-        title = "JacoDB",
-        description = "`JacoDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JacoDB` does the same for bytecode stored in a file system.",
-
-        ),
-    externalDocs = ExternalDocumentation(url = "https://github.com/UnitTestBot/jacodb/wiki")
-)
-@Service
-class OpenApiDef
-
 
 @Tag(
     name = "1. database instance resource",

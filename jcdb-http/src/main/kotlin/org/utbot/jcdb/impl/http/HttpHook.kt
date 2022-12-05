@@ -16,13 +16,22 @@
 
 package org.utbot.jcdb.impl.http
 
+import io.swagger.v3.oas.models.Components
+import io.swagger.v3.oas.models.ExternalDocumentation
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.security.SecurityScheme
+import io.swagger.v3.oas.models.servers.Server
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.context.annotation.Bean
 import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
+
 
 open class HttpHook(
     private val port: Int, private val jcdb: JCDB, private val settings: JCDBSettings,
@@ -74,4 +83,26 @@ fun JCDBSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> 
 }
 
 @SpringBootApplication
-open class Application
+open class Application {
+
+    @Bean
+    open fun springShopOpenAPI(@Value("\${server.servlet.context-path}") contextPath: String): OpenAPI {
+        return OpenAPI()
+            .addServersItem(Server().url(contextPath))
+            .info(
+                Info()
+                    .title("JacoDB")
+                    .description("`JacoDB` is a pure Java library that allows you to get information about Java bytecode outside the JVM process and to store it in a database. While Java `Reflection` makes it possible to inspect code at runtime, `JacoDB` does the same for bytecode stored in a file system.")
+            )
+            .externalDocs(
+                ExternalDocumentation().url("https://github.com/UnitTestBot/jacodb/wiki")
+            )
+            .components(
+                Components()
+                    .addSecuritySchemes(
+                        "basicScheme",
+                        SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("basic")
+                    )
+            )
+    }
+}
