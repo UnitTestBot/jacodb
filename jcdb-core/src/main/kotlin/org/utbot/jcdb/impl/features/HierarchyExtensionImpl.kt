@@ -23,9 +23,11 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.isFinal
 import org.utbot.jcdb.api.isPrivate
 import org.utbot.jcdb.impl.fs.PersistenceClassSource
 import org.utbot.jcdb.impl.storage.BatchedSequence
+import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import java.util.concurrent.Future
 
 @Suppress("SqlResolve")
@@ -50,7 +52,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         """.trimIndent()
 
         private fun directSubClassesQuery(locationIds: String, sinceId: Long?) = """
-            SELECT Classes.id, Classes.location_id, SymbolsName.name as name_name FROM ClassHierarchies
+            SELECT Classes.id, Classes.location_id, SymbolsName.name as name_name, Classes.bytecode FROM ClassHierarchies
                 JOIN Symbols ON Symbols.id = ClassHierarchies.super_id
                 JOIN Symbols as SymbolsName ON SymbolsName.id = Classes.name
                 JOIN Classes ON Classes.id = ClassHierarchies.class_id
@@ -61,19 +63,38 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 
     override fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
         if (cp.db.isInstalled(InMemoryHierarchy)) {
-            return cp.findSubclassesInMemory(name, allHierarchy)
+            return cp.findSubclassesInMemory(name, allHierarchy, false)
         }
         val classId = cp.findClassOrNull(name) ?: return emptySequence()
         return findSubClasses(classId, allHierarchy)
     }
 
     override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+        return findSubClasses(jcClass, allHierarchy, false)
+    }
+
+    override fun findOverrides(jcMethod: JcMethod, includeAbstract: Boolean): Sequence<JcMethod> {
+        if (jcMethod.isFinal) {
+            return emptySequence()
+        }
+        val desc = jcMethod.description
+        val name = jcMethod.name
+        return findSubClasses(jcMethod.enclosingClass, allHierarchy = true, true)
+            .mapNotNull { it.findMethodOrNull(name, desc) }
+            .filter { !it.isPrivate }
+    }
+
+    private fun findSubClasses(
+        jcClass: JcClassOrInterface,
+        allHierarchy: Boolean,
+        full: Boolean
+    ): Sequence<JcClassOrInterface> {
         if (cp.db.isInstalled(InMemoryHierarchy)) {
-            return cp.findSubclassesInMemory(jcClass.name, allHierarchy)
+            return cp.findSubclassesInMemory(jcClass.name, allHierarchy, full)
         }
         val name = jcClass.name
 
-        return cp.subClasses(name, allHierarchy).map { record ->
+        return cp.subClasses(name, allHierarchy, full).map { record ->
             cp.toJcClass(
                 PersistenceClassSource(
                     classpath = cp,
@@ -86,15 +107,8 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }
     }
 
-    override fun findOverrides(jcMethod: JcMethod): Sequence<JcMethod> {
-        val desc = jcMethod.description
-        val name = jcMethod.name
-        return findSubClasses(jcMethod.enclosingClass, allHierarchy = true)
-            .mapNotNull { it.findMethodOrNull(name, desc) }
-            .filter { !it.isPrivate }
-    }
 
-    private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean): Sequence<ClassRecord> {
+    private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean, full: Boolean): Sequence<ClassRecord> {
         val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
         return BatchedSequence(50) { offset, batchSize ->
             val query = when {
@@ -104,11 +118,12 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
             db.persistence.read {
                 val cursor = it.fetchLazy(query, name)
                 cursor.fetchNext(batchSize).map {
-                    val id = it.get("id") as Long
+                    val id = it.get(CLASSES.ID)!!
                     id to ClassRecord(
-                        locationId = it.get("location_id") as Long,
+                        id = it.get(CLASSES.ID)!!,
                         name = it.get("name_name") as String,
-                        id = id
+                        locationId = it.get(CLASSES.LOCATION_ID)!!,
+                        byteCode = if (full) it.get(CLASSES.BYTECODE) else null
                     )
                 }.also {
                     cursor.close()
@@ -120,9 +135,10 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 }
 
 private class ClassRecord(
-    val locationId: Long,
+    val id: Long,
     val name: String,
-    val id: Long
+    val locationId: Long,
+    val byteCode: ByteArray? = null
 )
 
 suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {

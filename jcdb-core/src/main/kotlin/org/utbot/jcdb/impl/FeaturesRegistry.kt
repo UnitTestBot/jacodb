@@ -75,6 +75,7 @@ sealed class JcInternalSignal {
     class BeforeIndexing(val clearOnStart: Boolean) : JcInternalSignal()
     object AfterIndexing : JcInternalSignal()
     object Drop : JcInternalSignal()
+    object Closed : JcInternalSignal()
     class LocationRemoved(val location: RegisteredLocation) : JcInternalSignal()
 
     fun asJcSignal(jcdb: JCDB): JcSignal {
@@ -83,6 +84,7 @@ sealed class JcInternalSignal {
             is AfterIndexing -> JcSignal.AfterIndexing(jcdb)
             is LocationRemoved -> JcSignal.LocationRemoved(jcdb, location)
             is Drop -> JcSignal.Drop(jcdb)
+            is Closed -> JcSignal.Closed(jcdb)
         }
     }
 

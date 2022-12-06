@@ -66,9 +66,9 @@ class FastHierarchyIndexer(
     }
 }
 
-data class FastHierarchyReq(val name: String, val allHierarchy: Boolean = true)
+data class InMemoryHierarchyReq(val name: String, val allHierarchy: Boolean = true, val full: Boolean = false)
 
-object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
+object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 
     private val hierarchies = ConcurrentHashMap<JCDB, InMemoryHierarchyCache>()
 
@@ -107,11 +107,11 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
         }
     }
 
-    override suspend fun query(classpath: JcClasspath, req: FastHierarchyReq): Sequence<ClassSource> {
+    override suspend fun query(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         return syncQuery(classpath, req)
     }
 
-    fun syncQuery(classpath: JcClasspath, req: FastHierarchyReq): Sequence<ClassSource> {
+    fun syncQuery(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         val persistence = classpath.db.persistence
         val locationIds = classpath.registeredLocations.map { it.id }
         if (req.name == "java.lang.Object") {
@@ -173,18 +173,18 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
         if (allSubclasses.isEmpty()) {
             return emptySequence()
         }
-        val allHashes = allSubclasses.toList()
+        val allIds = allSubclasses.toList()
         return BatchedSequence<ClassSource>(50) { offset, batchSize ->
             persistence.read { jooq ->
                 val index = offset?.toInt() ?: 0
-                val hashes = allHashes.subList(index, min(allHashes.size, index + batchSize))
-                if (hashes.isEmpty()) {
+                val ids = allIds.subList(index, min(allIds.size, index + batchSize))
+                if (ids.isEmpty()) {
                     emptyList()
                 } else {
-                    jooq.select(SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID)
+                    jooq.select(SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, CLASSES.BYTECODE)
                         .from(CLASSES)
                         .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                        .where(SYMBOLS.ID.`in`(hashes).and(CLASSES.LOCATION_ID.`in`(locationIds)))
+                        .where(SYMBOLS.ID.`in`(ids).and(CLASSES.LOCATION_ID.`in`(locationIds)))
                         .orderBy(CLASSES.ID)
                         .limit(batchSize)
                         .fetch()
@@ -207,8 +207,8 @@ object InMemoryHierarchy : JcFeature<FastHierarchyReq, ClassSource> {
 
 }
 
-internal fun JcClasspath.findSubclassesInMemory(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
-    return InMemoryHierarchy.syncQuery(this, FastHierarchyReq(name, allHierarchy)).map {
+internal fun JcClasspath.findSubclassesInMemory(name: String, allHierarchy: Boolean, full: Boolean): Sequence<JcClassOrInterface> {
+    return InMemoryHierarchy.syncQuery(this, InMemoryHierarchyReq(name, allHierarchy, full)).map {
         toJcClass(it)
     }
 }
