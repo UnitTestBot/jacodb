@@ -1,12 +1,55 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.api.cfg.*
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClassType
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.NoClassInClasspathException
+import org.utbot.jcdb.api.TypeName
+import org.utbot.jcdb.api.cfg.DefaultJcExprVisitor
+import org.utbot.jcdb.api.cfg.DefaultJcInstVisitor
+import org.utbot.jcdb.api.cfg.JcAssignInst
+import org.utbot.jcdb.api.cfg.JcBlockGraph
+import org.utbot.jcdb.api.cfg.JcCallExpr
+import org.utbot.jcdb.api.cfg.JcCallInst
+import org.utbot.jcdb.api.cfg.JcCatchInst
+import org.utbot.jcdb.api.cfg.JcEnterMonitorInst
+import org.utbot.jcdb.api.cfg.JcExitMonitorInst
+import org.utbot.jcdb.api.cfg.JcExpr
+import org.utbot.jcdb.api.cfg.JcGotoInst
+import org.utbot.jcdb.api.cfg.JcGraph
+import org.utbot.jcdb.api.cfg.JcGraphBuilder
+import org.utbot.jcdb.api.cfg.JcIfInst
+import org.utbot.jcdb.api.cfg.JcInst
+import org.utbot.jcdb.api.cfg.JcInstVisitor
+import org.utbot.jcdb.api.cfg.JcReturnInst
+import org.utbot.jcdb.api.cfg.JcSpecialCallExpr
+import org.utbot.jcdb.api.cfg.JcSwitchInst
+import org.utbot.jcdb.api.cfg.JcTerminatingInst
+import org.utbot.jcdb.api.cfg.JcThrowInst
+import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
@@ -20,7 +63,6 @@ import org.utbot.jcdb.impl.cfg.JavaTasks
 import org.utbot.jcdb.impl.cfg.MethodNodeBuilder
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.cfg.Simplifier
-import org.utbot.jcdb.impl.cfg.print
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import java.net.URLClassLoader
 import java.nio.file.Files

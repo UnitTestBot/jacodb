@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.api.cfg.ext
 
 import info.leadinglight.jdot.Edge
@@ -6,16 +22,79 @@ import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.impl.Util
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.api.cfg.*
+import org.utbot.jcdb.api.JcClassType
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.cfg.JcAddExpr
+import org.utbot.jcdb.api.cfg.JcAndExpr
+import org.utbot.jcdb.api.cfg.JcArgument
+import org.utbot.jcdb.api.cfg.JcArrayAccess
+import org.utbot.jcdb.api.cfg.JcAssignInst
+import org.utbot.jcdb.api.cfg.JcBasicBlock
+import org.utbot.jcdb.api.cfg.JcBlockGraph
+import org.utbot.jcdb.api.cfg.JcBool
+import org.utbot.jcdb.api.cfg.JcByte
+import org.utbot.jcdb.api.cfg.JcCallInst
+import org.utbot.jcdb.api.cfg.JcCastExpr
+import org.utbot.jcdb.api.cfg.JcCatchInst
+import org.utbot.jcdb.api.cfg.JcChar
+import org.utbot.jcdb.api.cfg.JcClassConstant
+import org.utbot.jcdb.api.cfg.JcCmpExpr
+import org.utbot.jcdb.api.cfg.JcCmpgExpr
+import org.utbot.jcdb.api.cfg.JcCmplExpr
+import org.utbot.jcdb.api.cfg.JcDivExpr
+import org.utbot.jcdb.api.cfg.JcDouble
+import org.utbot.jcdb.api.cfg.JcDynamicCallExpr
+import org.utbot.jcdb.api.cfg.JcEnterMonitorInst
+import org.utbot.jcdb.api.cfg.JcEqExpr
+import org.utbot.jcdb.api.cfg.JcExitMonitorInst
+import org.utbot.jcdb.api.cfg.JcExpr
+import org.utbot.jcdb.api.cfg.JcExprVisitor
+import org.utbot.jcdb.api.cfg.JcFieldRef
+import org.utbot.jcdb.api.cfg.JcFloat
+import org.utbot.jcdb.api.cfg.JcGeExpr
+import org.utbot.jcdb.api.cfg.JcGotoInst
+import org.utbot.jcdb.api.cfg.JcGraph
+import org.utbot.jcdb.api.cfg.JcGtExpr
+import org.utbot.jcdb.api.cfg.JcIfInst
+import org.utbot.jcdb.api.cfg.JcInst
+import org.utbot.jcdb.api.cfg.JcInstVisitor
+import org.utbot.jcdb.api.cfg.JcInstanceOfExpr
+import org.utbot.jcdb.api.cfg.JcInt
+import org.utbot.jcdb.api.cfg.JcLambdaExpr
+import org.utbot.jcdb.api.cfg.JcLeExpr
+import org.utbot.jcdb.api.cfg.JcLengthExpr
+import org.utbot.jcdb.api.cfg.JcLocal
+import org.utbot.jcdb.api.cfg.JcLong
+import org.utbot.jcdb.api.cfg.JcLtExpr
+import org.utbot.jcdb.api.cfg.JcMethodConstant
+import org.utbot.jcdb.api.cfg.JcMulExpr
+import org.utbot.jcdb.api.cfg.JcNegExpr
+import org.utbot.jcdb.api.cfg.JcNeqExpr
+import org.utbot.jcdb.api.cfg.JcNewArrayExpr
+import org.utbot.jcdb.api.cfg.JcNewExpr
+import org.utbot.jcdb.api.cfg.JcNullConstant
+import org.utbot.jcdb.api.cfg.JcOrExpr
+import org.utbot.jcdb.api.cfg.JcRemExpr
+import org.utbot.jcdb.api.cfg.JcReturnInst
+import org.utbot.jcdb.api.cfg.JcShlExpr
+import org.utbot.jcdb.api.cfg.JcShort
+import org.utbot.jcdb.api.cfg.JcShrExpr
+import org.utbot.jcdb.api.cfg.JcSpecialCallExpr
+import org.utbot.jcdb.api.cfg.JcStaticCallExpr
+import org.utbot.jcdb.api.cfg.JcStringConstant
+import org.utbot.jcdb.api.cfg.JcSubExpr
+import org.utbot.jcdb.api.cfg.JcSwitchInst
+import org.utbot.jcdb.api.cfg.JcThis
+import org.utbot.jcdb.api.cfg.JcThrowInst
+import org.utbot.jcdb.api.cfg.JcUshrExpr
+import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
+import org.utbot.jcdb.api.cfg.JcXorExpr
 import org.utbot.jcdb.api.ext.findTypeOrNull
+import org.utbot.jcdb.api.toType
 import java.io.File
-import java.lang.ClassCastException
-import java.lang.Error
-import java.lang.IndexOutOfBoundsException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.ArithmeticException
 
 fun JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))

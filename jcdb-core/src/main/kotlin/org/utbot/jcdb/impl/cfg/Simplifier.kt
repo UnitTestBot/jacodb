@@ -1,7 +1,38 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.cfg
 
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.api.cfg.ext.*
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcRawAssignInst
+import org.utbot.jcdb.api.JcRawCatchInst
+import org.utbot.jcdb.api.JcRawComplexValue
+import org.utbot.jcdb.api.JcRawConstant
+import org.utbot.jcdb.api.JcRawInst
+import org.utbot.jcdb.api.JcRawInstList
+import org.utbot.jcdb.api.JcRawLabelInst
+import org.utbot.jcdb.api.JcRawLocal
+import org.utbot.jcdb.api.JcRawNullConstant
+import org.utbot.jcdb.api.JcRawSimpleValue
+import org.utbot.jcdb.api.JcRawValue
+import org.utbot.jcdb.api.JcType
+import org.utbot.jcdb.api.cfg.ext.applyAndGet
+import org.utbot.jcdb.api.cfg.ext.filter
+import org.utbot.jcdb.api.cfg.ext.filterNot
+import org.utbot.jcdb.api.cfg.ext.map
 import org.utbot.jcdb.api.ext.findCommonSupertype
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.cfg.util.FullExprSetCollector

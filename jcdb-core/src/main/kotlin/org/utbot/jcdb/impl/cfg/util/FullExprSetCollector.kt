@@ -1,6 +1,70 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.cfg.util
 
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.JcRawAddExpr
+import org.utbot.jcdb.api.JcRawAndExpr
+import org.utbot.jcdb.api.JcRawArgument
+import org.utbot.jcdb.api.JcRawArrayAccess
+import org.utbot.jcdb.api.JcRawBool
+import org.utbot.jcdb.api.JcRawByte
+import org.utbot.jcdb.api.JcRawCastExpr
+import org.utbot.jcdb.api.JcRawChar
+import org.utbot.jcdb.api.JcRawClassConstant
+import org.utbot.jcdb.api.JcRawCmpExpr
+import org.utbot.jcdb.api.JcRawCmpgExpr
+import org.utbot.jcdb.api.JcRawCmplExpr
+import org.utbot.jcdb.api.JcRawDivExpr
+import org.utbot.jcdb.api.JcRawDouble
+import org.utbot.jcdb.api.JcRawDynamicCallExpr
+import org.utbot.jcdb.api.JcRawEqExpr
+import org.utbot.jcdb.api.JcRawExpr
+import org.utbot.jcdb.api.JcRawFieldRef
+import org.utbot.jcdb.api.JcRawFloat
+import org.utbot.jcdb.api.JcRawGeExpr
+import org.utbot.jcdb.api.JcRawGtExpr
+import org.utbot.jcdb.api.JcRawInstanceOfExpr
+import org.utbot.jcdb.api.JcRawInt
+import org.utbot.jcdb.api.JcRawInterfaceCallExpr
+import org.utbot.jcdb.api.JcRawLeExpr
+import org.utbot.jcdb.api.JcRawLengthExpr
+import org.utbot.jcdb.api.JcRawLocal
+import org.utbot.jcdb.api.JcRawLong
+import org.utbot.jcdb.api.JcRawLtExpr
+import org.utbot.jcdb.api.JcRawMethodConstant
+import org.utbot.jcdb.api.JcRawMulExpr
+import org.utbot.jcdb.api.JcRawNegExpr
+import org.utbot.jcdb.api.JcRawNeqExpr
+import org.utbot.jcdb.api.JcRawNewArrayExpr
+import org.utbot.jcdb.api.JcRawNewExpr
+import org.utbot.jcdb.api.JcRawNullConstant
+import org.utbot.jcdb.api.JcRawOrExpr
+import org.utbot.jcdb.api.JcRawRemExpr
+import org.utbot.jcdb.api.JcRawShlExpr
+import org.utbot.jcdb.api.JcRawShort
+import org.utbot.jcdb.api.JcRawShrExpr
+import org.utbot.jcdb.api.JcRawSpecialCallExpr
+import org.utbot.jcdb.api.JcRawStaticCallExpr
+import org.utbot.jcdb.api.JcRawStringConstant
+import org.utbot.jcdb.api.JcRawSubExpr
+import org.utbot.jcdb.api.JcRawThis
+import org.utbot.jcdb.api.JcRawUshrExpr
+import org.utbot.jcdb.api.JcRawVirtualCallExpr
+import org.utbot.jcdb.api.JcRawXorExpr
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
 
 class FullExprSetCollector : JcRawExprVisitor<Unit> {
