@@ -55,6 +55,7 @@ import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.api.toType
+import org.utbot.jcdb.impl.bytecode.JCDBClassWriter
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.BinarySearchTree
@@ -314,7 +315,7 @@ class IRTest : BaseTest() {
 //            println()
             newBody
         }
-        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+        val cw = JCDBClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
         val checker = CheckClassAdapter(classNode)
         classNode.accept(checker)
         val targetDir = target.resolve(klass.packageName.replace('.', '/'))

@@ -25,8 +25,9 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassSource
-import org.utbot.jcdb.impl.bytecode.hasFrameInfo
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.impl.bytecode.computeFrames
+import org.utbot.jcdb.impl.bytecode.hasFrameInfo
 import org.utbot.jcdb.impl.storage.AnnotationValueKind
 import org.utbot.jcdb.impl.types.AnnotationInfo
 import org.utbot.jcdb.impl.types.AnnotationValue
@@ -136,15 +137,15 @@ val ClassSource.info: ClassInfo get() {
     return newClassNode(ClassReader.SKIP_CODE).asClassInfo(byteCode)
 }
 
-val ClassSource.asmNode: ClassNode get() {
-    return newClassNode(ClassReader.SKIP_CODE)
+val ClassSource.fullAsmNode: ClassNode get() {
+    return newClassNode(ClassReader.EXPAND_FRAMES)
 }
 
-val ClassSource.fullAsmNode: ClassNode get() {
-    var classNode = newClassNode(ClassReader.EXPAND_FRAMES)
+fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
+    var classNode = fullAsmNode
     classNode = when {
         classNode.hasFrameInfo -> classNode
-        else -> classNode.computeFrames()
+        else -> classNode.computeFrames(classpath)
     }
     return classNode
 }
