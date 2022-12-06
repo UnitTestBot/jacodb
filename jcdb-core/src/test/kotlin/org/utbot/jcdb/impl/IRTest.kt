@@ -4,25 +4,46 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
-import org.utbot.jcdb.api.*
-import org.utbot.jcdb.api.cfg.*
-import org.utbot.jcdb.api.cfg.ext.view
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClassType
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.JcTypedMethod
+import org.utbot.jcdb.api.NoClassInClasspathException
+import org.utbot.jcdb.api.TypeName
+import org.utbot.jcdb.api.cfg.DefaultJcExprVisitor
+import org.utbot.jcdb.api.cfg.DefaultJcInstVisitor
+import org.utbot.jcdb.api.cfg.JcAssignInst
+import org.utbot.jcdb.api.cfg.JcCallExpr
+import org.utbot.jcdb.api.cfg.JcCallInst
+import org.utbot.jcdb.api.cfg.JcExpr
+import org.utbot.jcdb.api.cfg.JcInst
+import org.utbot.jcdb.api.cfg.JcSpecialCallExpr
+import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.methods
+import org.utbot.jcdb.api.packageName
+import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl
-import org.utbot.jcdb.impl.cfg.*
+import org.utbot.jcdb.impl.cfg.BinarySearchTree
+import org.utbot.jcdb.impl.cfg.IRExamples
+import org.utbot.jcdb.impl.cfg.JavaTasks
+import org.utbot.jcdb.impl.cfg.MethodNodeBuilder
+import org.utbot.jcdb.impl.cfg.RawInstListBuilder
+import org.utbot.jcdb.impl.cfg.Simplifier
+import org.utbot.jcdb.impl.cfg.print
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import java.net.URLClassLoader
 import java.nio.file.Files
 
 class OverridesResolver(
     val hierarchyExtension: HierarchyExtension
-) : DefaultJcInstVisitor<List<JcTypedMethod>>, DefaultJcExprVisitor<List<JcTypedMethod>> {
-    override val defaultInstHandler: (JcInst) -> List<JcTypedMethod>
-        get() = { emptyList() }
-    override val defaultExprHandler: (JcExpr) -> List<JcTypedMethod>
-        get() = { emptyList() }
+) : DefaultJcInstVisitor<Sequence<JcTypedMethod>>, DefaultJcExprVisitor<Sequence<JcTypedMethod>> {
+    override val defaultInstHandler: (JcInst) -> Sequence<JcTypedMethod>
+        get() = { emptySequence() }
+    override val defaultExprHandler: (JcExpr) -> Sequence<JcTypedMethod>
+        get() = { emptySequence() }
 
     private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
         return methods.firstOrNull { typedMethod ->
@@ -39,20 +60,20 @@ class OverridesResolver(
             return klass.getMethod(name, parameters.map { it.type }, returnType)
         }
 
-    override fun visitJcAssignInst(inst: JcAssignInst): List<JcTypedMethod> {
+    override fun visitJcAssignInst(inst: JcAssignInst): Sequence<JcTypedMethod> {
         if (inst.rhv is JcCallExpr) return inst.rhv.accept(this)
-        return emptyList()
+        return emptySequence()
     }
 
-    override fun visitJcCallInst(inst: JcCallInst): List<JcTypedMethod> {
+    override fun visitJcCallInst(inst: JcCallInst): Sequence<JcTypedMethod> {
         return inst.callExpr.accept(this)
     }
 
-    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): List<JcTypedMethod> {
+    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Sequence<JcTypedMethod> {
         return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
     }
 
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): List<JcTypedMethod> {
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Sequence<JcTypedMethod> {
         return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
     }
 
