@@ -92,6 +92,7 @@ class StringConcatSimplifier(
     private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
     private val instructions = mutableListOf<JcInst>()
     private val catchReplacements = mutableMapOf<JcInst, MutableList<JcInst>>()
+    private val instructionIndices = mutableMapOf<JcInst, Int>()
 
     fun build(): JcGraph {
         var changed = false
@@ -139,6 +140,7 @@ class StringConcatSimplifier(
 
         if (!changed) return jcGraph
 
+        instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
         val mappedInstructions = instructions.map { it.accept(this) }
         return JcGraph(jcGraph.classpath, mappedInstructions)
     }
@@ -173,7 +175,7 @@ class StringConcatSimplifier(
     }
 
     private fun indexOf(instRef: JcInstRef) = JcInstRef(
-        instructions.indexOf(instructionReplacements.getOrDefault(jcGraph.inst(instRef), jcGraph.inst(instRef)))
+        instructionIndices[instructionReplacements.getOrDefault(jcGraph.inst(instRef), jcGraph.inst(instRef))] ?: -1
     )
 
     private fun indicesOf(instRef: JcInstRef) =

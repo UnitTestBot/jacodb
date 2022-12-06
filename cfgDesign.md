@@ -14,67 +14,74 @@ The base class of this representation is `JcRawInstList`. It represents a list-l
 collection of instructions and allows to iterate over the instructions, access them by
 index and to modify the list of instructions.
 
+### 3-address instructions
+
 `JcRawInst` is the base interface for the raw instruction. All the instruction are identified
 by the object, they are not comparable using `equals`.
 
 List of `JcRawInst` implementations:
 
-* `JcAssignInst` --- Assignment instruction. Left hand side of the instruction can only be a
+* `JcAssignInst` &mdash; Assignment instruction. Left hand side of the instruction can only be a
   `JcRawValue`, right hand side can be any expression (`JcRawExpression`).
-* `JcRawEnterMonitorInst`, `JcRawExitMonitorInst` --- Monitor instruction that correspond
+* `JcRawEnterMonitorInst`, `JcRawExitMonitorInst` &mdash; Monitor instruction that correspond
   directly to their existing analogs. `monitor` property can only be a `JcRawSimpleValue`.
-* `JcRawCallInst` --- Call instruction that represents a method that does not save it's returning
+* `JcRawCallInst` &mdash; Call instruction that represents a method that does not save it's returning
   variable to any local variable. Method calls that return a value represented throug `JcRawAssignInst`.
-* `JcRawLabelInst` --- Label instruction, used to mark some program points in the code. Mainly required
+* `JcRawLabelInst` &mdash; Label instruction, used to mark some program points in the code. Mainly required
   to be used in the branching instructions. Label is identified by a name, all the references
   to a label are represented using `JcRawLabelRef` class.
-* `JcRawReturnInst` --- Return instruction, `returnValue` property is null when method does not
+* `JcRawReturnInst` &mdash; Return instruction, `returnValue` property is null when method does not
   return anything.
-* `JcRawThrowInst` --- Throw instruction.
-* `JcRawCatchInst` --- Catch instruction that represents an entry for `try-catch` block in the
+* `JcRawThrowInst` &mdash; Throw instruction.
+* `JcRawCatchInst` &mdash; Catch instruction that represents an entry for `try-catch` block in the
   code. Does not map directly to bytecode instruction, but represents a `TryCatchBlock` of a method.
   Stores a value that corresponds to a caught exception `throwable` and a range of the instructions
   that in catches from `startInclusive until endExclusive`.
-* `JcRawGotoInst` --- Jump instruction.
-* `JcRawIfInst` --- Conditional jump instruction. The condition of the instruction should
+* `JcRawGotoInst` &mdash; Jump instruction.
+* `JcRawIfInst` &mdash; Conditional jump instruction. The condition of the instruction should
   necessarily be `JcRawConditionExpr`, because not all the conditional expressions that we use
   in higher-level programming languages can be easily expressed in JVM bytecode.
-* `JcRawSwitchInst` --- Switch instruction, combned representation of `LookupSwitch` and `TableSwitch`
+* `JcRawSwitchInst` &mdash; Switch instruction, combned representation of `LookupSwitch` and `TableSwitch`
   bytecode instructions.
 
-`JcRawExpr` is a base interface for all the expression types and value types that can be
-expressed in the JVM bytecode. List of `JcRawExpr` implementations:
+### Raw expressions
 
-* `JcRawBinaryExpr` --- Binary expression, implementations implement all the arithmetic
+`JcRawExpr` is a base interface for all the expression types and value types that can be
+expressed in the JVM bytecode. `JcRawExpr` stores its type as a `TypeName` object which is
+essentially is just a Java name of the type as string (hence the name "raw"). List of `JcRawExpr` implementations:
+
+* `JcRawBinaryExpr` &mdash; Binary expression, implementations implement all the arithmetic
   expressions (e.g. `JcRawAdd`, `JcRawMul` etc.), conditional expressions (`JcRawEq`, `JcRawGt` etc.),
   logical expressiongs (`JcRawAnd`, `JcRawOr`, `JcRawXor`).
-    * `JcRawConditionExpr` --- Conditional expressions, that can be used as a condition in `JcRawIfInst`.
-* `JcRawLengthExpr` --- Array length expression.
-* `JcRawNegExpr` --- Negation expression.
-* `JcRawCastExpr` --- Cast expression. Can be uset to cast both reference types and primitive types.
-* `JcRawNewExpr` --- New expression, creates a single object.
-* `JcRawNewArrayExpr` --- New array expression, creates a (multi)array of a given type.
-* `JcRawInstanceOfExpr` --- Instanceof check.
-* `JcRawCallExpr` --- Method call expression.
-    * `JcRawDynamicCallExpr` --- `invokedynamic` instruction representation, preserves all the info
+    * `JcRawConditionExpr` &mdash; Conditional expressions, that can be used as a condition in `JcRawIfInst`.
+* `JcRawLengthExpr` &mdash; Array length expression.
+* `JcRawNegExpr` &mdash; Negation expression.
+* `JcRawCastExpr` &mdash; Cast expression. Can be uset to cast both reference types and primitive types.
+* `JcRawNewExpr` &mdash; New expression, creates a single object.
+* `JcRawNewArrayExpr` &mdash; New array expression, creates a (multi)array of a given type.
+* `JcRawInstanceOfExpr` &mdash; Instanceof check.
+* `JcRawCallExpr` &mdash; Method call expression.
+    * `JcRawDynamicCallExpr` &mdash; `invokedynamic` instruction representation, preserves all the info
     * `JcRawVirtualCallExpr`
     * `JcRawInterfaceCallExpr`
     * `JcRawStaticCallExpr`
     * `JcRawSpecialCallExpr`
-* `JcRawValue` --- Representation of a single value:
-    * `JcRawSimpleValue` --- Representation of a simple value that does not have any sub-values:
+* `JcRawValue` &mdash; Representation of a single value:
+    * `JcRawSimpleValue` &mdash; Representation of a simple value that does not have any sub-values:
         * `JcRawThis`
         * `JcRawArgument`
         * `JcRawLocal`
         * `JcRawConstant`
-    * `JcRawComplexValue` --- Complex value that has a sub-values
-        * `JcRawFieldRef` --- Field reference. Can be used both as a field read access (e.g. `a = x.y`)
+    * `JcRawComplexValue` &mdash; Complex value that has a sub-values
+        * `JcRawFieldRef` &mdash; Field reference. Can be used both as a field read access (e.g. `a = x.y`)
           and field store access (e.g. `x.y = a`)
-        * `JcRawArrayAccess` --- Array element reference. Can be used both as an array read access (e.g. `a = x[y]`)
+        * `JcRawArrayAccess` &mdash; Array element reference. Can be used both as an array read access (e.g. `a = x[y]`)
           and array store access (e.g. `x[y] = a`)
 
 To get an 3-address instruction list representation of a method you need to call `JcMethod::instructionList`.
 Instruction list building requires a `JcClasspath`, because some stages require use of subtyping information.
+
+### Some implementation details of instruction list construction
 
 `RawInstListBuilder` is used to build a `JcRawInstList` from bytecode representation (i.e. from `MethodNode`).
 To build an instruction list representation, `MethodNode` **should** contain frame information (i.e. `FrameNode`'s)
@@ -148,8 +155,157 @@ process is similar for both stack variables and local variables.
 `RawInstListBuilder` also performs the simplification of the resulting instruction list. This process is
 required because the construction process naturally introduces a lot of redundancy in the instruction list.
 The main stages of simplification are:
-* deleting repeated assignments inside a basic block
-* deleting declarations of unused variables
-* deleting declarations of mutually dependent unused variables (e.g. `a = b` and `b = a`)
-* simple unit propagation
-* type normalization using `JcClasspath`
+* Deleting repeated assignments inside a basic block.
+* Deleting declarations of unused variables.
+* Deleting declarations of mutually dependent unused variables (e.g. `a = b` and `b = a`).
+* Simple unit propagation.
+* Type normalization using `JcClasspath`.
+
+## Visitor API
+
+We also provide a visitor API for traversing and modifying `JcRawInstList`. Visitors have a standard
+interface, they can be invoked using an `accept` method on instructions and expressions:
+```
+val a = jcRawInst.accept(MyInstVisitor())
+val b = jcRawExpr.accept(MyExprVisitor())
+```
+
+We also provide a "functional"-like extensions for applying visitors to `JcRawInstList`:
+* `filter(visitor: JcRawInstVisitor<Boolean>): JcRawInstList`
+* `filterNot(visitor: JcRawInstVisitor<Boolean>): JcRawInstList`
+* `map(visitor: JcRawInstVisitor<JcRawInst>): JcRawInstList`
+* `mapNotNull(visitor: JcRawInstVisitor<JcRawInst?>): JcRawInstList`
+* `flatMap(visitor: JcRawInstVisitor<Collection<JcRawInst>>): JcRawInstList`
+* `apply(visitor: JcRawInstVisitor<Unit>): JcRawInstList`
+* `applyAndGet(visitor: T, getter: (T) -> R): R`
+* `collect(visitor: JcRawInstVisitor<T>): Collection<T>`
+
+`jcdb-core` provides a number of utility visitors for working with the instruction list:
+* `ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>)` &mdash; Traverses an instruction list 
+and replaces all occurrences of expressions from `mapping` to the corresponding property.
+* `FullExprSetCollector()` &mdash; Collects **all** the expressions that occur in a given object
+  (instruction list, single instruction or an expression).
+* `InstructionFilter(val predicate: (JcRawInst) -> Boolean)` &mdash; Filters the instructions by
+a given predicate.
+
+`JcRawInstList` can be converted back to the ASM `MethodNode` using `MethodNodeBuilder.build()`
+method. The conversion process is pretty straightforward and does not require any additional
+comments.
+
+# Control flow graph API
+
+A control flow graph of the method is represented as a `JcGraph` object. To create a
+`JcGraph` of a method you can invoke `graph` function of a 3-address instruction list:
+```kotlin
+fun createGraph(classpath: JcClasspath, method: JcMethod): JcGraph {
+    val instructionList = method.instructionList(classpath)
+    return instructionList.graph(classpath, method)
+}
+```
+
+## `JcGraph`
+
+Intermediate representation of JcGraph uses the resolved type information (i.e. `JcType` 
+hierarchy) and classpath information, therefore it requires a classpath instance.
+Similar to `JcRawInstList`, JcGraph stores a list of method instructions. However, it
+also tries to resolve all the execution paths in the method. JcGraph operates with
+`JcInst` class hierarchy (which is similar to `JcRawInst` in many cases) and provides
+following API:
+* `entry: JcInst` &mdash; Get the entry point of a method, there can be only one entry point.
+* `exits: List<JcInst>` &mdash; Get all the "normal" exit points of a method, i.e. all the return and trow
+ instructions.
+* `throwExits: Map<JcType, List<JcInst>>` &mdash; All the potential exception exit points of a method.
+* `ref(inst: JcInst): JcInstRef` &mdash; Get the `JcInstRef` for an instruction. It is a lightweight wrapper that
+allows to reference an instruction anytime you need.
+* `inst(ref: JcInstRef): JcInst` &mdash; Convert `JcInstRef` into a `JcInst`.
+* `previous(inst: JcInst): JcInst` &mdash; Get the previous instruction in the list.
+* `next(inst: JcInst): JcInst` &mdash; Get the next instruction in the list.
+* `successors(inst: JcInst): Set<JcInst>` &mdash; Get all the successors of an instruction
+in a CFG. **Does not include any exception control flow**.
+* `predecessors(inst: JcInst): Set<JcInst>` &mdash; Get all the predecessors of an instruction
+  in a CFG. **Does not include any exception control flow**.
+* `throwers(inst: JcInst): Set<JcInst>` &mdash; Get all the instructions that may throw an
+exception that is caught by `inst`. Represents an exception control flow of
+a method. Will return an empty set for all instructions except `JcCatchInst`.
+* `catchers(inst: JcInst): Set<JcCatchInst>` &mdash; Get all the instructions that may catch an
+  exception that is thrown by `inst`. Represents an exception control flow of
+  a method.
+* `exceptionExits(inst: JcInst): Set<JcClassType>` &mdash; Get all the exception types that
+an instruction can throw and method will not catch.
+* `blockGraph(): JcBlockGraph` &mdash; Create a basic block representation of a CFG.
+* `iterator(): Iterator<JcInst>` &mdash; Iterator over the instructions of a graph.
+
+## `JcBlockGraph`
+
+`JcBlockGraph` is a basic block API for CFG. It operates with `JcBasicBlock`'s, each
+basic block jst represents an interval of instructions with following properties:
+* Instructions of a basic block are executed consecutively one after other during
+the normal execution (i.e. no exceptions are thrown).
+* All the instructions of a basic block have the same exception handlers, i.e. calling
+`jcGraph.catchers(inst)` for each instruction of a basic block will return the same result.
+
+`JcBlockGraph` provides following API:
+* `entry: JcBasicBlock` &mdash; Entry of a method. There can be only one entry.
+* `exits: List<JcBasicBlock>` &mdash; Exits of a method.
+* `instructions(block: JcBasicBlock): List<JcInst>` &mdash; Get the instructions of a basic
+block.
+* `predecessors(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the predecessors of a
+basic block in a CFG. **Does not include any exception control flow**.
+* `successors(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the successors of a
+  basic block in a CFG. **Does not include any exception control flow**.
+* `throwers(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the basic blocks that may throw an
+  exception that is caught by `block`. Represents an exception control flow of
+  a method. Will return an empty set for all blocks except ones that start with `JcCatchInst`.
+* `catchers(block: JcBasicBlock): Set<JcBasicBlock>` &mdash; Get all the basic blocks that may catch an
+  exception that is thrown by `block`. Represents an exception control flow of
+  a method.
+
+We also provide an API to visualize the `JcGraph` and `JcBlockGraph`:
+* `JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false)` &mdash;
+Generate a svg file using DOT ('dotCmd' requires a path to executable of a DOT) and view
+it using `viewerCmd` program (e.g. executable of a browser). `viewCatchConnections` flag
+defines whether a throw-catch connections will be displayed in the graph.
+* `JcBlockGraph.view(dotCmd: String, viewerCmd: String)` &mdash; Similar, but it displays
+`JcBlockGraph`.
+
+CFG API operates on `JcInst` instructions. `JcInst` is similar to `JcRawInst` with some
+small differences. The main difference is that `JcInst` uses `JcType`'s to represent
+types. Another difference is that `JcInst` does not need tha labels to represent connections
+between instructions (as they are stored in `JcGraph`). In all other cases `JcInst` hierarchy
+(including `JcExpr` and `JcValue`) are almost one-to-one matched with `JcRawInst` hierarchy
+(including `JcRawExpr` and `JcRawValue`).
+
+One more thing worth noting is that `JcGraph` represent an immutable structure and does
+not provide any API for its modification. It is so on purpose, because modifying CFG
+requires awareness of all the connections inside a graph and user should correctly manage
+those connections when changing the CFG. However, user can always create a new copy of
+a `JcGraph` with all the necessary modifications. 
+
+## Examples
+
+An example of CFG modification is given in `StringConcatSimplifier` class: it creates a new
+`JcGraph` in which all the `invokedynamic` string concatenation instructions are 
+replaced with simple `String.concat` method call.
+
+`ReachingDefinitionsAnalysis` class is an example of using basic block API. It performs
+a standard reaching definitions analysis for basic blocks using simple worklist algorithm.
+
+## Visitor API
+
+As with 3-address instruction list, we also provide a visitor API for traversing and
+modifying `JcGraph`. Visitors have a standard interface, they can be invoked using an 
+`accept` method on instructions and expressions:
+```
+val a = jcInst.accept(MyInstVisitor())
+val b = jcExpr.accept(MyExprVisitor())
+```
+
+We also provide a "functional"-like extensions for applying visitors to `JcGraph`:
+* `filter(visitor: JcInstVisitor<Boolean>): JcGraph`
+* `filterNot(visitor: JcInstVisitor<Boolean>): JcGraph`
+* `map(visitor: JcInstVisitor<JcInst>): JcGraph`
+* `mapNotNull(visitor: JcInstVisitor<JcInst?>): JcGraph`
+* `flatMap(visitor: JcInstVisitor<Collection<JcInst>>): JcGraph`
+* `apply(visitor: JcInstVisitor<Unit>): JcGraph`
+* `applyAndGet(visitor: T, getter: (T) -> R): R`
+* `collect(visitor: JcInstVisitor<T>): Collection<T>`
