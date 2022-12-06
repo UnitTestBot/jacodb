@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.bytecode
 
 import org.utbot.jcdb.api.ClassSource
@@ -8,17 +24,26 @@ import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.impl.fs.ClassSourceImpl
+import org.utbot.jcdb.impl.fs.LazyClassSourceImpl
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.fs.info
+import org.utbot.jcdb.impl.types.ClassInfo
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource
 ) : JcClassOrInterface {
 
-    private val info = classSource.info
+    private val cachedInfo: ClassInfo? = when {
+        classSource is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
+        classSource is ClassSourceImpl -> classSource.info // we can easily read link let's do it
+        else -> null // maybe we do not need to do right now
+    }
 
-    override val declaration = JcDeclarationImpl.of(location = classSource.location.jcLocation, this)
+    val info by lazy { cachedInfo ?: classSource.info }
+
+    override val declaration = JcDeclarationImpl.of(location = classSource.location, this)
 
     override val name: String get() = classSource.className
     override val simpleName: String get() = classSource.className.substringAfterLast(".")
@@ -57,6 +82,7 @@ class JcClassOrInterfaceImpl(
         get() = info.access
 
     override fun bytecode() = classSource.fullAsmNode
+    override fun binaryBytecode(): ByteArray = classSource.byteCode
 
     override val isAnonymous: Boolean
         get() {

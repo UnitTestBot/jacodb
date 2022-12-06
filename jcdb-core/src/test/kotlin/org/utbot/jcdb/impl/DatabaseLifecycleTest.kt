@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl
 
 import com.google.common.cache.AbstractCache
@@ -18,7 +34,6 @@ import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
 import org.utbot.jcdb.impl.storage.PersistentLocationRegistry
-import org.utbot.jcdb.impl.vfs.RestoredJcByteCodeLocation
 import org.utbot.jcdb.jcdb
 import java.io.File
 import java.nio.file.Files
@@ -26,7 +41,7 @@ import java.util.*
 
 class DatabaseLifecycleTest {
 
-    private var db: JCDBImpl? = runBlocking {
+    private var db = runBlocking {
         jcdb {
             useProcessJavaRuntime()
         } as JCDBImpl
@@ -51,24 +66,29 @@ class DatabaseLifecycleTest {
 
     @Test
     fun `refresh is working when build dir is removed`() = runBlocking {
-        val database = db!!
-        val cp = database.classpath(listOf(testDirClone))
+        val cp = db.classpath(listOf(testDirClone))
         val barKt = cp.findClass<BarKt>()
-        database.awaitBackgroundJobs()
+        db.awaitBackgroundJobs()
         assertTrue(testDirClone.deleteRecursively())
         assertNotNull(barKt.declaredMethods.first().body())
 
-        database.refresh()
+        db.refresh()
 
         assertEquals(1, cp.locations.filterIsInstance<BuildFolderLocation>().size)
         withRegistry {
             assertEquals(1, snapshots.size)
-            assertEquals(1, actualLocations.filter { (it.jcLocation as RestoredJcByteCodeLocation).createRefreshed() == null }.size)
+            assertEquals(
+                1,
+                actualLocations.filter { it.jcLocation?.createRefreshed() == null }.size
+            )
         }
 
-        cp.findClass<BarKt>()
+        with(cp.findClass<BarKt>()) {
+            assertNotNull(declaredMethods.first().body())
+        }
+
         cp.close()
-        database.refresh()
+        db.refresh()
         withRegistry {
             assertTrue(snapshots.isEmpty())
             assertTrue(actualLocations.all { it.jcLocation !is BuildFolderLocation })
@@ -77,7 +97,7 @@ class DatabaseLifecycleTest {
 
     @Test
     fun `method could be read from build dir`() = runBlocking {
-        val cp = db!!.classpath(listOf(testDirClone))
+        val cp = db.classpath(listOf(testDirClone))
         val barKt = cp.findClass<BarKt>()
 
         assertNotNull(
@@ -87,34 +107,47 @@ class DatabaseLifecycleTest {
         )
     }
 
+    private fun File.deleteWithRetries(retries: Int): Boolean {
+        var result = false
+        var counter = 0
+        while (!result && counter < retries) {
+            result = delete()
+            counter++
+            if (!result) {
+                println("Deletion failed $counter")
+                Thread.sleep(1000)
+            }
+        }
+        return result
+    }
+
     @Test
     fun `refresh is working when jar is removed`() = runBlocking {
-        val database = db!!
-        val cp = database.classpath(listOf(guavaLibClone))
-        val abstractCacheClass = cp.findClass<AbstractCache<*,*>>()
-        database.awaitBackgroundJobs() // is required for deleting jar
+        val cp = db.classpath(listOf(guavaLibClone))
+        val abstractCacheClass = cp.findClass<AbstractCache<*, *>>()
+        db.awaitBackgroundJobs() // is required for deleting jar
 
-        assertTrue(guavaLibClone.delete())
+        assertTrue(guavaLibClone.deleteWithRetries(3))
         assertNotNull(abstractCacheClass.declaredMethods.first().body())
 
-        database.refresh()
+        db.refresh()
         withRegistry {
             assertEquals(1, snapshots.size)
         }
 
-        cp.findClass<AbstractCache<*,*>>()
+        cp.findClass<AbstractCache<*, *>>()
         cp.close()
-        database.refresh()
+        db.refresh()
         withRegistry {
             assertTrue(snapshots.isEmpty())
-            assertEquals(database.javaRuntime.allLocations.size, actualLocations.size)
+            assertEquals(db.javaRuntime.allLocations.size, actualLocations.size)
         }
     }
 
     @Test
     fun `method body could be read from jar`() = runBlocking {
-        val cp = db!!.classpath(listOf(guavaLibClone))
-        val abstractCacheClass = cp.findClassOrNull<AbstractCache<*,*>>()
+        val cp = db.classpath(listOf(guavaLibClone))
+        val abstractCacheClass = cp.findClassOrNull<AbstractCache<*, *>>()
         assertNotNull(abstractCacheClass!!)
 
         assertNotNull(
@@ -124,12 +157,12 @@ class DatabaseLifecycleTest {
 
     @Test
     fun `simultaneous access to method body`() = runBlocking {
-        val database = db!!
-        database.awaitBackgroundJobs()
-        val cps = (1..10).map { database.classpath(listOf(guavaLibClone)) }
+        db.awaitBackgroundJobs()
+        val cps = (1..10).map { db.classpath(listOf(guavaLibClone)) }
 
         fun JcClasspath.accessMethod() {
-            val abstractCacheClass = findClass<AbstractCache<*,*>>()
+
+            val abstractCacheClass = findClass<AbstractCache<*, *>>()
 
             assertNotNull(
                 abstractCacheClass.declaredMethods.first().body()
@@ -143,7 +176,7 @@ class DatabaseLifecycleTest {
                 }
             }.joinAll()
         }
-        database.refresh()
+        db.refresh()
 
         withRegistry {
             assertTrue(snapshots.isEmpty())
@@ -152,26 +185,20 @@ class DatabaseLifecycleTest {
 
     @Test
     fun `jar should not be blocked after method read`() = runBlocking {
-        val cp = db!!.classpath(listOf(guavaLibClone))
+        val cp = db.classpath(listOf(guavaLibClone))
         val clazz = cp.findClass<Iterators>()
         assertNotNull(clazz.declaredMethods.first().body())
-        db!!.awaitBackgroundJobs()
-        assertTrue(guavaLibClone.delete())
+        db.awaitBackgroundJobs()
+        assertTrue(guavaLibClone.deleteWithRetries(3))
     }
 
     @AfterEach
     fun cleanup() {
+        db.close()
         tempFolder.deleteRecursively()
-        runBlocking {
-            db?.let {
-                it.close()
-                it.awaitBackgroundJobs()
-            }
-        }
-        db = null
     }
 
     private fun withRegistry(action: PersistentLocationRegistry.() -> Unit) {
-        (db!!.locationsRegistry as PersistentLocationRegistry).action()
+        (db.locationsRegistry as PersistentLocationRegistry).action()
     }
 }

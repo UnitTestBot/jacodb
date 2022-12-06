@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.types
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,7 +28,7 @@ abstract class BaseTypesTest : BaseTest() {
 
     companion object : WithDB()
 
-    protected inline fun <reified T> findClassType(): JcClassType {
+    protected inline fun <reified T> findType(): JcClassType {
         val found = cp.findTypeOrNull(T::class.java.name)
         assertNotNull(found)
         return found!!.assertIs()
@@ -24,7 +40,7 @@ abstract class BaseTypesTest : BaseTest() {
     }
 
     protected inline fun <reified T> JcType?.assertClassType(): JcClassType {
-        val expected = findClassType<T>()
+        val expected = findType<T>()
         assertEquals(
             expected.jcClass.name,
             (this as? JcClassType)?.jcClass?.name,

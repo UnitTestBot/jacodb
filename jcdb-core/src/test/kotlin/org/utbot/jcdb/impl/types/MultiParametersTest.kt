@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.types
 
 import kotlinx.coroutines.runBlocking
@@ -21,7 +37,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `first level of parameterization fields`() {
         runBlocking {
-            val test1 = findClassType<SuperTest1<*, *, *>>()
+            val test1 = findType<SuperTest1<*, *, *>>()
             with(test1.field(SuperTest1<*, *, *>::stateT)) {
                 assertEquals("T", (fieldType as JcTypeVariable).symbol)
             }
@@ -37,7 +53,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `second level of parameterization fields`() {
         runBlocking {
-            val test2 = findClassType<SuperTest2<*, *>>()
+            val test2 = findType<SuperTest2<*, *>>()
             with(test2.field(SuperTest1<*, *, *>::stateT)) {
                 fieldType.assertClassType<String>()
             }
@@ -54,7 +70,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `third level of parameterization fields`() {
         runBlocking {
-            val test2 = findClassType<SuperTest3>()
+            val test2 = findType<SuperTest3>()
             with(test2.field(SuperTest1<*, *, *>::stateT)) {
                 fieldType.assertClassType<String>()
             }
@@ -72,7 +88,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `first level of parameterization methods`() {
         runBlocking {
-            val test1 = findClassType<SuperTest1<*, *, *>>()
+            val test1 = findType<SuperTest1<*, *, *>>()
             with(test1.method(SuperTest1<*, *, *>::runT)) {
                 assertEquals("T", (returnType as JcTypeVariable).symbol)
                 assertEquals("T", (parameters.first().type as JcTypeVariable).symbol)
@@ -91,7 +107,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `second level of parameterization methods`() {
         runBlocking {
-            val test2 = findClassType<SuperTest2<*, *>>()
+            val test2 = findType<SuperTest2<*, *>>()
             with(test2.method(SuperTest1<*, *, *>::runT)) {
                 parameters.first().type.assertClassType<String>()
                 returnType.assertClassType<String>()
@@ -110,7 +126,7 @@ class MultiParametersTest : BaseTypesTest() {
     @Test
     fun `third level of parameterization methods`() {
         runBlocking {
-            val test2 = findClassType<SuperTest3>()
+            val test2 = findType<SuperTest3>()
             with(test2.method(SuperTest1<*, *, *>::runT)) {
                 parameters.first().type.assertClassType<String>()
                 returnType.assertClassType<String>()

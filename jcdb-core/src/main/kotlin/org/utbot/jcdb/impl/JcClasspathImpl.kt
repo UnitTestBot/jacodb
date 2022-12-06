@@ -1,6 +1,23 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl
 
 import com.google.common.cache.CacheBuilder
+import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -33,7 +50,7 @@ class JcClasspathImpl(
         .maximumSize(1_000)
         .build<String, ClassHolder>()
 
-    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.map { it.jcLocation }
+    override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
@@ -49,8 +66,8 @@ class JcClasspathImpl(
     override fun findClassOrNull(name: String): JcClassOrInterface? {
         return classCache.get(name) {
             val jcClass = toJcClass(classpathVfs.firstClassOrNull(name))
-                ?: db.persistence.findClassByName(this, locationsRegistrySnapshot.locations, name)?.let {
-                    JcClassOrInterfaceImpl(this, it)
+                ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
+                    toJcClass(it)
                 }
             ClassHolder(jcClass)
         }.jcClass
@@ -67,6 +84,10 @@ class JcClasspathImpl(
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
         return JcArrayTypeImpl(elementType, true)
+    }
+
+    override fun toJcClass(source: ClassSource): JcClassOrInterface {
+        return JcClassOrInterfaceImpl(this, source)
     }
 
     override fun findTypeOrNull(name: String): JcType? {

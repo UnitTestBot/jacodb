@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.types
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,7 +27,7 @@ class InnerTypesTest : BaseTypesTest() {
 
     @Test
     fun `inner classes linked to method`() {
-        val classWithInners = findClassType<InnerClasses<*>>()
+        val classWithInners = findType<InnerClasses<*>>()
         val inners = classWithInners.innerTypes
         assertEquals(4, inners.size)
         val methodLinked = inners.first { it.typeName == "org.utbot.jcdb.impl.types.InnerClasses<W>.InnerClasses\$1" }
@@ -27,7 +43,7 @@ class InnerTypesTest : BaseTypesTest() {
 
     @Test
     fun `get not parameterized inner types`() {
-        val innerClasses = findClassType<InnerClasses<*>>().innerTypes
+        val innerClasses = findType<InnerClasses<*>>().innerTypes
         assertEquals(4, innerClasses.size)
         with(innerClasses.first { it.typeName.contains("InnerState") }) {
             val fields = fields
@@ -43,7 +59,7 @@ class InnerTypesTest : BaseTypesTest() {
 
     @Test
     fun `get inner type linked to parameterized method`() {
-        val innerClasses = findClassType<InnerClasses<*>>().innerTypes
+        val innerClasses = findType<InnerClasses<*>>().innerTypes
         assertEquals(4, innerClasses.size)
         with(innerClasses.first { it.typeName.contains("1") }) {
             val fields = fields
@@ -105,7 +121,7 @@ class InnerTypesTest : BaseTypesTest() {
     }
 
     private fun field(fieldName: String): JcClassType {
-        return findClassType<InnerClasses<*>>().fields.first {
+        return findType<InnerClasses<*>>().fields.first {
             it.name == fieldName
         }.fieldType.assertIsClass()
     }

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.bytecode
 
 import org.utbot.jcdb.api.JcAnnotation
@@ -5,6 +21,8 @@ import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.TypeName
+import org.utbot.jcdb.api.ext.kmConstructor
+import org.utbot.jcdb.api.ext.kmFunction
 import org.utbot.jcdb.impl.types.ParameterInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
 
@@ -16,8 +34,23 @@ class JcParameterImpl(
     override val access: Int
         get() = info.access
 
-    override val name: String?
-        get() = info.name
+    override val name: String? by lazy {
+        if (info.name != null)
+            return@lazy info.name
+
+        method.kmFunction?.let {
+            // Shift needed to properly handle extension functions
+            val shift = if (it.receiverParameterType != null) 1 else 0
+            if (index - shift < 0)
+                return@lazy null
+
+            return@lazy it.valueParameters[index - shift].name
+        }
+
+        method.kmConstructor?.let {
+            it.valueParameters[index].name
+        }
+    }
 
     override val index: Int
         get() = info.index

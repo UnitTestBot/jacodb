@@ -1,5 +1,22 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -14,8 +31,10 @@ import kotlinx.coroutines.withContext
 import org.utbot.jcdb.JCDBSettings
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
@@ -31,13 +50,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class JCDBImpl(
+    internal val javaRuntime: JavaRuntime,
     override val persistence: JCDBPersistence,
     val featureRegistry: FeaturesRegistry,
     private val settings: JCDBSettings
 ) : JCDB {
 
     private val classesVfs = GlobalClassesVfs()
-    internal val javaRuntime = JavaRuntime(settings.jre)
     private val hooks = settings.hooks.map { it(this) }
 
     internal val locationsRegistry: LocationsRegistry
@@ -50,11 +69,11 @@ class JCDBImpl(
 
     init {
         featureRegistry.bind(this)
-        locationsRegistry = PersistentLocationRegistry(persistence, featureRegistry)
+        locationsRegistry = PersistentLocationRegistry(this, featureRegistry)
     }
 
-    override val locations: List<JcByteCodeLocation>
-        get() = locationsRegistry.actualLocations.map { it.jcLocation }
+    override val locations: List<RegisteredLocation>
+        get() = locationsRegistry.actualLocations
 
     suspend fun restore() {
         persistence.setup()
@@ -62,17 +81,21 @@ class JCDBImpl(
         val runtime = JavaRuntime(settings.jre).allLocations
         locationsRegistry.setup(runtime).new.process()
         locationsRegistry.registerIfNeeded(
-            settings.predefinedDirOrJars.filter { it.exists() }.map { it.asByteCodeLocation(isRuntime = false) }
+            settings.predefinedDirOrJars.filter { it.exists() }.map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
         ).new.process()
     }
 
     override suspend fun classpath(dirOrJars: List<File>): JcClasspath {
         assertNotClosed()
-        val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation() }
+        val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
             .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
+        return classpathOf(processed)
+    }
+
+    override fun classpathOf(locations: List<RegisteredLocation>): JcClasspath {
         return JcClasspathImpl(
-            locationsRegistry.newSnapshot(processed),
+            locationsRegistry.newSnapshot(locations),
             this,
             classesVfs
         )
@@ -87,6 +110,9 @@ class JCDBImpl(
         )
     }
 
+    override val runtimeVersion: JavaVersion
+        get() = javaRuntime.version
+
     override suspend fun load(dirOrJar: File) = apply {
         assertNotClosed()
         load(listOf(dirOrJar))
@@ -94,7 +120,7 @@ class JCDBImpl(
 
     override suspend fun load(dirOrJars: List<File>) = apply {
         assertNotClosed()
-        loadLocations(dirOrJars.filterExisted().map { it.asByteCodeLocation() })
+        loadLocations(dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) })
     }
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {
@@ -119,11 +145,9 @@ class JCDBImpl(
             map { location ->
                 async {
                     val sources = location.sources
-                    if (parentScope.isActive) {
-                        persistence.persist(location, sources)
-                        classesVfs.visit(RemoveLocationsVisitor(listOf(location)))
-                        featureRegistry.index(location, sources)
-                    }
+                    parentScope.ifActive { persistence.persist(location, sources) }
+                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location))) }
+                    parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
             }.joinAll()
             locationsRegistry.afterProcessing(this@process)
@@ -148,10 +172,8 @@ class JCDBImpl(
             val parentScope = this
             locations.map {
                 async {
-                    val addedClasses = persistence.findClasses(it)
-                    if (parentScope.isActive) {
-                        featureRegistry.index(it, addedClasses)
-                    }
+                    val addedClasses = persistence.findClassSources(it)
+                    parentScope.ifActive { featureRegistry.index(it, addedClasses) }
                 }
             }.joinAll()
         }
@@ -171,10 +193,14 @@ class JCDBImpl(
     }
 
     override suspend fun awaitBackgroundJobs() {
-        backgroundJobs.values.toList().joinAll()
+        backgroundJobs.values.joinAll()
     }
 
-    fun afterStart() {
+    override fun isInstalled(feature: JcFeature<*, *>): Boolean {
+        return featureRegistry.has(feature)
+    }
+
+    suspend fun afterStart() {
         hooks.forEach { it.afterStart() }
     }
 
@@ -187,8 +213,9 @@ class JCDBImpl(
         runBlocking {
             awaitBackgroundJobs()
         }
-        backgroundScope.cancel()
         backgroundJobs.clear()
+        classesVfs.close()
+        backgroundScope.cancel()
         persistence.close()
         hooks.forEach { it.afterStop() }
     }
@@ -196,6 +223,12 @@ class JCDBImpl(
     private fun assertNotClosed() {
         if (isClosed.get()) {
             throw IllegalStateException("Database is already closed")
+        }
+    }
+
+    private inline fun CoroutineScope.ifActive(action: () -> Unit) {
+        if (isActive) {
+            action()
         }
     }
 

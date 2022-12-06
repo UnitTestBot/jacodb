@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.fs
 
 import kotlinx.collections.immutable.toImmutableList
@@ -29,7 +45,7 @@ fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     signature = signature,
     access = access,
 
-    outerClass = outerClassName(),
+    outerClass = outerClassRef(),
     innerClasses = innerClasses.map {
         Type.getObjectType(it.name).className
     }.toImmutableList(),
@@ -43,14 +59,14 @@ fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     bytecode = bytecode
 )
 
-private val String.className: String
+val String.className: String
     get() = Type.getObjectType(this).className
 
-private fun ClassNode.outerClassName(): OuterClassRef? {
+private fun ClassNode.outerClassRef(): OuterClassRef? {
     val innerRef = innerClasses.firstOrNull { it.name == name }
 
     val direct = outerClass?.className
-    if (direct == null && innerRef != null) {
+    if (direct == null && innerRef != null && innerRef.outerName != null) {
         return OuterClassRef(innerRef.outerName.className, innerRef.innerName)
     }
     return direct?.let {
@@ -94,10 +110,10 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         desc = desc,
         access = access,
         annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
-        parametersInfo = params.mapIndexed { index, param ->
+        parametersInfo = List(params.size) { index ->
             ParameterInfo(
                 index = index,
-                name = param,
+                name = parameters?.get(index)?.name,
                 access = parameters?.get(index)?.access ?: Opcodes.ACC_PUBLIC,
                 type = params[index],
                 annotations = visibleParameterAnnotations?.get(index)?.asAnnotationInfos(true).orEmpty()
@@ -111,8 +127,8 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
     name = name,
     signature = signature,
     access = access,
-    type = desc.className,
-    annotations = visibleAnnotations.asAnnotationInfos(true) + visibleAnnotations.asAnnotationInfos(false)
+    type = Type.getObjectType(desc).className,
+    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
 )
 
 

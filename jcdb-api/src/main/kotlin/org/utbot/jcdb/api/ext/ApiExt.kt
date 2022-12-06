@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.api
 
 import kotlinx.collections.immutable.toPersistentList
@@ -262,12 +278,13 @@ fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
-fun JcClassOrInterface.enumValues(): List<JcField>? {
-    if (isEnum) {
-        return declaredFields.filter { it.isStatic && it.type.typeName == name }
+val JcClassOrInterface.enumValues: List<JcField>?
+    get() {
+        if (isEnum) {
+            return declaredFields.filter { it.isStatic && it.type.typeName == name }
+        }
+        return null
     }
-    return null
-}
 
 
 val JcClassOrInterface.methods: List<JcMethod>
@@ -327,6 +344,8 @@ fun String.jvmName(): String {
     }
 }
 
+val jvmPrimitiveNames = hashSetOf("Z", "B", "C", "S", "I", "F", "J", "D", "V")
+
 fun String.jcdbName(): String {
     return when {
         this == "Z" -> PredefinedPrimitives.boolean
@@ -367,17 +386,17 @@ const val NotNull = "org.jetbrains.annotations.NotNull"
 
 val JcMethod.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return !PredefinedPrimitives.matches(returnType.typeName) && annotations.all { !it.matches(NotNull) }
     }
 
 val JcField.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return !PredefinedPrimitives.matches(type.typeName) && annotations.all { !it.matches(NotNull) }
     }
 
 val JcParameter.isNullable: Boolean
     get() {
-        return annotations.any { it.matches(NotNull) }
+        return !PredefinedPrimitives.matches(type.typeName) && annotations.all { !it.matches(NotNull) }
     }
 
 fun JcClasspath.anyType(): JcClassType =

@@ -1,14 +1,35 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.storage
 
-
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jooq.DSLContext
+import org.jooq.TableField
+import org.utbot.jcdb.api.JCDBSymbolsInterner
 import org.utbot.jcdb.api.RegisteredLocation
+import org.utbot.jcdb.impl.storage.jooq.tables.references.ANNOTATIONS
+import org.utbot.jcdb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
+import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
+import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
+import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSINNERCLASSES
+import org.utbot.jcdb.impl.storage.jooq.tables.references.FIELDS
+import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODS
+import org.utbot.jcdb.impl.storage.jooq.tables.references.OUTERCLASSES
+import org.utbot.jcdb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jcdb.impl.types.AnnotationInfo
 import org.utbot.jcdb.impl.types.AnnotationValue
 import org.utbot.jcdb.impl.types.AnnotationValueList
@@ -19,8 +40,13 @@ import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.MethodInfo
 import org.utbot.jcdb.impl.types.ParameterInfo
 import org.utbot.jcdb.impl.types.PrimitiveValue
+import java.sql.Connection
+import java.sql.Types
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
@@ -35,21 +61,25 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
     private val outerClassIdGen = AtomicLong()
 
     fun setup() {
-        transaction(persistence.db) {
-            SymbolEntity.all().forEach {
-                symbolsCache[it.name] = it.id.value
+        persistence.read {
+            it.selectFrom(SYMBOLS).fetch().forEach {
+                val (id, name) = it
+                if (name != null && id != null)
+                    symbolsCache[name] = id
             }
 
-            classIdGen.set(Classes.maxId ?: 0)
-            symbolsIdGen.set(Symbols.maxId ?: 0)
-            methodIdGen.set(Methods.maxId ?: 0)
-            fieldIdGen.set(Fields.maxId ?: 0)
-            methodParamIdGen.set(MethodParameters.maxId ?: 0)
-            annotationIdGen.set(Annotations.maxId ?: 0)
-            annotationValueIdGen.set(AnnotationValues.maxId ?: 0)
-            outerClassIdGen.set(OuterClasses.maxId ?: 0)
+            classIdGen.set(CLASSES.ID.maxId ?: 0)
+            symbolsIdGen.set(SYMBOLS.ID.maxId ?: 0)
+            methodIdGen.set(METHODS.ID.maxId ?: 0)
+            fieldIdGen.set(FIELDS.ID.maxId ?: 0)
+            methodParamIdGen.set(METHODPARAMETERS.ID.maxId ?: 0)
+            annotationIdGen.set(ANNOTATIONS.ID.maxId ?: 0)
+            annotationValueIdGen.set(ANNOTATIONVALUES.ID.maxId ?: 0)
+            outerClassIdGen.set(OUTERCLASSES.ID.maxId ?: 0)
         }
     }
+
+    fun newSymbolInterner() = JCDBSymbolsInternerImpl(jooq = persistence.jooq, symbolsIdGen, symbolsCache)
 
     fun persist(location: RegisteredLocation, classes: List<ClassInfo>) {
         val classCollector = ClassCollector(classIdGen)
@@ -82,126 +112,148 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
             it.fields.forEach { it.annotations.extractAllSymbolsTo(names) }
         }
         val namesToAdd = arrayListOf<Pair<Long, String>>()
-        persistence.write {
-            names.forEach {
-                if (!symbolsCache.containsKey(it)) {
-                    val id = symbolsIdGen.incrementAndGet()
-                    symbolsCache[it] = id
-                    namesToAdd.add(id to it)
+        persistence.write { jooq ->
+            jooq.connection { conn ->
+                names.forEach {
+                    symbolsCache.computeIfAbsent(it) {
+                        val id = symbolsIdGen.incrementAndGet()
+                        namesToAdd.add(id to it)
+                        id
+                    }
+                }
+                val locationId = location.id
+                classes.forEach { classCollector.collect(it) }
+                classCollector.classes.entries.forEach { (classInfo, storedClassId) ->
+                    if (classInfo.interfaces.isNotEmpty()) {
+                        classInfo.interfaces.forEach {
+                            classRefCollector.collectParent(storedClassId, it, isClass = false)
+                        }
+                    }
+                    classRefCollector.collectParent(storedClassId, classInfo.superClass, isClass = true)
+                    if (classInfo.innerClasses.isNotEmpty()) {
+                        classInfo.innerClasses.forEach {
+                            classRefCollector.collectInnerClass(storedClassId, it)
+                        }
+                    }
+                    classInfo.methods.forEach {
+                        methodsCollector.collect(storedClassId, it)
+                    }
+                    classInfo.fields.forEach {
+                        fieldCollector.collect(storedClassId, it)
+                    }
+                }
+
+                conn.insertElements(SYMBOLS, namesToAdd) { (id, name) ->
+                    setLong(1, id)
+                    setString(2, name)
+                }
+
+                conn.insertElements(CLASSES, classCollector.classes.entries) {
+                    val (classInfo, id) = it
+                    val packageName = classInfo.name.substringBeforeLast('.')
+                    val pack = packageName.findCachedSymbol()
+                    setLong(1, id)
+                    setInt(2, classInfo.access)
+                    setLong(3, classInfo.name.findCachedSymbol())
+                    setString(4, classInfo.signature)
+                    setBytes(5, classInfo.bytecode)
+                    setLong(6, locationId)
+                    setLong(7, pack)
+                    annotationCollector.collect(classInfo.annotations, id, RefKind.CLASS)
+                }
+                conn.insertElements(METHODS, methodsCollector.methods) {
+                    val (classId, methodId, method) = it
+                    setLong(1, methodId)
+                    setInt(2, method.access)
+                    setLong(3, method.name.findCachedSymbol())
+                    setString(4, method.signature)
+                    setString(5, method.desc)
+                    setLong(6, method.returnClass.findCachedSymbol())
+                    setLong(7, classId)
+                    annotationCollector.collect(method.annotations, methodId, RefKind.METHOD)
+                }
+
+                conn.insertElements(METHODPARAMETERS, paramsCollector.params) {
+                    val (methodId, param) = it
+                    val paramId = methodParamIdGen.incrementAndGet()
+                    setLong(1, paramId)
+                    setInt(2, param.access)
+                    setInt(3, param.index)
+                    setString(4, param.name)
+                    setLong(5, param.type.findCachedSymbol())
+                    setLong(6, methodId)
+                    annotationCollector.collect(param.annotations, paramId, RefKind.PARAM)
+                }
+
+                conn.insertElements(CLASSINNERCLASSES, classRefCollector.innerClasses.entries) { innerClass ->
+                    setNull(1, Types.BIGINT)
+                    setLong(2, innerClass.key)
+                    setLong(3, innerClass.value.findCachedSymbol())
+                }
+                conn.insertElements(CLASSHIERARCHIES, classRefCollector.superClasses) { superClass ->
+                    setNull(1, Types.BIGINT)
+                    setLong(2, superClass.first)
+                    setLong(3, superClass.second.findCachedSymbol())
+                    setBoolean(4, superClass.third)
+                }
+
+                conn.insertElements(FIELDS, fieldCollector.fields.entries) { field ->
+                    val (fieldId, fieldInfo) = field.value
+                    setLong(1, fieldId)
+                    setInt(2, fieldInfo.access)
+                    setLong(3, fieldInfo.name.findCachedSymbol())
+                    setString(4, fieldInfo.signature)
+                    setLong(5, fieldInfo.type.findCachedSymbol())
+                    setLong(6, field.key)
+                }
+
+                conn.insertElements(ANNOTATIONS, annotationCollector.collected) { annotation ->
+                    setLong(1, annotation.id)
+                    setLong(2, annotation.info.className.findCachedSymbol())
+                    setBoolean(3, annotation.info.visible)
+                    setNullableLong(4, annotation.parentId)
+
+                    setNullableLong(5, annotation.refId.takeIf { annotation.refKind == RefKind.CLASS })
+                    setNullableLong(6, annotation.refId.takeIf { annotation.refKind == RefKind.METHOD })
+                    setNullableLong(7, annotation.refId.takeIf { annotation.refKind == RefKind.FIELD })
+                    setNullableLong(8, annotation.refId.takeIf { annotation.refKind == RefKind.PARAM })
+                }
+
+                conn.insertElements(ANNOTATIONVALUES, annotationCollector.collectedValues) { value ->
+                    setLong(1, value.id)
+                    setString(2, value.name)
+                    setLong(3, value.annotationId)
+                    if (value.primitiveValueType != null) {
+                        setInt(4, value.primitiveValueType.ordinal)
+                        setString(5, value.primitiveValue)
+                    } else {
+                        setNull(4, Types.INTEGER)
+                        setNull(5, Types.VARCHAR)
+                    }
+                    setNullableLong(6, value.enumSymbolId)
+                }
+
+                conn.insertElements(OUTERCLASSES, classes.filter { it.outerClass != null }) { classInfo ->
+                    val outerClass = classInfo.outerClass!!
+                    val outerClassId = outerClass.className.findCachedSymbol()
+                    setLong(1, outerClassIdGen.incrementAndGet())
+                    setLong(2, outerClassId)
+                    setString(3, outerClass.name)
+                    setString(4, classInfo.outerMethod)
+                    setString(5, classInfo.outerMethodDesc)
                 }
             }
-            namesToAdd.createNames()
         }
-        val locationId = location.id
-        classes.forEach { classCollector.collect(it) }
-        classCollector.classes.entries.forEach { (classInfo, storedClassId) ->
-            if (classInfo.interfaces.isNotEmpty()) {
-                classInfo.interfaces.forEach {
-                    classRefCollector.collectParent(storedClassId, it, isClass = false)
-                }
-            }
-            classRefCollector.collectParent(storedClassId, classInfo.superClass, isClass = true)
-            if (classInfo.innerClasses.isNotEmpty()) {
-                classInfo.innerClasses.forEach {
-                    classRefCollector.collectInnerClass(storedClassId, it)
-                }
-            }
-            classInfo.methods.forEach {
-                methodsCollector.collect(storedClassId, it)
-            }
-            classInfo.fields.forEach {
-                fieldCollector.collect(storedClassId, it)
-            }
-        }
+    }
 
-        persistence.write {
-            Classes.batchInsert(classCollector.classes.entries, shouldReturnGeneratedValues = false) {
-                val (classInfo, id) = it
-                val packageName = classInfo.name.substringBeforeLast('.')
-                val pack = packageName.findCachedSymbol()
-                this[Classes.id] = id
-                this[Classes.access] = classInfo.access
-                this[Classes.locationId] = locationId
-                this[Classes.name] = classInfo.name.findCachedSymbol()
-                this[Classes.signature] = classInfo.signature
-                this[Classes.packageId] = pack
-                this[Classes.bytecode] = ExposedBlob(classInfo.bytecode)
-                annotationCollector.collect(classInfo.annotations, id, RefKind.CLASS)
-            }
+    fun findSymbolId(symbol: String): Long? {
+        return symbolsCache[symbol]
+    }
 
-            Methods.batchInsert(methodsCollector.methods, shouldReturnGeneratedValues = false) {
-                val (classId, methodId, method) = it
-                this[Methods.id] = methodId
-                this[Methods.access] = method.access
-                this[Methods.name] = method.name.findCachedSymbol()
-                this[Methods.signature] = method.signature
-                this[Methods.desc] = method.desc
-                this[Methods.classId] = classId
-                this[Methods.returnClass] = method.returnClass.findCachedSymbol()
-            }
-            MethodParameters.batchInsert(paramsCollector.params, shouldReturnGeneratedValues = false) {
-                val (methodId, param) = it
-                val paramId = methodParamIdGen.incrementAndGet()
-                this[MethodParameters.id] = paramId
-                this[MethodParameters.access] = param.access
-                this[MethodParameters.name] = param.name
-                this[MethodParameters.index] = param.index
-                this[MethodParameters.methodId] = methodId
-                this[MethodParameters.parameterClass] = param.type.findCachedSymbol()
-                annotationCollector.collect(param.annotations, paramId, RefKind.PARAM)
-            }
-            ClassInnerClasses.batchInsert(classRefCollector.innerClasses.entries, shouldReturnGeneratedValues = false) {
-                this[ClassInnerClasses.classId] = it.key
-                this[ClassInnerClasses.innerClassId] = it.value.findCachedSymbol()
-            }
-            ClassHierarchies.batchInsert(classRefCollector.superClasses, shouldReturnGeneratedValues = false) {
-                this[ClassHierarchies.classId] = it.first
-                this[ClassHierarchies.superRef] = it.second.findCachedSymbol()
-                this[ClassHierarchies.isClassRef] = it.third
-            }
-            Fields.batchInsert(fieldCollector.fields.entries, shouldReturnGeneratedValues = false) {
-                val (fieldId, fieldInfo) = it.value
-                this[Fields.id] = fieldId
-                this[Fields.classId] = it.key
-                this[Fields.access] = fieldInfo.access
-                this[Fields.name] = fieldInfo.name.findCachedSymbol()
-                this[Fields.signature] = fieldInfo.signature
-                this[Fields.fieldClass] = fieldInfo.type.findCachedSymbol()
-            }
-
-            Annotations.batchInsert(annotationCollector.collected, shouldReturnGeneratedValues = false) {
-                this[Annotations.id] = it.id
-                when (it.refKind) {
-                    RefKind.CLASS -> this[Annotations.classRef] = it.refId
-                    RefKind.FIELD -> this[Annotations.fieldRef] = it.refId
-                    RefKind.METHOD -> this[Annotations.methodRef] = it.refId
-                    RefKind.PARAM -> this[Annotations.parameterRef] = it.refId
-                }
-                this[Annotations.parentAnnotation] = it.parentId
-                this[Annotations.visible] = it.info.visible
-                this[Annotations.name] = it.info.className.findCachedSymbol()
-            }
-            AnnotationValues.batchInsert(annotationCollector.collectedValues, shouldReturnGeneratedValues = false) {
-                this[AnnotationValues.id] = it.id
-                this[AnnotationValues.name] = it.name
-                this[AnnotationValues.annotation] = it.annotationId
-                if (it.primitiveValueType != null) {
-                    this[AnnotationValues.kind] = it.primitiveValueType
-                    this[AnnotationValues.value] = it.primitiveValue
-                }
-                this[AnnotationValues.enumValue] = it.enumSymbolId
-            }
-            classes.filter { it.outerClass != null }.forEach { classInfo ->
-                val outerClass = classInfo.outerClass!!
-                val outerClassId = outerClass.className.findCachedSymbol()
-                OuterClasses.insert {
-                    it[OuterClasses.id] = outerClassIdGen.incrementAndGet()
-                    it[name] = outerClass.name
-                    it[outerClassName] = outerClassId
-                    it[methodName] = classInfo.outerMethod
-                    it[methodDesc] = classInfo.outerMethodDesc
-                }
-            }
+    fun findSymbolName(symbolId: Long): String {
+        return persistence.read { jooq ->
+            jooq.select(SYMBOLS.NAME).from(SYMBOLS)
+                .where(SYMBOLS.ID.eq(symbolId)).fetchOne(SYMBOLS.NAME)!!
         }
     }
 
@@ -210,19 +262,9 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
             ?: throw IllegalStateException("Symbol $this is required in cache. Please setup cache first")
     }
 
-    private fun Collection<Pair<Long, String>>.createNames() {
-        Symbols.batchInsert(this, shouldReturnGeneratedValues = false) {
-            val (id, name) = it
-            this[Symbols.id] = id
-            this[Symbols.name] = name
-            this[Symbols.hash] = name.longHash
-        }
-    }
-
-    private val <T : Comparable<T>> IdTable<T>.maxId: T?
+    private val TableField<*, Long?>.maxId: Long?
         get() {
-            val maxId = slice(id.max()).selectAll().firstOrNull() ?: return null
-            return maxId[id.max()]?.value
+            return maxId(persistence.jooq)
         }
 }
 
@@ -408,4 +450,31 @@ private class MethodsCollector(
         annotationCollector.collect(method.annotations, methodId, RefKind.METHOD)
     }
 
+}
+
+class JCDBSymbolsInternerImpl(
+    override val jooq: DSLContext,
+    private val symbolsIdGen: AtomicLong,
+    private val symbolsCache: ConcurrentHashMap<String, Long>
+) : JCDBSymbolsInterner {
+
+    private val newElements = HashMap<String, Long>()
+
+    override fun findOrNew(symbol: String): Long {
+        return symbolsCache.computeIfAbsent(symbol) {
+            symbolsIdGen.incrementAndGet().also {
+                newElements[symbol] = it
+            }
+        }
+    }
+
+    override fun flush(conn: Connection) {
+        conn.runBatch(SYMBOLS) {
+            newElements.forEach { (value, id) ->
+                setLong(1, id)
+                setString(2, value)
+                addBatch()
+            }
+        }
+    }
 }

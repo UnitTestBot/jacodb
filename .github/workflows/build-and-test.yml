@@ -36,7 +36,7 @@ jobs:
           distribution: 'temurin'
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.0.2
+          gradle-version: 7.4.2
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
@@ -50,6 +50,7 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
+          check_name: "jdk 11 test results"
 
   jdk8:
 
@@ -65,7 +66,7 @@ jobs:
           java-package: jdk+fx
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.0.2
+          gradle-version: 7.4.2
       - name: Build and run tests
         run: |
           gradle clean build --no-daemon --info
@@ -79,3 +80,4 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/**/*.xml"
+          check_name: "jdk 8 test results"

@@ -1,55 +1,97 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.vfs
 
+import org.utbot.jcdb.api.JCDB
+import org.utbot.jcdb.api.JCDBPersistence
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
-import org.utbot.jcdb.api.LocationType
+import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.RegisteredLocation
 import org.utbot.jcdb.impl.fs.asByteCodeLocation
-import org.utbot.jcdb.impl.storage.BytecodeLocationEntity
+import org.utbot.jcdb.impl.storage.jooq.tables.records.BytecodelocationsRecord
+import org.utbot.jcdb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import java.io.File
 
 class PersistentByteCodeLocation(
+    private val persistence: JCDBPersistence,
+    private val runtimeVersion: JavaVersion,
     override val id: Long,
-    override val jcLocation: JcByteCodeLocation
+    private val cachedRecord: BytecodelocationsRecord? = null,
+    private val cachedLocation: JcByteCodeLocation? = null
 ) : RegisteredLocation {
 
-    constructor(entity: BytecodeLocationEntity) : this(entity.id.value, entity.toJcLocation())
+    constructor(jcdb: JCDB, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
+        jcdb.persistence,
+        jcdb.runtimeVersion,
+        record.id!!,
+        record,
+        location
+    )
 
-    val entity get() = BytecodeLocationEntity.findById(id) ?: throw IllegalStateException("Can't find location by id $id")
-}
+    constructor(cp: JcClasspath, locationId: Long) : this(
+        cp.db.persistence,
+        cp.db.runtimeVersion,
+        locationId,
+        null,
+        null
+    )
 
-
-class RestoredJcByteCodeLocation(
-    override val path: String,
-    override val type: LocationType,
-    override val hash: String
-) : JcByteCodeLocation {
-
-    override val jarOrFolder: File
-        get() = File(path)
-
-    override fun isChanged(): Boolean {
-        val actual = createRefreshed() ?: return true
-        return actual.hash != hash
+    val record by lazy {
+        cachedRecord ?: persistence.read { jooq ->
+            jooq.fetchOne(BYTECODELOCATIONS, BYTECODELOCATIONS.ID.eq(id))!!
+        }
     }
 
-    override fun createRefreshed(): JcByteCodeLocation? {
-        if (!jarOrFolder.exists()) {
+    override val jcLocation: JcByteCodeLocation?
+        get() {
+            return cachedLocation ?: record.toJcLocation()
+        }
+
+    override val path: String
+        get() = record.path!!
+
+    override val runtime: Boolean
+        get() = record.runtime!!
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RegisteredLocation
+
+        if (id != other.id) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+
+    private fun BytecodelocationsRecord.toJcLocation(): JcByteCodeLocation? {
+        try {
+            val newOne = File(path!!).asByteCodeLocation(runtimeVersion, isRuntime = runtime!!)
+            if (newOne.fsId != uniqueid!!) {
+                return null
+            }
+            return newOne
+        } catch (e: Exception) {
             return null
         }
-        return jarOrFolder.asByteCodeLocation(type == LocationType.RUNTIME)
     }
-
-    override fun resolve(classFullName: String) = null
-
-    override val classNames: Set<String>
-        get() = emptySet()
-
-    override val classes: Map<String, ByteArray>?
-        get() = null
 }
 
-
-fun BytecodeLocationEntity.toJcLocation() = RestoredJcByteCodeLocation(
-    path,
-    LocationType.RUNTIME.takeIf { runtime } ?: LocationType.APP,
-    hash)

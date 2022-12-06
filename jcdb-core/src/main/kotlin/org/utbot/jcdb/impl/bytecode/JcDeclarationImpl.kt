@@ -1,28 +1,44 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.bytecode
 
-import org.utbot.jcdb.api.JcByteCodeLocation
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
+import org.utbot.jcdb.api.RegisteredLocation
 
-class JcDeclarationImpl(override val location: JcByteCodeLocation, override val relativePath: String) : JcDeclaration {
+class JcDeclarationImpl(override val location: RegisteredLocation, override val relativePath: String) : JcDeclaration {
 
     companion object {
-        fun of(location: JcByteCodeLocation, clazz: JcClassOrInterface): JcDeclarationImpl {
+        fun of(location: RegisteredLocation, clazz: JcClassOrInterface): JcDeclarationImpl {
             return JcDeclarationImpl(location, clazz.name)
         }
 
-        fun of(location: JcByteCodeLocation, method: JcMethod): JcDeclarationImpl {
+        fun of(location: RegisteredLocation, method: JcMethod): JcDeclarationImpl {
             return JcDeclarationImpl(location, "${method.enclosingClass.name}#${method.name}")
         }
 
-        fun of(location: JcByteCodeLocation, field: JcField): JcDeclarationImpl {
+        fun of(location: RegisteredLocation, field: JcField): JcDeclarationImpl {
             return JcDeclarationImpl(location, "${field.enclosingClass.name}#${field.name}")
         }
 
-        fun of(location: JcByteCodeLocation, param: JcParameter): JcDeclarationImpl {
+        fun of(location: RegisteredLocation, param: JcParameter): JcDeclarationImpl {
             return JcDeclarationImpl(location, "${param.method.enclosingClass.name}#${param.name}:${param.index}")
         }
     }

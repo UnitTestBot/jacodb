@@ -1,19 +1,34 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.fs
 
 import mu.KLogging
+import org.utbot.jcdb.api.JavaVersion
 import org.utbot.jcdb.api.JcByteCodeLocation
 import java.io.File
 
 val logger = object : KLogging() {}.logger
 
-fun File.asByteCodeLocation(isRuntime: Boolean = false): JcByteCodeLocation {
+fun File.asByteCodeLocation(runtimeVersion: JavaVersion, isRuntime: Boolean = false): JcByteCodeLocation {
     if (!exists()) {
         throw IllegalArgumentException("file $absolutePath doesn't exist")
     }
-    if (isFile && name.endsWith(".jar")) {
-        return JarLocation(this, isRuntime)
-    } else if (isFile && name.endsWith(".jmod")) {
-        return JmodLocation(this)
+    if (isFile && name.endsWith(".jar") || name.endsWith(".jmod")) {
+        return JarLocation(this, isRuntime, runtimeVersion)
     } else if (!isFile) {
         return BuildFolderLocation(this)
     }

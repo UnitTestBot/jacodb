@@ -1,5 +1,22 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.impl.tests
 
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -8,6 +25,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.JRE
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.constructors
@@ -36,6 +54,8 @@ import org.utbot.jcdb.impl.Enums
 import org.utbot.jcdb.impl.Foo
 import org.utbot.jcdb.impl.SuperDuper
 import org.utbot.jcdb.impl.hierarchies.Creature
+import org.utbot.jcdb.impl.skipAssertionsOn
+import org.utbot.jcdb.impl.usages.Generics
 import org.utbot.jcdb.impl.usages.HelloWorldAnonymousClasses
 import org.utbot.jcdb.impl.usages.WithInner
 import org.w3c.dom.Document
@@ -52,6 +72,20 @@ abstract class DatabaseEnvTest {
     @AfterEach
     open fun close() {
         cp.close()
+    }
+
+    @Test
+    fun `find class from String`() {
+        val clazz = cp.findClass<String>()
+
+        fun fieldType(name: String): String {
+            return clazz.declaredFields.first { it.name == name }.type.typeName
+        }
+        skipAssertionsOn(JRE.JAVA_8) {
+            assertEquals("byte", fieldType("coder"))
+        }
+        assertEquals("long", fieldType("serialVersionUID"))
+        assertEquals("java.util.Comparator", fieldType("CASE_INSENSITIVE_ORDER"))
     }
 
     @Test
@@ -84,7 +118,7 @@ abstract class DatabaseEnvTest {
         assertEquals(5, methods.size)
         with(methods.first { it.name == "smthPublic" }) {
             assertEquals(1, parameters.size)
-            assertEquals("int", parameters.first().name)
+            assertEquals("int", parameters.first().type.typeName)
             assertTrue(isPublic)
         }
 
@@ -107,12 +141,12 @@ abstract class DatabaseEnvTest {
             assertEquals("byte[]", type.typeName)
         }
 
-        with(fields.get(1)) {
+        with(fields[1]) {
             assertEquals("objectArray", name)
             assertEquals("java.lang.Object[]", type.typeName)
         }
 
-        with(fields.get(2)) {
+        with(fields[2]) {
             assertEquals("objectObjectArray", name)
             assertEquals("java.lang.Object[][]", type.typeName)
         }
@@ -123,7 +157,7 @@ abstract class DatabaseEnvTest {
         with(methods.first { it.name == "smth" }) {
             val parameters = parameters
             assertEquals(1, parameters.size)
-            assertEquals("byte[]", parameters.first().name)
+            assertEquals("byte[]", parameters.first().type.typeName)
             assertEquals("byte[]", returnType.typeName)
         }
     }
@@ -191,7 +225,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `find subclasses for class`() {
-        with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true)) {
+        with(findSubClasses<AbstractMap<*, *>>(allHierarchy = true).toList()) {
             assertTrue(size > 10) {
                 "expected more then 10 but got only: ${joinToString { it.name }}"
             }
@@ -207,7 +241,14 @@ abstract class DatabaseEnvTest {
     @Test
     fun `find subclasses for interface`() {
         with(findSubClasses<Document>()) {
-            assertTrue(isNotEmpty())
+            assertTrue(toList().isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `find huge number of subclasses`() {
+        with(findSubClasses<Runnable>()) {
+            assertTrue(take(10).toList().size == 10)
         }
     }
 
@@ -217,12 +258,12 @@ abstract class DatabaseEnvTest {
         assertTrue(enum.isEnum)
         assertEquals(
             listOf("SIMPLE", "COMPLEX", "SUPER_COMPLEX").sorted(),
-            enum.enumValues()?.map { it.name }?.sorted()
+            enum.enumValues?.map { it.name }?.sorted()
         )
 
         val notEnum = cp.findClass<String>()
         assertFalse(notEnum.isEnum)
-        assertNull(notEnum.enumValues())
+        assertNull(notEnum.enumValues)
     }
 
     @Test
@@ -230,7 +271,7 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)
 
-        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true)) {
+        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true).toList()) {
             assertEquals(4, size) {
                 "expected 4 but got only: ${joinToString { it.name }}"
             }
@@ -254,6 +295,20 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
+    fun `method parameters`() {
+        val generics = cp.findClass<Generics<*>>()
+        val method = generics.methods.first { it.name == "merge" }
+
+        assertEquals(1, method.parameters.size)
+        with(method.parameters.first()) {
+            assertEquals(generics.name, type.typeName)
+            assertEquals(method, this.method)
+            assertEquals(0, index)
+            assertNull(name)
+        }
+    }
+
+    @Test
     fun `find method overrides`() {
         val creatureClass = cp.findClass<Creature>()
 
@@ -261,7 +316,7 @@ abstract class DatabaseEnvTest {
         val sayMethod = creatureClass.declaredMethods.first { it.name == "say" }
         val helloMethod = creatureClass.declaredMethods.first { it.name == "hello" }
 
-        var overrides = hierarchyExt.findOverrides(sayMethod)
+        var overrides = hierarchyExt.findOverrides(sayMethod).toList()
 
         with(overrides) {
             assertEquals(4, size)
@@ -271,7 +326,7 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.Pterodactyl>() })
         }
-        overrides = hierarchyExt.findOverrides(helloMethod)
+        overrides = hierarchyExt.findOverrides(helloMethod).toList()
         with(overrides) {
             assertEquals(1, size)
 
@@ -280,7 +335,21 @@ abstract class DatabaseEnvTest {
         }
     }
 
-    private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): List<JcClassOrInterface> {
+
+    @Test
+    fun `classes common methods usages`() = runBlocking {
+        val runnable = cp.findClass<Runnable>()
+        val runMethod = runnable.declaredMethods.first { it.name == "run" }
+        assertTrue(hierarchyExt.findOverrides(runMethod).count() > 300)
+    }
+
+    @Test
+    fun `classes common hierarchy`() = runBlocking {
+        val runnable = cp.findClass<Runnable>()
+        assertTrue(hierarchyExt.findSubClasses(runnable, true).count() > 300)
+    }
+
+    private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
         return hierarchyExt.findSubClasses(T::class.java.name, allHierarchy)
     }
 }

@@ -1,9 +1,27 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.utbot.jcdb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
+import java.sql.Connection
 
 enum class LocationType {
     RUNTIME,
@@ -28,6 +46,10 @@ enum class FieldUsageMode {
     WRITE
 }
 
+interface JavaVersion {
+    val majorVersion: Int
+}
+
 
 /**
  * Compilation database
@@ -36,8 +58,10 @@ enum class FieldUsageMode {
  */
 interface JCDB : Closeable {
 
-    val locations: List<JcByteCodeLocation>
+    val locations: List<RegisteredLocation>
     val persistence: JCDBPersistence
+
+    val runtimeVersion: JavaVersion
 
     /**
      * create classpath instance
@@ -47,6 +71,8 @@ interface JCDB : Closeable {
      */
     suspend fun classpath(dirOrJars: List<File>): JcClasspath
     fun asyncClasspath(dirOrJars: List<File>) = GlobalScope.future { classpath(dirOrJars) }
+
+    fun classpathOf(locations: List<RegisteredLocation>): JcClasspath
 
     /**
      * process and index single byte-code resource
@@ -100,8 +126,9 @@ interface JCDB : Closeable {
      * await background jobs
      */
     suspend fun awaitBackgroundJobs()
-
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
+
+    fun isInstalled(feature: JcFeature<*,*>): Boolean
 }
 
 
@@ -111,15 +138,30 @@ interface JCDBPersistence : Closeable {
 
     fun setup()
 
-    fun <T> write(newTx: Boolean = true, action: () -> T): T
-    fun <T> read(newTx: Boolean = true, action: () -> T): T
+    fun <T> write(action: (DSLContext) -> T): T
+    fun <T> read(action: (DSLContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
-    fun findClassByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
-    fun findClasses(location: RegisteredLocation): List<ClassSource>
+    fun findSymbolId(symbol: String): Long?
+    fun findSymbolName(symbolId: Long): String
+    fun findLocation(locationId: Long): RegisteredLocation
+
+    fun newSymbolInterner(): JCDBSymbolsInterner
+    fun findBytecode(classId: Long): ByteArray
+
+    fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
+    fun findClassSources(location: RegisteredLocation): List<ClassSource>
 }
 
 interface RegisteredLocation {
-    val jcLocation: JcByteCodeLocation
+    val jcLocation: JcByteCodeLocation?
     val id: Long
+    val path: String
+    val runtime: Boolean
+}
+
+interface JCDBSymbolsInterner {
+    val jooq: DSLContext
+    fun findOrNew(symbol: String): Long
+    fun flush(conn: Connection)
 }
