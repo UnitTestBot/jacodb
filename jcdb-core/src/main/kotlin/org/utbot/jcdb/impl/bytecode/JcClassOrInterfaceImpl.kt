@@ -26,7 +26,7 @@ import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.fs.LazyClassSourceImpl
-import org.utbot.jcdb.impl.fs.fullAsmNode
+import org.utbot.jcdb.impl.fs.fullAsmNodeWithFrames
 import org.utbot.jcdb.impl.fs.info
 import org.utbot.jcdb.impl.types.ClassInfo
 
@@ -81,7 +81,7 @@ class JcClassOrInterfaceImpl(
     override val access: Int
         get() = info.access
 
-    override fun bytecode() = classSource.fullAsmNode
+    override fun bytecode() = classSource.fullAsmNodeWithFrames(classpath)
     override fun binaryBytecode(): ByteArray = classSource.byteCode
 
     override val isAnonymous: Boolean

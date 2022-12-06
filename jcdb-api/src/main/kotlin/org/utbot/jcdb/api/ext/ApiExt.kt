@@ -340,7 +340,7 @@ fun String.jvmName(): String {
             "[" + elementName.jvmName()
         }
 
-        else -> "L$this;"
+        else -> "L${this.replace('.', '/')};"
     }
 }
 
@@ -363,10 +363,10 @@ fun String.jcdbName(): String {
         }
 
         startsWith("L") -> {
-            substring(1, length - 1)
+            substring(1, length - 1).replace('/', '.')
         }
 
-        else -> this
+        else -> this.replace('/', '.')
     }
 }
 
