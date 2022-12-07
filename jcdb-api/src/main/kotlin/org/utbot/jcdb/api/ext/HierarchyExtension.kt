@@ -43,6 +43,6 @@ interface HierarchyExtension {
      * find overrides of current method
      * @return list with unique methods overriding current
      */
-    fun findOverrides(jcMethod: JcMethod): Sequence<JcMethod>
+    fun findOverrides(jcMethod: JcMethod, includeAbstract: Boolean = true): Sequence<JcMethod>
 
 }

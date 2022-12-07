@@ -140,6 +140,11 @@ val JcMethod.isConstructor: Boolean
         return name == "<init>"
     }
 
+val JcMethod.isClassInitializer: Boolean
+    get() {
+        return name == "<clinit>"
+    }
+
 val JcAccessible.isSynthetic: Boolean
     get() {
         return access and Opcodes.ACC_SYNTHETIC != 0

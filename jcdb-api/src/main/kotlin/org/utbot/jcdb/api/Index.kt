@@ -51,6 +51,11 @@ sealed class JcSignal(val jcdb: JCDB) {
      */
     class Drop(jcdb: JCDB) : JcSignal(jcdb)
 
+    /**
+     * database is closed
+     */
+    class Closed(jcdb: JCDB) : JcSignal(jcdb)
+
 }
 
 
