@@ -86,9 +86,16 @@ class JcGraph(
     fun previous(inst: JcInst): JcInst = instructions[ref(inst).index - 1]
     fun next(inst: JcInst): JcInst = instructions[ref(inst).index + 1]
 
+    /**
+     * `successors` and `predecessors` represent normal control flow
+     */
     fun successors(inst: JcInst): Set<JcInst> = successorMap.getOrDefault(inst, emptySet())
     fun predecessors(inst: JcInst): Set<JcInst> = predecessorMap.getOrDefault(inst, emptySet())
 
+    /**
+     * `throwers` and `catchers` represent control flow when an exception occurs
+     * `throwers` returns an empty set for every instruction except `JcCatchInst`
+     */
     fun throwers(inst: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(inst, emptySet())
     fun catchers(inst: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(inst, emptySet())
 
@@ -101,6 +108,10 @@ class JcGraph(
     fun throwers(inst: JcInstRef): Set<JcInst> = throwers(inst(inst))
     fun catchers(inst: JcInstRef): Set<JcCatchInst> = catchers(inst(inst))
 
+    /**
+     * get all the exceptions types that this instruction may throw and terminate
+     * current method
+     */
     fun exceptionExits(inst: JcInst): Set<JcClassType> =
         inst.accept(JcExceptionResolver(classpath)).filter { it in _throwExits }.toSet()
 
@@ -119,6 +130,10 @@ class JcGraph(
  * (i.e. no exceptions thrown)
  * - all have the same exception handlers (i.e. `jcGraph.catchers(inst)`
  * returns the same result for all instructions of the basic block)
+ *
+ * Because of the current implementation of basic block API, block is *not*
+ * guaranteed to end with a terminating (i.e. `JcTerminatingInst` or `JcBranchingInst`) instruction.
+ * However, any terminating instruction is guaranteed to be the last instruction of a basic block.
  */
 class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
 
@@ -200,9 +215,15 @@ class JcBlockGraph(
     fun instructions(block: JcBasicBlock): List<JcInst> =
         (block.start.index..block.end.index).map { jcGraph.instructions[it] }
 
+    /**
+     * `successors` and `predecessors` represent normal control flow
+     */
     fun predecessors(block: JcBasicBlock): Set<JcBasicBlock> = predecessorMap.getOrDefault(block, emptySet())
     fun successors(block: JcBasicBlock): Set<JcBasicBlock> = successorMap.getOrDefault(block, emptySet())
 
+    /**
+     * `throwers` and `catchers` represent control flow when an exception occurs
+     */
     fun catchers(block: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(block, emptySet())
     fun throwers(block: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(block, emptySet())
 
@@ -814,6 +835,10 @@ data class JcDynamicCallExpr(
     }
 }
 
+/**
+ * `invokevirtual` and `invokeinterface` instructions of the bytecode
+ * are both represented with `JcVirtualCallExpr` for simplicity
+ */
 data class JcVirtualCallExpr(
     override val method: JcTypedMethod,
     val instance: JcValue,
