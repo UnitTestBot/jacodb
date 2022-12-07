@@ -294,8 +294,12 @@ fun <R, E, T : JcExprVisitor<E>> JcExpr.applyAndGet(visitor: T, getter: (T) -> R
     return getter(visitor)
 }
 
-
-// todo: this now does not fully correspond to the specification, maybe we want to change it in the future
+/**
+ * Returns a list of possible thrown exceptions for any given instruction or expression (types of exceptions
+ * are determined from JVM bytecode specification). For method calls it returns:
+ * - all the declared checked exception types
+ * - 'java.lang.Throwable' for any potential unchecked types
+ */
 class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcClassType>>, JcExprVisitor<List<JcClassType>> {
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
@@ -455,7 +459,7 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
     }
 
     override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): List<JcClassType> {
-        return emptyList()
+        return listOf(throwableType)
     }
 
     override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): List<JcClassType> {

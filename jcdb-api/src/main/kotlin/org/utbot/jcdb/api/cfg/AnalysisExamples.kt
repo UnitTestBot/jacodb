@@ -159,6 +159,10 @@ class StringConcatSimplifier(
 
         if (!changed) return jcGraph
 
+        /**
+         * after we changed the instruction list, we need to examine new instruction list and
+         * remap all the old JcInstRef's to new ones
+         */
         instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
         val mappedInstructions = instructions.map { it.accept(this) }
         return JcGraph(jcGraph.classpath, mappedInstructions)
