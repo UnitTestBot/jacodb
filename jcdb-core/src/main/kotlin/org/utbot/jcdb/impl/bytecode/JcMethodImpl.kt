@@ -17,7 +17,13 @@
 package org.utbot.jcdb.impl.bytecode
 
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jcdb.api.*
+import org.utbot.jcdb.api.ClassSource
+import org.utbot.jcdb.api.JcAnnotation
+import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.JcParameter
+import org.utbot.jcdb.api.cfg.JcRawInstList
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.fs.fullAsmNode

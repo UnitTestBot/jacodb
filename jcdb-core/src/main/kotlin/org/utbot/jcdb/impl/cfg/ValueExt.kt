@@ -16,23 +16,23 @@
 
 package org.utbot.jcdb.impl.cfg
 
-import org.utbot.jcdb.api.JcRawNullConstant
-import org.utbot.jcdb.api.JcRawStringConstant
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.TypeName
+import org.utbot.jcdb.api.cfg.JcRawNullConstant
+import org.utbot.jcdb.api.cfg.JcRawStringConstant
 import org.utbot.jcdb.impl.cfg.util.NULL
 import org.utbot.jcdb.impl.cfg.util.STRING_CLASS
 import org.utbot.jcdb.impl.cfg.util.typeName
 
 fun JcRawNull() = JcRawNullConstant(NULL)
-fun JcRawBool(value: Boolean) = org.utbot.jcdb.api.JcRawBool(value, PredefinedPrimitives.boolean.typeName())
-fun JcRawByte(value: Byte) = org.utbot.jcdb.api.JcRawByte(value, PredefinedPrimitives.byte.typeName())
-fun JcRawShort(value: Short) = org.utbot.jcdb.api.JcRawShort(value, PredefinedPrimitives.short.typeName())
-fun JcRawChar(value: Char) = org.utbot.jcdb.api.JcRawChar(value, PredefinedPrimitives.char.typeName())
-fun JcRawInt(value: Int) = org.utbot.jcdb.api.JcRawInt(value, PredefinedPrimitives.int.typeName())
-fun JcRawLong(value: Long) = org.utbot.jcdb.api.JcRawLong(value, PredefinedPrimitives.long.typeName())
-fun JcRawFloat(value: Float) = org.utbot.jcdb.api.JcRawFloat(value, PredefinedPrimitives.float.typeName())
-fun JcRawDouble(value: Double) = org.utbot.jcdb.api.JcRawDouble(value, PredefinedPrimitives.double.typeName())
+fun JcRawBool(value: Boolean) = org.utbot.jcdb.api.cfg.JcRawBool(value, PredefinedPrimitives.boolean.typeName())
+fun JcRawByte(value: Byte) = org.utbot.jcdb.api.cfg.JcRawByte(value, PredefinedPrimitives.byte.typeName())
+fun JcRawShort(value: Short) = org.utbot.jcdb.api.cfg.JcRawShort(value, PredefinedPrimitives.short.typeName())
+fun JcRawChar(value: Char) = org.utbot.jcdb.api.cfg.JcRawChar(value, PredefinedPrimitives.char.typeName())
+fun JcRawInt(value: Int) = org.utbot.jcdb.api.cfg.JcRawInt(value, PredefinedPrimitives.int.typeName())
+fun JcRawLong(value: Long) = org.utbot.jcdb.api.cfg.JcRawLong(value, PredefinedPrimitives.long.typeName())
+fun JcRawFloat(value: Float) = org.utbot.jcdb.api.cfg.JcRawFloat(value, PredefinedPrimitives.float.typeName())
+fun JcRawDouble(value: Double) = org.utbot.jcdb.api.cfg.JcRawDouble(value, PredefinedPrimitives.double.typeName())
 
 fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
     PredefinedPrimitives.boolean -> JcRawBool(false)

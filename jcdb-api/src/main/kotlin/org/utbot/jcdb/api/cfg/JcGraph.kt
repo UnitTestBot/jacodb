@@ -16,7 +16,6 @@
 
 package org.utbot.jcdb.api.cfg
 
-import org.utbot.jcdb.api.BsmArg
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcType

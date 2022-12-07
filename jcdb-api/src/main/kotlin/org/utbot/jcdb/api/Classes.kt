@@ -18,6 +18,7 @@ package org.utbot.jcdb.api
 
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
+import org.utbot.jcdb.api.cfg.JcRawInstList
 
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 

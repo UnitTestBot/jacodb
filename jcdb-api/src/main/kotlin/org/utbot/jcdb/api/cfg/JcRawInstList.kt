@@ -14,12 +14,11 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.api
+package org.utbot.jcdb.api.cfg
 
-import org.utbot.jcdb.api.cfg.JcGraph
-import org.utbot.jcdb.api.cfg.JcGraphBuilder
-import org.utbot.jcdb.api.cfg.JcRawExprVisitor
-import org.utbot.jcdb.api.cfg.JcRawInstVisitor
+import org.utbot.jcdb.api.JcClasspath
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.TypeName
 
 class JcRawInstList(
     instructions: List<JcRawInst>

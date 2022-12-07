@@ -16,40 +16,15 @@
 
 package org.utbot.jcdb.api.cfg
 
-import org.utbot.jcdb.api.BsmStringArg
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.autoboxIfNeeded
 import org.utbot.jcdb.api.ext.findTypeOrNull
 import java.util.*
 import kotlin.collections.ArrayDeque
-import kotlin.collections.List
-import kotlin.collections.MutableList
-import kotlin.collections.MutableSet
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.emptyList
-import kotlin.collections.filter
-import kotlin.collections.first
-import kotlin.collections.flatMap
-import kotlin.collections.fold
-import kotlin.collections.getOrDefault
-import kotlin.collections.getOrPut
-import kotlin.collections.indices
-import kotlin.collections.isNotEmpty
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapValues
-import kotlin.collections.minusAssign
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.mutableSetOf
-import kotlin.collections.plus
-import kotlin.collections.plusAssign
-import kotlin.collections.putAll
-import kotlin.collections.random
 import kotlin.collections.set
-import kotlin.collections.toMutableSet
 
 class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraph) {
     val jcGraph get() = blockGraph.jcGraph

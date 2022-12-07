@@ -43,11 +43,17 @@ class JcClasspathImpl(
 ) : JcClasspath {
 
     private class ClassHolder(val jcClass: JcClassOrInterface?)
+    private class TypeHolder(val type: JcType?)
 
     private val classCache = CacheBuilder.newBuilder()
         .expireAfterAccess(Duration.ofSeconds(10))
         .maximumSize(1_000)
         .build<String, ClassHolder>()
+
+    private val typeCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(Duration.ofSeconds(10))
+        .maximumSize(1_000)
+        .build<String, TypeHolder>()
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
@@ -96,6 +102,12 @@ class JcClasspathImpl(
     }
 
     override fun findTypeOrNull(name: String): JcType? {
+        return typeCache.get(name) {
+            TypeHolder(doFindTypeOrNull(name))
+        }.type
+    }
+
+    private fun doFindTypeOrNull(name: String): JcType? {
         if (name.endsWith("[]")) {
             val targetName = name.removeSuffix("[]")
             return findTypeOrNull(targetName)?.let {

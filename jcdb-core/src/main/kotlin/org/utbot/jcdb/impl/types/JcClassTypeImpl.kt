@@ -87,44 +87,41 @@ open class JcClassTypeImpl(
         }
 
 
-    override val superType: JcClassType?
-        get() {
-            val superClass = jcClass.superClass ?: return null
-            return resolutionImpl?.let {
-                val newSubstitutor = superSubstitutor(superClass, it.superClass)
-                JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
-            } ?: superClass.toType()
-        }
+    override val superType: JcClassType? by lazy(LazyThreadSafetyMode.NONE) {
+        val superClass = jcClass.superClass ?: return@lazy null
+        resolutionImpl?.let {
+            val newSubstitutor = superSubstitutor(superClass, it.superClass)
+            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
+        } ?: superClass.toType()
+    }
 
-    override val interfaces: List<JcClassType>
-        get() {
-            return jcClass.interfaces.map { iface ->
-                val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
-                if (ifaceType != null) {
-                    val newSubstitutor = superSubstitutor(iface, ifaceType)
-                    JcClassTypeImpl(iface, null, newSubstitutor, nullable)
-                } else {
-                    iface.toType()
-                }
+    override val interfaces: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
+        jcClass.interfaces.map { iface ->
+            val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
+            if (ifaceType != null) {
+                val newSubstitutor = superSubstitutor(iface, ifaceType)
+                JcClassTypeImpl(iface, null, newSubstitutor, nullable)
+            } else {
+                iface.toType()
             }
         }
+    }
 
-    override val innerTypes: List<JcClassType>
-        get() {
-            return jcClass.innerClasses.map {
-                val outerMethod = it.outerMethod
-                val outerClass = it.outerClass
+    override val innerTypes: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
+        jcClass.innerClasses.map {
+            val outerMethod = it.outerMethod
+            val outerClass = it.outerClass
 
-                val innerParameters = (
-                        outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
-                        )?.values?.toList().orEmpty()
-                val innerSubstitutor = when {
-                    it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
-                    else -> substitutor.newScope(innerParameters)
-                }
-                JcClassTypeImpl(it, this, innerSubstitutor, true)
+            val innerParameters = (
+                    outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
+                    )?.values?.toList().orEmpty()
+            val innerSubstitutor = when {
+                it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
+                else -> substitutor.newScope(innerParameters)
             }
+            JcClassTypeImpl(it, this, innerSubstitutor, true)
         }
+    }
 
     override val declaredMethods by lazy(LazyThreadSafetyMode.NONE) {
         typedMethods(true, fromSuperTypes = false, jcClass.packageName)
@@ -208,7 +205,7 @@ open class JcClassTypeImpl(
         }
         val result = directSet.toSortedSet<JcTypedField>(UnsafeHierarchyTypedFieldComparator)
         result.addAll(
-             (superType as? JcClassTypeImpl)?.typedFields(
+            (superType as? JcClassTypeImpl)?.typedFields(
                 false,
                 fromSuperTypes = true,
                 classPackageName
@@ -244,7 +241,10 @@ fun JvmType.isReferencesClass(name: String): Boolean {
 private object UnsafeHierarchyTypedMethodComparator : Comparator<JcTypedMethod> {
 
     override fun compare(o1: JcTypedMethod, o2: JcTypedMethod): Int {
-        return (o1.name + o1.method.description).compareTo(o2.name + o2.method.description)
+        return when (o1.name) {
+            o2.name -> o1.method.description.compareTo(o2.method.description)
+            else -> o1.name.compareTo(o2.name)
+        }
     }
 }
 

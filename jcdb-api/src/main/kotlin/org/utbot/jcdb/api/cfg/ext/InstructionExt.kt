@@ -16,10 +16,10 @@
 
 package org.utbot.jcdb.api.cfg.ext
 
-import org.utbot.jcdb.api.JcRawExpr
-import org.utbot.jcdb.api.JcRawInst
-import org.utbot.jcdb.api.JcRawInstList
+import org.utbot.jcdb.api.cfg.JcRawExpr
 import org.utbot.jcdb.api.cfg.JcRawExprVisitor
+import org.utbot.jcdb.api.cfg.JcRawInst
+import org.utbot.jcdb.api.cfg.JcRawInstList
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 
 fun JcRawInstList.filter(visitor: JcRawInstVisitor<Boolean>) =
