@@ -92,7 +92,7 @@ public class JavaTasks {
         throw new NotImplementedError();
     }
 
-    public static void heapSort(List<Double> arr) {
+    public static void heapSort(List<Double> arr) throws IOException, ArrayIndexOutOfBoundsException {
         int n = arr.size();
 
         for (int i = n / 2 - 1; i >= 0; i--) {
@@ -126,7 +126,7 @@ public class JavaTasks {
         }
     }
 
-    static public void sortTemperatures(String inputName, String outputName) {
+    static public void sortTemperatures(String inputName, String outputName) throws IOException {
         List<Double> temperature = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
