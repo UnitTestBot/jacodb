@@ -46,7 +46,7 @@ class PersistenceClassSource(
     private val cachedByteCode: ByteArray? = null
 ) : ClassSource {
 
-    constructor(persistenceClassSource: PersistenceClassSource, byteCode: ByteArray): this(
+    private constructor(persistenceClassSource: PersistenceClassSource, byteCode: ByteArray) : this(
         persistenceClassSource.classpath,
         persistenceClassSource.className,
         persistenceClassSource.classId,
@@ -58,5 +58,10 @@ class PersistenceClassSource(
 
     override val byteCode by lazy {
         cachedByteCode ?: classpath.db.persistence.findBytecode(classId)
+    }
+
+    fun bind(byteCode: ByteArray?) = when {
+        byteCode != null -> PersistenceClassSource(this, byteCode)
+        else -> this
     }
 }

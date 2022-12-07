@@ -23,8 +23,11 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.isClassInitializer
+import org.utbot.jcdb.api.isConstructor
 import org.utbot.jcdb.api.isFinal
 import org.utbot.jcdb.api.isPrivate
+import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.impl.fs.PersistenceClassSource
 import org.utbot.jcdb.impl.storage.BatchedSequence
 import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
@@ -62,19 +65,25 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     }
 
     override fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+        val jcClass = cp.findClassOrNull(name) ?: return emptySequence()
+        if (jcClass.isFinal) {
+            return emptySequence()
+        }
         if (cp.db.isInstalled(InMemoryHierarchy)) {
             return cp.findSubclassesInMemory(name, allHierarchy, false)
         }
-        val classId = cp.findClassOrNull(name) ?: return emptySequence()
-        return findSubClasses(classId, allHierarchy)
+        return findSubClasses(jcClass, allHierarchy)
     }
 
     override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+        if (jcClass.isFinal) {
+            return emptySequence()
+        }
         return findSubClasses(jcClass, allHierarchy, false)
     }
 
     override fun findOverrides(jcMethod: JcMethod, includeAbstract: Boolean): Sequence<JcMethod> {
-        if (jcMethod.isFinal) {
+        if (jcMethod.isFinal || jcMethod.isConstructor || jcMethod.isStatic || jcMethod.isClassInitializer) {
             return emptySequence()
         }
         val desc = jcMethod.description
@@ -101,7 +110,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
                     locationId = record.locationId,
                     classId = record.id,
                     className = record.name
-                ),
+                ).bind(record.byteCode),
                 withCaching = true
             )
         }

@@ -42,7 +42,7 @@ typealias InMemoryHierarchyCache = ConcurrentHashMap<Long, ConcurrentHashMap<Lon
 
 private val objectJvmName = Type.getInternalName(Any::class.java)
 
-class FastHierarchyIndexer(
+class InMemoryHierarchyIndexer(
     private val persistence: JCDBPersistence,
     private val location: RegisteredLocation,
     private val hierarchy: InMemoryHierarchyCache
@@ -192,14 +192,13 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
                         .where(SYMBOLS.ID.`in`(ids).and(CLASSES.LOCATION_ID.`in`(locationIds)))
                         .fetch()
                         .mapNotNull { (className, classId, locationId, byteCode) ->
-                            var source = PersistenceClassSource(
+                            val source = PersistenceClassSource(
                                 classpath = classpath,
                                 classId = classId!!,
                                 className = className!!,
                                 locationId = locationId!!
-                            )
-                            if (req.full) {
-                                source = PersistenceClassSource(source, byteCode!!)
+                            ).let {
+                                it.bind(byteCode.takeIf { req.full })
                             }
                             (batchSize + index) to source
                         }
@@ -209,7 +208,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
     }
 
     override fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer {
-        return FastHierarchyIndexer(jcdb.persistence, location, hierarchies.getOrPut(jcdb) { ConcurrentHashMap() })
+        return InMemoryHierarchyIndexer(jcdb.persistence, location, hierarchies.getOrPut(jcdb) { ConcurrentHashMap() })
     }
 
 }

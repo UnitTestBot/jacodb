@@ -241,12 +241,10 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                         classId!! to byteArray!!
                     }.toMap()
             }
-            classes.map {
+            classes.map { (source, offsets) ->
                 position++ to UsageFeatureResponse(
-                    source = PersistenceClassSource(
-                        it.first,
-                        byteCodes[it.first.classId]!!
-                    ), offsets = it.second
+                    source = source.bind(byteCodes[source.classId]),
+                    offsets = offsets
                 )
             }
         }
