@@ -72,7 +72,7 @@ class JcRawInstList(
 sealed interface JcRawInst {
     val operands: List<JcRawExpr>
 
-    abstract fun <T> accept(visitor: JcRawInstVisitor<T>): T
+    fun <T> accept(visitor: JcRawInstVisitor<T>): T
 }
 
 class JcRawAssignInst(

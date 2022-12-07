@@ -17,6 +17,7 @@
 package org.utbot.jcdb.impl.features
 
 import org.jooq.DSLContext
+import org.jooq.impl.DSL
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.utbot.jcdb.api.ByteCodeIndexer
@@ -176,25 +177,31 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
         val allIds = allSubclasses.toList()
         return BatchedSequence<ClassSource>(50) { offset, batchSize ->
             persistence.read { jooq ->
-                val index = offset?.toInt() ?: 0
-                val ids = allIds.subList(index, min(allIds.size, index + batchSize))
+                val index = offset ?: 0
+                val ids = allIds.subList(index.toInt(), min(allIds.size, index.toInt() + batchSize))
                 if (ids.isEmpty()) {
                     emptyList()
                 } else {
-                    jooq.select(SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, CLASSES.BYTECODE)
-                        .from(CLASSES)
+                    jooq.select(
+                        SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, when {
+                            req.full -> CLASSES.BYTECODE
+                            else -> DSL.inline(ByteArray(0)).`as`(CLASSES.BYTECODE)
+                        }
+                    ).from(CLASSES)
                         .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
                         .where(SYMBOLS.ID.`in`(ids).and(CLASSES.LOCATION_ID.`in`(locationIds)))
-                        .orderBy(CLASSES.ID)
-                        .limit(batchSize)
                         .fetch()
-                        .mapNotNull { (className, classId, locationId) ->
-                            (index.toLong() + batchSize) to PersistenceClassSource(
+                        .mapNotNull { (className, classId, locationId, byteCode) ->
+                            var source = PersistenceClassSource(
                                 classpath = classpath,
                                 classId = classId!!,
                                 className = className!!,
                                 locationId = locationId!!
                             )
+                            if (req.full) {
+                                source = PersistenceClassSource(source, byteCode!!)
+                            }
+                            (batchSize + index) to source
                         }
                 }
             }
@@ -207,7 +214,11 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 
 }
 
-internal fun JcClasspath.findSubclassesInMemory(name: String, allHierarchy: Boolean, full: Boolean): Sequence<JcClassOrInterface> {
+internal fun JcClasspath.findSubclassesInMemory(
+    name: String,
+    allHierarchy: Boolean,
+    full: Boolean
+): Sequence<JcClassOrInterface> {
     return InMemoryHierarchy.syncQuery(this, InMemoryHierarchyReq(name, allHierarchy, full)).map {
         toJcClass(it)
     }

@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassOrInterface
+import org.utbot.jcdb.api.JcMethod
+import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.BaseTest
 import org.utbot.jcdb.impl.WithDB
 import org.utbot.jcdb.impl.WithRestoredDB
@@ -59,10 +61,31 @@ abstract class BaseInMemoryHierarchyTest : BaseTest() {
         }
     }
 
+    @Test
+    fun `find huge number of method overrides`() {
+        val jcClazz = cp.findClass<Runnable>()
+        with(findMethodOverrides(jcClazz.declaredMethods.first()).toList()) {
+            println("Found: $size")
+            assertTrue(size > 10)
+        }
+    }
+
+    @Test
+    fun `find regular method overrides`() {
+        val jcClazz = cp.findClass<Document>()
+        with(findMethodOverrides(jcClazz.declaredMethods.first()).toList()) {
+            assertTrue(size >= 4)
+        }
+    }
+
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> =
         runBlocking {
-            cp.findSubclassesInMemory(T::class.java.name, allHierarchy)
+            cp.findSubclassesInMemory(T::class.java.name, allHierarchy, true)
         }
+
+    private fun findMethodOverrides(method: JcMethod): Sequence<JcMethod> = runBlocking {
+        cp.hierarchyExt().findOverrides(method)
+    }
 
 }
 

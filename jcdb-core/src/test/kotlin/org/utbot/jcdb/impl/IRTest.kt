@@ -16,6 +16,7 @@
 
 package org.utbot.jcdb.impl
 
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -50,6 +51,7 @@ import org.utbot.jcdb.api.cfg.JcSwitchInst
 import org.utbot.jcdb.api.cfg.JcTerminatingInst
 import org.utbot.jcdb.api.cfg.JcThrowInst
 import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
+import org.utbot.jcdb.api.cfg.ext.applyAndGet
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.methods
@@ -65,6 +67,8 @@ import org.utbot.jcdb.impl.cfg.MethodNodeBuilder
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.cfg.Simplifier
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
+import org.utbot.jcdb.impl.features.InMemoryHierarchy
+import org.utbot.jcdb.impl.features.hierarchyExt
 import java.net.URLClassLoader
 import java.nio.file.Files
 
@@ -266,7 +270,9 @@ class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
 class IRTest : BaseTest() {
     val target = Files.createTempDirectory("jcdb-temp")
 
-    companion object : WithDB()
+    companion object : WithDB(InMemoryHierarchy)
+
+    private val ext = runBlocking { cp.hierarchyExt() }
 
     @Test
     fun `get ir of simple method`() {
@@ -306,6 +312,7 @@ class IRTest : BaseTest() {
             val instructionList = it.instructionList(cp)
 //            println("Instruction list: $instructionList")
             val graph = instructionList.graph(cp, it)
+            graph.applyAndGet(OverridesResolver(ext)) {}
             JcGraphChecker(graph).check()
 //            println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
