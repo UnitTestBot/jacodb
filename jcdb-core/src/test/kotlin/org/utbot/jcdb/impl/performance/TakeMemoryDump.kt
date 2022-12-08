@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb
+package org.utbot.jcdb.impl.performance
 
 import kotlinx.coroutines.runBlocking
 import org.utbot.jcdb.impl.allClasspath
@@ -25,6 +25,7 @@ import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.FIELDS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODPARAMETERS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODS
+import org.utbot.jcdb.jcdb
 
 fun main() {
     var start = System.currentTimeMillis()
