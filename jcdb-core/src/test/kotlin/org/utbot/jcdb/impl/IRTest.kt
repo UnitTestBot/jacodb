@@ -34,7 +34,6 @@ import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.cfg.DefaultJcExprVisitor
 import org.utbot.jcdb.api.cfg.DefaultJcInstVisitor
 import org.utbot.jcdb.api.cfg.JcAssignInst
-import org.utbot.jcdb.api.cfg.JcBlockGraph
 import org.utbot.jcdb.api.cfg.JcCallExpr
 import org.utbot.jcdb.api.cfg.JcCallInst
 import org.utbot.jcdb.api.cfg.JcCatchInst
@@ -43,7 +42,6 @@ import org.utbot.jcdb.api.cfg.JcExitMonitorInst
 import org.utbot.jcdb.api.cfg.JcExpr
 import org.utbot.jcdb.api.cfg.JcGotoInst
 import org.utbot.jcdb.api.cfg.JcGraph
-import org.utbot.jcdb.api.cfg.JcGraphBuilder
 import org.utbot.jcdb.api.cfg.JcIfInst
 import org.utbot.jcdb.api.cfg.JcInst
 import org.utbot.jcdb.api.cfg.JcInstVisitor
@@ -66,6 +64,8 @@ import org.utbot.jcdb.impl.bytecode.JcMethodImpl
 import org.utbot.jcdb.impl.cfg.BinarySearchTree
 import org.utbot.jcdb.impl.cfg.IRExamples
 import org.utbot.jcdb.impl.cfg.JavaTasks
+import org.utbot.jcdb.impl.cfg.JcBlockGraphImpl
+import org.utbot.jcdb.impl.cfg.JcGraphBuilder
 import org.utbot.jcdb.impl.cfg.MethodNodeBuilder
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.cfg.Simplifier
@@ -306,7 +306,7 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JCDBImpl>())
         testClass(cp.findClass<ExprMapper>())
         testClass(cp.findClass<JcGraphBuilder>())
-        testClass(cp.findClass<JcBlockGraph>())
+        testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
 //    @Test
@@ -345,9 +345,9 @@ class IRTest : BaseTest() {
 //            val oldBody = it.body()
 //            println()
 //            println("Old body: ${oldBody.print()}")
-            val instructionList = it.instructionList(cp)
+            val instructionList = it.instructionList()
 //            println("Instruction list: $instructionList")
-            val graph = instructionList.graph(cp, it)
+            val graph = instructionList.graph(it)
             graph.applyAndGet(OverridesResolver(ext)) {}
             JcGraphChecker(graph).check()
 //            println("Graph: $graph")

@@ -43,7 +43,6 @@ import org.objectweb.asm.tree.TableSwitchInsnNode
 import org.objectweb.asm.tree.TryCatchBlockNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
-import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.TypeName
@@ -79,7 +78,6 @@ import org.utbot.jcdb.api.cfg.JcRawGotoInst
 import org.utbot.jcdb.api.cfg.JcRawGtExpr
 import org.utbot.jcdb.api.cfg.JcRawIfInst
 import org.utbot.jcdb.api.cfg.JcRawInst
-import org.utbot.jcdb.api.cfg.JcRawInstList
 import org.utbot.jcdb.api.cfg.JcRawInstanceOfExpr
 import org.utbot.jcdb.api.cfg.JcRawInterfaceCallExpr
 import org.utbot.jcdb.api.cfg.JcRawLabelInst
@@ -111,7 +109,6 @@ import org.utbot.jcdb.api.cfg.JcRawUshrExpr
 import org.utbot.jcdb.api.cfg.JcRawValue
 import org.utbot.jcdb.api.cfg.JcRawVirtualCallExpr
 import org.utbot.jcdb.api.cfg.JcRawXorExpr
-import org.utbot.jcdb.api.cfg.ext.map
 import org.utbot.jcdb.api.isStatic
 import org.utbot.jcdb.impl.cfg.util.CLASS_CLASS
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
@@ -251,19 +248,19 @@ class RawInstListBuilder(
     private var localCounter = 0
     private var argCounter = 0
 
-    fun build(jcClasspath: JcClasspath): JcRawInstList {
+    fun build(): JcRawInstListImpl {
         buildGraph()
 
         buildInstructions()
         buildRequiredAssignments()
         buildRequiredGotos()
 
-        val originalInstructionList = JcRawInstList(methodNode.instructions.flatMap { instructionList(it) })
+        val originalInstructionList = JcRawInstListImpl(methodNode.instructions.flatMap { instructionList(it) })
 
         // after all the frame info resolution we can refine type info for some local variables,
         // so we replace all the old versions of the variables with the type refined ones
         val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localTypeRefinement.toMap()))
-        return Simplifier().simplify(jcClasspath, localsNormalizedInstructionList)
+        return Simplifier().simplify(method.enclosingClass.classpath, localsNormalizedInstructionList)
     }
 
     private fun buildInstructions() {

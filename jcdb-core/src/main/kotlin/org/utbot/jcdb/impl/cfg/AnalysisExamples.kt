@@ -20,13 +20,15 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.autoboxIfNeeded
 import org.utbot.jcdb.api.ext.findTypeOrNull
+import org.utbot.jcdb.impl.cfg.JcBlockGraphImpl
+import org.utbot.jcdb.impl.cfg.JcGraphImpl
 import java.util.*
 import kotlin.collections.ArrayDeque
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraph) {
+class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraphImpl) {
     val jcGraph get() = blockGraph.jcGraph
 
     private val nDefinitions = jcGraph.instructions.size
@@ -104,7 +106,7 @@ class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraph) {
 
 
 class StringConcatSimplifier(
-    val jcGraph: JcGraph
+    val jcGraph: JcGraphImpl
 ) : DefaultJcInstVisitor<JcInst> {
     override val defaultInstHandler: (JcInst) -> JcInst
         get() = { it }
@@ -113,7 +115,7 @@ class StringConcatSimplifier(
     private val catchReplacements = mutableMapOf<JcInst, MutableList<JcInst>>()
     private val instructionIndices = mutableMapOf<JcInst, Int>()
 
-    fun build(): JcGraph {
+    fun build(): JcGraphImpl {
         var changed = false
         for (inst in jcGraph) {
             if (inst is JcAssignInst) {
@@ -165,7 +167,7 @@ class StringConcatSimplifier(
          */
         instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
         val mappedInstructions = instructions.map { it.accept(this) }
-        return JcGraph(jcGraph.classpath, mappedInstructions)
+        return JcGraphImpl(jcGraph.classpath, mappedInstructions)
     }
 
     private fun stringify(value: JcValue, instList: MutableList<JcInst>): JcValue {

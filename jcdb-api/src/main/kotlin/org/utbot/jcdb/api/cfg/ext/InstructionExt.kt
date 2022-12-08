@@ -22,21 +22,6 @@ import org.utbot.jcdb.api.cfg.JcRawInst
 import org.utbot.jcdb.api.cfg.JcRawInstList
 import org.utbot.jcdb.api.cfg.JcRawInstVisitor
 
-fun JcRawInstList.filter(visitor: JcRawInstVisitor<Boolean>) =
-    JcRawInstList(instructions.filter { it.accept(visitor) })
-
-fun JcRawInstList.filterNot(visitor: JcRawInstVisitor<Boolean>) =
-    JcRawInstList(instructions.filterNot { it.accept(visitor) })
-
-fun JcRawInstList.map(visitor: JcRawInstVisitor<JcRawInst>) =
-    JcRawInstList(instructions.map { it.accept(visitor) })
-
-fun JcRawInstList.mapNotNull(visitor: JcRawInstVisitor<JcRawInst?>) =
-    JcRawInstList(instructions.mapNotNull { it.accept(visitor) })
-
-fun JcRawInstList.flatMap(visitor: JcRawInstVisitor<Collection<JcRawInst>>) =
-    JcRawInstList(instructions.flatMap { it.accept(visitor) })
-
 fun JcRawInstList.apply(visitor: JcRawInstVisitor<Unit>): JcRawInstList {
     instructions.forEach { it.accept(visitor) }
     return this

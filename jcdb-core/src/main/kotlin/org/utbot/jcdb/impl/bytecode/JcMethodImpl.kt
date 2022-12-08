@@ -20,11 +20,10 @@ import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.ClassSource
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClassOrInterface
-import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
-import org.utbot.jcdb.api.cfg.JcRawInstList
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.impl.cfg.JcRawInstListImpl
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.fs.fullAsmNode
 import org.utbot.jcdb.impl.types.MethodInfo
@@ -68,8 +67,8 @@ class JcMethodImpl(
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
-    override fun instructionList(jcClasspath: JcClasspath): JcRawInstList {
-        return RawInstListBuilder(this, body().jsrInlined).build(jcClasspath)
+    override fun instructionList(): JcRawInstListImpl {
+        return RawInstListBuilder(this, body().jsrInlined).build()
     }
 
     override fun equals(other: Any?): Boolean {

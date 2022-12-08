@@ -254,21 +254,6 @@ fun JcBlockGraph.toFile(dotCmd: String): Path {
     return resultingFile
 }
 
-fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
-    JcGraph(classpath, instructions.filter { it.accept(visitor) })
-
-fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
-    JcGraph(classpath, instructions.filterNot { it.accept(visitor) })
-
-fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
-    JcGraph(classpath, instructions.map { it.accept(visitor) })
-
-fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
-    JcGraph(classpath, instructions.mapNotNull { it.accept(visitor) })
-
-fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
-    JcGraph(classpath, instructions.flatMap { it.accept(visitor) })
-
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
     instructions.forEach { it.accept(visitor) }
     return this

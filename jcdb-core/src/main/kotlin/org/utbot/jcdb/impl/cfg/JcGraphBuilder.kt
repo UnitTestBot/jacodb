@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.api.cfg
+package org.utbot.jcdb.impl.cfg
 
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcClasspath
@@ -25,6 +25,138 @@ import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.boolean
 import org.utbot.jcdb.api.byte
+import org.utbot.jcdb.api.cfg.BsmHandle
+import org.utbot.jcdb.api.cfg.JcAddExpr
+import org.utbot.jcdb.api.cfg.JcAndExpr
+import org.utbot.jcdb.api.cfg.JcArgument
+import org.utbot.jcdb.api.cfg.JcArrayAccess
+import org.utbot.jcdb.api.cfg.JcAssignInst
+import org.utbot.jcdb.api.cfg.JcBinaryExpr
+import org.utbot.jcdb.api.cfg.JcBool
+import org.utbot.jcdb.api.cfg.JcByte
+import org.utbot.jcdb.api.cfg.JcCallExpr
+import org.utbot.jcdb.api.cfg.JcCallInst
+import org.utbot.jcdb.api.cfg.JcCastExpr
+import org.utbot.jcdb.api.cfg.JcCatchInst
+import org.utbot.jcdb.api.cfg.JcChar
+import org.utbot.jcdb.api.cfg.JcClassConstant
+import org.utbot.jcdb.api.cfg.JcCmpExpr
+import org.utbot.jcdb.api.cfg.JcCmpgExpr
+import org.utbot.jcdb.api.cfg.JcCmplExpr
+import org.utbot.jcdb.api.cfg.JcConditionExpr
+import org.utbot.jcdb.api.cfg.JcDivExpr
+import org.utbot.jcdb.api.cfg.JcDouble
+import org.utbot.jcdb.api.cfg.JcDynamicCallExpr
+import org.utbot.jcdb.api.cfg.JcEnterMonitorInst
+import org.utbot.jcdb.api.cfg.JcEqExpr
+import org.utbot.jcdb.api.cfg.JcExitMonitorInst
+import org.utbot.jcdb.api.cfg.JcExpr
+import org.utbot.jcdb.api.cfg.JcFieldRef
+import org.utbot.jcdb.api.cfg.JcFloat
+import org.utbot.jcdb.api.cfg.JcGeExpr
+import org.utbot.jcdb.api.cfg.JcGotoInst
+import org.utbot.jcdb.api.cfg.JcGraph
+import org.utbot.jcdb.api.cfg.JcGtExpr
+import org.utbot.jcdb.api.cfg.JcIfInst
+import org.utbot.jcdb.api.cfg.JcInst
+import org.utbot.jcdb.api.cfg.JcInstRef
+import org.utbot.jcdb.api.cfg.JcInstanceOfExpr
+import org.utbot.jcdb.api.cfg.JcInt
+import org.utbot.jcdb.api.cfg.JcLambdaExpr
+import org.utbot.jcdb.api.cfg.JcLeExpr
+import org.utbot.jcdb.api.cfg.JcLengthExpr
+import org.utbot.jcdb.api.cfg.JcLocal
+import org.utbot.jcdb.api.cfg.JcLong
+import org.utbot.jcdb.api.cfg.JcLtExpr
+import org.utbot.jcdb.api.cfg.JcMethodConstant
+import org.utbot.jcdb.api.cfg.JcMulExpr
+import org.utbot.jcdb.api.cfg.JcNegExpr
+import org.utbot.jcdb.api.cfg.JcNeqExpr
+import org.utbot.jcdb.api.cfg.JcNewArrayExpr
+import org.utbot.jcdb.api.cfg.JcNewExpr
+import org.utbot.jcdb.api.cfg.JcNullConstant
+import org.utbot.jcdb.api.cfg.JcOrExpr
+import org.utbot.jcdb.api.cfg.JcRawAddExpr
+import org.utbot.jcdb.api.cfg.JcRawAndExpr
+import org.utbot.jcdb.api.cfg.JcRawArgument
+import org.utbot.jcdb.api.cfg.JcRawArrayAccess
+import org.utbot.jcdb.api.cfg.JcRawAssignInst
+import org.utbot.jcdb.api.cfg.JcRawBinaryExpr
+import org.utbot.jcdb.api.cfg.JcRawBool
+import org.utbot.jcdb.api.cfg.JcRawByte
+import org.utbot.jcdb.api.cfg.JcRawCallExpr
+import org.utbot.jcdb.api.cfg.JcRawCallInst
+import org.utbot.jcdb.api.cfg.JcRawCastExpr
+import org.utbot.jcdb.api.cfg.JcRawCatchInst
+import org.utbot.jcdb.api.cfg.JcRawChar
+import org.utbot.jcdb.api.cfg.JcRawClassConstant
+import org.utbot.jcdb.api.cfg.JcRawCmpExpr
+import org.utbot.jcdb.api.cfg.JcRawCmpgExpr
+import org.utbot.jcdb.api.cfg.JcRawCmplExpr
+import org.utbot.jcdb.api.cfg.JcRawDivExpr
+import org.utbot.jcdb.api.cfg.JcRawDouble
+import org.utbot.jcdb.api.cfg.JcRawDynamicCallExpr
+import org.utbot.jcdb.api.cfg.JcRawEnterMonitorInst
+import org.utbot.jcdb.api.cfg.JcRawEqExpr
+import org.utbot.jcdb.api.cfg.JcRawExitMonitorInst
+import org.utbot.jcdb.api.cfg.JcRawExprVisitor
+import org.utbot.jcdb.api.cfg.JcRawFieldRef
+import org.utbot.jcdb.api.cfg.JcRawFloat
+import org.utbot.jcdb.api.cfg.JcRawGeExpr
+import org.utbot.jcdb.api.cfg.JcRawGotoInst
+import org.utbot.jcdb.api.cfg.JcRawGtExpr
+import org.utbot.jcdb.api.cfg.JcRawIfInst
+import org.utbot.jcdb.api.cfg.JcRawInst
+import org.utbot.jcdb.api.cfg.JcRawInstVisitor
+import org.utbot.jcdb.api.cfg.JcRawInstanceOfExpr
+import org.utbot.jcdb.api.cfg.JcRawInt
+import org.utbot.jcdb.api.cfg.JcRawInterfaceCallExpr
+import org.utbot.jcdb.api.cfg.JcRawLabelInst
+import org.utbot.jcdb.api.cfg.JcRawLabelRef
+import org.utbot.jcdb.api.cfg.JcRawLeExpr
+import org.utbot.jcdb.api.cfg.JcRawLengthExpr
+import org.utbot.jcdb.api.cfg.JcRawLocal
+import org.utbot.jcdb.api.cfg.JcRawLong
+import org.utbot.jcdb.api.cfg.JcRawLtExpr
+import org.utbot.jcdb.api.cfg.JcRawMethodConstant
+import org.utbot.jcdb.api.cfg.JcRawMulExpr
+import org.utbot.jcdb.api.cfg.JcRawNegExpr
+import org.utbot.jcdb.api.cfg.JcRawNeqExpr
+import org.utbot.jcdb.api.cfg.JcRawNewArrayExpr
+import org.utbot.jcdb.api.cfg.JcRawNewExpr
+import org.utbot.jcdb.api.cfg.JcRawNullConstant
+import org.utbot.jcdb.api.cfg.JcRawOrExpr
+import org.utbot.jcdb.api.cfg.JcRawRemExpr
+import org.utbot.jcdb.api.cfg.JcRawReturnInst
+import org.utbot.jcdb.api.cfg.JcRawShlExpr
+import org.utbot.jcdb.api.cfg.JcRawShort
+import org.utbot.jcdb.api.cfg.JcRawShrExpr
+import org.utbot.jcdb.api.cfg.JcRawSpecialCallExpr
+import org.utbot.jcdb.api.cfg.JcRawStaticCallExpr
+import org.utbot.jcdb.api.cfg.JcRawStringConstant
+import org.utbot.jcdb.api.cfg.JcRawSubExpr
+import org.utbot.jcdb.api.cfg.JcRawSwitchInst
+import org.utbot.jcdb.api.cfg.JcRawThis
+import org.utbot.jcdb.api.cfg.JcRawThrowInst
+import org.utbot.jcdb.api.cfg.JcRawUshrExpr
+import org.utbot.jcdb.api.cfg.JcRawVirtualCallExpr
+import org.utbot.jcdb.api.cfg.JcRawXorExpr
+import org.utbot.jcdb.api.cfg.JcRemExpr
+import org.utbot.jcdb.api.cfg.JcReturnInst
+import org.utbot.jcdb.api.cfg.JcShlExpr
+import org.utbot.jcdb.api.cfg.JcShort
+import org.utbot.jcdb.api.cfg.JcShrExpr
+import org.utbot.jcdb.api.cfg.JcSpecialCallExpr
+import org.utbot.jcdb.api.cfg.JcStaticCallExpr
+import org.utbot.jcdb.api.cfg.JcStringConstant
+import org.utbot.jcdb.api.cfg.JcSubExpr
+import org.utbot.jcdb.api.cfg.JcSwitchInst
+import org.utbot.jcdb.api.cfg.JcThis
+import org.utbot.jcdb.api.cfg.JcThrowInst
+import org.utbot.jcdb.api.cfg.JcUshrExpr
+import org.utbot.jcdb.api.cfg.JcValue
+import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
+import org.utbot.jcdb.api.cfg.JcXorExpr
 import org.utbot.jcdb.api.char
 import org.utbot.jcdb.api.double
 import org.utbot.jcdb.api.ext.findTypeOrNull
@@ -36,7 +168,7 @@ import org.utbot.jcdb.api.toType
 
 class JcGraphBuilder(
     val classpath: JcClasspath,
-    val instList: JcRawInstList,
+    val instList: JcRawInstListImpl,
     val method: JcMethod
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
@@ -51,7 +183,7 @@ class JcGraphBuilder(
         res
     }
 
-    fun build(): JcGraph = JcGraph(classpath, instList.mapNotNull { convertRawInst(it) })
+    fun build(): JcGraph = JcGraphImpl(classpath, instList.mapNotNull { convertRawInst(it) })
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
         instMap.getOrPut(inst) { handler() }
