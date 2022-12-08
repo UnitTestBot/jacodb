@@ -76,8 +76,13 @@ class SQLitePersistenceImpl(
             it.setJournalMode(SQLiteConfig.JournalMode.OFF)
             it.setPageSize(32_768)
             it.setCacheSize(-8_000)
+            it.setSharedCache(true)
         }
-        val url = "jdbc:sqlite:file:jcdb-${location ?: UUID.randomUUID()}?mode=memory&cache=shared&rewriteBatchedStatements=true"
+        val props = listOfNotNull(
+            ("mode" to "memory").takeIf { location == null },
+            "rewriteBatchedStatements" to "true"
+        ).map { "${it.first}=${it.second}" }.joinToString("&")
+        val url = "jdbc:sqlite:file:jcdb-${location ?: UUID.randomUUID()}?$props"
         val dataSource = SQLiteDataSource(config).also {
             it.url = url
         }
@@ -171,11 +176,11 @@ class SQLitePersistenceImpl(
             .join(SYMBOLS).on(CLASSES.NAME.eq(SYMBOLS.ID))
             .where(CLASSES.LOCATION_ID.eq(location.id))
             .fetch()
-        return classes.map {
+        return classes.map { (locationId, array, name) ->
             ClassSourceImpl(
                 location = location,
-                className = it.component3()!!,
-                byteCode = it.component2()!!
+                className = name!!,
+                byteCode = array!!
             )
         }
     }
