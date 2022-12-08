@@ -76,6 +76,11 @@ val JcAccessible.isFinal: Boolean
         return access and Opcodes.ACC_FINAL != 0
     }
 
+val JcClassOrInterface.isAnnotation: Boolean
+    get() {
+        return access and Opcodes.ACC_ANNOTATION != 0
+    }
+
 /**
  * is item has `synchronized` modifier
  */

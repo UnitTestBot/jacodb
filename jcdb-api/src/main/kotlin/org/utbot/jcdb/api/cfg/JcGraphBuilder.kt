@@ -22,6 +22,7 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.TypeName
+import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.boolean
 import org.utbot.jcdb.api.byte
 import org.utbot.jcdb.api.char
@@ -273,7 +274,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as JcClassType
+        val klass = instance.type as? JcClassType ?: classpath.anyType()
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
@@ -283,7 +284,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as JcClassType
+        val klass = instance.type as? JcClassType ?: classpath.anyType()
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(

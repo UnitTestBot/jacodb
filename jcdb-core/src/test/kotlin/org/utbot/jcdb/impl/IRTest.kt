@@ -16,8 +16,10 @@
 
 package org.utbot.jcdb.impl
 
+import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -54,6 +56,7 @@ import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.cfg.ext.applyAndGet
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
+import org.utbot.jcdb.api.isAnnotation
 import org.utbot.jcdb.api.methods
 import org.utbot.jcdb.api.packageName
 import org.utbot.jcdb.api.toType
@@ -69,6 +72,8 @@ import org.utbot.jcdb.impl.cfg.Simplifier
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.features.InMemoryHierarchy
 import org.utbot.jcdb.impl.features.hierarchyExt
+import org.utbot.jcdb.impl.fs.JarLocation
+import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 
@@ -135,6 +140,7 @@ class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
                         assertTrue(blockGraph.predecessors(block).isEmpty())
                         assertTrue(blockGraph.throwers(block).isNotEmpty())
                     }
+
                     else -> {
                         assertTrue(blockGraph.predecessors(block).isNotEmpty())
                         assertTrue(blockGraph.throwers(block).isEmpty())
@@ -268,7 +274,7 @@ class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
 }
 
 class IRTest : BaseTest() {
-    val target = Files.createTempDirectory("jcdb-temp")
+    private val target = Files.createTempDirectory("jcdb-temp")
 
     companion object : WithDB(InMemoryHierarchy)
 
@@ -302,6 +308,36 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcGraphBuilder>())
         testClass(cp.findClass<JcBlockGraph>())
     }
+
+//    @Test
+    fun `get ir of jackson`() {
+        allClasspath.filter { it.name.contains("jackson") }.forEach {
+            runAlongLib(it)
+        }
+    }
+
+//    @Test
+    fun `get ir of guava`() {
+        runAlongLib(guavaLib)
+    }
+
+    private fun runAlongLib(file: File) {
+        println("Run along: ${file.absolutePath}")
+
+        val classes = JarLocation(file, isRuntime = false, object : org.utbot.jcdb.api.JavaVersion {
+            override val majorVersion: Int
+                get() = JavaVersion.getMajorJavaVersion()
+        }).classes
+        assertNotNull(classes)
+        classes!!.forEach {
+            val clazz = cp.findClass(it.key)
+            if (!clazz.isAnnotation) {
+                println("Testing class: ${it.key}")
+                testClass(clazz)
+            }
+        }
+    }
+
 
     private fun testClass(klass: JcClassOrInterface) = try {
         val classNode = klass.bytecode()
