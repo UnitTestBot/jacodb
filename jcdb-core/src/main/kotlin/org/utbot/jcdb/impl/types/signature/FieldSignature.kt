@@ -20,7 +20,7 @@ import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.Pure
-import org.utbot.jcdb.api.ext.kmType
+import org.utbot.jcdb.impl.bytecode.kmType
 import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor

@@ -21,7 +21,6 @@ import org.utbot.jcdb.api.JcDeclaration
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.TypeName
-import org.utbot.jcdb.api.ext.kmParameter
 import org.utbot.jcdb.impl.types.ParameterInfo
 import org.utbot.jcdb.impl.types.TypeNameImpl
 

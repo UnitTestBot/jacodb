@@ -16,15 +16,12 @@
 
 package org.utbot.jcdb.impl.types.signature
 
-import kotlinx.metadata.KmTypeParameter
 import org.utbot.jcdb.api.JcAccessible
 
 interface JvmTypeParameterDeclaration {
     val symbol: String
     val owner: JcAccessible
     val bounds: List<JvmType>?
-
-    fun relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JvmTypeParameterDeclaration
 }
 
 internal class JvmTypeParameterDeclarationImpl(
@@ -32,13 +29,6 @@ internal class JvmTypeParameterDeclarationImpl(
     override val owner: JcAccessible,
     override val bounds: List<JvmType>? = null
 ) : JvmTypeParameterDeclaration {
-    override fun relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JvmTypeParameterDeclaration {
-        val newBounds = bounds?.zip(kmTypeParameter.upperBounds) { bound, kmType ->
-            bound.relaxWithKmType(kmType)
-        }
-        return JvmTypeParameterDeclarationImpl(symbol, owner, newBounds)
-    }
-
     override fun toString(): String {
         return "$symbol : ${bounds?.joinToString { it.displayName }}"
     }

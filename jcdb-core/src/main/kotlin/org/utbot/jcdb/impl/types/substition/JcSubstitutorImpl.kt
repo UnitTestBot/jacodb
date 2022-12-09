@@ -23,6 +23,7 @@ import org.utbot.jcdb.impl.types.signature.JvmType
 import org.utbot.jcdb.impl.types.signature.JvmTypeParameterDeclaration
 import org.utbot.jcdb.impl.types.signature.JvmTypeParameterDeclarationImpl
 import org.utbot.jcdb.impl.types.signature.JvmTypeVariable
+import org.utbot.jcdb.impl.types.signature.copyWithNullability
 
 class JcSubstitutorImpl(
     // map declaration -> actual type or type variable
@@ -35,7 +36,7 @@ class JcSubstitutorImpl(
             val direct = substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
             if (direct != null) {
                 // Substituted type is nullable iff type variable is nullable (declared as T?) or substituting type is nullable
-                return direct.setNullability(direct.isNullable || type.isNullable)
+                return direct.copyWithNullability(direct.isNullable || type.isNullable)
             }
             return type.declaration?.let {
                 JvmTypeVariable(visitDeclaration(it, context), type.isNullable)
@@ -93,7 +94,7 @@ class JcSubstitutorImpl(
                 }
                 return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }?.let {
                     // Substituted type is nullable iff type variable is nullable (declared as T?) or substituting type is nullable
-                    it.setNullability(it.isNullable || type.isNullable)
+                    it.copyWithNullability(it.isNullable || type.isNullable)
                 } ?: type
             }
         }

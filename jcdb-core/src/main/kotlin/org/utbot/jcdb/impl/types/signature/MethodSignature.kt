@@ -21,9 +21,9 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.Pure
-import org.utbot.jcdb.api.ext.kmFunction
-import org.utbot.jcdb.api.ext.kmReturnType
-import org.utbot.jcdb.api.ext.kmType
+import org.utbot.jcdb.impl.bytecode.kmFunction
+import org.utbot.jcdb.impl.bytecode.kmReturnType
+import org.utbot.jcdb.impl.bytecode.kmType
 import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor
