@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "***** Check license before commit ******"
+
+./gradlew checkLicense

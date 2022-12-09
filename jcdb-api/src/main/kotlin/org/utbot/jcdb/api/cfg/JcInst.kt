@@ -718,7 +718,7 @@ data class JcFieldRef(
 ) : JcComplexValue {
     override val type: JcType get() = this.field.fieldType
 
-    override fun toString(): String = "${instance ?: field.field.enclosingClass.name}.${field.name}"
+    override fun toString(): String = "${instance ?: field.enclosingType.typeName}.${field.name}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcFieldRef(this)
