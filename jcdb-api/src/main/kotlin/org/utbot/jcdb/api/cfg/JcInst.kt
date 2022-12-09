@@ -121,7 +121,7 @@ class JcCatchInst(
     override val operands: List<JcExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "catch ($throwable: ${throwable.type})"
+    override fun toString(): String = "catch ($throwable: ${throwable.type.typeName})"
 
     override fun <T> accept(visitor: JcInstVisitor<T>): T {
         return visitor.visitJcCatchInst(this)
@@ -718,7 +718,7 @@ data class JcFieldRef(
 ) : JcComplexValue {
     override val type: JcType get() = this.field.fieldType
 
-    override fun toString(): String = "${instance ?: field.field.enclosingClass}.${field.name}"
+    override fun toString(): String = "${instance ?: field.field.enclosingClass.name}.${field.name}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcFieldRef(this)
