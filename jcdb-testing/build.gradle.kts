@@ -9,6 +9,6 @@ dependencies {
     api(group = "org.junit.jupiter", name = "junit-jupiter")
     api(group = "com.google.guava", name = "guava", version = "31.1-jre")
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
-    implementation("org.mockito:mockito-core:4.2.0")
+    implementation(group = "org.mockito", name = "mockito-core", version = "4.8.0")
 
 }

@@ -25,7 +25,6 @@ import org.utbot.jcdb.api.cfg.JcInst
 import org.utbot.jcdb.api.cfg.JcInstRef
 import org.utbot.jcdb.api.cfg.JcInstVisitor
 import org.utbot.jcdb.api.cfg.JcTerminatingInst
-import org.utbot.jcdb.api.cfg.ext.JcExceptionResolver
 import org.utbot.jcdb.api.isSubtypeOf
 
 class JcGraphImpl(

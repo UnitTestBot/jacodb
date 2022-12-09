@@ -9,7 +9,6 @@ dependencies {
     api(group = "org.ow2.asm", name = "asm-tree", version = asmVersion)
     api(group = "org.ow2.asm", name = "asm-commons", version = asmVersion)
     api(group = "org.ow2.asm", name = "asm-util", version = asmVersion)
-    api(group = "info.leadinglight", name = "jdot", version = "1.0")
 
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable-jvm", version = collectionsVersion)
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)

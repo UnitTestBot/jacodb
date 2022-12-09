@@ -51,7 +51,6 @@ import org.utbot.jcdb.api.cfg.JcSwitchInst
 import org.utbot.jcdb.api.cfg.JcTerminatingInst
 import org.utbot.jcdb.api.cfg.JcThrowInst
 import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
-import org.utbot.jcdb.api.cfg.ext.applyAndGet
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.isAnnotation
@@ -69,6 +68,7 @@ import org.utbot.jcdb.impl.cfg.JcGraphBuilder
 import org.utbot.jcdb.impl.cfg.MethodNodeBuilder
 import org.utbot.jcdb.impl.cfg.RawInstListBuilder
 import org.utbot.jcdb.impl.cfg.Simplifier
+import org.utbot.jcdb.impl.cfg.applyAndGet
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.features.InMemoryHierarchy
 import org.utbot.jcdb.impl.features.hierarchyExt
@@ -274,6 +274,7 @@ class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
 }
 
 class IRTest : BaseTest() {
+
     private val target = Files.createTempDirectory("jcdb-temp")
 
     companion object : WithDB(InMemoryHierarchy)
@@ -309,14 +310,14 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-//    @Test
+    //    @Test
     fun `get ir of jackson`() {
         allClasspath.filter { it.name.contains("jackson") }.forEach {
             runAlongLib(it)
         }
     }
 
-//    @Test
+    //    @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
     }

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.api.cfg.ext
+package org.utbot.jcdb.impl.cfg
 
 import info.leadinglight.jdot.Edge
 import info.leadinglight.jdot.Graph
@@ -100,7 +100,7 @@ fun JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolea
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))
 }
 
-fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false): Path {
+fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: File? = null): Path {
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("jcGraph")
@@ -170,10 +170,10 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false): Path 
         }
     }
 
-    val file = graph.dot2file("svg")
-    val newFile = "${file.removeSuffix("out")}svg"
-    val resultingFile = File(newFile).toPath()
-    Files.move(File(file).toPath(), resultingFile)
+    val outFile = graph.dot2file("svg")
+    val newFile = "${outFile.removeSuffix("out")}svg"
+    val resultingFile = file?.toPath() ?: File(newFile).toPath()
+    Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
 }
 
@@ -182,7 +182,7 @@ fun JcBlockGraph.view(dotCmd: String, viewerCmd: String) {
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd)}"))
 }
 
-fun JcBlockGraph.toFile(dotCmd: String): Path {
+fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("jcGraph")
@@ -247,10 +247,10 @@ fun JcBlockGraph.toFile(dotCmd: String): Path {
         }
     }
 
-    val file = graph.dot2file("svg")
-    val newFile = "${file.removeSuffix("out")}svg"
-    val resultingFile = File(newFile).toPath()
-    Files.move(File(file).toPath(), resultingFile)
+    val outFile = graph.dot2file("svg")
+    val newFile = "${outFile.removeSuffix("out")}svg"
+    val resultingFile = file?.toPath() ?: File(newFile).toPath()
+    Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
 }
 

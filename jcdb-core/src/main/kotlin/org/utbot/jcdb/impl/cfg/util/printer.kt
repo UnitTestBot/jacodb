@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.impl.cfg
+package org.utbot.jcdb.impl.cfg.util
 
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
