@@ -53,7 +53,7 @@ class NullabilityByAnnotationsTest: BaseTest() {
         val clazz = typeOf<NullAnnotationExamples>() as JcClassType
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
-        val expectedNullability = listOf(true, false)
+        val expectedNullability = listOf(true, false, true)
         val actualParameterNullability = nullableMethod.parameters.map { it.nullable }
         val actualParameterTypeNullability = nullableMethod.parameters.map { it.type.nullable }
 

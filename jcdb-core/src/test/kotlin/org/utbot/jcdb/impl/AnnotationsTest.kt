@@ -46,7 +46,7 @@ class AnnotationsTest : BaseTest() {
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
         val actualAnnotations = nullableMethod.parameters.map { it.annotationsSimple }
-        val expectedAnnotations = listOf(listOf(jbNullable), listOf(jbNotNull))
+        val expectedAnnotations = listOf(listOf(jbNullable), listOf(jbNotNull), emptyList())
         assertEquals(expectedAnnotations, actualAnnotations)
     }
 

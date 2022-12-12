@@ -19,17 +19,26 @@ package org.utbot.jcdb.impl.usages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class NullAnnotationExamples {
     String refNullable;
     @NotNull String refNotNull = "dumb init value";
 
     int primitiveValue;
 
-    String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam) {
+    String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
         return null;
     }
 
     @NotNull String notNullMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam) {
         return "dumb return value";
     }
+
+    public static class SomeContainer<E> {
+        List<E> simpleList;
+        List<@NotNull E> improvedList;
+    }
+
+    public void instantiatedContainer(SomeContainer<String> nullableParam, SomeContainer<@NotNull String> notNullParam) {}
 }

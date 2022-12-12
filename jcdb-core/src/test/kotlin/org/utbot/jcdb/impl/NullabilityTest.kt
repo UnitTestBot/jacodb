@@ -18,6 +18,7 @@ package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcBoundedWildcard
@@ -27,8 +28,9 @@ import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcUnboundWildcard
 import org.utbot.jcdb.api.ext.findTypeOrNull
+import org.utbot.jcdb.impl.usages.NullAnnotationExamples
 
-class KotlinNullabilityTest : BaseTest() {
+class NullabilityTest : BaseTest() {
     companion object : WithDB()
 
     @Test
@@ -56,6 +58,28 @@ class KotlinNullabilityTest : BaseTest() {
                 +buildTree(true) {
                     +buildTree(false)
                 }
+            }
+        )
+
+        assertEquals(expectedNullability, actualNullability)
+    }
+
+    @Disabled("Annotations on types are not supported")
+    @Test
+    fun `Test nullability for simple generics Java`() = runBlocking {
+        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+        val params = clazz.declaredMethods.single { it.name == "nullableMethod" }.parameters
+        val actualNullability = params.map { it.type.nullabilityTree }
+        val expectedNullability = listOf(
+            // @Nullable String
+            buildTree(true),
+
+            // @NotNull String
+            buildTree(false),
+
+            // SomeContainer<@NotNull String>
+            buildTree(true) {
+                +buildTree(false)
             }
         )
 
@@ -217,6 +241,60 @@ class KotlinNullabilityTest : BaseTest() {
 
             // E?
             buildTree(true)
+        )
+
+        assertEquals(expectedNullability, fieldsNullability)
+    }
+
+    @Disabled("Annotations on types are not supported")
+    @Test
+    fun `Test nullability after substitution with nullable type java`() = runBlocking {
+        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+        val param = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[0]
+
+        val fieldsNullability = (param.type as JcClassType)
+            .fields
+            .sortedBy { it.name }
+            .map { it.fieldType.nullabilityTree }
+
+        // E -> String
+        val expectedNullability = listOf(
+            // List<E>
+            buildTree(true) {
+                +buildTree(true)
+            },
+
+            // List<@NotNull E>
+            buildTree(true) {
+                +buildTree(false)
+            },
+        )
+
+        assertEquals(expectedNullability, fieldsNullability)
+    }
+
+    @Disabled("Annotations on types are not supported")
+    @Test
+    fun `Test nullability after substitution with notNull type Java`() = runBlocking {
+        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val param = clazz.declaredMethods.single { it.name == "instantiatedContainer" }.parameters[1]
+
+        val fieldsNullability = (param.type as JcClassType)
+            .fields
+            .sortedBy { it.name }
+            .map { it.fieldType.nullabilityTree }
+
+        // E -> @NotNull String
+        val expectedNullability = listOf(
+            // List<E>
+            buildTree(true) {
+                +buildTree(false)
+            },
+
+            // List<E?>
+            buildTree(true) {
+                +buildTree(false)
+            },
         )
 
         assertEquals(expectedNullability, fieldsNullability)
