@@ -133,12 +133,12 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
 }
 
 
-suspend fun JcClasspath.usagesExtension(): SyncUsagesExtension {
+suspend fun JcClasspath.usagesExt(): SyncUsagesExtension {
     if (!db.isInstalled(Usages)) {
         throw IllegalStateException("This extension requires `Usages` feature to be installed")
     }
     return SyncUsagesExtension(hierarchyExt(), this)
 }
 
-suspend fun JcClasspath.findUsages(method: JcMethod) = usagesExtension().findUsages(method)
-suspend fun JcClasspath.findUsages(field: JcField, mode: FieldUsageMode) = usagesExtension().findUsages(field, mode)
+suspend fun JcClasspath.findUsages(method: JcMethod) = usagesExt().findUsages(method)
+suspend fun JcClasspath.findUsages(field: JcField, mode: FieldUsageMode) = usagesExt().findUsages(field, mode)

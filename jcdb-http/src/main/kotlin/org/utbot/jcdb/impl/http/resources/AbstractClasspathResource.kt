@@ -27,7 +27,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.findFieldOrNull
 import org.utbot.jcdb.api.findMethodOrNull
 import org.utbot.jcdb.impl.features.hierarchyExt
-import org.utbot.jcdb.impl.features.usagesExtension
+import org.utbot.jcdb.impl.features.usagesExt
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
@@ -91,7 +91,7 @@ abstract class AbstractClasspathResource {
     ): MethodRefPaginator {
         val top = optionalTop ?: 50
         val skip = optionalSkip ?: 0
-        val ext = usagesExtension()
+        val ext = usagesExt()
         val jcClass = findClassOrNull(className)
             ?: throw NotFoundException("Class $className not found by name")
         val field = jcClass.findFieldOrNull(fieldName)
@@ -111,7 +111,7 @@ abstract class AbstractClasspathResource {
     ): MethodRefPaginator {
         val top = optionalTop ?: 50
         val skip = optionalSkip ?: 0
-        val ext = usagesExtension()
+        val ext = usagesExt()
         val jcClass = findClassOrNull(className)
             ?: throw NotFoundException("Class $className not found by name")
         val method = when {

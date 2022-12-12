@@ -113,6 +113,7 @@ class SootBenchmarks {
         Scene.v().loadNecessaryClasses()
         PackManager.v().runPacks()
         val sootClass = Scene.v().getSootClass("java.lang.String")
+        sootClass.getMethod("asd").retrieveActiveBody()
         sootClass.setResolvingLevel(SootClass.BODIES)
         sootClass.methods.first().retrieveActiveBody() as JimpleBody
     }

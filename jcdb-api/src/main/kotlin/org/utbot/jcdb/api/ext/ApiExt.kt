@@ -275,8 +275,8 @@ fun JcClassOrInterface.findFieldOrNull(name: String): JcField? = declaredFields.
 /**
  * find method by name and description
  */
-fun JcClassOrInterface.findMethodOrNull(name: String, desc: String): JcMethod? =
-    declaredMethods.firstOrNull { it.name == name && it.description == desc }
+fun JcClassOrInterface.findMethodOrNull(name: String, desc: String? = null): JcMethod? =
+    declaredMethods.firstOrNull { it.name == name && (desc == null || it.description == desc) }
 
 /**
  * find method by ASM node

@@ -137,7 +137,7 @@ abstract class BaseSearchUsagesTest : BaseTest() {
     @Test
     fun `find usages of Runnable#run method`() {
         runBlocking {
-            val ext = cp.usagesExtension()
+            val ext = cp.usagesExt()
             val runMethod = cp.findClass<Runnable>().declaredMethods.first()
             assertEquals("run", runMethod.name)
             val result = ext.findUsages(runMethod).toList()
@@ -148,7 +148,7 @@ abstract class BaseSearchUsagesTest : BaseTest() {
     @Test
     fun `find usages of System#out field`() {
         runBlocking {
-            val ext = cp.usagesExtension()
+            val ext = cp.usagesExt()
             val invokeStaticField = cp.findClass<System>().declaredFields.first { it.name == "out" }
             val result = ext.findUsages(invokeStaticField, FieldUsageMode.READ).toList()
             println("System.out used in: " + result.size + " methods")
@@ -158,7 +158,7 @@ abstract class BaseSearchUsagesTest : BaseTest() {
 
     private inline fun <reified T> fieldsUsages(mode: FieldUsageMode = FieldUsageMode.WRITE): Map<String, Set<String>> {
         return runBlocking {
-            with(cp.usagesExtension()) {
+            with(cp.usagesExt()) {
                 val classId = cp.findClass<T>()
 
                 val fields = classId.declaredFields
@@ -172,7 +172,7 @@ abstract class BaseSearchUsagesTest : BaseTest() {
 
     private inline fun <reified T> methodsUsages(): Map<String, Set<String>> {
         return runBlocking {
-            with(cp.usagesExtension()) {
+            with(cp.usagesExt()) {
                 val classId = cp.findClass<T>()
                 val methods = classId.declaredMethods
 
