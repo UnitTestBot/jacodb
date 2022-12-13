@@ -111,10 +111,10 @@ class JcTypedMethodImpl(
         } else {
             classpath.typeOf(info.substitutor.substitute(impl.returnType))
         }
-        if (!method.isNullable && type is JcRefType)
-            type.notNullable()
-        else
-            type
+
+        method.isNullable?.let {
+            (type as? JcRefType)?.copyWithNullability(it)
+        } ?: type
     }
 
     override fun typeOf(inst: LocalVariableNode): JcType {

@@ -20,7 +20,7 @@ import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
 import org.utbot.jcdb.impl.bytecode.isNullable
 
-fun JvmType.copyWithNullability(nullability: Boolean): JvmType =
+fun JvmType.copyWithNullability(nullability: Boolean?): JvmType =
     when (this) {
         is JvmArrayType -> JvmArrayType(elementType, nullability)
         is JvmClassRefType -> JvmClassRefType(name, nullability)
@@ -32,13 +32,13 @@ fun JvmType.copyWithNullability(nullability: Boolean): JvmType =
         }
 
         is JvmWildcard -> {
-            if (!nullability)
+            if (nullability != true)
                 error("Attempting to make wildcard not-nullable, which are always nullable by convention")
             this
         }
 
         is JvmPrimitiveType -> {
-            if (nullability)
+            if (nullability != false)
                 error("Attempting to make a nullable primitive")
             this
         }

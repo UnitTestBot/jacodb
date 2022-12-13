@@ -16,6 +16,8 @@
 
 package org.utbot.jcdb.impl
 
+import org.utbot.jcdb.impl.usages.NullAnnotationExamples
+
 class KotlinNullabilityExamples {
     class SomeContainer<E>(
         val listOfNotNull: List<E>,
@@ -49,6 +51,18 @@ class KotlinNullabilityExamples {
     interface SomeContainerProducerI<P> {
         fun produceContainer(): SomeContainer<P>
     }
+
+//    fun <R> keek(x: SomeContainer<R?>, y: NullAnnotationExamples.SomeContainer<R>) {
+//        y.
+//    }
+
+//    fun kek3() {
+//        NullAnnotationExamples().javaContainer.undefined = null
+//        NullAnnotationExamples()::class.java.annotations
+//    }
+
+    lateinit var ktContainer: SomeContainer<String>
+    lateinit var javaContainer: NullAnnotationExamples.SomeContainer<String?>
 
     lateinit var someContainerProducer: SomeContainerProducerI<Int?>
 }

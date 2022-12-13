@@ -24,6 +24,7 @@ import java.util.List;
 public class NullAnnotationExamples {
     String refNullable;
     @NotNull String refNotNull = "dumb init value";
+    @Nullable String explicitlyNullable;
 
     int primitiveValue;
 
@@ -35,10 +36,30 @@ public class NullAnnotationExamples {
         return "dumb return value";
     }
 
-    public static class SomeContainer<E> {
-        List<E> simpleList;
-        List<@NotNull E> improvedList;
+    public SomeContainer<? extends String> kek() {
+        return null;
     }
+
+//    public KotlinNullabilityExamples.SomeContainer<String> kek2() { return null; }
+//
+//    public KotlinNullabilityExamples.SomeContainer<@Nullable String> ktContainer;
+
+    public static class SomeContainer<E> {
+        public E undefined = null;
+        public @NotNull E notNull;
+        public @Nullable E nullable;
+
+        public List<E> listOfUndefined;
+        public List<@NotNull E> listOfNotNull;
+        public List<@Nullable E> listOfNullable;
+    }
+//    public SomeContainer<@NotNull String> javaContainer;
+
+//    public void kek3() {
+//        if (javaContainer.undefined == null) {
+//            // STATIC ANALYZER FAIL HAHA
+//        }
+//    }
 
     public void instantiatedContainer(SomeContainer<String> nullableParam, SomeContainer<@NotNull String> notNullParam) {}
 }

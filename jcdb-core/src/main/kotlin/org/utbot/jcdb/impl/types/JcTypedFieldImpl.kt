@@ -46,10 +46,9 @@ class JcTypedFieldImpl(
             classpath.typeOf(substitutor.substitute(it))
         } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
 
-        if (!field.isNullable && type is JcRefType)
-            type.notNullable()
-        else
-            type
+        field.isNullable?.let {
+            (type as? JcRefType)?.copyWithNullability(it)
+        } ?: type
     }
 
 

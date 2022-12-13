@@ -42,13 +42,12 @@ class JcTypedMethodParameterImpl(
                 classpath.typeOf(substitutor.substitute(jvmType))
             } ?: classpath.findTypeOrNull(typeName) ?: typeName.throwClassNotFound()
 
-            return if (!parameter.isNullable && type is JcRefType)
-                type.notNullable()
-            else
-                type
+            return parameter.isNullable?.let {
+                (type as? JcRefType)?.copyWithNullability(it)
+            } ?: type
         }
 
-    override val nullable: Boolean
+    override val nullable: Boolean?
         get() = parameter.isNullable //if (type != null && type.nullable) parameter.isNullable else false
 
     override val name: String?

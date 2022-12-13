@@ -84,12 +84,12 @@ class JcClasspathImpl(
             jcClass,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
-            nullable = true
+            nullable = null
         )
     }
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
-        return JcArrayTypeImpl(elementType, true)
+        return JcArrayTypeImpl(elementType, null)
     }
 
     override fun toJcClass(source: ClassSource, withCaching: Boolean): JcClassOrInterface {

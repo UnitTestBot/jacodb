@@ -35,6 +35,7 @@ class AnnotationsTest : BaseTest() {
         val expectedAnnotations = mapOf(
             "refNullable" to emptyList(),
             "refNotNull" to listOf(jbNotNull),
+            "explicitlyNullable" to listOf(jbNullable),
             "primitiveValue" to emptyList(),
         )
         assertEquals(expectedAnnotations, actualAnnotations)

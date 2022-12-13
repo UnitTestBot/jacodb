@@ -40,8 +40,8 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                 ?: throw IllegalStateException("primitive type ${jvmType.ref} not found")
         }
 
-        is JvmClassRefType -> typeOf(findClass(jvmType.name)).let { if (!jvmType.isNullable) it.notNullable() else it }
-        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType)).let { if (!jvmType.isNullable) it.notNullable() else it }
+        is JvmClassRefType -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
+        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType)).copyWithNullability(jvmType.isNullable)
         is JvmParameterizedType -> {
             val clazz = findClass(jvmType.name)
             JcClassTypeImpl(
@@ -75,11 +75,11 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
 
         is JvmUnboundWildcard -> JcUnboundWildcardImpl(this)
         is JvmBoundWildcard.JvmUpperBoundWildcard -> JcBoundedWildcardImpl(
-            upperBounds = listOf(typeOf(jvmType.bound) as JcRefType), lowerBounds = emptyList(), true // nullability for wildcard seems to mean nothing
+            upperBounds = listOf(typeOf(jvmType.bound) as JcRefType), lowerBounds = emptyList()
         )
 
         is JvmBoundWildcard.JvmLowerBoundWildcard -> JcBoundedWildcardImpl(
-            upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType), true
+            upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType)
         )
     }
 }

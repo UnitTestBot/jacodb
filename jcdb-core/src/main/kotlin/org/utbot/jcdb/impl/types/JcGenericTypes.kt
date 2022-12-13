@@ -23,22 +23,26 @@ import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcUnboundWildcard
 
-class JcUnboundWildcardImpl(override val classpath: JcClasspath, override val nullable: Boolean = true) :
+class JcUnboundWildcardImpl(override val classpath: JcClasspath) :
     JcUnboundWildcard {
+
+    override val nullable: Boolean = true
 
     override val typeName: String
         get() = "*"
 
-    override fun notNullable(): JcRefType {
-        return JcUnboundWildcardImpl(classpath, false)
+    override fun copyWithNullability(nullability: Boolean?): JcRefType {
+        if (nullability != true)
+            error("Attempting to make wildcard not-nullable, which are always nullable by convention")
+        return this
     }
 }
 
 class JcBoundedWildcardImpl(
     override val upperBounds: List<JcRefType>,
     override val lowerBounds: List<JcRefType>,
-    override val nullable: Boolean
 ) : JcBoundedWildcard {
+    override val nullable: Boolean = true
 
     override val classpath: JcClasspath
         get() = upperBounds.firstOrNull()?.classpath ?: lowerBounds.firstOrNull()?.classpath
@@ -54,8 +58,10 @@ class JcBoundedWildcardImpl(
         }
 
 
-    override fun notNullable(): JcRefType {
-        return JcBoundedWildcardImpl(upperBounds, lowerBounds, false)
+    override fun copyWithNullability(nullability: Boolean?): JcRefType {
+        if (nullability != true)
+            error("Attempting to make wildcard not-nullable, which are always nullable by convention")
+        return this
     }
 }
 
@@ -63,7 +69,7 @@ class JcBoundedWildcardImpl(
 class JcTypeVariableImpl(
     override val classpath: JcClasspath,
     private val declaration: JcTypeVariableDeclaration,
-    override val nullable: Boolean
+    override val nullable: Boolean?
 ) : JcTypeVariable {
 
     override val typeName: String
@@ -74,7 +80,7 @@ class JcTypeVariableImpl(
     override val bounds: List<JcRefType>
         get() = declaration.bounds
 
-    override fun notNullable(): JcRefType {
-        return JcTypeVariableImpl(classpath, declaration, nullable)
+    override fun copyWithNullability(nullability: Boolean?): JcRefType {
+        return JcTypeVariableImpl(classpath, declaration, nullability)
     }
 }

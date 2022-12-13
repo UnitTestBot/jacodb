@@ -106,12 +106,12 @@ abstract class DatabaseEnvTest {
         with(fields.first()) {
             assertEquals("foo", name)
             assertEquals("int", type.typeName)
-            assertFalse(isNullable)
+            assertEquals(false, isNullable)
         }
         with(fields[1]) {
             assertEquals("bar", name)
             assertEquals(String::class.java.name, type.typeName)
-            assertFalse(isNullable)
+            assertEquals(false, isNullable)
         }
 
         val methods = clazz.declaredMethods

@@ -335,9 +335,9 @@ class NullabilityTest : BaseTest() {
 
 
 
-    private data class TypeNullabilityTree(val isNullable: Boolean, val innerTypes: List<TypeNullabilityTree>)
+    private data class TypeNullabilityTree(val isNullable: Boolean?, val innerTypes: List<TypeNullabilityTree>)
 
-    private class TreeBuilder(private val isNullable: Boolean) {
+    private class TreeBuilder(private val isNullable: Boolean?) {
         private val innerTypes: MutableList<TypeNullabilityTree> = mutableListOf()
 
         operator fun TypeNullabilityTree.unaryPlus() {
@@ -347,7 +347,7 @@ class NullabilityTest : BaseTest() {
         fun build(): TypeNullabilityTree = TypeNullabilityTree(isNullable, innerTypes)
     }
 
-    private fun buildTree(isNullable: Boolean, actions: TreeBuilder.() -> Unit = {}) =
+    private fun buildTree(isNullable: Boolean?, actions: TreeBuilder.() -> Unit = {}) =
         TreeBuilder(isNullable).apply(actions).build()
 
     private val JcType.nullabilityTree: TypeNullabilityTree get() {

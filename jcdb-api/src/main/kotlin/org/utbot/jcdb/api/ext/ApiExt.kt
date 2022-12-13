@@ -411,21 +411,24 @@ val JcMethod.jcdbSignature: String
     }
 
 const val NotNull = "org.jetbrains.annotations.NotNull"
+const val Nullable = "org.jetbrains.annotations.Nullable"
 
-val JcMethod.isNullable: Boolean
-    get() {
-        return !PredefinedPrimitives.matches(returnType.typeName) && annotations.all { !it.matches(NotNull) }
+private fun JcAnnotated.isNullable(type: TypeName): Boolean? =
+    when {
+        PredefinedPrimitives.matches(type.typeName) -> false
+        annotations.any { it.matches(NotNull) } -> false
+        annotations.any { it.matches(Nullable) } -> true
+        else -> null
     }
 
-val JcField.isNullable: Boolean
-    get() {
-        return !PredefinedPrimitives.matches(type.typeName) && annotations.all { !it.matches(NotNull) }
-    }
+val JcMethod.isNullable: Boolean?
+    get() = isNullable(returnType)
 
-val JcParameter.isNullable: Boolean
-    get() {
-        return !PredefinedPrimitives.matches(type.typeName) && annotations.all { !it.matches(NotNull) }
-    }
+val JcField.isNullable: Boolean?
+    get() = isNullable(type)
+
+val JcParameter.isNullable: Boolean?
+    get() = isNullable(type)
 
 fun JcClasspath.anyType(): JcClassType =
     findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()

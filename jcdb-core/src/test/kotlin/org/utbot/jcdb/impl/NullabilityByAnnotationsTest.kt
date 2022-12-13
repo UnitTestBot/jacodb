@@ -18,8 +18,6 @@ package org.utbot.jcdb.impl
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
@@ -36,8 +34,9 @@ class NullabilityByAnnotationsTest: BaseTest() {
         val clazz = typeOf<NullAnnotationExamples>() as JcClassType
 
         val expectedNullability = mapOf(
-            "refNullable" to true,
+            "refNullable" to null,
             "refNotNull" to false,
+            "explicitlyNullable" to true,
             "primitiveValue" to false,
         )
 
@@ -53,7 +52,7 @@ class NullabilityByAnnotationsTest: BaseTest() {
         val clazz = typeOf<NullAnnotationExamples>() as JcClassType
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
-        val expectedNullability = listOf(true, false, true)
+        val expectedNullability = listOf(true, false, null)
         val actualParameterNullability = nullableMethod.parameters.map { it.nullable }
         val actualParameterTypeNullability = nullableMethod.parameters.map { it.type.nullable }
 
@@ -66,12 +65,12 @@ class NullabilityByAnnotationsTest: BaseTest() {
         val clazz = typeOf<NullAnnotationExamples>() as JcClassType
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
-        assertTrue(nullableMethod.method.isNullable)
-        assertTrue(nullableMethod.returnType.nullable)
+        assertEquals(null, nullableMethod.method.isNullable)
+        assertEquals(null, nullableMethod.returnType.nullable)
 
         val notNullMethod = clazz.declaredMethods.single { it.name == "notNullMethod" }
-        assertFalse(notNullMethod.method.isNullable)
-        assertFalse(notNullMethod.returnType.nullable)
+        assertEquals(false, notNullMethod.method.isNullable)
+        assertEquals(false, notNullMethod.returnType.nullable)
     }
 
     private inline fun <reified T> typeOf(): JcType {

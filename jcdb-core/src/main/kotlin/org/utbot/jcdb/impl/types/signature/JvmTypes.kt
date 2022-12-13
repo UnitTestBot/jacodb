@@ -18,14 +18,14 @@ package org.utbot.jcdb.impl.types.signature
 
 import org.utbot.jcdb.api.PredefinedPrimitives
 
-sealed class JvmType(val isNullable: Boolean) {
+sealed class JvmType(val isNullable: Boolean?) {
 
     abstract val displayName: String
 }
 
-internal sealed class JvmRefType(isNullable: Boolean) : JvmType(isNullable)
+internal sealed class JvmRefType(isNullable: Boolean?) : JvmType(isNullable)
 
-internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean = true) : JvmRefType(isNullable) {
+internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null) : JvmRefType(isNullable) {
 
     override val displayName: String
         get() = elementType.displayName + "[]"
@@ -35,7 +35,7 @@ internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean = true
 internal class JvmParameterizedType(
     val name: String,
     val parameterTypes: List<JvmType>,
-    isNullable: Boolean = true
+    isNullable: Boolean? = null
 ) : JvmRefType(isNullable) {
 
     override val displayName: String
@@ -45,7 +45,7 @@ internal class JvmParameterizedType(
         val name: String,
         val parameterTypes: List<JvmType>,
         val ownerType: JvmType,
-        isNullable: Boolean = true
+        isNullable: Boolean? = null
     ) : JvmRefType(isNullable) {
 
         override val displayName: String
@@ -55,27 +55,16 @@ internal class JvmParameterizedType(
 
 }
 
-internal class JvmClassRefType(val name: String, isNullable: Boolean = true) : JvmRefType(isNullable) {
+internal class JvmClassRefType(val name: String, isNullable: Boolean? = null) : JvmRefType(isNullable) {
 
     override val displayName: String
         get() = name
 
 }
 
-/**
- * For type variable we think that it is [isNullable] iff for every concrete type obtained by this from substitution,
- * the resulting type may contain null.
- *
- * For example, type `T?` from Kotlin is [isNullable] because even if T is replaced with not-nullable type,
- * the resulting type is nullable. Both in Java and Kotlin, type `T` is not [isNullable] because when replaced with notnull
- * type, the result may not contain null.
- *
- * This is important to properly handle nullability w.r.t substitutions:
- * substituted type is nullable iff type variable is nullable or substituting type is nullable
- */
-class JvmTypeVariable(val symbol: String, isNullable: Boolean = false) : JvmType(isNullable) {
+class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType(isNullable) {
 
-    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean = false) : this(declaration.symbol, isNullable) {
+    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null) : this(declaration.symbol, isNullable) {
         this.declaration = declaration
     }
 
