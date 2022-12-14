@@ -46,23 +46,15 @@ class KotlinNullabilityExamples {
 
     fun <A: List<Int?>, B: List<Int>?> typeVariableDeclarations() = Unit
 
-    fun instantiatedContainer(byNotNull: SomeContainer<String>, byNullable: SomeContainer<String?>) = Unit
+    lateinit var containerOfNotNull: SomeContainer<String>
+    lateinit var containerOfNullable: SomeContainer<String?>
+
+    lateinit var javaContainerOfNotNull: NullAnnotationExamples.SomeContainer<String>
+    lateinit var javaContainerOfNullable: NullAnnotationExamples.SomeContainer<String?>
 
     interface SomeContainerProducerI<P> {
         fun produceContainer(): SomeContainer<P>
     }
-
-//    fun <R> keek(x: SomeContainer<R?>, y: NullAnnotationExamples.SomeContainer<R>) {
-//        y.
-//    }
-
-//    fun kek3() {
-//        NullAnnotationExamples().javaContainer.undefined = null
-//        NullAnnotationExamples()::class.java.annotations
-//    }
-
-    lateinit var ktContainer: SomeContainer<String>
-    lateinit var javaContainer: NullAnnotationExamples.SomeContainer<String?>
 
     lateinit var someContainerProducer: SomeContainerProducerI<Int?>
 }

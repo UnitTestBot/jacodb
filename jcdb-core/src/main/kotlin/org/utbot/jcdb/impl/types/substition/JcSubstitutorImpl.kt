@@ -115,7 +115,7 @@ class JcSubstitutorImpl(
      * |--------------------------|------|-------|-----------------|------------------|--------|
      * | kt R & java @NotNull R   | R    | R?    | R               | R?               | R!     |
      * | kt R? & java @Nullable R | R?   | R?    | R               | R?               | R?     |
-     * | java R (== kt R?)        | R!   | R?    | R               | R?               | R!     |
+     * | java R (== kt R!)        | R!   | R?    | R               | R?               | R!     |
      *
      *
      * Here R can be type variable as well as concrete type as well as any other reference type

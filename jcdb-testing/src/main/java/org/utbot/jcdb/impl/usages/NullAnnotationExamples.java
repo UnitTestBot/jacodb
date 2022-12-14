@@ -18,6 +18,7 @@ package org.utbot.jcdb.impl.usages;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.utbot.jcdb.impl.KotlinNullabilityExamples;
 
 import java.util.List;
 
@@ -28,6 +29,16 @@ public class NullAnnotationExamples {
 
     int primitiveValue;
 
+    public static class SomeContainer<E> {
+        public List<@NotNull E> listOfNotNull;
+        public List<@Nullable E> listOfNullable;
+        public SomeContainer<String> containerOfDefault;
+
+        public @NotNull E notNull;
+        public @Nullable E nullable;
+        public E undefined;
+    }
+
     String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
         return null;
     }
@@ -36,30 +47,15 @@ public class NullAnnotationExamples {
         return "dumb return value";
     }
 
-    public SomeContainer<? extends String> kek() {
+    public @Nullable SomeContainer<? extends @NotNull String> wildcard() {
         return null;
     }
 
-//    public KotlinNullabilityExamples.SomeContainer<String> kek2() { return null; }
-//
-//    public KotlinNullabilityExamples.SomeContainer<@Nullable String> ktContainer;
+    public SomeContainer<@NotNull String> containerOfNotNull;
+    public SomeContainer<@Nullable String> containerOfNullable;
+    public SomeContainer<String> containerOfUndefined;
 
-    public static class SomeContainer<E> {
-        public E undefined = null;
-        public @NotNull E notNull;
-        public @Nullable E nullable;
-
-        public List<E> listOfUndefined;
-        public List<@NotNull E> listOfNotNull;
-        public List<@Nullable E> listOfNullable;
-    }
-//    public SomeContainer<@NotNull String> javaContainer;
-
-//    public void kek3() {
-//        if (javaContainer.undefined == null) {
-//            // STATIC ANALYZER FAIL HAHA
-//        }
-//    }
-
-    public void instantiatedContainer(SomeContainer<String> nullableParam, SomeContainer<@NotNull String> notNullParam) {}
+    public KotlinNullabilityExamples.SomeContainer<@NotNull String> ktContainerOfNotNull;
+    public KotlinNullabilityExamples.SomeContainer<@Nullable String> ktContainerOfNullable;
+    public KotlinNullabilityExamples.SomeContainer<String> ktContainerOfUndefined;
 }

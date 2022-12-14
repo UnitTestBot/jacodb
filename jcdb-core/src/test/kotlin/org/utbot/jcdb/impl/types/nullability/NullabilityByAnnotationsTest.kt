@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.impl
+package org.utbot.jcdb.impl.types.nullability
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -23,6 +23,8 @@ import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.ext.isNullable
+import org.utbot.jcdb.impl.BaseTest
+import org.utbot.jcdb.impl.WithDB
 import org.utbot.jcdb.impl.usages.NullAnnotationExamples
 
 class NullabilityByAnnotationsTest: BaseTest() {
@@ -40,8 +42,9 @@ class NullabilityByAnnotationsTest: BaseTest() {
             "primitiveValue" to false,
         )
 
-        val actualFieldNullability = clazz.declaredFields.associate { it.name to it.field.isNullable }
-        val actualFieldTypeNullability = clazz.declaredFields.associate { it.name to it.fieldType.nullable }
+        val fields = clazz.declaredFields.filter { it.name in expectedNullability.keys }
+        val actualFieldNullability = fields.associate { it.name to it.field.isNullable }
+        val actualFieldTypeNullability = fields.associate { it.name to it.fieldType.nullable }
 
         assertEquals(expectedNullability, actualFieldNullability)
         assertEquals(expectedNullability, actualFieldTypeNullability)

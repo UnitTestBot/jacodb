@@ -31,13 +31,15 @@ class AnnotationsTest : BaseTest() {
     fun `Test field annotations`() = runBlocking {
         val clazz = cp.findClass<NullAnnotationExamples>()
 
-        val actualAnnotations = clazz.declaredFields.associate { it.name to it.annotationsSimple }
         val expectedAnnotations = mapOf(
             "refNullable" to emptyList(),
             "refNotNull" to listOf(jbNotNull),
             "explicitlyNullable" to listOf(jbNullable),
             "primitiveValue" to emptyList(),
         )
+        val fields = clazz.declaredFields.filter { it.name in expectedAnnotations.keys }
+        val actualAnnotations = fields.associate { it.name to it.annotationsSimple }
+
         assertEquals(expectedAnnotations, actualAnnotations)
     }
 
