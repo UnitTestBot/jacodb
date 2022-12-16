@@ -10,6 +10,5 @@ dependencies {
     api(group = "com.google.guava", name = "guava", version = "31.1-jre")
     api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
     implementation(group = "org.mockito", name = "mockito-core", version = "4.8.0")
-    implementation("org.jetbrains:annotations:20.1.0")
-
+    implementation(group = "org.jetbrains", name = "annotations", version = "20.1.0")
 }

@@ -57,7 +57,7 @@ private val JcClassOrInterface.kMetadata: KotlinClassMetadata?
             KotlinClassMetadata.read(kmHeader)
         } catch (e: InconsistentKotlinMetadataException) {
             logger.warn {
-                "Can't parse Kotlin metadata annotation found on class ${this.name}, the class may be damaged"
+                "Can't parse Kotlin metadata annotation found on class $name, the class may be damaged"
             }
             null
         }
@@ -82,16 +82,11 @@ val JcParameter.kmParameter: KmValueParameter?
             val shift = if (it.receiverParameterType != null) 1 else 0
 
             // index - shift could be out of bounds if generated JVM parameter is fictive
-            // See compilation of extension functions and coroutines for more details
-            if (index - shift < 0 || index - shift >= it.valueParameters.size)
-                return null
-
-            return it.valueParameters[index - shift]
+            // E.g., see how extension functions and coroutines are compiled
+            return it.valueParameters.getOrNull(index - shift)
         }
 
-        return method.kmConstructor?.let {
-            it.valueParameters[index]
-        }
+        return method.kmConstructor?.valueParameters?.get(index)
     }
 
 // If parameter is a receiver parameter, it doesn't have KmValueParameter instance, but we still can get KmType for it

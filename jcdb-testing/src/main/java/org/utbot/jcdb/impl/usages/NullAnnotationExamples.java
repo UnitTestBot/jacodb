@@ -32,7 +32,7 @@ public class NullAnnotationExamples {
     public static class SomeContainer<E> {
         public List<@NotNull E> listOfNotNull;
         public List<@Nullable E> listOfNullable;
-        public SomeContainer<String> containerOfDefault;
+        public SomeContainer<String> containerOfUndefined;
 
         public @NotNull E notNull;
         public @Nullable E nullable;

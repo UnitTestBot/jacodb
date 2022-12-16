@@ -18,6 +18,13 @@ package org.utbot.jcdb.impl.types.signature
 
 import org.utbot.jcdb.api.PredefinedPrimitives
 
+/**
+ * @property isNullable denotes the nullability of the type in terms of Kotlin type system.
+ * It has three possible values:
+ * - true -- means that type is nullable, a.k.a. T?
+ * - false -- means that type is non-nullable, a.k.a. T
+ * - null -- means that type has unknown nullability, a.k.a. T!
+ */
 sealed class JvmType(val isNullable: Boolean?) {
 
     abstract val displayName: String
@@ -62,6 +69,15 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null) : 
 
 }
 
+/**
+ * For type variables, the nullability is defined similarly to all other types:
+ *  - kt T? and java @Nullable T -- nullable (true)
+ *  - kt T and java @NotNull T -- non-nullable (false)
+ *  - java T -- undefined nullability (null)
+ *
+ *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
+ *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
+ */
 class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType(isNullable) {
 
     constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null) : this(declaration.symbol, isNullable) {
@@ -76,7 +92,7 @@ class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
-internal sealed class JvmWildcard: JvmType(true)
+internal sealed class JvmWildcard: JvmType(isNullable = true)
 
 internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 

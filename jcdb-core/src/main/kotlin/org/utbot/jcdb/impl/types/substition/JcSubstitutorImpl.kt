@@ -60,7 +60,7 @@ class JcSubstitutorImpl(
         return JcSubstitutorImpl(
             (filtered + declarations.associateWith {
                 // TODO: nullability=false is a hack here: there is no TypeVariable at this moment
-                //  so we need `neutral` element, such that its substitution by other type would return the latter
+                //  so we need "neutral" element, such that its substitution by other type would return the latter
                 JvmTypeVariable(substitute(it, incomingSymbols), false)
             }).toPersistentMap()
         )
@@ -107,7 +107,7 @@ class JcSubstitutorImpl(
     /**
      * The table below represents how nullability is maintained during substitutions.
      * Each column stands for type of type variable (`kt` or `java` prefix denotes language in which it was declared).
-     * In the same manner, each raw stands for type with which type variable was replaced.
+     * In the same manner, each raw stands for type with which type variable was substituted.
      * Cells in the intersection denote resulting type with its nullability (written in Kotlin notation):
      *
      *
@@ -122,7 +122,7 @@ class JcSubstitutorImpl(
      * (so you can substitute R with, e.g., String everywhere in the table, and it will still be right).
      *
      * This data was obtained empirically, and you may check it by looking at derived types for fields/properties of
-     * `NullAnnotationExamples.ktContainer`, `KotlinNullabilityExamples.javaContainer`, etc.
+     * `NullAnnotationExamples.ktContainerOfUndefined`, `KotlinNullabilityExamples.javaContainerOfNullable`, etc.
      */
     private fun relaxNullabilityAfterSubstitution(typeVar: JvmTypeVariable, type: JvmType): JvmType {
         val typeVarNullability = typeVar.isNullable

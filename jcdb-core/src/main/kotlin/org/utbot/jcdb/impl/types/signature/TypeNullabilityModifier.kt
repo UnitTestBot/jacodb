@@ -47,7 +47,7 @@ fun JvmType.copyWithNullability(nullability: Boolean?): JvmType =
 internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
     when (this) {
         is JvmArrayType -> {
-            // NB: kmType may have zero (for primitive arrays) one (for object arrays) argument
+            // NB: kmType may have zero (for primitive arrays) or one (for object arrays) argument
             val updatedElementType = kmType.arguments.singleOrNull()?.type?.let {
                 elementType.relaxWithKmType(it)
             } ?: elementType
