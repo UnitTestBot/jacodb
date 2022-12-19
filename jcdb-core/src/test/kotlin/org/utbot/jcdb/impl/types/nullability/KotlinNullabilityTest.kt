@@ -26,8 +26,18 @@ import org.utbot.jcdb.impl.BaseTest
 import org.utbot.jcdb.impl.KotlinNullabilityExamples
 import org.utbot.jcdb.impl.WithDB
 
+class Kek<E: Kek<E>> {
+    lateinit var a: E
+}
+
 class KotlinNullabilityTest : BaseTest() {
     companion object : WithDB()
+
+    @Test
+    fun `gl`() = runBlocking {
+        val clazz = typeOf<Kek<*>>() as JcClassType
+        print(clazz.typeArguments)
+    }
 
     @Test
     fun `Test nullability for simple generics`() = runBlocking {

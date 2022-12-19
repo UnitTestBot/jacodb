@@ -89,6 +89,24 @@ class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType
     override val displayName: String
         get() = symbol
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JvmTypeVariable
+
+        if (symbol != other.symbol) return false
+        if (declaration != other.declaration) return false
+        if (isNullable != other.isNullable) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = symbol.hashCode()
+        result = 63 * result + 31 * (declaration?.hashCode() ?: 1) + (isNullable?.hashCode() ?: 0)
+        return result
+    }
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness

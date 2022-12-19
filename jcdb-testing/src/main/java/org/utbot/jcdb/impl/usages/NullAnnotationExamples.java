@@ -30,8 +30,8 @@ public class NullAnnotationExamples {
     int primitiveValue;
 
     public static class SomeContainer<E> {
-        public List<@NotNull E> listOfNotNull;
-        public List<@Nullable E> listOfNullable;
+        public List<E> listOfNotNull;
+        public List<E> listOfNullable;
         public SomeContainer<String> containerOfUndefined;
 
         public @NotNull E notNull;
@@ -39,7 +39,7 @@ public class NullAnnotationExamples {
         public E undefined;
     }
 
-    String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
+    String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<String> notNullContainer) {
         return null;
     }
 
@@ -47,15 +47,15 @@ public class NullAnnotationExamples {
         return "dumb return value";
     }
 
-    public @Nullable SomeContainer<? extends @NotNull String> wildcard() {
+    public @Nullable SomeContainer<? extends String> wildcard() {
         return null;
     }
 
-    public SomeContainer<@NotNull String> containerOfNotNull;
-    public SomeContainer<@Nullable String> containerOfNullable;
+    public SomeContainer<String> containerOfNotNull;
+    public SomeContainer<String> containerOfNullable;
     public SomeContainer<String> containerOfUndefined;
 
-    public KotlinNullabilityExamples.SomeContainer<@NotNull String> ktContainerOfNotNull;
-    public KotlinNullabilityExamples.SomeContainer<@Nullable String> ktContainerOfNullable;
+    public KotlinNullabilityExamples.SomeContainer<String> ktContainerOfNotNull;
+    public KotlinNullabilityExamples.SomeContainer<String> ktContainerOfNullable;
     public KotlinNullabilityExamples.SomeContainer<String> ktContainerOfUndefined;
 }

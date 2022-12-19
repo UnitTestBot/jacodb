@@ -32,6 +32,7 @@ class KotlinJavaInteropNullabilityTest : BaseTest() {
     companion object : WithDB()
 
     @Test
+    //@Disabled("as we can")
     fun `Test nullability after substitution of Kotlin T with type of undefined nullability Java`() = runBlocking {
         val clazz = typeOf<NullAnnotationExamples>() as JcClassType
         val containerOfUndefined = clazz.declaredFields.single { it.name == "ktContainerOfUndefined" }

@@ -21,6 +21,7 @@ import kotlinx.collections.immutable.toPersistentList
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jcdb.api.JcAccessible
+import org.utbot.jcdb.api.JcAnnotated
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClassType
@@ -30,6 +31,7 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcParameter
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
+import org.utbot.jcdb.api.TypeName
 import org.utbot.jcdb.api.boolean
 import org.utbot.jcdb.api.byte
 import org.utbot.jcdb.api.char

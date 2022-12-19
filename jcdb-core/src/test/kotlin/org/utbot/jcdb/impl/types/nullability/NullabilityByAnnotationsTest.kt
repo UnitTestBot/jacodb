@@ -18,6 +18,7 @@ package org.utbot.jcdb.impl.types.nullability
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
