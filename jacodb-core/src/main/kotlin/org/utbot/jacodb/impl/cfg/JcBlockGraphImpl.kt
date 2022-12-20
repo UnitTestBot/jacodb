@@ -33,10 +33,8 @@ class JcBlockGraphImpl(
     private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
     override val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
-    override val entry: JcBasicBlock
-        get() = basicBlocks.single {
-            predecessors(it).isEmpty() && jcGraph.throwers(it.start).isEmpty()
-        }
+    override val entry: JcBasicBlock get() = basicBlocks.first()
+
     override val exits: List<JcBasicBlock> get() = basicBlocks.filter { successors(it).isEmpty() }
 
     init {

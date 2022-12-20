@@ -40,7 +40,7 @@ class JcGraphImpl(
     private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
     private val _throwExits = mutableMapOf<JcClassType, MutableSet<JcInstRef>>()
 
-    override val entry: JcInst get() = instructions.single { predecessors(it).isEmpty() && throwers(it).isEmpty() }
+    override val entry: JcInst get() = instructions.first()
     override val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
 
     /**

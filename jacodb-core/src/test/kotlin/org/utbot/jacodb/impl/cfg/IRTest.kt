@@ -327,7 +327,7 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<FilteringParserDelegate>())
     }
 
-    //    @Test
+    @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
     }
