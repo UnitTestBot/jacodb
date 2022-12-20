@@ -18,7 +18,7 @@ package org.utbot.jacodb.impl
 
 import org.utbot.jacodb.api.ByteCodeIndexer
 import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.JcFeature
 import org.utbot.jacodb.api.JcSignal
 import org.utbot.jacodb.api.RegisteredLocation
@@ -27,9 +27,9 @@ import java.io.Closeable
 
 class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable {
 
-    private lateinit var jcdb: JCDB
+    private lateinit var jcdb: JcDatabase
 
-    fun bind(jcdb: JCDB) {
+    fun bind(jcdb: JcDatabase) {
         this.jcdb = jcdb
     }
 
@@ -58,7 +58,7 @@ class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable 
         features.forEach { it.onSignal(signal.asJcSignal(jcdb)) }
     }
 
-    fun forEach(action: (JCDB, JcFeature<*, *>) -> Unit) {
+    fun forEach(action: (JcDatabase, JcFeature<*, *>) -> Unit) {
         features.forEach { action(jcdb, it) }
     }
 
@@ -78,7 +78,7 @@ sealed class JcInternalSignal {
     object Closed : JcInternalSignal()
     class LocationRemoved(val location: RegisteredLocation) : JcInternalSignal()
 
-    fun asJcSignal(jcdb: JCDB): JcSignal {
+    fun asJcSignal(jcdb: JcDatabase): JcSignal {
         return when (this) {
             is BeforeIndexing -> JcSignal.BeforeIndexing(jcdb, clearOnStart)
             is AfterIndexing -> JcSignal.AfterIndexing(jcdb)

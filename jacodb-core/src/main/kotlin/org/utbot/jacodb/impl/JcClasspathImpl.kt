@@ -38,7 +38,7 @@ import java.time.Duration
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
-    override val db: JCDBImpl,
+    override val db: JcDatabaseImpl,
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
 

@@ -17,9 +17,9 @@
 package org.utbot.jacodb.impl.cfg
 
 import kotlinx.coroutines.runBlocking
-import org.utbot.jacodb.api.JCDB
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.methods
 import org.utbot.jacodb.impl.JcGraphChecker
@@ -30,7 +30,7 @@ import java.io.File
 
 class IRSvgGenerator(private val folder: File) : Closeable {
 
-    private val db: JCDB
+    private val db: JcDatabase
     private val cp: JcClasspath
 
     init {

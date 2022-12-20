@@ -25,7 +25,7 @@ import org.utbot.jacodb.api.ext.findClass
 /**
  * ASM class writer with jacodb specific resolution of common superclasses
  */
-class JCDBClassWriter(val classpath: JcClasspath, flags: Int) : ClassWriter(flags) {
+class JcDatabaseClassWriter(val classpath: JcClasspath, flags: Int) : ClassWriter(flags) {
 
     /*
    * We need to overwrite this method here, as we are generating multiple classes that might reference each other. See

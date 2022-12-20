@@ -29,12 +29,12 @@ import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.utbot.jacodb.api.Hook
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.JcSettings
 
 
 open class HttpHook(
-    private val port: Int, private val jcdb: JCDB, private val settings: JcSettings,
+    private val port: Int, private val jcdb: JcDatabase, private val settings: JcSettings,
     private val exposureSettings: DefaultExposureSettings
 ) : Hook {
 

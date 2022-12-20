@@ -17,8 +17,8 @@
 package org.utbot.jacodb.impl.storage
 
 import org.jooq.DSLContext
-import org.utbot.jacodb.api.JCDB
 import org.utbot.jacodb.api.JcByteCodeLocation
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.LocationType
 import org.utbot.jacodb.api.RegisteredLocation
 import org.utbot.jacodb.impl.CleanupResult
@@ -34,7 +34,7 @@ import org.utbot.jacodb.impl.vfs.PersistentByteCodeLocation
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-class PersistentLocationRegistry(private val jcdb: JCDB, private val featuresRegistry: FeaturesRegistry) :
+class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featuresRegistry: FeaturesRegistry) :
     LocationsRegistry {
 
     private val persistence = jcdb.persistence

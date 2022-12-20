@@ -57,8 +57,8 @@ import org.utbot.jacodb.api.ext.isAnnotation
 import org.utbot.jacodb.api.ext.methods
 import org.utbot.jacodb.api.ext.packageName
 import org.utbot.jacodb.api.ext.toType
-import org.utbot.jacodb.impl.bytecode.JCDBClassWriter
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.utbot.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.utbot.jacodb.impl.bytecode.JcMethodImpl
 import org.utbot.jacodb.impl.cfg.JcBlockGraphImpl
 import org.utbot.jacodb.impl.cfg.JcGraphBuilder
@@ -301,7 +301,7 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcMethodImpl>())
         testClass(cp.findClass<RawInstListBuilder>())
         testClass(cp.findClass<Simplifier>())
-        testClass(cp.findClass<JCDBImpl>())
+        testClass(cp.findClass<JcDatabaseImpl>())
         testClass(cp.findClass<ExprMapper>())
         testClass(cp.findClass<JcGraphBuilder>())
         testClass(cp.findClass<JcBlockGraphImpl>())
@@ -356,7 +356,7 @@ class IRTest : BaseTest() {
 //            println()
             newBody
         }
-        val cw = JCDBClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
+        val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
         val checker = CheckClassAdapter(classNode)
         classNode.accept(checker)
         val targetDir = target.resolve(klass.packageName.replace('.', '/'))

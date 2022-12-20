@@ -22,10 +22,10 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.utbot.jacodb.api.ByteCodeIndexer
 import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JCDB
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.JcFeature
 import org.utbot.jacodb.api.JcSignal
 import org.utbot.jacodb.api.RegisteredLocation
@@ -43,7 +43,7 @@ typealias InMemoryHierarchyCache = ConcurrentHashMap<Long, ConcurrentHashMap<Lon
 private val objectJvmName = Type.getInternalName(Any::class.java)
 
 class InMemoryHierarchyIndexer(
-    private val persistence: JCDBPersistence,
+    private val persistence: JcDatabasePersistence,
     private val location: RegisteredLocation,
     private val hierarchy: InMemoryHierarchyCache
 ) : ByteCodeIndexer {
@@ -71,7 +71,7 @@ data class InMemoryHierarchyReq(val name: String, val allHierarchy: Boolean = tr
 
 object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 
-    private val hierarchies = ConcurrentHashMap<JCDB, InMemoryHierarchyCache>()
+    private val hierarchies = ConcurrentHashMap<JcDatabase, InMemoryHierarchyCache>()
 
     override fun onSignal(signal: JcSignal) {
         when (signal) {
@@ -207,7 +207,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
         }
     }
 
-    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer {
+    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation): ByteCodeIndexer {
         return InMemoryHierarchyIndexer(jcdb.persistence, location, hierarchies.getOrPut(jcdb) { ConcurrentHashMap() })
     }
 

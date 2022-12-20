@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.JcSettings
 import java.io.File
 import java.util.*
@@ -42,7 +42,7 @@ const val seeGithub = "see GitHub"
     externalDocs = ExternalDocumentation(url = "$wikiLocation#database", description = seeGithub)
 )
 @RestController
-class RootResource(val jcdbSettings: JcSettings, val jcdb: JCDB) {
+class RootResource(val jcdbSettings: JcSettings, val jcdb: JcDatabase) {
 
     private val downloadFolder = File("downloads").also {
         if (!it.exists()) {

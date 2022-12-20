@@ -24,9 +24,9 @@ import org.jooq.impl.DSL
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JcByteCodeLocation
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.RegisteredLocation
 import org.utbot.jacodb.impl.FeaturesRegistry
 import org.utbot.jacodb.impl.JcInternalSignal
@@ -50,7 +50,7 @@ class SQLitePersistenceImpl(
     private val featuresRegistry: FeaturesRegistry,
     location: String? = null,
     private val clearOnStart: Boolean
-) : JCDBPersistence, Closeable {
+) : JcDatabasePersistence, Closeable {
 
     companion object : KLogging() {
         private const val cachesPrefix = "org.utbot.jacodb.persistence.caches"

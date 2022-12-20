@@ -29,7 +29,7 @@ import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.jacodb
 import java.nio.file.Files
@@ -48,7 +48,7 @@ class RestoreJcdbBenchmark {
         private val jdbcLocation = Files.createTempDirectory("jdbc-${UUID.randomUUID()}").toFile().absolutePath
     }
 
-    var db: JCDB? = null
+    var db: JcDatabase? = null
 
     @Setup
     fun setup() {
@@ -67,7 +67,7 @@ class RestoreJcdbBenchmark {
         db = null
     }
 
-    private fun newDB(): JCDB {
+    private fun newDB(): JcDatabase {
         return runBlocking {
             jacodb {
                 persistent(jdbcLocation)

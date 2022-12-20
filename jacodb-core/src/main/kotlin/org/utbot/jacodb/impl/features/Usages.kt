@@ -22,9 +22,9 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.utbot.jacodb.api.ByteCodeIndexer
-import org.utbot.jacodb.api.JCDB
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.JcFeature
 import org.utbot.jacodb.api.JcSignal
 import org.utbot.jacodb.api.RegisteredLocation
@@ -75,7 +75,7 @@ private class MethodMap(size: Int) {
     }
 }
 
-class UsagesIndexer(persistence: JCDBPersistence, private val location: RegisteredLocation) :
+class UsagesIndexer(persistence: JcDatabasePersistence, private val location: RegisteredLocation) :
     ByteCodeIndexer {
 
     // callee_class -> (callee_name, callee_desc, opcode) -> caller
@@ -249,7 +249,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
         }
     }
 
-    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = UsagesIndexer(jcdb.persistence, location)
+    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) = UsagesIndexer(jcdb.persistence, location)
 
 
     private fun ByteArray.toShortArray(): ShortArray {

@@ -29,7 +29,7 @@ import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.allJars
 import org.utbot.jacodb.impl.features.Usages
 import org.utbot.jacodb.impl.jacodb
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbLifeCycleBenchmarks {
 
-    private lateinit var db: JCDB
+    private lateinit var db: JcDatabase
 
     @Setup(Level.Iteration)
     fun setup() {

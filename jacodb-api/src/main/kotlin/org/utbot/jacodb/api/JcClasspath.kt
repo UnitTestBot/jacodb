@@ -29,7 +29,7 @@ import java.io.Closeable
 interface JcClasspath : Closeable {
 
     /** locations of this classpath */
-    val db: JCDB
+    val db: JcDatabase
 
     /** locations of this classpath */
     val locations: List<JcByteCodeLocation>

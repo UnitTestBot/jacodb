@@ -23,9 +23,9 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jacodb.api.ByteCodeIndexer
 import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JCDB
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.JcFeature
 import org.utbot.jacodb.api.JcSignal
 import org.utbot.jacodb.api.RegisteredLocation
@@ -52,7 +52,7 @@ private data class BuilderMethod(
     val priority: Int
 )
 
-class BuildersIndexer(val persistence: JCDBPersistence, private val location: RegisteredLocation) :
+class BuildersIndexer(val persistence: JcDatabasePersistence, private val location: RegisteredLocation) :
     ByteCodeIndexer {
 
     // class -> (caller_class, offset, priority)
@@ -215,7 +215,7 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
 
     }
 
-    override fun newIndexer(jcdb: JCDB, location: RegisteredLocation) = BuildersIndexer(jcdb.persistence, location)
+    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) = BuildersIndexer(jcdb.persistence, location)
 
 
 }

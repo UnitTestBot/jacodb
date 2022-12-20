@@ -19,7 +19,7 @@ package org.utbot.jacodb.impl
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.utbot.jacodb.api.Hook
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.JcFeature
 import java.io.File
 
@@ -42,7 +42,7 @@ class JcSettings {
     var predefinedDirOrJars: List<File> = persistentListOf()
         private set
 
-    var hooks: MutableList<(JCDB) -> Hook> = arrayListOf()
+    var hooks: MutableList<(JcDatabase) -> Hook> = arrayListOf()
         private set
 
     /** mandatory setting for java runtime location */
@@ -79,7 +79,7 @@ class JcSettings {
     }
 
     /** builder for hooks */
-    fun withHook(hook: (JCDB) -> Hook) = apply {
+    fun withHook(hook: (JcDatabase) -> Hook) = apply {
         hooks += hook
     }
 

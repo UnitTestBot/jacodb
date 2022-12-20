@@ -19,15 +19,15 @@ package org.utbot.jacodb.impl
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.fs.JavaRuntime
 import org.utbot.jacodb.impl.storage.SQLitePersistenceImpl
 
-suspend fun jacodb(builder: JcSettings.() -> Unit): JCDB {
+suspend fun jacodb(builder: JcSettings.() -> Unit): JcDatabase {
     return jacodb(JcSettings().also(builder))
 }
 
-suspend fun jacodb(settings: JcSettings): JCDB {
+suspend fun jacodb(settings: JcSettings): JcDatabase {
     val featureRegistry = FeaturesRegistry(settings.features)
     val javaRuntime = JavaRuntime(settings.jre)
     val environment = SQLitePersistenceImpl(
@@ -36,7 +36,7 @@ suspend fun jacodb(settings: JcSettings): JCDB {
         location = settings.persistentLocation,
         clearOnStart = settings.persistentClearOnStart ?: true
     )
-    return JCDBImpl(
+    return JcDatabaseImpl(
         javaRuntime = javaRuntime,
         persistence = environment,
         featureRegistry = featureRegistry,

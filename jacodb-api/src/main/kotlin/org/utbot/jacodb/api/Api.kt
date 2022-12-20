@@ -56,10 +56,10 @@ interface JavaVersion {
  *
  * `close` method should be called when database is not needed anymore
  */
-interface JCDB : Closeable {
+interface JcDatabase : Closeable {
 
     val locations: List<RegisteredLocation>
-    val persistence: JCDBPersistence
+    val persistence: JcDatabasePersistence
 
     val runtimeVersion: JavaVersion
 
@@ -79,7 +79,7 @@ interface JCDB : Closeable {
      * @param dirOrJar build folder or jar file
      * @return current database instance
      */
-    suspend fun load(dirOrJar: File): JCDB
+    suspend fun load(dirOrJar: File): JcDatabase
     fun asyncLoad(dirOrJar: File) = GlobalScope.future { load(dirOrJar) }
 
     /**
@@ -87,7 +87,7 @@ interface JCDB : Closeable {
      * @param dirOrJars list of build folder or jar file
      * @return current database instance
      */
-    suspend fun load(dirOrJars: List<File>): JCDB
+    suspend fun load(dirOrJars: List<File>): JcDatabase
     fun asyncLoad(dirOrJars: List<File>) = GlobalScope.future { load(dirOrJars) }
 
     /**
@@ -95,7 +95,7 @@ interface JCDB : Closeable {
      * @param locations locations to load
      * @return current database instance
      */
-    suspend fun loadLocations(locations: List<JcByteCodeLocation>): JCDB
+    suspend fun loadLocations(locations: List<JcByteCodeLocation>): JcDatabase
     fun asyncLocations(locations: List<JcByteCodeLocation>) = GlobalScope.future { loadLocations(locations) }
 
     /**
@@ -120,7 +120,7 @@ interface JCDB : Closeable {
      *
      * @return current database instance
      */
-    fun watchFileSystemChanges(): JCDB
+    fun watchFileSystemChanges(): JcDatabase
 
     /**
      * await background jobs
@@ -132,7 +132,7 @@ interface JCDB : Closeable {
 }
 
 
-interface JCDBPersistence : Closeable {
+interface JcDatabasePersistence : Closeable {
 
     val locations: List<JcByteCodeLocation>
 

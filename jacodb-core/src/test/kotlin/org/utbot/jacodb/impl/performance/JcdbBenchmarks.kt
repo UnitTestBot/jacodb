@@ -29,7 +29,7 @@ import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.features.Usages
 import org.utbot.jacodb.impl.guavaLib
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbBenchmarks  {
 
-    private var db: JCDB? = null
+    private var db: JcDatabase? = null
 
     @Benchmark
     fun jvmRuntime() {

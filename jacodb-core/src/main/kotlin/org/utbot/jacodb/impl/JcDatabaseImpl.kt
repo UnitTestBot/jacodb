@@ -28,11 +28,11 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.utbot.jacodb.api.JCDB
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JavaVersion
 import org.utbot.jacodb.api.JcByteCodeLocation
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.JcFeature
 import org.utbot.jacodb.api.RegisteredLocation
 import org.utbot.jacodb.impl.fs.JavaRuntime
@@ -48,12 +48,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class JCDBImpl(
+class JcDatabaseImpl(
     internal val javaRuntime: JavaRuntime,
-    override val persistence: JCDBPersistence,
+    override val persistence: JcDatabasePersistence,
     val featureRegistry: FeaturesRegistry,
     private val settings: JcSettings
-) : JCDB {
+) : JcDatabase {
 
     private val classesVfs = GlobalClassesVfs()
     private val hooks = settings.hooks.map { it(this) }
@@ -178,7 +178,7 @@ class JCDBImpl(
         }
     }
 
-    override fun watchFileSystemChanges(): JCDB {
+    override fun watchFileSystemChanges(): JcDatabase {
         val delay = settings.watchFileSystemDelay?.toLong()
         if (delay != null) { // just paranoid check
             backgroundScope.launch {

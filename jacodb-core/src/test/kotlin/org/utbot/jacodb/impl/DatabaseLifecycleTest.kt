@@ -43,7 +43,7 @@ class DatabaseLifecycleTest {
     private var db = runBlocking {
         jacodb {
             useProcessJavaRuntime()
-        } as JCDBImpl
+        } as JcDatabaseImpl
     }
     private val tempFolder = Files.createTempDirectory("classpath-copy-" + UUID.randomUUID()).toFile()
 

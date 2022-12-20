@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.utbot.jacodb.api.FieldUsageMode
-import org.utbot.jacodb.api.JCDB
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
 import java.util.*
 
 @Tag(
@@ -38,7 +38,7 @@ import java.util.*
 )
 @RestController
 @RequestMapping("/classpaths/allJars")
-class AllClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
+class AllClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
 
     @Volatile
     private var allClasspath: JcClasspath = jcdb.allClasspath
@@ -147,4 +147,4 @@ class AllClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
 
 }
 
-private val JCDB.allClasspath get() = classpathOf(locations)
+private val JcDatabase.allClasspath get() = classpathOf(locations)

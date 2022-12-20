@@ -55,7 +55,7 @@ internal fun ClassNode.inlineJsrs() {
 
 private fun ClassNode.toByteArray(classpath: JcClasspath): ByteArray {
     this.inlineJsrs()
-    val cw = JCDBClassWriter(classpath, ClassWriter.COMPUTE_FRAMES)
+    val cw = JcDatabaseClassWriter(classpath, ClassWriter.COMPUTE_FRAMES)
     this.accept(cw)
     return cw.toByteArray()
 }

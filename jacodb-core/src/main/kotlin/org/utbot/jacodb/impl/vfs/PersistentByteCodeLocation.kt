@@ -16,11 +16,11 @@
 
 package org.utbot.jacodb.impl.vfs
 
-import org.utbot.jacodb.api.JCDB
-import org.utbot.jacodb.api.JCDBPersistence
 import org.utbot.jacodb.api.JavaVersion
 import org.utbot.jacodb.api.JcByteCodeLocation
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.RegisteredLocation
 import org.utbot.jacodb.impl.fs.asByteCodeLocation
 import org.utbot.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
@@ -28,14 +28,14 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import java.io.File
 
 class PersistentByteCodeLocation(
-    private val persistence: JCDBPersistence,
+    private val persistence: JcDatabasePersistence,
     private val runtimeVersion: JavaVersion,
     override val id: Long,
     private val cachedRecord: BytecodelocationsRecord? = null,
     private val cachedLocation: JcByteCodeLocation? = null
 ) : RegisteredLocation {
 
-    constructor(jcdb: JCDB, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
+    constructor(jcdb: JcDatabase, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
         jcdb.persistence,
         jcdb.runtimeVersion,
         record.id!!,

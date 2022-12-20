@@ -31,30 +31,30 @@ interface JcFeature<REQ, RES> {
 
     suspend fun query(classpath: JcClasspath, req: REQ): Sequence<RES>
 
-    fun newIndexer(jcdb: JCDB, location: RegisteredLocation): ByteCodeIndexer
+    fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation): ByteCodeIndexer
 
     fun onSignal(signal: JcSignal)
 
 }
 
 
-sealed class JcSignal(val jcdb: JCDB) {
+sealed class JcSignal(val jcdb: JcDatabase) {
 
     /** can be used for creating persistence scheme */
-    class BeforeIndexing(jcdb: JCDB, val clearOnStart: Boolean) : JcSignal(jcdb)
+    class BeforeIndexing(jcdb: JcDatabase, val clearOnStart: Boolean) : JcSignal(jcdb)
     /** can be used to create persistence indexes after data batch upload */
-    class AfterIndexing(jcdb: JCDB) : JcSignal(jcdb)
+    class AfterIndexing(jcdb: JcDatabase) : JcSignal(jcdb)
     /** can be used for cleanup index data when location is removed */
-    class LocationRemoved(jcdb: JCDB, val location: RegisteredLocation) : JcSignal(jcdb)
+    class LocationRemoved(jcdb: JcDatabase, val location: RegisteredLocation) : JcSignal(jcdb)
     /**
      * rebuild all
      */
-    class Drop(jcdb: JCDB) : JcSignal(jcdb)
+    class Drop(jcdb: JcDatabase) : JcSignal(jcdb)
 
     /**
      * database is closed
      */
-    class Closed(jcdb: JCDB) : JcSignal(jcdb)
+    class Closed(jcdb: JcDatabase) : JcSignal(jcdb)
 
 }
 

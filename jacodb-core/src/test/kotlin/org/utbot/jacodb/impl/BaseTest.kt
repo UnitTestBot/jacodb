@@ -21,8 +21,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.utbot.jacodb.api.JCDB
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.JcFeature
 import java.nio.file.Files
 import kotlin.reflect.full.companionObjectInstance
@@ -79,14 +79,14 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
 
     private val jdbcLocation = Files.createTempFile("jcdb-", null).toFile().absolutePath
 
-    var tempDb: JCDB? = newDB()
+    var tempDb: JcDatabase? = newDB()
 
-    override var db: JCDB = newDB {
+    override var db: JcDatabase = newDB {
         tempDb?.close()
         tempDb = null
     }
 
-    private fun newDB(before: () -> Unit = {}): JCDB {
+    private fun newDB(before: () -> Unit = {}): JcDatabase {
         before()
         return runBlocking {
             jacodb {

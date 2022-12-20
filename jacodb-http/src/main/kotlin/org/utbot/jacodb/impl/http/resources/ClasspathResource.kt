@@ -31,9 +31,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.utbot.jacodb.api.FieldUsageMode
-import org.utbot.jacodb.api.JCDB
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.ext.jcdbName
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jacodb.impl.types.FieldInfo
@@ -60,7 +60,7 @@ private class LastAccessedClasspath(
 )
 @RestController
 @RequestMapping("/classpaths")
-class ClasspathResource(val jcdb: JCDB) : AbstractClasspathResource() {
+class ClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
 
     private val classpaths = ConcurrentHashMap<String, LastAccessedClasspath>()
     private fun nextUUID() = UUID.randomUUID().toString()

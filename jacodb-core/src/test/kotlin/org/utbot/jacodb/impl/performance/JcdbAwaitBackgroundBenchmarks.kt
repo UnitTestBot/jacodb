@@ -29,7 +29,7 @@ import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
-import org.utbot.jacodb.api.JCDB
+import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.JcSettings
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.jacodb
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 
-    private lateinit var db: JCDB
+    private lateinit var db: JcDatabase
 
     abstract fun JcSettings.configure()
 
