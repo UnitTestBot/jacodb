@@ -16,6 +16,8 @@
 
 package org.utbot.jcdb.impl.features
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import org.objectweb.asm.Opcodes
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.JcClassOrInterface
@@ -29,6 +31,7 @@ import org.utbot.jcdb.api.ext.isPackagePrivate
 import org.utbot.jcdb.api.ext.isPrivate
 import org.utbot.jcdb.api.ext.isStatic
 import org.utbot.jcdb.api.ext.packageName
+import java.util.concurrent.Future
 
 class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, private val cp: JcClasspath) {
 
@@ -139,6 +142,8 @@ suspend fun JcClasspath.usagesExt(): SyncUsagesExtension {
     }
     return SyncUsagesExtension(hierarchyExt(), this)
 }
+
+fun JcClasspath.asyncUsages(): Future<SyncUsagesExtension> = GlobalScope.future { usagesExt() }
 
 suspend fun JcClasspath.findUsages(method: JcMethod) = usagesExt().findUsages(method)
 suspend fun JcClasspath.findUsages(field: JcField, mode: FieldUsageMode) = usagesExt().findUsages(field, mode)

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.utbot.jcdb.api.JCDB;
 import org.utbot.jcdb.api.JcClassOrInterface;
 import org.utbot.jcdb.api.JcClasspath;
-import org.utbot.jcdb.api.ext.Api;
 import org.utbot.jcdb.impl.features.Usages;
 
 import java.io.IOException;
@@ -46,7 +45,6 @@ public class JavaApiTest {
         try (JCDB instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
             try (JcClasspath classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
                 JcClassOrInterface clazz = classpath.findClassOrNull("java.lang.String");
-                Api.isInterface(clazz);
                 assertNotNull(clazz);
                 assertNotNull(classpath.asyncRefreshed(false).get());
             }

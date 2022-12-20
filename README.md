@@ -10,7 +10,7 @@ Information about classes, hierarchies, annotations, methods, fields, and their 
 
 ## Useful links
 
-- [Design overview and technical information](../../wiki/Api-reference).
+- [Design overview and technical information](../../wiki/Design).
 - [Full api reference](../../wiki/Api-reference)
 
 ## Examples
