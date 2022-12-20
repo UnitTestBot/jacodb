@@ -12,6 +12,7 @@ Information about classes, hierarchies, annotations, methods, fields, and their 
 
 - [Design overview and technical information](../../wiki/Design).
 - [Full api reference](../../wiki/Api-reference)
+- [3-address bytecode representation](../../wiki/Three-address-instruction-list-IR)
 
 ## Examples
 
