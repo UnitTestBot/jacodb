@@ -21,10 +21,10 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.methods
+import org.utbot.jcdb.api.ext.methods
 import org.utbot.jcdb.impl.JcGraphChecker
 import org.utbot.jcdb.impl.allClasspath
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.io.Closeable
 import java.io.File
 
@@ -40,7 +40,7 @@ class IRSvgGenerator(private val folder: File) : Closeable {
             folder.list()?.forEach { File(folder, it).delete() }
         }
         db = runBlocking {
-            jcdb {
+            jacodb {
                 loadByteCode(allClasspath)
             }
         }

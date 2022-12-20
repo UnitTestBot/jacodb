@@ -32,7 +32,7 @@ import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.serializer
 import org.objectweb.asm.Type
 import org.utbot.jcdb.api.TypeName
-import org.utbot.jcdb.api.jcdbName
+import org.utbot.jcdb.api.ext.jcdbName
 import org.utbot.jcdb.impl.storage.AnnotationValueKind
 
 @Serializable

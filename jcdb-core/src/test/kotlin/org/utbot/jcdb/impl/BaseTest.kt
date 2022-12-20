@@ -24,7 +24,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.nio.file.Files
 import kotlin.reflect.full.companionObjectInstance
 
@@ -61,7 +61,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
     protected var allFeatures = features.toList().toTypedArray()
 
     open var db = runBlocking {
-        jcdb {
+        jacodb {
 //            persistent("D:\\work\\jcdb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
@@ -90,7 +90,7 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
     private fun newDB(before: () -> Unit = {}): JCDB {
         before()
         return runBlocking {
-            jcdb {
+            jacodb {
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()

@@ -25,12 +25,12 @@ import org.utbot.jcdb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jcdb.impl.storage.jooq.tables.references.FIELDS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODPARAMETERS
 import org.utbot.jcdb.impl.storage.jooq.tables.references.METHODS
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 
 fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
-        val db = jcdb {
+        val db = jacodb {
             loadByteCode(allClasspath)
             persistent("D:\\work\\jcdb\\jcdb.db")
             installFeatures(Usages, Builders, InMemoryHierarchy)

@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("JacoDB")
 package org.utbot.jcdb
 
 import kotlinx.coroutines.GlobalScope
@@ -24,11 +25,11 @@ import org.utbot.jcdb.impl.JCDBImpl
 import org.utbot.jcdb.impl.fs.JavaRuntime
 import org.utbot.jcdb.impl.storage.SQLitePersistenceImpl
 
-suspend fun jcdb(builder: JCDBSettings.() -> Unit): JCDB {
-    return jcdb(JCDBSettings().also(builder))
+suspend fun jacodb(builder: JcSettings.() -> Unit): JCDB {
+    return jacodb(JcSettings().also(builder))
 }
 
-suspend fun jcdb(settings: JCDBSettings): JCDB {
+suspend fun jacodb(settings: JcSettings): JCDB {
     val featureRegistry = FeaturesRegistry(settings.features)
     val javaRuntime = JavaRuntime(settings.jre)
     val environment = SQLitePersistenceImpl(
@@ -49,4 +50,4 @@ suspend fun jcdb(settings: JCDBSettings): JCDB {
 }
 
 /** bridge for Java */
-fun asyncJcdb(settings: JCDBSettings) = GlobalScope.future { jcdb(settings) }
+fun async(settings: JcSettings) = GlobalScope.future { jacodb(settings) }

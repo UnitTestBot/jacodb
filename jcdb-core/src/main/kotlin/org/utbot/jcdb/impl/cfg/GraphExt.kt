@@ -91,7 +91,7 @@ import org.utbot.jcdb.api.cfg.JcUshrExpr
 import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.cfg.JcXorExpr
 import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.api.toType
+import org.utbot.jcdb.api.ext.toType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

@@ -32,7 +32,7 @@ import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.allJars
 import org.utbot.jcdb.impl.features.Usages
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.util.concurrent.TimeUnit
 
 @State(Scope.Benchmark)
@@ -48,7 +48,7 @@ class JcdbLifeCycleBenchmarks {
     @Setup(Level.Iteration)
     fun setup() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 installFeatures(Usages)
                 useProcessJavaRuntime()
             }

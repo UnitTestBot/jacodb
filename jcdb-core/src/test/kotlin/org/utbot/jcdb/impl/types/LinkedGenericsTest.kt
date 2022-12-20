@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcTypeVariable
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.isConstructor
+import org.utbot.jcdb.api.ext.isConstructor
 import org.utbot.jcdb.impl.types.Generics.LinkedImpl
 import org.utbot.jcdb.impl.types.Generics.SingleImpl
 

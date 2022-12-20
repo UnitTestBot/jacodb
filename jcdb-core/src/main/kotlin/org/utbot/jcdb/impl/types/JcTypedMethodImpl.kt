@@ -28,8 +28,8 @@ import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.MethodResolution
 import org.utbot.jcdb.api.PredefinedPrimitive
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.isNullable
-import org.utbot.jcdb.api.isStatic
+import org.utbot.jcdb.api.ext.isNullable
+import org.utbot.jcdb.api.ext.isStatic
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.FieldResolutionImpl
 import org.utbot.jcdb.impl.types.signature.FieldSignature

@@ -21,7 +21,7 @@ import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedField
 import org.utbot.jcdb.api.PredefinedPrimitive
-import org.utbot.jcdb.api.isNullable
+import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.FieldResolutionImpl
 import org.utbot.jcdb.impl.types.signature.FieldSignature

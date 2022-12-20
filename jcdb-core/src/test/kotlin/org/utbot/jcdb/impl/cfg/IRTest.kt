@@ -53,10 +53,10 @@ import org.utbot.jcdb.api.cfg.JcThrowInst
 import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.ext.HierarchyExtension
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.isAnnotation
-import org.utbot.jcdb.api.methods
-import org.utbot.jcdb.api.packageName
-import org.utbot.jcdb.api.toType
+import org.utbot.jcdb.api.ext.isAnnotation
+import org.utbot.jcdb.api.ext.methods
+import org.utbot.jcdb.api.ext.packageName
+import org.utbot.jcdb.api.ext.toType
 import org.utbot.jcdb.impl.bytecode.JCDBClassWriter
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.bytecode.JcMethodImpl

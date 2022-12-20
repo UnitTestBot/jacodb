@@ -22,7 +22,6 @@ import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.TypeName
-import org.utbot.jcdb.api.anyType
 import org.utbot.jcdb.api.boolean
 import org.utbot.jcdb.api.byte
 import org.utbot.jcdb.api.cfg.BsmHandle
@@ -159,12 +158,13 @@ import org.utbot.jcdb.api.cfg.JcVirtualCallExpr
 import org.utbot.jcdb.api.cfg.JcXorExpr
 import org.utbot.jcdb.api.char
 import org.utbot.jcdb.api.double
+import org.utbot.jcdb.api.ext.anyType
 import org.utbot.jcdb.api.ext.findTypeOrNull
+import org.utbot.jcdb.api.ext.toType
 import org.utbot.jcdb.api.float
 import org.utbot.jcdb.api.int
 import org.utbot.jcdb.api.long
 import org.utbot.jcdb.api.short
-import org.utbot.jcdb.api.toType
 
 class JcGraphBuilder(
     val classpath: JcClasspath,

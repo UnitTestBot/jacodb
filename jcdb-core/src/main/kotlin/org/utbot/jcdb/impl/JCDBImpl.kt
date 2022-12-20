@@ -28,7 +28,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.utbot.jcdb.JCDBSettings
+import org.utbot.jcdb.JcSettings
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JCDBPersistence
 import org.utbot.jcdb.api.JavaVersion
@@ -53,7 +53,7 @@ class JCDBImpl(
     internal val javaRuntime: JavaRuntime,
     override val persistence: JCDBPersistence,
     val featureRegistry: FeaturesRegistry,
-    private val settings: JCDBSettings
+    private val settings: JcSettings
 ) : JCDB {
 
     private val classesVfs = GlobalClassesVfs()

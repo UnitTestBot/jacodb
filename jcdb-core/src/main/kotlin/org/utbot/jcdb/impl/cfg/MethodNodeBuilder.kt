@@ -115,8 +115,8 @@ import org.utbot.jcdb.api.cfg.JcRawUshrExpr
 import org.utbot.jcdb.api.cfg.JcRawValue
 import org.utbot.jcdb.api.cfg.JcRawVirtualCallExpr
 import org.utbot.jcdb.api.cfg.JcRawXorExpr
-import org.utbot.jcdb.api.isStatic
-import org.utbot.jcdb.api.jvmName
+import org.utbot.jcdb.api.ext.isStatic
+import org.utbot.jcdb.api.ext.jvmName
 import org.utbot.jcdb.impl.cfg.util.baseElementType
 import org.utbot.jcdb.impl.cfg.util.internalDesc
 import org.utbot.jcdb.impl.cfg.util.isDWord

@@ -31,7 +31,7 @@ import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.allClasspath
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -69,7 +69,7 @@ class RestoreJcdbBenchmark {
 
     private fun newDB(): JCDB {
         return runBlocking {
-            jcdb {
+            jacodb {
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()

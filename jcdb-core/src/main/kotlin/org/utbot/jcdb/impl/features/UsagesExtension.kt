@@ -23,12 +23,12 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.HierarchyExtension
-import org.utbot.jcdb.api.findFieldOrNull
-import org.utbot.jcdb.api.findMethodOrNull
-import org.utbot.jcdb.api.isPackagePrivate
-import org.utbot.jcdb.api.isPrivate
-import org.utbot.jcdb.api.isStatic
-import org.utbot.jcdb.api.packageName
+import org.utbot.jcdb.api.ext.findFieldOrNull
+import org.utbot.jcdb.api.ext.findMethodOrNull
+import org.utbot.jcdb.api.ext.isPackagePrivate
+import org.utbot.jcdb.api.ext.isPrivate
+import org.utbot.jcdb.api.ext.isStatic
+import org.utbot.jcdb.api.ext.packageName
 
 class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, private val cp: JcClasspath) {
 

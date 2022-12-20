@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcArrayType
 import org.utbot.jcdb.api.JcPrimitiveType
-import org.utbot.jcdb.api.isConstructor
+import org.utbot.jcdb.api.ext.isConstructor
 
 class TypesTest : BaseTypesTest() {
 

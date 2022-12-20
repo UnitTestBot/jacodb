@@ -21,12 +21,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcTypedMethod
-import org.utbot.jcdb.api.constructors
+import org.utbot.jcdb.api.ext.constructors
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.isConstructor
-import org.utbot.jcdb.api.isSynthetic
-import org.utbot.jcdb.api.methods
-import org.utbot.jcdb.api.toType
+import org.utbot.jcdb.api.ext.isConstructor
+import org.utbot.jcdb.api.ext.isSynthetic
+import org.utbot.jcdb.api.ext.methods
+import org.utbot.jcdb.api.ext.toType
 import org.utbot.jcdb.impl.hierarchies.Overrides
 import java.io.Closeable
 

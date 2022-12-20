@@ -22,7 +22,7 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
-import org.utbot.jcdb.api.isStatic
+import org.utbot.jcdb.api.ext.isStatic
 import org.utbot.jcdb.impl.types.signature.JvmTypeParameterDeclaration
 import org.utbot.jcdb.impl.types.signature.MethodResolutionImpl
 import org.utbot.jcdb.impl.types.signature.MethodSignature

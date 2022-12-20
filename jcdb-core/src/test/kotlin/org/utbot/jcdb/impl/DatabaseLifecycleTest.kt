@@ -34,7 +34,7 @@ import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findClassOrNull
 import org.utbot.jcdb.impl.fs.BuildFolderLocation
 import org.utbot.jcdb.impl.storage.PersistentLocationRegistry
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.io.File
 import java.nio.file.Files
 import java.util.*
@@ -42,7 +42,7 @@ import java.util.*
 class DatabaseLifecycleTest {
 
     private var db = runBlocking {
-        jcdb {
+        jacodb {
             useProcessJavaRuntime()
         } as JCDBImpl
     }

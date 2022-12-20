@@ -24,7 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.utbot.jcdb.impl.features.Builders
 import org.utbot.jcdb.impl.features.InMemoryHierarchy
 import org.utbot.jcdb.impl.features.Usages
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.io.File
 
 val jar: File?
@@ -74,7 +74,7 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
     override fun run() {
         val api = apiPrefix
         runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 persistent(location = location)
                 loadByteCode(allClasspath)

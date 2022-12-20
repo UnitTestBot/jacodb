@@ -19,7 +19,7 @@ package org.utbot.jcdb.impl.types
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.isSynthetic
+import org.utbot.jcdb.api.ext.isSynthetic
 import org.utbot.jcdb.impl.types.Comparables.ComparableTest1
 import org.utbot.jcdb.impl.types.Comparables.ComparableTest2
 import org.utbot.jcdb.impl.types.Comparables.ComparableTest3

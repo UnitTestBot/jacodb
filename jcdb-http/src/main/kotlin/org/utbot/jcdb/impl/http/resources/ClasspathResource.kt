@@ -34,7 +34,7 @@ import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.jcdbName
+import org.utbot.jcdb.api.ext.jcdbName
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.types.FieldInfo
 import org.utbot.jcdb.impl.types.MethodInfo

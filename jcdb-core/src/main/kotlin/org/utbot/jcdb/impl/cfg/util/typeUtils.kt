@@ -18,8 +18,8 @@ package org.utbot.jcdb.impl.cfg.util
 
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.TypeName
-import org.utbot.jcdb.api.jcdbName
-import org.utbot.jcdb.api.jvmName
+import org.utbot.jcdb.api.ext.jcdbName
+import org.utbot.jcdb.api.ext.jvmName
 import org.utbot.jcdb.impl.types.TypeNameImpl
 
 internal val NULL = "null".typeName()

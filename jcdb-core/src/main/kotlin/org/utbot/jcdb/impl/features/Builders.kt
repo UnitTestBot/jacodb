@@ -29,7 +29,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcFeature
 import org.utbot.jcdb.api.JcSignal
 import org.utbot.jcdb.api.RegisteredLocation
-import org.utbot.jcdb.api.jvmPrimitiveNames
+import org.utbot.jcdb.api.ext.jvmPrimitiveNames
 import org.utbot.jcdb.impl.fs.PersistenceClassSource
 import org.utbot.jcdb.impl.fs.className
 import org.utbot.jcdb.impl.storage.executeQueries

@@ -23,7 +23,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.ext.findClass
-import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.ext.findMethodOrNull
 import org.utbot.jcdb.impl.fs.ClassSourceImpl
 import org.utbot.jcdb.impl.fs.LazyClassSourceImpl
 import org.utbot.jcdb.impl.fs.fullAsmNodeWithFrames

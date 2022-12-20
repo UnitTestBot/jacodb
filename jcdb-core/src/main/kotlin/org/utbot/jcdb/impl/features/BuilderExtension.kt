@@ -24,7 +24,7 @@ import org.utbot.jcdb.api.JcClasspath
 import org.utbot.jcdb.api.JcMethod
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.HierarchyExtension
-import org.utbot.jcdb.api.toType
+import org.utbot.jcdb.api.ext.toType
 
 
 class BuildersExtension(private val classpath: JcClasspath, private val hierarchyExtension: HierarchyExtension) {

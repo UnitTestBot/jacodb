@@ -24,8 +24,8 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.utbot.jcdb.api.FieldUsageMode
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.findFieldOrNull
-import org.utbot.jcdb.api.findMethodOrNull
+import org.utbot.jcdb.api.ext.findFieldOrNull
+import org.utbot.jcdb.api.ext.findMethodOrNull
 import org.utbot.jcdb.impl.features.hierarchyExt
 import org.utbot.jcdb.impl.features.usagesExt
 import javax.annotation.PostConstruct

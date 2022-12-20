@@ -109,7 +109,7 @@ import org.utbot.jcdb.api.cfg.JcRawUshrExpr
 import org.utbot.jcdb.api.cfg.JcRawValue
 import org.utbot.jcdb.api.cfg.JcRawVirtualCallExpr
 import org.utbot.jcdb.api.cfg.JcRawXorExpr
-import org.utbot.jcdb.api.isStatic
+import org.utbot.jcdb.api.ext.isStatic
 import org.utbot.jcdb.impl.cfg.util.CLASS_CLASS
 import org.utbot.jcdb.impl.cfg.util.ExprMapper
 import org.utbot.jcdb.impl.cfg.util.METHOD_HANDLE_CLASS

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.api.isNullable
+import org.utbot.jcdb.api.ext.isNullable
 
 class SimpleNullabilityTest:  BaseTest() {
 

@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("ClasspathExt")
 package org.utbot.jcdb.api.ext
 
 import kotlinx.collections.immutable.toImmutableList

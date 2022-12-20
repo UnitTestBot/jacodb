@@ -26,8 +26,8 @@ import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.PredefinedPrimitives
 import org.utbot.jcdb.api.RegisteredLocation
+import org.utbot.jcdb.api.ext.toType
 import org.utbot.jcdb.api.throwClassNotFound
-import org.utbot.jcdb.api.toType
 import org.utbot.jcdb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jcdb.impl.types.JcArrayTypeImpl
 import org.utbot.jcdb.impl.types.JcClassTypeImpl

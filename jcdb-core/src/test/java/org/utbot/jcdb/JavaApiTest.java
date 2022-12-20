@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.utbot.jcdb.api.JCDB;
 import org.utbot.jcdb.api.JcClassOrInterface;
 import org.utbot.jcdb.api.JcClasspath;
+import org.utbot.jcdb.api.ext.Api;
 import org.utbot.jcdb.impl.features.Usages;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class JavaApiTest {
     @Test
     public void createJcdb() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
-        try (JCDB instance = JcdbKt.asyncJcdb(new JCDBSettings().installFeatures(Usages.INSTANCE)).get()) {
+        try (JCDB instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
             System.out.println("Database is ready: " + instance);
         }
     }
@@ -42,9 +43,10 @@ public class JavaApiTest {
     @Test
     public void createClasspath() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
-        try (JCDB instance = JcdbKt.asyncJcdb(new JCDBSettings().installFeatures(Usages.INSTANCE)).get()) {
+        try (JCDB instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
             try (JcClasspath classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
                 JcClassOrInterface clazz = classpath.findClassOrNull("java.lang.String");
+                Api.isInterface(clazz);
                 assertNotNull(clazz);
                 assertNotNull(classpath.asyncRefreshed(false).get());
             }
@@ -55,7 +57,7 @@ public class JavaApiTest {
     @Test
     public void jcdbOperations() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
-        try (JCDB instance = JcdbKt.asyncJcdb(new JCDBSettings().installFeatures(Usages.INSTANCE)).get()) {
+        try (JCDB instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
             instance.asyncLoad(getAllClasspath()).get();
             System.out.println("asyncLoad finished");
             instance.asyncRefresh().get();

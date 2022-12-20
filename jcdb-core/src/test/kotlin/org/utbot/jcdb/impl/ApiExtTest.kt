@@ -23,12 +23,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.autoboxIfNeeded
+import org.utbot.jcdb.api.ext.autoboxIfNeeded
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.api.isSubtypeOf
+import org.utbot.jcdb.api.ext.isSubtypeOf
+import org.utbot.jcdb.api.ext.unboxIfNeeded
 import org.utbot.jcdb.api.short
-import org.utbot.jcdb.api.unboxIfNeeded
 import org.utbot.jcdb.impl.hierarchies.Creature
 import org.utbot.jcdb.impl.hierarchies.Creature.Animal
 import org.utbot.jcdb.impl.hierarchies.Creature.Bird

@@ -18,7 +18,7 @@ package org.utbot.jcdb.impl.bytecode
 
 import org.utbot.jcdb.api.JcAnnotation
 import org.utbot.jcdb.api.JcClasspath
-import org.utbot.jcdb.api.enumValues
+import org.utbot.jcdb.api.ext.enumValues
 import org.utbot.jcdb.impl.types.AnnotationInfo
 import org.utbot.jcdb.impl.types.AnnotationValue
 import org.utbot.jcdb.impl.types.AnnotationValueList

@@ -29,10 +29,10 @@ import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
-import org.utbot.jcdb.JCDBSettings
+import org.utbot.jcdb.JcSettings
 import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.allClasspath
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -40,12 +40,12 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 
     private lateinit var db: JCDB
 
-    abstract fun JCDBSettings.configure()
+    abstract fun JcSettings.configure()
 
     @Setup(Level.Iteration)
     fun setup() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 configure()
             }
@@ -74,7 +74,7 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbJvmBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
-    override fun JCDBSettings.configure() {
+    override fun JcSettings.configure() {
     }
 
 }
@@ -87,7 +87,7 @@ class JcdbJvmBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbAllClasspathBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
-    override fun JCDBSettings.configure() {
+    override fun JcSettings.configure() {
         loadByteCode(allClasspath)
     }
 
@@ -101,7 +101,7 @@ class JcdbAllClasspathBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmar
 @Measurement(iterations = 2, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbIdeaBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
-    override fun JCDBSettings.configure() {
+    override fun JcSettings.configure() {
         loadByteCode(allIdeaJars)
         persistent(File.createTempFile("jcdb-", "-db").absolutePath)
     }

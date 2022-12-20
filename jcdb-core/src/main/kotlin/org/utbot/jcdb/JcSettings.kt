@@ -26,7 +26,7 @@ import java.io.File
 /**
  * Settings for database
  */
-class JCDBSettings {
+class JcSettings {
 
     /** watch file system changes delay */
     var watchFileSystemDelay: Int? = null

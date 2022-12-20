@@ -18,7 +18,7 @@ package org.utbot.jcdb.api.cfg
 
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.PredefinedPrimitives
-import org.utbot.jcdb.api.autoboxIfNeeded
+import org.utbot.jcdb.api.ext.autoboxIfNeeded
 import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.impl.cfg.JcBlockGraphImpl
 import org.utbot.jcdb.impl.cfg.JcGraphImpl

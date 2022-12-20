@@ -22,7 +22,7 @@ import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.PredefinedPrimitive
-import org.utbot.jcdb.api.isNullable
+import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.throwClassNotFound
 import org.utbot.jcdb.impl.types.signature.JvmType
 import org.utbot.jcdb.impl.types.substition.JcSubstitutor

@@ -33,7 +33,7 @@ import org.utbot.jcdb.api.JCDB
 import org.utbot.jcdb.impl.allClasspath
 import org.utbot.jcdb.impl.features.Usages
 import org.utbot.jcdb.impl.guavaLib
-import org.utbot.jcdb.jcdb
+import org.utbot.jcdb.jacodb
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -51,7 +51,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntime() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
             }
         }
@@ -60,7 +60,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithUsages() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 installFeatures(Usages)
             }
@@ -70,7 +70,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithAllClasspath() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 loadByteCode(allClasspath)
             }
@@ -80,7 +80,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithAllClasspathWithUsages() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 loadByteCode(allClasspath)
                 installFeatures(Usages)
@@ -91,7 +91,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithGuava() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 loadByteCode(listOf(guavaLib))
             }
@@ -101,7 +101,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithGuavaWithUsages() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 loadByteCode(listOf(guavaLib))
                 installFeatures(Usages)
@@ -112,7 +112,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeWithIdeaCommunity() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 persistent(File.createTempFile("jcdb-", "-db").absolutePath)
                 loadByteCode(allIdeaJars)
@@ -123,7 +123,7 @@ class JcdbBenchmarks  {
     @Benchmark
     fun jvmRuntimeIdeaCommunityWithUsages() {
         db = runBlocking {
-            jcdb {
+            jacodb {
                 useProcessJavaRuntime()
                 loadByteCode(allIdeaJars)
                 persistent(File.createTempFile("jcdb-", "-db").absolutePath)

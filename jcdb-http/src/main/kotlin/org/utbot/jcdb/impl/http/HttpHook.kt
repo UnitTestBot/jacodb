@@ -28,13 +28,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
-import org.utbot.jcdb.JCDBSettings
+import org.utbot.jcdb.JcSettings
 import org.utbot.jcdb.api.Hook
 import org.utbot.jcdb.api.JCDB
 
 
 open class HttpHook(
-    private val port: Int, private val jcdb: JCDB, private val settings: JCDBSettings,
+    private val port: Int, private val jcdb: JCDB, private val settings: JcSettings,
     private val exposureSettings: DefaultExposureSettings
 ) : Hook {
 
@@ -77,7 +77,7 @@ class DefaultExposureSettings {
     var apiPrefix: String = "/jcdb-api"
 }
 
-fun JCDBSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Unit = {}) = withHook {
+fun JcSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Unit = {}) = withHook {
     val settings = DefaultExposureSettings().also(action)
     HttpHook(port, it, this, settings)
 }

@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("Cfg")
 package org.utbot.jcdb.api.cfg.ext
 
 import org.utbot.jcdb.api.cfg.JcRawExpr

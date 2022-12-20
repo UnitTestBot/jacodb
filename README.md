@@ -10,7 +10,7 @@ Information about classes, hierarchies, annotations, methods, fields, and their 
 
 ## Useful links
 
-- [Design overview and technical information](docs/design.md).
+- [Design overview and technical information](../../wiki/Api-reference).
 - [Full api reference](../../wiki/Api-reference)
 
 ## Examples
@@ -22,6 +22,39 @@ API has two levels: the one representing in filesystem (**bytecode** and **class
 
 Both levels are connected to `JcClasspath`. You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by generics substitution.
 
+Java
+```java
+class Example {
+    public static MethodNode findNormalDistribution() {
+        var commonsMath32 = new File("commons-math3-3.2.jar");
+        var commonsMath36 = new File("commons-math3-3.6.1.jar");
+        var buildDir = new File("my-project/build/classes/java/main");
+        var database = JacoDB.async(
+                new JcSettings()
+                        .useProcessJRE()
+                        .persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
+        ).get();
+
+        // Let's load these three bytecode locations
+        database.load(Lists.newArrayList(commonsMath32, commonsMath36, buildDir));
+
+        // This method just refreshes the libraries inside the database. If there are any changes in libs then 
+        // the database updates data with the new results.
+        database.load(Lists.newArrayList(buildDir));
+
+        // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
+        var jcClass = database.asyncClasspath(commonsMath32, buildDir).get().findClass("org.apache.commons.math3.distribution.NormalDistribution");
+        System.out.println(jcClass.getMethods().size);
+        System.out.println(jcClass.getAnnotations().size);
+        System.out.println(Api.getConstructors(jcClass).size);
+
+        // At this point the database read the method bytecode and return the result.
+        return jcClass.getMethods().get(0).body();
+    }
+}
+```
+
+Kotlin
 ```kotlin
 suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
@@ -50,6 +83,8 @@ suspend fun findNormalDistribution(): Any {
 }
 ```
 
+
+
 Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed. Class could be in incomplete environment (i.e super class, interface, return type or parameter of method is not found in classpath) then api will throw `NoClassInClasspathException` at runtime. 
 
 The database can watch for file system changes in the background and refresh the JAR-files explicitly:
@@ -77,6 +112,30 @@ The database can watch for file system changes in the background and refresh the
 
 It represents runtime behavior according to parameter substitution in the given generic type: 
 
+Java
+```java
+public class Example {
+    public static class A<T> {
+        T x = null;
+    }
+
+    public static class B extends A<String> {
+    }
+
+    public static void main(String[] args) {
+        var b = classpath.findTypeOrNull("Example.B");
+        var xType = b.getFields()
+                .stream()
+                .filter(it -> "x".equals(it.getName()))
+                .findFirst().get().getFieldType();
+        var stringType = classpath.findTypeOrNull("java.lang.String");
+        System.out.println(xType.equals(stringType)); // will print `true` 
+    }
+    
+}
+```
+
+Kotlin
 ```kotlin
     open class A<T> {
         val x: T
@@ -88,8 +147,8 @@ It represents runtime behavior according to parameter substitution in the given 
         val b = classpath.findClass<B>().toType()
         println(b.fields.first { it.name == "x"}.fieldType == cp.findClass<String>().toType()) // will print `true` 
     }
-
 ```
+
 
 ## Multithreading
 
@@ -97,6 +156,28 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
 
 `JcClasspath` represents an independent snapshot of classes, which cannot be modified since it is created. Removing or modifying library files does not affect `JcClasspath` instance structure. The `JcClasspath#close` method releases all snapshots and cleans up the persisted data if some libraries are outdated.
 
+Java
+```java
+class Example {
+    public static void main(String[] args) {
+        var database = JacoDB.async(
+                new JcSettings()
+                        .watchFileSystemChanges()
+                        .useProcessJavaRuntime()
+                        .loadByteCode(Lists.newArrayList(lib1, buildDir))
+                        .persistent(location = "...")
+        ).get();
+
+        var cp = database.asyncClasspath(buildDir).get();
+        database.asyncRefresh().get(); // does not affect cp classes
+
+        var cp1 = database.asyncClasspath(buildDir).get(); // will use new version of compiled results in buildDir
+    }
+}
+```
+
+
+Kotlin
 ```kotlin
     val database = jacodb {
         watchFileSystemChanges()
@@ -113,6 +194,22 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
 
 If there is a request for a `JcClasspath` instance containing the libraries, which haven't been indexed yet, the indexing process is triggered and the new instance of the `JcClasspath` set is returned. 
 
+Java
+```java
+class Example {
+    public static void main(String[] args) {
+        var database = Jacodb.async(
+                new JcSettings()
+                        .loadByteCode(Lists.newArrayList(lib1))
+                        .persistent("...")
+        ).get();
+
+        var cp = database.asyncClasspath(buildDir).get(); // database will automatically process buildDir
+    }
+}
+```
+
+Kotlin 
 ```kotlin
     val database = jacodb {
         load(listOf(lib1))
@@ -126,6 +223,25 @@ If there is a request for a `JcClasspath` instance containing the libraries, whi
 `JcClasspath` can represent only a consistent state of the JAR-files being loaded. It is the completely loaded 
 JAR-file that appears in `JcClasspath`. Please note: there is no guarantee that all the JAR-files, submitted for loading, will be actually loaded.
 
+Java
+
+```java
+class Example {
+    public static void main(String[] args) {
+        val db = JacoDB.async(new JcSettings()).get();
+
+        new Thread(() -> db.asyncLoad(Lists.newArrayList(lib1, lib2)).get()).start();
+
+        new Thread(() -> {
+            // maybe created when lib2 or both are not loaded into database
+            // but buildDir will be loaded anyway
+            var cp = db.asyncClasspath(buildDir).get();
+        }).start();
+    }
+}
+ ```
+
+Kotlin
 ```kotlin
     val db = jacodb {
         persistent()

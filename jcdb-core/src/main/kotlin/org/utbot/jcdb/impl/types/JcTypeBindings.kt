@@ -22,7 +22,7 @@ import org.utbot.jcdb.api.JcRefType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.PredefinedPrimitives
-import org.utbot.jcdb.api.anyType
+import org.utbot.jcdb.api.ext.anyType
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.impl.types.signature.JvmArrayType
 import org.utbot.jcdb.impl.types.signature.JvmBoundWildcard
