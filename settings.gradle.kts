@@ -1,4 +1,4 @@
-rootProject.name = "jcdb"
+rootProject.name = "jacodb"
 
 plugins {
     id("org.danilopianini.gradle-pre-commit-git-hooks") version "1.0.25"
@@ -12,7 +12,7 @@ gitHooks {
     createHooks() // actual hooks creation
 }
 
-include("jcdb-api")
-include("jcdb-core")
-include("jcdb-testing")
-include("jcdb-http")
+include("jacodb-api")
+include("jacodb-core")
+include("jacodb-testing")
+include("jacodb-http")

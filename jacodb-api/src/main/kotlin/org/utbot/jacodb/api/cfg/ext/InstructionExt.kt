@@ -1,0 +1,49 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+@file:JvmName("Cfg")
+package org.utbot.jacodb.api.cfg.ext
+
+import org.utbot.jacodb.api.cfg.JcRawExpr
+import org.utbot.jacodb.api.cfg.JcRawExprVisitor
+import org.utbot.jacodb.api.cfg.JcRawInst
+import org.utbot.jacodb.api.cfg.JcRawInstList
+import org.utbot.jacodb.api.cfg.JcRawInstVisitor
+
+fun JcRawInstList.apply(visitor: JcRawInstVisitor<Unit>): JcRawInstList {
+    instructions.forEach { it.accept(visitor) }
+    return this
+}
+
+fun <R, E, T : JcRawInstVisitor<E>> JcRawInstList.applyAndGet(visitor: T, getter: (T) -> R): R {
+    instructions.forEach { it.accept(visitor) }
+    return getter(visitor)
+}
+
+fun <T> JcRawInstList.collect(visitor: JcRawInstVisitor<T>): Collection<T> {
+    return instructions.map { it.accept(visitor) }
+}
+
+
+fun <R, E, T : JcRawInstVisitor<E>> JcRawInst.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
+}
+
+fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T) -> R): R {
+    this.accept(visitor)
+    return getter(visitor)
+}
