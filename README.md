@@ -90,11 +90,25 @@ Note: the `body` method returns `null` if the to-be-processed JAR-file was chang
 
 The database can watch for file system changes in the background and refresh the JAR-files explicitly:
 
+Java
+```java
+    var database = JacoDB.async(new JcSettings()
+        .watchFileSystem()
+        .useProcessJRE()
+        .loadByteCode(Arrays.asList(lib1, buildDir)) 
+        .persistent("", false)).get();
+    }
+
+    // A user rebuilds the buildDir folder.
+    // The database re-reads the rebuilt directory in the background.
+```
+
+Kotlin
 ```kotlin
     val database = jacodb {
         watchFileSystemChanges = true
         useProcessJRE()
-        load(listOf(lib1, buildDir)) 
+        loadByteCode(listOf(lib1, buildDir)) 
         persistent()
     }
 
