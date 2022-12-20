@@ -40,15 +40,15 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                 ?: throw IllegalStateException("primitive type ${jvmType.ref} not found")
         }
 
-        is JvmClassRefType -> typeOf(findClass(jvmType.name))
-        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType))
+        is JvmClassRefType -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
+        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType)).copyWithNullability(jvmType.isNullable)
         is JvmParameterizedType -> {
             val clazz = findClass(jvmType.name)
             JcClassTypeImpl(
                 clazz,
                 null,
                 parameters ?: jvmType.parameterTypes,
-                nullable = true
+                nullable = jvmType.isNullable
             )
         }
 
@@ -60,14 +60,14 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                 clazz,
                 outerType as JcClassTypeImpl,
                 jvmType.parameterTypes,
-                nullable = true
+                nullable = jvmType.isNullable
             )
         }
 
         is JvmTypeVariable -> {
             val declaration = jvmType.declaration
             if (declaration != null) {
-                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), true)
+                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), jvmType.isNullable)
             } else {
                 anyType()
             }
@@ -75,11 +75,11 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
 
         is JvmUnboundWildcard -> JcUnboundWildcardImpl(this)
         is JvmBoundWildcard.JvmUpperBoundWildcard -> JcBoundedWildcardImpl(
-            upperBounds = listOf(typeOf(jvmType.bound) as JcRefType), lowerBounds = emptyList(), true
+            upperBounds = listOf(typeOf(jvmType.bound) as JcRefType), lowerBounds = emptyList()
         )
 
         is JvmBoundWildcard.JvmLowerBoundWildcard -> JcBoundedWildcardImpl(
-            upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType), true
+            upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType)
         )
     }
 }

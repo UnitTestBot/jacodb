@@ -26,7 +26,6 @@ import org.utbot.jcdb.api.JcTypeVariableDeclaration
 import org.utbot.jcdb.api.JcTypedMethod
 import org.utbot.jcdb.api.JcTypedMethodParameter
 import org.utbot.jcdb.api.MethodResolution
-import org.utbot.jcdb.api.PredefinedPrimitive
 import org.utbot.jcdb.api.ext.findClass
 import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.api.ext.isStatic
@@ -113,15 +112,14 @@ class JcTypedMethodImpl(
             classpath.typeOf(info.substitutor.substitute(impl.returnType))
         }
 
-        if (!method.isNullable && type !is PredefinedPrimitive)
-            (type as JcRefType).notNullable()
-        else
-            type
+        method.isNullable?.let {
+            (type as? JcRefType)?.copyWithNullability(it)
+        } ?: type
     }
 
     override fun typeOf(inst: LocalVariableNode): JcType {
         val variableSignature =
-            FieldSignature.of(inst.signature, method.allVisibleTypeParameters()) as? FieldResolutionImpl
+            FieldSignature.of(inst.signature, method.allVisibleTypeParameters(), null) as? FieldResolutionImpl
         if (variableSignature == null) {
             val type = Type.getType(inst.desc)
             return classpath.findTypeOrNull(type.className) ?: type.className.throwClassNotFound()

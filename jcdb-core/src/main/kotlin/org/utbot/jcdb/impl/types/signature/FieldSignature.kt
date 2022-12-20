@@ -20,16 +20,17 @@ import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jcdb.api.FieldResolution
 import org.utbot.jcdb.api.JcField
 import org.utbot.jcdb.api.Pure
+import org.utbot.jcdb.impl.bytecode.kmType
 import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor
 
-internal class FieldSignature : TypeRegistrant {
+internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
 
     private lateinit var fieldType: JvmType
 
     override fun register(token: JvmType) {
-        fieldType = token
+        fieldType = field?.kmType?.let { token.relaxWithKmType(it) } ?: token
     }
 
     fun resolve(): FieldResolution {
@@ -42,13 +43,13 @@ internal class FieldSignature : TypeRegistrant {
             FieldResolutionImpl(visitor.visitType(fieldType))
 
         fun of(field: JcField): FieldResolution {
-            return of(field.signature, field.enclosingClass.allVisibleTypeParameters())
+            return of(field.signature, field.enclosingClass.allVisibleTypeParameters(), field)
         }
 
-        fun of(signature: String?, declarations: Map<String, JvmTypeParameterDeclaration>): FieldResolution {
+        fun of(signature: String?, declarations: Map<String, JvmTypeParameterDeclaration>, field: JcField?): FieldResolution {
             signature ?: return Pure
             val signatureReader = SignatureReader(signature)
-            val visitor = FieldSignature()
+            val visitor = FieldSignature(field)
             return try {
                 signatureReader.acceptType(TypeExtractor(visitor))
                 val result = visitor.resolve()

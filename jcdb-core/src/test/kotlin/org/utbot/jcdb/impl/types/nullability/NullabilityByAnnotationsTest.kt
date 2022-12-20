@@ -14,46 +14,42 @@
  *  limitations under the License.
  */
 
-package org.utbot.jcdb.impl
+package org.utbot.jcdb.impl.types.nullability
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JcClassType
-import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.ext.isNullable
+import org.utbot.jcdb.impl.types.BaseTypesTest
+import org.utbot.jcdb.impl.usages.NullAnnotationExamples
 
-class SimpleNullabilityTest:  BaseTest() {
-
-    companion object : WithDB()
+class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test field nullability`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+        val clazz = findType<NullAnnotationExamples>()
 
         val expectedNullability = mapOf(
-            "refNullable" to true,
+            "refNullable" to null,
             "refNotNull" to false,
-            "primitiveNullable" to true,
-            "primitiveNotNull" to false,
+            "explicitlyNullable" to true,
+            "primitiveValue" to false,
         )
 
-        val actualFieldNullability = clazz.declaredFields.associate { it.name to it.field.isNullable }
-        val actualFieldTypeNullability = clazz.declaredFields.associate { it.name to it.fieldType.nullable }
+        val fields = clazz.declaredFields.filter { it.name in expectedNullability.keys }
+        val actualFieldNullability = fields.associate { it.name to it.field.isNullable }
+        val actualFieldTypeNullability = fields.associate { it.name to it.fieldType.nullable }
 
         assertEquals(expectedNullability, actualFieldNullability)
         assertEquals(expectedNullability, actualFieldTypeNullability)
     }
 
     @Test
-    fun `Test method parameter isNullable`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+    fun `Test method parameter nullability`() = runBlocking {
+        val clazz = findType<NullAnnotationExamples>()
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
-        val expectedNullability = listOf(true, false)
+        val expectedNullability = listOf(true, false, null)
         val actualParameterNullability = nullableMethod.parameters.map { it.nullable }
         val actualParameterTypeNullability = nullableMethod.parameters.map { it.type.nullable }
 
@@ -62,19 +58,15 @@ class SimpleNullabilityTest:  BaseTest() {
     }
 
     @Test
-    fun `Test method isNullable`() = runBlocking {
-        val clazz = typeOf<NullableExamples>() as JcClassType
+    fun `Test method nullability`() = runBlocking {
+        val clazz = findType<NullAnnotationExamples>()
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
-        assertTrue(nullableMethod.method.isNullable)
-        assertTrue(nullableMethod.returnType.nullable)
+        assertEquals(null, nullableMethod.method.isNullable)
+        assertEquals(null, nullableMethod.returnType.nullable)
 
         val notNullMethod = clazz.declaredMethods.single { it.name == "notNullMethod" }
-        assertFalse(notNullMethod.method.isNullable)
-        assertFalse(notNullMethod.returnType.nullable)
-    }
-
-    private inline fun <reified T> typeOf(): JcType {
-        return cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
+        assertEquals(false, notNullMethod.method.isNullable)
+        assertEquals(false, notNullMethod.returnType.nullable)
     }
 }

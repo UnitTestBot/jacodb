@@ -40,14 +40,14 @@ open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
-    override val nullable: Boolean
+    override val nullable: Boolean?
 ) : JcClassType {
 
     constructor(
         jcClass: JcClassOrInterface,
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
-        nullable: Boolean
+        nullable: Boolean?
     ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
 
     private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
@@ -140,7 +140,7 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun notNullable() = JcClassTypeImpl(jcClass, outerType, substitutor, false)
+    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

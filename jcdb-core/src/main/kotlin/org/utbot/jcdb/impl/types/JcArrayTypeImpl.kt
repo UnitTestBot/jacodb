@@ -23,13 +23,13 @@ import org.utbot.jcdb.api.JcType
 
 class JcArrayTypeImpl(
     override val elementType: JcType,
-    override val nullable: Boolean = true
+    override val nullable: Boolean? = null
 ) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"
 
-    override fun notNullable(): JcRefType {
-        return JcArrayTypeImpl(elementType, false)
+    override fun copyWithNullability(nullability: Boolean?): JcRefType {
+        return JcArrayTypeImpl(elementType, nullability)
     }
 
     override val classpath: JcClasspath

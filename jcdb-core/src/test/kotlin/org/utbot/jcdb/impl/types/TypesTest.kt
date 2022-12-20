@@ -17,7 +17,6 @@
 package org.utbot.jcdb.impl.types
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcArrayType
@@ -68,7 +67,7 @@ class TypesTest : BaseTypesTest() {
         val type = findType<Example>()
         val actualParameters = type.declaredMethods.single { it.name == "f" }.parameters
         assertEquals(listOf("notNullable", "nullable"), actualParameters.map { it.name })
-        assertFalse(actualParameters.first().nullable)
-        assertTrue(actualParameters.get(1).nullable)
+        assertEquals(false, actualParameters.first().nullable)
+        assertEquals(true, actualParameters.get(1).nullable)
     }
 }

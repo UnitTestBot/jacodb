@@ -21,11 +21,12 @@ import org.utbot.jcdb.api.JcClassOrInterface
 import org.utbot.jcdb.api.Malformed
 import org.utbot.jcdb.api.Pure
 import org.utbot.jcdb.api.TypeResolution
+import org.utbot.jcdb.impl.bytecode.kmTypeParameters
 import org.utbot.jcdb.impl.types.allVisibleTypeParameters
 import org.utbot.jcdb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jcdb.impl.types.substition.fixDeclarationVisitor
 
-internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass) {
+internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass, jcClass.kmTypeParameters) {
 
     private val interfaceTypes = ArrayList<JvmType>()
     private lateinit var superClass: JvmType

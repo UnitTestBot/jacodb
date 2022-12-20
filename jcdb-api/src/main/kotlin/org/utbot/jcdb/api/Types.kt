@@ -47,14 +47,14 @@ interface JcTypedMethodParameter {
     val type: JcType
     val name: String?
     val enclosingMethod: JcTypedMethod
-    val nullable: Boolean
+    val nullable: Boolean?
 }
 
 interface JcType {
     val classpath: JcClasspath
     val typeName: String
 
-    val nullable: Boolean
+    val nullable: Boolean?
 }
 
 interface JcPrimitiveType : JcType {
@@ -63,7 +63,7 @@ interface JcPrimitiveType : JcType {
 }
 
 interface JcRefType : JcType {
-    fun notNullable(): JcRefType
+    fun copyWithNullability(nullability: Boolean?): JcRefType
 }
 
 interface JcArrayType : JcRefType {
