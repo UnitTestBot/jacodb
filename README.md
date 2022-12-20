@@ -36,11 +36,11 @@ class Example {
         ).get();
 
         // Let's load these three bytecode locations
-        database.load(Lists.newArrayList(commonsMath32, commonsMath36, buildDir));
+        database.load(Arrays.asList(commonsMath32, commonsMath36, buildDir));
 
         // This method just refreshes the libraries inside the database. If there are any changes in libs then 
         // the database updates data with the new results.
-        database.load(Lists.newArrayList(buildDir));
+        database.load(Arrays.asList(buildDir));
 
         // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
         var jcClass = database.asyncClasspath(commonsMath32, buildDir).get().findClass("org.apache.commons.math3.distribution.NormalDistribution");
@@ -164,7 +164,7 @@ class Example {
                 new JcSettings()
                         .watchFileSystemChanges()
                         .useProcessJavaRuntime()
-                        .loadByteCode(Lists.newArrayList(lib1, buildDir))
+                        .loadByteCode(Arrays.asList(lib1, buildDir))
                         .persistent(location = "...")
         ).get();
 
@@ -200,7 +200,7 @@ class Example {
     public static void main(String[] args) {
         var database = Jacodb.async(
                 new JcSettings()
-                        .loadByteCode(Lists.newArrayList(lib1))
+                        .loadByteCode(Arrays.asList(lib1))
                         .persistent("...")
         ).get();
 
@@ -230,7 +230,7 @@ class Example {
     public static void main(String[] args) {
         val db = JacoDB.async(new JcSettings()).get();
 
-        new Thread(() -> db.asyncLoad(Lists.newArrayList(lib1, lib2)).get()).start();
+        new Thread(() -> db.asyncLoad(Arrays.asList(lib1, lib2)).get()).start();
 
         new Thread(() -> {
             // maybe created when lib2 or both are not loaded into database
