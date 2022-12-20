@@ -27,8 +27,6 @@ abstract class AbstractByteCodeLocation(override val jarOrFolder: File) : JcByte
 
     abstract fun currentHash(): String
 
-    override fun isChanged(): Boolean {
-        return fsId != currentHash()
-    }
+    override fun isChanged() = fsId != currentHash()
 
 }

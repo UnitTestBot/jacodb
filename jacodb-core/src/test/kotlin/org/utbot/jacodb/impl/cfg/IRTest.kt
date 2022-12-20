@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl
 
+import com.fasterxml.jackson.core.filter.FilteringParserDelegate
 import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,7 +54,9 @@ import org.utbot.jacodb.api.cfg.JcThrowInst
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.ext.HierarchyExtension
 import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.api.ext.isAbstract
 import org.utbot.jacodb.api.ext.isAnnotation
+import org.utbot.jacodb.api.ext.isInterface
 import org.utbot.jacodb.api.ext.methods
 import org.utbot.jacodb.api.ext.packageName
 import org.utbot.jacodb.api.ext.toType
@@ -116,9 +119,14 @@ class OverridesResolver(
 
 }
 
-class JcGraphChecker(val jcGraph: JcGraph) : JcInstVisitor<Unit> {
+class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor<Unit> {
     fun check() {
-        assertDoesNotThrow { jcGraph.entry }
+        try {
+            jcGraph.entry
+        } catch (e: Exception) {
+            println("Fail on method ${method.enclosingClass.simpleName}#${method.name}(${method.parameters.joinToString(",") { it.type.typeName }})")
+            throw e
+        }
         assertTrue(jcGraph.exits.all { it is JcTerminatingInst })
 
         jcGraph.forEach { it.accept(this) }
@@ -307,11 +315,16 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-    //    @Test
+    @Test
     fun `get ir of jackson`() {
         allClasspath.filter { it.name.contains("jackson") }.forEach {
             runAlongLib(it)
         }
+    }
+
+    @Test
+    fun `test fail`() {
+        testClass(cp.findClass<FilteringParserDelegate>())
     }
 
     //    @Test
@@ -329,7 +342,7 @@ class IRTest : BaseTest() {
         assertNotNull(classes)
         classes!!.forEach {
             val clazz = cp.findClass(it.key)
-            if (!clazz.isAnnotation) {
+            if (!clazz.isAnnotation && !clazz.isInterface) {
                 println("Testing class: ${it.key}")
                 testClass(clazz)
             }
@@ -340,21 +353,25 @@ class IRTest : BaseTest() {
     private fun testClass(klass: JcClassOrInterface) = try {
         val classNode = klass.bytecode()
         classNode.methods = klass.methods.filter { it.enclosingClass == klass }.map {
+            if (it.isAbstract) {
+                it.body()
+            } else {
 //            val oldBody = it.body()
 //            println()
 //            println("Old body: ${oldBody.print()}")
-            val instructionList = it.instructionList()
+                val instructionList = it.instructionList()
 //            println("Instruction list: $instructionList")
-            val graph = instructionList.graph(it)
-            graph.applyAndGet(OverridesResolver(ext)) {}
-            JcGraphChecker(graph).check()
+                val graph = instructionList.graph(it)
+                graph.applyAndGet(OverridesResolver(ext)) {}
+                JcGraphChecker(it, graph).check()
 //            println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
-            val newBody = MethodNodeBuilder(it, instructionList).build()
+                val newBody = MethodNodeBuilder(it, instructionList).build()
 //            println("New body: ${newBody.print()}")
 //            println()
-            newBody
+                newBody
+            }
         }
         val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
         val checker = CheckClassAdapter(classNode)
