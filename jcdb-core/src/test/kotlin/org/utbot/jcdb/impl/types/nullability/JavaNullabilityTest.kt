@@ -16,131 +16,120 @@
 
 package org.utbot.jcdb.impl.types.nullability
 
-import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JcClassType
-import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.impl.BaseTest
-import org.utbot.jcdb.impl.WithDB
-import org.utbot.jcdb.impl.usages.NullAnnotationExamples
-
-@Disabled("Type annotations are not supported")
-class JavaNullabilityTest : BaseTest() {
-    companion object : WithDB()
-
-    @Test
-    fun `Test nullability for simple types Java`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
-        val params = clazz.declaredMethods.single { it.name == "nullableMethod" }.parameters
-        val actualNullability = params.map { it.type.nullabilityTree }
-        val expectedNullability = listOf(
-            // @Nullable String
-            buildTree(true),
-
-            // @NotNull String
-            buildTree(false),
-
-            // SomeContainer<@NotNull String>
-            buildTree(null) {
-                +buildTree(false)
-            }
-        )
-
-        assertEquals(expectedNullability, actualNullability)
-    }
-
-    @Test
-    fun `Test nullability on wildcards Java`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
-        val returnType = clazz.declaredMethods.single { it.name == "wildcard" }.returnType
-        val actualNullability = returnType.nullabilityTree
-        val expectedNullability =
-            buildTree(true) {
-                +buildTree(false)
-            }
-
-        assertEquals(expectedNullability, actualNullability)
-    }
-
-    @Test
-    fun `Test nullability after substitution with NotNull type or type of undefined nullability Java`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
-        val containerOfUndefined = clazz.declaredFields.single { it.name == "containerOfUndefined" }
-        val containerOfNotNull = clazz.declaredFields.single { it.name == "containerOfNotNull" }
-
-        val containerOfUndefinedFieldsNullability = (containerOfUndefined.fieldType as JcClassType)
-            .fields
-            .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
-
-        val containerOfNotNullFieldsNullability = (containerOfNotNull.fieldType as JcClassType)
-            .fields
-            .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
-
-        // E -> String or E -> @NotNull String
-        val expectedNullability = listOf(
-            // List<@NotNull E>
-            buildTree(null) {
-                +buildTree(false)
-            },
-
-            // List<@Nullable E>
-            buildTree(null) {
-                +buildTree(true)
-            },
-
-            // List<E>
-            buildTree(null) {
-                +buildTree(null)
-            },
-
-            // @NotNull E, @Nullable E, E
-            buildTree(false), buildTree(true), buildTree(null)
-        )
-
-        assertEquals(expectedNullability, containerOfNotNullFieldsNullability)
-        assertEquals(expectedNullability, containerOfUndefinedFieldsNullability)
-    }
-
-    @Test
-    fun `Test nullability after substitution with nullable type Java`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
-        val containerOfNullable = clazz.declaredFields.single { it.name == "containerOfNullable" }
-
-        val containerOfNullableFieldsNullability = (containerOfNullable.fieldType as JcClassType)
-            .fields
-            .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
-
-        // E -> @Nullable String
-        val expectedNullability = listOf(
-            // List<@NotNull E>
-            buildTree(null) {
-                +buildTree(false)
-            },
-
-            // List<@Nullable E>
-            buildTree(null) {
-                +buildTree(true)
-            },
-
-            // List<E>
-            buildTree(null) {
-                +buildTree(true)
-            },
-
-            // @NotNull E, @Nullable E, E
-            buildTree(false), buildTree(true), buildTree(true)
-        )
-
-        assertEquals(expectedNullability, containerOfNullableFieldsNullability)
-    }
-
-    private inline fun <reified T> typeOf(): JcType {
-        return cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
-    }
-}
+//@Disabled("Type annotations are not supported")
+//class JavaNullabilityTest : BaseTest() {
+//    companion object : WithDB()
+//
+//    @Test
+//    fun `Test nullability for simple types Java`() = runBlocking {
+//        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+//        val params = clazz.declaredMethods.single { it.name == "nullableMethod" }.parameters
+//        val actualNullability = params.map { it.type.nullabilityTree }
+//        val expectedNullability = listOf(
+//            // @Nullable String
+//            buildTree(true),
+//
+//            // @NotNull String
+//            buildTree(false),
+//
+//            // SomeContainer<@NotNull String>
+//            buildTree(null) {
+//                +buildTree(false)
+//            }
+//        )
+//
+//        assertEquals(expectedNullability, actualNullability)
+//    }
+//
+//    @Test
+//    fun `Test nullability on wildcards Java`() = runBlocking {
+//        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+//        val returnType = clazz.declaredMethods.single { it.name == "wildcard" }.returnType
+//        val actualNullability = returnType.nullabilityTree
+//        val expectedNullability =
+//            buildTree(true) {
+//                +buildTree(false)
+//            }
+//
+//        assertEquals(expectedNullability, actualNullability)
+//    }
+//
+//    @Test
+//    fun `Test nullability after substitution with NotNull type or type of undefined nullability Java`() = runBlocking {
+//        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+//        val containerOfUndefined = clazz.declaredFields.single { it.name == "containerOfUndefined" }
+//        val containerOfNotNull = clazz.declaredFields.single { it.name == "containerOfNotNull" }
+//
+//        val containerOfUndefinedFieldsNullability = (containerOfUndefined.fieldType as JcClassType)
+//            .fields
+//            .sortedBy { it.name }
+//            .map { it.fieldType.nullabilityTree }
+//
+//        val containerOfNotNullFieldsNullability = (containerOfNotNull.fieldType as JcClassType)
+//            .fields
+//            .sortedBy { it.name }
+//            .map { it.fieldType.nullabilityTree }
+//
+//        // E -> String or E -> @NotNull String
+//        val expectedNullability = listOf(
+//            // List<@NotNull E>
+//            buildTree(null) {
+//                +buildTree(false)
+//            },
+//
+//            // List<@Nullable E>
+//            buildTree(null) {
+//                +buildTree(true)
+//            },
+//
+//            // List<E>
+//            buildTree(null) {
+//                +buildTree(null)
+//            },
+//
+//            // @NotNull E, @Nullable E, E
+//            buildTree(false), buildTree(true), buildTree(null)
+//        )
+//
+//        assertEquals(expectedNullability, containerOfNotNullFieldsNullability)
+//        assertEquals(expectedNullability, containerOfUndefinedFieldsNullability)
+//    }
+//
+//    @Test
+//    fun `Test nullability after substitution with nullable type Java`() = runBlocking {
+//        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+//        val containerOfNullable = clazz.declaredFields.single { it.name == "containerOfNullable" }
+//
+//        val containerOfNullableFieldsNullability = (containerOfNullable.fieldType as JcClassType)
+//            .fields
+//            .sortedBy { it.name }
+//            .map { it.fieldType.nullabilityTree }
+//
+//        // E -> @Nullable String
+//        val expectedNullability = listOf(
+//            // List<@NotNull E>
+//            buildTree(null) {
+//                +buildTree(false)
+//            },
+//
+//            // List<@Nullable E>
+//            buildTree(null) {
+//                +buildTree(true)
+//            },
+//
+//            // List<E>
+//            buildTree(null) {
+//                +buildTree(true)
+//            },
+//
+//            // @NotNull E, @Nullable E, E
+//            buildTree(false), buildTree(true), buildTree(true)
+//        )
+//
+//        assertEquals(expectedNullability, containerOfNullableFieldsNullability)
+//    }
+//
+//    private inline fun <reified T> typeOf(): JcType {
+//        return cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
+//    }
+//}
