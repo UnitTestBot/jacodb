@@ -22,15 +22,15 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.impl.BaseTest
 import org.utbot.jcdb.impl.KotlinNullabilityExamples
 import org.utbot.jcdb.impl.WithDB
+import org.utbot.jcdb.impl.types.BaseTypesTest
 
 class Kek<E: Kek<E>> {
     lateinit var a: E
 }
 
-class KotlinNullabilityTest : BaseTest() {
+class KotlinNullabilityTest : BaseTypesTest() {
     companion object : WithDB()
 
     @Test
