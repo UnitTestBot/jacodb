@@ -22,12 +22,10 @@ import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
 import org.utbot.jcdb.api.JcType
 import org.utbot.jcdb.api.ext.findTypeOrNull
-import org.utbot.jcdb.impl.WithDB
 import org.utbot.jcdb.impl.types.BaseTypesTest
 import org.utbot.jcdb.impl.usages.NullAnnotationExamples
 
 class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
-    companion object : WithDB()
 
     @Test
     fun `Test nullability after substitution of Kotlin T with type of undefined nullability Java`() = runBlocking {
