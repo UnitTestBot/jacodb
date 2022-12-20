@@ -19,9 +19,6 @@ package org.utbot.jcdb.impl.types.nullability
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jcdb.api.JcClassType
-import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.api.ext.isNullable
 import org.utbot.jcdb.impl.types.BaseTypesTest
 import org.utbot.jcdb.impl.usages.NullAnnotationExamples
@@ -30,7 +27,7 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test field nullability`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+        val clazz = findType<NullAnnotationExamples>()
 
         val expectedNullability = mapOf(
             "refNullable" to null,
@@ -49,7 +46,7 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test method parameter nullability`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+        val clazz = findType<NullAnnotationExamples>()
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
         val expectedNullability = listOf(true, false, null)
@@ -62,7 +59,7 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test method nullability`() = runBlocking {
-        val clazz = typeOf<NullAnnotationExamples>() as JcClassType
+        val clazz = findType<NullAnnotationExamples>()
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
         assertEquals(null, nullableMethod.method.isNullable)
@@ -71,9 +68,5 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
         val notNullMethod = clazz.declaredMethods.single { it.name == "notNullMethod" }
         assertEquals(false, notNullMethod.method.isNullable)
         assertEquals(false, notNullMethod.returnType.nullable)
-    }
-
-    private inline fun <reified T> typeOf(): JcType {
-        return cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
     }
 }

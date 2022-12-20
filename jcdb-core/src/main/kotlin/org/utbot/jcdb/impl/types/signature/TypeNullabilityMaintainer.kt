@@ -44,25 +44,24 @@ fun JvmType.copyWithNullability(nullability: Boolean?): JvmType =
         }
     }
 
-internal fun JvmType.relaxWithKmType(kmType: KmType, recLevel: Int = 0): JvmType {
-    require(recLevel <= 1000)
-    return when (this) {
+internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
+    when (this) {
         is JvmArrayType -> {
             // NB: kmType may have zero (for primitive arrays) or one (for object arrays) argument
             val updatedElementType = kmType.arguments.singleOrNull()?.type?.let {
-                elementType.relaxWithKmType(it, recLevel + 1)
+                elementType.relaxWithKmType(it)
             } ?: elementType
 
             JvmArrayType(updatedElementType, kmType.isNullable)
         }
 
         is JvmParameterizedType.JvmNestedType -> {
-            val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type }, recLevel + 1)
+            val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
             JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable)
         }
 
         is JvmParameterizedType -> {
-            val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type }, recLevel + 1)
+            val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
             JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable)
         }
 
@@ -70,15 +69,14 @@ internal fun JvmType.relaxWithKmType(kmType: KmType, recLevel: Int = 0): JvmType
             // Kotlin metadata is constructed in terms of projections => there is no explicit type for wildcard.
             // Therefore, we don't look for kmType.arguments and relax bound with kmType directly, not with kmType.arguments.single()
             // Same applies to JvmLowerBoundWildcard.relaxWithKmType
-            JvmBoundWildcard.JvmUpperBoundWildcard(bound.relaxWithKmType(kmType, recLevel + 1))
+            JvmBoundWildcard.JvmUpperBoundWildcard(bound.relaxWithKmType(kmType))
         }
 
         is JvmBoundWildcard.JvmLowerBoundWildcard ->
-            JvmBoundWildcard.JvmLowerBoundWildcard(bound.relaxWithKmType(kmType, recLevel + 1))
+            JvmBoundWildcard.JvmLowerBoundWildcard(bound.relaxWithKmType(kmType))
 
         else -> copyWithNullability(kmType.isNullable) // default implementation for many of JvmTypes
     }
-}
 
 internal fun JvmTypeParameterDeclarationImpl.relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JvmTypeParameterDeclaration {
     val newBounds = bounds?.zip(kmTypeParameter.upperBounds) { bound, kmType ->
@@ -87,9 +85,9 @@ internal fun JvmTypeParameterDeclarationImpl.relaxWithKmTypeParameter(kmTypePara
     return JvmTypeParameterDeclarationImpl(symbol, owner, newBounds)
 }
 
-private fun Iterable<JvmType>.relaxAll(kmTypes: List<KmType?>, recLevel: Int): List<JvmType> =
+private fun Iterable<JvmType>.relaxAll(kmTypes: List<KmType?>): List<JvmType> =
     zip(kmTypes) { type, kmType ->
         kmType?.let {
-            type.relaxWithKmType(it, recLevel)
+            type.relaxWithKmType(it)
         } ?: type
     }

@@ -20,26 +20,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jcdb.api.JcClassType
-import org.utbot.jcdb.api.JcType
-import org.utbot.jcdb.api.ext.findTypeOrNull
 import org.utbot.jcdb.impl.KotlinNullabilityExamples
 import org.utbot.jcdb.impl.types.BaseTypesTest
 
-class Kek<E: Kek<E>> {
-    lateinit var a: E
-}
-
 class KotlinNullabilityTest : BaseTypesTest() {
-
-    @Test
-    fun `gl`() = runBlocking {
-        val clazz = typeOf<Kek<*>>() as JcClassType
-        print(clazz.typeArguments)
-    }
-
     @Test
     fun `Test nullability for simple generics`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val params = clazz.declaredMethods.single { it.name == "simpleGenerics" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(
@@ -70,7 +57,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability for extension function`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val actualNullability = clazz.declaredMethods.single { it.name == "extensionFunction" }
             .parameters.single()
             .type
@@ -88,7 +75,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability for generics with projections`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val params = clazz.declaredMethods.single { it.name == "genericsWithProjection" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(
@@ -113,7 +100,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability for arrays`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val params = clazz.declaredMethods.single { it.name == "javaArrays" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(
@@ -135,7 +122,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability on type parameters`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val params = clazz.declaredMethods.single { it.name == "typeVariableParameters" }.parameters
         val actualNullability = params.map { it.type.nullable }
         val expectedNullability = listOf(false, true) // T, T?
@@ -145,7 +132,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability on type variable declarations`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val params = clazz.declaredMethods.single { it.name == "typeVariableDeclarations" }.typeParameters
         val actualNullability = params.map { it.bounds.single().nullabilityTree }
 
@@ -166,7 +153,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability after substitution with notNull type`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val field = clazz.declaredFields.single { it.name == "containerOfNotNull" }
 
         val fieldsNullability = (field.fieldType as JcClassType)
@@ -198,7 +185,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability after substitution with nullable type`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val field = clazz.declaredFields.single { it.name == "containerOfNullable" }
 
         val fieldsNullability = (field.fieldType as JcClassType)
@@ -230,7 +217,7 @@ class KotlinNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability after passing nullable type through chain of notnull type variables`() = runBlocking {
-        val clazz = typeOf<KotlinNullabilityExamples>() as JcClassType
+        val clazz = findType<KotlinNullabilityExamples>()
         val fieldType = clazz.declaredFields.single { it.name == "someContainerProducer" }.fieldType
         val innerMethodType = (fieldType as JcClassType).declaredMethods.single { it.name == "produceContainer" }.returnType
 
@@ -259,9 +246,5 @@ class KotlinNullabilityTest : BaseTypesTest() {
         )
 
         assertEquals(expectedNullability, fieldsNullability)
-    }
-
-    private inline fun <reified T> typeOf(): JcType {
-        return cp.findTypeOrNull<T>() ?: throw IllegalStateException("Type ${T::class.java.name} not found")
     }
 }
