@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMultiset
 import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -55,7 +54,6 @@ import org.utbot.jacodb.api.cfg.JcThrowInst
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.ext.HierarchyExtension
 import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.api.ext.findCommonSupertype
 import org.utbot.jacodb.api.ext.isAbstract
 import org.utbot.jacodb.api.ext.isAnnotation
 import org.utbot.jacodb.api.ext.isInterface
@@ -330,14 +328,6 @@ class IRTest : BaseTest() {
     @Test
     fun `test fail`() {
         testClass(cp.findClass<ImmutableMultiset<*>>())
-    }
-
-    @Test
-    fun `test hierarchy`() {
-        val ms1 = cp.findClass<com.google.common.collect.Multiset<*>>().toType()
-        val ms2 = cp.findClass<com.google.common.collect.LinkedHashMultiset<*>>().toType()
-        val common = cp.findCommonSupertype(setOf(ms1, ms2))
-        assertFalse(common!!.typeName == "java.lang.Object")
     }
 
     @Test

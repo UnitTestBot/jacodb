@@ -120,7 +120,7 @@ inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
 /**
  * find a common supertype for a set of classes
  */
-fun JcClasspath.findCommonSupertype(types: Set<JcType>): JcType? = when {
+fun JcClasspath.findCommonSupertype(types: Set<JcType>, atLeast: JcType): JcType? = when {
     types.size == 1 -> types.first()
     types.all { it.typeName in integersMap } -> types.maxByOrNull { integersMap[it.typeName]!! }
     types.all { it is JcClassType } -> {
@@ -137,13 +137,13 @@ fun JcClasspath.findCommonSupertype(types: Set<JcType>): JcType? = when {
         types.map { it as JcArrayType }.map { it.elementType }.toSet().size == 1 -> types.first()
         types.all { it is JcArrayType } -> {
             val components = types.map { (it as JcArrayType).elementType }.toSet()
-            when (val merged = findCommonSupertype(components)) {
+            when (val merged = findCommonSupertype(components, atLeast)) {
                 null -> anyType()
                 else -> arrayTypeOf(merged)
             }
         }
 
-        else -> findTypeOrNull<Any>()
+        else -> anyType()
     }
 
     else -> null

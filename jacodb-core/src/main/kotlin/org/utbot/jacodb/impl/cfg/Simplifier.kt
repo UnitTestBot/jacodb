@@ -32,11 +32,9 @@ import org.utbot.jacodb.api.cfg.JcRawNullConstant
 import org.utbot.jacodb.api.cfg.JcRawSimpleValue
 import org.utbot.jacodb.api.cfg.JcRawValue
 import org.utbot.jacodb.api.cfg.ext.applyAndGet
-import org.utbot.jacodb.api.ext.findCommonSupertype
 import org.utbot.jacodb.impl.cfg.util.ExprMapper
 import org.utbot.jacodb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jacodb.impl.cfg.util.InstructionFilter
-import org.utbot.jacodb.impl.cfg.util.typeName
 
 /**
  * a class that simplifies the instruction list after construction
@@ -235,9 +233,11 @@ internal class Simplifier {
         }
         val replacement = types.filterValues { it.size > 1 }
             .mapValues {
-                val supertype = jcClasspath.findCommonSupertype(it.value)
-                    ?: error("Could not find common supertype of ${it.value.joinToString { it.typeName }}")
-                JcRawLocal(it.key.name, supertype.normalizedName.typeName())
+//                val typeName = it.key.typeName.typeName
+//                val strictType = jcClasspath.findTypeOrNull(typeName) ?: error("Could not find type $typeName")
+//                val supertype = jcClasspath.findCommonSupertype(it.value, strictType)
+//                    ?: error("Could not find common supertype of ${it.value.joinToString { it.typeName }}")
+                JcRawLocal(it.key.name, it.key.typeName)
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }
