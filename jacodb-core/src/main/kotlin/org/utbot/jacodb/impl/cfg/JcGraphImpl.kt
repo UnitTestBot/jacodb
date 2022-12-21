@@ -25,7 +25,7 @@ import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.cfg.JcInstRef
 import org.utbot.jacodb.api.cfg.JcInstVisitor
 import org.utbot.jacodb.api.cfg.JcTerminatingInst
-import org.utbot.jacodb.api.ext.isSubtypeOf
+import org.utbot.jacodb.api.ext.isSubClassOf
 
 class JcGraphImpl(
     override val classpath: JcClasspath,
@@ -73,7 +73,7 @@ class JcGraphImpl(
 
         for (inst in instructions) {
             for (throwableType in inst.accept(JcExceptionResolver(classpath))) {
-                if (!catchers(inst).any { throwableType.jcClass isSubtypeOf (it.throwable.type as JcClassType).jcClass }) {
+                if (!catchers(inst).any { throwableType.jcClass isSubClassOf (it.throwable.type as JcClassType).jcClass }) {
                     _throwExits.getOrPut(throwableType, ::mutableSetOf) += ref(inst)
                 }
             }

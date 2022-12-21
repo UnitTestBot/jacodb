@@ -29,8 +29,9 @@ object PredefinedPrimitives {
     val float = "float"
     val double = "double"
     val void = "void"
+    val _null = "null"
 
-    private val values = persistentListOf(boolean, byte, char, short, int, long, float, double, void)
+    private val values = persistentListOf(boolean, byte, char, short, int, long, float, double, void, _null)
     private val valueSet = values.toHashSet()
 
     fun of(name: String, cp: JcClasspath): JcPrimitiveType? {

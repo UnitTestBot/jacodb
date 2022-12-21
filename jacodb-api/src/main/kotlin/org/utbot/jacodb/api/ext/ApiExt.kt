@@ -270,20 +270,20 @@ fun JcClassOrInterface.forEachSuperClasses(action: (JcClassOrInterface) -> Unit)
     return result.toPersistentList()
 }
 
-val JcClassOrInterface.allSuperHierarchy: List<JcClassOrInterface>
+val JcClassOrInterface.allSuperHierarchy: LinkedHashSet<JcClassOrInterface>
     get() {
-        val result = hashSetOf<JcClassOrInterface>()
+        val result = LinkedHashSet<JcClassOrInterface>()
         forEachSuperClasses {
             result.add(it)
         }
-        return result.toPersistentList()
+        return result
     }
 
-infix fun JcClassOrInterface.isSubtypeOf(another: JcClassOrInterface): Boolean {
+infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean {
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    return another in allSuperHierarchy
+    return another == this || another in allSuperHierarchy
 }
 
 

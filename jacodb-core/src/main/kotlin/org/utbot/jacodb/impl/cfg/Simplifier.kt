@@ -16,7 +16,10 @@
 
 package org.utbot.jacodb.impl.cfg
 
+import org.utbot.jacodb.api.JcArrayType
+import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcPrimitiveType
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.cfg.JcRawAssignInst
 import org.utbot.jacodb.api.cfg.JcRawCatchInst
@@ -234,8 +237,18 @@ internal class Simplifier {
             .mapValues {
                 val supertype = jcClasspath.findCommonSupertype(it.value)
                     ?: error("Could not find common supertype of ${it.value.joinToString { it.typeName }}")
-                JcRawLocal(it.key.name, supertype.typeName.typeName())
+                JcRawLocal(it.key.name, supertype.normalizedName.typeName())
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }
+
+    private val JcType.normalizedName: String get() {
+        return when(this) {
+            is JcClassType -> jcClass.name
+            is JcArrayType -> elementType.normalizedName + "[]"
+            is JcPrimitiveType -> typeName
+            else -> "java.lang.Object"
+        }
+    }
+
 }

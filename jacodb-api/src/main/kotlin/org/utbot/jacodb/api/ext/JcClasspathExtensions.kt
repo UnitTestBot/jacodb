@@ -125,26 +125,20 @@ fun JcClasspath.findCommonSupertype(types: Set<JcType>): JcType? = when {
     types.all { it.typeName in integersMap } -> types.maxByOrNull { integersMap[it.typeName]!! }
     types.all { it is JcClassType } -> {
         val classes = types.map { it as JcClassType }
-        var result = findTypeOrNull<Any>()!!
-        for (i in 0..classes.lastIndex) {
-            val isAncestor = classes.fold(true) { acc, klass ->
-                acc && klass.jcClass isSubtypeOf classes[i].jcClass
-            }
-
-            if (isAncestor) {
-                result = classes[i]
-            }
+        val allHierarchies = classes.map { it.jcClass.allSuperHierarchy + it.jcClass }
+        val allIntersect = allHierarchies.fold(allHierarchies[0]) { acc, set ->
+            acc.intersect(set)
         }
-        result
+        allIntersect.firstOrNull()?.toType() ?: anyType()
     }
 
     types.all { it is JcRefType } -> when {
-        types.any { it is JcClassType } -> findTypeOrNull<Any>()
+        types.any { it is JcClassType } -> anyType()
         types.map { it as JcArrayType }.map { it.elementType }.toSet().size == 1 -> types.first()
         types.all { it is JcArrayType } -> {
             val components = types.map { (it as JcArrayType).elementType }.toSet()
             when (val merged = findCommonSupertype(components)) {
-                null -> findTypeOrNull<Any>()
+                null -> anyType()
                 else -> arrayTypeOf(merged)
             }
         }

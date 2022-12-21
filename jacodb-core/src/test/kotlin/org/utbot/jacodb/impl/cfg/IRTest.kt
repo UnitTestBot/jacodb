@@ -16,10 +16,11 @@
 
 package org.utbot.jacodb.impl
 
-import com.fasterxml.jackson.core.filter.FilteringParserDelegate
+import com.google.common.collect.ImmutableMultiset
 import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -54,6 +55,7 @@ import org.utbot.jacodb.api.cfg.JcThrowInst
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.ext.HierarchyExtension
 import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.api.ext.findCommonSupertype
 import org.utbot.jacodb.api.ext.isAbstract
 import org.utbot.jacodb.api.ext.isAnnotation
 import org.utbot.jacodb.api.ext.isInterface
@@ -63,6 +65,9 @@ import org.utbot.jacodb.api.ext.toType
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.utbot.jacodb.impl.bytecode.JcMethodImpl
+import org.utbot.jacodb.impl.cfg.BinarySearchTree
+import org.utbot.jacodb.impl.cfg.IRExamples
+import org.utbot.jacodb.impl.cfg.JavaTasks
 import org.utbot.jacodb.impl.cfg.JcBlockGraphImpl
 import org.utbot.jacodb.impl.cfg.JcGraphBuilder
 import org.utbot.jacodb.impl.cfg.MethodNodeBuilder
@@ -288,18 +293,18 @@ class IRTest : BaseTest() {
 
     @Test
     fun `get ir of simple method`() {
-        testClass(cp.findClass<org.utbot.jacodb.impl.cfg.IRExamples>())
+        testClass(cp.findClass<IRExamples>())
     }
 
     @Test
     fun `get ir of algorithms lesson 1`() {
-        testClass(cp.findClass<org.utbot.jacodb.impl.cfg.JavaTasks>())
+        testClass(cp.findClass<JavaTasks>())
     }
 
     @Test
     fun `get ir of binary search tree`() {
-        testClass(cp.findClass<org.utbot.jacodb.impl.cfg.BinarySearchTree<*>>())
-        testClass(cp.findClass<org.utbot.jacodb.impl.cfg.BinarySearchTree<*>.BinarySearchTreeIterator>())
+        testClass(cp.findClass<BinarySearchTree<*>>())
+        testClass(cp.findClass<BinarySearchTree<*>.BinarySearchTreeIterator>())
     }
 
     @Test
@@ -324,7 +329,15 @@ class IRTest : BaseTest() {
 
     @Test
     fun `test fail`() {
-        testClass(cp.findClass<FilteringParserDelegate>())
+        testClass(cp.findClass<ImmutableMultiset<*>>())
+    }
+
+    @Test
+    fun `test hierarchy`() {
+        val ms1 = cp.findClass<com.google.common.collect.Multiset<*>>().toType()
+        val ms2 = cp.findClass<com.google.common.collect.LinkedHashMultiset<*>>().toType()
+        val common = cp.findCommonSupertype(setOf(ms1, ms2))
+        assertFalse(common!!.typeName == "java.lang.Object")
     }
 
     @Test

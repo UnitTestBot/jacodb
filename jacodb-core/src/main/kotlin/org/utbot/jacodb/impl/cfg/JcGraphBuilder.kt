@@ -370,7 +370,8 @@ class JcGraphBuilder(
             jcMethod.name == name &&
                     jcMethod.returnType.typeName == returnType.typeName &&
                     jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
-        } ?: error("Could not find a method with correct signature")
+        }
+            ?: error("Could not find a method with correct signature")
     }
 
     private val JcRawCallExpr.typedMethod: JcTypedMethod
