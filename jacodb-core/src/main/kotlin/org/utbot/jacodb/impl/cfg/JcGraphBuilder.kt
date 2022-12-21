@@ -243,7 +243,7 @@ class JcGraphBuilder(
             val end = instList.indexOf(labels.getValue(inst.endExclusive))
             while (current != end) {
                 val rawInst = instList[current]
-                if(rawInst != inst){
+                if (rawInst != inst) {
                     val jcInst = convertRawInst(rawInst)
                     jcInst?.let {
                         result += JcInstRef(inst2Index[rawInst]!!)
