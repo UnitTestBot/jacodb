@@ -822,6 +822,7 @@ data class JcStringConstant(val value: String, override val type: JcType) : JcCo
  * klass may be JcClassType or JcArrayType for constructions like byte[].class
  */
 data class JcClassConstant(val klass: JcType, override val type: JcType) : JcConstant {
+
     override fun toString(): String = "${klass.typeName}.class"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {

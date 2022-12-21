@@ -242,9 +242,12 @@ class JcGraphBuilder(
             var current = instList.indexOf(labels.getValue(inst.startInclusive))
             val end = instList.indexOf(labels.getValue(inst.endExclusive))
             while (current != end) {
-                val jcInst = convertRawInst(instList[current])
-                jcInst?.let {
-                    result += JcInstRef(inst2Index[instList[current]]!!)
+                val rawInst = instList[current]
+                if(rawInst != inst){
+                    val jcInst = convertRawInst(rawInst)
+                    jcInst?.let {
+                        result += JcInstRef(inst2Index[rawInst]!!)
+                    }
                 }
                 ++current
             }
@@ -482,13 +485,13 @@ class JcGraphBuilder(
     override fun visitJcRawDouble(value: JcRawDouble): JcExpr = JcDouble(value.value, classpath.double)
 
     override fun visitJcRawNullConstant(value: JcRawNullConstant): JcExpr =
-        JcNullConstant(classpath.findTypeOrNull<Any>() ?: error("could not find type Any"))
+        JcNullConstant(classpath.anyType())
 
     override fun visitJcRawStringConstant(value: JcRawStringConstant): JcExpr =
         JcStringConstant(value.value, value.typeName.asType)
 
     override fun visitJcRawClassConstant(value: JcRawClassConstant): JcExpr =
-        JcClassConstant(value.className.asType as JcClassType, value.typeName.asType)
+        JcClassConstant(value.className.asType, value.typeName.asType)
 
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant): JcExpr {
         val klass = value.declaringClass.asType as JcClassType

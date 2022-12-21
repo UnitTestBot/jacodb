@@ -16,7 +16,6 @@
 
 package org.utbot.jacodb.impl
 
-import com.google.common.collect.ImmutableMultiset
 import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -127,7 +126,13 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         try {
             jcGraph.entry
         } catch (e: Exception) {
-            println("Fail on method ${method.enclosingClass.simpleName}#${method.name}(${method.parameters.joinToString(",") { it.type.typeName }})")
+            println(
+                "Fail on method ${method.enclosingClass.simpleName}#${method.name}(${
+                    method.parameters.joinToString(
+                        ","
+                    ) { it.type.typeName }
+                })"
+            )
             throw e
         }
         assertTrue(jcGraph.exits.all { it is JcTerminatingInst })
@@ -320,14 +325,9 @@ class IRTest : BaseTest() {
 
     @Test
     fun `get ir of jackson`() {
-        allClasspath.filter { it.name.contains("jackson") }.forEach {
-            runAlongLib(it)
-        }
-    }
-
-    @Test
-    fun `test fail`() {
-        testClass(cp.findClass<ImmutableMultiset<*>>())
+        allClasspath
+            .filter { it.name.contains("jackson") }
+            .forEach { runAlongLib(it) }
     }
 
     @Test
