@@ -204,12 +204,16 @@ open class JcClassTypeImpl(
             return directSet
         }
         val result = directSet.toSortedSet<JcTypedField>(UnsafeHierarchyTypedFieldComparator)
+        val superTypesToCheck = (listOf(superType) + interfaces).mapNotNull { it as? JcClassTypeImpl }
+
         result.addAll(
-            (superType as? JcClassTypeImpl)?.typedFields(
-                false,
-                fromSuperTypes = true,
-                classPackageName
-            ).orEmpty()
+            superTypesToCheck.flatMap {
+                it.typedFields(
+                    false,
+                    fromSuperTypes = true,
+                    classPackageName
+                )
+            }
         )
         return result.toList()
     }
