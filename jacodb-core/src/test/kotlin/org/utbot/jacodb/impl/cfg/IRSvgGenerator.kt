@@ -22,7 +22,6 @@ import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.methods
-import org.utbot.jacodb.impl.JcGraphChecker
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.jacodb
 import java.io.Closeable

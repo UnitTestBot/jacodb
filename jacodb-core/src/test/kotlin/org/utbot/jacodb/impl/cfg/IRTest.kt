@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl
+package org.utbot.jacodb.impl.cfg
 
 import com.google.gson.internal.JavaVersion
 import kotlinx.coroutines.runBlocking
@@ -59,22 +59,19 @@ import org.utbot.jacodb.api.ext.isInterface
 import org.utbot.jacodb.api.ext.methods
 import org.utbot.jacodb.api.ext.packageName
 import org.utbot.jacodb.api.ext.toType
+import org.utbot.jacodb.impl.BaseTest
+import org.utbot.jacodb.impl.JcClasspathImpl
+import org.utbot.jacodb.impl.JcDatabaseImpl
+import org.utbot.jacodb.impl.WithDB
+import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.utbot.jacodb.impl.bytecode.JcMethodImpl
-import org.utbot.jacodb.impl.cfg.BinarySearchTree
-import org.utbot.jacodb.impl.cfg.IRExamples
-import org.utbot.jacodb.impl.cfg.JavaTasks
-import org.utbot.jacodb.impl.cfg.JcBlockGraphImpl
-import org.utbot.jacodb.impl.cfg.JcGraphBuilder
-import org.utbot.jacodb.impl.cfg.MethodNodeBuilder
-import org.utbot.jacodb.impl.cfg.RawInstListBuilder
-import org.utbot.jacodb.impl.cfg.Simplifier
-import org.utbot.jacodb.impl.cfg.applyAndGet
 import org.utbot.jacodb.impl.cfg.util.ExprMapper
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
 import org.utbot.jacodb.impl.features.hierarchyExt
 import org.utbot.jacodb.impl.fs.JarLocation
+import org.utbot.jacodb.impl.guavaLib
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
