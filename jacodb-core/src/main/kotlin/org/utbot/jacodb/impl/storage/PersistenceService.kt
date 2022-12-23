@@ -208,14 +208,13 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
                     setBoolean(3, superClass.third)
                 }
 
-                conn.insertElements(FIELDS, fieldCollector.fields.entries) { field ->
-                    val (fieldId, fieldInfo) = field.value
+                conn.insertElements(FIELDS, fieldCollector.fields) { (classId, fieldId, fieldInfo) ->
                     setLong(1, fieldId)
                     setInt(2, fieldInfo.access)
                     setLong(3, fieldInfo.name.findCachedSymbol())
                     setString(4, fieldInfo.signature)
                     setLong(5, fieldInfo.type.findCachedSymbol())
-                    setLong(6, field.key)
+                    setLong(6, classId)
                 }
 
                 conn.insertElements(ANNOTATIONS, annotationCollector.collected) { annotation ->
@@ -415,12 +414,12 @@ fun AnnotationValue.extractSymbolsTo(result: HashSet<String>) {
 
 private class FieldCollector(private val fieldIdGen: AtomicLong, private val annotationCollector: AnnotationCollector) {
 
-    val fields = HashMap<Long, Pair<Long, FieldInfo>>()
+    val fields = ArrayList<Triple<Long, Long, FieldInfo>>()
 
     fun collect(classId: Long, fieldInfo: FieldInfo) {
         val fieldId = fieldIdGen.incrementAndGet()
         logger.info("FIELD ID: " + fieldId)
-        fields[classId] = fieldId to fieldInfo
+        fields.add(Triple(classId, fieldId, fieldInfo))
         annotationCollector.collect(fieldInfo.annotations, fieldId, RefKind.FIELD)
     }
 }
@@ -428,7 +427,7 @@ private class FieldCollector(private val fieldIdGen: AtomicLong, private val ann
 private class ClassRefCollector {
 
     val superClasses = ArrayList<Triple<Long, String, Boolean>>()
-    val innerClasses = HashMap<Long, String>()
+    val innerClasses = ArrayList<Pair<Long, String>>()
 
     fun collectParent(classId: Long, superClass: String?, isClass: Boolean = true) {
         if (superClass != null && superClass != "java.lang.Object") {
@@ -437,7 +436,7 @@ private class ClassRefCollector {
     }
 
     fun collectInnerClass(classId: Long, innerClass: String) {
-        innerClasses[classId] = innerClass
+        innerClasses.add(classId to innerClass)
     }
 }
 
