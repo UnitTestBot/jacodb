@@ -16,13 +16,12 @@
 
 package org.utbot.jacodb.impl.storage
 
+import com.zaxxer.hikari.HikariDataSource
 import mu.KLogging
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.conf.Settings
 import org.jooq.impl.DSL
-import org.sqlite.SQLiteConfig
-import org.sqlite.SQLiteDataSource
 import org.utbot.jacodb.api.ClassSource
 import org.utbot.jacodb.api.JcByteCodeLocation
 import org.utbot.jacodb.api.JcClasspath
@@ -41,9 +40,7 @@ import org.utbot.jacodb.impl.vfs.PersistentByteCodeLocation
 import java.io.Closeable
 import java.io.File
 import java.sql.Connection
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 class SQLitePersistenceImpl(
     private val javaRuntime: JavaRuntime,
@@ -71,29 +68,30 @@ class SQLitePersistenceImpl(
     private val symbolsCache = cacheOf<Long, String>(symbolsCacheSize)
 
     init {
-        val config = SQLiteConfig().also {
-            it.setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-            it.setJournalMode(SQLiteConfig.JournalMode.OFF)
-            it.setPageSize(32_768)
-            it.setCacheSize(-8_000)
-            it.setSharedCache(true)
-        }
-        val props = listOfNotNull(
-            ("mode" to "memory").takeIf { location == null },
-            "rewriteBatchedStatements" to "true",
-            "useServerPrepStmts" to "false"
-        ).joinToString("&") { "${it.first}=${it.second}" }
+//        val config = SQLiteConfig().also {
+//            it.setSynchronous(SQLiteConfig.SynchronousMode.OFF)
+//            it.setJournalMode(SQLiteConfig.JournalMode.OFF)
+//            it.setPageSize(32_768)
+//            it.setCacheSize(-8_000)
+//            it.setSharedCache(true)
+//        }
+//        val props = listOfNotNull(
+//            ("mode" to "memory").takeIf { location == null },
+//            "rewriteBatchedStatements" to "true",
+//            "useServerPrepStmts" to "false"
+//        ).joinToString("&") { "${it.first}=${it.second}" }
 
-        val dataSource = SQLiteDataSource(config).also {
-            it.url = "jdbc:sqlite:file:${location ?: ("jcdb-" + UUID.randomUUID())}?$props"
+        val dataSource = HikariDataSource().also {
+            it.maximumPoolSize = 80
+            it.transactionIsolation = "TRANSACTION_READ_COMMITTED"
+            it.jdbcUrl = "jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root&reWriteBatchedInserts=true"
         }
-        connection = dataSource.connection
-        jooq = DSL.using(connection, SQLDialect.SQLITE, Settings().withExecuteLogging(false))
+        jooq = DSL.using(dataSource, SQLDialect.POSTGRES, Settings().withExecuteLogging(false))
         write {
             if (clearOnStart) {
-                jooq.executeQueriesFrom("jcdb-drop-schema.sql")
+                jooq.executeQueriesFrom("postgres/jcdb-drop-schema.sql")
             }
-            jooq.executeQueriesFrom("jcdb-create-schema.sql")
+            jooq.executeQueriesFrom("postgres/jcdb-create-schema.sql")
         }
     }
 
@@ -126,9 +124,7 @@ class SQLitePersistenceImpl(
     }
 
     override fun <T> write(action: (DSLContext) -> T): T {
-        return lock.withLock {
-            action(jooq)
-        }
+        return action(jooq)
     }
 
     override fun <T> read(action: (DSLContext) -> T): T {

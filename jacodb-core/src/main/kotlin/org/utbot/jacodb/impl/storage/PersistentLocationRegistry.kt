@@ -31,6 +31,7 @@ import org.utbot.jacodb.impl.RegistrationResult
 import org.utbot.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.utbot.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.utbot.jacodb.impl.vfs.PersistentByteCodeLocation
+import java.sql.Types
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -115,6 +116,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
                     setString(3, location.fsId)
                     setBoolean(4, location.type == LocationType.RUNTIME)
                     setInt(5, LocationState.INITIAL.ordinal)
+                    setNull(6, Types.BIGINT)
                 }
             }
             val added = records.map {

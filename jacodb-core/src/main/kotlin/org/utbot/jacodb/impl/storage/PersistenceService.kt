@@ -20,6 +20,7 @@ import org.jooq.DSLContext
 import org.jooq.TableField
 import org.utbot.jacodb.api.JCDBSymbolsInterner
 import org.utbot.jacodb.api.RegisteredLocation
+import org.utbot.jacodb.impl.fs.logger
 import org.utbot.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.utbot.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
 import org.utbot.jacodb.impl.storage.jooq.tables.references.CLASSES
@@ -81,7 +82,7 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
     fun newSymbolInterner() = JCDBSymbolsInternerImpl(jooq = persistence.jooq, symbolsIdGen, symbolsCache)
 
-    fun persist(location: RegisteredLocation, classes: List<ClassInfo>) {
+    fun persist(location: RegisteredLocation, classes: List<ClassInfo>) = synchronized(this) {
         val classCollector = ClassCollector(classIdGen)
         val annotationCollector = AnnotationCollector(annotationIdGen, annotationValueIdGen, symbolsCache)
         val fieldCollector = FieldCollector(fieldIdGen, annotationCollector)
@@ -159,6 +160,8 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
                     setBytes(5, classInfo.bytecode)
                     setLong(6, locationId)
                     setLong(7, pack)
+                    setNull(8, Types.BIGINT)
+                    setNull(9, Types.BIGINT)
                     annotationCollector.collect(classInfo.annotations, id, RefKind.CLASS)
                 }
                 conn.insertElements(METHODS, methodsCollector.methods) {
@@ -185,16 +188,24 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
                     annotationCollector.collect(param.annotations, paramId, RefKind.PARAM)
                 }
 
-                conn.insertElements(CLASSINNERCLASSES, classRefCollector.innerClasses.entries) { innerClass ->
-                    setNull(1, Types.BIGINT)
-                    setLong(2, innerClass.key)
-                    setLong(3, innerClass.value.findCachedSymbol())
+                conn.insertElements(
+                    CLASSINNERCLASSES,
+                    classRefCollector.innerClasses.entries,
+                    autoIncrementId = true
+                ) { innerClass ->
+//                    setNull(1, Types.BIGINT)
+                    setLong(1, innerClass.key)
+                    setLong(2, innerClass.value.findCachedSymbol())
                 }
-                conn.insertElements(CLASSHIERARCHIES, classRefCollector.superClasses) { superClass ->
-                    setNull(1, Types.BIGINT)
-                    setLong(2, superClass.first)
-                    setLong(3, superClass.second.findCachedSymbol())
-                    setBoolean(4, superClass.third)
+                conn.insertElements(
+                    CLASSHIERARCHIES,
+                    classRefCollector.superClasses,
+                    autoIncrementId = true
+                ) { superClass ->
+//                    setNull(1, Types.BIGINT)
+                    setLong(1, superClass.first)
+                    setLong(2, superClass.second.findCachedSymbol())
+                    setBoolean(3, superClass.third)
                 }
 
                 conn.insertElements(FIELDS, fieldCollector.fields.entries) { field ->
@@ -221,16 +232,18 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
                 conn.insertElements(ANNOTATIONVALUES, annotationCollector.collectedValues) { value ->
                     setLong(1, value.id)
-                    setString(2, value.name)
-                    setLong(3, value.annotationId)
+                    setLong(2, value.annotationId)
+                    setString(3, value.name)
+                    setNullableLong(4, value.refAnnotationId)
                     if (value.primitiveValueType != null) {
-                        setInt(4, value.primitiveValueType.ordinal)
-                        setString(5, value.primitiveValue)
+                        setInt(5, value.primitiveValueType.ordinal)
+                        setString(6, value.primitiveValue)
                     } else {
-                        setNull(4, Types.INTEGER)
-                        setNull(5, Types.VARCHAR)
+                        setNull(5, Types.INTEGER)
+                        setNull(6, Types.VARCHAR)
                     }
-                    setNullableLong(6, value.enumSymbolId)
+                    setNullableLong(7, value.classSymbolId)
+                    setNullableLong(8, value.enumSymbolId)
                 }
 
                 conn.insertElements(OUTERCLASSES, classes.filter { it.outerClass != null }) { classInfo ->
@@ -287,6 +300,7 @@ private data class AnnotationValueItem(
     val name: String,
 
     val classSymbolId: Long? = null,
+    val refAnnotationId: Long? = null,
     val enumSymbolId: Long? = null,
 
     val primitiveValue: String? = null,
@@ -307,20 +321,34 @@ private class AnnotationCollector(
         }
     }
 
-    fun collect(info: AnnotationInfo, refId: Long, kind: RefKind, parentId: Long? = null) {
+    fun collect(info: AnnotationInfo, refId: Long, kind: RefKind, parentId: Long? = null): Long {
         val id = annotationIdGen.incrementAndGet()
         val parent = AnnotationItem(id = id, refId = refId, info = info, refKind = kind, parentId = parentId)
         collected.add(parent)
         info.values.forEach {
             collectValue(it, parent)
         }
+        return id
     }
+
 
     fun collectValue(nameValue: Pair<String, AnnotationValue>, parent: AnnotationItem) {
         val (name, value) = nameValue
         val valueId = annotationValueIdGen.incrementAndGet()
         when (value) {
-            is AnnotationInfo -> collect(value, parent.refId, parent.refKind, parent.id)
+            is AnnotationInfo -> {
+                val refId = collect(value, parent.refId, parent.refKind, parent.id)
+                collectedValues.add(
+                    AnnotationValueItem(
+                        id = valueId,
+                        name = name,
+                        refAnnotationId = refId,
+                        annotationId = parent.id,
+                        enumSymbolId = null,
+                    )
+                )
+            }
+
             is ClassRef -> collectedValues.add(
                 AnnotationValueItem(
                     id = valueId,
@@ -391,6 +419,7 @@ private class FieldCollector(private val fieldIdGen: AtomicLong, private val ann
 
     fun collect(classId: Long, fieldInfo: FieldInfo) {
         val fieldId = fieldIdGen.incrementAndGet()
+        logger.info("FIELD ID: " + fieldId)
         fields[classId] = fieldId to fieldInfo
         annotationCollector.collect(fieldInfo.annotations, fieldId, RefKind.FIELD)
     }

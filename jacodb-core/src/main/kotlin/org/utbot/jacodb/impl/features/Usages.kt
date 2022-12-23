@@ -147,7 +147,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
             "callee_desc_hash"            BIGINT,
             "opcode"                      INTEGER,
             "caller_class_symbol_id"      BIGINT NOT NULL,
-            "caller_method_offsets"       BLOB,
+            "caller_method_offsets"       bytea,
             "location_id"                 BIGINT NOT NULL,
             CONSTRAINT "fk_callee_class_symbol_id" FOREIGN KEY ("callee_class_symbol_id") REFERENCES "Symbols" ("id") ON DELETE CASCADE,
             CONSTRAINT "fk_location_id" FOREIGN KEY ("location_id") REFERENCES "BytecodeLocations" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
