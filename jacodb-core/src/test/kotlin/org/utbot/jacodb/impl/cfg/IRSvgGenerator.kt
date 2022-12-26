@@ -22,7 +22,6 @@ import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.methods
-import org.utbot.jacodb.impl.JcGraphChecker
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.jacodb
 import java.io.Closeable
@@ -57,7 +56,7 @@ class IRSvgGenerator(private val folder: File) : Closeable {
             val fixedName = it.name.replace(Regex("[^A-Za-z0-9]"), "")
             val fileName = "${it.enclosingClass.simpleName}-$fixedName-$index.svg"
             val graph = instructionList.graph(it)
-            JcGraphChecker(graph).check()
+            JcGraphChecker(it, graph).check()
             graph.toFile("dot", false, file = File(folder, "graph-$fileName"))
             graph.blockGraph().toFile("dot", file = File(folder, "block-graph-$fileName"))
         }

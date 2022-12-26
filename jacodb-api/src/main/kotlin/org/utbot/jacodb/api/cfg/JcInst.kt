@@ -16,7 +16,6 @@
 
 package org.utbot.jacodb.api.cfg
 
-import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedField
 import org.utbot.jacodb.api.JcTypedMethod
@@ -819,8 +818,12 @@ data class JcStringConstant(val value: String, override val type: JcType) : JcCo
     }
 }
 
-data class JcClassConstant(val klass: JcClassType, override val type: JcType) : JcConstant {
-    override fun toString(): String = "${klass.jcClass.name}.class"
+/**
+ * klass may be JcClassType or JcArrayType for constructions like byte[].class
+ */
+data class JcClassConstant(val klass: JcType, override val type: JcType) : JcConstant {
+
+    override fun toString(): String = "${klass.typeName}.class"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcClassConstant(this)

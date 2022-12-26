@@ -26,7 +26,7 @@ import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.ext.autoboxIfNeeded
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.findTypeOrNull
-import org.utbot.jacodb.api.ext.isSubtypeOf
+import org.utbot.jacodb.api.ext.isSubClassOf
 import org.utbot.jacodb.api.ext.unboxIfNeeded
 import org.utbot.jacodb.api.short
 import org.utbot.jacodb.impl.hierarchies.Creature.Animal
@@ -69,16 +69,16 @@ class ApiExtTest : BaseTest() {
 
     @Test
     fun `isSubtype for regular classes`() = runBlocking {
-        assertTrue(classOf<Dinosaur>() isSubtypeOf classOf<org.utbot.jacodb.impl.hierarchies.Creature>())
+        assertTrue(classOf<Dinosaur>() isSubClassOf classOf<org.utbot.jacodb.impl.hierarchies.Creature>())
 
-        assertFalse(classOf<Dinosaur>() isSubtypeOf classOf<Fish>())
-        assertTrue(classOf<TRex>() isSubtypeOf classOf<org.utbot.jacodb.impl.hierarchies.Creature>())
-        assertTrue(classOf<TRex>() isSubtypeOf classOf<Animal>())
-        assertTrue(classOf<TRex>() isSubtypeOf classOf<DinosaurImpl>())
+        assertFalse(classOf<Dinosaur>() isSubClassOf classOf<Fish>())
+        assertTrue(classOf<TRex>() isSubClassOf classOf<org.utbot.jacodb.impl.hierarchies.Creature>())
+        assertTrue(classOf<TRex>() isSubClassOf classOf<Animal>())
+        assertTrue(classOf<TRex>() isSubClassOf classOf<DinosaurImpl>())
 
-        assertFalse(classOf<TRex>() isSubtypeOf classOf<Fish>())
-        assertFalse(classOf<Pterodactyl>() isSubtypeOf classOf<Fish>())
-        assertTrue(classOf<Pterodactyl>() isSubtypeOf classOf<Bird>())
+        assertFalse(classOf<TRex>() isSubClassOf classOf<Fish>())
+        assertFalse(classOf<Pterodactyl>() isSubClassOf classOf<Fish>())
+        assertTrue(classOf<Pterodactyl>() isSubClassOf classOf<Bird>())
     }
 
     private inline fun <reified T> typeOf(): JcType {
