@@ -20,7 +20,6 @@ import org.jooq.DSLContext
 import org.jooq.TableField
 import org.utbot.jacodb.api.JCDBSymbolsInterner
 import org.utbot.jacodb.api.RegisteredLocation
-import org.utbot.jacodb.impl.fs.logger
 import org.utbot.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.utbot.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
 import org.utbot.jacodb.impl.storage.jooq.tables.references.CLASSES
@@ -49,7 +48,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-class PersistenceService(private val persistence: SQLitePersistenceImpl) {
+class PersistenceService(private val persistence: AbstractJcDatabasePersistenceImpl) {
 
     private val symbolsCache = ConcurrentHashMap<String, Long>()
     private val classIdGen = AtomicLong()
@@ -190,19 +189,17 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
 
                 conn.insertElements(
                     CLASSINNERCLASSES,
-                    classRefCollector.innerClasses.entries,
+                    classRefCollector.innerClasses,
                     autoIncrementId = true
-                ) { innerClass ->
-//                    setNull(1, Types.BIGINT)
-                    setLong(1, innerClass.key)
-                    setLong(2, innerClass.value.findCachedSymbol())
+                ) { (classId, innerClass) ->
+                    setLong(1, classId)
+                    setLong(2, innerClass.findCachedSymbol())
                 }
                 conn.insertElements(
                     CLASSHIERARCHIES,
                     classRefCollector.superClasses,
                     autoIncrementId = true
                 ) { superClass ->
-//                    setNull(1, Types.BIGINT)
                     setLong(1, superClass.first)
                     setLong(2, superClass.second.findCachedSymbol())
                     setBoolean(3, superClass.third)
@@ -236,7 +233,7 @@ class PersistenceService(private val persistence: SQLitePersistenceImpl) {
                     setNullableLong(4, value.refAnnotationId)
                     if (value.primitiveValueType != null) {
                         setInt(5, value.primitiveValueType.ordinal)
-                        setString(6, value.primitiveValue)
+                        setString(6, value.primitiveValue?.replace("\u0000", ""))
                     } else {
                         setNull(5, Types.INTEGER)
                         setNull(6, Types.VARCHAR)
@@ -418,7 +415,6 @@ private class FieldCollector(private val fieldIdGen: AtomicLong, private val ann
 
     fun collect(classId: Long, fieldInfo: FieldInfo) {
         val fieldId = fieldIdGen.incrementAndGet()
-        logger.info("FIELD ID: " + fieldId)
         fields.add(Triple(classId, fieldId, fieldInfo))
         annotationCollector.collect(fieldInfo.annotations, fieldId, RefKind.FIELD)
     }

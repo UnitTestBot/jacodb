@@ -44,51 +44,58 @@ fun <ELEMENT, RECORD : Record> Connection.insertElements(
     if (!elements.iterator().hasNext()) {
         return
     }
-    autoCommit = false
-    val fields = table.fields()
-    val values = when {
-        autoIncrementId -> "DEFAULT, " + fields.drop(1).joinToString { "?" }
-        else -> fields.joinToString { "?" }
-    }
-    val query ="INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES ($values)"
-    prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
-        elements.forEach {
-            stmt.map(it)
-            stmt.addBatch()
+    withoutAutocommit {
+        val fields = when {
+            autoIncrementId -> table.fields().drop(1)
+            else -> table.fields().toList()
         }
-        stmt.executeBatch()
+
+        val values = fields.joinToString { "?" }
+
+        val query = "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES ($values)"
+        prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
+            elements.forEach {
+                stmt.map(it)
+                stmt.addBatch()
+            }
+            stmt.executeBatch()
+        }
     }
+}
+
+inline fun Connection.withoutAutocommit(crossinline action: () -> Unit) {
+    autoCommit = false
+    action()
     commit()
     autoCommit = true
 }
 
 fun <RECORD : Record> Connection.runBatch(table: Table<RECORD>, batchedAction: PreparedStatement.() -> Unit) {
-    autoCommit = false
     val fields = table.fields()
-    val query =
-        "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES (${fields.joinToString { "?" }})"
+    val query = "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES (${fields.joinToString { "?" }})"
     prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
         stmt.batchedAction()
         stmt.executeBatch()
     }
-    commit()
-    autoCommit = true
 }
 
-fun DSLContext.executeQueries(query: String) {
+fun DSLContext.executeQueries(query: String, asSingle: Boolean = false) {
     connection {
-        query.split(";").forEach {
-            if (it.isNotBlank()) {
-                execute(it)
+        when (asSingle) {
+            true -> execute(query)
+            else -> query.split(";").forEach {
+                if (it.isNotBlank()) {
+                    execute(it)
+                }
             }
         }
     }
 }
 
-fun DSLContext.executeQueriesFrom(location: String) {
+fun DSLContext.executeQueriesFrom(location: String, asSingle: Boolean = false) {
     val stream = javaClass.classLoader.getResourceAsStream(location)
         ?: throw IllegalStateException("no sql script for $location found")
-    executeQueries(stream.bufferedReader().readText())
+    executeQueries(stream.bufferedReader().readText(), asSingle)
 }
 
 fun PreparedStatement.setNullableLong(index: Int, value: Long?) {
@@ -119,7 +126,8 @@ fun TableField<*, Long?>.maxId(jooq: DSLContext): Long? {
         .from(table).fetchAny()?.component1()
 }
 
-class BatchedSequence<T>(private val batchSize: Int, private val getNext: (Long?, Int) -> List<Pair<Long, T>>) : Sequence<T> {
+class BatchedSequence<T>(private val batchSize: Int, private val getNext: (Long?, Int) -> List<Pair<Long, T>>) :
+    Sequence<T> {
 
     private val result = arrayListOf<T>()
     private var position = 0

@@ -21,7 +21,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.fs.JavaRuntime
-import org.utbot.jacodb.impl.storage.SQLitePersistenceImpl
 
 suspend fun jacodb(builder: JcSettings.() -> Unit): JcDatabase {
     return jacodb(JcSettings().also(builder))
@@ -30,15 +29,11 @@ suspend fun jacodb(builder: JcSettings.() -> Unit): JcDatabase {
 suspend fun jacodb(settings: JcSettings): JcDatabase {
     val featureRegistry = FeaturesRegistry(settings.features)
     val javaRuntime = JavaRuntime(settings.jre)
-    val environment = SQLitePersistenceImpl(
-        javaRuntime,
-        featureRegistry,
-        location = settings.persistentLocation,
-        clearOnStart = settings.persistentClearOnStart ?: true
-    )
+    val persistence = (settings.persistentType ?: JcPersistenceType.SQLITE)
+        .newPersistence(javaRuntime,featureRegistry,settings)
     return JcDatabaseImpl(
         javaRuntime = javaRuntime,
-        persistence = environment,
+        persistence = persistence,
         featureRegistry = featureRegistry,
         settings = settings
     ).also {

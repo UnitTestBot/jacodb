@@ -39,6 +39,7 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.storage.longHash
 import org.utbot.jacodb.impl.storage.runBatch
 import org.utbot.jacodb.impl.storage.setNullableLong
+import org.utbot.jacodb.impl.storage.withoutAutocommit
 
 
 private class MethodMap(size: Int) {
@@ -111,26 +112,28 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
 
     override fun flush(jooq: DSLContext) {
         jooq.connection { conn ->
-            conn.runBatch(CALLS) {
-                usages.forEach { (calleeClass, calleeEntry) ->
-                    val calleeId = calleeClass.className.symbolId
-                    calleeEntry.forEach { (info, callers) ->
-                        val (calleeName, calleeDesc, opcode) = info
-                        callers.forEach { (caller, offsets) ->
-                            val callerId = if (calleeClass == caller) calleeId else caller.symbolId
-                            setLong(1, calleeId)
-                            setLong(2, calleeName.symbolId)
-                            setNullableLong(3, calleeDesc?.longHash)
-                            setInt(4, opcode)
-                            setLong(5, callerId)
-                            setBytes(6, offsets.result())
-                            setLong(7, location.id)
-                            addBatch()
+            conn.withoutAutocommit {
+                conn.runBatch(CALLS) {
+                    usages.forEach { (calleeClass, calleeEntry) ->
+                        val calleeId = calleeClass.className.symbolId
+                        calleeEntry.forEach { (info, callers) ->
+                            val (calleeName, calleeDesc, opcode) = info
+                            callers.forEach { (caller, offsets) ->
+                                val callerId = if (calleeClass == caller) calleeId else caller.symbolId
+                                setLong(1, calleeId)
+                                setLong(2, calleeName.symbolId)
+                                setNullableLong(3, calleeDesc?.longHash)
+                                setInt(4, opcode)
+                                setLong(5, callerId)
+                                setBytes(6, offsets.result())
+                                setLong(7, location.id)
+                                addBatch()
+                            }
                         }
                     }
+                    interner.flush(conn)
                 }
             }
-            interner.flush(conn)
         }
     }
 
@@ -140,54 +143,32 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
 
 object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
-    private val createScheme = """
-        CREATE TABLE IF NOT EXISTS "Calls"(
-            "callee_class_symbol_id"      BIGINT NOT NULL,
-            "callee_name_symbol_id"       BIGINT NOT NULL,
-            "callee_desc_hash"            BIGINT,
-            "opcode"                      INTEGER,
-            "caller_class_symbol_id"      BIGINT NOT NULL,
-            "caller_method_offsets"       bytea,
-            "location_id"                 BIGINT NOT NULL,
-            CONSTRAINT "fk_callee_class_symbol_id" FOREIGN KEY ("callee_class_symbol_id") REFERENCES "Symbols" ("id") ON DELETE CASCADE,
-            CONSTRAINT "fk_location_id" FOREIGN KEY ("location_id") REFERENCES "BytecodeLocations" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
-        );
-    """.trimIndent()
-
-    private val createIndex = """
-        CREATE INDEX IF NOT EXISTS 'Calls search' ON Calls(opcode, location_id, callee_class_symbol_id, callee_name_symbol_id, callee_desc_hash)
-    """.trimIndent()
-
-    private val dropScheme = """
-        DROP TABLE IF EXISTS "Calls";
-        DROP INDEX IF EXISTS "Calls search";
-    """.trimIndent()
-
     override fun onSignal(signal: JcSignal) {
+        val jcdb = signal.jcdb
         when (signal) {
             is JcSignal.BeforeIndexing -> {
-                signal.jcdb.persistence.write {
+                jcdb.persistence.write {
                     if (signal.clearOnStart) {
-                        it.executeQueries(dropScheme)
+                        it.executeQueries(jcdb.persistence.getScript("usages/drop-schema.sql"))
                     }
-                    it.executeQueries(createScheme)
+                    it.executeQueries(jcdb.persistence.getScript("usages/create-schema.sql"))
                 }
             }
 
             is JcSignal.LocationRemoved -> {
-                signal.jcdb.persistence.write {
+                jcdb.persistence.write {
                     it.deleteFrom(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
                 }
             }
 
             is JcSignal.AfterIndexing -> {
-                signal.jcdb.persistence.write {
-                    it.executeQueries(createIndex)
+                jcdb.persistence.write {
+                    it.executeQueries(jcdb.persistence.getScript("usages/add-indexes.sql"))
                 }
             }
 
             is JcSignal.Drop -> {
-                signal.jcdb.persistence.write {
+                jcdb.persistence.write {
                     it.deleteFrom(CALLS).execute()
                 }
             }
