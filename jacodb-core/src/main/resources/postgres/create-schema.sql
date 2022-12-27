@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "Classes"(
                                         "access"       INT    NOT NULL,
                                         "name"         BIGINT NOT NULL,
                                         "signature"    TEXT,
-                                        "bytecode"     bytea  NOT NULL,
+                                        "bytecode"     BYTEA  NOT NULL,
                                         "location_id"  BIGINT NOT NULL,
                                         "package_id"   BIGINT NOT NULL,
                                         "outer_class"  BIGINT,

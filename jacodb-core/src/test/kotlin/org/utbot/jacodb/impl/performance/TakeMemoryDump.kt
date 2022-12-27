@@ -19,7 +19,9 @@ package org.utbot.jacodb.impl.performance
 import kotlinx.coroutines.runBlocking
 import org.utbot.jacodb.impl.JcPersistenceType
 import org.utbot.jacodb.impl.allClasspath
+import org.utbot.jacodb.impl.features.Builders
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
+import org.utbot.jacodb.impl.features.Usages
 import org.utbot.jacodb.impl.jacodb
 import org.utbot.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jacodb.impl.storage.jooq.tables.references.FIELDS
@@ -35,7 +37,7 @@ fun main() {
                 clearOnStart = true,
                 JcPersistenceType.POSTGRES
             )
-            installFeatures(InMemoryHierarchy)
+            installFeatures(InMemoryHierarchy, Usages, Builders)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")
             start = System.currentTimeMillis()

@@ -133,16 +133,16 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
     """.trimIndent()
 
     private val createIndex = """
-		    CREATE INDEX IF NOT EXISTS 'Builders search' ON Builders(location_id, class_symbol_id, priority);
-            CREATE INDEX IF NOT EXISTS 'Builders sorting' ON Builders(priority);
-            CREATE INDEX IF NOT EXISTS 'Builders join' ON Builders(builder_class_symbol_id);
+		    CREATE INDEX IF NOT EXISTS "BuildersSearch" ON "Builders"(location_id, class_symbol_id, priority);
+            CREATE INDEX IF NOT EXISTS "BuildersSorting" ON "Builders"(priority);
+            CREATE INDEX IF NOT EXISTS "BuildersJoin" ON "Builders"(builder_class_symbol_id);
     """.trimIndent()
 
     private val dropScheme = """
             DROP TABLE IF EXISTS "Builders";
-            DROP INDEX IF EXISTS "Builders search";
-            DROP INDEX IF EXISTS "Builders sorting";
-            DROP INDEX IF EXISTS "Builders join";
+            DROP INDEX IF EXISTS "BuildersSearch";
+            DROP INDEX IF EXISTS "BuildersSorting";
+            DROP INDEX IF EXISTS "BuildersJoin";
     """.trimIndent()
 
     override fun onSignal(signal: JcSignal) {
