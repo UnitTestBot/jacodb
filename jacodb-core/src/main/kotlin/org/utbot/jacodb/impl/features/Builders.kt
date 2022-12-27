@@ -37,7 +37,6 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.BUILDERS
 import org.utbot.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.storage.runBatch
-import org.utbot.jacodb.impl.storage.withoutAutocommit
 
 private val MethodNode.isGetter: Boolean
     get() {
@@ -90,20 +89,18 @@ class BuildersIndexer(val persistence: JcDatabasePersistence, private val locati
 
     override fun flush(jooq: DSLContext) {
         jooq.connection { conn ->
-            conn.withoutAutocommit {
-                conn.runBatch(BUILDERS) {
-                    potentialBuilders.forEach { (calleeClass, builders) ->
-                        val calleeId = calleeClass.className.symbolId
-                        builders.forEach {
-                            val (callerClass, offset, priority) = it
-                            val callerId = callerClass.className.symbolId
-                            setLong(1, calleeId)
-                            setLong(2, callerId)
-                            setInt(3, priority)
-                            setInt(4, offset)
-                            setLong(5, location.id)
-                            addBatch()
-                        }
+            conn.runBatch(BUILDERS) {
+                potentialBuilders.forEach { (calleeClass, builders) ->
+                    val calleeId = calleeClass.className.symbolId
+                    builders.forEach {
+                        val (callerClass, offset, priority) = it
+                        val callerId = callerClass.className.symbolId
+                        setLong(1, calleeId)
+                        setLong(2, callerId)
+                        setInt(3, priority)
+                        setInt(4, offset)
+                        setLong(5, location.id)
+                        addBatch()
                     }
                 }
             }
@@ -218,7 +215,8 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
 
     }
 
-    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) = BuildersIndexer(jcdb.persistence, location)
+    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) =
+        BuildersIndexer(jcdb.persistence, location)
 
 
 }

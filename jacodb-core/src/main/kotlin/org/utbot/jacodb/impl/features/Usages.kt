@@ -39,7 +39,6 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.storage.longHash
 import org.utbot.jacodb.impl.storage.runBatch
 import org.utbot.jacodb.impl.storage.setNullableLong
-import org.utbot.jacodb.impl.storage.withoutAutocommit
 
 
 private class MethodMap(size: Int) {
@@ -112,27 +111,25 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
 
     override fun flush(jooq: DSLContext) {
         jooq.connection { conn ->
-            conn.withoutAutocommit {
-                conn.runBatch(CALLS) {
-                    usages.forEach { (calleeClass, calleeEntry) ->
-                        val calleeId = calleeClass.className.symbolId
-                        calleeEntry.forEach { (info, callers) ->
-                            val (calleeName, calleeDesc, opcode) = info
-                            callers.forEach { (caller, offsets) ->
-                                val callerId = if (calleeClass == caller) calleeId else caller.symbolId
-                                setLong(1, calleeId)
-                                setLong(2, calleeName.symbolId)
-                                setNullableLong(3, calleeDesc?.longHash)
-                                setInt(4, opcode)
-                                setLong(5, callerId)
-                                setBytes(6, offsets.result())
-                                setLong(7, location.id)
-                                addBatch()
-                            }
+            conn.runBatch(CALLS) {
+                usages.forEach { (calleeClass, calleeEntry) ->
+                    val calleeId = calleeClass.className.symbolId
+                    calleeEntry.forEach { (info, callers) ->
+                        val (calleeName, calleeDesc, opcode) = info
+                        callers.forEach { (caller, offsets) ->
+                            val callerId = if (calleeClass == caller) calleeId else caller.symbolId
+                            setLong(1, calleeId)
+                            setLong(2, calleeName.symbolId)
+                            setNullableLong(3, calleeDesc?.longHash)
+                            setInt(4, opcode)
+                            setLong(5, callerId)
+                            setBytes(6, offsets.result())
+                            setLong(7, location.id)
+                            addBatch()
                         }
                     }
-                    interner.flush(conn)
                 }
+                interner.flush(conn)
             }
         }
     }
