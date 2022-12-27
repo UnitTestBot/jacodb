@@ -17,7 +17,7 @@
 package org.utbot.jacodb.impl.performance
 
 import kotlinx.coroutines.runBlocking
-import org.utbot.jacodb.impl.JcPersistenceType
+import org.utbot.jacodb.impl.PredefinedPersistenceType
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.features.Builders
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
@@ -35,7 +35,7 @@ fun main() {
             loadByteCode(allClasspath)
             persistent("jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root",
                 clearOnStart = true,
-                JcPersistenceType.POSTGRES
+                PredefinedPersistenceType.POSTGRES
             )
             installFeatures(InMemoryHierarchy, Usages, Builders)
         }.also {

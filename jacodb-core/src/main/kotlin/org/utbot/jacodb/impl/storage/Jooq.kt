@@ -44,35 +44,27 @@ fun <ELEMENT, RECORD : Record> Connection.insertElements(
     if (!elements.iterator().hasNext()) {
         return
     }
-    withoutAutocommit {
-        val fields = when {
-            autoIncrementId -> table.fields().drop(1)
-            else -> table.fields().toList()
-        }
-
-        val values = fields.joinToString { "?" }
-
-        val query = "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES ($values)"
-        prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
-            elements.forEach {
-                stmt.map(it)
-                stmt.addBatch()
-            }
-            stmt.executeBatch()
-        }
+    val fields = when {
+        autoIncrementId -> table.fields().drop(1)
+        else -> table.fields().toList()
     }
-}
 
-inline fun Connection.withoutAutocommit(crossinline action: () -> Unit) {
-    autoCommit = false
-    action()
-    commit()
-    autoCommit = true
+    val values = fields.joinToString { "?" }
+
+    val query = "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES ($values)"
+    prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
+        elements.forEach {
+            stmt.map(it)
+            stmt.addBatch()
+        }
+        stmt.executeBatch()
+    }
 }
 
 fun <RECORD : Record> Connection.runBatch(table: Table<RECORD>, batchedAction: PreparedStatement.() -> Unit) {
     val fields = table.fields()
-    val query = "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES (${fields.joinToString { "?" }})"
+    val query =
+        "INSERT INTO \"${table.name}\"(${fields.joinToString { "\"" + it.name + "\"" }}) VALUES (${fields.joinToString { "?" }})"
     prepareStatement(query, Statement.NO_GENERATED_KEYS).use { stmt ->
         stmt.batchedAction()
         stmt.executeBatch()

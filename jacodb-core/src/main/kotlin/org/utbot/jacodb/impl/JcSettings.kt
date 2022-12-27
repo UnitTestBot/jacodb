@@ -68,7 +68,7 @@ class JcSettings {
      * @param location - file for db location
      * @param clearOnStart -if true old data from this folder will be dropped
      */
-    fun persistent(location: String, clearOnStart: Boolean = false, type: JcPersistenceType = JcPersistenceType.SQLITE) = apply {
+    fun persistent(location: String, clearOnStart: Boolean = false, type: JcPersistenceType = PredefinedPersistenceType.SQLITE) = apply {
         persistentLocation = location
         persistentClearOnStart = clearOnStart
         persistentType = type
@@ -130,7 +130,16 @@ class JcSettings {
     }
 }
 
-enum class JcPersistenceType {
+interface JcPersistenceType {
+
+    fun newPersistence(
+        runtime: JavaRuntime,
+        featuresRegistry: FeaturesRegistry,
+        settings: JcSettings
+    ): JcDatabasePersistence
+}
+
+enum class PredefinedPersistenceType : JcPersistenceType {
     SQLITE {
         override fun newPersistence(
             runtime: JavaRuntime,
@@ -160,9 +169,4 @@ enum class JcPersistenceType {
         }
     };
 
-    abstract fun newPersistence(
-        runtime: JavaRuntime,
-        featuresRegistry: FeaturesRegistry,
-        settings: JcSettings
-    ): JcDatabasePersistence
 }

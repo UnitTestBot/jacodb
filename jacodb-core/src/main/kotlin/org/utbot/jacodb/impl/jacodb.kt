@@ -29,7 +29,7 @@ suspend fun jacodb(builder: JcSettings.() -> Unit): JcDatabase {
 suspend fun jacodb(settings: JcSettings): JcDatabase {
     val featureRegistry = FeaturesRegistry(settings.features)
     val javaRuntime = JavaRuntime(settings.jre)
-    val persistence = (settings.persistentType ?: JcPersistenceType.SQLITE)
+    val persistence = (settings.persistentType ?: PredefinedPersistenceType.SQLITE)
         .newPersistence(javaRuntime,featureRegistry,settings)
     return JcDatabaseImpl(
         javaRuntime = javaRuntime,
