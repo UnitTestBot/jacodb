@@ -17,6 +17,7 @@
 package org.utbot.jacodb.impl.performance
 
 import kotlinx.coroutines.runBlocking
+import org.utbot.jacodb.impl.PredefinedPersistenceType
 import org.utbot.jacodb.impl.allClasspath
 import org.utbot.jacodb.impl.features.Builders
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
@@ -32,8 +33,11 @@ fun main() {
     runBlocking {
         val db = jacodb {
             loadByteCode(allClasspath)
-            persistent("D:\\work\\jacodb\\jcdb-inspection.db")
-            installFeatures(Usages, Builders, InMemoryHierarchy)
+            persistent("jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root",
+                clearOnStart = true,
+                PredefinedPersistenceType.POSTGRES
+            )
+            installFeatures(InMemoryHierarchy, Usages, Builders)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")
             start = System.currentTimeMillis()

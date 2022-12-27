@@ -20,7 +20,11 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.utbot.jacodb.api.Hook
 import org.utbot.jacodb.api.JcDatabase
+import org.utbot.jacodb.api.JcDatabasePersistence
 import org.utbot.jacodb.api.JcFeature
+import org.utbot.jacodb.impl.fs.JavaRuntime
+import org.utbot.jacodb.impl.storage.PostgresPersistenceImpl
+import org.utbot.jacodb.impl.storage.SQLitePersistenceImpl
 import java.io.File
 
 /**
@@ -33,6 +37,9 @@ class JcSettings {
         private set
 
     /** persisted  */
+    var persistentType: JcPersistenceType? = null
+        private set
+
     var persistentLocation: String? = null
         private set
 
@@ -61,9 +68,10 @@ class JcSettings {
      * @param location - file for db location
      * @param clearOnStart -if true old data from this folder will be dropped
      */
-    fun persistent(location: String, clearOnStart: Boolean = false) = apply {
+    fun persistent(location: String, clearOnStart: Boolean = false, type: JcPersistenceType = PredefinedPersistenceType.SQLITE) = apply {
         persistentLocation = location
         persistentClearOnStart = clearOnStart
+        persistentType = type
     }
 
     fun loadByteCode(files: List<File>) = apply {
@@ -120,4 +128,45 @@ class JcSettings {
         }
         return file
     }
+}
+
+interface JcPersistenceType {
+
+    fun newPersistence(
+        runtime: JavaRuntime,
+        featuresRegistry: FeaturesRegistry,
+        settings: JcSettings
+    ): JcDatabasePersistence
+}
+
+enum class PredefinedPersistenceType : JcPersistenceType {
+    SQLITE {
+        override fun newPersistence(
+            runtime: JavaRuntime,
+            featuresRegistry: FeaturesRegistry,
+            settings: JcSettings
+        ): JcDatabasePersistence {
+            return SQLitePersistenceImpl(
+                javaRuntime = runtime,
+                featuresRegistry = featuresRegistry,
+                location = settings.persistentLocation,
+                clearOnStart = settings.persistentClearOnStart ?: false
+            )
+        }
+    },
+    POSTGRES {
+        override fun newPersistence(
+            runtime: JavaRuntime,
+            featuresRegistry: FeaturesRegistry,
+            settings: JcSettings
+        ): JcDatabasePersistence {
+            return PostgresPersistenceImpl(
+                javaRuntime = runtime,
+                featuresRegistry = featuresRegistry,
+                jcdbUrl = settings.persistentLocation,
+                clearOnStart = settings.persistentClearOnStart ?: false
+            )
+        }
+    };
+
 }

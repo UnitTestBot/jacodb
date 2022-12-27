@@ -47,7 +47,7 @@ class IRSvgGenerator(private val folder: File) : Closeable {
     }
 
     fun generate() {
-        dumpClass(cp.findClass<org.utbot.jacodb.impl.cfg.IRExamples>())
+        dumpClass(cp.findClass<IRExamples>())
     }
 
     private fun dumpClass(klass: JcClassOrInterface) {
