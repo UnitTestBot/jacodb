@@ -59,9 +59,10 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
 
     private inner class ParameterTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            val outToken = method.parameters[parameterTypes.size].kmType?.let {
+            // TODO: find real list of annotations here
+            val outToken = (method.parameters[parameterTypes.size].kmType?.let {
                 token.relaxWithKmType(it)
-            } ?: token
+            } ?: token).relaxWithAnnotations(listOf(), method.enclosingClass.classpath, 0)
             parameterTypes.add(outToken)
         }
     }
@@ -72,6 +73,9 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
             method.kmReturnType?.let {
                 returnType = returnType.relaxWithKmType(it)
             }
+
+            // TODO: find real list of annotations here
+            returnType = returnType.relaxWithAnnotations(listOf(), method.enclosingClass.classpath, 0)
         }
     }
 

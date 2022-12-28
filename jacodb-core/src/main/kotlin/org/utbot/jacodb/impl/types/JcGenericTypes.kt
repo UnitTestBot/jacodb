@@ -16,9 +16,11 @@
 
 package org.utbot.jacodb.impl.types
 
+import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.api.JcBoundedWildcard
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcRefType
+import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypeVariable
 import org.utbot.jacodb.api.JcTypeVariableDeclaration
 import org.utbot.jacodb.api.JcUnboundWildcard
@@ -27,6 +29,8 @@ class JcUnboundWildcardImpl(override val classpath: JcClasspath) :
     JcUnboundWildcard {
 
     override val nullable: Boolean = true
+
+    override val annotations: List<JcAnnotation> = listOf()
 
     override val typeName: String
         get() = "*"
@@ -43,6 +47,8 @@ class JcBoundedWildcardImpl(
     override val lowerBounds: List<JcRefType>,
 ) : JcBoundedWildcard {
     override val nullable: Boolean = true
+
+    override val annotations: List<JcAnnotation> = listOf()
 
     override val classpath: JcClasspath
         get() = upperBounds.firstOrNull()?.classpath ?: lowerBounds.firstOrNull()?.classpath
@@ -69,7 +75,8 @@ class JcBoundedWildcardImpl(
 class JcTypeVariableImpl(
     override val classpath: JcClasspath,
     private val declaration: JcTypeVariableDeclaration,
-    override val nullable: Boolean?
+    override val nullable: Boolean?,
+    override val annotations: List<JcAnnotation> = listOf()
 ) : JcTypeVariable {
 
     override val typeName: String
@@ -81,6 +88,9 @@ class JcTypeVariableImpl(
         get() = declaration.bounds
 
     override fun copyWithNullability(nullability: Boolean?): JcRefType {
-        return JcTypeVariableImpl(classpath, declaration, nullability)
+        return JcTypeVariableImpl(classpath, declaration, nullability, annotations)
     }
+
+    override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType =
+        JcTypeVariableImpl(classpath, declaration, nullable, annotations)
 }

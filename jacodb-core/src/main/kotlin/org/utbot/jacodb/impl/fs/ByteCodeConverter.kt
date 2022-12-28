@@ -24,6 +24,7 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.TypeAnnotationNode
 import org.utbot.jacodb.api.ClassSource
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.impl.bytecode.computeFrames
@@ -57,6 +58,7 @@ fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     methods = methods.map { it.asMethodInfo() }.toImmutableList(),
     fields = fields.map { it.asFieldInfo() }.toImmutableList(),
     annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
+    //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false),
     bytecode = bytecode
 )
 
@@ -97,7 +99,8 @@ private fun Any.toAnnotationValue(): AnnotationValue {
 private fun AnnotationNode.asAnnotationInfo(visible: Boolean) = AnnotationInfo(
     className = Type.getType(desc).className,
     visible = visible,
-    values = values?.chunked(2)?.map { (it[0] as String) to it[1].toAnnotationValue() }.orEmpty()
+    values = values?.chunked(2)?.map { (it[0] as String) to it[1].toAnnotationValue() }.orEmpty(),
+    typeRefPath = (this as? TypeAnnotationNode)?.let { it.typeRef to it.typePath.toString() }
 )
 
 private fun List<AnnotationNode>?.asAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
@@ -111,6 +114,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         desc = desc,
         access = access,
         annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
+        //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false),
         parametersInfo = List(params.size) { index ->
             ParameterInfo(
                 index = index,
@@ -121,7 +125,11 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
                         + invisibleParameterAnnotations?.get(index)?.asAnnotationInfos(false).orEmpty()
             )
         }
-    )
+    ).also {
+        if (name == "nullableMethod") {
+            println(it.annotations.size)
+        }
+    }
 }
 
 private fun FieldNode.asFieldInfo() = FieldInfo(
@@ -129,8 +137,13 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
     signature = signature,
     access = access,
     type = Type.getObjectType(desc).className,
-    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
-)
+    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
+    //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false)
+).also {
+    if (name == "containerOfNotNull") {
+        println(it.annotations.size)
+    }
+}
 
 
 val ClassSource.info: ClassInfo get() {

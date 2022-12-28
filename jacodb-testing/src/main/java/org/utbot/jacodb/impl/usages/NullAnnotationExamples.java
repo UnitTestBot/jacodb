@@ -22,6 +22,7 @@ import org.utbot.jacodb.impl.KotlinNullabilityExamples;
 
 import java.util.List;
 
+// invisibleTypeAnnotations.map { TypeReference(it.typeRef).formalParameterIndex to it.typePath?.getStepArgument(0) }
 public class NullAnnotationExamples {
     String refNullable;
     @NotNull String refNotNull = "dumb init value";
@@ -38,6 +39,8 @@ public class NullAnnotationExamples {
         public @Nullable E nullable;
         public E undefined;
     }
+
+    public void kek(NullAnnotationExamples.SomeContainer<@NotNull String> s) {}
 
     String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
         return null;

@@ -18,29 +18,32 @@ package org.utbot.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
+import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.impl.bytecode.isNullable
 
-fun JvmType.copyWithNullability(nullability: Boolean?): JvmType =
+fun JvmType.copyWith(nullability: Boolean?, annotations: List<JcAnnotation> = this.annotations): JvmType =
     when (this) {
-        is JvmArrayType -> JvmArrayType(elementType, nullability)
-        is JvmClassRefType -> JvmClassRefType(name, nullability)
-        is JvmParameterizedType.JvmNestedType -> JvmParameterizedType.JvmNestedType(name, parameterTypes, ownerType, nullability)
-        is JvmParameterizedType -> JvmParameterizedType(name, parameterTypes, nullability)
+        is JvmArrayType -> JvmArrayType(elementType, nullability, annotations)
+        is JvmClassRefType -> JvmClassRefType(name, nullability, annotations)
+        is JvmParameterizedType.JvmNestedType -> JvmParameterizedType.JvmNestedType(name, parameterTypes, ownerType, nullability, annotations)
+        is JvmParameterizedType -> JvmParameterizedType(name, parameterTypes, nullability, annotations)
 
-        is JvmTypeVariable -> JvmTypeVariable(symbol, nullability).also {
+        is JvmTypeVariable -> JvmTypeVariable(symbol, nullability, annotations).also {
             it.declaration = declaration
         }
 
         is JvmWildcard -> {
             if (nullability != true)
                 error("Attempting to make wildcard not-nullable, which are always nullable by convention")
+            if (annotations.isNotEmpty())
+                error("Annotations on wildcards are not supported")
             this
         }
 
         is JvmPrimitiveType -> {
             if (nullability != false)
                 error("Attempting to make a nullable primitive")
-            this
+            JvmPrimitiveType(ref, annotations)
         }
     }
 
@@ -52,17 +55,17 @@ internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
                 elementType.relaxWithKmType(it)
             } ?: elementType
 
-            JvmArrayType(updatedElementType, kmType.isNullable)
+            JvmArrayType(updatedElementType, kmType.isNullable, annotations.toMutableList())
         }
 
         is JvmParameterizedType.JvmNestedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable)
+            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable, annotations.toMutableList())
         }
 
         is JvmParameterizedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable)
+            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable, annotations.toMutableList())
         }
 
         is JvmBoundWildcard.JvmUpperBoundWildcard -> {
@@ -75,7 +78,7 @@ internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
         is JvmBoundWildcard.JvmLowerBoundWildcard ->
             JvmBoundWildcard.JvmLowerBoundWildcard(bound.relaxWithKmType(kmType))
 
-        else -> copyWithNullability(kmType.isNullable) // default implementation for many of JvmTypes
+        else -> copyWith(kmType.isNullable) // default implementation for many of JvmTypes
     }
 
 internal fun JvmTypeParameterDeclarationImpl.relaxWithKmTypeParameter(kmTypeParameter: KmTypeParameter): JvmTypeParameterDeclaration {

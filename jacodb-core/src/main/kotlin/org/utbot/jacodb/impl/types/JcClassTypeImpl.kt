@@ -16,9 +16,11 @@
 
 package org.utbot.jacodb.impl.types
 
+import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcRefType
+import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedField
 import org.utbot.jacodb.api.JcTypedMethod
 import org.utbot.jacodb.api.ext.isConstructor
@@ -40,15 +42,17 @@ open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
-    override val nullable: Boolean?
+    override val nullable: Boolean?,
+    override val annotations: List<JcAnnotation>
 ) : JcClassType {
 
     constructor(
         jcClass: JcClassOrInterface,
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
-        nullable: Boolean?
-    ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
+        nullable: Boolean?,
+        annotations: List<JcAnnotation>
+    ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable, annotations)
 
     private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
@@ -91,7 +95,7 @@ open class JcClassTypeImpl(
         val superClass = jcClass.superClass ?: return@lazy null
         resolutionImpl?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
-            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
+            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable, annotations)
         } ?: superClass.toType()
     }
 
@@ -100,7 +104,7 @@ open class JcClassTypeImpl(
             val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
                 val newSubstitutor = superSubstitutor(iface, ifaceType)
-                JcClassTypeImpl(iface, null, newSubstitutor, nullable)
+                JcClassTypeImpl(iface, null, newSubstitutor, nullable, annotations)
             } else {
                 iface.toType()
             }
@@ -119,7 +123,7 @@ open class JcClassTypeImpl(
                 it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
                 else -> substitutor.newScope(innerParameters)
             }
-            JcClassTypeImpl(it, this, innerSubstitutor, true)
+            JcClassTypeImpl(it, this, innerSubstitutor, true, annotations)
         }
     }
 
@@ -140,7 +144,10 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability)
+    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability, annotations.toMutableList())
+
+    override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType =
+        JcClassTypeImpl(jcClass, outerType, substitutor, nullable, annotations)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

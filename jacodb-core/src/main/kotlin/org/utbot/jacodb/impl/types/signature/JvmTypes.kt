@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.types.signature
 
+import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.api.PredefinedPrimitives
 
 /**
@@ -25,14 +26,15 @@ import org.utbot.jacodb.api.PredefinedPrimitives
  * - false -- means that type is non-nullable, a.k.a. T
  * - null -- means that type has unknown nullability, a.k.a. T!
  */
-sealed class JvmType(val isNullable: Boolean?) {
+sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotation>) {
 
     abstract val displayName: String
+    //val annotations: List<JcAnnotation> = ListOf()
 }
 
-internal sealed class JvmRefType(isNullable: Boolean?) : JvmType(isNullable)
+internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>) : JvmType(isNullable, annotations)
 
-internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null) : JvmRefType(isNullable) {
+internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = elementType.displayName + "[]"
@@ -42,8 +44,9 @@ internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = nul
 internal class JvmParameterizedType(
     val name: String,
     val parameterTypes: List<JvmType>,
-    isNullable: Boolean? = null
-) : JvmRefType(isNullable) {
+    isNullable: Boolean? = null,
+    annotations: List<JcAnnotation>
+) : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = name + "<${parameterTypes.joinToString { it.displayName }}>"
@@ -52,8 +55,9 @@ internal class JvmParameterizedType(
         val name: String,
         val parameterTypes: List<JvmType>,
         val ownerType: JvmType,
-        isNullable: Boolean? = null
-    ) : JvmRefType(isNullable) {
+        isNullable: Boolean? = null,
+        annotations: List<JcAnnotation>
+    ) : JvmRefType(isNullable, annotations) {
 
         override val displayName: String
             get() = name + "<${parameterTypes.joinToString { it.displayName }}>"
@@ -62,7 +66,8 @@ internal class JvmParameterizedType(
 
 }
 
-internal class JvmClassRefType(val name: String, isNullable: Boolean? = null) : JvmRefType(isNullable) {
+internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>
+) : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = name
@@ -78,9 +83,10 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null) : 
  *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
  *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
  */
-class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType(isNullable) {
+class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>
+) : JvmType(isNullable, annotations) {
 
-    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null) : this(declaration.symbol, isNullable) {
+    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : this(declaration.symbol, isNullable, annotations) {
         this.declaration = declaration
     }
 
@@ -110,7 +116,7 @@ class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
-internal sealed class JvmWildcard: JvmType(isNullable = true)
+internal sealed class JvmWildcard: JvmType(isNullable = true, listOf())
 
 internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 
@@ -133,7 +139,7 @@ internal object JvmUnboundWildcard : JvmWildcard() {
         get() = "*"
 }
 
-internal class JvmPrimitiveType(val ref: String) : JvmRefType(isNullable = false) {
+internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf()) : JvmRefType(isNullable = false, annotations) {
 
     companion object {
         fun of(descriptor: Char): JvmType {

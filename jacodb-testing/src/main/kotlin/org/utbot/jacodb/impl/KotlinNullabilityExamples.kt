@@ -17,6 +17,7 @@
 package org.utbot.jacodb.impl
 
 class KotlinNullabilityExamples {
+    val x: String = "abc"
     class SomeContainer<E>(
         val listOfNotNull: List<E>,
         val listOfNullable: List<E?>,

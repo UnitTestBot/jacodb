@@ -21,8 +21,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.ext.isNullable
 import org.utbot.jacodb.impl.types.BaseTypesTest
+import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
 class NullabilityByAnnotationsTest: BaseTypesTest() {
+    @Test
+    fun test() = runBlocking {
+        val y = NullAnnotationExamples()
+        val a = NullKek()
+        val clazz = findType<NullAnnotationExamples>()
+
+        if (clazz.fields.map { it.fieldType }.isEmpty() || clazz.methods.map { it.returnType }.isEmpty() ) {
+            assertEquals(true, false)
+        }
+    }
 
     @Test
     fun `Test field nullability`() = runBlocking {

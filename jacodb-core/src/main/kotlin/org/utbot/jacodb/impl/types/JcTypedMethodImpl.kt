@@ -106,7 +106,7 @@ class JcTypedMethodImpl(
         val info = info
         val impl = info.impl
         val type = if (impl == null) {
-            classpath.findTypeOrNull(typeName)
+            classpath.findTypeOrNull(typeName)?.copyWithAnnotations(method.annotations)
                 ?: throw IllegalStateException("Can't resolve type by name $typeName")
         } else {
             classpath.typeOf(info.substitutor.substitute(impl.returnType))

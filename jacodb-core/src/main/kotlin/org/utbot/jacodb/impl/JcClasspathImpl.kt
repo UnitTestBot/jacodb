@@ -17,6 +17,16 @@
 package org.utbot.jacodb.impl
 
 import com.google.common.cache.CacheBuilder
+import org.utbot.jacodb.api.ClassSource
+import org.utbot.jacodb.api.JcAnnotation
+import org.utbot.jacodb.api.JcArrayType
+import org.utbot.jacodb.api.JcByteCodeLocation
+import org.utbot.jacodb.api.JcClassOrInterface
+import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcRefType
+import org.utbot.jacodb.api.JcType
+import org.utbot.jacodb.api.PredefinedPrimitives
+import org.utbot.jacodb.api.RegisteredLocation
 import kotlinx.coroutines.*
 import org.utbot.jacodb.api.*
 import org.utbot.jacodb.api.ext.toType
@@ -71,17 +81,18 @@ class JcClasspathImpl(
         }.jcClass
     }
 
-    override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
+    override fun typeOf(jcClass: JcClassOrInterface, nullability: Boolean?, annotations: List<JcAnnotation>): JcRefType {
         return JcClassTypeImpl(
             jcClass,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
-            nullable = null
+            nullability,
+            annotations
         )
     }
 
-    override fun arrayTypeOf(elementType: JcType): JcArrayType {
-        return JcArrayTypeImpl(elementType, null)
+    override fun arrayTypeOf(elementType: JcType, nullability: Boolean?, annotations: List<JcAnnotation>): JcArrayType {
+        return JcArrayTypeImpl(elementType, nullability, annotations)
     }
 
     override fun toJcClass(source: ClassSource, withCaching: Boolean): JcClassOrInterface {

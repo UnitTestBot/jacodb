@@ -53,6 +53,7 @@ class ClassInfo(
     val innerClasses: List<String>,
     val interfaces: List<String>,
     val annotations: List<AnnotationInfo>,
+//    val typeAnnotations: List<AnnotationInfo>,
     val bytecode: ByteArray
 )
 
@@ -69,6 +70,7 @@ class MethodInfo(
     val signature: String?,
     val access: Int,
     val annotations: List<AnnotationInfo>,
+//    val typeAnnotations: List<AnnotationInfo>,
     val parametersInfo: List<ParameterInfo>,
 ) {
     val returnClass: String get() = Type.getReturnType(desc).className
@@ -82,14 +84,16 @@ class FieldInfo(
     val signature: String?,
     val access: Int,
     val type: String,
-    val annotations: List<AnnotationInfo>
+    val annotations: List<AnnotationInfo>,
+    //val typeAnnotations: List<AnnotationInfo>
 )
 
 @Serializable
-class AnnotationInfo(
+open class AnnotationInfo(
     val className: String,
     val visible: Boolean,
-    val values: List<Pair<String, AnnotationValue>>
+    val values: List<Pair<String, AnnotationValue>>,
+    val typeRefPath: Pair<Int, String>?
 ) : AnnotationValue()
 
 @Serializable

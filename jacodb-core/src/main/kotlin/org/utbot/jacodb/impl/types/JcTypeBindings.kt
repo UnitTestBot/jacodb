@@ -36,19 +36,20 @@ import org.utbot.jacodb.impl.types.signature.JvmUnboundWildcard
 internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
     return when (jvmType) {
         is JvmPrimitiveType -> {
-            PredefinedPrimitives.of(jvmType.ref, this)
+            PredefinedPrimitives.of(jvmType.ref, this, jvmType.annotations)
                 ?: throw IllegalStateException("primitive type ${jvmType.ref} not found")
         }
 
-        is JvmClassRefType -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
-        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType)).copyWithNullability(jvmType.isNullable)
+        is JvmClassRefType -> typeOf(findClass(jvmType.name), jvmType.isNullable, jvmType.annotations)
+        is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType), jvmType.isNullable, jvmType.annotations)
         is JvmParameterizedType -> {
             val clazz = findClass(jvmType.name)
             JcClassTypeImpl(
                 clazz,
                 null,
                 parameters ?: jvmType.parameterTypes,
-                nullable = jvmType.isNullable
+                nullable = jvmType.isNullable,
+                jvmType.annotations
             )
         }
 
@@ -60,14 +61,15 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                 clazz,
                 outerType as JcClassTypeImpl,
                 jvmType.parameterTypes,
-                nullable = jvmType.isNullable
+                nullable = jvmType.isNullable,
+                jvmType.annotations
             )
         }
 
         is JvmTypeVariable -> {
             val declaration = jvmType.declaration
             if (declaration != null) {
-                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), jvmType.isNullable)
+                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), jvmType.isNullable, jvmType.annotations)
             } else {
                 anyType()
             }

@@ -50,9 +50,10 @@ interface JcClasspath : Closeable {
      */
     fun findTypeOrNull(name: String): JcType?
 
-    fun typeOf(jcClass: JcClassOrInterface): JcRefType
+    fun typeOf(jcClass: JcClassOrInterface, nullability: Boolean? = null, annotations: List<JcAnnotation> = listOf()): JcRefType
 
-    fun arrayTypeOf(elementType: JcType): JcArrayType
+    fun arrayTypeOf(elementType: JcType, nullability: Boolean? = null, annotations: List<JcAnnotation> = listOf()): JcArrayType
+
     fun toJcClass(source: ClassSource, withCaching: Boolean = true): JcClassOrInterface
 
     suspend fun refreshed(closeOld: Boolean): JcClasspath

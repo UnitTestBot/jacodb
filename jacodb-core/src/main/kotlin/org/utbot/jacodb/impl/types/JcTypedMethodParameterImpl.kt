@@ -40,7 +40,7 @@ class JcTypedMethodParameterImpl(
             val typeName = parameter.type.typeName
             val type = jvmType?.let {
                 classpath.typeOf(substitutor.substitute(jvmType))
-            } ?: classpath.findTypeOrNull(typeName) ?: typeName.throwClassNotFound()
+            } ?: classpath.findTypeOrNull(typeName)?.copyWithAnnotations(parameter.annotations) ?: typeName.throwClassNotFound()
 
             return parameter.isNullable?.let {
                 (type as? JcRefType)?.copyWithNullability(it)

@@ -31,6 +31,10 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
 
     override fun register(token: JvmType) {
         fieldType = field?.kmType?.let { token.relaxWithKmType(it) } ?: token
+        field?.let {
+            // TODO: find real list of annotations here
+            fieldType = fieldType.relaxWithAnnotations(listOf(), it.enclosingClass.classpath, 0)
+        }
     }
 
     fun resolve(): FieldResolution {

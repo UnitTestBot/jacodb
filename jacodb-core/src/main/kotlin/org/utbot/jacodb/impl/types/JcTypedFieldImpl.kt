@@ -44,7 +44,7 @@ class JcTypedFieldImpl(
         val typeName = field.type.typeName
         val type = resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))
-        } ?: classpath.findTypeOrNull(field.type.typeName) ?: typeName.throwClassNotFound()
+        } ?: classpath.findTypeOrNull(field.type.typeName)?.copyWithAnnotations(field.annotations) ?: typeName.throwClassNotFound()
 
         field.isNullable?.let {
             (type as? JcRefType)?.copyWithNullability(it)

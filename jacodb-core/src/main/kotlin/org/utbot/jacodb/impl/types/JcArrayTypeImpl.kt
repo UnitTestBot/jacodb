@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.types
 
+import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.api.JcArrayType
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcRefType
@@ -23,13 +24,14 @@ import org.utbot.jacodb.api.JcType
 
 class JcArrayTypeImpl(
     override val elementType: JcType,
-    override val nullable: Boolean? = null
+    override val nullable: Boolean? = null,
+    override val annotations: List<JcAnnotation> = listOf()
 ) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"
 
     override fun copyWithNullability(nullability: Boolean?): JcRefType {
-        return JcArrayTypeImpl(elementType, nullability)
+        return JcArrayTypeImpl(elementType, nullability, annotations.toMutableList())
     }
 
     override val classpath: JcClasspath
@@ -50,4 +52,7 @@ class JcArrayTypeImpl(
         return elementType.hashCode()
     }
 
+    override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType {
+        return JcArrayTypeImpl(elementType, nullable, annotations)
+    }
 }
