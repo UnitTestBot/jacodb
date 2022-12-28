@@ -39,6 +39,7 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.storage.longHash
 import org.utbot.jacodb.impl.storage.runBatch
 import org.utbot.jacodb.impl.storage.setNullableLong
+import org.utbot.jacodb.impl.storage.withoutAutoCommit
 
 
 private class MethodMap(size: Int) {
@@ -110,7 +111,7 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
     }
 
     override fun flush(jooq: DSLContext) {
-        jooq.connection { conn ->
+        jooq.withoutAutoCommit { conn ->
             conn.runBatch(CALLS) {
                 usages.forEach { (calleeClass, calleeEntry) ->
                     val calleeId = calleeClass.className.symbolId
@@ -129,8 +130,8 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
                         }
                     }
                 }
-                interner.flush(conn)
             }
+            interner.flush(conn)
         }
     }
 

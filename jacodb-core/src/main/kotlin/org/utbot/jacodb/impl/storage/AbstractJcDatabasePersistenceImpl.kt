@@ -34,6 +34,7 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.vfs.PersistentByteCodeLocation
 import java.io.Closeable
 import java.io.File
+import java.util.concurrent.locks.ReentrantLock
 
 abstract class AbstractJcDatabasePersistenceImpl(
     private val javaRuntime: JavaRuntime,
@@ -55,6 +56,8 @@ abstract class AbstractJcDatabasePersistenceImpl(
     private val locationsCache = cacheOf<Long, RegisteredLocation>(locationsCacheSize)
     private val byteCodeCache = cacheOf<Long, ByteArray>(byteCodeCacheSize)
     private val symbolsCache = cacheOf<Long, String>(symbolsCacheSize)
+
+    private val lock = ReentrantLock()
 
     override val locations: List<JcByteCodeLocation>
         get() {
@@ -83,8 +86,8 @@ abstract class AbstractJcDatabasePersistenceImpl(
         }
     }
 
-    override fun <T> write(action: (DSLContext) -> T): T {
-        return action(jooq)
+    override fun <T> write(action: (DSLContext) -> T): T  = synchronized(this) {
+        action(jooq)
     }
 
     override fun <T> read(action: (DSLContext) -> T): T {

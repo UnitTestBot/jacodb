@@ -37,6 +37,7 @@ import org.utbot.jacodb.impl.storage.jooq.tables.references.BUILDERS
 import org.utbot.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.utbot.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.utbot.jacodb.impl.storage.runBatch
+import org.utbot.jacodb.impl.storage.withoutAutoCommit
 
 private val MethodNode.isGetter: Boolean
     get() {
@@ -88,7 +89,7 @@ class BuildersIndexer(val persistence: JcDatabasePersistence, private val locati
 
 
     override fun flush(jooq: DSLContext) {
-        jooq.connection { conn ->
+        jooq.withoutAutoCommit { conn ->
             conn.runBatch(BUILDERS) {
                 potentialBuilders.forEach { (calleeClass, builders) ->
                     val calleeId = calleeClass.className.symbolId
