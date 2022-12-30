@@ -148,7 +148,7 @@ class JcDatabaseImpl(
                     parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location))) }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
-            }.joinAll()
+            }.awaitAll()
             persistence.createIndexes()
             locationsRegistry.afterProcessing(this@process)
             backgroundJobs.remove(backgroundJobId)

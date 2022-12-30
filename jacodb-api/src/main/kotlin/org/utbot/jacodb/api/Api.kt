@@ -146,13 +146,13 @@ interface JcDatabasePersistence : Closeable {
     fun findSymbolName(symbolId: Long): String
     fun findLocation(locationId: Long): RegisteredLocation
 
-    fun newSymbolInterner(): JCDBSymbolsInterner
+    val symbolInterner: JCDBSymbolsInterner
     fun findBytecode(classId: Long): ByteArray
 
     fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
     fun findClassSources(location: RegisteredLocation): List<ClassSource>
 
-    fun createIndexes(){}
+    fun createIndexes() {}
 
     fun getScript(name: String): String
 }
