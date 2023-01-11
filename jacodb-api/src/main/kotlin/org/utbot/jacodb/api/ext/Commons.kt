@@ -26,15 +26,15 @@ import java.util.*
 
 fun String.jvmName(): String {
     return when {
-        this == PredefinedPrimitives.boolean -> "Z"
-        this == PredefinedPrimitives.byte -> "B"
-        this == PredefinedPrimitives.char -> "C"
-        this == PredefinedPrimitives.short -> "S"
-        this == PredefinedPrimitives.int -> "I"
-        this == PredefinedPrimitives.float -> "F"
-        this == PredefinedPrimitives.long -> "J"
-        this == PredefinedPrimitives.double -> "D"
-        this == PredefinedPrimitives.void -> "V"
+        this == PredefinedPrimitives.Boolean -> "Z"
+        this == PredefinedPrimitives.Byte -> "B"
+        this == PredefinedPrimitives.Char -> "C"
+        this == PredefinedPrimitives.Short -> "S"
+        this == PredefinedPrimitives.Int -> "I"
+        this == PredefinedPrimitives.Float -> "F"
+        this == PredefinedPrimitives.Long -> "J"
+        this == PredefinedPrimitives.Double -> "D"
+        this == PredefinedPrimitives.Void -> "V"
         endsWith("[]") -> {
             val elementName = substring(0, length - 2)
             "[" + elementName.jvmName()
@@ -48,15 +48,15 @@ val jvmPrimitiveNames = hashSetOf("Z", "B", "C", "S", "I", "F", "J", "D", "V")
 
 fun String.jcdbName(): String {
     return when {
-        this == "Z" -> PredefinedPrimitives.boolean
-        this == "B" -> PredefinedPrimitives.byte
-        this == "C" -> PredefinedPrimitives.char
-        this == "S" -> PredefinedPrimitives.short
-        this == "I" -> PredefinedPrimitives.int
-        this == "F" -> PredefinedPrimitives.float
-        this == "J" -> PredefinedPrimitives.long
-        this == "D" -> PredefinedPrimitives.double
-        this == "V" -> PredefinedPrimitives.void
+        this == "Z" -> PredefinedPrimitives.Boolean
+        this == "B" -> PredefinedPrimitives.Byte
+        this == "C" -> PredefinedPrimitives.Char
+        this == "S" -> PredefinedPrimitives.Short
+        this == "I" -> PredefinedPrimitives.Int
+        this == "F" -> PredefinedPrimitives.Float
+        this == "J" -> PredefinedPrimitives.Long
+        this == "D" -> PredefinedPrimitives.Double
+        this == "V" -> PredefinedPrimitives.Void
         startsWith("[") -> {
             val elementName = substring(1, length)
             elementName.jcdbName() + "[]"

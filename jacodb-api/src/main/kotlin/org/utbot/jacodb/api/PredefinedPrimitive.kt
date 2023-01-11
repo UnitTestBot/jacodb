@@ -20,18 +20,19 @@ import kotlinx.collections.immutable.persistentListOf
 
 object PredefinedPrimitives {
 
-    const val boolean = "boolean"
-    const val byte = "byte"
-    const val char = "char"
-    const val short = "short"
-    const val int = "int"
-    const val long = "long"
-    const val float = "float"
-    const val double = "double"
-    const val void = "void"
-    const val _null = "null"
+    const val Boolean = "boolean"
 
-    private val values = persistentListOf(boolean, byte, char, short, int, long, float, double, void, _null)
+    const val Byte = "byte"
+    const val Char = "char"
+    const val Short = "short"
+    const val Int = "int"
+    const val Long = "long"
+    const val Float = "float"
+    const val Double = "double"
+    const val Void = "void"
+    const val Null = "null"
+
+    private val values = persistentListOf(Boolean, Byte, Char, Short, Int, Long, Float, Double, Void, Null)
     private val valueSet = values.toHashSet()
 
     @JvmStatic
@@ -70,12 +71,12 @@ class PredefinedPrimitive(override val classpath: JcClasspath, override val type
 
 }
 
-val JcClasspath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.void)
-val JcClasspath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.boolean)
-val JcClasspath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.short)
-val JcClasspath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.int)
-val JcClasspath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.long)
-val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.float)
-val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.double)
-val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.byte)
-val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.char)
+val JcClasspath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.Void)
+val JcClasspath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.Boolean)
+val JcClasspath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.Short)
+val JcClasspath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.Int)
+val JcClasspath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.Long)
+val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.Float)
+val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.Double)
+val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.Byte)
+val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.Char)
