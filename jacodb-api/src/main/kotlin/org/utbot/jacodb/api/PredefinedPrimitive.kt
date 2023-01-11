@@ -20,20 +20,21 @@ import kotlinx.collections.immutable.persistentListOf
 
 object PredefinedPrimitives {
 
-    val boolean = "boolean"
-    val byte = "byte"
-    val char = "char"
-    val short = "short"
-    val int = "int"
-    val long = "long"
-    val float = "float"
-    val double = "double"
-    val void = "void"
-    val _null = "null"
+    const val boolean = "boolean"
+    const val byte = "byte"
+    const val char = "char"
+    const val short = "short"
+    const val int = "int"
+    const val long = "long"
+    const val float = "float"
+    const val double = "double"
+    const val void = "void"
+    const val _null = "null"
 
     private val values = persistentListOf(boolean, byte, char, short, int, long, float, double, void, _null)
     private val valueSet = values.toHashSet()
 
+    @JvmStatic
     fun of(name: String, cp: JcClasspath): JcPrimitiveType? {
         if (valueSet.contains(name)) {
             return PredefinedPrimitive(cp, name)
@@ -41,6 +42,7 @@ object PredefinedPrimitives {
         return null
     }
 
+    @JvmStatic
     fun matches(name: String): Boolean {
         return valueSet.contains(name)
     }

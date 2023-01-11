@@ -161,7 +161,7 @@ interface RegisteredLocation {
     val jcLocation: JcByteCodeLocation?
     val id: Long
     val path: String
-    val runtime: Boolean
+    val isRuntime: Boolean
 }
 
 interface JCDBSymbolsInterner {

@@ -102,7 +102,7 @@ class ClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
         return ClasspathEntity(
             classpathId,
             locations = classpath.registeredLocations.map {
-                LocationEntity(it.id, it.path, it.runtime)
+                LocationEntity(it.id, it.path, it.isRuntime)
             })
     }
 

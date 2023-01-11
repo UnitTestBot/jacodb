@@ -24,6 +24,9 @@ import org.utbot.jacodb.api.JcParameter
 import org.utbot.jacodb.api.PredefinedPrimitives
 import org.utbot.jacodb.api.TypeName
 
+const val NotNull = "org.jetbrains.annotations.NotNull"
+const val Nullable = "org.jetbrains.annotations.Nullable"
+
 private fun JcAnnotated.isNullable(type: TypeName): Boolean? =
     when {
         PredefinedPrimitives.matches(type.typeName) -> false

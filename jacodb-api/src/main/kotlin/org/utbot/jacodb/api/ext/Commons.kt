@@ -71,9 +71,6 @@ fun String.jcdbName(): String {
 }
 
 
-const val NotNull = "org.jetbrains.annotations.NotNull"
-const val Nullable = "org.jetbrains.annotations.Nullable"
-
 fun JcClasspath.anyType(): JcClassType =
     findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()
 

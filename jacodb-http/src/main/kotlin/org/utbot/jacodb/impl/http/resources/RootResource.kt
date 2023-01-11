@@ -65,7 +65,7 @@ class RootResource(val jcdbSettings: JcSettings, val jcdb: JcDatabase) {
             LocationEntity(
                 id = it.id,
                 path = it.path,
-                runtime = it.runtime
+                runtime = it.isRuntime
             )
         }
     )

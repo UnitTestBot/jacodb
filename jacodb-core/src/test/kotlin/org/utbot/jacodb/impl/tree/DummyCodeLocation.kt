@@ -30,7 +30,7 @@ open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, Reg
     override val fsId: String
         get() = name
 
-    override val runtime: Boolean
+    override val isRuntime: Boolean
         get() = false
 
     override val jcLocation: JcByteCodeLocation

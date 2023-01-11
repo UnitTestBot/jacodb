@@ -34,6 +34,7 @@ import org.utbot.jacodb.api.ext.enumValues
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.findClassOrNull
 import org.utbot.jacodb.api.ext.findMethodOrNull
+import org.utbot.jacodb.api.ext.hasBody
 import org.utbot.jacodb.api.ext.isEnum
 import org.utbot.jacodb.api.ext.isFinal
 import org.utbot.jacodb.api.ext.isInterface
@@ -342,6 +343,16 @@ abstract class DatabaseEnvTest {
     fun `classes common hierarchy`() = runBlocking {
         val runnable = cp.findClass<Runnable>()
         assertTrue(hierarchyExt.findSubClasses(runnable, true).count() > 300)
+    }
+
+    @Test
+    fun `body of method`() = runBlocking {
+        val runnable = cp.findClass<Runnable>()
+
+        val method = runnable.declaredMethods.first()
+        assertFalse(method.hasBody)
+        assertNotNull(method.body())
+        assertTrue(method.body().instructions.toList().isEmpty())
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

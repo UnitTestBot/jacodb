@@ -70,3 +70,9 @@ val JcMethod.jcdbSignature: String
         val params = parameters.joinToString(";") { it.type.typeName } + (";".takeIf { parameters.isNotEmpty() } ?: "")
         return "$name($params)${returnType.typeName};"
     }
+
+@get:JvmName("hasBody")
+val JcMethod.hasBody: Boolean
+    get() {
+        return !isNative && !isAbstract && body().instructions.first != null
+    }
