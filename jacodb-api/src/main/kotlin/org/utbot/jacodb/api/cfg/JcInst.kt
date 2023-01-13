@@ -738,6 +738,36 @@ data class JcArrayAccess(
 
 sealed interface JcConstant : JcSimpleValue
 
+sealed interface JcNumeric : JcConstant {
+    val value: Number
+
+    fun isEqual(c: JcNumeric): Boolean = c.value == value
+
+    fun isNotEqual(c: JcNumeric): Boolean = !isEqual(c)
+
+    fun isLessThan(c: JcNumeric): Boolean
+
+    fun isLessThanOrEqual(c: JcNumeric): Boolean = isLessThan(c) || isEqual(c)
+
+    fun isGreaterThan(c: JcNumeric): Boolean
+
+    fun isGreaterThanOrEqual(c: JcNumeric): Boolean = isGreaterThan(c) || isEqual(c)
+
+    operator fun plus(c: JcNumeric): JcNumeric
+
+    operator fun minus(c: JcNumeric): JcNumeric
+
+    operator fun times(c: JcNumeric): JcNumeric
+
+    operator fun div(c: JcNumeric): JcNumeric
+
+    operator fun rem(c: JcNumeric): JcNumeric
+
+    operator fun unaryMinus(): JcNumeric
+
+}
+
+
 data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
@@ -746,8 +776,40 @@ data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcByte(val value: Byte, override val type: JcType) : JcConstant {
+data class JcByte(override val value: Byte, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
+
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcInt(value + c.value.toByte(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcInt(value.div(c.value.toByte()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcInt(value.times(c.value.toByte()), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcInt(value.div(c.value.toByte()), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcInt(value.rem(c.value.toByte()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcInt(-value, type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toByte()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toByte()
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcByte(this)
@@ -762,41 +824,200 @@ data class JcChar(val value: Char, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcShort(val value: Short, override val type: JcType) : JcConstant {
+data class JcShort(override  val value: Short, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
+
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcInt(value + c.value.toShort(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcInt(value.div(c.value.toShort()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcInt(value * c.value.toInt(), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcInt(value / c.value.toShort(), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcInt(value.rem(c.value.toShort()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcInt(-value, type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toShort()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toShort()
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcShort(this)
     }
 }
 
-data class JcInt(val value: Int, override val type: JcType) : JcConstant {
+data class JcInt(override val value: Int, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
+
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcInt(value + c.value.toInt(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcInt(value.div(c.value.toInt()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcInt(value * c.value.toInt(), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcInt(value / c.value.toInt(), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcInt(value.rem(c.value.toInt()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcInt(-value, type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toInt()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toInt()
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcInt(this)
     }
 }
 
-data class JcLong(val value: Long, override val type: JcType) : JcConstant {
+data class JcLong(override val value: Long, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
+
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcLong(value + c.value.toLong(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcLong(value.div(c.value.toLong()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcLong(value * c.value.toLong(), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcLong(value.div(c.value.toLong()), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcLong(value.rem(c.value.toLong()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcLong(-value, type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toLong()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toLong()
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLong(this)
     }
 }
 
-data class JcFloat(val value: Float, override val type: JcType) : JcConstant {
+data class JcFloat(override val value: Float, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
+
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcFloat(value + c.value.toFloat(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcFloat(value.div(c.value.toFloat()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcFloat(value * c.value.toFloat(), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcFloat(value.div(c.value.toFloat()), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcFloat(value.rem(c.value.toFloat()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcFloat(value.times(-1), type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toFloat()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toFloat()
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcFloat(this)
     }
 }
 
-data class JcDouble(val value: Double, override val type: JcType) : JcConstant {
+data class JcDouble(override val value: Double, override val type: JcType) : JcNumeric {
     override fun toString(): String = "$value"
 
+    override fun plus(c: JcNumeric): JcNumeric {
+        return JcDouble(value + c.value.toDouble(), type)
+    }
+
+    override fun minus(c: JcNumeric): JcNumeric {
+        return JcDouble(value.div(c.value.toDouble()), type)
+    }
+
+    override fun times(c: JcNumeric): JcNumeric {
+        return JcDouble(value * c.value.toDouble(), type)
+    }
+
+    override fun div(c: JcNumeric): JcNumeric {
+        return JcDouble(value.div(c.value.toDouble()), type)
+    }
+
+    override fun rem(c: JcNumeric): JcNumeric {
+        return JcDouble(value.rem(c.value.toDouble()), type)
+    }
+
+    override fun unaryMinus(): JcNumeric {
+        return JcDouble(-value, type)
+    }
+
+    override fun isLessThan(c: JcNumeric): Boolean {
+        return value < c.value.toDouble()
+    }
+
+    override fun isGreaterThan(c: JcNumeric): Boolean {
+        return value > c.value.toDouble()
+    }
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcDouble(this)
     }
