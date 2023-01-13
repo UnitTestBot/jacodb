@@ -28,7 +28,7 @@ import org.utbot.jacodb.api.cfg.JcRawLocal
 import org.utbot.jacodb.api.cfg.JcRawNullConstant
 import org.utbot.jacodb.api.cfg.JcRawSimpleValue
 import org.utbot.jacodb.api.cfg.JcRawValue
-import org.utbot.jacodb.api.cfg.ext.applyAndGet
+import org.utbot.jacodb.api.ext.cfg.applyAndGet
 import org.utbot.jacodb.impl.cfg.util.ExprMapper
 import org.utbot.jacodb.impl.cfg.util.FullExprSetCollector
 import org.utbot.jacodb.impl.cfg.util.InstructionFilter

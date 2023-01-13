@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-@file:JvmName("Cfg")
-package org.utbot.jacodb.api.cfg.ext
+@file:JvmName("JcInstructions")
+package org.utbot.jacodb.api.ext.cfg
 
 import org.utbot.jacodb.api.cfg.JcRawExpr
 import org.utbot.jacodb.api.cfg.JcRawExprVisitor

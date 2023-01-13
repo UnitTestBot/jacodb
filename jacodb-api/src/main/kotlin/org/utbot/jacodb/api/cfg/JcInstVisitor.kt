@@ -29,18 +29,29 @@ interface JcInstVisitor<T> {
     fun visitJcSwitchInst(inst: JcSwitchInst): T
 }
 
+@JvmDefaultWithoutCompatibility
 interface DefaultJcInstVisitor<T> : JcInstVisitor<T> {
     val defaultInstHandler: (JcInst) -> T
 
+    @JvmDefault
     override fun visitJcAssignInst(inst: JcAssignInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcEnterMonitorInst(inst: JcEnterMonitorInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcExitMonitorInst(inst: JcExitMonitorInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcCallInst(inst: JcCallInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcReturnInst(inst: JcReturnInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcThrowInst(inst: JcThrowInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcCatchInst(inst: JcCatchInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcGotoInst(inst: JcGotoInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcIfInst(inst: JcIfInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcSwitchInst(inst: JcSwitchInst): T = defaultInstHandler(inst)
 }
 
@@ -97,56 +108,105 @@ interface JcExprVisitor<T> {
 }
 
 
+@JvmDefaultWithoutCompatibility
 interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
     val defaultExprHandler: (JcExpr) -> T
 
+    @JvmDefault
     override fun visitJcAddExpr(expr: JcAddExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcAndExpr(expr: JcAndExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcCmpExpr(expr: JcCmpExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcCmpgExpr(expr: JcCmpgExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcCmplExpr(expr: JcCmplExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcDivExpr(expr: JcDivExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcMulExpr(expr: JcMulExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcEqExpr(expr: JcEqExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcNeqExpr(expr: JcNeqExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcGeExpr(expr: JcGeExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcGtExpr(expr: JcGtExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcLeExpr(expr: JcLeExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcLtExpr(expr: JcLtExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcOrExpr(expr: JcOrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRemExpr(expr: JcRemExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcShlExpr(expr: JcShlExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcShrExpr(expr: JcShrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcSubExpr(expr: JcSubExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcUshrExpr(expr: JcUshrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcXorExpr(expr: JcXorExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcLengthExpr(expr: JcLengthExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcNegExpr(expr: JcNegExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcCastExpr(expr: JcCastExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcNewExpr(expr: JcNewExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcNewArrayExpr(expr: JcNewArrayExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcLambdaExpr(expr: JcLambdaExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): T = defaultExprHandler(expr)
 
+    @JvmDefault
     override fun visitJcThis(value: JcThis): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcArgument(value: JcArgument): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcLocal(value: JcLocal): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcFieldRef(value: JcFieldRef): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcArrayAccess(value: JcArrayAccess): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcBool(value: JcBool): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcByte(value: JcByte): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcChar(value: JcChar): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcShort(value: JcShort): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcInt(value: JcInt): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcLong(value: JcLong): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcFloat(value: JcFloat): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcDouble(value: JcDouble): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcNullConstant(value: JcNullConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcStringConstant(value: JcStringConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcClassConstant(value: JcClassConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcMethodConstant(value: JcMethodConstant): T = defaultExprHandler(value)
 }

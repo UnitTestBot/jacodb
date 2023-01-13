@@ -66,5 +66,4 @@ public class JavaApiTest {
             System.out.println("asyncAwaitBackgroundJobs finished");
         }
     }
-
 }

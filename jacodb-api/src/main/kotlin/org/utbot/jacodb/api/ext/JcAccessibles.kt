@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcAccessibles")
+
 package org.utbot.jacodb.api.ext
 
 import org.objectweb.asm.Opcodes

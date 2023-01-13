@@ -35,9 +35,9 @@ class JcClassOrInterfaceImpl(
     private val classSource: ClassSource
 ) : JcClassOrInterface {
 
-    private val cachedInfo: ClassInfo? = when {
-        classSource is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
-        classSource is ClassSourceImpl -> classSource.info // we can easily read link let's do it
+    private val cachedInfo: ClassInfo? = when (classSource) {
+        is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
+        is ClassSourceImpl -> classSource.info // we can easily read link let's do it
         else -> null // maybe we do not need to do right now
     }
 

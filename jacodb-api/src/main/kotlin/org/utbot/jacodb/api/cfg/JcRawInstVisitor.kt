@@ -30,19 +30,31 @@ interface JcRawInstVisitor<T> {
     fun visitJcRawSwitchInst(inst: JcRawSwitchInst): T
 }
 
+@JvmDefaultWithoutCompatibility
 interface DefaultJcRawInstVisitor<T> : JcRawInstVisitor<T> {
     val defaultInstHandler: (JcRawInst) -> T
 
+    @JvmDefault
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawExitMonitorInst(inst: JcRawExitMonitorInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawCallInst(inst: JcRawCallInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawReturnInst(inst: JcRawReturnInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawThrowInst(inst: JcRawThrowInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawGotoInst(inst: JcRawGotoInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawIfInst(inst: JcRawIfInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawSwitchInst(inst: JcRawSwitchInst): T = defaultInstHandler(inst)
 }
 
@@ -98,57 +110,104 @@ interface JcRawExprVisitor<T> {
     fun visitJcRawMethodConstant(value: JcRawMethodConstant): T
 }
 
-
+@JvmDefaultWithoutCompatibility
 interface DefaultJcRawExprVisitor<T> : JcRawExprVisitor<T> {
     val defaultExprHandler: (JcRawExpr) -> T
 
+    @JvmDefault
     override fun visitJcRawAddExpr(expr: JcRawAddExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawAndExpr(expr: JcRawAndExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawCmpExpr(expr: JcRawCmpExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawCmpgExpr(expr: JcRawCmpgExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawCmplExpr(expr: JcRawCmplExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawDivExpr(expr: JcRawDivExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawMulExpr(expr: JcRawMulExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawEqExpr(expr: JcRawEqExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawNeqExpr(expr: JcRawNeqExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawGeExpr(expr: JcRawGeExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawGtExpr(expr: JcRawGtExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawLeExpr(expr: JcRawLeExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawLtExpr(expr: JcRawLtExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawOrExpr(expr: JcRawOrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawRemExpr(expr: JcRawRemExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawShlExpr(expr: JcRawShlExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawShrExpr(expr: JcRawShrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawSubExpr(expr: JcRawSubExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawUshrExpr(expr: JcRawUshrExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawXorExpr(expr: JcRawXorExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawLengthExpr(expr: JcRawLengthExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawNegExpr(expr: JcRawNegExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawCastExpr(expr: JcRawCastExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawNewExpr(expr: JcRawNewExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawStaticCallExpr(expr: JcRawStaticCallExpr): T = defaultExprHandler(expr)
+    @JvmDefault
     override fun visitJcRawSpecialCallExpr(expr: JcRawSpecialCallExpr): T = defaultExprHandler(expr)
-
+    @JvmDefault
     override fun visitJcRawThis(value: JcRawThis): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawArgument(value: JcRawArgument): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawLocal(value: JcRawLocal): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawFieldRef(value: JcRawFieldRef): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawArrayAccess(value: JcRawArrayAccess): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawBool(value: JcRawBool): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawByte(value: JcRawByte): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawChar(value: JcRawChar): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawShort(value: JcRawShort): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawInt(value: JcRawInt): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawLong(value: JcRawLong): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawFloat(value: JcRawFloat): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawDouble(value: JcRawDouble): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawNullConstant(value: JcRawNullConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawStringConstant(value: JcRawStringConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawClassConstant(value: JcRawClassConstant): T = defaultExprHandler(value)
+    @JvmDefault
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant): T = defaultExprHandler(value)
 }
