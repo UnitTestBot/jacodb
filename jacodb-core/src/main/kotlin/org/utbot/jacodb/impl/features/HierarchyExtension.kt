@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("Hierarchies")
 package org.utbot.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
@@ -150,9 +151,11 @@ private class ClassRecord(
     val byteCode: ByteArray? = null
 )
 
+
 suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
     db.awaitBackgroundJobs()
     return HierarchyExtensionImpl(this)
 }
 
 fun JcClasspath.asyncHierarchy(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
+
