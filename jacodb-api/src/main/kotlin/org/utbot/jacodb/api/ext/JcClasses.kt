@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcClasses")
+
 package org.utbot.jacodb.api.ext
 
 import kotlinx.collections.immutable.toPersistentList
@@ -65,7 +66,6 @@ fun JcClassOrInterface.toType(): JcClassType {
 }
 
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")
-
 
 
 /**
@@ -167,6 +167,11 @@ infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean 
     }
     return another == this || another in allSuperHierarchy
 }
+
+val JcClassOrInterface.isKotlin: Boolean
+    get() {
+        return annotations.any { it.matches("kotlin.Metadata") }
+    }
 
 
 private val JcClassOrInterface.simpleBinaryName: String?

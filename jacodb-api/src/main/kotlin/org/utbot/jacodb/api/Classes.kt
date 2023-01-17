@@ -70,7 +70,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     fun body(): MethodNode
     fun instructionList(): JcRawInstList
 
-    fun cfg() = instructionList().graph(this)
+    fun flowGraph() = instructionList().graph(this)
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {

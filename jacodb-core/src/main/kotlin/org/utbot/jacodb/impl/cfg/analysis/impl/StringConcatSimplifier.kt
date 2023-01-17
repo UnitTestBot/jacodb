@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg
+package org.utbot.jacodb.impl.cfg.analysis.impl
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.PredefinedPrimitives
 import org.utbot.jacodb.api.cfg.BsmStringArg
 import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
 import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcBasicBlock
 import org.utbot.jacodb.api.cfg.JcCatchInst
 import org.utbot.jacodb.api.cfg.JcDynamicCallExpr
 import org.utbot.jacodb.api.cfg.JcGotoInst
@@ -36,85 +35,8 @@ import org.utbot.jacodb.api.cfg.JcValue
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.ext.autoboxIfNeeded
 import org.utbot.jacodb.api.ext.findTypeOrNull
-import java.util.*
-import kotlin.collections.ArrayDeque
+import org.utbot.jacodb.impl.cfg.JcGraphImpl
 import kotlin.collections.set
-
-class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraphImpl) {
-    val jcGraph get() = blockGraph.jcGraph
-
-    private val nDefinitions = jcGraph.instructions.size
-    private val ins = mutableMapOf<JcBasicBlock, BitSet>()
-    private val outs = mutableMapOf<JcBasicBlock, BitSet>()
-    private val assignmentsMap = mutableMapOf<JcValue, MutableSet<JcInstRef>>()
-
-    init {
-        initAssignmentsMap()
-        val entry = blockGraph.entry
-        for (block in blockGraph)
-            outs[block] = emptySet()
-
-        val queue = ArrayDeque<JcBasicBlock>().also { it += entry }
-        val notVisited = blockGraph.toMutableSet()
-        while (queue.isNotEmpty() || notVisited.isNotEmpty()) {
-            val current = when {
-                queue.isNotEmpty() -> queue.removeFirst()
-                else -> notVisited.random()
-            }
-            notVisited -= current
-
-            ins[current] = fullPredecessors(current).map { outs[it]!! }.fold(emptySet()) { acc, bitSet ->
-                acc.or(bitSet)
-                acc
-            }
-
-            val oldOut = outs[current]!!.clone() as BitSet
-            val newOut = gen(current)
-
-            if (oldOut != newOut) {
-                outs[current] = newOut
-                for (successor in fullSuccessors(current)) {
-                    queue += successor
-                }
-            }
-        }
-    }
-
-    private fun initAssignmentsMap() {
-        for (inst in jcGraph) {
-            if (inst is JcAssignInst) {
-                assignmentsMap.getOrPut(inst.lhv, ::mutableSetOf) += jcGraph.ref(inst)
-            }
-        }
-    }
-
-    private fun emptySet(): BitSet = BitSet(nDefinitions)
-
-    private fun gen(block: JcBasicBlock): BitSet {
-        val inSet = ins[block]!!.clone() as BitSet
-        for (inst in blockGraph.instructions(block)) {
-            if (inst is JcAssignInst) {
-                for (kill in assignmentsMap.getOrDefault(inst.lhv, mutableSetOf())) {
-                    inSet[kill] = false
-                }
-                inSet[jcGraph.ref(inst)] = true
-            }
-        }
-        return inSet
-    }
-
-    private fun fullPredecessors(block: JcBasicBlock) = blockGraph.predecessors(block) + blockGraph.throwers(block)
-    private fun fullSuccessors(block: JcBasicBlock) = blockGraph.successors(block) + blockGraph.catchers(block)
-
-    private operator fun BitSet.set(ref: JcInstRef, value: Boolean) {
-        this.set(ref.index, value)
-    }
-
-    fun outs(block: JcBasicBlock): List<JcInst> {
-        val defs = outs.getOrDefault(block, emptySet())
-        return (0 until nDefinitions).filter { defs[it] }.map { jcGraph.instructions[it] }
-    }
-}
 
 
 class StringConcatSimplifier(
@@ -127,6 +49,8 @@ class StringConcatSimplifier(
     private val catchReplacements = mutableMapOf<JcInst, MutableList<JcInst>>()
     private val instructionIndices = mutableMapOf<JcInst, Int>()
 
+    private val stringType = jcGraph.classpath.findTypeOrNull<String>() as JcClassType
+
     fun build(): JcGraphImpl {
         var changed = false
         for (inst in jcGraph) {
@@ -135,7 +59,6 @@ class StringConcatSimplifier(
                 val rhv = inst.rhv
 
                 if (rhv is JcDynamicCallExpr && rhv.callCiteMethodName == "makeConcatWithConstants") {
-                    val stringType = jcGraph.classpath.findTypeOrNull<String>() as JcClassType
 
                     val (first, second) = when {
                         rhv.callCiteArgs.size == 2 -> rhv.callCiteArgs
@@ -152,14 +75,14 @@ class StringConcatSimplifier(
                     changed = true
 
                     val result = mutableListOf<JcInst>()
-                    val firstStr = stringify(first, result)
-                    val secondStr = stringify(second, result)
+                    val firstStr = stringify(inst, first, result)
+                    val secondStr = stringify(inst, second, result)
 
                     val concatMethod = stringType.methods.first {
                         it.name == "concat" && it.parameters.size == 1 && it.parameters.first().type == stringType
                     }
                     val newConcatExpr = JcVirtualCallExpr(concatMethod, firstStr, listOf(secondStr))
-                    result += JcAssignInst(lhv, newConcatExpr)
+                    result += JcAssignInst(inst.lineNumber, lhv, newConcatExpr)
                     instructionReplacements[inst] = result.first()
                     catchReplacements[inst] = result
                     instructions += result
@@ -182,7 +105,7 @@ class StringConcatSimplifier(
         return JcGraphImpl(jcGraph.classpath, mappedInstructions)
     }
 
-    private fun stringify(value: JcValue, instList: MutableList<JcInst>): JcValue {
+    private fun stringify(inst: JcInst, value: JcValue, instList: MutableList<JcInst>): JcValue {
         val cp = jcGraph.classpath
         val stringType = cp.findTypeOrNull<String>()!!
         return when {
@@ -193,7 +116,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcStaticCallExpr(method, listOf(value))
                 val assignment = JcLocal("${value}String", stringType)
-                instList += JcAssignInst(assignment, toStringExpr)
+                instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
                 assignment
             }
 
@@ -205,7 +128,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcVirtualCallExpr(method, value, emptyList())
                 val assignment = JcLocal("${value}String", stringType)
-                instList += JcAssignInst(assignment, toStringExpr)
+                instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
                 assignment
             }
         }
@@ -221,19 +144,22 @@ class StringConcatSimplifier(
         }
 
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
+        inst.lineNumber,
         inst.throwable,
         inst.throwers.flatMap { indicesOf(it) }
     )
 
-    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(indexOf(inst.target))
+    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(inst.lineNumber, indexOf(inst.target))
 
     override fun visitJcIfInst(inst: JcIfInst): JcInst = JcIfInst(
+        inst.lineNumber,
         inst.condition,
         indexOf(inst.trueBranch),
         indexOf(inst.falseBranch)
     )
 
     override fun visitJcSwitchInst(inst: JcSwitchInst): JcInst = JcSwitchInst(
+        inst.lineNumber,
         inst.key,
         inst.branches.mapValues { indexOf(it.value) },
         indexOf(inst.default)

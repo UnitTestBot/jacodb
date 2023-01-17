@@ -19,6 +19,7 @@ package org.utbot.jacodb.api.cfg
 import org.utbot.jacodb.api.TypeName
 
 sealed interface JcRawInst {
+
     val operands: List<JcRawExpr>
 
     fun <T> accept(visitor: JcRawInstVisitor<T>): T
@@ -81,6 +82,19 @@ class JcRawCallInst(
 data class JcRawLabelRef(val name: String) {
     override fun toString() = name
 }
+
+class JcRawLineNumberInst(val lineNumber: Int, val start: JcRawLabelRef) : JcRawInst {
+
+    override val operands: List<JcRawExpr>
+        get() = emptyList()
+
+    override fun toString(): String = "line number $lineNumber:"
+
+    override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
+        return visitor.visitJcRawLineNumberInst(this)
+    }
+}
+
 
 class JcRawLabelInst(
     val name: String
@@ -910,3 +924,19 @@ data class JcRawMethodConstant(
         return visitor.visitJcRawMethodConstant(this)
     }
 }
+
+//
+//fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
+//    val idx: Int = instructions.indexOf(inst)
+//    assert(idx != -1)
+//
+//    // Get index of labels and insnNode within method
+//    val insnIt: ListIterator<AbstractInsnNode> = insnList.iterator(idx)
+//    while (insnIt.hasPrevious()) {
+//        val node: AbstractInsnNode = insnIt.previous()
+//        if (node is LineNumberNode) {
+//            return node as LineNumberNode
+//        }
+//    }
+//    return null
+//}

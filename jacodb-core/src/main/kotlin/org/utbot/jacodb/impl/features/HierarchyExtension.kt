@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-@file:JvmName("Hierarchies")
+@file:JvmName("JcHierarchies")
 package org.utbot.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope

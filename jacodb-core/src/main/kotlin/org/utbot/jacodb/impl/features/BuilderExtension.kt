@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-@file:JvmName("Builders")
+@file:JvmName("JcBuilders")
 package org.utbot.jacodb.impl.features
 
 import org.utbot.jacodb.api.JcArrayType

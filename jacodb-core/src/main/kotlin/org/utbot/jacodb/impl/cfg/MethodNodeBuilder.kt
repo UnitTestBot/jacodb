@@ -28,6 +28,7 @@ import org.objectweb.asm.tree.InvokeDynamicInsnNode
 import org.objectweb.asm.tree.JumpInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.LookupSwitchInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
@@ -88,6 +89,7 @@ import org.utbot.jacodb.api.cfg.JcRawLabelInst
 import org.utbot.jacodb.api.cfg.JcRawLabelRef
 import org.utbot.jacodb.api.cfg.JcRawLeExpr
 import org.utbot.jacodb.api.cfg.JcRawLengthExpr
+import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
 import org.utbot.jacodb.api.cfg.JcRawLocal
 import org.utbot.jacodb.api.cfg.JcRawLong
 import org.utbot.jacodb.api.cfg.JcRawLtExpr
@@ -303,6 +305,10 @@ class MethodNodeBuilder(
 
     override fun visitJcRawLabelInst(inst: JcRawLabelInst) {
         currentInsnList.add(label(inst))
+    }
+
+    override fun visitJcRawLineNumberInst(inst: JcRawLineNumberInst) {
+        currentInsnList.add(LineNumberNode(inst.lineNumber, label(inst.start)))
     }
 
     override fun visitJcRawReturnInst(inst: JcRawReturnInst) {

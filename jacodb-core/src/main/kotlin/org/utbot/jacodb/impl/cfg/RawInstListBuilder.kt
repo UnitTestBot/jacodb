@@ -84,6 +84,7 @@ import org.utbot.jacodb.api.cfg.JcRawLabelInst
 import org.utbot.jacodb.api.cfg.JcRawLabelRef
 import org.utbot.jacodb.api.cfg.JcRawLeExpr
 import org.utbot.jacodb.api.cfg.JcRawLengthExpr
+import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
 import org.utbot.jacodb.api.cfg.JcRawLocal
 import org.utbot.jacodb.api.cfg.JcRawLtExpr
 import org.utbot.jacodb.api.cfg.JcRawMethodConstant
@@ -277,7 +278,7 @@ class RawInstListBuilder(
                 is JumpInsnNode -> buildJumpInsnNode(insn)
                 is LabelNode -> buildLabelNode(insn)
                 is LdcInsnNode -> buildLdcInsnNode(insn)
-                is LineNumberNode -> {}
+                is LineNumberNode -> buildLineNumberNode(insn)
                 is LookupSwitchInsnNode -> buildLookupSwitchInsnNode(insn)
                 is MethodInsnNode -> buildMethodInsnNode(insn)
                 is MultiANewArrayInsnNode -> buildMultiANewArrayInsnNode(insn)
@@ -1142,6 +1143,10 @@ class RawInstListBuilder(
                 push(nextRegister(tryCatch.typeOrDefault.typeName()))
             }
         }
+    }
+
+    private fun buildLineNumberNode(insnNode: LineNumberNode) {
+        instructionList(insnNode) += JcRawLineNumberInst(insnNode.line, labelRef(insnNode.start))
     }
 
     private fun buildLdcInsnNode(insnNode: LdcInsnNode) {

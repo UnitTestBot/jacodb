@@ -57,6 +57,7 @@ import org.utbot.jacodb.api.cfg.JcRawInterfaceCallExpr
 import org.utbot.jacodb.api.cfg.JcRawLabelInst
 import org.utbot.jacodb.api.cfg.JcRawLeExpr
 import org.utbot.jacodb.api.cfg.JcRawLengthExpr
+import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
 import org.utbot.jacodb.api.cfg.JcRawLocal
 import org.utbot.jacodb.api.cfg.JcRawLong
 import org.utbot.jacodb.api.cfg.JcRawLtExpr
@@ -121,6 +122,10 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
     }
 
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): JcRawInst {
+        return inst
+    }
+
+    override fun visitJcRawLineNumberInst(inst: JcRawLineNumberInst): JcRawInst {
         return inst
     }
 

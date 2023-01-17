@@ -56,6 +56,7 @@ import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.api.ext.isAbstract
 import org.utbot.jacodb.api.ext.isAnnotation
 import org.utbot.jacodb.api.ext.isInterface
+import org.utbot.jacodb.api.ext.isKotlin
 import org.utbot.jacodb.api.ext.methods
 import org.utbot.jacodb.api.ext.packageName
 import org.utbot.jacodb.api.ext.toType
@@ -77,7 +78,7 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 
 class OverridesResolver(
-    val hierarchyExtension: HierarchyExtension
+    private val hierarchyExtension: HierarchyExtension
 ) : DefaultJcInstVisitor<Sequence<JcTypedMethod>>, DefaultJcExprVisitor<Sequence<JcTypedMethod>> {
     override val defaultInstHandler: (JcInst) -> Sequence<JcTypedMethod>
         get() = { emptySequence() }
@@ -360,8 +361,14 @@ class IRTest : BaseTest() {
 //            println()
 //            println("Old body: ${oldBody.print()}")
                 val instructionList = it.instructionList()
+
 //            println("Instruction list: $instructionList")
-                val graph = instructionList.graph(it)
+                val graph = it.flowGraph()
+                if (!it.enclosingClass.isKotlin) {
+                    graph.instructions.forEach {
+                        assertTrue(it.lineNumber > 0, "$it should have line number")
+                    }
+                }
                 graph.applyAndGet(OverridesResolver(ext)) {}
                 JcGraphChecker(it, graph).check()
 //            println("Graph: $graph")

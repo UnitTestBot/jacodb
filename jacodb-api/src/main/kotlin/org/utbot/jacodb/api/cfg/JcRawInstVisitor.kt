@@ -22,6 +22,7 @@ interface JcRawInstVisitor<T> {
     fun visitJcRawExitMonitorInst(inst: JcRawExitMonitorInst): T
     fun visitJcRawCallInst(inst: JcRawCallInst): T
     fun visitJcRawLabelInst(inst: JcRawLabelInst): T
+    fun visitJcRawLineNumberInst(inst: JcRawLineNumberInst): T
     fun visitJcRawReturnInst(inst: JcRawReturnInst): T
     fun visitJcRawThrowInst(inst: JcRawThrowInst): T
     fun visitJcRawCatchInst(inst: JcRawCatchInst): T
@@ -45,6 +46,8 @@ interface DefaultJcRawInstVisitor<T> : JcRawInstVisitor<T> {
     @JvmDefault
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): T = defaultInstHandler(inst)
     @JvmDefault
+    override fun visitJcRawLineNumberInst(inst: JcRawLineNumberInst): T = defaultInstHandler(inst)
+    @JvmDefault
     override fun visitJcRawReturnInst(inst: JcRawReturnInst): T = defaultInstHandler(inst)
     @JvmDefault
     override fun visitJcRawThrowInst(inst: JcRawThrowInst): T = defaultInstHandler(inst)
@@ -56,6 +59,7 @@ interface DefaultJcRawInstVisitor<T> : JcRawInstVisitor<T> {
     override fun visitJcRawIfInst(inst: JcRawIfInst): T = defaultInstHandler(inst)
     @JvmDefault
     override fun visitJcRawSwitchInst(inst: JcRawSwitchInst): T = defaultInstHandler(inst)
+
 }
 
 interface JcRawExprVisitor<T> {

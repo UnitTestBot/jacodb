@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-@file:JvmName("Usages")
+@file:JvmName("JcUsages")
 package org.utbot.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope

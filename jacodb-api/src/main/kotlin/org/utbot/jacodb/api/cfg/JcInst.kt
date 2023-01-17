@@ -22,6 +22,7 @@ import org.utbot.jacodb.api.JcTypedMethod
 
 
 sealed interface JcInst {
+    val lineNumber: Int
     val operands: List<JcExpr>
 
     fun <T> accept(visitor: JcInstVisitor<T>): T
@@ -32,6 +33,7 @@ data class JcInstRef constructor(
 )
 
 class JcAssignInst(
+    override val lineNumber: Int,
     val lhv: JcValue,
     val rhv: JcExpr
 ) : JcInst {
@@ -47,6 +49,7 @@ class JcAssignInst(
 }
 
 class JcEnterMonitorInst(
+    override val lineNumber: Int,
     val monitor: JcValue
 ) : JcInst {
     override val operands: List<JcExpr>
@@ -60,6 +63,7 @@ class JcEnterMonitorInst(
 }
 
 class JcExitMonitorInst(
+    override val lineNumber: Int,
     val monitor: JcValue
 ) : JcInst {
     override val operands: List<JcExpr>
@@ -73,6 +77,7 @@ class JcExitMonitorInst(
 }
 
 class JcCallInst(
+    override val lineNumber: Int,
     val callExpr: JcCallExpr
 ) : JcInst {
     override val operands: List<JcExpr>
@@ -88,6 +93,7 @@ class JcCallInst(
 sealed interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
+    override val lineNumber: Int,
     val returnValue: JcValue?
 ) : JcTerminatingInst {
     override val operands: List<JcExpr>
@@ -101,6 +107,7 @@ class JcReturnInst(
 }
 
 class JcThrowInst(
+    override val lineNumber: Int,
     val throwable: JcValue
 ) : JcTerminatingInst {
     override val operands: List<JcExpr>
@@ -114,6 +121,7 @@ class JcThrowInst(
 }
 
 class JcCatchInst(
+    override val lineNumber: Int,
     val throwable: JcValue,
     val throwers: List<JcInstRef>
 ) : JcInst {
@@ -132,6 +140,7 @@ sealed interface JcBranchingInst : JcInst {
 }
 
 class JcGotoInst(
+    override val lineNumber: Int,
     val target: JcInstRef
 ) : JcBranchingInst {
     override val operands: List<JcExpr>
@@ -148,6 +157,7 @@ class JcGotoInst(
 }
 
 class JcIfInst(
+    override val lineNumber: Int,
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
     val falseBranch: JcInstRef
@@ -166,6 +176,7 @@ class JcIfInst(
 }
 
 class JcSwitchInst(
+    override val lineNumber: Int,
     val key: JcValue,
     val branches: Map<JcValue, JcInstRef>,
     val default: JcInstRef
@@ -593,6 +604,11 @@ sealed interface JcCallExpr : JcExpr {
         get() = args
 }
 
+sealed interface JcInstanceCallExpr : JcCallExpr {
+    val instance: JcValue
+}
+
+
 /**
  * JcLambdaExpr is created when we can resolve the `invokedynamic` instruction.
  * When Java or Kotlin compiles a code with the lambda call, it generates
@@ -631,9 +647,9 @@ data class JcDynamicCallExpr(
  */
 data class JcVirtualCallExpr(
     override val method: JcTypedMethod,
-    val instance: JcValue,
+    override val instance: JcValue,
     override val args: List<JcValue>,
-) : JcCallExpr {
+) : JcInstanceCallExpr {
     override val operands: List<JcValue>
         get() = listOf(instance) + args
 
@@ -666,9 +682,9 @@ data class JcStaticCallExpr(
 
 data class JcSpecialCallExpr(
     override val method: JcTypedMethod,
-    val instance: JcValue,
+    override val instance: JcValue,
     override val args: List<JcValue>,
-) : JcCallExpr {
+) : JcInstanceCallExpr {
     override fun toString(): String =
         "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
@@ -738,32 +754,33 @@ data class JcArrayAccess(
 
 sealed interface JcConstant : JcSimpleValue
 
-sealed interface JcNumeric : JcConstant {
+sealed interface JcNumericConstant : JcConstant {
+
     val value: Number
 
-    fun isEqual(c: JcNumeric): Boolean = c.value == value
+    fun isEqual(c: JcNumericConstant): Boolean = c.value == value
 
-    fun isNotEqual(c: JcNumeric): Boolean = !isEqual(c)
+    fun isNotEqual(c: JcNumericConstant): Boolean = !isEqual(c)
 
-    fun isLessThan(c: JcNumeric): Boolean
+    fun isLessThan(c: JcNumericConstant): Boolean
 
-    fun isLessThanOrEqual(c: JcNumeric): Boolean = isLessThan(c) || isEqual(c)
+    fun isLessThanOrEqual(c: JcNumericConstant): Boolean = isLessThan(c) || isEqual(c)
 
-    fun isGreaterThan(c: JcNumeric): Boolean
+    fun isGreaterThan(c: JcNumericConstant): Boolean
 
-    fun isGreaterThanOrEqual(c: JcNumeric): Boolean = isGreaterThan(c) || isEqual(c)
+    fun isGreaterThanOrEqual(c: JcNumericConstant): Boolean = isGreaterThan(c) || isEqual(c)
 
-    operator fun plus(c: JcNumeric): JcNumeric
+    operator fun plus(c: JcNumericConstant): JcNumericConstant
 
-    operator fun minus(c: JcNumeric): JcNumeric
+    operator fun minus(c: JcNumericConstant): JcNumericConstant
 
-    operator fun times(c: JcNumeric): JcNumeric
+    operator fun times(c: JcNumericConstant): JcNumericConstant
 
-    operator fun div(c: JcNumeric): JcNumeric
+    operator fun div(c: JcNumericConstant): JcNumericConstant
 
-    operator fun rem(c: JcNumeric): JcNumeric
+    operator fun rem(c: JcNumericConstant): JcNumericConstant
 
-    operator fun unaryMinus(): JcNumeric
+    operator fun unaryMinus(): JcNumericConstant
 
 }
 
@@ -776,38 +793,38 @@ data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcByte(override val value: Byte, override val type: JcType) : JcNumeric {
+data class JcByte(override val value: Byte, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value + c.value.toByte(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.div(c.value.toByte()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.times(c.value.toByte()), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.div(c.value.toByte()), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.rem(c.value.toByte()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcInt(-value, type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toByte()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toByte()
     }
 
@@ -824,38 +841,38 @@ data class JcChar(val value: Char, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcShort(override  val value: Short, override val type: JcType) : JcNumeric {
+data class JcShort(override val value: Short, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value + c.value.toShort(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.div(c.value.toShort()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value * c.value.toInt(), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value / c.value.toShort(), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.rem(c.value.toShort()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcInt(-value, type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toShort()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toShort()
     }
 
@@ -864,38 +881,38 @@ data class JcShort(override  val value: Short, override val type: JcType) : JcNu
     }
 }
 
-data class JcInt(override val value: Int, override val type: JcType) : JcNumeric {
+data class JcInt(override val value: Int, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value + c.value.toInt(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.div(c.value.toInt()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value * c.value.toInt(), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value / c.value.toInt(), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcInt(value.rem(c.value.toInt()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcInt(-value, type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toInt()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toInt()
     }
 
@@ -904,38 +921,38 @@ data class JcInt(override val value: Int, override val type: JcType) : JcNumeric
     }
 }
 
-data class JcLong(override val value: Long, override val type: JcType) : JcNumeric {
+data class JcLong(override val value: Long, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcLong(value + c.value.toLong(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcLong(value.div(c.value.toLong()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcLong(value * c.value.toLong(), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcLong(value.div(c.value.toLong()), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcLong(value.rem(c.value.toLong()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcLong(-value, type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toLong()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toLong()
     }
 
@@ -944,38 +961,38 @@ data class JcLong(override val value: Long, override val type: JcType) : JcNumer
     }
 }
 
-data class JcFloat(override val value: Float, override val type: JcType) : JcNumeric {
+data class JcFloat(override val value: Float, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcFloat(value + c.value.toFloat(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcFloat(value.div(c.value.toFloat()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcFloat(value * c.value.toFloat(), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcFloat(value.div(c.value.toFloat()), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcFloat(value.rem(c.value.toFloat()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcFloat(value.times(-1), type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toFloat()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toFloat()
     }
 
@@ -984,40 +1001,41 @@ data class JcFloat(override val value: Float, override val type: JcType) : JcNum
     }
 }
 
-data class JcDouble(override val value: Double, override val type: JcType) : JcNumeric {
+data class JcDouble(override val value: Double, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
-    override fun plus(c: JcNumeric): JcNumeric {
+    override fun plus(c: JcNumericConstant): JcNumericConstant {
         return JcDouble(value + c.value.toDouble(), type)
     }
 
-    override fun minus(c: JcNumeric): JcNumeric {
+    override fun minus(c: JcNumericConstant): JcNumericConstant {
         return JcDouble(value.div(c.value.toDouble()), type)
     }
 
-    override fun times(c: JcNumeric): JcNumeric {
+    override fun times(c: JcNumericConstant): JcNumericConstant {
         return JcDouble(value * c.value.toDouble(), type)
     }
 
-    override fun div(c: JcNumeric): JcNumeric {
+    override fun div(c: JcNumericConstant): JcNumericConstant {
         return JcDouble(value.div(c.value.toDouble()), type)
     }
 
-    override fun rem(c: JcNumeric): JcNumeric {
+    override fun rem(c: JcNumericConstant): JcNumericConstant {
         return JcDouble(value.rem(c.value.toDouble()), type)
     }
 
-    override fun unaryMinus(): JcNumeric {
+    override fun unaryMinus(): JcNumericConstant {
         return JcDouble(-value, type)
     }
 
-    override fun isLessThan(c: JcNumeric): Boolean {
+    override fun isLessThan(c: JcNumericConstant): Boolean {
         return value < c.value.toDouble()
     }
 
-    override fun isGreaterThan(c: JcNumeric): Boolean {
+    override fun isGreaterThan(c: JcNumericConstant): Boolean {
         return value > c.value.toDouble()
     }
+
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcDouble(this)
     }

@@ -114,6 +114,7 @@ import org.utbot.jacodb.api.cfg.JcRawLabelInst
 import org.utbot.jacodb.api.cfg.JcRawLabelRef
 import org.utbot.jacodb.api.cfg.JcRawLeExpr
 import org.utbot.jacodb.api.cfg.JcRawLengthExpr
+import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
 import org.utbot.jacodb.api.cfg.JcRawLocal
 import org.utbot.jacodb.api.cfg.JcRawLong
 import org.utbot.jacodb.api.cfg.JcRawLtExpr
@@ -172,13 +173,14 @@ class JcGraphBuilder(
     val method: JcMethod
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
+    private var currentLineNumber = 0
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
     private val inst2Index: Map<JcRawInst, Int> = run {
         val res = mutableMapOf<JcRawInst, Int>()
         var index = 0
         for (inst in instList) {
             res[inst] = index
-            if (inst !is JcRawLabelInst) ++index
+            if (inst !is JcRawLabelInst && inst !is JcRawLineNumberInst) ++index
         }
         res
     }
@@ -209,31 +211,36 @@ class JcGraphBuilder(
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
         val lhv = inst.lhv.accept(this) as JcValue
         val rhv = inst.rhv.accept(this)
-        JcAssignInst(lhv, rhv)
+        JcAssignInst(currentLineNumber, lhv, rhv)
     }
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): JcInst = handle(inst) {
-        JcEnterMonitorInst(inst.monitor.accept(this) as JcValue)
+        JcEnterMonitorInst(currentLineNumber, inst.monitor.accept(this) as JcValue)
     }
 
     override fun visitJcRawExitMonitorInst(inst: JcRawExitMonitorInst): JcInst = handle(inst) {
-        JcExitMonitorInst(inst.monitor.accept(this) as JcValue)
+        JcExitMonitorInst(currentLineNumber, inst.monitor.accept(this) as JcValue)
     }
 
     override fun visitJcRawCallInst(inst: JcRawCallInst): JcInst = handle(inst) {
-        JcCallInst(inst.callExpr.accept(this) as JcCallExpr)
+        JcCallInst(currentLineNumber, inst.callExpr.accept(this) as JcCallExpr)
     }
 
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): JcInst? {
         return null
     }
 
+    override fun visitJcRawLineNumberInst(inst: JcRawLineNumberInst): JcInst? {
+        currentLineNumber = inst.lineNumber
+        return null
+    }
+
     override fun visitJcRawReturnInst(inst: JcRawReturnInst): JcInst {
-        return JcReturnInst(inst.returnValue?.accept(this) as? JcValue)
+        return JcReturnInst(currentLineNumber, inst.returnValue?.accept(this) as? JcValue)
     }
 
     override fun visitJcRawThrowInst(inst: JcRawThrowInst): JcInst {
-        return JcThrowInst(inst.throwable.accept(this) as JcValue)
+        return JcThrowInst(currentLineNumber, inst.throwable.accept(this) as JcValue)
     }
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): JcInst = handle(inst) {
@@ -254,17 +261,19 @@ class JcGraphBuilder(
             result
         }
         return JcCatchInst(
+            currentLineNumber,
             inst.throwable.accept(this) as JcValue,
             throwers
         )
     }
 
     override fun visitJcRawGotoInst(inst: JcRawGotoInst): JcInst = handle(inst) {
-        JcGotoInst(label2InstRef(inst.target))
+        JcGotoInst(currentLineNumber, label2InstRef(inst.target))
     }
 
     override fun visitJcRawIfInst(inst: JcRawIfInst): JcInst = handle(inst) {
         JcIfInst(
+            currentLineNumber,
             inst.condition.accept(this) as JcConditionExpr,
             label2InstRef(inst.trueBranch),
             label2InstRef(inst.falseBranch)
@@ -273,6 +282,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawSwitchInst(inst: JcRawSwitchInst): JcInst = handle(inst) {
         JcSwitchInst(
+            currentLineNumber,
             inst.key.accept(this) as JcValue,
             inst.branches.map { it.key.accept(this) as JcValue to label2InstRef(it.value) }.toMap(),
             label2InstRef(inst.default)
