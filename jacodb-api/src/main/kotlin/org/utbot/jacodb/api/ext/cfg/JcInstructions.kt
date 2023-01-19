@@ -15,8 +15,16 @@
  */
 
 @file:JvmName("JcInstructions")
+
 package org.utbot.jacodb.api.ext.cfg
 
+import org.utbot.jacodb.api.cfg.DefaultJcExprVisitor
+import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
+import org.utbot.jacodb.api.cfg.JcArrayAccess
+import org.utbot.jacodb.api.cfg.JcCallExpr
+import org.utbot.jacodb.api.cfg.JcExpr
+import org.utbot.jacodb.api.cfg.JcFieldRef
+import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.cfg.JcRawExpr
 import org.utbot.jacodb.api.cfg.JcRawExprVisitor
 import org.utbot.jacodb.api.cfg.JcRawInst
@@ -47,3 +55,57 @@ fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T
     this.accept(visitor)
     return getter(visitor)
 }
+
+
+object FieldRefVisitor : DefaultJcExprVisitor<JcFieldRef?>, DefaultJcInstVisitor<JcFieldRef?> {
+
+    override val defaultExprHandler: (JcExpr) -> JcFieldRef?
+        get() = { null }
+
+    override val defaultInstHandler: (JcInst) -> JcFieldRef?
+        get() = {
+            it.operands.map { it.accept(this) }.firstOrNull { it != null }
+        }
+
+    override fun visitJcFieldRef(value: JcFieldRef): JcFieldRef {
+        return value
+    }
+}
+
+object ArrayAccessVisitor : DefaultJcExprVisitor<JcArrayAccess?>, DefaultJcInstVisitor<JcArrayAccess?> {
+
+    override val defaultExprHandler: (JcExpr) -> JcArrayAccess?
+        get() = {
+            it.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
+        }
+
+    override val defaultInstHandler: (JcInst) -> JcArrayAccess?
+        get() = {
+            it.operands.map { it.accept(this) }.firstOrNull { it != null }
+        }
+
+}
+
+object CallExprVisitor : DefaultJcInstVisitor<JcCallExpr?> {
+
+    override val defaultInstHandler: (JcInst) -> JcCallExpr?
+        get() = {
+            it.operands.filterIsInstance<JcCallExpr>().firstOrNull()
+        }
+
+}
+
+val JcInst.fieldRef: JcFieldRef?
+    get() {
+        return accept(FieldRefVisitor)
+    }
+
+val JcInst.arrayRef: JcArrayAccess?
+    get() {
+        return accept(ArrayAccessVisitor)
+    }
+
+val JcInst.callExpr: JcCallExpr?
+    get() {
+        return accept(CallExprVisitor)
+    }
