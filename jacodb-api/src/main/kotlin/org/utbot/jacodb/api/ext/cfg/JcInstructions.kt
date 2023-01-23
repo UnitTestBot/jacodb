@@ -18,18 +18,7 @@
 
 package org.utbot.jacodb.api.ext.cfg
 
-import org.utbot.jacodb.api.cfg.DefaultJcExprVisitor
-import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
-import org.utbot.jacodb.api.cfg.JcArrayAccess
-import org.utbot.jacodb.api.cfg.JcCallExpr
-import org.utbot.jacodb.api.cfg.JcExpr
-import org.utbot.jacodb.api.cfg.JcFieldRef
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcRawExpr
-import org.utbot.jacodb.api.cfg.JcRawExprVisitor
-import org.utbot.jacodb.api.cfg.JcRawInst
-import org.utbot.jacodb.api.cfg.JcRawInstList
-import org.utbot.jacodb.api.cfg.JcRawInstVisitor
+import org.utbot.jacodb.api.cfg.*
 
 fun JcRawInstList.apply(visitor: JcRawInstVisitor<Unit>): JcRawInstList {
     instructions.forEach { it.accept(visitor) }
@@ -109,3 +98,5 @@ val JcInst.callExpr: JcCallExpr?
     get() {
         return accept(CallExprVisitor)
     }
+
+
