@@ -24,7 +24,7 @@ import java.util.*
 
 class JcLoop(
     val graph: JcGraph,
-    val header: JcInst,
+    val head: JcInst,
     val instructions: List<JcInst>
 ) {
     val exits: Collection<JcInst> by lazy(LazyThreadSafetyMode.NONE) {
@@ -46,14 +46,14 @@ class JcLoop(
 
         other as JcLoop
 
-        if (header != other.header) return false
+        if (head != other.head) return false
         if (instructions != other.instructions) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = header.hashCode()
+        var result = head.hashCode()
         result = 31 * result + instructions.hashCode()
         return result
     }
@@ -93,7 +93,7 @@ private fun JcGraph.newLoop(head: JcInst, loopStatements: MutableList<JcInst>): 
     val backJump = loopStatements.last()
     // must branch back to the head
     assert(successors(backJump).contains(head))
-    return JcLoop(this, header = head, instructions = loopStatements)
+    return JcLoop(this, head = head, instructions = loopStatements)
 }
 
 

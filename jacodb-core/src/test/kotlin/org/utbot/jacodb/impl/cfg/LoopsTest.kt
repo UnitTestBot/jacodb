@@ -23,6 +23,7 @@ import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.impl.BaseTest
 import org.utbot.jacodb.impl.WithDB
+import org.utbot.jacodb.impl.cfg.util.JcLoop
 import org.utbot.jacodb.impl.cfg.util.loops
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
 
@@ -33,8 +34,19 @@ class LoopsTest : BaseTest() {
     @Test
     fun `loop inside loop should work`() {
         val clazz = cp.findClass<JavaTasks>()
-        with(clazz.findMethod("insertionSort").flowGraph().loops) {
+        with(clazz.findMethod("insertionSort").flowGraph().loops.toList()) {
             assertEquals(2, size)
+            with(first()) {
+                assertEquals(36, head.lineNumber)
+                assertEquals(2, exits.size)
+                assertSources(36, 37)
+            }
+
+            with(get(1)) {
+                assertEquals(31, head.lineNumber)
+                assertEquals(1, exits.size)
+                assertSources(31, 41)
+            }
         }
     }
 
@@ -64,4 +76,10 @@ class LoopsTest : BaseTest() {
 
     private fun JcClassOrInterface.findMethod(name: String): JcMethod = declaredMethods.first { it.name == name }
 
+
+    private fun JcLoop.assertSources(start: Int, end: Int) {
+        val sourceLineNumbers = instructions.map { it.lineNumber }
+        assertEquals(end, sourceLineNumbers.max())
+        assertEquals(start, sourceLineNumbers.min())
+    }
 }
