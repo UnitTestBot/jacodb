@@ -18,17 +18,18 @@ package org.utbot.jacodb.impl.types.nullability
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.impl.types.BaseTypesTest
+import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
-@Disabled("Type annotations are not supported")
+//@Disabled("Type annotations are not supported")
 class JavaNullabilityTest : BaseTypesTest() {
 
     @Test
     fun `Test nullability for simple types Java`() = runBlocking {
-        val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = findType<NullAnnotationExamples>()
+        //clazz.declaredFields.map { it.fieldType }
         val params = clazz.declaredMethods.single { it.name == "nullableMethod" }.parameters
         val actualNullability = params.map { it.type.nullabilityTree }
         val expectedNullability = listOf(

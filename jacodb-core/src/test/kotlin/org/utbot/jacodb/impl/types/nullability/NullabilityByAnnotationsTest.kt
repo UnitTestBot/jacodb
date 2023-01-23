@@ -20,15 +20,18 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.ext.isNullable
+import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
 import org.utbot.jacodb.impl.types.BaseTypesTest
+import org.utbot.jacodb.impl.usages.Generics
 import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
 class NullabilityByAnnotationsTest: BaseTypesTest() {
     @Test
     fun test() = runBlocking {
         val y = NullAnnotationExamples()
-        val a = NullKek()
-        val clazz = findType<NullAnnotationExamples>()
+        //val a = NullKek()
+        val clazz = findType<Generics<*>>()
+        println(clazz.annotations.map { (it as JcAnnotationImpl) })
 
         if (clazz.fields.map { it.fieldType }.isEmpty() || clazz.methods.map { it.returnType }.isEmpty() ) {
             assertEquals(true, false)

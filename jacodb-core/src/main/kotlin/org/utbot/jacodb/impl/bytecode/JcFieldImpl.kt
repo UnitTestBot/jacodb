@@ -18,6 +18,7 @@ package org.utbot.jacodb.impl.bytecode
 
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcField
+import org.utbot.jacodb.impl.types.AnnotationInfo
 import org.utbot.jacodb.impl.types.FieldInfo
 import org.utbot.jacodb.impl.types.TypeNameImpl
 
@@ -42,6 +43,9 @@ class JcFieldImpl(
     override val annotations by lazy {
         info.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
     }
+
+    internal val typeAnnotationInfos: List<AnnotationInfo>
+        get() = info.annotations.filter { it.typeRef != null }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcFieldImpl) {

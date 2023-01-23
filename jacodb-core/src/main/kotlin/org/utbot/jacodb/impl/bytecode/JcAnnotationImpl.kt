@@ -25,6 +25,7 @@ import org.utbot.jacodb.impl.types.AnnotationValueList
 import org.utbot.jacodb.impl.types.ClassRef
 import org.utbot.jacodb.impl.types.EnumRef
 import org.utbot.jacodb.impl.types.PrimitiveValue
+//import org.utbot.jacodb.impl.types.TypeAnnotationInfo
 
 class JcAnnotationImpl(
     private val info: AnnotationInfo,

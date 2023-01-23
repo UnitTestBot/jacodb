@@ -20,6 +20,7 @@ import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jacodb.api.FieldResolution
 import org.utbot.jacodb.api.JcField
 import org.utbot.jacodb.api.Pure
+import org.utbot.jacodb.impl.bytecode.JcFieldImpl
 import org.utbot.jacodb.impl.bytecode.kmType
 import org.utbot.jacodb.impl.types.allVisibleTypeParameters
 import org.utbot.jacodb.impl.types.substition.JvmTypeVisitor
@@ -31,9 +32,8 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
 
     override fun register(token: JvmType) {
         fieldType = field?.kmType?.let { token.relaxWithKmType(it) } ?: token
-        field?.let {
-            // TODO: find real list of annotations here
-            fieldType = fieldType.relaxWithAnnotations(listOf(), it.enclosingClass.classpath, 0)
+        (field as? JcFieldImpl)?.let {
+            fieldType = fieldType.relaxWithAnnotations(it.typeAnnotationInfos, it.enclosingClass.classpath, 0)
         }
     }
 

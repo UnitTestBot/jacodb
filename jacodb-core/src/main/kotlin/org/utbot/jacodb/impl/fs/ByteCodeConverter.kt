@@ -41,6 +41,7 @@ import org.utbot.jacodb.impl.types.MethodInfo
 import org.utbot.jacodb.impl.types.OuterClassRef
 import org.utbot.jacodb.impl.types.ParameterInfo
 import org.utbot.jacodb.impl.types.PrimitiveValue
+//import org.utbot.jacodb.impl.types.TypeAnnotationInfo
 
 fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     name = Type.getObjectType(name).className,
@@ -57,8 +58,8 @@ fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     interfaces = interfaces.map { it.className }.toImmutableList(),
     methods = methods.map { it.asMethodInfo() }.toImmutableList(),
     fields = fields.map { it.asFieldInfo() }.toImmutableList(),
-    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
-    //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false),
+    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
+            + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
     bytecode = bytecode
 )
 
@@ -99,12 +100,22 @@ private fun Any.toAnnotationValue(): AnnotationValue {
 private fun AnnotationNode.asAnnotationInfo(visible: Boolean) = AnnotationInfo(
     className = Type.getType(desc).className,
     visible = visible,
+    values = values?.chunked(2)?.map { (it[0] as String) to it[1].toAnnotationValue() }.orEmpty(), null, null
+)
+
+private fun TypeAnnotationNode.asTypeAnnotationInfo(visible: Boolean) = AnnotationInfo(
+    className = Type.getType(desc).className,
+    visible = visible,
     values = values?.chunked(2)?.map { (it[0] as String) to it[1].toAnnotationValue() }.orEmpty(),
-    typeRefPath = (this as? TypeAnnotationNode)?.let { it.typeRef to it.typePath.toString() }
+    typeRef = typeRef,
+    typePath = typePath.toString()
 )
 
 private fun List<AnnotationNode>?.asAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
     orEmpty().map { it.asAnnotationInfo(visible) }.toImmutableList()
+
+private fun List<TypeAnnotationNode>?.asTypeAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
+    orEmpty().map { it.asTypeAnnotationInfo(visible) }.toImmutableList()
 
 private fun MethodNode.asMethodInfo(): MethodInfo {
     val params = Type.getArgumentTypes(desc).map { it.className }.toImmutableList()
@@ -113,8 +124,8 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         signature = signature,
         desc = desc,
         access = access,
-        annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
-        //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false),
+        annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
+                + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
         parametersInfo = List(params.size) { index ->
             ParameterInfo(
                 index = index,
@@ -137,8 +148,8 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
     signature = signature,
     access = access,
     type = Type.getObjectType(desc).className,
-    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false),
-    //typeAnnotations = visibleTypeAnnotations.asAnnotationInfos(true) + invisibleTypeAnnotations.asAnnotationInfos(false)
+    annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
+            + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
 ).also {
     if (name == "containerOfNotNull") {
         println(it.annotations.size)
