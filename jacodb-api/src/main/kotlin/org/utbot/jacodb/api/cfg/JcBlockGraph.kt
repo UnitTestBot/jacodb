@@ -28,7 +28,7 @@ package org.utbot.jacodb.api.cfg
  * guaranteed to end with a terminating (i.e. `JcTerminatingInst` or `JcBranchingInst`) instruction.
  * However, any terminating instruction is guaranteed to be the last instruction of a basic block.
  */
-class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
+data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
 
 interface JcBlockGraph: Iterable<JcBasicBlock> {
     val jcGraph: JcGraph

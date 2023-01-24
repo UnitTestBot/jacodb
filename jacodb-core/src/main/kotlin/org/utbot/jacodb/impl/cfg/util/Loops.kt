@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("JcLoops")
 package org.utbot.jacodb.impl.cfg.util
 
 import org.utbot.jacodb.api.cfg.JcGraph
@@ -40,6 +41,7 @@ class JcLoop(
     }
 
     val backJump: JcInst get() = instructions.last()
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -61,8 +63,7 @@ class JcLoop(
 
 }
 
-val JcGraph.loops: Set<JcLoop>
-    get() {
+val JcGraph.loops: Set<JcLoop> get() {
         val finder = findDominators()
         val loops = HashMap<JcInst, MutableList<JcInst>>()
         instructions.forEach { inst ->
