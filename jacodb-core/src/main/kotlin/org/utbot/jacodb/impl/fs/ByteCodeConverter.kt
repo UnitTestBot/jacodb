@@ -108,7 +108,7 @@ private fun TypeAnnotationNode.asTypeAnnotationInfo(visible: Boolean) = Annotati
     visible = visible,
     values = values?.chunked(2)?.map { (it[0] as String) to it[1].toAnnotationValue() }.orEmpty(),
     typeRef = typeRef,
-    typePath = typePath.toString()
+    typePath = typePath?.toString()
 )
 
 private fun List<AnnotationNode>?.asAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
