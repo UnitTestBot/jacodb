@@ -19,113 +19,14 @@ package org.utbot.jacodb.impl.cfg
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.IntInsnNode
-import org.objectweb.asm.tree.InvokeDynamicInsnNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.LineNumberNode
-import org.objectweb.asm.tree.LookupSwitchInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.MethodNode
-import org.objectweb.asm.tree.MultiANewArrayInsnNode
-import org.objectweb.asm.tree.ParameterNode
-import org.objectweb.asm.tree.TableSwitchInsnNode
-import org.objectweb.asm.tree.TryCatchBlockNode
-import org.objectweb.asm.tree.TypeInsnNode
-import org.objectweb.asm.tree.VarInsnNode
+import org.objectweb.asm.tree.*
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.PredefinedPrimitives
 import org.utbot.jacodb.api.TypeName
-import org.utbot.jacodb.api.cfg.BsmDoubleArg
-import org.utbot.jacodb.api.cfg.BsmFloatArg
-import org.utbot.jacodb.api.cfg.BsmHandle
-import org.utbot.jacodb.api.cfg.BsmIntArg
-import org.utbot.jacodb.api.cfg.BsmLongArg
-import org.utbot.jacodb.api.cfg.BsmMethodTypeArg
-import org.utbot.jacodb.api.cfg.BsmStringArg
-import org.utbot.jacodb.api.cfg.BsmTypeArg
-import org.utbot.jacodb.api.cfg.JcRawAddExpr
-import org.utbot.jacodb.api.cfg.JcRawAndExpr
-import org.utbot.jacodb.api.cfg.JcRawArgument
-import org.utbot.jacodb.api.cfg.JcRawArrayAccess
-import org.utbot.jacodb.api.cfg.JcRawAssignInst
-import org.utbot.jacodb.api.cfg.JcRawBool
-import org.utbot.jacodb.api.cfg.JcRawByte
-import org.utbot.jacodb.api.cfg.JcRawCallExpr
-import org.utbot.jacodb.api.cfg.JcRawCallInst
-import org.utbot.jacodb.api.cfg.JcRawCastExpr
-import org.utbot.jacodb.api.cfg.JcRawCatchInst
-import org.utbot.jacodb.api.cfg.JcRawChar
-import org.utbot.jacodb.api.cfg.JcRawClassConstant
-import org.utbot.jacodb.api.cfg.JcRawCmpExpr
-import org.utbot.jacodb.api.cfg.JcRawCmpgExpr
-import org.utbot.jacodb.api.cfg.JcRawCmplExpr
-import org.utbot.jacodb.api.cfg.JcRawComplexValue
-import org.utbot.jacodb.api.cfg.JcRawDivExpr
-import org.utbot.jacodb.api.cfg.JcRawDouble
-import org.utbot.jacodb.api.cfg.JcRawDynamicCallExpr
-import org.utbot.jacodb.api.cfg.JcRawEnterMonitorInst
-import org.utbot.jacodb.api.cfg.JcRawEqExpr
-import org.utbot.jacodb.api.cfg.JcRawExitMonitorInst
-import org.utbot.jacodb.api.cfg.JcRawExpr
-import org.utbot.jacodb.api.cfg.JcRawExprVisitor
-import org.utbot.jacodb.api.cfg.JcRawFieldRef
-import org.utbot.jacodb.api.cfg.JcRawFloat
-import org.utbot.jacodb.api.cfg.JcRawGeExpr
-import org.utbot.jacodb.api.cfg.JcRawGotoInst
-import org.utbot.jacodb.api.cfg.JcRawGtExpr
-import org.utbot.jacodb.api.cfg.JcRawIfInst
-import org.utbot.jacodb.api.cfg.JcRawInstList
-import org.utbot.jacodb.api.cfg.JcRawInstVisitor
-import org.utbot.jacodb.api.cfg.JcRawInstanceOfExpr
-import org.utbot.jacodb.api.cfg.JcRawInt
-import org.utbot.jacodb.api.cfg.JcRawInterfaceCallExpr
-import org.utbot.jacodb.api.cfg.JcRawLabelInst
-import org.utbot.jacodb.api.cfg.JcRawLabelRef
-import org.utbot.jacodb.api.cfg.JcRawLeExpr
-import org.utbot.jacodb.api.cfg.JcRawLengthExpr
-import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
-import org.utbot.jacodb.api.cfg.JcRawLocal
-import org.utbot.jacodb.api.cfg.JcRawLong
-import org.utbot.jacodb.api.cfg.JcRawLtExpr
-import org.utbot.jacodb.api.cfg.JcRawMethodConstant
-import org.utbot.jacodb.api.cfg.JcRawMulExpr
-import org.utbot.jacodb.api.cfg.JcRawNegExpr
-import org.utbot.jacodb.api.cfg.JcRawNeqExpr
-import org.utbot.jacodb.api.cfg.JcRawNewArrayExpr
-import org.utbot.jacodb.api.cfg.JcRawNewExpr
-import org.utbot.jacodb.api.cfg.JcRawNullConstant
-import org.utbot.jacodb.api.cfg.JcRawOrExpr
-import org.utbot.jacodb.api.cfg.JcRawRemExpr
-import org.utbot.jacodb.api.cfg.JcRawReturnInst
-import org.utbot.jacodb.api.cfg.JcRawShlExpr
-import org.utbot.jacodb.api.cfg.JcRawShort
-import org.utbot.jacodb.api.cfg.JcRawShrExpr
-import org.utbot.jacodb.api.cfg.JcRawSpecialCallExpr
-import org.utbot.jacodb.api.cfg.JcRawStaticCallExpr
-import org.utbot.jacodb.api.cfg.JcRawStringConstant
-import org.utbot.jacodb.api.cfg.JcRawSubExpr
-import org.utbot.jacodb.api.cfg.JcRawSwitchInst
-import org.utbot.jacodb.api.cfg.JcRawThis
-import org.utbot.jacodb.api.cfg.JcRawThrowInst
-import org.utbot.jacodb.api.cfg.JcRawUshrExpr
-import org.utbot.jacodb.api.cfg.JcRawValue
-import org.utbot.jacodb.api.cfg.JcRawVirtualCallExpr
-import org.utbot.jacodb.api.cfg.JcRawXorExpr
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.isStatic
 import org.utbot.jacodb.api.ext.jvmName
-import org.utbot.jacodb.impl.cfg.util.baseElementType
-import org.utbot.jacodb.impl.cfg.util.internalDesc
-import org.utbot.jacodb.impl.cfg.util.isDWord
-import org.utbot.jacodb.impl.cfg.util.isPrimitive
-import org.utbot.jacodb.impl.cfg.util.jvmClassName
-import org.utbot.jacodb.impl.cfg.util.jvmTypeName
-import org.utbot.jacodb.impl.cfg.util.typeName
+import org.utbot.jacodb.impl.cfg.util.*
 
 private val PredefinedPrimitives.smallIntegers get() = setOf(Boolean, Byte, Char, Short, Int)
 
@@ -203,7 +104,7 @@ class MethodNodeBuilder(
             locals[thisRef] = localIndex++
         }
         for (parameter in method.parameters) {
-            val argument = JcRawArgument(parameter.index, null, parameter.type)
+            val argument = JcRawArgument(parameter.index, parameter.name, parameter.type)
             locals[argument] = localIndex
             if (argument.typeName.isDWord) localIndex += 2
             else localIndex++
