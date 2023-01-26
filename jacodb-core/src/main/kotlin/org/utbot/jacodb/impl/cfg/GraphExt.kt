@@ -25,71 +25,7 @@ import info.leadinglight.jdot.impl.Util
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.cfg.JcAddExpr
-import org.utbot.jacodb.api.cfg.JcAndExpr
-import org.utbot.jacodb.api.cfg.JcArgument
-import org.utbot.jacodb.api.cfg.JcArrayAccess
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcBasicBlock
-import org.utbot.jacodb.api.cfg.JcBlockGraph
-import org.utbot.jacodb.api.cfg.JcBool
-import org.utbot.jacodb.api.cfg.JcByte
-import org.utbot.jacodb.api.cfg.JcCallInst
-import org.utbot.jacodb.api.cfg.JcCastExpr
-import org.utbot.jacodb.api.cfg.JcCatchInst
-import org.utbot.jacodb.api.cfg.JcChar
-import org.utbot.jacodb.api.cfg.JcClassConstant
-import org.utbot.jacodb.api.cfg.JcCmpExpr
-import org.utbot.jacodb.api.cfg.JcCmpgExpr
-import org.utbot.jacodb.api.cfg.JcCmplExpr
-import org.utbot.jacodb.api.cfg.JcDivExpr
-import org.utbot.jacodb.api.cfg.JcDouble
-import org.utbot.jacodb.api.cfg.JcDynamicCallExpr
-import org.utbot.jacodb.api.cfg.JcEnterMonitorInst
-import org.utbot.jacodb.api.cfg.JcEqExpr
-import org.utbot.jacodb.api.cfg.JcExitMonitorInst
-import org.utbot.jacodb.api.cfg.JcExpr
-import org.utbot.jacodb.api.cfg.JcExprVisitor
-import org.utbot.jacodb.api.cfg.JcFieldRef
-import org.utbot.jacodb.api.cfg.JcFloat
-import org.utbot.jacodb.api.cfg.JcGeExpr
-import org.utbot.jacodb.api.cfg.JcGotoInst
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcGtExpr
-import org.utbot.jacodb.api.cfg.JcIfInst
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstVisitor
-import org.utbot.jacodb.api.cfg.JcInstanceOfExpr
-import org.utbot.jacodb.api.cfg.JcInt
-import org.utbot.jacodb.api.cfg.JcLambdaExpr
-import org.utbot.jacodb.api.cfg.JcLeExpr
-import org.utbot.jacodb.api.cfg.JcLengthExpr
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.cfg.JcLong
-import org.utbot.jacodb.api.cfg.JcLtExpr
-import org.utbot.jacodb.api.cfg.JcMethodConstant
-import org.utbot.jacodb.api.cfg.JcMulExpr
-import org.utbot.jacodb.api.cfg.JcNegExpr
-import org.utbot.jacodb.api.cfg.JcNeqExpr
-import org.utbot.jacodb.api.cfg.JcNewArrayExpr
-import org.utbot.jacodb.api.cfg.JcNewExpr
-import org.utbot.jacodb.api.cfg.JcNullConstant
-import org.utbot.jacodb.api.cfg.JcOrExpr
-import org.utbot.jacodb.api.cfg.JcRemExpr
-import org.utbot.jacodb.api.cfg.JcReturnInst
-import org.utbot.jacodb.api.cfg.JcShlExpr
-import org.utbot.jacodb.api.cfg.JcShort
-import org.utbot.jacodb.api.cfg.JcShrExpr
-import org.utbot.jacodb.api.cfg.JcSpecialCallExpr
-import org.utbot.jacodb.api.cfg.JcStaticCallExpr
-import org.utbot.jacodb.api.cfg.JcStringConstant
-import org.utbot.jacodb.api.cfg.JcSubExpr
-import org.utbot.jacodb.api.cfg.JcSwitchInst
-import org.utbot.jacodb.api.cfg.JcThis
-import org.utbot.jacodb.api.cfg.JcThrowInst
-import org.utbot.jacodb.api.cfg.JcUshrExpr
-import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
-import org.utbot.jacodb.api.cfg.JcXorExpr
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.findTypeOrNull
 import org.utbot.jacodb.api.ext.toType
 import java.io.File
@@ -478,7 +414,7 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
         return emptyList()
     }
 
-    override fun visitJcLocal(value: JcLocal): List<JcClassType> {
+    override fun visitJcLocalVar(value: JcLocalVar): List<JcClassType> {
         return emptyList()
     }
 

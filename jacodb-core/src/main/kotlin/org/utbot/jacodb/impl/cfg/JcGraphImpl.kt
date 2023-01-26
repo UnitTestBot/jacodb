@@ -18,20 +18,16 @@ package org.utbot.jacodb.impl.cfg
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.cfg.JcBranchingInst
-import org.utbot.jacodb.api.cfg.JcCatchInst
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstRef
-import org.utbot.jacodb.api.cfg.JcInstVisitor
-import org.utbot.jacodb.api.cfg.JcTerminatingInst
+import org.utbot.jacodb.api.JcMethod
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.isSubClassOf
 
 class JcGraphImpl(
-    override val classpath: JcClasspath,
+    override val method: JcMethod,
     override val instructions: List<JcInst>,
 ) : Iterable<JcInst>, JcGraph {
     private val indexMap = instructions.mapIndexed { index, jcInst -> jcInst to index }.toMap()
+    override val classpath: JcClasspath get() = method.enclosingClass.classpath
 
     private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
     private val successorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
@@ -40,8 +36,11 @@ class JcGraphImpl(
     private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
     private val _throwExits = mutableMapOf<JcClassType, MutableSet<JcInstRef>>()
 
+    private val exceptionResolver = JcExceptionResolver(classpath)
+
     override val entry: JcInst get() = instructions.first()
     override val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
+
 
     /**
      * returns a map of possible exceptions that may be thrown from this method
@@ -72,7 +71,7 @@ class JcGraphImpl(
         }
 
         for (inst in instructions) {
-            for (throwableType in inst.accept(JcExceptionResolver(classpath))) {
+            for (throwableType in inst.accept(exceptionResolver)) {
                 if (!catchers(inst).any { throwableType.jcClass isSubClassOf (it.throwable.type as JcClassType).jcClass }) {
                     _throwExits.getOrPut(throwableType, ::mutableSetOf) += ref(inst)
                 }
@@ -115,7 +114,7 @@ class JcGraphImpl(
      * current method
      */
     override fun exceptionExits(inst: JcInst): Set<JcClassType> =
-        inst.accept(JcExceptionResolver(classpath)).filter { it in _throwExits }.toSet()
+        inst.accept(exceptionResolver).filter { it in _throwExits }.toSet()
 
     override fun exceptionExits(ref: JcInstRef): Set<JcClassType> = exceptionExits(inst(ref))
 
@@ -128,16 +127,16 @@ class JcGraphImpl(
 
 
 fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
-    JcGraphImpl(classpath, instructions.filter { it.accept(visitor) })
+    JcGraphImpl(method, instructions.filter { it.accept(visitor) })
 
 fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
-    JcGraphImpl(classpath, instructions.filterNot { it.accept(visitor) })
+    JcGraphImpl(method, instructions.filterNot { it.accept(visitor) })
 
 fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
-    JcGraphImpl(classpath, instructions.map { it.accept(visitor) })
+    JcGraphImpl(method, instructions.map { it.accept(visitor) })
 
 fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
-    JcGraphImpl(classpath, instructions.mapNotNull { it.accept(visitor) })
+    JcGraphImpl(method, instructions.mapNotNull { it.accept(visitor) })
 
 fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
-    JcGraphImpl(classpath, instructions.flatMap { it.accept(visitor) })
+    JcGraphImpl(method, instructions.flatMap { it.accept(visitor) })

@@ -762,6 +762,10 @@ sealed interface JcRawValue : JcRawExpr {
 
 sealed interface JcRawSimpleValue : JcRawValue
 
+sealed interface JcRawLocal : JcRawValue {
+    val name: String
+}
+
 data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
     override fun toString(): String = "this"
 
@@ -770,19 +774,27 @@ data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
     }
 }
 
-data class JcRawArgument(val index: Int, val name: String?, override val typeName: TypeName) : JcRawSimpleValue {
-    override fun toString(): String = name ?: "arg$$index"
+data class JcRawArgument(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
+    companion object {
+        @JvmStatic
+        fun of(index: Int, name: String?, typeName: TypeName): JcRawArgument {
+            return JcRawArgument(index, name ?: "arg$$index", typeName)
+        }
+    }
+
+
+    override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawArgument(this)
     }
 }
 
-data class JcRawLocal(val name: String, override val typeName: TypeName) : JcRawSimpleValue {
+data class JcRawLocalVar(override val name: String, override val typeName: TypeName) : JcRawLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
-        return visitor.visitJcRawLocal(this)
+        return visitor.visitJcRawLocalVar(this)
     }
 }
 

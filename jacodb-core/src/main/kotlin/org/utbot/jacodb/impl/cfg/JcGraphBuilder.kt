@@ -40,7 +40,7 @@ class JcGraphBuilder(
         res
     }
 
-    fun build(): JcGraph = JcGraphImpl(classpath, instList.mapNotNull { convertRawInst(it) })
+    fun build(): JcGraph = JcGraphImpl(method, instList.mapNotNull { convertRawInst(it) })
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
         instMap.getOrPut(inst) { handler() }
@@ -312,11 +312,11 @@ class JcGraphBuilder(
         JcThis(method.enclosingClass.toType())
 
     override fun visitJcRawArgument(value: JcRawArgument): JcExpr = method.parameters[value.index].let {
-        JcArgument(it.index, value.name, it.type.asType)
+        JcArgument.of(it.index, value.name, it.type.asType)
     }
 
-    override fun visitJcRawLocal(value: JcRawLocal): JcExpr =
-        JcLocal(value.name, value.typeName.asType)
+    override fun visitJcRawLocalVar(value: JcRawLocalVar): JcExpr =
+        JcLocalVar(value.name, value.typeName.asType)
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val instance = value.instance?.accept(this) as? JcValue

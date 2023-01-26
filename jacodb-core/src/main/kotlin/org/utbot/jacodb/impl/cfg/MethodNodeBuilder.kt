@@ -104,7 +104,7 @@ class MethodNodeBuilder(
             locals[thisRef] = localIndex++
         }
         for (parameter in method.parameters) {
-            val argument = JcRawArgument(parameter.index, parameter.name, parameter.type)
+            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
             locals[argument] = localIndex
             if (argument.typeName.isDWord) localIndex += 2
             else localIndex++
@@ -658,7 +658,7 @@ class MethodNodeBuilder(
         currentInsnList.add(loadValue(value))
     }
 
-    override fun visitJcRawLocal(value: JcRawLocal) {
+    override fun visitJcRawLocalVar(value: JcRawLocalVar) {
         currentInsnList.add(loadValue(value))
     }
 

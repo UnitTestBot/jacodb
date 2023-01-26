@@ -18,12 +18,17 @@ package org.utbot.jacodb.api.cfg
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcMethod
 
-interface JcGraph : Iterable<JcInst> {
+interface JcGraph : Graph<JcInst> {
+
+    val method: JcMethod
     val classpath: JcClasspath
     val instructions: List<JcInst>
     val entry: JcInst
-    val exits: List<JcInst>
+    override val exits: List<JcInst>
+    override val entries: List<JcInst>
+        get() = listOf(entry)
 
     /**
      * returns a map of possible exceptions that may be thrown from this method
@@ -41,8 +46,8 @@ interface JcGraph : Iterable<JcInst> {
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    fun successors(inst: JcInst): Set<JcInst>
-    fun predecessors(inst: JcInst): Set<JcInst>
+    override fun successors(inst: JcInst): Set<JcInst>
+    override fun predecessors(inst: JcInst): Set<JcInst>
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs

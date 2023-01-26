@@ -148,7 +148,7 @@ class RawInstListBuilder(
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
     private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val localTypeRefinement = mutableMapOf<JcRawLocal, JcRawLocal>()
+    private val localTypeRefinement = mutableMapOf<JcRawLocalVar, JcRawLocalVar>()
     private var labelCounter = 0
     private var localCounter = 0
     private var argCounter = 0
@@ -356,7 +356,7 @@ class RawInstListBuilder(
 
 
     private fun nextRegister(typeName: TypeName): JcRawValue {
-        return JcRawLocal("%${localCounter++}", typeName)
+        return JcRawLocalVar("%${localCounter++}", typeName)
     }
     private fun nextLabel(): JcRawLabelInst = JcRawLabelInst("#${labelCounter++}")
 
@@ -406,7 +406,7 @@ class RawInstListBuilder(
             locals[argCounter++] = thisRef
         }
         for (parameter in method.parameters) {
-            val argument = JcRawArgument(parameter.index, parameter.name, parameter.type)
+            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
             locals[argCounter] = argument
             if (argument.typeName.isDWord) argCounter += 2
             else argCounter++
@@ -743,11 +743,11 @@ class RawInstListBuilder(
 
                     else -> frame.locals.filterKeys { it in this }.mapValues {
                         when {
-                            it.value is JcRawLocal && it.value.typeName != this[it.key]!! -> JcRawLocal(
-                                (it.value as JcRawLocal).name,
+                            it.value is JcRawLocalVar && it.value.typeName != this[it.key]!! -> JcRawLocalVar(
+                                (it.value as JcRawLocalVar).name,
                                 this[it.key]!!
                             ).also { newLocal ->
-                                localTypeRefinement[it.value as JcRawLocal] = newLocal
+                                localTypeRefinement[it.value as JcRawLocalVar] = newLocal
                             }
 
                             else -> it.value
@@ -818,11 +818,11 @@ class RawInstListBuilder(
 
                 else -> frame.stack.withIndex().filter { it.index in this }.map {
                     when {
-                        it.value is JcRawLocal && it.value.typeName != this[it.index]!! -> JcRawLocal(
-                            (it.value as JcRawLocal).name,
+                        it.value is JcRawLocalVar && it.value.typeName != this[it.index]!! -> JcRawLocalVar(
+                            (it.value as JcRawLocalVar).name,
                             this[it.index]!!
                         ).also { newLocal ->
-                            localTypeRefinement[it.value as JcRawLocal] = newLocal
+                            localTypeRefinement[it.value as JcRawLocalVar] = newLocal
                         }
 
                         else -> it.value

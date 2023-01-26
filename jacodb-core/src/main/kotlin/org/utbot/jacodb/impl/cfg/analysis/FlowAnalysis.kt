@@ -16,17 +16,7 @@
 
 package org.utbot.jacodb.impl.cfg.analysis
 
-import org.utbot.jacodb.api.cfg.DefaultJcExprVisitor
-import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcCallExpr
-import org.utbot.jacodb.api.cfg.JcCallInst
-import org.utbot.jacodb.api.cfg.JcCatchInst
-import org.utbot.jacodb.api.cfg.JcExpr
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.cfg.JcThrowInst
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.impl.cfg.collect
 
 interface FlowAnalysis<T> {
@@ -56,7 +46,7 @@ object LocalResolver : DefaultJcInstVisitor<Sequence<JcLocal>>, DefaultJcExprVis
     override val defaultExprHandler: (JcExpr) -> Sequence<JcLocal>
         get() = { emptySequence() }
 
-    override fun visitJcLocal(value: JcLocal): Sequence<JcLocal> {
+    override fun visitJcLocalVar(value: JcLocalVar): Sequence<JcLocal> {
         return sequenceOf(value)
     }
 

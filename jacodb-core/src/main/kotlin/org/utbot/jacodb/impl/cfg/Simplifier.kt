@@ -18,16 +18,7 @@ package org.utbot.jacodb.impl.cfg
 
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcType
-import org.utbot.jacodb.api.cfg.JcRawAssignInst
-import org.utbot.jacodb.api.cfg.JcRawCatchInst
-import org.utbot.jacodb.api.cfg.JcRawComplexValue
-import org.utbot.jacodb.api.cfg.JcRawConstant
-import org.utbot.jacodb.api.cfg.JcRawInst
-import org.utbot.jacodb.api.cfg.JcRawLabelInst
-import org.utbot.jacodb.api.cfg.JcRawLocal
-import org.utbot.jacodb.api.cfg.JcRawNullConstant
-import org.utbot.jacodb.api.cfg.JcRawSimpleValue
-import org.utbot.jacodb.api.cfg.JcRawValue
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.cfg.applyAndGet
 import org.utbot.jacodb.impl.cfg.util.ExprMapper
 import org.utbot.jacodb.impl.cfg.util.FullExprSetCollector
@@ -180,8 +171,8 @@ internal class Simplifier {
     private fun computeReplacements(
         instList: JcRawInstListImpl,
         uses: Map<JcRawSimpleValue, Set<JcRawInst>>
-    ): Pair<Map<JcRawLocal, JcRawValue>, Set<JcRawInst>> {
-        val replacements = mutableMapOf<JcRawLocal, JcRawValue>()
+    ): Pair<Map<JcRawLocalVar, JcRawValue>, Set<JcRawInst>> {
+        val replacements = mutableMapOf<JcRawLocalVar, JcRawValue>()
         val reservedValues = mutableSetOf<JcRawValue>()
         val replacedInsts = mutableSetOf<JcRawInst>()
 
@@ -189,7 +180,7 @@ internal class Simplifier {
             if (inst is JcRawAssignInst) {
                 val rhv = inst.rhv
                 if (inst.lhv is JcRawSimpleValue
-                    && rhv is JcRawLocal
+                    && rhv is JcRawLocalVar
                     && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
                     && rhv !in reservedValues
                 ) {
@@ -209,7 +200,7 @@ internal class Simplifier {
             if (inst is JcRawAssignInst) {
                 val lhv = inst.lhv
                 val rhv = inst.rhv
-                if (lhv is JcRawLocal && rhv is JcRawLocal) {
+                if (lhv is JcRawLocalVar && rhv is JcRawLocalVar) {
                     assignments.getOrPut(lhv, ::mutableSetOf).add(rhv)
                 }
             }
@@ -218,11 +209,11 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(jcClasspath: JcClasspath, instList: JcRawInstListImpl): JcRawInstListImpl {
-        val types = mutableMapOf<JcRawLocal, MutableSet<JcType>>()
+        val types = mutableMapOf<JcRawLocalVar, MutableSet<JcType>>()
         for (inst in instList) {
-            if (inst is JcRawAssignInst && inst.lhv is JcRawLocal && inst.rhv !is JcRawNullConstant) {
+            if (inst is JcRawAssignInst && inst.lhv is JcRawLocalVar && inst.rhv !is JcRawNullConstant) {
                 types.getOrPut(
-                    inst.lhv as JcRawLocal,
+                    inst.lhv as JcRawLocalVar,
                     ::mutableSetOf
                 ) += jcClasspath.findTypeOrNull(inst.rhv.typeName.typeName)
                     ?: error("Could not find type")
@@ -230,7 +221,7 @@ internal class Simplifier {
         }
         val replacement = types.filterValues { it.size > 1 }
             .mapValues {
-                JcRawLocal(it.key.name, it.key.typeName)
+                JcRawLocalVar(it.key.name, it.key.typeName)
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }

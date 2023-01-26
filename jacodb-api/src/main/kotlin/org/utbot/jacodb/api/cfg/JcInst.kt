@@ -709,19 +709,30 @@ data class JcThis(override val type: JcType) : JcSimpleValue {
     }
 }
 
-data class JcArgument(val index: Int, val name: String?, override val type: JcType) : JcSimpleValue {
-    override fun toString(): String = name ?: "arg$$index"
+sealed interface JcLocal : JcSimpleValue {
+    val name: String
+}
+
+data class JcArgument(val index: Int, override val name: String, override val type: JcType) : JcLocal {
+
+    companion object {
+        @JvmStatic
+        fun of(index: Int, name: String?, type: JcType): JcArgument {
+            return JcArgument(index, name ?: "arg$$index", type)
+        }
+    }
+    override fun toString(): String = name
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcArgument(this)
     }
 }
 
-data class JcLocal(val name: String, override val type: JcType) : JcSimpleValue {
+data class JcLocalVar(override val name: String, override val type: JcType) : JcLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
-        return visitor.visitJcLocal(this)
+        return visitor.visitJcLocalVar(this)
     }
 }
 

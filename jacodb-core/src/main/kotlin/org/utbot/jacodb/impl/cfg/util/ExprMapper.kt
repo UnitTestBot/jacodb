@@ -17,75 +17,7 @@
 package org.utbot.jacodb.impl.cfg.util
 
 import org.utbot.jacodb.api.TypeName
-import org.utbot.jacodb.api.cfg.JcRawAddExpr
-import org.utbot.jacodb.api.cfg.JcRawAndExpr
-import org.utbot.jacodb.api.cfg.JcRawArgument
-import org.utbot.jacodb.api.cfg.JcRawArrayAccess
-import org.utbot.jacodb.api.cfg.JcRawAssignInst
-import org.utbot.jacodb.api.cfg.JcRawBinaryExpr
-import org.utbot.jacodb.api.cfg.JcRawBool
-import org.utbot.jacodb.api.cfg.JcRawByte
-import org.utbot.jacodb.api.cfg.JcRawCallExpr
-import org.utbot.jacodb.api.cfg.JcRawCallInst
-import org.utbot.jacodb.api.cfg.JcRawCastExpr
-import org.utbot.jacodb.api.cfg.JcRawCatchInst
-import org.utbot.jacodb.api.cfg.JcRawChar
-import org.utbot.jacodb.api.cfg.JcRawClassConstant
-import org.utbot.jacodb.api.cfg.JcRawCmpExpr
-import org.utbot.jacodb.api.cfg.JcRawCmpgExpr
-import org.utbot.jacodb.api.cfg.JcRawCmplExpr
-import org.utbot.jacodb.api.cfg.JcRawConditionExpr
-import org.utbot.jacodb.api.cfg.JcRawDivExpr
-import org.utbot.jacodb.api.cfg.JcRawDouble
-import org.utbot.jacodb.api.cfg.JcRawDynamicCallExpr
-import org.utbot.jacodb.api.cfg.JcRawEnterMonitorInst
-import org.utbot.jacodb.api.cfg.JcRawEqExpr
-import org.utbot.jacodb.api.cfg.JcRawExitMonitorInst
-import org.utbot.jacodb.api.cfg.JcRawExpr
-import org.utbot.jacodb.api.cfg.JcRawExprVisitor
-import org.utbot.jacodb.api.cfg.JcRawFieldRef
-import org.utbot.jacodb.api.cfg.JcRawFloat
-import org.utbot.jacodb.api.cfg.JcRawGeExpr
-import org.utbot.jacodb.api.cfg.JcRawGotoInst
-import org.utbot.jacodb.api.cfg.JcRawGtExpr
-import org.utbot.jacodb.api.cfg.JcRawIfInst
-import org.utbot.jacodb.api.cfg.JcRawInst
-import org.utbot.jacodb.api.cfg.JcRawInstVisitor
-import org.utbot.jacodb.api.cfg.JcRawInstanceOfExpr
-import org.utbot.jacodb.api.cfg.JcRawInt
-import org.utbot.jacodb.api.cfg.JcRawInterfaceCallExpr
-import org.utbot.jacodb.api.cfg.JcRawLabelInst
-import org.utbot.jacodb.api.cfg.JcRawLeExpr
-import org.utbot.jacodb.api.cfg.JcRawLengthExpr
-import org.utbot.jacodb.api.cfg.JcRawLineNumberInst
-import org.utbot.jacodb.api.cfg.JcRawLocal
-import org.utbot.jacodb.api.cfg.JcRawLong
-import org.utbot.jacodb.api.cfg.JcRawLtExpr
-import org.utbot.jacodb.api.cfg.JcRawMethodConstant
-import org.utbot.jacodb.api.cfg.JcRawMulExpr
-import org.utbot.jacodb.api.cfg.JcRawNegExpr
-import org.utbot.jacodb.api.cfg.JcRawNeqExpr
-import org.utbot.jacodb.api.cfg.JcRawNewArrayExpr
-import org.utbot.jacodb.api.cfg.JcRawNewExpr
-import org.utbot.jacodb.api.cfg.JcRawNullConstant
-import org.utbot.jacodb.api.cfg.JcRawOrExpr
-import org.utbot.jacodb.api.cfg.JcRawRemExpr
-import org.utbot.jacodb.api.cfg.JcRawReturnInst
-import org.utbot.jacodb.api.cfg.JcRawShlExpr
-import org.utbot.jacodb.api.cfg.JcRawShort
-import org.utbot.jacodb.api.cfg.JcRawShrExpr
-import org.utbot.jacodb.api.cfg.JcRawSimpleValue
-import org.utbot.jacodb.api.cfg.JcRawSpecialCallExpr
-import org.utbot.jacodb.api.cfg.JcRawStaticCallExpr
-import org.utbot.jacodb.api.cfg.JcRawStringConstant
-import org.utbot.jacodb.api.cfg.JcRawSubExpr
-import org.utbot.jacodb.api.cfg.JcRawSwitchInst
-import org.utbot.jacodb.api.cfg.JcRawThis
-import org.utbot.jacodb.api.cfg.JcRawThrowInst
-import org.utbot.jacodb.api.cfg.JcRawUshrExpr
-import org.utbot.jacodb.api.cfg.JcRawValue
-import org.utbot.jacodb.api.cfg.JcRawVirtualCallExpr
-import org.utbot.jacodb.api.cfg.JcRawXorExpr
+import org.utbot.jacodb.api.cfg.*
 
 class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRawInst>, JcRawExprVisitor<JcRawExpr> {
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcRawInst {
@@ -387,7 +319,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
 
     override fun visitJcRawThis(value: JcRawThis) = exprHandler(value) { value }
     override fun visitJcRawArgument(value: JcRawArgument) = exprHandler(value) { value }
-    override fun visitJcRawLocal(value: JcRawLocal) = exprHandler(value) { value }
+    override fun visitJcRawLocalVar(value: JcRawLocalVar) = exprHandler(value) { value }
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef) = exprHandler(value) {
         val newInstance = value.instance?.accept(this) as? JcRawValue
