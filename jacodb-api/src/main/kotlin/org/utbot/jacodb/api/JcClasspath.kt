@@ -19,6 +19,7 @@ package org.utbot.jacodb.api
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import java.io.Closeable
+import java.util.concurrent.Future
 
 /**
  * Represents classpath, i.e. number of locations of byte code.
@@ -57,4 +58,35 @@ interface JcClasspath : Closeable {
     suspend fun refreshed(closeOld: Boolean): JcClasspath
     fun asyncRefreshed(closeOld: Boolean) = GlobalScope.future { refreshed(closeOld) }
 
+    suspend fun execute(task: JcClasspathTask): JcClasspathTask
+
+    fun executeAsync(task: JcClasspathTask): Future<JcClasspathTask> = GlobalScope.future { execute(task) }
 }
+
+
+interface JcClasspathTask {
+
+    fun before(classpath: JcClasspath) {
+    }
+
+    fun after(classpath: JcClasspath) {
+
+    }
+
+    fun shouldProcess(registeredLocation: RegisteredLocation): Boolean = true
+    fun shouldProcess(classSource: ClassSource): Boolean = true
+
+    fun process(source: ClassSource, classpath: JcClasspath)
+
+}
+
+
+interface JcClassProcessingTask : JcClasspathTask {
+
+    override fun process(source: ClassSource, classpath: JcClasspath) {
+        process(classpath.toJcClass(source, true))
+    }
+
+    fun process(clazz: JcClassOrInterface)
+}
+

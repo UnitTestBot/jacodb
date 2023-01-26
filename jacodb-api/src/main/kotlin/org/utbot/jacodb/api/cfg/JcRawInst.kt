@@ -762,7 +762,7 @@ sealed interface JcRawValue : JcRawExpr {
 
 sealed interface JcRawSimpleValue : JcRawValue
 
-sealed interface JcRawLocal : JcRawValue {
+sealed interface JcRawLocal : JcRawSimpleValue {
     val name: String
 }
 

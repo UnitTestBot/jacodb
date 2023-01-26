@@ -18,47 +18,21 @@ package org.utbot.jacodb.impl.tests
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.JRE
 import org.utbot.jacodb.api.JcClassOrInterface
+import org.utbot.jacodb.api.JcClassProcessingTask
 import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.HierarchyExtension
-import org.utbot.jacodb.api.ext.constructors
-import org.utbot.jacodb.api.ext.enumValues
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.api.ext.findClassOrNull
-import org.utbot.jacodb.api.ext.findMethodOrNull
-import org.utbot.jacodb.api.ext.hasBody
-import org.utbot.jacodb.api.ext.isEnum
-import org.utbot.jacodb.api.ext.isFinal
-import org.utbot.jacodb.api.ext.isInterface
-import org.utbot.jacodb.api.ext.isLocal
-import org.utbot.jacodb.api.ext.isMemberClass
-import org.utbot.jacodb.api.ext.isNullable
-import org.utbot.jacodb.api.ext.isPrivate
-import org.utbot.jacodb.api.ext.isPublic
-import org.utbot.jacodb.api.ext.jcdbSignature
-import org.utbot.jacodb.api.ext.jvmSignature
-import org.utbot.jacodb.api.ext.methods
-import org.utbot.jacodb.impl.A
-import org.utbot.jacodb.impl.B
-import org.utbot.jacodb.impl.C
-import org.utbot.jacodb.impl.D
-import org.utbot.jacodb.impl.Enums
-import org.utbot.jacodb.impl.Foo
-import org.utbot.jacodb.impl.SuperDuper
-import org.utbot.jacodb.impl.skipAssertionsOn
+import org.utbot.jacodb.api.ext.*
+import org.utbot.jacodb.impl.*
 import org.w3c.dom.Document
 import org.w3c.dom.DocumentType
 import org.w3c.dom.Element
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 abstract class DatabaseEnvTest {
 
@@ -353,6 +327,19 @@ abstract class DatabaseEnvTest {
         assertFalse(method.hasBody)
         assertNotNull(method.body())
         assertTrue(method.body().instructions.toList().isEmpty())
+    }
+
+    @Test
+    fun `class task should work`() = runBlocking {
+        val counter = AtomicLong()
+        val runnable = cp.execute(object : JcClassProcessingTask {
+            override fun process(clazz: JcClassOrInterface) {
+                counter.incrementAndGet()
+            }
+        })
+        val count = counter.get()
+        println("Number of classes is $count")
+        assertTrue(count > 30_000, "counter is $count expected to be > 30_000")
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

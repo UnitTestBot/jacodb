@@ -18,21 +18,7 @@ package org.utbot.jacodb.impl.cfg.analysis.impl
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.cfg.BsmStringArg
-import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcCatchInst
-import org.utbot.jacodb.api.cfg.JcDynamicCallExpr
-import org.utbot.jacodb.api.cfg.JcGotoInst
-import org.utbot.jacodb.api.cfg.JcIfInst
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstRef
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.cfg.JcStaticCallExpr
-import org.utbot.jacodb.api.cfg.JcStringConstant
-import org.utbot.jacodb.api.cfg.JcSwitchInst
-import org.utbot.jacodb.api.cfg.JcValue
-import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.autoboxIfNeeded
 import org.utbot.jacodb.api.ext.findTypeOrNull
 import org.utbot.jacodb.impl.cfg.JcGraphImpl
@@ -102,7 +88,7 @@ class StringConcatSimplifier(
          */
         instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
         val mappedInstructions = instructions.map { it.accept(this) }
-        return JcGraphImpl(jcGraph.classpath, mappedInstructions)
+        return JcGraphImpl(jcGraph.method, mappedInstructions)
     }
 
     private fun stringify(inst: JcInst, value: JcValue, instList: MutableList<JcInst>): JcValue {
@@ -115,7 +101,7 @@ class StringConcatSimplifier(
                     it.name == "toString" && it.parameters.size == 1 && it.parameters.first().type == value.type
                 }
                 val toStringExpr = JcStaticCallExpr(method, listOf(value))
-                val assignment = JcLocal("${value}String", stringType)
+                val assignment = JcLocalVar("${value}String", stringType)
                 instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
                 assignment
             }
@@ -127,7 +113,7 @@ class StringConcatSimplifier(
                     it.name == "toString" && it.parameters.isEmpty()
                 }
                 val toStringExpr = JcVirtualCallExpr(method, value, emptyList())
-                val assignment = JcLocal("${value}String", stringType)
+                val assignment = JcLocalVar("${value}String", stringType)
                 instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
                 assignment
             }

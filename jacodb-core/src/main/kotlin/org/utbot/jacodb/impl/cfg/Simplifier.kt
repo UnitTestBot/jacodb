@@ -200,7 +200,7 @@ internal class Simplifier {
             if (inst is JcRawAssignInst) {
                 val lhv = inst.lhv
                 val rhv = inst.rhv
-                if (lhv is JcRawLocalVar && rhv is JcRawLocalVar) {
+                if (lhv is JcRawLocal && rhv is JcRawLocal) {
                     assignments.getOrPut(lhv, ::mutableSetOf).add(rhv)
                 }
             }

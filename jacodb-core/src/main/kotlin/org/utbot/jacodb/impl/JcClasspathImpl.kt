@@ -17,17 +17,9 @@
 package org.utbot.jacodb.impl
 
 import com.google.common.cache.CacheBuilder
-import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JcArrayType
-import org.utbot.jacodb.api.JcByteCodeLocation
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.JcRefType
-import org.utbot.jacodb.api.JcType
-import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.RegisteredLocation
+import kotlinx.coroutines.*
+import org.utbot.jacodb.api.*
 import org.utbot.jacodb.api.ext.toType
-import org.utbot.jacodb.api.throwClassNotFound
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jacodb.impl.types.JcArrayTypeImpl
 import org.utbot.jacodb.impl.types.JcClassTypeImpl
@@ -119,6 +111,26 @@ class JcClasspathImpl(
             return predefined
         }
         return typeOf(findClassOrNull(name) ?: return null)
+    }
+
+    override suspend fun execute(task: JcClasspathTask): JcClasspathTask {
+        val locations = registeredLocations.filter { task.shouldProcess(it) }
+        task.before(this)
+        withContext(Dispatchers.IO) {
+            val parentScope = this
+            locations.map {
+                async {
+                    val sources = db.persistence.findClassSources(it)
+                    sources.forEach {
+                        if (parentScope.isActive && task.shouldProcess(it)) {
+                            task.process(it, this@JcClasspathImpl)
+                        }
+                    }
+                }
+            }.joinAll()
+        }
+        task.after(this)
+        return task
     }
 
     override fun close() {
