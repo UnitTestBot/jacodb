@@ -17,22 +17,14 @@
 package org.utbot.jacodb.impl.performance
 
 import kotlinx.coroutines.runBlocking
-import org.openjdk.jmh.annotations.Benchmark
-import org.openjdk.jmh.annotations.BenchmarkMode
-import org.openjdk.jmh.annotations.Fork
-import org.openjdk.jmh.annotations.Level
-import org.openjdk.jmh.annotations.Measurement
-import org.openjdk.jmh.annotations.Mode
-import org.openjdk.jmh.annotations.OutputTimeUnit
-import org.openjdk.jmh.annotations.Scope
-import org.openjdk.jmh.annotations.Setup
-import org.openjdk.jmh.annotations.State
-import org.openjdk.jmh.annotations.TearDown
-import org.openjdk.jmh.annotations.Warmup
+import org.openjdk.jmh.annotations.*
 import org.utbot.jacodb.api.JcDatabase
 import org.utbot.jacodb.impl.JcSettings
 import org.utbot.jacodb.impl.allClasspath
+import org.utbot.jacodb.impl.features.InMemoryHierarchy
+import org.utbot.jacodb.impl.features.Usages
 import org.utbot.jacodb.impl.jacodb
+import org.utbot.jacodb.impl.storage.jooq.tables.references.*
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -103,6 +95,7 @@ class JcdbIdeaBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
     override fun JcSettings.configure() {
         loadByteCode(allIdeaJars)
+        installFeatures(Usages, InMemoryHierarchy)
         persistent(File.createTempFile("jcdb-", "-db").absolutePath)
     }
 
