@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.bytecode
 
+import org.objectweb.asm.TypeReference
 import org.objectweb.asm.tree.MethodNode
 import org.utbot.jacodb.api.ClassSource
 import org.utbot.jacodb.api.JcAnnotation
@@ -26,6 +27,7 @@ import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.impl.cfg.JcRawInstListImpl
 import org.utbot.jacodb.impl.cfg.RawInstListBuilder
 import org.utbot.jacodb.impl.fs.fullAsmNode
+import org.utbot.jacodb.impl.types.AnnotationInfo
 import org.utbot.jacodb.impl.types.MethodInfo
 import org.utbot.jacodb.impl.types.TypeNameImpl
 import org.utbot.jacodb.impl.types.signature.MethodResolutionImpl
@@ -59,7 +61,20 @@ class JcMethodImpl(
         get() = methodInfo.parametersInfo.map { JcParameterImpl(this, it) }
 
     override val annotations: List<JcAnnotation>
-        get() = methodInfo.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
+        get() = methodInfo.annotations
+            .filter { it.typeRef == null } // Type annotations are stored with method in bytecode, but they are not a part of method in language
+            .map { JcAnnotationImpl(it, enclosingClass.classpath) }
+
+    internal val returnTypeAnnotations: List<AnnotationInfo>
+        get() = methodInfo.annotations.filter {
+            it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_RETURN
+        }
+
+    internal fun parameterTypeAnnotations(parameterIndex: Int): List<AnnotationInfo> =
+        methodInfo.annotations.filter {
+            it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_FORMAL_PARAMETER
+                    && TypeReference(it.typeRef).formalParameterIndex == parameterIndex
+        }
 
     override val description get() = methodInfo.desc
 

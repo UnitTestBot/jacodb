@@ -18,7 +18,6 @@ package org.utbot.jacodb.impl.types.nullability
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.impl.KotlinNullabilityExamples
@@ -59,7 +58,6 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    @Disabled("Type annotations are not supported")
     fun `Test nullability after substitution of Kotlin T with notNull type Java`() = runBlocking {
         val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNotNull" }
@@ -92,7 +90,6 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    @Disabled("Type annotations are not supported")
     fun `Test nullability after substitution of Kotlin T with nullable type Java`() = runBlocking {
         val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNullable" }
@@ -125,7 +122,6 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    @Disabled("Type annotations are not supported")
     fun `Test nullability after substitution of Java T with nullable type Kotlin`() = runBlocking {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNullable = clazz.declaredFields.single { it.name == "javaContainerOfNullable" }
@@ -160,7 +156,6 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    @Disabled("Type annotations are not supported")
     fun `Test nullability after substitution of Java T with notNull type Kotlin`() = runBlocking {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "javaContainerOfNotNull" }

@@ -21,7 +21,7 @@ import kotlinx.metadata.KmTypeParameter
 import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.impl.bytecode.isNullable
 
-fun JvmType.copyWith(nullability: Boolean?, annotations: List<JcAnnotation> = this.annotations): JvmType =
+internal fun JvmType.copyWith(nullability: Boolean?, annotations: List<JcAnnotation> = this.annotations): JvmType =
     when (this) {
         is JvmArrayType -> JvmArrayType(elementType, nullability, annotations)
         is JvmClassRefType -> JvmClassRefType(name, nullability, annotations)
@@ -55,17 +55,17 @@ internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
                 elementType.relaxWithKmType(it)
             } ?: elementType
 
-            JvmArrayType(updatedElementType, kmType.isNullable, annotations.toMutableList())
+            JvmArrayType(updatedElementType, kmType.isNullable, annotations.toList())
         }
 
         is JvmParameterizedType.JvmNestedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable, annotations.toMutableList())
+            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable, annotations.toList())
         }
 
         is JvmParameterizedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable, annotations.toMutableList())
+            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable, annotations.toList())
         }
 
         is JvmBoundWildcard.JvmUpperBoundWildcard -> {

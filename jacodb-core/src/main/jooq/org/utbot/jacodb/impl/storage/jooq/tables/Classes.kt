@@ -34,6 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CLASSES_BYTECODELOCATIONS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CLASSES_METHODS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CLASSES_OUTERCLASSES_1
@@ -55,7 +56,7 @@ open class Classes(
     parameters: Array<Field<*>?>?
 ): TableImpl<ClassesRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -140,7 +141,7 @@ open class Classes(
     constructor(): this(DSL.name("Classes"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, ClassesRecord>): this(Internal.createPathAlias(child, key), child, key, CLASSES, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<ClassesRecord> = PK_CLASSES
     override fun getKeys(): List<UniqueKey<ClassesRecord>> = listOf(PK_CLASSES)
     override fun getReferences(): List<ForeignKey<ClassesRecord, *>> = listOf(FK_CLASSES_SYMBOLS_2, FK_CLASSES_BYTECODELOCATIONS_1, FK_CLASSES_SYMBOLS_1, FK_CLASSES_OUTERCLASSES_1, FK_CLASSES_METHODS_1)

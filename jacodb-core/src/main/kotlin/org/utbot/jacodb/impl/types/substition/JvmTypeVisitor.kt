@@ -66,7 +66,7 @@ internal interface JvmTypeVisitor {
     }
 
     fun visitArrayType(type: JvmArrayType, context: VisitorContext): JvmType {
-        return JvmArrayType(visitType(type.elementType, context), type.isNullable, mutableListOf())
+        return JvmArrayType(visitType(type.elementType, context), type.isNullable, type.annotations)
     }
 
     fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
@@ -97,7 +97,7 @@ internal interface JvmTypeVisitor {
     }
 
     fun visitParameterizedType(type: JvmParameterizedType, context: VisitorContext): JvmType {
-        return JvmParameterizedType(type.name, type.parameterTypes.map { visitType(it, context) }, type.isNullable, mutableListOf())
+        return JvmParameterizedType(type.name, type.parameterTypes.map { visitType(it, context) }, type.isNullable, type.annotations)
     }
 
     fun visitDeclaration(

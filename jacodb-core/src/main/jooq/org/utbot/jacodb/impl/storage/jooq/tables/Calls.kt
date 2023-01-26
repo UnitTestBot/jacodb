@@ -20,8 +20,11 @@
 package org.utbot.jacodb.impl.storage.jooq.tables
 
 
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
+import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row7
@@ -33,6 +36,8 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
+import org.utbot.jacodb.impl.storage.jooq.indexes.CALLSSEARCH
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CALLS_BYTECODELOCATIONS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CALLS_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.tables.records.CallsRecord
@@ -50,7 +55,7 @@ open class Calls(
     parameters: Array<Field<*>?>?
 ): TableImpl<CallsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -125,7 +130,8 @@ open class Calls(
     constructor(): this(DSL.name("Calls"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, CallsRecord>): this(Internal.createPathAlias(child, key), child, key, CALLS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getIndexes(): List<Index> = listOf(CALLSSEARCH)
     override fun getReferences(): List<ForeignKey<CallsRecord, *>> = listOf(FK_CALLS_SYMBOLS_1, FK_CALLS_BYTECODELOCATIONS_1)
 
     private lateinit var _symbols: Symbols

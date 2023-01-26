@@ -21,6 +21,7 @@ import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.Malformed
 import org.utbot.jacodb.api.MethodResolution
 import org.utbot.jacodb.api.Pure
+import org.utbot.jacodb.impl.bytecode.JcMethodImpl
 import org.utbot.jacodb.impl.bytecode.kmFunction
 import org.utbot.jacodb.impl.bytecode.kmReturnType
 import org.utbot.jacodb.impl.bytecode.kmType
@@ -32,7 +33,6 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
 
     private val parameterTypes = ArrayList<JvmType>()
     private val exceptionTypes = ArrayList<JvmClassRefType>()
-
     private lateinit var returnType: JvmType
 
     override fun visitParameterType(): SignatureVisitor {
@@ -59,23 +59,25 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
 
     private inner class ParameterTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            // TODO: find real list of annotations here
-            val outToken = (method.parameters[parameterTypes.size].kmType?.let {
+            var outToken = method.parameters[parameterTypes.size].kmType?.let {
                 token.relaxWithKmType(it)
-            } ?: token).relaxWithAnnotations(listOf(), method.enclosingClass.classpath, 0)
+            } ?: token
+
+            (method as? JcMethodImpl)?.let {
+                outToken = outToken.relaxWithAnnotations(it.parameterTypeAnnotations(parameterTypes.size), it.enclosingClass.classpath)
+            }
+
             parameterTypes.add(outToken)
         }
     }
 
     private inner class ReturnTypeTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            returnType = token
-            method.kmReturnType?.let {
-                returnType = returnType.relaxWithKmType(it)
-            }
+            returnType = method.kmReturnType?.let { token.relaxWithKmType(it) } ?: token
 
-            // TODO: find real list of annotations here
-            returnType = returnType.relaxWithAnnotations(listOf(), method.enclosingClass.classpath, 0)
+            (method as? JcMethodImpl)?.let {
+                returnType = returnType.relaxWithAnnotations(it.returnTypeAnnotations, it.enclosingClass.classpath)
+            }
         }
     }
 

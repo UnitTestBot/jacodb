@@ -22,6 +22,8 @@ import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedField
 import org.utbot.jacodb.api.ext.isNullable
 import org.utbot.jacodb.api.throwClassNotFound
+import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
+import org.utbot.jacodb.impl.bytecode.JcFieldImpl
 import org.utbot.jacodb.impl.types.signature.FieldResolutionImpl
 import org.utbot.jacodb.impl.types.signature.FieldSignature
 import org.utbot.jacodb.impl.types.substition.JcSubstitutor
@@ -44,7 +46,9 @@ class JcTypedFieldImpl(
         val typeName = field.type.typeName
         val type = resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))
-        } ?: classpath.findTypeOrNull(field.type.typeName)?.copyWithAnnotations(field.annotations) ?: typeName.throwClassNotFound()
+        } ?: classpath.findTypeOrNull(field.type.typeName)?.copyWithAnnotations(
+            (field as? JcFieldImpl)?.typeAnnotationInfos?.map { JcAnnotationImpl(it, field.enclosingClass.classpath) } ?: listOf()
+        ) ?: typeName.throwClassNotFound()
 
         field.isNullable?.let {
             (type as? JcRefType)?.copyWithNullability(it)

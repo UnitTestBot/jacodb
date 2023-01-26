@@ -41,7 +41,6 @@ import org.utbot.jacodb.impl.types.MethodInfo
 import org.utbot.jacodb.impl.types.OuterClassRef
 import org.utbot.jacodb.impl.types.ParameterInfo
 import org.utbot.jacodb.impl.types.PrimitiveValue
-//import org.utbot.jacodb.impl.types.TypeAnnotationInfo
 
 fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     name = Type.getObjectType(name).className,
@@ -136,11 +135,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
                         + invisibleParameterAnnotations?.get(index)?.asAnnotationInfos(false).orEmpty()
             )
         }
-    ).also {
-        if (name == "nullableMethod") {
-            println(it.annotations.size)
-        }
-    }
+    )
 }
 
 private fun FieldNode.asFieldInfo() = FieldInfo(
@@ -150,11 +145,7 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
     type = Type.getObjectType(desc).className,
     annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
             + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
-).also {
-    if (name == "containerOfNotNull") {
-        println(it.annotations.size)
-    }
-}
+)
 
 
 val ClassSource.info: ClassInfo get() {

@@ -24,7 +24,7 @@ import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
 import org.jooq.Record
-import org.jooq.Row8
+import org.jooq.Row10
 import org.jooq.Schema
 import org.jooq.Table
 import org.jooq.TableField
@@ -34,6 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_ANNOTATIONS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_CLASSES_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_FIELDS_1
@@ -56,7 +57,7 @@ open class Annotations(
     parameters: Array<Field<*>?>?
 ): TableImpl<AnnotationsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -91,6 +92,16 @@ open class Annotations(
      * The column <code>Annotations.visible</code>.
      */
     val VISIBLE: TableField<AnnotationsRecord, Boolean?> = createField(DSL.name("visible"), SQLDataType.BOOLEAN.nullable(false), this, "")
+
+    /**
+     * The column <code>Annotations.type_reference</code>.
+     */
+    val TYPE_REFERENCE: TableField<AnnotationsRecord, Long?> = createField(DSL.name("type_reference"), SQLDataType.BIGINT, this, "")
+
+    /**
+     * The column <code>Annotations.type_path</code>.
+     */
+    val TYPE_PATH: TableField<AnnotationsRecord, String?> = createField(DSL.name("type_path"), SQLDataType.VARCHAR(256), this, "")
 
     /**
      * The column <code>Annotations.parent_annotation</code>.
@@ -136,7 +147,7 @@ open class Annotations(
     constructor(): this(DSL.name("Annotations"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, AnnotationsRecord>): this(Internal.createPathAlias(child, key), child, key, ANNOTATIONS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<AnnotationsRecord> = PK_ANNOTATIONS
     override fun getKeys(): List<UniqueKey<AnnotationsRecord>> = listOf(PK_ANNOTATIONS)
     override fun getReferences(): List<ForeignKey<AnnotationsRecord, *>> = listOf(FK_ANNOTATIONS_SYMBOLS_1, FK_ANNOTATIONS_ANNOTATIONS_1, FK_ANNOTATIONS_CLASSES_1, FK_ANNOTATIONS_METHODS_1, FK_ANNOTATIONS_FIELDS_1, FK_ANNOTATIONS_METHODPARAMETERS_1)
@@ -197,7 +208,7 @@ open class Annotations(
     override fun rename(name: Name): Annotations = Annotations(name, null)
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
-    override fun fieldsRow(): Row8<Long?, Long?, Boolean?, Long?, Long?, Long?, Long?, Long?> = super.fieldsRow() as Row8<Long?, Long?, Boolean?, Long?, Long?, Long?, Long?, Long?>
+    override fun fieldsRow(): Row10<Long?, Long?, Boolean?, Long?, String?, Long?, Long?, Long?, Long?, Long?> = super.fieldsRow() as Row10<Long?, Long?, Boolean?, Long?, String?, Long?, Long?, Long?, Long?, Long?>
 }

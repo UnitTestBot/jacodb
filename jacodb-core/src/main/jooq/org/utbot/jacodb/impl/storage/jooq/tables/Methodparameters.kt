@@ -20,6 +20,8 @@
 package org.utbot.jacodb.impl.storage.jooq.tables
 
 
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -34,6 +36,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_METHODS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.PK_METHODPARAMETERS
@@ -52,7 +55,7 @@ open class Methodparameters(
     parameters: Array<Field<*>?>?
 ): TableImpl<MethodparametersRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -122,7 +125,7 @@ open class Methodparameters(
     constructor(): this(DSL.name("MethodParameters"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, MethodparametersRecord>): this(Internal.createPathAlias(child, key), child, key, METHODPARAMETERS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<MethodparametersRecord> = PK_METHODPARAMETERS
     override fun getKeys(): List<UniqueKey<MethodparametersRecord>> = listOf(PK_METHODPARAMETERS)
     override fun getReferences(): List<ForeignKey<MethodparametersRecord, *>> = listOf(FK_METHODPARAMETERS_SYMBOLS_1, FK_METHODPARAMETERS_METHODS_1)

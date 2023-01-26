@@ -22,7 +22,6 @@ package org.utbot.jacodb.impl.storage.jooq.tables
 
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row7
@@ -35,7 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.utbot.jacodb.impl.storage.jooq.indexes.METHODS_CLASS_ID_NAME_DESC
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_METHODS_CLASSES_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_METHODS_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_METHODS_SYMBOLS_2
@@ -55,7 +54,7 @@ open class Methods(
     parameters: Array<Field<*>?>?
 ): TableImpl<MethodsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -130,8 +129,7 @@ open class Methods(
     constructor(): this(DSL.name("Methods"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, MethodsRecord>): this(Internal.createPathAlias(child, key), child, key, METHODS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(METHODS_CLASS_ID_NAME_DESC)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<MethodsRecord> = PK_METHODS
     override fun getKeys(): List<UniqueKey<MethodsRecord>> = listOf(PK_METHODS)
     override fun getReferences(): List<ForeignKey<MethodsRecord, *>> = listOf(FK_METHODS_SYMBOLS_2, FK_METHODS_SYMBOLS_1, FK_METHODS_CLASSES_1)

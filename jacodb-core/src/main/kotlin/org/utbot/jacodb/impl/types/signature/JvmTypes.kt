@@ -29,7 +29,6 @@ import org.utbot.jacodb.api.PredefinedPrimitives
 sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotation>) {
 
     abstract val displayName: String
-    //val annotations: List<JcAnnotation> = ListOf()
 }
 
 internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>) : JvmType(isNullable, annotations)

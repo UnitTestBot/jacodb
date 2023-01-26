@@ -34,6 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_ANNOTATIONS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_ANNOTATIONS_2
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_SYMBOLS_1
@@ -54,7 +55,7 @@ open class Annotationvalues(
     parameters: Array<Field<*>?>?
 ): TableImpl<AnnotationvaluesRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -134,7 +135,7 @@ open class Annotationvalues(
     constructor(): this(DSL.name("AnnotationValues"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, AnnotationvaluesRecord>): this(Internal.createPathAlias(child, key), child, key, ANNOTATIONVALUES, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<AnnotationvaluesRecord> = PK_ANNOTATIONVALUES
     override fun getKeys(): List<UniqueKey<AnnotationvaluesRecord>> = listOf(PK_ANNOTATIONVALUES)
     override fun getReferences(): List<ForeignKey<AnnotationvaluesRecord, *>> = listOf(FK_ANNOTATIONVALUES_ANNOTATIONS_2, FK_ANNOTATIONVALUES_ANNOTATIONS_1, FK_ANNOTATIONVALUES_SYMBOLS_1, FK_ANNOTATIONVALUES_SYMBOLS_2)

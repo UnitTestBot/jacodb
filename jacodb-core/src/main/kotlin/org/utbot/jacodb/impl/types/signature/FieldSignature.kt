@@ -33,7 +33,7 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
     override fun register(token: JvmType) {
         fieldType = field?.kmType?.let { token.relaxWithKmType(it) } ?: token
         (field as? JcFieldImpl)?.let {
-            fieldType = fieldType.relaxWithAnnotations(it.typeAnnotationInfos, it.enclosingClass.classpath, 0)
+            fieldType = fieldType.relaxWithAnnotations(it.typeAnnotationInfos, it.enclosingClass.classpath)
         }
     }
 

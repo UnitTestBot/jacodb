@@ -20,27 +20,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.ext.isNullable
-import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
 import org.utbot.jacodb.impl.types.BaseTypesTest
-import org.utbot.jacodb.impl.usages.Generics
 import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
 class NullabilityByAnnotationsTest: BaseTypesTest() {
     @Test
-    fun test() = runBlocking {
-        val y = NullAnnotationExamples()
-        //val a = NullKek()
-        val clazz = findType<Generics<*>>()
-        println(clazz.annotations.map { (it as JcAnnotationImpl) })
-
-        if (clazz.fields.map { it.fieldType }.isEmpty() || clazz.methods.map { it.returnType }.isEmpty() ) {
-            assertEquals(true, false)
-        }
-    }
-
-    @Test
     fun `Test field nullability`() = runBlocking {
-        val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = findType<NullAnnotationExamples>()
 
         val expectedNullability = mapOf(
             "refNullable" to null,
@@ -59,7 +45,7 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test method parameter nullability`() = runBlocking {
-        val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = findType<NullAnnotationExamples>()
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
         val expectedNullability = listOf(true, false, null)
@@ -72,7 +58,7 @@ class NullabilityByAnnotationsTest: BaseTypesTest() {
 
     @Test
     fun `Test method nullability`() = runBlocking {
-        val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = findType<NullAnnotationExamples>()
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
         assertEquals(null, nullableMethod.method.isNullable)

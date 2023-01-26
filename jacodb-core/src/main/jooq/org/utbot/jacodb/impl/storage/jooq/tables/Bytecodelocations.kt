@@ -22,7 +22,6 @@ package org.utbot.jacodb.impl.storage.jooq.tables
 
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row6
@@ -35,7 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.utbot.jacodb.impl.storage.jooq.indexes.BYTECODELOCATIONS_HASH
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.PK_BYTECODELOCATIONS
 import org.utbot.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
@@ -53,7 +52,7 @@ open class Bytecodelocations(
     parameters: Array<Field<*>?>?
 ): TableImpl<BytecodelocationsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -123,8 +122,7 @@ open class Bytecodelocations(
     constructor(): this(DSL.name("BytecodeLocations"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, BytecodelocationsRecord>): this(Internal.createPathAlias(child, key), child, key, BYTECODELOCATIONS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(BYTECODELOCATIONS_HASH)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<BytecodelocationsRecord> = PK_BYTECODELOCATIONS
     override fun getKeys(): List<UniqueKey<BytecodelocationsRecord>> = listOf(PK_BYTECODELOCATIONS)
     override fun getReferences(): List<ForeignKey<BytecodelocationsRecord, *>> = listOf(FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1)

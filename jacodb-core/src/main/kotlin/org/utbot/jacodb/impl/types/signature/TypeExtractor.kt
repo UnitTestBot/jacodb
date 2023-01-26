@@ -33,7 +33,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
     }
 
     override fun visitTypeVariable(name: String) {
-        typeRegistrant.register(JvmTypeVariable(name, null, mutableListOf()))
+        typeRegistrant.register(JvmTypeVariable(name, null, listOf()))
     }
 
     override fun visitArrayType(): SignatureVisitor {
@@ -41,7 +41,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
     }
 
     override fun register(token: JvmType) {
-        typeRegistrant.register(JvmArrayType(token, null, mutableListOf()))
+        typeRegistrant.register(JvmArrayType(token, null, listOf()))
     }
 
     override fun visitClassType(name: String) {
@@ -126,7 +126,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
         class TopLevelType(private val internalName: String) : AbstractBase() {
 
             override fun toToken(): JvmType {
-                return if (isParameterized) JvmParameterizedType(name, parameters, null, mutableListOf()) else JvmClassRefType(name, null, mutableListOf())
+                return if (isParameterized) JvmParameterizedType(name, parameters, null, listOf()) else JvmClassRefType(name, null, listOf())
             }
 
             override val isParameterized: Boolean
@@ -148,8 +148,8 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
                     parameters,
                     outerTypeToken!!.toToken()!!,
                     null,
-                    mutableListOf()
-                ) else JvmClassRefType(name, null, mutableListOf())
+                    listOf()
+                ) else JvmClassRefType(name, null, listOf())
             }
 
             override val isParameterized: Boolean

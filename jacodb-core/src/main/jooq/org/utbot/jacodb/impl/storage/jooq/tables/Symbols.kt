@@ -22,7 +22,6 @@ package org.utbot.jacodb.impl.storage.jooq.tables
 
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row2
@@ -35,7 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.utbot.jacodb.impl.storage.jooq.indexes.SYMBOLS_NAME
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.PK_SYMBOLS
 import org.utbot.jacodb.impl.storage.jooq.tables.records.SymbolsRecord
 
@@ -52,7 +51,7 @@ open class Symbols(
     parameters: Array<Field<*>?>?
 ): TableImpl<SymbolsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -102,8 +101,7 @@ open class Symbols(
     constructor(): this(DSL.name("Symbols"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, SymbolsRecord>): this(Internal.createPathAlias(child, key), child, key, SYMBOLS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(SYMBOLS_NAME)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<SymbolsRecord> = PK_SYMBOLS
     override fun getKeys(): List<UniqueKey<SymbolsRecord>> = listOf(PK_SYMBOLS)
     override fun `as`(alias: String): Symbols = Symbols(DSL.name(alias), this)

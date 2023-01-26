@@ -34,6 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_CLASSES_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.PK_CLASSINNERCLASSES
@@ -52,7 +53,7 @@ open class Classinnerclasses(
     parameters: Array<Field<*>?>?
 ): TableImpl<ClassinnerclassesRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -107,7 +108,7 @@ open class Classinnerclasses(
     constructor(): this(DSL.name("ClassInnerClasses"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, ClassinnerclassesRecord>): this(Internal.createPathAlias(child, key), child, key, CLASSINNERCLASSES, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<ClassinnerclassesRecord> = PK_CLASSINNERCLASSES
     override fun getKeys(): List<UniqueKey<ClassinnerclassesRecord>> = listOf(PK_CLASSINNERCLASSES)
     override fun getReferences(): List<ForeignKey<ClassinnerclassesRecord, *>> = listOf(FK_CLASSINNERCLASSES_CLASSES_1, FK_CLASSINNERCLASSES_SYMBOLS_1)

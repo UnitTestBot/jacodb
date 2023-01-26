@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.bytecode
 
+import org.objectweb.asm.TypeReference
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcField
 import org.utbot.jacodb.impl.types.AnnotationInfo
@@ -41,11 +42,13 @@ class JcFieldImpl(
         get() = info.signature
 
     override val annotations by lazy {
-        info.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
+        info.annotations
+            .filter { it.typeRef == null } // Type annotations are stored with fields in bytecode, but they are not a part of field in language
+            .map { JcAnnotationImpl(it, enclosingClass.classpath) }
     }
 
     internal val typeAnnotationInfos: List<AnnotationInfo>
-        get() = info.annotations.filter { it.typeRef != null }
+        get() = info.annotations.filter { it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.FIELD }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcFieldImpl) {

@@ -22,7 +22,6 @@ package org.utbot.jacodb.impl.storage.jooq.tables
 
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row6
@@ -35,7 +34,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.utbot.jacodb.impl.storage.jooq.indexes.FIELDS_CLASS_ID_NAME
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_FIELDS_CLASSES_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_2
@@ -55,7 +54,7 @@ open class Fields(
     parameters: Array<Field<*>?>?
 ): TableImpl<FieldsRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -125,8 +124,7 @@ open class Fields(
     constructor(): this(DSL.name("Fields"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, FieldsRecord>): this(Internal.createPathAlias(child, key), child, key, FIELDS, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(FIELDS_CLASS_ID_NAME)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<FieldsRecord> = PK_FIELDS
     override fun getKeys(): List<UniqueKey<FieldsRecord>> = listOf(PK_FIELDS)
     override fun getReferences(): List<ForeignKey<FieldsRecord, *>> = listOf(FK_FIELDS_SYMBOLS_2, FK_FIELDS_SYMBOLS_1, FK_FIELDS_CLASSES_1)

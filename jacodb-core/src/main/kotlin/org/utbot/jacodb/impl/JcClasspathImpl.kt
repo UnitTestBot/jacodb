@@ -17,19 +17,24 @@
 package org.utbot.jacodb.impl
 
 import com.google.common.cache.CacheBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withContext
 import org.utbot.jacodb.api.ClassSource
 import org.utbot.jacodb.api.JcAnnotation
 import org.utbot.jacodb.api.JcArrayType
 import org.utbot.jacodb.api.JcByteCodeLocation
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcClasspathTask
 import org.utbot.jacodb.api.JcRefType
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.PredefinedPrimitives
 import org.utbot.jacodb.api.RegisteredLocation
-import kotlinx.coroutines.*
-import org.utbot.jacodb.api.*
 import org.utbot.jacodb.api.ext.toType
+import org.utbot.jacodb.api.throwClassNotFound
 import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.utbot.jacodb.impl.types.JcArrayTypeImpl
 import org.utbot.jacodb.impl.types.JcClassTypeImpl

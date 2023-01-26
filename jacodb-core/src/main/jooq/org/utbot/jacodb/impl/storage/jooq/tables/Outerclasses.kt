@@ -20,6 +20,8 @@
 package org.utbot.jacodb.impl.storage.jooq.tables
 
 
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -34,6 +36,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.utbot.jacodb.impl.storage.jooq.DefaultSchema
 import org.utbot.jacodb.impl.storage.jooq.keys.FK_OUTERCLASSES_SYMBOLS_1
 import org.utbot.jacodb.impl.storage.jooq.keys.PK_OUTERCLASSES
 import org.utbot.jacodb.impl.storage.jooq.tables.records.OuterclassesRecord
@@ -51,7 +54,7 @@ open class Outerclasses(
     parameters: Array<Field<*>?>?
 ): TableImpl<OuterclassesRecord>(
     alias,
-    org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -116,7 +119,7 @@ open class Outerclasses(
     constructor(): this(DSL.name("OuterClasses"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, OuterclassesRecord>): this(Internal.createPathAlias(child, key), child, key, OUTERCLASSES, null)
-    override fun getSchema(): Schema = org.utbot.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
     override fun getPrimaryKey(): UniqueKey<OuterclassesRecord> = PK_OUTERCLASSES
     override fun getKeys(): List<UniqueKey<OuterclassesRecord>> = listOf(PK_OUTERCLASSES)
     override fun getReferences(): List<ForeignKey<OuterclassesRecord, *>> = listOf(FK_OUTERCLASSES_SYMBOLS_1)
