@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.JcAnnotated
 import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
 class AnnotationsTest : BaseTest() {
 
@@ -28,7 +29,7 @@ class AnnotationsTest : BaseTest() {
 
     @Test
     fun `Test field annotations`() = runBlocking {
-        val clazz = cp.findClass<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = cp.findClass<NullAnnotationExamples>()
 
         val expectedAnnotations = mapOf(
             "refNullable" to emptyList(),
@@ -44,7 +45,7 @@ class AnnotationsTest : BaseTest() {
 
     @Test
     fun `Test method parameter annotations`() = runBlocking {
-        val clazz = cp.findClass<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = cp.findClass<NullAnnotationExamples>()
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
 
         val actualAnnotations = nullableMethod.parameters.map { it.annotationsSimple }
@@ -54,7 +55,7 @@ class AnnotationsTest : BaseTest() {
 
     @Test
     fun `Test method annotations`() = runBlocking {
-        val clazz = cp.findClass<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
+        val clazz = cp.findClass<NullAnnotationExamples>()
 
         val nullableMethod = clazz.declaredMethods.single { it.name == "nullableMethod" }
         assertEquals(emptyList<String>(), nullableMethod.annotationsSimple)

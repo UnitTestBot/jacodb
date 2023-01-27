@@ -37,7 +37,14 @@ public class NullAnnotationExamples {
         public @NotNull E notNull;
         public @Nullable E nullable;
         public E undefined;
+
+        public class DeepNested{}
     }
+
+//    public class InnerClass<T> {
+//        public int x;
+//        public class DeepNested{}
+//    }
 
     public void kek(NullAnnotationExamples.SomeContainer<@NotNull String> s) {}
 
@@ -50,6 +57,10 @@ public class NullAnnotationExamples {
     }
 
     public @Nullable SomeContainer<? extends @NotNull String> wildcard() {
+        return null;
+    }
+
+    public SomeContainer<@NotNull String>.DeepNested kekkek() {
         return null;
     }
 

@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.types.signature
 
+import mu.KLogging
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.Malformed
@@ -28,6 +29,8 @@ import org.utbot.jacodb.impl.bytecode.kmType
 import org.utbot.jacodb.impl.types.allVisibleTypeParameters
 import org.utbot.jacodb.impl.types.substition.JvmTypeVisitor
 import org.utbot.jacodb.impl.types.substition.fixDeclarationVisitor
+
+val logger = object : KLogging() {}.logger
 
 internal class MethodSignature(private val method: JcMethod) : Signature<MethodResolution>(method, method.kmFunction?.typeParameters) {
 
@@ -118,6 +121,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
                     }
                 }
             } catch (ignored: RuntimeException) {
+                logger.warn { ignored.printStackTrace() }
                 Malformed
             }
         }

@@ -65,6 +65,7 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
                     }
                 }
             } catch (ignored: RuntimeException) {
+                logger.warn { ignored.printStackTrace() }
                 throw ignored
             }
         }
