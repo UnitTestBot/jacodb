@@ -282,6 +282,6 @@ Bytecode loading consists of two steps:
 
 `JacoDB` or `JcClasspath` instances are returned right after the first step is performed. You retrieve the final representation of **classes** during the second step. It is possible that the `.class` files undergo changes at some moment between the first step and the second, and **classes** representation is affected accordingly.
 
-Here are [Benchmarks](./wiki/Benchmarks) results and [Soot migration](./wiki/Soot-migration).
+Here are [Benchmarks](../../wiki/Benchmarks) results and [Soot migration](../../wiki/Soot-migration).
 
 
