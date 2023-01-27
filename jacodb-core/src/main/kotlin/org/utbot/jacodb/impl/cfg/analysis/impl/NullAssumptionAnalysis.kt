@@ -17,18 +17,7 @@
 package org.utbot.jacodb.impl.cfg.analysis.impl
 
 import org.utbot.jacodb.api.JcRefType
-import org.utbot.jacodb.api.cfg.JcArgument
-import org.utbot.jacodb.api.cfg.JcArrayAccess
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcCallExpr
-import org.utbot.jacodb.api.cfg.JcCastExpr
-import org.utbot.jacodb.api.cfg.JcEnterMonitorInst
-import org.utbot.jacodb.api.cfg.JcFieldRef
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstanceCallExpr
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.cfg.JcValue
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.cfg.arrayRef
 import org.utbot.jacodb.api.ext.cfg.callExpr
 import org.utbot.jacodb.api.ext.cfg.fieldRef
@@ -104,7 +93,7 @@ open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<NullAna
         val outIter = out.keys.iterator()
         while (outIter.hasNext()) {
             val v = outIter.next()
-            if (!(v is JcLocal || v is JcArgument)) {
+            if (!(v is JcLocal)) {
                 outIter.remove()
             }
         }
