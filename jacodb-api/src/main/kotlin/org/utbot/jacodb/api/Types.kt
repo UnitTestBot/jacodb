@@ -47,7 +47,6 @@ interface JcTypedMethodParameter {
     val type: JcType
     val name: String?
     val enclosingMethod: JcTypedMethod
-    val nullable: Boolean?
 }
 
 interface JcType {

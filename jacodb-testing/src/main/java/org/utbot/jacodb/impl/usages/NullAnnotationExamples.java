@@ -38,15 +38,10 @@ public class NullAnnotationExamples {
         public @Nullable E nullable;
         public E undefined;
 
-        public class DeepNested{}
+        public class Inner {}
     }
 
-//    public class InnerClass<T> {
-//        public int x;
-//        public class DeepNested{}
-//    }
-
-    public void kek(NullAnnotationExamples.SomeContainer<@NotNull String> s) {}
+    //public void kek(NullAnnotationExamples.SomeContainer<@NotNull String> s) {}
 
     String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
         return null;
@@ -60,7 +55,11 @@ public class NullAnnotationExamples {
         return null;
     }
 
-    public SomeContainer<@NotNull String>.DeepNested kekkek() {
+    public SomeContainer<@NotNull String>.@Nullable Inner inner() {
+        return null;
+    }
+
+    public @NotNull SomeContainer<String> @Nullable[] array() {
         return null;
     }
 

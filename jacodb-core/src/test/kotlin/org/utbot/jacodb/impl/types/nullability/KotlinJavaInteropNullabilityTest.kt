@@ -26,7 +26,7 @@ import org.utbot.jacodb.impl.types.BaseTypesTest
 class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
 
     @Test
-    fun `Test nullability after substitution of Kotlin T with type of undefined nullability Java`() = runBlocking {
+    fun `nullability after substitution of Kotlin T with type of undefined nullability Java`() = runBlocking {
         val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
         val containerOfUndefined = clazz.declaredFields.single { it.name == "ktContainerOfUndefined" }
 
@@ -58,7 +58,7 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    fun `Test nullability after substitution of Kotlin T with notNull type Java`() = runBlocking {
+    fun `nullability after substitution of Kotlin T with notNull type Java`() = runBlocking {
         val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNotNull" }
 
@@ -90,7 +90,7 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    fun `Test nullability after substitution of Kotlin T with nullable type Java`() = runBlocking {
+    fun `nullability after substitution of Kotlin T with nullable type Java`() = runBlocking {
         val clazz = findType<org.utbot.jacodb.impl.usages.NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNullable" }
 
@@ -122,7 +122,7 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    fun `Test nullability after substitution of Java T with nullable type Kotlin`() = runBlocking {
+    fun `nullability after substitution of Java T with nullable type Kotlin`() = runBlocking {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNullable = clazz.declaredFields.single { it.name == "javaContainerOfNullable" }
 
@@ -156,7 +156,7 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
     }
 
     @Test
-    fun `Test nullability after substitution of Java T with notNull type Kotlin`() = runBlocking {
+    fun `nullability after substitution of Java T with notNull type Kotlin`() = runBlocking {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "javaContainerOfNotNull" }
 

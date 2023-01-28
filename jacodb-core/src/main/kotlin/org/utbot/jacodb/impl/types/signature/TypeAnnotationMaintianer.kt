@@ -28,7 +28,7 @@ const val Nullable = "org.jetbrains.annotations.Nullable"
 // TODO: add proper docs here
 private sealed class RelaxationResult {
     class Completed(val relaxedType: JvmType): RelaxationResult()
-    object NeedsToRelaxInner: RelaxationResult()
+    class NeedsToRelaxInner(val fromStep: Int): RelaxationResult()
 
     fun takeCompleted(): JvmType = (this as Completed).relaxedType
 }
@@ -38,6 +38,7 @@ private fun JvmType.relaxWithAnnotation(
     cp: JcClasspath,
     curTypePathStep: Int,
 ): RelaxationResult {
+    val step: Int
     if (this is JvmParameterizedType.JvmNestedType) {
         when (val result = ownerType.relaxWithAnnotation(annotationInfo, cp, curTypePathStep)) {
             is RelaxationResult.Completed -> return RelaxationResult.Completed(
@@ -49,12 +50,14 @@ private fun JvmType.relaxWithAnnotation(
                     annotations
                 )
             )
-            is RelaxationResult.NeedsToRelaxInner -> Unit
+            is RelaxationResult.NeedsToRelaxInner -> step = result.fromStep
         }
+    } else {
+        step = curTypePathStep
     }
 
     val typePath = TypePath.fromString(annotationInfo.typePath)
-    if (typePath == null || typePath.length == curTypePathStep) {
+    if (typePath == null || typePath.length == step) {
         val annotation = JcAnnotationImpl(annotationInfo, cp)
         return when {
             annotation.matches(NotNull) -> RelaxationResult.Completed(copyWith(false, annotations.plus(annotation)))
@@ -63,13 +66,13 @@ private fun JvmType.relaxWithAnnotation(
         }
     }
 
-    return when (typePath.getStep(curTypePathStep)) {
+    return when (typePath.getStep(step)) {
         TypePath.TYPE_ARGUMENT -> {
             require(this is JvmParameterizedType)
-            val index = typePath.getStepArgument(curTypePathStep)
+            val index = typePath.getStepArgument(step)
             val newParameterTypes = parameterTypes.toMutableList()
             newParameterTypes[index] = newParameterTypes[index]
-                .relaxWithAnnotation(annotationInfo, cp, curTypePathStep + 1).takeCompleted()
+                .relaxWithAnnotation(annotationInfo, cp, step + 1).takeCompleted()
             RelaxationResult.Completed(
                 when (this) {
                     is JvmParameterizedType.JvmNestedType -> JvmParameterizedType.JvmNestedType(
@@ -93,12 +96,12 @@ private fun JvmType.relaxWithAnnotation(
             when (this) {
                 is JvmBoundWildcard.JvmLowerBoundWildcard -> RelaxationResult.Completed(
                     JvmBoundWildcard.JvmLowerBoundWildcard(
-                        bound.relaxWithAnnotation(annotationInfo, cp, curTypePathStep + 1).takeCompleted()
+                        bound.relaxWithAnnotation(annotationInfo, cp, step + 1).takeCompleted()
                     )
                 )
                 is JvmBoundWildcard.JvmUpperBoundWildcard -> RelaxationResult.Completed(
                     JvmBoundWildcard.JvmUpperBoundWildcard(
-                        bound.relaxWithAnnotation(annotationInfo, cp, curTypePathStep + 1).takeCompleted()
+                        bound.relaxWithAnnotation(annotationInfo, cp, step + 1).takeCompleted()
                     )
                 )
             }
@@ -107,13 +110,13 @@ private fun JvmType.relaxWithAnnotation(
             require(this is JvmArrayType)
             RelaxationResult.Completed(
                 JvmArrayType(
-                    elementType.relaxWithAnnotation(annotationInfo, cp, curTypePathStep + 1).takeCompleted(),
+                    elementType.relaxWithAnnotation(annotationInfo, cp, step + 1).takeCompleted(),
                     isNullable,
                     annotations
                 )
             )
         }
-        TypePath.INNER_TYPE -> RelaxationResult.NeedsToRelaxInner
+        TypePath.INNER_TYPE -> RelaxationResult.NeedsToRelaxInner(step + 1)
         else -> error("Illegal type path step occurred while parsing type annotation")
     }
 }

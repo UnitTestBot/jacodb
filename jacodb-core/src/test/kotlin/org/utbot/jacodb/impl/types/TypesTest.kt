@@ -67,7 +67,7 @@ class TypesTest : BaseTypesTest() {
         val type = findType<Example>()
         val actualParameters = type.declaredMethods.single { it.name == "f" }.parameters
         assertEquals(listOf("notNullable", "nullable"), actualParameters.map { it.name })
-        assertEquals(false, actualParameters.first().nullable)
-        assertEquals(true, actualParameters.get(1).nullable)
+        assertEquals(false, actualParameters.first().type.nullable)
+        assertEquals(true, actualParameters.get(1).type.nullable)
     }
 }
