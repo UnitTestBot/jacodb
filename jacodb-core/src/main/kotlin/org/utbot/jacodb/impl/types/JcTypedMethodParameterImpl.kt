@@ -44,7 +44,7 @@ class JcTypedMethodParameterImpl(
                 classpath.typeOf(substitutor.substitute(jvmType))
             } ?: classpath.findTypeOrNull(typeName)
                 ?.copyWithAnnotations(
-                    (enclosingMethod.method as? JcMethodImpl)?.parameterTypeAnnotations(parameter.index)?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
+                    (enclosingMethod.method as? JcMethodImpl)?.parameterTypeAnnotationInfos(parameter.index)?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
                 ) ?: typeName.throwClassNotFound()
 
             return parameter.isNullable?.let {

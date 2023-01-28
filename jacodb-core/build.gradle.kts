@@ -52,7 +52,6 @@ dependencies {
     implementation(group = "com.google.guava", name = "guava", version = "31.1-jre")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version = kmetadataVersion)
 
-
     testImplementation(project(":jacodb-testing"))
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter")
     testImplementation(group = "org.unittestbot.soot", name = "soot-utbot-fork", version = "4.4.0-FORK-2")

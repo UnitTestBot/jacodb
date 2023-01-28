@@ -144,7 +144,7 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability, annotations.toMutableList())
+    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability, annotations)
 
     override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType =
         JcClassTypeImpl(jcClass, outerType, substitutor, nullable, annotations)

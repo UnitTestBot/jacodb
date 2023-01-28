@@ -31,7 +31,7 @@ class JcArrayTypeImpl(
     override val typeName = elementType.typeName + "[]"
 
     override fun copyWithNullability(nullability: Boolean?): JcRefType {
-        return JcArrayTypeImpl(elementType, nullability, annotations.toList())
+        return JcArrayTypeImpl(elementType, nullability, annotations)
     }
 
     override val classpath: JcClasspath

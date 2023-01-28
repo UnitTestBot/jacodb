@@ -110,7 +110,7 @@ class JcTypedMethodImpl(
         val type = if (impl == null) {
             classpath.findTypeOrNull(typeName)
                 ?.copyWithAnnotations(
-                    (method as? JcMethodImpl)?.returnTypeAnnotations?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
+                    (method as? JcMethodImpl)?.returnTypeAnnotationInfos?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
                 )
                 ?: throw IllegalStateException("Can't resolve type by name $typeName")
         } else {

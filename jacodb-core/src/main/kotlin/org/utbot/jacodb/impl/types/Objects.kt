@@ -90,8 +90,8 @@ class AnnotationInfo(
     val className: String,
     val visible: Boolean,
     val values: List<Pair<String, AnnotationValue>>,
-    val typeRef: Int?,
-    val typePath: String?,
+    val typeRef: Int?, // -- only applicable to type annotations (null for others)
+    val typePath: String?, // -- only applicable to type annotations (null for others, but also may be null for some type annotations)
 ) : AnnotationValue()
 
 @Serializable

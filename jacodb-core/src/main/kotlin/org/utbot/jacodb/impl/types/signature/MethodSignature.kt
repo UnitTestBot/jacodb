@@ -67,7 +67,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
             } ?: token
 
             (method as? JcMethodImpl)?.let {
-                outToken = outToken.relaxWithAnnotations(it.parameterTypeAnnotations(parameterTypes.size), it.enclosingClass.classpath)
+                outToken = outToken.relaxWithAnnotations(it.parameterTypeAnnotationInfos(parameterTypes.size), it.enclosingClass.classpath)
             }
 
             parameterTypes.add(outToken)
@@ -79,7 +79,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
             returnType = method.kmReturnType?.let { token.relaxWithKmType(it) } ?: token
 
             (method as? JcMethodImpl)?.let {
-                returnType = returnType.relaxWithAnnotations(it.returnTypeAnnotations, it.enclosingClass.classpath)
+                returnType = returnType.relaxWithAnnotations(it.returnTypeAnnotationInfos, it.enclosingClass.classpath)
             }
         }
     }

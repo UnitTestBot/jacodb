@@ -25,7 +25,9 @@ import org.utbot.jacodb.impl.types.AnnotationInfo
 const val NotNull = "org.jetbrains.annotations.NotNull"
 const val Nullable = "org.jetbrains.annotations.Nullable"
 
-// TODO: add proper docs here
+/**
+ * Stores the result of [relaxWithAnnotation] method. See this method's docs for more details.
+ */
 private sealed class RelaxationResult {
     class Completed(val relaxedType: JvmType): RelaxationResult()
     class NeedsToRelaxInner(val fromStep: Int): RelaxationResult()
@@ -33,6 +35,24 @@ private sealed class RelaxationResult {
     fun takeCompleted(): JvmType = (this as Completed).relaxedType
 }
 
+/**
+ * Recursive method that applies type annotation to correct part of type
+ *
+ * Note that inner types are handled in a special way. This is because in JvmTypes by default we look at the innermost
+ * type, and we can access outer type via [JvmParameterizedType.JvmNestedType.ownerType].
+ * However, in type annotations path is stored in the opposite way -- by default annotation is applied to the outermost
+ * type, and a special symbol in typePath indicates that it should be applied to inner type -- see [TypePath.INNER_TYPE]
+ *
+ * So, if current type is [JvmParameterizedType.JvmNestedType] we should call this method on its ownertype. This call
+ * may either complete successfully (and in this case we have to do nothing), or it can meet directive to go to inner type,
+ * and in this case it will return [RelaxationResult.NeedsToRelaxInner], which will mean that we should continue parsing
+ * and going through typePath for current type. fromStep property will denote, from which step of typePath we should
+ * continue.
+ *
+ * @param annotationInfo annotation to be applied
+ * @param cp [JcClasspath] instance needed to instantiate [JcAnnotationImpl]
+ * @param curTypePathStep step of typePath that is currently being processed -- see [TypePath.getStep] for more details
+ */
 private fun JvmType.relaxWithAnnotation(
     annotationInfo: AnnotationInfo,
     cp: JcClasspath,
@@ -121,7 +141,10 @@ private fun JvmType.relaxWithAnnotation(
     }
 }
 
-// NB: this method also changes nullability according to given annotations
+/**
+ * Adds all given type annotations to proper parts of type (which is given as receiver).
+ * Also, for nullability annotations, changes the nullability of corresponding parts of type
+ */
 internal fun JvmType.relaxWithAnnotations(annotationInfos: List<AnnotationInfo>, cp: JcClasspath): JvmType =
     annotationInfos.fold(this) { type, annotation ->
         type.relaxWithAnnotation(annotation, cp, 0).takeCompleted()

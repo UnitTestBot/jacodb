@@ -65,12 +65,12 @@ class JcMethodImpl(
             .filter { it.typeRef == null } // Type annotations are stored with method in bytecode, but they are not a part of method in language
             .map { JcAnnotationImpl(it, enclosingClass.classpath) }
 
-    internal val returnTypeAnnotations: List<AnnotationInfo>
+    internal val returnTypeAnnotationInfos: List<AnnotationInfo>
         get() = methodInfo.annotations.filter {
             it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_RETURN
         }
 
-    internal fun parameterTypeAnnotations(parameterIndex: Int): List<AnnotationInfo> =
+    internal fun parameterTypeAnnotationInfos(parameterIndex: Int): List<AnnotationInfo> =
         methodInfo.annotations.filter {
             it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_FORMAL_PARAMETER
                     && TypeReference(it.typeRef).formalParameterIndex == parameterIndex

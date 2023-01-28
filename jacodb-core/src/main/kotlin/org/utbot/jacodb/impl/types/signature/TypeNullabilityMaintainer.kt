@@ -55,17 +55,17 @@ internal fun JvmType.relaxWithKmType(kmType: KmType): JvmType =
                 elementType.relaxWithKmType(it)
             } ?: elementType
 
-            JvmArrayType(updatedElementType, kmType.isNullable, annotations.toList())
+            JvmArrayType(updatedElementType, kmType.isNullable, annotations)
         }
 
         is JvmParameterizedType.JvmNestedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable, annotations.toList())
+            JvmParameterizedType.JvmNestedType(name, relaxedParameterTypes, ownerType, kmType.isNullable, annotations)
         }
 
         is JvmParameterizedType -> {
             val relaxedParameterTypes = parameterTypes.relaxAll(kmType.arguments.map { it.type })
-            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable, annotations.toList())
+            JvmParameterizedType(name, relaxedParameterTypes, kmType.isNullable, annotations)
         }
 
         is JvmBoundWildcard.JvmUpperBoundWildcard -> {
