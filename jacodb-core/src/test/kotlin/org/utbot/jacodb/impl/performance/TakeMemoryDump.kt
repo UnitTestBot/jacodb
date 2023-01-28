@@ -37,7 +37,6 @@ fun main() {
                 clearOnStart = true,
                 PredefinedPersistenceType.SQLITE
             )
-//            persistent("jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root",
 //            persistent("jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root&reWriteBatchedInserts=false",
 //                clearOnStart = true,
 //                PredefinedPersistenceType.POSTGRES

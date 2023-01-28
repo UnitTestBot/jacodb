@@ -41,8 +41,6 @@ public class NullAnnotationExamples {
         public class Inner {}
     }
 
-    //public void kek(NullAnnotationExamples.SomeContainer<@NotNull String> s) {}
-
     String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
         return null;
     }

@@ -1,7 +1,11 @@
+
 import de.undercouch.gradle.tasks.download.Download
 import org.jooq.codegen.GenerationTool
-import org.jooq.meta.jaxb.*
 import org.jooq.meta.jaxb.Configuration
+import org.jooq.meta.jaxb.Database
+import org.jooq.meta.jaxb.Generate
+import org.jooq.meta.jaxb.Generator
+import org.jooq.meta.jaxb.Jdbc
 import org.jooq.meta.jaxb.Target
 import java.nio.file.Paths
 
@@ -47,7 +51,6 @@ dependencies {
 
     implementation(group = "com.google.guava", name = "guava", version = "31.1-jre")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version = kmetadataVersion)
-    implementation(group = "org.jetbrains", name = "annotations", version = "20.1.0")
 
 
     testImplementation(project(":jacodb-testing"))

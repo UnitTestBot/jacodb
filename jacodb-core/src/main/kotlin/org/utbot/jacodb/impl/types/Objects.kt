@@ -53,7 +53,6 @@ class ClassInfo(
     val innerClasses: List<String>,
     val interfaces: List<String>,
     val annotations: List<AnnotationInfo>,
-    //val typeAnnotations: List<TypeAnnotationInfo>,
     val bytecode: ByteArray
 )
 
@@ -70,7 +69,6 @@ class MethodInfo(
     val signature: String?,
     val access: Int,
     val annotations: List<AnnotationInfo>,
-    //val typeAnnotations: List<TypeAnnotationInfo>,
     val parametersInfo: List<ParameterInfo>,
 ) {
     val returnClass: String get() = Type.getReturnType(desc).className
@@ -84,8 +82,7 @@ class FieldInfo(
     val signature: String?,
     val access: Int,
     val type: String,
-    val annotations: List<AnnotationInfo>,
-    //val typeAnnotations: List<TypeAnnotationInfo>,
+    val annotations: List<AnnotationInfo>
 )
 
 @Serializable
@@ -96,13 +93,6 @@ class AnnotationInfo(
     val typeRef: Int?,
     val typePath: String?,
 ) : AnnotationValue()
-
-//@Serializable
-//class TypeAnnotationInfo(
-//    val annotationInfo: AnnotationInfo,
-////    val typeRef: Int,
-////    val typePath: String,
-//) : AnnotationValue()
 
 @Serializable
 class ParameterInfo(
@@ -184,6 +174,3 @@ data class TypeNameImpl(private val jvmName: String) : TypeName {
 
     override fun toString(): String = typeName
 }
-
-// create-schema.sql TakeMemoryDump (installFeatures, location) gradle.properties generateSqlSchema PersistanceService.kt comment database_location
-// db browser for sqllite
