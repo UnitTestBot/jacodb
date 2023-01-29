@@ -35,6 +35,8 @@ private fun JcAnnotated.isNullable(type: TypeName): Boolean? =
         else -> null
     }
 
+// TODO: maybe move these methods from ext into class definitions?
+//  We already have many nullability-related methods there, furthermore this way we can use jacodb-core in implementation
 val JcField.isNullable: Boolean?
     get() = isNullable(type)
 

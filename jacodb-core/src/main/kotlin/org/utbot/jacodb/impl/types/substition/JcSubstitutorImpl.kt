@@ -19,6 +19,7 @@ package org.utbot.jacodb.impl.types.substition
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
+import org.utbot.jacodb.impl.types.isNotNullAnnotation
 import org.utbot.jacodb.impl.types.signature.JvmType
 import org.utbot.jacodb.impl.types.signature.JvmTypeParameterDeclaration
 import org.utbot.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
@@ -137,13 +138,10 @@ class JcSubstitutorImpl(
             typeVarNullability == null && substNullability != true -> type.copyWith(null, newAnnotations)
 
             // If above conditions not met and there is @NotNull annotation, the type is restricted to be notNullable
-            typeVar.annotations.any { it.matches(notNull) } -> type.copyWith(false, newAnnotations)
+            typeVar.annotations.any { it.isNotNullAnnotation } -> type.copyWith(false, newAnnotations)
 
             // Otherwise, type variable is Kotlin's default T, and it doesn't change nullability
             else -> type.copyWith(type.isNullable, newAnnotations)
         }
     }
-
-    // TODO: move it from here
-    private val notNull = "org.jetbrains.annotations.NotNull"
 }

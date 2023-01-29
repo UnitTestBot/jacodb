@@ -20,10 +20,8 @@ import org.objectweb.asm.TypePath
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
 import org.utbot.jacodb.impl.types.AnnotationInfo
-
-// TODO: move it from here
-const val NotNull = "org.jetbrains.annotations.NotNull"
-const val Nullable = "org.jetbrains.annotations.Nullable"
+import org.utbot.jacodb.impl.types.isNotNullAnnotation
+import org.utbot.jacodb.impl.types.isNullableAnnotation
 
 /**
  * Stores the result of [relaxWithAnnotation] method. See this method's docs for more details.
@@ -80,8 +78,8 @@ private fun JvmType.relaxWithAnnotation(
     if (typePath == null || typePath.length == step) {
         val annotation = JcAnnotationImpl(annotationInfo, cp)
         return when {
-            annotation.matches(NotNull) -> RelaxationResult.Completed(copyWith(false, annotations.plus(annotation)))
-            annotation.matches(Nullable) -> RelaxationResult.Completed(copyWith(true, annotations.plus(annotation)))
+            annotation.isNotNullAnnotation-> RelaxationResult.Completed(copyWith(false, annotations.plus(annotation)))
+            annotation.isNullableAnnotation-> RelaxationResult.Completed(copyWith(true, annotations.plus(annotation)))
             else -> RelaxationResult.Completed(copyWith(isNullable, annotations.plus(annotation)))
         }
     }
