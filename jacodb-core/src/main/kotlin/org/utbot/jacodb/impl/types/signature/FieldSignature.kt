@@ -16,9 +16,11 @@
 
 package org.utbot.jacodb.impl.types.signature
 
+import mu.KLogging
 import org.objectweb.asm.signature.SignatureReader
 import org.utbot.jacodb.api.FieldResolution
 import org.utbot.jacodb.api.JcField
+import org.utbot.jacodb.api.Malformed
 import org.utbot.jacodb.api.Pure
 import org.utbot.jacodb.impl.bytecode.kmType
 import org.utbot.jacodb.impl.types.allVisibleTypeParameters
@@ -37,7 +39,7 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
         return FieldResolutionImpl(fieldType)
     }
 
-    companion object {
+    companion object : KLogging() {
 
         private fun FieldResolutionImpl.apply(visitor: JvmTypeVisitor) =
             FieldResolutionImpl(visitor.visitType(fieldType))
@@ -46,7 +48,11 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
             return of(field.signature, field.enclosingClass.allVisibleTypeParameters(), field)
         }
 
-        fun of(signature: String?, declarations: Map<String, JvmTypeParameterDeclaration>, field: JcField?): FieldResolution {
+        fun of(
+            signature: String?,
+            declarations: Map<String, JvmTypeParameterDeclaration>,
+            field: JcField?
+        ): FieldResolution {
             signature ?: return Pure
             val signatureReader = SignatureReader(signature)
             val visitor = FieldSignature(field)
@@ -61,7 +67,8 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
                     }
                 }
             } catch (ignored: RuntimeException) {
-                throw ignored
+                logger.warn(ignored) { "Can't parse signature '$signature' of field $field" }
+                Malformed
             }
         }
     }

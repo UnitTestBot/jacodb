@@ -16,6 +16,7 @@
 
 package org.utbot.jacodb.impl.types.signature
 
+import mu.KLogging
 import org.objectweb.asm.signature.SignatureVisitor
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.Malformed
@@ -81,7 +82,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
         }
     }
 
-    companion object {
+    companion object : KLogging() {
 
         private fun MethodResolutionImpl.apply(visitor: JvmTypeVisitor) = MethodResolutionImpl(
             visitor.visitType(returnType),
@@ -112,6 +113,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
                     }
                 }
             } catch (ignored: RuntimeException) {
+                logger.warn(ignored) { "Can't parse signature '$signature' of field $jcMethod" }
                 Malformed
             }
         }
