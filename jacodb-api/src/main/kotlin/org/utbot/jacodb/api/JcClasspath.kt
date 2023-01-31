@@ -58,9 +58,9 @@ interface JcClasspath : Closeable {
     suspend fun refreshed(closeOld: Boolean): JcClasspath
     fun asyncRefreshed(closeOld: Boolean) = GlobalScope.future { refreshed(closeOld) }
 
-    suspend fun execute(task: JcClasspathTask): JcClasspathTask
+    suspend fun <T : JcClasspathTask> execute(task: T): JcClasspathTask
 
-    fun executeAsync(task: JcClasspathTask): Future<JcClasspathTask> = GlobalScope.future { execute(task) }
+    fun <T : JcClasspathTask> executeAsync(task: T): Future<JcClasspathTask> = GlobalScope.future { execute(task) }
 }
 
 

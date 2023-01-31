@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis
+package org.utbot.jacodb.impl.analysis
 
 import org.utbot.jacodb.api.cfg.JcGotoInst
 import org.utbot.jacodb.api.cfg.JcGraph

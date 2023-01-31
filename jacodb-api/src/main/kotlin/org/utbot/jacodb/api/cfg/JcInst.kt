@@ -608,6 +608,20 @@ sealed interface JcInstanceCallExpr : JcCallExpr {
     val instance: JcValue
 }
 
+data class JcPhiExpr(
+    override val type: JcType,
+    val values: List<JcValue>,
+    val args: List<JcArgument>
+): JcExpr {
+
+    override val operands: List<JcValue>
+        get() = values
+
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcPhiExpr(this)
+    }
+}
+
 
 /**
  * JcLambdaExpr is created when we can resolve the `invokedynamic` instruction.

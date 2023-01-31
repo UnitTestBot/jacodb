@@ -24,7 +24,7 @@ import org.utbot.jacodb.api.cfg.JcGraph
 interface JcAnalysisTask : JcClassProcessingTask {
 
     @JvmDefault
-    val transformers: List<JcGraphTransformer> get() = emptyList()
+    val transformers: List<JcAnalysisFeature> get() = emptyList()
 
     @JvmDefault
     fun flowOf(method: JcMethod): JcGraph {

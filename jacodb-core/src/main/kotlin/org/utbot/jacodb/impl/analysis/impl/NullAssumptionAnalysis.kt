@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis.impl
+package org.utbot.jacodb.impl.analysis.impl
 
 import org.utbot.jacodb.api.JcRefType
 import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.api.ext.cfg.arrayRef
 import org.utbot.jacodb.api.ext.cfg.callExpr
 import org.utbot.jacodb.api.ext.cfg.fieldRef
-import org.utbot.jacodb.impl.cfg.analysis.BackwardFlowAnalysis
+import org.utbot.jacodb.impl.analysis.BackwardFlowAnalysis
 
 
 class NullAnalysisMap : HashMap<JcValue, NullableState> {

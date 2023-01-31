@@ -18,28 +18,20 @@ package org.utbot.jacodb.api.analysis
 
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
 
-interface JcInterProceduralTask : JcAnalysisTask {
+interface JcAnalysisFeature {
 
-    fun callersOf(method: JcMethod): Sequence<JcInstIdentity>
-    fun groupedCallersOf(method: JcMethod): Map<JcMethod, Set<JcInst>>
+    @JvmDefault
+    fun transform(graph: JcGraph): JcGraph = graph
 
-    fun callInstructionIdsOf(method: JcMethod): Sequence<JcInstIdentity>
-    fun callInstructionsOf(method: JcMethod): Sequence<JcInst>
+    @JvmDefault
+    fun flowOf(method: JcMethod): JcGraph? = null
 
-    fun heads(method: JcMethod): List<JcInstIdentity>
-
-    fun isCall(instId: JcInstIdentity): Boolean
-
-    fun isExit(instId: JcInstIdentity): Boolean
-
-    fun isHead(instId: JcInstIdentity): Boolean
-
-    fun toInstruction(instId: JcInstIdentity): JcInst
 }
 
-data class JcInstIdentity(val method: JcMethod, val index: Int) {
-    constructor(graph: JcGraph, index: Int) : this(graph.method, index)
+interface JcCollectingAnalysisFeature: JcAnalysisFeature {
+    @JvmDefault
+    fun collect(method: JcMethod, finalGraph: JcGraph) {
+    }
 
 }

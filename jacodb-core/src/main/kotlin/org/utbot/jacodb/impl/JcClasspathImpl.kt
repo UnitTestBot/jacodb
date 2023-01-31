@@ -113,7 +113,7 @@ class JcClasspathImpl(
         return typeOf(findClassOrNull(name) ?: return null)
     }
 
-    override suspend fun execute(task: JcClasspathTask): JcClasspathTask {
+    override suspend fun <T : JcClasspathTask> execute(task: T): T {
         val locations = registeredLocations.filter { task.shouldProcess(it) }
         task.before(this)
         withContext(Dispatchers.IO) {

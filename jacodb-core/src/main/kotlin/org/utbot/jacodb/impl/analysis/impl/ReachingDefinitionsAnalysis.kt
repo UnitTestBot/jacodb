@@ -14,13 +14,9 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis.impl
+package org.utbot.jacodb.impl.analysis.impl
 
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcBasicBlock
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstRef
-import org.utbot.jacodb.api.cfg.JcValue
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.impl.cfg.JcBlockGraphImpl
 import java.util.*
 import kotlin.collections.ArrayDeque

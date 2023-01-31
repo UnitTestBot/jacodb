@@ -14,26 +14,44 @@
  *  limitations under the License.
  */
 
+@file:JvmName("JcValues")
+
 package org.utbot.jacodb.impl.cfg
 
-import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.TypeName
-import org.utbot.jacodb.api.cfg.JcRawNullConstant
-import org.utbot.jacodb.api.cfg.JcRawStringConstant
+import org.utbot.jacodb.api.*
+import org.utbot.jacodb.api.cfg.*
 import org.utbot.jacodb.impl.cfg.util.NULL
 import org.utbot.jacodb.impl.cfg.util.STRING_CLASS
 import org.utbot.jacodb.impl.cfg.util.typeName
 
+@JvmName("rawNull")
 fun JcRawNull() = JcRawNullConstant(NULL)
+
+@JvmName("rawBool")
 fun JcRawBool(value: Boolean) = org.utbot.jacodb.api.cfg.JcRawBool(value, PredefinedPrimitives.Boolean.typeName())
+
+@JvmName("rawByte")
 fun JcRawByte(value: Byte) = org.utbot.jacodb.api.cfg.JcRawByte(value, PredefinedPrimitives.Byte.typeName())
+
+@JvmName("rawShort")
 fun JcRawShort(value: Short) = org.utbot.jacodb.api.cfg.JcRawShort(value, PredefinedPrimitives.Short.typeName())
+
+@JvmName("rawChar")
 fun JcRawChar(value: Char) = org.utbot.jacodb.api.cfg.JcRawChar(value, PredefinedPrimitives.Char.typeName())
+
+@JvmName("rawInt")
 fun JcRawInt(value: Int) = org.utbot.jacodb.api.cfg.JcRawInt(value, PredefinedPrimitives.Int.typeName())
+
+@JvmName("rawLong")
 fun JcRawLong(value: Long) = org.utbot.jacodb.api.cfg.JcRawLong(value, PredefinedPrimitives.Long.typeName())
+
+@JvmName("rawFloat")
 fun JcRawFloat(value: Float) = org.utbot.jacodb.api.cfg.JcRawFloat(value, PredefinedPrimitives.Float.typeName())
+
+@JvmName("rawDouble")
 fun JcRawDouble(value: Double) = org.utbot.jacodb.api.cfg.JcRawDouble(value, PredefinedPrimitives.Double.typeName())
 
+@JvmName("rawZero")
 fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
     PredefinedPrimitives.Boolean -> JcRawBool(false)
     PredefinedPrimitives.Byte -> JcRawByte(0)
@@ -46,6 +64,7 @@ fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
     else -> error("Unknown primitive type: $typeName")
 }
 
+@JvmName("rawNumber")
 fun JcRawNumber(number: Number) = when (number) {
     is Int -> JcRawInt(number)
     is Float -> JcRawFloat(number)
@@ -54,4 +73,14 @@ fun JcRawNumber(number: Number) = when (number) {
     else -> error("Unknown number: $number")
 }
 
+@JvmName("rawString")
 fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())
+
+
+fun JcClasspath.int(value: Int): JcInt = JcInt(value, int)
+fun JcClasspath.byte(value: Byte): JcByte = JcByte(value, byte)
+fun JcClasspath.short(value: Short): JcShort = JcShort(value, short)
+fun JcClasspath.long(value: Long): JcLong = JcLong(value, long)
+fun JcClasspath.boolean(value: Boolean): JcBool = JcBool(value, boolean)
+fun JcClasspath.double(value: Double): JcDouble = JcDouble(value, double)
+fun JcClasspath.float(value: Float): JcFloat = JcFloat(value, float)

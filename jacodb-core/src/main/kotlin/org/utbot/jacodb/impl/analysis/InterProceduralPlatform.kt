@@ -14,54 +14,45 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis
+@file:JvmName("InterProceduralPlatforms")
+package org.utbot.jacodb.impl.analysis
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.analysis.JcGraphTransformer
+import org.utbot.jacodb.api.analysis.JcAnalysisFeature
 import org.utbot.jacodb.api.analysis.JcInstIdentity
-import org.utbot.jacodb.api.analysis.JcInterProceduralTask
+import org.utbot.jacodb.api.analysis.JcInterProceduralPlatform
 import org.utbot.jacodb.api.cfg.JcGraph
 import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.ext.cfg.callExpr
+import org.utbot.jacodb.impl.analysis.features.JcCacheGraphFeature
 import org.utbot.jacodb.impl.features.SyncUsagesExtension
+import org.utbot.jacodb.impl.features.usagesExt
+import java.util.concurrent.Future
 
-abstract class AbstractJcInterProceduralTask(val usages: SyncUsagesExtension) : JcInterProceduralTask {
+open class InterProceduralPlatform(
+    classpath: JcClasspath,
+    val usages: SyncUsagesExtension,
+    cacheSize: Long,
+    feature: List<JcAnalysisFeature>
+) : JcAnalysisPlatformImpl(
+    classpath,
+    feature.toPersistentList() + JcCacheGraphFeature(cacheSize)
+), JcInterProceduralPlatform {
 
-    protected open fun <KEY, VALUE> newCache(factory: (KEY) -> VALUE): LoadingCache<KEY, VALUE> {
-        return CacheBuilder.newBuilder()
-            .concurrencyLevel(Runtime.getRuntime().availableProcessors())
-            .initialCapacity(10_000)
-            .softValues()
-            .build(object : CacheLoader<KEY, VALUE>() {
-                override fun load(body: KEY): VALUE {
-                    return factory(body)
-                }
-            })
-    }
-
-    protected val graphsStore by lazy(LazyThreadSafetyMode.NONE) {
-        newCache<JcMethod, JcGraph> { flowOf(it) }
-    }
-
-    open val JcMethod.actualFlowGraph: JcGraph
+    protected open val JcMethod.actualFlowGraph: JcGraph
         get() {
-            return graphsStore.getUnchecked(this)
+            return flowGraph(this)
         }
 
     override fun groupedCallersOf(method: JcMethod): Map<JcMethod, Set<JcInst>> {
         val callersMethod = usages.findUsages(method)
         return callersMethod.associateWith {
-            it.actualFlowGraph.instructions.mapIndexedNotNull { index, inst ->
-                val callExpr = inst.callExpr
-                if (callExpr != null && callExpr.method.method == method) {
-                    inst
-                } else {
-                    null
-                }
+            it.actualFlowGraph.instructions.filter { inst ->
+                inst.callExpr?.method?.method == method
             }.toSet()
         }
     }
@@ -99,7 +90,7 @@ abstract class AbstractJcInterProceduralTask(val usages: SyncUsagesExtension) : 
 
 
     override fun heads(method: JcMethod): List<JcInstIdentity> {
-        return listOf(method.actualFlowGraph.toRef { it.entry })
+        return listOf(method.actualFlowGraph.toIdentity { it.entry })
     }
 
     override fun isCall(instId: JcInstIdentity): Boolean {
@@ -121,16 +112,20 @@ abstract class AbstractJcInterProceduralTask(val usages: SyncUsagesExtension) : 
         return instId.method.actualFlowGraph.instructions[instId.index]
     }
 
-    private inline fun JcGraph.toRef(inst: (JcGraph) -> JcInst): JcInstIdentity {
+    private inline fun JcGraph.toIdentity(inst: (JcGraph) -> JcInst): JcInstIdentity {
         return JcInstIdentity(this, indexOf(inst(this)))
     }
 }
 
-abstract class TransformingInterProcedureTask(
-    usages: SyncUsagesExtension,
-    _transformers: List<JcGraphTransformer>
-) : AbstractJcInterProceduralTask(usages) {
-
-    override val transformers = _transformers.toPersistentList()
-
+suspend fun JcClasspath.interProcedure(
+    features: List<JcAnalysisFeature>,
+    cacheSize: Long = 10_000
+): InterProceduralPlatform {
+    val usages = usagesExt()
+    return InterProceduralPlatform(this, usages, cacheSize, features)
 }
+
+fun JcClasspath.asyncInterProcedure(
+    features: List<JcAnalysisFeature>,
+    cacheSize: Long = 10_000
+): Future<InterProceduralPlatform> = GlobalScope.future { interProcedure(features, cacheSize) }

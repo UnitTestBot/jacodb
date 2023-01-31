@@ -14,16 +14,25 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis
+package org.utbot.jacodb.api.analysis
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import org.utbot.jacodb.api.JcClasspath
+import org.utbot.jacodb.api.JcClasspathTask
+import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.cfg.JcGraph
 
+interface JcAnalysisPlatform : JcClasspathTask {
 
-abstract class ForwardFlowAnalysis<T>(graph: JcGraph) : FlowAnalysisImpl<T>(graph) {
+    val classpath: JcClasspath
+    val features: List<JcAnalysisFeature>
 
-    override val isForward = true
+    fun flowGraph(method: JcMethod): JcGraph
 
-    override fun run() {
-        runAnalysis(FlowAnalysisDirection.FORWARD, ins, outs)
-    }
+    suspend fun collect()
+    suspend fun asyncCollect() = GlobalScope.future { collect() }
+
 }
+
+

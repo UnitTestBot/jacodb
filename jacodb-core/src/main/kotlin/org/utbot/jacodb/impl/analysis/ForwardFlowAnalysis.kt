@@ -14,11 +14,16 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.api.analysis
+package org.utbot.jacodb.impl.analysis
 
 import org.utbot.jacodb.api.cfg.JcGraph
 
-interface JcGraphTransformer {
 
-    fun transform(graph: JcGraph): JcGraph
+abstract class ForwardFlowAnalysis<T>(graph: JcGraph) : FlowAnalysisImpl<T>(graph) {
+
+    override val isForward = true
+
+    override fun run() {
+        runAnalysis(FlowAnalysisDirection.FORWARD, ins, outs)
+    }
 }

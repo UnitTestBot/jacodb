@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.cfg.analysis.impl
+package org.utbot.jacodb.impl.analysis.impl
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.PredefinedPrimitives
