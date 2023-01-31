@@ -7,7 +7,7 @@ val coroutinesVersion: String by rootProject
 val junit5Version: String by project
 val semVer: String? by project
 
-group = "org.utbot.jacodb"
+group = "org.jacodb"
 project.version = semVer ?: "1.0-SNAPSHOT"
 
 buildscript {
