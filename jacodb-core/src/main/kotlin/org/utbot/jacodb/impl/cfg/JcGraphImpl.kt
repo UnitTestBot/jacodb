@@ -90,15 +90,15 @@ class JcGraphImpl(
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    override fun successors(inst: JcInst): Set<JcInst> = successorMap.getOrDefault(inst, emptySet())
-    override fun predecessors(inst: JcInst): Set<JcInst> = predecessorMap.getOrDefault(inst, emptySet())
+    override fun successors(node: JcInst): Set<JcInst> = successorMap.getOrDefault(node, emptySet())
+    override fun predecessors(node: JcInst): Set<JcInst> = predecessorMap.getOrDefault(node, emptySet())
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      * `throwers` returns an empty set for every instruction except `JcCatchInst`
      */
-    override fun throwers(inst: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(inst, emptySet())
-    override fun catchers(inst: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(inst, emptySet())
+    override fun throwers(node: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(node, emptySet())
+    override fun catchers(node: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(node, emptySet())
 
     override fun previous(inst: JcInstRef): JcInst = previous(inst(inst))
     override fun next(inst: JcInstRef): JcInst = next(inst(inst))

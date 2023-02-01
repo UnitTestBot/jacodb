@@ -30,22 +30,22 @@ package org.utbot.jacodb.api.cfg
  */
 data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
 
-interface JcBlockGraph: Iterable<JcBasicBlock> {
+interface JcBlockGraph: Graph<JcBasicBlock> {
     val jcGraph: JcGraph
     val basicBlocks: List<JcBasicBlock>
     val entry: JcBasicBlock
-    val exits: List<JcBasicBlock>
+    override val exits: List<JcBasicBlock>
     fun instructions(block: JcBasicBlock): List<JcInst>
 
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    fun predecessors(block: JcBasicBlock): Set<JcBasicBlock>
-    fun successors(block: JcBasicBlock): Set<JcBasicBlock>
+    override fun predecessors(node: JcBasicBlock): Set<JcBasicBlock>
+    override fun successors(node: JcBasicBlock): Set<JcBasicBlock>
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      */
-    fun catchers(block: JcBasicBlock): Set<JcBasicBlock>
-    fun throwers(block: JcBasicBlock): Set<JcBasicBlock>
+    override fun catchers(node: JcBasicBlock): Set<JcBasicBlock>
+    override fun throwers(node: JcBasicBlock): Set<JcBasicBlock>
 }

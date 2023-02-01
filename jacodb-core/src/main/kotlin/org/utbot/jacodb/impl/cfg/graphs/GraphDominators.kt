@@ -16,9 +16,7 @@
 
 package org.utbot.jacodb.impl.cfg.graphs
 
-import org.utbot.jacodb.api.cfg.JcCatchInst
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.*
 import java.util.*
 
 
@@ -27,12 +25,13 @@ import java.util.*
  *
  * Uses the algorithm contained in Dragon book, pg. 670-1.
  */
-open class GraphDominators(val graph: JcGraph) {
+open class GraphDominators<NODE>(val graph: Graph<NODE>) {
 
-    private val size = graph.instructions.size
+    private val nodes = graph.toList()
+    private val size = nodes.size
 
-    private val head = graph.entry
-    private val flowSets = HashMap<Int, BitSet>(size)
+    private val heads = graph.entries
+    private val flowSets = HashMap<Int, BitSet>()
 
     fun find() {
         val fullSet = BitSet(size)
@@ -40,9 +39,9 @@ open class GraphDominators(val graph: JcGraph) {
 
         // set up domain for intersection: head nodes are only dominated by themselves,
         // other nodes are dominated by everything else
-        graph.instructions.forEachIndexed { index, inst ->
+        nodes.forEachIndexed { index, node ->
             flowSets[index] = when {
-                inst === head -> BitSet().also {
+                heads.contains(node) -> BitSet().also {
                     it.set(index)
                 }
 
@@ -52,17 +51,17 @@ open class GraphDominators(val graph: JcGraph) {
         var changed: Boolean
         do {
             changed = false
-            graph.instructions.forEachIndexed { index, inst ->
-                if (inst !== head) {
+            nodes.forEachIndexed { index, node ->
+                if (!heads.contains(node)) {
                     val fullClone = fullSet.clone() as BitSet
-                    val predecessors = when (inst) {
-                        !is JcCatchInst -> graph.predecessors(inst)
-                        else -> graph.throwers(inst)
+                    val predecessors = when (node) {
+                        !is JcCatchInst -> graph.predecessors(node)
+                        else -> graph.throwers(node)
                     }
 
                     predecessors.forEach { fullClone.and(it.dominatorsBitSet) }
 
-                    val oldSet = inst.dominatorsBitSet
+                    val oldSet = node.dominatorsBitSet
                     fullClone.set(index)
                     if (fullClone != oldSet) {
                         flowSets[index] = fullClone
@@ -73,29 +72,29 @@ open class GraphDominators(val graph: JcGraph) {
         } while (changed)
     }
 
-    private val JcInst.indexOf: Int
+    private val NODE.indexOf: Int
         get() {
-            val index = graph.instructions.indexOf(this)
-            return index.takeIf { it >= 0 } ?: error("No with index ${this} in the graph!")
+            val index = graph.indexOf(this)
+            return index.takeIf { it >= 0 } ?: error("No node with index $this in the graph")
         }
 
-    private val Int.instruction: JcInst
+    private val Int.node: NODE
         get() {
-            return graph.instructions[this]
+            return nodes[this]
         }
 
-    private val JcInst.dominatorsBitSet: BitSet
+    private val NODE.dominatorsBitSet: BitSet
         get() {
             return flowSets[indexOf] ?: error("Node $this is not in the graph!")
         }
 
-    fun dominators(inst: JcInst): List<JcInst> {
+    fun dominators(inst: NODE): List<NODE> {
         // reconstruct list of dominators from bitset
-        val result = arrayListOf<JcInst>()
+        val result = arrayListOf<NODE>()
         val bitSet = inst.dominatorsBitSet
         var i = bitSet.nextSetBit(0)
         while (i >= 0) {
-            result.add(i.instruction)
+            result.add(i.node)
             if (i == Int.MAX_VALUE) {
                 break // or (i+1) would overflow
             }
@@ -104,16 +103,16 @@ open class GraphDominators(val graph: JcGraph) {
         return result
     }
 
-    fun immediateDominator(inst: JcInst): JcInst? {
+    fun immediateDominator(inst: NODE): NODE? {
         // root node
-        if (head === inst) {
+        if (heads.contains(inst)) {
             return null
         }
         val doms = inst.dominatorsBitSet.clone() as BitSet
         doms.clear(inst.indexOf)
         var i = doms.nextSetBit(0)
         while (i >= 0) {
-            val dominator = i.instruction
+            val dominator = i.node
             if (dominator.isDominatedByAll(doms)) {
                 return dominator
             }
@@ -125,7 +124,7 @@ open class GraphDominators(val graph: JcGraph) {
         return null
     }
 
-    private fun JcInst.isDominatedByAll(dominators: BitSet): Boolean {
+    private fun NODE.isDominatedByAll(dominators: BitSet): Boolean {
         val bitSet = dominatorsBitSet
         var i = dominators.nextSetBit(0)
         while (i >= 0) {
@@ -140,11 +139,11 @@ open class GraphDominators(val graph: JcGraph) {
         return true
     }
 
-    fun isDominatedBy(node: JcInst, dominator: JcInst): Boolean {
+    fun isDominatedBy(node: NODE, dominator: NODE): Boolean {
         return node.dominatorsBitSet[dominator.indexOf]
     }
 
-    fun isDominatedByAll(node: JcInst, dominators: Collection<JcInst>): Boolean {
+    fun isDominatedByAll(node: NODE, dominators: Collection<NODE>): Boolean {
         val bitSet = node.dominatorsBitSet
         for (n in dominators) {
             if (!bitSet[n.indexOf]) {
@@ -155,7 +154,12 @@ open class GraphDominators(val graph: JcGraph) {
     }
 }
 
-fun JcGraph.findDominators(): GraphDominators {
+fun JcGraph.findDominators(): GraphDominators<JcInst> {
+    return GraphDominators(this).also {
+        it.find()
+    }
+}
+fun JcBlockGraph.findDominators(): GraphDominators<JcBasicBlock> {
     return GraphDominators(this).also {
         it.find()
     }

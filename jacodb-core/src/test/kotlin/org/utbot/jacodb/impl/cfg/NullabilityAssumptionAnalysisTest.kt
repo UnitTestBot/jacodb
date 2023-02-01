@@ -26,7 +26,7 @@ import org.utbot.jacodb.api.cfg.JcLocal
 import org.utbot.jacodb.api.ext.findClass
 import org.utbot.jacodb.impl.BaseTest
 import org.utbot.jacodb.impl.WithDB
-import org.utbot.jacodb.impl.cfg.analysis.impl.NullAssumptionAnalysis
+import org.utbot.jacodb.impl.analysis.impl.NullAssumptionAnalysis
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
 
 class NullabilityAssumptionAnalysisTest : BaseTest() {

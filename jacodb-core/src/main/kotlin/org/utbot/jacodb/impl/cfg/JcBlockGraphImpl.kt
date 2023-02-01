@@ -16,12 +16,7 @@
 
 package org.utbot.jacodb.impl.cfg
 
-import org.utbot.jacodb.api.cfg.JcBasicBlock
-import org.utbot.jacodb.api.cfg.JcBlockGraph
-import org.utbot.jacodb.api.cfg.JcBranchingInst
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstRef
-import org.utbot.jacodb.api.cfg.JcTerminatingInst
+import org.utbot.jacodb.api.cfg.*
 
 class JcBlockGraphImpl(
     override val jcGraph: JcGraphImpl
@@ -35,6 +30,8 @@ class JcBlockGraphImpl(
     override val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
     override val entry: JcBasicBlock get() = basicBlocks.first()
 
+    override val entries: List<JcBasicBlock>
+        get() = listOf(entry)
     override val exits: List<JcBasicBlock> get() = basicBlocks.filter { successors(it).isEmpty() }
 
     init {
@@ -102,14 +99,14 @@ class JcBlockGraphImpl(
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    override fun predecessors(block: JcBasicBlock): Set<JcBasicBlock> = predecessorMap.getOrDefault(block, emptySet())
-    override fun successors(block: JcBasicBlock): Set<JcBasicBlock> = successorMap.getOrDefault(block, emptySet())
+    override fun predecessors(node: JcBasicBlock): Set<JcBasicBlock> = predecessorMap.getOrDefault(node, emptySet())
+    override fun successors(node: JcBasicBlock): Set<JcBasicBlock> = successorMap.getOrDefault(node, emptySet())
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      */
-    override fun catchers(block: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(block, emptySet())
-    override fun throwers(block: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(block, emptySet())
+    override fun catchers(node: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(node, emptySet())
+    override fun throwers(node: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(node, emptySet())
 
     override fun iterator(): Iterator<JcBasicBlock> = basicBlocks.iterator()
 }

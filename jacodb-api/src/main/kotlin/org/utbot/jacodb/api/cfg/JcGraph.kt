@@ -46,15 +46,15 @@ interface JcGraph : Graph<JcInst> {
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    override fun successors(inst: JcInst): Set<JcInst>
-    override fun predecessors(inst: JcInst): Set<JcInst>
+    override fun successors(node: JcInst): Set<JcInst>
+    override fun predecessors(node: JcInst): Set<JcInst>
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      * `throwers` returns an empty set for every instruction except `JcCatchInst`
      */
-    fun throwers(inst: JcInst): Set<JcInst>
-    fun catchers(inst: JcInst): Set<JcCatchInst>
+    override fun throwers(node: JcInst): Set<JcInst>
+    override fun catchers(node: JcInst): Set<JcCatchInst>
     fun previous(inst: JcInstRef): JcInst
     fun next(inst: JcInstRef): JcInst
     fun successors(inst: JcInstRef): Set<JcInst>

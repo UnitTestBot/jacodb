@@ -477,4 +477,7 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
         return emptyList()
     }
 
+    override fun visitJcPhiExpr(value: JcPhiExpr): List<JcClassType> {
+        return emptyList()
+    }
 }
