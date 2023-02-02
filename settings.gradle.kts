@@ -14,6 +14,5 @@ gitHooks {
 
 include("jacodb-api")
 include("jacodb-core")
-include("jacodb-testing")
 include("jacodb-http")
 include("jacodb-analysis")

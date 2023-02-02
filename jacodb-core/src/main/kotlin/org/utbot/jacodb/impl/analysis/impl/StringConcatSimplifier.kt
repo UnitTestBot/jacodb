@@ -68,7 +68,7 @@ class StringConcatSimplifier(
                         it.name == "concat" && it.parameters.size == 1 && it.parameters.first().type == stringType
                     }
                     val newConcatExpr = JcVirtualCallExpr(concatMethod, firstStr, listOf(secondStr))
-                    result += JcAssignInst(inst.lineNumber, lhv, newConcatExpr)
+                    result += JcAssignInst(inst.owner, inst.lineNumber, lhv, newConcatExpr)
                     instructionReplacements[inst] = result.first()
                     catchReplacements[inst] = result
                     instructions += result
@@ -102,7 +102,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcStaticCallExpr(method, listOf(value))
                 val assignment = JcLocalVar("${value}String", stringType)
-                instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
+                instList += JcAssignInst(inst.owner, inst.lineNumber, assignment, toStringExpr)
                 assignment
             }
 
@@ -114,7 +114,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcVirtualCallExpr(method, value, emptyList())
                 val assignment = JcLocalVar("${value}String", stringType)
-                instList += JcAssignInst(inst.lineNumber, assignment, toStringExpr)
+                instList += JcAssignInst(inst.owner, inst.lineNumber, assignment, toStringExpr)
                 assignment
             }
         }
@@ -130,14 +130,16 @@ class StringConcatSimplifier(
         }
 
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
+        inst.owner,
         inst.lineNumber,
         inst.throwable,
         inst.throwers.flatMap { indicesOf(it) }
     )
 
-    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(inst.lineNumber, indexOf(inst.target))
+    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(inst.owner, inst.lineNumber, indexOf(inst.target))
 
     override fun visitJcIfInst(inst: JcIfInst): JcInst = JcIfInst(
+        inst.owner,
         inst.lineNumber,
         inst.condition,
         indexOf(inst.trueBranch),
@@ -145,6 +147,7 @@ class StringConcatSimplifier(
     )
 
     override fun visitJcSwitchInst(inst: JcSwitchInst): JcInst = JcSwitchInst(
+        inst.owner,
         inst.lineNumber,
         inst.key,
         inst.branches.mapValues { indexOf(it.value) },

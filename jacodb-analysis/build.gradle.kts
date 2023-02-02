@@ -6,5 +6,5 @@ dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-api"))
 
-    testImplementation(project(":jacodb-testing"))
+    testImplementation(testFixtures(project(":jacodb-core")))
 }

@@ -17,13 +17,13 @@
 package org.utbot.jacodb.impl.bytecode
 
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.api.JcAnnotation
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.JcParameter
+import org.utbot.jacodb.api.*
+import org.utbot.jacodb.api.cfg.JcGraph
+import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.JcInstList
+import org.utbot.jacodb.api.cfg.JcRawInst
 import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.impl.cfg.JcRawInstListImpl
+import org.utbot.jacodb.impl.cfg.JcGraphBuilder
 import org.utbot.jacodb.impl.cfg.RawInstListBuilder
 import org.utbot.jacodb.impl.fs.fullAsmNode
 import org.utbot.jacodb.impl.types.MethodInfo
@@ -67,8 +67,16 @@ class JcMethodImpl(
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
-    override fun instructionList(): JcRawInstListImpl {
-        return RawInstListBuilder(this, body().jsrInlined).build()
+    override val rawInstList: JcInstList<JcRawInst> by lazy {
+        RawInstListBuilder(this, body().jsrInlined).build()
+    }
+
+    override fun flowGraph(): JcGraph {
+        return JcGraphBuilder(this, rawInstList).buildFlowGraph()
+    }
+
+    override val instList: JcInstList<JcInst> by lazy {
+        JcGraphBuilder(this, rawInstList).buildInstList()
     }
 
     override fun equals(other: Any?): Boolean {

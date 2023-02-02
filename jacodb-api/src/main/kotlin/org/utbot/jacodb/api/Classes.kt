@@ -18,7 +18,10 @@ package org.utbot.jacodb.api
 
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
-import org.utbot.jacodb.api.cfg.JcRawInstList
+import org.utbot.jacodb.api.cfg.JcGraph
+import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.JcInstList
+import org.utbot.jacodb.api.cfg.JcRawInst
 
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
@@ -68,9 +71,11 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val exceptions: List<JcClassOrInterface>
 
     fun body(): MethodNode
-    fun instructionList(): JcRawInstList
+    fun flowGraph(): JcGraph
 
-    fun flowGraph() = instructionList().graph(this)
+    val rawInstList: JcInstList<JcRawInst>
+    val instList: JcInstList<JcInst>
+
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {

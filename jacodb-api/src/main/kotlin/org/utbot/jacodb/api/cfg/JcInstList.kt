@@ -16,22 +16,19 @@
 
 package org.utbot.jacodb.api.cfg
 
-import org.utbot.jacodb.api.JcMethod
-
-interface JcRawInstList {
-    val instructions: List<JcRawInst>
+interface JcInstList<INST>: Iterable<INST> {
+    val instructions: List<INST>
     val size: Int
     val indices: IntRange
     val lastIndex: Int
 
-    operator fun get(index: Int): JcRawInst
-    fun getOrNull(index: Int): JcRawInst?
-    fun iterator(): Iterator<JcRawInst>
-    fun insertBefore(inst: JcRawInst, vararg newInstructions: JcRawInst)
-    fun insertBefore(inst: JcRawInst, newInstructions: Collection<JcRawInst>)
-    fun insertAfter(inst: JcRawInst, vararg newInstructions: JcRawInst)
-    fun insertAfter(inst: JcRawInst, newInstructions: Collection<JcRawInst>)
-    fun remove(inst: JcRawInst): Boolean
-    fun removeAll(inst: Collection<JcRawInst>): Boolean
-    fun graph(method: JcMethod): JcGraph
+    operator fun get(index: Int): INST
+    fun getOrNull(index: Int): INST?
+    override fun iterator(): Iterator<INST>
+    fun insertBefore(inst: INST, vararg newInstructions: INST)
+    fun insertBefore(inst: INST, newInstructions: Collection<INST>)
+    fun insertAfter(inst: INST, vararg newInstructions: INST)
+    fun insertAfter(inst: INST, newInstructions: Collection<INST>)
+    fun remove(inst: INST): Boolean
+    fun removeAll(inst: Collection<INST>): Boolean
 }

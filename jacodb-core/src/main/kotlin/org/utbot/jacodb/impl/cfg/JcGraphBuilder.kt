@@ -23,10 +23,12 @@ import org.utbot.jacodb.api.ext.findTypeOrNull
 import org.utbot.jacodb.api.ext.toType
 
 class JcGraphBuilder(
-    val classpath: JcClasspath,
-    val instList: JcRawInstListImpl,
-    val method: JcMethod
+    val method: JcMethod,
+    val instList: JcInstList<JcRawInst>
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
+
+    val classpath: JcClasspath = method.enclosingClass.classpath
+
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private var currentLineNumber = 0
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
@@ -40,7 +42,8 @@ class JcGraphBuilder(
         res
     }
 
-    fun build(): JcGraph = JcGraphImpl(method, instList.mapNotNull { convertRawInst(it) })
+    fun buildFlowGraph(): JcGraph = JcGraphImpl(method, instList.mapNotNull { convertRawInst(it) })
+    fun buildInstList(): JcInstList<JcInst> = JcInstListImpl(instList.mapNotNull { convertRawInst(it) })
 
     private inline fun <reified T : JcRawInst> handle(inst: T, handler: () -> JcInst) =
         instMap.getOrPut(inst) { handler() }
@@ -66,19 +69,19 @@ class JcGraphBuilder(
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
         val lhv = inst.lhv.accept(this) as JcValue
         val rhv = inst.rhv.accept(this)
-        JcAssignInst(currentLineNumber, lhv, rhv)
+        JcAssignInst(method, currentLineNumber, lhv, rhv)
     }
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): JcInst = handle(inst) {
-        JcEnterMonitorInst(currentLineNumber, inst.monitor.accept(this) as JcValue)
+        JcEnterMonitorInst(method,currentLineNumber, inst.monitor.accept(this) as JcValue)
     }
 
     override fun visitJcRawExitMonitorInst(inst: JcRawExitMonitorInst): JcInst = handle(inst) {
-        JcExitMonitorInst(currentLineNumber, inst.monitor.accept(this) as JcValue)
+        JcExitMonitorInst(method,currentLineNumber, inst.monitor.accept(this) as JcValue)
     }
 
     override fun visitJcRawCallInst(inst: JcRawCallInst): JcInst = handle(inst) {
-        JcCallInst(currentLineNumber, inst.callExpr.accept(this) as JcCallExpr)
+        JcCallInst(method,currentLineNumber, inst.callExpr.accept(this) as JcCallExpr)
     }
 
     override fun visitJcRawLabelInst(inst: JcRawLabelInst): JcInst? {
@@ -91,11 +94,11 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawReturnInst(inst: JcRawReturnInst): JcInst {
-        return JcReturnInst(currentLineNumber, inst.returnValue?.accept(this) as? JcValue)
+        return JcReturnInst(method,currentLineNumber, inst.returnValue?.accept(this) as? JcValue)
     }
 
     override fun visitJcRawThrowInst(inst: JcRawThrowInst): JcInst {
-        return JcThrowInst(currentLineNumber, inst.throwable.accept(this) as JcValue)
+        return JcThrowInst(method,currentLineNumber, inst.throwable.accept(this) as JcValue)
     }
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): JcInst = handle(inst) {
@@ -116,6 +119,7 @@ class JcGraphBuilder(
             result
         }
         return JcCatchInst(
+            method,
             currentLineNumber,
             inst.throwable.accept(this) as JcValue,
             throwers
@@ -123,11 +127,12 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawGotoInst(inst: JcRawGotoInst): JcInst = handle(inst) {
-        JcGotoInst(currentLineNumber, label2InstRef(inst.target))
+        JcGotoInst(method,currentLineNumber, label2InstRef(inst.target))
     }
 
     override fun visitJcRawIfInst(inst: JcRawIfInst): JcInst = handle(inst) {
         JcIfInst(
+            method,
             currentLineNumber,
             inst.condition.accept(this) as JcConditionExpr,
             label2InstRef(inst.trueBranch),
@@ -137,6 +142,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawSwitchInst(inst: JcRawSwitchInst): JcInst = handle(inst) {
         JcSwitchInst(
+            method,
             currentLineNumber,
             inst.key.accept(this) as JcValue,
             inst.branches.map { it.key.accept(this) as JcValue to label2InstRef(it.value) }.toMap(),

@@ -20,17 +20,17 @@ package org.utbot.jacodb.api.ext.cfg
 
 import org.utbot.jacodb.api.cfg.*
 
-fun JcRawInstList.apply(visitor: JcRawInstVisitor<Unit>): JcRawInstList {
+fun JcInstList<JcRawInst>.apply(visitor: JcRawInstVisitor<Unit>): JcInstList<JcRawInst> {
     instructions.forEach { it.accept(visitor) }
     return this
 }
 
-fun <R, E, T : JcRawInstVisitor<E>> JcRawInstList.applyAndGet(visitor: T, getter: (T) -> R): R {
+fun <R, E, T : JcRawInstVisitor<E>> JcInstList<JcRawInst>.applyAndGet(visitor: T, getter: (T) -> R): R {
     instructions.forEach { it.accept(visitor) }
     return getter(visitor)
 }
 
-fun <T> JcRawInstList.collect(visitor: JcRawInstVisitor<T>): Collection<T> {
+fun <T> JcInstList<JcRawInst>.collect(visitor: JcRawInstVisitor<T>): Collection<T> {
     return instructions.map { it.accept(visitor) }
 }
 

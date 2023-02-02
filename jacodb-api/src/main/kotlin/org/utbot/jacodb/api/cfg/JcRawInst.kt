@@ -16,9 +16,11 @@
 
 package org.utbot.jacodb.api.cfg
 
+import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.TypeName
 
 sealed interface JcRawInst {
+    val owner: JcMethod
 
     val operands: List<JcRawExpr>
 
@@ -26,6 +28,7 @@ sealed interface JcRawInst {
 }
 
 class JcRawAssignInst(
+    override val owner: JcMethod,
     val lhv: JcRawValue,
     val rhv: JcRawExpr
 ) : JcRawInst {
@@ -41,6 +44,7 @@ class JcRawAssignInst(
 }
 
 class JcRawEnterMonitorInst(
+    override val owner: JcMethod,
     val monitor: JcRawSimpleValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -54,6 +58,7 @@ class JcRawEnterMonitorInst(
 }
 
 class JcRawExitMonitorInst(
+    override val owner: JcMethod,
     val monitor: JcRawSimpleValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -67,6 +72,7 @@ class JcRawExitMonitorInst(
 }
 
 class JcRawCallInst(
+    override val owner: JcMethod,
     val callExpr: JcRawCallExpr
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -83,7 +89,7 @@ data class JcRawLabelRef(val name: String) {
     override fun toString() = name
 }
 
-class JcRawLineNumberInst(val lineNumber: Int, val start: JcRawLabelRef) : JcRawInst {
+class JcRawLineNumberInst(override val owner: JcMethod, val lineNumber: Int, val start: JcRawLabelRef) : JcRawInst {
 
     override val operands: List<JcRawExpr>
         get() = emptyList()
@@ -97,6 +103,7 @@ class JcRawLineNumberInst(val lineNumber: Int, val start: JcRawLabelRef) : JcRaw
 
 
 class JcRawLabelInst(
+    override val owner: JcMethod,
     val name: String
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -112,6 +119,7 @@ class JcRawLabelInst(
 }
 
 class JcRawReturnInst(
+    override val owner: JcMethod,
     val returnValue: JcRawValue?
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -125,6 +133,7 @@ class JcRawReturnInst(
 }
 
 class JcRawThrowInst(
+    override val owner: JcMethod,
     val throwable: JcRawValue
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
@@ -138,6 +147,7 @@ class JcRawThrowInst(
 }
 
 class JcRawCatchInst(
+    override val owner: JcMethod,
     val throwable: JcRawValue,
     val handler: JcRawLabelRef,
     val startInclusive: JcRawLabelRef,
@@ -158,6 +168,7 @@ sealed interface JcRawBranchingInst : JcRawInst {
 }
 
 class JcRawGotoInst(
+    override val owner: JcMethod,
     val target: JcRawLabelRef
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
@@ -174,6 +185,7 @@ class JcRawGotoInst(
 }
 
 data class JcRawIfInst(
+    override val owner: JcMethod,
     val condition: JcRawConditionExpr,
     val trueBranch: JcRawLabelRef,
     val falseBranch: JcRawLabelRef
@@ -192,6 +204,7 @@ data class JcRawIfInst(
 }
 
 data class JcRawSwitchInst(
+    override val owner: JcMethod,
     val key: JcRawValue,
     val branches: Map<JcRawValue, JcRawLabelRef>,
     val default: JcRawLabelRef
