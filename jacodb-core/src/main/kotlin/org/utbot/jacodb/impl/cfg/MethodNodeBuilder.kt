@@ -66,7 +66,7 @@ private val TypeName.typeInt
 
 class MethodNodeBuilder(
     val method: JcMethod,
-    val instList: JcRawInstList
+    val instList: JcInstList<JcRawInst>
 ) : JcRawInstVisitor<Unit>, JcRawExprVisitor<Unit> {
     private var localIndex = 0
     private var stackSize = 0

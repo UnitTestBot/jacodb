@@ -25,7 +25,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newRhv = inst.rhv.accept(this)
         return when {
             inst.lhv == newLhv && inst.rhv == newRhv -> inst
-            else -> JcRawAssignInst(newLhv, newRhv)
+            else -> JcRawAssignInst(inst.owner, newLhv, newRhv)
         }
     }
 
@@ -33,7 +33,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newMonitor = inst.monitor.accept(this) as JcRawSimpleValue
         return when (inst.monitor) {
             newMonitor -> inst
-            else -> JcRawEnterMonitorInst(newMonitor)
+            else -> JcRawEnterMonitorInst(inst.owner, newMonitor)
         }
     }
 
@@ -41,7 +41,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newMonitor = inst.monitor.accept(this) as JcRawSimpleValue
         return when (inst.monitor) {
             newMonitor -> inst
-            else -> JcRawExitMonitorInst(newMonitor)
+            else -> JcRawExitMonitorInst(inst.owner, newMonitor)
         }
     }
 
@@ -49,7 +49,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newCall = inst.callExpr.accept(this) as JcRawCallExpr
         return when (inst.callExpr) {
             newCall -> inst
-            else -> JcRawCallInst(newCall)
+            else -> JcRawCallInst(inst.owner, newCall)
         }
     }
 
@@ -65,7 +65,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newReturn = inst.returnValue?.accept(this) as? JcRawValue
         return when (inst.returnValue) {
             newReturn -> inst
-            else -> JcRawReturnInst(newReturn)
+            else -> JcRawReturnInst(inst.owner, newReturn)
         }
     }
 
@@ -73,7 +73,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newThrowable = inst.throwable.accept(this) as JcRawValue
         return when (inst.throwable) {
             newThrowable -> inst
-            else -> JcRawThrowInst(newThrowable)
+            else -> JcRawThrowInst(inst.owner, newThrowable)
         }
     }
 
@@ -81,7 +81,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newThrowable = inst.throwable.accept(this) as JcRawValue
         return when (inst.throwable) {
             newThrowable -> inst
-            else -> JcRawCatchInst(newThrowable, inst.handler, inst.startInclusive, inst.endExclusive)
+            else -> JcRawCatchInst(inst.owner, newThrowable, inst.handler, inst.startInclusive, inst.endExclusive)
         }
     }
 
@@ -93,7 +93,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newCondition = inst.condition.accept(this) as JcRawConditionExpr
         return when (inst.condition) {
             newCondition -> inst
-            else -> JcRawIfInst(newCondition, inst.trueBranch, inst.falseBranch)
+            else -> JcRawIfInst(inst.owner, newCondition, inst.trueBranch, inst.falseBranch)
         }
     }
 
@@ -102,7 +102,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newBranches = inst.branches.mapKeys { it.key.accept(this) as JcRawValue }
         return when {
             inst.key == newKey && inst.branches == newBranches -> inst
-            else -> JcRawSwitchInst(newKey, newBranches, inst.default)
+            else -> JcRawSwitchInst(inst.owner, newKey, newBranches, inst.default)
         }
     }
 

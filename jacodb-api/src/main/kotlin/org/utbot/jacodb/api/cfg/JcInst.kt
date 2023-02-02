@@ -16,12 +16,14 @@
 
 package org.utbot.jacodb.api.cfg
 
+import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedField
 import org.utbot.jacodb.api.JcTypedMethod
 
 
 sealed interface JcInst {
+    val owner: JcMethod
     val lineNumber: Int
     val operands: List<JcExpr>
 
@@ -33,6 +35,7 @@ data class JcInstRef constructor(
 )
 
 class JcAssignInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val lhv: JcValue,
     val rhv: JcExpr
@@ -49,6 +52,7 @@ class JcAssignInst(
 }
 
 class JcEnterMonitorInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val monitor: JcValue
 ) : JcInst {
@@ -63,6 +67,7 @@ class JcEnterMonitorInst(
 }
 
 class JcExitMonitorInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val monitor: JcValue
 ) : JcInst {
@@ -77,6 +82,7 @@ class JcExitMonitorInst(
 }
 
 class JcCallInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val callExpr: JcCallExpr
 ) : JcInst {
@@ -93,6 +99,7 @@ class JcCallInst(
 sealed interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val returnValue: JcValue?
 ) : JcTerminatingInst {
@@ -107,6 +114,7 @@ class JcReturnInst(
 }
 
 class JcThrowInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val throwable: JcValue
 ) : JcTerminatingInst {
@@ -121,6 +129,7 @@ class JcThrowInst(
 }
 
 class JcCatchInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val throwable: JcValue,
     val throwers: List<JcInstRef>
@@ -140,6 +149,7 @@ sealed interface JcBranchingInst : JcInst {
 }
 
 class JcGotoInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val target: JcInstRef
 ) : JcBranchingInst {
@@ -157,6 +167,7 @@ class JcGotoInst(
 }
 
 class JcIfInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
@@ -176,6 +187,7 @@ class JcIfInst(
 }
 
 class JcSwitchInst(
+    override val owner: JcMethod,
     override val lineNumber: Int,
     val key: JcValue,
     val branches: Map<JcValue, JcInstRef>,

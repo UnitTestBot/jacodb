@@ -1,0 +1,151 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package org.jacodb.testing.types
+
+import kotlinx.coroutines.runBlocking
+import org.jacodb.testing.types.MultipleParametrization.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.utbot.jacodb.api.JcClassType
+import org.utbot.jacodb.api.JcTypeVariable
+import org.utbot.jacodb.api.JcTypedField
+import org.utbot.jacodb.api.JcTypedMethod
+import kotlin.reflect.KFunction2
+import kotlin.reflect.KMutableProperty1
+
+class MultiParametersTest : BaseTypesTest() {
+
+    private val finalW = "java.util.ArrayList<java.lang.String>"
+    private val finalZ = "java.util.ArrayList<java.util.ArrayList<java.lang.String>>"
+
+    @Test
+    fun `first level of parameterization fields`() {
+        runBlocking {
+            val test1 = findType<SuperTest1<*, *, *>>()
+            with(test1.field(SuperTest1<*, *, *>::stateT)) {
+                assertEquals("T", (fieldType as JcTypeVariable).symbol)
+            }
+            with(test1.field(SuperTest1<*, *, *>::stateW)) {
+                assertEquals("W", (fieldType as JcTypeVariable).symbol)
+            }
+            with(test1.field(SuperTest1<*, *, *>::stateZ)) {
+                assertEquals("Z", (fieldType as JcTypeVariable).symbol)
+            }
+        }
+    }
+
+    @Test
+    fun `second level of parameterization fields`() {
+        runBlocking {
+            val test2 = findType<SuperTest2<*, *>>()
+            with(test2.field(SuperTest1<*, *, *>::stateT)) {
+                fieldType.assertClassType<String>()
+            }
+            with(test2.field(SuperTest1<*, *, *>::stateW)) {
+                val variable = fieldType as JcTypeVariable
+                assertEquals("W", variable.symbol)
+            }
+            with(test2.field(SuperTest1<*, *, *>::stateZ)) {
+                assertEquals("Z", (fieldType as JcTypeVariable).symbol)
+            }
+        }
+    }
+
+    @Test
+    fun `third level of parameterization fields`() {
+        runBlocking {
+            val test2 = findType<SuperTest3>()
+            with(test2.field(SuperTest1<*, *, *>::stateT)) {
+                fieldType.assertClassType<String>()
+            }
+            with(test2.field(SuperTest1<*, *, *>::stateW)) {
+                val variable = fieldType
+                assertEquals(finalW, variable.typeName)
+            }
+            with(test2.field(SuperTest1<*, *, *>::stateZ)) {
+                val variable = fieldType
+                assertEquals(finalZ, variable.typeName)
+            }
+        }
+    }
+
+    @Test
+    fun `first level of parameterization methods`() {
+        runBlocking {
+            val test1 = findType<SuperTest1<*, *, *>>()
+            with(test1.method(SuperTest1<*, *, *>::runT)) {
+                assertEquals("T", (returnType as JcTypeVariable).symbol)
+                assertEquals("T", (parameters.first().type as JcTypeVariable).symbol)
+            }
+            with(test1.method(SuperTest1<*, *, *>::runW)) {
+                assertEquals("W", (returnType as JcTypeVariable).symbol)
+                assertEquals("W", (parameters.first().type as JcTypeVariable).symbol)
+            }
+            with(test1.method(SuperTest1<*, *, *>::runZ)) {
+                assertEquals("Z", (returnType as JcTypeVariable).symbol)
+                assertEquals("Z", (parameters.first().type as JcTypeVariable).symbol)
+            }
+        }
+    }
+
+    @Test
+    fun `second level of parameterization methods`() {
+        runBlocking {
+            val test2 = findType<SuperTest2<*, *>>()
+            with(test2.method(SuperTest1<*, *, *>::runT)) {
+                parameters.first().type.assertClassType<String>()
+                returnType.assertClassType<String>()
+            }
+            with(test2.method(SuperTest1<*, *, *>::runW)) {
+                assertEquals("W", (returnType as JcTypeVariable).symbol)
+                assertEquals("W", (parameters.first().type as JcTypeVariable).symbol)
+            }
+            with(test2.method(SuperTest1<*, *, *>::runZ)) {
+                assertEquals("Z", (returnType as JcTypeVariable).symbol)
+                assertEquals("Z", (parameters.first().type as JcTypeVariable).symbol)
+            }
+        }
+    }
+
+    @Test
+    fun `third level of parameterization methods`() {
+        runBlocking {
+            val test2 = findType<SuperTest3>()
+            with(test2.method(SuperTest1<*, *, *>::runT)) {
+                parameters.first().type.assertClassType<String>()
+                returnType.assertClassType<String>()
+            }
+            with(test2.method(SuperTest1<*, *, *>::runW)) {
+                assertEquals(finalW, parameters.first().type.typeName)
+                assertEquals(finalW, returnType.typeName)
+            }
+            with(test2.method(SuperTest1<*, *, *>::runZ)) {
+                assertEquals(finalZ, parameters.first().type.typeName)
+                assertEquals(finalZ, returnType.typeName)
+            }
+        }
+    }
+
+    private suspend fun JcClassType.field(prop: KMutableProperty1<SuperTest1<*, *, *>, *>): JcTypedField {
+        return fields.first { it.name == prop.name }
+    }
+
+    private suspend fun JcClassType.method(prop: KFunction2<SuperTest1<*, *, *>, Nothing, *>): JcTypedMethod {
+        return methods.first { it.name == prop.name }
+    }
+
+}
