@@ -55,10 +55,18 @@ class AnalysisTest : BaseTest() {
     @Test
     fun `analyse something`() {
         val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+//        cp.execute(object: JcClassProcessingTask{
+//            override fun process(clazz: JcClassOrInterface) {
+//
+//            }
+//        })
 //        doRun<D>()
     }
 
-    fun <D> doRun(startMethod: JcMethod, emptyDataFact: D, flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>, graph: ApplicationGraph<JcMethod, JcInst>) = runBlocking {
+
+    data class IfdsResult<D>(val pathEdges: List<Edge<D>>, val summaryEdge: List<Edge<D>>, val resultFacts: Map<JcInst, Set<D>>)
+
+    fun <D> doRun(startMethod: JcMethod, emptyDataFact: D, flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>, graph: ApplicationGraph<JcMethod, JcInst>): IfdsResult<D> = runBlocking {
         val entryPoints = graph.entryPoint(startMethod)
         val pathEdges = mutableListOf<Edge<D>>()
         val workList: Queue<Edge<D>> = LinkedList()
@@ -69,6 +77,7 @@ class AnalysisTest : BaseTest() {
             workList.add(startE)
         }
         val summaryEdges = mutableListOf<Edge<D>>()
+        val occuredMethods = mutableSetOf<JcMethod>()
 
         fun propagate(e: Edge<D>) {
             if (e !in pathEdges) {
@@ -81,6 +90,10 @@ class AnalysisTest : BaseTest() {
             val (u, v) = workList.peek()
             val (sp, d1) = u
             val (n, d2) = v
+
+            occuredMethods.add(graph.methodOf(sp))
+            occuredMethods.add(graph.methodOf(n))
+
             val callees = graph.callees(n).toList()
             // 13
             if (callees.isNotEmpty()) {
@@ -119,6 +132,7 @@ class AnalysisTest : BaseTest() {
                 val nMethod = graph.methodOf(n)
                 val nMethodExitPoints = graph.exitPoints(nMethod).toList()
                 if (n in nMethodExitPoints) {
+                    @Suppress("UnnecessaryVariable") val ep = n
                     val callers = graph.callers(nMethod)
                     for (caller in callers) {
                         // todo think
@@ -127,7 +141,7 @@ class AnalysisTest : BaseTest() {
                         for (d4 in d4Set) {
                             val returnSitesOfCallers = graph.successors(caller)
                             for (returnSiteOfCaller in returnSitesOfCallers) {
-                                val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, n)
+                                val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
                                 val d5Set = exitToReturnFlowFunction.compute(d2)
                                 for (d5 in d5Set) {
                                     val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
@@ -145,13 +159,37 @@ class AnalysisTest : BaseTest() {
                         }
                     }
                 } else {
-
+                    val nextInstrs = graph.successors(n)
+                    for (m in nextInstrs) {
+                        val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
+                        val d3Set = flowFunction.compute(d2)
+                        for (d3 in d3Set) {
+                            val newEdge = Edge(u, Vertex(m, d3))
+                            propagate(newEdge)
+                        }
+                    }
                 }
             }
         }
 
+        // end of the algo - we should now for each instruction which domain facts holds at it
+        // based on the facts we can create analyses
 
-//        graph.callees(graph.successors(graph.successors(graph.successors(graph.entryPoint(graph.classpath.findClassOrNull("org.jacodb.analysis.impl.IFDSMainKt").methods.find {it.name.equals("main")}!!).toList().single()).single()).single()).last()!!)
-        println(graph.toString())
+        // we are interested in facts for each instruction
+
+        val resultFacts = mutableMapOf<JcInst, Set<D>>()
+
+        for (method in occuredMethods) {
+            for (entryPoint in graph.entryPoint(method)) {
+                for (inst in method.instList) {
+                    val availableFacts = mutableSetOf<D>()
+
+
+
+                    resultFacts[inst] = availableFacts
+                }
+            }
+        }
+        return@runBlocking IfdsResult(pathEdges, summaryEdges, resultFacts)
     }
 }
