@@ -30,5 +30,7 @@ class AnalysisTest : BaseTest() {
     @Test
     fun `analyse something`() = runBlocking {
         val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+        //graph.callees(graph.successors(graph.successors(graph.successors(graph.entryPoint(graph.classpath.findClassOrNull("org.jacodb.analysis.impl.IFDSMainKt").methods.find {it.name.equals("main")}!!).toList().single()).single()).single()).last()!!)
+        println(graph.toString())
     }
 }
