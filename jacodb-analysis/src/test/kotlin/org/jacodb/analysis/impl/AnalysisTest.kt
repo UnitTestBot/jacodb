@@ -20,13 +20,22 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Test
+import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.analysis.ApplicationGraph
+import org.utbot.jacodb.api.analysis.JcAnalysisPlatform
+import org.utbot.jacodb.api.cfg.JcArgument
+import org.utbot.jacodb.api.cfg.JcAssignInst
+import org.utbot.jacodb.api.cfg.JcCallInst
 import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.JcReturnInst
+import org.utbot.jacodb.api.cfg.JcValue
+import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.impl.analysis.locals
 import org.utbot.jacodb.impl.features.InMemoryHierarchy
 import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.features.usagesExt
 import java.util.*
+import kotlin.math.sqrt
 
 data class Vertex<D>(val statement: JcInst, val domainFact: D)
 
@@ -49,18 +58,154 @@ interface FlowFunctionsSpace<Method, Statement, D> {
     fun obtainExitToReturnSiteFlowFunction(callStatement: Statement, returnSite: Statement, exitStatement: Statement): FlowFunctionInstance<D>
 }
 
+data class VariableNode(val value: JcValue?) {
+    companion object {
+        fun fromValue(value: JcValue) = VariableNode(value)
+
+        val ZERO = VariableNode(null)
+    }
+}
+
+/**
+ * Flow function which is equal to id for all elements except those in [nonId], for which the result is stored in the map
+ */
+class IdLikeFlowFunction<D>(
+    private val nonId: Map<D, Collection<D>>
+): FlowFunctionInstance<D> {
+    override fun compute(fact: D): Collection<D> {
+        return nonId.getOrDefault(fact, listOf(fact))
+    }
+
+    override fun computeBackward(fact: D): Collection<D> {
+        val res = mutableListOf<D>()
+        if (!nonId.containsKey(fact)) {
+            res.add(fact)
+        }
+        return res + nonId.entries.filter { (_, value) -> value == fact }.map { it.key }
+    }
+}
+
+class UninitializedVariableFlowFunctions(
+    private val classpath: JcClasspath,
+    private val platform: JcAnalysisPlatform
+): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
+
+    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<VariableNode> {
+        return when (current) {
+            is JcAssignInst -> {
+                val nonId = mutableMapOf(VariableNode.fromValue(current.lhv) to listOf<VariableNode>())
+                current.rhv.operands.map {
+                    nonId.put(VariableNode.fromValue(it), listOf(VariableNode.fromValue(current.lhv)))
+                }
+                IdLikeFlowFunction(nonId)
+            }
+            else -> IdLikeFlowFunction(emptyMap())
+        }
+    }
+
+    override fun obtainCallToStartFlowFunction(
+        callStatement: JcInst,
+        callee: JcMethod
+    ): FlowFunctionInstance<VariableNode> {
+        (callStatement as JcCallInst)
+        val nonId = mutableMapOf<VariableNode, MutableList<VariableNode>>()
+        val args = callStatement.callExpr.args
+        val params = callee.parameters.map {
+            JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
+        }
+
+        platform.flowGraph(callStatement.owner).locals.forEach {
+            nonId[VariableNode(it)] = mutableListOf()
+        }
+
+        params.zip(args).forEach { (param, arg) ->
+            arg.operands.forEach {
+                nonId.getOrDefault(VariableNode(it), mutableListOf()).add(VariableNode(param))
+            }
+        }
+
+        return IdLikeFlowFunction(nonId)
+    }
+
+    override fun obtainCallToReturnFlowFunction(
+        callStatement: JcInst,
+        returnSite: JcInst
+    ): FlowFunctionInstance<VariableNode> {
+        return object : FlowFunctionInstance<VariableNode> {
+            override fun compute(fact: VariableNode): Collection<VariableNode> {
+                val value = fact.value
+                return if (fact == VariableNode.ZERO || value in platform.flowGraph(callStatement.owner).locals) // TODO: optimize
+                    listOf(fact)
+                else
+                    listOf()
+            }
+
+            override fun computeBackward(fact: VariableNode): Collection<VariableNode> {
+                // these are symmetric
+                return compute(fact)
+            }
+        }
+    }
+
+    override fun obtainExitToReturnSiteFlowFunction(
+        callStatement: JcInst,
+        returnSite: JcInst,
+        exitStatement: JcInst
+    ): FlowFunctionInstance<VariableNode> {
+        val nonId = mutableMapOf<VariableNode, MutableList<VariableNode>>()
+
+        platform.flowGraph(callStatement.owner).locals.forEach {
+            nonId[VariableNode(it)] = mutableListOf()
+        }
+
+        if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
+            exitStatement.returnValue?.let {
+                nonId.getOrDefault(VariableNode(it), mutableListOf()).add(VariableNode(callStatement.lhv))
+            }
+        }
+        return IdLikeFlowFunction(nonId)
+    }
+}
+
+class Example {
+
+    var flag = false
+    var counter = 0
+
+    fun f(x: Int): Int {
+        try {
+            return secretFun(x)
+        } catch (e: RuntimeException) {
+            flag = true
+        } finally {
+            counter += 1
+        }
+        return 0
+    }
+
+    private fun secretFun(x: Int): Int {
+        return sqrt(x.toDouble()).toInt()
+    }
+}
+
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
     @Test
     fun `analyse something`() {
-        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-//        cp.execute(object: JcClassProcessingTask{
+//        val graph = runBlocking {
+//            JcApplicationGraphImpl(cp, cp.usagesExt())
+//        }
+//      graph.callees(graph.successors(graph.successors(graph.successors(graph.entryPoint(graph.classpath.findClassOrNull("org.jacodb.analysis.impl.IFDSMainKt").methods.find {it.name.equals("main")}!!).toList().single()).single()).single()).last()!!)
+//      cp.execute(object: JcClassProcessingTask{
 //            override fun process(clazz: JcClassOrInterface) {
 //
 //            }
 //        })
-//        doRun<D>()
+//doRun<D>()
+        val methodCFG = cp.findClass<Example>().declaredMethods.single { it.name == "f" }.flowGraph()
+        println(methodCFG)
+        println(methodCFG.toString())
     }
 
 
