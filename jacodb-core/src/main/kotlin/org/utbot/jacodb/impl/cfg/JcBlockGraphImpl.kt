@@ -16,10 +16,16 @@
 
 package org.utbot.jacodb.impl.cfg
 
-import org.utbot.jacodb.api.cfg.*
+import org.utbot.jacodb.api.cfg.JcBasicBlock
+import org.utbot.jacodb.api.cfg.JcBlockGraph
+import org.utbot.jacodb.api.cfg.JcBranchingInst
+import org.utbot.jacodb.api.cfg.JcGraph
+import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.JcInstRef
+import org.utbot.jacodb.api.cfg.JcTerminatingInst
 
 class JcBlockGraphImpl(
-    override val jcGraph: JcGraphImpl
+    override val jcGraph: JcGraph
 ) : Iterable<JcBasicBlock>, JcBlockGraph {
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()

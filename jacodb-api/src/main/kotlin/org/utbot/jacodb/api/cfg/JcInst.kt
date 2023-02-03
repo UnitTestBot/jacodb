@@ -21,13 +21,55 @@ import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedField
 import org.utbot.jacodb.api.JcTypedMethod
 
+class JcInstLocation(
+    val method: JcMethod,
+    val index: Int,
+    val lineNumber: Int
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcInstLocation
+
+        if (method != other.method) return false
+        if (index != other.index) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = method.hashCode()
+        result = 31 * result + index
+        return result
+    }
+}
+
 
 sealed interface JcInst {
-    val owner: JcMethod
-    val lineNumber: Int
+    val location: JcInstLocation
     val operands: List<JcExpr>
 
+    val lineNumber get() = location.lineNumber
+
     fun <T> accept(visitor: JcInstVisitor<T>): T
+}
+
+abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AbstractJcInst
+
+        if (location != other.location) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return location.hashCode()
+    }
 }
 
 data class JcInstRef constructor(
@@ -35,11 +77,10 @@ data class JcInstRef constructor(
 )
 
 class JcAssignInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val lhv: JcValue,
     val rhv: JcExpr
-) : JcInst {
+) : AbstractJcInst(location) {
 
     override val operands: List<JcExpr>
         get() = listOf(lhv, rhv)
@@ -52,10 +93,9 @@ class JcAssignInst(
 }
 
 class JcEnterMonitorInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val monitor: JcValue
-) : JcInst {
+) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(monitor)
 
@@ -67,10 +107,9 @@ class JcEnterMonitorInst(
 }
 
 class JcExitMonitorInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val monitor: JcValue
-) : JcInst {
+) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(monitor)
 
@@ -82,10 +121,9 @@ class JcExitMonitorInst(
 }
 
 class JcCallInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val callExpr: JcCallExpr
-) : JcInst {
+) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(callExpr)
 
@@ -99,10 +137,9 @@ class JcCallInst(
 sealed interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val returnValue: JcValue?
-) : JcTerminatingInst {
+) : AbstractJcInst(location), JcTerminatingInst {
     override val operands: List<JcExpr>
         get() = listOfNotNull(returnValue)
 
@@ -114,10 +151,9 @@ class JcReturnInst(
 }
 
 class JcThrowInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val throwable: JcValue
-) : JcTerminatingInst {
+) : AbstractJcInst(location), JcTerminatingInst {
     override val operands: List<JcExpr>
         get() = listOf(throwable)
 
@@ -129,11 +165,10 @@ class JcThrowInst(
 }
 
 class JcCatchInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val throwable: JcValue,
     val throwers: List<JcInstRef>
-) : JcInst {
+) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(throwable)
 
@@ -149,10 +184,9 @@ sealed interface JcBranchingInst : JcInst {
 }
 
 class JcGotoInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val target: JcInstRef
-) : JcBranchingInst {
+) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = emptyList()
 
@@ -167,12 +201,11 @@ class JcGotoInst(
 }
 
 class JcIfInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
     val falseBranch: JcInstRef
-) : JcBranchingInst {
+) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = listOf(condition)
 
@@ -187,12 +220,11 @@ class JcIfInst(
 }
 
 class JcSwitchInst(
-    override val owner: JcMethod,
-    override val lineNumber: Int,
+    location: JcInstLocation,
     val key: JcValue,
     val branches: Map<JcValue, JcInstRef>,
     val default: JcInstRef
-) : JcBranchingInst {
+) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = listOf(key) + branches.keys
 
@@ -624,7 +656,7 @@ data class JcPhiExpr(
     override val type: JcType,
     val values: List<JcValue>,
     val args: List<JcArgument>
-): JcExpr {
+) : JcExpr {
 
     override val operands: List<JcValue>
         get() = values
@@ -747,6 +779,7 @@ data class JcArgument(val index: Int, override val name: String, override val ty
             return JcArgument(index, name ?: "arg$$index", type)
         }
     }
+
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {

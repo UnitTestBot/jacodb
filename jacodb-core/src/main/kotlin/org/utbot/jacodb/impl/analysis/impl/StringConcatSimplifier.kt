@@ -18,16 +18,29 @@ package org.utbot.jacodb.impl.analysis.impl
 
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.cfg.*
+import org.utbot.jacodb.api.cfg.BsmStringArg
+import org.utbot.jacodb.api.cfg.DefaultJcInstVisitor
+import org.utbot.jacodb.api.cfg.JcAssignInst
+import org.utbot.jacodb.api.cfg.JcCatchInst
+import org.utbot.jacodb.api.cfg.JcDynamicCallExpr
+import org.utbot.jacodb.api.cfg.JcGotoInst
+import org.utbot.jacodb.api.cfg.JcGraph
+import org.utbot.jacodb.api.cfg.JcIfInst
+import org.utbot.jacodb.api.cfg.JcInst
+import org.utbot.jacodb.api.cfg.JcInstRef
+import org.utbot.jacodb.api.cfg.JcLocalVar
+import org.utbot.jacodb.api.cfg.JcStaticCallExpr
+import org.utbot.jacodb.api.cfg.JcStringConstant
+import org.utbot.jacodb.api.cfg.JcSwitchInst
+import org.utbot.jacodb.api.cfg.JcValue
+import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.ext.autoboxIfNeeded
 import org.utbot.jacodb.api.ext.findTypeOrNull
 import org.utbot.jacodb.impl.cfg.JcGraphImpl
 import kotlin.collections.set
 
 
-class StringConcatSimplifier(
-    val jcGraph: JcGraphImpl
-) : DefaultJcInstVisitor<JcInst> {
+class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst> {
     override val defaultInstHandler: (JcInst) -> JcInst
         get() = { it }
     private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
@@ -37,7 +50,7 @@ class StringConcatSimplifier(
 
     private val stringType = jcGraph.classpath.findTypeOrNull<String>() as JcClassType
 
-    fun build(): JcGraphImpl {
+    fun build(): JcGraph {
         var changed = false
         for (inst in jcGraph) {
             if (inst is JcAssignInst) {
@@ -68,7 +81,7 @@ class StringConcatSimplifier(
                         it.name == "concat" && it.parameters.size == 1 && it.parameters.first().type == stringType
                     }
                     val newConcatExpr = JcVirtualCallExpr(concatMethod, firstStr, listOf(secondStr))
-                    result += JcAssignInst(inst.owner, inst.lineNumber, lhv, newConcatExpr)
+                    result += JcAssignInst(inst.location, lhv, newConcatExpr)
                     instructionReplacements[inst] = result.first()
                     catchReplacements[inst] = result
                     instructions += result
@@ -92,8 +105,6 @@ class StringConcatSimplifier(
     }
 
     private fun stringify(inst: JcInst, value: JcValue, instList: MutableList<JcInst>): JcValue {
-        val cp = jcGraph.classpath
-        val stringType = cp.findTypeOrNull<String>()!!
         return when {
             PredefinedPrimitives.matches(value.type.typeName) -> {
                 val boxedType = value.type.autoboxIfNeeded() as JcClassType
@@ -102,7 +113,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcStaticCallExpr(method, listOf(value))
                 val assignment = JcLocalVar("${value}String", stringType)
-                instList += JcAssignInst(inst.owner, inst.lineNumber, assignment, toStringExpr)
+                instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }
 
@@ -114,7 +125,7 @@ class StringConcatSimplifier(
                 }
                 val toStringExpr = JcVirtualCallExpr(method, value, emptyList())
                 val assignment = JcLocalVar("${value}String", stringType)
-                instList += JcAssignInst(inst.owner, inst.lineNumber, assignment, toStringExpr)
+                instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }
         }
@@ -130,25 +141,22 @@ class StringConcatSimplifier(
         }
 
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
-        inst.owner,
-        inst.lineNumber,
+        inst.location,
         inst.throwable,
         inst.throwers.flatMap { indicesOf(it) }
     )
 
-    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(inst.owner, inst.lineNumber, indexOf(inst.target))
+    override fun visitJcGotoInst(inst: JcGotoInst): JcInst = JcGotoInst(inst.location, indexOf(inst.target))
 
     override fun visitJcIfInst(inst: JcIfInst): JcInst = JcIfInst(
-        inst.owner,
-        inst.lineNumber,
+        inst.location,
         inst.condition,
         indexOf(inst.trueBranch),
         indexOf(inst.falseBranch)
     )
 
     override fun visitJcSwitchInst(inst: JcSwitchInst): JcInst = JcSwitchInst(
-        inst.owner,
-        inst.lineNumber,
+        inst.location,
         inst.key,
         inst.branches.mapValues { indexOf(it.value) },
         indexOf(inst.default)

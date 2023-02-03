@@ -41,11 +41,11 @@ class JcApplicationGraphImpl(
         }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
-        return node.owner.actualFlowGraph.predecessors(node).asSequence()
+        return node.location.method.actualFlowGraph.predecessors(node).asSequence()
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
-        return node.owner.actualFlowGraph.successors(node).asSequence()
+        return node.location.method.actualFlowGraph.successors(node).asSequence()
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
@@ -72,6 +72,6 @@ class JcApplicationGraphImpl(
     }
 
     override fun methodOf(node: JcInst): JcMethod {
-        return node.owner
+        return node.location.method
     }
 }
