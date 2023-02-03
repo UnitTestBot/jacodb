@@ -54,12 +54,4 @@ private fun mainImpl(args: Array<String>) {
     val directoryPathString = args.first()
     val clazzFQN = args.last()
 
-    // 0. jacodb docs
-    // 1. create graph
-    // 2. test in debug if it works
-    // 3. create tests that it really works
-    // 4. create simple rider callgraph and validate that it really works as intended
-    // 5. look for instructions and etc
-    // 6. understand ifds
-    // 7. add interface logic on IFDS and design the solution and how it should be working
 }
