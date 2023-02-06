@@ -116,3 +116,15 @@ fun JcClasspath.findClass(name: String): JcClassOrInterface {
 inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
 }
+
+
+val JcClasspath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.Void)
+val JcClasspath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.Boolean)
+val JcClasspath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.Short)
+val JcClasspath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.Int)
+val JcClasspath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.Long)
+val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.Float)
+val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.Double)
+val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.Byte)
+val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.Char)
+val JcClasspath.nullType get() = PredefinedPrimitive(this, PredefinedPrimitives.Null)

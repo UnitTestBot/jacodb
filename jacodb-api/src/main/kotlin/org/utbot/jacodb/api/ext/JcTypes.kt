@@ -20,14 +20,6 @@ package org.utbot.jacodb.api.ext
 import org.utbot.jacodb.api.JcArrayType
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcType
-import org.utbot.jacodb.api.boolean
-import org.utbot.jacodb.api.byte
-import org.utbot.jacodb.api.char
-import org.utbot.jacodb.api.double
-import org.utbot.jacodb.api.float
-import org.utbot.jacodb.api.int
-import org.utbot.jacodb.api.long
-import org.utbot.jacodb.api.short
 import org.utbot.jacodb.api.throwClassNotFound
 import java.lang.Boolean
 import java.lang.Byte

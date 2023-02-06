@@ -22,8 +22,6 @@ import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypedMethod
 import org.utbot.jacodb.api.TypeName
-import org.utbot.jacodb.api.boolean
-import org.utbot.jacodb.api.byte
 import org.utbot.jacodb.api.cfg.BsmHandle
 import org.utbot.jacodb.api.cfg.JcAddExpr
 import org.utbot.jacodb.api.cfg.JcAndExpr
@@ -159,15 +157,17 @@ import org.utbot.jacodb.api.cfg.JcUshrExpr
 import org.utbot.jacodb.api.cfg.JcValue
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.cfg.JcXorExpr
-import org.utbot.jacodb.api.char
-import org.utbot.jacodb.api.double
 import org.utbot.jacodb.api.ext.anyType
+import org.utbot.jacodb.api.ext.boolean
+import org.utbot.jacodb.api.ext.byte
+import org.utbot.jacodb.api.ext.char
+import org.utbot.jacodb.api.ext.double
 import org.utbot.jacodb.api.ext.findTypeOrNull
+import org.utbot.jacodb.api.ext.float
+import org.utbot.jacodb.api.ext.int
+import org.utbot.jacodb.api.ext.long
+import org.utbot.jacodb.api.ext.short
 import org.utbot.jacodb.api.ext.toType
-import org.utbot.jacodb.api.float
-import org.utbot.jacodb.api.int
-import org.utbot.jacodb.api.long
-import org.utbot.jacodb.api.short
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcGraphBuilder(

@@ -20,6 +20,13 @@ package org.utbot.jacodb.impl.cfg
 
 import org.utbot.jacodb.api.*
 import org.utbot.jacodb.api.cfg.*
+import org.utbot.jacodb.api.ext.boolean
+import org.utbot.jacodb.api.ext.byte
+import org.utbot.jacodb.api.ext.double
+import org.utbot.jacodb.api.ext.float
+import org.utbot.jacodb.api.ext.int
+import org.utbot.jacodb.api.ext.long
+import org.utbot.jacodb.api.ext.short
 import org.utbot.jacodb.impl.cfg.util.NULL
 import org.utbot.jacodb.impl.cfg.util.STRING_CLASS
 import org.utbot.jacodb.impl.cfg.util.typeName

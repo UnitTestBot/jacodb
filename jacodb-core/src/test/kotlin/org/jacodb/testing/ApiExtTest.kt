@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.ext.*
-import org.utbot.jacodb.api.short
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 class ApiExtTest : BaseTest() {
