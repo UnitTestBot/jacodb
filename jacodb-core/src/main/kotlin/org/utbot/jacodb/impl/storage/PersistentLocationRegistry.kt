@@ -207,6 +207,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
 
     override fun close() {
         featuresRegistry.broadcast(JcInternalSignal.Closed)
+        runtimeLocations = emptyList()
     }
 
     private fun JcByteCodeLocation.findOrNew(dslContext: DSLContext): BytecodelocationsRecord {

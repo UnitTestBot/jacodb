@@ -146,4 +146,10 @@ abstract class AbstractJcDatabasePersistenceImpl(
         persistenceService.persist(location, allClasses)
     }
 
+    override fun close() {
+        locationsCache.invalidateAll()
+        symbolsCache.invalidateAll()
+        byteCodeCache.invalidateAll()
+        symbolInterner.setup()
+    }
 }

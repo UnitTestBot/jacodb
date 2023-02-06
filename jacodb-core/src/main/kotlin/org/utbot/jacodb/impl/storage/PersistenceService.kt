@@ -40,6 +40,7 @@ import org.utbot.jacodb.impl.types.FieldInfo
 import org.utbot.jacodb.impl.types.MethodInfo
 import org.utbot.jacodb.impl.types.ParameterInfo
 import org.utbot.jacodb.impl.types.PrimitiveValue
+import java.io.Closeable
 import java.sql.Connection
 import java.sql.Types
 import java.util.concurrent.ConcurrentHashMap
@@ -458,7 +459,7 @@ private class MethodsCollector(
 
 }
 
-class JCDBSymbolsInternerImpl(override val jooq: DSLContext) : JCDBSymbolsInterner {
+class JCDBSymbolsInternerImpl(override val jooq: DSLContext) : JCDBSymbolsInterner, Closeable {
     private val symbolsIdGen = AtomicLong()
     private val symbolsCache = ConcurrentHashMap<String, Long>()
     private val newElements = ConcurrentHashMap<String, Long>()
@@ -489,5 +490,10 @@ class JCDBSymbolsInternerImpl(override val jooq: DSLContext) : JCDBSymbolsIntern
         entries.forEach {
             newElements.remove(it.key)
         }
+    }
+
+    override fun close() {
+        symbolsCache.clear()
+        newElements.clear()
     }
 }
