@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-@file:JvmName("Commons")
+@file:JvmName("JcCommons")
 package org.utbot.jacodb.api.ext
 
 import org.utbot.jacodb.api.JcClassType

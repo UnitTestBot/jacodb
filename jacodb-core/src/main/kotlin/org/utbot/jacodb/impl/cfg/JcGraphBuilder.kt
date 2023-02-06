@@ -169,7 +169,7 @@ import org.utbot.jacodb.api.int
 import org.utbot.jacodb.api.long
 import org.utbot.jacodb.api.short
 
-/** this class stores state and is NOT THREAD SAFE. Use it carefully */
+/** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcGraphBuilder(
     val method: JcMethod,
     val instList: JcInstList<JcRawInst>
