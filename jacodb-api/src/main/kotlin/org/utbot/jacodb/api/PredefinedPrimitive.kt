@@ -80,3 +80,4 @@ val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.Flo
 val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.Double)
 val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.Byte)
 val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.Char)
+val JcClasspath.nullType get() = PredefinedPrimitive(this, PredefinedPrimitives.Null)
