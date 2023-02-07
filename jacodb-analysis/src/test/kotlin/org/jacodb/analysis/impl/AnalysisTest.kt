@@ -329,7 +329,11 @@ class AnalysisTest : BaseTest() {
                 for (inst in method.instList) {
                     val availableFacts = mutableSetOf<D>()
 
-
+                    for (pathEdge in pathEdges) {
+                        if (pathEdge.u.statement == entryPoint) {
+                            availableFacts.add(pathEdge.v.domainFact)
+                        }
+                    }
 
                     resultFacts[inst] = availableFacts
                 }
