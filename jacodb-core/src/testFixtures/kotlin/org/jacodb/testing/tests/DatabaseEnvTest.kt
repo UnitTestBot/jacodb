@@ -17,20 +17,52 @@
 package org.jacodb.testing.tests
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.testing.*
+import org.jacodb.testing.A
+import org.jacodb.testing.B
+import org.jacodb.testing.Bar
+import org.jacodb.testing.C
+import org.jacodb.testing.D
+import org.jacodb.testing.Enums
+import org.jacodb.testing.Foo
+import org.jacodb.testing.SuperDuper
 import org.jacodb.testing.hierarchies.Creature
+import org.jacodb.testing.skipAssertionsOn
+import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.usages.Generics
 import org.jacodb.testing.usages.HelloWorldAnonymousClasses
 import org.jacodb.testing.usages.WithInner
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.JRE
 import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClassProcessingTask
 import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.*
+import org.utbot.jacodb.api.ext.HierarchyExtension
+import org.utbot.jacodb.api.ext.constructors
+import org.utbot.jacodb.api.ext.enumValues
+import org.utbot.jacodb.api.ext.fields
+import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.api.ext.findClassOrNull
+import org.utbot.jacodb.api.ext.findMethodOrNull
+import org.utbot.jacodb.api.ext.hasBody
+import org.utbot.jacodb.api.ext.humanReadableSignature
+import org.utbot.jacodb.api.ext.isEnum
+import org.utbot.jacodb.api.ext.isFinal
+import org.utbot.jacodb.api.ext.isInterface
+import org.utbot.jacodb.api.ext.isLocal
+import org.utbot.jacodb.api.ext.isMemberClass
+import org.utbot.jacodb.api.ext.isNullable
+import org.utbot.jacodb.api.ext.isPrivate
+import org.utbot.jacodb.api.ext.isPublic
+import org.utbot.jacodb.api.ext.jcdbSignature
+import org.utbot.jacodb.api.ext.jvmSignature
+import org.utbot.jacodb.api.ext.methods
 import org.w3c.dom.Document
 import org.w3c.dom.DocumentType
 import org.w3c.dom.Element
@@ -343,7 +375,7 @@ abstract class DatabaseEnvTest {
     @Test
     fun `class task should work`() = runBlocking {
         val counter = AtomicLong()
-        val runnable = cp.execute(object : JcClassProcessingTask {
+        cp.execute(object : JcClassProcessingTask {
             override fun process(clazz: JcClassOrInterface) {
                 counter.incrementAndGet()
             }
@@ -351,6 +383,30 @@ abstract class DatabaseEnvTest {
         val count = counter.get()
         println("Number of classes is $count")
         assertTrue(count > 30_000, "counter is $count expected to be > 30_000")
+    }
+
+    @Test
+    fun `all visible fields should work`() = runBlocking {
+        val clazz = cp.findClass<FieldsAndMethods>()
+        with(clazz.fields) {
+            assertNull(firstOrNull { it.name == "privateField" })
+            assertNull(firstOrNull { it.name == "packageField" })
+            assertNotNull(firstOrNull { it.name == "privateFieldsAndMethods" })
+            assertNotNull(firstOrNull { it.name == "publicField" })
+            assertNotNull(firstOrNull { it.name == "protectedField" })
+        }
+    }
+
+    @Test
+    fun `all visible methods should work`() = runBlocking {
+        val clazz = cp.findClass<FieldsAndMethods>()
+        with(clazz.methods) {
+            assertNull(firstOrNull { it.name == "privateMethod" })
+            assertNull(firstOrNull { it.name == "packageMethod" })
+            assertNotNull(firstOrNull { it.name == "privateFieldsAndMethods" })
+            assertNotNull(firstOrNull { it.name == "publicMethod" })
+            assertNotNull(firstOrNull { it.name == "protectedMethod" })
+        }
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

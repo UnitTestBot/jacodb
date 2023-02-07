@@ -103,6 +103,11 @@ val JcClassOrInterface.methods: List<JcMethod>
         return methods(allMethods = true, fromSuperTypes = true, packageName = packageName)
     }
 
+val JcClassOrInterface.fields: List<JcField>
+    get() {
+        return fields(allFields = true, fromSuperTypes = true, packageName = packageName)
+    }
+
 private fun JcClassOrInterface.methods(
     allMethods: Boolean,
     fromSuperTypes: Boolean,
@@ -118,7 +123,7 @@ private fun JcClassOrInterface.methods(
     if (!fromSuperTypes) {
         return methodSet
     }
-    val result = declaredMethods.toSortedSet(UnsafeHierarchyMethodComparator)
+    val result = methodSet.toSortedSet(UnsafeHierarchyMethodComparator)
     result.addAll(
         superClass?.methods(false, fromSuperTypes = true, packageName).orEmpty()
     )
@@ -126,6 +131,28 @@ private fun JcClassOrInterface.methods(
         interfaces.flatMap {
             it.methods(false, fromSuperTypes = true, packageName).orEmpty()
         }
+    )
+    return result.toList()
+}
+
+private fun JcClassOrInterface.fields(
+    allFields: Boolean,
+    fromSuperTypes: Boolean,
+    packageName: String
+): List<JcField> {
+    val classPackageName = this.packageName
+    val fieldSet = if (allFields) {
+        declaredFields
+    } else {
+        declaredFields.filter { (it.isPublic || it.isProtected || (it.isPackagePrivate && packageName == classPackageName)) }
+    }
+
+    if (!fromSuperTypes) {
+        return fieldSet
+    }
+    val result = fieldSet.toMutableSet()
+    result.addAll(
+        superClass?.fields(false, fromSuperTypes = true, packageName).orEmpty()
     )
     return result.toList()
 }
