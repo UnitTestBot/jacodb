@@ -186,6 +186,7 @@ abstract class DatabaseEnvTest {
             assertEquals(DocumentType::class.java.name, returnType.typeName)
             assertEquals("getDoctype()org.w3c.dom.DocumentType;", jcdbSignature)
             assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", jvmSignature)
+            assertEquals("org.w3c.dom.DocumentType getDoctype()", humanReadableSignature)
             assertTrue(isPublic)
         }
 
@@ -194,6 +195,12 @@ abstract class DatabaseEnvTest {
             assertEquals(Element::class.java.name, returnType.typeName)
             assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", jcdbSignature)
             assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", jvmSignature)
+            assertEquals("org.w3c.dom.Element createElement(java.lang.String)", humanReadableSignature)
+        }
+
+        with(methods.first { it.name == "importNode" }) {
+            assertEquals("importNode(org.w3c.dom.Node;boolean;)org.w3c.dom.Node;", jcdbSignature)
+            assertEquals("org.w3c.dom.Node importNode(org.w3c.dom.Node,boolean)", humanReadableSignature)
         }
     }
 

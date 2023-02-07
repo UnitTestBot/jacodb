@@ -71,6 +71,12 @@ val JcMethod.jcdbSignature: String
         return "$name($params)${returnType.typeName};"
     }
 
+val JcMethod.humanReadableSignature: String
+    get() {
+        val params = parameters.joinToString(",") { it.type.typeName }
+        return "${returnType.typeName} $name($params)"
+    }
+
 @get:JvmName("hasBody")
 val JcMethod.hasBody: Boolean
     get() {
