@@ -17,11 +17,13 @@
 package org.utbot.jacodb.impl.types
 
 import org.utbot.jacodb.api.JcBoundedWildcard
+import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcRefType
 import org.utbot.jacodb.api.JcTypeVariable
 import org.utbot.jacodb.api.JcTypeVariableDeclaration
 import org.utbot.jacodb.api.JcUnboundWildcard
+import org.utbot.jacodb.api.ext.objectClass
 
 class JcUnboundWildcardImpl(override val classpath: JcClasspath) :
     JcUnboundWildcard {
@@ -57,6 +59,10 @@ class JcBoundedWildcardImpl(
             return "? $name ${bounds.joinToString(" & ") { it.typeName }}"
         }
 
+    override val jcClass: JcClassOrInterface by lazy(LazyThreadSafetyMode.NONE) {
+        val obj = classpath.objectClass
+        lowerBounds.firstNotNullOfOrNull { it.jcClass.takeIf { it != obj } } ?: obj
+    }
 
     override fun copyWithNullability(nullability: Boolean?): JcRefType {
         if (nullability != true)
@@ -79,6 +85,11 @@ class JcTypeVariableImpl(
 
     override val bounds: List<JcRefType>
         get() = declaration.bounds
+
+    override val jcClass: JcClassOrInterface by lazy(LazyThreadSafetyMode.NONE) {
+        val obj = classpath.objectClass
+        bounds.firstNotNullOfOrNull { it.jcClass.takeIf { it != obj } } ?: obj
+    }
 
     override fun copyWithNullability(nullability: Boolean?): JcRefType {
         return JcTypeVariableImpl(classpath, declaration, nullability)

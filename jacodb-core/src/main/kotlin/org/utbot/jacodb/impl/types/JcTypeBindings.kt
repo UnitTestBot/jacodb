@@ -22,8 +22,8 @@ import org.utbot.jacodb.api.JcRefType
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.JcTypeVariableDeclaration
 import org.utbot.jacodb.api.PredefinedPrimitives
-import org.utbot.jacodb.api.ext.anyType
 import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.api.ext.objectType
 import org.utbot.jacodb.impl.types.signature.JvmArrayType
 import org.utbot.jacodb.impl.types.signature.JvmBoundWildcard
 import org.utbot.jacodb.impl.types.signature.JvmClassRefType
@@ -69,7 +69,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
             if (declaration != null) {
                 JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), jvmType.isNullable)
             } else {
-                anyType()
+                objectType
             }
         }
 

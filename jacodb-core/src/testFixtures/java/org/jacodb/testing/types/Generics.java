@@ -21,10 +21,12 @@ import java.util.List;
 
 public class Generics {
 
+
     static class LinkedBase<T, W extends List<T>> {
         T state;
         W stateW;
         List<W> stateListW;
+
     }
 
 

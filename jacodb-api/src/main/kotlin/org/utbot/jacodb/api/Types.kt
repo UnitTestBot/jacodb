@@ -17,6 +17,7 @@
 package org.utbot.jacodb.api
 
 import org.objectweb.asm.tree.LocalVariableNode
+import org.utbot.jacodb.api.ext.objectClass
 
 interface JcTypedField {
     val name: String
@@ -63,16 +64,24 @@ interface JcPrimitiveType : JcType {
 }
 
 interface JcRefType : JcType {
+
+    val jcClass: JcClassOrInterface
+
     fun copyWithNullability(nullability: Boolean?): JcRefType
 }
 
 interface JcArrayType : JcRefType {
     val elementType: JcType
+
+    override val jcClass: JcClassOrInterface
+        get() = classpath.objectClass
+
+    val dimensions: Int
 }
 
 interface JcClassType : JcRefType {
 
-    val jcClass: JcClassOrInterface
+    override val jcClass: JcClassOrInterface
 
     val outerType: JcClassType?
 
@@ -102,7 +111,11 @@ interface JcBoundedWildcard : JcRefType {
     val lowerBounds: List<JcRefType>
 }
 
-interface JcUnboundWildcard : JcRefType
+interface JcUnboundWildcard : JcRefType {
+    override val jcClass: JcClassOrInterface
+        get() = classpath.objectClass
+
+}
 
 interface JcTypeVariableDeclaration {
     val symbol: String

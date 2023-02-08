@@ -17,11 +17,14 @@
 @file:JvmName("JcCommons")
 package org.utbot.jacodb.api.ext
 
+import org.utbot.jacodb.api.JcClassOrInterface
 import org.utbot.jacodb.api.JcClassType
 import org.utbot.jacodb.api.JcClasspath
 import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.PredefinedPrimitives
 import org.utbot.jacodb.api.throwClassNotFound
+import java.io.Serializable
+import java.lang.Cloneable
 import java.util.*
 
 fun String.jvmName(): String {
@@ -71,8 +74,17 @@ fun String.jcdbName(): String {
 }
 
 
-fun JcClasspath.anyType(): JcClassType =
-    findTypeOrNull("java.lang.Object") as? JcClassType ?: throwClassNotFound<Any>()
+val JcClasspath.objectType: JcClassType
+    get() = findTypeOrNull<Any>() as? JcClassType ?: throwClassNotFound<Any>()
+
+val JcClasspath.objectClass: JcClassOrInterface
+    get() = findClass<Any>()
+
+val JcClasspath.cloneableClass: JcClassOrInterface
+    get() = findClass<Cloneable>()
+
+val JcClasspath.serializableClass: JcClassOrInterface
+    get() = findClass<Serializable>()
 
 
 // call with SAFE. comparator works only on methods from one hierarchy

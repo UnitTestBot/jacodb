@@ -24,7 +24,7 @@ import org.utbot.jacodb.api.analysis.JcPointsToAnalysis
 import org.utbot.jacodb.api.analysis.JcPointsToSet
 import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.ext.anyType
+import org.utbot.jacodb.api.ext.objectType
 
 class FullObjectsSet(type: JcType) : JcPointsToSet {
 
@@ -48,7 +48,7 @@ class PrimitivePointsAnalysis(private val classpath: JcClasspath) : JcPointsToAn
     }
 
     override fun reachingObjects(field: JcField): JcPointsToSet {
-        return FullObjectsSet(classpath.findTypeOrNull(field.type.typeName) ?: classpath.anyType())
+        return FullObjectsSet(classpath.findTypeOrNull(field.type.typeName) ?: classpath.objectType)
     }
 
     override fun reachingObjects(set: JcPointsToSet, field: JcField): JcPointsToSet {
@@ -60,6 +60,6 @@ class PrimitivePointsAnalysis(private val classpath: JcClasspath) : JcPointsToAn
     }
 
     override fun reachingObjectsOfArrayElement(set: JcPointsToSet): JcPointsToSet {
-        return FullObjectsSet(classpath.anyType())
+        return FullObjectsSet(classpath.objectType)
     }
 }

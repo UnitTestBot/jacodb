@@ -15,10 +15,13 @@
  */
 
 @file:JvmName("JcTypes")
+
 package org.utbot.jacodb.api.ext
 
 import org.utbot.jacodb.api.JcArrayType
 import org.utbot.jacodb.api.JcClassType
+import org.utbot.jacodb.api.JcPrimitiveType
+import org.utbot.jacodb.api.JcRefType
 import org.utbot.jacodb.api.JcType
 import org.utbot.jacodb.api.throwClassNotFound
 import java.lang.Boolean
@@ -27,6 +30,7 @@ import java.lang.Double
 import java.lang.Float
 import java.lang.Long
 import java.lang.Short
+import java.util.*
 
 
 val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstructor }
@@ -34,7 +38,7 @@ val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstr
 /**
  * @return element class in case of `this` is ArrayClass
  */
-val JcType.ifArrayGetElementClass: JcType?
+val JcType.ifArrayGetElementType: JcType?
     get() {
         return when (this) {
             is JcArrayType -> elementType
@@ -76,5 +80,83 @@ fun JcType.autoboxIfNeeded(): JcType {
         classpath.float -> classpath.findTypeOrNull<java.lang.Float>() ?: throwClassNotFound<Float>()
         classpath.double -> classpath.findTypeOrNull<java.lang.Double>() ?: throwClassNotFound<Double>()
         else -> this
+    }
+}
+
+val JcArrayType.deepestElementType: JcType
+    get() {
+        var type = elementType
+        while (type is JcArrayType) {
+            val et = elementType.ifArrayGetElementType ?: return type
+            type = et
+        }
+        return type
+    }
+
+fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
+    val nullType = classpath.nullType
+    if (this == declaration) {
+        return true
+    }
+    return when {
+        declaration == nullType -> false
+        this == nullType -> declaration is JcRefType
+        this is JcClassType ->
+            when (declaration) {
+                classpath.objectType -> true
+                is JcClassType -> jcClass.isSubClassOf(declaration.jcClass)
+                is JcPrimitiveType -> unboxIfNeeded() == declaration
+                else -> false
+            }
+
+        this is JcPrimitiveType -> {
+            when (declaration) {
+                classpath.objectType -> true
+                classpath.short -> this == classpath.short || this == classpath.byte
+                classpath.int -> this == classpath.int || this == classpath.short || this == classpath.byte
+                classpath.long -> this == classpath.long || this == classpath.int || this == classpath.short || this == classpath.byte
+                classpath.float -> this == classpath.float || this == classpath.long || this == classpath.int || this == classpath.short || this == classpath.byte
+                classpath.double -> this == classpath.double || this == classpath.float || this == classpath.long || this == classpath.int || this == classpath.short || this == classpath.byte
+                !is JcPrimitiveType -> declaration.unboxIfNeeded() == this
+                else -> false
+            }
+        }
+
+        this is JcArrayType -> {
+            when (declaration) {
+                // From Java Language Spec 2nd ed., Chapter 10, Arrays
+                classpath.objectType -> true
+                classpath.serializableClass.toType() -> true
+                classpath.cloneableClass.toType() -> true
+                is JcArrayType -> {
+                    // boolean[][] can be stored in a Object[].
+                    // Interface[] can be stored in a Object[]
+                    if (dimensions == declaration.dimensions) {
+                        val thisElement = deepestElementType
+                        val declarationElement = declaration.deepestElementType
+                        when {
+                            thisElement is JcRefType && declarationElement is JcRefType -> thisElement.jcClass.isSubClassOf(
+                                declarationElement.jcClass
+                            )
+                            else -> false
+                        }
+                    } else if (dimensions > declaration.dimensions) {
+                        val type = declaration.deepestElementType
+                        if (type is JcRefType) {
+                            // From Java Language Spec 2nd ed., Chapter 10, Arrays
+                            type == classpath.objectType || type == classpath.serializableClass.toType() || type == classpath.cloneableClass.toType()
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }
+
+                else -> false
+            }
+        }
+
+        else -> false
     }
 }

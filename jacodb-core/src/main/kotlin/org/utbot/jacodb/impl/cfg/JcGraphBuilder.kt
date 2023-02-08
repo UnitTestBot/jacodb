@@ -157,7 +157,6 @@ import org.utbot.jacodb.api.cfg.JcUshrExpr
 import org.utbot.jacodb.api.cfg.JcValue
 import org.utbot.jacodb.api.cfg.JcVirtualCallExpr
 import org.utbot.jacodb.api.cfg.JcXorExpr
-import org.utbot.jacodb.api.ext.anyType
 import org.utbot.jacodb.api.ext.boolean
 import org.utbot.jacodb.api.ext.byte
 import org.utbot.jacodb.api.ext.char
@@ -166,6 +165,7 @@ import org.utbot.jacodb.api.ext.findTypeOrNull
 import org.utbot.jacodb.api.ext.float
 import org.utbot.jacodb.api.ext.int
 import org.utbot.jacodb.api.ext.long
+import org.utbot.jacodb.api.ext.objectType
 import org.utbot.jacodb.api.ext.short
 import org.utbot.jacodb.api.ext.toType
 
@@ -447,7 +447,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.anyType()
+        val klass = instance.type as? JcClassType ?: classpath.objectType
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
@@ -457,7 +457,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.anyType()
+        val klass = instance.type as? JcClassType ?: classpath.objectType
         val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
@@ -522,7 +522,7 @@ class JcGraphBuilder(
     override fun visitJcRawDouble(value: JcRawDouble): JcExpr = JcDouble(value.value, classpath.double)
 
     override fun visitJcRawNullConstant(value: JcRawNullConstant): JcExpr =
-        JcNullConstant(classpath.anyType())
+        JcNullConstant(classpath.objectType)
 
     override fun visitJcRawStringConstant(value: JcRawStringConstant): JcExpr =
         JcStringConstant(value.value, value.typeName.asType)

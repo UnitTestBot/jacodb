@@ -118,13 +118,13 @@ inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
 }
 
 
-val JcClasspath.void get() = PredefinedPrimitive(this, PredefinedPrimitives.Void)
-val JcClasspath.boolean get() = PredefinedPrimitive(this, PredefinedPrimitives.Boolean)
-val JcClasspath.short get() = PredefinedPrimitive(this, PredefinedPrimitives.Short)
-val JcClasspath.int get() = PredefinedPrimitive(this, PredefinedPrimitives.Int)
-val JcClasspath.long get() = PredefinedPrimitive(this, PredefinedPrimitives.Long)
-val JcClasspath.float get() = PredefinedPrimitive(this, PredefinedPrimitives.Float)
-val JcClasspath.double get() = PredefinedPrimitive(this, PredefinedPrimitives.Double)
-val JcClasspath.byte get() = PredefinedPrimitive(this, PredefinedPrimitives.Byte)
-val JcClasspath.char get() = PredefinedPrimitive(this, PredefinedPrimitives.Char)
-val JcClasspath.nullType get() = PredefinedPrimitive(this, PredefinedPrimitives.Null)
+val JcClasspath.void: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Void)
+val JcClasspath.boolean: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Boolean)
+val JcClasspath.short: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Short)
+val JcClasspath.int: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Int)
+val JcClasspath.long: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Long)
+val JcClasspath.float: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Float)
+val JcClasspath.double: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Double)
+val JcClasspath.byte: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Byte)
+val JcClasspath.char: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Char)
+val JcClasspath.nullType: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Null)
