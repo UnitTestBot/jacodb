@@ -27,6 +27,7 @@ import org.utbot.jacodb.api.analysis.ApplicationGraph
 import org.utbot.jacodb.api.analysis.JcAnalysisPlatform
 import org.utbot.jacodb.api.cfg.JcArgument
 import org.utbot.jacodb.api.cfg.JcAssignInst
+import org.utbot.jacodb.api.cfg.JcBinaryExpr
 import org.utbot.jacodb.api.cfg.JcCallExpr
 import org.utbot.jacodb.api.cfg.JcConstant
 import org.utbot.jacodb.api.cfg.JcInst
@@ -117,6 +118,7 @@ class NPEFlowFunctions(
     private val platform: JcAnalysisPlatform
 ): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
 
+    // todo: think about name shadowing
     private val JcMethod.domain: Set<VariableNode>
         get() {
             return platform.flowGraph(this).locals
@@ -139,7 +141,7 @@ class NPEFlowFunctions(
             when (val rhv = current.rhv) {
                 is JcLocal -> nonId[VariableNode.fromLocal(rhv)] = setOf(VariableNode.fromLocal(rhv), VariableNode.fromValue(current.lhv)).toList()
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
-                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcCallExpr -> Unit
+                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcCallExpr, is JcBinaryExpr -> Unit
                 else -> TODO()
             }
         }
@@ -163,7 +165,7 @@ class NPEFlowFunctions(
             nonId[VariableNode.fromLocal(it)] = mutableListOf()
         }
 
-        nonId[VariableNode.ZERO] = platform.flowGraph(callee).locals
+        nonId[VariableNode.ZERO] = callee.domain
             .filterIsInstance<JcLocalVar>()
             .filter { it.type.nullable != false }
             .map { VariableNode.fromLocal(it) }
@@ -180,7 +182,6 @@ class NPEFlowFunctions(
         }
 
         // todo: pass everything related to `this` if this is JcInstanceCallExpr
-
         return IdLikeFlowFunction(callStatement.domain, nonId)
     }
 
@@ -203,8 +204,8 @@ class NPEFlowFunctions(
         val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
 
         // We shouldn't propagate locals back to caller
-        platform.flowGraph(callStatement.location.method).locals.forEach {
-            nonId[VariableNode.fromLocal(it)] = emptyList()
+        exitStatement.domain.forEach {
+            nonId[it] = emptyList()
         }
 
         // todo: pass everything related to `this` back to caller
@@ -218,48 +219,6 @@ class NPEFlowFunctions(
             }
         }
         return IdLikeFlowFunction(callStatement.domain, nonId)
-    }
-}
-
-//class Example {
-//
-//    var flag = false
-//    var y: String? = null
-//    var counter = 0
-//
-//    fun f(x: Int): Int {
-//        try {
-//            y = "abc"
-//            return secretFun(x)
-//        } catch (e: RuntimeException) {
-//            flag = true
-//        } finally {
-//            println(y)
-//            counter += 1
-//        }
-//        return 0
-//    }
-//
-//    private fun secretFun(x: Int): Int {
-//        return sqrt(x.toDouble()).toInt()
-//    }
-//}
-
-class VeryDumbExample {
-    fun f(): Int {
-        var x: String? = null
-        var y: String? = "abc"
-        x = g(y)
-        return x!!.length
-    }
-
-    fun g(y: String?): String? {
-        return null
-        //return id(y)
-    }
-
-    fun id(x: String?): String? {
-        return x
     }
 }
 
@@ -285,6 +244,41 @@ class SimplifiedJcApplicationGraph(
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
+    @Suppress("WARNINGS")
+    class NPEExamples {
+        private fun constNull(y: String?): String? = null
+
+        private fun id(x: String?): String? = x
+
+        private fun twoExits(x: String?): String? {
+            if (x != null && x.startsWith("239"))
+                return x
+            return null
+        }
+
+        fun npeOnLength(): Int {
+            var x: String? = "abc"
+            var y: String? = "def"
+            x = constNull(y)
+            return x!!.length
+        }
+
+        fun noNPE(): Int {
+            var x: String? = null
+            var y: String? = "def"
+            x = id(y)
+            return x!!.length
+        }
+
+        fun npeAfterTwoExits(): Int {
+            var x: String? = null
+            var y: String? = "abc"
+            x = twoExits(x)
+            y = twoExits(y)
+            return x!!.length + y!!.length
+        }
+    }
+
     @Test
     fun `analyse something`() {
         val graph = runBlocking {
@@ -296,9 +290,40 @@ class AnalysisTest : BaseTest() {
 //
 //            }
 //        })
-        val testingMethod = cp.findClass<VeryDumbExample>().declaredMethods.single { it.name == "f" }
+        val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
         val results = doRun(testingMethod, NPEFlowFunctions(cp, graph), graph)
         print(results)
+    }
+
+    @Test
+    fun `analyze simple NPE`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
+        val actual = findNPEInstructions(method)
+
+        // todo: think about better assertions here
+        assertEquals(
+            listOf("%3 = %2.length()"),
+            actual.map { it.toString() }
+        )
+    }
+
+    @Test
+    fun `analyze no NPE`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPE" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(emptyList<JcInst>(), actual)
+    }
+
+    @Test
+    fun `analyze NPE after fun with two exits`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeAfterTwoExits" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%4 = %2.length()", "%5 = %3.length()"),
+            actual.map { it.toString() }
+        )
     }
 
     fun findNPEInstructions(method: JcMethod): List<JcInst> {
@@ -314,18 +339,6 @@ class AnalysisTest : BaseTest() {
             }
         }
         return possibleNPEInstructions
-    }
-
-    @Test
-    fun `analyze simple NPE`() {
-        val method = cp.findClass<VeryDumbExample>().declaredMethods.single { it.name == "f" }
-        val actual = findNPEInstructions(method)
-
-        // todo: think about better assertions here
-        assertEquals(
-            listOf("%3 = %2.length()"),
-            actual.map { it.toString() }
-        )
     }
 
     data class IfdsResult<D>(val pathEdges: List<Edge<D>>, val summaryEdge: List<Edge<D>>, val resultFacts: Map<JcInst, Set<D>>)
@@ -446,7 +459,8 @@ class AnalysisTest : BaseTest() {
 
         val resultFacts = mutableMapOf<JcInst, MutableSet<D>>()
 
-        // lines 6-8
+        // 6-8
+        // todo: think about optimizations when we don't need all facts
         for (pathEdge in pathEdges) {
             //val method = pathEdge.u.statement.location.method
             resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
