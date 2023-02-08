@@ -50,43 +50,49 @@ object LocalResolver : DefaultJcInstVisitor<Sequence<JcLocal>>, DefaultJcExprVis
         return sequenceOf(value)
     }
 
+    override fun visitJcArgument(value: JcArgument): Sequence<JcLocal> {
+        return sequenceOf(value)
+    }
+
+    private fun visitCallExpr(expr: JcCallExpr): Sequence<JcLocal> {
+        return expr.operands.asSequence().flatMap { it.accept(this@LocalResolver) }
+    }
+
+    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
+
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
+
+    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
+
+    override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
+
     override fun visitJcAssignInst(inst: JcAssignInst): Sequence<JcLocal> {
-        val value = inst.lhv
         return sequence {
-            if (value is JcLocal) {
-                yield(value)
-            }
-            if (inst.rhv is JcCallExpr) {
-                yieldAll(inst.lhv.accept(this@LocalResolver))
-            }
+            yieldAll(inst.lhv.accept(this@LocalResolver))
+            yieldAll(inst.rhv.accept(this@LocalResolver))
         }
     }
 
     override fun visitJcThrowInst(inst: JcThrowInst): Sequence<JcLocal> {
-        val throwable = inst.throwable
-        if (throwable is JcLocal) {
-            return sequenceOf(throwable)
-        }
-        return emptySequence()
+        return inst.throwable.accept(this)
     }
 
     override fun visitJcCatchInst(inst: JcCatchInst): Sequence<JcLocal> {
-        val throwable = inst.throwable
-        if (throwable is JcLocal) {
-            return sequenceOf(throwable)
-        }
-        return emptySequence()
+        return inst.throwable.accept(this)
     }
 
     override fun visitJcCallInst(inst: JcCallInst): Sequence<JcLocal> {
         return inst.callExpr.accept(this)
     }
 
+    override fun visitJcReturnInst(inst: JcReturnInst): Sequence<JcLocal> {
+        return inst.returnValue?.accept(this) ?: emptySequence()
+    }
 }
 
-val JcGraph.locals: List<JcLocal>
+val JcGraph.locals: Set<JcLocal>
     get() {
-        return collect(LocalResolver).flatMap { it.toList() }
+        return collect(LocalResolver).flatMap { it.toList() }.toSet()
     }
 
 //val JcInst.locals: List<JcLocal>
