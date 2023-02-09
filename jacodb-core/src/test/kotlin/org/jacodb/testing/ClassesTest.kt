@@ -17,11 +17,11 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.junit.jupiter.api.extension.ExtendWith
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.HierarchyExtension
-import org.utbot.jacodb.impl.features.hierarchyExt
 
 
 @ExtendWith(CleanDB::class)

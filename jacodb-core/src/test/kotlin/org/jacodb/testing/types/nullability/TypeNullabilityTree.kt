@@ -16,7 +16,13 @@
 
 package org.jacodb.testing.types.nullability
 
-import org.utbot.jacodb.api.*
+import org.jacodb.api.JcArrayType
+import org.jacodb.api.JcBoundedWildcard
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.JcTypeVariableDeclaration
+import org.jacodb.api.JcUnboundWildcard
 
 data class TypeNullabilityTree(val isNullable: Boolean?, val innerTypes: List<TypeNullabilityTree>)
 

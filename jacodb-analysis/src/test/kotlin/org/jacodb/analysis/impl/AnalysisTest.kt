@@ -17,12 +17,12 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.features.usagesExt
 
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)

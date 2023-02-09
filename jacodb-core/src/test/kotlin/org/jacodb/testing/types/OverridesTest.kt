@@ -16,13 +16,18 @@
 
 package org.jacodb.testing.types
 
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.ext.constructors
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.isConstructor
+import org.jacodb.api.ext.isSynthetic
+import org.jacodb.api.ext.methods
+import org.jacodb.api.ext.toType
 import org.jacodb.testing.hierarchies.Overrides
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.JcTypedMethod
-import org.utbot.jacodb.api.ext.*
 import java.io.Closeable
 
 class OverridesTest : BaseTypesTest() {

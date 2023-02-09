@@ -17,13 +17,13 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcType
+import org.jacodb.api.ext.*
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.hierarchies.Creature.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcType
-import org.utbot.jacodb.api.ext.*
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 class ApiExtTest : BaseTest() {

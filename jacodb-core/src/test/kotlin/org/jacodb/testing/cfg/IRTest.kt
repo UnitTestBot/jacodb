@@ -17,28 +17,67 @@
 package org.jacodb.testing.cfg
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JavaVersion
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.NoClassInClasspathException
+import org.jacodb.api.TypeName
+import org.jacodb.api.cfg.DefaultJcExprVisitor
+import org.jacodb.api.cfg.DefaultJcInstVisitor
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcCatchInst
+import org.jacodb.api.cfg.JcEnterMonitorInst
+import org.jacodb.api.cfg.JcExitMonitorInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcGotoInst
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcSwitchInst
+import org.jacodb.api.cfg.JcTerminatingInst
+import org.jacodb.api.cfg.JcThrowInst
+import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.isAbstract
+import org.jacodb.api.ext.isAnnotation
+import org.jacodb.api.ext.isInterface
+import org.jacodb.api.ext.isKotlin
+import org.jacodb.api.ext.packageName
+import org.jacodb.api.ext.toType
+import org.jacodb.impl.JcClasspathImpl
+import org.jacodb.impl.JcDatabaseImpl
+import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.jacodb.impl.bytecode.JcDatabaseClassWriter
+import org.jacodb.impl.bytecode.JcMethodImpl
+import org.jacodb.impl.cfg.JcBlockGraphImpl
+import org.jacodb.impl.cfg.JcGraphBuilder
+import org.jacodb.impl.cfg.MethodNodeBuilder
+import org.jacodb.impl.cfg.RawInstListBuilder
+import org.jacodb.impl.cfg.Simplifier
+import org.jacodb.impl.cfg.applyAndGet
+import org.jacodb.impl.cfg.util.ExprMapper
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
-import org.utbot.jacodb.api.*
-import org.utbot.jacodb.api.cfg.*
-import org.utbot.jacodb.api.ext.*
-import org.utbot.jacodb.impl.JcClasspathImpl
-import org.utbot.jacodb.impl.JcDatabaseImpl
-import org.utbot.jacodb.impl.bytecode.JcClassOrInterfaceImpl
-import org.utbot.jacodb.impl.bytecode.JcDatabaseClassWriter
-import org.utbot.jacodb.impl.bytecode.JcMethodImpl
-import org.utbot.jacodb.impl.cfg.*
-import org.utbot.jacodb.impl.cfg.util.ExprMapper
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.hierarchyExt
-import org.utbot.jacodb.impl.fs.JarLocation
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -252,15 +291,20 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
 
 class IRTest : BaseTest() {
 
-    private val target = Files.createTempDirectory("jcdb-temp")
-
     companion object : WithDB(InMemoryHierarchy)
+
+    private val target = Files.createTempDirectory("jcdb-temp")
 
     private val ext = runBlocking { cp.hierarchyExt() }
 
     @Test
     fun `get ir of simple method`() {
         testClass(cp.findClass<IRExamples>())
+    }
+
+    @Test
+    fun `arrays methods`() {
+        testClass(cp.findClass<JavaArrays>())
     }
 
     @Test
@@ -302,7 +346,7 @@ class IRTest : BaseTest() {
     private fun runAlongLib(file: File) {
         println("Run along: ${file.absolutePath}")
 
-        val classes = JarLocation(file, isRuntime = false, object : org.utbot.jacodb.api.JavaVersion {
+        val classes = JarLocation(file, isRuntime = false, object : JavaVersion {
             override val majorVersion: Int
                 get() = 8
         }).classes
@@ -319,7 +363,7 @@ class IRTest : BaseTest() {
 
     private fun testClass(klass: JcClassOrInterface) = try {
         val classNode = klass.bytecode()
-        classNode.methods = klass.methods.filter { it.enclosingClass == klass }.map {
+        classNode.methods = klass.declaredMethods.filter { it.enclosingClass == klass }.map {
             if (it.isAbstract) {
                 it.body()
             } else {

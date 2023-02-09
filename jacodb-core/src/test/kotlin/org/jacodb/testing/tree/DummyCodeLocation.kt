@@ -16,10 +16,10 @@
 
 package org.jacodb.testing.tree
 
-import org.utbot.jacodb.api.JcByteCodeLocation
-import org.utbot.jacodb.api.LocationType
-import org.utbot.jacodb.api.RegisteredLocation
-import org.utbot.jacodb.impl.storage.longHash
+import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.LocationType
+import org.jacodb.api.RegisteredLocation
+import org.jacodb.impl.storage.longHash
 import java.io.File
 
 open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, RegisteredLocation {

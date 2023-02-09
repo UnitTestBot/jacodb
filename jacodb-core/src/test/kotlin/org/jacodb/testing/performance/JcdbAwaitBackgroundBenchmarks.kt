@@ -17,14 +17,14 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcDatabase
+import org.jacodb.impl.JcSettings
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.Usages
+import org.jacodb.impl.jacodb
+import org.jacodb.impl.storage.jooq.tables.references.*
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.*
-import org.utbot.jacodb.api.JcDatabase
-import org.utbot.jacodb.impl.JcSettings
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.jacodb
-import org.utbot.jacodb.impl.storage.jooq.tables.references.*
 import java.io.File
 import java.util.concurrent.TimeUnit
 

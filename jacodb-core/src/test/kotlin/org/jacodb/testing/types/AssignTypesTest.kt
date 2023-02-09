@@ -16,12 +16,12 @@
 
 package org.jacodb.testing.types
 
+import org.jacodb.api.ext.isAssignable
+import org.jacodb.api.ext.objectType
+import org.jacodb.api.throwClassNotFound
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.ext.isAssignable
-import org.utbot.jacodb.api.ext.objectType
-import org.utbot.jacodb.api.throwClassNotFound
 
 
 class AssignTypesTest : BaseTypesTest() {

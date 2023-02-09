@@ -16,10 +16,10 @@
 
 package org.jacodb.testing.types
 
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcTypeVariable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClassType
-import org.utbot.jacodb.api.JcTypeVariable
 import java.io.Closeable
 
 

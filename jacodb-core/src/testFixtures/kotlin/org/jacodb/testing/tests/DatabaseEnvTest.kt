@@ -17,6 +17,29 @@
 package org.jacodb.testing.tests
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassProcessingTask
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.api.ext.constructors
+import org.jacodb.api.ext.enumValues
+import org.jacodb.api.ext.fields
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findClassOrNull
+import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.api.ext.hasBody
+import org.jacodb.api.ext.humanReadableSignature
+import org.jacodb.api.ext.isEnum
+import org.jacodb.api.ext.isFinal
+import org.jacodb.api.ext.isInterface
+import org.jacodb.api.ext.isLocal
+import org.jacodb.api.ext.isMemberClass
+import org.jacodb.api.ext.isNullable
+import org.jacodb.api.ext.isPrivate
+import org.jacodb.api.ext.isPublic
+import org.jacodb.api.ext.jcdbSignature
+import org.jacodb.api.ext.jvmSignature
+import org.jacodb.api.ext.methods
 import org.jacodb.testing.A
 import org.jacodb.testing.B
 import org.jacodb.testing.Bar
@@ -40,29 +63,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.JRE
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcClassProcessingTask
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.HierarchyExtension
-import org.utbot.jacodb.api.ext.constructors
-import org.utbot.jacodb.api.ext.enumValues
-import org.utbot.jacodb.api.ext.fields
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.api.ext.findClassOrNull
-import org.utbot.jacodb.api.ext.findMethodOrNull
-import org.utbot.jacodb.api.ext.hasBody
-import org.utbot.jacodb.api.ext.humanReadableSignature
-import org.utbot.jacodb.api.ext.isEnum
-import org.utbot.jacodb.api.ext.isFinal
-import org.utbot.jacodb.api.ext.isInterface
-import org.utbot.jacodb.api.ext.isLocal
-import org.utbot.jacodb.api.ext.isMemberClass
-import org.utbot.jacodb.api.ext.isNullable
-import org.utbot.jacodb.api.ext.isPrivate
-import org.utbot.jacodb.api.ext.isPublic
-import org.utbot.jacodb.api.ext.jcdbSignature
-import org.utbot.jacodb.api.ext.jvmSignature
-import org.utbot.jacodb.api.ext.methods
 import org.w3c.dom.Document
 import org.w3c.dom.DocumentType
 import org.w3c.dom.Element
@@ -387,7 +387,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `all visible fields should work`() = runBlocking {
-        val clazz = cp.findClass<FieldsAndMethods>()
+        val clazz = cp.findClass<FieldsAndMethods.Common1Child>()
         with(clazz.fields) {
             assertNull(firstOrNull { it.name == "privateField" })
             assertNull(firstOrNull { it.name == "packageField" })
@@ -399,7 +399,7 @@ abstract class DatabaseEnvTest {
 
     @Test
     fun `all visible methods should work`() = runBlocking {
-        val clazz = cp.findClass<FieldsAndMethods>()
+        val clazz = cp.findClass<FieldsAndMethods.Common1Child>()
         with(clazz.methods) {
             assertNull(firstOrNull { it.name == "privateMethod" })
             assertNull(firstOrNull { it.name == "packageMethod" })

@@ -16,15 +16,15 @@
 
 package org.jacodb.analysis.impl
 
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.analysis.ApplicationGraph
-import org.utbot.jacodb.api.cfg.JcGraph
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.ext.cfg.callExpr
-import org.utbot.jacodb.impl.analysis.JcAnalysisPlatformImpl
-import org.utbot.jacodb.impl.analysis.features.JcCacheGraphFeature
-import org.utbot.jacodb.impl.features.SyncUsagesExtension
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
+import org.jacodb.impl.analysis.features.JcCacheGraphFeature
+import org.jacodb.impl.features.SyncUsagesExtension
 
 /**
  * Possible we will need JcRawInst instead of JcInst

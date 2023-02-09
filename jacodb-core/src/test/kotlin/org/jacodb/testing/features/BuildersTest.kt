@@ -17,6 +17,11 @@
 package org.jacodb.testing.features
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcMethod
+import org.jacodb.api.ext.findClass
+import org.jacodb.impl.features.Builders
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.buildersExtension
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.builders.Hierarchy.HierarchyInterface
@@ -27,11 +32,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.JRE
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.impl.features.Builders
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.buildersExtension
 import javax.xml.parsers.DocumentBuilderFactory
 
 class BuildersTest : BaseTest() {

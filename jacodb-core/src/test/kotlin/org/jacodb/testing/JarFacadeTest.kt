@@ -16,13 +16,13 @@
 
 package org.jacodb.testing
 
+import org.jacodb.impl.fs.JarFacade
+import org.jacodb.impl.fs.parseRuntimeVersion
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledOnJre
 import org.junit.jupiter.api.condition.JRE
 import org.junit.platform.commons.util.ModuleUtils
-import org.utbot.jacodb.impl.fs.JarFacade
-import org.utbot.jacodb.impl.fs.parseRuntimeVersion
 import java.nio.file.Paths
 import java.util.jar.JarFile
 

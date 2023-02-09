@@ -17,18 +17,18 @@
 package org.jacodb.testing.features
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcMethod
+import org.jacodb.api.ext.findClass
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.findSubclassesInMemory
+import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithRestoredDB
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.findSubclassesInMemory
-import org.utbot.jacodb.impl.features.hierarchyExt
 import org.w3c.dom.Document
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

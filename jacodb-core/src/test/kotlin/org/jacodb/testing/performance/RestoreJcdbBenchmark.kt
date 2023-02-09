@@ -17,10 +17,10 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcDatabase
+import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.*
-import org.utbot.jacodb.api.JcDatabase
-import org.utbot.jacodb.impl.jacodb
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.TimeUnit
