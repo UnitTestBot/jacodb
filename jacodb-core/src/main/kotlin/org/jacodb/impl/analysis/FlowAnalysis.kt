@@ -18,16 +18,22 @@ package org.jacodb.impl.analysis
 
 import org.jacodb.api.cfg.DefaultJcExprVisitor
 import org.jacodb.api.cfg.DefaultJcInstVisitor
+import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcCallInst
 import org.jacodb.api.cfg.JcCatchInst
+import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcStaticCallExpr
 import org.jacodb.api.cfg.JcThrowInst
+import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.impl.cfg.collect
 
 interface FlowAnalysis<T> {
