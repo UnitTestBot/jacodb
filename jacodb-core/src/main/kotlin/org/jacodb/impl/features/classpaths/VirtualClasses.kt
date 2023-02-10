@@ -24,6 +24,8 @@ import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcDeclaration
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcParameter
+import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
@@ -31,10 +33,12 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.ext.isInterface
+import org.jacodb.api.ext.jvmName
 import org.jacodb.api.ext.objectClass
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.JcInstListImpl
+import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -44,13 +48,22 @@ class VirtualClasses(
     private val virtualLocation: VirtualLocation = VirtualLocation()
 ) : JcClasspathFeature {
 
+    companion object {
+
+        fun create(factory: VirtualClassesBuilder.() -> Unit): VirtualClasses {
+            return VirtualClasses(VirtualClassesBuilder().also { it.factory() }.build())
+        }
+
+    }
+
     private val map = classes.associateBy { it.name }
 
-    override fun classOf(classpath: JcClasspath, name: String): JcClassOrInterface? {
-        return map.get(name)?.also {
+    override fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? {
+        return map[name]?.also {
             it.bind(classpath, virtualLocation)
         }
     }
+
 }
 
 interface JcVirtualClass : JcClassOrInterface {
@@ -61,8 +74,14 @@ interface JcVirtualClass : JcClassOrInterface {
     }
 }
 
-interface JcVirtualField : JcField
+interface JcVirtualField : JcField {
+    fun bind(clazz: JcClassOrInterface)
+
+}
+
 interface JcVirtualMethod : JcMethod {
+
+    fun bind(clazz: JcClassOrInterface)
 
     override fun body() = MethodNode()
 
@@ -97,6 +116,11 @@ open class JcVirtualClassImpl(
     override val declaredFields: List<JcVirtualField>,
     override val declaredMethods: List<JcVirtualMethod>
 ) : JcVirtualClass {
+
+    init {
+        declaredFields.forEach { it.bind(this) }
+        declaredMethods.forEach { it.bind(this) }
+    }
 
     private lateinit var virtualLocation: VirtualLocation
 
@@ -149,17 +173,175 @@ open class JcVirtualClassImpl(
 
 }
 
-class JcVirtualFieldImpl(
+open class JcVirtualFieldImpl(
     override val name: String,
     override val access: Int = Opcodes.ACC_PUBLIC,
     override val type: TypeName,
-    override val enclosingClass: JcClassOrInterface
 ) : JcVirtualField {
     override val declaration: JcDeclaration
         get() = JcDeclarationImpl.of(enclosingClass.declaration.location, this)
+
+    override lateinit var enclosingClass: JcClassOrInterface
+
+    override fun bind(clazz: JcClassOrInterface) {
+        this.enclosingClass = clazz
+    }
 
     override val signature: String?
         get() = null
     override val annotations: List<JcAnnotation>
         get() = emptyList()
+}
+
+open class JcVirtualParameter(
+    override val index: Int,
+    override val type: TypeName
+) : JcParameter {
+
+    override val declaration: JcDeclaration
+        get() = JcDeclarationImpl.of(method.enclosingClass.declaration.location, this)
+
+    override val name: String?
+        get() = null
+
+    override val annotations: List<JcAnnotation>
+        get() = emptyList()
+
+    override val access: Int
+        get() = Opcodes.ACC_PUBLIC
+
+    override lateinit var method: JcMethod
+
+    fun bind(method: JcVirtualMethod) {
+        this.method = method
+    }
+
+}
+
+open class JcVirtualMethodImpl(
+    override val name: String,
+    override val access: Int = Opcodes.ACC_PUBLIC,
+    override val returnType: TypeName,
+    override val parameters: List<JcVirtualParameter>,
+    override val description: String
+) : JcVirtualMethod {
+
+    init {
+        parameters.forEach { it.bind(this) }
+    }
+
+    override val declaration: JcDeclaration
+        get() = JcDeclarationImpl.of(enclosingClass.declaration.location, this)
+
+    override lateinit var enclosingClass: JcClassOrInterface
+
+    override val signature: String?
+        get() = null
+    override val annotations: List<JcAnnotation>
+        get() = emptyList()
+
+    override val exceptions: List<JcClassOrInterface>
+        get() = emptyList()
+
+    override fun bind(clazz: JcClassOrInterface) {
+        enclosingClass = clazz
+    }
+}
+
+
+open class VirtualClassesBuilder {
+    open class VirtualClassBuilder(var name: String) {
+        var access: Int = Opcodes.ACC_PUBLIC
+        var fields: ArrayList<VirtualFieldBuilder> = ArrayList()
+        var methods: ArrayList<VirtualMethodBuilder> = ArrayList()
+
+        fun newField(name: String, access: Int = Opcodes.ACC_PUBLIC, callback: VirtualFieldBuilder.() -> Unit = {}) {
+            fields.add(VirtualFieldBuilder(name).also {
+                it.access = access
+                it.callback()
+            })
+        }
+
+        fun newMethod(name: String, access: Int = Opcodes.ACC_PUBLIC, callback: VirtualMethodBuilder.() -> Unit = {}) {
+            methods.add(VirtualMethodBuilder(name).also {
+                it.access = access
+                it.callback()
+            })
+        }
+
+        fun build(): JcVirtualClass {
+            return JcVirtualClassImpl(
+                name,
+                access,
+                fields.map { it.build() },
+                methods.map { it.build() },
+            )
+        }
+    }
+
+    open class VirtualFieldBuilder(var name: String) {
+        companion object {
+            private val defType = TypeNameImpl("java.lang.Object")
+        }
+
+        var access: Int = Opcodes.ACC_PUBLIC
+        var type: TypeName = defType
+
+        fun type(name: String) {
+            type = TypeNameImpl(name)
+        }
+
+        fun build(): JcVirtualField {
+            return JcVirtualFieldImpl(name, access, type)
+        }
+
+    }
+
+    open class VirtualMethodBuilder(val name: String) {
+
+        var access = Opcodes.ACC_PUBLIC
+        var returnType: TypeName = TypeNameImpl(PredefinedPrimitives.Void)
+        var parameters: List<TypeName> = emptyList()
+
+        fun params(vararg p: String) {
+            parameters = p.map { TypeNameImpl(it) }.toList()
+        }
+
+        fun returnType(name: String) {
+            returnType = TypeNameImpl(name)
+        }
+
+        val description: String
+            get() {
+                return buildString {
+                    append("(")
+                    parameters.forEach {
+                        append(it.typeName.jvmName())
+                    }
+                    append(")")
+                    append(returnType.typeName.jvmName())
+                }
+            }
+
+        open fun build(): JcVirtualMethod {
+            return JcVirtualMethodImpl(
+                name,
+                access,
+                returnType,
+                parameters.mapIndexed { index, typeName -> JcVirtualParameter(index, typeName) },
+                description
+            )
+        }
+    }
+
+    private val classes = ArrayList<VirtualClassBuilder>()
+
+    fun newClass(name: String, access: Int = Opcodes.ACC_PUBLIC, callback: VirtualClassBuilder.() -> Unit = {}) {
+        classes.add(VirtualClassBuilder(name).also {
+            it.access = access
+            it.callback()
+        })
+    }
+
+    fun build() = classes.map { it.build() }
 }

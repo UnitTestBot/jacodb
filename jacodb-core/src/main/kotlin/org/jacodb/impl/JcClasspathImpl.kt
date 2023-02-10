@@ -65,7 +65,7 @@ class JcClasspathImpl(
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
-        val result = features?.firstNotNullOfOrNull { it.classOf(this, name) }
+        val result = features?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
         if (result != null) {
             return result
         }
@@ -74,9 +74,7 @@ class JcClasspathImpl(
             ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
                 toJcClass(it)
             }
-        return jcClass?.also {
-            broadcast(JcClassFoundEvent(it))
-        }
+        return jcClass
     }
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
@@ -85,7 +83,9 @@ class JcClasspathImpl(
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null
-        )
+        ).also {
+            broadcast(JcTypeFoundEvent(it))
+        }
     }
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
@@ -93,11 +93,13 @@ class JcClasspathImpl(
     }
 
     override fun toJcClass(source: ClassSource): JcClassOrInterface {
-        return JcClassOrInterfaceImpl(this, source, features)
+        return JcClassOrInterfaceImpl(this, source, features).also {
+            broadcast(JcClassFoundEvent(it))
+        }
     }
 
     override fun findTypeOrNull(name: String): JcType? {
-        val result = features?.firstNotNullOfOrNull { it.typeOf(this, name) }
+        val result = features?.firstNotNullOfOrNull { it.tryFindType(this, name) }
         if (result != null) {
             return result
         }
@@ -111,9 +113,7 @@ class JcClasspathImpl(
         if (predefined != null) {
             return predefined
         }
-        return typeOf(findClassOrNull(name) ?: return null).also {
-            broadcast(JcTypeFoundEvent(it))
-        }
+        return typeOf(findClassOrNull(name) ?: return null)
     }
 
     override suspend fun <T : JcClasspathTask> execute(task: T): T {

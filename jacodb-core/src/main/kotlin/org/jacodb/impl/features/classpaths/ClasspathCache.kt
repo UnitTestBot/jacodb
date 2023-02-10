@@ -52,7 +52,7 @@ open class ClasspathCache(
         .build<String, JcType>()
 
 
-    override fun classOf(classpath: JcClasspath, name: String): JcClassOrInterface? {
+    override fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? {
         return classesCache.getIfPresent(name)
     }
 

@@ -101,8 +101,8 @@ interface JcClassProcessingTask : JcClasspathTask {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathFeature {
 
-    fun classOf(classpath: JcClasspath, name: String): JcClassOrInterface? = null
-    fun typeOf(classpath: JcClasspath, name: String): JcType? = null
+    fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? = null
+    fun tryFindType(classpath: JcClasspath, name: String): JcType? = null
 
     fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
     fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
