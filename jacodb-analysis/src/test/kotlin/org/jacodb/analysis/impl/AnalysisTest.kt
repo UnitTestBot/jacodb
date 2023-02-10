@@ -30,10 +30,13 @@ import org.utbot.jacodb.api.cfg.JcAssignInst
 import org.utbot.jacodb.api.cfg.JcBinaryExpr
 import org.utbot.jacodb.api.cfg.JcCallExpr
 import org.utbot.jacodb.api.cfg.JcConstant
+import org.utbot.jacodb.api.cfg.JcEqExpr
+import org.utbot.jacodb.api.cfg.JcIfInst
 import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.cfg.JcInstanceCallExpr
 import org.utbot.jacodb.api.cfg.JcLocal
 import org.utbot.jacodb.api.cfg.JcLocalVar
+import org.utbot.jacodb.api.cfg.JcNeqExpr
 import org.utbot.jacodb.api.cfg.JcNewArrayExpr
 import org.utbot.jacodb.api.cfg.JcNewExpr
 import org.utbot.jacodb.api.cfg.JcNullConstant
@@ -115,6 +118,7 @@ class IdLikeFlowFunction<D>(
 
 class NPEFlowFunctions(
     private val classpath: JcClasspath,
+    private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val platform: JcAnalysisPlatform
 ): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
 
@@ -143,6 +147,40 @@ class NPEFlowFunctions(
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
                 is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcCallExpr, is JcBinaryExpr -> Unit
                 else -> TODO()
+            }
+        }
+        if (current is JcIfInst) {
+            val expr = current.condition
+            var comparedValue: JcValue? = null
+
+            if (expr.rhv is JcNullConstant && expr.lhv is JcLocal)
+                comparedValue = expr.lhv
+            else if (expr.lhv is JcNullConstant && expr.rhv is JcLocal)
+                comparedValue = expr.rhv
+
+            val currentBranch = graph.methodOf(current).flowGraph().ref(next)
+            if (comparedValue != null) {
+                when (expr) {
+                    is JcEqExpr -> {
+                        comparedValue.let {
+                            if (currentBranch == current.trueBranch) {
+                                nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(comparedValue))
+                            } else if (currentBranch == current.falseBranch) {
+                                nonId[VariableNode.fromValue(comparedValue)] = emptyList()
+                            }
+                        }
+                    }
+                    is JcNeqExpr -> {
+                        comparedValue.let {
+                            if (currentBranch == current.falseBranch) {
+                                nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(comparedValue))
+                            } else if (currentBranch == current.trueBranch) {
+                                nonId[VariableNode.fromValue(comparedValue)] = emptyList()
+                            }
+                        }
+                    }
+                    else -> Unit
+                }
             }
         }
         return IdLikeFlowFunction(current.domain, nonId)
@@ -277,6 +315,13 @@ class AnalysisTest : BaseTest() {
             y = twoExits(y)
             return x!!.length + y!!.length
         }
+
+        fun checkedAccess(x: String?): Int {
+            if (x != null) {
+                return x.length
+            }
+            return -1
+        }
     }
 
     @Test
@@ -291,7 +336,7 @@ class AnalysisTest : BaseTest() {
 //            }
 //        })
         val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val results = doRun(testingMethod, NPEFlowFunctions(cp, graph), graph)
+        val results = doRun(testingMethod, NPEFlowFunctions(cp, graph, graph), graph)
         print(results)
     }
 
@@ -326,11 +371,19 @@ class AnalysisTest : BaseTest() {
         )
     }
 
+    @Test
+    fun `no NPE after checked access`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "checkedAccess" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(emptyList<JcInst>(), actual)
+    }
+
     fun findNPEInstructions(method: JcMethod): List<JcInst> {
         val graph = runBlocking {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
         }
-        val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph), graph)
+        val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph, graph), graph)
         val possibleNPEInstructions = mutableListOf<JcInst>()
         ifdsResults.resultFacts.forEach { (instruction, facts) ->
             val callExpr = instruction.callExpr
