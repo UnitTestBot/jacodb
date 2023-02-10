@@ -56,6 +56,7 @@ interface JavaVersion {
  *
  * `close` method should be called when database is not needed anymore
  */
+@JvmDefaultWithoutCompatibility
 interface JcDatabase : Closeable {
 
     val locations: List<RegisteredLocation>
@@ -69,10 +70,12 @@ interface JcDatabase : Closeable {
      * @param dirOrJars list of byte-code resources to be processed and included in classpath
      * @return new classpath instance associated with specified byte-code locations
      */
-    suspend fun classpath(dirOrJars: List<File>): JcClasspath
+    suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath
+    suspend fun classpath(dirOrJars: List<File>): JcClasspath = classpath(dirOrJars, null)
     fun asyncClasspath(dirOrJars: List<File>) = GlobalScope.future { classpath(dirOrJars) }
+    fun asyncClasspath(dirOrJars: List<File>, features: List<JcClasspathFeature>?) = GlobalScope.future { classpath(dirOrJars, features) }
 
-    fun classpathOf(locations: List<RegisteredLocation>): JcClasspath
+    fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath
 
     /**
      * process and index single byte-code resource

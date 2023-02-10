@@ -19,6 +19,7 @@ package org.jacodb.testing;
 import com.google.common.collect.Lists;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
+import org.jacodb.api.JcClasspathFeature;
 import org.jacodb.api.JcDatabase;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;

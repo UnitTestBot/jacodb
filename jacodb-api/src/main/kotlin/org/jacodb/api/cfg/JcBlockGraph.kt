@@ -30,7 +30,7 @@ package org.jacodb.api.cfg
  */
 data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
 
-interface JcBlockGraph: Graph<JcBasicBlock> {
+interface JcBlockGraph: JcBytecodeGraph<JcBasicBlock> {
     val jcGraph: JcGraph
     val basicBlocks: List<JcBasicBlock>
     val entry: JcBasicBlock

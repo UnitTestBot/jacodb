@@ -19,6 +19,7 @@ package org.jacodb.impl.bytecode
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
 import org.jacodb.api.cfg.JcGraph
@@ -38,6 +39,7 @@ import org.objectweb.asm.tree.MethodNode
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
     private val source: ClassSource,
+    private val features: List<JcClasspathFeature>?,
     override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
 
@@ -72,7 +74,10 @@ class JcMethodImpl(
     }
 
     override val rawInstList: JcInstList<JcRawInst> by lazy {
-        RawInstListBuilder(this, body().jsrInlined).build()
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, body().jsrInlined).build()
+        features?.fold(list) { value, feature ->
+            feature.transformRawInstList(this, value)
+        } ?: list
     }
 
     override fun flowGraph(): JcGraph {
@@ -80,7 +85,11 @@ class JcMethodImpl(
     }
 
     override val instList: JcInstList<JcInst> by lazy {
-        JcGraphBuilder(this, rawInstList).buildInstList()
+        val list: JcInstList<JcInst> = JcGraphBuilder(this, rawInstList).buildInstList()
+        features?.fold(list) { value, feature ->
+            feature.transformInstList(this, value)
+        } ?: list
+
     }
 
     override fun equals(other: Any?): Boolean {

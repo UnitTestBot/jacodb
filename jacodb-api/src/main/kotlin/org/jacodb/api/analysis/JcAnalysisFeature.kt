@@ -19,18 +19,17 @@ package org.jacodb.api.analysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcGraph
 
+@JvmDefaultWithoutCompatibility
 interface JcAnalysisFeature {
 
-    @JvmDefault
     fun transform(graph: JcGraph): JcGraph = graph
 
-    @JvmDefault
     fun flowOf(method: JcMethod): JcGraph? = null
 
 }
 
+@JvmDefaultWithoutCompatibility
 interface JcCollectingAnalysisFeature: JcAnalysisFeature {
-    @JvmDefault
     fun collect(method: JcMethod, finalGraph: JcGraph) {
     }
 

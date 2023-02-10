@@ -111,8 +111,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
                     locationId = record.locationId,
                     classId = record.id,
                     className = record.name
-                ).bind(record.byteCode),
-                withCaching = true
+                ).bind(record.byteCode)
             )
         }
     }
