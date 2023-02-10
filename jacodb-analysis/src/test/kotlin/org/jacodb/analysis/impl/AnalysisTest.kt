@@ -26,14 +26,18 @@ import org.utbot.jacodb.api.JcMethod
 import org.utbot.jacodb.api.analysis.ApplicationGraph
 import org.utbot.jacodb.api.analysis.JcAnalysisPlatform
 import org.utbot.jacodb.api.cfg.JcArgument
+import org.utbot.jacodb.api.cfg.JcArrayAccess
 import org.utbot.jacodb.api.cfg.JcAssignInst
 import org.utbot.jacodb.api.cfg.JcBinaryExpr
 import org.utbot.jacodb.api.cfg.JcCallExpr
+import org.utbot.jacodb.api.cfg.JcCastExpr
 import org.utbot.jacodb.api.cfg.JcConstant
 import org.utbot.jacodb.api.cfg.JcEqExpr
+import org.utbot.jacodb.api.cfg.JcFieldRef
 import org.utbot.jacodb.api.cfg.JcIfInst
 import org.utbot.jacodb.api.cfg.JcInst
 import org.utbot.jacodb.api.cfg.JcInstanceCallExpr
+import org.utbot.jacodb.api.cfg.JcLengthExpr
 import org.utbot.jacodb.api.cfg.JcLocal
 import org.utbot.jacodb.api.cfg.JcLocalVar
 import org.utbot.jacodb.api.cfg.JcNeqExpr
@@ -41,9 +45,12 @@ import org.utbot.jacodb.api.cfg.JcNewArrayExpr
 import org.utbot.jacodb.api.cfg.JcNewExpr
 import org.utbot.jacodb.api.cfg.JcNullConstant
 import org.utbot.jacodb.api.cfg.JcReturnInst
+import org.utbot.jacodb.api.cfg.JcThis
 import org.utbot.jacodb.api.cfg.JcValue
 import org.utbot.jacodb.api.ext.cfg.callExpr
+import org.utbot.jacodb.api.ext.cfg.fieldRef
 import org.utbot.jacodb.api.ext.findClass
+import org.utbot.jacodb.api.ext.isNullable
 import org.utbot.jacodb.api.ext.packageName
 import org.utbot.jacodb.impl.analysis.JcAnalysisPlatformImpl
 import org.utbot.jacodb.impl.analysis.features.JcCacheGraphFeature
@@ -145,7 +152,21 @@ class NPEFlowFunctions(
             when (val rhv = current.rhv) {
                 is JcLocal -> nonId[VariableNode.fromLocal(rhv)] = setOf(VariableNode.fromLocal(rhv), VariableNode.fromValue(current.lhv)).toList()
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
-                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcCallExpr, is JcBinaryExpr -> Unit
+                is JcArrayAccess -> Unit // TODO: do smth real here
+                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcBinaryExpr, is JcLengthExpr -> Unit
+                is JcFieldRef -> Unit// TODO: do smth real here
+                is JcCallExpr -> {
+                    // todo: this is workaround for non-analyzable methods, do smth cooler here
+                    if (rhv.method.method.isNullable != false && rhv.method.name != "iterator")
+                        nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
+                }
+                is JcCastExpr -> {
+                    when (val operand = rhv.operand) {
+                        is JcLocal -> nonId[VariableNode.fromLocal(operand)] = setOf(VariableNode.fromLocal(operand), VariableNode.fromValue(current.lhv)).toList()
+                        is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
+                        else -> Unit
+                    }
+                }
                 else -> TODO()
             }
         }
@@ -215,6 +236,8 @@ class NPEFlowFunctions(
             when (arg) {
                 is JcLocal -> nonId.getValue(VariableNode.fromLocal(arg)).add(VariableNode.fromLocal(param))
                 is JcNullConstant -> nonId.getValue(VariableNode.ZERO).add(VariableNode.fromLocal(param))
+                is JcConstant, is JcThis -> Unit
+                is JcFieldRef -> Unit // TODO: do something smarter here
                 else -> TODO()
             }
         }
@@ -253,6 +276,8 @@ class NPEFlowFunctions(
             when (val value = exitStatement.returnValue) {
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(callStatement.lhv))
                 is JcLocal -> nonId[VariableNode.fromLocal(value)] = listOf(VariableNode.fromValue(callStatement.lhv))
+                is JcConstant, is JcThis -> Unit
+                is JcFieldRef -> Unit // TODO: do something smarter here
                 else -> TODO()
             }
         }
@@ -389,6 +414,17 @@ class AnalysisTest : BaseTest() {
             val callExpr = instruction.callExpr
             if (callExpr is JcInstanceCallExpr && VariableNode.fromValue(callExpr.instance) in facts) {
                 possibleNPEInstructions.add(instruction)
+            }
+
+            // todo: check for JcLengthExpr and JcArrayAccess
+
+            val fieldRef = instruction.fieldRef
+            if (fieldRef is JcFieldRef) {
+                fieldRef.instance?.let {
+                    if (VariableNode.fromValue(it) in facts) {
+                        possibleNPEInstructions.add(instruction)
+                    }
+                }
             }
         }
         return possibleNPEInstructions
