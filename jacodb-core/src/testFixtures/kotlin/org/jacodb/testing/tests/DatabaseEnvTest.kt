@@ -43,10 +43,11 @@ import org.jacodb.api.ext.isPublic
 import org.jacodb.api.ext.jcdbSignature
 import org.jacodb.api.ext.jvmSignature
 import org.jacodb.api.ext.methods
-import org.jacodb.impl.features.classpaths.JcVirtualClass
-import org.jacodb.impl.features.classpaths.JcVirtualField
-import org.jacodb.impl.features.classpaths.JcVirtualMethod
+import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
 import org.jacodb.testing.A
 import org.jacodb.testing.B
 import org.jacodb.testing.Bar
@@ -418,19 +419,21 @@ abstract class DatabaseEnvTest {
     }
 
     @Test
-    fun `virtual classes should work`() = runBlocking {
+    fun `virtual classes should work`() {
         val fakeClassName = "xxx.Fake"
         val fakeFieldName = "fakeField"
         val fakeMethodName = "fakeMethod"
-        val cp = cp.db.classpath(allClasspath, listOf(VirtualClasses.create {
-            newClass(fakeClassName) {
-                newField(fakeFieldName)
-                newMethod(fakeMethodName) {
-                    returnType(PredefinedPrimitives.Int)
-                    params(PredefinedPrimitives.Int)
+        val cp = runBlocking {
+            cp.db.classpath(allClasspath, listOf(VirtualClasses.builder {
+                newClass(fakeClassName) {
+                    newField(fakeFieldName)
+                    newMethod(fakeMethodName) {
+                        returnType(PredefinedPrimitives.Int)
+                        params(PredefinedPrimitives.Int)
+                    }
                 }
-            }
-        }))
+            }))
+        }
         val clazz = cp.findClass(fakeClassName)
         assertTrue(clazz is JcVirtualClass)
         with(clazz) {
@@ -443,6 +446,44 @@ abstract class DatabaseEnvTest {
             assertTrue(method is JcVirtualMethod)
             assertNotNull(method?.enclosingClass)
         }
+    }
+
+    @Test
+    fun `virtual fields and methods of `() {
+        val fakeFieldName = "fakeField"
+        val fakeMethodName = "fakeMethod"
+        val cp = runBlocking {
+            cp.db.classpath(allClasspath, listOf(VirtualClassContent.builder {
+                append {
+                    matcher { it.name == "java.lang.String" }
+                    field { builder, _ ->
+                        builder.name = fakeFieldName
+                        builder.type(PredefinedPrimitives.Int)
+                    }
+                    method { builder, _ ->
+                        builder.name = fakeMethodName
+                        builder.returnType(PredefinedPrimitives.Int)
+                        builder.params(PredefinedPrimitives.Int)
+                    }
+                }
+            }))
+        }
+        val clazz = cp.findClass<String>()
+        val field = clazz.findDeclaredFieldOrNull(fakeFieldName)
+        assertTrue(field is JcVirtualField)
+        assertEquals(PredefinedPrimitives.Int, field!!.type.typeName)
+        assertNotNull(field.enclosingClass)
+
+        val method = clazz.declaredMethods.first { it.name == fakeMethodName }
+        assertTrue(method is JcVirtualMethod)
+        assertEquals(PredefinedPrimitives.Int, method.returnType.typeName)
+        assertEquals(1, method.parameters.size)
+        assertEquals(PredefinedPrimitives.Int, method.parameters.first().type.typeName)
+        assertNotNull(method.enclosingClass)
+        method.parameters.forEach {
+            assertNotNull(it.method)
+        }
+
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
