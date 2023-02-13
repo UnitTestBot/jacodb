@@ -20,7 +20,7 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 
-interface JcGraph : Graph<JcInst> {
+interface JcGraph : JcBytecodeGraph<JcInst> {
 
     val method: JcMethod
     val classpath: JcClasspath

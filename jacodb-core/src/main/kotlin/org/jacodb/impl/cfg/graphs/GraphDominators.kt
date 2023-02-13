@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.cfg.graphs
 
-import org.jacodb.api.cfg.Graph
+import org.jacodb.api.cfg.JcBytecodeGraph
 import org.jacodb.api.cfg.JcBasicBlock
 import org.jacodb.api.cfg.JcBlockGraph
 import org.jacodb.api.cfg.JcCatchInst
@@ -30,7 +30,7 @@ import java.util.*
  *
  * Uses the algorithm contained in Dragon book, pg. 670-1.
  */
-open class GraphDominators<NODE>(val graph: Graph<NODE>) {
+open class GraphDominators<NODE>(val graph: JcBytecodeGraph<NODE>) {
 
     private val nodes = graph.toList()
     private val size = nodes.size

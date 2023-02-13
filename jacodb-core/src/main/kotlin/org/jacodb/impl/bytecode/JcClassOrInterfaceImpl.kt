@@ -20,6 +20,7 @@ import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
@@ -32,7 +33,8 @@ import org.jacodb.impl.types.ClassInfo
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
-    private val classSource: ClassSource
+    private val classSource: ClassSource,
+    private val features: List<JcClasspathFeature>?
 ) : JcClassOrInterface {
 
     private val cachedInfo: ClassInfo? = when (classSource) {
@@ -100,11 +102,36 @@ class JcClassOrInterfaceImpl(
         }
 
     override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
-        info.fields.map { JcFieldImpl(this, it) }
+        val fields = info.fields
+        val result: List<JcField> = fields.map { JcFieldImpl(this, it) }
+        when {
+            !features.isNullOrEmpty() -> {
+                val modifiedFields = result.toMutableList()
+                features.forEach {
+                    it.fieldsOf(this)?.let {
+                        modifiedFields.addAll(it)
+                    }
+                }
+                modifiedFields
+            }
+            else -> result
+        }
     }
 
     override val declaredMethods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
-        info.methods.map { toJcMethod(it, classSource) }
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, features) }
+        when {
+            !features.isNullOrEmpty() -> {
+                val modifiedMethods = result.toMutableList()
+                features.forEach {
+                    it.methodsOf(this)?.let {
+                        modifiedMethods.addAll(it)
+                    }
+                }
+                modifiedMethods
+            }
+            else -> result
+        }
     }
 
     override fun equals(other: Any?): Boolean {

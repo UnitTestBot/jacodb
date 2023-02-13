@@ -26,6 +26,7 @@ import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.storage.PostgresPersistenceImpl
 import org.jacodb.impl.storage.SQLitePersistenceImpl
 import java.io.File
+import java.time.Duration
 
 /**
  * Settings for database
@@ -49,6 +50,12 @@ class JcSettings {
     var predefinedDirOrJars: List<File> = persistentListOf()
         private set
 
+    var cacheSettings: JcCacheSettings = JcCacheSettings(10_000, Duration.ofSeconds(10))
+        private set
+
+    var byteCodeSettings: JcByteCodeCache = JcByteCodeCache()
+        private set
+
     var hooks: MutableList<(JcDatabase) -> Hook> = arrayListOf()
         private set
 
@@ -68,10 +75,22 @@ class JcSettings {
      * @param location - file for db location
      * @param clearOnStart -if true old data from this folder will be dropped
      */
-    fun persistent(location: String, clearOnStart: Boolean = false, type: JcPersistenceType = PredefinedPersistenceType.SQLITE) = apply {
+    fun persistent(
+        location: String,
+        clearOnStart: Boolean = false,
+        type: JcPersistenceType = PredefinedPersistenceType.SQLITE
+    ) = apply {
         persistentLocation = location
         persistentClearOnStart = clearOnStart
         persistentType = type
+    }
+
+    fun classCaching(maxSize: Long, expiration: Duration) = apply {
+        cacheSettings = JcCacheSettings(maxSize, expiration)
+    }
+
+    fun bytecodeCaching(byteCodeCache: JcByteCodeCache) = apply {
+        this.byteCodeSettings = byteCodeCache
     }
 
     fun loadByteCode(files: List<File>) = apply {
@@ -170,3 +189,7 @@ enum class PredefinedPersistenceType : JcPersistenceType {
     };
 
 }
+
+class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
+
+class JcCacheSettings(val maxSize: Long, val expiration: Duration, val byteCodeCache: JcByteCodeCache = JcByteCodeCache())

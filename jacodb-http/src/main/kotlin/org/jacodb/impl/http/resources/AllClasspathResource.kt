@@ -147,4 +147,4 @@ class AllClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
 
 }
 
-private val JcDatabase.allClasspath get() = classpathOf(locations)
+private val JcDatabase.allClasspath get() = classpathOf(locations, null)

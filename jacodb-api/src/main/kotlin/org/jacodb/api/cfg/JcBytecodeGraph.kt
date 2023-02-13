@@ -18,11 +18,15 @@ package org.jacodb.api.cfg
 
 interface Graph<NODE> : Iterable<NODE> {
 
+    fun successors(node: NODE): Set<NODE>
+    fun predecessors(node: NODE): Set<NODE>
+}
+
+interface JcBytecodeGraph<NODE> : Graph<NODE> {
+
     val entries: List<NODE>
     val exits: List<NODE>
 
-    fun successors(node: NODE): Set<NODE>
-    fun predecessors(node: NODE): Set<NODE>
     fun throwers(node: NODE): Set<NODE>
     fun catchers(node: NODE): Set<NODE>
 

@@ -21,12 +21,11 @@ import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcGraph
 
+@JvmDefaultWithoutCompatibility
 interface JcAnalysisTask : JcClassProcessingTask {
 
-    @JvmDefault
     val transformers: List<JcAnalysisFeature> get() = emptyList()
 
-    @JvmDefault
     fun flowOf(method: JcMethod): JcGraph {
         val initial = method.flowGraph()
         return transformers.fold(initial) { value, transformer ->

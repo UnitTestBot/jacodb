@@ -20,12 +20,15 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.enumValues
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findClassOrNull
+import org.jacodb.api.ext.findDeclaredFieldOrNull
+import org.jacodb.api.ext.findDeclaredMethodOrNull
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.hasBody
 import org.jacodb.api.ext.humanReadableSignature
@@ -40,6 +43,11 @@ import org.jacodb.api.ext.isPublic
 import org.jacodb.api.ext.jcdbSignature
 import org.jacodb.api.ext.jvmSignature
 import org.jacodb.api.ext.methods
+import org.jacodb.impl.features.classpaths.VirtualClassContent
+import org.jacodb.impl.features.classpaths.VirtualClasses
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
 import org.jacodb.testing.A
 import org.jacodb.testing.B
 import org.jacodb.testing.Bar
@@ -48,6 +56,7 @@ import org.jacodb.testing.D
 import org.jacodb.testing.Enums
 import org.jacodb.testing.Foo
 import org.jacodb.testing.SuperDuper
+import org.jacodb.testing.allClasspath
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.skipAssertionsOn
 import org.jacodb.testing.structure.FieldsAndMethods
@@ -407,6 +416,74 @@ abstract class DatabaseEnvTest {
             assertNotNull(firstOrNull { it.name == "publicMethod" })
             assertNotNull(firstOrNull { it.name == "protectedMethod" })
         }
+    }
+
+    @Test
+    fun `virtual classes should work`() {
+        val fakeClassName = "xxx.Fake"
+        val fakeFieldName = "fakeField"
+        val fakeMethodName = "fakeMethod"
+        val cp = runBlocking {
+            cp.db.classpath(allClasspath, listOf(VirtualClasses.builder {
+                newClass(fakeClassName) {
+                    newField(fakeFieldName)
+                    newMethod(fakeMethodName) {
+                        returnType(PredefinedPrimitives.Int)
+                        params(PredefinedPrimitives.Int)
+                    }
+                }
+            }))
+        }
+        val clazz = cp.findClass(fakeClassName)
+        assertTrue(clazz is JcVirtualClass)
+        with(clazz) {
+            val field = findDeclaredFieldOrNull(fakeFieldName)
+            assertTrue(field is JcVirtualField)
+            assertNotNull(field?.enclosingClass)
+        }
+        with(clazz) {
+            val method = findDeclaredMethodOrNull(fakeMethodName, "(I)I")
+            assertTrue(method is JcVirtualMethod)
+            assertNotNull(method?.enclosingClass)
+        }
+    }
+
+    @Test
+    fun `virtual fields and methods of `() {
+        val fakeFieldName = "fakeField"
+        val fakeMethodName = "fakeMethod"
+        val cp = runBlocking {
+            cp.db.classpath(allClasspath, listOf(VirtualClassContent.builder {
+                append {
+                    matcher { it.name == "java.lang.String" }
+                    field { builder, _ ->
+                        builder.name = fakeFieldName
+                        builder.type(PredefinedPrimitives.Int)
+                    }
+                    method { builder, _ ->
+                        builder.name = fakeMethodName
+                        builder.returnType(PredefinedPrimitives.Int)
+                        builder.params(PredefinedPrimitives.Int)
+                    }
+                }
+            }))
+        }
+        val clazz = cp.findClass<String>()
+        val field = clazz.findDeclaredFieldOrNull(fakeFieldName)
+        assertTrue(field is JcVirtualField)
+        assertEquals(PredefinedPrimitives.Int, field!!.type.typeName)
+        assertNotNull(field.enclosingClass)
+
+        val method = clazz.declaredMethods.first { it.name == fakeMethodName }
+        assertTrue(method is JcVirtualMethod)
+        assertEquals(PredefinedPrimitives.Int, method.returnType.typeName)
+        assertEquals(1, method.parameters.size)
+        assertEquals(PredefinedPrimitives.Int, method.parameters.first().type.typeName)
+        assertNotNull(method.enclosingClass)
+        method.parameters.forEach {
+            assertNotNull(it.method)
+        }
+
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

@@ -31,10 +31,12 @@ import kotlinx.coroutines.withContext
 import org.jacodb.api.JavaVersion
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.JcFeature
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.filterExisted
@@ -80,22 +82,31 @@ class JcDatabaseImpl(
         val runtime = JavaRuntime(settings.jre).allLocations
         locationsRegistry.setup(runtime).new.process()
         locationsRegistry.registerIfNeeded(
-            settings.predefinedDirOrJars.filter { it.exists() }.map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
+            settings.predefinedDirOrJars.filter { it.exists() }
+                .map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
         ).new.process()
     }
 
-    override suspend fun classpath(dirOrJars: List<File>): JcClasspath {
+    private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
+        if (this!= null && any { it is ClasspathCache }) {
+            return this
+        }
+        return listOf(ClasspathCache(settings.cacheSettings.maxSize, settings.cacheSettings.expiration)) + this.orEmpty()
+    }
+
+    override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
         assertNotClosed()
         val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
             .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
-        return classpathOf(processed)
+        return classpathOf(processed, features)
     }
 
-    override fun classpathOf(locations: List<RegisteredLocation>): JcClasspath {
+    override fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath {
         return JcClasspathImpl(
             locationsRegistry.newSnapshot(locations),
             this,
+            features.appendCaching(),
             classesVfs
         )
     }
@@ -105,6 +116,7 @@ class JcDatabaseImpl(
         return JcClasspathImpl(
             locationsRegistry.newSnapshot(cp.registeredLocations),
             cp.db,
+            cp.features,
             classesVfs
         )
     }
@@ -145,7 +157,7 @@ class JcDatabaseImpl(
                 async {
                     val sources = location.sources
                     parentScope.ifActive { persistence.persist(location, sources) }
-                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location))) }
+                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location), settings.byteCodeSettings.prefixes)) }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
             }.awaitAll()
@@ -160,7 +172,7 @@ class JcDatabaseImpl(
         awaitBackgroundJobs()
         locationsRegistry.refresh().new.process()
         val result = locationsRegistry.cleanup()
-        classesVfs.visit(RemoveLocationsVisitor(result.outdated))
+        classesVfs.visit(RemoveLocationsVisitor(result.outdated, settings.byteCodeSettings.prefixes))
     }
 
     override suspend fun rebuildFeatures() {

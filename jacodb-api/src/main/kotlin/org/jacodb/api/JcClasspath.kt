@@ -18,6 +18,9 @@ package org.jacodb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcRawInst
 import java.io.Closeable
 import java.util.concurrent.Future
 
@@ -35,6 +38,7 @@ interface JcClasspath : Closeable {
     /** locations of this classpath */
     val locations: List<JcByteCodeLocation>
     val registeredLocations: List<RegisteredLocation>
+    val features: List<JcClasspathFeature>?
 
     /**
      *  @param name full name of the type
@@ -53,7 +57,7 @@ interface JcClasspath : Closeable {
     fun typeOf(jcClass: JcClassOrInterface): JcRefType
 
     fun arrayTypeOf(elementType: JcType): JcArrayType
-    fun toJcClass(source: ClassSource, withCaching: Boolean = true): JcClassOrInterface
+    fun toJcClass(source: ClassSource): JcClassOrInterface
 
     suspend fun refreshed(closeOld: Boolean): JcClasspath
     fun asyncRefreshed(closeOld: Boolean) = GlobalScope.future { refreshed(closeOld) }
@@ -84,9 +88,36 @@ interface JcClasspathTask {
 interface JcClassProcessingTask : JcClasspathTask {
 
     override fun process(source: ClassSource, classpath: JcClasspath) {
-        process(classpath.toJcClass(source, true))
+        process(classpath.toJcClass(source))
     }
 
     fun process(clazz: JcClassOrInterface)
 }
 
+/**
+ * Implementation should be idempotent that means that results should not be changed during time
+ * Result of this
+ */
+@JvmDefaultWithoutCompatibility
+interface JcClasspathFeature {
+
+    fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? = null
+    fun tryFindType(classpath: JcClasspath, name: String): JcType? = null
+
+    fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
+    fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
+
+    fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
+    fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
+
+    fun on(event: JcClasspathFeatureEvent) {
+    }
+
+}
+
+fun JcClasspath.broadcast(event: JcClasspathFeatureEvent) = features?.forEach { it.on(event) }
+
+interface JcClasspathFeatureEvent
+
+data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
+data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent

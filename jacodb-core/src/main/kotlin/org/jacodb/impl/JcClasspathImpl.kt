@@ -16,7 +16,6 @@
 
 package org.jacodb.impl
 
-import com.google.common.cache.CacheBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
@@ -25,13 +24,17 @@ import kotlinx.coroutines.withContext
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.JcClassFoundEvent
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcClasspathTask
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
+import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.broadcast
 import org.jacodb.api.ext.toType
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
@@ -40,26 +43,13 @@ import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.vfs.ClasspathVfs
 import org.jacodb.impl.vfs.GlobalClassesVfs
-import java.time.Duration
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     override val db: JcDatabaseImpl,
+    override val features: List<JcClasspathFeature>?,
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
-
-    private class ClassHolder(val jcClass: JcClassOrInterface?)
-    private class TypeHolder(val type: JcType?)
-
-    private val classCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(Duration.ofSeconds(10))
-        .maximumSize(10_000)
-        .build<String, ClassHolder>()
-
-    private val typeCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(Duration.ofSeconds(10))
-        .maximumSize(10_000)
-        .build<String, TypeHolder>()
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
@@ -75,14 +65,16 @@ class JcClasspathImpl(
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
-        return classCache.get(name) {
-            val source = classpathVfs.firstClassOrNull(name)
-            val jcClass = source?.let { toJcClass(it.source, false) }
-                ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
-                    toJcClass(it, false)
-                }
-            ClassHolder(jcClass)
-        }.jcClass
+        val result = features?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
+        if (result != null) {
+            return result
+        }
+        val source = classpathVfs.firstClassOrNull(name)
+        val jcClass = source?.let { toJcClass(it.source) }
+            ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
+                toJcClass(it)
+            }
+        return jcClass
     }
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
@@ -91,29 +83,26 @@ class JcClasspathImpl(
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null
-        )
+        ).also {
+            broadcast(JcTypeFoundEvent(it))
+        }
     }
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
         return JcArrayTypeImpl(elementType, null)
     }
 
-    override fun toJcClass(source: ClassSource, withCaching: Boolean): JcClassOrInterface {
-        if (withCaching) {
-            return classCache.get(source.className) {
-                ClassHolder(JcClassOrInterfaceImpl(this, source))
-            }.jcClass!!
+    override fun toJcClass(source: ClassSource): JcClassOrInterface {
+        return JcClassOrInterfaceImpl(this, source, features).also {
+            broadcast(JcClassFoundEvent(it))
         }
-        return JcClassOrInterfaceImpl(this, source)
     }
 
     override fun findTypeOrNull(name: String): JcType? {
-        return typeCache.get(name) {
-            TypeHolder(doFindTypeOrNull(name))
-        }.type
-    }
-
-    private fun doFindTypeOrNull(name: String): JcType? {
+        val result = features?.firstNotNullOfOrNull { it.tryFindType(this, name) }
+        if (result != null) {
+            return result
+        }
         if (name.endsWith("[]")) {
             val targetName = name.removeSuffix("[]")
             return findTypeOrNull(targetName)?.let {

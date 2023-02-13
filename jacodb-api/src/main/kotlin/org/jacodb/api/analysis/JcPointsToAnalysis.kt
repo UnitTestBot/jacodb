@@ -24,7 +24,8 @@ import org.jacodb.api.cfg.JcLocal
 interface JcPointsToAnalysis<Context> {
 
     /** @return set of objects pointed to by variable [local] in context [context].  */
-    fun reachingObjects(local: JcLocal, context: Context? = null): JcPointsToSet
+    fun reachingObjects(local: JcLocal): JcPointsToSet = reachingObjects(local, null)
+    fun reachingObjects(local: JcLocal, context: Context?): JcPointsToSet
 
     /** @return set of objects pointed to by field  */
     fun reachingObjects(field: JcField): JcPointsToSet
@@ -37,6 +38,7 @@ interface JcPointsToAnalysis<Context> {
     /**
      * @return the set of objects pointed to by instance field [field] of the objects pointed to by [local] in context [context].
      */
+    fun reachingObjects(local: JcLocal, field: JcField): JcPointsToSet  = reachingObjects(local, field, null)
     fun reachingObjects(local: JcLocal, field: JcField, context: Context? = null): JcPointsToSet
 
     /**

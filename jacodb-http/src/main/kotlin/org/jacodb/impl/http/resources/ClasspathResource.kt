@@ -211,7 +211,7 @@ class ClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
     fun new(@RequestBody locations: List<LocationEntity>?): ClasspathEntity {
         val existed = jcdb.locations.associateBy { it.id }
         val classpathLocations = locations.orEmpty().mapNotNull { existed[it.id] }
-        val newClasspath = jcdb.classpathOf(classpathLocations)
+        val newClasspath = jcdb.classpathOf(classpathLocations, null)
         val key = nextUUID()
         classpaths[key] = LastAccessedClasspath(System.currentTimeMillis(), newClasspath)
         return ClasspathEntity(key)
