@@ -488,7 +488,8 @@ class AnalysisTest : BaseTest() {
                 //17-18 for summary edges
                 for (summaryEdge in summaryEdges) {
                     if (summaryEdge.u == v) {
-                        propagate(summaryEdge)
+                        val newPathEdge = Edge(u, summaryEdge.v)
+                        propagate(newPathEdge)
                     }
                 }
             } else {
