@@ -7,7 +7,7 @@ val coroutinesVersion: String by rootProject
 val junit5Version: String by project
 val semVer: String? by project
 
-group = "org.utbot.jacodb"
+group = "org.jacodb"
 project.version = semVer ?: "1.0-SNAPSHOT"
 
 buildscript {
@@ -22,11 +22,13 @@ plugins {
 
     `java-library`
     `maven-publish`
+    `java-test-fixtures`
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     id("org.jetbrains.kotlinx.benchmark") version "0.4.4"
     id("org.cadixdev.licenser") version "0.6.1"
+
 }
 
 subprojects {
