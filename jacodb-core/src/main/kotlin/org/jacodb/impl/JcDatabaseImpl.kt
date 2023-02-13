@@ -157,7 +157,7 @@ class JcDatabaseImpl(
                 async {
                     val sources = location.sources
                     parentScope.ifActive { persistence.persist(location, sources) }
-                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location))) }
+                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location), settings.byteCodeSettings.prefixes)) }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
             }.awaitAll()
@@ -172,7 +172,7 @@ class JcDatabaseImpl(
         awaitBackgroundJobs()
         locationsRegistry.refresh().new.process()
         val result = locationsRegistry.cleanup()
-        classesVfs.visit(RemoveLocationsVisitor(result.outdated))
+        classesVfs.visit(RemoveLocationsVisitor(result.outdated, settings.byteCodeSettings.prefixes))
     }
 
     override suspend fun rebuildFeatures() {

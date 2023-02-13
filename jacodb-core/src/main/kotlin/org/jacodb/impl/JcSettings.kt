@@ -53,6 +53,9 @@ class JcSettings {
     var cacheSettings: JcCacheSettings = JcCacheSettings(10_000, Duration.ofSeconds(10))
         private set
 
+    var byteCodeSettings: JcByteCodeCache = JcByteCodeCache()
+        private set
+
     var hooks: MutableList<(JcDatabase) -> Hook> = arrayListOf()
         private set
 
@@ -84,6 +87,10 @@ class JcSettings {
 
     fun classCaching(maxSize: Long, expiration: Duration) = apply {
         cacheSettings = JcCacheSettings(maxSize, expiration)
+    }
+
+    fun bytecodeCaching(byteCodeCache: JcByteCodeCache) = apply {
+        this.byteCodeSettings = byteCodeCache
     }
 
     fun loadByteCode(files: List<File>) = apply {
@@ -183,4 +190,6 @@ enum class PredefinedPersistenceType : JcPersistenceType {
 
 }
 
-class JcCacheSettings(val maxSize: Long, val expiration: Duration)
+class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
+
+class JcCacheSettings(val maxSize: Long, val expiration: Duration, val byteCodeCache: JcByteCodeCache = JcByteCodeCache())
