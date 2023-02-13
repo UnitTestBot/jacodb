@@ -19,7 +19,7 @@ package org.jacodb.impl.types.substition
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
-import org.utbot.jacodb.impl.types.isNotNullAnnotation
+import org.jacodb.impl.types.isNotNullAnnotation
 import org.jacodb.impl.types.signature.JvmType
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl

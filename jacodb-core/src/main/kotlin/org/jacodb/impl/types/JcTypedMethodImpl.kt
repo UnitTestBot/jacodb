@@ -28,6 +28,8 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.isStatic
 import org.jacodb.api.throwClassNotFound
+import org.jacodb.impl.bytecode.JcAnnotationImpl
+import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
 import org.jacodb.impl.types.signature.MethodResolutionImpl

@@ -18,7 +18,7 @@ package org.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 import org.jacodb.impl.bytecode.isNullable
 
 internal fun JvmType.copyWith(nullability: Boolean?, annotations: List<JcAnnotation> = this.annotations): JvmType =

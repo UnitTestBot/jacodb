@@ -22,6 +22,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
 import org.jacodb.api.ClassSource
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassFoundEvent

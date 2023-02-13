@@ -40,6 +40,7 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.TypeAnnotationNode
 
 fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     name = Type.getObjectType(name).className,

@@ -19,7 +19,7 @@ package org.jacodb.impl.bytecode
 import org.objectweb.asm.TypeReference
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcField
-import org.utbot.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.FieldInfo
 import org.jacodb.impl.types.TypeNameImpl
 

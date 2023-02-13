@@ -23,8 +23,8 @@ import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.throwClassNotFound
-import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
-import org.utbot.jacodb.impl.bytecode.JcMethodImpl
+import org.jacodb.impl.bytecode.JcAnnotationImpl
+import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.JvmType
 import org.jacodb.impl.types.substition.JcSubstitutor
 

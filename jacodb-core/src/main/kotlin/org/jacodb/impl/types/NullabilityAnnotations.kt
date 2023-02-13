@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.types
+package org.jacodb.impl.types
 
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 
 val JcAnnotation.isNotNullAnnotation: Boolean
     get() = NullabilityAnnotations.notNullAnnotations.any { matches(it) }

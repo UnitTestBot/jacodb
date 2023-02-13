@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.types
 
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcRefType
-import org.utbot.jacodb.api.JcType
+import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.ext.isConstructor

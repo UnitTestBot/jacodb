@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.types.signature
+package org.jacodb.impl.types.signature
 
 import org.objectweb.asm.TypePath
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
-import org.utbot.jacodb.impl.types.AnnotationInfo
-import org.utbot.jacodb.impl.types.isNotNullAnnotation
-import org.utbot.jacodb.impl.types.isNullableAnnotation
+import org.jacodb.api.JcClasspath
+import org.jacodb.impl.bytecode.JcAnnotationImpl
+import org.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.types.isNotNullAnnotation
+import org.jacodb.impl.types.isNullableAnnotation
 
 /**
  * Stores the result of [relaxWithAnnotation] method. See this method's docs for more details.

@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types
 
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcRefType

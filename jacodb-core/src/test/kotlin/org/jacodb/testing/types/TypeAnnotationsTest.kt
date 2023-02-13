@@ -14,18 +14,19 @@
  *  limitations under the License.
  */
 
-package org.utbot.jacodb.impl.types
+package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcArrayType
+import org.jacodb.api.JcBoundedWildcard
+import org.jacodb.api.JcClassType
+import org.jacodb.impl.types.JcClassTypeImpl
+import org.jacodb.testing.usages.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcAnnotation
-import org.utbot.jacodb.api.JcArrayType
-import org.utbot.jacodb.api.JcBoundedWildcard
-import org.utbot.jacodb.api.JcClassType
-import org.utbot.jacodb.impl.usages.NullAnnotationExamples
 
-class TypeAnnotationsTest: BaseTypesTest() {
+class TypeAnnotationsTest : BaseTypesTest() {
     @Test
     fun `type annotations on fields`() = runBlocking {
         val clazz = findType<NullAnnotationExamples>()
@@ -105,6 +106,6 @@ class TypeAnnotationsTest: BaseTypesTest() {
     }
 
     private val jbNullable = "org.jetbrains.annotations.Nullable"
-    private val jbNotNull  = "org.jetbrains.annotations.NotNull"
+    private val jbNotNull = "org.jetbrains.annotations.NotNull"
     private val Iterable<JcAnnotation>.simplified get() = map { it.name }
 }

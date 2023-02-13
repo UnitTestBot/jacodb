@@ -22,8 +22,8 @@ import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.throwClassNotFound
-import org.utbot.jacodb.impl.bytecode.JcAnnotationImpl
-import org.utbot.jacodb.impl.bytecode.JcFieldImpl
+import org.jacodb.impl.bytecode.JcAnnotationImpl
+import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
 import org.jacodb.impl.types.substition.JcSubstitutor

@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.PredefinedPrimitives
 
 /**

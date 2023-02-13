@@ -31,6 +31,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.fs.fullAsmNode
+import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.impl.types.signature.MethodResolutionImpl

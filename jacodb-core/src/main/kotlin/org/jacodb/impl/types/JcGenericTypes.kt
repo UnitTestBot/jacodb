@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.types
 
-import org.utbot.jacodb.api.JcAnnotation
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcBoundedWildcard
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcRefType
-import org.utbot.jacodb.api.JcType
+import org.jacodb.api.JcType
 import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.JcTypeVariableDeclaration
 import org.jacodb.api.JcUnboundWildcard
