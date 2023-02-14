@@ -24,7 +24,7 @@ import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 
-class VirtualClasses(
+open class VirtualClasses(
     val classes: List<JcVirtualClass>,
     private val virtualLocation: VirtualLocation = VirtualLocation()
 ) : JcClasspathFeature {
