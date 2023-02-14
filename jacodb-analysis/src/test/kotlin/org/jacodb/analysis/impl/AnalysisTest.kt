@@ -21,44 +21,45 @@ import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.analysis.ApplicationGraph
-import org.utbot.jacodb.api.analysis.JcAnalysisPlatform
-import org.utbot.jacodb.api.cfg.JcArgument
-import org.utbot.jacodb.api.cfg.JcArrayAccess
-import org.utbot.jacodb.api.cfg.JcAssignInst
-import org.utbot.jacodb.api.cfg.JcBinaryExpr
-import org.utbot.jacodb.api.cfg.JcCallExpr
-import org.utbot.jacodb.api.cfg.JcCastExpr
-import org.utbot.jacodb.api.cfg.JcConstant
-import org.utbot.jacodb.api.cfg.JcEqExpr
-import org.utbot.jacodb.api.cfg.JcFieldRef
-import org.utbot.jacodb.api.cfg.JcIfInst
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcInstanceCallExpr
-import org.utbot.jacodb.api.cfg.JcLengthExpr
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.cfg.JcLocalVar
-import org.utbot.jacodb.api.cfg.JcNeqExpr
-import org.utbot.jacodb.api.cfg.JcNewArrayExpr
-import org.utbot.jacodb.api.cfg.JcNewExpr
-import org.utbot.jacodb.api.cfg.JcNullConstant
-import org.utbot.jacodb.api.cfg.JcReturnInst
-import org.utbot.jacodb.api.cfg.JcThis
-import org.utbot.jacodb.api.cfg.JcValue
-import org.utbot.jacodb.api.ext.cfg.callExpr
-import org.utbot.jacodb.api.ext.cfg.fieldRef
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.api.ext.isNullable
-import org.utbot.jacodb.api.ext.packageName
-import org.utbot.jacodb.impl.analysis.JcAnalysisPlatformImpl
-import org.utbot.jacodb.impl.analysis.features.JcCacheGraphFeature
-import org.utbot.jacodb.impl.analysis.locals
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.SyncUsagesExtension
-import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.features.usagesExt
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcAnalysisPlatform
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcArrayAccess
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcBinaryExpr
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcCastExpr
+import org.jacodb.api.cfg.JcConstant
+import org.jacodb.api.cfg.JcEqExpr
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcLengthExpr
+import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcNeqExpr
+import org.jacodb.api.cfg.JcNewArrayExpr
+import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcNullConstant
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcThis
+import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.ext.cfg.fieldRef
+import org.jacodb.api.ext.constructors
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.isNullable
+import org.jacodb.api.ext.packageName
+import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
+import org.jacodb.impl.analysis.features.JcCacheGraphFeature
+import org.jacodb.impl.analysis.locals
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.SyncUsagesExtension
+import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.usagesExt
 import java.util.*
 
 data class Vertex<D>(val statement: JcInst, val domainFact: D)
@@ -349,6 +350,13 @@ class AnalysisTest : BaseTest() {
         }
     }
 
+    @Test
+    fun `fields resolving should work through interfaces`() = runBlocking {
+        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+        val callers = graph.callers(cp.findClass<StringTokenizer>().constructors[2])
+        println(callers.toList().size)
+    }
+    
     @Test
     fun `analyse something`() {
         val graph = runBlocking {
