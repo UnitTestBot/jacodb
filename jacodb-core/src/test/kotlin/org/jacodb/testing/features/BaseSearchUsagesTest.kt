@@ -17,6 +17,11 @@
 package org.jacodb.testing.features
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.FieldUsageMode
+import org.jacodb.api.ext.findClass
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.usages.fields.FieldA
@@ -25,11 +30,6 @@ import org.jacodb.testing.usages.methods.MethodA
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.FieldUsageMode
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.features.usagesExt
 import kotlin.system.measureTimeMillis
 
 abstract class BaseSearchUsagesTest : BaseTest() {

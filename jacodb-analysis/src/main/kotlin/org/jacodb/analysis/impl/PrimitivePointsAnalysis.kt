@@ -16,15 +16,15 @@
 
 package org.jacodb.analysis.impl
 
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.JcField
-import org.utbot.jacodb.api.JcType
-import org.utbot.jacodb.api.analysis.JcPointsToAnalysis
-import org.utbot.jacodb.api.analysis.JcPointsToSet
-import org.utbot.jacodb.api.cfg.JcInst
-import org.utbot.jacodb.api.cfg.JcLocal
-import org.utbot.jacodb.api.ext.objectType
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcField
+import org.jacodb.api.JcType
+import org.jacodb.api.analysis.JcPointsToAnalysis
+import org.jacodb.api.analysis.JcPointsToSet
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.ext.objectType
 
 class FullObjectsSet(type: JcType) : JcPointsToSet {
 

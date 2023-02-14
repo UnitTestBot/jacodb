@@ -18,15 +18,15 @@ package org.jacodb.testing
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.usedFields
+import org.jacodb.api.ext.usedMethods
+import org.jacodb.impl.features.Usages
 import org.jacodb.testing.usages.direct.DirectA
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.api.ext.findFieldsUsedIn
-import org.utbot.jacodb.api.ext.findMethodsUsedIn
-import org.utbot.jacodb.impl.features.Usages
 
 class DirectUsagesTest : BaseTest() {
 
@@ -115,10 +115,10 @@ class DirectUsagesTest : BaseTest() {
 
     private inline fun <reified T> JcClasspath.fieldsUsages(): List<Pair<String, List<Pair<String, List<String>>>>> {
         return runBlocking {
-            val classId = cp.findClass<T>()
+            val classId = findClass<T>()
 
             classId.declaredMethods.map {
-                val usages = findFieldsUsedIn(it)
+                val usages = it.usedFields
                 it.name to listOf(
                     "reads" to usages.reads.map { it.enclosingClass.name + "#" + it.name },
                     "writes" to usages.writes.map { it.enclosingClass.name + "#" + it.name }
@@ -132,12 +132,12 @@ class DirectUsagesTest : BaseTest() {
 
     private inline fun <reified T> JcClasspath.methodsUsages(): List<Pair<String, List<String>>> {
         return runBlocking {
-            val jcClass = cp.findClass<T>()
+            val jcClass = findClass<T>()
 
             val methods = jcClass.declaredMethods
 
             methods.map {
-                it.name to findMethodsUsedIn(it).map { it.enclosingClass.name + "#" + it.name }.toImmutableList()
+                it.name to it.usedMethods.map { it.enclosingClass.name + "#" + it.name }.toImmutableList()
             }.filterNot { it.second.isEmpty() }
         }
     }

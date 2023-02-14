@@ -17,13 +17,13 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcTypedMethod
 import org.jacodb.testing.types.MultipleParametrization.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClassType
-import org.utbot.jacodb.api.JcTypeVariable
-import org.utbot.jacodb.api.JcTypedField
-import org.utbot.jacodb.api.JcTypedMethod
 import kotlin.reflect.KFunction2
 import kotlin.reflect.KMutableProperty1
 

@@ -18,6 +18,13 @@ package org.jacodb.testing;
 
 public class Common {
 
+    public interface CommonInterface {
+
+        default void defaultMethod() {
+            System.out.println("Hello");
+        }
+    }
+
     public static class Common1 {
         public int publicField;
         protected int protectedField;
@@ -26,10 +33,13 @@ public class Common {
 
         public void publicMethod() {
         }
+
         protected void protectedMethod() {
         }
+
         private void privateMethod() {
         }
+
         void packageMethod() {
         }
 

@@ -17,13 +17,13 @@
 package org.jacodb.testing.persistence
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.WithRestoredDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.jacodb.testing.withDB
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.ext.HierarchyExtension
-import org.utbot.jacodb.impl.features.hierarchyExt
 
 class RestoredDBTest : DatabaseEnvTest() {
 

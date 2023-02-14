@@ -17,14 +17,14 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcFeature
+import org.jacodb.impl.jacodb
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.utbot.jacodb.api.JcClasspath
-import org.utbot.jacodb.api.JcDatabase
-import org.utbot.jacodb.api.JcFeature
-import org.utbot.jacodb.impl.jacodb
 import java.nio.file.Files
 import kotlin.reflect.full.companionObjectInstance
 

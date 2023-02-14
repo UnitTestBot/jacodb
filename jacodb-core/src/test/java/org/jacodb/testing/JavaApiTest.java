@@ -17,13 +17,14 @@
 package org.jacodb.testing;
 
 import com.google.common.collect.Lists;
+import org.jacodb.api.JcClassOrInterface;
+import org.jacodb.api.JcClasspath;
+import org.jacodb.api.JcClasspathFeature;
+import org.jacodb.api.JcDatabase;
+import org.jacodb.impl.JacoDB;
+import org.jacodb.impl.JcSettings;
+import org.jacodb.impl.features.Usages;
 import org.junit.jupiter.api.Test;
-import org.utbot.jacodb.api.JcClassOrInterface;
-import org.utbot.jacodb.api.JcClasspath;
-import org.utbot.jacodb.api.JcDatabase;
-import org.utbot.jacodb.impl.JacoDB;
-import org.utbot.jacodb.impl.JcSettings;
-import org.utbot.jacodb.impl.features.Usages;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;

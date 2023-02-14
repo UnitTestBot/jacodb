@@ -16,16 +16,16 @@
 
 package org.jacodb.testing.cfg
 
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcMethod
+import org.jacodb.api.ext.findClass
+import org.jacodb.impl.cfg.util.JcLoop
+import org.jacodb.impl.cfg.util.loops
+import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcClassOrInterface
-import org.utbot.jacodb.api.JcMethod
-import org.utbot.jacodb.api.ext.findClass
-import org.utbot.jacodb.impl.cfg.util.JcLoop
-import org.utbot.jacodb.impl.cfg.util.loops
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
 
 class LoopsTest : BaseTest() {
 

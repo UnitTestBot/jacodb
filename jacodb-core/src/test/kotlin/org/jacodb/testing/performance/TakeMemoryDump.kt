@@ -17,12 +17,16 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.impl.PredefinedPersistenceType
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.Usages
+import org.jacodb.impl.jacodb
+import org.jacodb.impl.storage.jooq.tables.references.CALLS
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.FIELDS
+import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.references.METHODS
 import org.jacodb.testing.allClasspath
-import org.utbot.jacodb.impl.PredefinedPersistenceType
-import org.utbot.jacodb.impl.features.InMemoryHierarchy
-import org.utbot.jacodb.impl.features.Usages
-import org.utbot.jacodb.impl.jacodb
-import org.utbot.jacodb.impl.storage.jooq.tables.references.*
 
 fun main() {
     var start = System.currentTimeMillis()

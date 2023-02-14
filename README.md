@@ -26,31 +26,32 @@ Both levels are connected to `JcClasspath`. You can't modify **classes** retriev
 Java
 ```java
 class Example {
-    public static MethodNode findNormalDistribution() {
-        var commonsMath32 = new File("commons-math3-3.2.jar");
-        var commonsMath36 = new File("commons-math3-3.6.1.jar");
-        var buildDir = new File("my-project/build/classes/java/main");
-        var database = JacoDB.async(
+    public static MethodNode findNormalDistribution() throws Exception {
+        File commonsMath32 = new File("commons-math3-3.2.jar");
+        File commonsMath36 = new File("commons-math3-3.6.1.jar");
+        File buildDir = new File("my-project/build/classes/java/main");
+        JcDatabase database = JacoDB.async(
                 new JcSettings()
-                        .useProcessJRE()
-                        .persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
+                        .useProcessJavaRuntime()
+                        .persistent("/tmp/compilation-db/" + System.currentTimeMillis()) // persist data
         ).get();
 
         // Let's load these three bytecode locations
-        database.load(Arrays.asList(commonsMath32, commonsMath36, buildDir));
+        database.asyncLoad(Arrays.asList(commonsMath32, commonsMath36, buildDir));
 
         // This method just refreshes the libraries inside the database. If there are any changes in libs then 
         // the database updates data with the new results.
-        database.load(Arrays.asList(buildDir));
+        database.asyncLoad(Collections.singletonList(buildDir));
 
         // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
-        var jcClass = database.asyncClasspath(commonsMath32, buildDir).get().findClass("org.apache.commons.math3.distribution.NormalDistribution");
-        System.out.println(jcClass.getMethods().size);
-        System.out.println(jcClass.getAnnotations().size);
-        System.out.println(Api.getConstructors(jcClass).size);
+        JcClassOrInterface jcClass = database.asyncClasspath(Arrays.asList(commonsMath32, buildDir))
+                .get().findClassOrNull("org.apache.commons.math3.distribution.NormalDistribution");
+        System.out.println(jcClass.getDeclaredMethods().size());
+        System.out.println(jcClass.getAnnotations().size());
+        System.out.println(JcClasses.getConstructors(jcClass).size());
 
         // At this point the database read the method bytecode and return the result.
-        return jcClass.getMethods().get(0).body();
+        return jcClass.getDeclaredMethods().get(0).body();
     }
 }
 ```
@@ -62,7 +63,7 @@ suspend fun findNormalDistribution(): Any {
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
     val database = jacodb {
-        useProcessJRE()
+        useProcessJavaRuntime()
         persistent("/tmp/compilation-db/${System.currentTimeMillis()}") // persist data
     }
 
@@ -74,8 +75,9 @@ suspend fun findNormalDistribution(): Any {
     database.load(listOf(buildDir))
 
     // Let's assume that we want to get bytecode info only for `commons-math3` version 3.2.
-    val jcClass = database.classpath(commonsMath32, buildDir).findClass("org.apache.commons.math3.distribution.NormalDistribution")
-    println(jcClass.methods.size)
+    val jcClass = database.classpath(listOf(commonsMath32, buildDir))
+        .findClass("org.apache.commons.math3.distribution.NormalDistribution")
+    println(jcClass.declaredMethods.size)
     println(jcClass.constructors.size)
     println(jcClass.annotations.size)
 
@@ -92,12 +94,14 @@ The database can watch for file system changes in the background and refresh the
 
 Java
 ```java
-    var database = JacoDB.async(new JcSettings()
-        .watchFileSystem()
-        .useProcessJRE()
-        .loadByteCode(Arrays.asList(lib1, buildDir)) 
-        .persistent("", false)).get();
+    public static void watchFileSystem() throws Exception {
+        JcDatabase database = JacoDB.async(new JcSettings()
+            .watchFileSystem()
+            .useProcessJavaRuntime()
+            .loadByteCode(Arrays.asList(lib1, buildDir))
+            .persistent("", false)).get();
     }
+
 
     // A user rebuilds the buildDir folder.
     // The database re-reads the rebuilt directory in the background.
@@ -106,10 +110,10 @@ Java
 Kotlin
 ```kotlin
     val database = jacodb {
-        watchFileSystemChanges = true
-        useProcessJRE()
-        loadByteCode(listOf(lib1, buildDir)) 
-        persistent()
+        watchFileSystem()
+        useProcessJavaRuntime()
+        loadByteCode(listOf(lib1, buildDir))
+        persistent("")
     }
 
     // A user rebuilds the buildDir folder.
@@ -129,38 +133,37 @@ It represents runtime behavior according to parameter substitution in the given 
 
 Java
 ```java
-public class Example {
     public static class A<T> {
         T x = null;
     }
-
+    
     public static class B extends A<String> {
     }
 
-    public static void main(String[] args) {
-        var b = classpath.findTypeOrNull("Example.B");
-        var xType = b.getFields()
+    public static void typesSubstitution() {
+        JcClassType b = (JcClassType)classpath.findTypeOrNull("org.jacodb.examples.JavaReadMeExamples.B");
+        JcType xType = b.getFields()
                 .stream()
                 .filter(it -> "x".equals(it.getName()))
                 .findFirst().get().getFieldType();
-        var stringType = classpath.findTypeOrNull("java.lang.String");
+        JcClassType stringType = (JcClassType) classpath.findTypeOrNull("java.lang.String");
         System.out.println(xType.equals(stringType)); // will print `true` 
     }
-    
-}
 ```
 
 Kotlin
 ```kotlin
-    open class A<T> {
-        val x: T
-    }
-
-    class B: A<String>()
-
-    fun main() {
+    open class A<T>(val x: T)
+    
+    class B(x: String): A<String>(x)
+    
+    suspend fun typesSubstitution() {
+        val db = jacodb {
+            loadByteCode(listOf(File("all-classpath")))
+        }
+        val classpath = db.classpath(listOf(File("all-classpath")))
         val b = classpath.findClass<B>().toType()
-        println(b.fields.first { it.name == "x"}.fieldType == cp.findClass<String>().toType()) // will print `true` 
+        println(b.fields.first { it.name == "x"}.fieldType == classpath.findClass<String>().toType()) // will print `true` 
     }
 ```
 
@@ -173,65 +176,62 @@ The instances of `JcClassOrInterface`, `JcMethod`, and `JcClasspath` are thread-
 
 Java
 ```java
-class Example {
-    public static void main(String[] args) {
-        var database = JacoDB.async(
-                new JcSettings()
-                        .watchFileSystemChanges()
-                        .useProcessJavaRuntime()
-                        .loadByteCode(Arrays.asList(lib1, buildDir))
-                        .persistent(location = "...")
+    public static void refresh() throws Exception {
+        JcDatabase database = JacoDB.async(
+            new JcSettings()
+            .watchFileSystem()
+            .useProcessJavaRuntime()
+            .loadByteCode(Arrays.asList(lib1, buildDir))
+            .persistent("...")
         ).get();
 
-        var cp = database.asyncClasspath(buildDir).get();
+        JcClasspath cp = database.asyncClasspath(Collections.singletonList(buildDir)).get();
         database.asyncRefresh().get(); // does not affect cp classes
 
-        var cp1 = database.asyncClasspath(buildDir).get(); // will use new version of compiled results in buildDir
+        JcClasspath cp1 = database.asyncClasspath(Collections.singletonList(buildDir)).get(); // will use new version of compiled results in buildDir
     }
-}
 ```
 
 
 Kotlin
 ```kotlin
     val database = jacodb {
-        watchFileSystemChanges()
+        watchFileSystem()
         useProcessJavaRuntime()
-        load(listOf(lib1, buildDir))
-        persistent()
+        loadByteCode(listOf(lib1, buildDir))
+        persistent("")
     }
     
-    val cp = database.classpath(buildDir)
+    val cp = database.classpath(listOf(buildDir))
     database.refresh() // does not affect cp classes
-
-    val cp1 = database.classpath(buildDir) // will use new version of compiled results in buildDir
+    
+    val cp1 = database.classpath(listOf(buildDir)) // will use new version of compiled results in buildDir
 ```
 
 If there is a request for a `JcClasspath` instance containing the libraries, which haven't been indexed yet, the indexing process is triggered and the new instance of the `JcClasspath` set is returned. 
 
 Java
 ```java
-class Example {
-    public static void main(String[] args) {
-        var database = Jacodb.async(
-                new JcSettings()
-                        .loadByteCode(Arrays.asList(lib1))
-                        .persistent("...")
+    public static void autoProcessing() throws Exception {
+        JcDatabase database = JacoDB.async(
+            new JcSettings()
+                .loadByteCode(Arrays.asList(lib1))
+                .persistent("...")
         ).get();
 
-        var cp = database.asyncClasspath(buildDir).get(); // database will automatically process buildDir
+        JcClasspath cp = database.asyncClasspath(Collections.singletonList(buildDir)).get(); // database will automatically process buildDir
+
     }
-}
 ```
 
 Kotlin 
 ```kotlin
     val database = jacodb {
-        load(listOf(lib1))
-        persistent()
+        loadByteCode(listOf(lib1))
+        persistent("")
     }
     
-    val cp = database.classpath(buildDir) // database will automatically process buildDir
+    val cp = database.classpath(listOf(buildDir)) // database will automatically process buildDir
 ```
 
 `JacoDB` is thread-safe. If one requests `JcClasspath` instance while loading JAR-files from another thread, 
@@ -259,17 +259,21 @@ class Example {
 Kotlin
 ```kotlin
     val db = jacodb {
-        persistent()
+        persistent("")
     }
     
     thread(start = true) {
-        db.load(listOf(lib1, lib2))
+        runBlocking {
+            db.load(listOf(lib1, lib2))
+        }
     }
     
     thread(start = true) {
-        // maybe created when lib2 or both are not loaded into database
-        // but buildDir will be loaded anyway
-        val cp = db.classpath(buildDir)
+        runBlocking {
+            // maybe created when lib2 or both are not loaded into database
+            // but buildDir will be loaded anyway
+            val cp = db.classpath(listOf(buildDir))
+        }
     }
 ```
 

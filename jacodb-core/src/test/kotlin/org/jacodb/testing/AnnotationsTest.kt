@@ -17,11 +17,11 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcAnnotated
+import org.jacodb.api.ext.findClass
 import org.jacodb.testing.usages.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.JcAnnotated
-import org.utbot.jacodb.api.ext.findClass
 
 class AnnotationsTest : BaseTest() {
 

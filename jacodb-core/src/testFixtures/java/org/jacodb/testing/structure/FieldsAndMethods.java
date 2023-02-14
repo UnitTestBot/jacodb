@@ -18,11 +18,14 @@ package org.jacodb.testing.structure;
 
 import org.jacodb.testing.Common;
 
-public class FieldsAndMethods extends Common.Common1 {
+public class FieldsAndMethods {
 
-    private int privateFieldsAndMethods;
+    public static class Common1Child extends Common.Common1 {
+        private int privateFieldsAndMethods;
 
-    private void privateFieldsAndMethods() {
+        private void privateFieldsAndMethods() {
+        }
+
     }
 
 }

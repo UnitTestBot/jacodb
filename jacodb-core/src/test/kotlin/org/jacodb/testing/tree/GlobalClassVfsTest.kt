@@ -17,14 +17,16 @@
 package org.jacodb.testing.tree
 
 import kotlinx.collections.immutable.persistentListOf
-import org.junit.jupiter.api.Assertions.*
+import org.jacodb.api.ClassSource
+import org.jacodb.impl.fs.ClassSourceImpl
+import org.jacodb.impl.vfs.ClassVfsItem
+import org.jacodb.impl.vfs.ClasspathVfs
+import org.jacodb.impl.vfs.GlobalClassesVfs
+import org.jacodb.impl.vfs.RemoveLocationsVisitor
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.ClassSource
-import org.utbot.jacodb.impl.fs.ClassSourceImpl
-import org.utbot.jacodb.impl.vfs.ClassVfsItem
-import org.utbot.jacodb.impl.vfs.ClasspathVfs
-import org.utbot.jacodb.impl.vfs.GlobalClassesVfs
-import org.utbot.jacodb.impl.vfs.RemoveLocationsVisitor
 
 class GlobalClassVfsTest {
 

@@ -17,10 +17,13 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.testing.types.Comparables.*
+import org.jacodb.api.ext.isSynthetic
+import org.jacodb.testing.types.Comparables.ComparableTest1
+import org.jacodb.testing.types.Comparables.ComparableTest2
+import org.jacodb.testing.types.Comparables.ComparableTest3
+import org.jacodb.testing.types.Comparables.ComparableTest5
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.utbot.jacodb.api.ext.isSynthetic
 
 class RecursiveTypesTest : BaseTypesTest() {
 
