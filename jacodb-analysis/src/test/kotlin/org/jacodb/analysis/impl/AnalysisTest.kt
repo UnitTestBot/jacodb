@@ -17,6 +17,7 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.examples.Example
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -36,6 +37,7 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcNegExpr
 import org.jacodb.api.cfg.JcNeqExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
@@ -47,6 +49,7 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.isAccessibleFrom
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.packageName
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
@@ -55,6 +58,7 @@ import org.jacodb.impl.analysis.locals
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.SyncUsagesExtension
 import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
@@ -154,7 +158,7 @@ class NPEFlowFunctions(
                 is JcLocal -> nonId[VariableNode.fromLocal(rhv)] = setOf(VariableNode.fromLocal(rhv), VariableNode.fromValue(current.lhv)).toList()
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
                 is JcArrayAccess -> Unit // TODO: do smth real here
-                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcBinaryExpr, is JcLengthExpr -> Unit
+                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcBinaryExpr, is JcLengthExpr, is JcNegExpr, is JcThis -> Unit
                 is JcFieldRef -> Unit// TODO: do smth real here
                 is JcCallExpr -> {
                     // todo: this is workaround for non-analyzable methods, do smth cooler here
@@ -310,6 +314,17 @@ class AnalysisTest : BaseTest() {
 
     @Suppress("WARNINGS")
     class NPEExamples {
+
+        interface SomeI {
+            fun functionThatCanThrowNPEOnNull(x: String?)
+            fun functionThatCanNotThrowNPEOnNull(x: String?)
+        }
+
+        class SomeImpl: SomeI {
+            override fun functionThatCanThrowNPEOnNull(x: String?) = println(x!!.length)
+            override fun functionThatCanNotThrowNPEOnNull(x: String?) = println(x)
+        }
+
         private fun constNull(y: String?): String? = null
 
         private fun id(x: String?): String? = x
@@ -348,6 +363,14 @@ class AnalysisTest : BaseTest() {
             }
             return -1
         }
+
+        fun possibleNPEOnVirtualCall(x: SomeI, y: String) {
+            x.functionThatCanThrowNPEOnNull(y)
+        }
+
+        fun noNPEOnVirtualCall(x: SomeI, y: String) {
+            x.functionThatCanNotThrowNPEOnNull(y)
+        }
     }
 
     @Test
@@ -362,6 +385,7 @@ class AnalysisTest : BaseTest() {
         val graph = runBlocking {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
         }
+        val devirtualizer = AllOverridesDevirtualizer(graph, cp)
 //      graph.callees(graph.successors(graph.successors(graph.successors(graph.entryPoint(graph.classpath.findClassOrNull("org.jacodb.analysis.impl.IFDSMainKt").methods.find {it.name.equals("main")}!!).toList().single()).single()).single()).last()!!)
 //      cp.execute(object: JcClassProcessingTask{
 //            override fun process(clazz: JcClassOrInterface) {
@@ -369,7 +393,7 @@ class AnalysisTest : BaseTest() {
 //            }
 //        })
         val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val results = doRun(testingMethod, NPEFlowFunctions(cp, graph, graph), graph)
+        val results = doRun(testingMethod, NPEFlowFunctions(cp, graph, graph), graph, devirtualizer)
         print(results)
     }
 
@@ -412,13 +436,38 @@ class AnalysisTest : BaseTest() {
         assertEquals(emptyList<NPELocation>(), actual)
     }
 
+    @Test
+    fun `npe on virtual call when possible`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "possibleNPEOnVirtualCall" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(2, actual.size) // TODO: should be only one NPE, false positive due to kotlin not-null
+    }
+
+    @Test
+    fun `no npe on virtual call when impossible`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEOnVirtualCall" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(1, actual.size)
+    }
+
+    @Test
+    fun `speed test`() {
+        val method = cp.findClass<Example>().declaredMethods.single { it.name == "main" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(10, actual.size)
+    }
+
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     fun findNPEInstructions(method: JcMethod): List<NPELocation> {
         val graph = runBlocking {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
         }
-        val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph, graph), graph)
+        val devirtualizer = AllOverridesDevirtualizer(graph, cp)
+        val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph, graph), graph, devirtualizer)
         val possibleNPEInstructions = mutableListOf<NPELocation>()
         ifdsResults.resultFacts.forEach { (instruction, facts) ->
             val callExpr = instruction.callExpr
@@ -446,6 +495,29 @@ class AnalysisTest : BaseTest() {
         return possibleNPEInstructions
     }
 
+    interface Devirtualizer<Method, Statement> {
+        /**
+         * Accepts source of the code and sink, which is expected to be virtual call
+         * Should return all methods that could be called by sink.
+         */
+        fun findPossibleCallees(sources: List<Statement>, sink: Statement): Collection<Method>
+    }
+
+    class AllOverridesDevirtualizer(private val initialGraph: ApplicationGraph<JcMethod, JcInst>, classpath: JcClasspath) : Devirtualizer<JcMethod, JcInst> {
+        private val hierarchyExtension = runBlocking {
+            classpath.hierarchyExt()
+        }
+
+        override fun findPossibleCallees(sources: List<JcInst>, sink: JcInst): Collection<JcMethod> {
+            val methods = initialGraph.callees(sink).toList()
+            return methods
+                .filter { it.enclosingClass.isAccessibleFrom(sink.location.method.enclosingClass.packageName) }
+                .flatMap {
+                    hierarchyExtension.findOverrides(it).toList() + listOf(it)
+                }
+        }
+    }
+
     data class IfdsResult<D>(
         val pathEdges: List<Edge<D>>,
         val summaryEdge: List<Edge<D>>,
@@ -465,7 +537,12 @@ class AnalysisTest : BaseTest() {
         }
     }
 
-    fun <D> doRun(startMethod: JcMethod, flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>, graph: ApplicationGraph<JcMethod, JcInst>): IfdsResult<D> = runBlocking {
+    fun <D> doRun(
+        startMethod: JcMethod,
+        flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>,
+        graph: ApplicationGraph<JcMethod, JcInst>,
+        devirtualizer: Devirtualizer<JcMethod, JcInst>?
+    ): IfdsResult<D> = runBlocking {
         val entryPoints = graph.entryPoint(startMethod)
         val pathEdges = mutableListOf<Edge<D>>()
         val workList: Queue<Edge<D>> = LinkedList()
@@ -495,7 +572,7 @@ class AnalysisTest : BaseTest() {
             val (sp, d1) = u
             val (n, d2) = v
 
-            val callees = graph.callees(n).toList()
+            val callees = devirtualizer?.findPossibleCallees(graph.entryPoint(startMethod).toList(), n)?.toList() ?: graph.callees(n).toList()
             // 13
             if (callees.isNotEmpty()) {
                 //14

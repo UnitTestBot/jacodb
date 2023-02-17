@@ -28,7 +28,7 @@ interface JcGraph : JcBytecodeGraph<JcInst> {
     val entry: JcInst
     override val exits: List<JcInst>
     override val entries: List<JcInst>
-        get() = listOf(entry)
+        get() = if (instructions.isEmpty()) listOf() else listOf(entry)
 
     /**
      * returns a map of possible exceptions that may be thrown from this method
