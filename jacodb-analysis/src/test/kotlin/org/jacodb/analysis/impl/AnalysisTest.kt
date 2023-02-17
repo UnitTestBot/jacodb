@@ -17,10 +17,6 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -60,6 +56,10 @@ import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.SyncUsagesExtension
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
+import org.jacodb.testing.BaseTest
+import org.jacodb.testing.WithDB
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.util.*
 
 data class Vertex<D>(val statement: JcInst, val domainFact: D)
@@ -381,7 +381,7 @@ class AnalysisTest : BaseTest() {
         // todo: think about better assertions here
         assertEquals(
             listOf("%3 = %2.length()"),
-            actual.map { it.toString() }
+            actual.map { it.inst.toString() }
         )
     }
 
@@ -390,7 +390,7 @@ class AnalysisTest : BaseTest() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPE" }
         val actual = findNPEInstructions(method)
 
-        assertEquals(emptyList<JcInst>(), actual)
+        assertEquals(emptyList<NPELocation>(), actual)
     }
 
     @Test
@@ -400,7 +400,7 @@ class AnalysisTest : BaseTest() {
 
         assertEquals(
             listOf("%4 = %2.length()", "%5 = %3.length()"),
-            actual.map { it.toString() }
+            actual.map { it.inst.toString() }
         )
     }
 
@@ -409,19 +409,24 @@ class AnalysisTest : BaseTest() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "checkedAccess" }
         val actual = findNPEInstructions(method)
 
-        assertEquals(emptyList<JcInst>(), actual)
+        assertEquals(emptyList<NPELocation>(), actual)
     }
 
-    fun findNPEInstructions(method: JcMethod): List<JcInst> {
+    data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
+
+    fun findNPEInstructions(method: JcMethod): List<NPELocation> {
         val graph = runBlocking {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
         }
         val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph, graph), graph)
-        val possibleNPEInstructions = mutableListOf<JcInst>()
+        val possibleNPEInstructions = mutableListOf<NPELocation>()
         ifdsResults.resultFacts.forEach { (instruction, facts) ->
             val callExpr = instruction.callExpr
             if (callExpr is JcInstanceCallExpr && VariableNode.fromValue(callExpr.instance) in facts) {
-                possibleNPEInstructions.add(instruction)
+                val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
+                    Vertex(instruction, VariableNode.fromValue(callExpr.instance)), method
+                )
+                possibleNPEInstructions.add(NPELocation(instruction, callExpr.instance, possibleStackTrace))
             }
 
             // todo: check for JcLengthExpr and JcArrayAccess
@@ -430,7 +435,10 @@ class AnalysisTest : BaseTest() {
             if (fieldRef is JcFieldRef) {
                 fieldRef.instance?.let {
                     if (VariableNode.fromValue(it) in facts) {
-                        possibleNPEInstructions.add(instruction)
+                        val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
+                            Vertex(instruction, VariableNode.fromValue(it)), method
+                        )
+                        possibleNPEInstructions.add(NPELocation(instruction, it, possibleStackTrace))
                     }
                 }
             }
@@ -438,12 +446,31 @@ class AnalysisTest : BaseTest() {
         return possibleNPEInstructions
     }
 
-    data class IfdsResult<D>(val pathEdges: List<Edge<D>>, val summaryEdge: List<Edge<D>>, val resultFacts: Map<JcInst, Set<D>>)
+    data class IfdsResult<D>(
+        val pathEdges: List<Edge<D>>,
+        val summaryEdge: List<Edge<D>>,
+        val resultFacts: Map<JcInst, Set<D>>,
+        val callToStartEdges: List<Edge<D>>,
+    ) {
+        fun resolvePossibleStackTrace(vertex: Vertex<D>, startMethod: JcMethod): List<JcInst> {
+            val result = mutableListOf(vertex.statement)
+            var curVertex = vertex
+            while (curVertex.statement.location.method != startMethod) {
+                // TODO: Note that taking not first element may cause to infinite loop in this implementation
+                val startVertex = pathEdges.first { it.v == curVertex }.u
+                curVertex = callToStartEdges.first { it.v == startVertex }.u
+                result.add(curVertex.statement)
+            }
+            return result.reversed()
+        }
+    }
 
     fun <D> doRun(startMethod: JcMethod, flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>, graph: ApplicationGraph<JcMethod, JcInst>): IfdsResult<D> = runBlocking {
         val entryPoints = graph.entryPoint(startMethod)
         val pathEdges = mutableListOf<Edge<D>>()
         val workList: Queue<Edge<D>> = LinkedList()
+        val callToStartEdges = mutableListOf<Edge<D>>()
+
         for(entryPoint in entryPoints) {
             for (fact in flowSpace.obtainStartFacts(entryPoint)) {
                 val startV = Vertex(entryPoint, fact)
@@ -454,11 +481,13 @@ class AnalysisTest : BaseTest() {
         }
         val summaryEdges = mutableListOf<Edge<D>>()
 
-        fun propagate(e: Edge<D>) {
+        fun propagate(e: Edge<D>): Boolean {
             if (e !in pathEdges) {
                 pathEdges.add(e)
                 workList.add(e)
+                return true
             }
+            return false
         }
 
         while(!workList.isEmpty()) {
@@ -478,7 +507,9 @@ class AnalysisTest : BaseTest() {
                             //15
                             val sCalledProcWithD3 = Vertex(sCalledProc, d3)
                             val nextEdge = Edge(sCalledProcWithD3, sCalledProcWithD3)
-                            propagate(nextEdge)
+                            if (propagate(nextEdge)) {
+                                callToStartEdges.add(Edge(v, sCalledProcWithD3))
+                            }
                         }
                     }
                 }
@@ -563,6 +594,6 @@ class AnalysisTest : BaseTest() {
             //val method = pathEdge.u.statement.location.method
             resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
         }
-        return@runBlocking IfdsResult(pathEdges, summaryEdges, resultFacts)
+        return@runBlocking IfdsResult(pathEdges, summaryEdges, resultFacts, callToStartEdges)
     }
 }
