@@ -33,6 +33,7 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
+import org.jacodb.api.ext.isStatic
 
 val logger = object : KLogging() {}.logger
 
@@ -75,6 +76,9 @@ val JcMethod.kmConstructor: KmConstructor?
     get() =
         enclosingClass.kMetadata?.constructors?.firstOrNull { it.signature?.name == name && it.signature?.desc == description }
 
+private val JcClassOrInterface.isInner
+    get() = outerClass != null && !isStatic
+
 val JcParameter.kmParameter: KmValueParameter?
     get() {
         method.kmFunction?.let {
@@ -86,7 +90,14 @@ val JcParameter.kmParameter: KmValueParameter?
             return it.valueParameters.getOrNull(index - shift)
         }
 
-        return method.kmConstructor?.valueParameters?.get(index)
+        method.kmConstructor?.let {
+            // In case of inner classes outerclass is implicitly passed to constructor
+            val shift = if (method.enclosingClass.isInner) 1 else 0
+
+            return it.valueParameters.getOrNull(index - shift)
+        }
+
+        return null
     }
 
 // If parameter is a receiver parameter, it doesn't have KmValueParameter instance, but we still can get KmType for it
