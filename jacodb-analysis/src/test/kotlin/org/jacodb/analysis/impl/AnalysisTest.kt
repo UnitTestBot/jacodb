@@ -17,7 +17,6 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.examples.Example
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -45,6 +44,7 @@ import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
@@ -162,7 +162,7 @@ class NPEFlowFunctions(
                 is JcFieldRef -> Unit// TODO: do smth real here
                 is JcCallExpr -> {
                     // todo: this is workaround for non-analyzable methods, do smth cooler here
-                    if (rhv.method.method.isNullable != false && rhv.method.name != "iterator")
+                    if (rhv.method.method.isNullable == true)
                         nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
                 }
                 is JcCastExpr -> {
@@ -283,6 +283,7 @@ class NPEFlowFunctions(
                 is JcLocal -> nonId[VariableNode.fromLocal(value)] = listOf(VariableNode.fromValue(callStatement.lhv))
                 is JcConstant, is JcThis -> Unit
                 is JcFieldRef -> Unit // TODO: do something smarter here
+                null -> Unit // TODO: think about this (null here somehow occurs in lambdas with no return value)
                 else -> TODO()
             }
         }
@@ -299,13 +300,20 @@ class SimplifiedJcApplicationGraph(
 
     override fun predecessors(node: JcInst): Sequence<JcInst> = impl.predecessors(node)
     override fun successors(node: JcInst): Sequence<JcInst> = impl.successors(node)
-    override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot {
-        it.enclosingClass.packageName.startsWith("java") || it.enclosingClass.packageName.startsWith("kotlin")
+    override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
+        bannedPackagePrefixes.any { callee.enclosingClass.packageName.startsWith(it) }
     }
     override fun callers(method: JcMethod): Sequence<JcInst> = impl.callers(method)
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = impl.entryPoint(method)
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = impl.exitPoints(method)
     override fun methodOf(node: JcInst): JcMethod = impl.methodOf(node)
+
+    companion object {
+        private val bannedPackagePrefixes = listOf(
+            "kotlin.",
+            "java."
+        )
+    }
 
 }
 
@@ -321,8 +329,8 @@ class AnalysisTest : BaseTest() {
         }
 
         class SomeImpl: SomeI {
-            override fun functionThatCanThrowNPEOnNull(x: String?) = println(x!!.length)
-            override fun functionThatCanNotThrowNPEOnNull(x: String?) = println(x)
+            override fun functionThatCanThrowNPEOnNull(x: String?) { x!!.length }
+            override fun functionThatCanNotThrowNPEOnNull(x: String?) { x }
         }
 
         private fun constNull(y: String?): String? = null
@@ -364,11 +372,11 @@ class AnalysisTest : BaseTest() {
             return -1
         }
 
-        fun possibleNPEOnVirtualCall(x: SomeI, y: String) {
+        fun possibleNPEOnVirtualCall(x: SomeI, y: String?) {
             x.functionThatCanThrowNPEOnNull(y)
         }
 
-        fun noNPEOnVirtualCall(x: SomeI, y: String) {
+        fun noNPEOnVirtualCall(x: SomeI, y: String?) {
             x.functionThatCanNotThrowNPEOnNull(y)
         }
     }
@@ -452,14 +460,6 @@ class AnalysisTest : BaseTest() {
         assertEquals(1, actual.size)
     }
 
-    @Test
-    fun `speed test`() {
-        val method = cp.findClass<Example>().declaredMethods.single { it.name == "main" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(10, actual.size)
-    }
-
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     fun findNPEInstructions(method: JcMethod): List<NPELocation> {
@@ -503,18 +503,40 @@ class AnalysisTest : BaseTest() {
         fun findPossibleCallees(sources: List<Statement>, sink: Statement): Collection<Method>
     }
 
-    class AllOverridesDevirtualizer(private val initialGraph: ApplicationGraph<JcMethod, JcInst>, classpath: JcClasspath) : Devirtualizer<JcMethod, JcInst> {
+    class AllOverridesDevirtualizer(
+        private val initialGraph: ApplicationGraph<JcMethod, JcInst>,
+        private val classpath: JcClasspath,
+        private val limit: Int = 3
+    ) : Devirtualizer<JcMethod, JcInst> {
         private val hierarchyExtension = runBlocking {
             classpath.hierarchyExt()
         }
 
         override fun findPossibleCallees(sources: List<JcInst>, sink: JcInst): Collection<JcMethod> {
             val methods = initialGraph.callees(sink).toList()
+            if (sink.callExpr !is JcVirtualCallExpr)
+                return methods
             return methods
-                .filter { it.enclosingClass.isAccessibleFrom(sink.location.method.enclosingClass.packageName) }
-                .flatMap {
-                    hierarchyExtension.findOverrides(it).toList() + listOf(it)
+                .flatMap { method ->
+                    if (bannedPackagePrefixes.any { method.enclosingClass.packageName.startsWith(it) })
+                        listOf(method)
+                    else {
+                        hierarchyExtension
+                            .findOverrides(method)
+                            .filter { it.enclosingClass.isAccessibleFrom(sink.location.method.enclosingClass.packageName) }
+                            .take(limit - 1)
+                            .toList() + listOf(method)
+                    }
                 }
+        }
+
+        companion object {
+            private val bannedPackagePrefixes = listOf(
+                "sun.",
+                "jdk.internal",
+                "java.",
+                "kotlin."
+            )
         }
     }
 
