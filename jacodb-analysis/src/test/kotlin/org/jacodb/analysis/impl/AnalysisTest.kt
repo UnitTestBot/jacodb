@@ -152,6 +152,15 @@ class NPEFlowFunctions(
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<VariableNode> {
         val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
+
+        (current.callExpr as? JcInstanceCallExpr)?.let {
+            val instance = it.instance
+            if (instance is JcLocal) {
+                // Calling a method on null will cause NPE => in next instructions instance can't be null
+                nonId[VariableNode.fromLocal(instance)] = emptyList()
+            }
+        }
+
         if (current is JcAssignInst) {
             nonId[VariableNode.fromValue(current.lhv)] = listOf()
             when (val rhv = current.rhv) {
@@ -259,6 +268,13 @@ class NPEFlowFunctions(
         if (callStatement is JcAssignInst) {
             nonId[VariableNode.fromValue(callStatement.lhv)] = emptyList()
         }
+        (callStatement.callExpr as? JcInstanceCallExpr)?.let {
+            val instance = it.instance
+            if (instance is JcLocal) {
+                // Calling a method on null will cause NPE => in next instructions instance can't be null
+                nonId[VariableNode.fromLocal(instance)] = emptyList()
+            }
+        }
         return IdLikeFlowFunction(callStatement.domain, nonId)
     }
 
@@ -329,6 +345,11 @@ class AnalysisTest : BaseTest() {
         }
 
         class SomeImpl: SomeI {
+            override fun functionThatCanThrowNPEOnNull(x: String?) { x }
+            override fun functionThatCanNotThrowNPEOnNull(x: String?) { x }
+        }
+
+        class AnotherImpl: SomeI {
             override fun functionThatCanThrowNPEOnNull(x: String?) { x!!.length }
             override fun functionThatCanNotThrowNPEOnNull(x: String?) { x }
         }
@@ -372,12 +393,23 @@ class AnalysisTest : BaseTest() {
             return -1
         }
 
-        fun possibleNPEOnVirtualCall(x: SomeI, y: String?) {
-            x.functionThatCanThrowNPEOnNull(y)
+        fun consecutiveNPEs(x: String?, flag: Boolean): Int {
+            var a = 0
+            var b = 0
+            if (flag) {
+                a = x!!.length
+                b = x!!.length
+            }
+            var c = x!!.length
+            return a + b + c
         }
 
-        fun noNPEOnVirtualCall(x: SomeI, y: String?) {
-            x.functionThatCanNotThrowNPEOnNull(y)
+        fun possibleNPEOnVirtualCall(x: SomeI?, y: String?) {
+            x!!.functionThatCanThrowNPEOnNull(y)
+        }
+
+        fun noNPEOnVirtualCall(x: SomeI?, y: String?) {
+            x!!.functionThatCanNotThrowNPEOnNull(y)
         }
     }
 
@@ -412,8 +444,8 @@ class AnalysisTest : BaseTest() {
 
         // todo: think about better assertions here
         assertEquals(
-            listOf("%3 = %2.length()"),
-            actual.map { it.inst.toString() }
+            setOf("%3 = %2.length()"),
+            actual.map { it.inst.toString() }.toSet()
         )
     }
 
@@ -431,8 +463,8 @@ class AnalysisTest : BaseTest() {
         val actual = findNPEInstructions(method)
 
         assertEquals(
-            listOf("%4 = %2.length()", "%5 = %3.length()"),
-            actual.map { it.inst.toString() }
+            setOf("%4 = %2.length()", "%5 = %3.length()"),
+            actual.map { it.inst.toString() }.toSet()
         )
     }
 
@@ -445,11 +477,22 @@ class AnalysisTest : BaseTest() {
     }
 
     @Test
+    fun `consecutive NPEs handled properly`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "consecutiveNPEs" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            setOf("%2 = x.length()", "%4 = x.length()"),
+            actual.map { it.inst.toString() }.toSet()
+        )
+    }
+
+    @Test
     fun `npe on virtual call when possible`() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "possibleNPEOnVirtualCall" }
         val actual = findNPEInstructions(method)
 
-        assertEquals(2, actual.size) // TODO: should be only one NPE, false positive due to kotlin not-null
+        assertEquals(2, actual.size)
     }
 
     @Test
