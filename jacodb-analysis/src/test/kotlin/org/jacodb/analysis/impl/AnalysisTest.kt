@@ -161,6 +161,14 @@ class NPEFlowFunctions(
             }
         }
 
+        current.fieldRef?.let {
+            val instance = it.instance
+            if (instance is JcLocal) {
+                // Dereferencing field on null will cause NPE => in next instructions instance can't be null
+                nonId[VariableNode.fromLocal(instance)] = emptyList()
+            }
+        }
+
         if (current is JcAssignInst) {
             nonId[VariableNode.fromValue(current.lhv)] = listOf()
             when (val rhv = current.rhv) {
@@ -272,6 +280,13 @@ class NPEFlowFunctions(
             val instance = it.instance
             if (instance is JcLocal) {
                 // Calling a method on null will cause NPE => in next instructions instance can't be null
+                nonId[VariableNode.fromLocal(instance)] = emptyList()
+            }
+        }
+        callStatement.fieldRef?.let {
+            val instance = it.instance
+            if (instance is JcLocal) {
+                // Dereferencing field on null will cause NPE => in next instructions instance can't be null
                 nonId[VariableNode.fromLocal(instance)] = emptyList()
             }
         }
