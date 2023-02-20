@@ -19,21 +19,11 @@ package org.jacodb.impl.analysis
 import org.jacodb.api.cfg.DefaultJcExprVisitor
 import org.jacodb.api.cfg.DefaultJcInstVisitor
 import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcThrowInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.impl.cfg.collect
 
 interface FlowAnalysis<T> {
@@ -59,9 +49,22 @@ interface FlowAnalysis<T> {
 object LocalResolver : DefaultJcInstVisitor<Sequence<JcLocal>>, DefaultJcExprVisitor<Sequence<JcLocal>> {
 
     override val defaultInstHandler: (JcInst) -> Sequence<JcLocal>
-        get() = { emptySequence() }
+        get() = { inst ->
+            inst.operands
+                .asSequence()
+                .flatMap {
+                    it.accept(this@LocalResolver)
+                }
+        }
+
     override val defaultExprHandler: (JcExpr) -> Sequence<JcLocal>
-        get() = { emptySequence() }
+        get() = { expr ->
+            expr.operands
+                .asSequence()
+                .flatMap {
+                    it.accept(this@LocalResolver)
+                }
+        }
 
     override fun visitJcLocalVar(value: JcLocalVar): Sequence<JcLocal> {
         return sequenceOf(value)
@@ -69,41 +72,6 @@ object LocalResolver : DefaultJcInstVisitor<Sequence<JcLocal>>, DefaultJcExprVis
 
     override fun visitJcArgument(value: JcArgument): Sequence<JcLocal> {
         return sequenceOf(value)
-    }
-
-    private fun visitCallExpr(expr: JcCallExpr): Sequence<JcLocal> {
-        return expr.operands.asSequence().flatMap { it.accept(this@LocalResolver) }
-    }
-
-    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): Sequence<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcAssignInst(inst: JcAssignInst): Sequence<JcLocal> {
-        return sequence {
-            yieldAll(inst.lhv.accept(this@LocalResolver))
-            yieldAll(inst.rhv.accept(this@LocalResolver))
-        }
-    }
-
-    override fun visitJcThrowInst(inst: JcThrowInst): Sequence<JcLocal> {
-        return inst.throwable.accept(this)
-    }
-
-    override fun visitJcCatchInst(inst: JcCatchInst): Sequence<JcLocal> {
-        return inst.throwable.accept(this)
-    }
-
-    override fun visitJcCallInst(inst: JcCallInst): Sequence<JcLocal> {
-        return inst.callExpr.accept(this)
-    }
-
-    override fun visitJcReturnInst(inst: JcReturnInst): Sequence<JcLocal> {
-        return inst.returnValue?.accept(this) ?: emptySequence()
     }
 }
 
