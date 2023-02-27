@@ -237,15 +237,6 @@ val JcClassOrInterface.isKotlin: Boolean
         return annotations.any { it.matches("kotlin.Metadata") }
     }
 
-fun JcClassOrInterface.isAccessibleFrom(packageName: String): Boolean {
-    return when {
-        isAnonymous || isPrivate -> false
-        isPublic -> true
-        isProtected || isPackagePrivate -> packageName == this.packageName
-        else -> false
-    }
-}
-
 private val JcClassOrInterface.simpleBinaryName: String?
     get() {
         // top level class

@@ -16,7 +16,10 @@
 
 package org.jacodb.analysis.impl
 
+import NPEExamples
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.impl.AnalysisTest.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
+import org.jacodb.analysis.impl.SimplifiedJcApplicationGraph.Companion.bannedPackagePrefixes
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -49,7 +52,6 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isAccessibleFrom
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.packageName
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
@@ -97,9 +99,9 @@ data class VariableNode private constructor(val value: JcValue?) {
 
         val ZERO = VariableNode(null)
 
+        // TODO: do we really need these?
         fun fromLocal(value: JcLocal) = VariableNode(value)
 
-        // todo: do we really want this?
         fun fromValue(value: JcValue) = VariableNode(value)
     }
 }
@@ -128,13 +130,18 @@ class IdLikeFlowFunction<D>(
     }
 }
 
+/**
+ * This is an implementation of [FlowFunctionsSpace] for NullPointerException problem based on JaCoDB CFG.
+ * Here "fact D holds" denotes that "value D can be null"
+ */
 class NPEFlowFunctions(
     private val classpath: JcClasspath,
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val platform: JcAnalysisPlatform
 ): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
 
-    // todo: think about name shadowing
+    // TODO: think about name shadowing
+    // Returns all local variables and arguments referenced by this method
     private val JcMethod.domain: Set<VariableNode>
         get() {
             return platform.flowGraph(this).locals
@@ -147,7 +154,7 @@ class NPEFlowFunctions(
         get() = location.method.domain
 
     override fun obtainStartFacts(startStatement: JcInst): Collection<VariableNode> {
-        return startStatement.domain
+        return startStatement.domain.filter { it.value == null || it.value.type.nullable != false }
     }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<VariableNode> {
@@ -176,9 +183,9 @@ class NPEFlowFunctions(
                 is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
                 is JcArrayAccess -> Unit // TODO: do smth real here
                 is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcBinaryExpr, is JcLengthExpr, is JcNegExpr, is JcThis -> Unit
-                is JcFieldRef -> Unit// TODO: do smth real here
+                is JcFieldRef -> Unit // TODO: do smth real here
                 is JcCallExpr -> {
-                    // todo: this is workaround for non-analyzable methods, do smth cooler here
+                    // TODO: this is workaround for non-analyzable methods, do smth cooler here
                     if (rhv.method.method.isNullable == true)
                         nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
                 }
@@ -192,6 +199,9 @@ class NPEFlowFunctions(
                 else -> TODO()
             }
         }
+
+        // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
+        // (because x == null will be held at expr2 but won't be held at expr1)
         if (current is JcIfInst) {
             val expr = current.condition
             var comparedValue: JcValue? = null
@@ -240,12 +250,12 @@ class NPEFlowFunctions(
             JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
         }
 
-
         // We don't propagate locals to the callee
         platform.flowGraph(callStatement.location.method).locals.forEach {
             nonId[VariableNode.fromLocal(it)] = mutableListOf()
         }
 
+        // All nullable callee's locals are initialized as null
         nonId[VariableNode.ZERO] = callee.domain
             .filterIsInstance<JcLocalVar>()
             .filter { it.type.nullable != false }
@@ -274,6 +284,7 @@ class NPEFlowFunctions(
     ): FlowFunctionInstance<VariableNode> {
         val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
         if (callStatement is JcAssignInst) {
+            // Nullability of lhs of assignment will be handled by exit-to-return flow function
             nonId[VariableNode.fromValue(callStatement.lhv)] = emptyList()
         }
         (callStatement.callExpr as? JcInstanceCallExpr)?.let {
@@ -286,6 +297,7 @@ class NPEFlowFunctions(
         callStatement.fieldRef?.let {
             val instance = it.instance
             if (instance is JcLocal) {
+                // TODO: think about how many field dereferences could be here and above
                 // Dereferencing field on null will cause NPE => in next instructions instance can't be null
                 nonId[VariableNode.fromLocal(instance)] = emptyList()
             }
@@ -305,7 +317,7 @@ class NPEFlowFunctions(
             nonId[it] = emptyList()
         }
 
-        // todo: pass everything related to `this` back to caller
+        // TODO: pass everything related to `this` back to caller
 
         if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
             // Propagate results back to caller in case of assignment
@@ -322,6 +334,9 @@ class NPEFlowFunctions(
     }
 }
 
+/**
+ * Simplification of JcApplicationGraph that ignores method calls matching [bannedPackagePrefixes]
+ */
 class SimplifiedJcApplicationGraph(
     override val classpath: JcClasspath,
     usages: SyncUsagesExtension,
@@ -350,83 +365,6 @@ class SimplifiedJcApplicationGraph(
 
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
-
-    @Suppress("WARNINGS")
-    class NPEExamples {
-
-        interface SomeI {
-            fun functionThatCanThrowNPEOnNull(x: String?)
-            fun functionThatCanNotThrowNPEOnNull(x: String?)
-        }
-
-        class SomeImpl: SomeI {
-            override fun functionThatCanThrowNPEOnNull(x: String?) { x }
-            override fun functionThatCanNotThrowNPEOnNull(x: String?) { x }
-        }
-
-        class AnotherImpl: SomeI {
-            override fun functionThatCanThrowNPEOnNull(x: String?) { x!!.length }
-            override fun functionThatCanNotThrowNPEOnNull(x: String?) { x }
-        }
-
-        private fun constNull(y: String?): String? = null
-
-        private fun id(x: String?): String? = x
-
-        private fun twoExits(x: String?): String? {
-            if (x != null && x.startsWith("239"))
-                return x
-            return null
-        }
-
-        fun npeOnLength(): Int {
-            var x: String? = "abc"
-            var y: String? = "def"
-            x = constNull(y)
-            return x!!.length
-        }
-
-        fun noNPE(): Int {
-            var x: String? = null
-            var y: String? = "def"
-            x = id(y)
-            return x!!.length
-        }
-
-        fun npeAfterTwoExits(): Int {
-            var x: String? = null
-            var y: String? = "abc"
-            x = twoExits(x)
-            y = twoExits(y)
-            return x!!.length + y!!.length
-        }
-
-        fun checkedAccess(x: String?): Int {
-            if (x != null) {
-                return x.length
-            }
-            return -1
-        }
-
-        fun consecutiveNPEs(x: String?, flag: Boolean): Int {
-            var a = 0
-            var b = 0
-            if (flag) {
-                a = x!!.length
-                b = x!!.length
-            }
-            var c = x!!.length
-            return a + b + c
-        }
-
-        fun possibleNPEOnVirtualCall(x: SomeI?, y: String?) {
-            x!!.functionThatCanThrowNPEOnNull(y)
-        }
-
-        fun noNPEOnVirtualCall(x: SomeI?, y: String?) {
-            x!!.functionThatCanNotThrowNPEOnNull(y)
-        }
-    }
 
     @Test
     fun `fields resolving should work through interfaces`() = runBlocking {
@@ -457,7 +395,7 @@ class AnalysisTest : BaseTest() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
         val actual = findNPEInstructions(method)
 
-        // todo: think about better assertions here
+        // TODO: think about better assertions here
         assertEquals(
             setOf("%3 = %2.length()"),
             actual.map { it.inst.toString() }.toSet()
@@ -497,7 +435,7 @@ class AnalysisTest : BaseTest() {
         val actual = findNPEInstructions(method)
 
         assertEquals(
-            setOf("%2 = x.length()", "%4 = x.length()"),
+            setOf("%2 = arg$0.length()", "%4 = arg$0.length()"),
             actual.map { it.inst.toString() }.toSet()
         )
     }
@@ -507,6 +445,7 @@ class AnalysisTest : BaseTest() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "possibleNPEOnVirtualCall" }
         val actual = findNPEInstructions(method)
 
+        // TODO: one false-positive here due to not-parsed @NotNull annotation
         assertEquals(2, actual.size)
     }
 
@@ -515,11 +454,15 @@ class AnalysisTest : BaseTest() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEOnVirtualCall" }
         val actual = findNPEInstructions(method)
 
+        // TODO: false-positive here due to not-parsed @NotNull annotation
         assertEquals(1, actual.size)
     }
 
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
+    /**
+     * The method finds all places where NPE may occur
+     */
     fun findNPEInstructions(method: JcMethod): List<NPELocation> {
         val graph = runBlocking {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
@@ -536,7 +479,7 @@ class AnalysisTest : BaseTest() {
                 possibleNPEInstructions.add(NPELocation(instruction, callExpr.instance, possibleStackTrace))
             }
 
-            // todo: check for JcLengthExpr and JcArrayAccess
+            // TODO: check for JcLengthExpr and JcArrayAccess
 
             val fieldRef = instruction.fieldRef
             if (fieldRef is JcFieldRef) {
@@ -555,12 +498,17 @@ class AnalysisTest : BaseTest() {
 
     interface Devirtualizer<Method, Statement> {
         /**
-         * Accepts source of the code and sink, which is expected to be virtual call
+         * Accepts source of the code and sink, which is expected to be virtual call.
+         *
          * Should return all methods that could be called by sink.
          */
         fun findPossibleCallees(sources: List<Statement>, sink: Statement): Collection<Method>
     }
 
+    /**
+     * Simple devirtualizer that substitutes method with all ov its overrides, but no more then [limit].
+     * Also, it doesn't devirtualize methods matching [bannedPackagePrefixes]
+     */
     class AllOverridesDevirtualizer(
         private val initialGraph: ApplicationGraph<JcMethod, JcInst>,
         private val classpath: JcClasspath,
@@ -580,8 +528,7 @@ class AnalysisTest : BaseTest() {
                         listOf(method)
                     else {
                         hierarchyExtension
-                            .findOverrides(method)
-                            .filter { it.enclosingClass.isAccessibleFrom(sink.location.method.enclosingClass.packageName) }
+                            .findOverrides(method) // TODO: maybe filter inaccessible methods here?
                             .take(limit - 1)
                             .toList() + listOf(method)
                     }
@@ -604,6 +551,9 @@ class AnalysisTest : BaseTest() {
         val resultFacts: Map<JcInst, Set<D>>,
         val callToStartEdges: List<Edge<D>>,
     ) {
+        /**
+         * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
+         */
         fun resolvePossibleStackTrace(vertex: Vertex<D>, startMethod: JcMethod): List<JcInst> {
             val result = mutableListOf(vertex.statement)
             var curVertex = vertex
