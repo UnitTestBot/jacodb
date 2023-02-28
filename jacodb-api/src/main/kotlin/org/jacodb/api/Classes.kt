@@ -43,6 +43,7 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val interfaces: List<JcClassOrInterface>
     val innerClasses: List<JcClassOrInterface>
 
+    fun <T> extensionValue(key: String): T?
 }
 
 interface JcAnnotation : JcSymbol {

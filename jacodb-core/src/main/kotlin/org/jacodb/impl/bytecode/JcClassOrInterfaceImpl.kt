@@ -43,6 +43,14 @@ class JcClassOrInterfaceImpl(
         else -> null // maybe we do not need to do right now
     }
 
+    private val extensionData by lazy(LazyThreadSafetyMode.NONE) {
+        HashMap<String, Any>().also { map ->
+            features?.forEach {
+                map.putAll(it.extensionValuesOf(this).orEmpty())
+            }
+        }
+    }
+
     val info by lazy { cachedInfo ?: classSource.info }
 
     override val declaration = JcDeclarationImpl.of(location = classSource.location, this)
@@ -85,6 +93,10 @@ class JcClassOrInterfaceImpl(
 
     override fun bytecode() = classSource.fullAsmNodeWithFrames(classpath)
     override fun binaryBytecode(): ByteArray = classSource.byteCode
+
+    override fun <T> extensionValue(key: String): T? {
+        return extensionData[key] as? T
+    }
 
     override val isAnonymous: Boolean
         get() {

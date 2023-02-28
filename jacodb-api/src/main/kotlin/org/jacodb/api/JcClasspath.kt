@@ -107,6 +107,8 @@ interface JcClasspathFeature {
     fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
     fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
 
+    fun extensionValuesOf(clazz: JcClassOrInterface): Map<String, Any>? = null
+
     fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
     fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
 

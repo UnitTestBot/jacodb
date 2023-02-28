@@ -28,9 +28,12 @@ import org.jacodb.impl.features.classpaths.VirtualLocation
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
+@JvmDefaultWithoutCompatibility
 interface JcVirtualClass : JcClassOrInterface {
     override val declaredFields: List<JcVirtualField>
     override val declaredMethods: List<JcVirtualMethod>
+
+    override fun <T> extensionValue(key: String): T? = null
 
     fun bind(classpath: JcClasspath, virtualLocation: VirtualLocation) {
     }

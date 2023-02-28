@@ -37,6 +37,7 @@ import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.JcFeature
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
+import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.filterExisted
@@ -89,9 +90,9 @@ class JcDatabaseImpl(
 
     private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
         if (this!= null && any { it is ClasspathCache }) {
-            return this
+            return listOf(KotlinMetadata) + this
         }
-        return listOf(ClasspathCache(settings.cacheSettings.maxSize, settings.cacheSettings.expiration)) + this.orEmpty()
+        return listOf(ClasspathCache(settings.cacheSettings.maxSize, settings.cacheSettings.expiration), KotlinMetadata) + this.orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {

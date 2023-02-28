@@ -20,6 +20,7 @@ package org.jacodb.api.ext
 
 import org.jacodb.api.JcAccessible
 import org.jacodb.api.JcAnnotated
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
@@ -122,4 +123,8 @@ internal fun <Container : JcAccessible, Result : JcAccessible> Container.findEle
 
 fun JcAnnotated.hasAnnotation(className: String): Boolean {
     return annotations.any { it.matches(className) }
+}
+
+fun JcAnnotated.annotation(className: String): JcAnnotation? {
+    return annotations.firstOrNull { it.matches(className) }
 }
