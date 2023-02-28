@@ -25,6 +25,7 @@ import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.JcFeature
 import org.jacodb.api.JcSignal
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.BatchedSequence
@@ -115,7 +116,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
     fun syncQuery(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         val persistence = classpath.db.persistence
         val locationIds = classpath.registeredLocations.map { it.id }
-        if (req.name == "java.lang.Object") {
+        if (req.name == OBJECT_CLASS) {
             return BatchedSequence(50) { offset, batchSize ->
                 persistence.read { jooq ->
                     val whereCondition = if (offset == null) {

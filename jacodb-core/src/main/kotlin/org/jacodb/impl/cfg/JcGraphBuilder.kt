@@ -165,12 +165,15 @@ import org.jacodb.api.ext.findFieldOrNull
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.float
+import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.int
 import org.jacodb.api.ext.jvmName
 import org.jacodb.api.ext.long
 import org.jacodb.api.ext.objectType
+import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.short
 import org.jacodb.api.ext.toType
+import org.jacodb.impl.cfg.util.OBJECT_CLASS
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcGraphBuilder(
@@ -416,7 +419,16 @@ class JcGraphBuilder(
             append(")")
             append(returnType.typeName.jvmName())
         }
-        val methodOrNull = findMethodOrNull(name, sb)
+        var methodOrNull = findMethodOrNull(name, sb)
+        if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
+            methodOrNull = findMethodOrNull {
+                val method = it.method
+                method.name == name && method.hasAnnotation("java.lang.invoke.MethodHandle\$PolymorphicSignature")
+            } // weak consumption. may fail
+        }
+        if(methodOrNull == null){
+            println("zzz")
+        }
         return methodOrNull ?: error("Could not find a method with correct signature $typeName#$name$sb")
     }
 
