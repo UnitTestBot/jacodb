@@ -18,7 +18,6 @@ package org.jacodb.testing.types
 
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.ext.isConstructor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

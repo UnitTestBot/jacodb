@@ -26,37 +26,6 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
-
-/**
- * is method has `native` modifier
- */
-val JcMethod.isNative: Boolean
-    get() {
-        return access and Opcodes.ACC_NATIVE != 0
-    }
-
-/**
- * is item has `synchronized` modifier
- */
-val JcMethod.isSynchronized: Boolean
-    get() {
-        return access and Opcodes.ACC_SYNCHRONIZED != 0
-    }
-
-/**
- * return true if method is constructor
- */
-val JcMethod.isConstructor: Boolean
-    get() {
-        return name == "<init>"
-    }
-
-val JcMethod.isClassInitializer: Boolean
-    get() {
-        return name == "<clinit>"
-    }
-
-
 /**
  * is method has `strictfp` modifier
  */

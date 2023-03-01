@@ -20,6 +20,7 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -76,6 +77,36 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 
     val rawInstList: JcInstList<JcRawInst>
     val instList: JcInstList<JcInst>
+
+    /**
+     * is method has `native` modifier
+     */
+    val isNative: Boolean
+        get() {
+            return access and Opcodes.ACC_NATIVE != 0
+        }
+
+    /**
+     * is item has `synchronized` modifier
+     */
+    val isSynchronized: Boolean
+        get() {
+            return access and Opcodes.ACC_SYNCHRONIZED != 0
+        }
+
+    /**
+     * return true if method is constructor
+     */
+    val isConstructor: Boolean
+        get() {
+            return name == "<init>"
+        }
+
+    val isClassInitializer: Boolean
+        get() {
+            return name == "<clinit>"
+        }
+
 
 }
 

@@ -20,8 +20,6 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isConstructor
-import org.jacodb.api.ext.isSynthetic
 import org.jacodb.api.ext.methods
 import org.jacodb.api.ext.toType
 import org.jacodb.testing.hierarchies.Overrides

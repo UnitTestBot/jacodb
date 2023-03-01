@@ -96,7 +96,6 @@ import org.jacodb.api.cfg.JcRawUshrExpr
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.ext.jvmName
 import org.jacodb.impl.cfg.util.baseElementType
 import org.jacodb.impl.cfg.util.internalDesc

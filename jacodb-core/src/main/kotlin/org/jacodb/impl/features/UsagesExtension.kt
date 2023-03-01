@@ -27,9 +27,6 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findDeclaredFieldOrNull
 import org.jacodb.api.ext.findDeclaredMethodOrNull
-import org.jacodb.api.ext.isPackagePrivate
-import org.jacodb.api.ext.isPrivate
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.ext.packageName
 import org.objectweb.asm.Opcodes
 import java.util.concurrent.Future

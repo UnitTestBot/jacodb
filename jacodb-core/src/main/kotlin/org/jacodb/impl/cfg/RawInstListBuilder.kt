@@ -88,7 +88,6 @@ import org.jacodb.api.cfg.JcRawUshrExpr
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.api.ext.isStatic
 import org.jacodb.impl.cfg.util.CLASS_CLASS
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.cfg.util.METHOD_HANDLE_CLASS

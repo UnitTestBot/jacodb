@@ -21,11 +21,6 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.ext.isConstructor
-import org.jacodb.api.ext.isPackagePrivate
-import org.jacodb.api.ext.isProtected
-import org.jacodb.api.ext.isPublic
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.signature.JvmClassRefType

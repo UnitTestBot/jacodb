@@ -16,6 +16,7 @@
 
 package org.jacodb.api
 
+import org.objectweb.asm.Opcodes
 import java.io.File
 
 
@@ -82,7 +83,67 @@ interface JcAnnotatedSymbol : JcSymbol, JcAnnotated
  * represents structure which has access modifiers like field, class, method
  */
 interface JcAccessible {
+
     /** byte-code access value */
     val access: Int
+
+    val isPublic: Boolean
+        get() {
+            return access and Opcodes.ACC_PUBLIC != 0
+        }
+
+    /**
+     * is item has `private` modifier
+     */
+    val isPrivate: Boolean
+        get() {
+            return access and Opcodes.ACC_PRIVATE != 0
+        }
+
+    /**
+     * is item has `protected` modifier
+     */
+    val isProtected: Boolean
+        get() {
+            return access and Opcodes.ACC_PROTECTED != 0
+        }
+
+    /**
+     * is item has `package` modifier
+     */
+    val isPackagePrivate: Boolean
+        get() {
+            return !isPublic && !isProtected && !isPrivate
+        }
+
+    /**
+     * is item has `static` modifier
+     */
+    val isStatic: Boolean
+        get() {
+            return access and Opcodes.ACC_STATIC != 0
+        }
+
+    /**
+     * is item has `final` modifier
+     */
+    val isFinal: Boolean
+        get() {
+            return access and Opcodes.ACC_FINAL != 0
+        }
+
+    /**
+     * is item has `abstract` modifier
+     */
+    val isAbstract: Boolean
+        get() {
+            return access and Opcodes.ACC_ABSTRACT != 0
+        }
+
+    val isSynthetic: Boolean
+        get() {
+            return access and Opcodes.ACC_SYNTHETIC != 0
+        }
+
 }
 

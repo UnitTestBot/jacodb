@@ -26,7 +26,6 @@ import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.MethodResolution
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
