@@ -27,20 +27,6 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 
 
-val JcClassOrInterface.isAnnotation: Boolean
-    get() {
-        return access and Opcodes.ACC_ANNOTATION != 0
-    }
-
-/**
- * is class is interface
- */
-val JcClassOrInterface.isInterface: Boolean
-    get() {
-        return access and Opcodes.ACC_INTERFACE != 0
-    }
-
-
 val JcClassOrInterface.isLocalOrAnonymous: Boolean
     get() {
         return outerMethod != null

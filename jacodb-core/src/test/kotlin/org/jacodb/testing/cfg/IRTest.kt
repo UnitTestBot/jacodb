@@ -46,8 +46,6 @@ import org.jacodb.api.cfg.JcThrowInst
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isAnnotation
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.isKotlin
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType

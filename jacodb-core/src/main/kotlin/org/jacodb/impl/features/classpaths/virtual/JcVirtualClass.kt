@@ -21,7 +21,6 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDeclaration
 import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.objectClass
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.features.classpaths.VirtualLocation

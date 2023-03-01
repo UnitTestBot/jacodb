@@ -24,6 +24,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
+@JvmDefaultWithoutCompatibility
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     val classpath: JcClasspath
@@ -45,6 +46,22 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val innerClasses: List<JcClassOrInterface>
 
     fun <T> extensionValue(key: String): T?
+
+
+    val isAnnotation: Boolean
+        get() {
+            return access and Opcodes.ACC_ANNOTATION != 0
+        }
+
+    /**
+     * is class is interface
+     */
+    val isInterface: Boolean
+        get() {
+            return access and Opcodes.ACC_INTERFACE != 0
+        }
+
+
 }
 
 interface JcAnnotation : JcSymbol {

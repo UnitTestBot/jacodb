@@ -33,7 +33,6 @@ import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.hasBody
 import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.isEnum
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.isLocal
 import org.jacodb.api.ext.isMemberClass
 import org.jacodb.api.ext.isNullable
