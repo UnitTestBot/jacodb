@@ -16,9 +16,9 @@
 
 package org.jacodb.analysis.impl
 
-import com.sun.org.apache.xpath.internal.operations.Bool
+import mu.KotlinLogging
 import net.lingala.zip4j.ZipFile
-import java.io.FileOutputStream
+import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -27,12 +27,14 @@ import java.util.Collections.min
 import kotlin.io.path.*
 import kotlin.random.Random
 
+private val logger = KotlinLogging.logger { }
+
 // region generation
 
-class DeZipper {
+class DeZipper(private val language: TargetLanguage) {
     private fun transferTemplateZipToTemp(): Path {
         val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
-        this.javaClass.classLoader.getResourceAsStream("UtBotTemplateForIfdsSyntheticTests.zip")!!
+        this.javaClass.classLoader.getResourceAsStream(language.projectZipInResourcesName())!!
             .use { templateFromResourceStream ->
                 FileOutputStream(pathWhereToUnzipTemplate.toFile()).use { streamToLocationForTemplate ->
                     templateFromResourceStream.copyTo(streamToLocationForTemplate)
@@ -85,9 +87,8 @@ class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
 
 
     fun getAccessPath(u: Int, v: Int): List<Int> {
-        if (lastQuery == u to v) return lastQueryPath
-
-        if (isAccessible(u, v)) return lastQueryPath
+        if (lastQuery == u to v || isAccessible(u, v))
+            return lastQueryPath
 
         return badPath
     }
@@ -97,6 +98,8 @@ class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
 
 // region common
 
+const val impossibleGraphId = -1
+
 // primary languages - java, cpp.
 // secondary - python, go, js, kotlin, etc.
 
@@ -104,14 +107,11 @@ class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
 // 1. package-private/internal/sealed modifiers - as they are not present in all languages
 // 2. cpp private inheritance, multiple inheritance - as this complicates code model way too much
 // 3. cpp constructor initialization features - complicates ast too much
-// 4.
 
 /**
  * Anything that can be dumped via [TargetLanguage]
  */
-interface CodeElement {
-    // TODO some way to dump
-}
+interface CodeElement
 
 /**
  * Universal visibility that is present in most of the languages.
@@ -156,16 +156,34 @@ interface Inheritable : CodeElement {
  * Anything that resides in type
  */
 interface TypePart : CodeElement {
-    val containingType: TypeRepresentation
+    val containingType: TypePresentation
 }
 
 /**
- * Anything that resides in tyoe and can be located
+ * Anything that resides in type and can be located
  */
 interface NamedTypePart : NameOwner, TypePart {
     override val fqnName: String
         get() = containingType.fqnName + "." + shortName
 }
+
+interface CodePresentation : CodeElement
+
+interface CodeExpression : CodeElement
+
+interface CodeValue : CodeElement {
+    val evaluatedType: TypeUsage
+}
+
+interface ValueReference : NameOwner, CodeValue {
+    fun resolve(): ValuePresentation
+}
+
+interface FieldReference : ValueReference {
+    val qualifier: CodeValue
+}
+
+interface ValueExpression : CodeExpression, CodeValue
 // endregion
 
 // region type
@@ -175,58 +193,79 @@ interface NamedTypePart : NameOwner, TypePart {
 /**
  * Class, interface, abstract class, structure, enum.
  */
-interface TypeRepresentation : VisibilityOwner, NameOwner, Inheritable {
+interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inheritable {
+    companion object {
+        val voidType: TypePresentation =
+            TypeImpl("Void").lockClass()
+    }
+
     // most of the time this is ObjectCreationExpression - for open and final classes
     // in case of abstract, static, interface and enum - this would throw exception
-    val defaultValue: RValueRepresentation
+    val defaultValue: CodeValue
+
     // if created class is not abstract - we will find all methods that do not have implementation
     // and provide default overload for it. Default means completely empty body, same parameters and return type.
     val typeParts: Collection<TypePart>
+
     // there are no way to add interface as we expect:
     // 1. all interface hierarchy will be predefined beforehand - in graph
     // 2. all class hierarchy also will be predefined beforehand - as tree
     // 3. we will know about abstract class to interface mappings
     // 4. we will topologically sort that class-interface graph and generate hierarchy accordingly
-    val implementedInterfaces: Collection<TypeRepresentation>
+    val implementedInterfaces: Collection<TypePresentation>
+
     // as we know class-interface hierarchy - we do not need to redefine who we inherited from
-    override val inheritedFrom: TypeRepresentation?
+    override val inheritedFrom: TypePresentation?
 
-    val defaultConstructor: ConstructorRepresentation
-    val staticCounterPart: TypeRepresentation
-    val instanceType: InstanceType
+    val defaultConstructor: ConstructorPresentation
+    val staticCounterPart: TypePresentation
+    val instanceType: InstanceTypeUsage
 
-    fun overrideMethod(methodToOverride: MethodRepresentation): MethodRepresentation
+    fun overrideMethod(methodToOverride: MethodPresentation): MethodPresentation
     fun createMethod(
-        name: String,
-        parameters: List<LValueRepresentation>,
-        returnType: TypeRepresentation
-    ): MethodRepresentation
+        graphId: Int,
+        name: String = "methodFor$graphId",
+        visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
+        returnType: TypeUsage = voidType.instanceType,
+        inheritanceModifier: InheritanceModifier = InheritanceModifier.FINAL,
+        parameters: List<Pair<TypeUsage, String>> = emptyList(),
+    ): MethodPresentation
 
-    fun createConstructor(parameter: List<LValueRepresentation>, parentConstructorCall: ObjectCreationExpression?): ConstructorRepresentation
-    fun createField(name: String, type: TypeRepresentation, initialValue: RValueRepresentation): FieldRepresentation
+    fun createConstructor(
+        graphId: Int,
+        visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
+        parentConstructorCall: ObjectCreationExpression? = null,
+        parameters: List<Pair<TypeUsage, String>> = emptyList()
+    ): ConstructorPresentation
 
-    val implementedMethods: Collection<MethodRepresentation>
-        get() = typeParts.filterIsInstance<MethodRepresentation>()
-    val allAvailableMethods: Collection<MethodRepresentation>
+    fun createField(name: String, type: TypePresentation, initialValue: CodeValue? = null): FieldPresentation
+
+    val implementedMethods: Collection<MethodPresentation>
+        get() = typeParts.filterIsInstance<MethodPresentation>()
+    val allAvailableMethods: Collection<MethodPresentation>
         get() = (implementedInterfaces.flatMap { it.allAvailableMethods })
             .union(inheritedFrom?.allAvailableMethods ?: mutableListOf())
             .union(implementedMethods)
 
-    val constructors: Collection<ConstructorRepresentation>
-        get() = typeParts.filterIsInstance<ConstructorRepresentation>()
+    val constructors: Collection<ConstructorPresentation>
+        get() = typeParts.filterIsInstance<ConstructorPresentation>()
 
-    val implementedFields: Collection<FieldRepresentation>
-        get() = typeParts.filterIsInstance<FieldRepresentation>()
-    val allAvailableFields: Collection<FieldRepresentation>
+    val implementedFields: Collection<FieldPresentation>
+        get() = typeParts.filterIsInstance<FieldPresentation>()
+    val allAvailableFields: Collection<FieldPresentation>
         get() = implementedFields.union(inheritedFrom?.allAvailableFields ?: emptyList())
 
-    fun getImplementedField(name: String): FieldRepresentation? = implementedFields.singleOrNull { it.shortName == name }
-    fun getField(name: String): FieldRepresentation? = allAvailableFields.singleOrNull { it.shortName == name }
-    fun getImplementedFields(type: ResolvedType): Collection<FieldRepresentation> = implementedFields.filter { it.type == type }
-    fun getFields(type: ResolvedType): Collection<FieldRepresentation> = allAvailableFields.filter { it.type == type }
+    fun getImplementedField(name: String): FieldPresentation? = implementedFields.singleOrNull { it.shortName == name }
+    fun getField(name: String): FieldPresentation? = allAvailableFields.singleOrNull { it.shortName == name }
+    fun getImplementedFields(type: TypeUsage): Collection<FieldPresentation> =
+        implementedFields.filter { it.type == type }
 
-    fun getImplementedMethods(name: String): Collection<MethodRepresentation> = implementedMethods.filter { it.shortName == name }
-    fun getMethods(name: String): Collection<MethodRepresentation> = allAvailableMethods.filter { it.shortName == name }
+    fun getFields(type: TypeUsage): Collection<FieldPresentation> = allAvailableFields.filter { it.type == type }
+
+    fun getImplementedMethods(name: String): Collection<MethodPresentation> =
+        implementedMethods.filter { it.shortName == name }
+
+    fun getMethods(name: String): Collection<MethodPresentation> = allAvailableMethods.filter { it.shortName == name }
 }
 
 //endregion
@@ -236,71 +275,79 @@ interface TypeRepresentation : VisibilityOwner, NameOwner, Inheritable {
 /**
  * Anything that can be called. Parent for functions, methods, lambdas, constructors, destructors etc.
  */
-interface CallableRepresentation : CodeElement {
+interface CallablePresentation : CodePresentation {
     val signature: String
         get() = parameters.joinToString { it.type.fqnName }
 
     // consists from parameters and local variables
     val visibleLocals: Collection<CallableLocal>
-    val returnType: ResolvedType
+    val returnType: TypeUsage
 
     // should be aware of local variables
-    fun createParameter(name: String, type: ResolvedType): ParameterRepresentation
+    fun createParameter(name: String, type: TypeUsage): ParameterPresentation
 
     // should be aware of parameters
     fun createLocalVariable(
         name: String,
-        type: ResolvedType,
-        initialValue: RValueRepresentation
-    ): LocalVariableRepresentation
+        type: TypeUsage,
+        initialValue: CodeValue? = null
+    ): LocalVariablePresentation
 
     /**
      * Each site represent different way to execute this callable
      */
-    val sites: Collection<SiteRepresentation>
-    fun createCallSite(invokedOn: RValueRepresentation?, callee: CallableRepresentation): CallSiteRepresentation
-    val terminationSite: TerminationSiteRepresentation
+    val sites: Collection<Site>
+    fun createCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite
+    val terminationSite: TerminationSite
 
     val graphId: Int
 
-    val parameters: Collection<ParameterRepresentation>
-        get() = visibleLocals.filterIsInstance<ParameterRepresentation>()
-    val localVariables: Collection<LocalVariableRepresentation>
-        get() = visibleLocals.filterIsInstance<LocalVariableRepresentation>()
+    val parameters: Collection<ParameterPresentation>
+        get() = visibleLocals.filterIsInstance<ParameterPresentation>()
+    val localVariables: Collection<LocalVariablePresentation>
+        get() = visibleLocals.filterIsInstance<LocalVariablePresentation>()
 
     fun getLocal(name: String) = visibleLocals.singleOrNull { it.shortName == name }
-    fun getLocals(type: ResolvedType) = visibleLocals.filter { it.type == type }
+    fun getLocals(type: TypeUsage) = visibleLocals.filter { it.type == type }
 
     fun getLocalVariable(name: String) = localVariables.singleOrNull { it.shortName == name }
-    fun getLocalVariables(type: ResolvedType) = localVariables.filter { it.type == type }
+    fun getLocalVariables(type: TypeUsage) = localVariables.filter { it.type == type }
     fun getOrCreateLocalVariable(
         name: String,
-        type: ResolvedType,
-        initialValue: RValueRepresentation
+        type: TypeUsage,
+        initialValue: CodeValue? = null
     ) = getLocalVariable(name) ?: createLocalVariable(name, type, initialValue)
 
     fun getParameter(name: String) = parameters.singleOrNull { it.shortName == name }
-    fun getParameters(type: ResolvedType) = parameters.filter { it.type == type }
-    fun getOrCreateParameter(name: String, type: ResolvedType) =
+    fun getParameters(type: TypeUsage) = parameters.filter { it.type == type }
+    fun getOrCreateParameter(name: String, type: TypeUsage) =
         getParameter(name) ?: createParameter(name, type)
+
+    fun getCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite? =
+        sites.filterIsInstance<CallSite>().singleOrNull {
+            it.invocationExpression.invokedOn == invokedOn && it.invocationExpression.invokedCallable == callee
+        }
+
+    fun getOrCreateCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite =
+        getCallSite(callee, invokedOn) ?: createCallSite(callee, invokedOn)
 }
 
-interface ConstructorRepresentation : CallableRepresentation, VisibilityOwner, TypePart {
+interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart {
     val parentConstructorCall: ObjectCreationExpression?
-    override val returnType: ResolvedType
+    override val returnType: TypeUsage
         get() = containingType.instanceType
 }
 
 /**
  * Any named functions. Global, static functions and methods.
  */
-interface FunctionRepresentation : CallableRepresentation, VisibilityOwner, NameOwner {
+interface FunctionPresentation : CallablePresentation, VisibilityOwner, NameOwner {
     override val fqnName: String
         get() = shortName
 }
 
-interface MethodRepresentation : FunctionRepresentation, NamedTypePart, Inheritable {
-    val overriddenMethod: MethodRepresentation?
+interface MethodPresentation : FunctionPresentation, NamedTypePart, Inheritable {
+    override val inheritedFrom: MethodPresentation?
     override val fqnName: String
         get() = super<NamedTypePart>.fqnName
 }
@@ -310,25 +357,33 @@ interface MethodRepresentation : FunctionRepresentation, NamedTypePart, Inherita
 // region sites
 
 /**
- * Some code block in function. Any callable instance is list of sites.
+ * Some code block in execution path in single function.
+ * Any callable instance is list of sites.
+ * In any execution path each function
  */
-interface SiteRepresentation : CodeElement {
+interface Site : CodeElement {
     val siteId: Int
-    val parentCallable: CallableRepresentation
+    val parentCallable: CallablePresentation
 }
 
 /**
- * Site represents call and all prepartion for this call
+ * Represents call and all preparation for this call
  */
-interface CallSiteRepresentation : SiteRepresentation {
+interface CallSite : Site {
+    val preparation: Collection<CodeExpression>
+    fun addExpressionBeforeInvocation(expression: CodeExpression)
     val invocationExpression: InvocationExpression
 }
 
 /**
  * End of any call sequence.
  */
-interface TerminationSiteRepresentation : SiteRepresentation {
-    fun addDereference(reference: RValueRepresentation)
+interface TerminationSite : Site {
+    val returnValue: CodeValue?
+    fun setReturnValue(value: CodeValue)
+
+    val dereferences: Collection<CodeValue>
+    fun addDereference(reference: CodeValue)
 }
 
 // endregion
@@ -338,39 +393,39 @@ interface TerminationSiteRepresentation : SiteRepresentation {
  * Expression that have arguments. Each argument should specify for which parameter it is used for.
  * If some parameters are not matched - default values of types will be used.
  */
-interface ArgumentsOwnerExpression : RValueRepresentation {
-    val parameterToArgument: Map<ParameterRepresentation, RValueRepresentation>
-    fun addInCall(parameter: ParameterRepresentation, argument: RValueRepresentation)
+interface ArgumentsOwnerExpression : ValueExpression {
+    val parameterToArgument: Map<ParameterPresentation, CodeValue>
+    fun addInCall(parameter: ParameterPresentation, argument: CodeValue)
 }
 
 interface InvocationExpression : ArgumentsOwnerExpression {
-    val invokedCallable: CallableRepresentation
-    val invokedOn: RValueRepresentation?
+    val invokedCallable: CallablePresentation
+    val invokedOn: CodeValue?
 
-    override val type: ResolvedType
+    override val evaluatedType: TypeUsage
         get() = invokedCallable.returnType
 }
 
 interface FunctionInvocationExpression : InvocationExpression {
-    override val invokedOn: RValueRepresentation?
+    override val invokedOn: CodeValue?
         get() = null
-    override val invokedCallable: FunctionRepresentation
+    override val invokedCallable: FunctionPresentation
 }
 
 interface MethodInvocationExpression : InvocationExpression {
-    val invokedMethod: MethodRepresentation
-    override val invokedOn: RValueRepresentation
+    val invokedMethod: MethodPresentation
+    override val invokedOn: CodeValue
 
-    override val invokedCallable: MethodRepresentation
+    override val invokedCallable: MethodPresentation
         get() = invokedMethod
 }
 
 interface ObjectCreationExpression : InvocationExpression {
-    val invokedConstructor: ConstructorRepresentation
+    val invokedConstructor: ConstructorPresentation
 
-    override val invokedCallable: ConstructorRepresentation
+    override val invokedCallable: ConstructorPresentation
         get() = invokedConstructor
-    override val invokedOn: RValueRepresentation?
+    override val invokedOn: CodeValue?
         get() = null
 }
 
@@ -379,106 +434,129 @@ interface ObjectCreationExpression : InvocationExpression {
  * Create anonymous object of this interface and mock anything you need to.
  * [TargetLanguage] will use [substitution] for generating code.
  */
-interface DirectStringSubstitution : CodeElement {
+interface DirectStringSubstitution : CodeValue {
     val substitution: String
 }
 // endregion
 
-// region resolvedType
+// region TypeUsage
 
-enum class TypeTag(private val number: Int) {
-    EMPTY(0),
-    ARRAY(1 shl 0),
-    NULLABLE(1 shl 1);
+interface TypeUsage : CodeElement, NameOwner {
+    fun wrapInArray(): TypeUsage
+
+    val isNullable: Boolean
+    fun flipNullability(): TypeUsage
 }
 
-interface ResolvedType : CodeElement, NameOwner {
-    val tag: EnumSet<TypeTag>
-    fun furthestElementType(): InstanceType
-    fun wrapInArray(): ArrayType
-    fun nullable(): ResolvedType
+interface ArrayTypeUsage : TypeUsage {
+    val element: TypeUsage
+    fun furthestElementType(): TypeUsage
 }
 
-interface ArrayType: ResolvedType {
-    val element: ResolvedType
+interface InstanceTypeUsage : TypeUsage {
+    val representation: TypePresentation
 }
-
-interface InstanceType: ResolvedType {
-    val representation: TypeRepresentation
-}
-
 // endregion
 
 // region values
 /**
  * Anything that can be assigned or invoked.
  */
-interface RValueRepresentation : CodeElement {
-    val type: ResolvedType
+interface ValuePresentation : CodePresentation, NameOwner {
+    val type: TypeUsage
 }
-
-/**
- * Anything you can assign value to.
- */
-interface LValueRepresentation : NameOwner, RValueRepresentation
 
 /**
  * Named entities of callable. For now we require all locals to be unique.
  */
-interface CallableLocal : LValueRepresentation {
-    val parentCallable: CallableRepresentation
+interface CallableLocal : ValuePresentation {
+    val parentCallable: CallablePresentation
+    val reference: ValueReference
 }
 
-interface ParameterRepresentation : CallableLocal {
+interface ParameterPresentation : CallableLocal {
     val indexInSignature: Int
 }
 
 interface InitializerOwner {
-    val initialValue: RValueRepresentation
+    val initialValue: CodeValue?
 }
 
-interface FieldRepresentation : TypePart, LValueRepresentation, InitializerOwner
+interface FieldPresentation : TypePart, ValuePresentation, InitializerOwner, Inheritable {
+    // todo assert that field is accessible in code value type
+    fun createReference(codeValue: CodeValue): FieldReference
+}
 
-interface LocalVariableRepresentation : CallableLocal, InitializerOwner
+interface LocalVariablePresentation : CallableLocal, InitializerOwner, CodeExpression
 // endregion
 
 // region typeImpl
 
 open class TypeImpl(
     final override val shortName: String,
-    final override val visibility: VisibilityModifier,
-    final override val inheritanceModifier: InheritanceModifier,
-    final override val inheritedFrom: TypeRepresentation? = null,
-    interfaces: List<TypeRepresentation> = emptyList(),
-    defaultConstructorParameters: List<LValueRepresentation> = emptyList(),
-    parentConstructorCall: ObjectCreationExpression? = null
-) : TypeRepresentation {
+    defaultConstructorGraphId: Int = impossibleGraphId,
+    final override val visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
+    final override val inheritanceModifier: InheritanceModifier = InheritanceModifier.FINAL,
+    interfaces: List<TypePresentation> = emptyList(),
+    constructorVisibilityModifier: VisibilityModifier = VisibilityModifier.PUBLIC,
+    defaultConstructorParameters: List<Pair<TypeUsage, String>> = emptyList(),
+    parentConstructorCall: ObjectCreationExpression? = null,
+    final override val inheritedFrom: TypePresentation? = null,
+) : TypePresentation {
     final override val implementedInterfaces = interfaces.toSet()
+
+    private var isLocked = false
+
+    fun lockClass(): TypeImpl {
+        isLocked = true
+        return this
+    }
+
+    fun isLocked(): Boolean {
+        return isLocked
+    }
+
+    private fun throwIfLocked() {
+        if (isLocked()) {
+            throw IllegalStateException("Type is locked, modification is unavailable")
+        }
+    }
 
     init {
         // interfaces have separate inheritance mechanism
         // enum and static classes cant inherited classes
         if (inheritanceModifier == InheritanceModifier.INTERFACE ||
             inheritanceModifier == InheritanceModifier.ENUM ||
-            inheritanceModifier == InheritanceModifier.STATIC) {
+            inheritanceModifier == InheritanceModifier.STATIC
+        ) {
             assert(inheritedFrom == null)
         }
 
         if (inheritedFrom != null) {
             // type can be inherited only from abstract or open
-            assert(inheritedFrom.inheritanceModifier == InheritanceModifier.ABSTRACT ||
-                    inheritedFrom.inheritanceModifier == InheritanceModifier.OPEN)
+            assert(
+                inheritedFrom.inheritanceModifier == InheritanceModifier.ABSTRACT ||
+                        inheritedFrom.inheritanceModifier == InheritanceModifier.OPEN
+            )
             // if type is inherited - it can only be abstract, open or final
-            assert(inheritanceModifier == InheritanceModifier.ABSTRACT ||
-                    inheritanceModifier == InheritanceModifier.OPEN ||
-                    inheritanceModifier == InheritanceModifier.FINAL)
+            assert(
+                inheritanceModifier == InheritanceModifier.ABSTRACT ||
+                        inheritanceModifier == InheritanceModifier.OPEN ||
+                        inheritanceModifier == InheritanceModifier.FINAL
+            )
         }
     }
 
-    override val instanceType: InstanceType
-        get() = TODO("Not yet implemented")
-    override val staticCounterPart: TypeRepresentation by lazy { StaticCounterPartTypeImpl(this) }
-    override val defaultConstructor: ConstructorRepresentation by lazy { createConstructor(defaultConstructorParameters, parentConstructorCall) }
+    override val instanceType: InstanceTypeUsage by lazy { InstanceTypeImpl(this, false) }
+    override val staticCounterPart: TypePresentation by lazy { StaticCounterPartTypeImpl(this) }
+    override val defaultConstructor: ConstructorPresentation by lazy {
+        createConstructor(
+            defaultConstructorGraphId,
+            constructorVisibilityModifier,
+            parentConstructorCall,
+            defaultConstructorParameters
+        )
+    }
     override val defaultValue: ObjectCreationExpression by lazy { ObjectCreationExpressionImpl(defaultConstructor) }
 
     override fun equals(other: Any?): Boolean {
@@ -486,7 +564,7 @@ open class TypeImpl(
             return false
 
         // different types should have different fqn names
-        assert(this === other || this.fqnName != other.fqnName)
+        assert(this === other || this.fqnName != other.fqnName || this.staticCounterPart === other)
 
         return other === this
     }
@@ -513,7 +591,8 @@ open class TypeImpl(
      * @throws MethodNotFoundException if [methodToOverride] is not defined in any of parent types
      * @throws MethodCollisionException if [methodToOverride] collides with some other method already defined method in this type hierarchy
      */
-    override fun overrideMethod(methodToOverride: MethodRepresentation): MethodRepresentation {
+    override fun overrideMethod(methodToOverride: MethodPresentation): MethodPresentation {
+        throwIfLocked()
         // 1. check not overridden
         // 2. check no same
         // 3. check no any other conflict
@@ -521,17 +600,30 @@ open class TypeImpl(
     }
 
     // throws if fqn + parameters already presented in available methods
+    // this method intentionally does not allow overriding, use another method for it
     /**
-     * Creates method from scratch.
-     * @throws MethodCollisionException proposed method is already declared in this type hierarchy
+     * Creates method from scratch. This method throws if proposed method already available in hierarchy.
+     * Particularly, it throws if you try to implicitly override another method.
+     * For overriding use [overrideMethod].
      */
     override fun createMethod(
+        graphId: Int,
         name: String,
-        parameters: List<LValueRepresentation>,
-        returnType: TypeRepresentation
-    ): MethodRepresentation {
+        visibility: VisibilityModifier,
+        returnType: TypeUsage,
+        inheritanceModifier: InheritanceModifier,
+        parameters: List<Pair<TypeUsage, String>>,
+    ): MethodPresentation {
+        throwIfLocked()
+        val methodToAdd = MethodImpl(graphId, this, name, visibility, returnType, inheritanceModifier, null, parameters)
+        val collidedMethods = getMethods(name).filter { it.signature == methodToAdd.signature }
 
-        return MethodImpl(this, null)
+        if (collidedMethods.isEmpty()) {
+            typeParts.add(methodToAdd)
+            return methodToAdd
+        } else {
+            throw IllegalStateException("Method with the same signature already present: ${collidedMethods.size}")
+        }
     }
 
     // throws if signature already present
@@ -542,12 +634,25 @@ open class TypeImpl(
      * @throws ConstructorCollisionException proposed constructor is already declared in this type
      * @throws NoParentCallException this type requires parent initialization, provide which parent constructor to call
      */
-    override fun createConstructor(parameter: List<LValueRepresentation>, parentConstructorCall: ObjectCreationExpression?): ConstructorRepresentation {
-        // 1. provide default constructor parameters
-        // 2. create default constructor
+    override fun createConstructor(
+        graphId: Int,
+        visibility: VisibilityModifier,
+        parentConstructorCall: ObjectCreationExpression?,
+        parameters: List<Pair<TypeUsage, String>>
+    ): ConstructorPresentation {
+        throwIfLocked()
+        val constructorToAdd = ConstructorImpl(graphId, this, visibility, parentConstructorCall, parameters)
         // 3. assert constructor is created with parent call in case of need
-        // 4. then we can take object creation expression with this constructor
+        val collidedConstructors = typeParts
+            .filterIsInstance<ConstructorPresentation>()
+            .filter { it.signature == constructorToAdd.signature }
 
+        if (collidedConstructors.isEmpty()) {
+            typeParts.add(constructorToAdd)
+            return constructorToAdd
+        } else {
+            throw IllegalStateException("Constructors with same signature already present: ${collidedConstructors.size}")
+        }
     }
 
     // throws if name already present in hierachy
@@ -557,24 +662,27 @@ open class TypeImpl(
      */
     override fun createField(
         name: String,
-        type: TypeRepresentation,
-        initialValue: RValueRepresentation
-    ): FieldRepresentation {
+        type: TypePresentation,
+        initialValue: CodeValue?
+    ): FieldPresentation {
+        throwIfLocked()
         TODO("Not yet implemented")
     }
 }
 
-class StaticCounterPartTypeImpl(typeImpl: TypeImpl): TypeImpl(), TypeRepresentation {
-    override val staticCounterPart: TypeRepresentation = typeImpl
+class StaticCounterPartTypeImpl(typeImpl: TypeImpl) : TypeImpl(typeImpl.shortName), TypePresentation {
+    override val staticCounterPart: TypePresentation = typeImpl
 
-    override fun overrideMethod(methodToOverride: MethodRepresentation): MethodRepresentation {
+    override fun overrideMethod(methodToOverride: MethodPresentation): MethodPresentation {
         throw IllegalStateException("Methods in static counterparts cannot be overridden")
     }
 
     override fun createConstructor(
-        parameter: List<LValueRepresentation>,
-        parentConstructorCall: ObjectCreationExpression?
-    ): ConstructorRepresentation {
+        graphId: Int,
+        visibility: VisibilityModifier,
+        parentConstructorCall: ObjectCreationExpression?,
+        parameters: List<Pair<TypeUsage, String>>
+    ): ConstructorPresentation {
         throw IllegalStateException("Constructors in static counterparts cannot be created")
     }
 
@@ -582,11 +690,11 @@ class StaticCounterPartTypeImpl(typeImpl: TypeImpl): TypeImpl(), TypeRepresentat
         // todo class<type>?
         get() = throw IllegalStateException("static types dont have default value")
 
-    override val defaultConstructor: ConstructorRepresentation
+    override val defaultConstructor: ConstructorPresentation
         // todo static initializer?
         get() = throw IllegalStateException("static types cannot be instantiated")
 
-    override val instanceType: InstanceType
+    override val instanceType: InstanceTypeUsage
         // todo Class<Type>
         get() = throw IllegalStateException("static types cannot be referenced")
 }
@@ -595,9 +703,9 @@ class StaticCounterPartTypeImpl(typeImpl: TypeImpl): TypeImpl(), TypeRepresentat
 
 // region sites_impl
 
-abstract class SiteImpl : SiteRepresentation {
+abstract class SiteImpl : Site {
     override fun equals(other: Any?): Boolean {
-        if (other !is SiteRepresentation) {
+        if (other !is Site) {
             return false
         }
 
@@ -616,16 +724,28 @@ abstract class SiteImpl : SiteRepresentation {
 class CallSiteImpl(
     // unique identifier with the function
     override val siteId: Int,
-    override val parentCallable: CallableRepresentation,
+    override val parentCallable: CallablePresentation,
     override val invocationExpression: InvocationExpression
-) : SiteImpl(), CallSiteRepresentation
+) : SiteImpl(), CallSite {
+    override val preparation = mutableListOf<CodeExpression>()
+    override fun addExpressionBeforeInvocation(expression: CodeExpression) {
+        preparation.add(expression)
+    }
+}
 
-class TerminationSiteImpl(override val parentCallable: CallableRepresentation) : SiteImpl(),
-    TerminationSiteRepresentation {
-    private val dereferences = mutableListOf<RValueRepresentation>()
+class TerminationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), TerminationSite {
+    override var returnValue: CodeValue? = null
+        private set
+
+    override fun setReturnValue(value: CodeValue) {
+        returnValue = value
+    }
+
+    override val dereferences = mutableListOf<CodeValue>()
 
     override val siteId: Int = Int.MAX_VALUE
-    override fun addDereference(reference: RValueRepresentation) {
+
+    override fun addDereference(reference: CodeValue) {
         // you can add multiple dereferences on the same reference
         dereferences.add(reference)
     }
@@ -635,11 +755,12 @@ class TerminationSiteImpl(override val parentCallable: CallableRepresentation) :
 
 // region callables_impl
 
-open class CallableImpl(
+abstract class CallableImpl(
     override val graphId: Int,
-    override val returnType: ResolvedType,
-    parameters: List<LValueRepresentation> = emptyList()
-) : CallableRepresentation {
+    override val returnType: TypeUsage,
+    parameters: List<Pair<TypeUsage, String>>
+) : CallablePresentation {
+
     override fun hashCode(): Int {
         return graphId.hashCode()
     }
@@ -657,33 +778,33 @@ open class CallableImpl(
     }
 
     override val visibleLocals = parameters
-        .mapIndexed { index, it -> ParameterImpl(it.type, it.shortName, this, index) }
+        .mapIndexed { index, it -> ParameterImpl(it.first, it.second, this, index) }
         .toMutableList<CallableLocal>()
-    override val sites = mutableListOf<SiteRepresentation>()
+    override val sites = mutableListOf<Site>()
 
     override fun createLocalVariable(
         name: String,
-        type: ResolvedType,
-        initialValue: RValueRepresentation
-    ): LocalVariableRepresentation {
+        type: TypeUsage,
+        initialValue: CodeValue?
+    ): LocalVariablePresentation {
         assert(getLocal(name) == null) { "Already have local entity with name $name" }
         return LocalVariableImpl(type, name, initialValue, this).also { visibleLocals.add(it) }
     }
 
-    override fun createParameter(name: String, type: ResolvedType): ParameterRepresentation {
+    override fun createParameter(name: String, type: TypeUsage): ParameterPresentation {
         assert(getLocal(name) == null) { "Already have local entity with name $name" }
         return ParameterImpl(type, name, this, parameters.size).also { visibleLocals.add(it) }
     }
 
     override fun createCallSite(
-        invokedOn: RValueRepresentation?,
-        callee: CallableRepresentation
-    ): CallSiteRepresentation {
-        val invocationExpression: InvocationExpression = if (invokedOn != null && callee is MethodRepresentation) {
+        callee: CallablePresentation,
+        invokedOn: CodeValue?
+    ): CallSite {
+        val invocationExpression: InvocationExpression = if (invokedOn != null && callee is MethodPresentation) {
             MethodInvocationExpressionImpl(callee, invokedOn)
-        } else if (invokedOn == null && callee is FunctionRepresentation) {
+        } else if (invokedOn == null && callee is FunctionPresentation) {
             FunctionInvocationExpressionImpl(callee)
-        } else if (invokedOn == null && callee is ConstructorRepresentation) {
+        } else if (invokedOn == null && callee is ConstructorPresentation) {
             ObjectCreationExpressionImpl(callee)
         } else {
             throw Exception("unknown call site creation")
@@ -692,17 +813,17 @@ open class CallableImpl(
         return CallSiteImpl(sites.size, this, invocationExpression).also { sites.add(it) }
     }
 
-    override val terminationSite: TerminationSiteRepresentation = TerminationSiteImpl(this).also { sites.add(it) }
+    override val terminationSite: TerminationSite = TerminationSiteImpl(this).also { sites.add(it) }
 }
 
 class ConstructorImpl(
     graphId: Int,
+    override val containingType: TypePresentation,
     override val visibility: VisibilityModifier,
-    override val containingType: TypeRepresentation,
-    override val parentConstructorCall: ObjectCreationExpression? = null,
-    parameters: List<LValueRepresentation> = emptyList()
-) : CallableImpl(graphId, containingType.instanceType, parameters), ConstructorRepresentation {
-    override val returnType: ResolvedType
+    override val parentConstructorCall: ObjectCreationExpression?,
+    parameters: List<Pair<TypeUsage, String>>
+) : CallableImpl(graphId, containingType.instanceType, parameters), ConstructorPresentation {
+    override val returnType: TypeUsage
         get() = super<CallableImpl>.returnType
 
     override fun equals(other: Any?): Boolean {
@@ -726,12 +847,11 @@ class ConstructorImpl(
 
 open class FunctionImpl(
     graphId: Int,
-    override val shortName: String,
-    override val visibility: VisibilityModifier,
-    returnType: ResolvedType,
-    parameters: List<LValueRepresentation> = emptyList()
-) : CallableImpl(graphId, returnType, parameters), FunctionRepresentation {
-
+    override val shortName: String = "functionFor$graphId",
+    override val visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
+    returnType: TypeUsage = TypePresentation.voidType.instanceType,
+    parameters: List<Pair<TypeUsage, String>> = emptyList()
+) : CallableImpl(graphId, returnType, parameters), FunctionPresentation {
     override fun equals(other: Any?): Boolean {
         if (other !is FunctionImpl)
             return false
@@ -741,6 +861,7 @@ open class FunctionImpl(
         } else {
             // all functions(including methods) should have unique <fqn, signatures>
             // and so 2 functions should not have same fqn and signature simultaneously
+            // todo or one should override another if this is method
             assert(fqnName != other.fqnName || signature != other.signature)
         }
 
@@ -749,61 +870,48 @@ open class FunctionImpl(
 }
 
 class MethodImpl(
+    graphId: Int,
+    override val containingType: TypePresentation,
     name: String,
     visibility: VisibilityModifier,
-    graphId: Int,
-    returnType: ResolvedType,
+    returnType: TypeUsage,
     override val inheritanceModifier: InheritanceModifier,
     override val inheritedFrom: MethodImpl?,
-    override val containingType: TypeRepresentation,
-    override val overriddenMethod: MethodRepresentation? = null,
-    parameters: List<LValueRepresentation> = emptyList()
-) : FunctionImpl(graphId, name, visibility, returnType, parameters), MethodRepresentation
+    parameters: List<Pair<TypeUsage, String>>
+) : FunctionImpl(graphId, name, visibility, returnType, parameters), MethodPresentation
 
 // endregion
 
 // region expressions_impl
 
 abstract class ArgumentsOwnerExpressionImpl : ArgumentsOwnerExpression {
-    override val parameterToArgument = hashMapOf<ParameterRepresentation, RValueRepresentation>()
-    override fun addInCall(parameter: ParameterRepresentation, argument: RValueRepresentation) {
+    override val parameterToArgument = hashMapOf<ParameterPresentation, CodeValue>()
+    override fun addInCall(parameter: ParameterPresentation, argument: CodeValue) {
         assert(!parameterToArgument.contains(parameter)) { "redeclaration of parameter value, do not do it!" }
+        // todo assert types correlate
         parameterToArgument[parameter] = argument
     }
 }
 
 class FunctionInvocationExpressionImpl(
-    override val invokedCallable: FunctionRepresentation
+    override val invokedCallable: FunctionPresentation
 ) : ArgumentsOwnerExpressionImpl(), FunctionInvocationExpression
 
 class MethodInvocationExpressionImpl(
-    override val invokedMethod: MethodRepresentation,
-    override val invokedOn: RValueRepresentation
+    override val invokedMethod: MethodPresentation,
+    override val invokedOn: CodeValue
 ) : ArgumentsOwnerExpressionImpl(), MethodInvocationExpression
 
-class ObjectCreationExpressionImpl(override val invokedConstructor: ConstructorRepresentation) :
+class ObjectCreationExpressionImpl(override val invokedConstructor: ConstructorPresentation) :
     ArgumentsOwnerExpressionImpl(), ObjectCreationExpression
-
-// endregion
-
-// region resolvedType_impl
-
-abstract class ResolvedTypeImpl(final override val tag: TypeTag): ResolvedType {
-
-}
-
-
-class InstanceTypeImpl(final override val representation: TypeRepresentation): ResolvedTypeImpl(), InstanceType, NameOwner by representation {
-    override fun furthestElementType(): InstanceType = this
-
-    override fun wrapInArray(): ArrayType = ;
-}
 
 // endregion
 
 // region values_impl
 
 abstract class FunctionLocalImpl : CallableLocal {
+    override val reference: ValueReference by lazy { SimpleValueReference(this) }
+
     override fun hashCode(): Int {
         return parentCallable.hashCode() * 31 + shortName.hashCode()
     }
@@ -821,33 +929,36 @@ abstract class FunctionLocalImpl : CallableLocal {
 
         return this === other
     }
+
+    override val fqnName: String
+        get() = (parentCallable as? NameOwner)?.fqnName?.let { "$it." } + shortName
 }
 
 class LocalVariableImpl(
-    override val type: ResolvedType,
+    override val type: TypeUsage,
     // currently we prohibit shadowing local variables,
     // it means that local variables and parameters can be identified by its name and parent function
     override val shortName: String,
-    override val initialValue: RValueRepresentation,
-    override val parentCallable: CallableRepresentation
-) : FunctionLocalImpl(), LocalVariableRepresentation
+    // todo assert initial value type is assignable to type
+    override val initialValue: CodeValue?,
+    override val parentCallable: CallablePresentation
+) : FunctionLocalImpl(), LocalVariablePresentation
 
 class ParameterImpl(
-    override val type: ResolvedType,
+    override val type: TypeUsage,
     override val shortName: String,
     // invariant - two parameters relates to the same function if they point to the same function
     // currently we prohibit shadowing local variables,
     // it means that local variables and parameters can be identified by its name and parent function
-    override val parentCallable: CallableRepresentation,
+    override val parentCallable: CallablePresentation,
     // just for correct code generation
     override val indexInSignature: Int
-) : ParameterRepresentation {
+) : FunctionLocalImpl(), ParameterPresentation {
     override fun equals(other: Any?): Boolean {
-
         assert(
             // here we check that if this is 2 different parameters that refers to the same function --
             this === other
-                    || other !is ParameterRepresentation
+                    || other !is ParameterPresentation
                     || parentCallable != other.parentCallable
                     // -- they stay on different indices
                     || indexInSignature != other.indexInSignature
@@ -857,38 +968,98 @@ class ParameterImpl(
     }
 }
 
+class SimpleValueReference(private val presentation: ValuePresentation) : ValueReference, NameOwner by presentation {
+    override fun resolve(): ValuePresentation = presentation
+    override val evaluatedType: TypeUsage
+        get() = presentation.type
+}
+
 // endregion
 
-class CodeRepresentation(private val graph: Map<Int, Set<Int>>, val language: TargetLanguage) {
-    private val functions = mutableMapOf<Int, FunctionRepresentation>()
-    private var startFunctionIdCounter = startFunctionFirstId
-    private val startFunctionToGenericId = mutableMapOf<String, Int>()
-    private val generatedTypes = mutableMapOf<String, TypeRepresentation>()
+// region resolvedTypeImpl
 
-    // TODO types - int, unit, object, java.base
-    fun dumpTo(sourcesDir: Path) {
+abstract class TypeUsageImpl : TypeUsage {
+    override fun wrapInArray(): TypeUsage {
+        return ArrayTypeUsageImpl(this, false)
+    }
+}
 
+class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean) : TypeUsageImpl(),
+    ArrayTypeUsage {
+    override val shortName: String
+        get() = element.shortName + "[]"
+
+    override fun furthestElementType(): TypeUsage {
+        if (element is ArrayTypeUsage)
+            return element.furthestElementType()
+        return element
     }
 
-    fun getOrCreateFunctionFor(v: Int): FunctionRepresentation {
+    override fun flipNullability(): TypeUsage {
+        // todo flip inner element nullability?
+        return ArrayTypeUsageImpl(element, !isNullable)
+    }
+}
+
+class InstanceTypeImpl(override val representation: TypePresentation, override val isNullable: Boolean) :
+    TypeUsageImpl(), InstanceTypeUsage {
+    override val shortName: String
+        get() = representation.shortName
+
+    override fun flipNullability(): TypeUsage {
+        return InstanceTypeImpl(representation, !isNullable)
+    }
+}
+
+// endregion
+
+class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val language: TargetLanguage) : CodeElement {
+    private val functions = mutableMapOf<Int, FunctionPresentation>()
+    private var startFunctionIdCounter = startFunctionFirstId
+    private val startFunctionToGenericId = mutableMapOf<String, Int>()
+    private val generatedTypes = mutableMapOf<String, TypePresentation>()
+
+    fun getOrCreateFunctionFor(v: Int): FunctionPresentation {
         return functions.getOrPut(v) { FunctionImpl(v) }
     }
 
-    fun getOrCreateStartFunction(name: String): FunctionRepresentation {
+    fun getOrCreateStartFunction(name: String): FunctionPresentation {
         val startFunctionId = startFunctionToGenericId.getOrPut(name) { startFunctionIdCounter++ }
 
         return getOrCreateFunctionFor(startFunctionId)
     }
 
-    fun getOrCreateReferenceType(name: String): TypeRepresentation {
-        return generatedTypes.getOrPut(name) {
-            TypeImpl(name, VisibilityModifier.PUBLIC, InheritanceModifier.FINAL)
-        }
+    fun getOrCreateType(name: String): TypePresentation {
+        val generated = generatedTypes[name]
+        val predefined = language.getPredefinedType(name)
+
+        assert(generated == null || predefined == null) { "type with $name is generated and predefined simultaneously" }
+
+        return generated ?: predefined ?: generatedTypes.getOrPut(name) { TypeImpl(name) }
     }
 
-    inline fun <reified T> getStandardType(): TypeRepresentation {
-        //TODO correct
-        return getOrCreateReferenceType(T::class.java.simpleName)
+    fun getPredefinedType(name: String): TypePresentation? {
+        return language.getPredefinedType(name)
+    }
+
+    fun getPredefinedPrimitive(primitive: TargetLanguage.PredefinedPrimitives): TypePresentation? {
+        return language.getPredefinedPrimitive(primitive)
+    }
+
+    fun dumpTo(projectPath: Path) {
+        for ((name, presentation) in generatedTypes) {
+            language.dumpType(presentation, projectPath)
+        }
+
+        for ((id, function) in functions) {
+            if (id < startFunctionFirstId)
+                language.dumpFunction(function, projectPath)
+        }
+
+        for ((name, id) in startFunctionToGenericId) {
+            val function = functions.getValue(id)
+            language.dumpStartFunction(name, function, projectPath)
+        }
     }
 
     companion object {
@@ -897,12 +1068,272 @@ class CodeRepresentation(private val graph: Map<Int, Set<Int>>, val language: Ta
 }
 
 interface TargetLanguage {
+    enum class PredefinedPrimitives {
+        INT
+    }
+
+    fun projectZipInResourcesName(): String
     fun resolveProjectPathToSources(projectPath: Path): Path
+    fun getPredefinedType(name: String): TypePresentation?
+    fun getPredefinedPrimitive(primitive: PredefinedPrimitives): TypePresentation?
+    fun dumpType(type: TypePresentation, pathToSourcesDir: Path)
+    fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path)
+    fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path)
 }
 
 class JavaLanguage : TargetLanguage {
+    private val realPrimitivesName = mutableMapOf<TargetLanguage.PredefinedPrimitives, String>()
+    private val predefinedTypes = mutableMapOf<String, TypePresentation>()
+
+    init {
+        val integer = TypeImpl("Integer")
+        realPrimitivesName[TargetLanguage.PredefinedPrimitives.INT] = integer.shortName
+        predefinedTypes[integer.shortName] = integer.lockClass()
+        // type argument cannot be primitive
+        val arrayDeque = TypeImpl("ArrayDeque<Integer>")
+        arrayDeque.createMethod(impossibleGraphId, name = "add", parameters = listOf(integer.instanceType to "e"))
+        arrayDeque.createMethod(impossibleGraphId, name = "poll", returnType = integer.instanceType)
+        predefinedTypes[arrayDeque.shortName] = arrayDeque.lockClass()
+    }
+
     override fun resolveProjectPathToSources(projectPath: Path): Path {
-        TODO("Not yet implemented")
+        val relativeJavaSourceSetPath = "src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
+
+        return projectPath.resolve(relativeJavaSourceSetPath.replace('\\', File.separatorChar))
+    }
+
+    override fun projectZipInResourcesName(): String {
+        return "UtBotTemplateForIfdsSyntheticTests.zip"
+    }
+
+    override fun getPredefinedType(name: String): TypePresentation? {
+        return predefinedTypes[name]
+    }
+
+    override fun getPredefinedPrimitive(primitive: TargetLanguage.PredefinedPrimitives): TypePresentation? {
+        return predefinedTypes[realPrimitivesName[primitive]]
+    }
+
+    private var fileWriter: OutputStreamWriter? = null
+
+    private fun inFile(type: TypePresentation, pathToSourcesDir: Path, block: () -> Unit) {
+        val javaFilePath = pathToSourcesDir.resolve(type.shortName + ".java")
+        try {
+            javaFilePath.outputStream().use {
+                fileWriter = OutputStreamWriter(BufferedOutputStream(it))
+                block()
+            }
+        } finally {
+            flush()
+            fileWriter = null
+        }
+    }
+
+    private fun flush() {
+        fileWriter!!.flush()
+    }
+
+    private fun write(content: String) {
+        fileWriter!!.write(content)
+    }
+
+    private fun writeElement(content: String) {
+        write(content)
+        write(" ")
+    }
+
+    private fun appendVisibility(visibility: VisibilityModifier) {
+        writeElement(visibility.toString().lowercase())
+    }
+
+    private fun appendTypeSignature(type: TypePresentation) {
+        appendVisibility(type.visibility)
+        when (type.inheritanceModifier) {
+            InheritanceModifier.ABSTRACT -> writeElement("abstract class")
+            InheritanceModifier.OPEN -> writeElement("class")
+            InheritanceModifier.FINAL -> writeElement("final class")
+            InheritanceModifier.INTERFACE -> writeElement("interface")
+            InheritanceModifier.STATIC -> writeElement("static class")
+            InheritanceModifier.ENUM -> writeElement("enum")
+        }
+        writeElement(type.shortName)
+    }
+
+    private var offset = 0
+
+    private fun addTab() {
+        ++offset
+    }
+
+    private fun removeTab() {
+        --offset
+    }
+
+    private fun tabulate() {
+        for (i in 0 until offset) {
+            write("\t")
+        }
+    }
+
+    private fun inScope(block: () -> Unit) {
+        try {
+            write(" {\n")
+            addTab()
+            tabulate()
+            block()
+        } finally {
+            write("\n}\n")
+            removeTab()
+        }
+    }
+    private fun appendParametersList(callable: CallablePresentation) {
+        write("(")
+        var first = true
+        for (parameter in callable.parameters) {
+            if (!first) {
+                write(", ")
+            }
+            first = false
+            appendTypeUsage(parameter.type)
+            write(parameter.shortName)
+        }
+        write(")")
+    }
+
+
+    private fun append(field: FieldPresentation) {
+        // todo
+    }
+
+    private fun appendTypeUsage(typeUsage: TypeUsage) {
+        hjkhjk
+    }
+
+    private fun appendCodeValue(codeValue: CodeValue) {
+        asd
+    }
+
+    private fun writeDefaultValueForTypeUsage(typeUsage: TypeUsage) {
+        asd
+    }
+
+    private fun appendCallList(objCreationExpression: ObjectCreationExpression) {
+        write("(")
+        var first = true
+        for (parameter in objCreationExpression.invokedConstructor.parameters) {
+            if (!first) {
+                write(", ")
+            }
+            first = false
+            val argument: CodeValue? = objCreationExpression.parameterToArgument[parameter]
+            if (argument == null) {
+                writeDefaultValueForTypeUsage(parameter.type)
+            } else {
+                appendCodeValue(argument)
+            }
+        }
+        write(")")
+    }
+
+    private fun appendLocalVariable(localVariablePresentation: LocalVariablePresentation) {
+        writeElement("val")
+        writeElement(localVariablePresentation.shortName)
+        writeElement(":")
+        appendTypeUsage(localVariablePresentation.type)
+
+        val initialValue = localVariablePresentation.initialValue
+
+        if (initialValue != null) {
+            writeElement("=")
+            appendCodeValue(initialValue)
+        } else {
+            asd
+        }
+    }
+
+    private fun appendSite(site: Site) {
+        when(site) {
+            is CallSite -> {
+                asd
+            }
+            is TerminationSite -> {
+                asdasd
+            }
+        }
+    }
+
+    private fun append(constructor: ConstructorPresentation) {
+        appendVisibility(constructor.visibility)
+        write(constructor.containingType.shortName)
+        appendParametersList(constructor)
+        inScope {
+            val parentCall = constructor.parentConstructorCall
+            if (parentCall != null) {
+                write("super")
+                appendCallList(parentCall)
+            }
+            val localVariables = constructor.localVariables
+            for (variable in localVariables) {
+                appendLocalVariable(variable)
+            }
+            val sites = constructor.sites
+            for (site in sites) {
+                if (site !is TerminationSite)
+                    appendSite(site)
+            }
+            appendSite(constructor.terminationSite)
+        }
+    }
+
+
+    private fun append(methodPresentation: MethodPresentation) {
+        appendVisibility(methodPresentation)
+        if ()
+        asdasd
+    }
+
+    private fun createProxyType(name: String, func: FunctionPresentation): TypePresentation {
+        val proxyType = TypeImpl("ProxyTypeFor$name", inheritanceModifier = InheritanceModifier.STATIC)
+        proxyType.createMethod(
+            func.graphId,
+            func.shortName,
+            func.visibility,
+            func.returnType,
+            InheritanceModifier.STATIC,
+            func.parameters.map { it.type to it.shortName })
+        
+    }
+
+    override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type, pathToSourcesDir) {
+        appendTypeSignature(type)
+        inScope {
+            for (field in type.implementedFields) {
+                append(field)
+            }
+            for (constructor in type.constructors) {
+                append(constructor)
+            }
+            for (method in type.implementedMethods) {
+                append(method)
+            }
+
+            val staticCounterPart = type.staticCounterPart
+
+            for (staticField in staticCounterPart.implementedFields) {
+                append(staticField)
+            }
+            for (staticMethod in staticCounterPart.implementedMethods) {
+                append(staticMethod)
+            }
+        }
+    }
+
+    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =
+        dumpStartFunction(func.shortName, func, pathToSourcesDir)
+
+    override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) {
+        val proxyTypeForFunc = createProxyType(name, func)
+        dumpType(proxyTypeForFunc, pathToSourcesDir)
     }
 }
 
@@ -914,19 +1345,33 @@ interface AnalysisVulnerabilityProvider {
     ): VulnerabilityInstance {
         return provideInstance(codeRepresentation).apply(block)
     }
+
+    fun isApplicable(language: TargetLanguage): Boolean
 }
 
 class NpeProvider : AnalysisVulnerabilityProvider {
     override fun provideInstance(codeRepresentation: CodeRepresentation): VulnerabilityInstance {
         return NpeInstance(codeRepresentation)
     }
+
+    override fun isApplicable(language: TargetLanguage): Boolean {
+        return language is JavaLanguage
+    }
 }
 
-private var vulnerabilitiesCounter = 0
-
 class NpeInstance(private val codeRepresentation: CodeRepresentation) : VulnerabilityInstance {
-    private val id = "npeInstance${++vulnerabilitiesCounter}"
-    private val realPath = mutableListOf<Int>()
+    companion object {
+        private var vulnerabilitiesCounter = 0
+    }
+
+    private val id = "NpeInstance${++vulnerabilitiesCounter}"
+    private val variableId = "variableFor$id"
+    private val parameterId = "parameterFor$id"
+    private val typeId = "typeFor$id"
+    private val startFunctionId = "startFunctionFor$id"
+
+    private val dispatcherName = "dispatchQueue"
+    private val arrayDeque = codeRepresentation.getPredefinedType("ArrayDeque<Integer>")!!
 
     // все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
     // так как рендеринг в конце - все будет ок
@@ -934,14 +1379,31 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
     // НЕТ! так как у нас проблема может быть только на одном путе, только пройдя его полностью - то нам не нужно эмулировать
     // диспатчинг в ифдс, он сам найдет только то, что нужно, а вот верификация будет за юсвм!!
 
-    override fun createSource(u: Int) {
-        val startFunction = codeRepresentation.getOrCreateStartFunction(id)
-        val type = codeRepresentation.getOrCreateReferenceType(id)
+    private fun addPath(targetCall: Int) {
+        val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)
+        val dispatcher = startFunction.getLocalVariable(dispatcherName)!!
+        val dispatcherType = (dispatcher.type as InstanceTypeUsage).representation
+        val dispatcherAddMethod = dispatcherType.implementedMethods.single()
+        val callSite = startFunction.sites.single() as CallSite
+        val invocationExpression = MethodInvocationExpressionImpl(dispatcherAddMethod, dispatcher.reference)
+        val dispatcherAddMethodParameter = dispatcherAddMethod.parameters.single()
 
-        startFunction.newLocalVariable(type, id, type.defaultValue)
+        invocationExpression.addInCall(dispatcherAddMethodParameter, object: DirectStringSubstitution {
+            override val substitution: String = targetCall.toString()
+            override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.type
+        })
+        callSite.addExpressionBeforeInvocation(invocationExpression)
+    }
+
+    override fun createSource(u: Int) {
+        val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)
+        val type = codeRepresentation.getOrCreateType(typeId)
+
+        // must be initialized here as in following transits this will be parameter
+        startFunction.createLocalVariable(dispatcherName, arrayDeque.instanceType, arrayDeque.defaultValue)
+        // initialized as null
+        startFunction.createLocalVariable(variableId, type.instanceType)
         transitVulnerability(startFunction.graphId, u)
-        realPath.add(startFunction.graphId)
-        realPath.add(u)
     }
 
     override fun mutateVulnerability(u: Int, v: Int) {
@@ -951,37 +1413,28 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
     override fun transitVulnerability(u: Int, v: Int) {
         val functionU = codeRepresentation.getOrCreateFunctionFor(u)
         val functionV = codeRepresentation.getOrCreateFunctionFor(v)
-        val variableInU = functionU.getLocalEntity(id)!!
-        val parameterInV = functionV.getOrCreateParameterFor(id, variableInU)
+
+        // as it can be either variable or parameter
+        val dispatchArrayInU = functionU.getLocal(dispatcherName)!!
+        val variableInU = functionU.getLocal(variableId)!!
+
+        // as it can be either variable or parameter
+        val dispatchParameterInV = functionV.getOrCreateParameter(dispatcherName, arrayDeque.instanceType)
+        val parameterInV = functionV.getOrCreateParameter(parameterId, variableInU.type)
+
         val uvCallSite = functionU.getOrCreateCallSite(functionV)
 
-        uvCallSite.addInCall(variableInU, parameterInV)
-        realPath.add(v)
+        uvCallSite.invocationExpression.addInCall(dispatchParameterInV, dispatchArrayInU.reference)
+        uvCallSite.invocationExpression.addInCall(parameterInV, variableInU.reference)
+        addPath(v)
     }
 
     override fun createSink(v: Int) {
         val functionV = codeRepresentation.getOrCreateFunctionFor(v)
-        val variableInV = functionV.getLocalEntity(id)!!
-        val vTerminationSite = functionV.getOrCreateTerminationSite()
+        val variableInV = functionV.getLocalVariable(id)!!
+        val vTerminationSite = functionV.terminationSite
 
-        vTerminationSite.addDereference(variableInV)
-        dispatchPath()
-    }
-
-    private fun dispatchPath() {
-        val startFunction = codeRepresentation.getOrCreateFunctionFor(realPath.first())
-        val intArrayType = codeRepresentation.getStandardType<Array<Int>>()
-        val dispatchArray = startFunction.newLocalVariable(
-            intArrayType,
-            "dispatchArray",
-            intArrayType.valueRepresentationFrom(realPath)
-        )
-        val u = realPath[1]
-        val functionU = codeRepresentation.getOrCreateFunctionFor(u)
-        val parameterInU = functionU.getOrCreateParameterFor("dispatchArray", dispatchArray)
-        val startUCallSite = startFunction.getOrCreateCallSite(functionU)
-
-        startUCallSite.addInCall(dispatchArray, parameterInU)
+        vTerminationSite.addDereference(variableInV.reference)
     }
 }
 
@@ -992,16 +1445,11 @@ interface VulnerabilityInstance {
     fun createSink(v: Int)
 }
 
-private lateinit var randomer: Random
-
 // TODO tests - generate by hands some tests, 100% cover must be
 // TODO c++ implementation
-// TODO plan him on following:
 // TODO enums
 // TODO complex representations - list of other
-// TODO code element hierarchy and top/down
-// TODO site representation hierarchy
-// TODO dereferences, ifs, cycles, arrays, assignments, lambda invokes, returns
+// TODO ifs, cycles, arrays, assignments, lambda invokes, returns
 // TODO analyses aware constructors
 // TODO interfaces - DAG, abstract classes - graph DFS, implementation of interfaces - zip dag to tree
 // TODO method implementation - paths in tree divisino in half, random points
@@ -1012,6 +1460,10 @@ private lateinit var randomer: Random
 // TODO final boss will be unsoundiness - reflection and jni
 // TODO protected modifiers
 // TODO type and/or signature correlation, covariance/contrvariance - this should be part of overloading
+// TODO connecting already defined code
+// TODO generating IFDS false positives to test USVM
+// TODO verifications - all interfaces methods are implemented, no collisions, all abstract methods are defined in non-abstract classes etc
+// TODO per language features to enable/disable some generations
 
 // can be added with minimal work, but i do not see usefulness in foreseeable future
 // TODO extension methods? - should be functions/methods with additional mark
@@ -1030,18 +1482,34 @@ fun main(args: Array<String>) {
     val m = args[1].toInt()
     val k = args[2].toInt()
 
-    randomer = Random(arrayOf(n, m, k).contentHashCode())
+    assert(n in 1 until 1000) { "currently big graphs not supported just in case" }
+    assert(m in 1 until 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
+    assert(k in 0 until min(listOf(255, n, m)))
+
+    val projectPath = Paths.get(args[3]).normalize()
+
+    assert(projectPath.notExists() || projectPath.useDirectoryEntries { it.none() }) { "Provide path to directory which either does not exists or empty" }
+
+    val targetLanguageString = args[4]
+    val targetLanguageService = ServiceLoader.load(TargetLanguage::class.java)
+    val targetLanguage = targetLanguageService.single { it.javaClass.simpleName == targetLanguageString }
 
     val vulnerabilityProviderService = ServiceLoader.load(AnalysisVulnerabilityProvider::class.java)
     val vulnerabilityProviders = mutableListOf<AnalysisVulnerabilityProvider>()
 
     for (analysis in vulnerabilityProviderService) {
-        vulnerabilityProviders.add(analysis)
+        if (analysis.isApplicable(targetLanguage)) {
+            vulnerabilityProviders.add(analysis)
+        }
     }
 
-    assert(n in 1 until 1000) { "currently big graphs not supported just in case" }
-    assert(m in 1 until 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
-    assert(k in 0 until min(listOf(255, n, m)))
+    logger.info { "analyses summary: " }
+
+    val randomSeed = arrayOf(n, m, k).contentHashCode()
+    val randomer = Random(randomSeed)
+
+    logger.info { "debug seed: $randomSeed" }
+
     // 1. как-то задавать анализы, для которых генерируем граф
     // Это говно должено реализовывать интерфейс какой-нибудь, который должен быть положен рядом-в класспас,
     // мы его каким-нибудь рефлекшеном находим и радуемся
@@ -1064,21 +1532,16 @@ fun main(args: Array<String>) {
     // 5. сделать дампалку итогового состояния функций через жопу
     // просто интерфейс, который принимает функцию из репрезентации и путь, куда это говно надо написать. Дальше уже разбирается сама.
     // их тоже можно искать сервисом
-    val projectPath = Paths.get(args[3]).normalize()
-    assert(projectPath.notExists() || projectPath.useDirectoryEntries { it.none() }) { "Provide path to directory which either does not exists or empty" }
-    val targetLanguageString = args[4]
-    val targetLanguageService = ServiceLoader.load(TargetLanguage::class.java)
-    val targetLanguage = targetLanguageService.single { it.javaClass.simpleName == targetLanguageString }
 
-    val dezipper = DeZipper()
+    val dezipper = DeZipper(targetLanguage)
 
     dezipper.dezip(projectPath)
 
     val graph = mutableMapOf<Int, MutableSet<Int>>()
 
     for (i in 0 until m) {
-        val u = Random.nextInt(n)
-        val v = Random.nextInt(n)
+        val u = randomer.nextInt(n)
+        val v = randomer.nextInt(n)
         // TODO loops v->v?
         graph.getOrPut(u) { mutableSetOf() }.add(v)
     }
@@ -1088,9 +1551,9 @@ fun main(args: Array<String>) {
     val generatedVulnerabilitiesList = mutableListOf<VulnerabilityInstance>()
 
     for (i in 0 until k) {
-        val u = Random.nextInt(n)
-        val v = Random.nextInt(n)
-        val vulnerabilityIndex = Random.nextInt(vulnerabilityProviders.size)
+        val u = randomer.nextInt(n)
+        val v = randomer.nextInt(n)
+        val vulnerabilityIndex = randomer.nextInt(vulnerabilityProviders.size)
         val vulnerabilityProvider = vulnerabilityProviders[vulnerabilityIndex]
 
         if (accessibilityCache.isAccessible(u, v)) {
@@ -1109,6 +1572,5 @@ fun main(args: Array<String>) {
         }
     }
 
-    val srcDir = targetLanguage.resolveProjectPathToSources(projectPath)
-    codeRepresentation.dumpTo(srcDir)
+    codeRepresentation.dumpTo(projectPath)
 }
