@@ -277,7 +277,7 @@ interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inher
  */
 interface CallablePresentation : CodePresentation {
     val signature: String
-        get() = parameters.joinToString { it.type.fqnName }
+        get() = parameters.joinToString { it.type.stringPresentation }
 
     // consists from parameters and local variables
     val visibleLocals: Collection<CallableLocal>
@@ -364,14 +364,16 @@ interface MethodPresentation : FunctionPresentation, NamedTypePart, Inheritable 
 interface Site : CodeElement {
     val siteId: Int
     val parentCallable: CallablePresentation
+    val expressionsBefore: Collection<CodeExpression>
+    val expressionsAfter: Collection<CodeExpression>
+    fun addBefore(expression: CodeExpression)
+    fun addAfter(expression: CodeExpression)
 }
 
 /**
  * Represents call and all preparation for this call
  */
 interface CallSite : Site {
-    val preparation: Collection<CodeExpression>
-    fun addExpressionBeforeInvocation(expression: CodeExpression)
     val invocationExpression: InvocationExpression
 }
 
@@ -379,9 +381,6 @@ interface CallSite : Site {
  * End of any call sequence.
  */
 interface TerminationSite : Site {
-    val returnValue: CodeValue?
-    fun setReturnValue(value: CodeValue)
-
     val dereferences: Collection<CodeValue>
     fun addDereference(reference: CodeValue)
 }
@@ -389,6 +388,11 @@ interface TerminationSite : Site {
 // endregion
 
 // region code expressions
+
+interface ReturnExpression : CodeExpression {
+    val toReturn: CodeValue
+}
+
 /**
  * Expression that have arguments. Each argument should specify for which parameter it is used for.
  * If some parameters are not matched - default values of types will be used.
@@ -441,7 +445,9 @@ interface DirectStringSubstitution : CodeValue {
 
 // region TypeUsage
 
-interface TypeUsage : CodeElement, NameOwner {
+interface TypeUsage : CodeElement {
+    val stringPresentation: String
+
     fun wrapInArray(): TypeUsage
 
     val isNullable: Boolean
@@ -454,7 +460,7 @@ interface ArrayTypeUsage : TypeUsage {
 }
 
 interface InstanceTypeUsage : TypeUsage {
-    val representation: TypePresentation
+    val typePresentation: TypePresentation
 }
 // endregion
 
@@ -704,6 +710,17 @@ class StaticCounterPartTypeImpl(typeImpl: TypeImpl) : TypeImpl(typeImpl.shortNam
 // region sites_impl
 
 abstract class SiteImpl : Site {
+    override val expressionsAfter = mutableListOf<CodeExpression>()
+    override val expressionsBefore = mutableListOf<CodeExpression>()
+
+    override fun addBefore(expression: CodeExpression) {
+        expressionsBefore.add(expression)
+    }
+
+    override fun addAfter(expression: CodeExpression) {
+        expressionsAfter.add(expression)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other !is Site) {
             return false
@@ -726,21 +743,9 @@ class CallSiteImpl(
     override val siteId: Int,
     override val parentCallable: CallablePresentation,
     override val invocationExpression: InvocationExpression
-) : SiteImpl(), CallSite {
-    override val preparation = mutableListOf<CodeExpression>()
-    override fun addExpressionBeforeInvocation(expression: CodeExpression) {
-        preparation.add(expression)
-    }
-}
+) : SiteImpl(), CallSite
 
 class TerminationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), TerminationSite {
-    override var returnValue: CodeValue? = null
-        private set
-
-    override fun setReturnValue(value: CodeValue) {
-        returnValue = value
-    }
-
     override val dereferences = mutableListOf<CodeValue>()
 
     override val siteId: Int = Int.MAX_VALUE
@@ -984,10 +989,10 @@ abstract class TypeUsageImpl : TypeUsage {
     }
 }
 
-class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean) : TypeUsageImpl(),
-    ArrayTypeUsage {
-    override val shortName: String
-        get() = element.shortName + "[]"
+class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean) :
+    TypeUsageImpl(), ArrayTypeUsage {
+
+    override val stringPresentation: String = element.stringPresentation + "[]"
 
     override fun furthestElementType(): TypeUsage {
         if (element is ArrayTypeUsage)
@@ -1001,13 +1006,14 @@ class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullabl
     }
 }
 
-class InstanceTypeImpl(override val representation: TypePresentation, override val isNullable: Boolean) :
+class InstanceTypeImpl(override val typePresentation: TypePresentation, override val isNullable: Boolean) :
     TypeUsageImpl(), InstanceTypeUsage {
-    override val shortName: String
-        get() = representation.shortName
+
+    override val stringPresentation: String
+        get() = typePresentation.shortName
 
     override fun flipNullability(): TypeUsage {
-        return InstanceTypeImpl(representation, !isNullable)
+        return InstanceTypeImpl(typePresentation, !isNullable)
     }
 }
 
@@ -1116,8 +1122,11 @@ class JavaLanguage : TargetLanguage {
 
     private var fileWriter: OutputStreamWriter? = null
 
-    private fun inFile(type: TypePresentation, pathToSourcesDir: Path, block: () -> Unit) {
-        val javaFilePath = pathToSourcesDir.resolve(type.shortName + ".java")
+    private fun inFile(nameOwner: NameOwner, pathToSourcesDir: Path, block: () -> Unit) =
+        inFile(nameOwner.shortName, pathToSourcesDir, block)
+
+    private fun inFile(fileName: String, pathToSourcesDir: Path, block: () -> Unit) {
+        val javaFilePath = pathToSourcesDir.resolve("$fileName.java")
         try {
             javaFilePath.outputStream().use {
                 fileWriter = OutputStreamWriter(BufferedOutputStream(it))
@@ -1175,6 +1184,10 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
+    private fun throwCannotDump(ce: CodeElement) {
+        assert(false) { "Do not know how to dump ${ce.javaClass.simpleName}" }
+    }
+
     private fun inScope(block: () -> Unit) {
         try {
             write(" {\n")
@@ -1186,6 +1199,7 @@ class JavaLanguage : TargetLanguage {
             removeTab()
         }
     }
+
     private fun appendParametersList(callable: CallablePresentation) {
         write("(")
         var first = true
@@ -1200,32 +1214,89 @@ class JavaLanguage : TargetLanguage {
         write(")")
     }
 
-
-    private fun append(field: FieldPresentation) {
+    private fun appendField(field: FieldPresentation) {
         // todo
     }
 
     private fun appendTypeUsage(typeUsage: TypeUsage) {
-        hjkhjk
-    }
-
-    private fun appendCodeValue(codeValue: CodeValue) {
-        asd
+        writeElement(typeUsage.stringPresentation)
     }
 
     private fun writeDefaultValueForTypeUsage(typeUsage: TypeUsage) {
-        asd
+        when (typeUsage) {
+            is ArrayTypeUsage -> {
+                throwCannotDump(typeUsage)
+            }
+            is InstanceTypeUsage -> {
+                val presentation = typeUsage.typePresentation
+                val valueToWrite = presentation.defaultValue
+                appendCodeValue(valueToWrite)
+            }
+            else -> {
+                throwCannotDump(typeUsage)
+            }
+        }
     }
 
-    private fun appendCallList(objCreationExpression: ObjectCreationExpression) {
+    private fun appendCodeExpression(codeExpression: CodeExpression) {
+        when (codeExpression) {
+            is ValueExpression -> appendValueExpression(codeExpression)
+            returnStatement;
+                localVariablePresentaion;
+            else -> {
+                throwCannotDump(codeExpression)
+            }
+            // 1. localVariable presentation
+            // 2. return statement - expression
+        }
+    }
+
+    private fun appendCodeValue(codeValue: CodeValue) {
+        when (codeValue) {
+            is DirectStringSubstitution -> write(codeValue.substitution)
+            is ValueReference -> {
+                val presentation = codeValue.resolve()
+                write(presentation.shortName)
+            }
+            is ValueExpression -> appendValueExpression(codeValue)
+            else -> {
+                throwCannotDump(codeValue)
+            }
+        }
+    }
+
+    private fun appendValueExpression(valueExpression: ValueExpression) {
+        when (valueExpression) {
+            is ObjectCreationExpression -> {
+                writeElement("new")
+                writeElement(valueExpression.invokedConstructor.containingType.shortName)
+                appendCallList(valueExpression)
+            }
+            is MethodInvocationExpression -> {
+                appendCodeValue(valueExpression.invokedOn)
+                write(".")
+                write(valueExpression.invokedMethod.shortName)
+                appendCallList(valueExpression)
+            }
+            is FunctionInvocationExpression -> {
+                write(valueExpression.invokedCallable.shortName)
+                appendCallList(valueExpression)
+            }
+            else -> {
+                throwCannotDump(valueExpression)
+            }
+        }
+    }
+
+    private fun appendCallList(invocationExpression: InvocationExpression) {
         write("(")
         var first = true
-        for (parameter in objCreationExpression.invokedConstructor.parameters) {
+        for (parameter in invocationExpression.invokedCallable.parameters) {
             if (!first) {
                 write(", ")
             }
             first = false
-            val argument: CodeValue? = objCreationExpression.parameterToArgument[parameter]
+            val argument: CodeValue? = invocationExpression.parameterToArgument[parameter]
             if (argument == null) {
                 writeDefaultValueForTypeUsage(parameter.type)
             } else {
@@ -1247,22 +1318,54 @@ class JavaLanguage : TargetLanguage {
             writeElement("=")
             appendCodeValue(initialValue)
         } else {
-            asd
+            writeElement("= null")
         }
+        write(";\n")
     }
 
     private fun appendSite(site: Site) {
-        when(site) {
+        when (site) {
             is CallSite -> {
-                asd
+                appendDispatchIfOnSiteId()
+                for (before in site.expressionsBefore) {
+                    appendCodeExpression(before)
+                }
+                appendCodeValue(site.invocationExpression)
+                for (after in site.expressionsAfter) {
+                    appendCodeExpression(after)
+                }
             }
             is TerminationSite -> {
-                asdasd
+                appendDispatchElse()
+                for (before in site.expressionsBefore) {
+                    appendCodeExpression(before)
+                }
+                for (dereference in site.dereferences) {
+                    appendCodeValue(dereference)
+                    write(".toString();\n")
+                }
+                for (after in site.expressionsAfter) {
+                    appendCodeExpression(after)
+                }
             }
         }
     }
 
-    private fun append(constructor: ConstructorPresentation) {
+    private fun appendLocalsAndSites(callable: CallablePresentation) {
+        val localVariables = callable.localVariables
+        for (variable in localVariables) {
+            appendLocalVariable(variable)
+        }
+        appendLocalDispatchVariableAndPop()
+        val sites = callable.sites
+        for (site in sites) {
+            if (site !is TerminationSite)
+                appendSite(site)
+        }
+        appendSite(callable.terminationSite)
+    }
+
+    private fun appendConstructor(constructor: ConstructorPresentation) {
         appendVisibility(constructor.visibility)
         write(constructor.containingType.shortName)
         appendParametersList(constructor)
@@ -1272,69 +1375,82 @@ class JavaLanguage : TargetLanguage {
                 write("super")
                 appendCallList(parentCall)
             }
-            val localVariables = constructor.localVariables
-            for (variable in localVariables) {
-                appendLocalVariable(variable)
-            }
-            val sites = constructor.sites
-            for (site in sites) {
-                if (site !is TerminationSite)
-                    appendSite(site)
-            }
-            appendSite(constructor.terminationSite)
+            appendLocalsAndSites(constructor)
         }
     }
 
+    private fun appendStaticFunction(function: FunctionPresentation) = appendStartFunction(function.shortName, function)
 
-    private fun append(methodPresentation: MethodPresentation) {
-        appendVisibility(methodPresentation)
-        if ()
-        asdasd
+    private fun appendStartFunction(name: String, function: FunctionPresentation) {
+        writeElement("public static class ClassFor$name")
+        inScope {
+            appendVisibility(function.visibility)
+            writeElement("static")
+            appendTypeUsage(function.returnType)
+            write(function.shortName)
+            appendParametersList(function)
+            inScope {
+                appendLocalsAndSites(function)
+            }
+        }
     }
 
-    private fun createProxyType(name: String, func: FunctionPresentation): TypePresentation {
-        val proxyType = TypeImpl("ProxyTypeFor$name", inheritanceModifier = InheritanceModifier.STATIC)
-        proxyType.createMethod(
-            func.graphId,
-            func.shortName,
-            func.visibility,
-            func.returnType,
-            InheritanceModifier.STATIC,
-            func.parameters.map { it.type to it.shortName })
-        
+    private fun appendMethodSignature(methodPresentation: MethodPresentation) {
+        if (methodPresentation.inheritedFrom != null) {
+            writeElement("@Override\n")
+        }
+        appendVisibility(methodPresentation.visibility)
+        when (methodPresentation.inheritanceModifier) {
+            InheritanceModifier.ABSTRACT -> writeElement("abstract")
+            InheritanceModifier.FINAL -> writeElement("final")
+            InheritanceModifier.STATIC -> writeElement("static")
+            else -> {
+                assert(false) { "should be impossible" }
+            }
+        }
+        writeElement(methodPresentation.shortName)
+        appendParametersList(methodPresentation)
+    }
+
+    private fun appendMethod(methodPresentation: MethodPresentation) {
+        appendMethodSignature(methodPresentation)
+        inScope {
+            appendLocalsAndSites(methodPresentation)
+        }
     }
 
     override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type, pathToSourcesDir) {
         appendTypeSignature(type)
         inScope {
             for (field in type.implementedFields) {
-                append(field)
+                appendField(field)
             }
             for (constructor in type.constructors) {
-                append(constructor)
+                appendConstructor(constructor)
             }
             for (method in type.implementedMethods) {
-                append(method)
+                appendMethod(method)
             }
 
             val staticCounterPart = type.staticCounterPart
 
             for (staticField in staticCounterPart.implementedFields) {
-                append(staticField)
+                appendField(staticField)
             }
             for (staticMethod in staticCounterPart.implementedMethods) {
-                append(staticMethod)
+                appendMethod(staticMethod)
             }
         }
     }
 
-    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =
-        dumpStartFunction(func.shortName, func, pathToSourcesDir)
-
-    override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) {
-        val proxyTypeForFunc = createProxyType(name, func)
-        dumpType(proxyTypeForFunc, pathToSourcesDir)
+    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) = inFile(func, pathToSourcesDir) {
+        appendStaticFunction(func)
     }
+
+    override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
+        inFile(name, pathToSourcesDir) {
+            appendStartFunction(name, func)
+        }
 }
 
 interface AnalysisVulnerabilityProvider {
@@ -1382,17 +1498,17 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
     private fun addPath(targetCall: Int) {
         val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)
         val dispatcher = startFunction.getLocalVariable(dispatcherName)!!
-        val dispatcherType = (dispatcher.type as InstanceTypeUsage).representation
+        val dispatcherType = (dispatcher.type as InstanceTypeUsage).typePresentation
         val dispatcherAddMethod = dispatcherType.implementedMethods.single()
         val callSite = startFunction.sites.single() as CallSite
         val invocationExpression = MethodInvocationExpressionImpl(dispatcherAddMethod, dispatcher.reference)
         val dispatcherAddMethodParameter = dispatcherAddMethod.parameters.single()
 
-        invocationExpression.addInCall(dispatcherAddMethodParameter, object: DirectStringSubstitution {
+        invocationExpression.addInCall(dispatcherAddMethodParameter, object : DirectStringSubstitution {
             override val substitution: String = targetCall.toString()
             override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.type
         })
-        callSite.addExpressionBeforeInvocation(invocationExpression)
+        callSite.addBefore(invocationExpression)
     }
 
     override fun createSource(u: Int) {
