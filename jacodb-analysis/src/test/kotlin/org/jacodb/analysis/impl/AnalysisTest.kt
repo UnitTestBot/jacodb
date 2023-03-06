@@ -24,28 +24,25 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcAnalysisPlatform
+import org.jacodb.api.cfg.DefaultJcExprVisitor
 import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBinaryExpr
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcConstant
+import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcEqExpr
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcNegExpr
 import org.jacodb.api.cfg.JcNeqExpr
-import org.jacodb.api.cfg.JcNewArrayExpr
-import org.jacodb.api.cfg.JcNewExpr
 import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcThis
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcStaticCallExpr
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
@@ -140,6 +137,42 @@ class NPEFlowFunctions(
     private val platform: JcAnalysisPlatform
 ): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
 
+    private val factLeadingToNullVisitor = object : DefaultJcExprVisitor<VariableNode?> {
+        override val defaultExprHandler: (JcExpr) -> VariableNode?
+            get() = { null }
+
+        private fun visitJcLocal(value: JcLocal) = VariableNode.fromLocal(value)
+
+        private fun visitJcCallExpr(expr: JcCallExpr): VariableNode? {
+            if (expr.method.method.isNullable == true) {
+                return VariableNode.ZERO
+            }
+            return null
+        }
+
+        override fun visitJcArgument(value: JcArgument) = visitJcLocal(value)
+
+        override fun visitJcLocalVar(value: JcLocalVar) = visitJcLocal(value)
+
+        override fun visitJcNullConstant(value: JcNullConstant) = VariableNode.ZERO
+
+        override fun visitJcCastExpr(expr: JcCastExpr) = expr.operand.accept(this)
+
+        override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr) = visitJcCallExpr(expr)
+
+        override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) = visitJcCallExpr(expr)
+
+        override fun visitJcStaticCallExpr(expr: JcStaticCallExpr) = visitJcCallExpr(expr)
+
+        override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr) = visitJcCallExpr(expr)
+
+        // TODO: override others
+    }
+
+    // Returns a fact, such that if it holds, `this` expr is null (or null if there is no such fact)
+    private val JcExpr.factLeadingToNull: VariableNode?
+        get() = accept(factLeadingToNullVisitor)
+
     // TODO: think about name shadowing
     // Returns all local variables and arguments referenced by this method
     private val JcMethod.domain: Set<VariableNode>
@@ -153,6 +186,16 @@ class NPEFlowFunctions(
     private val JcInst.domain: Set<VariableNode>
         get() = location.method.domain
 
+    // Returns a value that is being dereferenced in this call
+    private val JcInst.dereferencedValue: JcLocal?
+        get() {
+            (callExpr as? JcInstanceCallExpr)?.let {
+                return it.instance as? JcLocal
+            }
+
+           return fieldRef?.instance as? JcLocal
+        }
+
     override fun obtainStartFacts(startStatement: JcInst): Collection<VariableNode> {
         return startStatement.domain.filter { it.value == null || it.value.type.nullable != false }
     }
@@ -160,43 +203,16 @@ class NPEFlowFunctions(
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<VariableNode> {
         val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
 
-        (current.callExpr as? JcInstanceCallExpr)?.let {
-            val instance = it.instance
-            if (instance is JcLocal) {
-                // Calling a method on null will cause NPE => in next instructions instance can't be null
-                nonId[VariableNode.fromLocal(instance)] = emptyList()
-            }
-        }
-
-        current.fieldRef?.let {
-            val instance = it.instance
-            if (instance is JcLocal) {
-                // Dereferencing field on null will cause NPE => in next instructions instance can't be null
-                nonId[VariableNode.fromLocal(instance)] = emptyList()
-            }
+        current.dereferencedValue?.let {
+            nonId[VariableNode.fromLocal(it)] = emptyList()
         }
 
         if (current is JcAssignInst) {
             nonId[VariableNode.fromValue(current.lhv)] = listOf()
-            when (val rhv = current.rhv) {
-                is JcLocal -> nonId[VariableNode.fromLocal(rhv)] = setOf(VariableNode.fromLocal(rhv), VariableNode.fromValue(current.lhv)).toList()
-                is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
-                is JcArrayAccess -> Unit // TODO: do smth real here
-                is JcNewExpr, is JcNewArrayExpr, is JcConstant, is JcBinaryExpr, is JcLengthExpr, is JcNegExpr, is JcThis -> Unit
-                is JcFieldRef -> Unit // TODO: do smth real here
-                is JcCallExpr -> {
-                    // TODO: this is workaround for non-analyzable methods, do smth cooler here
-                    if (rhv.method.method.isNullable == true)
-                        nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
+            current.rhv.factLeadingToNull?.let {
+                if (it.value == null || it.value != current.dereferencedValue) {
+                    nonId[it] = setOf(it, VariableNode.fromValue(current.lhv)).toList()
                 }
-                is JcCastExpr -> {
-                    when (val operand = rhv.operand) {
-                        is JcLocal -> nonId[VariableNode.fromLocal(operand)] = setOf(VariableNode.fromLocal(operand), VariableNode.fromValue(current.lhv)).toList()
-                        is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(current.lhv))
-                        else -> Unit
-                    }
-                }
-                else -> TODO()
             }
         }
 
@@ -265,12 +281,8 @@ class NPEFlowFunctions(
 
         // Propagate values passed to callee as parameters
         params.zip(args).forEach { (param, arg) ->
-            when (arg) {
-                is JcLocal -> nonId.getValue(VariableNode.fromLocal(arg)).add(VariableNode.fromLocal(param))
-                is JcNullConstant -> nonId.getValue(VariableNode.ZERO).add(VariableNode.fromLocal(param))
-                is JcConstant, is JcThis -> Unit
-                is JcFieldRef -> Unit // TODO: do something smarter here
-                else -> TODO()
+            arg.factLeadingToNull?.let {
+                nonId.getValue(it).add(VariableNode.fromLocal(param))
             }
         }
 
@@ -287,20 +299,8 @@ class NPEFlowFunctions(
             // Nullability of lhs of assignment will be handled by exit-to-return flow function
             nonId[VariableNode.fromValue(callStatement.lhv)] = emptyList()
         }
-        (callStatement.callExpr as? JcInstanceCallExpr)?.let {
-            val instance = it.instance
-            if (instance is JcLocal) {
-                // Calling a method on null will cause NPE => in next instructions instance can't be null
-                nonId[VariableNode.fromLocal(instance)] = emptyList()
-            }
-        }
-        callStatement.fieldRef?.let {
-            val instance = it.instance
-            if (instance is JcLocal) {
-                // TODO: think about how many field dereferences could be here and above
-                // Dereferencing field on null will cause NPE => in next instructions instance can't be null
-                nonId[VariableNode.fromLocal(instance)] = emptyList()
-            }
+        callStatement.dereferencedValue?.let {
+            nonId[VariableNode.fromLocal(it)] = emptyList()
         }
         return IdLikeFlowFunction(callStatement.domain, nonId)
     }
@@ -321,16 +321,11 @@ class NPEFlowFunctions(
 
         if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
             // Propagate results back to caller in case of assignment
-            when (val value = exitStatement.returnValue) {
-                is JcNullConstant -> nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(callStatement.lhv))
-                is JcLocal -> nonId[VariableNode.fromLocal(value)] = listOf(VariableNode.fromValue(callStatement.lhv))
-                is JcConstant, is JcThis -> Unit
-                is JcFieldRef -> Unit // TODO: do something smarter here
-                null -> Unit // TODO: think about this (null here somehow occurs in lambdas with no return value)
-                else -> TODO()
+            exitStatement.returnValue?.factLeadingToNull?.let {
+                nonId[it] = listOf(VariableNode.fromValue(callStatement.lhv))
             }
         }
-        return IdLikeFlowFunction(callStatement.domain, nonId)
+        return IdLikeFlowFunction(exitStatement.domain, nonId)
     }
 }
 
