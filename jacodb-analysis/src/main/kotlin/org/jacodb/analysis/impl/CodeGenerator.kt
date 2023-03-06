@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:OptIn(ExperimentalPathApi::class)
+
 package org.jacodb.analysis.impl
 
 import mu.KotlinLogging
@@ -31,7 +33,7 @@ private val logger = KotlinLogging.logger { }
 
 // region generation
 
-class DeZipper(private val language: TargetLanguage) {
+class DeZipper(private val language: TargetLanguage, private val fullClear: Boolean) {
     private fun transferTemplateZipToTemp(): Path {
         val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
         this.javaClass.classLoader.getResourceAsStream(language.projectZipInResourcesName())!!
@@ -45,13 +47,17 @@ class DeZipper(private val language: TargetLanguage) {
 
     fun dezip(pathToDirectoryWhereToUnzipTemplate: Path) {
         pathToDirectoryWhereToUnzipTemplate.createDirectories()
+        if (fullClear) {
+            pathToDirectoryWhereToUnzipTemplate.toFile().deleteRecursively()
+            pathToDirectoryWhereToUnzipTemplate.createDirectories()
+        }
         val templateZipAtTemp = transferTemplateZipToTemp()
         ZipFile(templateZipAtTemp.toFile()).extractAll(pathToDirectoryWhereToUnzipTemplate.absolutePathString())
     }
 }
 
-class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
-    private val used = Array(graph.size) { 0 }
+class AccessibilityCache(n: Int, private val graph: Map<Int, Set<Int>>) {
+    private val used = Array(n) { 0 }
     private var currentWave = 0
     val badQuery = -1 to -1
     val badPath = listOf(-1)
@@ -65,7 +71,7 @@ class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
             return true
         }
 
-        for (v in graph.getValue(u)) {
+        for (v in graph.getOrDefault(u, emptySet())) {
             if (used[v] != currentWave && dfs(v, target)) {
                 lastQueryPath.add(u)
                 return true
@@ -79,6 +85,7 @@ class AccessibilityCache(private val graph: Map<Int, Set<Int>>) {
         ++currentWave
         lastQuery = badQuery
         if (dfs(u, v)) {
+            lastQueryPath.reverse()
             lastQuery = u to v
             return true
         }
@@ -195,8 +202,7 @@ interface ValueExpression : CodeExpression, CodeValue
  */
 interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inheritable {
     companion object {
-        val voidType: TypePresentation =
-            TypeImpl("Void").lockClass()
+        val voidType: TypePresentation = TypeImpl("Void")
     }
 
     // most of the time this is ObjectCreationExpression - for open and final classes
@@ -296,7 +302,7 @@ interface CallablePresentation : CodePresentation {
     /**
      * Each site represent different way to execute this callable
      */
-    val sites: Collection<Site>
+    val callSites: Collection<CallSite>
     fun createCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite
     val terminationSite: TerminationSite
 
@@ -324,7 +330,7 @@ interface CallablePresentation : CodePresentation {
         getParameter(name) ?: createParameter(name, type)
 
     fun getCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite? =
-        sites.filterIsInstance<CallSite>().singleOrNull {
+        callSites.singleOrNull {
             it.invocationExpression.invokedOn == invokedOn && it.invocationExpression.invokedCallable == callee
         }
 
@@ -511,23 +517,6 @@ open class TypeImpl(
 ) : TypePresentation {
     final override val implementedInterfaces = interfaces.toSet()
 
-    private var isLocked = false
-
-    fun lockClass(): TypeImpl {
-        isLocked = true
-        return this
-    }
-
-    fun isLocked(): Boolean {
-        return isLocked
-    }
-
-    private fun throwIfLocked() {
-        if (isLocked()) {
-            throw IllegalStateException("Type is locked, modification is unavailable")
-        }
-    }
-
     init {
         // interfaces have separate inheritance mechanism
         // enum and static classes cant inherited classes
@@ -598,7 +587,6 @@ open class TypeImpl(
      * @throws MethodCollisionException if [methodToOverride] collides with some other method already defined method in this type hierarchy
      */
     override fun overrideMethod(methodToOverride: MethodPresentation): MethodPresentation {
-        throwIfLocked()
         // 1. check not overridden
         // 2. check no same
         // 3. check no any other conflict
@@ -620,7 +608,6 @@ open class TypeImpl(
         inheritanceModifier: InheritanceModifier,
         parameters: List<Pair<TypeUsage, String>>,
     ): MethodPresentation {
-        throwIfLocked()
         val methodToAdd = MethodImpl(graphId, this, name, visibility, returnType, inheritanceModifier, null, parameters)
         val collidedMethods = getMethods(name).filter { it.signature == methodToAdd.signature }
 
@@ -646,7 +633,6 @@ open class TypeImpl(
         parentConstructorCall: ObjectCreationExpression?,
         parameters: List<Pair<TypeUsage, String>>
     ): ConstructorPresentation {
-        throwIfLocked()
         val constructorToAdd = ConstructorImpl(graphId, this, visibility, parentConstructorCall, parameters)
         // 3. assert constructor is created with parent call in case of need
         val collidedConstructors = typeParts
@@ -671,7 +657,6 @@ open class TypeImpl(
         type: TypePresentation,
         initialValue: CodeValue?
     ): FieldPresentation {
-        throwIfLocked()
         TODO("Not yet implemented")
     }
 }
@@ -766,6 +751,11 @@ abstract class CallableImpl(
     parameters: List<Pair<TypeUsage, String>>
 ) : CallablePresentation {
 
+    private val sites = mutableListOf<Site>()
+
+    override val callSites: Collection<CallSite>
+        get() = sites.filterIsInstance<CallSite>()
+
     override fun hashCode(): Int {
         return graphId.hashCode()
     }
@@ -785,7 +775,6 @@ abstract class CallableImpl(
     override val visibleLocals = parameters
         .mapIndexed { index, it -> ParameterImpl(it.first, it.second, this, index) }
         .toMutableList<CallableLocal>()
-    override val sites = mutableListOf<Site>()
 
     override fun createLocalVariable(
         name: String,
@@ -805,6 +794,8 @@ abstract class CallableImpl(
         callee: CallablePresentation,
         invokedOn: CodeValue?
     ): CallSite {
+        assert(!sites.any { it.siteId == callee.graphId }) { "already contains callsite for to such method" }
+
         val invocationExpression: InvocationExpression = if (invokedOn != null && callee is MethodPresentation) {
             MethodInvocationExpressionImpl(callee, invokedOn)
         } else if (invokedOn == null && callee is FunctionPresentation) {
@@ -815,7 +806,7 @@ abstract class CallableImpl(
             throw Exception("unknown call site creation")
         }
 
-        return CallSiteImpl(sites.size, this, invocationExpression).also { sites.add(it) }
+        return CallSiteImpl(callee.graphId, this, invocationExpression).also { sites.add(it) }
     }
 
     override val terminationSite: TerminationSite = TerminationSiteImpl(this).also { sites.add(it) }
@@ -1087,19 +1078,24 @@ interface TargetLanguage {
     fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path)
 }
 
+private val dispatcherName = "dispatchQueue"
+
 class JavaLanguage : TargetLanguage {
     private val realPrimitivesName = mutableMapOf<TargetLanguage.PredefinedPrimitives, String>()
     private val predefinedTypes = mutableMapOf<String, TypePresentation>()
+    private val integer: TypePresentation
+    private val arrayDeque: TypePresentation
 
     init {
-        val integer = TypeImpl("Integer")
+        integer = TypeImpl("Integer")
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.INT] = integer.shortName
-        predefinedTypes[integer.shortName] = integer.lockClass()
+        predefinedTypes[integer.shortName] = integer
+
         // type argument cannot be primitive
-        val arrayDeque = TypeImpl("ArrayDeque<Integer>")
+        arrayDeque = TypeImpl("ArrayDeque<Integer>")
         arrayDeque.createMethod(impossibleGraphId, name = "add", parameters = listOf(integer.instanceType to "e"))
         arrayDeque.createMethod(impossibleGraphId, name = "poll", returnType = integer.instanceType)
-        predefinedTypes[arrayDeque.shortName] = arrayDeque.lockClass()
+        predefinedTypes[arrayDeque.shortName] = arrayDeque
     }
 
     override fun resolveProjectPathToSources(projectPath: Path): Path {
@@ -1131,9 +1127,9 @@ class JavaLanguage : TargetLanguage {
             javaFilePath.outputStream().use {
                 fileWriter = OutputStreamWriter(BufferedOutputStream(it))
                 block()
+                flush()
             }
         } finally {
-            flush()
             fileWriter = null
         }
     }
@@ -1241,8 +1237,8 @@ class JavaLanguage : TargetLanguage {
     private fun appendCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
             is ValueExpression -> appendValueExpression(codeExpression)
-            returnStatement;
-                localVariablePresentaion;
+            // todo returnStatement
+            // todo localVariablePresentation
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -1326,41 +1322,54 @@ class JavaLanguage : TargetLanguage {
     private fun appendSite(site: Site) {
         when (site) {
             is CallSite -> {
-                appendDispatchIfOnSiteId()
-                for (before in site.expressionsBefore) {
-                    appendCodeExpression(before)
+                writeElement("if (currentDispatch == ${site.siteId})")
+                inScope {
+                    for (before in site.expressionsBefore) {
+                        appendCodeExpression(before)
+                    }
+                    appendCodeValue(site.invocationExpression)
+                    for (after in site.expressionsAfter) {
+                        appendCodeExpression(after)
+                    }
                 }
-                appendCodeValue(site.invocationExpression)
-                for (after in site.expressionsAfter) {
-                    appendCodeExpression(after)
-                }
+                writeElement("else")
             }
             is TerminationSite -> {
-                appendDispatchElse()
-                for (before in site.expressionsBefore) {
-                    appendCodeExpression(before)
-                }
-                for (dereference in site.dereferences) {
-                    appendCodeValue(dereference)
-                    write(".toString();\n")
-                }
-                for (after in site.expressionsAfter) {
-                    appendCodeExpression(after)
+                inScope {
+                    for (before in site.expressionsBefore) {
+                        appendCodeExpression(before)
+                    }
+                    for (dereference in site.dereferences) {
+                        appendCodeValue(dereference)
+                        write(".toString();\n")
+                    }
+                    for (after in site.expressionsAfter) {
+                        appendCodeExpression(after)
+                    }
                 }
             }
         }
     }
 
+    private fun appendLocalDispatchVariableAndPop(callable: CallablePresentation) {
+        val integerType = getPredefinedPrimitive(TargetLanguage.PredefinedPrimitives.INT)!!
+        val integerUsage = integerType.instanceType
+        val dispatcherParameter = callable.getLocal(dispatcherName)!!
+        val dispatcherReference = dispatcherParameter.reference
+        val pollMethod = arrayDeque.getMethods("poll").single()
+        val methodInvocation = MethodInvocationExpressionImpl(pollMethod, dispatcherReference)
+        callable.getOrCreateLocalVariable("currentDispatch", integerUsage, methodInvocation)
+    }
+
     private fun appendLocalsAndSites(callable: CallablePresentation) {
+        appendLocalDispatchVariableAndPop(callable)
         val localVariables = callable.localVariables
         for (variable in localVariables) {
             appendLocalVariable(variable)
         }
-        appendLocalDispatchVariableAndPop()
-        val sites = callable.sites
+        val sites = callable.callSites
         for (site in sites) {
-            if (site !is TerminationSite)
-                appendSite(site)
+            appendSite(site)
         }
         appendSite(callable.terminationSite)
     }
@@ -1482,11 +1491,9 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
 
     private val id = "NpeInstance${++vulnerabilitiesCounter}"
     private val variableId = "variableFor$id"
-    private val parameterId = "parameterFor$id"
     private val typeId = "typeFor$id"
     private val startFunctionId = "startFunctionFor$id"
 
-    private val dispatcherName = "dispatchQueue"
     private val arrayDeque = codeRepresentation.getPredefinedType("ArrayDeque<Integer>")!!
 
     // все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
@@ -1499,8 +1506,8 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
         val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)
         val dispatcher = startFunction.getLocalVariable(dispatcherName)!!
         val dispatcherType = (dispatcher.type as InstanceTypeUsage).typePresentation
-        val dispatcherAddMethod = dispatcherType.implementedMethods.single()
-        val callSite = startFunction.sites.single() as CallSite
+        val dispatcherAddMethod = dispatcherType.getMethods("add").single()
+        val callSite = startFunction.callSites.single()
         val invocationExpression = MethodInvocationExpressionImpl(dispatcherAddMethod, dispatcher.reference)
         val dispatcherAddMethodParameter = dispatcherAddMethod.parameters.single()
 
@@ -1536,7 +1543,7 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
 
         // as it can be either variable or parameter
         val dispatchParameterInV = functionV.getOrCreateParameter(dispatcherName, arrayDeque.instanceType)
-        val parameterInV = functionV.getOrCreateParameter(parameterId, variableInU.type)
+        val parameterInV = functionV.getOrCreateParameter(variableId, variableInU.type)
 
         val uvCallSite = functionU.getOrCreateCallSite(functionV)
 
@@ -1547,7 +1554,7 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
 
     override fun createSink(v: Int) {
         val functionV = codeRepresentation.getOrCreateFunctionFor(v)
-        val variableInV = functionV.getLocalVariable(id)!!
+        val variableInV = functionV.getLocal(variableId)!!
         val vTerminationSite = functionV.terminationSite
 
         vTerminationSite.addDereference(variableInV.reference)
@@ -1591,14 +1598,14 @@ interface VulnerabilityInstance {
 
 
 fun main(args: Array<String>) {
-    assert(args.size == 5) {
-        "vertices:Int edges:Int vulnerabilities:Int pathToProjectDir:String targetLanguage:String"
+    assert(args.size in 5..6) {
+        "vertices:Int edges:Int vulnerabilities:Int pathToProjectDir:String targetLanguage:String [clearTargetDir: Boolean]"
     }
     val n = args[0].toInt()
     val m = args[1].toInt()
     val k = args[2].toInt()
 
-    assert(n in 1 until 1000) { "currently big graphs not supported just in case" }
+    assert(n in 2 until 1000) { "currently big graphs not supported just in case" }
     assert(m in 1 until 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
     assert(k in 0 until min(listOf(255, n, m)))
 
@@ -1649,24 +1656,30 @@ fun main(args: Array<String>) {
     // просто интерфейс, который принимает функцию из репрезентации и путь, куда это говно надо написать. Дальше уже разбирается сама.
     // их тоже можно искать сервисом
 
-    val dezipper = DeZipper(targetLanguage)
+    val fullClear = args.getOrElse(5) { "false" }.toBooleanStrict()
+    val dezipper = DeZipper(targetLanguage, fullClear)
 
     dezipper.dezip(projectPath)
 
     val graph = mutableMapOf<Int, MutableSet<Int>>()
 
-    for (i in 0 until m) {
+    var i = 0
+    while(i < m) {
         val u = randomer.nextInt(n)
         val v = randomer.nextInt(n)
-        // TODO loops v->v?
-        graph.getOrPut(u) { mutableSetOf() }.add(v)
+
+        if (u != v) {
+            // TODO loops v->v?
+            graph.getOrPut(u) { mutableSetOf() }.add(v)
+            i++
+        }
     }
 
-    val accessibilityCache = AccessibilityCache(graph)
+    val accessibilityCache = AccessibilityCache(n, graph)
     val codeRepresentation = CodeRepresentation(graph, targetLanguage)
     val generatedVulnerabilitiesList = mutableListOf<VulnerabilityInstance>()
-
-    for (i in 0 until k) {
+    i = 0
+    while(i < k) {
         val u = randomer.nextInt(n)
         val v = randomer.nextInt(n)
         val vulnerabilityIndex = randomer.nextInt(vulnerabilityProviders.size)
@@ -1685,6 +1698,7 @@ fun main(args: Array<String>) {
                 createSink(v)
             }
             generatedVulnerabilitiesList.add(instance)
+            i++
         }
     }
 
