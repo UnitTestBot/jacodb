@@ -178,6 +178,11 @@ interface CodePresentation : CodeElement
 
 interface CodeExpression : CodeElement
 
+interface AssignmentExpression: CodeExpression {
+    val assignmentValue: CodeValue
+    val assignmentTarget: CodeValue
+}
+
 interface CodeValue : CodeElement {
     val evaluatedType: TypeUsage
 }
@@ -202,7 +207,7 @@ interface ValueExpression : CodeExpression, CodeValue
  */
 interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inheritable {
     companion object {
-        val voidType: TypePresentation = TypeImpl("Void")
+        val voidType: TypePresentation = TypeImpl("void")
     }
 
     // most of the time this is ObjectCreationExpression - for open and final classes
@@ -264,9 +269,9 @@ interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inher
     fun getImplementedField(name: String): FieldPresentation? = implementedFields.singleOrNull { it.shortName == name }
     fun getField(name: String): FieldPresentation? = allAvailableFields.singleOrNull { it.shortName == name }
     fun getImplementedFields(type: TypeUsage): Collection<FieldPresentation> =
-        implementedFields.filter { it.type == type }
+        implementedFields.filter { it.usage == type }
 
-    fun getFields(type: TypeUsage): Collection<FieldPresentation> = allAvailableFields.filter { it.type == type }
+    fun getFields(type: TypeUsage): Collection<FieldPresentation> = allAvailableFields.filter { it.usage == type }
 
     fun getImplementedMethods(name: String): Collection<MethodPresentation> =
         implementedMethods.filter { it.shortName == name }
@@ -283,7 +288,7 @@ interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inher
  */
 interface CallablePresentation : CodePresentation {
     val signature: String
-        get() = parameters.joinToString { it.type.stringPresentation }
+        get() = parameters.joinToString { it.usage.stringPresentation }
 
     // consists from parameters and local variables
     val visibleLocals: Collection<CallableLocal>
@@ -299,6 +304,7 @@ interface CallablePresentation : CodePresentation {
         initialValue: CodeValue? = null
     ): LocalVariablePresentation
 
+    val preparationSite: Site
     /**
      * Each site represent different way to execute this callable
      */
@@ -314,10 +320,10 @@ interface CallablePresentation : CodePresentation {
         get() = visibleLocals.filterIsInstance<LocalVariablePresentation>()
 
     fun getLocal(name: String) = visibleLocals.singleOrNull { it.shortName == name }
-    fun getLocals(type: TypeUsage) = visibleLocals.filter { it.type == type }
+    fun getLocals(type: TypeUsage) = visibleLocals.filter { it.usage == type }
 
     fun getLocalVariable(name: String) = localVariables.singleOrNull { it.shortName == name }
-    fun getLocalVariables(type: TypeUsage) = localVariables.filter { it.type == type }
+    fun getLocalVariables(type: TypeUsage) = localVariables.filter { it.usage == type }
     fun getOrCreateLocalVariable(
         name: String,
         type: TypeUsage,
@@ -325,7 +331,7 @@ interface CallablePresentation : CodePresentation {
     ) = getLocalVariable(name) ?: createLocalVariable(name, type, initialValue)
 
     fun getParameter(name: String) = parameters.singleOrNull { it.shortName == name }
-    fun getParameters(type: TypeUsage) = parameters.filter { it.type == type }
+    fun getParameters(type: TypeUsage) = parameters.filter { it.usage == type }
     fun getOrCreateParameter(name: String, type: TypeUsage) =
         getParameter(name) ?: createParameter(name, type)
 
@@ -368,7 +374,6 @@ interface MethodPresentation : FunctionPresentation, NamedTypePart, Inheritable 
  * In any execution path each function
  */
 interface Site : CodeElement {
-    val siteId: Int
     val parentCallable: CallablePresentation
     val expressionsBefore: Collection<CodeExpression>
     val expressionsAfter: Collection<CodeExpression>
@@ -376,10 +381,13 @@ interface Site : CodeElement {
     fun addAfter(expression: CodeExpression)
 }
 
+interface PreparationSite: Site
+
 /**
  * Represents call and all preparation for this call
  */
 interface CallSite : Site {
+    val graphId: Int
     val invocationExpression: InvocationExpression
 }
 
@@ -475,7 +483,7 @@ interface InstanceTypeUsage : TypeUsage {
  * Anything that can be assigned or invoked.
  */
 interface ValuePresentation : CodePresentation, NameOwner {
-    val type: TypeUsage
+    val usage: TypeUsage
 }
 
 /**
@@ -499,7 +507,7 @@ interface FieldPresentation : TypePart, ValuePresentation, InitializerOwner, Inh
     fun createReference(codeValue: CodeValue): FieldReference
 }
 
-interface LocalVariablePresentation : CallableLocal, InitializerOwner, CodeExpression
+interface LocalVariablePresentation : CallableLocal, InitializerOwner
 // endregion
 
 // region typeImpl
@@ -705,13 +713,22 @@ abstract class SiteImpl : Site {
     override fun addAfter(expression: CodeExpression) {
         expressionsAfter.add(expression)
     }
+}
 
+class PreparationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), PreparationSite
+
+class CallSiteImpl(
+    // unique identifier with the function
+    override val graphId: Int,
+    override val parentCallable: CallablePresentation,
+    override val invocationExpression: InvocationExpression
+) : SiteImpl(), CallSite {
     override fun equals(other: Any?): Boolean {
-        if (other !is Site) {
+        if (other !is CallSite) {
             return false
         }
 
-        if (parentCallable == other.parentCallable && siteId == other.siteId) {
+        if (parentCallable == other.parentCallable && graphId == other.graphId) {
             assert(other === this)
         }
 
@@ -719,21 +736,12 @@ abstract class SiteImpl : Site {
     }
 
     override fun hashCode(): Int {
-        return parentCallable.hashCode() * 31 + siteId
+        return parentCallable.hashCode() * 31 + graphId
     }
 }
 
-class CallSiteImpl(
-    // unique identifier with the function
-    override val siteId: Int,
-    override val parentCallable: CallablePresentation,
-    override val invocationExpression: InvocationExpression
-) : SiteImpl(), CallSite
-
 class TerminationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), TerminationSite {
     override val dereferences = mutableListOf<CodeValue>()
-
-    override val siteId: Int = Int.MAX_VALUE
 
     override fun addDereference(reference: CodeValue) {
         // you can add multiple dereferences on the same reference
@@ -751,10 +759,7 @@ abstract class CallableImpl(
     parameters: List<Pair<TypeUsage, String>>
 ) : CallablePresentation {
 
-    private val sites = mutableListOf<Site>()
-
-    override val callSites: Collection<CallSite>
-        get() = sites.filterIsInstance<CallSite>()
+    override val callSites = mutableListOf<CallSite>()
 
     override fun hashCode(): Int {
         return graphId.hashCode()
@@ -794,7 +799,7 @@ abstract class CallableImpl(
         callee: CallablePresentation,
         invokedOn: CodeValue?
     ): CallSite {
-        assert(!sites.any { it.siteId == callee.graphId }) { "already contains callsite for to such method" }
+        assert(!callSites.any { it.graphId == callee.graphId }) { "already contains call-site for to such method" }
 
         val invocationExpression: InvocationExpression = if (invokedOn != null && callee is MethodPresentation) {
             MethodInvocationExpressionImpl(callee, invokedOn)
@@ -806,10 +811,11 @@ abstract class CallableImpl(
             throw Exception("unknown call site creation")
         }
 
-        return CallSiteImpl(callee.graphId, this, invocationExpression).also { sites.add(it) }
+        return CallSiteImpl(callee.graphId, this, invocationExpression).also { callSites.add(it) }
     }
 
-    override val terminationSite: TerminationSite = TerminationSiteImpl(this).also { sites.add(it) }
+    override val terminationSite: TerminationSite by lazy { TerminationSiteImpl(this) }
+    override val preparationSite: Site by lazy { PreparationSiteImpl(this) }
 }
 
 class ConstructorImpl(
@@ -880,6 +886,8 @@ class MethodImpl(
 
 // region expressions_impl
 
+class AssignmentExpressionImpl(override val assignmentTarget: CodeValue, override val assignmentValue: CodeValue) : AssignmentExpression
+
 abstract class ArgumentsOwnerExpressionImpl : ArgumentsOwnerExpression {
     override val parameterToArgument = hashMapOf<ParameterPresentation, CodeValue>()
     override fun addInCall(parameter: ParameterPresentation, argument: CodeValue) {
@@ -931,7 +939,7 @@ abstract class FunctionLocalImpl : CallableLocal {
 }
 
 class LocalVariableImpl(
-    override val type: TypeUsage,
+    override val usage: TypeUsage,
     // currently we prohibit shadowing local variables,
     // it means that local variables and parameters can be identified by its name and parent function
     override val shortName: String,
@@ -941,7 +949,7 @@ class LocalVariableImpl(
 ) : FunctionLocalImpl(), LocalVariablePresentation
 
 class ParameterImpl(
-    override val type: TypeUsage,
+    override val usage: TypeUsage,
     override val shortName: String,
     // invariant - two parameters relates to the same function if they point to the same function
     // currently we prohibit shadowing local variables,
@@ -967,7 +975,7 @@ class ParameterImpl(
 class SimpleValueReference(private val presentation: ValuePresentation) : ValueReference, NameOwner by presentation {
     override fun resolve(): ValuePresentation = presentation
     override val evaluatedType: TypeUsage
-        get() = presentation.type
+        get() = presentation.usage
 }
 
 // endregion
@@ -1015,6 +1023,13 @@ class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val lang
     private var startFunctionIdCounter = startFunctionFirstId
     private val startFunctionToGenericId = mutableMapOf<String, Int>()
     private val generatedTypes = mutableMapOf<String, TypePresentation>()
+    private val dispatchedCallables = mutableSetOf<Int>()
+
+    fun createDispatch(callable: CallablePresentation) {
+        if (dispatchedCallables.add(callable.graphId)) {
+            language.dispatch(callable)
+        }
+    }
 
     fun getOrCreateFunctionFor(v: Int): FunctionPresentation {
         return functions.getOrPut(v) { FunctionImpl(v) }
@@ -1032,7 +1047,7 @@ class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val lang
 
         assert(generated == null || predefined == null) { "type with $name is generated and predefined simultaneously" }
 
-        return generated ?: predefined ?: generatedTypes.getOrPut(name) { TypeImpl(name) }
+        return generated ?: predefined ?: generatedTypes.getOrPut(name) { TypeImpl(name.capitalize()) }
     }
 
     fun getPredefinedType(name: String): TypePresentation? {
@@ -1044,18 +1059,19 @@ class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val lang
     }
 
     fun dumpTo(projectPath: Path) {
+        val pathToSourcesDir = language.resolveProjectPathToSources(projectPath)
         for ((name, presentation) in generatedTypes) {
-            language.dumpType(presentation, projectPath)
+            language.dumpType(presentation, pathToSourcesDir)
         }
 
         for ((id, function) in functions) {
             if (id < startFunctionFirstId)
-                language.dumpFunction(function, projectPath)
+                language.dumpFunction(function, pathToSourcesDir)
         }
 
         for ((name, id) in startFunctionToGenericId) {
             val function = functions.getValue(id)
-            language.dumpStartFunction(name, function, projectPath)
+            language.dumpStartFunction(name, function, pathToSourcesDir)
         }
     }
 
@@ -1066,7 +1082,8 @@ class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val lang
 
 interface TargetLanguage {
     enum class PredefinedPrimitives {
-        INT
+        INT,
+        VOID
     }
 
     fun projectZipInResourcesName(): String
@@ -1076,9 +1093,11 @@ interface TargetLanguage {
     fun dumpType(type: TypePresentation, pathToSourcesDir: Path)
     fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path)
     fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path)
+    fun dispatch(callable: CallablePresentation)
 }
 
-private val dispatcherName = "dispatchQueue"
+private val dispatcherQueueName = "dispatchQueue"
+private val currentDispatch = "currentDispatch"
 
 class JavaLanguage : TargetLanguage {
     private val realPrimitivesName = mutableMapOf<TargetLanguage.PredefinedPrimitives, String>()
@@ -1087,6 +1106,9 @@ class JavaLanguage : TargetLanguage {
     private val arrayDeque: TypePresentation
 
     init {
+        realPrimitivesName[TargetLanguage.PredefinedPrimitives.VOID] = TypePresentation.voidType.shortName
+        predefinedTypes[TypePresentation.voidType.shortName] = TypePresentation.voidType
+
         integer = TypeImpl("Integer")
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.INT] = integer.shortName
         predefinedTypes[integer.shortName] = integer
@@ -1094,12 +1116,27 @@ class JavaLanguage : TargetLanguage {
         // type argument cannot be primitive
         arrayDeque = TypeImpl("ArrayDeque<Integer>")
         arrayDeque.createMethod(impossibleGraphId, name = "add", parameters = listOf(integer.instanceType to "e"))
-        arrayDeque.createMethod(impossibleGraphId, name = "poll", returnType = integer.instanceType)
+        arrayDeque.createMethod(impossibleGraphId, name = "remove", returnType = integer.instanceType)
         predefinedTypes[arrayDeque.shortName] = arrayDeque
     }
 
+    override fun dispatch(callable: CallablePresentation) {
+        val integerType = getPredefinedPrimitive(TargetLanguage.PredefinedPrimitives.INT)!!
+        val integerUsage = integerType.instanceType
+        val current = callable.getOrCreateLocalVariable(currentDispatch, integerUsage, object : DirectStringSubstitution {
+            override val substitution: String = "-1"
+            override val evaluatedType: TypeUsage = integerUsage
+        })
+        val dispatcherQueue = callable.getLocal(dispatcherQueueName)!!
+        val dispatcherReference = dispatcherQueue.reference
+        val removeMethod = arrayDeque.getMethods("remove").single()
+        val methodInvocation = MethodInvocationExpressionImpl(removeMethod, dispatcherReference)
+        val assignment = AssignmentExpressionImpl(current.reference, methodInvocation)
+        callable.preparationSite.addAfter(assignment)
+    }
+
     override fun resolveProjectPathToSources(projectPath: Path): Path {
-        val relativeJavaSourceSetPath = "src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
+        val relativeJavaSourceSetPath = "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
 
         return projectPath.resolve(relativeJavaSourceSetPath.replace('\\', File.separatorChar))
     }
@@ -1118,14 +1155,16 @@ class JavaLanguage : TargetLanguage {
 
     private var fileWriter: OutputStreamWriter? = null
 
-    private fun inFile(nameOwner: NameOwner, pathToSourcesDir: Path, block: () -> Unit) =
-        inFile(nameOwner.shortName, pathToSourcesDir, block)
-
     private fun inFile(fileName: String, pathToSourcesDir: Path, block: () -> Unit) {
-        val javaFilePath = pathToSourcesDir.resolve("$fileName.java")
+        val javaFilePath = pathToSourcesDir.resolve("${fileName.capitalize()}.java")
         try {
             javaFilePath.outputStream().use {
                 fileWriter = OutputStreamWriter(BufferedOutputStream(it))
+                appendLine { write("package org.utbot.ifds.synthetic.tests") }
+                // for simplification - all generated code will be in a single package
+                // with all required imports added unconditionally to all files.
+                appendLine { write("import java.util.*") }
+                write("\n")
                 block()
                 flush()
             }
@@ -1142,26 +1181,30 @@ class JavaLanguage : TargetLanguage {
         fileWriter!!.write(content)
     }
 
-    private fun writeElement(content: String) {
+    private fun writeSeparated(content: String) {
         write(content)
         write(" ")
     }
 
-    private fun appendVisibility(visibility: VisibilityModifier) {
-        writeElement(visibility.toString().lowercase())
+    // write - just writes
+    // append - handles with tabulation and necessary semicolons
+    // dump - accept code element and creates text file with its representation
+
+    private fun writeVisibility(visibility: VisibilityModifier) {
+        writeSeparated(visibility.toString().lowercase())
     }
 
-    private fun appendTypeSignature(type: TypePresentation) {
-        appendVisibility(type.visibility)
+    private fun writeTypeSignature(type: TypePresentation) {
+        writeVisibility(type.visibility)
         when (type.inheritanceModifier) {
-            InheritanceModifier.ABSTRACT -> writeElement("abstract class")
-            InheritanceModifier.OPEN -> writeElement("class")
-            InheritanceModifier.FINAL -> writeElement("final class")
-            InheritanceModifier.INTERFACE -> writeElement("interface")
-            InheritanceModifier.STATIC -> writeElement("static class")
-            InheritanceModifier.ENUM -> writeElement("enum")
+            InheritanceModifier.ABSTRACT -> writeSeparated("abstract class")
+            InheritanceModifier.OPEN -> writeSeparated("class")
+            InheritanceModifier.FINAL -> writeSeparated("final class")
+            InheritanceModifier.INTERFACE -> writeSeparated("interface")
+            InheritanceModifier.STATIC -> writeSeparated("static class")
+            InheritanceModifier.ENUM -> writeSeparated("enum")
         }
-        writeElement(type.shortName)
+        writeSeparated(type.shortName)
     }
 
     private var offset = 0
@@ -1186,17 +1229,20 @@ class JavaLanguage : TargetLanguage {
 
     private fun inScope(block: () -> Unit) {
         try {
-            write(" {\n")
+            write("{\n")
             addTab()
-            tabulate()
+            // do not tabulate here.
+            // each code element should be aware if it has to be tabulated and manage tabulation on its own
             block()
         } finally {
-            write("\n}\n")
+            write("\n")
             removeTab()
+            tabulate()
+            write("}\n")
         }
     }
 
-    private fun appendParametersList(callable: CallablePresentation) {
+    private fun writeParametersList(callable: CallablePresentation) {
         write("(")
         var first = true
         for (parameter in callable.parameters) {
@@ -1204,18 +1250,18 @@ class JavaLanguage : TargetLanguage {
                 write(", ")
             }
             first = false
-            appendTypeUsage(parameter.type)
+            writeTypeUsage(parameter.usage)
             write(parameter.shortName)
         }
-        write(")")
+        writeSeparated(")")
     }
 
     private fun appendField(field: FieldPresentation) {
         // todo
     }
 
-    private fun appendTypeUsage(typeUsage: TypeUsage) {
-        writeElement(typeUsage.stringPresentation)
+    private fun writeTypeUsage(typeUsage: TypeUsage) {
+        writeSeparated(typeUsage.stringPresentation)
     }
 
     private fun writeDefaultValueForTypeUsage(typeUsage: TypeUsage) {
@@ -1226,7 +1272,7 @@ class JavaLanguage : TargetLanguage {
             is InstanceTypeUsage -> {
                 val presentation = typeUsage.typePresentation
                 val valueToWrite = presentation.defaultValue
-                appendCodeValue(valueToWrite)
+                writeCodeValue(valueToWrite)
             }
             else -> {
                 throwCannotDump(typeUsage)
@@ -1234,11 +1280,17 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendCodeExpression(codeExpression: CodeExpression) {
+    private fun appendCodeExpression(codeExpression: CodeExpression) = appendLine { writeCodeExpression(codeExpression) }
+
+    private fun writeCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
-            is ValueExpression -> appendValueExpression(codeExpression)
+            is ValueExpression -> writeValueExpression(codeExpression)
+            is AssignmentExpression -> {
+                writeCodeValue(codeExpression.assignmentTarget)
+                write(" = ")
+                writeCodeValue(codeExpression.assignmentValue)
+            }
             // todo returnStatement
-            // todo localVariablePresentation
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -1247,36 +1299,41 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendCodeValue(codeValue: CodeValue) {
+    private fun appendCodeValue(codeValue: CodeValue) = appendLine { writeCodeValue(codeValue) }
+
+    private fun writeCodeValue(codeValue: CodeValue) {
         when (codeValue) {
             is DirectStringSubstitution -> write(codeValue.substitution)
             is ValueReference -> {
                 val presentation = codeValue.resolve()
                 write(presentation.shortName)
             }
-            is ValueExpression -> appendValueExpression(codeValue)
+            is ValueExpression -> writeValueExpression(codeValue)
             else -> {
                 throwCannotDump(codeValue)
             }
         }
     }
 
-    private fun appendValueExpression(valueExpression: ValueExpression) {
+    private fun writeValueExpression(valueExpression: ValueExpression) {
         when (valueExpression) {
+            // TODO creation of arrays?
             is ObjectCreationExpression -> {
-                writeElement("new")
-                writeElement(valueExpression.invokedConstructor.containingType.shortName)
-                appendCallList(valueExpression)
+                writeSeparated("new")
+                writeSeparated(valueExpression.invokedConstructor.containingType.shortName)
+                writeCallList(valueExpression)
             }
             is MethodInvocationExpression -> {
-                appendCodeValue(valueExpression.invokedOn)
+                writeCodeValue(valueExpression.invokedOn)
                 write(".")
                 write(valueExpression.invokedMethod.shortName)
-                appendCallList(valueExpression)
+                writeCallList(valueExpression)
             }
             is FunctionInvocationExpression -> {
+                write(classNameForStaticFunction(valueExpression.invokedCallable.shortName))
+                write(".")
                 write(valueExpression.invokedCallable.shortName)
-                appendCallList(valueExpression)
+                writeCallList(valueExpression)
             }
             else -> {
                 throwCannotDump(valueExpression)
@@ -1284,7 +1341,7 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendCallList(invocationExpression: InvocationExpression) {
+    private fun writeCallList(invocationExpression: InvocationExpression) {
         write("(")
         var first = true
         for (parameter in invocationExpression.invokedCallable.parameters) {
@@ -1294,35 +1351,69 @@ class JavaLanguage : TargetLanguage {
             first = false
             val argument: CodeValue? = invocationExpression.parameterToArgument[parameter]
             if (argument == null) {
-                writeDefaultValueForTypeUsage(parameter.type)
+                writeDefaultValueForTypeUsage(parameter.usage)
             } else {
-                appendCodeValue(argument)
+                writeCodeValue(argument)
             }
         }
         write(")")
     }
 
-    private fun appendLocalVariable(localVariablePresentation: LocalVariablePresentation) {
-        writeElement("val")
-        writeElement(localVariablePresentation.shortName)
-        writeElement(":")
-        appendTypeUsage(localVariablePresentation.type)
+    private fun appendLocalVariable(localVariablePresentation: LocalVariablePresentation) = appendLine {
+        writeTypeUsage(localVariablePresentation.usage)
+        writeSeparated(localVariablePresentation.shortName)
 
         val initialValue = localVariablePresentation.initialValue
 
         if (initialValue != null) {
-            writeElement("=")
-            appendCodeValue(initialValue)
+            writeSeparated("=")
+            writeCodeValue(initialValue)
         } else {
-            writeElement("= null")
+            writeSeparated("= null")
         }
-        write(";\n")
+    }
+
+// 1. assignment + in vulnerability transit do dispatch
+//
+// 2. refactor part with expressions in site
+// 3. correct styling
+// commentaries
+
+// statistics dump - vulnerability id, source, sink, path
+
+// optionally - conditional paths
+// optionally - kotlinx serialization for hierarchy
+
+    private fun appendLine(block: () -> Unit) {
+        try {
+            tabulate()
+            block()
+        }
+        finally {
+            write(";\n")
+        }
     }
 
     private fun appendSite(site: Site) {
+        // we always dump sites in following order:
+        // 1. preparation site
+        // 2. call sites
+        // 3. termination site
+        // there are no different function for each site as their logic is connected:
+        // there is always termination site in each callable.
+        // so after each call site `else` is added.
         when (site) {
+            is PreparationSite -> {
+                for (before in site.expressionsBefore) {
+                    appendCodeExpression(before)
+                }
+                for (after in site.expressionsAfter) {
+                    appendCodeExpression(after)
+                }
+            }
             is CallSite -> {
-                writeElement("if (currentDispatch == ${site.siteId})")
+                tabulate()
+                writeSeparated("if (currentDispatch == ${site.graphId})")
                 inScope {
                     for (before in site.expressionsBefore) {
                         appendCodeExpression(before)
@@ -1332,7 +1423,8 @@ class JavaLanguage : TargetLanguage {
                         appendCodeExpression(after)
                     }
                 }
-                writeElement("else")
+                tabulate()
+                writeSeparated("else")
             }
             is TerminationSite -> {
                 inScope {
@@ -1340,8 +1432,10 @@ class JavaLanguage : TargetLanguage {
                         appendCodeExpression(before)
                     }
                     for (dereference in site.dereferences) {
-                        appendCodeValue(dereference)
-                        write(".toString();\n")
+                        appendLine {
+                            writeCodeValue(dereference)
+                            write(".toString()")
+                        }
                     }
                     for (after in site.expressionsAfter) {
                         appendCodeExpression(after)
@@ -1351,22 +1445,12 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendLocalDispatchVariableAndPop(callable: CallablePresentation) {
-        val integerType = getPredefinedPrimitive(TargetLanguage.PredefinedPrimitives.INT)!!
-        val integerUsage = integerType.instanceType
-        val dispatcherParameter = callable.getLocal(dispatcherName)!!
-        val dispatcherReference = dispatcherParameter.reference
-        val pollMethod = arrayDeque.getMethods("poll").single()
-        val methodInvocation = MethodInvocationExpressionImpl(pollMethod, dispatcherReference)
-        callable.getOrCreateLocalVariable("currentDispatch", integerUsage, methodInvocation)
-    }
-
     private fun appendLocalsAndSites(callable: CallablePresentation) {
-        appendLocalDispatchVariableAndPop(callable)
         val localVariables = callable.localVariables
         for (variable in localVariables) {
             appendLocalVariable(variable)
         }
+        appendSite(callable.preparationSite)
         val sites = callable.callSites
         for (site in sites) {
             appendSite(site)
@@ -1375,14 +1459,17 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendConstructor(constructor: ConstructorPresentation) {
-        appendVisibility(constructor.visibility)
+        tabulate()
+        writeVisibility(constructor.visibility)
         write(constructor.containingType.shortName)
-        appendParametersList(constructor)
+        writeParametersList(constructor)
         inScope {
             val parentCall = constructor.parentConstructorCall
             if (parentCall != null) {
-                write("super")
-                appendCallList(parentCall)
+                appendLine {
+                    write("super")
+                    writeCallList(parentCall)
+                }
             }
             appendLocalsAndSites(constructor)
         }
@@ -1390,14 +1477,19 @@ class JavaLanguage : TargetLanguage {
 
     private fun appendStaticFunction(function: FunctionPresentation) = appendStartFunction(function.shortName, function)
 
+    private fun classNameForStaticFunction(functionName: String): String {
+        return "ClassFor${functionName.capitalize()}"
+    }
+
     private fun appendStartFunction(name: String, function: FunctionPresentation) {
-        writeElement("public static class ClassFor$name")
+        writeSeparated("public class ${classNameForStaticFunction(name)}")
         inScope {
-            appendVisibility(function.visibility)
-            writeElement("static")
-            appendTypeUsage(function.returnType)
+            tabulate()
+            writeVisibility(function.visibility)
+            writeSeparated("static")
+            writeTypeUsage(function.returnType)
             write(function.shortName)
-            appendParametersList(function)
+            writeParametersList(function)
             inScope {
                 appendLocalsAndSites(function)
             }
@@ -1405,20 +1497,22 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendMethodSignature(methodPresentation: MethodPresentation) {
+        tabulate()
         if (methodPresentation.inheritedFrom != null) {
-            writeElement("@Override\n")
+            writeSeparated("@Override\n")
         }
-        appendVisibility(methodPresentation.visibility)
+        tabulate()
+        writeVisibility(methodPresentation.visibility)
         when (methodPresentation.inheritanceModifier) {
-            InheritanceModifier.ABSTRACT -> writeElement("abstract")
-            InheritanceModifier.FINAL -> writeElement("final")
-            InheritanceModifier.STATIC -> writeElement("static")
+            InheritanceModifier.ABSTRACT -> writeSeparated("abstract")
+            InheritanceModifier.FINAL -> writeSeparated("final")
+            InheritanceModifier.STATIC -> writeSeparated("static")
             else -> {
                 assert(false) { "should be impossible" }
             }
         }
-        writeElement(methodPresentation.shortName)
-        appendParametersList(methodPresentation)
+        writeSeparated(methodPresentation.shortName)
+        writeParametersList(methodPresentation)
     }
 
     private fun appendMethod(methodPresentation: MethodPresentation) {
@@ -1428,8 +1522,8 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type, pathToSourcesDir) {
-        appendTypeSignature(type)
+    override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type.shortName, pathToSourcesDir) {
+        writeTypeSignature(type)
         inScope {
             for (field in type.implementedFields) {
                 appendField(field)
@@ -1452,12 +1546,12 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) = inFile(func, pathToSourcesDir) {
+    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) = inFile(classNameForStaticFunction(func.shortName), pathToSourcesDir) {
         appendStaticFunction(func)
     }
 
     override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
-        inFile(name, pathToSourcesDir) {
+        inFile(classNameForStaticFunction(name), pathToSourcesDir) {
             appendStartFunction(name, func)
         }
 }
@@ -1491,9 +1585,8 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
 
     private val id = "NpeInstance${++vulnerabilitiesCounter}"
     private val variableId = "variableFor$id"
-    private val typeId = "typeFor$id"
+    private val typeId = "TypeFor$id"
     private val startFunctionId = "startFunctionFor$id"
-
     private val arrayDeque = codeRepresentation.getPredefinedType("ArrayDeque<Integer>")!!
 
     // все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
@@ -1504,18 +1597,18 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
 
     private fun addPath(targetCall: Int) {
         val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)
-        val dispatcher = startFunction.getLocalVariable(dispatcherName)!!
-        val dispatcherType = (dispatcher.type as InstanceTypeUsage).typePresentation
+        val dispatcher = startFunction.getLocalVariable(dispatcherQueueName)!!
+        val dispatcherType = (dispatcher.usage as InstanceTypeUsage).typePresentation
         val dispatcherAddMethod = dispatcherType.getMethods("add").single()
-        val callSite = startFunction.callSites.single()
+        val preparationSite = startFunction.preparationSite
         val invocationExpression = MethodInvocationExpressionImpl(dispatcherAddMethod, dispatcher.reference)
         val dispatcherAddMethodParameter = dispatcherAddMethod.parameters.single()
 
         invocationExpression.addInCall(dispatcherAddMethodParameter, object : DirectStringSubstitution {
             override val substitution: String = targetCall.toString()
-            override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.type
+            override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.usage
         })
-        callSite.addBefore(invocationExpression)
+        preparationSite.addBefore(invocationExpression)
     }
 
     override fun createSource(u: Int) {
@@ -1523,9 +1616,10 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
         val type = codeRepresentation.getOrCreateType(typeId)
 
         // must be initialized here as in following transits this will be parameter
-        startFunction.createLocalVariable(dispatcherName, arrayDeque.instanceType, arrayDeque.defaultValue)
+        startFunction.createLocalVariable(dispatcherQueueName, arrayDeque.instanceType, arrayDeque.defaultValue)
         // initialized as null
         startFunction.createLocalVariable(variableId, type.instanceType)
+        codeRepresentation.createDispatch(startFunction)
         transitVulnerability(startFunction.graphId, u)
     }
 
@@ -1538,18 +1632,19 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
         val functionV = codeRepresentation.getOrCreateFunctionFor(v)
 
         // as it can be either variable or parameter
-        val dispatchArrayInU = functionU.getLocal(dispatcherName)!!
+        val dispatchArrayInU = functionU.getLocal(dispatcherQueueName)!!
         val variableInU = functionU.getLocal(variableId)!!
 
         // as it can be either variable or parameter
-        val dispatchParameterInV = functionV.getOrCreateParameter(dispatcherName, arrayDeque.instanceType)
-        val parameterInV = functionV.getOrCreateParameter(variableId, variableInU.type)
+        val dispatchParameterInV = functionV.getOrCreateParameter(dispatcherQueueName, arrayDeque.instanceType)
+        val parameterInV = functionV.getOrCreateParameter(variableId, variableInU.usage)
 
         val uvCallSite = functionU.getOrCreateCallSite(functionV)
 
         uvCallSite.invocationExpression.addInCall(dispatchParameterInV, dispatchArrayInU.reference)
         uvCallSite.invocationExpression.addInCall(parameterInV, variableInU.reference)
         addPath(v)
+        codeRepresentation.createDispatch(functionV)
     }
 
     override fun createSink(v: Int) {
@@ -1558,6 +1653,7 @@ class NpeInstance(private val codeRepresentation: CodeRepresentation) : Vulnerab
         val vTerminationSite = functionV.terminationSite
 
         vTerminationSite.addDereference(variableInV.reference)
+        addPath(-1)
     }
 }
 
@@ -1678,6 +1774,7 @@ fun main(args: Array<String>) {
     val accessibilityCache = AccessibilityCache(n, graph)
     val codeRepresentation = CodeRepresentation(graph, targetLanguage)
     val generatedVulnerabilitiesList = mutableListOf<VulnerabilityInstance>()
+
     i = 0
     while(i < k) {
         val u = randomer.nextInt(n)
