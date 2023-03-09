@@ -114,8 +114,7 @@ class JcClassOrInterfaceImpl(
         }
 
     override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
-        val fields = info.fields
-        val result: List<JcField> = fields.map { JcFieldImpl(this, it) }
+        val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
         when {
             !features.isNullOrEmpty() -> {
                 val modifiedFields = result.toMutableList()

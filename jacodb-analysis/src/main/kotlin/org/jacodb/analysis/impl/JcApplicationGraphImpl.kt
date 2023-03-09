@@ -19,6 +19,7 @@ package org.jacodb.analysis.impl
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcAnalysisFeature
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -29,23 +30,23 @@ import org.jacodb.impl.features.SyncUsagesExtension
 /**
  * Possible we will need JcRawInst instead of JcInst
  */
-class JcApplicationGraphImpl(
+open class JcApplicationGraphImpl(
     override val classpath: JcClasspath,
-    private val usages: SyncUsagesExtension,
+    protected val usages: SyncUsagesExtension,
     cacheSize: Long = 10_000,
-) : JcAnalysisPlatformImpl(classpath, listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
+    features: List<JcAnalysisFeature> = emptyList()
+) : JcAnalysisPlatformImpl(classpath, features + listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
 
-    private val JcMethod.actualFlowGraph: JcGraph
-        get() {
-            return flowGraph(this)
-        }
+    protected open fun JcMethod.actualFlowGraph(): JcGraph {
+        return flowGraph(this)
+    }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.actualFlowGraph.predecessors(node).asSequence()
+        return node.location.method.actualFlowGraph().predecessors(node).asSequence()
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.actualFlowGraph.successors(node).asSequence()
+        return node.location.method.actualFlowGraph().successors(node).asSequence()
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
@@ -56,7 +57,7 @@ class JcApplicationGraphImpl(
 
     override fun callers(method: JcMethod): Sequence<JcInst> {
         return usages.findUsages(method).flatMap {
-            it.actualFlowGraph.instructions.filter { inst ->
+            it.actualFlowGraph().instructions.filter { inst ->
                 inst.callExpr?.method?.method == method
             }.asSequence()
         }
@@ -64,11 +65,11 @@ class JcApplicationGraphImpl(
 
 
     override fun entryPoint(method: JcMethod): Sequence<JcInst> {
-        return method.actualFlowGraph.entries.asSequence()
+        return method.actualFlowGraph().entries.asSequence()
     }
 
     override fun exitPoints(method: JcMethod): Sequence<JcInst> {
-        return method.actualFlowGraph.exits.asSequence()
+        return method.actualFlowGraph().exits.asSequence()
     }
 
     override fun methodOf(node: JcInst): JcMethod {

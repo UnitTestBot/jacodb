@@ -14,15 +14,27 @@
  *  limitations under the License.
  */
 
-package org.jacodb.impl.analysis
+package org.jacodb.analysis.impl.custom
 
 import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcInst
 
-abstract class BackwardFlowAnalysis<T> (graph: JcGraph) : FlowAnalysisImpl<T>(graph) {
+interface FlowAnalysis<T> {
 
-    override val isForward: Boolean = false
+    val ins: MutableMap<JcInst, T>
+    val outs: MutableMap<JcInst, T>
 
-    override fun run() {
-        runAnalysis(FlowAnalysisDirection.BACKWARD, outs, ins)
-    }
+    val graph: JcGraph
+
+    val isForward: Boolean
+
+    fun newFlow(): T
+
+    fun newEntryFlow(): T
+
+    fun merge(in1: T, in2: T, out: T)
+
+    fun copy(source: T?, dest: T)
+
+    fun run()
 }

@@ -48,7 +48,6 @@ import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcEnterMonitorInst
 import org.jacodb.api.cfg.JcEqExpr
 import org.jacodb.api.cfg.JcExitMonitorInst
-import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcExprVisitor
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcFloat
@@ -255,38 +254,13 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
     return resultingFile
 }
 
-fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
-    instructions.forEach { it.accept(visitor) }
-    return this
-}
-
-fun <R, E, T : JcInstVisitor<E>> JcGraph.applyAndGet(visitor: T, getter: (T) -> R): R {
-    instructions.forEach { it.accept(visitor) }
-    return getter(visitor)
-}
-
-fun <T> JcGraph.collect(visitor: JcInstVisitor<T>): Collection<T> {
-    return instructions.map { it.accept(visitor) }
-}
-
-
-fun <R, E, T : JcInstVisitor<E>> JcInst.applyAndGet(visitor: T, getter: (T) -> R): R {
-    this.accept(visitor)
-    return getter(visitor)
-}
-
-fun <R, E, T : JcExprVisitor<E>> JcExpr.applyAndGet(visitor: T, getter: (T) -> R): R {
-    this.accept(visitor)
-    return getter(visitor)
-}
-
 /**
  * Returns a list of possible thrown exceptions for any given instruction or expression (types of exceptions
  * are determined from JVM bytecode specification). For method calls it returns:
  * - all the declared checked exception types
  * - 'java.lang.Throwable' for any potential unchecked types
  */
-class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcClassType>>, JcExprVisitor<List<JcClassType>> {
+open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcClassType>>, JcExprVisitor<List<JcClassType>> {
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType

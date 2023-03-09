@@ -44,6 +44,7 @@ import org.jacodb.api.cfg.JcSwitchInst
 import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.JcThrowInst
 import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.applyAndGet
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.isKotlin
@@ -59,7 +60,6 @@ import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
-import org.jacodb.impl.cfg.applyAndGet
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.hierarchyExt

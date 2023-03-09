@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.impl.analysis.impl
+package org.jacodb.analysis.impl.custom
 
 import org.jacodb.api.JcRefType
 import org.jacodb.api.cfg.JcArrayAccess
@@ -31,7 +31,6 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.arrayRef
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
-import org.jacodb.impl.analysis.BackwardFlowAnalysis
 
 
 class NullAnalysisMap : HashMap<JcValue, NullableState> {

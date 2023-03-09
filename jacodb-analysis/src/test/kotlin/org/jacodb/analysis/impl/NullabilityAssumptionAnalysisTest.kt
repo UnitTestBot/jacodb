@@ -14,18 +14,19 @@
  *  limitations under the License.
  */
 
-package org.jacodb.testing.cfg
+package org.jacodb.analysis.impl
 
+import org.jacodb.analysis.impl.custom.NullAssumptionAnalysis
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.analysis.impl.NullAssumptionAnalysis
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.cfg.NullAssumptionAnalysisExample
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 

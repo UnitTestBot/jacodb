@@ -189,8 +189,19 @@ val JcClassOrInterface.constructors: List<JcMethod>
 val JcClassOrInterface.allSuperHierarchy: LinkedHashSet<JcClassOrInterface>
     get() {
         val result = LinkedHashSet<JcClassOrInterface>()
-        forEachSuperClasses {
+        forAllSuperHierarchy {
             result.add(it)
+        }
+        return result
+    }
+
+val JcClassOrInterface.superClasses: List<JcClassOrInterface>
+    get() {
+        val result = arrayListOf<JcClassOrInterface>()
+        var t = superClass
+        while (t != null) {
+            result.add(t)
+            t = t.superClass
         }
         return result
     }
@@ -199,14 +210,14 @@ val JcClassOrInterface.allSuperHierarchy: LinkedHashSet<JcClassOrInterface>
 /**
  * @return all interfaces and classes retrieved recursively from this ClassId
  */
-fun JcClassOrInterface.forEachSuperClasses(action: (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
+fun JcClassOrInterface.forAllSuperHierarchy(action: (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
     val parents = (interfaces + superClass).filterNotNull()
     parents.forEach {
         action(it)
     }
     val result = parents.toMutableSet()
     parents.forEach {
-        it.forEachSuperClasses(action)
+        it.forAllSuperHierarchy(action)
     }
     return result.toPersistentList()
 }

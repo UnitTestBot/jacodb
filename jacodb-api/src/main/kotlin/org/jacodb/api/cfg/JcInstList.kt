@@ -16,7 +16,7 @@
 
 package org.jacodb.api.cfg
 
-interface JcInstList<INST>: Iterable<INST> {
+interface JcInstList<INST> : Iterable<INST> {
     val instructions: List<INST>
     val size: Int
     val indices: IntRange
@@ -24,7 +24,11 @@ interface JcInstList<INST>: Iterable<INST> {
 
     operator fun get(index: Int): INST
     fun getOrNull(index: Int): INST?
-    override fun iterator(): Iterator<INST>
+
+    fun toMutableList(): JcMutableInstList<INST>
+}
+
+interface JcMutableInstList<INST> : JcInstList<INST> {
     fun insertBefore(inst: INST, vararg newInstructions: INST)
     fun insertBefore(inst: INST, newInstructions: Collection<INST>)
     fun insertAfter(inst: INST, vararg newInstructions: INST)

@@ -99,4 +99,7 @@ val JcInst.callExpr: JcCallExpr?
         return accept(CallExprVisitor)
     }
 
-
+val JcInstList<JcInst>.locals: Set<JcLocal>
+    get() {
+        return instructions.flatMap { it.accept(LocalResolver).orEmpty() }.toSet()
+    }
