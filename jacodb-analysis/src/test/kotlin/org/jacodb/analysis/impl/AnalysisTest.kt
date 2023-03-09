@@ -65,28 +65,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
 
-data class Vertex<D>(val statement: JcInst, val domainFact: D)
-
-data class Edge<D>(val u: Vertex<D>, val v: Vertex<D>)
-
-// ответственность за то, чтобы при создании ребер между датафлоу фактами
-// при рассматривании разных случаев ребер в IFDS(при вызове метода, при возврате из метода и тд)
-// лежит на создателе флоу функции.
-
-// мы подразумеваем, что в флоу фанке нужно уметь считать домены для инструкций, которые выполнятся друг за другом напрямую
-interface FlowFunctionInstance<D> {
-    fun compute(fact: D): Collection<D>
-    fun computeBackward(fact: D): Collection<D>
-}
-
-interface FlowFunctionsSpace<Method, Statement, D> {
-    fun obtainStartFacts(startStatement: Statement): Collection<D>
-    fun obtainSequentFlowFunction(current: Statement, next: Statement): FlowFunctionInstance<D>
-    fun obtainCallToStartFlowFunction(callStatement: Statement, callee: Method): FlowFunctionInstance<D>
-    fun obtainCallToReturnFlowFunction(callStatement: Statement, returnSite: Statement): FlowFunctionInstance<D>
-    fun obtainExitToReturnSiteFlowFunction(callStatement: Statement, returnSite: Statement, exitStatement: Statement): FlowFunctionInstance<D>
-}
-
 /**
  * This class is used to represent a dataflow fact in problems where facts could be correlated with variables/values
  * (such as NPE, uninitialized variable, etc.)
@@ -491,15 +469,6 @@ class AnalysisTest : BaseTest() {
         return possibleNPEInstructions
     }
 
-    interface Devirtualizer<Method, Statement> {
-        /**
-         * Accepts source of the code and sink, which is expected to be virtual call.
-         *
-         * Should return all methods that could be called by sink.
-         */
-        fun findPossibleCallees(sources: List<Statement>, sink: Statement): Collection<Method>
-    }
-
     /**
      * Simple devirtualizer that substitutes method with all ov its overrides, but no more then [limit].
      * Also, it doesn't devirtualize methods matching [bannedPackagePrefixes]
@@ -513,7 +482,7 @@ class AnalysisTest : BaseTest() {
             classpath.hierarchyExt()
         }
 
-        override fun findPossibleCallees(sources: List<JcInst>, sink: JcInst): Collection<JcMethod> {
+        override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
             val methods = initialGraph.callees(sink).toList()
             if (sink.callExpr !is JcVirtualCallExpr)
                 return methods
@@ -540,162 +509,15 @@ class AnalysisTest : BaseTest() {
         }
     }
 
-    data class IfdsResult<D>(
-        val pathEdges: List<Edge<D>>,
-        val summaryEdge: List<Edge<D>>,
-        val resultFacts: Map<JcInst, Set<D>>,
-        val callToStartEdges: List<Edge<D>>,
-    ) {
-        /**
-         * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
-         */
-        fun resolvePossibleStackTrace(vertex: Vertex<D>, startMethod: JcMethod): List<JcInst> {
-            val result = mutableListOf(vertex.statement)
-            var curVertex = vertex
-            while (curVertex.statement.location.method != startMethod) {
-                // TODO: Note that taking not first element may cause to infinite loop in this implementation
-                val startVertex = pathEdges.first { it.v == curVertex }.u
-                curVertex = callToStartEdges.first { it.v == startVertex }.u
-                result.add(curVertex.statement)
-            }
-            return result.reversed()
-        }
-    }
-
     fun <D> doRun(
         startMethod: JcMethod,
         flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>,
         graph: ApplicationGraph<JcMethod, JcInst>,
         devirtualizer: Devirtualizer<JcMethod, JcInst>?
-    ): IfdsResult<D> = runBlocking {
-        val entryPoints = graph.entryPoint(startMethod)
-        val pathEdges = mutableListOf<Edge<D>>()
-        val workList: Queue<Edge<D>> = LinkedList()
-        val callToStartEdges = mutableListOf<Edge<D>>()
-
-        for(entryPoint in entryPoints) {
-            for (fact in flowSpace.obtainStartFacts(entryPoint)) {
-                val startV = Vertex(entryPoint, fact)
-                val startE = Edge(startV, startV)
-                pathEdges.add(startE)
-                workList.add(startE)
-            }
-        }
-        val summaryEdges = mutableListOf<Edge<D>>()
-
-        fun propagate(e: Edge<D>): Boolean {
-            if (e !in pathEdges) {
-                pathEdges.add(e)
-                workList.add(e)
-                return true
-            }
-            return false
-        }
-
-        while(!workList.isEmpty()) {
-            val (u, v) = workList.poll()
-            val (sp, d1) = u
-            val (n, d2) = v
-
-            val callees = devirtualizer?.findPossibleCallees(graph.entryPoint(startMethod).toList(), n)?.toList() ?: graph.callees(n).toList()
-            // 13
-            if (callees.isNotEmpty()) {
-                //14
-                for (calledProc in callees) {
-                    val flowFunction = flowSpace.obtainCallToStartFlowFunction(n, calledProc)
-                    val nextFacts = flowFunction.compute(d2)
-                    for (sCalledProc in graph.entryPoint(calledProc)) {
-                        for (d3 in nextFacts) {
-                            //15
-                            val sCalledProcWithD3 = Vertex(sCalledProc, d3)
-                            val nextEdge = Edge(sCalledProcWithD3, sCalledProcWithD3)
-                            if (propagate(nextEdge)) {
-                                callToStartEdges.add(Edge(v, sCalledProcWithD3))
-                            }
-                        }
-                    }
-                }
-                //17-18
-                val returnSitesOfN = graph.successors(n)
-                for (returnSite in returnSitesOfN) {
-                    val flowFunction = flowSpace.obtainCallToReturnFlowFunction(n, returnSite)
-                    val nextFacts = flowFunction.compute(d2)
-                    for (d3 in nextFacts) {
-                        val returnSiteVertex = Vertex(returnSite, d3)
-                        val nextEdge = Edge(u, returnSiteVertex)
-                        propagate(nextEdge)
-                    }
-                }
-                //17-18 for summary edges
-                for (summaryEdge in summaryEdges) {
-                    if (summaryEdge.u == v) {
-                        val newPathEdge = Edge(u, summaryEdge.v)
-                        propagate(newPathEdge)
-                    }
-                }
-            } else {
-                // 21-22
-                val nMethod = graph.methodOf(n)
-                val nMethodExitPoints = graph.exitPoints(nMethod).toList()
-                if (n in nMethodExitPoints) {
-                    @Suppress("UnnecessaryVariable") val ep = n
-                    val callers = graph.callers(nMethod)
-                    for (caller in callers) {
-                        // todo think
-                        val callToStartEdgeFlowFunction = flowSpace.obtainCallToStartFlowFunction(caller, nMethod)
-                        val d4Set = callToStartEdgeFlowFunction.computeBackward(d1)
-                        for (d4 in d4Set) {
-                            val returnSitesOfCallers = graph.successors(caller)
-                            for (returnSiteOfCaller in returnSitesOfCallers) {
-                                val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
-                                val d5Set = exitToReturnFlowFunction.compute(d2)
-                                for (d5 in d5Set) {
-                                    val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
-                                    if (newSummaryEdge !in summaryEdges) {
-                                        summaryEdges.add(newSummaryEdge)
-
-                                        // Can't use iterator-based loops because of possible ConcurrentModificationException
-                                        var ind = 0
-                                        while (ind < pathEdges.size) {
-                                            val pathEdge = pathEdges[ind]
-                                            if (pathEdge.v == newSummaryEdge.u) {
-                                                val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
-                                                propagate(newPathEdge)
-                                            }
-                                            ind += 1
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    val nextInstrs = graph.successors(n)
-                    for (m in nextInstrs) {
-                        val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
-                        val d3Set = flowFunction.compute(d2)
-                        for (d3 in d3Set) {
-                            val newEdge = Edge(u, Vertex(m, d3))
-                            propagate(newEdge)
-                        }
-                    }
-                }
-            }
-        }
-
-        // end of the algo - we should now for each instruction which domain facts holds at it
-        // based on the facts we can create analyses
-
-        // we are interested in facts for each instruction
-
-        val resultFacts = mutableMapOf<JcInst, MutableSet<D>>()
-
-        // 6-8
-        // todo: think about optimizations when we don't need all facts
-        for (pathEdge in pathEdges) {
-            //val method = pathEdge.u.statement.location.method
-            resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
-        }
-        return@runBlocking IfdsResult(pathEdges, summaryEdges, resultFacts, callToStartEdges)
+    ): IFDSResult<JcMethod, JcInst, D> = runBlocking {
+        val ifdsInstance = IFDSInstance(graph, flowSpace, devirtualizer)
+        ifdsInstance.addStart(startMethod)
+        ifdsInstance.run()
+        return@runBlocking ifdsInstance.collectResults()
     }
 }
