@@ -14,12 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.type
 
-interface InvocationExpression : ArgumentsOwnerExpression {
-    val invokedCallable: org.jacodb.analysis.codegen.ast.base.CallablePresentation
-    val invokedOn: CodeValue?
+import org.jacodb.analysis.codegen.ast.base.*
 
-    override val evaluatedType: TypeUsage
-        get() = invokedCallable.returnType
+interface FieldPresentation : TypePart, ValuePresentation, InitializerOwner, Inheritable {
+    fun createReference(codeValue: CodeValue): FieldReference
 }

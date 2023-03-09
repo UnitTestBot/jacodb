@@ -16,15 +16,14 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.ArgumentsOwnerExpression
+import org.jacodb.analysis.codegen.ast.base.expression.ArgumentsOwnerExpression
 import org.jacodb.analysis.codegen.ast.base.CodeValue
-import org.jacodb.analysis.codegen.ast.base.ParameterPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.ParameterPresentation
 
 abstract class ArgumentsOwnerExpressionImpl : ArgumentsOwnerExpression {
     override val parameterToArgument = hashMapOf<ParameterPresentation, CodeValue>()
     override fun addInCall(parameter: ParameterPresentation, argument: CodeValue) {
         assert(!parameterToArgument.contains(parameter)) { "redeclaration of parameter value, do not do it!" }
-        // todo assert argument is assignable
         parameterToArgument[parameter] = argument
     }
 }

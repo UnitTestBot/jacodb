@@ -14,12 +14,21 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.sites
+
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.CodeElement
+import org.jacodb.analysis.codegen.ast.base.CodeExpression
 
 /**
- * Named entities of callable. For now we require all locals to be unique.
+ * Some code block in execution path in single function.
+ * Any callable instance is list of sites.
+ * In any execution path each function
  */
-interface CallableLocal : ValuePresentation {
+interface Site : CodeElement {
     val parentCallable: CallablePresentation
-    val reference: ValueReference
+    val expressionsBefore: Collection<CodeExpression>
+    val expressionsAfter: Collection<CodeExpression>
+    fun addBefore(expression: CodeExpression)
+    fun addAfter(expression: CodeExpression)
 }

@@ -16,6 +16,11 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
+
+/**
+ * Anything that can be used as a value
+ */
 interface CodeValue : CodeElement {
     val evaluatedType: TypeUsage
 }

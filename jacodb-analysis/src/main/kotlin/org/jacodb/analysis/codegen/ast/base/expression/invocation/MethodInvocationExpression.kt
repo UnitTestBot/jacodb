@@ -14,10 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression.invocation
 
-interface MethodPresentation : FunctionPresentation, NamedTypePart, Inheritable {
-    override val inheritedFrom: MethodPresentation?
-    override val fqnName: String
-        get() = super<NamedTypePart>.fqnName
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
+
+interface MethodInvocationExpression : InvocationExpression {
+    val invokedMethod: MethodPresentation
+    override val invokedOn: CodeValue
+
+    override val invokedCallable: MethodPresentation
+        get() = invokedMethod
 }

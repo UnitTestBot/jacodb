@@ -16,7 +16,9 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class InstanceTypeImpl(override val typePresentation: TypePresentation, override val isNullable: Boolean) :
     TypeUsageImpl(), InstanceTypeUsage {

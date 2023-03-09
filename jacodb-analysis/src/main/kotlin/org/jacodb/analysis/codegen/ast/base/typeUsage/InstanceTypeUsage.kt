@@ -14,12 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.typeUsage
 
-/**
- * Represents call and all preparation for this call
- */
-interface CallSite : Site {
-    val graphId: Int
-    val invocationExpression: InvocationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+
+interface InstanceTypeUsage : TypeUsage {
+    val typePresentation: TypePresentation
 }

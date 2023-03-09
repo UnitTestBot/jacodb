@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.codegen.language.impl
 
+import net.lingala.zip4j.ZipFile
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.impossibleGraphId
 import java.io.BufferedOutputStream
@@ -25,8 +26,31 @@ import java.nio.file.Path
 import kotlin.io.path.outputStream
 import org.jacodb.analysis.codegen.ast.impl.*
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.FunctionInvocationExpression
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.InvocationExpression
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.MethodInvocationExpression
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.LocalVariablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.FieldPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.sites.CallSite
+import org.jacodb.analysis.codegen.ast.base.sites.PreparationSite
+import org.jacodb.analysis.codegen.ast.base.sites.Site
+import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
+import org.jacodb.analysis.codegen.ast.base.typeUsage.ArrayTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 import org.jacodb.analysis.codegen.currentDispatch
 import org.jacodb.analysis.codegen.dispatcherQueueName
+import java.io.FileOutputStream
+import java.nio.file.Files
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
 
 class JavaLanguage : TargetLanguage {
     private val realPrimitivesName = mutableMapOf<TargetLanguage.PredefinedPrimitives, String>()
@@ -49,7 +73,7 @@ class JavaLanguage : TargetLanguage {
         predefinedTypes[arrayDeque.shortName] = arrayDeque
     }
 
-    override fun dispatch(callable: org.jacodb.analysis.codegen.ast.base.CallablePresentation) {
+    override fun dispatch(callable: CallablePresentation) {
         val integerType = getPredefinedPrimitive(TargetLanguage.PredefinedPrimitives.INT)!!
         val integerUsage = integerType.instanceType
         val current = callable.getOrCreateLocalVariable(currentDispatch, integerUsage, object :
@@ -61,8 +85,7 @@ class JavaLanguage : TargetLanguage {
         val dispatcherReference = dispatcherQueue.reference
         val removeMethod = arrayDeque.getMethods("remove").single()
         val methodInvocation = MethodInvocationExpressionImpl(removeMethod, dispatcherReference)
-        val assignment =
-            org.jacodb.analysis.codegen.ast.impl.AssignmentExpressionImpl(current.reference, methodInvocation)
+        val assignment = AssignmentExpressionImpl(current.reference, methodInvocation)
         callable.preparationSite.addAfter(assignment)
     }
 
@@ -108,6 +131,9 @@ class JavaLanguage : TargetLanguage {
         fileWriter!!.flush()
     }
 
+    // write - just writes
+    // append - handles with tabulation and necessary semicolons
+    // dump - accept code element and creates text file with its representation
     private fun write(content: String) {
         fileWriter!!.write(content)
     }
@@ -116,10 +142,6 @@ class JavaLanguage : TargetLanguage {
         write(content)
         write(" ")
     }
-
-    // write - just writes
-    // append - handles with tabulation and necessary semicolons
-    // dump - accept code element and creates text file with its representation
 
     private fun writeVisibility(visibility: VisibilityModifier) {
         writeSeparated(visibility.toString().lowercase())
@@ -173,7 +195,7 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun writeParametersList(callable: org.jacodb.analysis.codegen.ast.base.CallablePresentation) {
+    private fun writeParametersList(callable: CallablePresentation) {
         write("(")
         var first = true
         for (parameter in callable.parameters) {
@@ -188,7 +210,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendField(field: FieldPresentation) {
-        // todo
+        TODO("not implemented")
     }
 
     private fun writeTypeUsage(typeUsage: TypeUsage) {
@@ -197,7 +219,7 @@ class JavaLanguage : TargetLanguage {
 
     private fun writeDefaultValueForTypeUsage(typeUsage: TypeUsage) {
         when (typeUsage) {
-            is org.jacodb.analysis.codegen.ast.base.ArrayTypeUsage -> {
+            is ArrayTypeUsage -> {
                 throwCannotDump(typeUsage)
             }
             is InstanceTypeUsage -> {
@@ -216,17 +238,14 @@ class JavaLanguage : TargetLanguage {
     private fun writeCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
             is ValueExpression -> writeValueExpression(codeExpression)
-            is org.jacodb.analysis.codegen.ast.base.AssignmentExpression -> {
+            is AssignmentExpression -> {
                 writeCodeValue(codeExpression.assignmentTarget)
                 write(" = ")
                 writeCodeValue(codeExpression.assignmentValue)
             }
-            // todo returnStatement
             else -> {
                 throwCannotDump(codeExpression)
             }
-            // 1. localVariable presentation
-            // 2. return statement - expression
         }
     }
 
@@ -248,7 +267,6 @@ class JavaLanguage : TargetLanguage {
 
     private fun writeValueExpression(valueExpression: ValueExpression) {
         when (valueExpression) {
-            // TODO creation of arrays?
             is ObjectCreationExpression -> {
                 writeSeparated("new")
                 writeSeparated(valueExpression.invokedConstructor.containingType.shortName)
@@ -304,17 +322,6 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-// 1. assignment + in vulnerability transit do dispatch
-//
-// 2. refactor part with expressions in site
-// 3. correct styling
-// commentaries
-
-// statistics dump - vulnerability id, source, sink, path
-
-// optionally - conditional paths
-// optionally - kotlinx serialization for hierarchy
-
     private fun appendLine(block: () -> Unit) {
         try {
             tabulate()
@@ -342,7 +349,7 @@ class JavaLanguage : TargetLanguage {
                     appendCodeExpression(after)
                 }
             }
-            is org.jacodb.analysis.codegen.ast.base.CallSite -> {
+            is CallSite -> {
                 tabulate()
                 writeSeparated("if (currentDispatch == ${site.graphId})")
                 inScope {
@@ -376,7 +383,7 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendLocalsAndSites(callable: org.jacodb.analysis.codegen.ast.base.CallablePresentation) {
+    private fun appendLocalsAndSites(callable: CallablePresentation) {
         val localVariables = callable.localVariables
         for (variable in localVariables) {
             appendLocalVariable(variable)
@@ -485,4 +492,31 @@ class JavaLanguage : TargetLanguage {
         inFile(classNameForStaticFunction(name), pathToSourcesDir) {
             appendStartFunction(name, func)
         }
+
+    private fun transferTemplateZipToTemp(): Path {
+        val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
+        val resourcesName = projectZipInResourcesName()
+
+        this.javaClass.classLoader.getResourceAsStream(resourcesName)!!
+            .use { templateFromResourceStream ->
+                FileOutputStream(pathWhereToUnzipTemplate.toFile()).use { streamToLocationForTemplate ->
+                    templateFromResourceStream.copyTo(streamToLocationForTemplate)
+                }
+            }
+
+        return pathWhereToUnzipTemplate
+    }
+
+    override fun unzipTemplateProject(pathToDirectoryWhereToUnzipTemplate: Path, fullClear: Boolean) {
+        pathToDirectoryWhereToUnzipTemplate.createDirectories()
+
+        if (fullClear) {
+            pathToDirectoryWhereToUnzipTemplate.toFile().deleteRecursively()
+            pathToDirectoryWhereToUnzipTemplate.createDirectories()
+        }
+
+        val templateZipAtTemp = transferTemplateZipToTemp()
+
+        ZipFile(templateZipAtTemp.toFile()).extractAll(pathToDirectoryWhereToUnzipTemplate.absolutePathString())
+    }
 }

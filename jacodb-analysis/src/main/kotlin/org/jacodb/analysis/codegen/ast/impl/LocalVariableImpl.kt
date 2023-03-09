@@ -17,13 +17,15 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.LocalVariablePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class LocalVariableImpl(
     override val usage: TypeUsage,
     // currently we prohibit shadowing local variables,
     // it means that local variables and parameters can be identified by its name and parent function
     override val shortName: String,
-    // todo assert initial value type is assignable to type
     override val initialValue: CodeValue?,
     override val parentCallable: CallablePresentation
 ) : FunctionLocalImpl(), LocalVariablePresentation

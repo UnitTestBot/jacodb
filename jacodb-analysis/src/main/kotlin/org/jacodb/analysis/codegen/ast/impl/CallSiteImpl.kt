@@ -16,7 +16,9 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.InvocationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.sites.CallSite
 
 class CallSiteImpl(
     // unique identifier with the function

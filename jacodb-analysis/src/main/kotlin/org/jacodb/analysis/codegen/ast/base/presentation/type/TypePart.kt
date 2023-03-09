@@ -14,6 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.type
 
-interface PreparationSite: Site
+import org.jacodb.analysis.codegen.ast.base.CodeElement
+
+/**
+ * Anything that resides in type
+ */
+interface TypePart : CodeElement {
+    val containingType: TypePresentation
+}

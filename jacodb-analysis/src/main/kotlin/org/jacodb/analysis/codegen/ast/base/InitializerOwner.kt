@@ -16,6 +16,10 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+/**
+ * Entity that might have initial value, i.e. local variable.
+ * Null means absence of initialization value/
+ */
 interface InitializerOwner {
     val initialValue: CodeValue?
 }

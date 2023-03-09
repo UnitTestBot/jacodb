@@ -14,10 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression.invocation
 
-interface FunctionInvocationExpression : InvocationExpression {
-    override val invokedOn: CodeValue?
-        get() = null
-    override val invokedCallable: FunctionPresentation
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.expression.ArgumentsOwnerExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
+
+interface InvocationExpression : ArgumentsOwnerExpression {
+    val invokedCallable: CallablePresentation
+    val invokedOn: CodeValue?
+
+    override val evaluatedType: TypeUsage
+        get() = invokedCallable.returnType
 }

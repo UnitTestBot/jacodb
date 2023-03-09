@@ -14,13 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.callable.local
 
-/**
- * Expression that have arguments. Each argument should specify for which parameter it is used for.
- * If some parameters are not matched - default values of types will be used.
- */
-interface ArgumentsOwnerExpression : ValueExpression {
-    val parameterToArgument: Map<ParameterPresentation, CodeValue>
-    fun addInCall(parameter: ParameterPresentation, argument: CodeValue)
-}
+import org.jacodb.analysis.codegen.ast.base.InitializerOwner
+
+interface LocalVariablePresentation : CallableLocalPresentation, InitializerOwner

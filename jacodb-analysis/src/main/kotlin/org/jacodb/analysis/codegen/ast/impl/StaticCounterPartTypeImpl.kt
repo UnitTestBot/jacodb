@@ -17,6 +17,12 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class StaticCounterPartTypeImpl(typeImpl: TypeImpl) : TypeImpl(typeImpl.shortName), TypePresentation {
     override val staticCounterPart: TypePresentation = typeImpl
@@ -35,14 +41,11 @@ class StaticCounterPartTypeImpl(typeImpl: TypeImpl) : TypeImpl(typeImpl.shortNam
     }
 
     override val defaultValue
-        // todo class<type>?
         get() = throw IllegalStateException("static types dont have default value")
 
     override val defaultConstructor: ConstructorPresentation
-        // todo static initializer?
         get() = throw IllegalStateException("static types cannot be instantiated")
 
     override val instanceType: InstanceTypeUsage
-        // todo Class<Type>
         get() = throw IllegalStateException("static types cannot be referenced")
 }

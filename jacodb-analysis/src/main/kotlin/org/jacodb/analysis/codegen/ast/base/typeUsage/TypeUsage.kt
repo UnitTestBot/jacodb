@@ -14,6 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.typeUsage
 
-interface LocalVariablePresentation : CallableLocal, InitializerOwner
+import org.jacodb.analysis.codegen.ast.base.CodeElement
+
+interface TypeUsage : CodeElement {
+    val stringPresentation: String
+
+    fun wrapInArray(): TypeUsage
+
+    val isNullable: Boolean
+    fun flipNullability(): TypeUsage
+}

@@ -16,4 +16,7 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+/**
+ * Expression that can be evaluated to some value
+ */
 interface ValueExpression : CodeExpression, CodeValue

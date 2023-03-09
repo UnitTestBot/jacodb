@@ -17,6 +17,7 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.sites.Site
 
 abstract class SiteImpl : Site {
     override val expressionsAfter = mutableListOf<CodeExpression>()

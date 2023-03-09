@@ -14,11 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.type
 
-/**
- * Anything that resides in type
- */
-interface TypePart : CodeElement {
-    val containingType: TypePresentation
+import org.jacodb.analysis.codegen.ast.base.Inheritable
+import org.jacodb.analysis.codegen.ast.base.NamedTypePart
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+
+interface MethodPresentation : FunctionPresentation, NamedTypePart, Inheritable {
+    override val inheritedFrom: MethodPresentation?
+    override val fqnName: String
+        get() = super<NamedTypePart>.fqnName
 }

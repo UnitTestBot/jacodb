@@ -16,21 +16,21 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.TypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.ArrayTypeUsage
 
 class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean) :
-    TypeUsageImpl(), org.jacodb.analysis.codegen.ast.base.ArrayTypeUsage {
+    TypeUsageImpl(), ArrayTypeUsage {
 
     override val stringPresentation: String = element.stringPresentation + "[]"
 
     override fun furthestElementType(): TypeUsage {
-        if (element is org.jacodb.analysis.codegen.ast.base.ArrayTypeUsage)
+        if (element is ArrayTypeUsage)
             return element.furthestElementType()
         return element
     }
 
     override fun flipNullability(): TypeUsage {
-        // todo flip inner element nullability?
         return ArrayTypeUsageImpl(element, !isNullable)
     }
 }

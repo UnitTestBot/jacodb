@@ -14,7 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.callable
+
+import org.jacodb.analysis.codegen.ast.base.CodePresentation
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.CallableLocalPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.LocalVariablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.ParameterPresentation
+import org.jacodb.analysis.codegen.ast.base.sites.CallSite
+import org.jacodb.analysis.codegen.ast.base.sites.Site
+import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 /**
  * Anything that can be called. Parent for functions, methods, lambdas, constructors, destructors etc.
@@ -24,7 +34,7 @@ interface CallablePresentation : CodePresentation {
         get() = parameters.joinToString { it.usage.stringPresentation }
 
     // consists from parameters and local variables
-    val visibleLocals: Collection<CallableLocal>
+    val visibleLocals: Collection<CallableLocalPresentation>
     val returnType: TypeUsage
 
     // should be aware of local variables

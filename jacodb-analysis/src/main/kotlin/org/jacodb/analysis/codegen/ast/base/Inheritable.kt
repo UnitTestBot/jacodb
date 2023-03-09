@@ -16,6 +16,9 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+/**
+ * Entity that can participate in inherit hierarchy and be overridden
+ */
 interface Inheritable : CodeElement {
     val inheritanceModifier: InheritanceModifier
     val inheritedFrom: Inheritable?

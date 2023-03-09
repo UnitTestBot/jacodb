@@ -16,7 +16,9 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.ParameterPresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class ParameterImpl(
     override val usage: TypeUsage,
@@ -24,7 +26,7 @@ class ParameterImpl(
     // invariant - two parameters relates to the same function if they point to the same function
     // currently we prohibit shadowing local variables,
     // it means that local variables and parameters can be identified by its name and parent function
-    override val parentCallable: org.jacodb.analysis.codegen.ast.base.CallablePresentation,
+    override val parentCallable: CallablePresentation,
     // just for correct code generation
     override val indexInSignature: Int
 ) : FunctionLocalImpl(), ParameterPresentation {

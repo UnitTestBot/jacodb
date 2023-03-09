@@ -16,6 +16,9 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+/**
+ * Code entity with visibility
+ */
 interface VisibilityOwner : CodeElement {
     val visibility: VisibilityModifier
 }

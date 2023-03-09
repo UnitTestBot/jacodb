@@ -17,6 +17,10 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class ConstructorImpl(
     graphId: Int,

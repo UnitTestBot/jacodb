@@ -14,10 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.sites
 
-interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart {
-    val parentConstructorCall: ObjectCreationExpression?
-    override val returnType: TypeUsage
-        get() = containingType.instanceType
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.InvocationExpression
+
+/**
+ * Represents call and all preparation for this call
+ */
+interface CallSite : Site {
+    val graphId: Int
+    val invocationExpression: InvocationExpression
 }

@@ -14,17 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.typeUsage
 
-/**
- * Some code block in execution path in single function.
- * Any callable instance is list of sites.
- * In any execution path each function
- */
-interface Site : CodeElement {
-    val parentCallable: CallablePresentation
-    val expressionsBefore: Collection<CodeExpression>
-    val expressionsAfter: Collection<CodeExpression>
-    fun addBefore(expression: CodeExpression)
-    fun addAfter(expression: CodeExpression)
+interface ArrayTypeUsage : TypeUsage {
+    val element: TypeUsage
+    fun furthestElementType(): TypeUsage
 }

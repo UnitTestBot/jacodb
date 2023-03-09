@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.codegen.ast.impl
 
-import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 abstract class TypeUsageImpl : TypeUsage {
     override fun wrapInArray(): TypeUsage {

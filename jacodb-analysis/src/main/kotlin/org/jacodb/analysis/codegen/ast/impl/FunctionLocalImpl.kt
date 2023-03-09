@@ -17,8 +17,9 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.CallableLocalPresentation
 
-abstract class FunctionLocalImpl : CallableLocal {
+abstract class FunctionLocalImpl : CallableLocalPresentation {
     override val reference: ValueReference by lazy { SimpleValueReference(this) }
 
     override fun hashCode(): Int {
@@ -26,7 +27,7 @@ abstract class FunctionLocalImpl : CallableLocal {
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is CallableLocal || parentCallable != other.parentCallable) {
+        if (other !is CallableLocalPresentation || parentCallable != other.parentCallable) {
             // there are no constraints on locals that refer to different callables
             return false
         }

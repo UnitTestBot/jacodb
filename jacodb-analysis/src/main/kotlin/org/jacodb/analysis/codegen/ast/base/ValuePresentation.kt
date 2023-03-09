@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
+
 /**
  * Anything that can be assigned or invoked.
  */

@@ -17,6 +17,9 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 open class FunctionImpl(
     graphId: Int,
@@ -34,7 +37,6 @@ open class FunctionImpl(
         } else {
             // all functions(including methods) should have unique <fqn, signatures>
             // and so 2 functions should not have same fqn and signature simultaneously
-            // todo or one should override another if this is method
             assert(fqnName != other.fqnName || signature != other.signature)
         }
 

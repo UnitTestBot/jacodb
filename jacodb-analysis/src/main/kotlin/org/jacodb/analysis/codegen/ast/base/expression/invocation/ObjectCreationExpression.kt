@@ -14,13 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression.invocation
 
-interface TypeUsage : CodeElement {
-    val stringPresentation: String
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
 
-    fun wrapInArray(): TypeUsage
+interface ObjectCreationExpression : InvocationExpression {
+    val invokedConstructor: ConstructorPresentation
 
-    val isNullable: Boolean
-    fun flipNullability(): TypeUsage
+    override val invokedCallable: ConstructorPresentation
+        get() = invokedConstructor
+    override val invokedOn: CodeValue?
+        get() = null
 }

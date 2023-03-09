@@ -14,9 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression
 
-interface ArrayTypeUsage : TypeUsage {
-    val element: TypeUsage
-    fun furthestElementType(): TypeUsage
+import org.jacodb.analysis.codegen.ast.base.CodeExpression
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+
+interface AssignmentExpression: CodeExpression {
+    val assignmentValue: CodeValue
+    val assignmentTarget: CodeValue
 }

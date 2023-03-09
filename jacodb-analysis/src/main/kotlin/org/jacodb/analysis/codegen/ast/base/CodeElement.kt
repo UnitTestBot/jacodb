@@ -17,6 +17,6 @@
 package org.jacodb.analysis.codegen.ast.base
 
 /**
- * Anything that can be dumped
+ * Anything that can be dumped to code
  */
 interface CodeElement

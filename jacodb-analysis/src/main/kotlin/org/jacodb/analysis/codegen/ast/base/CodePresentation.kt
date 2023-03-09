@@ -16,4 +16,7 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+/**
+ * Represents any entity that requires declaration, i.e. type, field, method etc.
+ */
 interface CodePresentation : CodeElement

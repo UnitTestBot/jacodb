@@ -17,9 +17,10 @@
 package org.jacodb.analysis.codegen.ast.base
 
 /**
- * Hack if AST is not sufficient, proposing [TargetLanguage] writing [substitution] string directly.
+ * Hack if AST is not sufficient, proposing [org.jacodb.analysis.codegen.language.base.TargetLanguage] writing [substitution] string directly.
  * Create anonymous object of this interface and mock anything you need to.
- * [TargetLanguage] will use [substitution] for generating code.
+ *
+ * [org.jacodb.analysis.codegen.language.base.TargetLanguage] will use [substitution] for generating code.
  */
 interface DirectStringSubstitution : CodeValue {
     val substitution: String

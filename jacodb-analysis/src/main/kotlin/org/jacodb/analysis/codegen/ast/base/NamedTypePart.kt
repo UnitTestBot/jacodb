@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.codegen.ast.base
 
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePart
+
 /**
  * Anything that resides in type and can be located
  */

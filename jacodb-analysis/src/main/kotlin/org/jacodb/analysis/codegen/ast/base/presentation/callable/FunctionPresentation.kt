@@ -14,8 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.callable
 
-interface InstanceTypeUsage : TypeUsage {
-    val typePresentation: TypePresentation
+import org.jacodb.analysis.codegen.ast.base.NameOwner
+import org.jacodb.analysis.codegen.ast.base.VisibilityOwner
+
+/**
+ * Any named functions. Global, static functions and methods.
+ */
+interface FunctionPresentation : CallablePresentation, VisibilityOwner, NameOwner {
+    override val fqnName: String
+        get() = shortName
 }

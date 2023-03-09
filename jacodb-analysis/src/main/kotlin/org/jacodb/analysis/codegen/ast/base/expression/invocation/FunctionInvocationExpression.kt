@@ -14,9 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression.invocation
 
-/**
- * Any code expression that can be executed
- */
-interface CodeExpression : CodeElement
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+
+interface FunctionInvocationExpression : InvocationExpression {
+    override val invokedOn: CodeValue?
+        get() = null
+    override val invokedCallable: FunctionPresentation
+}

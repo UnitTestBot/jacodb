@@ -14,9 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.callable.local
 
-interface FieldPresentation : TypePart, ValuePresentation, InitializerOwner, Inheritable {
-    // todo assert that field is accessible to code value type
-    fun createReference(codeValue: CodeValue): FieldReference
+import org.jacodb.analysis.codegen.ast.base.ValuePresentation
+import org.jacodb.analysis.codegen.ast.base.ValueReference
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+
+/**
+ * Named entities of callable. For now we require all locals to be unique.
+ */
+interface CallableLocalPresentation : ValuePresentation {
+    val parentCallable: CallablePresentation
+    val reference: ValueReference
 }

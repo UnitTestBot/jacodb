@@ -17,6 +17,10 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.type.*
+import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 import org.jacodb.analysis.codegen.impossibleGraphId
 
 open class TypeImpl(

@@ -14,12 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.sites
 
-interface MethodInvocationExpression : InvocationExpression {
-    val invokedMethod: MethodPresentation
-    override val invokedOn: CodeValue
+import org.jacodb.analysis.codegen.ast.base.CodeValue
 
-    override val invokedCallable: MethodPresentation
-        get() = invokedMethod
+/**
+ * End of any call sequence.
+ */
+interface TerminationSite : Site {
+    val dereferences: Collection<CodeValue>
+    fun addDereference(reference: CodeValue)
 }

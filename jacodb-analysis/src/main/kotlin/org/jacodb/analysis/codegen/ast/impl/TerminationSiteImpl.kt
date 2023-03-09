@@ -17,6 +17,8 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
 
 class TerminationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), TerminationSite {
     override val dereferences = mutableListOf<CodeValue>()

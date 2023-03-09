@@ -17,7 +17,9 @@
 package org.jacodb.analysis.codegen.language.base
 
 import java.nio.file.Path
-import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 
 interface TargetLanguage {
     enum class PredefinedPrimitives {
@@ -32,5 +34,6 @@ interface TargetLanguage {
     fun dumpType(type: TypePresentation, pathToSourcesDir: Path)
     fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path)
     fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path)
-    fun dispatch(callable: org.jacodb.analysis.codegen.ast.base.CallablePresentation)
+    fun dispatch(callable: CallablePresentation)
+    fun unzipTemplateProject(pathToDirectoryWhereToUnzipTemplate: Path, fullClear: Boolean)
 }

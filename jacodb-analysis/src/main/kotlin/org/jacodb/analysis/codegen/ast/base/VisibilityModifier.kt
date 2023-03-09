@@ -21,6 +21,5 @@ package org.jacodb.analysis.codegen.ast.base
  */
 enum class VisibilityModifier {
     PUBLIC,
-    PRIVATE,
-    // TODO PROTECTED - as it is relevant only when we will have inheritance
+    PRIVATE
 }

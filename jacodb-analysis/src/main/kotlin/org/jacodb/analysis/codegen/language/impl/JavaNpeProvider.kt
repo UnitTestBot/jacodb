@@ -21,6 +21,8 @@ import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
 import org.jacodb.analysis.codegen.CodeRepresentation
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 import org.jacodb.analysis.codegen.ast.impl.*
 import org.jacodb.analysis.codegen.dispatcherQueueName
 
@@ -44,12 +46,6 @@ class JavaNpeInstance(private val codeRepresentation: CodeRepresentation) : Vuln
     private val typeId = "TypeFor$id"
     private val startFunctionId = "startFunctionFor$id"
     private val arrayDeque = codeRepresentation.getPredefinedType("ArrayDeque<Integer>")!!
-
-    // все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
-    // так как рендеринг в конце - все будет ок
-    // путь задаеися глобальным стейтом на доменах?))))
-    // НЕТ! так как у нас проблема может быть только на одном путе, только пройдя его полностью - то нам не нужно эмулировать
-    // диспатчинг в ифдс, он сам найдет только то, что нужно, а вот верификация будет за юсвм!!
 
     private fun addPath(targetCall: Int) {
         val startFunction = codeRepresentation.getOrCreateStartFunction(startFunctionId)

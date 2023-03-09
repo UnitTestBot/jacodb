@@ -14,12 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.expression
+
+import org.jacodb.analysis.codegen.ast.base.CodeValue
+import org.jacodb.analysis.codegen.ast.base.ValueExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.ParameterPresentation
 
 /**
- * Any named functions. Global, static functions and methods.
+ * Expression that have arguments. Each argument should specify for which parameter it is used for.
+ * If some parameters are not matched - default values of types will be used.
  */
-interface FunctionPresentation : CallablePresentation, VisibilityOwner, NameOwner {
-    override val fqnName: String
-        get() = shortName
+interface ArgumentsOwnerExpression : ValueExpression {
+    val parameterToArgument: Map<ParameterPresentation, CodeValue>
+    fun addInCall(parameter: ParameterPresentation, argument: CodeValue)
 }

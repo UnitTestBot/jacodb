@@ -17,6 +17,18 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.InvocationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.CallableLocalPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.LocalVariablePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.ParameterPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
+import org.jacodb.analysis.codegen.ast.base.sites.CallSite
+import org.jacodb.analysis.codegen.ast.base.sites.Site
+import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
+import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 abstract class CallableImpl(
     override val graphId: Int,
@@ -51,7 +63,7 @@ abstract class CallableImpl(
                 index
             )
         }
-        .toMutableList<CallableLocal>()
+        .toMutableList<CallableLocalPresentation>()
 
     override fun createLocalVariable(
         name: String,

@@ -17,50 +17,17 @@
 package org.jacodb.analysis.codegen
 
 import mu.KotlinLogging
-import net.lingala.zip4j.ZipFile
-import org.jacodb.analysis.codegen.ast.base.*
-import org.jacodb.analysis.codegen.ast.impl.*
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
-import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.Collections.min
-import kotlin.io.path.*
+import kotlin.io.path.notExists
+import kotlin.io.path.useDirectoryEntries
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger { }
-
-class DeZipper(private val language: TargetLanguage, private val fullClear: Boolean) {
-    private fun transferTemplateZipToTemp(): Path {
-        val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
-
-        this.javaClass.classLoader.getResourceAsStream(language.projectZipInResourcesName())!!
-            .use { templateFromResourceStream ->
-                FileOutputStream(pathWhereToUnzipTemplate.toFile()).use { streamToLocationForTemplate ->
-                    templateFromResourceStream.copyTo(streamToLocationForTemplate)
-                }
-            }
-
-        return pathWhereToUnzipTemplate
-    }
-
-    fun dezip(pathToDirectoryWhereToUnzipTemplate: Path) {
-        pathToDirectoryWhereToUnzipTemplate.createDirectories()
-
-        if (fullClear) {
-            pathToDirectoryWhereToUnzipTemplate.toFile().deleteRecursively()
-            pathToDirectoryWhereToUnzipTemplate.createDirectories()
-        }
-
-        val templateZipAtTemp = transferTemplateZipToTemp()
-
-        ZipFile(templateZipAtTemp.toFile()).extractAll(pathToDirectoryWhereToUnzipTemplate.absolutePathString())
-    }
-}
 
 class AccessibilityCache(n: Int, private val graph: Map<Int, Set<Int>>) {
     private val used = Array(n) { 0 }
@@ -107,9 +74,6 @@ class AccessibilityCache(n: Int, private val graph: Map<Int, Set<Int>>) {
     }
 }
 
-
-const val impossibleGraphId = -1
-
 // primary languages - java, cpp.
 // secondary - python, go, js, kotlin, etc.
 
@@ -119,74 +83,34 @@ const val impossibleGraphId = -1
 // 3. cpp constructor initialization features - complicates ast too much
 
 
+// 1. assignment + in vulnerability transit do dispatch
+//
+// 2. refactor part with expressions in site
+// 3. correct styling
+// commentaries
+
+// statistics dump - vulnerability id, source, sink, path
+
+// optionally - conditional paths
+// optionally - kotlinx serialization for hierarchy
+
+// все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
+// так как рендеринг в конце - все будет ок
+// путь задаеися глобальным стейтом на доменах?))))
+// НЕТ! так как у нас проблема может быть только на одном путе, только пройдя его полностью - то нам не нужно эмулировать
+// диспатчинг в ифдс, он сам найдет только то, что нужно, а вот верификация будет за юсвм!!
+
 // we will differ static class and instance class like in kotlin.
 // for Java and CPP this means that in case of static elements we will create static duplicate
 
-class CodeRepresentation(private val graph: Map<Int, Set<Int>>, private val language: TargetLanguage) : CodeElement {
-    private val functions = mutableMapOf<Int, FunctionPresentation>()
-    private var startFunctionIdCounter = startFunctionFirstId
-    private val startFunctionToGenericId = mutableMapOf<String, Int>()
-    private val generatedTypes = mutableMapOf<String, TypePresentation>()
-    private val dispatchedCallables = mutableSetOf<Int>()
-
-    fun createDispatch(callable: org.jacodb.analysis.codegen.ast.base.CallablePresentation) {
-        if (dispatchedCallables.add(callable.graphId)) {
-            language.dispatch(callable)
-        }
-    }
-
-    fun getOrCreateFunctionFor(v: Int): FunctionPresentation {
-        return functions.getOrPut(v) { FunctionImpl(v) }
-    }
-
-    fun getOrCreateStartFunction(name: String): FunctionPresentation {
-        val startFunctionId = startFunctionToGenericId.getOrPut(name) { startFunctionIdCounter++ }
-
-        return getOrCreateFunctionFor(startFunctionId)
-    }
-
-    fun getOrCreateType(name: String): TypePresentation {
-        val generated = generatedTypes[name]
-        val predefined = language.getPredefinedType(name)
-
-        assert(generated == null || predefined == null) { "type with $name is generated and predefined simultaneously" }
-
-        return generated ?: predefined ?: generatedTypes.getOrPut(name) { TypeImpl(name.capitalize()) }
-    }
-
-    fun getPredefinedType(name: String): TypePresentation? {
-        return language.getPredefinedType(name)
-    }
-
-    fun getPredefinedPrimitive(primitive: TargetLanguage.PredefinedPrimitives): TypePresentation? {
-        return language.getPredefinedPrimitive(primitive)
-    }
-
-    fun dumpTo(projectPath: Path) {
-        val pathToSourcesDir = language.resolveProjectPathToSources(projectPath)
-        for ((name, presentation) in generatedTypes) {
-            language.dumpType(presentation, pathToSourcesDir)
-        }
-
-        for ((id, function) in functions) {
-            if (id < startFunctionFirstId)
-                language.dumpFunction(function, pathToSourcesDir)
-        }
-
-        for ((name, id) in startFunctionToGenericId) {
-            val function = functions.getValue(id)
-            language.dumpStartFunction(name, function, pathToSourcesDir)
-        }
-    }
-
-    companion object {
-        private const val startFunctionFirstId = Int.MAX_VALUE / 2
-    }
-}
-
-val dispatcherQueueName = "dispatchQueue"
-val currentDispatch = "currentDispatch"
-
+// TODO PROTECTED - as it is relevant only when we will have inheritance
+// todo assert that field is accessible to code value type
+// todo field and method overloading implementation
+// todo static initializer?
+// todo assert initial value type is assignable to type
+// todo flip inner element nullability?
+// todo or one should override another if this is method
+// todo returnStatement
 // TODO tests - generate by hands some tests, 100% cover must be
 // TODO c++ implementation
 // TODO enums
@@ -276,9 +200,8 @@ fun main(args: Array<String>) {
     // их тоже можно искать сервисом
 
     val fullClear = args.getOrElse(5) { "false" }.toBooleanStrict()
-    val dezipper = DeZipper(targetLanguage, fullClear)
 
-    dezipper.dezip(projectPath)
+    targetLanguage.unzipTemplateProject(projectPath, fullClear)
 
     val graph = mutableMapOf<Int, MutableSet<Int>>()
 
@@ -295,7 +218,7 @@ fun main(args: Array<String>) {
     }
 
     val accessibilityCache = AccessibilityCache(n, graph)
-    val codeRepresentation = CodeRepresentation(graph, targetLanguage)
+    val codeRepresentation = CodeRepresentation(targetLanguage)
     val generatedVulnerabilitiesList = mutableListOf<VulnerabilityInstance>()
 
     i = 0

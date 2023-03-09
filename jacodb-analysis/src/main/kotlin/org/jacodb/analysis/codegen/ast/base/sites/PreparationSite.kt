@@ -14,12 +14,6 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.sites
 
-/**
- * End of any call sequence.
- */
-interface TerminationSite : Site {
-    val dereferences: Collection<CodeValue>
-    fun addDereference(reference: CodeValue)
-}
+interface PreparationSite: Site

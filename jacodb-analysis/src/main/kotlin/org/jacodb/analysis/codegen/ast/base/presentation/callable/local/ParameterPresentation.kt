@@ -14,9 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen.ast.base.presentation.callable.local
 
-interface AssignmentExpression: CodeExpression {
-    val assignmentValue: CodeValue
-    val assignmentTarget: CodeValue
+interface ParameterPresentation : CallableLocalPresentation {
+    val indexInSignature: Int
 }

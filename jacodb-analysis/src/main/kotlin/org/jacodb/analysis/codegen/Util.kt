@@ -14,13 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.codegen.ast.base
+package org.jacodb.analysis.codegen
 
-interface ObjectCreationExpression : InvocationExpression {
-    val invokedConstructor: ConstructorPresentation
-
-    override val invokedCallable: ConstructorPresentation
-        get() = invokedConstructor
-    override val invokedOn: CodeValue?
-        get() = null
-}
+const val impossibleGraphId = -1
+const val dispatcherQueueName = "dispatchQueue"
+const val currentDispatch = "currentDispatch"

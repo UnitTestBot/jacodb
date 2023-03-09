@@ -17,6 +17,8 @@
 package org.jacodb.analysis.codegen.ast.impl
 
 import org.jacodb.analysis.codegen.ast.base.*
+import org.jacodb.analysis.codegen.ast.base.expression.invocation.MethodInvocationExpression
+import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
 
 class MethodInvocationExpressionImpl(
     override val invokedMethod: MethodPresentation,
