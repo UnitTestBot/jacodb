@@ -49,6 +49,8 @@ interface TypePresentation : CodePresentation, VisibilityOwner, NameOwner, Inher
     override val inheritedFrom: TypePresentation?
 
     val defaultConstructor: ConstructorPresentation
+    // we will differ static class and instance class like in kotlin.
+    // for Java and CPP this means that in case of static elements we will create static duplicate
     val staticCounterPart: TypePresentation
     val instanceType: InstanceTypeUsage
 
