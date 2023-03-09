@@ -2,7 +2,7 @@
   <configuration default="false" name="Generate small" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="org.jacodb.analysis.codegen.GeneratorKt" />
     <module name="jacodb.jacodb-analysis.main" />
-    <option name="PROGRAM_PARAMETERS" value="2 1 1 ~\Desktop\firstRun JavaLanguage true" />
+    <option name="PROGRAM_PARAMETERS" value="2 1 1 generated JavaLanguage true" />
     <shortenClasspath name="NONE" />
     <method v="2">
       <option name="Make" enabled="true" />
