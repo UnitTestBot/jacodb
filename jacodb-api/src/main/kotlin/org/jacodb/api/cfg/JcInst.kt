@@ -759,7 +759,11 @@ sealed interface JcValue : JcExpr {
 
 sealed interface JcSimpleValue : JcValue
 
-data class JcThis(override val type: JcType) : JcSimpleValue {
+data class JcThis(override val type: JcType) : JcLocal {
+
+    override val name: String
+        get() = "this"
+
     override fun toString(): String = "this"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {

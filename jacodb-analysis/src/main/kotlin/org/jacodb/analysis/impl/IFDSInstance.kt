@@ -20,14 +20,17 @@ import org.jacodb.api.analysis.ApplicationGraph
 import java.util.*
 
 class IFDSInstance<Method, Statement, D> (
-    private val graph: ApplicationGraph<Method, Statement>,
+    val graph: ApplicationGraph<Method, Statement>,
     private val flowSpace: FlowFunctionsSpace<Method, Statement, D>,
-    private val devirtualizer: Devirtualizer<Method, Statement>?
+    private val devirtualizer: Devirtualizer<Method, Statement>? = null,
+    private val listeners: MutableList<IFDSInstanceListener<Statement, D>> = mutableListOf()
 ) {
     private val pathEdges = mutableListOf<Edge<Statement, D>>()
     private val workList: Queue<Edge<Statement, D>> = LinkedList()
     private val callToStartEdges = mutableListOf<Edge<Statement, D>>()
     private val summaryEdges = mutableListOf<Edge<Statement, D>>()
+
+    fun addListener(listener: IFDSInstanceListener<Statement, D>) = listeners.add(listener)
 
     fun addStart(startMethod: Method) {
         val entryPoints = graph.entryPoint(startMethod)
@@ -41,10 +44,11 @@ class IFDSInstance<Method, Statement, D> (
         }
     }
 
-    fun propagate(e: Edge<Statement, D>): Boolean {
+    fun propagate(e: Edge<Statement, D>, pred: Statement? = null): Boolean {
         if (e !in pathEdges) {
             pathEdges.add(e)
             workList.add(e)
+            listeners.forEach { it.onPropagate(e, pred) }
             return true
         }
         return false
@@ -68,7 +72,7 @@ class IFDSInstance<Method, Statement, D> (
                             //15
                             val sCalledProcWithD3 = Vertex(sCalledProc, d3)
                             val nextEdge = Edge(sCalledProcWithD3, sCalledProcWithD3)
-                            if (propagate(nextEdge)) {
+                            if (propagate(nextEdge, n)) {
                                 callToStartEdges.add(Edge(v, sCalledProcWithD3))
                             }
                         }
@@ -82,14 +86,14 @@ class IFDSInstance<Method, Statement, D> (
                     for (d3 in nextFacts) {
                         val returnSiteVertex = Vertex(returnSite, d3)
                         val nextEdge = Edge(u, returnSiteVertex)
-                        propagate(nextEdge)
+                        propagate(nextEdge, n)
                     }
                 }
                 //17-18 for summary edges
                 for (summaryEdge in summaryEdges) {
                     if (summaryEdge.u == v) {
                         val newPathEdge = Edge(u, summaryEdge.v)
-                        propagate(newPathEdge)
+                        propagate(newPathEdge, n)
                     }
                 }
             } else {
@@ -97,6 +101,7 @@ class IFDSInstance<Method, Statement, D> (
                 val nMethod = graph.methodOf(n)
                 val nMethodExitPoints = graph.exitPoints(nMethod).toList()
                 if (n in nMethodExitPoints) {
+                    listeners.forEach { it.onExitPoint(Edge(u, v)) }
                     @Suppress("UnnecessaryVariable") val ep = n
                     val callers = graph.callers(nMethod)
                     for (caller in callers) {
@@ -119,7 +124,7 @@ class IFDSInstance<Method, Statement, D> (
                                             val pathEdge = pathEdges[ind]
                                             if (pathEdge.v == newSummaryEdge.u) {
                                                 val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
-                                                propagate(newPathEdge)
+                                                propagate(newPathEdge, pathEdge.u.statement)
                                             }
                                             ind += 1
                                         }
@@ -135,7 +140,7 @@ class IFDSInstance<Method, Statement, D> (
                         val d3Set = flowFunction.compute(d2)
                         for (d3 in d3Set) {
                             val newEdge = Edge(u, Vertex(m, d3))
-                            propagate(newEdge)
+                            propagate(newEdge, n)
                         }
                     }
                 }
