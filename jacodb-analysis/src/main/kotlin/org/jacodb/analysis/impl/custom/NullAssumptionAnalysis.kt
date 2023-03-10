@@ -51,7 +51,7 @@ class NullAnalysisMap : HashMap<JcValue, NullableState> {
  * If the original program assumes a value is non-null, then adding a use of that value will not introduce any NEW nullness
  * errors into the program. This code may be buggy, or just plain wrong. It has not been checked.
  */
-open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<NullAnalysisMap>(graph) {
+open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<JcInst, NullAnalysisMap>(graph) {
 
     override val ins: MutableMap<JcInst, NullAnalysisMap> = HashMap()
     override val outs: MutableMap<JcInst, NullAnalysisMap> = HashMap()

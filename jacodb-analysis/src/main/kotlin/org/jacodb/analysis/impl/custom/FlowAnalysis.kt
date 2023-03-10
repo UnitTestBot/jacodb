@@ -16,15 +16,14 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcBytecodeGraph
 
-interface FlowAnalysis<T> {
+interface FlowAnalysis<NODE, T> {
 
-    val ins: MutableMap<JcInst, T>
-    val outs: MutableMap<JcInst, T>
+    val ins: MutableMap<NODE, T>
+    val outs: MutableMap<NODE, T>
 
-    val graph: JcGraph
+    val graph: JcBytecodeGraph<NODE>
 
     val isForward: Boolean
 
