@@ -25,7 +25,6 @@ import io.swagger.v3.oas.models.servers.Server
 import org.jacodb.api.Hook
 import org.jacodb.api.JcDatabase
 import org.jacodb.impl.JcSettings
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ApplicationContextInitializer
@@ -49,7 +48,6 @@ open class HttpHook(
             it.setDefaultProperties(
                 mapOf(
                     "server.port" to port,
-                    "server.servlet.contextPath" to exposureSettings.apiPrefix,
                     "spring.servlet.multipart.max-file-size" to exposureSettings.maxUploadSize,
                     "spring.servlet.multipart.max-request-size" to exposureSettings.maxUploadSize,
                     "springdoc.swagger-ui.tagsSorter" to "alpha",
@@ -74,7 +72,6 @@ open class HttpHook(
 class DefaultExposureSettings {
     var explicitRefresh: Boolean = true
     var maxUploadSize: String = "10MB"
-    var apiPrefix: String = "/jcdb-api"
 }
 
 fun JcSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Unit = {}) = withHook {
@@ -86,9 +83,9 @@ fun JcSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Un
 open class Application {
 
     @Bean
-    open fun springOpenAPI(@Value("\${server.servlet.context-path}") contextPath: String): OpenAPI {
+    open fun springOpenAPI(): OpenAPI {
         return OpenAPI()
-            .addServersItem(Server().url(contextPath))
+            .addServersItem(Server().url("/"))
             .info(
                 Info()
                     .title("JacoDB")

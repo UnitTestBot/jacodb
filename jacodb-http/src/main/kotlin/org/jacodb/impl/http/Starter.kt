@@ -68,11 +68,7 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
     private val location by option("--location", help = "location dor database")
         .default("./jcdb-demo.db")
 
-    private val apiPrefix by option("--api-prefix", help = "api prefix")
-        .default("/jcdb-api")
-
     override fun run() {
-        val api = apiPrefix
         runBlocking {
             jacodb {
                 useProcessJavaRuntime()
@@ -81,7 +77,6 @@ class DemoApplication : CliktCommand(name = "JCDB demo application") {
                 installFeatures(Usages, Builders, InMemoryHierarchy)
                 exposeRestApi(port.toInt()) {
                     explicitRefresh = refresh
-                    apiPrefix = api
                 }
             }
         }

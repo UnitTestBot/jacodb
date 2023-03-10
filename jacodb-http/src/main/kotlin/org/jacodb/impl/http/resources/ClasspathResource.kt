@@ -59,7 +59,7 @@ private class LastAccessedClasspath(
     externalDocs = ExternalDocumentation(url = "$wikiLocation#classpath", description = seeGithub)
 )
 @RestController
-@RequestMapping("/classpaths")
+@RequestMapping("/api/classpaths")
 class ClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
 
     private val classpaths = ConcurrentHashMap<String, LastAccessedClasspath>()

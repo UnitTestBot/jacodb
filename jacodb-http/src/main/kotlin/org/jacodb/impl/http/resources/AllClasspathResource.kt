@@ -37,7 +37,7 @@ import java.util.*
     externalDocs = ExternalDocumentation(url = "$wikiLocation#classpath", description = seeGithub)
 )
 @RestController
-@RequestMapping("/classpaths/allJars")
+@RequestMapping("/api/classpaths/allJars")
 class AllClasspathResource(val jcdb: JcDatabase) : AbstractClasspathResource() {
 
     @Volatile

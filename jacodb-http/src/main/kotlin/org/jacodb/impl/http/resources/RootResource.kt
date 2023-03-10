@@ -55,7 +55,7 @@ class RootResource(val jcdbSettings: JcSettings, val jcdb: JcDatabase) {
         description = "${h3}Gets common information about database instance: runtime, processed bytecode locations etc$h3end",
         externalDocs = ExternalDocumentation(url = "$wikiLocation#database")
     )
-    @GetMapping("/")
+    @GetMapping("/api")
     fun databaseEntity() = JCDBEntity(
         jvmRuntime = JCDBRuntimeEntity(
             version = jcdb.runtimeVersion.majorVersion,
@@ -76,7 +76,7 @@ class RootResource(val jcdbSettings: JcSettings, val jcdb: JcDatabase) {
         externalDocs = ExternalDocumentation(url = "$wikiLocation#loaddirorjars")
     )
     @PostMapping(
-        "/locations",
+        "/api/locations",
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
     )
     suspend fun handleFileUpload(@RequestPart("file") fileUpload: MultipartFile): ResponseEntity<SimpleResponseEntity> {
