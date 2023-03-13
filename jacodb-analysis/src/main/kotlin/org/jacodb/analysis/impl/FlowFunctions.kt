@@ -21,9 +21,8 @@ package org.jacodb.analysis.impl
 // лежит на создателе флоу функции.
 
 // мы подразумеваем, что в флоу фанке нужно уметь считать домены для инструкций, которые выполнятся друг за другом напрямую
-interface FlowFunctionInstance<D> {
+fun interface FlowFunctionInstance<D> {
     fun compute(fact: D): Collection<D>
-    fun computeBackward(fact: D): Collection<D>
 }
 
 interface FlowFunctionsSpace<Method, Statement, D> {

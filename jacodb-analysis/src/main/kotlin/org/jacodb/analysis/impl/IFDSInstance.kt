@@ -29,6 +29,7 @@ class IFDSInstance<Method, Statement, D> (
     private val workList: Queue<Edge<Statement, D>> = LinkedList()
     private val callToStartEdges = mutableListOf<Edge<Statement, D>>()
     private val summaryEdges = mutableListOf<Edge<Statement, D>>()
+    private val callSites = mutableListOf<Vertex<Statement, D>>()
 
     fun addListener(listener: IFDSInstanceListener<Statement, D>) = listeners.add(listener)
 
@@ -54,10 +55,47 @@ class IFDSInstance<Method, Statement, D> (
         return false
     }
 
+    // Build summary edges of form (caller, d4) -> (*, *)
+    private fun findNewSummaryEdges(caller: Statement, d4: D, startToEndEdge: Edge<Statement, D>) {
+        val (sp, d1) = startToEndEdge.u
+        val (ep, d2) = startToEndEdge.v
+        val nMethod = graph.methodOf(ep)
+
+        if (ep !in graph.exitPoints(nMethod)) // Not a start-to-end edge
+            return
+
+        if (nMethod !in graph.callees(caller) || d1 !in flowSpace.obtainCallToStartFlowFunction(caller, nMethod).compute(d4))
+        // (sp, d1) is not reachable from (caller, d4)
+            return
+
+        // todo think
+        val returnSitesOfCallers = graph.successors(caller)
+        for (returnSiteOfCaller in returnSitesOfCallers) {
+            val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
+            val d5Set = exitToReturnFlowFunction.compute(d2)
+            for (d5 in d5Set) {
+                val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
+                if (newSummaryEdge !in summaryEdges) {
+                    summaryEdges.add(newSummaryEdge)
+
+                    // Can't use iterator-based loops because of possible ConcurrentModificationException
+                    var ind = 0
+                    while (ind < pathEdges.size) {
+                        val pathEdge = pathEdges[ind]
+                        if (pathEdge.v == newSummaryEdge.u) {
+                            val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
+                            propagate(newPathEdge)
+                        }
+                        ind += 1
+                    }
+                }
+            }
+        }
+    }
+
     fun run() {
         while(!workList.isEmpty()) {
             val (u, v) = workList.poll()
-            val (sp, d1) = u
             val (n, d2) = v
 
             val callees = devirtualizer?.findPossibleCallees(n)?.toList() ?: graph.callees(n).toList()
@@ -89,6 +127,14 @@ class IFDSInstance<Method, Statement, D> (
                         propagate(nextEdge, n)
                     }
                 }
+                if (v !in callSites) {
+                    callSites.add(v)
+                    // lazy computation of summaryEdges for lines 17-18
+                    // TODO: optimize here by looking only at startToEndEges
+                    for (startToEndEdge in pathEdges.toList()) {
+                        findNewSummaryEdges(n, d2, startToEndEdge)
+                    }
+                }
                 //17-18 for summary edges
                 for (summaryEdge in summaryEdges) {
                     if (summaryEdge.u == v) {
@@ -101,37 +147,8 @@ class IFDSInstance<Method, Statement, D> (
                 val nMethod = graph.methodOf(n)
                 val nMethodExitPoints = graph.exitPoints(nMethod).toList()
                 if (n in nMethodExitPoints) {
-                    listeners.forEach { it.onExitPoint(Edge(u, v)) }
-                    @Suppress("UnnecessaryVariable") val ep = n
-                    val callers = graph.callers(nMethod)
-                    for (caller in callers) {
-                        // todo think
-                        val callToStartEdgeFlowFunction = flowSpace.obtainCallToStartFlowFunction(caller, nMethod)
-                        val d4Set = callToStartEdgeFlowFunction.computeBackward(d1)
-                        for (d4 in d4Set) {
-                            val returnSitesOfCallers = graph.successors(caller)
-                            for (returnSiteOfCaller in returnSitesOfCallers) {
-                                val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
-                                val d5Set = exitToReturnFlowFunction.compute(d2)
-                                for (d5 in d5Set) {
-                                    val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
-                                    if (newSummaryEdge !in summaryEdges) {
-                                        summaryEdges.add(newSummaryEdge)
-
-                                        // Can't use iterator-based loops because of possible ConcurrentModificationException
-                                        var ind = 0
-                                        while (ind < pathEdges.size) {
-                                            val pathEdge = pathEdges[ind]
-                                            if (pathEdge.v == newSummaryEdge.u) {
-                                                val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
-                                                propagate(newPathEdge, pathEdge.u.statement)
-                                            }
-                                            ind += 1
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    for ((c, d4) in callSites) {
+                        findNewSummaryEdges(c, d4, Edge(u, v))
                     }
                 } else {
                     val nextInstrs = graph.successors(n)

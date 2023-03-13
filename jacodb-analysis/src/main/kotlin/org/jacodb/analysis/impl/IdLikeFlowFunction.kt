@@ -29,13 +29,4 @@ class IdLikeFlowFunction<D>(
         }
         return if (domain.contains(fact)) listOf(fact) else emptyList()
     }
-
-    override fun computeBackward(fact: D): Collection<D> {
-        val res = if (domain.contains(fact) && !nonId.containsKey(fact)) {
-            listOf(fact)
-        } else {
-            emptyList()
-        }
-        return res + nonId.entries.filter { (_, value) -> value.contains(fact) }.map { it.key }
-    }
 }
