@@ -1,6 +1,10 @@
 name: Build and push Docker image for jacodb.org
 
-on: [workflow_dispatch]
+on:
+  push:
+    branches:
+      - main
+
 
 env:
   REGISTRY: ghcr.io
