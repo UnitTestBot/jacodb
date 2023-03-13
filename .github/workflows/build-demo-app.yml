@@ -46,4 +46,4 @@ jobs:
           context: .
           file: jacodb-http/Dockerfile
           build-args: |
-            JAR_FILE=jcdb-http/build/libs/jacodb-http-demo.jar
+            JAR_FILE=jacodb-http/build/libs/jacodb-http-demo.jar
