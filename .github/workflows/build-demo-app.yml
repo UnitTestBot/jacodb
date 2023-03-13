@@ -1,4 +1,4 @@
-name: Build Docker image for demo app
+name: Build and push Docker image for jacodb.org
 
 on: [workflow_dispatch]
 
@@ -40,6 +40,6 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
           context: .
-          file: jcdb-http/Dockerfile
+          file: jacodb-http/Dockerfile
           build-args: |
             JAR_FILE=jcdb-http/build/libs/jacodb-http-demo.jar

@@ -82,6 +82,7 @@ fun JcSettings.exposeRestApi(port: Int, action: DefaultExposureSettings.() -> Un
 @SpringBootApplication
 open class Application {
 
+
     @Bean
     open fun springOpenAPI(): OpenAPI {
         return OpenAPI()
