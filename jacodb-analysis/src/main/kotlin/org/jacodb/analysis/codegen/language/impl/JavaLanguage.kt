@@ -57,6 +57,8 @@ class JavaLanguage : TargetLanguage {
     private val predefinedTypes = mutableMapOf<String, TypePresentation>()
     private val integer: TypePresentation
     private val arrayDeque: TypePresentation
+    private val DOT = "."
+    private val TAB = "\t"
 
     init {
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.VOID] = TypePresentation.voidType.shortName
@@ -90,7 +92,8 @@ class JavaLanguage : TargetLanguage {
     }
 
     override fun resolveProjectPathToSources(projectPath: Path): Path {
-        val relativeJavaSourceSetPath = "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
+        val relativeJavaSourceSetPath =
+            "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
 
         return projectPath.resolve(relativeJavaSourceSetPath.replace('\\', File.separatorChar))
     }
@@ -117,6 +120,7 @@ class JavaLanguage : TargetLanguage {
                 appendLine { write("package org.utbot.ifds.synthetic.tests") }
                 // for simplification - all generated code will be in a single package
                 // with all required imports added unconditionally to all files.
+                write("\n")
                 appendLine { write("import java.util.*") }
                 write("\n")
                 block()
@@ -191,7 +195,21 @@ class JavaLanguage : TargetLanguage {
             write("\n")
             removeTab()
             tabulate()
-            write("}\n")
+            write("}")
+        }
+    }
+
+    private fun inScopeWithoutSeparator(block: () -> Unit) {
+        try {
+            write("{\n")
+            addTab()
+            // do not tabulate here.
+            // each code element should be aware if it has to be tabulated and manage tabulation on its own
+            block()
+        } finally {
+            removeTab()
+            tabulate()
+            write("}")
         }
     }
 
@@ -222,18 +240,21 @@ class JavaLanguage : TargetLanguage {
             is ArrayTypeUsage -> {
                 throwCannotDump(typeUsage)
             }
+
             is InstanceTypeUsage -> {
                 val presentation = typeUsage.typePresentation
                 val valueToWrite = presentation.defaultValue
                 writeCodeValue(valueToWrite)
             }
+
             else -> {
                 throwCannotDump(typeUsage)
             }
         }
     }
 
-    private fun appendCodeExpression(codeExpression: CodeExpression) = appendLine { writeCodeExpression(codeExpression) }
+    private fun appendCodeExpression(codeExpression: CodeExpression) =
+        appendLine { writeCodeExpression(codeExpression) }
 
     private fun writeCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
@@ -243,6 +264,7 @@ class JavaLanguage : TargetLanguage {
                 write(" = ")
                 writeCodeValue(codeExpression.assignmentValue)
             }
+
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -258,6 +280,7 @@ class JavaLanguage : TargetLanguage {
                 val presentation = codeValue.resolve()
                 write(presentation.shortName)
             }
+
             is ValueExpression -> writeValueExpression(codeValue)
             else -> {
                 throwCannotDump(codeValue)
@@ -269,21 +292,24 @@ class JavaLanguage : TargetLanguage {
         when (valueExpression) {
             is ObjectCreationExpression -> {
                 writeSeparated("new")
-                writeSeparated(valueExpression.invokedConstructor.containingType.shortName)
+                write(valueExpression.invokedConstructor.containingType.shortName)
                 writeCallList(valueExpression)
             }
+
             is MethodInvocationExpression -> {
                 writeCodeValue(valueExpression.invokedOn)
-                write(".")
+                write(DOT)
                 write(valueExpression.invokedMethod.shortName)
                 writeCallList(valueExpression)
             }
+
             is FunctionInvocationExpression -> {
                 write(classNameForStaticFunction(valueExpression.invokedCallable.shortName))
-                write(".")
+                write(DOT)
                 write(valueExpression.invokedCallable.shortName)
                 writeCallList(valueExpression)
             }
+
             else -> {
                 throwCannotDump(valueExpression)
             }
@@ -326,13 +352,19 @@ class JavaLanguage : TargetLanguage {
         try {
             tabulate()
             block()
-        }
-        finally {
-            write(";\n")
+        } finally {
+            write(";")
+            write("\n")
         }
     }
 
-    private fun appendSite(site: Site) {
+    private fun appendSite(
+        site: Site,
+        isFirstInCallSite: Boolean = false,
+        isLastInCallSite: Boolean = false,
+        hasTerminations: Boolean = true,
+        hasCalls: Boolean = true
+    ) {
         // we always dump sites in following order:
         // 1. preparation site
         // 2. call sites
@@ -349,10 +381,11 @@ class JavaLanguage : TargetLanguage {
                     appendCodeExpression(after)
                 }
             }
+
             is CallSite -> {
-                tabulate()
+                if (isFirstInCallSite) tabulate()
                 writeSeparated("if (currentDispatch == ${site.graphId})")
-                inScope {
+                inScopeWithoutSeparator {
                     for (before in site.expressionsBefore) {
                         appendCodeExpression(before)
                     }
@@ -360,23 +393,29 @@ class JavaLanguage : TargetLanguage {
                     for (after in site.expressionsAfter) {
                         appendCodeExpression(after)
                     }
+
                 }
-                tabulate()
-                writeSeparated("else")
+                if (!isLastInCallSite || hasTerminations) writeSeparated(" else")
             }
+
             is TerminationSite -> {
-                inScope {
-                    for (before in site.expressionsBefore) {
-                        appendCodeExpression(before)
+                if (hasTerminations) {
+                    if (!hasCalls) {
+                        write(TAB + TAB)
                     }
-                    for (dereference in site.dereferences) {
-                        appendLine {
-                            writeCodeValue(dereference)
-                            write(".toString()")
+                    inScopeWithoutSeparator {
+                        for (before in site.expressionsBefore) {
+                            appendCodeExpression(before)
                         }
-                    }
-                    for (after in site.expressionsAfter) {
-                        appendCodeExpression(after)
+                        for (dereference in site.dereferences) {
+                            appendLine {
+                                writeCodeValue(dereference)
+                                write(".toString()")
+                            }
+                        }
+                        for (after in site.expressionsAfter) {
+                            appendCodeExpression(after)
+                        }
                     }
                 }
             }
@@ -390,10 +429,12 @@ class JavaLanguage : TargetLanguage {
         }
         appendSite(callable.preparationSite)
         val sites = callable.callSites
+        val hasDeref = !(callable.terminationSite.expressionsBefore.isEmpty()
+                && callable.terminationSite.expressionsAfter.isEmpty() && callable.terminationSite.dereferences.isEmpty())
         for (site in sites) {
-            appendSite(site)
+            appendSite(site, site.equals(sites.first()), site.equals(sites.last()), hasDeref)
         }
-        appendSite(callable.terminationSite)
+        appendSite(callable.terminationSite, hasTerminations = hasDeref, hasCalls = !sites.isEmpty())
     }
 
     private fun appendConstructor(constructor: ConstructorPresentation) {
@@ -420,6 +461,32 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendStartFunction(name: String, function: FunctionPresentation) {
+        writeSeparated("public class ${classNameForStaticFunction(name)}")
+        inScope {
+            tabulate()
+            writeVisibility(function.visibility)
+            writeSeparated("static")
+            writeTypeUsage(function.returnType)
+            write(function.shortName)
+            writeParametersList(function)
+            inScope {
+                appendLocalsAndSites(function)
+            }
+            write("\n\n")
+            tabulate()
+            writeVisibility(VisibilityModifier.PUBLIC)
+            writeSeparated("static")
+            writeSeparated("void")
+            writeSeparated("main(String[] args)")
+            inScope {
+                write(TAB + TAB)
+                write(function.shortName)
+                write("();")
+            }
+        }
+    }
+
+    private fun appendPSVM(name: String, function: FunctionPresentation) {
         writeSeparated("public class ${classNameForStaticFunction(name)}")
         inScope {
             tabulate()
@@ -484,9 +551,10 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) = inFile(classNameForStaticFunction(func.shortName), pathToSourcesDir) {
-        appendStaticFunction(func)
-    }
+    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =
+        inFile(classNameForStaticFunction(func.shortName), pathToSourcesDir) {
+            appendStaticFunction(func)
+        }
 
     override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
         inFile(classNameForStaticFunction(name), pathToSourcesDir) {
