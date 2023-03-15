@@ -158,4 +158,13 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
+    try {
+        val processBuilder = ProcessBuilder()
+        processBuilder.directory(File("generated\\UtBotTemplateForIfdsSyntheticTests".replace('\\', File.separatorChar)))
+        processBuilder.command("/bin/bash", "./gradlew", "assemble")
+        processBuilder.start()
+        println("generated code built success")
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
 }
