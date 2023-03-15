@@ -57,8 +57,6 @@ class JavaLanguage : TargetLanguage {
     private val predefinedTypes = mutableMapOf<String, TypePresentation>()
     private val integer: TypePresentation
     private val arrayDeque: TypePresentation
-    private val DOT = "."
-    private val TAB = "\t"
 
     init {
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.VOID] = TypePresentation.voidType.shortName
@@ -92,8 +90,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     override fun resolveProjectPathToSources(projectPath: Path): Path {
-        val relativeJavaSourceSetPath =
-            "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
+        val relativeJavaSourceSetPath = "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
 
         return projectPath.resolve(relativeJavaSourceSetPath.replace('\\', File.separatorChar))
     }
@@ -111,7 +108,6 @@ class JavaLanguage : TargetLanguage {
     }
 
     private var fileWriter: OutputStreamWriter? = null
-
     private fun inFile(fileName: String, pathToSourcesDir: Path, block: () -> Unit) {
         val javaFilePath = pathToSourcesDir.resolve("${fileName.capitalize()}.java")
         try {
@@ -120,9 +116,9 @@ class JavaLanguage : TargetLanguage {
                 appendLine { write("package org.utbot.ifds.synthetic.tests") }
                 // for simplification - all generated code will be in a single package
                 // with all required imports added unconditionally to all files.
-                write("\n")
+                write(SEPARATOR)
                 appendLine { write("import java.util.*") }
-                write("\n")
+                write(SEPARATOR)
                 block()
                 flush()
             }
@@ -165,7 +161,6 @@ class JavaLanguage : TargetLanguage {
     }
 
     private var offset = 0
-
     private fun addTab() {
         ++offset
     }
@@ -176,7 +171,7 @@ class JavaLanguage : TargetLanguage {
 
     private fun tabulate() {
         for (i in 0 until offset) {
-            write("\t")
+            write(TAB)
         }
     }
 
@@ -184,29 +179,15 @@ class JavaLanguage : TargetLanguage {
         assert(false) { "Do not know how to dump ${ce.javaClass.simpleName}" }
     }
 
-    private fun inScope(block: () -> Unit) {
+    private fun inScope(block: () -> Unit, needSeparator: Boolean) {
         try {
-            write("{\n")
+            write("{$SEPARATOR")
             addTab()
             // do not tabulate here.
             // each code element should be aware if it has to be tabulated and manage tabulation on its own
             block()
         } finally {
-            write("\n")
-            removeTab()
-            tabulate()
-            write("}")
-        }
-    }
-
-    private fun inScopeWithoutSeparator(block: () -> Unit) {
-        try {
-            write("{\n")
-            addTab()
-            // do not tabulate here.
-            // each code element should be aware if it has to be tabulated and manage tabulation on its own
-            block()
-        } finally {
+            if (needSeparator) write(SEPARATOR)
             removeTab()
             tabulate()
             write("}")
@@ -240,13 +221,11 @@ class JavaLanguage : TargetLanguage {
             is ArrayTypeUsage -> {
                 throwCannotDump(typeUsage)
             }
-
             is InstanceTypeUsage -> {
                 val presentation = typeUsage.typePresentation
                 val valueToWrite = presentation.defaultValue
                 writeCodeValue(valueToWrite)
             }
-
             else -> {
                 throwCannotDump(typeUsage)
             }
@@ -264,7 +243,6 @@ class JavaLanguage : TargetLanguage {
                 write(" = ")
                 writeCodeValue(codeExpression.assignmentValue)
             }
-
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -272,7 +250,6 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendCodeValue(codeValue: CodeValue) = appendLine { writeCodeValue(codeValue) }
-
     private fun writeCodeValue(codeValue: CodeValue) {
         when (codeValue) {
             is DirectStringSubstitution -> write(codeValue.substitution)
@@ -280,7 +257,6 @@ class JavaLanguage : TargetLanguage {
                 val presentation = codeValue.resolve()
                 write(presentation.shortName)
             }
-
             is ValueExpression -> writeValueExpression(codeValue)
             else -> {
                 throwCannotDump(codeValue)
@@ -295,21 +271,18 @@ class JavaLanguage : TargetLanguage {
                 write(valueExpression.invokedConstructor.containingType.shortName)
                 writeCallList(valueExpression)
             }
-
             is MethodInvocationExpression -> {
                 writeCodeValue(valueExpression.invokedOn)
                 write(DOT)
                 write(valueExpression.invokedMethod.shortName)
                 writeCallList(valueExpression)
             }
-
             is FunctionInvocationExpression -> {
                 write(classNameForStaticFunction(valueExpression.invokedCallable.shortName))
                 write(DOT)
                 write(valueExpression.invokedCallable.shortName)
                 writeCallList(valueExpression)
             }
-
             else -> {
                 throwCannotDump(valueExpression)
             }
@@ -353,8 +326,7 @@ class JavaLanguage : TargetLanguage {
             tabulate()
             block()
         } finally {
-            write(";")
-            write("\n")
+            write(";$SEPARATOR")
         }
     }
 
@@ -381,29 +353,28 @@ class JavaLanguage : TargetLanguage {
                     appendCodeExpression(after)
                 }
             }
-
             is CallSite -> {
                 if (isFirstInCallSite) tabulate()
                 writeSeparated("if (currentDispatch == ${site.graphId})")
-                inScopeWithoutSeparator {
-                    for (before in site.expressionsBefore) {
-                        appendCodeExpression(before)
-                    }
-                    appendCodeValue(site.invocationExpression)
-                    for (after in site.expressionsAfter) {
-                        appendCodeExpression(after)
-                    }
-
-                }
+                inScope(
+                    {
+                        for (before in site.expressionsBefore) {
+                            appendCodeExpression(before)
+                        }
+                        appendCodeValue(site.invocationExpression)
+                        for (after in site.expressionsAfter) {
+                            appendCodeExpression(after)
+                        }
+                    }, false
+                )
                 if (!isLastInCallSite || hasTerminations) writeSeparated(" else")
             }
-
             is TerminationSite -> {
                 if (hasTerminations) {
                     if (!hasCalls) {
-                        write(TAB + TAB)
+                        write(TAB.repeat(2))
                     }
-                    inScopeWithoutSeparator {
+                    inScope({
                         for (before in site.expressionsBefore) {
                             appendCodeExpression(before)
                         }
@@ -416,7 +387,7 @@ class JavaLanguage : TargetLanguage {
                         for (after in site.expressionsAfter) {
                             appendCodeExpression(after)
                         }
-                    }
+                    }, false)
                 }
             }
         }
@@ -442,7 +413,7 @@ class JavaLanguage : TargetLanguage {
         writeVisibility(constructor.visibility)
         write(constructor.containingType.shortName)
         writeParametersList(constructor)
-        inScope {
+        inScope({
             val parentCall = constructor.parentConstructorCall
             if (parentCall != null) {
                 appendLine {
@@ -451,7 +422,7 @@ class JavaLanguage : TargetLanguage {
                 }
             }
             appendLocalsAndSites(constructor)
-        }
+        }, true)
     }
 
     private fun appendStaticFunction(function: FunctionPresentation) = appendStartFunction(function.shortName, function)
@@ -462,49 +433,51 @@ class JavaLanguage : TargetLanguage {
 
     private fun appendStartFunction(name: String, function: FunctionPresentation) {
         writeSeparated("public class ${classNameForStaticFunction(name)}")
-        inScope {
+        inScope({
             tabulate()
             writeVisibility(function.visibility)
             writeSeparated("static")
             writeTypeUsage(function.returnType)
             write(function.shortName)
             writeParametersList(function)
-            inScope {
+            inScope({
                 appendLocalsAndSites(function)
+            }, true)
+            if (classNameForStaticFunction(name).contains("ClassForStartFunctionForNpeInstance")) {
+                write(SEPARATOR.repeat(2))
+                tabulate()
+                writeVisibility(VisibilityModifier.PUBLIC)
+                writeSeparated("static")
+                writeSeparated("void")
+                writeSeparated("main(String[] args)")
+                inScope({
+                    write(TAB.repeat(2))
+                    write(function.shortName)
+                    write("();")
+                }, true)
             }
-            write("\n\n")
-            tabulate()
-            writeVisibility(VisibilityModifier.PUBLIC)
-            writeSeparated("static")
-            writeSeparated("void")
-            writeSeparated("main(String[] args)")
-            inScope {
-                write(TAB + TAB)
-                write(function.shortName)
-                write("();")
-            }
-        }
+        }, true)
     }
 
     private fun appendPSVM(name: String, function: FunctionPresentation) {
         writeSeparated("public class ${classNameForStaticFunction(name)}")
-        inScope {
+        inScope({
             tabulate()
             writeVisibility(function.visibility)
             writeSeparated("static")
             writeTypeUsage(function.returnType)
             write(function.shortName)
             writeParametersList(function)
-            inScope {
+            inScope({
                 appendLocalsAndSites(function)
-            }
-        }
+            }, true)
+        }, true)
     }
 
     private fun appendMethodSignature(methodPresentation: MethodPresentation) {
         tabulate()
         if (methodPresentation.inheritedFrom != null) {
-            writeSeparated("@Override\n")
+            writeSeparated("@Override$SEPARATOR")
         }
         tabulate()
         writeVisibility(methodPresentation.visibility)
@@ -522,14 +495,14 @@ class JavaLanguage : TargetLanguage {
 
     private fun appendMethod(methodPresentation: MethodPresentation) {
         appendMethodSignature(methodPresentation)
-        inScope {
+        inScope({
             appendLocalsAndSites(methodPresentation)
-        }
+        }, true)
     }
 
     override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type.shortName, pathToSourcesDir) {
         writeTypeSignature(type)
-        inScope {
+        inScope({
             for (field in type.implementedFields) {
                 appendField(field)
             }
@@ -548,7 +521,7 @@ class JavaLanguage : TargetLanguage {
             for (staticMethod in staticCounterPart.implementedMethods) {
                 appendMethod(staticMethod)
             }
-        }
+        }, true)
     }
 
     override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =
