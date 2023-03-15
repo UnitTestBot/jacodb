@@ -136,23 +136,11 @@ subprojects {
     }
 
     publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
-                credentials {
-                    username = project.findProperty("gprUser") as? String ?: System.getenv("USERNAME")
-                    password = project.findProperty("gprKey") as? String ?: System.getenv("TOKEN")
-                }
-            }
-        }
-        publishing {
-            publications {
-                create<MavenPublication>("jar") {
-                    from(components["java"])
-                    groupId = "org.jacodb"
-                    artifactId = project.name
-                }
+        publications {
+            create<MavenPublication>("jar") {
+                from(components["java"])
+                groupId = "org.jacodb"
+                artifactId = project.name
             }
         }
     }
