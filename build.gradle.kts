@@ -136,16 +136,6 @@ subprojects {
     }
 
     publishing {
-        publications {
-            create<MavenPublication>("jar") {
-                from(components["java"])
-                groupId = "org.utbot"
-                artifactId = project.name
-            }
-        }
-    }
-
-    publishing {
         repositories {
             maven {
                 name = "GitHubPackages"
@@ -156,13 +146,36 @@ subprojects {
                 }
             }
         }
-        publications {
-            create<MavenPublication>("gpr") {
-                from(components["java"])
-                groupId = "org.utbot"
-                artifactId = project.name
+        publishing {
+            publications {
+                create<MavenPublication>("jar") {
+                    from(components["java"])
+                    groupId = "org.jacodb"
+                    artifactId = project.name
+                }
             }
         }
     }
 
+}
+
+configure(
+    listOf(
+        project(":jacodb-api"),
+        project(":jacodb-core"),
+        project(":jacodb-analysis"),
+    )
+) {
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+    }
 }
