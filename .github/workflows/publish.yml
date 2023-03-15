@@ -2,15 +2,12 @@ name: Publish to GitHub packages
 
 on: [workflow_dispatch]
 
-permissions:
-  contents: read
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -18,7 +15,8 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-      - uses: gradle/gradle-build-action@v2
+      - name: Publish package
+        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           gradle-version: 7.4.2
           arguments: publish
