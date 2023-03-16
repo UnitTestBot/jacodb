@@ -35,7 +35,7 @@ class TaintAnalysisWithPointsTo(
             updateActivation: Boolean,
         ) {
             val (u, v) = this
-            val newFact = if (updateActivation) v.domainFact.copy(activation = pred) else v.domainFact // TODO: think between pred and v.statement
+            val newFact = if (updateActivation && v.domainFact.activation == null) v.domainFact.copy(activation = pred) else v.domainFact // TODO: think between pred and v.statement
             val newStatement = pred ?: v.statement
             instance.graph.entryPoint(u.statement.location.method).forEach {
                 instance.propagate(
@@ -59,7 +59,7 @@ class TaintAnalysisWithPointsTo(
         forward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
                 val v = e.v
-                if (pred is JcAssignInst && v.domainFact.variable?.value == pred.lhv && v.domainFact.variable.isOnHeap) {
+                if (pred is JcAssignInst && v.domainFact.variable.startsWith(pred.lhv.toPath(5)) && v.domainFact.variable?.isOnHeap == true) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true)
                     backward.run()
                 }
@@ -70,7 +70,8 @@ class TaintAnalysisWithPointsTo(
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
                 val v = e.v
                 val curInst = v.statement
-                if (curInst is JcAssignInst && v.domainFact.variable?.value == curInst.lhv) {
+                // TODO: think if we need to check for isOnHeap here too
+                if (curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
                     e.handoverPathEdgeTo(forward, pred, updateActivation = false)
                 }
             }

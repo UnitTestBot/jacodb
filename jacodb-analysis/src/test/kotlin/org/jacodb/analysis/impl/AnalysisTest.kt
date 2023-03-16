@@ -183,6 +183,17 @@ class AnalysisTest : BaseTest() {
         )
     }
 
+    @Test
+    fun `simple points-two analysis`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simplePoints2" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%5 = %4.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     /**

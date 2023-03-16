@@ -56,7 +56,7 @@ class IFDSInstance<Method, Statement, D> (
     }
 
     // Build summary edges of form (caller, d4) -> (*, *)
-    private fun findNewSummaryEdges(caller: Statement, d4: D, startToEndEdge: Edge<Statement, D>) {
+    private fun findNewSummaryEdges(callSite: Statement, d4: D, startToEndEdge: Edge<Statement, D>) {
         val (sp, d1) = startToEndEdge.u
         val (ep, d2) = startToEndEdge.v
         val nMethod = graph.methodOf(ep)
@@ -64,17 +64,17 @@ class IFDSInstance<Method, Statement, D> (
         if (ep !in graph.exitPoints(nMethod)) // Not a start-to-end edge
             return
 
-        if (nMethod !in graph.callees(caller) || d1 !in flowSpace.obtainCallToStartFlowFunction(caller, nMethod).compute(d4))
+        if (nMethod !in graph.callees(callSite) || d1 !in flowSpace.obtainCallToStartFlowFunction(callSite, nMethod).compute(d4))
         // (sp, d1) is not reachable from (caller, d4)
             return
 
         // todo think
-        val returnSitesOfCallers = graph.successors(caller)
+        val returnSitesOfCallers = graph.successors(callSite)
         for (returnSiteOfCaller in returnSitesOfCallers) {
-            val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
+            val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(callSite, returnSiteOfCaller, ep)
             val d5Set = exitToReturnFlowFunction.compute(d2)
             for (d5 in d5Set) {
-                val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
+                val newSummaryEdge = Edge(Vertex(callSite, d4), Vertex(returnSiteOfCaller, d5))
                 if (newSummaryEdge !in summaryEdges) {
                     summaryEdges.add(newSummaryEdge)
 
@@ -84,7 +84,7 @@ class IFDSInstance<Method, Statement, D> (
                         val pathEdge = pathEdges[ind]
                         if (pathEdge.v == newSummaryEdge.u) {
                             val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
-                            propagate(newPathEdge)
+                            propagate(newPathEdge, callSite)
                         }
                         ind += 1
                     }

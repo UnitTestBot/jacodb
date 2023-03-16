@@ -16,8 +16,14 @@
 
 package org.jacodb.analysis.impl
 
+import org.jacodb.api.JcClassType
 import org.jacodb.api.JcField
+import org.jacodb.api.cfg.JcCastExpr
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.ext.fields
 
 /**
  * This class is used to represent an access path that is needed for problems
@@ -41,4 +47,55 @@ data class AccessPath private constructor(val value: JcLocal, val fieldAccesses:
         }
         return str
     }
+}
+
+internal fun JcExpr.toPathOrNull(maxPathLength: Int): AccessPath? {
+    if (this is JcCastExpr) {
+        return operand.toPathOrNull(maxPathLength)
+    }
+    if (this is JcLocal) {
+        return AccessPath.fromLocal(this)
+    }
+    if (this is JcFieldRef) {
+        // TODO: think about static fields
+        return instance?.toPathOrNull(maxPathLength)?.let {
+            AccessPath.fromOther(it, listOf(field.field), maxPathLength)
+        }
+    }
+    // TODO: handle arrays
+    return null
+}
+
+internal fun JcValue.toPath(maxPathLength: Int): AccessPath {
+    return toPathOrNull(maxPathLength) ?: error("Unable to build access path for value $this")
+}
+
+internal fun AccessPath.expandAtDepth(k: Int): List<AccessPath> {
+    if (k == 0)
+        return listOf(this)
+
+    val jcClass = fieldAccesses.lastOrNull()?.enclosingClass ?: (value.type as? JcClassType)?.jcClass
+    ?: return listOf(this)
+    // TODO: handle ArrayType
+
+    return listOf(this) + jcClass.fields.flatMap {
+        AccessPath.fromOther(this, listOf(it), k).expandAtDepth(k - 1)
+    }
+}
+
+internal fun AccessPath?.minus(other: AccessPath): List<JcField>? {
+    if (this == null) {
+        return null
+    }
+    if (value != other.value) {
+        return null
+    }
+    if (fieldAccesses.take(other.fieldAccesses.size) != other.fieldAccesses) {
+        return null
+    }
+    return fieldAccesses.drop(other.fieldAccesses.size)
+}
+
+internal fun AccessPath?.startsWith(other: AccessPath): Boolean {
+    return minus(other) != null
 }

@@ -127,4 +127,12 @@ public class NPEExamples {
         int len2 = second.length();
         return len1 + len2;
     }
+
+    int simplePoints2() {
+        SimpleClassWithField a = new SimpleClassWithField("abc");
+        SimpleClassWithField b = new SimpleClassWithField("kek"); // We can't directly set b=a, or cfg will optimize this and use one variable
+        b = a;
+        b.field = null;
+        return a.field.length();
+    }
 }
