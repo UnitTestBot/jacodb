@@ -44,6 +44,13 @@ class TaintAnalysisWithPointsTo(
                         Vertex(newStatement, newFact)
                     )
                 )
+                // Propagating zero fact
+                instance.propagate(
+                    Edge(
+                        Vertex(it, TaintNode.ZERO),
+                        Vertex(newStatement, TaintNode.ZERO)
+                    )
+                )
             }
         }
 
@@ -52,7 +59,7 @@ class TaintAnalysisWithPointsTo(
         forward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
                 val v = e.v
-                if (pred is JcAssignInst && v.domainFact.variable.value == pred.lhv && v.domainFact.variable.isOnHeap) {
+                if (pred is JcAssignInst && v.domainFact.variable?.value == pred.lhv && v.domainFact.variable.isOnHeap) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true)
                     backward.run()
                 }
@@ -63,7 +70,7 @@ class TaintAnalysisWithPointsTo(
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
                 val v = e.v
                 val curInst = v.statement
-                if (curInst is JcAssignInst && v.domainFact.variable.value == curInst.lhv) {
+                if (curInst is JcAssignInst && v.domainFact.variable?.value == curInst.lhv) {
                     e.handoverPathEdgeTo(forward, pred, updateActivation = false)
                 }
             }

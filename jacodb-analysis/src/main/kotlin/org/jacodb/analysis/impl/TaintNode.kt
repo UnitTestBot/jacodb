@@ -21,8 +21,10 @@ import org.jacodb.api.cfg.JcInst
 /**
  * activation == null <=> activation point is passed
  */
-data class TaintNode(val variable: AccessPath, val activation: JcInst?) {
+data class TaintNode private constructor (val variable: AccessPath?, val activation: JcInst?) {
     companion object {
-        val ZERO = TaintNode(AccessPath.ZERO, null)
+        val ZERO = TaintNode(null, null)
+
+        fun fromPath(variable: AccessPath, activation: JcInst? = null) = TaintNode(variable, activation)
     }
 }

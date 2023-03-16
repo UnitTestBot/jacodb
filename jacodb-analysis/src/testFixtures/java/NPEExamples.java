@@ -19,6 +19,20 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("ALL")
 public class NPEExamples {
 
+    static class SimpleClassWithField {
+        public String field;
+        SimpleClassWithField(String value) {
+            this.field = value;
+        }
+
+        public String add566() {
+            if (field != null) {
+                return field + "566";
+            }
+            return null;
+        }
+    }
+
     interface SomeI {
         int functionThatCanThrowNPEOnNull(String x);
         int functionThatCanNotThrowNPEOnNull(String x);
@@ -102,5 +116,15 @@ public class NPEExamples {
 
     int noNPEOnVirtualCall(@NotNull SomeI x, String y) {
         return x.functionThatCanNotThrowNPEOnNull(y);
+    }
+
+    int simpleNPEOnField() {
+        SimpleClassWithField instance = new SimpleClassWithField("abc");
+        String first = instance.add566();
+        int len1 = first.length();
+        instance.field = null;
+        String second = instance.add566();
+        int len2 = second.length();
+        return len1 + len2;
     }
 }

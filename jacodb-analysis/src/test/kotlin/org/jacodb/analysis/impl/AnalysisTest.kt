@@ -172,6 +172,17 @@ class AnalysisTest : BaseTest() {
         assertEquals(1, actual.size)
     }
 
+    @Test
+    fun `basic test for NPE on fields`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleNPEOnField" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%8 = %6.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     /**
@@ -186,9 +197,9 @@ class AnalysisTest : BaseTest() {
         val possibleNPEInstructions = mutableListOf<NPELocation>()
         ifdsResults.resultFacts.forEach { (instruction, facts) ->
             val instance = (instruction.callExpr as? JcInstanceCallExpr)?.instance as? JcLocal ?: return@forEach
-            if (TaintNode(AccessPath.fromLocal(instance), null) in facts) {
+            if (TaintNode.fromPath(AccessPath.fromLocal(instance)) in facts) {
                 val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                    Vertex(instruction, TaintNode(AccessPath.fromLocal(instance), null)), method
+                    Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(instance))), method
                 )
                 possibleNPEInstructions.add(NPELocation(instruction, instance, possibleStackTrace))
             }
@@ -200,9 +211,9 @@ class AnalysisTest : BaseTest() {
                 fieldRef.instance?.let {
                     if (it !is JcLocal)
                         return@let
-                    if (TaintNode(AccessPath.fromLocal(it), null) in facts) {
+                    if (TaintNode.fromPath(AccessPath.fromLocal(it)) in facts) {
                         val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            Vertex(instruction, TaintNode(AccessPath.fromLocal(it), null)), method
+                            Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(it))), method
                         )
                         possibleNPEInstructions.add(NPELocation(instruction, it, possibleStackTrace))
                     }

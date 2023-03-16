@@ -16,22 +16,29 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcField
 import org.jacodb.api.cfg.JcLocal
 
 /**
  * This class is used to represent an access path that is needed for problems
  * where dataflow facts could be correlated with variables/values (such as NPE, uninitialized variable, etc.)
  */
-data class AccessPath private constructor(val value: JcLocal?, val fieldAccesses: List<JcTypedField>) {
+data class AccessPath private constructor(val value: JcLocal, val fieldAccesses: List<JcField>) {
     companion object {
-        val ZERO = AccessPath(null, listOf())
 
         fun fromLocal(value: JcLocal) = AccessPath(value, listOf())
 
-        fun fromOther(other: AccessPath, field: JcTypedField) = AccessPath(other.value, other.fieldAccesses.plus(field))
+        fun fromOther(other: AccessPath, fields: List<JcField>, maxLength: Int) = AccessPath(other.value, other.fieldAccesses.plus(fields).take(maxLength))
     }
 
     val isOnHeap: Boolean
         get() = fieldAccesses.isNotEmpty()
+
+    override fun toString(): String {
+        var str = value.toString()
+        for (field in fieldAccesses) {
+            str += ".${field.name}"
+        }
+        return str
+    }
 }
