@@ -160,15 +160,9 @@ class NPEForwardFunctions(
             val currentBranch = graph.methodOf(current).flowGraph().ref(next)
             if ((expr is JcEqExpr && currentBranch == current.trueBranch) || (expr is JcNeqExpr && currentBranch == current.falseBranch)) {
                 // comparedPath is null in this branch
-                // TODO: carefully think!
-                if (fact.activation != null) {
-                    if (fact == TaintNode.ZERO)
-                        return@FlowFunctionInstance listOf(TaintNode.ZERO, TaintNode.fromPath(comparedPath))
-                    return@FlowFunctionInstance default
-                }
                 if (fact == TaintNode.ZERO)
                     return@FlowFunctionInstance listOf(TaintNode.fromPath(comparedPath))
-                if (fact.variable.startsWith(comparedPath)) {
+                if (fact.variable.startsWith(comparedPath) && fact.activation == null) {
                     if (fact.variable == comparedPath) {
                         // This is a hack: instructions like `return null` in branch of next will be considered only if
                         //  the fact holds (otherwise we could not get there)
@@ -193,8 +187,14 @@ class NPEForwardFunctions(
         callStatement: JcInst,
         callee: JcMethod
     ): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
+        if (fact.activation == callStatement) {
+            // TODO: think if this is correct
+            return@FlowFunctionInstance emptyList()
+        }
         // NB: in our jimple formalParameters are immutable => we can safely
         // pass paths from caller to callee and back by just renaming them
+        val updatedFact = fact.checkActivation(callStatement)
+
         val ans = mutableListOf<TaintNode>()
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
@@ -203,11 +203,11 @@ class NPEForwardFunctions(
         }
 
         formalParams.zip(actualParams).forEach { (formal, actual) ->
-            ans += transmitDataFlowAndThrowFact(actual, formal, fact)
+            ans += transmitDataFlowAndThrowFact(actual, formal, updatedFact)
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitDataFlowAndThrowFact(callExpr.instance, JcThis(callExpr.instance.type), fact)
+            ans += transmitDataFlowAndThrowFact(callExpr.instance, JcThis(callExpr.instance.type), updatedFact)
         }
 
         if (fact == TaintNode.ZERO) {
@@ -303,12 +303,17 @@ class NPEBackwardFunctions(
         return default
     }
 
+    private fun transmitBackDataFlowAndThrowFact(from: JcValue, to: JcExpr, fact: TaintNode): List<TaintNode> {
+        return transmitBackDataFlow(from, to, fact).minus(fact)
+    }
+
     override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
         return emptyList()
     }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
-        return@FlowFunctionInstance if(current is JcAssignInst) {
+        // fact.activation != current needed here to jump over assignment where the fact appeared
+        return@FlowFunctionInstance if (current is JcAssignInst && fact.activation != current) {
             transmitBackDataFlow(current.lhv, current.rhv, fact)
         } else {
             listOf(fact)
@@ -322,16 +327,19 @@ class NPEBackwardFunctions(
         val ans = mutableListOf<TaintNode>()
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
+        if (fact == TaintNode.ZERO)
+            ans.add(TaintNode.ZERO)
+
         if (callStatement is JcAssignInst) {
             graph.entryPoint(callee).filterIsInstance<JcReturnInst>().forEach { returnInst ->
                 returnInst.returnValue?.let {
-                    ans += transmitBackDataFlow(callStatement.lhv, it, fact)
+                    ans += transmitBackDataFlowAndThrowFact(callStatement.lhv, it, fact)
                 }
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitBackDataFlow(callExpr.instance, JcThis(callExpr.instance.type), fact)
+            ans += transmitBackDataFlowAndThrowFact(callExpr.instance, JcThis(callExpr.instance.type), fact)
         }
 
         // TODO: handle statics
@@ -347,7 +355,7 @@ class NPEBackwardFunctions(
 
         if (callStatement is JcAssignInst) {
             val lhvPath = callStatement.lhv.toPath(maxPathLength)
-            if (factPath.startsWith(lhvPath)) {
+            if (factPath.startsWith(lhvPath) && fact.activation != callStatement) {
                 return@FlowFunctionInstance emptyList()
             }
         }
@@ -363,228 +371,22 @@ class NPEBackwardFunctions(
         val ans = mutableListOf<TaintNode>()
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
-        val callee = graph.methodOf(returnSite)
+        val callee = graph.methodOf(exitStatement)
         val formalParams = callee.parameters.map {
             JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
         }
 
         formalParams.zip(actualParams).forEach { (formal, actual) ->
-            ans += transmitBackDataFlow(formal, actual, fact)
+            ans += transmitBackDataFlowAndThrowFact(formal, actual, fact)
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitBackDataFlow(JcThis(callExpr.instance.type), callExpr.instance, fact)
+            ans += transmitBackDataFlowAndThrowFact(JcThis(callExpr.instance.type), callExpr.instance, fact)
         }
 
         ans
     }
 }
-
-/**
- * This is an implementation of [FlowFunctionsSpace] for NullPointerException problem based on JaCoDB CFG.
- * Here "fact D holds" denotes that "value D can be null"
- */
-//class NPEForwardFunctions(
-//    private val classpath: JcClasspath,
-//    private val graph: ApplicationGraph<JcMethod, JcInst>,
-//    private val platform: JcAnalysisPlatform
-//): FlowFunctionsSpace<JcMethod, JcInst, TaintNode> {
-//
-//    private val factLeadingToNullVisitor = object : DefaultJcExprVisitor<TaintNode?> {
-//        override val defaultExprHandler: (JcExpr) -> TaintNode?
-//            get() = { null }
-//
-//        private fun visitJcLocal(value: JcLocal) = TaintNode.fromPath(AccessPath.fromLocal(value))
-//
-//        private fun visitJcCallExpr(expr: JcCallExpr): TaintNode? {
-//            if (expr.method.method.isNullable == true) {
-//                return TaintNode.ZERO
-//            }
-//            return null
-//        }
-//
-//        override fun visitJcArgument(value: JcArgument) = visitJcLocal(value)
-//
-//        override fun visitJcLocalVar(value: JcLocalVar) = visitJcLocal(value)
-//
-//        override fun visitJcNullConstant(value: JcNullConstant) = TaintNode.ZERO
-//
-//        override fun visitJcCastExpr(expr: JcCastExpr) = expr.operand.accept(this)
-//
-//        override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr) = visitJcCallExpr(expr)
-//
-//        override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) = visitJcCallExpr(expr)
-//
-//        override fun visitJcStaticCallExpr(expr: JcStaticCallExpr) = visitJcCallExpr(expr)
-//
-//        override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr) = visitJcCallExpr(expr)
-//
-//        // TODO: override others
-//    }
-//
-//    // Returns a fact, such that if it holds, `this` expr is null (or null if there is no such fact)
-//    private val JcExpr.factLeadingToNull: TaintNode?
-//        get() = accept(factLeadingToNullVisitor)
-//
-//    // TODO: think about name shadowing
-//    // Returns all local variables and arguments referenced by this method
-//    private val JcMethod.domain: Set<TaintNode>
-//        get() {
-//            return platform.flowGraph(this).locals
-//                .map { TaintNode.fromPath(AccessPath.fromLocal(it)) }
-//                .toSet()
-//                .plus(TaintNode.ZERO)
-//        }
-//
-//    private val JcInst.domain: Set<TaintNode>
-//        get() = location.method.domain
-//
-//    // Returns a value that is being dereferenced in this call
-//    private val JcInst.dereferencedValue: JcLocal?
-//        get() {
-//            (callExpr as? JcInstanceCallExpr)?.let {
-//                return it.instance as? JcLocal
-//            }
-//
-//            return fieldRef?.instance as? JcLocal
-//        }
-//
-//    override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
-//        return startStatement.domain.filter { it.variable == null || it.variable.value.type.nullable != false }
-//    }
-//
-//    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<TaintNode> {
-//        val nonId = mutableMapOf<TaintNode, List<TaintNode>>()
-//
-//        current.dereferencedValue?.let {
-//            nonId[TaintNode.fromPath(AccessPath.fromLocal(it))] = emptyList()
-//        }
-//
-//        if (current is JcAssignInst) {
-//            val lhv = current.lhv
-//            if (lhv is JcLocal) {
-//                nonId[TaintNode.fromPath(AccessPath.fromLocal(lhv))] = listOf()
-//                current.rhv.factLeadingToNull?.let {
-//                    if (it.variable == null || it.variable.value != current.dereferencedValue) {
-//                        nonId[it] = setOf(it, TaintNode.fromPath(AccessPath.fromLocal(lhv))).toList()
-//                    }
-//                }
-//            }
-//        }
-//
-//        // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
-//        // (because x == null will be held at expr2 but won't be held at expr1)
-//        if (current is JcIfInst) {
-//            val expr = current.condition
-//            var comparedValue: JcValue? = null
-//
-//            if (expr.rhv is JcNullConstant && expr.lhv is JcLocal)
-//                comparedValue = expr.lhv
-//            else if (expr.lhv is JcNullConstant && expr.rhv is JcLocal)
-//                comparedValue = expr.rhv
-//
-//            if (comparedValue !is JcLocal)
-//                return IdLikeFlowFunction(current.domain, nonId)
-//
-//            val currentBranch = graph.methodOf(current).flowGraph().ref(next)
-//            when (expr) {
-//                is JcEqExpr -> {
-//                    comparedValue.let {
-//                        if (currentBranch == current.trueBranch) {
-//                            nonId[TaintNode.ZERO] = listOf(TaintNode.ZERO, TaintNode.fromPath(AccessPath.fromLocal(comparedValue)))
-//                        } else if (currentBranch == current.falseBranch) {
-//                            nonId[TaintNode.fromPath(AccessPath.fromLocal(comparedValue))] = emptyList()
-//                        }
-//                    }
-//                }
-//                is JcNeqExpr -> {
-//                    comparedValue.let {
-//                        if (currentBranch == current.falseBranch) {
-//                            nonId[TaintNode.ZERO] = listOf(TaintNode.ZERO, TaintNode.fromPath(AccessPath.fromLocal(comparedValue)))
-//                        } else if (currentBranch == current.trueBranch) {
-//                            nonId[TaintNode.fromPath(AccessPath.fromLocal(comparedValue))] = emptyList()
-//                        }
-//                    }
-//                }
-//                else -> Unit
-//            }
-//    }
-//        return IdLikeFlowFunction(current.domain, nonId)
-//    }
-//
-//    override fun obtainCallToStartFlowFunction(
-//        callStatement: JcInst,
-//        callee: JcMethod
-//    ): FlowFunctionInstance<TaintNode> {
-//        val nonId = mutableMapOf<TaintNode, MutableList<TaintNode>>()
-//        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-//        val args = callExpr.args
-//        val params = callee.parameters.map {
-//            JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
-//        }
-//
-//        // We don't propagate locals to the callee
-//        platform.flowGraph(callStatement.location.method).locals.forEach {
-//            nonId[TaintNode.fromPath(AccessPath.fromLocal(it))] = mutableListOf()
-//        }
-//
-//        // All nullable callee's locals are initialized as null
-//        nonId[TaintNode.ZERO] = callee.domain
-//            .filterIsInstance<JcLocalVar>()
-//            .filter { it.type.nullable != false }
-//            .map { TaintNode.fromPath(AccessPath.fromLocal(it)) }
-//            .plus(TaintNode.ZERO)
-//            .toMutableList()
-//
-//        // Propagate values passed to callee as parameters
-//        params.zip(args).forEach { (param, arg) ->
-//            arg.factLeadingToNull?.let {
-//                nonId.getValue(it).add(TaintNode.fromPath(AccessPath.fromLocal(param)))
-//            }
-//        }
-//
-//        // todo: pass everything related to `this` if this is JcInstanceCallExpr
-//        return IdLikeFlowFunction(callStatement.domain, nonId)
-//    }
-//
-//    override fun obtainCallToReturnFlowFunction(
-//        callStatement: JcInst,
-//        returnSite: JcInst
-//    ): FlowFunctionInstance<TaintNode> {
-//        val nonId = mutableMapOf<TaintNode, List<TaintNode>>()
-//        if (callStatement is JcAssignInst && callStatement.lhv is JcLocal) {
-//            // Nullability of lhs of assignment will be handled by exit-to-return flow function
-//            nonId[TaintNode.fromPath(AccessPath.fromLocal(callStatement.lhv as JcLocal))] = emptyList()
-//        }
-//        callStatement.dereferencedValue?.let {
-//            nonId[TaintNode.fromPath(AccessPath.fromLocal(it))] = emptyList()
-//        }
-//        return IdLikeFlowFunction(callStatement.domain, nonId)
-//    }
-//
-//    override fun obtainExitToReturnSiteFlowFunction(
-//        callStatement: JcInst,
-//        returnSite: JcInst,
-//        exitStatement: JcInst
-//    ): FlowFunctionInstance<TaintNode> {
-//        val nonId = mutableMapOf<TaintNode, List<TaintNode>>()
-//
-//        // We shouldn't propagate locals back to caller
-//        exitStatement.domain.forEach {
-//            nonId[it] = emptyList()
-//        }
-//
-//        // TODO: pass everything related to `this` back to caller
-//
-//        if (callStatement is JcAssignInst && exitStatement is JcReturnInst && callStatement.lhv is JcLocal) {
-//            // Propagate results back to caller in case of assignment
-//            exitStatement.returnValue?.factLeadingToNull?.let {
-//                nonId[it] = listOf(TaintNode.fromPath(AccessPath.fromLocal(callStatement.lhv as JcLocal)))
-//            }
-//        }
-//        return IdLikeFlowFunction(exitStatement.domain, nonId)
-//    }
-//}
 
 fun runNPEWithPointsTo(
     graph: ApplicationGraph<JcMethod, JcInst>,

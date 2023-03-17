@@ -17,6 +17,6 @@
 package org.jacodb.analysis.impl
 
 interface IFDSInstanceListener<Statement, D> {
-    fun onPropagate(e: Edge<Statement, D>, pred: Statement?) = Unit
+    fun onPropagate(e: Edge<Statement, D>, pred: Statement?, factIsNew: Boolean) = Unit
     fun onExitPoint(e: Edge<Statement, D>) = Unit
 }

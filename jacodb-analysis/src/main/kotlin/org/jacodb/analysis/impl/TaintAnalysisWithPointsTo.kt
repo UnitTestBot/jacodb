@@ -57,9 +57,10 @@ class TaintAnalysisWithPointsTo(
         // Forward initiates backward analysis and wait until it finishes
         // Backward analysis does not initiate forward one, because it will run with updated queue after the backward finishes
         forward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
-            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
+            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
-                if (pred is JcAssignInst && v.domainFact.variable.startsWith(pred.lhv.toPath(5)) && v.domainFact.variable?.isOnHeap == true) {
+                //if (pred is JcAssignInst && v.domainFact.variable.startsWith(pred.lhv.toPath(5)) && v.domainFact.variable?.isOnHeap == true) {
+                if (v.domainFact.variable?.isOnHeap == true && factIsNew) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true)
                     backward.run()
                 }
@@ -67,11 +68,12 @@ class TaintAnalysisWithPointsTo(
         })
 
         backward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
-            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?) {
+            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
                 val curInst = v.statement
                 // TODO: think if we need to check for isOnHeap here too
-                if (curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
+                //if (curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
+                if (v.domainFact.variable?.isOnHeap == true && curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
                     e.handoverPathEdgeTo(forward, pred, updateActivation = false)
                 }
             }

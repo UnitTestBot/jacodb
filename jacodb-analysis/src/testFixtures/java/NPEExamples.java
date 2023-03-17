@@ -33,6 +33,13 @@ public class NPEExamples {
         }
     }
 
+    static class ContainerOfSimpleClass {
+        public SimpleClassWithField g;
+        ContainerOfSimpleClass(SimpleClassWithField inner) {
+            this.g = inner;
+        }
+    }
+
     interface SomeI {
         int functionThatCanThrowNPEOnNull(String x);
         int functionThatCanNotThrowNPEOnNull(String x);
@@ -68,6 +75,18 @@ public class NPEExamples {
         if (x != null && x.startsWith("239"))
             return x;
         return null;
+    }
+
+    private int taintIt(String in, SimpleClassWithField out) {
+        SimpleClassWithField x = new SimpleClassWithField("abc"); // Needed because otherwise cfg will optimize aliasing out
+        x = out;
+        x.field = in;
+        return out.field.length();
+    }
+
+    private void foo(ContainerOfSimpleClass z) {
+        SimpleClassWithField x = z.g;
+        x.field = null;
     }
 
     public int npeOnLength() {
@@ -134,5 +153,35 @@ public class NPEExamples {
         b = a;
         b.field = null;
         return a.field.length();
+    }
+
+    // Test from far+14, figure 2
+    int complexAliasing() {
+        ContainerOfSimpleClass a = new ContainerOfSimpleClass(new SimpleClassWithField("abc"));
+        SimpleClassWithField b = a.g;
+        foo(a);
+        return b.field.length();
+    }
+
+    // Test from far+14, Listing 2
+    int contextInjection() {
+        SimpleClassWithField p = new SimpleClassWithField("abc");
+        SimpleClassWithField p2 = new SimpleClassWithField("def");
+        taintIt(null, p);
+        int a = p.field.length();
+        taintIt("normal", p2);
+        int b = p2.field.length();
+        return a + b;
+    }
+
+    // Test from far+14, Listing 3
+    int flowSensitive() {
+        SimpleClassWithField p = new SimpleClassWithField("abc");
+        SimpleClassWithField p2 = new SimpleClassWithField("def");
+        p2 = p;
+        int a = p2.field.length();
+        p.field = null;
+        int b = p2.field.length();
+        return a + b;
     }
 }

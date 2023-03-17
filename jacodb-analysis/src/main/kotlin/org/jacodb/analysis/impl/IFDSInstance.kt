@@ -49,7 +49,8 @@ class IFDSInstance<Method, Statement, D> (
         if (e !in pathEdges) {
             pathEdges.add(e)
             workList.add(e)
-            listeners.forEach { it.onPropagate(e, pred) }
+            val isNew = pred != null && !pathEdges.contains(Edge(e.u, Vertex(pred, e.v.domainFact)))
+            listeners.forEach { it.onPropagate(e, pred, isNew) }
             return true
         }
         return false
@@ -110,7 +111,7 @@ class IFDSInstance<Method, Statement, D> (
                             //15
                             val sCalledProcWithD3 = Vertex(sCalledProc, d3)
                             val nextEdge = Edge(sCalledProcWithD3, sCalledProcWithD3)
-                            if (propagate(nextEdge, n)) {
+                            if (propagate(nextEdge)) {
                                 callToStartEdges.add(Edge(v, sCalledProcWithD3))
                             }
                         }
@@ -147,6 +148,7 @@ class IFDSInstance<Method, Statement, D> (
                 val nMethod = graph.methodOf(n)
                 val nMethodExitPoints = graph.exitPoints(nMethod).toList()
                 if (n in nMethodExitPoints) {
+                    listeners.forEach { it.onExitPoint(Edge(u, v)) }
                     for ((c, d4) in callSites) {
                         findNewSummaryEdges(c, d4, Edge(u, v))
                     }

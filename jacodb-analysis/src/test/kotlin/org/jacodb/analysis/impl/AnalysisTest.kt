@@ -60,6 +60,8 @@ class SimplifiedJcApplicationGraph(
 ) : JcAnalysisPlatformImpl(classpath, listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
     private val impl = JcApplicationGraphImpl(classpath, usages, cacheSize)
 
+    private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
+
     private fun getStartInst(method: JcMethod): JcNoopInst {
         return JcNoopInst(JcInstLocation(method, -1, -1))
     }
@@ -69,7 +71,7 @@ class SimplifiedJcApplicationGraph(
         return if (node == getStartInst(method)) {
             emptySequence()
         } else {
-            if (node in entryPoint(method)) {
+            if (node in impl.entryPoint(method)) {
                 sequenceOf(getStartInst(method))
             } else {
                 impl.predecessors(node)
@@ -86,8 +88,12 @@ class SimplifiedJcApplicationGraph(
     }
     override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
         bannedPackagePrefixes.any { callee.enclosingClass.packageName.startsWith(it) }
+    }.map {
+        val curSet = visitedCallers.getOrPut(it) { mutableSetOf() }
+        curSet.add(node)
+        it
     }
-    override fun callers(method: JcMethod): Sequence<JcInst> = impl.callers(method)
+    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()//impl.callers(method)
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))//impl.entryPoint(method)
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = impl.exitPoints(method)
     override fun methodOf(node: JcInst): JcMethod = impl.methodOf(node)
@@ -208,12 +214,45 @@ class AnalysisTest : BaseTest() {
     }
 
     @Test
-    fun `simple points-two analysis`() {
+    fun `simple points-to analysis`() {
         val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simplePoints2" }
         val actual = findNPEInstructions(method)
 
         assertEquals(
             listOf("%5 = %4.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `complex aliasing`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "complexAliasing" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%6 = %5.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `context injection in points-to`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "contextInjection" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            setOf("%6 = %5.length()", "%3 = %2.length()"),
+            actual.map { it.inst.toString() }.toSet()
+        )
+    }
+
+    @Test
+    fun `activation points maintain flow sensitivity`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "flowSensitive" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%8 = %7.length()"),
             actual.map { it.inst.toString() }
         )
     }
