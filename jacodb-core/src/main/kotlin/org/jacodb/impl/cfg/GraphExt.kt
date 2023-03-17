@@ -73,6 +73,7 @@ import org.jacodb.api.cfg.JcNegExpr
 import org.jacodb.api.cfg.JcNeqExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcNoopInst
 import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcOrExpr
 import org.jacodb.api.cfg.JcPhiExpr
@@ -327,6 +328,10 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
     }
 
     override fun visitJcSwitchInst(inst: JcSwitchInst): List<JcClassType> {
+        return emptyList()
+    }
+
+    override fun visitJcNoopInst(inst: JcNoopInst): List<JcClassType> {
         return emptyList()
     }
 

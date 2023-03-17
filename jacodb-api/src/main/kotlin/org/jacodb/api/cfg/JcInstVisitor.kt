@@ -27,6 +27,7 @@ interface JcInstVisitor<T> {
     fun visitJcGotoInst(inst: JcGotoInst): T
     fun visitJcIfInst(inst: JcIfInst): T
     fun visitJcSwitchInst(inst: JcSwitchInst): T
+    fun visitJcNoopInst(inst: JcNoopInst): T
 }
 
 @JvmDefaultWithoutCompatibility
@@ -53,6 +54,8 @@ interface DefaultJcInstVisitor<T> : JcInstVisitor<T> {
     override fun visitJcIfInst(inst: JcIfInst): T = defaultInstHandler(inst)
     
     override fun visitJcSwitchInst(inst: JcSwitchInst): T = defaultInstHandler(inst)
+
+    override fun visitJcNoopInst(inst: JcNoopInst): T = defaultInstHandler(inst)
 }
 
 interface JcExprVisitor<T> {

@@ -25,8 +25,10 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcNoopInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
@@ -58,13 +60,35 @@ class SimplifiedJcApplicationGraph(
 ) : JcAnalysisPlatformImpl(classpath, listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
     private val impl = JcApplicationGraphImpl(classpath, usages, cacheSize)
 
-    override fun predecessors(node: JcInst): Sequence<JcInst> = impl.predecessors(node)
-    override fun successors(node: JcInst): Sequence<JcInst> = impl.successors(node)
+    private fun getStartInst(method: JcMethod): JcNoopInst {
+        return JcNoopInst(JcInstLocation(method, -1, -1))
+    }
+
+    override fun predecessors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return if (node == getStartInst(method)) {
+            emptySequence()
+        } else {
+            if (node in entryPoint(method)) {
+                sequenceOf(getStartInst(method))
+            } else {
+                impl.predecessors(node)
+            }
+        }
+    }
+    override fun successors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return if (node == getStartInst(method)) {
+            impl.entryPoint(method)
+        } else {
+            impl.successors(node)
+        }
+    }
     override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
         bannedPackagePrefixes.any { callee.enclosingClass.packageName.startsWith(it) }
     }
     override fun callers(method: JcMethod): Sequence<JcInst> = impl.callers(method)
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> = impl.entryPoint(method)
+    override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))//impl.entryPoint(method)
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = impl.exitPoints(method)
     override fun methodOf(node: JcInst): JcMethod = impl.methodOf(node)
 

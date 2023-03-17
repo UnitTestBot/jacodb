@@ -50,7 +50,7 @@ class NPEForwardFunctions(
 
     private fun TaintNode.checkActivation(inst: JcInst): TaintNode {
         return if (inst == activation)
-            copy(activation=null)
+            copy(activation = null)
         else
             this
     }
