@@ -23,37 +23,21 @@ import org.jacodb.analysis.impl.SimplifiedJcApplicationGraph.Companion.bannedPac
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.DefaultJcExprVisitor
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcDynamicCallExpr
-import org.jacodb.api.cfg.JcEqExpr
-import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcNeqExpr
-import org.jacodb.api.cfg.JcNullConstant
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
+import org.jacodb.api.cfg.JcNoopInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.packageName
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
 import org.jacodb.impl.analysis.features.JcCacheGraphFeature
-import org.jacodb.impl.analysis.locals
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.SyncUsagesExtension
 import org.jacodb.impl.features.Usages
@@ -65,269 +49,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
 
-data class Vertex<D>(val statement: JcInst, val domainFact: D)
-
-data class Edge<D>(val u: Vertex<D>, val v: Vertex<D>)
-
-// ответственность за то, чтобы при создании ребер между датафлоу фактами
-// при рассматривании разных случаев ребер в IFDS(при вызове метода, при возврате из метода и тд)
-// лежит на создателе флоу функции.
-
-// мы подразумеваем, что в флоу фанке нужно уметь считать домены для инструкций, которые выполнятся друг за другом напрямую
-interface FlowFunctionInstance<D> {
-    fun compute(fact: D): Collection<D>
-    fun computeBackward(fact: D): Collection<D>
-}
-
-interface FlowFunctionsSpace<Method, Statement, D> {
-    fun obtainStartFacts(startStatement: Statement): Collection<D>
-    fun obtainSequentFlowFunction(current: Statement, next: Statement): FlowFunctionInstance<D>
-    fun obtainCallToStartFlowFunction(callStatement: Statement, callee: Method): FlowFunctionInstance<D>
-    fun obtainCallToReturnFlowFunction(callStatement: Statement, returnSite: Statement): FlowFunctionInstance<D>
-    fun obtainExitToReturnSiteFlowFunction(callStatement: Statement, returnSite: Statement, exitStatement: Statement): FlowFunctionInstance<D>
-}
-
-/**
- * This class is used to represent a dataflow fact in problems where facts could be correlated with variables/values
- * (such as NPE, uninitialized variable, etc.)
- */
-data class VariableNode private constructor(val value: JcValue?) {
-    companion object {
-
-        val ZERO = VariableNode(null)
-
-        // TODO: do we really need these?
-        fun fromLocal(value: JcLocal) = VariableNode(value)
-
-        fun fromValue(value: JcValue) = VariableNode(value)
-    }
-}
-
-/**
- * Flow function which is equal to id for all elements from [domain] except those in [nonId], for which the result is stored in the map
- */
-class IdLikeFlowFunction<D>(
-    private val domain: Set<D>,
-    private val nonId: Map<D, Collection<D>>
-): FlowFunctionInstance<D> {
-    override fun compute(fact: D): Collection<D> {
-        nonId[fact]?.let {
-            return it
-        }
-        return if (domain.contains(fact)) listOf(fact) else emptyList()
-    }
-
-    override fun computeBackward(fact: D): Collection<D> {
-        val res = if (domain.contains(fact) && !nonId.containsKey(fact)) {
-            listOf(fact)
-        } else {
-            emptyList()
-        }
-        return res + nonId.entries.filter { (_, value) -> value.contains(fact) }.map { it.key }
-    }
-}
-
-/**
- * This is an implementation of [FlowFunctionsSpace] for NullPointerException problem based on JaCoDB CFG.
- * Here "fact D holds" denotes that "value D can be null"
- */
-class NPEFlowFunctions(
-    private val classpath: JcClasspath,
-    private val graph: ApplicationGraph<JcMethod, JcInst>,
-    private val platform: JcAnalysisPlatform
-): FlowFunctionsSpace<JcMethod, JcInst, VariableNode> {
-
-    private val factLeadingToNullVisitor = object : DefaultJcExprVisitor<VariableNode?> {
-        override val defaultExprHandler: (JcExpr) -> VariableNode?
-            get() = { null }
-
-        private fun visitJcLocal(value: JcLocal) = VariableNode.fromLocal(value)
-
-        private fun visitJcCallExpr(expr: JcCallExpr): VariableNode? {
-            if (expr.method.method.isNullable == true) {
-                return VariableNode.ZERO
-            }
-            return null
-        }
-
-        override fun visitJcArgument(value: JcArgument) = visitJcLocal(value)
-
-        override fun visitJcLocalVar(value: JcLocalVar) = visitJcLocal(value)
-
-        override fun visitJcNullConstant(value: JcNullConstant) = VariableNode.ZERO
-
-        override fun visitJcCastExpr(expr: JcCastExpr) = expr.operand.accept(this)
-
-        override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr) = visitJcCallExpr(expr)
-
-        override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) = visitJcCallExpr(expr)
-
-        override fun visitJcStaticCallExpr(expr: JcStaticCallExpr) = visitJcCallExpr(expr)
-
-        override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr) = visitJcCallExpr(expr)
-
-        // TODO: override others
-    }
-
-    // Returns a fact, such that if it holds, `this` expr is null (or null if there is no such fact)
-    private val JcExpr.factLeadingToNull: VariableNode?
-        get() = accept(factLeadingToNullVisitor)
-
-    // TODO: think about name shadowing
-    // Returns all local variables and arguments referenced by this method
-    private val JcMethod.domain: Set<VariableNode>
-        get() {
-            return platform.flowGraph(this).locals
-                .map { VariableNode.fromLocal(it) }
-                .toSet()
-                .plus(VariableNode.ZERO)
-        }
-
-    private val JcInst.domain: Set<VariableNode>
-        get() = location.method.domain
-
-    // Returns a value that is being dereferenced in this call
-    private val JcInst.dereferencedValue: JcLocal?
-        get() {
-            (callExpr as? JcInstanceCallExpr)?.let {
-                return it.instance as? JcLocal
-            }
-
-           return fieldRef?.instance as? JcLocal
-        }
-
-    override fun obtainStartFacts(startStatement: JcInst): Collection<VariableNode> {
-        return startStatement.domain.filter { it.value == null || it.value.type.nullable != false }
-    }
-
-    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<VariableNode> {
-        val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
-
-        current.dereferencedValue?.let {
-            nonId[VariableNode.fromLocal(it)] = emptyList()
-        }
-
-        if (current is JcAssignInst) {
-            nonId[VariableNode.fromValue(current.lhv)] = listOf()
-            current.rhv.factLeadingToNull?.let {
-                if (it.value == null || it.value != current.dereferencedValue) {
-                    nonId[it] = setOf(it, VariableNode.fromValue(current.lhv)).toList()
-                }
-            }
-        }
-
-        // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
-        // (because x == null will be held at expr2 but won't be held at expr1)
-        if (current is JcIfInst) {
-            val expr = current.condition
-            var comparedValue: JcValue? = null
-
-            if (expr.rhv is JcNullConstant && expr.lhv is JcLocal)
-                comparedValue = expr.lhv
-            else if (expr.lhv is JcNullConstant && expr.rhv is JcLocal)
-                comparedValue = expr.rhv
-
-            val currentBranch = graph.methodOf(current).flowGraph().ref(next)
-            if (comparedValue != null) {
-                when (expr) {
-                    is JcEqExpr -> {
-                        comparedValue.let {
-                            if (currentBranch == current.trueBranch) {
-                                nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(comparedValue))
-                            } else if (currentBranch == current.falseBranch) {
-                                nonId[VariableNode.fromValue(comparedValue)] = emptyList()
-                            }
-                        }
-                    }
-                    is JcNeqExpr -> {
-                        comparedValue.let {
-                            if (currentBranch == current.falseBranch) {
-                                nonId[VariableNode.ZERO] = listOf(VariableNode.ZERO, VariableNode.fromValue(comparedValue))
-                            } else if (currentBranch == current.trueBranch) {
-                                nonId[VariableNode.fromValue(comparedValue)] = emptyList()
-                            }
-                        }
-                    }
-                    else -> Unit
-                }
-            }
-        }
-        return IdLikeFlowFunction(current.domain, nonId)
-    }
-
-    override fun obtainCallToStartFlowFunction(
-        callStatement: JcInst,
-        callee: JcMethod
-    ): FlowFunctionInstance<VariableNode> {
-        val nonId = mutableMapOf<VariableNode, MutableList<VariableNode>>()
-        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-        val args = callExpr.args
-        val params = callee.parameters.map {
-            JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
-        }
-
-        // We don't propagate locals to the callee
-        platform.flowGraph(callStatement.location.method).locals.forEach {
-            nonId[VariableNode.fromLocal(it)] = mutableListOf()
-        }
-
-        // All nullable callee's locals are initialized as null
-        nonId[VariableNode.ZERO] = callee.domain
-            .filterIsInstance<JcLocalVar>()
-            .filter { it.type.nullable != false }
-            .map { VariableNode.fromLocal(it) }
-            .plus(VariableNode.ZERO)
-            .toMutableList()
-
-        // Propagate values passed to callee as parameters
-        params.zip(args).forEach { (param, arg) ->
-            arg.factLeadingToNull?.let {
-                nonId.getValue(it).add(VariableNode.fromLocal(param))
-            }
-        }
-
-        // todo: pass everything related to `this` if this is JcInstanceCallExpr
-        return IdLikeFlowFunction(callStatement.domain, nonId)
-    }
-
-    override fun obtainCallToReturnFlowFunction(
-        callStatement: JcInst,
-        returnSite: JcInst
-    ): FlowFunctionInstance<VariableNode> {
-        val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
-        if (callStatement is JcAssignInst) {
-            // Nullability of lhs of assignment will be handled by exit-to-return flow function
-            nonId[VariableNode.fromValue(callStatement.lhv)] = emptyList()
-        }
-        callStatement.dereferencedValue?.let {
-            nonId[VariableNode.fromLocal(it)] = emptyList()
-        }
-        return IdLikeFlowFunction(callStatement.domain, nonId)
-    }
-
-    override fun obtainExitToReturnSiteFlowFunction(
-        callStatement: JcInst,
-        returnSite: JcInst,
-        exitStatement: JcInst
-    ): FlowFunctionInstance<VariableNode> {
-        val nonId = mutableMapOf<VariableNode, List<VariableNode>>()
-
-        // We shouldn't propagate locals back to caller
-        exitStatement.domain.forEach {
-            nonId[it] = emptyList()
-        }
-
-        // TODO: pass everything related to `this` back to caller
-
-        if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
-            // Propagate results back to caller in case of assignment
-            exitStatement.returnValue?.factLeadingToNull?.let {
-                nonId[it] = listOf(VariableNode.fromValue(callStatement.lhv))
-            }
-        }
-        return IdLikeFlowFunction(exitStatement.domain, nonId)
-    }
-}
 
 /**
  * Simplification of JcApplicationGraph that ignores method calls matching [bannedPackagePrefixes]
@@ -339,13 +60,41 @@ class SimplifiedJcApplicationGraph(
 ) : JcAnalysisPlatformImpl(classpath, listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
     private val impl = JcApplicationGraphImpl(classpath, usages, cacheSize)
 
-    override fun predecessors(node: JcInst): Sequence<JcInst> = impl.predecessors(node)
-    override fun successors(node: JcInst): Sequence<JcInst> = impl.successors(node)
+    private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
+
+    private fun getStartInst(method: JcMethod): JcNoopInst {
+        return JcNoopInst(JcInstLocation(method, -1, -1))
+    }
+
+    override fun predecessors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return if (node == getStartInst(method)) {
+            emptySequence()
+        } else {
+            if (node in impl.entryPoint(method)) {
+                sequenceOf(getStartInst(method))
+            } else {
+                impl.predecessors(node)
+            }
+        }
+    }
+    override fun successors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return if (node == getStartInst(method)) {
+            impl.entryPoint(method)
+        } else {
+            impl.successors(node)
+        }
+    }
     override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
         bannedPackagePrefixes.any { callee.enclosingClass.packageName.startsWith(it) }
+    }.map {
+        val curSet = visitedCallers.getOrPut(it) { mutableSetOf() }
+        curSet.add(node)
+        it
     }
-    override fun callers(method: JcMethod): Sequence<JcInst> = impl.callers(method)
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> = impl.entryPoint(method)
+    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()//impl.callers(method)
+    override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))//impl.entryPoint(method)
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = impl.exitPoints(method)
     override fun methodOf(node: JcInst): JcMethod = impl.methodOf(node)
 
@@ -381,7 +130,7 @@ class AnalysisTest : BaseTest() {
 //            }
 //        })
         val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val results = doRun(testingMethod, NPEFlowFunctions(cp, graph, graph), graph, devirtualizer)
+        val results = runNPEWithPointsTo(graph, graph, testingMethod, devirtualizer)
         print(results)
     }
 
@@ -453,6 +202,61 @@ class AnalysisTest : BaseTest() {
         assertEquals(1, actual.size)
     }
 
+    @Test
+    fun `basic test for NPE on fields`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleNPEOnField" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%8 = %6.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `simple points-to analysis`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simplePoints2" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%5 = %4.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `complex aliasing`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "complexAliasing" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%6 = %5.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `context injection in points-to`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "contextInjection" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            setOf("%6 = %5.length()", "%3 = %2.length()"),
+            actual.map { it.inst.toString() }.toSet()
+        )
+    }
+
+    @Test
+    fun `activation points maintain flow sensitivity`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "flowSensitive" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%8 = %7.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     /**
@@ -463,15 +267,15 @@ class AnalysisTest : BaseTest() {
             SimplifiedJcApplicationGraph(cp, cp.usagesExt())
         }
         val devirtualizer = AllOverridesDevirtualizer(graph, cp)
-        val ifdsResults = doRun(method, NPEFlowFunctions(cp, graph, graph), graph, devirtualizer)
+        val ifdsResults = runNPEWithPointsTo(graph, graph, method, devirtualizer)
         val possibleNPEInstructions = mutableListOf<NPELocation>()
         ifdsResults.resultFacts.forEach { (instruction, facts) ->
-            val callExpr = instruction.callExpr
-            if (callExpr is JcInstanceCallExpr && VariableNode.fromValue(callExpr.instance) in facts) {
+            val instance = (instruction.callExpr as? JcInstanceCallExpr)?.instance as? JcLocal ?: return@forEach
+            if (TaintNode.fromPath(AccessPath.fromLocal(instance)) in facts) {
                 val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                    Vertex(instruction, VariableNode.fromValue(callExpr.instance)), method
+                    Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(instance))), method
                 )
-                possibleNPEInstructions.add(NPELocation(instruction, callExpr.instance, possibleStackTrace))
+                possibleNPEInstructions.add(NPELocation(instruction, instance, possibleStackTrace))
             }
 
             // TODO: check for JcLengthExpr and JcArrayAccess
@@ -479,9 +283,11 @@ class AnalysisTest : BaseTest() {
             val fieldRef = instruction.fieldRef
             if (fieldRef is JcFieldRef) {
                 fieldRef.instance?.let {
-                    if (VariableNode.fromValue(it) in facts) {
+                    if (it !is JcLocal)
+                        return@let
+                    if (TaintNode.fromPath(AccessPath.fromLocal(it)) in facts) {
                         val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            Vertex(instruction, VariableNode.fromValue(it)), method
+                            Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(it))), method
                         )
                         possibleNPEInstructions.add(NPELocation(instruction, it, possibleStackTrace))
                     }
@@ -489,15 +295,6 @@ class AnalysisTest : BaseTest() {
             }
         }
         return possibleNPEInstructions
-    }
-
-    interface Devirtualizer<Method, Statement> {
-        /**
-         * Accepts source of the code and sink, which is expected to be virtual call.
-         *
-         * Should return all methods that could be called by sink.
-         */
-        fun findPossibleCallees(sources: List<Statement>, sink: Statement): Collection<Method>
     }
 
     /**
@@ -513,7 +310,7 @@ class AnalysisTest : BaseTest() {
             classpath.hierarchyExt()
         }
 
-        override fun findPossibleCallees(sources: List<JcInst>, sink: JcInst): Collection<JcMethod> {
+        override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
             val methods = initialGraph.callees(sink).toList()
             if (sink.callExpr !is JcVirtualCallExpr)
                 return methods
@@ -538,164 +335,5 @@ class AnalysisTest : BaseTest() {
                 "kotlin."
             )
         }
-    }
-
-    data class IfdsResult<D>(
-        val pathEdges: List<Edge<D>>,
-        val summaryEdge: List<Edge<D>>,
-        val resultFacts: Map<JcInst, Set<D>>,
-        val callToStartEdges: List<Edge<D>>,
-    ) {
-        /**
-         * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
-         */
-        fun resolvePossibleStackTrace(vertex: Vertex<D>, startMethod: JcMethod): List<JcInst> {
-            val result = mutableListOf(vertex.statement)
-            var curVertex = vertex
-            while (curVertex.statement.location.method != startMethod) {
-                // TODO: Note that taking not first element may cause to infinite loop in this implementation
-                val startVertex = pathEdges.first { it.v == curVertex }.u
-                curVertex = callToStartEdges.first { it.v == startVertex }.u
-                result.add(curVertex.statement)
-            }
-            return result.reversed()
-        }
-    }
-
-    fun <D> doRun(
-        startMethod: JcMethod,
-        flowSpace: FlowFunctionsSpace<JcMethod, JcInst, D>,
-        graph: ApplicationGraph<JcMethod, JcInst>,
-        devirtualizer: Devirtualizer<JcMethod, JcInst>?
-    ): IfdsResult<D> = runBlocking {
-        val entryPoints = graph.entryPoint(startMethod)
-        val pathEdges = mutableListOf<Edge<D>>()
-        val workList: Queue<Edge<D>> = LinkedList()
-        val callToStartEdges = mutableListOf<Edge<D>>()
-
-        for(entryPoint in entryPoints) {
-            for (fact in flowSpace.obtainStartFacts(entryPoint)) {
-                val startV = Vertex(entryPoint, fact)
-                val startE = Edge(startV, startV)
-                pathEdges.add(startE)
-                workList.add(startE)
-            }
-        }
-        val summaryEdges = mutableListOf<Edge<D>>()
-
-        fun propagate(e: Edge<D>): Boolean {
-            if (e !in pathEdges) {
-                pathEdges.add(e)
-                workList.add(e)
-                return true
-            }
-            return false
-        }
-
-        while(!workList.isEmpty()) {
-            val (u, v) = workList.poll()
-            val (sp, d1) = u
-            val (n, d2) = v
-
-            val callees = devirtualizer?.findPossibleCallees(graph.entryPoint(startMethod).toList(), n)?.toList() ?: graph.callees(n).toList()
-            // 13
-            if (callees.isNotEmpty()) {
-                //14
-                for (calledProc in callees) {
-                    val flowFunction = flowSpace.obtainCallToStartFlowFunction(n, calledProc)
-                    val nextFacts = flowFunction.compute(d2)
-                    for (sCalledProc in graph.entryPoint(calledProc)) {
-                        for (d3 in nextFacts) {
-                            //15
-                            val sCalledProcWithD3 = Vertex(sCalledProc, d3)
-                            val nextEdge = Edge(sCalledProcWithD3, sCalledProcWithD3)
-                            if (propagate(nextEdge)) {
-                                callToStartEdges.add(Edge(v, sCalledProcWithD3))
-                            }
-                        }
-                    }
-                }
-                //17-18
-                val returnSitesOfN = graph.successors(n)
-                for (returnSite in returnSitesOfN) {
-                    val flowFunction = flowSpace.obtainCallToReturnFlowFunction(n, returnSite)
-                    val nextFacts = flowFunction.compute(d2)
-                    for (d3 in nextFacts) {
-                        val returnSiteVertex = Vertex(returnSite, d3)
-                        val nextEdge = Edge(u, returnSiteVertex)
-                        propagate(nextEdge)
-                    }
-                }
-                //17-18 for summary edges
-                for (summaryEdge in summaryEdges) {
-                    if (summaryEdge.u == v) {
-                        val newPathEdge = Edge(u, summaryEdge.v)
-                        propagate(newPathEdge)
-                    }
-                }
-            } else {
-                // 21-22
-                val nMethod = graph.methodOf(n)
-                val nMethodExitPoints = graph.exitPoints(nMethod).toList()
-                if (n in nMethodExitPoints) {
-                    @Suppress("UnnecessaryVariable") val ep = n
-                    val callers = graph.callers(nMethod)
-                    for (caller in callers) {
-                        // todo think
-                        val callToStartEdgeFlowFunction = flowSpace.obtainCallToStartFlowFunction(caller, nMethod)
-                        val d4Set = callToStartEdgeFlowFunction.computeBackward(d1)
-                        for (d4 in d4Set) {
-                            val returnSitesOfCallers = graph.successors(caller)
-                            for (returnSiteOfCaller in returnSitesOfCallers) {
-                                val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(caller, returnSiteOfCaller, ep)
-                                val d5Set = exitToReturnFlowFunction.compute(d2)
-                                for (d5 in d5Set) {
-                                    val newSummaryEdge = Edge(Vertex(caller, d4), Vertex(returnSiteOfCaller, d5))
-                                    if (newSummaryEdge !in summaryEdges) {
-                                        summaryEdges.add(newSummaryEdge)
-
-                                        // Can't use iterator-based loops because of possible ConcurrentModificationException
-                                        var ind = 0
-                                        while (ind < pathEdges.size) {
-                                            val pathEdge = pathEdges[ind]
-                                            if (pathEdge.v == newSummaryEdge.u) {
-                                                val newPathEdge = Edge(pathEdge.u, newSummaryEdge.v)
-                                                propagate(newPathEdge)
-                                            }
-                                            ind += 1
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    val nextInstrs = graph.successors(n)
-                    for (m in nextInstrs) {
-                        val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
-                        val d3Set = flowFunction.compute(d2)
-                        for (d3 in d3Set) {
-                            val newEdge = Edge(u, Vertex(m, d3))
-                            propagate(newEdge)
-                        }
-                    }
-                }
-            }
-        }
-
-        // end of the algo - we should now for each instruction which domain facts holds at it
-        // based on the facts we can create analyses
-
-        // we are interested in facts for each instruction
-
-        val resultFacts = mutableMapOf<JcInst, MutableSet<D>>()
-
-        // 6-8
-        // todo: think about optimizations when we don't need all facts
-        for (pathEdge in pathEdges) {
-            //val method = pathEdge.u.statement.location.method
-            resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
-        }
-        return@runBlocking IfdsResult(pathEdges, summaryEdges, resultFacts, callToStartEdges)
     }
 }

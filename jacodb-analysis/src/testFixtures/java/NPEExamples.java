@@ -19,6 +19,27 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("ALL")
 public class NPEExamples {
 
+    static class SimpleClassWithField {
+        public String field;
+        SimpleClassWithField(String value) {
+            this.field = value;
+        }
+
+        public String add566() {
+            if (field != null) {
+                return field + "566";
+            }
+            return null;
+        }
+    }
+
+    static class ContainerOfSimpleClass {
+        public SimpleClassWithField g;
+        ContainerOfSimpleClass(SimpleClassWithField inner) {
+            this.g = inner;
+        }
+    }
+
     interface SomeI {
         int functionThatCanThrowNPEOnNull(String x);
         int functionThatCanNotThrowNPEOnNull(String x);
@@ -54,6 +75,18 @@ public class NPEExamples {
         if (x != null && x.startsWith("239"))
             return x;
         return null;
+    }
+
+    private int taintIt(String in, SimpleClassWithField out) {
+        SimpleClassWithField x = new SimpleClassWithField("abc"); // Needed because otherwise cfg will optimize aliasing out
+        x = out;
+        x.field = in;
+        return out.field.length();
+    }
+
+    private void foo(ContainerOfSimpleClass z) {
+        SimpleClassWithField x = z.g;
+        x.field = null;
     }
 
     public int npeOnLength() {
@@ -102,5 +135,53 @@ public class NPEExamples {
 
     int noNPEOnVirtualCall(@NotNull SomeI x, String y) {
         return x.functionThatCanNotThrowNPEOnNull(y);
+    }
+
+    int simpleNPEOnField() {
+        SimpleClassWithField instance = new SimpleClassWithField("abc");
+        String first = instance.add566();
+        int len1 = first.length();
+        instance.field = null;
+        String second = instance.add566();
+        int len2 = second.length();
+        return len1 + len2;
+    }
+
+    int simplePoints2() {
+        SimpleClassWithField a = new SimpleClassWithField("abc");
+        SimpleClassWithField b = new SimpleClassWithField("kek"); // We can't directly set b=a, or cfg will optimize this and use one variable
+        b = a;
+        b.field = null;
+        return a.field.length();
+    }
+
+    // Test from far+14, figure 2
+    int complexAliasing() {
+        ContainerOfSimpleClass a = new ContainerOfSimpleClass(new SimpleClassWithField("abc"));
+        SimpleClassWithField b = a.g;
+        foo(a);
+        return b.field.length();
+    }
+
+    // Test from far+14, Listing 2
+    int contextInjection() {
+        SimpleClassWithField p = new SimpleClassWithField("abc");
+        SimpleClassWithField p2 = new SimpleClassWithField("def");
+        taintIt(null, p);
+        int a = p.field.length();
+        taintIt("normal", p2);
+        int b = p2.field.length();
+        return a + b;
+    }
+
+    // Test from far+14, Listing 3
+    int flowSensitive() {
+        SimpleClassWithField p = new SimpleClassWithField("abc");
+        SimpleClassWithField p2 = new SimpleClassWithField("def");
+        p2 = p;
+        int a = p2.field.length();
+        p.field = null;
+        int b = p2.field.length();
+        return a + b;
     }
 }

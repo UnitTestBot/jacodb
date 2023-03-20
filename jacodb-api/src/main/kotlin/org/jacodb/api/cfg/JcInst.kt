@@ -72,6 +72,17 @@ abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
     }
 }
 
+class JcNoopInst(location: JcInstLocation): AbstractJcInst(location) {
+    override val operands: List<JcExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitJcNoopInst(this)
+    }
+
+    override fun toString(): String = "noop"
+}
+
 data class JcInstRef constructor(
     val index: Int
 )
@@ -759,7 +770,11 @@ sealed interface JcValue : JcExpr {
 
 sealed interface JcSimpleValue : JcValue
 
-data class JcThis(override val type: JcType) : JcSimpleValue {
+data class JcThis(override val type: JcType) : JcLocal {
+
+    override val name: String
+        get() = "this"
+
     override fun toString(): String = "this"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
