@@ -284,6 +284,8 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
+    override fun visitExternalJcInst(inst: JcInst) {
+    }
 }
 
 class IRTest : BaseTest() {

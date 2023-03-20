@@ -27,6 +27,8 @@ interface JcInstVisitor<T> {
     fun visitJcGotoInst(inst: JcGotoInst): T
     fun visitJcIfInst(inst: JcIfInst): T
     fun visitJcSwitchInst(inst: JcSwitchInst): T
+    fun visitExternalJcInst(inst: JcInst): T
+
 }
 
 @JvmDefaultWithoutCompatibility
@@ -53,6 +55,8 @@ interface DefaultJcInstVisitor<T> : JcInstVisitor<T> {
     override fun visitJcIfInst(inst: JcIfInst): T = defaultInstHandler(inst)
     
     override fun visitJcSwitchInst(inst: JcSwitchInst): T = defaultInstHandler(inst)
+
+    override fun visitExternalJcInst(inst: JcInst): T = defaultInstHandler(inst)
 }
 
 interface JcExprVisitor<T> {
@@ -106,6 +110,8 @@ interface JcExprVisitor<T> {
     fun visitJcClassConstant(value: JcClassConstant): T
     fun visitJcMethodConstant(value: JcMethodConstant): T
     fun visitJcPhiExpr(value: JcPhiExpr): T
+
+    fun visitExternalJcExpr(value: JcExpr): T
 }
 
 
@@ -211,4 +217,6 @@ interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
     override fun visitJcMethodConstant(value: JcMethodConstant): T = defaultExprHandler(value)
     
     override fun visitJcPhiExpr(value: JcPhiExpr): T = defaultExprHandler(value)
+
+    override fun visitExternalJcExpr(value: JcExpr): T = defaultExprHandler(value)
 }

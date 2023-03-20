@@ -48,6 +48,7 @@ import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcEnterMonitorInst
 import org.jacodb.api.cfg.JcEqExpr
 import org.jacodb.api.cfg.JcExitMonitorInst
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcExprVisitor
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcFloat
@@ -264,6 +265,15 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
+
+    override fun visitExternalJcExpr(value: JcExpr): List<JcClassType> {
+        return emptyList()
+    }
+
+    override fun visitExternalJcInst(inst: JcInst): List<JcClassType> {
+        return emptyList()
+    }
+
     override fun visitJcAssignInst(inst: JcAssignInst): List<JcClassType> {
         return inst.lhv.accept(this) + inst.rhv.accept(this)
     }

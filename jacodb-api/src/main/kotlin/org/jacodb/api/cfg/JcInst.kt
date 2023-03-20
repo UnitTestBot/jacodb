@@ -46,7 +46,7 @@ class JcInstLocation(
 }
 
 
-sealed interface JcInst {
+interface JcInst {
     val location: JcInstLocation
     val operands: List<JcExpr>
 
@@ -134,7 +134,7 @@ class JcCallInst(
     }
 }
 
-sealed interface JcTerminatingInst : JcInst
+interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
     location: JcInstLocation,
@@ -179,7 +179,7 @@ class JcCatchInst(
     }
 }
 
-sealed interface JcBranchingInst : JcInst {
+interface JcBranchingInst : JcInst {
     val successors: List<JcInstRef>
 }
 
@@ -238,7 +238,7 @@ class JcSwitchInst(
     }
 }
 
-sealed interface JcExpr {
+interface JcExpr {
     val type: JcType
     val operands: List<JcValue>
 
@@ -355,7 +355,7 @@ data class JcMulExpr(
     }
 }
 
-sealed interface JcConditionExpr : JcBinaryExpr
+interface JcConditionExpr : JcBinaryExpr
 
 data class JcEqExpr(
     override val type: JcType,
@@ -638,7 +638,7 @@ data class JcInstanceOfExpr(
     }
 }
 
-sealed interface JcCallExpr : JcExpr {
+interface JcCallExpr : JcExpr {
     val method: JcTypedMethod
     val args: List<JcValue>
 
@@ -648,7 +648,7 @@ sealed interface JcCallExpr : JcExpr {
         get() = args
 }
 
-sealed interface JcInstanceCallExpr : JcCallExpr {
+interface JcInstanceCallExpr : JcCallExpr {
     val instance: JcValue
 }
 
@@ -752,12 +752,12 @@ data class JcSpecialCallExpr(
 }
 
 
-sealed interface JcValue : JcExpr {
+interface JcValue : JcExpr {
     override val operands: List<JcValue>
         get() = emptyList()
 }
 
-sealed interface JcSimpleValue : JcValue
+interface JcSimpleValue : JcValue
 
 data class JcThis(override val type: JcType) : JcLocal {
 
@@ -771,7 +771,7 @@ data class JcThis(override val type: JcType) : JcLocal {
     }
 }
 
-sealed interface JcLocal : JcSimpleValue {
+interface JcLocal : JcSimpleValue {
     val name: String
 }
 
@@ -799,7 +799,7 @@ data class JcLocalVar(override val name: String, override val type: JcType) : Jc
     }
 }
 
-sealed interface JcComplexValue : JcValue
+interface JcComplexValue : JcValue
 
 data class JcFieldRef(
     val instance: JcValue?,
@@ -826,9 +826,9 @@ data class JcArrayAccess(
     }
 }
 
-sealed interface JcConstant : JcSimpleValue
+interface JcConstant : JcSimpleValue
 
-sealed interface JcNumericConstant : JcConstant {
+interface JcNumericConstant : JcConstant {
 
     val value: Number
 
