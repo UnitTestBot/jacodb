@@ -5,6 +5,16 @@ Primary languages: java, cpp.
 Secondary: python, go, js, kotlin, etc.
 
 ## Logic
+Main problem - there are no thoroughly labeled code benchmarks for static analyses. 
+All benchmarks are based on real code and we don't know nor all execution path, nor precise result for point analysis,
+nor knowledge of the amount of all available vulnerabilities.
+
+So we want to create code, that of which we will definitely know all execution paths, complete set of vulnerabilities,
+all sources and sinks, complete knowledge of all points to results and conditions on when they occur. 
+
+Main idea - though it is impossible to create complete graph representation of arbitrary graph, we can 
+generate some graph, which can be represented as a code. We will start from simple function calling, then add 
+type hierarchy, data flow, lambdas and other stuff. Each will be represented as a part of pgraph
 // все не что указано в тразите - идет в дефолт валуе. иначе берется из параметра.
 // так как рендеринг в конце - все будет ок
 // путь задаеися глобальным стейтом на доменах?))))
