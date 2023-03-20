@@ -31,7 +31,7 @@ import java.io.File
  */
 interface JcByteCodeLocation {
     val jarOrFolder: File
-    val fsId: String //id based on from file system
+    val fileSystemId: String //id based on from file system
 
     val type: LocationType
 

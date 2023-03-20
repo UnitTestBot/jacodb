@@ -30,7 +30,7 @@ open class JarLocation(
 
     companion object : KLogging()
 
-    override val fsId by lazy { fileChecksum }
+    override val fileSystemId by lazy { fileChecksum }
 
     override val type: LocationType
         get() = when {

@@ -60,7 +60,7 @@ abstract class AbstractClasspathResource {
 
     fun JcClasspath.classBytecode(className: String): HttpEntity<ByteArray> {
         val jcClass = findClassOrNull(className) ?: throw NotFoundException("Class not found by $className")
-        val bytes = jcClass.binaryBytecode()
+        val bytes = jcClass.bytecode()
 
         return HttpEntity<ByteArray>(bytes, HttpHeaders().also {
             it.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${jcClass.simpleName}.class")

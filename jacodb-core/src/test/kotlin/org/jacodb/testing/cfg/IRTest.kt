@@ -361,10 +361,10 @@ class IRTest : BaseTest() {
 
 
     private fun testClass(klass: JcClassOrInterface) = try {
-        val classNode = klass.bytecode()
+        val classNode = klass.asmNode()
         classNode.methods = klass.declaredMethods.filter { it.enclosingClass == klass }.map {
             if (it.isAbstract) {
-                it.body()
+                it.asmNode()
             } else {
 //            val oldBody = it.body()
 //            println()

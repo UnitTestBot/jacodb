@@ -54,13 +54,13 @@ val JcMethod.humanReadableSignature: String
 @get:JvmName("hasBody")
 val JcMethod.hasBody: Boolean
     get() {
-        return !isNative && !isAbstract && body().instructions.first != null
+        return !isNative && !isAbstract && asmNode().instructions.first != null
     }
 
 
 val JcMethod.usedMethods: List<JcMethod> get() {
     val cp = enclosingClass.classpath
-    val methodNode = body()
+    val methodNode = asmNode()
     val result = LinkedHashSet<JcMethod>()
     methodNode.instructions.forEach { instruction ->
         when (instruction) {
@@ -89,7 +89,7 @@ class FieldUsagesResult(
  */
 val JcMethod.usedFields: FieldUsagesResult get() {
     val cp = enclosingClass.classpath
-    val methodNode = body()
+    val methodNode = asmNode()
     val reads = LinkedHashSet<JcField>()
     val writes = LinkedHashSet<JcField>()
     methodNode.instructions.forEach { instruction ->

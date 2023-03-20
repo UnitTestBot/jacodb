@@ -69,12 +69,12 @@ class JcMethodImpl(
 
     override val description get() = methodInfo.desc
 
-    override fun body(): MethodNode {
+    override fun asmNode(): MethodNode {
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
     override val rawInstList: JcInstList<JcRawInst> by lazy {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, body().jsrInlined).build()
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, asmNode().jsrInlined).build()
         features?.fold(list) { value, feature ->
             feature.transformRawInstList(this, value)
         } ?: list
