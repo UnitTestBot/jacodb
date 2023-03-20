@@ -27,6 +27,7 @@ import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassFoundEvent
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcClasspathTask
 import org.jacodb.api.JcRefType
@@ -56,6 +57,8 @@ class JcClasspathImpl(
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
 
+    private val classpathExtFeature = features?.filterIsInstance<JcClasspathExtFeature>()
+
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
             if (closeOld) {
@@ -65,7 +68,7 @@ class JcClasspathImpl(
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
-        val result = features?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
+        val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
         if (result != null) {
             return result
         }
@@ -99,7 +102,7 @@ class JcClasspathImpl(
     }
 
     override fun findTypeOrNull(name: String): JcType? {
-        val result = features?.firstNotNullOfOrNull { it.tryFindType(this, name) }
+        val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindType(this, name) }
         if (result != null) {
             return result
         }

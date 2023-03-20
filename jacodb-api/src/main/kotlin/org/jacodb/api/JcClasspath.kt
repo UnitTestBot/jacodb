@@ -101,25 +101,40 @@ interface JcClassProcessingTask : JcClasspathTask {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathFeature {
 
+    fun on(event: JcClasspathFeatureEvent) {
+    }
+
+}
+
+@JvmDefaultWithoutCompatibility
+interface JcClasspathExtFeature : JcClasspathFeature {
+
     fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? = null
     fun tryFindType(classpath: JcClasspath, name: String): JcType? = null
+
+}
+
+@JvmDefaultWithoutCompatibility
+interface JcClassExtFeature : JcClasspathFeature {
 
     fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
     fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
 
     fun extensionValuesOf(clazz: JcClassOrInterface): Map<String, Any>? = null
 
+}
+
+@JvmDefaultWithoutCompatibility
+interface JcInstExtFeature : JcClasspathFeature {
+
     fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
     fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
-
-    fun on(event: JcClasspathFeatureEvent) {
-    }
-
 }
+
 
 fun JcClasspath.broadcast(event: JcClasspathFeatureEvent) = features?.forEach { it.on(event) }
 
-interface JcClasspathFeatureEvent
+sealed interface JcClasspathFeatureEvent
 
 data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
 data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent

@@ -20,6 +20,7 @@ import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcInstExtFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
 import org.jacodb.api.cfg.JcGraph
@@ -48,6 +49,8 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
+    private val methodFeatures = features?.filterIsInstance<JcInstExtFeature>()
+
     override val exceptions: List<JcClassOrInterface> by lazy(LazyThreadSafetyMode.NONE) {
         val methodSignature = MethodSignature.of(this)
         if (methodSignature is MethodResolutionImpl) {
@@ -75,18 +78,22 @@ class JcMethodImpl(
 
     override val rawInstList: JcInstList<JcRawInst> by lazy {
         val list: JcInstList<JcRawInst> = RawInstListBuilder(this, asmNode().jsrInlined).build()
-        features?.fold(list) { value, feature ->
+        methodFeatures?.fold(list) { value, feature ->
             feature.transformRawInstList(this, value)
         } ?: list
     }
 
+    private val lazyGraph by lazy {
+        JcGraphBuilder(this, rawInstList).buildFlowGraph()
+    }
+
     override fun flowGraph(): JcGraph {
-        return JcGraphBuilder(this, rawInstList).buildFlowGraph()
+        return lazyGraph
     }
 
     override val instList: JcInstList<JcInst> by lazy {
         val list: JcInstList<JcInst> = JcGraphBuilder(this, rawInstList).buildInstList()
-        features?.fold(list) { value, feature ->
+        methodFeatures?.fold(list) { value, feature ->
             feature.transformInstList(this, value)
         } ?: list
 

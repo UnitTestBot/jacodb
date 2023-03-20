@@ -23,12 +23,12 @@ import kotlinx.metadata.KmProperty
 import kotlinx.metadata.KmTypeParameter
 import kotlinx.metadata.jvm.KotlinClassHeader
 import kotlinx.metadata.jvm.KotlinClassMetadata
+import org.jacodb.api.JcClassExtFeature
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.ext.annotation
 import org.jacodb.impl.bytecode.logger
 
-object KotlinMetadata : JcClasspathFeature {
+object KotlinMetadata : JcClassExtFeature {
 
     const val METADATA_KEY = "kotlinClassMetadata"
 

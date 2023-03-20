@@ -19,7 +19,7 @@ package org.jacodb.impl.features.classpaths
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
@@ -27,7 +27,7 @@ import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 open class VirtualClasses(
     val classes: List<JcVirtualClass>,
     private val virtualLocation: VirtualLocation = VirtualLocation()
-) : JcClasspathFeature {
+) : JcClasspathExtFeature {
 
     companion object {
 

@@ -18,6 +18,7 @@ package org.jacodb.impl.bytecode
 
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassExtFeature
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathFeature
@@ -43,9 +44,11 @@ class JcClassOrInterfaceImpl(
         else -> null // maybe we do not need to do right now
     }
 
+    private val classFeatures = features?.filterIsInstance<JcClassExtFeature>()
+
     private val extensionData by lazy(LazyThreadSafetyMode.NONE) {
         HashMap<String, Any>().also { map ->
-            features?.forEach {
+            classFeatures?.forEach {
                 map.putAll(it.extensionValuesOf(this).orEmpty())
             }
         }
@@ -116,9 +119,9 @@ class JcClassOrInterfaceImpl(
     override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
         val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
         when {
-            !features.isNullOrEmpty() -> {
+            !classFeatures.isNullOrEmpty() -> {
                 val modifiedFields = result.toMutableList()
-                features.forEach {
+                classFeatures.forEach {
                     it.fieldsOf(this)?.let {
                         modifiedFields.addAll(it)
                     }
@@ -132,9 +135,9 @@ class JcClassOrInterfaceImpl(
     override val declaredMethods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
         val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, features) }
         when {
-            !features.isNullOrEmpty() -> {
+            !classFeatures.isNullOrEmpty() -> {
                 val modifiedMethods = result.toMutableList()
-                features.forEach {
+                classFeatures.forEach {
                     it.methodsOf(this)?.let {
                         modifiedMethods.addAll(it)
                     }

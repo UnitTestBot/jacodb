@@ -20,7 +20,7 @@ import com.google.common.cache.CacheBuilder
 import org.jacodb.api.JcClassFoundEvent
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.JcClasspathFeatureEvent
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypeFoundEvent
@@ -33,8 +33,7 @@ import java.time.Duration
 open class ClasspathCache(
     protected val maxSize: Long = 10_000,
     protected val expiration: Duration = Duration.ofMinutes(1)
-) : JcClasspathFeature {
-
+) : JcClasspathExtFeature {
     /**
      *
      */
