@@ -18,9 +18,7 @@ package org.jacodb.analysis.impl
 
 interface Devirtualizer<Method, Statement> {
     /**
-     * Accepts source of the code and sink, which is expected to be virtual call.
-     *
-     * Should return all methods that could be called by sink.
+     * Returns all methods that could be called at sink statement.
      */
     // TODO: add source to signature
     fun findPossibleCallees(sink: Statement): Collection<Method>

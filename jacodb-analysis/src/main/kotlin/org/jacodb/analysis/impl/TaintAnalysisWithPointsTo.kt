@@ -20,7 +20,6 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 
-// TODO: rabochee nazvanie
 // TODO: this should inherit from IFDSInstance or from some common interface (?)
 class TaintAnalysisWithPointsTo(
     private val forward: IFDSInstance<JcMethod, JcInst, TaintNode>,
@@ -59,7 +58,6 @@ class TaintAnalysisWithPointsTo(
         forward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
-                //if (pred is JcAssignInst && v.domainFact.variable.startsWith(pred.lhv.toPath(5)) && v.domainFact.variable?.isOnHeap == true) {
                 if (v.domainFact.variable?.isOnHeap == true && factIsNew) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true)
                     backward.run()
@@ -72,7 +70,6 @@ class TaintAnalysisWithPointsTo(
                 val v = e.v
                 val curInst = v.statement
                 // TODO: think if we need to check for isOnHeap here too
-                //if (curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
                 if (v.domainFact.variable?.isOnHeap == true && curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
                     e.handoverPathEdgeTo(forward, pred, updateActivation = false)
                 }

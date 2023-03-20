@@ -173,7 +173,6 @@ class IFDSInstance<Method, Statement, D> (
         // 6-8
         // todo: think about optimizations when we don't need all facts
         for (pathEdge in pathEdges) {
-            //val method = pathEdge.u.statement.location.method
             resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
         }
         return IFDSResult(graph, pathEdges, summaryEdges, resultFacts, callToStartEdges)
