@@ -179,7 +179,7 @@ class JavaLanguage : TargetLanguage {
         assert(false) { "Do not know how to dump ${ce.javaClass.simpleName}" }
     }
 
-    private fun inScope(block: () -> Unit, needSeparator: Boolean) {
+    private fun inScope(needSeparator: Boolean = false, block: () -> Unit) {
         try {
             write("{$SEPARATOR")
             addTab()
@@ -356,17 +356,15 @@ class JavaLanguage : TargetLanguage {
             is CallSite -> {
                 if (isFirstInCallSite) tabulate()
                 writeSeparated("if (currentDispatch == ${site.graphId})")
-                inScope(
-                    {
-                        for (before in site.expressionsBefore) {
-                            appendCodeExpression(before)
-                        }
-                        appendCodeValue(site.invocationExpression)
-                        for (after in site.expressionsAfter) {
-                            appendCodeExpression(after)
-                        }
-                    }, false
-                )
+                inScope {
+                    for (before in site.expressionsBefore) {
+                        appendCodeExpression(before)
+                    }
+                    appendCodeValue(site.invocationExpression)
+                    for (after in site.expressionsAfter) {
+                        appendCodeExpression(after)
+                    }
+                }
                 if (!isLastInCallSite || hasTerminations) writeSeparated(" else")
             }
             is TerminationSite -> {
@@ -374,7 +372,7 @@ class JavaLanguage : TargetLanguage {
                     if (!hasCalls) {
                         write(TAB.repeat(2))
                     }
-                    inScope({
+                    inScope {
                         for (before in site.expressionsBefore) {
                             appendCodeExpression(before)
                         }
@@ -387,7 +385,7 @@ class JavaLanguage : TargetLanguage {
                         for (after in site.expressionsAfter) {
                             appendCodeExpression(after)
                         }
-                    }, false)
+                    }
                 }
             }
         }
@@ -399,13 +397,17 @@ class JavaLanguage : TargetLanguage {
             appendLocalVariable(variable)
         }
         appendSite(callable.preparationSite)
+        val hasExpressionBefore = !callable.terminationSite.expressionsBefore.isEmpty()
+        val hasDereferences = !callable.terminationSite.dereferences.isEmpty()
+        val hasExpressionAfter = !callable.terminationSite.expressionsAfter.isEmpty()
+        val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
         val sites = callable.callSites
-        val hasDeref = !(callable.terminationSite.expressionsBefore.isEmpty()
-                && callable.terminationSite.expressionsAfter.isEmpty() && callable.terminationSite.dereferences.isEmpty())
         for (site in sites) {
-            appendSite(site, site.equals(sites.first()), site.equals(sites.last()), hasDeref)
+            val isFirstInSites = site.equals(sites.first())
+            val isLastInSites = site.equals(sites.last())
+            appendSite(site, isFirstInSites, isLastInSites, hasTerminations)
         }
-        appendSite(callable.terminationSite, hasTerminations = hasDeref, hasCalls = !sites.isEmpty())
+        appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
     }
 
     private fun appendConstructor(constructor: ConstructorPresentation) {
@@ -413,7 +415,7 @@ class JavaLanguage : TargetLanguage {
         writeVisibility(constructor.visibility)
         write(constructor.containingType.shortName)
         writeParametersList(constructor)
-        inScope({
+        inScope(needSeparator = true) {
             val parentCall = constructor.parentConstructorCall
             if (parentCall != null) {
                 appendLine {
@@ -422,7 +424,7 @@ class JavaLanguage : TargetLanguage {
                 }
             }
             appendLocalsAndSites(constructor)
-        }, true)
+        }
     }
 
     private fun appendStaticFunction(function: FunctionPresentation) = appendStartFunction(function.shortName, function)
@@ -433,45 +435,31 @@ class JavaLanguage : TargetLanguage {
 
     private fun appendStartFunction(name: String, function: FunctionPresentation) {
         writeSeparated("public class ${classNameForStaticFunction(name)}")
-        inScope({
+        inScope(needSeparator = true) {
             tabulate()
             writeVisibility(function.visibility)
             writeSeparated("static")
             writeTypeUsage(function.returnType)
             write(function.shortName)
             writeParametersList(function)
-            inScope({
+            inScope(needSeparator = true) {
                 appendLocalsAndSites(function)
-            }, true)
+            }
             if (classNameForStaticFunction(name).contains("ClassForStartFunctionForNpeInstance")) {
+                TypePresentation
                 write(SEPARATOR.repeat(2))
                 tabulate()
                 writeVisibility(VisibilityModifier.PUBLIC)
                 writeSeparated("static")
                 writeSeparated("void")
                 writeSeparated("main(String[] args)")
-                inScope({
+                inScope(needSeparator = true) {
                     write(TAB.repeat(2))
                     write(function.shortName)
                     write("();")
-                }, true)
+                }
             }
-        }, true)
-    }
-
-    private fun appendPSVM(name: String, function: FunctionPresentation) {
-        writeSeparated("public class ${classNameForStaticFunction(name)}")
-        inScope({
-            tabulate()
-            writeVisibility(function.visibility)
-            writeSeparated("static")
-            writeTypeUsage(function.returnType)
-            write(function.shortName)
-            writeParametersList(function)
-            inScope({
-                appendLocalsAndSites(function)
-            }, true)
-        }, true)
+        }
     }
 
     private fun appendMethodSignature(methodPresentation: MethodPresentation) {
@@ -495,20 +483,21 @@ class JavaLanguage : TargetLanguage {
 
     private fun appendMethod(methodPresentation: MethodPresentation) {
         appendMethodSignature(methodPresentation)
-        inScope({
+        inScope(needSeparator = true) {
             appendLocalsAndSites(methodPresentation)
-        }, true)
+        }
     }
 
     override fun dumpType(type: TypePresentation, pathToSourcesDir: Path) = inFile(type.shortName, pathToSourcesDir) {
         writeTypeSignature(type)
-        inScope({
+        inScope(needSeparator = true) {
             for (field in type.implementedFields) {
                 appendField(field)
             }
             for (constructor in type.constructors) {
                 appendConstructor(constructor)
             }
+            val y = type.implementedMethods.size
             for (method in type.implementedMethods) {
                 appendMethod(method)
             }
@@ -521,7 +510,7 @@ class JavaLanguage : TargetLanguage {
             for (staticMethod in staticCounterPart.implementedMethods) {
                 appendMethod(staticMethod)
             }
-        }, true)
+        }
     }
 
     override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =

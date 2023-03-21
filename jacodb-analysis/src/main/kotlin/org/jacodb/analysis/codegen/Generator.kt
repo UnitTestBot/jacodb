@@ -20,6 +20,7 @@ import mu.KotlinLogging
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
+import java.io.File
 import java.nio.file.Paths
 import java.util.*
 import java.util.Collections.min
@@ -158,13 +159,33 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
-    try {
+    // 1. win/ubuntu
+    // 2. gradlew
+    // 3. process exit code - ok
+    // 4. if not ok - stdout
+    // 5. java_home > 1.8
+    val java_home = System.getProperty("java.version")
+    if (java_home != null && java_home >= "1.8") {
+        val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")
         val processBuilder = ProcessBuilder()
-        processBuilder.directory(File("generated\\UtBotTemplateForIfdsSyntheticTests".replace('\\', File.separatorChar)))
-        processBuilder.command("/bin/bash", "./gradlew", "assemble")
-        processBuilder.start()
-        println("generated code built success")
-    } catch (e: Exception) {
-        e.printStackTrace()
+        processBuilder.directory(
+            File("generated\\UtBotTemplateForIfdsSyntheticTests".replace('\\', File.separatorChar))
+        )
+        var result = 0
+        if (isWindows) {
+            //TODO: chmod +x on windows
+            processBuilder.command("./gradlew", "assemble")
+        } else {
+            processBuilder.command("chmod", "+x", "gradlew")
+            result += processBuilder.start().waitFor()
+            processBuilder.command("./gradlew", "assemble")
+        }
+        result += processBuilder.start().waitFor()
+        if (result != 0) {
+            logger.info("gradle assembling ended with output value: $result")
+            println("problems with gradle")
+        }
+    } else {
+        logger.info("unsupported java version. it must being 8 or higher.")
     }
 }
