@@ -189,7 +189,7 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
     val graph = Graph("jcGraph")
 
     val nodes = mutableMapOf<JcBasicBlock, Node>()
-    for ((index, block) in basicBlocks.withIndex()) {
+    for ((index, block) in withIndex()) {
         val node = Node("$index")
             .setShape(Shape.box)
             .setLabel(instructions(block).joinToString("") { "$it\\l" }.replace("\"", "\\\"").replace("\n", "\\n"))

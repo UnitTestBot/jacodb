@@ -99,4 +99,10 @@ class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraphImpl) {
         val defs = outs.getOrDefault(block, emptySet())
         return (0 until nDefinitions).filter { defs[it] }.map { jcGraph.instructions[it] }
     }
+
+    fun ins(block: JcBasicBlock): List<JcInst> {
+        val defs = ins.getOrDefault(block, emptySet())
+        return (0 until nDefinitions).filter { defs[it] }.map { jcGraph.instructions[it] }
+    }
+
 }
