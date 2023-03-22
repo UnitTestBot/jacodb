@@ -403,8 +403,8 @@ class JavaLanguage : TargetLanguage {
         val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
         val sites = callable.callSites
         for (site in sites) {
-            val isFirstInSites = site.equals(sites.first())
-            val isLastInSites = site.equals(sites.last())
+            val isFirstInSites = site == sites.first()
+            val isLastInSites = site == sites.last()
             appendSite(site, isFirstInSites, isLastInSites, hasTerminations)
         }
         appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
@@ -427,39 +427,8 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendStaticFunction(function: FunctionPresentation) = appendStartFunction(function.shortName, function)
-
     private fun classNameForStaticFunction(functionName: String): String {
         return "ClassFor${functionName.capitalize()}"
-    }
-
-    private fun appendStartFunction(name: String, function: FunctionPresentation) {
-        writeSeparated("public class ${classNameForStaticFunction(name)}")
-        inScope(needSeparator = true) {
-            tabulate()
-            writeVisibility(function.visibility)
-            writeSeparated("static")
-            writeTypeUsage(function.returnType)
-            write(function.shortName)
-            writeParametersList(function)
-            inScope(needSeparator = true) {
-                appendLocalsAndSites(function)
-            }
-            if (classNameForStaticFunction(name).contains("ClassForStartFunctionForNpeInstance")) {
-                TypePresentation
-                write(SEPARATOR.repeat(2))
-                tabulate()
-                writeVisibility(VisibilityModifier.PUBLIC)
-                writeSeparated("static")
-                writeSeparated("void")
-                writeSeparated("main(String[] args)")
-                inScope(needSeparator = true) {
-                    write(TAB.repeat(2))
-                    write(function.shortName)
-                    write("();")
-                }
-            }
-        }
     }
 
     private fun appendMethodSignature(methodPresentation: MethodPresentation) {
@@ -477,11 +446,12 @@ class JavaLanguage : TargetLanguage {
                 assert(false) { "should be impossible" }
             }
         }
+        writeSeparated(methodPresentation.returnType.stringPresentation)
         writeSeparated(methodPresentation.shortName)
         writeParametersList(methodPresentation)
     }
 
-    private fun appendMethod(methodPresentation: MethodPresentation) {
+    private fun appendMethod(methodPresentation: MethodPresentation, func: FunctionPresentation? = null) {
         appendMethodSignature(methodPresentation)
         inScope(needSeparator = true) {
             appendLocalsAndSites(methodPresentation)
@@ -497,7 +467,6 @@ class JavaLanguage : TargetLanguage {
             for (constructor in type.constructors) {
                 appendConstructor(constructor)
             }
-            val y = type.implementedMethods.size
             for (method in type.implementedMethods) {
                 appendMethod(method)
             }
@@ -513,15 +482,32 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) =
-        inFile(classNameForStaticFunction(func.shortName), pathToSourcesDir) {
-            appendStaticFunction(func)
-        }
-
+private fun functionToTypeImpl(name: String = "", func: FunctionPresentation): TypeImpl {
+    val typeToReturn = TypeImpl(
+        shortName = classNameForStaticFunction(name.ifEmpty { func.shortName }),
+        defaultConstructorGraphId = func.graphId,
+        inheritanceModifier = InheritanceModifier.OPEN,
+    )
+    val funcToMethod = MethodImpl(
+        graphId = func.graphId,
+        containingType = typeToReturn,
+        name = func.shortName,
+        visibility = func.visibility,
+        returnType = func.returnType,
+        inheritanceModifier = InheritanceModifier.STATIC,
+        inheritedFrom = null,
+        parameters = emptyList()
+    )
+    funcToMethod.visibleLocals.addAll(func.visibleLocals)
+    funcToMethod.callSites.addAll(func.callSites)
+    typeToReturn.typeParts.add(funcToMethod)
+    return typeToReturn
+}
+    override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) {
+        dumpType(functionToTypeImpl(func = func), pathToSourcesDir)
+    }
     override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
-        inFile(classNameForStaticFunction(name), pathToSourcesDir) {
-            appendStartFunction(name, func)
-        }
+        dumpType(functionToTypeImpl(name, func), pathToSourcesDir)
 
     private fun transferTemplateZipToTemp(): Path {
         val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
