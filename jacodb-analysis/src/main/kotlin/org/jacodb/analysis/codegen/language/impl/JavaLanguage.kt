@@ -90,7 +90,8 @@ class JavaLanguage : TargetLanguage {
     }
 
     override fun resolveProjectPathToSources(projectPath: Path): Path {
-        val relativeJavaSourceSetPath = "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
+        val relativeJavaSourceSetPath =
+            "UtBotTemplateForIfdsSyntheticTests\\src\\main\\java\\org\\utbot\\ifds\\synthetic\\tests"
 
         return projectPath.resolve(relativeJavaSourceSetPath.replace('\\', File.separatorChar))
     }
@@ -221,11 +222,13 @@ class JavaLanguage : TargetLanguage {
             is ArrayTypeUsage -> {
                 throwCannotDump(typeUsage)
             }
+
             is InstanceTypeUsage -> {
                 val presentation = typeUsage.typePresentation
                 val valueToWrite = presentation.defaultValue
                 writeCodeValue(valueToWrite)
             }
+
             else -> {
                 throwCannotDump(typeUsage)
             }
@@ -243,6 +246,7 @@ class JavaLanguage : TargetLanguage {
                 write(" = ")
                 writeCodeValue(codeExpression.assignmentValue)
             }
+
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -482,27 +486,26 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-private fun functionToTypeImpl(name: String = "", func: FunctionPresentation): TypeImpl {
-    val typeToReturn = TypeImpl(
-        shortName = classNameForStaticFunction(name.ifEmpty { func.shortName }),
-        defaultConstructorGraphId = func.graphId,
-        inheritanceModifier = InheritanceModifier.OPEN,
-    )
-    val funcToMethod = MethodImpl(
-        graphId = func.graphId,
-        containingType = typeToReturn,
-        name = func.shortName,
-        visibility = func.visibility,
-        returnType = func.returnType,
-        inheritanceModifier = InheritanceModifier.STATIC,
-        inheritedFrom = null,
-        parameters = emptyList()
-    )
-    funcToMethod.visibleLocals.addAll(func.visibleLocals)
-    funcToMethod.callSites.addAll(func.callSites)
-    typeToReturn.typeParts.add(funcToMethod)
-    return typeToReturn
-}
+    private fun functionToTypeImpl(name: String = "", func: FunctionPresentation): TypeImpl {
+        val typeToReturn = TypeImpl(
+            shortName = classNameForStaticFunction(name.ifEmpty { func.shortName }),
+            defaultConstructorGraphId = func.graphId,
+            inheritanceModifier = InheritanceModifier.OPEN,
+        )
+        val funcToMethod = FuncWrapper(
+            func = func,
+            graphId = func.graphId,
+            containingType = typeToReturn,
+            name = func.shortName,
+            visibility = func.visibility,
+            returnType = func.returnType,
+            inheritanceModifier = InheritanceModifier.STATIC,
+            inheritedFrom = null,
+            parameters = func.parameters.map { Pair(it.usage, it.shortName) }
+        )
+        typeToReturn.typeParts.add(funcToMethod)
+        return typeToReturn
+    }
     override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) {
         dumpType(functionToTypeImpl(func = func), pathToSourcesDir)
     }

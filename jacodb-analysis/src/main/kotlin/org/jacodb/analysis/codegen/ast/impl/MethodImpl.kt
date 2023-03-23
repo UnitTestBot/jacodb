@@ -21,7 +21,7 @@ import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
 import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-class MethodImpl(
+open class MethodImpl(
     graphId: Int,
     override val containingType: TypePresentation,
     name: String,
