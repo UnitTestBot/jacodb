@@ -38,6 +38,7 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.cfg.JcNoopInst
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcSwitchInst
@@ -81,7 +82,6 @@ import org.objectweb.asm.util.CheckClassAdapter
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
-import java.util.*
 
 class OverridesResolver(
     private val hierarchyExtension: HierarchyExtension
@@ -288,6 +288,16 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
+    override fun visitJcNoopInst(inst: JcNoopInst) {
+        if (inst != jcGraph.entry) {
+            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
+        }
+
+        assertTrue(jcGraph.catchers(inst).all { catch ->
+            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
+        })
+        assertTrue(jcGraph.throwers(inst).isEmpty())
+    }
 }
 
 class IRTest : BaseTest() {
