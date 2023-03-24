@@ -19,6 +19,8 @@ package org.jacodb.analysis.impl
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.ext.cfg.callExpr
 
 // TODO: this should inherit from IFDSInstance or from some common interface (?)
 class TaintAnalysisWithPointsTo(
@@ -32,6 +34,7 @@ class TaintAnalysisWithPointsTo(
             instance: IFDSInstance<JcMethod, JcInst, TaintNode>,
             pred: JcInst?,
             updateActivation: Boolean,
+            propZero: Boolean
         ) {
             val (u, v) = this
             val newFact = if (updateActivation && v.domainFact.activation == null) v.domainFact.copy(activation = pred) else v.domainFact // TODO: think between pred and v.statement
@@ -43,13 +46,15 @@ class TaintAnalysisWithPointsTo(
                         Vertex(newStatement, newFact)
                     )
                 )
-                // Propagating zero fact
-                instance.propagate(
-                    Edge(
-                        Vertex(it, TaintNode.ZERO),
-                        Vertex(newStatement, TaintNode.ZERO)
+                if (propZero) {
+                    // Propagating zero fact
+                    instance.propagate(
+                        Edge(
+                            Vertex(it, u.domainFact),
+                            Vertex(newStatement, TaintNode.ZERO)
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -59,7 +64,7 @@ class TaintAnalysisWithPointsTo(
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
                 if (v.domainFact.variable?.isOnHeap == true && factIsNew) {
-                    e.handoverPathEdgeTo(backward, pred, updateActivation = true)
+                    e.handoverPathEdgeTo(backward, pred, updateActivation = true, propZero = true)
                     backward.run()
                 }
             }
@@ -69,14 +74,35 @@ class TaintAnalysisWithPointsTo(
             override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
                 val curInst = v.statement
-                // TODO: think if we need to check for isOnHeap here too
-                if (v.domainFact.variable?.isOnHeap == true && curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath(5))) {
-                    e.handoverPathEdgeTo(forward, pred, updateActivation = false)
+                var canBeKilled = false
+
+                if (v.domainFact.variable?.isOnHeap != true) {
+                    return
+                }
+
+                if (curInst is JcAssignInst && v.domainFact.variable.startsWith(curInst.lhv.toPath())) {
+                    canBeKilled = true
+                }
+
+                curInst.callExpr?.let { callExpr ->
+                    if (callExpr is JcInstanceCallExpr && v.domainFact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                        canBeKilled = true
+                    }
+                    callExpr.args.forEach {
+                        if (v.domainFact.variable.startsWith(it.toPathOrNull())) {
+                            canBeKilled = true
+                        }
+                    }
+                }
+                if (canBeKilled) {
+                    e.handoverPathEdgeTo(forward, pred, updateActivation = false, propZero = false)
                 }
             }
 
             override fun onExitPoint(e: Edge<JcInst, TaintNode>) {
-                e.handoverPathEdgeTo(forward, pred = null, updateActivation = false)
+                if (e.v.domainFact.variable?.isOnHeap == true) {
+                    e.handoverPathEdgeTo(forward, pred = null, updateActivation = false, propZero = false)
+                }
             }
         })
     }

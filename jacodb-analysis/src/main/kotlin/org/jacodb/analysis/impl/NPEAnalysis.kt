@@ -29,7 +29,6 @@ import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLocalVar
 import org.jacodb.api.cfg.JcNeqExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
@@ -48,25 +47,18 @@ class NPEForwardFunctions(
     private val maxPathLength: Int = 5
 ): FlowFunctionsSpace<JcMethod, JcInst, TaintNode> {
 
-    private fun TaintNode.checkActivation(inst: JcInst): TaintNode {
-        return if (inst == activation)
-            copy(activation = null)
-        else
-            this
-    }
-
     private fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
         if (this == null) {
             return false
         }
 
-        (inst.callExpr as? JcInstanceCallExpr)?.instance?.toPath(maxPathLength)?.let {
+        (inst.callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()?.let {
             if (it.startsWith(this)) {
                 return true
             }
         }
 
-        return inst.operands.mapNotNull { it.toPathOrNull(maxPathLength) }.any {
+        return inst.operands.mapNotNull { it.toPathOrNull() }.any {
             it.minus(this)?.isNotEmpty() == true
         }
     }
@@ -76,21 +68,21 @@ class NPEForwardFunctions(
             return false
         }
 
-        (expr as? JcInstanceCallExpr)?.instance?.toPath(maxPathLength)?.let {
+        (expr as? JcInstanceCallExpr)?.instance?.toPathOrNull()?.let {
             if (it.startsWith(this)) {
                 return true
             }
         }
 
-        return expr.operands.mapNotNull { it.toPathOrNull(maxPathLength) }.any {
+        return expr.operands.mapNotNull { it.toPathOrNull() }.any {
             it.minus(this)?.isNotEmpty() == true
         }
     }
 
-    private fun transmitDataFlow(from: JcExpr, to: JcValue, fact: TaintNode): List<TaintNode> {
+    private fun transmitDataFlow(from: JcExpr, to: JcValue, fact: TaintNode, dropFact: Boolean): List<TaintNode> {
         val factPath = fact.variable
-        val default = if (factPath.isDereferencedAt(from) || factPath.isDereferencedAt(to)) emptyList() else listOf(fact)
-        val toPath = to.toPathOrNull(maxPathLength) ?: return default
+        val default = if (dropFact || factPath.isDereferencedAt(from) || factPath.isDereferencedAt(to)) emptyList() else listOf(fact)
+        val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
 
         if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
             return if (fact == TaintNode.ZERO) {
@@ -112,10 +104,12 @@ class NPEForwardFunctions(
         }
 
         // TODO: slightly differs from original paper, think what's correct
-        val fromPath = from.toPathOrNull(maxPathLength) ?: return default
+        val fromPath = from.toPathOrNull()?.limit(maxPathLength) ?: return default
         if (factPath.startsWith(fromPath)) {
             val diff = factPath.minus(fromPath)!!
-            return setOf(fact, TaintNode.fromPath(AccessPath.fromOther(toPath, diff, maxPathLength), fact.activation)).toList()
+            return default
+                .plus(TaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
+                .distinct()
         }
         if (factPath.startsWith(toPath)) {
             return emptyList()
@@ -123,12 +117,9 @@ class NPEForwardFunctions(
         return default
     }
 
-    private fun transmitDataFlowAndThrowFact(from: JcExpr, to: JcValue, fact: TaintNode): List<TaintNode> {
-        return transmitDataFlow(from, to, fact).minus(fact)
-    }
-
     override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
         return listOf(TaintNode.ZERO) + platform.flowGraph(startStatement.location.method).locals
+            .filterIsInstance<JcArgument>()
             .filter { it.type.nullable != false }
             .map { AccessPath.fromLocal(it) }
             .flatMap { it.expandAtDepth(if (it.value is JcThis) 1 else 0) } // maxPathLength here gives lots of false positives
@@ -136,10 +127,12 @@ class NPEForwardFunctions(
     }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
-        val updatedFact = fact.checkActivation(current)
-        val default = if (fact.variable.isDereferencedAt(current)) emptyList() else listOf(updatedFact)
+        if (fact.activation == current) {
+            return@FlowFunctionInstance listOf(fact.activatedCopy)
+        }
+        val default = if (fact.variable.isDereferencedAt(current)) emptyList() else listOf(fact)
         if (current is JcAssignInst) {
-            return@FlowFunctionInstance transmitDataFlow(current.rhv, current.lhv, updatedFact)
+            return@FlowFunctionInstance transmitDataFlow(current.rhv, current.lhv, fact, dropFact = false)
         }
 
         // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
@@ -147,9 +140,9 @@ class NPEForwardFunctions(
         if (current is JcIfInst) {
             val expr = current.condition
             val comparedPath = if (expr.rhv is JcNullConstant) {
-                expr.lhv.toPathOrNull(maxPathLength)
+                expr.lhv.toPathOrNull()?.limit(maxPathLength)
             } else if (expr.lhv is JcNullConstant) {
-                expr.rhv.toPathOrNull(maxPathLength)
+                expr.rhv.toPathOrNull()?.limit(maxPathLength)
             } else {
                 null
             }
@@ -188,12 +181,10 @@ class NPEForwardFunctions(
         callee: JcMethod
     ): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
         if (fact.activation == callStatement) {
-            // TODO: think if this is correct
             return@FlowFunctionInstance emptyList()
         }
         // NB: in our jimple formalParameters are immutable => we can safely
         // pass paths from caller to callee and back by just renaming them
-        val updatedFact = fact.checkActivation(callStatement)
 
         val ans = mutableListOf<TaintNode>()
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
@@ -203,20 +194,18 @@ class NPEForwardFunctions(
         }
 
         formalParams.zip(actualParams).forEach { (formal, actual) ->
-            ans += transmitDataFlowAndThrowFact(actual, formal, updatedFact)
+            ans += transmitDataFlow(actual, formal, fact, dropFact = true)
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitDataFlowAndThrowFact(callExpr.instance, JcThis(callExpr.instance.type), updatedFact)
+            val thisInstance = JcThis(callExpr.instance.type)
+            ans += transmitDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
+                it.variable == thisInstance.toPath()
+            }
         }
 
         if (fact == TaintNode.ZERO) {
-            ans += platform.flowGraph(callee)
-                .locals
-                .filterIsInstance<JcLocalVar>()
-                .filter { it.type.nullable != false }
-                .map { TaintNode.fromPath(AccessPath.fromLocal(it)) }
-                .plus(TaintNode.ZERO)
+            ans.add(TaintNode.ZERO)
         }
 
         ans
@@ -229,24 +218,27 @@ class NPEForwardFunctions(
         if (fact == TaintNode.ZERO)
             return@FlowFunctionInstance listOf(fact)
 
-        val updatedFact = fact.checkActivation(callStatement)
+        if (fact.activation == callStatement) {
+            return@FlowFunctionInstance listOf(fact.activatedCopy)
+        }
+
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
-        val default = if (fact.variable.isDereferencedAt(callStatement)) emptyList() else listOf(updatedFact)
+        val default = if (fact.variable.isDereferencedAt(callStatement)) emptyList() else listOf(fact)
 
-        actualParams.mapNotNull { it.toPathOrNull(maxPathLength) }.forEach {
+        actualParams.mapNotNull { it.toPathOrNull() }.forEach {
             if (fact.variable.startsWith(it)) {
                 return@FlowFunctionInstance emptyList() // Will be handled by summary edge
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            if (fact.variable.startsWith(callExpr.instance.toPath(maxPathLength))) {
+            if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
                 return@FlowFunctionInstance emptyList() // Will be handled by summary edge
             }
         }
 
-        if (callStatement is JcAssignInst && fact.variable.startsWith(callStatement.lhv.toPath(maxPathLength))) {
+        if (callStatement is JcAssignInst && fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
             return@FlowFunctionInstance emptyList()
         }
 
@@ -262,21 +254,22 @@ class NPEForwardFunctions(
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val callee = exitStatement.location.method
+        val updatedFact = if (fact.activation?.location?.method == callee) fact.copy(activation = callStatement) else fact
         val formalParams = callee.parameters.map {
             JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
         }
 
         formalParams.zip(actualParams).forEach { (formal, actual) ->
-            ans += transmitDataFlowAndThrowFact(formal, actual, fact)
+            ans += transmitDataFlow(formal, actual, updatedFact, dropFact = true)
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitDataFlowAndThrowFact(JcThis(callExpr.instance.type), callExpr.instance, fact)
+            ans += transmitDataFlow(JcThis(callExpr.instance.type), callExpr.instance, updatedFact, dropFact = true)
         }
 
         if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
             exitStatement.returnValue?.let { // returnValue can be null here in some weird cases, for e.g. lambda
-                ans += transmitDataFlowAndThrowFact(it, callStatement.lhv, fact)
+                ans += transmitDataFlow(it, callStatement.lhv, updatedFact, dropFact = true)
             }
         }
 
@@ -290,21 +283,17 @@ class NPEBackwardFunctions(
     private val platform: JcAnalysisPlatform,
     private val maxPathLength: Int = 5
 ): FlowFunctionsSpace<JcMethod, JcInst, TaintNode> {
-    private fun transmitBackDataFlow(from: JcValue, to: JcExpr, fact: TaintNode): List<TaintNode> {
+    private fun transmitBackDataFlow(from: JcValue, to: JcExpr, fact: TaintNode, dropFact: Boolean): List<TaintNode> {
         val factPath = fact.variable
-        val default = listOf(fact)
-        val toPath = to.toPathOrNull(maxPathLength) ?: return default
-        val fromPath = from.toPathOrNull(maxPathLength) ?: return default
+        val default = if (dropFact) emptyList() else listOf(fact)
+        val toPath = to.toPathOrNull() ?: return default
+        val fromPath = from.toPathOrNull() ?: return default
 
         if (factPath.startsWith(fromPath)) {
             val diff = factPath.minus(fromPath)!!
-            return listOf(TaintNode.fromPath(AccessPath.fromOther(toPath, diff, maxPathLength), fact.activation))
+            return listOf(TaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
         }
         return default
-    }
-
-    private fun transmitBackDataFlowAndThrowFact(from: JcValue, to: JcExpr, fact: TaintNode): List<TaintNode> {
-        return transmitBackDataFlow(from, to, fact).minus(fact)
     }
 
     override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
@@ -314,7 +303,7 @@ class NPEBackwardFunctions(
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
         // fact.activation != current needed here to jump over assignment where the fact appeared
         return@FlowFunctionInstance if (current is JcAssignInst && fact.activation != current) {
-            transmitBackDataFlow(current.lhv, current.rhv, fact)
+            transmitBackDataFlow(current.lhv, current.rhv, fact, dropFact = false)
         } else {
             listOf(fact)
         }
@@ -333,13 +322,24 @@ class NPEBackwardFunctions(
         if (callStatement is JcAssignInst) {
             graph.entryPoint(callee).filterIsInstance<JcReturnInst>().forEach { returnInst ->
                 returnInst.returnValue?.let {
-                    ans += transmitBackDataFlowAndThrowFact(callStatement.lhv, it, fact)
+                    ans += transmitBackDataFlow(callStatement.lhv, it, fact, dropFact = true)
                 }
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitBackDataFlowAndThrowFact(callExpr.instance, JcThis(callExpr.instance.type), fact)
+            val thisInstance = JcThis(callExpr.instance.type)
+            ans += transmitBackDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
+                it.variable == thisInstance.toPath()
+            }
+        }
+
+        val formalParams = callee.parameters.map {
+            JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
+        }
+
+        callExpr.args.zip(formalParams).forEach { (actual, formal) ->
+            ans += transmitBackDataFlow(actual, formal, fact, dropFact = true)
         }
 
         // TODO: handle statics
@@ -352,10 +352,28 @@ class NPEBackwardFunctions(
         returnSite: JcInst
     ): FlowFunctionInstance<TaintNode> = FlowFunctionInstance { fact ->
         val factPath = fact.variable ?: return@FlowFunctionInstance listOf(fact)
+        val callExpr = callStatement.callExpr ?: error("CallStatement is expected to contain callExpr")
+
+        // TODO: check that this is legal
+        if (fact.activation == callStatement) {
+            return@FlowFunctionInstance listOf(fact)
+        }
+
+        callExpr.args.forEach {
+            if (fact.variable.startsWith(it.toPathOrNull())) {
+                return@FlowFunctionInstance emptyList()
+            }
+        }
+
+        if (callExpr is JcInstanceCallExpr) {
+            if (factPath.startsWith(callExpr.instance.toPathOrNull())) {
+                return@FlowFunctionInstance emptyList()
+            }
+        }
 
         if (callStatement is JcAssignInst) {
-            val lhvPath = callStatement.lhv.toPath(maxPathLength)
-            if (factPath.startsWith(lhvPath) && fact.activation != callStatement) {
+            val lhvPath = callStatement.lhv.toPath()
+            if (factPath.startsWith(lhvPath)) {
                 return@FlowFunctionInstance emptyList()
             }
         }
@@ -377,11 +395,11 @@ class NPEBackwardFunctions(
         }
 
         formalParams.zip(actualParams).forEach { (formal, actual) ->
-            ans += transmitBackDataFlowAndThrowFact(formal, actual, fact)
+            ans += transmitBackDataFlow(formal, actual, fact, dropFact = true)
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitBackDataFlowAndThrowFact(JcThis(callExpr.instance.type), callExpr.instance, fact)
+            ans += transmitBackDataFlow(JcThis(callExpr.instance.type), callExpr.instance, fact, dropFact = true)
         }
 
         ans

@@ -35,7 +35,6 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.packageName
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
 import org.jacodb.impl.analysis.features.JcCacheGraphFeature
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -87,7 +86,7 @@ class SimplifiedJcApplicationGraph(
         }
     }
     override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
-        bannedPackagePrefixes.any { callee.enclosingClass.packageName.startsWith(it) }
+        bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
     }.map {
         val curSet = visitedCallers.getOrPut(it) { mutableSetOf() }
         curSet.add(node)
@@ -100,8 +99,13 @@ class SimplifiedJcApplicationGraph(
 
     companion object {
         private val bannedPackagePrefixes = listOf(
-            "kotlin.",
-            "java."
+//            "kotlin.",
+//            "java.",
+            "kotlin.jvm.internal.",
+            "jdk.internal.",
+            "sun.",
+            "java.security.",
+            "java.util.regex."
         )
     }
 
@@ -257,6 +261,30 @@ class AnalysisTest : BaseTest() {
         )
     }
 
+    @Test
+    fun `overridden null assignment in callee don't affect next caller's instructions`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "overriddenNullInCallee" }
+        // This call may take infinite time in case of bugs with limiting field accesses
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            emptyList<NPELocation>(),
+            actual
+        )
+    }
+
+    @Test
+    fun `recursive classes handled correctly`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "recursiveClass" }
+        // This call may take infinite time in case of bugs with limiting field accesses
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            setOf("%10 = %9.toString()", "%15 = %14.toString()"),
+            actual.map { it.inst.toString() }.toSet()
+        )
+    }
+
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 
     /**
@@ -316,7 +344,7 @@ class AnalysisTest : BaseTest() {
                 return methods
             return methods
                 .flatMap { method ->
-                    if (bannedPackagePrefixes.any { method.enclosingClass.packageName.startsWith(it) })
+                    if (bannedPackagePrefixes.any { method.enclosingClass.name.startsWith(it) })
                         listOf(method)
                     else {
                         hierarchyExtension
@@ -330,7 +358,7 @@ class AnalysisTest : BaseTest() {
         companion object {
             private val bannedPackagePrefixes = listOf(
                 "sun.",
-                "jdk.internal",
+                "jdk.internal.",
                 "java.",
                 "kotlin."
             )

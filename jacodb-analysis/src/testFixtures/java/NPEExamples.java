@@ -63,6 +63,14 @@ public class NPEExamples {
         }
     }
 
+    static class RecursiveClass {
+        RecursiveClass rec = null;
+        RecursiveClass(RecursiveClass other) {
+            rec = other;
+        }
+        RecursiveClass() {rec = null;};
+    }
+
     private String constNull(String y) {
         return null;
     }
@@ -89,21 +97,21 @@ public class NPEExamples {
         x.field = null;
     }
 
-    public int npeOnLength() {
+    int npeOnLength() {
         String x = "abc";
         String y = "def";
         x = constNull(y);
         return x.length();
     }
 
-    public int noNPE() {
+    int noNPE() {
         String x = null;
         String y = "def";
         x = id(y);
         return x.length();
     }
 
-    public int npeAfterTwoExits() {
+    int npeAfterTwoExits() {
         String x = null;
         String y = "abc";
         x = twoExits(x);
@@ -111,14 +119,14 @@ public class NPEExamples {
         return x.length() + y.length();
     }
 
-    public int checkedAccess(String x) {
+    int checkedAccess(String x) {
         if (x != null) {
             return x.length();
         }
         return -1;
     }
 
-    public int consecutiveNPEs(String x, boolean flag) {
+    int consecutiveNPEs(String x, boolean flag) {
         int a = 0;
         int b = 0;
         if (flag) {
@@ -183,5 +191,28 @@ public class NPEExamples {
         p.field = null;
         int b = p2.field.length();
         return a + b;
+    }
+
+    int overriddenNullInCallee() {
+        // Here call to constructor for instance firstly sets instance.rec = null, then sets instance.rec = arg$0
+        // Fact from instance.rec = null shouldn't go to instruction with toString() after backward analysis spawned by the latter
+        RecursiveClass instance = new RecursiveClass(new RecursiveClass());
+        instance.rec.toString();
+        return 0;
+    }
+
+    int recursiveClass() {
+        RecursiveClass instance = new RecursiveClass(new RecursiveClass(new RecursiveClass()));
+        instance.rec.rec.toString(); // no NPE
+        instance.rec.rec.rec.toString(); // NPE
+        instance.rec = instance.rec.rec;
+        instance.rec.rec.toString(); // NPE
+        instance.rec.toString(); // no NPE
+        while (instance.hashCode() > 0) {
+            instance.rec = new RecursiveClass(); // creating possibly infinite chain of RecursiveClasses
+            instance = instance.rec;
+        }
+        instance.toString(); // no NPE
+        return 0;
     }
 }

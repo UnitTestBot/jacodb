@@ -27,4 +27,7 @@ data class TaintNode private constructor (val variable: AccessPath?, val activat
 
         fun fromPath(variable: AccessPath, activation: JcInst? = null) = TaintNode(variable, activation)
     }
+
+    val activatedCopy: TaintNode
+        get() = copy(activation = null)
 }
