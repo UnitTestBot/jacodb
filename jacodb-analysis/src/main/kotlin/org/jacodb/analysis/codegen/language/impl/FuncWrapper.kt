@@ -28,31 +28,23 @@ import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 import org.jacodb.analysis.codegen.ast.impl.MethodImpl
 
 class FuncWrapper(
-    graphId: Int, containingType: TypePresentation, name: String, visibility: VisibilityModifier,
-    returnType: TypeUsage, inheritanceModifier: InheritanceModifier, inheritedFrom: MethodImpl?,
+    func: FunctionPresentation,
+    graphId: Int,
+    containingType: TypePresentation,
+    name: String,
+    visibility: VisibilityModifier,
+    returnType: TypeUsage,
+    inheritanceModifier: InheritanceModifier,
+    inheritedFrom: MethodImpl?,
     parameters: List<Pair<TypeUsage, String>>
 ) : MethodImpl(
     graphId, containingType,
     name,
     visibility, returnType, inheritanceModifier, inheritedFrom, parameters
 ) {
-    private lateinit var func: FunctionPresentation;
+    private var func: FunctionPresentation
 
-    constructor(
-        func: FunctionPresentation,
-        graphId: Int,
-        containingType: TypePresentation,
-        name: String,
-        visibility: VisibilityModifier,
-        returnType: TypeUsage,
-        inheritanceModifier: InheritanceModifier,
-        inheritedFrom: MethodImpl?,
-        parameters: List<Pair<TypeUsage, String>>
-    ) : this(
-        graphId, containingType,
-        name,
-        visibility, returnType, inheritanceModifier, inheritedFrom, parameters
-    ) {
+    init {
         this.func = func
     }
 

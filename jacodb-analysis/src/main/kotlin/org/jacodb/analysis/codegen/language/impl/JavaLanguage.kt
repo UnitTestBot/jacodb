@@ -455,7 +455,7 @@ class JavaLanguage : TargetLanguage {
         writeParametersList(methodPresentation)
     }
 
-    private fun appendMethod(methodPresentation: MethodPresentation, func: FunctionPresentation? = null) {
+    private fun appendMethod(methodPresentation: MethodPresentation) {
         appendMethodSignature(methodPresentation)
         inScope(needSeparator = true) {
             appendLocalsAndSites(methodPresentation)
