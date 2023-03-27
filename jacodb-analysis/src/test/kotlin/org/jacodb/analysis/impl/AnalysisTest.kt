@@ -17,9 +17,11 @@
 package org.jacodb.analysis.impl
 
 import NPEExamples
+import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.impl.AnalysisTest.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
 import org.jacodb.analysis.impl.SimplifiedJcApplicationGraph.Companion.bannedPackagePrefixes
+import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -35,6 +37,7 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.methods
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
 import org.jacodb.impl.analysis.features.JcCacheGraphFeature
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -44,9 +47,15 @@ import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
+import java.util.stream.Stream
+import kotlin.streams.asStream
 
 
 /**
@@ -99,8 +108,8 @@ class SimplifiedJcApplicationGraph(
 
     companion object {
         private val bannedPackagePrefixes = listOf(
-//            "kotlin.",
-//            "java.",
+            "kotlin.",
+            "java.",
             "kotlin.jvm.internal.",
             "jdk.internal.",
             "sun.",
@@ -112,7 +121,64 @@ class SimplifiedJcApplicationGraph(
 }
 
 class AnalysisTest : BaseTest() {
-    companion object : WithDB(Usages, InMemoryHierarchy)
+    companion object : WithDB(Usages, InMemoryHierarchy) {
+        @JvmStatic
+        fun provideClassesForJuliet476(): Stream<Arguments> = runBlocking {
+            val cp = db.classpath(allClasspath)
+            val hierarchyExt = cp.hierarchyExt()
+            val baseClass = cp.findClass<AbstractTestCase>()
+            val classes = hierarchyExt.findSubClasses(baseClass, false)
+            classes.toArguments("CWE476")
+        }
+
+        @JvmStatic
+        fun provideClassesForJuliet690(): Stream<Arguments> = runBlocking {
+            val cp = db.classpath(allClasspath)
+            val hierarchyExt = cp.hierarchyExt()
+            val baseClass = cp.findClass<AbstractTestCase>()
+            val classes = hierarchyExt.findSubClasses(baseClass, false)
+            classes.toArguments("CWE690")
+        }
+
+        private fun Sequence<JcClassOrInterface>.toArguments(cwe: String): Stream<Arguments> = map { it.name }
+            .filter { it.contains(cwe) }
+            .filterNot { className -> bannedTests.any { className.contains(it) } }
+            .sorted()
+            .map { Arguments.of(it) }
+            .asStream()
+
+        private val bannedTests = listOf(
+            // not NPE problems
+            "null_check_after_deref",
+
+            // CFG fail
+            "deref_after_check", "binary_if", "StringBuilder_0", "String_0",
+
+            // TODO: arrays not supported
+            "int_array",
+
+            // TODO: switches not supported
+            "_15",
+
+            // TODO: statics not supported
+            "_68",
+
+            // TODO: containers not supported
+            "_72", "_73", "_74",
+
+            // TODO/Won't fix(?): passing through channels not supported
+            "_75",
+
+            // TODO/Won't fix(?): constant private/static methods not analyzed
+            "_11", "_08",
+
+            // TODO/Won't fix(?): unmodified non-final private variables not analyzed
+            "_05", "_07",
+
+            // TODO/Won't fix(?): unmodified non-final static variables not analyzed
+            "_10", "_14"
+        )
+    }
 
     @Test
     fun `fields resolving should work through interfaces`() = runBlocking {
@@ -284,6 +350,32 @@ class AnalysisTest : BaseTest() {
             actual.map { it.inst.toString() }.toSet()
         )
     }
+
+    @ParameterizedTest
+    @MethodSource("provideClassesForJuliet476")
+    fun `test on Juliet's CWE 476`(className: String) {
+        testJuliet(className)
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClassesForJuliet690")
+    fun `test on Juliet's CWE 690`(className: String) {
+        testJuliet(className)
+    }
+
+    private fun testJuliet(className: String) {
+        val clazz = cp.findClass(className)
+        val goodMethod = clazz.methods.single { it.name == "good" }
+        val badMethod = clazz.methods.single { it.name == "bad" }
+
+        goodMethod.flowGraph()
+        badMethod.flowGraph()
+        val goodNPE = findNPEInstructions(goodMethod)
+        val badNPE = findNPEInstructions(badMethod)
+
+        assertEquals(listOf(emptyList<NPELocation>(), true), listOf(goodNPE, badNPE.isNotEmpty()))
+    }
+
 
     data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
 

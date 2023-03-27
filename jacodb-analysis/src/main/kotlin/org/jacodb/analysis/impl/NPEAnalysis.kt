@@ -84,7 +84,7 @@ class NPEForwardFunctions(
         val default = if (dropFact || factPath.isDereferencedAt(from) || factPath.isDereferencedAt(to)) emptyList() else listOf(fact)
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
 
-        if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
+        if (from is JcNullConstant || (from is JcCallExpr && (from.method.method.isNullable == true || from.method.name == "getProperty"))) {
             return if (fact == TaintNode.ZERO) {
                 listOf(TaintNode.ZERO, TaintNode.fromPath(toPath)) // taint is generated here
             } else {
