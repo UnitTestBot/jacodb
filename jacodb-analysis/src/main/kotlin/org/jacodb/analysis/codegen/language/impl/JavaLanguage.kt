@@ -34,10 +34,7 @@ import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreation
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.LocalVariablePresentation
-import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
-import org.jacodb.analysis.codegen.ast.base.presentation.type.FieldPresentation
-import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
-import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
+import org.jacodb.analysis.codegen.ast.base.presentation.type.*
 import org.jacodb.analysis.codegen.ast.base.sites.CallSite
 import org.jacodb.analysis.codegen.ast.base.sites.PreparationSite
 import org.jacodb.analysis.codegen.ast.base.sites.Site
@@ -396,22 +393,26 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendLocalsAndSites(callable: CallablePresentation) {
-        val localVariables = callable.localVariables
-        for (variable in localVariables) {
-            appendLocalVariable(variable)
+        if (callable is PSVMWrapper) {
+            appendCodeValue(callable.preparationSite.invocationExpression)
+        } else {
+            val localVariables = callable.localVariables
+            for (variable in localVariables) {
+                appendLocalVariable(variable)
+            }
+            appendSite(callable.preparationSite)
+            val hasExpressionBefore = !callable.terminationSite.expressionsBefore.isEmpty()
+            val hasDereferences = !callable.terminationSite.dereferences.isEmpty()
+            val hasExpressionAfter = !callable.terminationSite.expressionsAfter.isEmpty()
+            val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
+            val sites = callable.callSites
+            for (site in sites) {
+                val isFirstInSites = site == sites.first()
+                val isLastInSites = site == sites.last()
+                appendSite(site, isFirstInSites, isLastInSites, hasTerminations,)
+            }
+            appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
         }
-        appendSite(callable.preparationSite)
-        val hasExpressionBefore = !callable.terminationSite.expressionsBefore.isEmpty()
-        val hasDereferences = !callable.terminationSite.dereferences.isEmpty()
-        val hasExpressionAfter = !callable.terminationSite.expressionsAfter.isEmpty()
-        val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
-        val sites = callable.callSites
-        for (site in sites) {
-            val isFirstInSites = site == sites.first()
-            val isLastInSites = site == sites.last()
-            appendSite(site, isFirstInSites, isLastInSites, hasTerminations)
-        }
-        appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
     }
 
     private fun appendConstructor(constructor: ConstructorPresentation) {
@@ -504,6 +505,48 @@ class JavaLanguage : TargetLanguage {
             parameters = func.parameters.map { Pair(it.usage, it.shortName) }
         )
         typeToReturn.typeParts.add(funcToMethod)
+        if (name.isNotEmpty()) {
+            val params = listOf(
+                Pair<TypeUsage, String>(
+                    InstanceTypeImpl(
+                        isNullable = false,
+                        typePresentation = TypeImpl(
+                            shortName = "String[]",
+                        ),
+                    ),
+                    "args"
+                )
+            )
+            typeToReturn.createMethod(
+                graphId = func.graphId,
+                name = "main",
+                inheritanceModifier = InheritanceModifier.STATIC,
+                parameters = params
+            )
+            typeToReturn.typeParts[1] = PSVMWrapper(
+                typeToReturn.typeParts[1] as MethodImpl, params, prepSite =
+                CallSiteImpl(
+                    graphId = func.graphId,
+                    parentCallable = func as CallablePresentation,
+                    MethodInvocationExpressionImpl(
+                        typeToReturn.typeParts[0] as MethodPresentation,
+                        SimpleValueReference(
+                            ParameterImpl(
+                                usage = InstanceTypeImpl(
+                                    isNullable = false,
+                                    typePresentation = TypeImpl(
+                                        shortName = "",
+                                    ),
+                                ),
+                                shortName = classNameForStaticFunction(name),
+                                indexInSignature = 0,
+                                parentCallable = typeToReturn.typeParts[0] as CallablePresentation
+                            )
+                        )
+                    )
+                ) //as PreparationSite
+            )
+        }
         return typeToReturn
     }
     override fun dumpFunction(func: FunctionPresentation, pathToSourcesDir: Path) {
