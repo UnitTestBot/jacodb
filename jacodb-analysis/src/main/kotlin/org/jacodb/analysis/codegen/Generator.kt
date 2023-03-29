@@ -164,6 +164,8 @@ fun main(args: Array<String>) {
     // 3. process exit code - ok
     // 4. if not ok - stdout
     // 5. java_home > 1.8
+    System.getenv()
+
     val java_home = System.getProperty("java.version")
     if (java_home != null && java_home >= "1.8") {
         val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")
@@ -173,17 +175,18 @@ fun main(args: Array<String>) {
         )
         var result = 0
         if (isWindows) {
-            //TODO: chmod +x on windows
             processBuilder.command("./gradlew", "assemble")
         } else {
-            processBuilder.command("chmod", "+x", "gradlew")
-            result += processBuilder.start().waitFor()
-            processBuilder.command("./gradlew", "assemble")
+//            listOf(
+//                listOf("./gradlew", "assemble"),
+//                listOf("chmod", "+x", "gradlew")
+//            ).forEach { cmd -> processBuilder.command(cmd) }
+            processBuilder.command("chmod +x gradlew; ./gradlew assemble")
         }
         result += processBuilder.start().waitFor()
         if (result != 0) {
             logger.info("gradle assembling ended with output value: $result")
-            println("problems with gradle")
+//            println("problems with gradle")
         }
     } else {
         logger.info("unsupported java version. it must being 8 or higher.")

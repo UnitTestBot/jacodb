@@ -393,26 +393,22 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendLocalsAndSites(callable: CallablePresentation) {
-        if (callable is PSVMWrapper) {
-            appendCodeValue(callable.preparationSite.invocationExpression)
-        } else {
-            val localVariables = callable.localVariables
-            for (variable in localVariables) {
-                appendLocalVariable(variable)
-            }
-            appendSite(callable.preparationSite)
-            val hasExpressionBefore = !callable.terminationSite.expressionsBefore.isEmpty()
-            val hasDereferences = !callable.terminationSite.dereferences.isEmpty()
-            val hasExpressionAfter = !callable.terminationSite.expressionsAfter.isEmpty()
-            val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
-            val sites = callable.callSites
-            for (site in sites) {
-                val isFirstInSites = site == sites.first()
-                val isLastInSites = site == sites.last()
-                appendSite(site, isFirstInSites, isLastInSites, hasTerminations,)
-            }
-            appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
+        val localVariables = callable.localVariables
+        for (variable in localVariables) {
+            appendLocalVariable(variable)
         }
+        appendSite(callable.preparationSite)
+        val hasExpressionBefore = !callable.terminationSite.expressionsBefore.isEmpty()
+        val hasDereferences = !callable.terminationSite.dereferences.isEmpty()
+        val hasExpressionAfter = !callable.terminationSite.expressionsAfter.isEmpty()
+        val hasTerminations = hasExpressionBefore || hasDereferences || hasExpressionAfter
+        val sites = callable.callSites
+        for (site in sites) {
+            val isFirstInSites = site == sites.first()
+            val isLastInSites = site == sites.last()
+            appendSite(site, isFirstInSites, isLastInSites, hasTerminations)
+        }
+        appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
     }
 
     private fun appendConstructor(constructor: ConstructorPresentation) {
@@ -433,6 +429,10 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun classNameForStaticFunction(functionName: String): String {
+        val diff = Integer.valueOf(functionName.substring(11)) - Integer.MAX_VALUE / 2;
+        if (diff >= 0) {
+            return "ClassForStartFunctionForNpeInstance${diff + 1}"
+        }
         return "ClassFor${functionName.capitalize()}"
     }
 
@@ -486,15 +486,13 @@ class JavaLanguage : TargetLanguage {
             }
         }
     }
-
     private fun functionToTypeImpl(name: String = "", func: FunctionPresentation): TypeImpl {
         val typeToReturn = TypeImpl(
-            shortName = classNameForStaticFunction(name.ifEmpty { func.shortName }),
+            shortName = classNameForStaticFunction(func.shortName),
             defaultConstructorGraphId = func.graphId,
             inheritanceModifier = InheritanceModifier.OPEN,
         )
-        val funcToMethod = FuncWrapper(
-            func = func,
+        val funcToMethod = MethodImpl(
             graphId = func.graphId,
             containingType = typeToReturn,
             name = func.shortName,
@@ -504,47 +502,35 @@ class JavaLanguage : TargetLanguage {
             inheritedFrom = null,
             parameters = func.parameters.map { Pair(it.usage, it.shortName) }
         )
+        funcToMethod.visibleLocals.addAll(func.localVariables)
+        funcToMethod.callSites.addAll(func.callSites)
+        func.preparationSite.expressionsBefore.forEach { expBefore -> funcToMethod.preparationSite.addBefore(expBefore) }
+        func.preparationSite.expressionsAfter.forEach { expAfter -> funcToMethod.preparationSite.addAfter(expAfter) }
+        func.terminationSite.expressionsBefore.forEach { expBefore -> funcToMethod.terminationSite.addBefore(expBefore) }
+        func.terminationSite.expressionsAfter.forEach { expAfter -> funcToMethod.terminationSite.addAfter(expAfter) }
+        func.terminationSite.dereferences.forEach { deref -> funcToMethod.terminationSite.addDereference(deref) }
         typeToReturn.typeParts.add(funcToMethod)
         if (name.isNotEmpty()) {
-            val params = listOf(
-                Pair<TypeUsage, String>(
-                    InstanceTypeImpl(
-                        isNullable = false,
-                        typePresentation = TypeImpl(
-                            shortName = "String[]",
-                        ),
-                    ),
-                    "args"
-                )
-            )
             typeToReturn.createMethod(
                 graphId = func.graphId,
                 name = "main",
                 inheritanceModifier = InheritanceModifier.STATIC,
-                parameters = params
-            )
-            typeToReturn.typeParts[1] = PSVMWrapper(
-                typeToReturn.typeParts[1] as MethodImpl, params, prepSite =
-                CallSiteImpl(
-                    graphId = func.graphId,
-                    parentCallable = func as CallablePresentation,
-                    MethodInvocationExpressionImpl(
-                        typeToReturn.typeParts[0] as MethodPresentation,
-                        SimpleValueReference(
-                            ParameterImpl(
-                                usage = InstanceTypeImpl(
-                                    isNullable = false,
-                                    typePresentation = TypeImpl(
-                                        shortName = "",
-                                    ),
-                                ),
-                                shortName = classNameForStaticFunction(name),
-                                indexInSignature = 0,
-                                parentCallable = typeToReturn.typeParts[0] as CallablePresentation
-                            )
-                        )
+                parameters = listOf(
+                    Pair<TypeUsage, String>(
+                        InstanceTypeImpl(
+                            isNullable = false,
+                            typePresentation = TypeImpl(
+                                shortName = "String[]",
+                            ),
+                        ),
+                        "args"
                     )
-                ) //as PreparationSite
+                )
+            )
+            (typeToReturn.typeParts[1] as MethodImpl).preparationSite.addBefore(
+                FunctionInvocationExpressionImpl(
+                    invokedCallable = (typeToReturn.typeParts[0] as FunctionPresentation),
+                )
             )
         }
         return typeToReturn
