@@ -486,48 +486,39 @@ class JavaLanguage : TargetLanguage {
             }
         }
     }
-    private fun functionToTypeImpl(name: String = "", func: FunctionPresentation): TypeImpl {
+    private fun functionToTypeImpl(
+        isStartFunc: Boolean = false,
+        name: String = "",
+        func: FunctionPresentation
+    ): TypeImpl {
         val typeToReturn = TypeImpl(
             shortName = classNameForStaticFunction(func.shortName),
             defaultConstructorGraphId = func.graphId,
+            visibility = func.visibility,
             inheritanceModifier = InheritanceModifier.OPEN,
         )
-        val funcToMethod = MethodImpl(
-            graphId = func.graphId,
-            containingType = typeToReturn,
+        val method = typeToReturn.createMethod(graphId = func.graphId,
             name = func.shortName,
             visibility = func.visibility,
             returnType = func.returnType,
             inheritanceModifier = InheritanceModifier.STATIC,
-            inheritedFrom = null,
             parameters = func.parameters.map { Pair(it.usage, it.shortName) }
         )
-        funcToMethod.visibleLocals.addAll(func.localVariables)
-        funcToMethod.callSites.addAll(func.callSites)
-        func.preparationSite.expressionsBefore.forEach { expBefore -> funcToMethod.preparationSite.addBefore(expBefore) }
-        func.preparationSite.expressionsAfter.forEach { expAfter -> funcToMethod.preparationSite.addAfter(expAfter) }
-        func.terminationSite.expressionsBefore.forEach { expBefore -> funcToMethod.terminationSite.addBefore(expBefore) }
-        func.terminationSite.expressionsAfter.forEach { expAfter -> funcToMethod.terminationSite.addAfter(expAfter) }
-        func.terminationSite.dereferences.forEach { deref -> funcToMethod.terminationSite.addDereference(deref) }
-        typeToReturn.typeParts.add(funcToMethod)
-        if (name.isNotEmpty()) {
-            typeToReturn.createMethod(
+        (method.visibleLocals as MutableList).addAll(func.localVariables)
+        (method.callSites as MutableList).addAll(func.callSites)
+        func.preparationSite.expressionsBefore.forEach { expBefore -> method.preparationSite.addBefore(expBefore) }
+        func.preparationSite.expressionsAfter.forEach { expAfter -> method.preparationSite.addAfter(expAfter) }
+        func.terminationSite.expressionsBefore.forEach { expBefore -> method.terminationSite.addBefore(expBefore) }
+        func.terminationSite.expressionsAfter.forEach { expAfter -> method.terminationSite.addAfter(expAfter) }
+        func.terminationSite.dereferences.forEach { deref -> method.terminationSite.addDereference(deref) }
+        if (isStartFunc) {
+            val psvmMethod = typeToReturn.createMethod(
                 graphId = func.graphId,
                 name = "main",
                 inheritanceModifier = InheritanceModifier.STATIC,
-                parameters = listOf(
-                    Pair<TypeUsage, String>(
-                        InstanceTypeImpl(
-                            isNullable = false,
-                            typePresentation = TypeImpl(
-                                shortName = "String[]",
-                            ),
-                        ),
-                        "args"
-                    )
-                )
+                parameters = listOf(Pair<TypeUsage, String>(InstanceTypeImpl(TypeImpl("String[]"), false), "args"))
             )
-            (typeToReturn.typeParts[1] as MethodImpl).preparationSite.addBefore(
+            psvmMethod.preparationSite.addBefore(
                 FunctionInvocationExpressionImpl(
                     invokedCallable = (typeToReturn.typeParts[0] as FunctionPresentation),
                 )
@@ -539,7 +530,7 @@ class JavaLanguage : TargetLanguage {
         dumpType(functionToTypeImpl(func = func), pathToSourcesDir)
     }
     override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
-        dumpType(functionToTypeImpl(name, func), pathToSourcesDir)
+        dumpType(functionToTypeImpl(true, name, func), pathToSourcesDir)
 
     private fun transferTemplateZipToTemp(): Path {
         val pathWhereToUnzipTemplate = Files.createTempFile(null, null)
