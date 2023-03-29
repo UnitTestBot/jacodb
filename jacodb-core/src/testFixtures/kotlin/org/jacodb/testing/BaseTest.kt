@@ -62,7 +62,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
 
     open var db = runBlocking {
         jacodb {
-//            persistent("D:\\work\\jcdb\\jcdb-index.db")
+            persistent("D:\\work\\jcdb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             installFeatures(*allFeatures)
