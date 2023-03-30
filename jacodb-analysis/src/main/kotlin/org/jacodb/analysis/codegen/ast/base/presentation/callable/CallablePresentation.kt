@@ -25,7 +25,7 @@ import org.jacodb.analysis.codegen.ast.base.sites.CallSite
 import org.jacodb.analysis.codegen.ast.base.sites.Site
 import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
-
+import org.jacodb.analysis.codegen.ast.impl.CallableImpl
 /**
  * Anything that can be called. Parent for functions, methods, lambdas, constructors, destructors etc.
  */
@@ -85,4 +85,14 @@ interface CallablePresentation : CodePresentation {
 
     fun getOrCreateCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite =
         getCallSite(callee, invokedOn) ?: createCallSite(callee, invokedOn)
+
+    fun copyTo(callee: CallablePresentation){
+        (callee as CallableImpl).visibleLocals.addAll(this.localVariables)
+        callee.callSites.addAll(this.callSites)
+        this.preparationSite.expressionsBefore.forEach { expBefore -> callee.preparationSite.addBefore(expBefore) }
+        this.preparationSite.expressionsAfter.forEach { expAfter -> callee.preparationSite.addAfter(expAfter) }
+        this.terminationSite.expressionsBefore.forEach { expBefore -> callee.terminationSite.addBefore(expBefore) }
+        this.terminationSite.expressionsAfter.forEach { expAfter -> callee.terminationSite.addAfter(expAfter) }
+        this.terminationSite.dereferences.forEach { deref -> callee.terminationSite.addDereference(deref) }
+    }
 }

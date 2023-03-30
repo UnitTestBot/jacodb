@@ -219,21 +219,18 @@ class JavaLanguage : TargetLanguage {
             is ArrayTypeUsage -> {
                 throwCannotDump(typeUsage)
             }
-
             is InstanceTypeUsage -> {
                 val presentation = typeUsage.typePresentation
                 val valueToWrite = presentation.defaultValue
                 writeCodeValue(valueToWrite)
             }
-
             else -> {
                 throwCannotDump(typeUsage)
             }
         }
     }
 
-    private fun appendCodeExpression(codeExpression: CodeExpression) =
-        appendLine { writeCodeExpression(codeExpression) }
+    private fun appendCodeExpression(codeExpression: CodeExpression) = appendLine { writeCodeExpression(codeExpression) }
 
     private fun writeCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
@@ -243,7 +240,6 @@ class JavaLanguage : TargetLanguage {
                 write(" = ")
                 writeCodeValue(codeExpression.assignmentValue)
             }
-
             else -> {
                 throwCannotDump(codeExpression)
             }
@@ -326,7 +322,8 @@ class JavaLanguage : TargetLanguage {
         try {
             tabulate()
             block()
-        } finally {
+        }
+        finally {
             write(";$SEPARATOR")
         }
     }
@@ -406,7 +403,12 @@ class JavaLanguage : TargetLanguage {
         for (site in sites) {
             val isFirstInSites = site == sites.first()
             val isLastInSites = site == sites.last()
-            appendSite(site, isFirstInSites, isLastInSites, hasTerminations)
+            appendSite(
+                site,
+                isFirstInCallSite = isFirstInSites,
+                isLastInCallSite = isLastInSites,
+                hasTerminations = hasTerminations
+            )
         }
         appendSite(callable.terminationSite, hasTerminations = hasTerminations, hasCalls = !sites.isEmpty())
     }
@@ -488,7 +490,6 @@ class JavaLanguage : TargetLanguage {
     }
     private fun functionToTypeImpl(
         isStartFunc: Boolean = false,
-        name: String = "",
         func: FunctionPresentation
     ): TypeImpl {
         val typeToReturn = TypeImpl(
@@ -504,23 +505,19 @@ class JavaLanguage : TargetLanguage {
             inheritanceModifier = InheritanceModifier.STATIC,
             parameters = func.parameters.map { Pair(it.usage, it.shortName) }
         )
-        (method.visibleLocals as MutableList).addAll(func.localVariables)
-        (method.callSites as MutableList).addAll(func.callSites)
-        func.preparationSite.expressionsBefore.forEach { expBefore -> method.preparationSite.addBefore(expBefore) }
-        func.preparationSite.expressionsAfter.forEach { expAfter -> method.preparationSite.addAfter(expAfter) }
-        func.terminationSite.expressionsBefore.forEach { expBefore -> method.terminationSite.addBefore(expBefore) }
-        func.terminationSite.expressionsAfter.forEach { expAfter -> method.terminationSite.addAfter(expAfter) }
-        func.terminationSite.dereferences.forEach { deref -> method.terminationSite.addDereference(deref) }
+        func.copyTo(method)
         if (isStartFunc) {
+            val psvmParam = Pair<TypeUsage, String>(InstanceTypeImpl(TypeImpl("String[]"), false), "args")
+            val psvmParams = listOf(psvmParam)
             val psvmMethod = typeToReturn.createMethod(
                 graphId = func.graphId,
                 name = "main",
                 inheritanceModifier = InheritanceModifier.STATIC,
-                parameters = listOf(Pair<TypeUsage, String>(InstanceTypeImpl(TypeImpl("String[]"), false), "args"))
+                parameters = psvmParams
             )
             psvmMethod.preparationSite.addBefore(
                 FunctionInvocationExpressionImpl(
-                    invokedCallable = (typeToReturn.typeParts[0] as FunctionPresentation),
+                    invokedCallable = (method),
                 )
             )
         }
@@ -530,7 +527,7 @@ class JavaLanguage : TargetLanguage {
         dumpType(functionToTypeImpl(func = func), pathToSourcesDir)
     }
     override fun dumpStartFunction(name: String, func: FunctionPresentation, pathToSourcesDir: Path) =
-        dumpType(functionToTypeImpl(true, name, func), pathToSourcesDir)
+        dumpType(functionToTypeImpl(isStartFunc = true, func = func), pathToSourcesDir)
 
     private fun transferTemplateZipToTemp(): Path {
         val pathWhereToUnzipTemplate = Files.createTempFile(null, null)

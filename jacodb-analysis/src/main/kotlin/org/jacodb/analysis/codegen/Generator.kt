@@ -20,7 +20,9 @@ import mu.KotlinLogging
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -160,11 +162,6 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
-    // 1. win/ubuntu
-    // 2. gradlew
-    // 3. process exit code - ok
-    // 4. if not ok - stdout
-    // 5. java_home > 1.8
     val javaHome1 = System.getProperty("java.version")
     if (javaHome1 != null && javaHome1 >= "1.8") {
         val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")
@@ -178,17 +175,19 @@ fun main(args: Array<String>) {
         } else {
             val chmodOutput = chmodGradlew(workingDir)
             if (chmodOutput.isNotEmpty()) {
-                logger.info("problems with chmod:$chmodOutput")
-            } else {
-                processBuilder.command("./gradlew", "assemble")
+                logger.info("problems with chmod: $chmodOutput")
             }
+            processBuilder.command("./gradlew", "assemble")
         }
-        processBuilder.start()
-        val result = Files.readAllLines(errorFile.toPath())
+        val gradlewProcess = processBuilder.start()
+        gradlewProcess.waitFor()
+        val errorResults = Files.readAllLines(errorFile.toPath())
         errorFile.delete()
-        if (result.isNotEmpty()) {
-            logger.info("problems with gradle assembling: $result")
+        if (errorResults.isNotEmpty()) {
+            logger.info("problems with gradle assembling: $errorResults")
         }
+        val gradlewResults = BufferedReader(InputStreamReader(gradlewProcess.inputStream)).readLines()
+        logger.info("gradle building: $gradlewResults")
     } else {
         logger.info("unsupported java version. it must being 8 or higher.")
     }
@@ -199,7 +198,7 @@ private fun chmodGradlew(file: File): List<String> {
     chmodBuilder.directory(file)
     chmodBuilder.command("chmod", "+x", "gradlew")
     val errorFile = File(file.absolutePath + File.separatorChar + "chmodErrors")
-    chmodBuilder.redirectError(errorFile).start()
+    chmodBuilder.redirectError(errorFile).start().waitFor()
     val result = Files.readAllLines(errorFile.toPath())
     errorFile.delete()
     return result
