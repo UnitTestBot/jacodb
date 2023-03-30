@@ -99,6 +99,7 @@ import org.jacodb.impl.cfg.util.asArray
 import org.jacodb.impl.cfg.util.elementType
 import org.jacodb.impl.cfg.util.isArray
 import org.jacodb.impl.cfg.util.isDWord
+import org.jacodb.impl.cfg.util.isPrimitive
 import org.jacodb.impl.cfg.util.typeName
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
@@ -422,7 +423,7 @@ class RawInstListBuilder(
 
     private fun local(variable: Int) = currentFrame.locals.getValue(variable)
 
-    private fun local(variable: Int, expr: JcRawValue): JcRawAssignInst? {
+    private fun local(variable: Int, expr: JcRawValue, insn: AbstractInsnNode): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
             if (oldVar.typeName == expr.typeName) {
@@ -431,12 +432,12 @@ class RawInstListBuilder(
                 currentFrame = currentFrame.put(variable, expr)
                 null
             } else {
-                val assignment = nextRegister(expr.typeName)
+                val assignment = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
                 currentFrame = currentFrame.put(variable, assignment)
                 JcRawAssignInst(method, oldVar, expr)
             }
         } else {
-            val newLocal = nextRegister(expr.typeName)
+            val newLocal = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
             val result = JcRawAssignInst(method, newLocal, expr)
             currentFrame = currentFrame.put(variable, newLocal)
             result
@@ -453,6 +454,24 @@ class RawInstListBuilder(
     private fun nextRegister(typeName: TypeName): JcRawValue {
         return JcRawLocalVar("%${localCounter++}", typeName)
     }
+
+    private fun nextRegisterDeclaredVariable(typeName: TypeName, variable: Int, insn: AbstractInsnNode): JcRawValue {
+        val nextLabel = generateSequence(insn) { it.next }
+            .filterIsInstance<LabelNode>()
+            .firstOrNull()
+
+        val declaredTypeName = methodNode.localVariables
+            .singleOrNull { it.index == variable && it.start == nextLabel }
+            ?.desc
+            ?.typeName()
+
+        return if (declaredTypeName != null && !declaredTypeName.isPrimitive) {
+            JcRawLocalVar("%${localCounter++}", declaredTypeName)
+        } else {
+            JcRawLocalVar("%${localCounter++}", typeName)
+        }
+    }
+
     private fun nextLabel(): JcRawLabelInst = JcRawLabelInst(method, "#${labelCounter++}")
 
     private fun buildGraph() {
@@ -998,7 +1017,7 @@ class RawInstListBuilder(
         val local = local(insnNode.`var`)
         val add = JcRawAddExpr(local.typeName, local, JcRawInt(insnNode.incr))
         instructionList(insnNode) += JcRawAssignInst(method, local, add)
-        local(insnNode.`var`, local)
+        local(insnNode.`var`, local, insnNode)
     }
 
     private fun buildIntInsnNode(insnNode: IntInsnNode) {
@@ -1312,7 +1331,7 @@ class RawInstListBuilder(
 
     private fun buildVarInsnNode(insnNode: VarInsnNode) {
         when (insnNode.opcode) {
-            in Opcodes.ISTORE..Opcodes.ASTORE -> local(insnNode.`var`, pop())?.let { instructionList(insnNode).add(it) }
+            in Opcodes.ISTORE..Opcodes.ASTORE -> local(insnNode.`var`, pop(), insnNode)?.let { instructionList(insnNode).add(it) }
 
             in Opcodes.ILOAD..Opcodes.ALOAD -> push(local(insnNode.`var`))
             else -> error("Unknown opcode ${insnNode.opcode} in VarInsnNode")
