@@ -218,21 +218,25 @@ private fun runCmd(
 }
 
 private fun checkJava(isWindows: Boolean) {
-    val javaHome = System.getenv("JAVA_HOME")
-    if (!javaHome.isNullOrEmpty()) return
-    if (System.getenv("PATH").isNullOrEmpty()) {
-        logger.error{"No PATH variable found"}
-        throw IOException("No PATH variable found")
-    }
     val canonicalJavaName = "java" + if (isWindows) ".exe" else ""
-    val javas = System.getenv("PATH").split(File.pathSeparator).filter { s: String ->
-        File(s + File.separator + canonicalJavaName).exists()
+    val awaitJava: String
+    var javaHome = System.getenv("JAVA_HOME")
+    if (javaHome.isNullOrEmpty()) {
+        if (System.getenv("PATH").isNullOrEmpty()) {
+            logger.error { "No PATH variable found" }
+            throw IOException("No PATH variable found")
+        }
+        val javas = System.getenv("PATH").split(File.pathSeparator).filter { s: String ->
+            File(s + File.separator + canonicalJavaName).exists()
+        }
+        if (javas.isEmpty()) {
+            logger.error { "no java found in environment" }
+            throw IOException("no java found in environment")
+        }
+        awaitJava = javas[0]
+    } else {
+        awaitJava = javaHome + File.separator + "bin" + File.separator + canonicalJavaName
     }
-    if (javas.isEmpty()) {
-        logger.error { "no java found in environment" }
-        throw IOException("no java found in environment")
-    }
-    val awaitJava = javas[0]
     val javaResult = runCmd(
         cmd = listOf(awaitJava.split(File.separator).joinToString(File.separator) { s ->
             if (s.contains(" ")) "\"" + s + "\"" else s
@@ -247,11 +251,11 @@ private fun checkJava(isWindows: Boolean) {
         logger.error { "no java found in environment" }
         throw IOException("no java found in environment")
     }
-    var javaVersion = javaResult[0].split(" ").get(2)
-    javaVersion = javaVersion.substring(1, javaVersion.length - 1)
-    if (javaVersion < "1.8") {
-        logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
-        throw IOException("java version must being 8 or higher. current env java: $javaVersion")
+    javaHome = javaResult[0].split(" ")[2]
+    javaHome = javaHome.substring(1, javaHome.length - 1)
+    if (javaHome < "1.8") {
+        logger.error { "java version must being 8 or higher. current env java: $javaHome" }
+        throw IOException("java version must being 8 or higher. current env java: $javaHome")
     }
 }
 
