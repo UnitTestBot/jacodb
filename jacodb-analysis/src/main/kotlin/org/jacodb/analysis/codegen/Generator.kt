@@ -20,10 +20,11 @@ import mu.KotlinLogging
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
-import java.io.BufferedReader
 import java.io.File
+import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.Collections.min
@@ -162,44 +163,104 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
-    val javaHome1 = System.getProperty("java.version")
-    if (javaHome1 != null && javaHome1 >= "1.8") {
-        val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")
-        val processBuilder = ProcessBuilder()
-        val workingDir = File("generated\\UtBotTemplateForIfdsSyntheticTests".replace('\\', File.separatorChar))
-        processBuilder.directory(workingDir)
-        val errorFile = File(workingDir.absolutePath + File.separatorChar + "gradlewErrors")
-        processBuilder.redirectError(errorFile)
-        if (isWindows) {
-            processBuilder.command("./gradlew", "assemble")
-        } else {
-            val chmodOutput = chmodGradlew(workingDir)
-            if (chmodOutput.isNotEmpty()) {
-                logger.info("problems with chmod: $chmodOutput")
-            }
-            processBuilder.command("./gradlew", "assemble")
+    gradlewAssemble(targetLanguage, projectPath)
+}
+private fun gradlewAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
+    val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")
+    checkJava(isWindows)
+    val zipName = targetLanguage.projectZipInResourcesName()
+    val workingDir = File(projectPath.toString() + File.separatorChar + zipName.substring(0, zipName.length - 4))
+    if (!isWindows) {
+        chmodGradlew(workingDir)
+    }
+    runCmd(
+        cmd = listOf("./gradlew", "assemble"),
+        errorMessage = "problems with gradlew",
+        errorFileAddition = "gradlew",
+        logAddition = "gradle building: ",
+        workingDir = workingDir
+    )
+}
+
+private fun runCmd(
+    cmd: List<String>,
+    errorMessage: String,
+    errorFileAddition: String,
+    logAddition: String,
+    isJavaChecking: Boolean = false,
+    workingDir: File?
+): List<String> {
+    try {
+        val cmdBuilder = ProcessBuilder()
+        if (workingDir != null) {
+            cmdBuilder.directory(workingDir)
         }
-        val gradlewProcess = processBuilder.start()
-        gradlewProcess.waitFor()
-        val errorResults = Files.readAllLines(errorFile.toPath())
+        cmdBuilder.command(cmd)
+        val errorFile =
+            File((if (workingDir != null) workingDir.absolutePath + File.separatorChar else "") + errorFileAddition + "Errors")
+        val cmdProcess = cmdBuilder.redirectError(errorFile).start()
+        cmdProcess.waitFor()
+        val errorLines = Files.readAllLines(errorFile.toPath())
         errorFile.delete()
-        if (errorResults.isNotEmpty()) {
-            logger.info("problems with gradle assembling: $errorResults")
+        if (errorLines.isNotEmpty() && !isJavaChecking) {
+            logger.error { errorMessage + ": " + errorLines.map { s -> s + System.lineSeparator() } }
+            throw IOException(errorMessage)
         }
-        val gradlewResults = BufferedReader(InputStreamReader(gradlewProcess.inputStream)).readLines()
-        logger.info("gradle building: $gradlewResults")
-    } else {
-        logger.info("unsupported java version. it must being 8 or higher.")
+        val loggingInfo =
+            if (!isJavaChecking) InputStreamReader(cmdProcess.inputStream).buffered().readLines() else errorLines
+        logger.info {
+            logAddition + loggingInfo.map { s -> s + System.lineSeparator() }
+        }
+        return loggingInfo
+    } catch (e: IOException) {
+        throw IOException(errorMessage)
     }
 }
 
-private fun chmodGradlew(file: File): List<String> {
-    val chmodBuilder = ProcessBuilder()
-    chmodBuilder.directory(file)
-    chmodBuilder.command("chmod", "+x", "gradlew")
-    val errorFile = File(file.absolutePath + File.separatorChar + "chmodErrors")
-    chmodBuilder.redirectError(errorFile).start().waitFor()
-    val result = Files.readAllLines(errorFile.toPath())
-    errorFile.delete()
-    return result
+private fun checkJava(isWindows: Boolean) {
+    val javaHome = System.getenv("JAVA_HOME")
+    if (!javaHome.isNullOrEmpty()) return
+    if (System.getenv("PATH").isNullOrEmpty()) {
+        logger.error{"No PATH variable found"}
+        throw IOException("No PATH variable found")
+    }
+    val canonicalJavaName = "java" + if (isWindows) ".exe" else ""
+    val javas = System.getenv("PATH").split(File.pathSeparator).filter { s: String ->
+        File(s + File.separator + canonicalJavaName).exists()
+    }
+    if (javas.isEmpty()) {
+        logger.error { "no java found in environment" }
+        throw IOException("no java found in environment")
+    }
+    val awaitJava = javas[0]
+    val javaResult = runCmd(
+        cmd = listOf(awaitJava.split(File.separator).joinToString(File.separator) { s ->
+            if (s.contains(" ")) "\"" + s + "\"" else s
+        } + File.separator + canonicalJavaName, "-version"),
+        errorMessage = "problems with getting java version",
+        logAddition = "getting java version: ",
+        workingDir = null,
+        isJavaChecking = true,
+        errorFileAddition = "java"
+    )
+    if (javaResult.isEmpty()) {
+        logger.error { "no java found in environment" }
+        throw IOException("no java found in environment")
+    }
+    var javaVersion = javaResult[0].split(" ").get(2)
+    javaVersion = javaVersion.substring(1, javaVersion.length - 1)
+    if (javaVersion < "1.8") {
+        logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
+        throw IOException("java version must being 8 or higher. current env java: $javaVersion")
+    }
+}
+
+private fun chmodGradlew(file: File) {
+    runCmd(
+        cmd = listOf("chmod", "+x", "gradlew"),
+        errorMessage = "problems with chmod",
+        errorFileAddition = "chmod",
+        logAddition = "chmod message: ",
+        workingDir = file
+    )
 }

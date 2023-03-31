@@ -104,8 +104,16 @@ class JavaLanguage : TargetLanguage {
     override fun getPredefinedPrimitive(primitive: TargetLanguage.PredefinedPrimitives): TypePresentation? {
         return predefinedTypes[realPrimitivesName[primitive]]
     }
-
     private var fileWriter: OutputStreamWriter? = null
+    private fun CallablePresentation.copyTo(callee: CallablePresentation) {
+        (callee as CallableImpl).visibleLocals.addAll(this.localVariables)
+        callee.callSites.addAll(this.callSites)
+        this.preparationSite.expressionsBefore.forEach { expBefore -> callee.preparationSite.addBefore(expBefore) }
+        this.preparationSite.expressionsAfter.forEach { expAfter -> callee.preparationSite.addAfter(expAfter) }
+        this.terminationSite.expressionsBefore.forEach { expBefore -> callee.terminationSite.addBefore(expBefore) }
+        this.terminationSite.expressionsAfter.forEach { expAfter -> callee.terminationSite.addAfter(expAfter) }
+        this.terminationSite.dereferences.forEach { deref -> callee.terminationSite.addDereference(deref) }
+    }
     private fun inFile(fileName: String, pathToSourcesDir: Path, block: () -> Unit) {
         val javaFilePath = pathToSourcesDir.resolve("${fileName.capitalize()}.java")
         try {
@@ -188,7 +196,7 @@ class JavaLanguage : TargetLanguage {
             if (needSeparator) write(SEPARATOR)
             removeTab()
             tabulate()
-            write("}")
+            write("}$SEPARATOR")
         }
     }
 
@@ -431,7 +439,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun classNameForStaticFunction(functionName: String): String {
-        val diff = Integer.valueOf(functionName.substring(11)) - Integer.MAX_VALUE / 2;
+        val diff = Integer.valueOf(functionName.substring(11)) - Integer.MAX_VALUE / 2
         if (diff >= 0) {
             return "ClassForStartFunctionForNpeInstance${diff + 1}"
         }
@@ -439,7 +447,6 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendMethodSignature(methodPresentation: MethodPresentation) {
-        tabulate()
         if (methodPresentation.inheritedFrom != null) {
             writeSeparated("@Override$SEPARATOR")
         }
@@ -507,7 +514,12 @@ class JavaLanguage : TargetLanguage {
         )
         func.copyTo(method)
         if (isStartFunc) {
-            val psvmParam = Pair<TypeUsage, String>(InstanceTypeImpl(TypeImpl("String[]"), false), "args")
+            val psvmParam = Pair<TypeUsage, String>(
+                ArrayTypeUsageImpl(
+                    element = InstanceTypeImpl(TypeImpl("String"), true),
+                    isNullable = false
+                ), "args"
+            )
             val psvmParams = listOf(psvmParam)
             val psvmMethod = typeToReturn.createMethod(
                 graphId = func.graphId,
@@ -539,7 +551,6 @@ class JavaLanguage : TargetLanguage {
                     templateFromResourceStream.copyTo(streamToLocationForTemplate)
                 }
             }
-
         return pathWhereToUnzipTemplate
     }
 
