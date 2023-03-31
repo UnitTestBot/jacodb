@@ -173,8 +173,9 @@ private fun gradlewAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
     if (!isWindows) {
         chmodGradlew(workingDir)
     }
+    val gradlewScript = "./gradlew" + if (isWindows) ".bat" else ""
     runCmd(
-        cmd = listOf("./gradlew", "assemble"),
+        cmd = listOf(gradlewScript, "assemble"),
         errorMessage = "problems with gradlew",
         errorFileAddition = "gradlew",
         logAddition = "gradle building: ",
