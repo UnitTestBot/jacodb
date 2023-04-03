@@ -26,22 +26,17 @@ import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.FIELDS
 import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
 import org.jacodb.impl.storage.jooq.tables.references.METHODS
-import org.jacodb.testing.allClasspath
 
 fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
         val db = jacodb {
-            loadByteCode(allClasspath)
+            loadByteCode(allIdeaJarsAbsolute)
             persistent(
-                "d:\\work\\jacodb\\jacodb-inspection.db",
+                "d:\\work\\jacodb\\jacodb-idea-usages.db",
                 clearOnStart = true,
                 PredefinedPersistenceType.SQLITE
             )
-//            persistent("jdbc:postgresql://localhost:5432/jacodb?user=postgres&password=root&reWriteBatchedInserts=false",
-//                clearOnStart = true,
-//                PredefinedPersistenceType.POSTGRES
-//            )
             installFeatures(InMemoryHierarchy, Usages)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")

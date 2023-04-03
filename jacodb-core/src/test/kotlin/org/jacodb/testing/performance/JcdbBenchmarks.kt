@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12048m"])
+@Fork(1, jvmArgs = ["-Xmx12288m"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

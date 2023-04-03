@@ -37,7 +37,7 @@ val allIdeaJars: List<File>
 
 val allIdeaJarsAbsolute: List<File>
     get() {
-        return allIdeaJarsMain("jcdb-core", "idea-community", "unzip")
+        return allIdeaJarsMain("jacodb-core", "idea-community", "unzip")
     }
 
 private fun allIdeaJarsMain(vararg paths: String): List<File> {
@@ -50,7 +50,7 @@ private fun allIdeaJarsMain(vararg paths: String): List<File> {
 }
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12048m"])
+@Fork(1, jvmArgs = ["-Xmx12288m"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
