@@ -64,7 +64,7 @@ class NPEForwardFunctions(
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
 
         // TODO: change hardcoded "getProperty" to something more adequate
-        if (from is JcNullConstant || (from is JcCallExpr && (from.method.method.isNullable == true || from.method.name == "getProperty"))) {
+        if (from is JcNullConstant || (from is JcCallExpr && from.method.method.treatAsNullable)) {
             return if (fact == TaintNode.ZERO) {
                 listOf(TaintNode.ZERO, TaintNode.fromPath(toPath)) // taint is generated here
             } else {
@@ -84,7 +84,7 @@ class NPEForwardFunctions(
             }
         }
 
-        if (from is JcNewExpr || from is JcNewArrayExpr || from is JcConstant || (from is JcCallExpr && from.method.method.isNullable != true)) {
+        if (from is JcNewExpr || from is JcNewArrayExpr || from is JcConstant || (from is JcCallExpr && !from.method.method.treatAsNullable)) {
             return if (factPath.startsWith(toPath)) {
                 emptyList() // new kills the fact here
             } else {
@@ -447,13 +447,6 @@ class NPEBackwardFunctions(
     }
 }
 
-// Main case of false positives here is code like
-//  x.f = null;
-//  y = x;
-//  y.f = "abc";
-//  x.f.length();
-//  Here, x.f is definitely not null, but we will report NPE
-//  (because alias analysis
 fun runNPEWithPointsTo(
     graph: ApplicationGraph<JcMethod, JcInst>,
     platform: JcAnalysisPlatform,
@@ -501,3 +494,16 @@ fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
 
     return inst.operands.any { isDereferencedAt(it) }
 }
+
+private val JcMethod.treatAsNullable: Boolean
+    get() {
+        if (isNullable == true) {
+            return true
+        }
+        return "${enclosingClass.name}.$name" in knownNullableMethods
+    }
+
+private val knownNullableMethods = listOf(
+    "java.lang.System.getProperty",
+    "java.util.Properties.getProperty"
+)
