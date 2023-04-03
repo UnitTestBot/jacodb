@@ -11,4 +11,6 @@ dependencies {
 
     testImplementation(testFixtures(project(":jacodb-core")))
     testFixturesImplementation(project(":jacodb-api"))
+    testFixturesImplementation("javax.servlet:servlet-api:2.5")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
 }

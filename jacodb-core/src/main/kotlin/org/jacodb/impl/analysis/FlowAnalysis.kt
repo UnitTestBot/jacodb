@@ -24,6 +24,7 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcThis
 import org.jacodb.impl.cfg.collect
 
 interface FlowAnalysis<T> {
@@ -71,6 +72,10 @@ object LocalResolver : DefaultJcInstVisitor<Sequence<JcLocal>>, DefaultJcExprVis
     }
 
     override fun visitJcArgument(value: JcArgument): Sequence<JcLocal> {
+        return sequenceOf(value)
+    }
+
+    override fun visitJcThis(value: JcThis): Sequence<JcLocal> {
         return sequenceOf(value)
     }
 }

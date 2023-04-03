@@ -17,24 +17,22 @@
 package org.jacodb.analysis.impl
 
 import NPEExamples
+import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.impl.AnalysisTest.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
 import org.jacodb.analysis.impl.SimplifiedJcApplicationGraph.Companion.bannedPackagePrefixes
+import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcNoopInst
-import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.methods
 import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
 import org.jacodb.impl.analysis.features.JcCacheGraphFeature
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -44,9 +42,15 @@ import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
+import java.util.stream.Stream
+import kotlin.streams.asStream
 
 
 /**
@@ -99,8 +103,8 @@ class SimplifiedJcApplicationGraph(
 
     companion object {
         private val bannedPackagePrefixes = listOf(
-//            "kotlin.",
-//            "java.",
+            "kotlin.",
+            "java.",
             "kotlin.jvm.internal.",
             "jdk.internal.",
             "sun.",
@@ -112,7 +116,55 @@ class SimplifiedJcApplicationGraph(
 }
 
 class AnalysisTest : BaseTest() {
-    companion object : WithDB(Usages, InMemoryHierarchy)
+    companion object : WithDB(Usages, InMemoryHierarchy) {
+        @JvmStatic
+        fun provideClassesForJuliet476(): Stream<Arguments> = runBlocking {
+            val cp = db.classpath(allClasspath)
+            val hierarchyExt = cp.hierarchyExt()
+            val baseClass = cp.findClass<AbstractTestCase>()
+            val classes = hierarchyExt.findSubClasses(baseClass, false)
+            classes.toArguments("CWE476")
+        }
+
+        @JvmStatic
+        fun provideClassesForJuliet690(): Stream<Arguments> = runBlocking {
+            val cp = db.classpath(allClasspath)
+            val hierarchyExt = cp.hierarchyExt()
+            val baseClass = cp.findClass<AbstractTestCase>()
+            val classes = hierarchyExt.findSubClasses(baseClass, false)
+            classes.toArguments("CWE690")
+        }
+
+        private fun Sequence<JcClassOrInterface>.toArguments(cwe: String): Stream<Arguments> = map { it.name }
+            .filter { it.contains(cwe) }
+            .filterNot { className -> bannedTests.any { className.contains(it) } }
+            .sorted()
+            .map { Arguments.of(it) }
+            .asStream()
+
+        private val bannedTests = listOf(
+            // not NPE problems
+            "null_check_after_deref",
+
+            // TODO: containers not supported
+            "_72", "_73", "_74",
+
+            // TODO/Won't fix(?): dead parts of switches shouldn't be analyzed
+            "_15",
+
+            // TODO/Won't fix(?): passing through channels not supported
+            "_75",
+
+            // TODO/Won't fix(?): constant private/static methods not analyzed
+            "_11", "_08",
+
+            // TODO/Won't fix(?): unmodified non-final private variables not analyzed
+            "_05", "_07",
+
+            // TODO/Won't fix(?): unmodified non-final static variables not analyzed
+            "_10", "_14"
+        )
+    }
 
     @Test
     fun `fields resolving should work through interfaces`() = runBlocking {
@@ -140,152 +192,156 @@ class AnalysisTest : BaseTest() {
 
     @Test
     fun `analyze simple NPE`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val actual = findNPEInstructions(method)
-
-        // TODO: think about better assertions here
-        assertEquals(
-            setOf("%3 = %2.length()"),
-            actual.map { it.inst.toString() }.toSet()
-        )
+        testOneMethod<NPEExamples>("npeOnLength", listOf("%3 = %2.length()"))
     }
 
     @Test
     fun `analyze no NPE`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPE" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(emptyList<NPELocation>(), actual)
+        testOneMethod<NPEExamples>("noNPE", emptyList())
     }
 
     @Test
     fun `analyze NPE after fun with two exits`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeAfterTwoExits" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%4 = %2.length()", "%5 = %3.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "npeAfterTwoExits",
+            listOf("%4 = %2.length()", "%5 = %3.length()")
         )
     }
 
     @Test
     fun `no NPE after checked access`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "checkedAccess" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(emptyList<NPELocation>(), actual)
+        testOneMethod<NPEExamples>("checkedAccess", emptyList())
     }
 
     @Test
     fun `consecutive NPEs handled properly`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "consecutiveNPEs" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%2 = arg$0.length()", "%4 = arg$0.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "consecutiveNPEs",
+            listOf("%2 = arg$0.length()", "%4 = arg$0.length()")
         )
     }
 
     @Test
     fun `npe on virtual call when possible`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "possibleNPEOnVirtualCall" }
-        val actual = findNPEInstructions(method)
+        testOneMethod<NPEExamples>(
+            "possibleNPEOnVirtualCall",
 
-        // TODO: one false-positive here due to not-parsed @NotNull annotation
-        assertEquals(2, actual.size)
+            // TODO: first location is false-positive here due to not-parsed @NotNull annotation
+            listOf("%0 = arg\$0.functionThatCanThrowNPEOnNull(arg\$1)", "%0 = arg\$0.length()")
+        )
     }
 
     @Test
     fun `no npe on virtual call when impossible`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEOnVirtualCall" }
-        val actual = findNPEInstructions(method)
+        testOneMethod<NPEExamples>(
+            "noNPEOnVirtualCall",
 
-        // TODO: false-positive here due to not-parsed @NotNull annotation
-        assertEquals(1, actual.size)
+            // TODO: false-positive here due to not-parsed @NotNull annotation
+            listOf("%0 = arg\$0.functionThatCanNotThrowNPEOnNull(arg\$1)")
+        )
     }
 
     @Test
     fun `basic test for NPE on fields`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleNPEOnField" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%8 = %6.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
     }
 
     @Test
     fun `simple points-to analysis`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simplePoints2" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%5 = %4.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("simplePoints2", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `complex aliasing`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "complexAliasing" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%6 = %5.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("complexAliasing", listOf("%6 = %5.length()"))
     }
 
     @Test
     fun `context injection in points-to`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "contextInjection" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%6 = %5.length()", "%3 = %2.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "contextInjection",
+            listOf("%6 = %5.length()", "%3 = %2.length()")
         )
     }
 
     @Test
     fun `activation points maintain flow sensitivity`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "flowSensitive" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%8 = %7.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("flowSensitive", listOf("%8 = %7.length()"))
     }
 
     @Test
     fun `overridden null assignment in callee don't affect next caller's instructions`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "overriddenNullInCallee" }
-        // This call may take infinite time in case of bugs with limiting field accesses
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            emptyList<NPELocation>(),
-            actual
-        )
+        testOneMethod<NPEExamples>("overriddenNullInCallee", emptyList())
     }
 
     @Test
     fun `recursive classes handled correctly`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "recursiveClass" }
-        // This call may take infinite time in case of bugs with limiting field accesses
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%10 = %9.toString()", "%15 = %14.toString()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "recursiveClass",
+            listOf("%10 = %9.toString()", "%15 = %14.toString()")
         )
     }
 
-    data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
+    @Test
+    fun `NPE on uninitialized array element dereferencing`() {
+        testOneMethod<NPEExamples>("simpleArrayNPE", listOf("%5 = %4.length()"))
+    }
+
+    @Test
+    fun `no NPE on array element dereferencing after initialization`() {
+        testOneMethod<NPEExamples>("noNPEAfterArrayInit", emptyList())
+    }
+
+    @Test
+    fun `array aliasing`() {
+        testOneMethod<NPEExamples>("arrayAliasing", listOf("%5 = %4.length()"))
+    }
+
+    @Test
+    fun `mixed array and class aliasing`() {
+        testOneMethod<NPEExamples>("mixedArrayClassAliasing", listOf("%13 = %12.length()"))
+    }
+
+    @Test
+    fun `dereferencing field of null object`() {
+        testOneMethod<NPEExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClassesForJuliet476")
+    fun `test on Juliet's CWE 476`(className: String) {
+        testJuliet(className)
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClassesForJuliet690")
+    fun `test on Juliet's CWE 690`(className: String) {
+        testJuliet(className)
+    }
+
+    private fun testJuliet(className: String) {
+        val clazz = cp.findClass(className)
+        val goodMethod = clazz.methods.single { it.name == "good" }
+        val badMethod = clazz.methods.single { it.name == "bad" }
+
+        goodMethod.flowGraph()
+        badMethod.flowGraph()
+        val goodNPE = findNPEInstructions(goodMethod)
+        val badNPE = findNPEInstructions(badMethod)
+
+        assertEquals(listOf(emptyList<NPELocation>(), true), listOf(goodNPE, badNPE.isNotEmpty()))
+    }
+
+    private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) {
+        val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
+        val actualLocations = findNPEInstructions(method)
+
+        // TODO: think about better assertions here
+        assertEquals(expectedLocations.toSet(), actualLocations.map { it.inst.toString() }.toSet())
+    }
+
+
+    data class NPELocation(val inst: JcInst, val path: AccessPath, val possibleStackTrace: List<JcInst>)
 
     /**
      * The method finds all places where NPE may occur
@@ -297,28 +353,13 @@ class AnalysisTest : BaseTest() {
         val devirtualizer = AllOverridesDevirtualizer(graph, cp)
         val ifdsResults = runNPEWithPointsTo(graph, graph, method, devirtualizer)
         val possibleNPEInstructions = mutableListOf<NPELocation>()
-        ifdsResults.resultFacts.forEach { (instruction, facts) ->
-            val instance = (instruction.callExpr as? JcInstanceCallExpr)?.instance as? JcLocal ?: return@forEach
-            if (TaintNode.fromPath(AccessPath.fromLocal(instance)) in facts) {
-                val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                    Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(instance))), method
-                )
-                possibleNPEInstructions.add(NPELocation(instruction, instance, possibleStackTrace))
-            }
-
-            // TODO: check for JcLengthExpr and JcArrayAccess
-
-            val fieldRef = instruction.fieldRef
-            if (fieldRef is JcFieldRef) {
-                fieldRef.instance?.let {
-                    if (it !is JcLocal)
-                        return@let
-                    if (TaintNode.fromPath(AccessPath.fromLocal(it)) in facts) {
-                        val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(it))), method
-                        )
-                        possibleNPEInstructions.add(NPELocation(instruction, it, possibleStackTrace))
-                    }
+        ifdsResults.resultFacts.forEach { (inst, facts) ->
+            facts.forEach { fact ->
+                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+                    val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
+                        Vertex(inst, fact), method
+                    )
+                    possibleNPEInstructions.add(NPELocation(inst, fact.variable!!, possibleStackTrace))
                 }
             }
         }

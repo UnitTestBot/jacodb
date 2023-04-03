@@ -71,6 +71,13 @@ public class NPEExamples {
         RecursiveClass() {rec = null;};
     }
 
+    static class ClassWithArrayField {
+        String[] arr;
+        ClassWithArrayField(String[] values) {
+            values = arr;
+        }
+    }
+
     private String constNull(String y) {
         return null;
     }
@@ -214,5 +221,64 @@ public class NPEExamples {
         }
         instance.toString(); // no NPE
         return 0;
+    }
+
+    int simpleArrayNPE() {
+        String[] s = new String[2];
+        int a = s.length;
+        int b = s[0].length();
+        return a + b;
+    }
+
+    int noNPEAfterArrayInit() {
+        String[] s = {"abc", "def"};
+        int a = s.length;
+        int b = s[0].length();
+        return a + b;
+    }
+
+    int arrayAliasing() {
+        String[] s = {"abc", "def"};
+        String[] t = {"ghi", "jkl"};
+        t = s;
+        t[0] = null;
+        return s[0].length();
+    }
+
+    int mixedArrayClassAliasing() {
+        ClassWithArrayField a = new ClassWithArrayField(new String[]{"abc", "def"});
+        ClassWithArrayField b = new ClassWithArrayField(new String[]{"ghi", "jkl"});
+        String[] aArr = a.arr;
+        b = a;
+        int x = aArr[0].length(); // no NPE
+        b.arr[0] = null;
+        int y = aArr[0].length(); // NPE
+        return x + y;
+    }
+
+    int npeOnFieldDeref() {
+        SimpleClassWithField a = null;
+        String s = a.field;
+        String t = a.field;
+        int res = 0;
+        if (s != null) {
+            res += 1;
+        }
+        if (t != null) {
+            res += 1;
+        }
+        return res;
+    }
+
+
+    // NOT WORKING
+    int noNPEAfterAliasing() {
+        SimpleClassWithField x = new SimpleClassWithField(null);
+        SimpleClassWithField y = new SimpleClassWithField("abc");
+        y = x;
+        y.field = "val";
+        // No NPE should be reported here, but current implementation will make a false-positive here
+        //  (because backward alias analysis can only propagate facts back, but can't kill them)
+        return x.field.length();
     }
 }

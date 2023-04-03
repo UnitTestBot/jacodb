@@ -49,23 +49,21 @@ fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T
 object FieldRefVisitor : DefaultJcExprVisitor<JcFieldRef?>, DefaultJcInstVisitor<JcFieldRef?> {
 
     override val defaultExprHandler: (JcExpr) -> JcFieldRef?
-        get() = { null }
+        get() = {
+            it.allValues.filterIsInstance<JcFieldRef>().firstOrNull()
+        }
 
     override val defaultInstHandler: (JcInst) -> JcFieldRef?
         get() = {
             it.operands.map { it.accept(this) }.firstOrNull { it != null }
         }
-
-    override fun visitJcFieldRef(value: JcFieldRef): JcFieldRef {
-        return value
-    }
 }
 
 object ArrayAccessVisitor : DefaultJcExprVisitor<JcArrayAccess?>, DefaultJcInstVisitor<JcArrayAccess?> {
 
     override val defaultExprHandler: (JcExpr) -> JcArrayAccess?
         get() = {
-            it.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
+            it.allValues.filterIsInstance<JcArrayAccess>().firstOrNull()
         }
 
     override val defaultInstHandler: (JcInst) -> JcArrayAccess?
@@ -99,4 +97,11 @@ val JcInst.callExpr: JcCallExpr?
         return accept(CallExprVisitor)
     }
 
-
+val JcExpr.allValues: List<JcValue>
+    get() {
+        return if (this is JcValue) {
+            listOf(this)
+        } else {
+            operands
+        }
+    }
