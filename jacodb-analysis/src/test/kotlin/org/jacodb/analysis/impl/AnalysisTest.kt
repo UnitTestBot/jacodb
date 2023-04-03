@@ -192,204 +192,119 @@ class AnalysisTest : BaseTest() {
 
     @Test
     fun `analyze simple NPE`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val actual = findNPEInstructions(method)
-
-        // TODO: think about better assertions here
-        assertEquals(
-            setOf("%3 = %2.length()"),
-            actual.map { it.inst.toString() }.toSet()
-        )
+        testOneMethod<NPEExamples>("npeOnLength", listOf("%3 = %2.length()"))
     }
 
     @Test
     fun `analyze no NPE`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPE" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(emptyList<NPELocation>(), actual)
+        testOneMethod<NPEExamples>("noNPE", emptyList())
     }
 
     @Test
     fun `analyze NPE after fun with two exits`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeAfterTwoExits" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%4 = %2.length()", "%5 = %3.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "npeAfterTwoExits",
+            listOf("%4 = %2.length()", "%5 = %3.length()")
         )
     }
 
     @Test
     fun `no NPE after checked access`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "checkedAccess" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(emptyList<NPELocation>(), actual)
+        testOneMethod<NPEExamples>("checkedAccess", emptyList())
     }
 
     @Test
     fun `consecutive NPEs handled properly`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "consecutiveNPEs" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%2 = arg$0.length()", "%4 = arg$0.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "consecutiveNPEs",
+            listOf("%2 = arg$0.length()", "%4 = arg$0.length()")
         )
     }
 
     @Test
     fun `npe on virtual call when possible`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "possibleNPEOnVirtualCall" }
-        val actual = findNPEInstructions(method)
+        testOneMethod<NPEExamples>(
+            "possibleNPEOnVirtualCall",
 
-        // TODO: one false-positive here due to not-parsed @NotNull annotation
-        assertEquals(2, actual.size)
+            // TODO: first location is false-positive here due to not-parsed @NotNull annotation
+            listOf("%0 = arg\$0.functionThatCanThrowNPEOnNull(arg\$1)", "%0 = arg\$0.length()")
+        )
     }
 
     @Test
     fun `no npe on virtual call when impossible`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEOnVirtualCall" }
-        val actual = findNPEInstructions(method)
+        testOneMethod<NPEExamples>(
+            "noNPEOnVirtualCall",
 
-        // TODO: false-positive here due to not-parsed @NotNull annotation
-        assertEquals(1, actual.size)
+            // TODO: false-positive here due to not-parsed @NotNull annotation
+            listOf("%0 = arg\$0.functionThatCanNotThrowNPEOnNull(arg\$1)")
+        )
     }
 
     @Test
     fun `basic test for NPE on fields`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleNPEOnField" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%8 = %6.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
     }
 
     @Test
     fun `simple points-to analysis`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simplePoints2" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%5 = %4.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("simplePoints2", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `complex aliasing`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "complexAliasing" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%6 = %5.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("complexAliasing", listOf("%6 = %5.length()"))
     }
 
     @Test
     fun `context injection in points-to`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "contextInjection" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%6 = %5.length()", "%3 = %2.length()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "contextInjection",
+            listOf("%6 = %5.length()", "%3 = %2.length()")
         )
     }
 
     @Test
     fun `activation points maintain flow sensitivity`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "flowSensitive" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%8 = %7.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("flowSensitive", listOf("%8 = %7.length()"))
     }
 
     @Test
     fun `overridden null assignment in callee don't affect next caller's instructions`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "overriddenNullInCallee" }
-        // This call may take infinite time in case of bugs with limiting field accesses
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            emptyList<NPELocation>(),
-            actual
-        )
+        testOneMethod<NPEExamples>("overriddenNullInCallee", emptyList())
     }
 
     @Test
     fun `recursive classes handled correctly`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "recursiveClass" }
-        // This call may take infinite time in case of bugs with limiting field accesses
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            setOf("%10 = %9.toString()", "%15 = %14.toString()"),
-            actual.map { it.inst.toString() }.toSet()
+        testOneMethod<NPEExamples>(
+            "recursiveClass",
+            listOf("%10 = %9.toString()", "%15 = %14.toString()")
         )
     }
 
     @Test
     fun `NPE on uninitialized array element dereferencing`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleArrayNPE" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%5 = %4.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("simpleArrayNPE", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `no NPE on array element dereferencing after initialization`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEAfterArrayInit" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            emptyList<String>(),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("noNPEAfterArrayInit", emptyList())
     }
 
     @Test
     fun `array aliasing`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "arrayAliasing" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%5 = %4.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("arrayAliasing", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `mixed array and class aliasing`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "mixedArrayClassAliasing" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%13 = %12.length()"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("mixedArrayClassAliasing", listOf("%13 = %12.length()"))
     }
 
     @Test
     fun `dereferencing field of null object`() {
-        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnFieldDeref" }
-        val actual = findNPEInstructions(method)
-
-        assertEquals(
-            listOf("%1 = %0.field"),
-            actual.map { it.inst.toString() }
-        )
+        testOneMethod<NPEExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
     }
 
     @ParameterizedTest
@@ -415,6 +330,14 @@ class AnalysisTest : BaseTest() {
         val badNPE = findNPEInstructions(badMethod)
 
         assertEquals(listOf(emptyList<NPELocation>(), true), listOf(goodNPE, badNPE.isNotEmpty()))
+    }
+
+    private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) {
+        val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
+        val actualLocations = findNPEInstructions(method)
+
+        // TODO: think about better assertions here
+        assertEquals(expectedLocations.toSet(), actualLocations.map { it.inst.toString() }.toSet())
     }
 
 
