@@ -59,7 +59,7 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 
 
 @State(Scope.Benchmark)
-@Fork(0)
+@Fork(1, jvmArgs = ["-Xmx12048m"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -72,7 +72,7 @@ class JcdbJvmBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 }
 
 @State(Scope.Benchmark)
-@Fork(0)
+@Fork(1, jvmArgs = ["-Xmx12048m"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -86,7 +86,7 @@ class JcdbAllClasspathBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmar
 }
 
 @State(Scope.Benchmark)
-@Fork(0)
+@Fork(1, jvmArgs = ["-Xmx12048m"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
