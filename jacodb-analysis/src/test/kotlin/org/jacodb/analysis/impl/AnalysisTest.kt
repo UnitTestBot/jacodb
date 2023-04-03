@@ -25,16 +25,11 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcNoopInst
-import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
@@ -151,20 +146,11 @@ class AnalysisTest : BaseTest() {
             // not NPE problems
             "null_check_after_deref",
 
-            // CFG fail
-            "deref_after_check", "binary_if", "StringBuilder_0", "String_0",
-
-            // TODO: arrays not supported
-            "int_array",
-
-            // TODO: switches not supported
-            "_15",
-
-            // TODO: statics not supported
-            "_68",
-
             // TODO: containers not supported
             "_72", "_73", "_74",
+
+            // TODO/Won't fix(?): dead parts of switches shouldn't be analyzed
+            "_15",
 
             // TODO/Won't fix(?): passing through channels not supported
             "_75",
@@ -351,6 +337,61 @@ class AnalysisTest : BaseTest() {
         )
     }
 
+    @Test
+    fun `NPE on uninitialized array element dereferencing`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "simpleArrayNPE" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%5 = %4.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `no NPE on array element dereferencing after initialization`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "noNPEAfterArrayInit" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            emptyList<String>(),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `array aliasing`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "arrayAliasing" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%5 = %4.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `mixed array and class aliasing`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "mixedArrayClassAliasing" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%13 = %12.length()"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
+    @Test
+    fun `dereferencing field of null object`() {
+        val method = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnFieldDeref" }
+        val actual = findNPEInstructions(method)
+
+        assertEquals(
+            listOf("%1 = %0.field"),
+            actual.map { it.inst.toString() }
+        )
+    }
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet476")
     fun `test on Juliet's CWE 476`(className: String) {
@@ -377,7 +418,7 @@ class AnalysisTest : BaseTest() {
     }
 
 
-    data class NPELocation(val inst: JcInst, val value: JcValue, val possibleStackTrace: List<JcInst>)
+    data class NPELocation(val inst: JcInst, val path: AccessPath, val possibleStackTrace: List<JcInst>)
 
     /**
      * The method finds all places where NPE may occur
@@ -389,28 +430,13 @@ class AnalysisTest : BaseTest() {
         val devirtualizer = AllOverridesDevirtualizer(graph, cp)
         val ifdsResults = runNPEWithPointsTo(graph, graph, method, devirtualizer)
         val possibleNPEInstructions = mutableListOf<NPELocation>()
-        ifdsResults.resultFacts.forEach { (instruction, facts) ->
-            val instance = (instruction.callExpr as? JcInstanceCallExpr)?.instance as? JcLocal ?: return@forEach
-            if (TaintNode.fromPath(AccessPath.fromLocal(instance)) in facts) {
-                val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                    Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(instance))), method
-                )
-                possibleNPEInstructions.add(NPELocation(instruction, instance, possibleStackTrace))
-            }
-
-            // TODO: check for JcLengthExpr and JcArrayAccess
-
-            val fieldRef = instruction.fieldRef
-            if (fieldRef is JcFieldRef) {
-                fieldRef.instance?.let {
-                    if (it !is JcLocal)
-                        return@let
-                    if (TaintNode.fromPath(AccessPath.fromLocal(it)) in facts) {
-                        val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            Vertex(instruction, TaintNode.fromPath(AccessPath.fromLocal(it))), method
-                        )
-                        possibleNPEInstructions.add(NPELocation(instruction, it, possibleStackTrace))
-                    }
+        ifdsResults.resultFacts.forEach { (inst, facts) ->
+            facts.forEach { fact ->
+                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+                    val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
+                        Vertex(inst, fact), method
+                    )
+                    possibleNPEInstructions.add(NPELocation(inst, fact.variable!!, possibleStackTrace))
                 }
             }
         }
