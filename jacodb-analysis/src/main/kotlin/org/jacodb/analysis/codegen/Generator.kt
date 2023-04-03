@@ -20,9 +20,9 @@ import mu.KotlinLogging
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
+import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -167,9 +167,9 @@ fun main(args: Array<String>) {
 }
 
 private fun gradlewAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
-    checkJava()
     val zipName = targetLanguage.projectZipInResourcesName()
     val workingDir = File(projectPath.toFile(), zipName.substring(0, zipName.length - 4))
+    checkJava(workingDir)
     if (!isWindows) {
         chmodGradlew(workingDir)
     }
@@ -189,76 +189,45 @@ private fun runCmd(
     filePrefix: String,
     logPrefix: String,
     shouldCheckJava: Boolean = false,
-    workingDir: File?
-): List<String> {
+    workingDir: File
+): File {
     try {
         val cmdBuilder = ProcessBuilder()
-        var dirToCreateFiles = ""
-        if (workingDir != null) {
-            cmdBuilder.directory(workingDir)
-            dirToCreateFiles = workingDir.absolutePath + File.separatorChar
-        }
+        cmdBuilder.directory(workingDir)
         cmdBuilder.command(cmd)
-        val errorFileName = dirToCreateFiles + filePrefix + "Errors"
-        val outputFileName = dirToCreateFiles + filePrefix + "Output"
+        val errorPrefix = if (shouldCheckJava) "Output" else "Errors"
+        val outputPrefix = if (shouldCheckJava) "" else "Output"
+        val errorFileName = workingDir.absolutePath + File.separator + filePrefix + errorPrefix
+        val outputFileName = workingDir.absolutePath + File.separator + filePrefix + outputPrefix
         val errorFile = File(errorFileName)
         val outputFile = File(outputFileName)
         val cmdProcess = cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start()
         cmdProcess.waitFor()
-        val errorLines = Files.readAllLines(errorFile.toPath()).map { s -> s + System.lineSeparator() }
-        val outputLines = Files.readAllLines(outputFile.toPath()).map { s -> s + System.lineSeparator() }
-        errorFile.delete()
-        outputFile.delete()
-        if (errorLines.isNotEmpty() && !shouldCheckJava) {
-            logger.error { "$errorMessage: $errorLines" }
+        if (errorFile.length() != 0L && !shouldCheckJava) {
+            logger.error { "$errorMessage. check logs in: ${errorFile.path}" }
             throw IllegalStateException(errorMessage)
         }
-        val loggingInfo =
-            if (!shouldCheckJava) outputLines else errorLines
+        val returnFile =
+            if (!shouldCheckJava) outputFile else errorFile
         logger.info {
-            logPrefix + loggingInfo
+            "$logPrefix. check more logs in: ${returnFile.path}"
         }
-        return loggingInfo
+        return returnFile
     } catch (e: IOException) {
         throw IllegalStateException(errorMessage)
     }
 }
 
-private fun checkJava() {
-    val canonicalJavaName = "java" + if (isWindows) ".exe" else ""
-    val javaPathToCheck: String
-    val javaHome = System.getenv("JAVA_HOME")
-    if (javaHome.isNullOrEmpty()) {
-        if (System.getenv("PATH").isNullOrEmpty()) {
-            logger.error { "No PATH variable found" }
-            throw IllegalStateException("No PATH variable found")
-        }
-        val foundJavaExecutables = System.getenv("PATH").split(File.pathSeparator).filter { s: String ->
-            File(s + File.separator + canonicalJavaName).exists()
-        }
-        if (foundJavaExecutables.isEmpty()) {
-            logger.error { "no java found in environment" }
-            throw IllegalStateException("no java found in environment")
-        }
-        javaPathToCheck = foundJavaExecutables[0]
-    } else {
-        javaPathToCheck = javaHome + File.separator + "bin" + File.separator + canonicalJavaName
-    }
-    val javaResult = runCmd(
-        cmd = listOf(javaPathToCheck.split(File.separator).joinToString(File.separator) { s ->
-            if (s.contains(" ")) "\"" + s + "\"" else s
-        } + File.separator + canonicalJavaName, "-version"),
-        errorMessage = "problems with getting java version",
-        logPrefix = "getting java version: ",
-        workingDir = null,
+private fun checkJava(file: File) {
+    val javaVersionFile = runCmd(
+        cmd = listOf("java", "-versionfd"),
+        errorMessage = "problems with java",
+        filePrefix = "javaVersion",
+        logPrefix = "java version checking:",
         shouldCheckJava = true,
-        filePrefix = "java"
+        workingDir = file
     )
-    if (javaResult.isEmpty()) {
-        logger.error { "no java found in environment" }
-        throw IllegalStateException("no java found in environment")
-    }
-    val javaDescription = javaResult[0]
+    val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
     var javaVersion = javaDescription.split(" ")[2]
     javaVersion = javaVersion.substring(1, javaVersion.length - 1)
     if (javaVersion < "1.8") {
