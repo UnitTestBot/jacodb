@@ -188,48 +188,44 @@ private fun runCmd(
     errorMessage: String,
     filePrefix: String,
     logPrefix: String,
-    shouldCheckJava: Boolean = false,
     workingDir: File
 ): File {
+    val errorFileName = workingDir.absolutePath + File.separator + filePrefix + "Error"
+    val outputFileName = workingDir.absolutePath + File.separator + filePrefix + "Output"
+    val errorFile = File(errorFileName)
+    val outputFile = File(outputFileName)
     try {
         val cmdBuilder = ProcessBuilder()
         cmdBuilder.directory(workingDir)
         cmdBuilder.command(cmd)
-        val errorPrefix = if (shouldCheckJava) "Output" else "Errors"
-        val outputPrefix = if (shouldCheckJava) "" else "Output"
-        val errorFileName = workingDir.absolutePath + File.separator + filePrefix + errorPrefix
-        val outputFileName = workingDir.absolutePath + File.separator + filePrefix + outputPrefix
-        val errorFile = File(errorFileName)
-        val outputFile = File(outputFileName)
         val cmdProcess = cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start()
         cmdProcess.waitFor()
-        if (errorFile.length() != 0L && !shouldCheckJava) {
+        val hasErrors = errorFile.length() != 0L
+        if (hasErrors) {
             logger.error { "$errorMessage. check logs in: ${errorFile.path}" }
             throw IllegalStateException(errorMessage)
         }
-        val returnFile =
-            if (!shouldCheckJava) outputFile else errorFile
         logger.info {
-            "$logPrefix. check more logs in: ${returnFile.path}"
+            "$logPrefix. check more logs in: ${outputFile.path}"
         }
-        return returnFile
+        return outputFile
     } catch (e: IOException) {
+        logger.error { "$errorMessage. check logs in: ${errorFile.path}" }
+        errorFile.writeText(e.stackTraceToString())
         throw IllegalStateException(errorMessage)
     }
 }
 
 private fun checkJava(file: File) {
     val javaVersionFile = runCmd(
-        cmd = listOf("java", "-version"),
+        cmd = listOf("java", "--version"),
         errorMessage = "problems with java",
         filePrefix = "javaVersion",
         logPrefix = "java version checking:",
-        shouldCheckJava = true,
         workingDir = file
     )
     val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
-    var javaVersion = javaDescription.split(" ")[2]
-    javaVersion = javaVersion.substring(1, javaVersion.length - 1)
+    val javaVersion = javaDescription.split(" ")[2]
     if (javaVersion < "1.8") {
         logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
         throw IllegalStateException("java version must being 8 or higher. current env java: $javaVersion")
