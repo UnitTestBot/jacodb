@@ -220,7 +220,7 @@ private fun runCmd(
 
 private fun checkJava(file: File) {
     val javaVersionFile = runCmd(
-        cmd = listOf("java", "-versionfd"),
+        cmd = listOf("java", "-version"),
         errorMessage = "problems with java",
         filePrefix = "javaVersion",
         logPrefix = "java version checking:",
