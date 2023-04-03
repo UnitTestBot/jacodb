@@ -19,3 +19,4 @@ package org.jacodb.analysis.codegen
 const val impossibleGraphId = -1
 const val dispatcherQueueName = "dispatchQueue"
 const val currentDispatch = "currentDispatch"
+val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")

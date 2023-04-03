@@ -54,6 +54,7 @@ class JavaLanguage : TargetLanguage {
     private val predefinedTypes = mutableMapOf<String, TypePresentation>()
     private val integer: TypePresentation
     private val arrayDeque: TypePresentation
+    private val string: TypePresentation
 
     init {
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.VOID] = TypePresentation.voidType.shortName
@@ -68,6 +69,9 @@ class JavaLanguage : TargetLanguage {
         arrayDeque.createMethod(impossibleGraphId, name = "add", parameters = listOf(integer.instanceType to "e"))
         arrayDeque.createMethod(impossibleGraphId, name = "remove", returnType = integer.instanceType)
         predefinedTypes[arrayDeque.shortName] = arrayDeque
+
+        string = TypeImpl("String")
+        predefinedTypes[string.shortName] = string
     }
 
     override fun dispatch(callable: CallablePresentation) {
@@ -514,12 +518,10 @@ class JavaLanguage : TargetLanguage {
         )
         func.copyTo(method)
         if (isStartFunc) {
-            val psvmParam = Pair<TypeUsage, String>(
-                ArrayTypeUsageImpl(
-                    element = InstanceTypeImpl(TypeImpl("String"), true),
-                    isNullable = false
-                ), "args"
-            )
+            val psvmParam = ArrayTypeUsageImpl(
+                element = InstanceTypeImpl(string, true),
+                isNullable = false
+            ) to "args"
             val psvmParams = listOf(psvmParam)
             val psvmMethod = typeToReturn.createMethod(
                 graphId = func.graphId,
