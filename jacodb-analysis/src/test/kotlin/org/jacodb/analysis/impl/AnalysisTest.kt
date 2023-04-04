@@ -22,13 +22,61 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
+    private fun checkAssembling(generatingArgs: List<String>): Int {
+        val commonArs = listOf(
+            "java",
+            "-ea",
+            "-jar",
+            "build/libs/jacodb-analysis-1.0-SNAPSHOT.jar"
+        )
+        val resultArgs = commonArs.plus(generatingArgs)
+        val assemblingResult = ProcessBuilder().command(resultArgs).start().waitFor()
+        File("generated").deleteRecursively()
+        return assemblingResult
+    }
+
     @Test
     fun `analyse something`() = runBlocking {
         val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+    }
+
+    @Test
+    fun checkBigAssembling() {
+        assertEquals(0, checkAssembling(listOf("100", "1000", "10", "generated", "JavaLanguage", "true")))
+    }
+
+    @Test
+    fun checkSmallAssembling() {
+        assertEquals(0, checkAssembling(listOf("2", "1", "1", "generated", "JavaLanguage", "true")))
+    }
+
+    @Test
+    fun checkWrongLanguageAssembling() {
+        assertEquals(1, checkAssembling(listOf("2", "1", "1", "generated", "PythonLanguage", "true")))
+    }
+
+    @Test
+    fun checkWrongNumOfArgsAssembling() {
+        assertEquals(1, checkAssembling(listOf("2")))
+        assertEquals(1, checkAssembling(listOf("2", "1")))
+        assertEquals(1, checkAssembling(listOf("2", "1", "1")))
+        assertEquals(1, checkAssembling(listOf("2", "1", "1", "generated")))
+        assertEquals(1, checkAssembling(listOf("2", "1", "1", "generated", "JavaLanguage", "true", "nothing")))
+    }
+
+    @Test
+    fun checkWrongBoundsOfArgsAssembling() {
+        assertEquals(1, checkAssembling(listOf("1", "1", "1", "generated", "JavaLanguage", "true")))
+        assertEquals(1, checkAssembling(listOf("1001", "1", "1", "generated", "JavaLanguage", "true")))
+        assertEquals(1, checkAssembling(listOf("2", "0", "1", "generated", "JavaLanguage", "true")))
+        assertEquals(1, checkAssembling(listOf("2", "1", "256", "generated", "JavaLanguage", "true")))
+        assertEquals(1, checkAssembling(listOf("2", "1", "-1", "generated", "JavaLanguage", "true")))
     }
 }
