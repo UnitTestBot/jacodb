@@ -197,8 +197,7 @@ private fun runCmd(
     try {
         val cmdBuilder = ProcessBuilder()
         cmdBuilder.directory(workingDir).command(cmd)
-        val cmdProcess = cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start()
-        cmdProcess.waitFor()
+        cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start().waitFor()
         val hasErrors = errorFile.length() != 0L
         if (hasErrors) {
             logger.error { "$errorMessage. check logs in - ${errorFile.path}" }
