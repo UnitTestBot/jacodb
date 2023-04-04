@@ -176,7 +176,7 @@ private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path)
     val gradlewScript = "./gradlew" + if (isWindows) ".bat" else ""
     runCmd(
         cmd = listOf(gradlewScript, "assemble"),
-        errorMessage = "problems with assembling",
+        errorPrefix = "problems with assembling",
         filePrefix = "gradlew",
         logPrefix = "gradle assembling",
         workingDir = workingDir
@@ -185,7 +185,7 @@ private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path)
 
 private fun runCmd(
     cmd: List<String>,
-    errorMessage: String,
+    errorPrefix: String,
     filePrefix: String,
     logPrefix: String,
     workingDir: File
@@ -195,29 +195,30 @@ private fun runCmd(
     val errorFile = File(errorFileName)
     val outputFile = File(outputFileName)
     try {
-        val cmdBuilder = ProcessBuilder()
-        cmdBuilder.directory(workingDir).command(cmd)
-        cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start().waitFor()
+        val cmdBuilder =
+            ProcessBuilder().directory(workingDir).redirectError(errorFile).redirectOutput(outputFile).command(cmd)
+        val process = cmdBuilder.start()
+        process.waitFor()
         val hasErrors = errorFile.length() != 0L
         if (hasErrors) {
-            logger.error { "$errorMessage. check logs in - ${errorFile.path}" }
-            throw IllegalStateException(errorMessage)
+            logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
+            throw IllegalStateException(errorPrefix)
         }
         logger.info {
-            "$logPrefix. check more logs in - ${outputFile.path}"
+            "$logPrefix: check more logs in - ${outputFile.path}"
         }
         return outputFile
     } catch (e: IOException) {
-        logger.error { "$errorMessage. check logs in - ${errorFile.path}" }
+        logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
         errorFile.writeText(e.stackTraceToString())
-        throw IllegalStateException(errorMessage)
+        throw IllegalStateException(errorPrefix)
     }
 }
 
 private fun checkJava(file: File) {
     val javaVersionFile = runCmd(
         cmd = listOf("java", "--version"),
-        errorMessage = "problems with java",
+        errorPrefix = "problems with java",
         filePrefix = "javaVersion",
         logPrefix = "java version checking",
         workingDir = file
@@ -235,7 +236,7 @@ private fun checkJava(file: File) {
 private fun chmodGradlew(file: File) {
     runCmd(
         cmd = listOf("chmod", "+x", "gradlew"),
-        errorMessage = "problems with chmod",
+        errorPrefix = "problems with chmod",
         filePrefix = "chmod",
         logPrefix = "chmod command execution",
         workingDir = file
