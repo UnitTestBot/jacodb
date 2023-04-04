@@ -25,7 +25,6 @@ import org.jacodb.analysis.codegen.ast.base.sites.CallSite
 import org.jacodb.analysis.codegen.ast.base.sites.Site
 import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
-
 /**
  * Anything that can be called. Parent for functions, methods, lambdas, constructors, destructors etc.
  */
@@ -85,4 +84,5 @@ interface CallablePresentation : CodePresentation {
 
     fun getOrCreateCallSite(callee: CallablePresentation, invokedOn: CodeValue? = null): CallSite =
         getCallSite(callee, invokedOn) ?: createCallSite(callee, invokedOn)
+
 }

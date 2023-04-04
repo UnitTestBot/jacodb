@@ -20,9 +20,14 @@ import mu.KotlinLogging
 import org.jacodb.analysis.codegen.language.base.AnalysisVulnerabilityProvider
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.language.base.VulnerabilityInstance
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.Collections.min
+import kotlin.IllegalStateException
 import kotlin.io.path.notExists
 import kotlin.io.path.useDirectoryEntries
 import kotlin.random.Random
@@ -158,4 +163,82 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
+    runGradleAssemble(targetLanguage, projectPath)
+}
+
+private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
+    val zipName = targetLanguage.projectZipInResourcesName()
+    val workingDir = File(projectPath.toFile(), File(zipName).nameWithoutExtension)
+    checkJava(workingDir)
+    if (!isWindows) {
+        chmodGradlew(workingDir)
+    }
+    val gradlewScript = "./gradlew" + if (isWindows) ".bat" else ""
+    runCmd(
+        cmd = listOf(gradlewScript, "assemble"),
+        errorPrefix = "problems with assembling",
+        filePrefix = "gradlew",
+        logPrefix = "gradle assembling",
+        workingDir = workingDir
+    )
+}
+
+private fun runCmd(
+    cmd: List<String>,
+    errorPrefix: String,
+    filePrefix: String,
+    logPrefix: String,
+    workingDir: File
+): File {
+    val errorFileName = workingDir.absolutePath + File.separator + filePrefix + "Error"
+    val outputFileName = workingDir.absolutePath + File.separator + filePrefix + "Output"
+    val errorFile = File(errorFileName)
+    val outputFile = File(outputFileName)
+    try {
+        val cmdBuilder =
+            ProcessBuilder().directory(workingDir).redirectError(errorFile).redirectOutput(outputFile).command(cmd)
+        val process = cmdBuilder.start()
+        process.waitFor()
+        val hasErrors = errorFile.length() != 0L
+        if (hasErrors) {
+            logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
+            throw IllegalStateException(errorPrefix)
+        }
+        logger.info {
+            "$logPrefix: check more logs in - ${outputFile.path}"
+        }
+        return outputFile
+    } catch (e: IOException) {
+        logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
+        errorFile.writeText(e.stackTraceToString())
+        throw IllegalStateException(errorPrefix)
+    }
+}
+
+private fun checkJava(file: File) {
+    val javaVersionFile = runCmd(
+        cmd = listOf("java", "--version"),
+        errorPrefix = "problems with java",
+        filePrefix = "javaVersion",
+        logPrefix = "java version checking",
+        workingDir = file
+    )
+    val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
+    val versionElements = javaDescription.split(" ")[1].split(DOT)
+    val discard = Integer.parseInt(versionElements[0])
+    val javaVersion = if (discard == 1) Integer.parseInt(versionElements[1]) else discard
+    if (javaVersion < 8) {
+        logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
+        throw IllegalStateException("java version must being 8 or higher. current env java: $javaVersion")
+    }
+}
+
+private fun chmodGradlew(file: File) {
+    runCmd(
+        cmd = listOf("chmod", "+x", "gradlew"),
+        errorPrefix = "problems with chmod",
+        filePrefix = "chmod",
+        logPrefix = "chmod command execution",
+        workingDir = file
+    )
 }

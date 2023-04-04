@@ -16,6 +16,10 @@
 
 package org.jacodb.analysis.codegen
 
+const val DOT = "."
+const val TAB = "\t"
+val SEPARATOR: String = System.lineSeparator()
 const val impossibleGraphId = -1
 const val dispatcherQueueName = "dispatchQueue"
 const val currentDispatch = "currentDispatch"
+val isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows")

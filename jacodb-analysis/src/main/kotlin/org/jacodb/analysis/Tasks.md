@@ -3,16 +3,17 @@
 
 ## Sanya
 ### based
-- [ ] correct styling
+- [x] correct styling
 - [ ] commentaries
-- [ ] main functions
-- [ ] return statement
-- [ ] compilable verification
+- [x] main functions
+- [x] compilable verification
+- [ ] tests
 - [ ] interfaces - DAG, abstract classes - graph DFS, implementation of interfaces - zip dag to tree
 - [ ] method implementation - paths in tree divisino in half, random points
 - [ ] each call in graph path - may be virtual invoke, provide arguments on which this call should via generated hierarchy tree
 - [ ] field and method overloading implementation
-- [ ] tests
+- [ ] return statement
+- [ ] virtual calls in vulnerability path
 
 ### After inheritance
 - [ ] type and/or signature correlation, covariance/contravariance - this should be part of overloading

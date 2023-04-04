@@ -83,6 +83,6 @@ class CodeRepresentation(private val language: TargetLanguage) : CodeElement {
     }
 
     companion object {
-        private const val startFunctionFirstId = Int.MAX_VALUE / 2
+        const val startFunctionFirstId = Int.MAX_VALUE / 2
     }
 }
