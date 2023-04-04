@@ -35,17 +35,17 @@ import java.util.concurrent.TimeUnit
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class SootupBenchmarks {
 
-//    @Benchmark
+    @Benchmark
     fun jvmRuntime() {
         newView(emptyList())
     }
 
-//    @Benchmark
+    @Benchmark
     fun jvmRuntimeWithGuava() {
         newView(listOf(guavaLib))
     }
 
-//    @Benchmark
+    @Benchmark
     fun jvmRuntimeWithAllClasspath() {
         newView(allClasspath)
     }

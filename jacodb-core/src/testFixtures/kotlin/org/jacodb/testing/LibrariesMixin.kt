@@ -42,7 +42,9 @@ val allJars: List<File>
 private val classpath: List<String>
     get() {
         val classpath = System.getProperty("java.class.path")
-        return classpath.split(File.pathSeparatorChar).toList()
+        return classpath.split(File.pathSeparatorChar)
+            .filter { !it.contains("sootup") }
+            .toList()
     }
 
 
