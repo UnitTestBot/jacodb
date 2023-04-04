@@ -17,6 +17,10 @@
 package org.jacodb.analysis.codegen.language.impl
 
 import net.lingala.zip4j.ZipFile
+import org.jacodb.analysis.codegen.TAB
+import org.jacodb.analysis.codegen.DOT
+import org.jacodb.analysis.codegen.SEPARATOR
+import org.jacodb.analysis.codegen.CodeRepresentation
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import org.jacodb.analysis.codegen.impossibleGraphId
 import java.io.BufferedOutputStream
@@ -54,7 +58,7 @@ class JavaLanguage : TargetLanguage {
     private val predefinedTypes = mutableMapOf<String, TypePresentation>()
     private val integer: TypePresentation
     private val arrayDeque: TypePresentation
-    private val string: TypePresentation
+    private val stringTypePresentation: TypePresentation
 
     init {
         realPrimitivesName[TargetLanguage.PredefinedPrimitives.VOID] = TypePresentation.voidType.shortName
@@ -70,8 +74,8 @@ class JavaLanguage : TargetLanguage {
         arrayDeque.createMethod(impossibleGraphId, name = "remove", returnType = integer.instanceType)
         predefinedTypes[arrayDeque.shortName] = arrayDeque
 
-        string = TypeImpl("String")
-        predefinedTypes[string.shortName] = string
+        stringTypePresentation = TypeImpl("String")
+        predefinedTypes[stringTypePresentation.shortName] = stringTypePresentation
     }
 
     override fun dispatch(callable: CallablePresentation) {
@@ -443,7 +447,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun classNameForStaticFunction(functionName: String): String {
-        val diff = Integer.valueOf(functionName.substring(11)) - Integer.MAX_VALUE / 2
+        val diff = Integer.valueOf(functionName.substring(11)) - CodeRepresentation.startFunctionFirstId
         if (diff >= 0) {
             return "ClassForStartFunctionForNpeInstance${diff + 1}"
         }
@@ -519,7 +523,7 @@ class JavaLanguage : TargetLanguage {
         func.copyTo(method)
         if (isStartFunc) {
             val psvmParam = ArrayTypeUsageImpl(
-                element = InstanceTypeImpl(string, true),
+                element = InstanceTypeImpl(stringTypePresentation, true),
                 isNullable = false
             ) to "args"
             val psvmParams = listOf(psvmParam)

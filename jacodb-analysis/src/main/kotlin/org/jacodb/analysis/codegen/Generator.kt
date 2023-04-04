@@ -163,12 +163,12 @@ fun main(args: Array<String>) {
     }
 
     codeRepresentation.dumpTo(projectPath)
-    gradlewAssemble(targetLanguage, projectPath)
+    runGradleAssemble(targetLanguage, projectPath)
 }
 
-private fun gradlewAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
+private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
     val zipName = targetLanguage.projectZipInResourcesName()
-    val workingDir = File(projectPath.toFile(), zipName.substring(0, zipName.length - 4))
+    val workingDir = File(projectPath.toFile(), File(zipName).nameWithoutExtension)
     checkJava(workingDir)
     if (!isWindows) {
         chmodGradlew(workingDir)
@@ -196,21 +196,20 @@ private fun runCmd(
     val outputFile = File(outputFileName)
     try {
         val cmdBuilder = ProcessBuilder()
-        cmdBuilder.directory(workingDir)
-        cmdBuilder.command(cmd)
+        cmdBuilder.directory(workingDir).command(cmd)
         val cmdProcess = cmdBuilder.redirectError(errorFile).redirectOutput(outputFile).start()
         cmdProcess.waitFor()
         val hasErrors = errorFile.length() != 0L
         if (hasErrors) {
-            logger.error { "$errorMessage. check logs in: ${errorFile.path}" }
+            logger.error { "$errorMessage. check logs in - ${errorFile.path}" }
             throw IllegalStateException(errorMessage)
         }
         logger.info {
-            "$logPrefix. check more logs in: ${outputFile.path}"
+            "$logPrefix. check more logs in - ${outputFile.path}"
         }
         return outputFile
     } catch (e: IOException) {
-        logger.error { "$errorMessage. check logs in: ${errorFile.path}" }
+        logger.error { "$errorMessage. check logs in - ${errorFile.path}" }
         errorFile.writeText(e.stackTraceToString())
         throw IllegalStateException(errorMessage)
     }
@@ -225,8 +224,10 @@ private fun checkJava(file: File) {
         workingDir = file
     )
     val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
-    val javaVersion = javaDescription.split(" ")[2]
-    if (javaVersion < "1.8") {
+    val versionElements = javaDescription.split(" ")[1].split(DOT)
+    val discard = Integer.parseInt(versionElements[0])
+    val javaVersion = if (discard == 1) Integer.parseInt(versionElements[1]) else discard
+    if (javaVersion < 8) {
         logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
         throw IllegalStateException("java version must being 8 or higher. current env java: $javaVersion")
     }
