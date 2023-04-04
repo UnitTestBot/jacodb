@@ -178,7 +178,7 @@ private fun gradlewAssemble(targetLanguage: TargetLanguage, projectPath: Path) {
         cmd = listOf(gradlewScript, "assemble"),
         errorMessage = "problems with assembling",
         filePrefix = "gradlew",
-        logPrefix = "gradle building: ",
+        logPrefix = "gradle assembling",
         workingDir = workingDir
     )
 }
@@ -221,7 +221,7 @@ private fun checkJava(file: File) {
         cmd = listOf("java", "--version"),
         errorMessage = "problems with java",
         filePrefix = "javaVersion",
-        logPrefix = "java version checking:",
+        logPrefix = "java version checking",
         workingDir = file
     )
     val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
@@ -237,7 +237,7 @@ private fun chmodGradlew(file: File) {
         cmd = listOf("chmod", "+x", "gradlew"),
         errorMessage = "problems with chmod",
         filePrefix = "chmod",
-        logPrefix = "chmod message: ",
+        logPrefix = "chmod command execution",
         workingDir = file
     )
 }
