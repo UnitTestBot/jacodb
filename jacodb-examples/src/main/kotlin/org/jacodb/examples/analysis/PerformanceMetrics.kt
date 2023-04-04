@@ -44,14 +44,10 @@ class Service {
         return User("admin")
     }
 
-    private fun getOrLoadAdminUser(): User {
-        return loadAdmin()
-    }
+    private fun getOrLoadAdminUser() = loadAdmin()
 
-    fun admin(): User {
-        return cache.getOrPut("admin") {
-            getOrLoadAdminUser()
-        }
+    fun admin() = cache.getOrPut("admin") {
+        getOrLoadAdminUser()
     }
 
 }
@@ -65,25 +61,31 @@ class Controller(private val service: Service) {
     }
 }
 
-object NoPath
-
-class AccessPath(private val list: List<String>) {
-
-    companion object {
-        fun of(inst: JcInst): AccessPath {
-            val method = inst.location.method
-            val sourceFile = method.enclosingClass.asmNode().sourceFile
-            val ref = "${method.enclosingClass.name}.${method.name}($sourceFile:${inst.location.lineNumber})"
-            return AccessPath(listOf(ref))
-        }
+private val JcInst.ref: String
+    get() {
+        val method = location.method
+        val sourceFile = method.enclosingClass.asmNode().sourceFile
+        return "${method.enclosingClass.name}.${method.name}($sourceFile:${location.lineNumber})"
     }
 
+interface MaybePath
+
+object NoPath : MaybePath
+
+class AccessPath(private val list: List<String>) : MaybePath {
+
+    constructor(inst: JcInst) : this(listOf(inst.ref))
+
     fun add(inst: JcInst): AccessPath {
-        return join(of(inst))
+        return join(AccessPath(inst))
     }
 
     fun join(another: AccessPath): AccessPath {
         return AccessPath(list + another.list)
+    }
+
+    fun join(another: JcInst): AccessPath {
+        return AccessPath(list + another.ref)
     }
 
     override fun toString(): String {
@@ -100,7 +102,7 @@ private val slow = Slow::class.java.name
 
 class HighPerformanceChecker : JcClassProcessingTask {
 
-    private val hasSlowCall = ConcurrentHashMap<JcMethod, Any>()
+    private val slowCallCache = ConcurrentHashMap<JcMethod, MaybePath>()
 
     override fun shouldProcess(registeredLocation: RegisteredLocation): Boolean {
         return registeredLocation.jcLocation is BuildFolderLocation
@@ -110,31 +112,43 @@ class HighPerformanceChecker : JcClassProcessingTask {
         clazz.declaredMethods
             .filter { it.hasAnnotation(highPerformance) }
             .forEach {
-                val path = it.slowCallPath()
+                val path = it.isSlowCallPath(slowCallCache)
                 if (path is AccessPath) {
                     println(path)
                 }
             }
     }
 
-    private fun JcMethod.slowCallPath(processingMethods: Set<JcMethod> = hashSetOf(this)): Any {
-        return hasSlowCall.getOrPut(this) {
-            for (inst in instList) {
-                val m = inst.callExpr?.method?.method
-                if (m != null && !processingMethods.contains(m) && !m.enclosingClass.name.startsWith("java")) {
-                    if (m.hasAnnotation(slow)) {
-                        return@getOrPut AccessPath.of(inst)
-                    } else if (m.isAbstract) {
-                        return@getOrPut false
-                    }
-                    val callPath = m.slowCallPath(processingMethods + m)
-                    if (callPath is AccessPath) {
-                        return@getOrPut callPath.join(AccessPath.of(inst))
-                    }
+    private val JcClassOrInterface.isSystem: Boolean
+        get() {
+            return name.startsWith("java") || name.startsWith("kotlin")
+        }
+
+    private fun JcMethod.isSlowCallPath(
+        cache: ConcurrentHashMap<JcMethod, MaybePath>,
+        processingMethods: Set<JcMethod> = hashSetOf(this)
+    ): MaybePath {
+        return cache.getOrPut(this) {
+            isSlowCallPath(processingMethods)
+        }
+    }
+
+    private fun JcMethod.isSlowCallPath(methods: Set<JcMethod> = hashSetOf(this)): MaybePath {
+        for (inst in instList) {
+            val method = inst.callExpr?.method?.method ?: continue
+            if (!methods.contains(method) && !method.enclosingClass.isSystem) {
+                if (method.hasAnnotation(slow)) {
+                    return AccessPath(inst)
+                } else if (method.isAbstract) {
+                    return NoPath
+                }
+                val callPath = method.isSlowCallPath(slowCallCache, methods + method)
+                if (callPath is AccessPath) {
+                    return callPath.join(inst)
                 }
             }
-            NoPath
         }
+        return NoPath
     }
 }
 
