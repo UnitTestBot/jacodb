@@ -15,7 +15,6 @@
  */
 
 @file:JvmName("JcUsages")
-
 package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
@@ -105,17 +104,9 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
                 className = hierarchy.map { it.name }.toSet()
             )
         ).flatMap {
-            val clazz = cp.toJcClass(it.source)
-            try {
-
-                clazz.declaredMethods
-                    .slice(
-                        it.offsets.map { it.toInt() }
-                    )
-            } catch (e: IndexOutOfBoundsException) {
-                throw e
-            }
-
+            cp.toJcClass(it.source)
+                .declaredMethods
+                .slice(it.offsets.map { it.toInt() })
         }
     }
 
