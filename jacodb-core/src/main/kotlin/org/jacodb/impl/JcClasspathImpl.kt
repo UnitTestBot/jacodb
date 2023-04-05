@@ -39,6 +39,7 @@ import org.jacodb.api.broadcast
 import org.jacodb.api.ext.toType
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.substition.JcSubstitutor
@@ -120,7 +121,6 @@ class JcClasspathImpl(
     }
 
     override suspend fun <T : JcClasspathTask> execute(task: T): T {
-        db.awaitBackgroundJobs()
         val locations = registeredLocations.filter { task.shouldProcess(it) }
         task.before(this)
         withContext(Dispatchers.IO) {
@@ -128,6 +128,10 @@ class JcClasspathImpl(
             locations.map {
                 async {
                     val sources = db.persistence.findClassSources(it)
+                        .takeIf { it.isNotEmpty() } ?: it.jcLocation?.classes?.map { entry ->
+                        ClassSourceImpl(location = it, className = entry.key, byteCode = entry.value)
+                    } ?: emptyList()
+
                     sources.forEach {
                         if (parentScope.isActive && task.shouldProcess(it)) {
                             task.process(it, this@JcClasspathImpl)
