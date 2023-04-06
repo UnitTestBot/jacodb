@@ -101,6 +101,14 @@ subprojects {
             }
         }
 
+        val sourcesJar by creating(Jar::class) {
+            archiveClassifier.set("sources")
+            from(sourceSets.getByName("main").kotlin.srcDirs)
+        }
+
+        artifacts {
+            archives(sourcesJar)
+        }
     }
 
     allOpen {
@@ -115,10 +123,37 @@ subprojects {
 
     publishing {
         publications {
-            create<MavenPublication>("jar") {
+            register<MavenPublication>("jar") {
                 from(components["java"])
+                artifact(tasks.named("sourcesJar"))
+
                 groupId = "org.jacodb"
                 artifactId = project.name
+
+                pom {
+                    packaging = "jar"
+                    name.set("org.jacodb")
+                    description.set("fast and effective way to access and analyze java bytecode")
+                    url.set("https://github.com/UnitTestBot/jacodb")
+                    scm {
+                        url.set("https://github.com/UnitTestBot/jacodb.git")
+                    }
+                    issueManagement {
+                        url.set("https://github.com/UnitTestBot/jacodb/issues")
+                    }
+                    licenses {
+                        license {
+                            name.set("Apache 2.0")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("unit-test-bot-team")
+                            name.set("UnitTestBot team")
+                        }
+                    }
+                }
             }
         }
     }
