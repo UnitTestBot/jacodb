@@ -25,17 +25,18 @@ import org.jacodb.impl.types.AnnotationValueList
 import org.jacodb.impl.types.ClassRef
 import org.jacodb.impl.types.EnumRef
 import org.jacodb.impl.types.PrimitiveValue
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcAnnotationImpl(
     private val info: AnnotationInfo,
     private val classpath: JcClasspath
 ) : JcAnnotation {
 
-    override val jcClass by lazy(LazyThreadSafetyMode.NONE) {
+    override val jcClass by lazy(PUBLICATION) {
         classpath.findClassOrNull(info.className)
     }
 
-    override val values by lazy(LazyThreadSafetyMode.NONE) {
+    override val values by lazy(PUBLICATION) {
         val size = info.values.size
         if (size > 0) {
             info.values.associate { it.first to fixValue(it.second) }

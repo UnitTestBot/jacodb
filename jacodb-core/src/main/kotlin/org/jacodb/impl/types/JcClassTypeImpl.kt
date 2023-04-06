@@ -30,6 +30,7 @@ import org.jacodb.impl.types.signature.TypeResolutionImpl
 import org.jacodb.impl.types.signature.TypeSignature
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.types.substition.substitute
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 open class JcClassTypeImpl(
     override val jcClass: JcClassOrInterface,
@@ -45,8 +46,8 @@ open class JcClassTypeImpl(
         nullable: Boolean?
     ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
 
-    private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
-    private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
+    private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
+    private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
 
     override val classpath get() = jcClass.classpath
 
@@ -85,7 +86,7 @@ open class JcClassTypeImpl(
         }
 
 
-    override val superType: JcClassType? by lazy(LazyThreadSafetyMode.NONE) {
+    override val superType: JcClassType? by lazy(PUBLICATION) {
         val superClass = jcClass.superClass ?: return@lazy null
         resolutionImpl?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
@@ -93,7 +94,7 @@ open class JcClassTypeImpl(
         } ?: superClass.toType()
     }
 
-    override val interfaces: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
+    override val interfaces: List<JcClassType> by lazy(PUBLICATION) {
         jcClass.interfaces.map { iface ->
             val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
@@ -105,7 +106,7 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val innerTypes: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
+    override val innerTypes: List<JcClassType> by lazy(PUBLICATION) {
         jcClass.innerClasses.map {
             val outerMethod = it.outerMethod
             val outerClass = it.outerClass
@@ -121,20 +122,20 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val declaredMethods by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredMethods by lazy(PUBLICATION) {
         typedMethods(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val methods by lazy(LazyThreadSafetyMode.NONE) {
+    override val methods by lazy(PUBLICATION) {
         //let's calculate visible methods from super types
         typedMethods(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override val declaredFields by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredFields by lazy(PUBLICATION) {
         typedFields(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val fields by lazy(LazyThreadSafetyMode.NONE) {
+    override val fields by lazy(PUBLICATION) {
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 

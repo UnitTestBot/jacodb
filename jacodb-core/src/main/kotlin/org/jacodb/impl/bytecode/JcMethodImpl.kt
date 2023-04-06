@@ -36,6 +36,7 @@ import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
@@ -51,7 +52,7 @@ class JcMethodImpl(
 
     private val methodFeatures = features?.filterIsInstance<JcInstExtFeature>()
 
-    override val exceptions: List<JcClassOrInterface> by lazy(LazyThreadSafetyMode.NONE) {
+    override val exceptions: List<JcClassOrInterface> by lazy(PUBLICATION) {
         val methodSignature = MethodSignature.of(this)
         if (methodSignature is MethodResolutionImpl) {
             methodSignature.exceptionTypes.map {

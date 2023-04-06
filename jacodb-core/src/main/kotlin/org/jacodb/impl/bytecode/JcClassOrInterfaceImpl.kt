@@ -31,6 +31,7 @@ import org.jacodb.impl.fs.LazyClassSourceImpl
 import org.jacodb.impl.fs.fullAsmNodeWithFrames
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
@@ -46,7 +47,7 @@ class JcClassOrInterfaceImpl(
 
     private val classFeatures = features?.filterIsInstance<JcClassExtFeature>()
 
-    private val extensionData by lazy(LazyThreadSafetyMode.NONE) {
+    private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->
             classFeatures?.forEach {
                 map.putAll(it.extensionValuesOf(this).orEmpty())
@@ -67,25 +68,25 @@ class JcClassOrInterfaceImpl(
     override val annotations: List<JcAnnotation>
         get() = info.annotations.map { JcAnnotationImpl(it, classpath) }
 
-    override val interfaces by lazy(LazyThreadSafetyMode.NONE) {
+    override val interfaces by lazy(PUBLICATION) {
         info.interfaces.map {
             classpath.findClass(it)
         }
     }
 
-    override val superClass by lazy(LazyThreadSafetyMode.NONE) {
+    override val superClass by lazy(PUBLICATION) {
         info.superClass?.let {
             classpath.findClass(it)
         }
     }
 
-    override val outerClass by lazy(LazyThreadSafetyMode.NONE) {
+    override val outerClass by lazy(PUBLICATION) {
         info.outerClass?.className?.let {
             classpath.findClass(it)
         }
     }
 
-    override val innerClasses by lazy(LazyThreadSafetyMode.NONE) {
+    override val innerClasses by lazy(PUBLICATION) {
         info.innerClasses.map {
             classpath.findClass(it)
         }
@@ -116,7 +117,7 @@ class JcClassOrInterfaceImpl(
             return null
         }
 
-    override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredFields: List<JcField> by lazy(PUBLICATION) {
         val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
         when {
             !classFeatures.isNullOrEmpty() -> {
@@ -132,7 +133,7 @@ class JcClassOrInterfaceImpl(
         }
     }
 
-    override val declaredMethods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
+    override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
         val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, features) }
         when {
             !classFeatures.isNullOrEmpty() -> {

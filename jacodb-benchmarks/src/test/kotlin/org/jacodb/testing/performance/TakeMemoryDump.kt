@@ -17,7 +17,6 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.impl.PredefinedPersistenceType
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
@@ -34,8 +33,6 @@ fun main() {
             loadByteCode(allIdeaJarsAbsolute)
             persistent(
                 "d:\\work\\jacodb\\jacodb-idea-usages.db",
-                clearOnStart = true,
-                PredefinedPersistenceType.SQLITE
             )
             installFeatures(InMemoryHierarchy, Usages)
         }.also {

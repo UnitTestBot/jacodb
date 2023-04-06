@@ -46,7 +46,7 @@ class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFi
         }
     }
 
-    val classes: Map<String, JarEntry> by lazy(LazyThreadSafetyMode.NONE) {
+    val classes: Map<String, JarEntry> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val result = entries.orEmpty().toMutableMap()
         if (isMultiRelease) {
             var version = 9
