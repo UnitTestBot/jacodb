@@ -1,4 +1,5 @@
 import de.undercouch.gradle.tasks.download.Download
+import kotlinx.benchmark.gradle.JvmBenchmarkTarget
 
 val asmVersion: String by rootProject
 val kotlinVersion: String by rootProject
@@ -9,6 +10,25 @@ val jooqVersion: String by rootProject
 plugins {
     id("de.undercouch.download") version "5.3.0"
     `java-test-fixtures`
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.4"
+}
+
+benchmark {
+    configurations {
+        named("main") { // main configuration is created automatically, but you can change its defaults
+            warmups = 3 // number of warmup iterations
+            iterations = 5 // number of iterations
+        }
+    }
+
+    // Setup configurations
+    targets {
+        // This one matches sourceSet name above
+        register("test") {
+            this as JvmBenchmarkTarget
+            jmhVersion = "1.21"
+        }
+    }
 }
 
 
