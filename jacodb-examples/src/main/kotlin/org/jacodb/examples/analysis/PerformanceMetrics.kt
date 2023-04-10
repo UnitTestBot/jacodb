@@ -39,15 +39,13 @@ class Service {
     private val cache = ConcurrentHashMap<String, User>()
 
     @Slow
-    fun loadAdmin(): User {
+    fun recalculateIndexes() {
         Thread.sleep(10_000)
-        return User("admin")
     }
 
-    private fun getOrLoadAdminUser() = loadAdmin()
-
     fun admin() = cache.getOrPut("admin") {
-        getOrLoadAdminUser()
+        recalculateIndexes()
+        User("admin")
     }
 
 }
@@ -55,7 +53,7 @@ class Service {
 class Controller(private val service: Service) {
 
     @HighPerformance
-    fun drawAdminUser() {
+    fun getAdminUser() {
         val user = service.admin()
         println("admin is $user")
     }
