@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcGraphs")
+
 package org.jacodb.api.cfg
 
 object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>?>, DefaultJcExprVisitor<Set<JcLocal>?> {
@@ -46,8 +47,12 @@ object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>?>, DefaultJcExprVisitor
 
     override fun visitJcAssignInst(inst: JcAssignInst): Set<JcLocal> {
         return buildSet {
-            inst.lhv.accept(this@LocalResolver)?.let {addAll(it)}
-            inst.rhv.accept(this@LocalResolver)?.let {addAll(it)}
+            inst.lhv.let {
+                if (it is JcLocal) {
+                    add(it)
+                }
+            }
+            inst.rhv.accept(this@LocalResolver)?.let { addAll(it) }
         }
     }
 

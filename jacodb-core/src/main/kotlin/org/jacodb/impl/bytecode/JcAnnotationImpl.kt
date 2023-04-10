@@ -63,4 +63,8 @@ class JcAnnotationImpl(
             is AnnotationValueList -> value.annotations.map { fixValue(it) }
         }
     }
+
+    override fun toString(): String {
+        return "@${name}(${values.entries.joinToString { "${it.key}=${it.value})" }})"
+    }
 }
