@@ -214,7 +214,7 @@ class NPEForwardFunctions(
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            val thisInstance = JcThis(callExpr.instance.type)
+            val thisInstance = callee.thisInstance
             ans += transmitDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
                 it.variable == thisInstance.toPath()
             }
@@ -292,7 +292,7 @@ class NPEForwardFunctions(
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitDataFlow(JcThis(callExpr.instance.type), callExpr.instance, updatedFact, dropFact = true)
+            ans += transmitDataFlow(callee.thisInstance, callExpr.instance, updatedFact, dropFact = true)
         }
 
         if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
@@ -361,7 +361,7 @@ class NPEBackwardFunctions(
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            val thisInstance = JcThis(callExpr.instance.type)
+            val thisInstance = callee.thisInstance
             ans += transmitBackDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
                 it.variable == thisInstance.toPath()
             }
@@ -436,7 +436,7 @@ class NPEBackwardFunctions(
         }
 
         if (callExpr is JcInstanceCallExpr) {
-            ans += transmitBackDataFlow(JcThis(callExpr.instance.type), callExpr.instance, fact, dropFact = true)
+            ans += transmitBackDataFlow(callee.thisInstance, callExpr.instance, fact, dropFact = true)
         }
 
         if (fact.variable?.isStatic == true) {
