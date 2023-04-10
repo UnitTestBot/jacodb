@@ -49,7 +49,7 @@ open class JcApplicationGraphImpl(
         return usages.findUsages(method).flatMap {
             it.flowGraph().instructions.filter { inst ->
                 inst.callExpr?.method?.method == method
-            }.asSequence()
+            }
         }
     }
 
