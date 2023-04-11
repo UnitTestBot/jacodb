@@ -90,9 +90,7 @@ internal class Simplifier {
         // remove instructions like `a = a`
         instructionList = cleanSelfAssignments(instructionList)
         // fix some typing errors and normalize the types of all local variables
-        instructionList = normalizeTypes(jcClasspath, instructionList)
-
-        return instructionList
+        return normalizeTypes(jcClasspath, instructionList)
     }
 
 
@@ -193,14 +191,22 @@ internal class Simplifier {
                     && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
                     && rhv !in reservedValues
                 ) {
-                    replacements[rhv] = inst.lhv
-                    reservedValues += inst.lhv
-                    replacedInsts += inst
+                    val lhv = inst.lhv
+                    val lhvUsage = uses.getOrDefault(lhv, emptySet()).firstOrNull()
+                    if (lhvUsage == null || !instList.isBefore(lhvUsage, inst)) {
+                        replacements[rhv] = lhv
+                        reservedValues += lhv
+                        replacedInsts += inst
+                    }
                 }
             }
         }
 
         return replacements to replacedInsts
+    }
+
+    private fun JcInstListImpl<JcRawInst>.isBefore(one: JcRawInst, another: JcRawInst): Boolean {
+        return indexOf(one) < indexOf(another)
     }
 
     private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawSimpleValue>> {
@@ -217,7 +223,10 @@ internal class Simplifier {
         return assignments
     }
 
-    private fun normalizeTypes(jcClasspath: JcClasspath, instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
+    private fun normalizeTypes(
+        jcClasspath: JcClasspath,
+        instList: JcInstListImpl<JcRawInst>
+    ): JcInstListImpl<JcRawInst> {
         val types = mutableMapOf<JcRawLocalVar, MutableSet<JcType>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst && inst.lhv is JcRawLocalVar && inst.rhv !is JcRawNullConstant) {
