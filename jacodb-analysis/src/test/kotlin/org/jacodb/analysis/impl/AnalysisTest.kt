@@ -17,7 +17,6 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.codegen.SEPARATOR
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
@@ -54,10 +53,12 @@ class AnalysisTest : BaseTest() {
             assertEquals(0, assemblingResult,errorDescription)
         } else {
             File("generated").deleteRecursively()
-            val text = errorFile.readText()
+            val reader = errorFile.bufferedReader()
+            for (i in 1..3) reader.readLine()
+            val errorDescription = reader.readLine()
             errorFile.delete()
             assertEquals(1, assemblingResult)
-            assertEquals(text.split(SEPARATOR)[3], failMessage)
+            assertEquals(errorDescription, failMessage)
         }
     }
 
