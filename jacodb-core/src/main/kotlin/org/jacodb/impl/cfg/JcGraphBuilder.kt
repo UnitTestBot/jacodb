@@ -173,7 +173,6 @@ import org.jacodb.api.ext.objectType
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.short
 import org.jacodb.api.ext.toType
-import org.jacodb.impl.cfg.util.OBJECT_CLASS
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcGraphBuilder(
@@ -425,9 +424,6 @@ class JcGraphBuilder(
                 val method = it.method
                 method.name == name && method.hasAnnotation("java.lang.invoke.MethodHandle\$PolymorphicSignature")
             } // weak consumption. may fail
-        }
-        if(methodOrNull == null){
-            println("zzz")
         }
         return methodOrNull ?: error("Could not find a method with correct signature $typeName#$name$sb")
     }
