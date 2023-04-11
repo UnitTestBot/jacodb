@@ -32,7 +32,7 @@ open class FunctionImpl(
         if (other !is FunctionImpl)
             return false
 
-        if (graphId == other.graphId) {
+        if (graphId == other.graphId && graphId != -1) {
             assert(this === other)
         } else {
             // all functions(including methods) should have unique <fqn, signatures>
