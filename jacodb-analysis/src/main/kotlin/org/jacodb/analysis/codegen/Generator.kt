@@ -87,9 +87,9 @@ fun main(args: Array<String>) {
     val m = args[1].toInt()
     val k = args[2].toInt()
 
-    assert(n in 2 until 1001) { "currently big graphs not supported just in case" }
-    assert(m in 1 until 1000001) { "though we permit duplicated edges, do not overflow graph too much" }
-    assert(k in 0 until min(listOf(255, n, m)) + 1)
+    assert(n in 2 .. 1000) { "currently big graphs not supported just in case" }
+    assert(m in 1 .. 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
+    assert(k in 0 .. min(listOf(255, n, m)))
 
     val projectPath = Paths.get(args[3]).normalize()
 
@@ -173,7 +173,9 @@ private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path)
     if (!isWindows) {
         chmodGradlew(workingDir)
     }
-    val gradlewScript = "./gradlew" + if (isWindows) ".bat" else ""
+    val gradlewScript =
+        (if (isWindows) workingDir.absolutePath else "") +
+                DOT + File.separator + "gradlew" + if (isWindows) ".bat" else ""
     runCmd(
         cmd = listOf(gradlewScript, "assemble"),
         errorPrefix = "problems with assembling",
@@ -211,7 +213,7 @@ private fun runCmd(
     } catch (e: IOException) {
         logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
         errorFile.writeText(e.stackTraceToString())
-        throw IllegalStateException(errorPrefix)
+        throw IllegalStateException(errorPrefix + " " + (e.message?.split(System.lineSeparator())?.get(0) ?: ""))
     }
 }
 
