@@ -24,8 +24,9 @@ class CallSiteImpl(
     // unique identifier with the function
     override val graphId: Int,
     override val parentCallable: CallablePresentation,
-    override val invocationExpression: InvocationExpression
-) : SiteImpl(), CallSite {
+    override val invocationExpression: InvocationExpression,
+    override var comments: ArrayList<String> = ArrayList()
+    ) : SiteImpl(), CallSite {
     override fun equals(other: Any?): Boolean {
         if (other !is CallSite) {
             return false

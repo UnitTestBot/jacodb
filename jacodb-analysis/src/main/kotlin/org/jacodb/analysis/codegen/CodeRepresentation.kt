@@ -25,7 +25,7 @@ import org.jacodb.analysis.codegen.ast.impl.TypeImpl
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import java.nio.file.Path
 
-class CodeRepresentation(private val language: TargetLanguage) : CodeElement {
+class CodeRepresentation(private val language: TargetLanguage, override var comments: ArrayList<String> = ArrayList()) : CodeElement {
     private val functions = mutableMapOf<Int, FunctionPresentation>()
     private var startFunctionIdCounter = startFunctionFirstId
     private val startFunctionToGenericId = mutableMapOf<String, Int>()

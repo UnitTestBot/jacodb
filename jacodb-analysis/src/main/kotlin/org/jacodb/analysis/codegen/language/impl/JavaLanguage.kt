@@ -85,6 +85,7 @@ class JavaLanguage : TargetLanguage {
             DirectStringSubstitution {
             override val substitution: String = "-1"
             override val evaluatedType: TypeUsage = integerUsage
+            override var comments: ArrayList<String> = ArrayList()
         })
         val dispatcherQueue = callable.getLocal(dispatcherQueueName)!!
         val dispatcherReference = dispatcherQueue.reference
@@ -246,7 +247,10 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendCodeExpression(codeExpression: CodeExpression) = appendLine { writeCodeExpression(codeExpression) }
+    private fun appendCodeExpression(codeExpression: CodeExpression) {
+        appendComments(codeExpression)
+        appendLine { writeCodeExpression(codeExpression) }
+    }
 
     private fun writeCodeExpression(codeExpression: CodeExpression) {
         when (codeExpression) {
@@ -280,6 +284,7 @@ class JavaLanguage : TargetLanguage {
     private fun writeValueExpression(valueExpression: ValueExpression) {
         when (valueExpression) {
             is ObjectCreationExpression -> {
+
                 writeSeparated("new")
                 write(valueExpression.invokedConstructor.containingType.shortName)
                 writeCallList(valueExpression)
@@ -344,6 +349,10 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
+    private fun appendComments(codeExpression: CodeExpression) {
+        codeExpression.comments.forEach { comment -> appendLine { write("// $comment") } }
+    }
+
     private fun appendSite(
         site: Site,
         isFirstInCallSite: Boolean = false,
@@ -379,6 +388,7 @@ class JavaLanguage : TargetLanguage {
                         appendCodeExpression(after)
                     }
                 }
+                tabulate()
                 if (!isLastInCallSite || hasTerminations) writeSeparated(" else")
             }
             is TerminationSite -> {

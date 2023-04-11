@@ -28,7 +28,8 @@ class ParameterImpl(
     // it means that local variables and parameters can be identified by its name and parent function
     override val parentCallable: CallablePresentation,
     // just for correct code generation
-    override val indexInSignature: Int
+    override val indexInSignature: Int,
+    override var comments: ArrayList<String> = ArrayList()
 ) : FunctionLocalImpl(), ParameterPresentation {
     override fun equals(other: Any?): Boolean {
         assert(

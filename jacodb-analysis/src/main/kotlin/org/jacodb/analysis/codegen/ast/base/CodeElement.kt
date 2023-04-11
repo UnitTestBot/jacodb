@@ -19,4 +19,22 @@ package org.jacodb.analysis.codegen.ast.base
 /**
  * Anything that can be dumped to code
  */
-interface CodeElement
+interface CodeElement {
+    var comments: ArrayList<String>
+    fun setComment(numOfComment: Int, newComment: String) {
+        while (comments.size < numOfComment + 1) {
+            comments.add("")
+        }
+        comments[numOfComment] = newComment
+    }
+
+    fun addComments(addingTarget: CodeElement) {
+        comments.addAll(addingTarget.comments)
+    }
+
+    fun addCommentsWithRemove(addingTarget: CodeElement) {
+        comments.addAll(addingTarget.comments)
+        addingTarget.comments.clear()
+    }
+
+}

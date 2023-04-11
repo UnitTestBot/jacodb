@@ -22,5 +22,6 @@ import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
 
 class MethodInvocationExpressionImpl(
     override val invokedMethod: MethodPresentation,
-    override val invokedOn: CodeValue
+    override val invokedOn: CodeValue,
+    override var comments: ArrayList<String> = ArrayList()
 ) : ArgumentsOwnerExpressionImpl(), MethodInvocationExpression

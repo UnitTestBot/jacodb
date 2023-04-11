@@ -19,7 +19,9 @@ package org.jacodb.analysis.codegen.ast.impl
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 import org.jacodb.analysis.codegen.ast.base.typeUsage.ArrayTypeUsage
 
-class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean) :
+class ArrayTypeUsageImpl(override val element: TypeUsage, override val isNullable: Boolean,
+                         override var comments: ArrayList<String> = ArrayList()
+) :
     TypeUsageImpl(), ArrayTypeUsage {
 
     override val stringPresentation: String = element.stringPresentation + "[]"

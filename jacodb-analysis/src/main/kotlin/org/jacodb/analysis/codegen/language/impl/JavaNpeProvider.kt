@@ -54,11 +54,14 @@ class JavaNpeInstance(private val codeRepresentation: CodeRepresentation) : Vuln
         val dispatcherAddMethod = dispatcherType.getMethods("add").single()
         val preparationSite = startFunction.preparationSite
         val invocationExpression = MethodInvocationExpressionImpl(dispatcherAddMethod, dispatcher.reference)
+        invocationExpression.addCommentsWithRemove(dispatcherAddMethod)
+        invocationExpression.addCommentsWithRemove(dispatcher.reference)
         val dispatcherAddMethodParameter = dispatcherAddMethod.parameters.single()
 
         invocationExpression.addInCall(dispatcherAddMethodParameter, object : DirectStringSubstitution {
             override val substitution: String = targetCall.toString()
             override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.usage
+            override var comments: ArrayList<String> = ArrayList()
         })
         preparationSite.addBefore(invocationExpression)
     }

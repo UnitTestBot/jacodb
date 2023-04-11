@@ -33,6 +33,7 @@ open class TypeImpl(
     defaultConstructorParameters: List<Pair<TypeUsage, String>> = emptyList(),
     parentConstructorCall: ObjectCreationExpression? = null,
     final override val inheritedFrom: TypePresentation? = null,
+    override var comments: ArrayList<String> = ArrayList(),
 ) : TypePresentation {
     final override val implementedInterfaces = interfaces.toSet()
 

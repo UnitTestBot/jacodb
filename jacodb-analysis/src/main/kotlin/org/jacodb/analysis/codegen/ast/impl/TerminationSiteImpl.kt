@@ -20,7 +20,7 @@ import org.jacodb.analysis.codegen.ast.base.*
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.sites.TerminationSite
 
-class TerminationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), TerminationSite {
+class TerminationSiteImpl(override val parentCallable: CallablePresentation, override var comments: ArrayList<String> = ArrayList()) : SiteImpl(), TerminationSite {
     override val dereferences = mutableListOf<CodeValue>()
 
     override fun addDereference(reference: CodeValue) {

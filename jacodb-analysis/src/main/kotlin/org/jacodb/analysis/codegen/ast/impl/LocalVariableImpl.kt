@@ -27,5 +27,6 @@ class LocalVariableImpl(
     // it means that local variables and parameters can be identified by its name and parent function
     override val shortName: String,
     override val initialValue: CodeValue?,
-    override val parentCallable: CallablePresentation
+    override val parentCallable: CallablePresentation,
+    override var comments: ArrayList<String> = ArrayList()
 ) : FunctionLocalImpl(), LocalVariablePresentation

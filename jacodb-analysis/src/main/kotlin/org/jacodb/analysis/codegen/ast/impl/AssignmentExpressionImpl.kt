@@ -19,5 +19,6 @@ package org.jacodb.analysis.codegen.ast.impl
 import org.jacodb.analysis.codegen.ast.base.*
 import org.jacodb.analysis.codegen.ast.base.expression.AssignmentExpression
 
-class AssignmentExpressionImpl(override val assignmentTarget: CodeValue, override val assignmentValue: CodeValue) :
+class AssignmentExpressionImpl(override val assignmentTarget: CodeValue, override val assignmentValue: CodeValue,
+                               override var comments: ArrayList<String> = ArrayList()) :
     AssignmentExpression

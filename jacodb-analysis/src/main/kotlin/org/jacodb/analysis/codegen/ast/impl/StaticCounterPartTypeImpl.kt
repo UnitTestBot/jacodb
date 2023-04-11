@@ -24,7 +24,7 @@ import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-class StaticCounterPartTypeImpl(typeImpl: TypeImpl) : TypeImpl(typeImpl.shortName), TypePresentation {
+class StaticCounterPartTypeImpl(typeImpl: TypeImpl, override var comments: ArrayList<String> = ArrayList()) : TypeImpl(typeImpl.shortName), TypePresentation {
     override val staticCounterPart: TypePresentation = typeImpl
 
     override fun overrideMethod(methodToOverride: MethodPresentation): MethodPresentation {
