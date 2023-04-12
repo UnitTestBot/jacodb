@@ -37,4 +37,8 @@ interface CodeElement {
         addingTarget.comments.clear()
     }
 
+    fun addComments(commentsToAdd: List<String>) {
+        comments.addAll(commentsToAdd)
+    }
+
 }

@@ -18,14 +18,17 @@ package org.jacodb.analysis.codegen
 
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.CodeElement
+import org.jacodb.analysis.codegen.ast.base.DirectStringSubstitution
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
 import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.impl.FunctionImpl
+import org.jacodb.analysis.codegen.ast.impl.MethodInvocationExpressionImpl
 import org.jacodb.analysis.codegen.ast.impl.TypeImpl
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import java.nio.file.Path
 
-class CodeRepresentation(private val language: TargetLanguage, override var comments: ArrayList<String> = ArrayList()) : CodeElement {
+class CodeRepresentation(private val language: TargetLanguage, override var comments: ArrayList<String> = ArrayList()) :
+    CodeElement {
     private val functions = mutableMapOf<Int, FunctionPresentation>()
     private var startFunctionIdCounter = startFunctionFirstId
     private val startFunctionToGenericId = mutableMapOf<String, Int>()
@@ -65,6 +68,30 @@ class CodeRepresentation(private val language: TargetLanguage, override var comm
         return language.getPredefinedPrimitive(primitive)
     }
 
+    private fun generateCommentForStartFunction(function: FunctionPresentation): List<String> {
+        val numsOfDispatches = function.preparationSite.expressionsBefore.map { expressionBefore ->
+            (expressionBefore as MethodInvocationExpressionImpl).parameterToArgument.map { dispatchValue ->
+                (dispatchValue.value as DirectStringSubstitution).substitution
+            }.toList()
+        }.toList().flatten()
+        val comments: ArrayList<String> = ArrayList()
+        val readableConst = 16
+        val numOfComments =
+            numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
+        var iterator = 0
+        while (iterator < numOfComments) {
+            val currentComment: StringBuilder = StringBuilder()
+            for (i in iterator * readableConst until minOf((iterator + 1) * readableConst, numsOfDispatches.size)) {
+                currentComment.append("${numsOfDispatches[i]} -> ")
+            }
+            comments.add(currentComment.toString())
+            iterator++
+        }
+        val lastComment = comments[numOfComments - 1]
+        comments[numOfComments - 1] = lastComment.substring(0, lastComment.length - 4)
+        return comments
+    }
+
     fun dumpTo(projectPath: Path) {
         val pathToSourcesDir = language.resolveProjectPathToSources(projectPath)
         for ((name, presentation) in generatedTypes) {
@@ -78,6 +105,8 @@ class CodeRepresentation(private val language: TargetLanguage, override var comm
 
         for ((name, id) in startFunctionToGenericId) {
             val function = functions.getValue(id)
+            val comments = generateCommentForStartFunction(function)
+            function.addComments(comments)
             language.dumpStartFunction(name, function, pathToSourcesDir)
         }
     }

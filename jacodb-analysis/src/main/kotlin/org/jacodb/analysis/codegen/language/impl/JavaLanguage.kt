@@ -349,7 +349,7 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendComments(codeExpression: CodeExpression) {
+    private fun appendComments(codeExpression: CodeElement) {
         codeExpression.comments.forEach { comment -> appendLine { write("// $comment") } }
     }
 
@@ -484,6 +484,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendMethod(methodPresentation: MethodPresentation) {
+        appendComments(methodPresentation)
         appendMethodSignature(methodPresentation)
         inScope(needSeparator = true) {
             appendLocalsAndSites(methodPresentation)
@@ -530,6 +531,7 @@ class JavaLanguage : TargetLanguage {
             inheritanceModifier = InheritanceModifier.STATIC,
             parameters = func.parameters.map { Pair(it.usage, it.shortName) }
         )
+        method.addCommentsWithRemove(func)
         func.copyTo(method)
         if (isStartFunc) {
             val psvmParam = ArrayTypeUsageImpl(
