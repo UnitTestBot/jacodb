@@ -23,7 +23,6 @@ import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcInstExtFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
-import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
@@ -31,6 +30,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.fs.fullAsmNode
+import org.jacodb.impl.softLazy
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.impl.types.signature.MethodResolutionImpl
@@ -50,7 +50,8 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
-    private val methodFeatures = features?.filterIsInstance<JcInstExtFeature>()
+    internal val methodFeatures = features?.filterIsInstance<JcInstExtFeature>()
+    private val instructions = JcGraphHolder(this)
 
     override val exceptions: List<JcClassOrInterface> by lazy(PUBLICATION) {
         val methodSignature = MethodSignature.of(this)
@@ -77,28 +78,11 @@ class JcMethodImpl(
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
-    override val rawInstList: JcInstList<JcRawInst> by lazy {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, asmNode().jsrInlined).build()
-        methodFeatures?.fold(list) { value, feature ->
-            feature.transformRawInstList(this, value)
-        } ?: list
-    }
+    override val rawInstList: JcInstList<JcRawInst> get() = instructions.rawInstList
 
-    private val lazyGraph by lazy {
-        JcGraphBuilder(this, rawInstList).buildFlowGraph()
-    }
+    override fun flowGraph() = instructions.flowGraph
 
-    override fun flowGraph(): JcGraph {
-        return lazyGraph
-    }
-
-    override val instList: JcInstList<JcInst> by lazy {
-        val list: JcInstList<JcInst> = JcGraphBuilder(this, rawInstList).buildInstList()
-        methodFeatures?.fold(list) { value, feature ->
-            feature.transformInstList(this, value)
-        } ?: list
-
-    }
+    override val instList: JcInstList<JcInst> get() = instructions.instList
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcMethodImpl) {
@@ -113,6 +97,28 @@ class JcMethodImpl(
 
     override fun toString(): String {
         return "${enclosingClass}#$name(${parameters.joinToString { it.type.typeName }})"
+    }
+
+}
+
+private class JcGraphHolder(val method: JcMethodImpl) {
+
+    val rawInstList: JcInstList<JcRawInst> by softLazy {
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode().jsrInlined).build()
+        method.methodFeatures?.fold(list) { value, feature ->
+            feature.transformRawInstList(method, value)
+        } ?: list
+    }
+
+    val flowGraph by softLazy {
+        JcGraphBuilder(method, rawInstList).buildFlowGraph()
+    }
+
+    val instList: JcInstList<JcInst> by softLazy {
+        val list: JcInstList<JcInst> = JcGraphBuilder(method, rawInstList).buildInstList()
+        method.methodFeatures?.fold(list) { value, feature ->
+            feature.transformInstList(method, value)
+        } ?: list
     }
 
 }

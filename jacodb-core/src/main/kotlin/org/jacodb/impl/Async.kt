@@ -20,6 +20,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import java.lang.ref.SoftReference
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 val BACKGROUND_PARALLELISM
     get() = Integer.getInteger(
@@ -31,4 +34,21 @@ class BackgroundScope : CoroutineScope {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val coroutineContext = Dispatchers.IO.limitedParallelism(BACKGROUND_PARALLELISM) + SupervisorJob()
+}
+
+fun <W, T> W.softLazy(getter: () -> T): ReadOnlyProperty<W, T> {
+    return object : ReadOnlyProperty<W, T> {
+        @Volatile
+        var softCache = SoftReference<T>(null)
+
+        override fun getValue(thisRef: W, property: KProperty<*>): T {
+            var instance = softCache.get()
+            if (instance == null) {
+                instance = getter()
+                softCache = SoftReference(instance)
+                return instance
+            }
+            return instance
+        }
+    }
 }
