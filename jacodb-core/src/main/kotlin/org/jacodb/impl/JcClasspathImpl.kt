@@ -32,7 +32,6 @@ import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcClasspathTask
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.broadcast
@@ -87,9 +86,7 @@ class JcClasspathImpl(
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null
-        ).also {
-            broadcast(JcTypeFoundEvent(it))
-        }
+        )
     }
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {

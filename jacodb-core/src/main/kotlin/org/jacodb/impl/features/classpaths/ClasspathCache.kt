@@ -22,8 +22,6 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.JcClasspathFeatureEvent
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
 import java.time.Duration
 
 
@@ -41,16 +39,9 @@ open class ClasspathCache(
         .expireAfterAccess(expiration)
         .maximumSize(maxSize)
         .build<String, JcClassOrInterface>()
-
     /**
      *
      */
-    private val typesCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(expiration)
-        .maximumSize(maxSize)
-        .build<String, JcType>()
-
-
     override fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? {
         return classesCache.getIfPresent(name)
     }
@@ -58,7 +49,6 @@ open class ClasspathCache(
     override fun on(event: JcClasspathFeatureEvent) {
         when(event) {
             is JcClassFoundEvent -> classesCache.put(event.clazz.name, event.clazz)
-            is JcTypeFoundEvent -> typesCache.put(event.type.typeName, event.type)
         }
     }
 }

@@ -137,4 +137,3 @@ fun JcClasspath.broadcast(event: JcClasspathFeatureEvent) = features?.forEach { 
 sealed interface JcClasspathFeatureEvent
 
 data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
-data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent

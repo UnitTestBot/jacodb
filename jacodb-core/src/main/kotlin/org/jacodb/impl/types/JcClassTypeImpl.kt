@@ -23,6 +23,7 @@ import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
+import org.jacodb.impl.softLazy
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.signature.JvmParameterizedType
 import org.jacodb.impl.types.signature.JvmType
@@ -86,15 +87,15 @@ open class JcClassTypeImpl(
         }
 
 
-    override val superType: JcClassType? by lazy(PUBLICATION) {
-        val superClass = jcClass.superClass ?: return@lazy null
+    override val superType: JcClassType? by softLazy {
+        val superClass = jcClass.superClass ?: return@softLazy null
         resolutionImpl?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
             JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
         } ?: superClass.toType()
     }
 
-    override val interfaces: List<JcClassType> by lazy(PUBLICATION) {
+    override val interfaces: List<JcClassType> by softLazy {
         jcClass.interfaces.map { iface ->
             val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
@@ -106,7 +107,7 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val innerTypes: List<JcClassType> by lazy(PUBLICATION) {
+    override val innerTypes: List<JcClassType> by softLazy {
         jcClass.innerClasses.map {
             val outerMethod = it.outerMethod
             val outerClass = it.outerClass
@@ -122,20 +123,20 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val declaredMethods by lazy(PUBLICATION) {
+    override val declaredMethods by softLazy {
         typedMethods(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val methods by lazy(PUBLICATION) {
+    override val methods by softLazy {
         //let's calculate visible methods from super types
         typedMethods(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override val declaredFields by lazy(PUBLICATION) {
+    override val declaredFields by softLazy {
         typedFields(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val fields by lazy(PUBLICATION) {
+    override val fields by softLazy {
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
