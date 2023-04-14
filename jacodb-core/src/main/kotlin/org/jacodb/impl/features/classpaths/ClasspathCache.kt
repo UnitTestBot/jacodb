@@ -38,8 +38,9 @@ open class ClasspathCache(
     /**
      *
      */
-    private val classesCache = CacheBuilder.newBuilder()
+    val classesCache = CacheBuilder.newBuilder()
         .expireAfterAccess(expiration)
+        .softValues()
         .maximumSize(maxSize)
         .build<String, JcClassOrInterface>()
 
@@ -48,6 +49,7 @@ open class ClasspathCache(
      */
     private val typesCache = CacheBuilder.newBuilder()
         .expireAfterAccess(expiration)
+        .softValues()
         .maximumSize(maxSize)
         .build<String, JcType>()
 
