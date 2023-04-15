@@ -14,9 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.paths
 
-interface IFDSInstanceListener<Statement, D> {
-    fun onPropagate(e: Edge<Statement, D>, pred: Statement?, factIsNew: Boolean) = Unit
-    fun onExitPoint(e: Edge<Statement, D>) = Unit
+import org.jacodb.api.JcField
+
+sealed interface Accessor
+
+data class FieldAccessor(val field: JcField) : Accessor {
+    override fun toString(): String {
+        return field.toString()
+    }
+}
+
+object ElementAccessor : Accessor {
+    override fun toString(): String {
+        return "*"
+    }
 }

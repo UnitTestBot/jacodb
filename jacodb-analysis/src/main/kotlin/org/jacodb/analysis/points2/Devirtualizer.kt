@@ -14,12 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.points2
 
-interface Devirtualizer<Method, Statement> {
+import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcInst
+
+interface Devirtualizer {
     /**
      * Returns all methods that could be called at sink statement.
      */
     // TODO: add source to signature
-    fun findPossibleCallees(sink: Statement): Collection<Method>
+    fun findPossibleCallees(sink: JcInst): Collection<JcMethod>
 }

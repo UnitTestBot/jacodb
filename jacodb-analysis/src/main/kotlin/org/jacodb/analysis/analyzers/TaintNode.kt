@@ -14,14 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.analyzers
 
+import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
 /**
  * activation == null <=> activation point is passed
  */
-data class TaintNode private constructor (val variable: AccessPath?, val activation: JcInst?) {
+data class TaintNode private constructor (val variable: AccessPath?, val activation: JcInst?): DomainFact {
+    override val id: SpaceId = NpeAnalyzer
     companion object {
         val ZERO = TaintNode(null, null)
 

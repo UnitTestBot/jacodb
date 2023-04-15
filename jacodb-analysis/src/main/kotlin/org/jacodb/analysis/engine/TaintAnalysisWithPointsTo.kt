@@ -14,9 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.engine
 
+import org.jacodb.analysis.AnalysisEngine
+import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.analyzers.TaintNode
+import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
+import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
@@ -24,14 +31,15 @@ import org.jacodb.api.ext.cfg.callExpr
 
 // TODO: this should inherit from IFDSInstance or from some common interface (?)
 class TaintAnalysisWithPointsTo(
-    private val forward: IFDSInstance<JcMethod, JcInst, TaintNode>,
-    private val backward: IFDSInstance<JcMethod, JcInst, TaintNode>
-) {
+    private val graph: ApplicationGraph<JcMethod, JcInst>,
+    private val forward: IFDSInstance,
+    private val backward: IFDSInstance
+): AnalysisEngine {
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
-        fun Edge<JcInst, TaintNode>.handoverPathEdgeTo(
-            instance: IFDSInstance<JcMethod, JcInst, TaintNode>,
+        fun IfdsEdge<TaintNode>.handoverPathEdgeTo(
+            instance: IFDSInstance,
             pred: JcInst?,
             updateActivation: Boolean,
             propZero: Boolean
@@ -39,19 +47,19 @@ class TaintAnalysisWithPointsTo(
             val (u, v) = this
             val newFact = if (updateActivation && v.domainFact.activation == null) v.domainFact.copy(activation = pred) else v.domainFact // TODO: think between pred and v.statement
             val newStatement = pred ?: v.statement
-            instance.graph.entryPoint(u.statement.location.method).forEach {
+            graph.entryPoint(u.statement.location.method).forEach {
                 instance.propagate(
-                    Edge(
-                        Vertex(it, u.domainFact),
-                        Vertex(newStatement, newFact)
+                    IfdsEdge(
+                        IfdsVertex(it, u.domainFact),
+                        IfdsVertex(newStatement, newFact)
                     )
                 )
                 if (propZero) {
                     // Propagating zero fact
                     instance.propagate(
-                        Edge(
-                            Vertex(it, u.domainFact),
-                            Vertex(newStatement, TaintNode.ZERO)
+                        IfdsEdge(
+                            IfdsVertex(it, u.domainFact),
+                            IfdsVertex(newStatement, TaintNode.ZERO)
                         )
                     )
                 }
@@ -60,8 +68,9 @@ class TaintAnalysisWithPointsTo(
 
         // Forward initiates backward analysis and wait until it finishes
         // Backward analysis does not initiate forward one, because it will run with updated queue after the backward finishes
-        forward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
-            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
+        forward.addListener(object: IFDSInstanceListener {
+            override fun onPropagate(_e: IfdsEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) {
+                val e = _e as IfdsEdge<TaintNode>
                 val v = e.v
                 if (v.domainFact.variable?.isOnHeap == true && factIsNew) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true, propZero = true)
@@ -70,8 +79,9 @@ class TaintAnalysisWithPointsTo(
             }
         })
 
-        backward.addListener(object: IFDSInstanceListener<JcInst, TaintNode> {
-            override fun onPropagate(e: Edge<JcInst, TaintNode>, pred: JcInst?, factIsNew: Boolean) {
+        backward.addListener(object: IFDSInstanceListener {
+            override fun onPropagate(_e: IfdsEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) {
+                val e = _e as IfdsEdge<TaintNode>
                 val v = e.v
                 val curInst = v.statement
                 var canBeKilled = false
@@ -99,7 +109,8 @@ class TaintAnalysisWithPointsTo(
                 }
             }
 
-            override fun onExitPoint(e: Edge<JcInst, TaintNode>) {
+            override fun onExitPoint(_e: IfdsEdge<DomainFact>) {
+                val e = _e as IfdsEdge<TaintNode>
                 if (e.v.domainFact.variable?.isOnHeap == true) {
                     e.handoverPathEdgeTo(forward, pred = null, updateActivation = false, propZero = false)
                 }
@@ -107,7 +118,9 @@ class TaintAnalysisWithPointsTo(
         })
     }
 
-    fun addStart(startMethod: JcMethod) = forward.addStart(startMethod)
+    override fun addStart(method: JcMethod) = forward.addStart(method)
     fun run() = forward.run()
     fun collectResults() = forward.collectResults()
+
+    override fun analyze(): DumpableAnalysisResult = forward.analyze()
 }

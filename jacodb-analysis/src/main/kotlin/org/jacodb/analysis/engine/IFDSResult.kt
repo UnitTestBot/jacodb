@@ -14,21 +14,22 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
-
+package org.jacodb.analysis.engine
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.cfg.JcInst
 
-data class IFDSResult<Method, Statement, D>(
-    private val graph: ApplicationGraph<Method, Statement>,
-    val pathEdges: List<Edge<Statement, D>>,
-    val summaryEdge: List<Edge<Statement, D>>,
-    val resultFacts: Map<Statement, Set<D>>,
-    val callToStartEdges: List<Edge<Statement, D>>,
+class IFDSResult(
+    val graph: ApplicationGraph<JcMethod, JcInst>,
+    val pathEdges: List<IfdsEdge<DomainFact>>,
+    val summaryEdge: List<IfdsEdge<DomainFact>>,
+    val resultFacts: Map<JcInst, Set<DomainFact>>,
+    val callToStartEdges: List<IfdsEdge<DomainFact>>,
 ) {
     /**
      * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
      */
-    fun resolvePossibleStackTrace(vertex: Vertex<Statement, D>, startMethod: Method): List<Statement> {
+    fun resolvePossibleStackTrace(vertex: IfdsVertex<DomainFact>, startMethod: JcMethod): List<JcInst> {
         val result = mutableListOf(vertex.statement)
         var curVertex = vertex
         while (graph.methodOf(curVertex.statement) != startMethod) {

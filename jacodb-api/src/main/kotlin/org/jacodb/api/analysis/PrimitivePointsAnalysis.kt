@@ -14,14 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.api.analysis
 
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcField
 import org.jacodb.api.JcType
-import org.jacodb.api.analysis.JcPointsToAnalysis
-import org.jacodb.api.analysis.JcPointsToSet
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.ext.objectType
@@ -39,7 +37,6 @@ class FullObjectsSet(type: JcType) : JcPointsToSet {
     override val possibleStrings: Set<String>? = null
     override val possibleClasses: Set<JcClassOrInterface>? = null
 }
-
 
 class PrimitivePointsAnalysis(private val classpath: JcClasspath) : JcPointsToAnalysis<JcInst> {
 
