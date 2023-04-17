@@ -46,6 +46,8 @@ dependencies {
     implementation(group = "org.unittestbot.soot", name = "soot-utbot-fork", version = "4.4.0-FORK-2")
     implementation(group = "org.soot-oss", name = "sootup.core", version = "1.0.0")
     implementation(group = "org.soot-oss", name = "sootup.java.bytecode", version = "1.0.0")
+
+    testImplementation(group = "org.jetbrains.kotlinx", name = "kotlinx-benchmark-runtime", version = "0.4.4")
 }
 
 tasks.register<Download>("downloadIdeaCommunity") {
