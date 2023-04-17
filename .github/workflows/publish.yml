@@ -27,5 +27,5 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: ${GITHUB_REF##*/}
+          BRANCH_NAME: ${{ github.head_ref }}
 
