@@ -30,11 +30,11 @@ class IFDSInstance(
     private val devirtualizer: Devirtualizer,
     private val listeners: MutableList<IFDSInstanceListener> = mutableListOf()
 ): AnalysisEngine {
-    private val pathEdges = mutableListOf<IfdsEdge<DomainFact>>()
-    private val workList: Queue<IfdsEdge<DomainFact>> = LinkedList()
-    private val callToStartEdges = mutableListOf<IfdsEdge<DomainFact>>()
-    private val summaryEdges = mutableListOf<IfdsEdge<DomainFact>>()
-    private val callSites = mutableListOf<IfdsVertex<DomainFact>>()
+    private val pathEdges = mutableListOf<IFDSEdge<DomainFact>>()
+    private val workList: Queue<IFDSEdge<DomainFact>> = LinkedList()
+    private val callToStartEdges = mutableListOf<IFDSEdge<DomainFact>>()
+    private val summaryEdges = mutableListOf<IFDSEdge<DomainFact>>()
+    private val callSites = mutableListOf<IFDSVertex<DomainFact>>()
 
     private val flowSpace get() = analyzer.flowFunctions
 
@@ -45,18 +45,18 @@ class IFDSInstance(
 
         for(entryPoint in entryPoints) {
             for (fact in flowSpace.obtainStartFacts(entryPoint)) {
-                val startV = IfdsVertex(entryPoint, fact)
-                val startE = IfdsEdge(startV, startV)
+                val startV = IFDSVertex(entryPoint, fact)
+                val startE = IFDSEdge(startV, startV)
                 propagate(startE)
             }
         }
     }
 
-    fun propagate(e: IfdsEdge<DomainFact>, pred: JcInst? = null): Boolean {
+    fun propagate(e: IFDSEdge<DomainFact>, pred: JcInst? = null): Boolean {
         if (e !in pathEdges) {
             pathEdges.add(e)
             workList.add(e)
-            val isNew = pred != null && !pathEdges.contains(IfdsEdge(e.u, IfdsVertex(pred, e.v.domainFact)))
+            val isNew = pred != null && !pathEdges.contains(IFDSEdge(e.u, IFDSVertex(pred, e.v.domainFact)))
             listeners.forEach { it.onPropagate(e, pred, isNew) }
             return true
         }
@@ -64,7 +64,7 @@ class IFDSInstance(
     }
 
     // Build summary edges of form (caller, d4) -> (*, *)
-    private fun findNewSummaryEdges(callSite: JcInst, d4: DomainFact, startToEndEdge: IfdsEdge<DomainFact>) {
+    private fun findNewSummaryEdges(callSite: JcInst, d4: DomainFact, startToEndEdge: IFDSEdge<DomainFact>) {
         val (sp, d1) = startToEndEdge.u
         val (ep, d2) = startToEndEdge.v
         val nMethod = graph.methodOf(ep)
@@ -82,7 +82,7 @@ class IFDSInstance(
             val exitToReturnFlowFunction = flowSpace.obtainExitToReturnSiteFlowFunction(callSite, returnSiteOfCaller, ep)
             val d5Set = exitToReturnFlowFunction.compute(d2)
             for (d5 in d5Set) {
-                val newSummaryEdge = IfdsEdge(IfdsVertex(callSite, d4), IfdsVertex(returnSiteOfCaller, d5))
+                val newSummaryEdge = IFDSEdge(IFDSVertex(callSite, d4), IFDSVertex(returnSiteOfCaller, d5))
                 if (newSummaryEdge !in summaryEdges) {
                     summaryEdges.add(newSummaryEdge)
 
@@ -91,7 +91,7 @@ class IFDSInstance(
                     while (ind < pathEdges.size) {
                         val pathEdge = pathEdges[ind]
                         if (pathEdge.v == newSummaryEdge.u) {
-                            val newPathEdge = IfdsEdge(pathEdge.u, newSummaryEdge.v)
+                            val newPathEdge = IFDSEdge(pathEdge.u, newSummaryEdge.v)
                             propagate(newPathEdge, callSite)
                         }
                         ind += 1
@@ -106,7 +106,7 @@ class IFDSInstance(
             val (u, v) = workList.poll()
             val (n, d2) = v
 
-            val callees = devirtualizer?.findPossibleCallees(n)?.toList() ?: graph.callees(n).toList()
+            val callees = devirtualizer.findPossibleCallees(n).toList()
             // 13
             if (callees.isNotEmpty()) {
                 //14
@@ -116,10 +116,10 @@ class IFDSInstance(
                     for (sCalledProc in graph.entryPoint(calledProc)) {
                         for (d3 in nextFacts) {
                             //15
-                            val sCalledProcWithD3 = IfdsVertex(sCalledProc, d3)
-                            val nextEdge = IfdsEdge(sCalledProcWithD3, sCalledProcWithD3)
+                            val sCalledProcWithD3 = IFDSVertex(sCalledProc, d3)
+                            val nextEdge = IFDSEdge(sCalledProcWithD3, sCalledProcWithD3)
                             if (propagate(nextEdge)) {
-                                callToStartEdges.add(IfdsEdge(v, sCalledProcWithD3))
+                                callToStartEdges.add(IFDSEdge(v, sCalledProcWithD3))
                             }
                         }
                     }
@@ -130,8 +130,8 @@ class IFDSInstance(
                     val flowFunction = flowSpace.obtainCallToReturnFlowFunction(n, returnSite)
                     val nextFacts = flowFunction.compute(d2)
                     for (d3 in nextFacts) {
-                        val returnSiteVertex = IfdsVertex(returnSite, d3)
-                        val nextEdge = IfdsEdge(u, returnSiteVertex)
+                        val returnSiteVertex = IFDSVertex(returnSite, d3)
+                        val nextEdge = IFDSEdge(u, returnSiteVertex)
                         propagate(nextEdge, n)
                     }
                 }
@@ -146,7 +146,7 @@ class IFDSInstance(
                 //17-18 for summary edges
                 for (summaryEdge in summaryEdges) {
                     if (summaryEdge.u == v) {
-                        val newPathEdge = IfdsEdge(u, summaryEdge.v)
+                        val newPathEdge = IFDSEdge(u, summaryEdge.v)
                         propagate(newPathEdge, n)
                     }
                 }
@@ -155,9 +155,9 @@ class IFDSInstance(
                 val nMethod = graph.methodOf(n)
                 val nMethodExitPoints = graph.exitPoints(nMethod).toList()
                 if (n in nMethodExitPoints) {
-                    listeners.forEach { it.onExitPoint(IfdsEdge(u, v)) }
+                    listeners.forEach { it.onExitPoint(IFDSEdge(u, v)) }
                     for ((c, d4) in callSites) {
-                        findNewSummaryEdges(c, d4, IfdsEdge(u, v))
+                        findNewSummaryEdges(c, d4, IFDSEdge(u, v))
                     }
                 } else {
                     val nextInstrs = graph.successors(n)
@@ -165,7 +165,7 @@ class IFDSInstance(
                         val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
                         val d3Set = flowFunction.compute(d2)
                         for (d3 in d3Set) {
-                            val newEdge = IfdsEdge(u, IfdsVertex(m, d3))
+                            val newEdge = IFDSEdge(u, IFDSVertex(m, d3))
                             propagate(newEdge, n)
                         }
                     }

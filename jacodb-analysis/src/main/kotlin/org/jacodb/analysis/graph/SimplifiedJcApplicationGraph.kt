@@ -17,7 +17,7 @@
 package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcNoopInst
@@ -28,7 +28,7 @@ import org.jacodb.api.cfg.JcNoopInst
 class SimplifiedJcApplicationGraph(
     private val impl: JcApplicationGraphImpl,
     private val bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-) : ApplicationGraph<JcMethod, JcInst> by impl {
+) : JcApplicationGraph by impl {
 
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
 

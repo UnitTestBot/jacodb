@@ -21,23 +21,24 @@ import org.jacodb.api.cfg.JcInst
 
 class IFDSResult(
     val graph: ApplicationGraph<JcMethod, JcInst>,
-    val pathEdges: List<IfdsEdge<DomainFact>>,
-    val summaryEdge: List<IfdsEdge<DomainFact>>,
+    val pathEdges: List<IFDSEdge<DomainFact>>,
+    val summaryEdge: List<IFDSEdge<DomainFact>>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
-    val callToStartEdges: List<IfdsEdge<DomainFact>>,
+    val callToStartEdges: List<IFDSEdge<DomainFact>>,
 ) {
     /**
      * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
      */
-    fun resolvePossibleStackTrace(vertex: IfdsVertex<DomainFact>, startMethod: JcMethod): List<JcInst> {
+    fun resolvePossibleStackTrace(vertex: IFDSVertex<DomainFact>, startMethod: JcMethod): List<JcInst> {
         val result = mutableListOf(vertex.statement)
-        var curVertex = vertex
-        while (graph.methodOf(curVertex.statement) != startMethod) {
-            // TODO: Note that taking not first element may cause to infinite loop in this implementation
-            val startVertex = pathEdges.first { it.v == curVertex }.u
-            curVertex = callToStartEdges.first { it.v == startVertex }.u
-            result.add(curVertex.statement)
-        }
+        // TODO: fix
+//        var curVertex = vertex
+//        while (graph.methodOf(curVertex.statement) != startMethod) {
+//            // TODO: Note that taking not first element may cause to infinite loop in this implementation
+//            val startVertex = pathEdges.first { it.v == curVertex }.u
+//            curVertex = callToStartEdges.first { it.v == startVertex }.u
+//            result.add(curVertex.statement)
+//        }
         return result.reversed()
     }
 }

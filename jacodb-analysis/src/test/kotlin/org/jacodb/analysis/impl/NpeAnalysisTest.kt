@@ -19,11 +19,11 @@ package org.jacodb.analysis.impl
 import NPEExamples
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.AnalysisMain
 import org.jacodb.analysis.FlowDroidFactory
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -242,11 +242,11 @@ class NpeAnalysisTest : BaseTest() {
         goodMethod.flowGraph()
         badMethod.flowGraph()
 
-        val goodNPE = findNpeSources(goodMethod).isEmpty()
-        val badNPE = findNpeSources(badMethod).isNotEmpty()
+        val goodNPE = findNpeSources(goodMethod)
+        val badNPE = findNpeSources(badMethod)
 
-        assertTrue(badNPE)
-        assertFalse(goodNPE)
+        assertTrue(badNPE.isNotEmpty())
+        assertTrue(goodNPE.isEmpty())
     }
 
     private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) {
@@ -265,7 +265,7 @@ class NpeAnalysisTest : BaseTest() {
     }
 
     private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
-        val graph = runBlocking { JcApplicationGraphImpl(cp, cp.usagesExt()) }
+        val graph = runBlocking { SimplifiedJcApplicationGraph(JcApplicationGraphImpl(cp, cp.usagesExt())) }
         val all = AllOverridesDevirtualizer(graph, cp)
         val ifds = FlowDroidFactory().createAnalysisEngine(graph, all, File("a"))
         ifds.addStart(method)

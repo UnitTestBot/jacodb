@@ -16,4 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-data class IfdsEdge<out T: DomainFact>(val u: IfdsVertex<T>, val v: IfdsVertex<T>)
+import org.jacodb.api.cfg.JcInst
+
+data class IFDSVertex<out T: DomainFact>(val statement: JcInst, val domainFact: T)

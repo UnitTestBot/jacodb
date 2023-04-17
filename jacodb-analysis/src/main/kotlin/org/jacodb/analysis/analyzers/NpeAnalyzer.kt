@@ -78,7 +78,7 @@ class NpeAnalyzer(
                 (facts as Set<TaintNode>).forEach { fact ->
                     if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
                         val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            IfdsVertex(inst, fact), method
+                            IFDSVertex(inst, fact), method
                         )
                         possibleNPEInstructions.add(NPELocation(inst, fact.variable!!, possibleStackTrace))
                     }
@@ -192,8 +192,8 @@ private class NPEForwardFunctions(
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {
             override val spaceId = NpeAnalyzer
-            override fun compute(_fact: DomainFact): Collection<TaintNode> {
-                val fact = _fact as TaintNode
+            override fun compute(fact: DomainFact): Collection<TaintNode> {
+                fact as TaintNode
                 if (fact.activation == current) {
                     return listOf(fact.activatedCopy)
                 }
@@ -250,8 +250,8 @@ private class NPEForwardFunctions(
     ): FlowFunctionInstance = object : FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             if (fact.activation == callStatement) {
                 return emptyList()
             }
@@ -290,8 +290,8 @@ private class NPEForwardFunctions(
     ): FlowFunctionInstance = object : FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             if (fact == TaintNode.ZERO)
                 return listOf(fact)
 
@@ -334,8 +334,8 @@ private class NPEForwardFunctions(
     ): FlowFunctionInstance = object : FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             val ans = mutableListOf<TaintNode>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
@@ -407,8 +407,8 @@ private class NPEBackwardFunctions(
         object : FlowFunctionInstance {
 
             override val spaceId = NpeAnalyzer
-            override fun compute(_fact: DomainFact): Collection<TaintNode> {
-                val fact = _fact as TaintNode
+            override fun compute(fact: DomainFact): Collection<TaintNode> {
+                fact as TaintNode
                 // fact.activation != current needed here to jump over assignment where the fact appeared
                 return if (current is JcAssignInst && fact.activation != current) {
                     transmitBackDataFlow(current.lhv, current.rhv, fact, dropFact = false)
@@ -424,8 +424,8 @@ private class NPEBackwardFunctions(
     ): FlowFunctionInstance = object: FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             val ans = mutableListOf<TaintNode>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
@@ -468,8 +468,8 @@ private class NPEBackwardFunctions(
     ): FlowFunctionInstance = object: FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             val factPath = fact.variable ?: return listOf(fact)
             val callExpr = callStatement.callExpr ?: error("CallStatement is expected to contain callExpr")
 
@@ -512,8 +512,8 @@ private class NPEBackwardFunctions(
     ): FlowFunctionInstance = object: FlowFunctionInstance {
 
         override val spaceId = NpeAnalyzer
-        override fun compute(_fact: DomainFact): Collection<TaintNode> {
-            val fact = _fact as TaintNode
+        override fun compute(fact: DomainFact): Collection<TaintNode> {
+            fact as TaintNode
             val ans = mutableListOf<TaintNode>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
