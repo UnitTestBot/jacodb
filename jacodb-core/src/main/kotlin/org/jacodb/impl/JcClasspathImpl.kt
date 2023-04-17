@@ -83,7 +83,8 @@ class JcClasspathImpl(
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
         return JcClassTypeImpl(
-            jcClass,
+            this,
+            jcClass.name,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null

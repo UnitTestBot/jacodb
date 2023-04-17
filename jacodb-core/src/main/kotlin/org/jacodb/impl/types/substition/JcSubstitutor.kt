@@ -16,7 +16,8 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.findClass
 import org.jacodb.impl.types.signature.JvmType
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
 import org.jacodb.impl.types.typeParameters
@@ -55,8 +56,9 @@ interface JcSubstitutor {
 
 }
 
-fun JcClassOrInterface.substitute(parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor {
-    val params = typeParameters
+fun JcClasspath.substitute(name: String, parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor {
+    val clazz = findClass(name)
+    val params = clazz.typeParameters
     require(params.size == parameters.size) {
         "Incorrect parameters specified for class $name: expected ${params.size} found ${parameters.size}"
     }

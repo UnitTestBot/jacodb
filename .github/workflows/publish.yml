@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'feature-**'
 
 jobs:
   publish:
@@ -26,4 +27,5 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${GITHUB_REF##*/}
 

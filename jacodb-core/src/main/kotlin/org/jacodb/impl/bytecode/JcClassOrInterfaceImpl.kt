@@ -16,14 +16,7 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.impl.fs.ClassSourceImpl
@@ -68,26 +61,26 @@ class JcClassOrInterfaceImpl(
     override val annotations: List<JcAnnotation>
         get() = info.annotations.map { JcAnnotationImpl(it, classpath) }
 
-    override val interfaces by lazy(PUBLICATION) {
-        info.interfaces.map {
+    override val interfaces: List<JcClassOrInterface> get() {
+        return info.interfaces.map {
             classpath.findClass(it)
         }
     }
 
-    override val superClass by lazy(PUBLICATION) {
-        info.superClass?.let {
+    override val superClass: JcClassOrInterface? get() {
+        return info.superClass?.let {
             classpath.findClass(it)
         }
     }
 
-    override val outerClass by lazy(PUBLICATION) {
-        info.outerClass?.className?.let {
+    override val outerClass: JcClassOrInterface? get() {
+        return info.outerClass?.className?.let {
             classpath.findClass(it)
         }
     }
 
-    override val innerClasses by lazy(PUBLICATION) {
-        info.innerClasses.map {
+    override val innerClasses: List<JcClassOrInterface> get() {
+        return info.innerClasses.map {
             classpath.findClass(it)
         }
     }
@@ -117,9 +110,9 @@ class JcClassOrInterfaceImpl(
             return null
         }
 
-    override val declaredFields: List<JcField> by lazy(PUBLICATION) {
+    override val declaredFields: List<JcField> get() {
         val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
-        when {
+        return when {
             !classFeatures.isNullOrEmpty() -> {
                 val modifiedFields = result.toMutableList()
                 classFeatures.forEach {

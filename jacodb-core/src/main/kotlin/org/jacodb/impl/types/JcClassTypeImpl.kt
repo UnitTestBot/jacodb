@@ -16,11 +16,8 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcTypedField
-import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.*
+import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.softLazy
@@ -34,23 +31,25 @@ import org.jacodb.impl.types.substition.substitute
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 open class JcClassTypeImpl(
-    override val jcClass: JcClassOrInterface,
+    override val classpath: JcClasspath,
+    val name: String,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
     override val nullable: Boolean?
 ) : JcClassType {
 
     constructor(
-        jcClass: JcClassOrInterface,
+        classpath: JcClasspath,
+        name: String,
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
         nullable: Boolean?
-    ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable)
+    ) : this(classpath, name, outerType, classpath.substitute(name, parameters, outerType?.substitutor), nullable)
 
     private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
 
-    override val classpath get() = jcClass.classpath
+    override val jcClass: JcClassOrInterface get() = classpath.findClass(name)
 
     override val access: Int
         get() = jcClass.access
@@ -91,7 +90,7 @@ open class JcClassTypeImpl(
         val superClass = jcClass.superClass ?: return@softLazy null
         resolutionImpl?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
-            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable)
+            JcClassTypeImpl(classpath, superClass.name, outerType, newSubstitutor, nullable)
         } ?: superClass.toType()
     }
 
@@ -100,7 +99,7 @@ open class JcClassTypeImpl(
             val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
                 val newSubstitutor = superSubstitutor(iface, ifaceType)
-                JcClassTypeImpl(iface, null, newSubstitutor, nullable)
+                JcClassTypeImpl(classpath, iface.name,null, newSubstitutor, nullable)
             } else {
                 iface.toType()
             }
@@ -119,7 +118,7 @@ open class JcClassTypeImpl(
                 it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
                 else -> substitutor.newScope(innerParameters)
             }
-            JcClassTypeImpl(it, this, innerSubstitutor, true)
+            JcClassTypeImpl(classpath, it.name, this, innerSubstitutor, true)
         }
     }
 
@@ -140,7 +139,7 @@ open class JcClassTypeImpl(
         typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability)
+    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(classpath, name, outerType, substitutor, nullability)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

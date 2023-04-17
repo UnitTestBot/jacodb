@@ -52,16 +52,15 @@ class JcMethodImpl(
 
     internal val methodFeatures = features?.filterIsInstance<JcInstExtFeature>()
     private val instructions = JcGraphHolder(this)
+    private val methodSignature = MethodSignature.of(this)
 
-    override val exceptions: List<JcClassOrInterface> by lazy(PUBLICATION) {
-        val methodSignature = MethodSignature.of(this)
+    override val exceptions: List<JcClassOrInterface> get() {
         if (methodSignature is MethodResolutionImpl) {
-            methodSignature.exceptionTypes.map {
+            return methodSignature.exceptionTypes.map {
                 enclosingClass.classpath.findClass(it.name)
             }
-        } else {
-            emptyList()
         }
+        return emptyList()
     }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
