@@ -104,6 +104,26 @@ private data class JcMethodRef(
     constructor(method: JcMethod) : this(method.enclosingClass.name, method.name, method.description)
 
     fun method(classpath: JcClasspath) = classpath.findClass(className).findMethodOrNull(name, description)!!
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcMethodRef
+
+        if (className != other.className) return false
+        if (name != other.name) return false
+        return description == other.description
+    }
+
+    override fun hashCode(): Int {
+        var result = className.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + description.hashCode()
+        return result
+    }
+
+
 }
 
 class JcInstLocationImpl(
@@ -117,6 +137,22 @@ class JcInstLocationImpl(
 
     override val method: JcMethod by softLazy {
         methodRef.method(classpath)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcInstLocationImpl
+
+        if (index != other.index) return false
+        return methodRef == other.methodRef
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + methodRef.hashCode()
+        return result
     }
 
 

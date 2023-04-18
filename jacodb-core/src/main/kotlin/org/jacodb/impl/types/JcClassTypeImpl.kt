@@ -86,16 +86,16 @@ open class JcClassTypeImpl(
         }
 
 
-    override val superType: JcClassType? by softLazy {
-        val superClass = jcClass.superClass ?: return@softLazy null
-        resolutionImpl?.let {
+    override val superType: JcClassType? get() {
+        val superClass = jcClass.superClass ?: return null
+        return resolutionImpl?.let {
             val newSubstitutor = superSubstitutor(superClass, it.superClass)
             JcClassTypeImpl(classpath, superClass.name, outerType, newSubstitutor, nullable)
         } ?: superClass.toType()
     }
 
-    override val interfaces: List<JcClassType> by softLazy {
-        jcClass.interfaces.map { iface ->
+    override val interfaces: List<JcClassType> get() {
+        return jcClass.interfaces.map { iface ->
             val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
             if (ifaceType != null) {
                 val newSubstitutor = superSubstitutor(iface, ifaceType)
@@ -106,8 +106,8 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val innerTypes: List<JcClassType> by softLazy {
-        jcClass.innerClasses.map {
+    override val innerTypes: List<JcClassType> get() {
+        return jcClass.innerClasses.map {
             val outerMethod = it.outerMethod
             val outerClass = it.outerClass
 
@@ -122,21 +122,21 @@ open class JcClassTypeImpl(
         }
     }
 
-    override val declaredMethods by softLazy {
-        typedMethods(true, fromSuperTypes = false, jcClass.packageName)
+    override val declaredMethods: List<JcTypedMethod> get() {
+        return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val methods by softLazy {
+    override val methods: List<JcTypedMethod> get() {
         //let's calculate visible methods from super types
-        typedMethods(true, fromSuperTypes = true, jcClass.packageName)
+        return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
     }
 
-    override val declaredFields by softLazy {
-        typedFields(true, fromSuperTypes = false, jcClass.packageName)
+    override val declaredFields: List<JcTypedField> get() {
+        return typedFields(true, fromSuperTypes = false, jcClass.packageName)
     }
 
-    override val fields by softLazy {
-        typedFields(true, fromSuperTypes = true, jcClass.packageName)
+    override val fields: List<JcTypedField> get() {
+        return typedFields(true, fromSuperTypes = true, jcClass.packageName)
     }
 
     override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(classpath, name, outerType, substitutor, nullability)

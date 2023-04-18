@@ -21,12 +21,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import java.lang.ref.SoftReference
+import java.lang.ref.WeakReference
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 val BACKGROUND_PARALLELISM
     get() = Integer.getInteger(
-        "org.utbot.jacodb.background.parallelism",
+        "org.jacodb.background.parallelism",
         64.coerceAtLeast(Runtime.getRuntime().availableProcessors())
     )
 
@@ -39,13 +40,30 @@ class BackgroundScope : CoroutineScope {
 fun <W, T> W.softLazy(getter: () -> T): ReadOnlyProperty<W, T> {
     return object : ReadOnlyProperty<W, T> {
         @Volatile
-        var softCache = SoftReference<T>(null)
+        var softRef = SoftReference<T>(null)
 
         override fun getValue(thisRef: W, property: KProperty<*>): T {
-            var instance = softCache.get()
+            var instance = softRef.get()
             if (instance == null) {
                 instance = getter()
-                softCache = SoftReference(instance)
+                softRef = SoftReference(instance)
+                return instance
+            }
+            return instance
+        }
+    }
+}
+
+fun <W, T> W.weakLazy(getter: () -> T): ReadOnlyProperty<W, T> {
+    return object : ReadOnlyProperty<W, T> {
+        @Volatile
+        var weakRef = WeakReference<T>(null)
+
+        override fun getValue(thisRef: W, property: KProperty<*>): T {
+            var instance = weakRef.get()
+            if (instance == null) {
+                instance = getter()
+                weakRef = WeakReference(instance)
                 return instance
             }
             return instance
