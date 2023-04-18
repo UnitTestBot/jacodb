@@ -16,12 +16,13 @@
 
 package org.jacodb.analysis.codegen.ast.base.presentation.type
 
+import org.jacodb.analysis.codegen.ast.base.Commentable
 import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
 import org.jacodb.analysis.codegen.ast.base.VisibilityOwner
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart {
+interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart, Commentable {
     val parentConstructorCall: ObjectCreationExpression?
     override val returnType: TypeUsage
         get() = containingType.instanceType

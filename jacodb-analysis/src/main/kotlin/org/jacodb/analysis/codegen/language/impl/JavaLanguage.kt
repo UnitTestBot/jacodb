@@ -248,7 +248,7 @@ class JavaLanguage : TargetLanguage {
     }
 
     private fun appendCodeExpression(codeExpression: CodeExpression) {
-        appendComments(codeExpression)
+        if (codeExpression is Commentable) appendComments(codeExpression)
         appendLine { writeCodeExpression(codeExpression) }
     }
 
@@ -349,7 +349,7 @@ class JavaLanguage : TargetLanguage {
         }
     }
 
-    private fun appendComments(codeExpression: CodeElement) {
+    private fun appendComments(codeExpression: Commentable) {
         codeExpression.comments.forEach { comment -> appendLine { write("// $comment") } }
     }
 

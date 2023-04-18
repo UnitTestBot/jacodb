@@ -23,11 +23,12 @@ import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresen
 import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.impl.FunctionImpl
 import org.jacodb.analysis.codegen.ast.impl.MethodInvocationExpressionImpl
+import org.jacodb.analysis.codegen.ast.impl.SimpleValueReference
 import org.jacodb.analysis.codegen.ast.impl.TypeImpl
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import java.nio.file.Path
 
-class CodeRepresentation(private val language: TargetLanguage, override var comments: ArrayList<String> = ArrayList()) :
+class CodeRepresentation(private val language: TargetLanguage) :
     CodeElement {
     private val functions = mutableMapOf<Int, FunctionPresentation>()
     private var startFunctionIdCounter = startFunctionFirstId
@@ -74,12 +75,17 @@ class CodeRepresentation(private val language: TargetLanguage, override var comm
                 (dispatchValue.value as DirectStringSubstitution).substitution
             }.toList()
         }.toList().flatten()
+        val numOfBreakingVarClass = numsOfDispatches[numsOfDispatches.size - 2].toInt()
+        val breakingClass = functions[numOfBreakingVarClass]
+        val breakingVar = breakingClass?.terminationSite?.dereferences?.elementAt(0)
         val comments: ArrayList<String> = ArrayList()
+        comments.add("This is start function for NullPointerException. The source for this issue is in variable " +
+                "${(breakingVar as SimpleValueReference).shortName}.")
         val readableConst = 16
-        val numOfComments =
-            numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
+        val numOfDispatchComments =
+                numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
         var iterator = 0
-        while (iterator < numOfComments) {
+        while (iterator < numOfDispatchComments) {
             val currentComment: StringBuilder = StringBuilder()
             for (i in iterator * readableConst until minOf((iterator + 1) * readableConst, numsOfDispatches.size)) {
                 currentComment.append("${numsOfDispatches[i]} -> ")
@@ -87,8 +93,8 @@ class CodeRepresentation(private val language: TargetLanguage, override var comm
             comments.add(currentComment.toString())
             iterator++
         }
-        val lastComment = comments[numOfComments - 1]
-        comments[numOfComments - 1] = lastComment.substring(0, lastComment.length - 4)
+        val lastComment = comments[numOfDispatchComments]
+        comments[numOfDispatchComments] = lastComment.substring(0, lastComment.length - 4)
         return comments
     }
 

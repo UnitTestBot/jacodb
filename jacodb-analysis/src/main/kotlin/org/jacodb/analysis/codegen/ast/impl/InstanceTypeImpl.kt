@@ -20,9 +20,7 @@ import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.base.typeUsage.InstanceTypeUsage
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-class InstanceTypeImpl(override val typePresentation: TypePresentation, override val isNullable: Boolean,
-                       override var comments: ArrayList<String> = ArrayList()
-) :
+class InstanceTypeImpl(override val typePresentation: TypePresentation, override val isNullable: Boolean) :
     TypeUsageImpl(), InstanceTypeUsage {
 
     override val stringPresentation: String

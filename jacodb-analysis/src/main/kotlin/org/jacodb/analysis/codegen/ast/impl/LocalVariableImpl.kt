@@ -28,5 +28,4 @@ class LocalVariableImpl(
     override val shortName: String,
     override val initialValue: CodeValue?,
     override val parentCallable: CallablePresentation,
-    override var comments: ArrayList<String> = ArrayList()
 ) : FunctionLocalImpl(), LocalVariablePresentation

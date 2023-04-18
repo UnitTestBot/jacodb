@@ -19,4 +19,4 @@ package org.jacodb.analysis.codegen.ast.impl
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.sites.PreparationSite
 
-class PreparationSiteImpl(override val parentCallable: CallablePresentation, override var comments: ArrayList<String> = ArrayList()) : SiteImpl(), PreparationSite
+class PreparationSiteImpl(override val parentCallable: CallablePresentation) : SiteImpl(), PreparationSite
