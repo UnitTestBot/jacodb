@@ -37,7 +37,7 @@ class BackgroundScope : CoroutineScope {
     override val coroutineContext = Dispatchers.IO.limitedParallelism(BACKGROUND_PARALLELISM) + SupervisorJob()
 }
 
-fun <W, T> W.softLazy(getter: () -> T): ReadOnlyProperty<W, T> {
+fun <W, T> softLazy(getter: () -> T): ReadOnlyProperty<W, T> {
     return object : ReadOnlyProperty<W, T> {
         @Volatile
         var softRef = SoftReference<T>(null)
@@ -54,7 +54,7 @@ fun <W, T> W.softLazy(getter: () -> T): ReadOnlyProperty<W, T> {
     }
 }
 
-fun <W, T> W.weakLazy(getter: () -> T): ReadOnlyProperty<W, T> {
+fun <W, T> weakLazy(getter: () -> T): ReadOnlyProperty<W, T> {
     return object : ReadOnlyProperty<W, T> {
         @Volatile
         var weakRef = WeakReference<T>(null)
