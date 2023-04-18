@@ -32,7 +32,8 @@ class AnalysisTest : BaseTest() {
         generatingArgs: List<String>,
         shouldFail: Boolean = false,
         failMessage: String? = null) {
-        val errorFile = File("src\\test\\kotlin\\org\\jacodb\\analysis\\impl\\errorsOutput".replace('\\', File.separatorChar))
+        val errorFile =
+            File("src\\test\\kotlin\\org\\jacodb\\analysis\\impl\\errorsOutput".replace('\\', File.separatorChar))
         val commonArs = listOf(
             "java",
             "-ea",
@@ -42,23 +43,19 @@ class AnalysisTest : BaseTest() {
         val resultArgs = commonArs.plus(generatingArgs)
         val assemblingResult = ProcessBuilder().redirectError(errorFile).command(resultArgs).start().waitFor()
         if (!shouldFail) {
-            var errorDescription: String? = null
-            if(assemblingResult != 0){
-                val reader = errorFile.bufferedReader()
-                for (i in 1 .. 3) reader.readLine()
-                errorDescription = reader.readLine()
+            var error: List<String>? = null
+            if (assemblingResult != 0) {
+                error = errorFile.readLines()
             }
             File("generated").deleteRecursively()
             errorFile.delete()
-            assertEquals(0, assemblingResult,errorDescription)
+            assertEquals(0, assemblingResult, error?.joinToString("/n"))
         } else {
             File("generated").deleteRecursively()
-            val reader = errorFile.bufferedReader()
-            for (i in 1..3) reader.readLine()
-            val errorDescription = reader.readLine()
+            val error = errorFile.readLines()
             errorFile.delete()
             assertEquals(1, assemblingResult)
-            assertEquals(errorDescription, failMessage)
+            assertEquals(error[3], failMessage)
         }
     }
 
