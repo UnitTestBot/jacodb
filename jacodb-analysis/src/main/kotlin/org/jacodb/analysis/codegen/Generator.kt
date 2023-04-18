@@ -27,7 +27,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.Collections.min
-import kotlin.IllegalStateException
 import kotlin.io.path.notExists
 import kotlin.io.path.useDirectoryEntries
 import kotlin.random.Random
@@ -185,31 +184,34 @@ private fun runGradleAssemble(targetLanguage: TargetLanguage, projectPath: Path)
     )
 }
 
+private data class RunCmdResult(val output: File, val error: File)
+
 private fun runCmd(
     cmd: List<String>,
     errorPrefix: String,
     filePrefix: String,
     logPrefix: String,
-    workingDir: File
-): File {
+    workingDir: File,
+    mergeOutput: Boolean = false
+): RunCmdResult {
     val errorFileName = workingDir.absolutePath + File.separator + filePrefix + "Error"
     val outputFileName = workingDir.absolutePath + File.separator + filePrefix + "Output"
-    val errorFile = File(errorFileName)
     val outputFile = File(outputFileName)
+    val errorFile = if (mergeOutput) outputFile else File(errorFileName)
     try {
         val cmdBuilder =
             ProcessBuilder().directory(workingDir).redirectError(errorFile).redirectOutput(outputFile).command(cmd)
         val process = cmdBuilder.start()
-        process.waitFor()
+        val pid = process.waitFor()
         val hasErrors = errorFile.length() != 0L
-        if (hasErrors) {
+        if (pid != 0 && hasErrors) {
             logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
             throw IllegalStateException(errorPrefix)
         }
         logger.info {
             "$logPrefix: check more logs in - ${outputFile.path}"
         }
-        return outputFile
+        return RunCmdResult(outputFile, errorFile)
     } catch (e: IOException) {
         logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
         errorFile.writeText(e.stackTraceToString())
@@ -217,21 +219,58 @@ private fun runCmd(
     }
 }
 
+class JavaVersion(version: String) : Comparable<JavaVersion> {
+    private val numbers: IntArray
+
+    init {
+        val split = version
+            .split("-".toRegex())
+            .dropLastWhile { it.isEmpty() }
+            .toTypedArray()[0]
+            .split("_".toRegex())
+            .dropLastWhile { it.isEmpty() }
+            .toTypedArray()[0]
+            .split("\\.".toRegex())
+            .dropLastWhile { it.isEmpty() }
+            .toTypedArray()
+        numbers = IntArray(split.size)
+        for (i in split.indices) {
+            numbers[i] = Integer.valueOf(split[i])
+        }
+    }
+
+    override operator fun compareTo(other: JavaVersion): Int {
+        val maxLength = numbers.size.coerceAtLeast(other.numbers.size)
+        for (i in 0 until maxLength) {
+            val left = if (i < numbers.size) numbers[i] else 0
+            val right = if (i < other.numbers.size) other.numbers[i] else 0
+            if (left != right) {
+                return if (left < right) -1 else 1
+            }
+        }
+        return 0
+    }
+
+    override fun toString(): String {
+        return numbers.joinToString(separator = ".")
+    }
+}
+
 private fun checkJava(file: File) {
-    val javaVersionFile = runCmd(
-        cmd = listOf("java", "--version"),
+    val (output, _) = runCmd(
+        cmd = listOf("java", "-version"),
         errorPrefix = "problems with java",
         filePrefix = "javaVersion",
         logPrefix = "java version checking",
-        workingDir = file
+        workingDir = file,
+        mergeOutput = true
     )
-    val javaDescription = BufferedReader(javaVersionFile.reader()).readLine()
-    val versionElements = javaDescription.split(" ")[1].split(DOT)
-    val discard = Integer.parseInt(versionElements[0])
-    val javaVersion = if (discard == 1) Integer.parseInt(versionElements[1]) else discard
-    if (javaVersion < 8) {
-        logger.error { "java version must being 8 or higher. current env java: $javaVersion" }
-        throw IllegalStateException("java version must being 8 or higher. current env java: $javaVersion")
+    val javaDescription = BufferedReader(output.reader()).readLine()
+    val versionElements = javaDescription.split(" ")[2].trim { it.isWhitespace() || it == '\"' }
+    val symVersion = JavaVersion(versionElements)
+    if (symVersion < JavaVersion("1.8")) {
+        logger.error { "java version must being 8 or higher. current env java: $symVersion" }
+        throw IllegalStateException("java version must being 8 or higher. current env java: $symVersion")
     }
 }
 
