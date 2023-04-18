@@ -55,7 +55,7 @@ class AnalysisTest : BaseTest() {
             val error = errorFile.readLines()
             errorFile.delete()
             assertEquals(1, assemblingResult)
-            assertEquals(error[3], failMessage)
+            assertEquals(error[0], failMessage)
         }
     }
 
