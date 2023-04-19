@@ -86,9 +86,9 @@ fun main(args: Array<String>) {
     val m = args[1].toInt()
     val k = args[2].toInt()
 
-    assert(n in 2 .. 1000) { "currently big graphs not supported just in case" }
-    assert(m in 1 .. 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
-    assert(k in 0 .. min(listOf(255, n, m)))
+    assert(n in 2..1000) { "currently big graphs not supported just in case" }
+    assert(m in 1..1000000) { "though we permit duplicated edges, do not overflow graph too much" }
+    assert(k in 0..min(listOf(255, n, m)))
 
     val projectPath = Paths.get(args[3]).normalize()
 
@@ -203,8 +203,7 @@ private fun runCmd(
             ProcessBuilder().directory(workingDir).redirectError(errorFile).redirectOutput(outputFile).command(cmd)
         val process = cmdBuilder.start()
         val pid = process.waitFor()
-        val hasErrors = errorFile.length() != 0L
-        if (pid != 0 && hasErrors) {
+        if (pid != 0) {
             logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
             throw IllegalStateException(errorPrefix)
         }

@@ -25,13 +25,14 @@ import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.jacodb.analysis.codegen.main
+import org.junit.jupiter.api.assertThrows
 
 class AnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
-    private fun checkTestCase(
-        generatingArgs: List<String>,
-        shouldFail: Boolean = false,
-        failMessage: String? = null) {
+    private fun testAssemble(
+        generatingArgs: List<String>
+    ) {
         val errorFile =
             File("src\\test\\kotlin\\org\\jacodb\\analysis\\impl\\errorsOutput".replace('\\', File.separatorChar))
         val commonArs = listOf(
@@ -41,22 +42,22 @@ class AnalysisTest : BaseTest() {
             "build/libs/jacodb-analysis-1.0-SNAPSHOT.jar"
         )
         val resultArgs = commonArs.plus(generatingArgs)
-        val assemblingResult = ProcessBuilder().redirectError(errorFile).command(resultArgs).start().waitFor()
-        if (!shouldFail) {
-            var error: List<String>? = null
-            if (assemblingResult != 0) {
-                error = errorFile.readLines()
-            }
-            File("generated").deleteRecursively()
-            errorFile.delete()
-            assertEquals(0, assemblingResult, error?.joinToString("/n"))
-        } else {
-            File("generated").deleteRecursively()
-            val error = errorFile.readLines()
-            errorFile.delete()
-            assertEquals(1, assemblingResult)
-            assertEquals(error[0], failMessage)
+        val process = ProcessBuilder().redirectError(ProcessBuilder.Redirect.INHERIT).command(resultArgs).start()
+        val assemblingResult = process.waitFor()
+        var error: List<String>? = null
+        if (assemblingResult != 0) {
+            error = errorFile.readLines()
         }
+        File("generated").deleteRecursively()
+        errorFile.delete()
+        assertEquals(0, assemblingResult, error?.joinToString(System.lineSeparator()))
+    }
+
+    private inline fun <reified T : Throwable> testThrows(exceptionMessage: String, args: Array<String>) {
+        val exception = assertThrows<T> {
+            main(args)
+        }
+        assertEquals(exceptionMessage, exception.message)
     }
 
     @Test
@@ -66,70 +67,60 @@ class AnalysisTest : BaseTest() {
 
     @Test
     fun checkBigAssembling() {
-        checkTestCase(listOf("100", "1000", "10", "generated", "JavaLanguage", "true"))
+        testAssemble(listOf("100", "1000", "10", "generated", "JavaLanguage", "true"))
     }
 
     @Test
     fun checkSmallAssembling() {
-        checkTestCase(listOf("2", "1", "1", "generated", "JavaLanguage", "true"))
+        testAssemble(listOf("2", "1", "1", "generated", "JavaLanguage", "true"))
     }
 
     @Test
     fun checkWrongLanguageAssembling() {
-        val failMessage =
-            "Exception in thread \"main\" java.util.NoSuchElementException: Collection contains no element matching the predicate."
-        checkTestCase(
-            listOf("2", "1", "1", "generated", "PythonLanguage", "true"),
-            shouldFail = true,
-            failMessage = failMessage
+        testThrows<NoSuchElementException>(
+            exceptionMessage = "Collection contains no element matching the predicate.",
+            args = arrayOf("2", "1", "1", "generated", "PythonLanguage", "true")
         )
     }
 
     @Test
     fun checkWrongNumOfArgsAssembling() {
-        val failMessage =
-            "Exception in thread \"main\" java.lang.AssertionError: vertices:Int edges:Int vulnerabilities:Int pathToProjectDir:String targetLanguage:String [clearTargetDir: Boolean]"
-        checkTestCase(listOf("2"), shouldFail = true, failMessage = failMessage)
-        checkTestCase(listOf("2", "1"), shouldFail = true, failMessage = failMessage)
-        checkTestCase(listOf("2", "1", "1"), shouldFail = true, failMessage = failMessage)
-        checkTestCase(listOf("2", "1", "1", "generated"), shouldFail = true, failMessage = failMessage)
-        checkTestCase(
-            listOf("2", "1", "1", "generated", "JavaLanguage", "true", "nothing"),
-            shouldFail = true,
-            failMessage = failMessage
+        val exceptionMessage =
+            "vertices:Int edges:Int vulnerabilities:Int pathToProjectDir:String targetLanguage:String [clearTargetDir: Boolean]"
+        testThrows<AssertionError>(exceptionMessage = exceptionMessage, args = arrayOf("2"))
+        testThrows<AssertionError>(exceptionMessage = exceptionMessage, args = arrayOf("2", "1"))
+        testThrows<AssertionError>(exceptionMessage = exceptionMessage, args = arrayOf("2", "1", "1"))
+        testThrows<AssertionError>(exceptionMessage = exceptionMessage, args = arrayOf("2", "1", "1", "generated"))
+        testThrows<AssertionError>(
+            exceptionMessage = exceptionMessage,
+            args = arrayOf("2", "1", "1", "2", "1", "1", "generated", "JavaLanguage", "true", "nothing")
         )
     }
 
     @Test
     fun checkWrongBoundsOfArgsAssembling() {
-        val commonFailMessage = "Exception in thread \"main\" java.lang.AssertionError: "
-        val nFailMessages = commonFailMessage + "currently big graphs not supported just in case"
-        val mFailMessages = commonFailMessage + "though we permit duplicated edges, do not overflow graph too much"
-        val kFailMessage = commonFailMessage + "Assertion failed"
-        checkTestCase(
-            listOf("1", "1", "1", "generated", "JavaLanguage", "true"),
-            shouldFail = true,
-            failMessage = nFailMessages
+        val nExceptionMessage = "currently big graphs not supported just in case"
+        val mExceptionMessage = "though we permit duplicated edges, do not overflow graph too much"
+        val kExceptionMessage = "Assertion failed"
+        testThrows<AssertionError>(
+            exceptionMessage = nExceptionMessage,
+            args = arrayOf("1", "1", "1", "generated", "JavaLanguage", "true")
         )
-        checkTestCase(
-            listOf("1001", "1", "1", "generated", "JavaLanguage", "true"),
-            shouldFail = true,
-            failMessage = nFailMessages
+        testThrows<AssertionError>(
+            exceptionMessage = nExceptionMessage,
+            args = arrayOf("1001", "1", "1", "generated", "JavaLanguage", "true")
         )
-        checkTestCase(
-            listOf("2", "0", "1", "generated", "JavaLanguage", "true"),
-            shouldFail = true,
-            failMessage = mFailMessages
+        testThrows<AssertionError>(
+            exceptionMessage = mExceptionMessage,
+            args = arrayOf("2", "0", "1", "generated", "JavaLanguage", "true")
         )
-        checkTestCase(
-            listOf("2", "1", "256", "generated", "JavaLanguage", "true"),
-            shouldFail = true,
-            failMessage = kFailMessage
+        testThrows<AssertionError>(
+            exceptionMessage = kExceptionMessage,
+            args = arrayOf("2", "1", "256", "generated", "JavaLanguage", "true")
         )
-        checkTestCase(
-            listOf("2", "1", "-1", "generated", "JavaLanguage", "true"),
-            shouldFail = true,
-            failMessage = kFailMessage
+        testThrows<AssertionError>(
+            exceptionMessage = kExceptionMessage,
+            args = arrayOf("2", "1", "-1", "generated", "JavaLanguage", "true")
         )
     }
 }
