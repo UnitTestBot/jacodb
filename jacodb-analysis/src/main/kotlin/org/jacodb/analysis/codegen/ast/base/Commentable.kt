@@ -17,7 +17,7 @@
 package org.jacodb.analysis.codegen.ast.base
 
 interface Commentable {
-    var comments: ArrayList<String>
+    var comments: MutableList<String>
     fun setCommentWithShift(numOfComment: Int, newComment: String) {
         while (comments.size < numOfComment + 1) {
             comments.add("")
@@ -25,14 +25,14 @@ interface Commentable {
         if (numOfComment <= comments.size - 1) {
             comments.add("")
             for (i in comments.size - 2 downTo numOfComment) {
-                comments.set(i + 1, comments.get(i))
+                comments[i + 1] = comments[i]
             }
         }
         comments[numOfComment] = newComment
     }
 
     fun setComment(numOfComment: Int, newComment: String) {
-        comments.set(numOfComment, newComment)
+        comments[numOfComment] = newComment
     }
 
     fun addComments(addingTarget: Commentable) {

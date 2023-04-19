@@ -61,7 +61,7 @@ class JavaNpeInstance(private val codeRepresentation: CodeRepresentation) : Vuln
         invocationExpression.addInCall(dispatcherAddMethodParameter, object : DirectStringSubstitution {
             override val substitution: String = targetCall.toString()
             override val evaluatedType: TypeUsage = dispatcherAddMethodParameter.usage
-            override var comments: ArrayList<String> = ArrayList()
+            override var comments: MutableList<String> = ArrayList()
         })
         preparationSite.addBefore(invocationExpression)
     }

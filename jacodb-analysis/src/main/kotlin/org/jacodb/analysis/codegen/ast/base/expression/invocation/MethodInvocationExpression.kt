@@ -20,7 +20,7 @@ import org.jacodb.analysis.codegen.ast.base.CodeValue
 import org.jacodb.analysis.codegen.ast.base.Commentable
 import org.jacodb.analysis.codegen.ast.base.presentation.type.MethodPresentation
 
-interface MethodInvocationExpression : InvocationExpression, Commentable {
+interface MethodInvocationExpression : InvocationExpression {
     val invokedMethod: MethodPresentation
     override val invokedOn: CodeValue
 

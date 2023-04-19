@@ -27,7 +27,7 @@ open class FunctionImpl(
     override val visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
     returnType: TypeUsage = TypePresentation.voidType.instanceType,
     parameters: List<Pair<TypeUsage, String>> = emptyList(),
-    override var comments: ArrayList<String> = ArrayList()
+    override var comments: MutableList<String> = ArrayList()
 ) : CallableImpl(graphId, returnType, parameters), FunctionPresentation {
     override fun equals(other: Any?): Boolean {
         if (other !is FunctionImpl)

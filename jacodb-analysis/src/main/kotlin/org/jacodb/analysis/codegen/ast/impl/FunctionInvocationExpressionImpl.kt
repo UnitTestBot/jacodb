@@ -20,5 +20,5 @@ import org.jacodb.analysis.codegen.ast.base.expression.invocation.FunctionInvoca
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
 
 class FunctionInvocationExpressionImpl(override val invokedCallable: FunctionPresentation,
-                                       override var comments: ArrayList<String> = ArrayList()
+                                       override var comments: MutableList<String> = ArrayList()
 ) : ArgumentsOwnerExpressionImpl(), FunctionInvocationExpression

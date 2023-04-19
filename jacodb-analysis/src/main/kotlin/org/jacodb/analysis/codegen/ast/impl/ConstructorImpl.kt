@@ -27,8 +27,7 @@ class ConstructorImpl(
     override val containingType: TypePresentation,
     override val visibility: VisibilityModifier,
     override val parentConstructorCall: ObjectCreationExpression?,
-    parameters: List<Pair<TypeUsage, String>>,
-    override var comments: ArrayList<String> = ArrayList()
+    parameters: List<Pair<TypeUsage, String>>
 ) : CallableImpl(graphId, containingType.instanceType, parameters), ConstructorPresentation {
     override val returnType: TypeUsage
         get() = super<CallableImpl>.returnType

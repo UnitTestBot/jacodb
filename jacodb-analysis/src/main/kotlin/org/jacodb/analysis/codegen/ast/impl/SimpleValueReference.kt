@@ -21,7 +21,7 @@ import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
 class SimpleValueReference(
         private val presentation: ValuePresentation,
-        override var comments: ArrayList<String> = ArrayList()
+        override var comments: MutableList<String> = ArrayList()
 ) : ValueReference, NameOwner by presentation {
     override fun resolve(): ValuePresentation = presentation
     override val evaluatedType: TypeUsage

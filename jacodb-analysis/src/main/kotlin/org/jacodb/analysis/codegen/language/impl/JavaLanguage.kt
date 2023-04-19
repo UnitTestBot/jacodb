@@ -85,7 +85,7 @@ class JavaLanguage : TargetLanguage {
             DirectStringSubstitution {
             override val substitution: String = "-1"
             override val evaluatedType: TypeUsage = integerUsage
-            override var comments: ArrayList<String> = ArrayList()
+            override var comments: MutableList<String> = ArrayList()
         })
         val dispatcherQueue = callable.getLocal(dispatcherQueueName)!!
         val dispatcherReference = dispatcherQueue.reference

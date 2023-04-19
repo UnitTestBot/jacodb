@@ -22,7 +22,7 @@ import org.jacodb.analysis.codegen.ast.base.VisibilityOwner
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart, Commentable {
+interface ConstructorPresentation : CallablePresentation, VisibilityOwner, TypePart {
     val parentConstructorCall: ObjectCreationExpression?
     override val returnType: TypeUsage
         get() = containingType.instanceType

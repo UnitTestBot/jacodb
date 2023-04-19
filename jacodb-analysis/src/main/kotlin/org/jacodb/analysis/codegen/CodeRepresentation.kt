@@ -70,11 +70,11 @@ class CodeRepresentation(private val language: TargetLanguage) :
     }
 
     private fun generateCommentForStartFunction(function: FunctionPresentation): List<String> {
-        val numsOfDispatches = function.preparationSite.expressionsBefore.map { expressionBefore ->
+        val numsOfDispatches = function.preparationSite.expressionsBefore.flatMap { expressionBefore ->
             (expressionBefore as MethodInvocationExpressionImpl).parameterToArgument.map { dispatchValue ->
                 (dispatchValue.value as DirectStringSubstitution).substitution
             }.toList()
-        }.toList().flatten()
+        }.toList()
         val numOfBreakingVarClass = numsOfDispatches[numsOfDispatches.size - 2].toInt()
         val breakingClass = functions[numOfBreakingVarClass]
         val breakingVar = breakingClass?.terminationSite?.dereferences?.elementAt(0)
@@ -83,10 +83,10 @@ class CodeRepresentation(private val language: TargetLanguage) :
                 "${(breakingVar as SimpleValueReference).shortName}.")
         val readableConst = 16
         val numOfDispatchComments =
-                numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
+            numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
         var iterator = 0
         while (iterator < numOfDispatchComments) {
-            val currentComment: StringBuilder = StringBuilder()
+            val currentComment = StringBuilder()
             for (i in iterator * readableConst until minOf((iterator + 1) * readableConst, numsOfDispatches.size)) {
                 currentComment.append("${numsOfDispatches[i]} -> ")
             }
