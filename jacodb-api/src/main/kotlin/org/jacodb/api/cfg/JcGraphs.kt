@@ -18,59 +18,23 @@
 
 package org.jacodb.api.cfg
 
-object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>?>, DefaultJcExprVisitor<Set<JcLocal>?> {
+object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>>, DefaultJcExprVisitor<Set<JcLocal>> {
 
-    override val defaultInstHandler: (JcInst) -> Set<JcLocal>?
-        get() = { null }
-    override val defaultExprHandler: (JcExpr) -> Set<JcLocal>?
-        get() = { null }
+    override val defaultInstHandler: (JcInst) -> Set<JcLocal>
+        get() = { (it.operands.locals + it.operands.flatMap { it.operands.locals }).toSet() }
 
-    override fun visitJcLocalVar(value: JcLocalVar): Set<JcLocal> {
-        return setOf(value)
-    }
-
-    override fun visitJcArgument(value: JcArgument): Set<JcLocal> {
-        return setOf(value)
-    }
-
-    private fun visitCallExpr(expr: JcCallExpr): Set<JcLocal> {
-        return expr.operands.flatMap { it.accept(this@LocalResolver).orEmpty() }.toSet()
-    }
-
-    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): Set<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Set<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Set<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): Set<JcLocal> = visitCallExpr(expr)
-
-    override fun visitJcAssignInst(inst: JcAssignInst): Set<JcLocal> {
-        return buildSet {
-            inst.lhv.let {
-                if (it is JcLocal) {
-                    add(it)
-                }
+    override val defaultExprHandler: (JcExpr) -> Set<JcLocal>
+        get() = {
+            val childs = it.operands.locals.toSet()
+            when {
+                it is JcLocal && childs.isEmpty() -> setOf(it)
+                it is JcLocal -> childs + it
+                else -> childs
             }
-            inst.rhv.accept(this@LocalResolver)?.let { addAll(it) }
         }
-    }
 
-    override fun visitJcThrowInst(inst: JcThrowInst): Set<JcLocal>? {
-        return inst.throwable.accept(this)
-    }
+    private val List<JcExpr>.locals get() = filterIsInstance<JcLocal>()
 
-    override fun visitJcCatchInst(inst: JcCatchInst): Set<JcLocal>? {
-        return inst.throwable.accept(this)
-    }
-
-    override fun visitJcCallInst(inst: JcCallInst): Set<JcLocal>? {
-        return inst.callExpr.accept(this)
-    }
-
-    override fun visitJcReturnInst(inst: JcReturnInst): Set<JcLocal>? {
-        return inst.returnValue?.accept(this)
-    }
 }
 
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
