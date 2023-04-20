@@ -17,12 +17,7 @@
 package org.jacodb.analysis.paths
 
 import org.jacodb.api.JcField
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isStatic
 
 /**

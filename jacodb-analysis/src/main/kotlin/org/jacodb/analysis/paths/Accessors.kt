@@ -22,7 +22,7 @@ sealed interface Accessor
 
 data class FieldAccessor(val field: JcField) : Accessor {
     override fun toString(): String {
-        return field.toString()
+        return field.name
     }
 }
 

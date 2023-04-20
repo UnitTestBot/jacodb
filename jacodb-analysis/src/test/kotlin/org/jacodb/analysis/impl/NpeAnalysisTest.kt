@@ -19,7 +19,7 @@ package org.jacodb.analysis.impl
 import NPEExamples
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.FlowDroidFactory
+import org.jacodb.analysis.NPEAnalysisFactory
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -267,7 +267,7 @@ class NpeAnalysisTest : BaseTest() {
     private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
         val graph = runBlocking { SimplifiedJcApplicationGraph(JcApplicationGraphImpl(cp, cp.usagesExt())) }
         val all = AllOverridesDevirtualizer(graph, cp)
-        val ifds = FlowDroidFactory().createAnalysisEngine(graph, all, File("a"))
+        val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, all, File("a"))
         ifds.addStart(method)
         val result = ifds.analyze()
         return result.foundVulnerabilities.filter { it.vulnerabilityType == NpeAnalyzer.value }

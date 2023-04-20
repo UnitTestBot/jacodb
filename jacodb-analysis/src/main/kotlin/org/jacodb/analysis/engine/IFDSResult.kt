@@ -29,16 +29,19 @@ class IFDSResult(
     /**
      * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
      */
-    fun resolvePossibleStackTrace(vertex: IFDSVertex<DomainFact>, startMethod: JcMethod): List<JcInst> {
+    fun resolvePossibleStackTrace(vertex: IFDSVertex<DomainFact>): List<JcInst> {
         val result = mutableListOf(vertex.statement)
         // TODO: fix
-//        var curVertex = vertex
-//        while (graph.methodOf(curVertex.statement) != startMethod) {
-//            // TODO: Note that taking not first element may cause to infinite loop in this implementation
-//            val startVertex = pathEdges.first { it.v == curVertex }.u
-//            curVertex = callToStartEdges.first { it.v == startVertex }.u
-//            result.add(curVertex.statement)
-//        }
+        var curVertex = vertex
+        while (curVertex.domainFact != ZEROFact) {
+            // TODO: Note that taking not first element may cause to infinite loop in this implementation
+            val startVertex = pathEdges.first { it.v == curVertex }.u
+            if (startVertex.domainFact == ZEROFact) {
+                break
+            }
+            curVertex = callToStartEdges.first { it.v == startVertex }.u
+            result.add(curVertex.statement)
+        }
         return result.reversed()
     }
 }

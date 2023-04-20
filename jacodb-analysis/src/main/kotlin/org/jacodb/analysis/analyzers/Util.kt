@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.analyzers
 
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcThis

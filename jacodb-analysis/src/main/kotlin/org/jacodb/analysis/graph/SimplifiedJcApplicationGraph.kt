@@ -23,7 +23,11 @@ import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcNoopInst
 
 /**
- * Simplified and optimized  JcApplicationGraph that ignores method calls matching [bannedPackagePrefixes]
+ * This is adopted specially for IFDS [JcApplicationGraph] that
+ *  1. Ignores method calls matching [bannedPackagePrefixes] (i.e., treats them as simple instructions with no callees)
+ *  2. In [callers] returns only callsites that were visited before
+ *  3. Adds a special [JcNoopInst] instruction to the beginning of each method
+ *    (because backward analysis may want for method to start with neutral instruction)
  */
 class SimplifiedJcApplicationGraph(
     private val impl: JcApplicationGraphImpl,
@@ -32,6 +36,8 @@ class SimplifiedJcApplicationGraph(
 
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
 
+    // For backward analysis we may want for method to start with "neutral" operation =>
+    //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
         return JcNoopInst(JcInstLocation(method, -1, -1))
     }
@@ -48,6 +54,7 @@ class SimplifiedJcApplicationGraph(
             }
         }
     }
+
     override fun successors(node: JcInst): Sequence<JcInst> {
         val method = methodOf(node)
         return if (node == getStartInst(method)) {
@@ -56,6 +63,7 @@ class SimplifiedJcApplicationGraph(
             impl.successors(node)
         }
     }
+
     override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
         bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
     }.map {
@@ -70,21 +78,17 @@ class SimplifiedJcApplicationGraph(
      */
     override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
 
-    /**
-     * This is IFDS-algorithm aware optimization.
-     * In IFDS we don't need all entry-points of method, we need only entry-points of method which we visited earlier.
-     */
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
 
     companion object {
         val defaultBannedPackagePrefixes: List<String> = listOf(
             "kotlin.",
             "java.",
-            "kotlin.jvm.internal.",
             "jdk.internal.",
             "sun.",
-            "java.security.",
-            "java.util.regex."
+//            "kotlin.jvm.internal.",
+//            "java.security.",
+//            "java.util.regex."
         )
     }
 }

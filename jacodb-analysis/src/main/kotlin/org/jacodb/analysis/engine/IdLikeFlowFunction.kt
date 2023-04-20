@@ -16,21 +16,14 @@
 
 package org.jacodb.analysis.engine
 
-private val impossibleSpaceId = object : SpaceId {
-    override val value: String
-        get() = "impossibleSpaceId"
-
-}
-
 /**
  * Flow function which is equal to id for all elements from [domain] except those in [nonId], for which the result is stored in the map
+ * For now, this class is not used, but it may be helpful for some analysis
  */
-class IdLikeFlowFunction(
+abstract class IdLikeFlowFunction(
     private val domain: Set<DomainFact>,
     private val nonId: Map<DomainFact, Collection<DomainFact>>
 ): FlowFunctionInstance {
-    override val spaceId: SpaceId
-        get() = impossibleSpaceId
 
     override fun compute(fact: DomainFact): Collection<DomainFact> {
         nonId[fact]?.let {

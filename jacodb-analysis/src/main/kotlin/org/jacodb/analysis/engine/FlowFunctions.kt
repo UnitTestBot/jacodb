@@ -21,7 +21,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
 interface FlowFunctionInstance {
-    val spaceId: SpaceId
+    val inIds: List<SpaceId>
     fun compute(fact: DomainFact): Collection<DomainFact>
 }
 
@@ -33,8 +33,19 @@ interface DomainFact {
     val id: SpaceId
 }
 
+object ZEROFact : DomainFact {
+    override val id = object : SpaceId {
+        override val value: String
+            get() = "ZERO fact id"
+    }
+
+    override fun toString(): String {
+        return "[ZERO fact]"
+    }
+}
+
 interface FlowFunctionsSpace {
-    val id: SpaceId
+    val inIds: List<SpaceId>
     fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact>
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance

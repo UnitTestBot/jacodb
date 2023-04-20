@@ -43,10 +43,11 @@ class IFDSInstance(
     override fun addStart(method: JcMethod) {
         val entryPoints = graph.entryPoint(method)
 
-        for(entryPoint in entryPoints) {
+        for (entryPoint in entryPoints) {
             for (fact in flowSpace.obtainStartFacts(entryPoint)) {
                 val startV = IFDSVertex(entryPoint, fact)
-                val startE = IFDSEdge(startV, startV)
+                val startU = IFDSVertex(entryPoint, ZEROFact)
+                val startE = IFDSEdge(startU, startV)
                 propagate(startE)
             }
         }
@@ -174,7 +175,7 @@ class IFDSInstance(
         }
     }
 
-    fun collectResults(): IFDSResult {
+    private fun collectResults(): IFDSResult {
         val resultFacts = mutableMapOf<JcInst, MutableSet<DomainFact>>()
 
         // 6-8

@@ -15,7 +15,6 @@
  */
 
 package org.jacodb.analysis
-
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.required
@@ -25,24 +24,19 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KotlinLogging
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.engine.IFDSInstance
+import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.impl.jacodb
 import java.io.File
-import java.lang.IllegalArgumentException
-import java.util.ServiceLoader
+import java.util.*
 
 @Serializable
 data class VulnerabilityInstance(
@@ -76,23 +70,29 @@ interface AnalysisEngineFactory : Factory {
     ): AnalysisEngine
 }
 
-class FlowDroidFactory : AnalysisEngineFactory {
+abstract class FlowDroidFactory : AnalysisEngineFactory {
+
+    protected abstract fun getAnalyzer(graph: JcApplicationGraph): Analyzer
+
     override fun createAnalysisEngine(
         graph: JcApplicationGraph,
         points2Engine: Points2Engine,
         cacheDir: File
     ): AnalysisEngine {
-        val cp = graph.classpath
-        val analyzer = NpeAnalyzer(cp, graph, graph)
-        val forwardInstance = IFDSInstance(graph, analyzer, points2Engine.obtainDevirtualizer())
-        val backwardInstance = IFDSInstance(graph.reversed, analyzer.backward, points2Engine.obtainDevirtualizer())
-        val instance = TaintAnalysisWithPointsTo(graph, forwardInstance, backwardInstance)
+        val analyzer = getAnalyzer(graph)
+        val instance = TaintAnalysisWithPointsTo(graph, analyzer, points2Engine)
 
         return instance
     }
 
     override val name: String
         get() = "JacoDB-FlowDroid"
+}
+
+class NPEAnalysisFactory : FlowDroidFactory() {
+    override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
+        return NpeAnalyzer(graph.classpath, graph, graph)
+    }
 }
 
 interface Points2EngineFactory : Factory {

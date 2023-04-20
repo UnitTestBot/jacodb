@@ -46,7 +46,7 @@ class NpeAnalyzer(
             get() = this@NpeAnalyzer.flowFunctions.backward
 
         override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
-            TODO("Do not call sources for backward")
+            error("Do not call sources for backward analyzer instance")
         }
     }
 
@@ -73,15 +73,11 @@ class NpeAnalyzer(
      */
     private fun findNPEInstructions(ifdsResults: IFDSResult): List<NPELocation> {
         val possibleNPEInstructions = mutableListOf<NPELocation>()
-        for (method in ifdsResults.graph.visitedMethods()) {
-            ifdsResults.resultFacts.forEach { (inst, facts) ->
-                (facts as Set<TaintNode>).forEach { fact ->
-                    if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
-                        val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                            IFDSVertex(inst, fact), method
-                        )
-                        possibleNPEInstructions.add(NPELocation(inst, fact.variable!!, possibleStackTrace))
-                    }
+        ifdsResults.resultFacts.forEach { (inst, facts) ->
+            facts.filterIsInstance<NPETaintNode>().forEach { fact ->
+                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+                    val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(IFDSVertex(inst, fact))
+                    possibleNPEInstructions.add(NPELocation(inst, fact.variable, possibleStackTrace))
                 }
             }
         }
@@ -97,8 +93,24 @@ private class NPEForwardFunctions(
     private val maxPathLength: Int = 5
 ) : FlowFunctionsSpace {
 
-    private fun transmitDataFlow(from: JcExpr, to: JcValue, fact: TaintNode, dropFact: Boolean): List<TaintNode> {
-        val factPath = fact.variable
+    private val JcIfInst.pathComparedWithNull: AccessPath?
+        get() {
+            val expr = condition
+            return if (expr.rhv is JcNullConstant) {
+                expr.lhv.toPathOrNull()?.limit(maxPathLength)
+            } else if (expr.lhv is JcNullConstant) {
+                expr.rhv.toPathOrNull()?.limit(maxPathLength)
+            } else {
+                null
+            }
+        }
+
+    private fun transmitDataFlow(from: JcExpr, to: JcValue, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+        val factPath = when (fact) {
+            is NPETaintNode -> fact.variable
+            ZEROFact -> null
+            else -> return emptyList()
+        }
 
         val default = if (dropFact || factPath.isDereferencedAt(from) || factPath.isDereferencedAt(to)) {
             emptyList()
@@ -108,10 +120,9 @@ private class NPEForwardFunctions(
 
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
 
-        // TODO: change hardcoded "getProperty" to something more adequate
         if (from is JcNullConstant || (from is JcCallExpr && from.method.method.treatAsNullable)) {
-            return if (fact == TaintNode.ZERO) {
-                listOf(TaintNode.ZERO, TaintNode.fromPath(toPath)) // taint is generated here
+            return if (fact == ZEROFact) {
+                listOf(ZEROFact, NPETaintNode.fromPath(toPath)) // taint is generated here
             } else {
                 if (factPath.startsWith(toPath)) {
                     emptyList()
@@ -121,11 +132,11 @@ private class NPEForwardFunctions(
             }
         }
 
-        if (from is JcNewArrayExpr && fact == TaintNode.ZERO) {
+        if (from is JcNewArrayExpr && fact == ZEROFact) {
             val arrayType = from.type as JcArrayType
             if (arrayType.elementType.nullable != false) {
                 val arrayElemPath = AccessPath.fromOther(toPath, List(arrayType.dimensions) { ElementAccessor })
-                return listOf(TaintNode.ZERO, TaintNode.fromPath(arrayElemPath, fact.activation))
+                return listOf(ZEROFact, NPETaintNode.fromPath(arrayElemPath))
             }
         }
 
@@ -137,12 +148,16 @@ private class NPEForwardFunctions(
             }
         }
 
+        if (fact !is NPETaintNode) {
+            return default
+        }
+
         // TODO: slightly differs from original paper, think what's correct
         val fromPath = from.toPathOrNull()?.limit(maxPathLength) ?: return default
         if (factPath.startsWith(fromPath)) {
             val diff = factPath.minus(fromPath)!!
             return default
-                .plus(TaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
+                .plus(NPETaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
                 .distinct()
         }
 
@@ -152,10 +167,10 @@ private class NPEForwardFunctions(
         return default
     }
 
-    override val id: SpaceId get() = NpeAnalyzer
+    override val inIds: List<SpaceId> get() = listOf(NpeAnalyzer)
 
-    override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
-        val result = mutableListOf(TaintNode.ZERO)
+    override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
+        val result = mutableListOf<DomainFact>(ZEROFact)
 
         val method = startStatement.location.method
 
@@ -166,22 +181,21 @@ private class NPEForwardFunctions(
         result += platform.flowGraph(method).locals
             .filterIsInstance<JcArgument>()
             .filter { it.type.nullable != false }
-            .map { TaintNode.fromPath(AccessPath.fromLocal(it)) }
+            .map { NPETaintNode.fromPath(AccessPath.fromLocal(it)) }
 
         // Possibly null statics
         // TODO: handle statics in a more general manner
         result += method.enclosingClass.fields
             .filter { it.isNullable != false && it.isStatic }
-            .map { TaintNode.fromPath(AccessPath.fromStaticField(it)) }
+            .map { NPETaintNode.fromPath(AccessPath.fromStaticField(it)) }
 
-        val thisInstance = platform.flowGraph(method).locals.filterIsInstance<JcThis>().singleOrNull()
-            ?: return result
+        val thisInstance = method.thisInstance
 
         // Possibly null fields
         result += method.enclosingClass.fields
             .filter { it.isNullable != false && !it.isStatic }
             .map {
-                TaintNode.fromPath(
+                NPETaintNode.fromPath(
                     AccessPath.fromOther(AccessPath.fromLocal(thisInstance), listOf(FieldAccessor(it)))
                 )
             }
@@ -191,56 +205,56 @@ private class NPEForwardFunctions(
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {
-            override val spaceId = NpeAnalyzer
-            override fun compute(fact: DomainFact): Collection<TaintNode> {
-                fact as TaintNode
-                if (fact.activation == current) {
+            override val inIds = this@NPEForwardFunctions.inIds
+
+            override fun compute(fact: DomainFact): Collection<DomainFact> {
+                if (fact is NPETaintNode && fact.activation == current) {
                     return listOf(fact.activatedCopy)
                 }
-                val default = if (fact.variable.isDereferencedAt(current)) emptyList() else listOf(fact)
                 if (current is JcAssignInst) {
                     return transmitDataFlow(current.rhv, current.lhv, fact, dropFact = false)
                 }
+                val default = if (fact is NPETaintNode && fact.variable.isDereferencedAt(current)) emptyList() else listOf(fact)
+
+                if (current !is JcIfInst) {
+                    return default
+                }
+
+                val currentBranch = graph.methodOf(current).flowGraph().ref(next)
+                if (fact == ZEROFact) {
+                    if (current.pathComparedWithNull != null) {
+                        if ((current.condition is JcEqExpr && currentBranch == current.trueBranch) ||
+                                (current.condition is JcNeqExpr && currentBranch == current.falseBranch)) {
+                            // This is a hack: instructions like `return null` in branch of next will be considered only if
+                            //  the fact holds (otherwise we could not get there)
+                            return listOf(NPETaintNode.fromPath(current.pathComparedWithNull!!))
+                        }
+                    }
+                    return listOf(ZEROFact)
+                }
+
+                fact as NPETaintNode
 
                 // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
                 // (because x == null will be held at expr2 but won't be held at expr1)
-                if (current is JcIfInst) {
-                    val expr = current.condition
-                    val comparedPath = if (expr.rhv is JcNullConstant) {
-                        expr.lhv.toPathOrNull()?.limit(maxPathLength)
-                    } else if (expr.lhv is JcNullConstant) {
-                        expr.rhv.toPathOrNull()?.limit(maxPathLength)
-                    } else {
-                        null
-                    }
+                val expr = current.condition
+                val comparedPath = current.pathComparedWithNull ?: return default
 
-                    if (comparedPath == null)
-                        return default
-
-                    val currentBranch = graph.methodOf(current).flowGraph().ref(next)
-                    if ((expr is JcEqExpr && currentBranch == current.trueBranch) || (expr is JcNeqExpr && currentBranch == current.falseBranch)) {
-                        // comparedPath is null in this branch
-                        if (fact == TaintNode.ZERO)
-                            return listOf(TaintNode.fromPath(comparedPath))
-                        if (fact.variable.startsWith(comparedPath) && fact.activation == null) {
-                            if (fact.variable == comparedPath) {
-                                // This is a hack: instructions like `return null` in branch of next will be considered only if
-                                //  the fact holds (otherwise we could not get there)
-                                return listOf(TaintNode.ZERO)
-                            }
-                            return emptyList()
+                if ((expr is JcEqExpr && currentBranch == current.trueBranch) || (expr is JcNeqExpr && currentBranch == current.falseBranch)) {
+                    // comparedPath is null in this branch
+                    if (fact.variable.startsWith(comparedPath) && fact.activation == null) {
+                        if (fact.variable == comparedPath) {
+                            return listOf(ZEROFact)
                         }
-                        return default
+                        return emptyList()
                     }
-                    if ((expr is JcEqExpr && currentBranch == current.falseBranch) || (expr is JcNeqExpr && currentBranch == current.trueBranch)) {
-                        // comparedPath is not null in this branch
-                        if (fact.variable == comparedPath)
-                            return emptyList()
-                        return default
-                    }
+                    return default
+                } else {
+                    // comparedPath is not null in this branch
+                    if (fact.variable == comparedPath)
+                        return emptyList()
+                    return default
                 }
-
-                return default
             }
         }
 
@@ -248,17 +262,16 @@ private class NPEForwardFunctions(
         callStatement: JcInst,
         callee: JcMethod
     ): FlowFunctionInstance = object : FlowFunctionInstance {
+        override val inIds = this@NPEForwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            if (fact.activation == callStatement) {
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            if (fact is NPETaintNode && fact.activation == callStatement) {
                 return emptyList()
             }
             // NB: in our jimple formalParameters are immutable => we can safely
             // pass paths from caller to callee and back by just renaming them
 
-            val ans = mutableListOf<TaintNode>()
+            val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
             val formalParams = callee.parameters.map {
@@ -270,13 +283,11 @@ private class NPEForwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                val thisInstance = JcThis(callExpr.instance.type)
-                ans += transmitDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
-                    it.variable == thisInstance.toPath()
-                }
+                val thisInstance = callee.thisInstance
+                ans += transmitDataFlow(callExpr.instance, thisInstance, fact, dropFact = true)
             }
 
-            if (fact == TaintNode.ZERO || fact.variable?.isStatic == true) {
+            if (fact == ZEROFact || (fact is NPETaintNode && fact.variable.isStatic)) {
                 ans.add(fact)
             }
 
@@ -288,12 +299,15 @@ private class NPEForwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst
     ): FlowFunctionInstance = object : FlowFunctionInstance {
+        override val inIds = this@NPEForwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            if (fact == TaintNode.ZERO)
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            if (fact == ZEROFact)
                 return listOf(fact)
+
+            if (fact !is NPETaintNode) {
+                return emptyList()
+            }
 
             if (fact.activation == callStatement) {
                 return listOf(fact.activatedCopy)
@@ -303,7 +317,7 @@ private class NPEForwardFunctions(
             val actualParams = callExpr.args
             val default = if (fact.variable.isDereferencedAt(callStatement)) emptyList() else listOf(fact)
 
-            if (fact.variable?.isStatic == true) {
+            if (fact.variable.isStatic) {
                 return emptyList()
             }
 
@@ -332,22 +346,24 @@ private class NPEForwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ): FlowFunctionInstance = object : FlowFunctionInstance {
+        override val inIds = this@NPEForwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            val ans = mutableListOf<TaintNode>()
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
             val callee = exitStatement.location.method
             // TODO: maybe we can always use fact instead of updatedFact here
-            val updatedFact =
-                if (fact.activation?.location?.method == callee) fact.copy(activation = callStatement) else fact
+            val updatedFact = if (fact is NPETaintNode && fact.activation?.location?.method == callee) {
+                fact.updateActivation(callStatement)
+            } else {
+                fact
+            }
             val formalParams = callee.parameters.map {
                 JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
             }
 
-            if (fact.variable?.isOnHeap == true) {
+            if (fact is NPETaintNode && fact.variable.isOnHeap) {
                 // If there is some method A.f(formal: T) that is called like A.f(actual) then
                 //  1. For all g^k, k >= 1, we should propagate back from formal.g^k to actual.g^k (as they are on heap)
                 //  2. We shouldn't propagate from formal to actual (as formal is local)
@@ -359,7 +375,7 @@ private class NPEForwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                ans += transmitDataFlow(JcThis(callExpr.instance.type), callExpr.instance, updatedFact, dropFact = true)
+                ans += transmitDataFlow(callee.thisInstance, callExpr.instance, updatedFact, dropFact = true)
             }
 
             if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {
@@ -368,7 +384,7 @@ private class NPEForwardFunctions(
                 }
             }
 
-            if (fact.variable?.isStatic == true && fact !in ans) {
+            if (fact is NPETaintNode && fact.variable.isStatic && fact !in ans) {
                 ans.add(fact)
             }
 
@@ -389,28 +405,28 @@ private class NPEBackwardFunctions(
     override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
         return emptyList()
     }
-    override val id: SpaceId = NpeAnalyzer
-    private fun transmitBackDataFlow(from: JcValue, to: JcExpr, fact: TaintNode, dropFact: Boolean): List<TaintNode> {
-        val factPath = fact.variable
+    override val inIds: List<SpaceId> = listOf(NpeAnalyzer)
+
+    private fun transmitBackDataFlow(from: JcValue, to: JcExpr, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+        val factPath = (fact as? NPETaintNode)?.variable
         val default = if (dropFact) emptyList() else listOf(fact)
         val toPath = to.toPathOrNull() ?: return default
         val fromPath = from.toPathOrNull() ?: return default
 
         if (factPath.startsWith(fromPath)) {
             val diff = factPath.minus(fromPath)!!
-            return listOf(TaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
+            return listOf(NPETaintNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), (fact as NPETaintNode).activation))
         }
         return default
     }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {
+            override val inIds = this@NPEBackwardFunctions.inIds
 
-            override val spaceId = NpeAnalyzer
-            override fun compute(fact: DomainFact): Collection<TaintNode> {
-                fact as TaintNode
+            override fun compute(fact: DomainFact): Collection<DomainFact> {
                 // fact.activation != current needed here to jump over assignment where the fact appeared
-                return if (current is JcAssignInst && fact.activation != current) {
+                return if (current is JcAssignInst && (fact !is NPETaintNode || fact.activation != current)) {
                     transmitBackDataFlow(current.lhv, current.rhv, fact, dropFact = false)
                 } else {
                     listOf(fact)
@@ -421,16 +437,15 @@ private class NPEBackwardFunctions(
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
         callee: JcMethod
-    ): FlowFunctionInstance = object: FlowFunctionInstance {
+    ): FlowFunctionInstance = object : FlowFunctionInstance {
+        override val inIds = this@NPEBackwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            val ans = mutableListOf<TaintNode>()
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
             // TODO: think about activation point handling for statics here
-            if (fact == TaintNode.ZERO || fact.variable?.isStatic == true)
+            if (fact == ZEROFact || (fact is NPETaintNode && fact.variable.isStatic))
                 ans.add(fact)
 
             if (callStatement is JcAssignInst) {
@@ -442,10 +457,8 @@ private class NPEBackwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                val thisInstance = JcThis(callExpr.instance.type)
-                ans += transmitBackDataFlow(callExpr.instance, thisInstance, fact, dropFact = true).filterNot {
-                    it.variable == thisInstance.toPath()
-                }
+                val thisInstance = callee.thisInstance
+                ans += transmitBackDataFlow(callExpr.instance, thisInstance, fact, dropFact = true)
             }
 
             val formalParams = callee.parameters.map {
@@ -455,7 +468,7 @@ private class NPEBackwardFunctions(
             callExpr.args.zip(formalParams).forEach { (actual, formal) ->
                 // FilterNot is needed for reasons described in comment for symmetric case in NPEForwardFunctions.obtainExitToReturnSiteFlowFunction
                 ans += transmitBackDataFlow(actual, formal, fact, dropFact = true)
-                    .filterNot { it.variable?.isOnHeap != true }
+                    .filterNot { it is NPETaintNode && !it.variable.isOnHeap }
             }
 
             return ans
@@ -466,11 +479,18 @@ private class NPEBackwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst
     ): FlowFunctionInstance = object: FlowFunctionInstance {
+        override val inIds = this@NPEBackwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            val factPath = fact.variable ?: return listOf(fact)
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            if (fact !is NPETaintNode) {
+                return if (fact == ZEROFact) {
+                    listOf(fact)
+                } else {
+                    emptyList()
+                }
+            }
+
+            val factPath = fact.variable
             val callExpr = callStatement.callExpr ?: error("CallStatement is expected to contain callExpr")
 
             // TODO: check that this is legal
@@ -501,7 +521,7 @@ private class NPEBackwardFunctions(
                 }
             }
 
-            return listOf (fact)
+            return listOf(fact)
         }
     }
 
@@ -510,11 +530,10 @@ private class NPEBackwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ): FlowFunctionInstance = object: FlowFunctionInstance {
+        override val inIds = this@NPEBackwardFunctions.inIds
 
-        override val spaceId = NpeAnalyzer
-        override fun compute(fact: DomainFact): Collection<TaintNode> {
-            fact as TaintNode
-            val ans = mutableListOf<TaintNode>()
+        override fun compute(fact: DomainFact): Collection<DomainFact> {
+            val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
             val callee = graph.methodOf(exitStatement)
@@ -527,10 +546,10 @@ private class NPEBackwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                ans += transmitBackDataFlow(JcThis(callExpr.instance.type), callExpr.instance, fact, dropFact = true)
+                ans += transmitBackDataFlow(callee.thisInstance, callExpr.instance, fact, dropFact = true)
             }
 
-            if (fact.variable?.isStatic == true) {
+            if (fact is NPETaintNode && fact.variable.isStatic) {
                 ans.add(fact)
             }
 
