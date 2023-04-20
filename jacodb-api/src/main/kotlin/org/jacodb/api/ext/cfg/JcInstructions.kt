@@ -101,5 +101,5 @@ val JcInst.callExpr: JcCallExpr?
 
 val JcInstList<JcInst>.locals: Set<JcLocal>
     get() {
-        return instructions.flatMap { it.accept(LocalResolver).orEmpty() }.toSet()
+        return instructions.flatMap { it.accept(LocalResolver) }.toSet()
     }

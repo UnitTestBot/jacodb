@@ -18,15 +18,22 @@
 
 package org.jacodb.api.cfg
 
-object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>?>, DefaultJcExprVisitor<Set<JcLocal>?> {
+object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>>, DefaultJcExprVisitor<Set<JcLocal>> {
 
-    override val defaultInstHandler: (JcInst) -> Set<JcLocal>?
-        get() = { it.operands.flatMap { it.operands }.filterIsInstance<JcLocal>().toSet() }
+    override val defaultInstHandler: (JcInst) -> Set<JcLocal>
+        get() = { (it.operands.locals + it.operands.flatMap { it.operands.locals }).toSet() }
 
-    override val defaultExprHandler: (JcExpr) -> Set<JcLocal>?
-        get() = { it.operands.filterIsInstance<JcLocal>().toSet() }
+    override val defaultExprHandler: (JcExpr) -> Set<JcLocal>
+        get() = {
+            val childs = it.operands.locals.toSet()
+            when {
+                it is JcLocal && childs.isEmpty() -> setOf(it)
+                it is JcLocal -> childs + it
+                else -> childs
+            }
+        }
 
-
+    private val List<JcExpr>.locals get() = filterIsInstance<JcLocal>()
 
 }
 
