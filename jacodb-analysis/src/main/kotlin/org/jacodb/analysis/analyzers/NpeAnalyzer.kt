@@ -175,7 +175,7 @@ private class NPEForwardFunctions(
         }
 
         // Following are some ad-hoc magic for if statements to change facts after instructions like if (x != null)
-        val currentBranch = graph.methodOf(inst).flowGraph().ref(nextInst)
+        val currentBranch = platform.flowGraph(graph.methodOf(inst)).ref(nextInst)
         if (fact == ZEROFact) {
             if (inst.pathComparedWithNull != null) {
                 if ((inst.condition is JcEqExpr && currentBranch == inst.trueBranch) ||
