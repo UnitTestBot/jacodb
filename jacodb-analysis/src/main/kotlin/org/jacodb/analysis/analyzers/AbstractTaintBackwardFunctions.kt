@@ -20,9 +20,7 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.paths.startsWith
-import org.jacodb.analysis.paths.toPath
-import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.analysis.paths.*
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -42,7 +40,26 @@ abstract class AbstractTaintBackwardFunctions(
         return emptyList()
     }
 
-    abstract fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
+    open fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+        if (fact == ZEROFact) {
+            return listOf(ZEROFact)
+        }
+
+        if (fact !is TaintNode || fact.id !in inIds) {
+            return emptyList()
+        }
+
+        val factPath = (fact as? TaintNode)?.variable
+        val default = if (dropFact) emptyList() else listOf(fact)
+        val toPath = to.toPathOrNull() ?: return default
+        val fromPath = from.toPathOrNull() ?: return default
+
+        val diff = factPath.minus(fromPath)
+        if (diff != null && factPath != fromPath) {
+            return listOf(fact.moveToOtherPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength)))
+        }
+        return default
+    }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {

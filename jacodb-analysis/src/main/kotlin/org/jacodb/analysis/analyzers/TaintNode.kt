@@ -27,6 +27,8 @@ import org.jacodb.api.cfg.JcInst
 abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = null): DomainFact {
     abstract fun updateActivation(newActivation: JcInst?): TaintNode
 
+    abstract fun moveToOtherPath(newPath: AccessPath): TaintNode
+
     val activatedCopy: TaintNode
         get() = updateActivation(null)
 
@@ -58,12 +60,12 @@ class NPETaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
         return NPETaintNode(variable, newActivation)
     }
 
+    override fun moveToOtherPath(newPath: AccessPath): TaintNode {
+        return NPETaintNode(newPath, activation)
+    }
+
     override val id: SpaceId
         get() = NpeAnalyzer
-
-    companion object {
-        fun fromPath(variable: AccessPath, activation: JcInst? = null) = NPETaintNode(variable, activation)
-    }
 }
 
 class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
@@ -71,10 +73,10 @@ class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): Taint
         return TaintAnalysisNode(variable, newActivation)
     }
 
+    override fun moveToOtherPath(newPath: AccessPath): TaintNode {
+        return TaintAnalysisNode(newPath, activation)
+    }
+
     override val id: SpaceId
         get() = TaintAnalyzer
-
-    companion object {
-        fun fromPath(variable: AccessPath, activation: JcInst? = null) = TaintAnalysisNode(variable, activation)
-    }
 }

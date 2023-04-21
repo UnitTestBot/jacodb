@@ -19,7 +19,8 @@ package org.jacodb.analysis.analyzers
 import org.jacodb.analysis.DumpableAnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.*
-import org.jacodb.analysis.paths.*
+import org.jacodb.analysis.paths.FieldAccessor
+import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -112,28 +113,19 @@ private class TaintForwardFunctions(
     override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
 
     override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
-        val factPath = when (fact) {
-            is TaintAnalysisNode -> fact.variable
-            ZEROFact -> return listOf(ZEROFact) + generates(atInst)
-            else -> return emptyList()
+        if (fact == ZEROFact) {
+            return listOf(ZEROFact) + generates(atInst)
+        }
+
+        if (fact !is TaintAnalysisNode) {
+            return emptyList()
         }
 
         val default = if (dropFact) emptyList() else listOf(fact)
-
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
-
         val fromPath = from.toPathOrNull()?.limit(maxPathLength) ?: return default
-        if (factPath.startsWith(fromPath) && (fact.activation == null || fromPath != factPath)) {
-            val diff = factPath.minus(fromPath)!!
-            return default
-                .plus(TaintAnalysisNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), fact.activation))
-                .distinct()
-        }
 
-        if (factPath.startsWith(toPath)) {
-            return emptyList()
-        }
-        return default
+        return normalFactFlow(fact, fromPath, toPath, dropFact, maxPathLength)
     }
 
     override fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact> {
@@ -158,21 +150,5 @@ private class TaintBackwardFunctions(
     backward: FlowFunctionsSpace,
     maxPathLength: Int,
 ) : AbstractTaintBackwardFunctions(classpath, graph, platform, backward, maxPathLength) {
-    override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
-        return emptyList()
-    }
     override val inIds: List<SpaceId> = listOf(TaintAnalyzer, ZEROFact.id)
-
-    override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
-        val factPath = (fact as? TaintNode)?.variable
-        val default = if (dropFact) emptyList() else listOf(fact)
-        val toPath = to.toPathOrNull() ?: return default
-        val fromPath = from.toPathOrNull() ?: return default
-
-        if (factPath.startsWith(fromPath)) {
-            val diff = factPath.minus(fromPath)!!
-            return listOf(TaintAnalysisNode.fromPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength), (fact as TaintNode).activation))
-        }
-        return default
-    }
 }

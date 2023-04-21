@@ -16,9 +16,32 @@
 
 package org.jacodb.analysis.analyzers
 
+import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.minus
+import org.jacodb.analysis.paths.startsWith
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.ext.toType
 
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
+
+fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dropFact: Boolean, maxPathLength: Int): List<TaintNode> {
+    val factPath = fact.variable
+    val default = if (dropFact) emptyList() else listOf(fact)
+
+    // Second clause is important here as it saves from false positive aliases, see
+    //  #AnalysisTest.`dereferencing copy of value saved before null assignment produce no npe`
+    val diff = factPath.minus(fromPath)
+    if (diff != null && (fact.activation == null || fromPath != factPath)) {
+        return default
+            .plus(fact.moveToOtherPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength)))
+            .distinct()
+    }
+
+    if (factPath.startsWith(toPath)) {
+        return emptyList()
+    }
+
+    return default
+}
