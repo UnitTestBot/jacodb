@@ -24,13 +24,16 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KotlinLogging
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.TaintAnalyzer
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
@@ -92,6 +95,12 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
 class NPEAnalysisFactory : FlowDroidFactory() {
     override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
         return NpeAnalyzer(graph.classpath, graph, graph)
+    }
+}
+
+class TaintAnalysisFactory(private val generates: (JcInst) -> List<DomainFact>) : FlowDroidFactory() {
+    override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
+        return TaintAnalyzer(graph.classpath, graph, graph, generates)
     }
 }
 

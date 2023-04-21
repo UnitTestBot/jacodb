@@ -270,6 +270,22 @@ public class NPEExamples {
         return res;
     }
 
+    int copyBeforeNullAssignment() {
+        SimpleClassWithField x = new SimpleClassWithField("abc");
+        SimpleClassWithField y = new SimpleClassWithField("def");
+        y.field = x.field; // not-null value saved in y.field
+        x.field = null; // x.field set to null, y.field has saved not-null value
+        return y.field.length();
+    }
+
+    int nullAssignmentToCopy() {
+        SimpleClassWithField x = new SimpleClassWithField("abc");
+        SimpleClassWithField y = new SimpleClassWithField("def");
+        x.field = y.field; // x.field now aliases y.field
+        x.field = null; // x.field set to null, y.field is not affected
+        return y.field.length();
+    }
+
 
     // NOT WORKING
     int noNPEAfterAliasing() {

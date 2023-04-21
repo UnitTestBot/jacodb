@@ -222,6 +222,16 @@ class NpeAnalysisTest : BaseTest() {
         testOneMethod<NPEExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
     }
 
+    @Test
+    fun `dereferencing copy of value saved before null assignment produce no npe`() {
+        testOneMethod<NPEExamples>("copyBeforeNullAssignment", emptyList())
+    }
+
+    @Test
+    fun `assigning null to copy doesn't affect original value`() {
+        testOneMethod<NPEExamples>("nullAssignmentToCopy", emptyList())
+    }
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet476")
     fun `test on Juliet's CWE 476`(className: String) {

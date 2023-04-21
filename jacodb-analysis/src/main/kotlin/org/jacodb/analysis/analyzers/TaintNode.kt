@@ -65,3 +65,16 @@ class NPETaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
         fun fromPath(variable: AccessPath, activation: JcInst? = null) = NPETaintNode(variable, activation)
     }
 }
+
+class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+    override fun updateActivation(newActivation: JcInst?): TaintAnalysisNode {
+        return TaintAnalysisNode(variable, newActivation)
+    }
+
+    override val id: SpaceId
+        get() = TaintAnalyzer
+
+    companion object {
+        fun fromPath(variable: AccessPath, activation: JcInst? = null) = TaintAnalysisNode(variable, activation)
+    }
+}

@@ -18,7 +18,6 @@ package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
@@ -42,11 +41,11 @@ class JcApplicationGraphImpl(
         }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.actualFlowGraph.predecessors(node).asSequence()
+        return node.location.method.actualFlowGraph.predecessors(node).asSequence() + node.location.method.actualFlowGraph.throwers(node).asSequence()
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.actualFlowGraph.successors(node).asSequence()
+        return node.location.method.actualFlowGraph.successors(node).asSequence() + node.location.method.actualFlowGraph.catchers(node).asSequence()
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
