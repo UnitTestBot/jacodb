@@ -17,15 +17,9 @@
 package org.jacodb.impl.features.classpaths
 
 import com.google.common.cache.CacheBuilder
-import org.jacodb.api.JcClassFoundEvent
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathExtFeature
-import org.jacodb.api.JcClasspathFeatureEvent
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
+import org.jacodb.api.*
 import java.time.Duration
+import java.util.*
 
 
 /**
@@ -42,7 +36,7 @@ open class ClasspathCache(
         .expireAfterAccess(expiration)
         .softValues()
         .maximumSize(maxSize)
-        .build<String, JcClassOrInterface>()
+        .build<String, Optional<JcClassOrInterface>>()
 
     /**
      *
@@ -51,24 +45,24 @@ open class ClasspathCache(
         .expireAfterAccess(expiration)
         .softValues()
         .maximumSize(maxSize)
-        .build<String, JcType>()
+        .build<String, Optional<JcType>>()
 
-
-    override fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? {
+    override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
         return classesCache.getIfPresent(name)
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcType? {
+    override fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? {
         return typesCache.getIfPresent(name)
     }
 
     override fun on(event: JcClasspathFeatureEvent) {
         when (event) {
-            is JcClassFoundEvent -> classesCache.put(event.clazz.name, event.clazz)
+            is JcClassFoundEvent -> classesCache.put(event.clazz.name, Optional.of(event.clazz))
+            is JcClassNotFound -> classesCache.put(event.name, Optional.empty())
             is JcTypeFoundEvent -> {
                 val type = event.type
                 if (type is JcClassType && type.typeParameters.isEmpty()) {
-                    typesCache.put(event.type.typeName, event.type)
+                    typesCache.put(event.type.typeName, Optional.of(event.type))
                 }
             }
         }

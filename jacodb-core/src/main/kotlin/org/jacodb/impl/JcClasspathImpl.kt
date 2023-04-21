@@ -16,28 +16,9 @@
 
 package org.jacodb.impl
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.withContext
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClassFoundEvent
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathExtFeature
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcClasspathTask
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.broadcast
+import kotlinx.coroutines.*
+import org.jacodb.api.*
 import org.jacodb.api.ext.toType
-import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
@@ -71,13 +52,16 @@ class JcClasspathImpl(
     override fun findClassOrNull(name: String): JcClassOrInterface? {
         val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
         if (result != null) {
-            return result
+            return result.orElse(null)
         }
         val source = classpathVfs.firstClassOrNull(name)
         val jcClass = source?.let { toJcClass(it.source) }
             ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
                 toJcClass(it)
             }
+        if (jcClass == null) {
+            broadcast(JcClassNotFound(name))
+        }
         return jcClass
     }
 
@@ -106,7 +90,7 @@ class JcClasspathImpl(
     override fun findTypeOrNull(name: String): JcType? {
         val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindType(this, name) }
         if (result != null) {
-            return result
+            return result.orElse(null)
         }
         if (name.endsWith("[]")) {
             val targetName = name.removeSuffix("[]")

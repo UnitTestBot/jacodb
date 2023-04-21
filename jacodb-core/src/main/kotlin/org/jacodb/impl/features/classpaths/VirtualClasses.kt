@@ -23,6 +23,7 @@ import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
+import java.util.Optional
 
 open class VirtualClasses(
     val classes: List<JcVirtualClass>,
@@ -45,10 +46,13 @@ open class VirtualClasses(
 
     private val map = classes.associateBy { it.name }
 
-    override fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? {
-        return map[name]?.also {
-            it.bind(classpath, virtualLocation)
+    override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
+        val clazz = map[name]
+        if(clazz != null){
+            clazz.bind(classpath, virtualLocation)
+            return Optional.of(clazz)
         }
+        return null
     }
 
 }

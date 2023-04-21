@@ -22,6 +22,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import java.io.Closeable
+import java.util.Optional
 import java.util.concurrent.Future
 
 /**
@@ -109,8 +110,18 @@ interface JcClasspathFeature {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathExtFeature : JcClasspathFeature {
 
-    fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? = null
-    fun tryFindType(classpath: JcClasspath, name: String): JcType? = null
+    /**
+     * semantic of method is like this:
+     * - not empty optional for found class
+     * - empty optional for class that we know is not exist in classpath
+     * - null for case when we do not know
+     */
+    fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? = null
+
+    /**
+     * semantic is the same as for `tryFindClass` method
+     */
+    fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? = null
 
 }
 
@@ -138,3 +149,4 @@ sealed interface JcClasspathFeatureEvent
 
 data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
 data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent
+data class JcClassNotFound(val name: String) : JcClasspathFeatureEvent
