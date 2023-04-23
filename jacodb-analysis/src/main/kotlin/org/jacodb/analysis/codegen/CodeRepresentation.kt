@@ -70,17 +70,23 @@ class CodeRepresentation(private val language: TargetLanguage) :
     }
 
     private fun generateCommentForStartFunction(function: FunctionPresentation): List<String> {
-        val numsOfDispatches = function.preparationSite.expressionsBefore.flatMap { expressionBefore ->
-            (expressionBefore as MethodInvocationExpressionImpl).parameterToArgument.map { dispatchValue ->
-                (dispatchValue.value as DirectStringSubstitution).substitution
-            }.toList()
-        }.toList()
+        val numsOfDispatches =
+            function.preparationSite.expressionsBefore.filterIsInstance<MethodInvocationExpressionImpl>()
+                .flatMap { expressionBefore ->
+                    expressionBefore.parameterToArgument.map { dispatchValue -> dispatchValue.value }
+                        .filterIsInstance<DirectStringSubstitution>()
+                        .map { dispatchValue ->
+                            dispatchValue.substitution
+                        }.toList()
+                }.toList()
         val numOfBreakingVarClass = numsOfDispatches[numsOfDispatches.size - 2].toInt()
         val breakingClass = functions[numOfBreakingVarClass]
         val breakingVar = breakingClass?.terminationSite?.dereferences?.elementAt(0)
         val comments: ArrayList<String> = ArrayList()
-        comments.add("This is start function for NullPointerException. The source for this issue is in variable " +
-                "${(breakingVar as SimpleValueReference).shortName}.")
+        comments.add(
+            "This is start function for NullPointerException. The source for this issue is in variable " +
+                    "${(breakingVar as SimpleValueReference).shortName}."
+        )
         val readableConst = 16
         val numOfDispatchComments =
             numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
