@@ -19,6 +19,7 @@ package org.jacodb.impl.bytecode
 import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.impl.features.classpaths.GraphsService
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
 import org.jacodb.impl.fs.fullAsmNodeWithFrames
@@ -29,7 +30,8 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource,
-    private val features: List<JcClasspathFeature>?
+    private val features: List<JcClasspathFeature>?,
+    private val graphsService: GraphsService,
 ) : JcClassOrInterface {
 
     private val cachedInfo: ClassInfo? = when (classSource) {
@@ -128,7 +130,7 @@ class JcClassOrInterfaceImpl(
     }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, features) }
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, graphsService) }
         when {
             !classFeatures.isNullOrEmpty() -> {
                 val modifiedMethods = result.toMutableList()

@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import org.jacodb.api.*
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.jacodb.impl.features.classpaths.GraphsService
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
 import org.jacodb.impl.types.JcClassTypeImpl
@@ -40,6 +41,8 @@ class JcClasspathImpl(
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
 
     private val classpathExtFeature = features?.filterIsInstance<JcClasspathExtFeature>()
+
+    private val graphsService = GraphsService(methodFeatures = features?.filterIsInstance<JcInstExtFeature>())
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
@@ -82,7 +85,7 @@ class JcClasspathImpl(
     }
 
     override fun toJcClass(source: ClassSource): JcClassOrInterface {
-        return JcClassOrInterfaceImpl(this, source, features).also {
+        return JcClassOrInterfaceImpl(this, source, features, graphsService).also {
             broadcast(JcClassFoundEvent(it))
         }
     }

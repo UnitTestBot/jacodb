@@ -32,12 +32,11 @@ open class ClasspathCache(
     /**
      *
      */
-    val classesCache = CacheBuilder.newBuilder()
+    private val classesCache = CacheBuilder.newBuilder()
         .expireAfterAccess(expiration)
         .softValues()
         .maximumSize(maxSize)
         .build<String, Optional<JcClassOrInterface>>()
-
     /**
      *
      */
