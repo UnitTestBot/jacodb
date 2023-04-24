@@ -87,20 +87,20 @@ fun JcTypedMethod.methodRef(): TypedMethodRef {
 }
 
 
-private data class JcMethodRef(
-    val className: String,
-    val name: String,
-    val description: String
-) {
-    constructor(method: JcMethod) : this(method.enclosingClass.name, method.name, method.description)
+class JcMethodRefImpl(method: JcMethod): JcMethodRef {
 
-    fun method(classpath: JcClasspath) = classpath.findClass(className).findMethodOrNull(name, description)!!
+    private val classpath = method.enclosingClass.classpath
+    private val className: String = method.enclosingClass.name
+    private val name: String = method.name
+    private val description: String = method.description
+
+    override val method get() = classpath.findClass(className).findMethodOrNull(name, description)!!
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as JcMethodRef
+        other as JcMethodRefImpl
 
         if (className != other.className) return false
         if (name != other.name) return false
@@ -114,20 +114,16 @@ private data class JcMethodRef(
         return result
     }
 
-
 }
 
 class JcInstLocationImpl(
-    _method: JcMethod,
+    val methodRef: JcMethodRef,
     override val index: Int,
     override val lineNumber: Int
 ) : JcInstLocation {
 
-    private val classpath = _method.enclosingClass.classpath
-    private val methodRef = JcMethodRef(_method)
-
     override val method: JcMethod by softLazy {
-        methodRef.method(classpath)
+        methodRef.method
     }
 
     override fun equals(other: Any?): Boolean {

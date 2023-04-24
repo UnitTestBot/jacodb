@@ -175,6 +175,7 @@ class JcGraphBuilder(
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
 
     val classpath: JcClasspath = method.enclosingClass.classpath
+    private val methodRef = JcMethodRefImpl(method)
 
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private var currentLineNumber = 0
@@ -310,7 +311,7 @@ class JcGraphBuilder(
     }
 
     private fun newLocation(): JcInstLocation {
-        return JcInstLocationImpl(method, index, currentLineNumber).also {
+        return JcInstLocationImpl(methodRef, index, currentLineNumber).also {
             index++
         }
     }
