@@ -14,73 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.paths
 
-import org.jacodb.api.JcField
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.isStatic
-
-sealed interface Accessor
-
-data class FieldAccessor(val field: JcField) : Accessor {
-    override fun toString(): String {
-        return field.toString()
-    }
-}
-
-object ElementAccessor : Accessor {
-    override fun toString(): String {
-        return "*"
-    }
-}
-
-/**
- * This class is used to represent an access path that is needed for problems
- * where dataflow facts could be correlated with variables/values (such as NPE, uninitialized variable, etc.)
- */
-data class AccessPath private constructor(val value: JcLocal?, val accesses: List<Accessor>) {
-    companion object {
-
-        fun fromLocal(value: JcLocal) = AccessPath(value, listOf())
-
-        fun fromStaticField(field: JcField): AccessPath {
-            if (!field.isStatic) {
-                throw IllegalArgumentException("Expected static field")
-            }
-
-            return AccessPath(null, listOf(FieldAccessor(field)))
-        }
-
-        fun fromOther(other: AccessPath, accesses: List<Accessor>): AccessPath {
-            if (accesses.any { it is FieldAccessor && it.field.isStatic }) {
-                throw IllegalArgumentException("Unexpected static field")
-            }
-
-            return AccessPath(other.value, other.accesses.plus(accesses))
-        }
-    }
-
-    fun limit(n: Int) = AccessPath(value, accesses.take(n))
-
-    val isOnHeap: Boolean
-        get() = accesses.isNotEmpty()
-
-    val isStatic: Boolean
-        get() = value == null
-
-    override fun toString(): String {
-        var str = value.toString()
-        for (accessor in accesses) {
-            str += ".$accessor"
-        }
-        return str
-    }
-}
+import org.jacodb.api.cfg.*
+import org.jacodb.api.ext.cfg.allValues
 
 internal fun JcExpr.toPathOrNull(): AccessPath? {
     if (this is JcCastExpr) {
@@ -134,4 +71,38 @@ internal fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     }
 
     return minus(other) != null
+}
+
+fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
+    if (this == null) {
+        return false
+    }
+
+    (expr as? JcInstanceCallExpr)?.let {
+        val instancePath = it.instance.toPathOrNull()
+        if (instancePath.startsWith(this)) {
+            return true
+        }
+    }
+
+    (expr as? JcLengthExpr)?.let {
+        val arrayPath = it.array.toPathOrNull()
+        if (arrayPath.startsWith(this)) {
+            return true
+        }
+    }
+
+    return expr.allValues
+        .mapNotNull { it.toPathOrNull() }
+        .any {
+            it.minus(this)?.isNotEmpty() == true
+        }
+}
+
+fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
+    if (this == null) {
+        return false
+    }
+
+    return inst.operands.any { isDereferencedAt(it) }
 }

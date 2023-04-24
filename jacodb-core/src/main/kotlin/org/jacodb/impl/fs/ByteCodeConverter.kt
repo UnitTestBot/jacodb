@@ -103,7 +103,7 @@ private fun AnnotationNode.asAnnotationInfo(visible: Boolean) = AnnotationInfo(
 private fun List<AnnotationNode>?.asAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
     orEmpty().map { it.asAnnotationInfo(visible) }.toImmutableList()
 
-private fun MethodNode.asMethodInfo(): MethodInfo {
+fun MethodNode.asMethodInfo(): MethodInfo {
     val params = Type.getArgumentTypes(desc).map { it.className }.toImmutableList()
     return MethodInfo(
         name = name,

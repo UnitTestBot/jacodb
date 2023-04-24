@@ -14,20 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.paths
 
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.JcField
 
-/**
- * activation == null <=> activation point is passed
- */
-data class TaintNode private constructor (val variable: AccessPath?, val activation: JcInst?) {
-    companion object {
-        val ZERO = TaintNode(null, null)
+sealed interface Accessor
 
-        fun fromPath(variable: AccessPath, activation: JcInst? = null) = TaintNode(variable, activation)
+data class FieldAccessor(val field: JcField) : Accessor {
+    override fun toString(): String {
+        return field.name
     }
+}
 
-    val activatedCopy: TaintNode
-        get() = copy(activation = null)
+object ElementAccessor : Accessor {
+    override fun toString(): String {
+        return "*"
+    }
 }

@@ -14,9 +14,6 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.engine
 
-interface IFDSInstanceListener<Statement, D> {
-    fun onPropagate(e: Edge<Statement, D>, pred: Statement?, factIsNew: Boolean) = Unit
-    fun onExitPoint(e: Edge<Statement, D>) = Unit
-}
+data class IFDSEdge<out T: DomainFact>(val u: IFDSVertex<T>, val v: IFDSVertex<T>)

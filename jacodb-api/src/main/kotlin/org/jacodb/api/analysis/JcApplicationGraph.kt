@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.api.analysis
 
-data class Vertex<Statement, D>(val statement: Statement, val domainFact: D)
+import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcInst
 
-data class Edge<Statement, D>(val u: Vertex<Statement, D>, val v: Vertex<Statement, D>)
+interface JcApplicationGraph : ApplicationGraph<JcMethod, JcInst>, JcAnalysisPlatform

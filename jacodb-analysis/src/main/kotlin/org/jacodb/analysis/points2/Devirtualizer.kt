@@ -14,11 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.points2
 
 import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcThis
-import org.jacodb.api.ext.toType
+import org.jacodb.api.cfg.JcInst
 
-val JcMethod.thisInstance: JcThis
-    get() = JcThis(enclosingClass.toType())
+interface Devirtualizer {
+    /**
+     * Returns all methods that could be called at sink statement.
+     */
+    // TODO: add source to signature
+    fun findPossibleCallees(sink: JcInst): Collection<JcMethod>
+}

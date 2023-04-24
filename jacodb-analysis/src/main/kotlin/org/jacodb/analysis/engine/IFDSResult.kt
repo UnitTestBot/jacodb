@@ -14,26 +14,31 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
-
+package org.jacodb.analysis.engine
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.cfg.JcInst
 
-data class IFDSResult<Method, Statement, D>(
-    private val graph: ApplicationGraph<Method, Statement>,
-    val pathEdges: List<Edge<Statement, D>>,
-    val summaryEdge: List<Edge<Statement, D>>,
-    val resultFacts: Map<Statement, Set<D>>,
-    val callToStartEdges: List<Edge<Statement, D>>,
+class IFDSResult(
+    val graph: ApplicationGraph<JcMethod, JcInst>,
+    val pathEdges: List<IFDSEdge<DomainFact>>,
+    val summaryEdge: List<IFDSEdge<DomainFact>>,
+    val resultFacts: Map<JcInst, Set<DomainFact>>,
+    val callToStartEdges: List<IFDSEdge<DomainFact>>,
 ) {
     /**
      * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
      */
-    fun resolvePossibleStackTrace(vertex: Vertex<Statement, D>, startMethod: Method): List<Statement> {
+    fun resolvePossibleStackTrace(vertex: IFDSVertex<DomainFact>): List<JcInst> {
         val result = mutableListOf(vertex.statement)
+        // TODO: fix
         var curVertex = vertex
-        while (graph.methodOf(curVertex.statement) != startMethod) {
+        while (curVertex.domainFact != ZEROFact) {
             // TODO: Note that taking not first element may cause to infinite loop in this implementation
             val startVertex = pathEdges.first { it.v == curVertex }.u
+            if (startVertex.domainFact == ZEROFact) {
+                break
+            }
             curVertex = callToStartEdges.first { it.v == startVertex }.u
             result.add(curVertex.statement)
         }

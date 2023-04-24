@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.graph
 
 import org.jacodb.api.analysis.ApplicationGraph
 
 class BackwardApplicationGraph<Method, Statement>(
-    private val forward: ApplicationGraph<Method, Statement>
+    val forward: ApplicationGraph<Method, Statement>
 ) : ApplicationGraph<Method, Statement> {
     override fun predecessors(node: Statement) = forward.successors(node)
 
@@ -34,7 +34,11 @@ class BackwardApplicationGraph<Method, Statement>(
     override fun exitPoints(method: Method) = forward.entryPoint(method)
 
     override fun methodOf(node: Statement) = forward.methodOf(node)
+
+    override fun visitedMethods() = forward.visitedMethods()
 }
 
 val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
-    get() = BackwardApplicationGraph(this)
+    get() = if (this is BackwardApplicationGraph) {
+        this.forward
+    } else BackwardApplicationGraph(this)

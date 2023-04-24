@@ -14,19 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.engine
 
-/**
- * Flow function which is equal to id for all elements from [domain] except those in [nonId], for which the result is stored in the map
- */
-class IdLikeFlowFunction<D>(
-    private val domain: Set<D>,
-    private val nonId: Map<D, Collection<D>>
-): FlowFunctionInstance<D> {
-    override fun compute(fact: D): Collection<D> {
-        nonId[fact]?.let {
-            return it
-        }
-        return if (domain.contains(fact)) listOf(fact) else emptyList()
-    }
-}
+import org.jacodb.api.cfg.JcInst
+
+data class IFDSVertex<out T: DomainFact>(val statement: JcInst, val domainFact: T)

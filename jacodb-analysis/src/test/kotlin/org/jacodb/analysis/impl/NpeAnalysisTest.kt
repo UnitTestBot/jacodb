@@ -19,103 +19,35 @@ package org.jacodb.analysis.impl
 import NPEExamples
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.impl.AnalysisTest.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
-import org.jacodb.analysis.impl.SimplifiedJcApplicationGraph.Companion.bannedPackagePrefixes
+import org.jacodb.analysis.NPEAnalysisFactory
+import org.jacodb.analysis.VulnerabilityInstance
+import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
+import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcNoopInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.impl.analysis.JcAnalysisPlatformImpl
-import org.jacodb.impl.analysis.features.JcCacheGraphFeature
 import org.jacodb.impl.features.InMemoryHierarchy
-import org.jacodb.impl.features.SyncUsagesExtension
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.File
 import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-
-/**
- * Simplification of JcApplicationGraph that ignores method calls matching [bannedPackagePrefixes]
- */
-class SimplifiedJcApplicationGraph(
-    override val classpath: JcClasspath,
-    usages: SyncUsagesExtension,
-    cacheSize: Long = 10_000,
-) : JcAnalysisPlatformImpl(classpath, listOf(JcCacheGraphFeature(cacheSize))), ApplicationGraph<JcMethod, JcInst> {
-    private val impl = JcApplicationGraphImpl(classpath, usages, cacheSize)
-
-    private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
-
-    private fun getStartInst(method: JcMethod): JcNoopInst {
-        return JcNoopInst(JcInstLocation(method, -1, -1))
-    }
-
-    override fun predecessors(node: JcInst): Sequence<JcInst> {
-        val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            emptySequence()
-        } else {
-            if (node in impl.entryPoint(method)) {
-                sequenceOf(getStartInst(method))
-            } else {
-                impl.predecessors(node)
-            }
-        }
-    }
-    override fun successors(node: JcInst): Sequence<JcInst> {
-        val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            impl.entryPoint(method)
-        } else {
-            impl.successors(node)
-        }
-    }
-    override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
-        bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
-    }.map {
-        val curSet = visitedCallers.getOrPut(it) { mutableSetOf() }
-        curSet.add(node)
-        it
-    }
-    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()//impl.callers(method)
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))//impl.entryPoint(method)
-    override fun exitPoints(method: JcMethod): Sequence<JcInst> = impl.exitPoints(method)
-    override fun methodOf(node: JcInst): JcMethod = impl.methodOf(node)
-
-    companion object {
-        private val bannedPackagePrefixes = listOf(
-            "kotlin.",
-            "java.",
-            "kotlin.jvm.internal.",
-            "jdk.internal.",
-            "sun.",
-            "java.security.",
-            "java.util.regex."
-        )
-    }
-
-}
-
-class AnalysisTest : BaseTest() {
+class NpeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
         fun provideClassesForJuliet476(): Stream<Arguments> = runBlocking {
@@ -171,23 +103,6 @@ class AnalysisTest : BaseTest() {
         val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
         val callers = graph.callers(cp.findClass<StringTokenizer>().constructors[2])
         println(callers.toList().size)
-    }
-    
-    @Test
-    fun `analyse something`() {
-        val graph = runBlocking {
-            SimplifiedJcApplicationGraph(cp, cp.usagesExt())
-        }
-        val devirtualizer = AllOverridesDevirtualizer(graph, cp)
-//      graph.callees(graph.successors(graph.successors(graph.successors(graph.entryPoint(graph.classpath.findClassOrNull("org.jacodb.analysis.impl.IFDSMainKt").methods.find {it.name.equals("main")}!!).toList().single()).single()).single()).last()!!)
-//      cp.execute(object: JcClassProcessingTask{
-//            override fun process(clazz: JcClassOrInterface) {
-//
-//            }
-//        })
-        val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
-        val results = runNPEWithPointsTo(graph, graph, testingMethod, devirtualizer)
-        print(results)
     }
 
     @Test
@@ -307,6 +222,16 @@ class AnalysisTest : BaseTest() {
         testOneMethod<NPEExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
     }
 
+    @Test
+    fun `dereferencing copy of value saved before null assignment produce no npe`() {
+        testOneMethod<NPEExamples>("copyBeforeNullAssignment", emptyList())
+    }
+
+    @Test
+    fun `assigning null to copy doesn't affect original value`() {
+        testOneMethod<NPEExamples>("nullAssignmentToCopy", emptyList())
+    }
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet476")
     fun `test on Juliet's CWE 476`(className: String) {
@@ -326,83 +251,35 @@ class AnalysisTest : BaseTest() {
 
         goodMethod.flowGraph()
         badMethod.flowGraph()
-        val goodNPE = findNPEInstructions(goodMethod)
-        val badNPE = findNPEInstructions(badMethod)
 
-        assertEquals(listOf(emptyList<NPELocation>(), true), listOf(goodNPE, badNPE.isNotEmpty()))
+        val goodNPE = findNpeSources(goodMethod)
+        val badNPE = findNpeSources(badMethod)
+
+        assertTrue(badNPE.isNotEmpty())
+        assertTrue(goodNPE.isEmpty())
     }
 
     private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) {
         val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
-        val actualLocations = findNPEInstructions(method)
+        val npes = findNpeSources(method)
 
         // TODO: think about better assertions here
-        assertEquals(expectedLocations.toSet(), actualLocations.map { it.inst.toString() }.toSet())
+        assertEquals(expectedLocations.toSet(), npes.map { it.source }.toSet())
     }
 
-
-    data class NPELocation(val inst: JcInst, val path: AccessPath, val possibleStackTrace: List<JcInst>)
-
-    /**
-     * The method finds all places where NPE may occur
-     */
-    fun findNPEInstructions(method: JcMethod): List<NPELocation> {
-        val graph = runBlocking {
-            SimplifiedJcApplicationGraph(cp, cp.usagesExt())
-        }
-        val devirtualizer = AllOverridesDevirtualizer(graph, cp)
-        val ifdsResults = runNPEWithPointsTo(graph, graph, method, devirtualizer)
-        val possibleNPEInstructions = mutableListOf<NPELocation>()
-        ifdsResults.resultFacts.forEach { (inst, facts) ->
-            facts.forEach { fact ->
-                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
-                    val possibleStackTrace = ifdsResults.resolvePossibleStackTrace(
-                        Vertex(inst, fact), method
-                    )
-                    possibleNPEInstructions.add(NPELocation(inst, fact.variable!!, possibleStackTrace))
-                }
-            }
-        }
-        return possibleNPEInstructions
+    @Test
+    fun `analyse something`() {
+        val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "npeOnLength" }
+        val results = findNpeSources(testingMethod)
+        print(results)
     }
 
-    /**
-     * Simple devirtualizer that substitutes method with all ov its overrides, but no more then [limit].
-     * Also, it doesn't devirtualize methods matching [bannedPackagePrefixes]
-     */
-    class AllOverridesDevirtualizer(
-        private val initialGraph: ApplicationGraph<JcMethod, JcInst>,
-        private val classpath: JcClasspath,
-        private val limit: Int = 3
-    ) : Devirtualizer<JcMethod, JcInst> {
-        private val hierarchyExtension = runBlocking {
-            classpath.hierarchyExt()
-        }
-
-        override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
-            val methods = initialGraph.callees(sink).toList()
-            if (sink.callExpr !is JcVirtualCallExpr)
-                return methods
-            return methods
-                .flatMap { method ->
-                    if (bannedPackagePrefixes.any { method.enclosingClass.name.startsWith(it) })
-                        listOf(method)
-                    else {
-                        hierarchyExtension
-                            .findOverrides(method) // TODO: maybe filter inaccessible methods here?
-                            .take(limit - 1)
-                            .toList() + listOf(method)
-                    }
-                }
-        }
-
-        companion object {
-            private val bannedPackagePrefixes = listOf(
-                "sun.",
-                "jdk.internal.",
-                "java.",
-                "kotlin."
-            )
-        }
+    private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
+        val graph = runBlocking { SimplifiedJcApplicationGraph(JcApplicationGraphImpl(cp, cp.usagesExt())) }
+        val all = AllOverridesDevirtualizer(graph, cp)
+        val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, all, File("a"))
+        ifds.addStart(method)
+        val result = ifds.analyze()
+        return result.foundVulnerabilities.filter { it.vulnerabilityType == NpeAnalyzer.value }
     }
 }

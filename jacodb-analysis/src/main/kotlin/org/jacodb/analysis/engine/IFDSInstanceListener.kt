@@ -14,19 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.analysis
+package org.jacodb.analysis.engine
 
-interface ApplicationGraph<Method, Statement> {
-    fun predecessors(node: Statement): Sequence<Statement>
-    fun successors(node: Statement): Sequence<Statement>
+import org.jacodb.api.cfg.JcInst
 
-    fun callees(node: Statement): Sequence<Method>
-    fun callers(method: Method): Sequence<Statement>
-
-    fun entryPoint(method: Method): Sequence<Statement>
-    fun exitPoints(method: Method): Sequence<Statement>
-
-    fun methodOf(node: Statement): Method
-
-    fun visitedMethods(): Sequence<Method>
+interface IFDSInstanceListener {
+    fun onPropagate(e: IFDSEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) = Unit
+    fun onExitPoint(e: IFDSEdge<DomainFact>) = Unit
 }
