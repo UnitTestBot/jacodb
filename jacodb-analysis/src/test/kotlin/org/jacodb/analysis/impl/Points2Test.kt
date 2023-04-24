@@ -33,7 +33,6 @@ import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -41,7 +40,6 @@ import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-@Disabled("Pointerbench src not included")
 class Points2Test : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
 
