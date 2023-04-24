@@ -35,13 +35,10 @@ interface DomainFact {
 
 object ZEROFact : DomainFact {
     override val id = object : SpaceId {
-        override val value: String
-            get() = "ZERO fact id"
+        override val value: String = "ZERO fact id"
     }
 
-    override fun toString(): String {
-        return "[ZERO fact]"
-    }
+    override fun toString() = "[ZERO fact]"
 }
 
 interface FlowFunctionsSpace {

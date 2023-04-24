@@ -32,8 +32,7 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -118,8 +117,12 @@ class Points2Test : BaseTest() {
 
         val res = findTaints(main)
         println("For $className:\nOur result: $res\nmust: $must\nnotMay: $notMay")
-        assertTrue(must.all { it in res })
-        assertFalse(notMay.any { it in res })
+
+        val notFoundFromMust = must.filter { it !in res }
+        assertEquals(emptyList<String>(), notFoundFromMust)
+
+        val foundFromNotMay = notMay.filter { it in res }
+        assertEquals(emptyList<String>(), foundFromNotMay)
     }
 
     private fun findTaints(method: JcMethod): List<String> {
