@@ -67,8 +67,13 @@ class AnalysisTest : BaseTest() {
         val exception = assertThrows<T> {
             main(args)
         }
-        val expMessage = exception.message
-        assertEquals(exceptionMessage, expMessage)
+        val thrownExceptionMessage = exception.message
+        if (exceptionMessage.equals(thrownExceptionMessage)) {
+            logger.info("SUCCESS")
+        } else {
+            logger.info("FAILED: expected $exceptionMessage, but thrown message is $thrownExceptionMessage")
+        }
+        assertEquals(exceptionMessage, thrownExceptionMessage)
     }
 
     @Test
