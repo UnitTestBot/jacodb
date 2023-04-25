@@ -204,15 +204,20 @@ private fun runCmd(
         val process = cmdBuilder.start()
         val pid = process.waitFor()
         if (pid != 0) {
-            logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
+            val errorMessage = "$errorPrefix: check logs in - ${errorFile.path}"
+            process.outputStream.bufferedWriter().write(errorMessage)
+            logger.error { errorMessage }
             throw IllegalStateException(errorPrefix)
         }
+        val infoMessage = "$logPrefix: check more logs in - ${outputFile.path}"
         logger.info {
-            "$logPrefix: check more logs in - ${outputFile.path}"
+            infoMessage
         }
+        process.outputStream.bufferedWriter().write(infoMessage)
         return RunCmdResult(outputFile, errorFile)
     } catch (e: IOException) {
-        logger.error { "$errorPrefix: check logs in - ${errorFile.path}" }
+        val errorMessage = "$errorPrefix: check logs in - ${errorFile.path}"
+        logger.error { errorMessage }
         errorFile.writeText(e.stackTraceToString())
         throw IllegalStateException(errorPrefix + " " + (e.message?.split(System.lineSeparator())?.get(0) ?: ""))
     }
