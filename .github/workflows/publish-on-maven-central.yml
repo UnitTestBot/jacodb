@@ -1,10 +1,8 @@
 name: Publish to GitHub packages
 
 on:
-  push:
-    branches:
-      - main
-      - 'feature-**'
+  schedule:
+    - cron: '30 23 * * 1,2,3,4,5'
 
 jobs:
   publish:
@@ -25,6 +23,6 @@ jobs:
           gradle-version: 7.4.2
           arguments: publish
         env:
-          ACTOR: ${{ github.actor }}
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_URL: 'https://maven.pkg.github.com/UnitTestBot/jacodb'
+          ACTOR: ${{ secrets.MAVEN_CENTRAL_LOGIN }}
+          TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+          REPO_URL: 'https://s01.oss.sonatype.org/'

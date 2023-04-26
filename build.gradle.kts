@@ -162,25 +162,38 @@ subprojects {
 
 }
 
-configure(
-    listOf(
-        project(":jacodb-api"),
-        project(":jacodb-core"),
-        project(":jacodb-analysis"),
-    )
-) {
-    publishing {
-        repositories {
-            maven {
-                name = "MavenCentral"
-                url = uri("https://s01.oss.sonatype.org/")
-                credentials {
-                    username = System.getenv("MAVEN_CENTRAL_LOGIN")
-                    password = System.getenv("MAVEN_CENTRAL_TOKEN")
+val publishRepo: String? = System.getenv("REPO_URL")
+
+if(!publishRepo.isNullOrEmpty()) {
+    configure(
+        listOf(
+            project(":jacodb-api"),
+            project(":jacodb-core"),
+            project(":jacodb-analysis"),
+        )
+    ) {
+        publishing {
+            repositories {
+                maven {
+                    name = "repo"
+                    url = uri(publishRepo)
+                    credentials {
+                        username = System.getenv("LOGIN")
+                        password = System.getenv("TOKEN")
+                    }
                 }
             }
         }
     }
+
+//signing {
+//    val signingKey: String? by project
+//    val signingPassword: String? by project
+//    useInMemoryPgpKeys(signingKey, signingPassword)
+//
+//    sign(publishing.publications["mavenJava"])
+//}
+
 }
 
 publishing {
@@ -226,15 +239,6 @@ publishing {
         }
     }
 }
-
-//signing {
-//    val signingKey: String? by project
-//    val signingPassword: String? by project
-//    useInMemoryPgpKeys(signingKey, signingPassword)
-//
-//    sign(publishing.publications["mavenJava"])
-//}
-
 
 tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
