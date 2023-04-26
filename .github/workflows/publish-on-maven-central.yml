@@ -1,8 +1,6 @@
 name: Publish to Maven Central
 
-on:
-  schedule:
-    - cron: '30 23 * * 1,2,3,4,5'
+on: workflow_dispatch
 
 jobs:
   publish:
