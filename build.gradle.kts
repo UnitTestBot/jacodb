@@ -21,6 +21,7 @@ plugins {
 
     `java-library`
     `maven-publish`
+    signing
     `java-test-fixtures`
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
@@ -171,13 +172,72 @@ configure(
     publishing {
         repositories {
             maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
+                name = "MavenCentral"
+                url = uri("https://s01.oss.sonatype.org/")
                 credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
+                    username = System.getenv("MAVEN_CENTRAL_LOGIN")
+                    password = System.getenv("MAVEN_CENTRAL_TOKEN")
                 }
             }
         }
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            pom {
+                name.set("JacoDB")
+                description.set("analyse JVM bytecode with pleasure")
+                url.set("https://www.jacodb.org")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("lehvolk")
+                        name.set("Alexey Volkov")
+                        email.set("lehvolk@yandex.ru")
+                    }
+                    developer {
+                        id.set("volivan239")
+                        name.set("Ivan Volkov")
+                        email.set("lehvolk@yandex.ru")
+                    }
+                    developer {
+                        id.set("AbdullinAM")
+                        name.set("Azat Abdullin")
+                        email.set("azat.aam@gmail.com")
+                    }
+                    developer {
+                        id.set("UnitTestBot")
+                        name.set("UnitTestBot Team")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                    developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                    url.set("https://www.jacodb.org")
+                }
+            }
+        }
+    }
+}
+
+//signing {
+//    val signingKey: String? by project
+//    val signingPassword: String? by project
+//    useInMemoryPgpKeys(signingKey, signingPassword)
+//
+//    sign(publishing.publications["mavenJava"])
+//}
+
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
 }
