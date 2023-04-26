@@ -1,4 +1,4 @@
-name: Publish to Maven Central
+name: Nightly builds for Maven Central
 
 on: workflow_dispatch
 
