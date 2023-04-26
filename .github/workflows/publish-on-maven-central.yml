@@ -23,4 +23,4 @@ jobs:
         env:
           ACTOR: ${{ secrets.MAVEN_CENTRAL_LOGIN }}
           TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-          REPO_URL: 'https://s01.oss.sonatype.org/'
+          REPO_URL: 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
