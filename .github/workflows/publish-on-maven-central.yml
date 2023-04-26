@@ -1,4 +1,4 @@
-name: Publish to GitHub packages
+name: Publish to Maven Central
 
 on:
   schedule:
