@@ -69,6 +69,19 @@ class CodeRepresentation(private val language: TargetLanguage) :
         return language.getPredefinedPrimitive(primitive)
     }
 
+    private fun generateOneLineComment(
+        iterator: Int,
+        readableConst: Int,
+        numsOfDispatches: List<String>,
+        currentComment: StringBuilder
+    ) {
+        val alreadyAddedToPreviousComment = iterator * readableConst
+        val willAddedAfterCurrentIterration = minOf((iterator + 1) * readableConst, numsOfDispatches.size)
+        for (i in alreadyAddedToPreviousComment until willAddedAfterCurrentIterration) {
+            currentComment.append("${numsOfDispatches[i]} -> ")
+        }
+    }
+
     private fun generateCommentForStartFunction(function: FunctionPresentation): List<String> {
         val numsOfDispatches =
             function.preparationSite.expressionsBefore.filterIsInstance<MethodInvocationExpressionImpl>()
@@ -81,21 +94,26 @@ class CodeRepresentation(private val language: TargetLanguage) :
                 }.toList()
         val numOfBreakingVarClass = numsOfDispatches[numsOfDispatches.size - 2].toInt()
         val breakingClass = functions[numOfBreakingVarClass]
-        val breakingVar = breakingClass?.terminationSite?.dereferences?.elementAt(0)
+        val breakingVar = breakingClass?.terminationSite?.dereferences?.filterIsInstance<SimpleValueReference>()?.get(0)
         val comments: ArrayList<String> = ArrayList()
-        comments.add(
-            "This is start function for NullPointerException. The source for this issue is in variable " +
-                    "${(breakingVar as SimpleValueReference).shortName}."
-        )
+        if (breakingVar != null) {
+            comments.add(
+                "This is start function for NullPointerException. The source for this issue is in variable " +
+                        "${breakingVar.shortName}."
+            )
+        }
         val readableConst = 16
         val numOfDispatchComments =
             numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
         var iterator = 0
         while (iterator < numOfDispatchComments) {
             val currentComment = StringBuilder()
-            for (i in iterator * readableConst until minOf((iterator + 1) * readableConst, numsOfDispatches.size)) {
-                currentComment.append("${numsOfDispatches[i]} -> ")
-            }
+            generateOneLineComment(
+                iterator = iterator,
+                readableConst = readableConst,
+                numsOfDispatches = numsOfDispatches,
+                currentComment = currentComment
+            )
             comments.add(currentComment.toString())
             iterator++
         }
