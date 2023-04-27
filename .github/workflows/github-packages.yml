@@ -24,6 +24,6 @@ jobs:
           gradle-version: 7.4.2
           arguments: |
             publish
-            -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
-            -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
+            -Pactor=${{ github.actor }}
+            -Ptoken=${{ secrets.GITHUB_TOKEN }}
             -PrepoUrl=https://maven.pkg.github.com/UnitTestBot/jacodb
