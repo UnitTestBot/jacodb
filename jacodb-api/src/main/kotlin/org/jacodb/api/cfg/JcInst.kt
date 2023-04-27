@@ -21,30 +21,16 @@ import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
 
-class JcInstLocation(
-    val method: JcMethod,
-    val index: Int,
-    val lineNumber: Int
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as JcInstLocation
-
-        if (method != other.method) return false
-        if (index != other.index) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = method.hashCode()
-        result = 31 * result + index
-        return result
-    }
+interface TypedMethodRef {
+    val name: String
+    val method: JcTypedMethod
 }
 
+interface JcInstLocation {
+    val method: JcMethod
+    val index: Int
+    val lineNumber: Int
+}
 
 interface JcInst {
     val location: JcInstLocation
@@ -72,7 +58,7 @@ abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
     }
 }
 
-data class JcInstRef constructor(
+data class JcInstRef(
     val index: Int
 )
 
@@ -675,23 +661,27 @@ data class JcPhiExpr(
  * object, but stores a reference to the actual method
  */
 data class JcLambdaExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val args: List<JcValue>,
 ) : JcCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLambdaExpr(this)
     }
 }
 
 data class JcDynamicCallExpr(
-    val bsm: JcTypedMethod,
+    private val bsmRef: TypedMethodRef,
     val bsmArgs: List<BsmArg>,
     val callCiteMethodName: String,
     val callCiteArgTypes: List<JcType>,
     val callCiteReturnType: JcType,
     val callCiteArgs: List<JcValue>
 ) : JcCallExpr {
-    override val method get() = bsm
+
+    override val method get() = bsmRef.method
     override val args get() = callCiteArgs
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -704,15 +694,18 @@ data class JcDynamicCallExpr(
  * are both represented with `JcVirtualCallExpr` for simplicity
  */
 data class JcVirtualCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val instance: JcValue,
     override val args: List<JcValue>,
 ) : JcInstanceCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override val operands: List<JcValue>
         get() = listOf(instance) + args
 
     override fun toString(): String =
-        "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcVirtualCallExpr(this)
@@ -721,11 +714,14 @@ data class JcVirtualCallExpr(
 
 
 data class JcStaticCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val args: List<JcValue>,
 ) : JcCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun toString(): String =
-        "${method.method.enclosingClass.name}.${method.name}${
+        "${method.method.enclosingClass.name}.${methodRef.name}${
             args.joinToString(
                 prefix = "(",
                 postfix = ")",
@@ -739,12 +735,15 @@ data class JcStaticCallExpr(
 }
 
 data class JcSpecialCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val instance: JcValue,
     override val args: List<JcValue>,
 ) : JcInstanceCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun toString(): String =
-        "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcSpecialCallExpr(this)

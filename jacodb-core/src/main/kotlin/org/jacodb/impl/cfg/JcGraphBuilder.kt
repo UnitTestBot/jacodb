@@ -20,7 +20,6 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.BsmHandle
 import org.jacodb.api.cfg.JcAddExpr
@@ -83,7 +82,6 @@ import org.jacodb.api.cfg.JcRawAssignInst
 import org.jacodb.api.cfg.JcRawBinaryExpr
 import org.jacodb.api.cfg.JcRawBool
 import org.jacodb.api.cfg.JcRawByte
-import org.jacodb.api.cfg.JcRawCallExpr
 import org.jacodb.api.cfg.JcRawCallInst
 import org.jacodb.api.cfg.JcRawCastExpr
 import org.jacodb.api.cfg.JcRawCatchInst
@@ -162,15 +160,11 @@ import org.jacodb.api.ext.byte
 import org.jacodb.api.ext.char
 import org.jacodb.api.ext.double
 import org.jacodb.api.ext.findFieldOrNull
-import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.float
-import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.int
-import org.jacodb.api.ext.jvmName
 import org.jacodb.api.ext.long
 import org.jacodb.api.ext.objectType
-import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.short
 import org.jacodb.api.ext.toType
 
@@ -181,6 +175,7 @@ class JcGraphBuilder(
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
 
     val classpath: JcClasspath = method.enclosingClass.classpath
+    private val methodRef = JcMethodRefImpl(method)
 
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private var currentLineNumber = 0
@@ -316,7 +311,7 @@ class JcGraphBuilder(
     }
 
     private fun newLocation(): JcInstLocation {
-        return JcInstLocation(method, index, currentLineNumber).also {
+        return JcInstLocationImpl(methodRef, index, currentLineNumber).also {
             index++
         }
     }
@@ -409,46 +404,21 @@ class JcGraphBuilder(
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType)
 
-    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
-        val sb = buildString {
-            append("(")
-            argTypes.forEach {
-                append(it.typeName.jvmName())
-            }
-            append(")")
-            append(returnType.typeName.jvmName())
-        }
-        var methodOrNull = findMethodOrNull(name, sb)
-        if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
-            methodOrNull = findMethodOrNull {
-                val method = it.method
-                method.name == name && method.hasAnnotation("java.lang.invoke.MethodHandle\$PolymorphicSignature")
-            } // weak consumption. may fail
-        }
-        return methodOrNull ?: error("Could not find a method with correct signature $typeName#$name$sb")
-    }
-
-    private val JcRawCallExpr.typedMethod: JcTypedMethod
-        get() {
-            val klass = declaringClass.asType as JcClassType
-            return klass.getMethod(methodName, argumentTypes, returnType)
-        }
-
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
         val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
         when (lambdaBases.size) {
             1 -> {
                 val base = lambdaBases.first()
                 val klass = base.declaringClass.asType as JcClassType
-                val typedBase = klass.getMethod(base.name, base.argTypes, base.returnType)
+                val ref = TypedMethodRefImpl(klass, base.name, base.argTypes, base.returnType)
 
-                return JcLambdaExpr(typedBase, expr.args.map { it.accept(this) as JcValue })
+                return JcLambdaExpr(ref, expr.args.map { it.accept(this) as JcValue })
             }
 
             else -> {
-                val bsm = expr.typedMethod
+
                 return JcDynamicCallExpr(
-                    bsm,
+                    classpath.methodRef(expr),
                     expr.bsmArgs,
                     expr.callCiteMethodName,
                     expr.callCiteArgTypes.map { it.asType },
@@ -461,36 +431,30 @@ class JcGraphBuilder(
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.objectType
-        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args
+            instance.type.methodRef(expr), instance, args
         )
     }
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.objectType
-        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args
+            instance.type.methodRef(expr), instance, args
         )
     }
 
     override fun visitJcRawStaticCallExpr(expr: JcRawStaticCallExpr): JcExpr {
-        val method = expr.typedMethod
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcStaticCallExpr(method, args)
+        return JcStaticCallExpr(classpath.methodRef(expr), args)
     }
 
     override fun visitJcRawSpecialCallExpr(expr: JcRawSpecialCallExpr): JcExpr {
-        val method = expr.typedMethod
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcSpecialCallExpr(
-            method, instance, args,
+            instance.type.methodRef(expr), instance, args
         )
     }
 

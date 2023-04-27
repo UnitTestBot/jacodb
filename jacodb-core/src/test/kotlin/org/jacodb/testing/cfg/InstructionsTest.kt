@@ -22,7 +22,7 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class InstructionsTest : BaseTest() {
@@ -38,7 +38,7 @@ class InstructionsTest : BaseTest() {
         val instructions = method.instList.instructions
         val firstUse = instructions.indexOfFirst { it.callExpr?.method?.method == use }
         val assign = instructions[firstUse + 1] as JcAssignInst
-        Assertions.assertEquals("%4", (assign.lhv as JcLocalVar).name)
-        Assertions.assertEquals("%1", (assign.rhv as JcLocalVar).name)
+        assertEquals("%4", (assign.lhv as JcLocalVar).name)
+        assertEquals("%1", (assign.rhv as JcLocalVar).name)
     }
 }

@@ -16,31 +16,27 @@
 
 package org.jacodb.impl.cfg
 
+import kotlinx.collections.immutable.toPersistentSet
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcTerminatingInst
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.isSubClassOf
+import java.util.Collections.singleton
 
 class JcGraphImpl(
     override val method: JcMethod,
     override val instructions: List<JcInst>,
 ) : Iterable<JcInst>, JcGraph {
-    private val indexMap = instructions.mapIndexed { index, jcInst -> jcInst to index }.toMap()
+
     override val classpath: JcClasspath get() = method.enclosingClass.classpath
 
-    private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
-    private val successorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
+    private val predecessorMap = hashMapOf<JcInst, Set<JcInst>>()
+    private val successorMap = hashMapOf<JcInst, Set<JcInst>>()
 
-    private val throwPredecessors = mutableMapOf<JcCatchInst, MutableSet<JcInst>>()
-    private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
-    private val _throwExits = mutableMapOf<JcClassType, MutableSet<JcInstRef>>()
+    private val throwPredecessors = hashMapOf<JcCatchInst, Set<JcInst>>()
+    private val throwSuccessors = hashMapOf<JcInst, Set<JcCatchInst>>()
+    private val _throwExits = hashMapOf<JcClassType, Set<JcInstRef>>()
 
     private val exceptionResolver = JcExceptionResolver(classpath)
 
@@ -53,25 +49,28 @@ class JcGraphImpl(
      * for each instruction of in the graph in determines possible thrown exceptions using
      * #JcExceptionResolver class
      */
-    override val throwExits: Map<JcClassType, List<JcInst>> get() = _throwExits.mapValues { (_, refs) -> refs.map { inst(it) } }
+    override val throwExits: Map<JcClassType, List<JcInst>>
+        get() = _throwExits.mapValues { (_, refs) ->
+            refs.map { instructions[it.index] }
+        }
 
     init {
         for (inst in instructions) {
             val successors = when (inst) {
-                is JcTerminatingInst -> mutableSetOf()
-                is JcBranchingInst -> inst.successors.map { inst(it) }.toMutableSet()
-                else -> mutableSetOf(next(inst))
+                is JcTerminatingInst -> emptySet()
+                is JcBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
+                else -> setOf(next(inst))
             }
             successorMap[inst] = successors
 
             for (successor in successors) {
-                predecessorMap.getOrPut(successor, ::mutableSetOf) += inst
+                predecessorMap.add(successor, inst)
             }
 
             if (inst is JcCatchInst) {
-                throwPredecessors[inst] = inst.throwers.map { inst(it) }.toMutableSet()
+                throwPredecessors[inst] = inst.throwers.map { instructions[it.index] }.toPersistentSet()
                 inst.throwers.forEach {
-                    throwSuccessors.getOrPut(inst(it), ::mutableSetOf).add(inst)
+                    throwSuccessors.add(inst(it), inst)
                 }
             }
         }
@@ -79,13 +78,18 @@ class JcGraphImpl(
         for (inst in instructions) {
             for (throwableType in inst.accept(exceptionResolver)) {
                 if (!catchers(inst).any { throwableType.jcClass isSubClassOf (it.throwable.type as JcClassType).jcClass }) {
-                    _throwExits.getOrPut(throwableType, ::mutableSetOf) += ref(inst)
+                    _throwExits.add(throwableType, ref(inst))
                 }
             }
         }
     }
 
-    override fun index(inst: JcInst) = indexMap.getOrDefault(inst, -1)
+    override fun index(inst: JcInst): Int {
+        if (instructions.contains(inst)) {
+            return inst.location.index
+        }
+        return -1
+    }
 
     override fun ref(inst: JcInst): JcInstRef = JcInstRef(index(inst))
     override fun inst(ref: JcInstRef): JcInst = instructions[ref.index]
@@ -129,6 +133,16 @@ class JcGraphImpl(
     override fun toString(): String = instructions.joinToString("\n")
 
     override fun iterator(): Iterator<JcInst> = instructions.iterator()
+
+
+    private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
+        val current = this[key]
+        if (current == null) {
+            this[key] = singleton(value)
+        } else {
+            this[key] = current + value
+        }
+    }
 }
 
 

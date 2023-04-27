@@ -235,6 +235,7 @@ val JcClassOrInterface.isKotlin: Boolean
     }
 
 
+
 private val JcClassOrInterface.simpleBinaryName: String?
     get() {
         // top level class

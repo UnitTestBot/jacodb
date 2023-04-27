@@ -30,7 +30,7 @@ import org.jacodb.impl.vfs.GlobalClassesVfs
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     override val db: JcDatabaseImpl,
-    override val features: List<JcClasspathFeature>?,
+    override val features: List<JcClasspathFeature>,
     globalClassVFS: GlobalClassesVfs
 ) : JcClasspath {
 
@@ -39,7 +39,7 @@ class JcClasspathImpl(
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
 
-    private val classpathExtFeature = features?.filterIsInstance<JcClasspathExtFeature>()
+    private val classpathExtFeature = features.filterIsInstance<JcClasspathExtFeature>()
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
@@ -67,7 +67,8 @@ class JcClasspathImpl(
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
         return JcClassTypeImpl(
-            jcClass,
+            this,
+            jcClass.name,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null
