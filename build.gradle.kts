@@ -21,6 +21,7 @@ plugins {
 
     `java-library`
     `maven-publish`
+    signing
     `java-test-fixtures`
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
@@ -31,7 +32,7 @@ repositories {
     mavenCentral()
 }
 
-subprojects {
+allprojects {
     group = rootProject.group
     version = rootProject.version
 
@@ -134,24 +135,41 @@ subprojects {
                 pom {
                     packaging = "jar"
                     name.set("org.jacodb")
-                    description.set("fast and effective way to access and analyze java bytecode")
-                    url.set("https://github.com/UnitTestBot/jacodb")
-                    scm {
-                        url.set("https://github.com/UnitTestBot/jacodb.git")
-                    }
+                    description.set("analyse JVM bytecode with pleasure")
                     issueManagement {
                         url.set("https://github.com/UnitTestBot/jacodb/issues")
                     }
+                    scm {
+                        connection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                        developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                        url.set("https://www.jacodb.org")
+                    }
+                    url.set("https://www.jacodb.org")
                     licenses {
                         license {
-                            name.set("Apache 2.0")
-                            url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
                     developers {
                         developer {
-                            id.set("unit-test-bot-team")
-                            name.set("UnitTestBot team")
+                            id.set("lehvolk")
+                            name.set("Alexey Volkov")
+                            email.set("lehvolk@yandex.ru")
+                        }
+                        developer {
+                            id.set("volivan239")
+                            name.set("Ivan Volkov")
+                            email.set("lehvolk@yandex.ru")
+                        }
+                        developer {
+                            id.set("AbdullinAM")
+                            name.set("Azat Abdullin")
+                            email.set("azat.aam@gmail.com")
+                        }
+                        developer {
+                            id.set("UnitTestBot")
+                            name.set("UnitTestBot Team")
                         }
                     }
                 }
@@ -161,23 +179,45 @@ subprojects {
 
 }
 
-configure(
-    listOf(
-        project(":jacodb-api"),
-        project(":jacodb-core"),
-        project(":jacodb-analysis"),
-    )
-) {
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
+val repoUrl: String? = project.properties["repoUrl"] as? String ?: "https://maven.pkg.github.com/UnitTestBot/jacodb"
+
+if (!repoUrl.isNullOrEmpty()) {
+    configure(
+        listOf(
+            project(":jacodb-api"),
+            project(":jacodb-core"),
+            project(":jacodb-analysis"),
+        )
+    ) {
+        publishing {
+            repositories {
+                maven {
+                    name = "repo"
+                    url = uri(repoUrl)
+                    val actor: String? by project
+                    val token: String? by project
+
+                    credentials {
+                        username = actor
+                        password = token
+                    }
                 }
             }
         }
+    }
+}
+
+signing {
+    val gpgKey: String? by project
+    val gpgPassphrase: String? by project
+    useInMemoryPgpKeys(gpgKey, gpgPassphrase)
+
+    sign(publishing.publications["jar"])
+}
+
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
 }
