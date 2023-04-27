@@ -26,8 +26,10 @@ jobs:
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           gradle-version: 7.4.2
-          arguments: publish
-        env:
-          ACTOR: ${{ secrets.MAVEN_CENTRAL_LOGIN }}
-          TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-          REPO_URL: 'https://s01.oss.sonatype.org/content/repositories/staging/'
+          arguments: |
+            publish
+            -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
+            -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
+            -PgpgKey=${{ secrets.OSSRH_GPG_SECRET_KEY }}
+            -PgpgPassphrase=${{ secrets.OSSRH_GPG_SECRET_PASSPHRASE }}
+            -PrepoUrl=https://s01.oss.sonatype.org/content/repositories/staging/
