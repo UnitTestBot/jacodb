@@ -16,11 +16,11 @@
 
 package org.jacodb.testing.performance
 
+import org.jacodb.impl.JcClasspathImpl
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
 import org.openjdk.jmh.annotations.*
 import soot.G
-import soot.PackManager
 import soot.Scene
 import soot.SootClass
 import soot.jimple.JimpleBody
@@ -73,6 +73,10 @@ class SootBenchmarks {
     }
 
     @Benchmark
+    @Warmup(iterations = 1)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 1, time = 1, timeUnit = TimeUnit.MILLISECONDS)
     fun jvmRuntimeWithIdeaCommunity() {
         initSoot(allIdeaJars)
     }
@@ -90,6 +94,8 @@ class SootBenchmarks {
             // from the source code have the same name in the jimple body.
             setPhaseOption("jb", "use-original-names:false")
             set_soot_classpath(files.filter { it.exists() }.joinToString(File.pathSeparator) { it.absolutePath })
+            set_process_dir(files.filter { it.exists() }.map { it.absolutePath })
+
             set_src_prec(Options.src_prec_only_class)
             set_keep_line_number(true)
             set_ignore_classpath_errors(true) // gradle/build/resources/main does not exists, but it's not a problem
@@ -104,10 +110,11 @@ class SootBenchmarks {
             set_whole_program(true)
         }
         Scene.v().loadNecessaryClasses()
-        PackManager.v().runPacks()
-        val sootClass = Scene.v().getSootClass("java.lang.String")
-        sootClass.setResolvingLevel(SootClass.BODIES)
-        sootClass.methods.first().retrieveActiveBody() as JimpleBody
+        val sootClass = Scene.v().getSootClass(JcClasspathImpl::class.java.name)
+        if (!sootClass.isPhantom) {
+            sootClass.setResolvingLevel(SootClass.BODIES)
+            sootClass.methods.first().retrieveActiveBody() as JimpleBody
+        }
     }
 
 }
