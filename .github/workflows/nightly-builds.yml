@@ -1,6 +1,8 @@
 name: Nightly builds for Maven Central
 
-on: workflow_dispatch
+on:
+  schedule:
+    - cron: '30 23 * * 1,2,3,4,5'
 
 jobs:
   publish:
