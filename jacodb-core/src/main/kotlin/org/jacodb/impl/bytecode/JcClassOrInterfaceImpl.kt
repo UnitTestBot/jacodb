@@ -19,7 +19,6 @@ package org.jacodb.impl.bytecode
 import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
-import org.jacodb.impl.features.classpaths.GraphsService
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
 import org.jacodb.impl.fs.fullAsmNodeWithFrames
@@ -30,9 +29,10 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource,
-    private val features: List<JcClasspathFeature>?,
-    private val graphsService: GraphsService,
+    features: List<JcClasspathFeature>,
 ) : JcClassOrInterface {
+
+    private val cache = features.filterIsInstance<JcMethodExtFeature>().first()
 
     private val cachedInfo: ClassInfo? = when (classSource) {
         is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
@@ -40,11 +40,11 @@ class JcClassOrInterfaceImpl(
         else -> null // maybe we do not need to do right now
     }
 
-    private val classFeatures = features?.filterIsInstance<JcClassExtFeature>()
+    private val classFeatures = features.filterIsInstance<JcClassExtFeature>()
 
     private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->
-            classFeatures?.forEach {
+            classFeatures.forEach {
                 map.putAll(it.extensionValuesOf(this).orEmpty())
             }
         }
@@ -115,7 +115,7 @@ class JcClassOrInterfaceImpl(
     override val declaredFields: List<JcField> get() {
         val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
         return when {
-            !classFeatures.isNullOrEmpty() -> {
+            classFeatures.isNotEmpty() -> {
                 val modifiedFields = result.toMutableList()
                 classFeatures.forEach {
                     it.fieldsOf(this)?.let {
@@ -130,9 +130,9 @@ class JcClassOrInterfaceImpl(
     }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, graphsService) }
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, cache) }
         when {
-            !classFeatures.isNullOrEmpty() -> {
+            classFeatures.isNotEmpty() -> {
                 val modifiedMethods = result.toMutableList()
                 classFeatures.forEach {
                     it.methodsOf(this)?.let {

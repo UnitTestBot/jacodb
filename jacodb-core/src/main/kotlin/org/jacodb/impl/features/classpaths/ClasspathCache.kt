@@ -17,7 +17,17 @@
 package org.jacodb.impl.features.classpaths
 
 import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import org.jacodb.api.*
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.impl.JcCacheSettings
+import org.jacodb.impl.bytecode.jsrInlined
+import org.jacodb.impl.cfg.JcGraphBuilder
+import org.jacodb.impl.cfg.JcMethodRefImpl
+import org.jacodb.impl.cfg.RawInstListBuilder
 import java.time.Duration
 import java.util.*
 
@@ -25,26 +35,23 @@ import java.util.*
 /**
  * any class cache should extend this class
  */
-open class ClasspathCache(
-    protected val maxSize: Long = 10_000,
-    protected val expiration: Duration = Duration.ofMinutes(1)
-) : JcClasspathExtFeature {
+open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, JcMethodExtFeature {
     /**
      *
      */
-    private val classesCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(expiration)
-        .softValues()
-        .maximumSize(maxSize)
+    private val classesCache = segmentBuilder(settings.classes)
         .build<String, Optional<JcClassOrInterface>>()
-    /**
-     *
-     */
-    private val typesCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(expiration)
-        .softValues()
-        .maximumSize(maxSize)
+
+    private val typesCache = segmentBuilder(settings.types)
         .build<String, Optional<JcType>>()
+
+    private val graphCache = segmentBuilder(settings.graphs)
+        .build(object : CacheLoader<JcMethodRef, JcGraphHolder>() {
+            override fun load(key: JcMethodRef): JcGraphHolder {
+                return JcGraphHolder(key)
+            }
+        });
+
 
     override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
         return classesCache.getIfPresent(name)
@@ -53,6 +60,20 @@ open class ClasspathCache(
     override fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? {
         return typesCache.getIfPresent(name)
     }
+
+    override fun flowGraph(method: JcMethod): JcGraph = method.holder().flowGraph
+
+    private fun JcMethod.holder(): JcGraphHolder {
+        return graphCache.getUnchecked(JcMethodRefImpl(this)).also {
+            it.bind(enclosingClass.classpath)
+        }
+    }
+
+    override fun instList(method: JcMethod): JcInstList<JcInst> = method.holder().instList
+
+    override fun rawInstList(method: JcMethod): JcInstList<JcRawInst> =
+        method.holder().rawInstList
+
 
     override fun on(event: JcClasspathFeatureEvent) {
         when (event) {
@@ -66,4 +87,45 @@ open class ClasspathCache(
             }
         }
     }
+
+    protected fun segmentBuilder(settings: Pair<Long, Duration>): CacheBuilder<Any, Any> {
+        val maxSize = settings.first
+        val expiration = settings.second
+
+        return CacheBuilder.newBuilder()
+            .expireAfterAccess(expiration)
+            .softValues()
+            .maximumSize(maxSize)
+    }
+}
+
+private class JcGraphHolder(private val methodRef: JcMethodRef) {
+
+    private val method get() = methodRef.method
+    private lateinit var classpath: JcClasspath
+    private lateinit var methodFeatures: List<JcInstExtFeature>
+
+    fun bind(classpath: JcClasspath) {
+        this.classpath = classpath
+        this.methodFeatures = classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
+    }
+
+    val rawInstList: JcInstList<JcRawInst> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode().jsrInlined).build()
+        methodFeatures.fold(list) { value, feature ->
+            feature.transformRawInstList(method, value)
+        }
+    }
+
+    val flowGraph by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        JcGraphBuilder(method, rawInstList).buildFlowGraph()
+    }
+
+    val instList: JcInstList<JcInst> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val list: JcInstList<JcInst> = JcGraphBuilder(method, rawInstList).buildInstList()
+        methodFeatures.fold(list) { value, feature ->
+            feature.transformInstList(method, value)
+        }
+    }
+
 }

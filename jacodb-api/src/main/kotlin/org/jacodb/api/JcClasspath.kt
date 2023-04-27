@@ -18,6 +18,7 @@ package org.jacodb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
@@ -140,6 +141,14 @@ interface JcInstExtFeature : JcClasspathFeature {
 
     fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
     fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
+}
+
+interface JcMethodExtFeature : JcClasspathFeature {
+
+    fun flowGraph(method: JcMethod): JcGraph
+    fun instList(method: JcMethod): JcInstList<JcInst>
+    fun rawInstList(method: JcMethod): JcInstList<JcRawInst>
+
 }
 
 

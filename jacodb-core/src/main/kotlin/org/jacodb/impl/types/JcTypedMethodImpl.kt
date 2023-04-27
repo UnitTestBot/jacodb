@@ -64,7 +64,7 @@ class JcTypedMethodImpl(
 
         TypedMethodInfo(
             substitutor = substitutor,
-            resolution = MethodSignature.withDeclarations(method)
+            resolution = signature
         )
     }
 

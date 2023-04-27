@@ -16,33 +16,22 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
+import org.jacodb.api.*
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.cfg.JcGraphBuilder
-import org.jacodb.impl.cfg.RawInstListBuilder
-import org.jacodb.impl.features.classpaths.GraphsService
 import org.jacodb.impl.fs.fullAsmNode
-import org.jacodb.impl.softLazy
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
-import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
     private val source: ClassSource,
-    private val graphsService: GraphsService,
+    private val classpathCache: JcMethodExtFeature,
     override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
 
@@ -76,11 +65,11 @@ class JcMethodImpl(
         return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
     }
 
-    override val rawInstList: JcInstList<JcRawInst> get() = graphsService.rawInstList(this)
+    override val rawInstList: JcInstList<JcRawInst> get() = classpathCache.rawInstList(this)
 
-    override fun flowGraph() = graphsService.flowGraph(this)
+    override fun flowGraph() = classpathCache.flowGraph(this)
 
-    override val instList: JcInstList<JcInst> get() = graphsService.instList(this)
+    override val instList: JcInstList<JcInst> get() = classpathCache.instList(this)
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcMethodImpl) {
