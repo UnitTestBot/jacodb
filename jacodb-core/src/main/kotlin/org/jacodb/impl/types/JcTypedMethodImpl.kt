@@ -23,6 +23,7 @@ import org.jacodb.api.JcTypeVariableDeclaration
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.MethodResolution
+import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.types.signature.FieldResolutionImpl
@@ -77,9 +78,12 @@ class JcTypedMethodImpl(
 
     override val exceptions: List<JcRefType>
         get() {
-            val impl = info.impl ?: return emptyList()
-            return impl.exceptionTypes.map {
+            val typesFromSignature = info.impl?.exceptionTypes?.map {
                 classpath.typeOf(info.substitutor.substitute(it)) as JcRefType
+            } ?: emptyList()
+
+            return typesFromSignature.ifEmpty {
+                method.exceptions.map { classpath.findTypeOrNull(it) as JcRefType }
             }
         }
 

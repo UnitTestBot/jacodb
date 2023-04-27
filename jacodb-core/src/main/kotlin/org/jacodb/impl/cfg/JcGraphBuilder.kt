@@ -265,10 +265,12 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): JcInst = handle(inst) {
-        val throwers = run {
+        val location = newLocation()
+        val throwableTypes = inst.entries.map { it.acceptedThrowable.asType }
+        val throwers = inst.entries.flatMap {
             val result = mutableListOf<JcInstRef>()
-            var current = instList.indexOf(labels.getValue(inst.startInclusive))
-            val end = instList.indexOf(labels.getValue(inst.endExclusive))
+            var current = instList.indexOf(labels.getValue(it.startInclusive))
+            val end = instList.indexOf(labels.getValue(it.endExclusive))
             while (current != end) {
                 val rawInst = instList[current]
                 if (rawInst != inst) {
@@ -280,10 +282,12 @@ class JcGraphBuilder(
                 ++current
             }
             result
-        }
+        }.distinct()
+
         return JcCatchInst(
-            newLocation(),
+            location,
             inst.throwable.accept(this) as JcValue,
+            throwableTypes,
             throwers
         )
     }
