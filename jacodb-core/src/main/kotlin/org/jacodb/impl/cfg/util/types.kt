@@ -43,6 +43,7 @@ val TypeName.internalDesc: String
                 else -> "[${element.internalDesc}"
             }
         }
+
         else -> this.jvmClassName
     }
 
@@ -67,6 +68,7 @@ internal fun TypeName.elementTypeOrNull() = when {
     typeName.endsWith("[]") -> typeName.removeSuffix("[]").typeName()
     else -> null
 }
+
 internal fun TypeName.baseElementType(): TypeName {
     var current: TypeName? = this
     var next: TypeName? = current

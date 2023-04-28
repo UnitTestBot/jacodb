@@ -23,7 +23,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import java.io.Closeable
-import java.util.Optional
+import java.util.*
 import java.util.concurrent.Future
 
 /**

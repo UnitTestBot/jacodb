@@ -20,7 +20,13 @@ import kotlinx.collections.immutable.toPersistentSet
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcBranchingInst
+import org.jacodb.api.cfg.JcCatchInst
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstRef
+import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.ext.isSubClassOf
 import java.util.Collections.singleton
 

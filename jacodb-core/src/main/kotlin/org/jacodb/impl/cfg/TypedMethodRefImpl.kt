@@ -16,11 +16,22 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodRef
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcRawCallExpr
 import org.jacodb.api.cfg.TypedMethodRef
-import org.jacodb.api.ext.*
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.api.ext.hasAnnotation
+import org.jacodb.api.ext.jvmName
+import org.jacodb.api.ext.objectType
+import org.jacodb.api.ext.packageName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy
 
@@ -87,7 +98,7 @@ fun JcTypedMethod.methodRef(): TypedMethodRef {
 }
 
 
-class JcMethodRefImpl(method: JcMethod): JcMethodRef {
+class JcMethodRefImpl(method: JcMethod) : JcMethodRef {
 
     private val classpath = method.enclosingClass.classpath
     private val className: String = method.enclosingClass.name

@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcLoops")
+
 package org.jacodb.impl.cfg.util
 
 import org.jacodb.api.cfg.JcGraph
@@ -64,7 +65,8 @@ class JcLoop(
 
 }
 
-val JcGraph.loops: Set<JcLoop> get() {
+val JcGraph.loops: Set<JcLoop>
+    get() {
         val finder = findDominators()
         val loops = HashMap<JcInst, MutableList<JcInst>>()
         instructions.forEach { inst ->

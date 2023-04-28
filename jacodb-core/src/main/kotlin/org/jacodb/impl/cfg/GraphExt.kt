@@ -25,7 +25,33 @@ import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.DefaultJcExprVisitor
+import org.jacodb.api.cfg.DefaultJcInstVisitor
+import org.jacodb.api.cfg.JcArrayAccess
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcBasicBlock
+import org.jacodb.api.cfg.JcBlockGraph
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcCastExpr
+import org.jacodb.api.cfg.JcDivExpr
+import org.jacodb.api.cfg.JcDynamicCallExpr
+import org.jacodb.api.cfg.JcExitMonitorInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcGotoInst
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcLambdaExpr
+import org.jacodb.api.cfg.JcLengthExpr
+import org.jacodb.api.cfg.JcNewArrayExpr
+import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcRemExpr
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcStaticCallExpr
+import org.jacodb.api.cfg.JcSwitchInst
+import org.jacodb.api.cfg.JcThrowInst
+import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.findTypeOrNull
 import java.io.File
 import java.nio.file.Files
@@ -195,7 +221,8 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
  * - all the declared checked exception types
  * - 'java.lang.Throwable' for any potential unchecked types
  */
-open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisitor<List<JcClassType>>, DefaultJcInstVisitor<List<JcClassType>> {
+open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisitor<List<JcClassType>>,
+    DefaultJcInstVisitor<List<JcClassType>> {
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
@@ -296,7 +323,7 @@ open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisito
 
     private fun <E> List<E>.thisOrThrowable(): Collection<JcClassType> {
         return map {
-            when(it){
+            when (it) {
                 is JcClassType -> it
                 else -> throwableType
             }

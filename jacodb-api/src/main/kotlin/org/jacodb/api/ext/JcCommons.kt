@@ -29,7 +29,6 @@ import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.throwClassNotFound
 import java.io.Serializable
 import java.lang.Cloneable
-import java.util.*
 
 fun String.jvmName(): String {
     return when {

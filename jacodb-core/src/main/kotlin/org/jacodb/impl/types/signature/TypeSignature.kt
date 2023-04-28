@@ -26,7 +26,8 @@ import org.jacodb.impl.types.substition.JvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureVisitor
 
-internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass, jcClass.kMetadata?.kmTypeParameters) {
+internal class TypeSignature(jcClass: JcClassOrInterface) :
+    Signature<TypeResolution>(jcClass, jcClass.kMetadata?.kmTypeParameters) {
 
     private val interfaceTypes = ArrayList<JvmType>()
     private lateinit var superClass: JvmType

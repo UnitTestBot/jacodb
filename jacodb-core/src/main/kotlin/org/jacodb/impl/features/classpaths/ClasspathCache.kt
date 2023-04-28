@@ -18,7 +18,19 @@ package org.jacodb.impl.features.classpaths
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
-import org.jacodb.api.*
+import org.jacodb.api.JcClassFoundEvent
+import org.jacodb.api.JcClassNotFound
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathExtFeature
+import org.jacodb.api.JcClasspathFeatureEvent
+import org.jacodb.api.JcInstExtFeature
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.api.JcMethodRef
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList

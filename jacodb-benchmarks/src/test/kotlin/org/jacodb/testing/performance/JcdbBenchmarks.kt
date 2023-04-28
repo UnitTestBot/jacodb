@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-class JcdbBenchmarks  {
+class JcdbBenchmarks {
 
     private var db: JcDatabase? = null
 

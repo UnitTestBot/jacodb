@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 
-class SignatureTest: BaseTest() {
+class SignatureTest : BaseTest() {
 
     companion object : WithDB()
 
@@ -155,6 +155,11 @@ class SignatureTest: BaseTest() {
 
     private val JcClassOrInterface.resolution get() = TypeSignature.of(this)
     private val JcMethod.resolution get() = MethodSignature.of(this)
-    private val JcField.resolution get() = FieldSignature.of(signature, enclosingClass.typeParameters.associateBy { it.symbol }, this)
+    private val JcField.resolution
+        get() = FieldSignature.of(
+            signature,
+            enclosingClass.typeParameters.associateBy { it.symbol },
+            this
+        )
 }
 

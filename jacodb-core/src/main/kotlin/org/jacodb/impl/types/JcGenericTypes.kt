@@ -53,7 +53,7 @@ class JcBoundedWildcardImpl(
 
     override val typeName: String
         get() {
-            val (name, bounds) = when{
+            val (name, bounds) = when {
                 upperBounds.isNotEmpty() -> "extends" to upperBounds
                 else -> "super" to lowerBounds
             }

@@ -15,9 +15,18 @@
  */
 
 @file:JvmName("JcClasspaths")
+
 package org.jacodb.api.ext
 
-import org.jacodb.api.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcPrimitiveType
+import org.jacodb.api.JcType
+import org.jacodb.api.NoClassInClasspathException
+import org.jacodb.api.PredefinedPrimitive
+import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.TypeName
+import org.jacodb.api.throwClassNotFound
 
 inline fun <reified T> JcClasspath.findClassOrNull(): JcClassOrInterface? {
     return findClassOrNull(T::class.java.name)

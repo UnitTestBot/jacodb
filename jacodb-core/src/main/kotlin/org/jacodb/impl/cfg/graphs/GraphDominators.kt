@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.cfg.graphs
 
-import org.jacodb.api.cfg.JcBytecodeGraph
 import org.jacodb.api.cfg.JcBasicBlock
 import org.jacodb.api.cfg.JcBlockGraph
+import org.jacodb.api.cfg.JcBytecodeGraph
 import org.jacodb.api.cfg.JcCatchInst
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
@@ -164,6 +164,7 @@ fun JcGraph.findDominators(): GraphDominators<JcInst> {
         it.find()
     }
 }
+
 fun JcBlockGraph.findDominators(): GraphDominators<JcBasicBlock> {
     return GraphDominators(this).also {
         it.find()

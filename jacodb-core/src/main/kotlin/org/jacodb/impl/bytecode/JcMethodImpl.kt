@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.api.JcParameter
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst

@@ -41,7 +41,7 @@ interface JcInst {
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
 
-abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
+abstract class AbstractJcInst(override val location: JcInstLocation) : JcInst {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

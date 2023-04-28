@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcUsages")
+
 package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope

@@ -16,7 +16,15 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassExtFeature
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcField
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.impl.fs.ClassSourceImpl
@@ -63,29 +71,33 @@ class JcClassOrInterfaceImpl(
     override val annotations: List<JcAnnotation>
         get() = info.annotations.map { JcAnnotationImpl(it, classpath) }
 
-    override val interfaces: List<JcClassOrInterface> get() {
-        return info.interfaces.map {
-            classpath.findClass(it)
+    override val interfaces: List<JcClassOrInterface>
+        get() {
+            return info.interfaces.map {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val superClass: JcClassOrInterface? get() {
-        return info.superClass?.let {
-            classpath.findClass(it)
+    override val superClass: JcClassOrInterface?
+        get() {
+            return info.superClass?.let {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val outerClass: JcClassOrInterface? get() {
-        return info.outerClass?.className?.let {
-            classpath.findClass(it)
+    override val outerClass: JcClassOrInterface?
+        get() {
+            return info.outerClass?.className?.let {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val innerClasses: List<JcClassOrInterface> get() {
-        return info.innerClasses.map {
-            classpath.findClass(it)
+    override val innerClasses: List<JcClassOrInterface>
+        get() {
+            return info.innerClasses.map {
+                classpath.findClass(it)
+            }
         }
-    }
 
     override val access: Int
         get() = info.access
@@ -112,22 +124,23 @@ class JcClassOrInterfaceImpl(
             return null
         }
 
-    override val declaredFields: List<JcField> get() {
-        val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
-        return when {
-            classFeatures.isNotEmpty() -> {
-                val modifiedFields = result.toMutableList()
-                classFeatures.forEach {
-                    it.fieldsOf(this)?.let {
-                        modifiedFields.addAll(it)
+    override val declaredFields: List<JcField>
+        get() {
+            val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
+            return when {
+                classFeatures.isNotEmpty() -> {
+                    val modifiedFields = result.toMutableList()
+                    classFeatures.forEach {
+                        it.fieldsOf(this)?.let {
+                            modifiedFields.addAll(it)
+                        }
                     }
+                    modifiedFields
                 }
-                modifiedFields
-            }
 
-            else -> result
+                else -> result
+            }
         }
-    }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
         val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, cache) }

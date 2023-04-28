@@ -15,10 +15,11 @@
  */
 
 @file:JvmName("JcHierarchies")
+
 package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.*
+import kotlinx.coroutines.future.future
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod

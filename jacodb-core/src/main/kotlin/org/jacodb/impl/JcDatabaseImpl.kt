@@ -89,7 +89,7 @@ class JcDatabaseImpl(
     }
 
     private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
-        if (this!= null && any { it is ClasspathCache }) {
+        if (this != null && any { it is ClasspathCache }) {
             return listOf(KotlinMetadata) + this
         }
         return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata) + this.orEmpty()
@@ -158,7 +158,14 @@ class JcDatabaseImpl(
                 async {
                     val sources = location.sources
                     parentScope.ifActive { persistence.persist(location, sources) }
-                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location), settings.byteCodeSettings.prefixes)) }
+                    parentScope.ifActive {
+                        classesVfs.visit(
+                            RemoveLocationsVisitor(
+                                listOf(location),
+                                settings.byteCodeSettings.prefixes
+                            )
+                        )
+                    }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
             }.awaitAll()

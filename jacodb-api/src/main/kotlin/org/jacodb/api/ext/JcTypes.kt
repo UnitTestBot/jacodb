@@ -32,7 +32,6 @@ import java.lang.Double
 import java.lang.Float
 import java.lang.Long
 import java.lang.Short
-import java.util.*
 
 
 val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstructor }
@@ -195,7 +194,7 @@ fun JcClassType.findMethodOrNull(
     return findElements(
         packageName = { jcClass.packageName },
         getAccessibles = { declaredMethods },
-        nextHierarchy = { listOfNotNull(superType) + interfaces},
+        nextHierarchy = { listOfNotNull(superType) + interfaces },
         predicate = predicate
     )
 //    if (method != null) {

@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JcFields")
+
 package org.jacodb.api.ext
 
 import org.jacodb.api.JcField

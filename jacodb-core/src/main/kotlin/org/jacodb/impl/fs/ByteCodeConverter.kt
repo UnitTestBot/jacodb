@@ -133,13 +133,15 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
 )
 
 
-val ClassSource.info: ClassInfo get() {
-    return newClassNode(ClassReader.SKIP_CODE).asClassInfo(byteCode)
-}
+val ClassSource.info: ClassInfo
+    get() {
+        return newClassNode(ClassReader.SKIP_CODE).asClassInfo(byteCode)
+    }
 
-val ClassSource.fullAsmNode: ClassNode get() {
-    return newClassNode(ClassReader.EXPAND_FRAMES)
-}
+val ClassSource.fullAsmNode: ClassNode
+    get() {
+        return newClassNode(ClassReader.EXPAND_FRAMES)
+    }
 
 fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
     var classNode = fullAsmNode
