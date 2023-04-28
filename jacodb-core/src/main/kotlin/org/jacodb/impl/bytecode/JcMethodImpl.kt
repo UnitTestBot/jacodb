@@ -24,6 +24,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
+import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
@@ -42,14 +43,18 @@ class JcMethodImpl(
 
     private val methodSignature = MethodSignature.of(this)
 
-    override val exceptions: List<JcClassOrInterface> get() {
-        if (methodSignature is MethodResolutionImpl) {
-            return methodSignature.exceptionTypes.map {
-                enclosingClass.classpath.findClass(it.name)
+    override val exceptions: List<JcClassOrInterface>
+        get() {
+            if (methodSignature is MethodResolutionImpl) {
+                val classpath = enclosingClass.classpath
+                return methodSignature.exceptionTypes.mapNotNull {
+                    (it as? JvmClassRefType)?.let {
+                        classpath.findClass(it.name)
+                    }
+                }
             }
+            return emptyList()
         }
-        return emptyList()
-    }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 

@@ -25,74 +25,8 @@ import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.JcAddExpr
-import org.jacodb.api.cfg.JcAndExpr
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcBlockGraph
-import org.jacodb.api.cfg.JcBool
-import org.jacodb.api.cfg.JcByte
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcChar
-import org.jacodb.api.cfg.JcClassConstant
-import org.jacodb.api.cfg.JcCmpExpr
-import org.jacodb.api.cfg.JcCmpgExpr
-import org.jacodb.api.cfg.JcCmplExpr
-import org.jacodb.api.cfg.JcDivExpr
-import org.jacodb.api.cfg.JcDouble
-import org.jacodb.api.cfg.JcDynamicCallExpr
-import org.jacodb.api.cfg.JcEnterMonitorInst
-import org.jacodb.api.cfg.JcEqExpr
-import org.jacodb.api.cfg.JcExitMonitorInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcExprVisitor
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcFloat
-import org.jacodb.api.cfg.JcGeExpr
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcGtExpr
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcInstanceOfExpr
-import org.jacodb.api.cfg.JcInt
-import org.jacodb.api.cfg.JcLambdaExpr
-import org.jacodb.api.cfg.JcLeExpr
-import org.jacodb.api.cfg.JcLengthExpr
-import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcLong
-import org.jacodb.api.cfg.JcLtExpr
-import org.jacodb.api.cfg.JcMethodConstant
-import org.jacodb.api.cfg.JcMulExpr
-import org.jacodb.api.cfg.JcNegExpr
-import org.jacodb.api.cfg.JcNeqExpr
-import org.jacodb.api.cfg.JcNewArrayExpr
-import org.jacodb.api.cfg.JcNewExpr
-import org.jacodb.api.cfg.JcNullConstant
-import org.jacodb.api.cfg.JcOrExpr
-import org.jacodb.api.cfg.JcPhiExpr
-import org.jacodb.api.cfg.JcRemExpr
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcShlExpr
-import org.jacodb.api.cfg.JcShort
-import org.jacodb.api.cfg.JcShrExpr
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcStringConstant
-import org.jacodb.api.cfg.JcSubExpr
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcThis
-import org.jacodb.api.cfg.JcThrowInst
-import org.jacodb.api.cfg.JcUshrExpr
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.cfg.JcXorExpr
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.findTypeOrNull
-import org.jacodb.api.ext.toType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -261,25 +195,19 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
  * - all the declared checked exception types
  * - 'java.lang.Throwable' for any potential unchecked types
  */
-open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcClassType>>, JcExprVisitor<List<JcClassType>> {
+open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisitor<List<JcClassType>>, DefaultJcInstVisitor<List<JcClassType>> {
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
 
-    override fun visitExternalJcExpr(value: JcExpr): List<JcClassType> {
-        return emptyList()
-    }
+    override val defaultExprHandler: (JcExpr) -> List<JcClassType>
+        get() = { emptyList() }
 
-    override fun visitExternalJcInst(inst: JcInst): List<JcClassType> {
-        return emptyList()
-    }
+    override val defaultInstHandler: (JcInst) -> List<JcClassType>
+        get() = { emptyList() }
 
     override fun visitJcAssignInst(inst: JcAssignInst): List<JcClassType> {
         return inst.lhv.accept(this) + inst.rhv.accept(this)
-    }
-
-    override fun visitJcEnterMonitorInst(inst: JcEnterMonitorInst): List<JcClassType> {
-        return listOf(nullPointerExceptionType)
     }
 
     override fun visitJcExitMonitorInst(inst: JcExitMonitorInst): List<JcClassType> {
@@ -290,116 +218,20 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
         return inst.callExpr.accept(this)
     }
 
-    override fun visitJcReturnInst(inst: JcReturnInst): List<JcClassType> {
-        return emptyList()
-    }
-
     override fun visitJcThrowInst(inst: JcThrowInst): List<JcClassType> {
         return listOf(inst.throwable.type as JcClassType, nullPointerExceptionType)
-    }
-
-    override fun visitJcCatchInst(inst: JcCatchInst): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcGotoInst(inst: JcGotoInst): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcIfInst(inst: JcIfInst): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcSwitchInst(inst: JcSwitchInst): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcAddExpr(expr: JcAddExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcAndExpr(expr: JcAndExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcCmpExpr(expr: JcCmpExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcCmpgExpr(expr: JcCmpgExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcCmplExpr(expr: JcCmplExpr): List<JcClassType> {
-        return emptyList()
     }
 
     override fun visitJcDivExpr(expr: JcDivExpr): List<JcClassType> {
         return listOf(arithmeticExceptionType)
     }
 
-    override fun visitJcMulExpr(expr: JcMulExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcEqExpr(expr: JcEqExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcNeqExpr(expr: JcNeqExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcGeExpr(expr: JcGeExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcGtExpr(expr: JcGtExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcLeExpr(expr: JcLeExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcLtExpr(expr: JcLtExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcOrExpr(expr: JcOrExpr): List<JcClassType> {
-        return emptyList()
-    }
-
     override fun visitJcRemExpr(expr: JcRemExpr): List<JcClassType> {
         return listOf(arithmeticExceptionType)
     }
 
-    override fun visitJcShlExpr(expr: JcShlExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcShrExpr(expr: JcShrExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcSubExpr(expr: JcSubExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcUshrExpr(expr: JcUshrExpr): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcXorExpr(expr: JcXorExpr): List<JcClassType> {
-        return emptyList()
-    }
-
     override fun visitJcLengthExpr(expr: JcLengthExpr): List<JcClassType> {
         return listOf(nullPointerExceptionType)
-    }
-
-    override fun visitJcNegExpr(expr: JcNegExpr): List<JcClassType> {
-        return emptyList()
     }
 
     override fun visitJcCastExpr(expr: JcCastExpr): List<JcClassType> {
@@ -417,14 +249,10 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
         return listOf(classpath.findTypeOrNull<NegativeArraySizeException>() as JcClassType)
     }
 
-    override fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr): List<JcClassType> {
-        return emptyList()
-    }
-
     override fun visitJcLambdaExpr(expr: JcLambdaExpr): List<JcClassType> {
         return buildList {
             add(throwableType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
@@ -436,14 +264,14 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
         return buildList {
             add(throwableType)
             add(nullPointerExceptionType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
     override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): List<JcClassType> {
         return buildList {
             add(throwableType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
@@ -451,20 +279,8 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
         return buildList {
             add(throwableType)
             add(nullPointerExceptionType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
-    }
-
-    override fun visitJcThis(value: JcThis): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcArgument(value: JcArgument): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcLocalVar(value: JcLocalVar): List<JcClassType> {
-        return emptyList()
     }
 
     override fun visitJcFieldRef(value: JcFieldRef): List<JcClassType> {
@@ -478,55 +294,14 @@ open class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<
         )
     }
 
-    override fun visitJcBool(value: JcBool): List<JcClassType> {
-        return emptyList()
+    private fun <E> List<E>.thisOrThrowable(): Collection<JcClassType> {
+        return map {
+            when(it){
+                is JcClassType -> it
+                else -> throwableType
+            }
+        }
     }
 
-    override fun visitJcByte(value: JcByte): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcChar(value: JcChar): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcShort(value: JcShort): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcInt(value: JcInt): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcLong(value: JcLong): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcFloat(value: JcFloat): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcDouble(value: JcDouble): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcNullConstant(value: JcNullConstant): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcStringConstant(value: JcStringConstant): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcClassConstant(value: JcClassConstant): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcMethodConstant(value: JcMethodConstant): List<JcClassType> {
-        return emptyList()
-    }
-
-    override fun visitJcPhiExpr(value: JcPhiExpr): List<JcClassType> {
-        return emptyList()
-    }
 }
+
