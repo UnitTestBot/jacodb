@@ -27,6 +27,7 @@ import org.jacodb.api.cfg.JcInstRef
 import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.ext.isSubClassOf
+import java.util.*
 
 class JcGraphImpl(
     override val method: JcMethod,
@@ -35,12 +36,12 @@ class JcGraphImpl(
     private val indexMap = instructions.mapIndexed { index, jcInst -> jcInst to index }.toMap()
     override val classpath: JcClasspath get() = method.enclosingClass.classpath
 
-    private val predecessorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
-    private val successorMap = mutableMapOf<JcInst, MutableSet<JcInst>>()
+    private val predecessorMap = mutableMapOf<JcInst, Set<JcInst>>()
+    private val successorMap = mutableMapOf<JcInst, Set<JcInst>>()
 
-    private val throwPredecessors = mutableMapOf<JcCatchInst, MutableSet<JcInst>>()
-    private val throwSuccessors = mutableMapOf<JcInst, MutableSet<JcCatchInst>>()
-    private val _throwExits = mutableMapOf<JcClassType, MutableSet<JcInstRef>>()
+    private val throwPredecessors = mutableMapOf<JcCatchInst, Set<JcInst>>()
+    private val throwSuccessors = mutableMapOf<JcInst, Set<JcCatchInst>>()
+    private val _throwExits = mutableMapOf<JcClassType, Set<JcInstRef>>()
 
     private val exceptionResolver = JcExceptionResolver(classpath)
 
@@ -65,13 +66,25 @@ class JcGraphImpl(
             successorMap[inst] = successors
 
             for (successor in successors) {
-                predecessorMap.getOrPut(successor, ::mutableSetOf) += inst
+                predecessorMap.add(successor, inst)
             }
 
             if (inst is JcCatchInst) {
-                throwPredecessors[inst] = inst.throwers.map { inst(it) }.toMutableSet()
-                inst.throwers.forEach {
-                    throwSuccessors.getOrPut(inst(it), ::mutableSetOf).add(inst)
+                val possibleThrowers = inst.throwers
+                    .map { inst(it) }
+                    .filter {
+                        it.accept(exceptionResolver).any { throwableType ->
+                            inst.throwableTypes.any { acceptedType ->
+                                val acceptedClass = (acceptedType as JcClassType).jcClass
+                                throwableType.jcClass isSubClassOf acceptedClass ||
+                                        acceptedClass isSubClassOf throwableType.jcClass
+                            }
+                        }
+                    }
+
+                throwPredecessors[inst] = possibleThrowers.toMutableSet()
+                possibleThrowers.forEach {
+                    throwSuccessors.add(it, inst)
                 }
             }
         }
@@ -79,7 +92,7 @@ class JcGraphImpl(
         for (inst in instructions) {
             for (throwableType in inst.accept(exceptionResolver)) {
                 if (!catchers(inst).any { throwableType.jcClass isSubClassOf (it.throwable.type as JcClassType).jcClass }) {
-                    _throwExits.getOrPut(throwableType, ::mutableSetOf) += ref(inst)
+                    _throwExits.add(throwableType, ref(inst))
                 }
             }
         }
@@ -129,6 +142,15 @@ class JcGraphImpl(
     override fun toString(): String = instructions.joinToString("\n")
 
     override fun iterator(): Iterator<JcInst> = instructions.iterator()
+
+    private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
+        val current = this[key]
+        if (current == null) {
+            this[key] = Collections.singleton(value)
+        } else {
+            this[key] = current + value
+        }
+    }
 }
 
 
