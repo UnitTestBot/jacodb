@@ -33,7 +33,7 @@ abstract class AbstractTaintForwardFunctions(
     protected val classpath: JcClasspath,
     protected val graph: ApplicationGraph<JcMethod, JcInst>,
     protected val platform: JcAnalysisPlatform,
-    protected val maxPathLength: Int = 5
+    protected val maxPathLength: Int
 ) : FlowFunctionsSpace {
 
     abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
@@ -99,8 +99,9 @@ abstract class AbstractTaintForwardFunctions(
         override val inIds = this@AbstractTaintForwardFunctions.inIds
 
         override fun compute(fact: DomainFact): Collection<DomainFact> {
-            if (fact == ZEROFact)
+            if (fact == ZEROFact) {
                 return listOf(fact)
+            }
 
             if (fact !is TaintNode) {
                 return emptyList()

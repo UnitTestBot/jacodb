@@ -61,10 +61,10 @@ class Points2Test : BaseTest() {
 
         @JvmStatic
         fun provideForPointerBenchGeneralJava(): Stream<Arguments> = listOf(
-            // TODO: Exceptions not handled correctly by cfg
-//                Arguments.of("Exception1", listOf("37", "42"), emptyList<String>()),
-//                Arguments.of("Exception2", listOf("39"), listOf("36")),
-//                Arguments.of("Null1", listOf("39", "42"), listOf("38")),
+            Arguments.of("Exception1", listOf("37", "38"), emptyList<String>()),
+
+            // Null1 and Null2 are not tested because it is difficult to represent them as taint problems
+            // Exception2 isn't tested because it needs analysis for possibly thrown exceptions
 
             Arguments.of("Interface1", listOf("40", "45"), listOf("38", "42", "43")),
             Arguments.of("OuterClass1", listOf("55", "51"), listOf("50", "53")),

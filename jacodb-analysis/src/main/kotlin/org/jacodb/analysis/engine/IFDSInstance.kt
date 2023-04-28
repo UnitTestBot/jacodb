@@ -31,7 +31,7 @@ class IFDSInstance(
     private val listeners: MutableList<IFDSInstanceListener> = mutableListOf()
 ): AnalysisEngine {
 
-    private inner class EdgesStorage {
+    private class EdgesStorage {
         private val byStart: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
         private val byEnd:   MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
         operator fun contains(e: IFDSEdge<DomainFact>): Boolean {
