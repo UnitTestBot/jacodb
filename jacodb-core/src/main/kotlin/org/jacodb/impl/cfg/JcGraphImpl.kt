@@ -74,9 +74,21 @@ class JcGraphImpl(
             }
 
             if (inst is JcCatchInst) {
-                throwPredecessors[inst] = inst.throwers.map { instructions[it.index] }.toPersistentSet()
-                inst.throwers.forEach {
-                    throwSuccessors.add(inst(it), inst)
+                val possibleThrowers = inst.throwers
+                    .map { inst(it) }
+                    .filter {
+                        it.accept(exceptionResolver).any { throwableType ->
+                            inst.throwableTypes.any { acceptedType ->
+                                val acceptedClass = (acceptedType as JcClassType).jcClass
+                                throwableType.jcClass isSubClassOf acceptedClass ||
+                                        acceptedClass isSubClassOf throwableType.jcClass
+                            }
+                        }
+                    }
+
+                throwPredecessors[inst] = possibleThrowers.toPersistentSet()
+                possibleThrowers.forEach {
+                    throwSuccessors.add(it, inst)
                 }
             }
         }
