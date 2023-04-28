@@ -17,6 +17,7 @@
 package org.jacodb.testing.cfg;
 
 import java.io.*;
+import java.net.DatagramSocket;
 
 public class IRExamples {
     int x;
@@ -110,6 +111,13 @@ public class IRExamples {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
         } catch (IOException e) {
+        }
+    }
+
+    static public void multiCatch(DatagramSocket s) {
+        try {
+            s.receive(null);
+        } catch (IOException | IllegalStateException e) {
         }
     }
 

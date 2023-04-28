@@ -22,18 +22,16 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
+import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.ext.findClass
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
-import org.jacodb.impl.types.signature.MethodResolutionImpl
-import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(
@@ -48,16 +46,10 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
-    override val exceptions: List<JcClassOrInterface> by lazy(LazyThreadSafetyMode.NONE) {
-        val methodSignature = MethodSignature.of(this)
-        if (methodSignature is MethodResolutionImpl) {
-            methodSignature.exceptionTypes.map {
-                enclosingClass.classpath.findClass(it.name)
-            }
-        } else {
-            emptyList()
+    override val exceptions: List<TypeName>
+        get() {
+            return methodInfo.exceptions.map { TypeNameImpl(it) }
         }
-    }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 

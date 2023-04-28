@@ -95,7 +95,7 @@ open class JcVirtualMethodImpl(
     override val annotations: List<JcAnnotation>
         get() = emptyList()
 
-    override val exceptions: List<JcClassOrInterface>
+    override val exceptions: List<TypeName>
         get() = emptyList()
 
     override fun bind(clazz: JcClassOrInterface) {

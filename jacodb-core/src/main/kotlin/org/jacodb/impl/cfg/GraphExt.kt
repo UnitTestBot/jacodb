@@ -93,7 +93,6 @@ import org.jacodb.api.cfg.JcUshrExpr
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.cfg.JcXorExpr
 import org.jacodb.api.ext.findTypeOrNull
-import org.jacodb.api.ext.toType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -289,6 +288,8 @@ fun <R, E, T : JcExprVisitor<E>> JcExpr.applyAndGet(visitor: T, getter: (T) -> R
  */
 class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcClassType>>, JcExprVisitor<List<JcClassType>> {
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
+    private val errorType = classpath.findTypeOrNull<Error>() as JcClassType
+    private val runtimeExceptionType = classpath.findTypeOrNull<RuntimeException>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
     override fun visitJcAssignInst(inst: JcAssignInst): List<JcClassType> {
@@ -444,8 +445,9 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
 
     override fun visitJcLambdaExpr(expr: JcLambdaExpr): List<JcClassType> {
         return buildList {
-            add(throwableType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            add(runtimeExceptionType)
+            add(errorType)
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
@@ -455,24 +457,25 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
 
     override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): List<JcClassType> {
         return buildList {
-            add(throwableType)
-            add(nullPointerExceptionType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            add(runtimeExceptionType)
+            add(errorType)
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
     override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): List<JcClassType> {
         return buildList {
-            add(throwableType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            add(runtimeExceptionType)
+            add(errorType)
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
     override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): List<JcClassType> {
         return buildList {
-            add(throwableType)
-            add(nullPointerExceptionType)
-            addAll(expr.method.exceptions.map { it.toType() })
+            add(runtimeExceptionType)
+            add(errorType)
+            addAll(expr.method.exceptions.thisOrThrowable())
         }
     }
 
@@ -549,5 +552,14 @@ class JcExceptionResolver(val classpath: JcClasspath) : JcInstVisitor<List<JcCla
 
     override fun visitJcPhiExpr(value: JcPhiExpr): List<JcClassType> {
         return emptyList()
+    }
+
+    private fun <E> List<E>.thisOrThrowable(): Collection<JcClassType> {
+        return map {
+            when (it) {
+                is JcClassType -> it
+                else -> throwableType
+            }
+        }
     }
 }

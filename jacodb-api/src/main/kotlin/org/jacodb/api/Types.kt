@@ -35,7 +35,7 @@ interface JcTypedMethod : JcAccessible {
     val typeArguments: List<JcRefType>
 
     val parameters: List<JcTypedMethodParameter>
-    val exceptions: List<JcClassOrInterface>
+    val exceptions: List<JcRefType>
     val method: JcMethod
 
     val enclosingType: JcRefType
