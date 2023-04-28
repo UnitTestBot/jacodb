@@ -41,4 +41,19 @@ class InstructionsTest : BaseTest() {
         assertEquals("%4", (assign.lhv as JcLocalVar).name)
         assertEquals("%1", (assign.rhv as JcLocalVar).name)
     }
+
+    @Test
+    fun `inst index`() {
+        val clazz = cp.findClass<JavaArrays>()
+        val method = clazz.declaredMethods.first {
+            it.name == "arrayObjectMonitors"
+        }
+        method.instList.forEachIndexed { index, inst ->
+            assertEquals(index, inst.location.index)
+        }
+
+        method.flowGraph().instructions.forEachIndexed { index, inst ->
+            assertEquals(index, inst.location.index)
+        }
+    }
 }
