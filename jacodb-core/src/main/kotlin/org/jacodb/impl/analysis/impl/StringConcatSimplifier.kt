@@ -144,6 +144,7 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
         inst.location,
         inst.throwable,
+        inst.throwableTypes,
         inst.throwers.flatMap { indicesOf(it) }
     )
 

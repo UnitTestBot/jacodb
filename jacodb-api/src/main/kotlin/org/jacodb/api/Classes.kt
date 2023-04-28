@@ -87,7 +87,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val parameters: List<JcParameter>
 
-    val exceptions: List<JcClassOrInterface>
+    val exceptions: List<TypeName>
 
     fun asmNode(): MethodNode
     fun flowGraph(): JcGraph

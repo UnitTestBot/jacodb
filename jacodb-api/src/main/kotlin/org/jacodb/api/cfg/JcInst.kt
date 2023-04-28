@@ -153,6 +153,7 @@ class JcThrowInst(
 class JcCatchInst(
     location: JcInstLocation,
     val throwable: JcValue,
+    val throwableTypes: List<JcType>,
     val throwers: List<JcInstRef>
 ) : AbstractJcInst(location) {
     override val operands: List<JcExpr>

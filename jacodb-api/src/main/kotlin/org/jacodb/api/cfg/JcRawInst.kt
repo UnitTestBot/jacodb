@@ -146,17 +146,22 @@ class JcRawThrowInst(
     }
 }
 
+data class JcRawCatchEntry(
+    val acceptedThrowable: TypeName,
+    val startInclusive: JcRawLabelRef,
+    val endExclusive: JcRawLabelRef
+)
+
 class JcRawCatchInst(
     override val owner: JcMethod,
     val throwable: JcRawValue,
     val handler: JcRawLabelRef,
-    val startInclusive: JcRawLabelRef,
-    val endExclusive: JcRawLabelRef
+    val entries: List<JcRawCatchEntry>,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "catch ($throwable: ${throwable.typeName}) $startInclusive - $endExclusive"
+    override fun toString(): String = "catch ($throwable: ${throwable.typeName})"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCatchInst(this)

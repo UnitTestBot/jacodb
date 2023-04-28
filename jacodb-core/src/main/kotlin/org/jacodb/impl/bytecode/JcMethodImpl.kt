@@ -22,16 +22,13 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.JcParameter
+import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.ext.findClass
 import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
-import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.signature.MethodResolutionImpl
-import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(
@@ -46,19 +43,9 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
-    private val methodSignature = MethodSignature.of(this)
-
-    override val exceptions: List<JcClassOrInterface>
+    override val exceptions: List<TypeName>
         get() {
-            if (methodSignature is MethodResolutionImpl) {
-                val classpath = enclosingClass.classpath
-                return methodSignature.exceptionTypes.mapNotNull {
-                    (it as? JvmClassRefType)?.let {
-                        classpath.findClass(it.name)
-                    }
-                }
-            }
-            return emptyList()
+            return methodInfo.exceptions.map { TypeNameImpl(it) }
         }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
