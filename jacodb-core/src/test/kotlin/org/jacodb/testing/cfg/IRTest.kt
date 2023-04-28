@@ -17,49 +17,15 @@
 package org.jacodb.testing.cfg
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.NoClassInClasspathException
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.DefaultJcExprVisitor
-import org.jacodb.api.cfg.DefaultJcInstVisitor
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcEnterMonitorInst
-import org.jacodb.api.cfg.JcExitMonitorInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcTerminatingInst
-import org.jacodb.api.cfg.JcThrowInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.cfg.applyAndGet
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isKotlin
-import org.jacodb.api.ext.packageName
-import org.jacodb.api.ext.toType
+import org.jacodb.api.*
+import org.jacodb.api.cfg.*
+import org.jacodb.api.ext.*
 import org.jacodb.impl.JcClasspathImpl
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.bytecode.JcMethodImpl
-import org.jacodb.impl.cfg.JcBlockGraphImpl
-import org.jacodb.impl.cfg.JcGraphBuilder
-import org.jacodb.impl.cfg.MethodNodeBuilder
-import org.jacodb.impl.cfg.RawInstListBuilder
-import org.jacodb.impl.cfg.Simplifier
+import org.jacodb.impl.cfg.*
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.hierarchyExt
@@ -68,9 +34,7 @@ import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.ClassWriter
@@ -370,7 +334,9 @@ class IRTest : BaseTest() {
 //            println()
 //            println("Old body: ${oldBody.print()}")
                 val instructionList = it.rawInstList
-
+                it.instList.forEachIndexed { index, inst ->
+                    assertEquals(index, inst.location.index, "indexes not matched for $it at $index")
+                }
 //            println("Instruction list: $instructionList")
                 val graph = it.flowGraph()
                 if (!it.enclosingClass.isKotlin) {
