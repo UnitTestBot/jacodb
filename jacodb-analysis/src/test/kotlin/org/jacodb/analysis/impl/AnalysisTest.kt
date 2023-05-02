@@ -17,7 +17,7 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.LogManager
+import mu.KotlinLogging
 import org.jacodb.analysis.codegen.main
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.assertThrows
 import java.io.File
 
 class AnalysisTest : BaseTest() {
-    private val logger = LogManager.getLogger(AnalysisTest::class)
+    private val logger = KotlinLogging.logger {}
 
     companion object : WithDB(Usages, InMemoryHierarchy)
 
@@ -40,7 +40,6 @@ class AnalysisTest : BaseTest() {
     ) {
         logger.info("[TEST] $testName")
         val errorFile = File("errorsOuptut")
-        errorFile.createNewFile()
         val commonArs = listOf(
             "java",
             "-ea",
@@ -58,7 +57,9 @@ class AnalysisTest : BaseTest() {
             logger.info("SUCCESS")
         }
         File("generated").deleteRecursively()
-        errorFile.delete()
+        if (errorFile.exists()) {
+            errorFile.delete()
+        }
         assertEquals(0, assemblingResult, error?.joinToString(System.lineSeparator()))
     }
 
@@ -71,7 +72,7 @@ class AnalysisTest : BaseTest() {
         if (exceptionMessage.equals(thrownExceptionMessage)) {
             logger.info("SUCCESS")
         } else {
-            logger.info("FAILED: expected $exceptionMessage, but thrown message is $thrownExceptionMessage")
+            logger.info("FAILED: expected: $exceptionMessage, but thrown message is: $thrownExceptionMessage")
         }
         assertEquals(exceptionMessage, thrownExceptionMessage)
     }
