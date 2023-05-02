@@ -23,7 +23,6 @@ import org.jacodb.analysis.codegen.ast.base.presentation.callable.local.Paramete
 abstract class ArgumentsOwnerExpressionImpl : ArgumentsOwnerExpression {
     override val parameterToArgument = hashMapOf<ParameterPresentation, CodeValue>()
     override fun addInCall(parameter: ParameterPresentation, argument: CodeValue) {
-        assert(!parameterToArgument.contains(parameter)) { "redeclaration of parameter value, do not do it!" }
         parameterToArgument[parameter] = argument
     }
 }

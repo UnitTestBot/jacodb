@@ -19,5 +19,6 @@ package org.jacodb.analysis.codegen.ast.impl
 import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
 import org.jacodb.analysis.codegen.ast.base.presentation.type.ConstructorPresentation
 
-class ObjectCreationExpressionImpl(override val invokedConstructor: ConstructorPresentation) :
+class ObjectCreationExpressionImpl(override val invokedConstructor: ConstructorPresentation,
+                                   override var comments: MutableList<String> = ArrayList()) :
     ArgumentsOwnerExpressionImpl(), ObjectCreationExpression

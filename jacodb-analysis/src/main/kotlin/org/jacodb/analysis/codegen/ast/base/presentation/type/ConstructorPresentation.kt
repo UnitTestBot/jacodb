@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.codegen.ast.base.presentation.type
 
+import org.jacodb.analysis.codegen.ast.base.Commentable
 import org.jacodb.analysis.codegen.ast.base.expression.invocation.ObjectCreationExpression
 import org.jacodb.analysis.codegen.ast.base.VisibilityOwner
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation

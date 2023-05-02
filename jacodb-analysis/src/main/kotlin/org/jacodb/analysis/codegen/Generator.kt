@@ -87,9 +87,9 @@ fun main(args: Array<String>) {
     val m = args[1].toInt()
     val k = args[2].toInt()
 
-    assert(n in 2 until 1000) { "currently big graphs not supported just in case" }
-    assert(m in 1 until 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
-    assert(k in 0 until min(listOf(255, n, m)))
+    assert(n in 2 .. 1000) { "currently big graphs not supported just in case" }
+    assert(m in 1 .. 1000000) { "though we permit duplicated edges, do not overflow graph too much" }
+    assert(k in 0 .. min(listOf(255, n, m)))
 
     val projectPath = Paths.get(args[3]).normalize()
 

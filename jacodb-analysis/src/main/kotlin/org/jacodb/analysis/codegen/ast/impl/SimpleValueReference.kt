@@ -19,7 +19,10 @@ package org.jacodb.analysis.codegen.ast.impl
 import org.jacodb.analysis.codegen.ast.base.*
 import org.jacodb.analysis.codegen.ast.base.typeUsage.TypeUsage
 
-class SimpleValueReference(private val presentation: ValuePresentation) : ValueReference, NameOwner by presentation {
+class SimpleValueReference(
+        private val presentation: ValuePresentation,
+        override var comments: MutableList<String> = ArrayList()
+) : ValueReference, NameOwner by presentation {
     override fun resolve(): ValuePresentation = presentation
     override val evaluatedType: TypeUsage
         get() = presentation.usage

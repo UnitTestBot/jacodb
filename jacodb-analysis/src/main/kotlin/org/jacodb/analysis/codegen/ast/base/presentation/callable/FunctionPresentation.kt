@@ -16,13 +16,14 @@
 
 package org.jacodb.analysis.codegen.ast.base.presentation.callable
 
+import org.jacodb.analysis.codegen.ast.base.Commentable
 import org.jacodb.analysis.codegen.ast.base.NameOwner
 import org.jacodb.analysis.codegen.ast.base.VisibilityOwner
 
 /**
  * Any named functions. Global, static functions and methods.
  */
-interface FunctionPresentation : CallablePresentation, VisibilityOwner, NameOwner {
+interface FunctionPresentation : CallablePresentation, VisibilityOwner, NameOwner, Commentable {
     override val fqnName: String
         get() = shortName
 }

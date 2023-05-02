@@ -26,13 +26,14 @@ open class FunctionImpl(
     override val shortName: String = "functionFor$graphId",
     override val visibility: VisibilityModifier = VisibilityModifier.PUBLIC,
     returnType: TypeUsage = TypePresentation.voidType.instanceType,
-    parameters: List<Pair<TypeUsage, String>> = emptyList()
+    parameters: List<Pair<TypeUsage, String>> = emptyList(),
+    override var comments: MutableList<String> = ArrayList()
 ) : CallableImpl(graphId, returnType, parameters), FunctionPresentation {
     override fun equals(other: Any?): Boolean {
         if (other !is FunctionImpl)
             return false
 
-        if (graphId == other.graphId) {
+        if (graphId == other.graphId && graphId != -1) {
             assert(this === other)
         } else {
             // all functions(including methods) should have unique <fqn, signatures>

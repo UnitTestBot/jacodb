@@ -18,14 +18,18 @@ package org.jacodb.analysis.codegen
 
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.CallablePresentation
 import org.jacodb.analysis.codegen.ast.base.CodeElement
+import org.jacodb.analysis.codegen.ast.base.DirectStringSubstitution
 import org.jacodb.analysis.codegen.ast.base.presentation.callable.FunctionPresentation
 import org.jacodb.analysis.codegen.ast.base.presentation.type.TypePresentation
 import org.jacodb.analysis.codegen.ast.impl.FunctionImpl
+import org.jacodb.analysis.codegen.ast.impl.MethodInvocationExpressionImpl
+import org.jacodb.analysis.codegen.ast.impl.SimpleValueReference
 import org.jacodb.analysis.codegen.ast.impl.TypeImpl
 import org.jacodb.analysis.codegen.language.base.TargetLanguage
 import java.nio.file.Path
 
-class CodeRepresentation(private val language: TargetLanguage) : CodeElement {
+class CodeRepresentation(private val language: TargetLanguage) :
+    CodeElement {
     private val functions = mutableMapOf<Int, FunctionPresentation>()
     private var startFunctionIdCounter = startFunctionFirstId
     private val startFunctionToGenericId = mutableMapOf<String, Int>()
@@ -65,6 +69,61 @@ class CodeRepresentation(private val language: TargetLanguage) : CodeElement {
         return language.getPredefinedPrimitive(primitive)
     }
 
+    private fun generateOneLineComment(
+        iterator: Int,
+        readableConst: Int,
+        numsOfDispatches: List<String>,
+        currentComment: StringBuilder
+    ) {
+        val alreadyAddedToPreviousComment = iterator * readableConst
+        val willAddedAfterCurrentIteration = minOf((iterator + 1) * readableConst, numsOfDispatches.size)
+        for (i in alreadyAddedToPreviousComment until willAddedAfterCurrentIteration) {
+            currentComment.append("${numsOfDispatches[i]} -> ")
+        }
+    }
+
+    private fun generateCommentForStartFunction(function: FunctionPresentation): List<String> {
+        val numsOfDispatches =
+            function.preparationSite.expressionsBefore.filterIsInstance<MethodInvocationExpressionImpl>()
+                .flatMap { expressionBefore ->
+                    expressionBefore.parameterToArgument.map { dispatchValue -> dispatchValue.value }
+                        .filterIsInstance<DirectStringSubstitution>()
+                        .map { dispatchValue ->
+                            dispatchValue.substitution
+                        }.toList()
+                }.toList()
+        val indexOfInterruptVar = numsOfDispatches.size - 2
+        val numOfBreakingVarClass = numsOfDispatches[indexOfInterruptVar].toInt()
+        val breakingClass = functions[numOfBreakingVarClass]
+        val breakingVar = breakingClass?.terminationSite?.dereferences?.filterIsInstance<SimpleValueReference>()?.get(0)
+        val comments: ArrayList<String> = ArrayList()
+        if (breakingVar != null) {
+            comments.add(
+                "This is start function for NullPointerException. The source for this issue is in variable " +
+                        "${breakingVar.shortName}."
+            )
+        }
+        val readableConst = 16
+        val numOfDispatchComments =
+            numsOfDispatches.size / readableConst + if (numsOfDispatches.size % readableConst == 0) 0 else 1
+        var iterator = 0
+        while (iterator < numOfDispatchComments) {
+            val currentComment = StringBuilder()
+            generateOneLineComment(
+                iterator = iterator,
+                readableConst = readableConst,
+                numsOfDispatches = numsOfDispatches,
+                currentComment = currentComment
+            )
+            comments.add(currentComment.toString())
+            iterator++
+        }
+        val lastComment = comments[numOfDispatchComments]
+        val lengthOfArrow = 3
+        comments[numOfDispatchComments] = lastComment.substring(0, lastComment.length - lengthOfArrow - 1)
+        return comments
+    }
+
     fun dumpTo(projectPath: Path) {
         val pathToSourcesDir = language.resolveProjectPathToSources(projectPath)
         for ((name, presentation) in generatedTypes) {
@@ -78,6 +137,8 @@ class CodeRepresentation(private val language: TargetLanguage) : CodeElement {
 
         for ((name, id) in startFunctionToGenericId) {
             val function = functions.getValue(id)
+            val comments = generateCommentForStartFunction(function)
+            function.addComments(comments)
             language.dumpStartFunction(name, function, pathToSourcesDir)
         }
     }
