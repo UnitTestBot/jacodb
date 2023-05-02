@@ -76,8 +76,8 @@ class CodeRepresentation(private val language: TargetLanguage) :
         currentComment: StringBuilder
     ) {
         val alreadyAddedToPreviousComment = iterator * readableConst
-        val willAddedAfterCurrentIterration = minOf((iterator + 1) * readableConst, numsOfDispatches.size)
-        for (i in alreadyAddedToPreviousComment until willAddedAfterCurrentIterration) {
+        val willAddedAfterCurrentIteration = minOf((iterator + 1) * readableConst, numsOfDispatches.size)
+        for (i in alreadyAddedToPreviousComment until willAddedAfterCurrentIteration) {
             currentComment.append("${numsOfDispatches[i]} -> ")
         }
     }
@@ -92,7 +92,8 @@ class CodeRepresentation(private val language: TargetLanguage) :
                             dispatchValue.substitution
                         }.toList()
                 }.toList()
-        val numOfBreakingVarClass = numsOfDispatches[numsOfDispatches.size - 2].toInt()
+        val indexOfInterruptVar = numsOfDispatches.size - 2
+        val numOfBreakingVarClass = numsOfDispatches[indexOfInterruptVar].toInt()
         val breakingClass = functions[numOfBreakingVarClass]
         val breakingVar = breakingClass?.terminationSite?.dereferences?.filterIsInstance<SimpleValueReference>()?.get(0)
         val comments: ArrayList<String> = ArrayList()
@@ -118,7 +119,8 @@ class CodeRepresentation(private val language: TargetLanguage) :
             iterator++
         }
         val lastComment = comments[numOfDispatchComments]
-        comments[numOfDispatchComments] = lastComment.substring(0, lastComment.length - 4)
+        val lengthOfArrow = 3
+        comments[numOfDispatchComments] = lastComment.substring(0, lastComment.length - lengthOfArrow - 1)
         return comments
     }
 
