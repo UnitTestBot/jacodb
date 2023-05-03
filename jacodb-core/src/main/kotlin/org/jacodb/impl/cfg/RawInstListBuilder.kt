@@ -71,6 +71,7 @@ import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
 import org.jacodb.api.cfg.JcRawNewArrayExpr
 import org.jacodb.api.cfg.JcRawNewExpr
+import org.jacodb.api.cfg.JcRawNullConstant
 import org.jacodb.api.cfg.JcRawOrExpr
 import org.jacodb.api.cfg.JcRawRemExpr
 import org.jacodb.api.cfg.JcRawReturnInst
@@ -426,7 +427,7 @@ class RawInstListBuilder(
     private fun local(variable: Int, expr: JcRawValue, insn: AbstractInsnNode): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
-            if (oldVar.typeName == expr.typeName) {
+            if (oldVar.typeName == expr.typeName || expr is JcRawNullConstant) {
                 JcRawAssignInst(method, oldVar, expr)
             } else if (expr is JcRawSimpleValue) {
                 currentFrame = currentFrame.put(variable, expr)
@@ -1152,7 +1153,7 @@ class RawInstListBuilder(
     private fun buildLabelNode(insnNode: LabelNode) {
         val labelInst = label(insnNode)
         instructionList(insnNode) += labelInst
-        val predecessors = predecessors.getOrDefault(insnNode, emptySet())
+        val predecessors = predecessors.getOrDefault(insnNode, emptySet()).filter {it !is LabelNode}
         val predecessorFrames = predecessors.mapNotNull { frames[it] }
         if (predecessors.size == predecessorFrames.size) {
             currentFrame = mergeFrames(predecessors.zip(predecessorFrames).toMap())

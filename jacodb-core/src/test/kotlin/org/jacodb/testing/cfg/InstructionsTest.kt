@@ -16,6 +16,12 @@
 
 package org.jacodb.testing.cfg
 
+import com.sun.mail.imap.IMAPMessage
+import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassProcessingTask
+import org.jacodb.api.JcMethod
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcLocalVar
 import org.jacodb.api.ext.cfg.callExpr
@@ -23,7 +29,13 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.objectweb.asm.util.Textifier
+import org.objectweb.asm.util.TraceMethodVisitor
+import java.util.concurrent.ConcurrentHashMap
+import javax.activation.DataHandler
+
 
 class InstructionsTest : BaseTest() {
 
@@ -40,6 +52,73 @@ class InstructionsTest : BaseTest() {
         val assign = instructions[firstUse + 1] as JcAssignInst
         assertEquals("%4", (assign.lhv as JcLocalVar).name)
         assertEquals("%1", (assign.rhv as JcLocalVar).name)
+    }
+
+    @Test
+    fun `null ref test`() {
+        val clazz = cp.findClass<DataHandler>()
+        clazz.declaredMethods.first { it.name == "writeTo" }.flowGraph()
+    }
+
+    @Test
+    fun `ref undefined`() {
+        val clazz = cp.findClass("com.sun.mail.smtp.SMTPTransport\$DigestMD5Authenticator")
+        clazz.declaredMethods.forEach { it.flowGraph() }
+    }
+
+    @Test
+    fun `properly merged frames for old bytecodce`() {
+        val clazz1 = cp.findClass<IMAPMessage>()
+        val method1 = clazz1.declaredMethods.first { it.name == "writeTo" }
+        method1.flowGraph()
+    }
+
+    @Test
+    fun `java 5 bytecode processed correctly`() {
+        val jars = cp.registeredLocations.map { it.path }
+            .filter { it.contains("mail-1.4.7.jar") || it.contains("activation-1.1.jar") }
+        assertEquals(2, jars.size)
+        val list = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
+        runBlocking {
+            cp.execute(object : JcClassProcessingTask {
+                override fun shouldProcess(registeredLocation: RegisteredLocation): Boolean {
+                    return !registeredLocation.isRuntime && jars.contains(registeredLocation.path)
+                }
+
+                override fun process(clazz: JcClassOrInterface) {
+                    list.add(clazz)
+                }
+            })
+        }
+        val failed = ConcurrentHashMap.newKeySet<JcMethod>()
+        list.parallelStream().forEach { clazz ->
+            clazz.declaredMethods.forEach {
+                try {
+                    it.flowGraph()
+                } catch (e: Exception) {
+                    failed.add(it)
+                }
+            }
+        }
+        assertTrue(failed.isEmpty(), "Failed to process methods: \n${failed.joinToString("\n") { it.enclosingClass.name + "#" + it.name }}")
+    }
+
+    private fun JcMethod.dumpInstructions(): String {
+        return buildString {
+            val textifier = Textifier()
+            asmNode().accept(TraceMethodVisitor(textifier))
+            textifier.text.printList(this)
+        }
+    }
+
+    private fun List<*>.printList(builder: StringBuilder) {
+        forEach {
+            if (it is List<*>) {
+                it.printList(builder)
+            } else {
+                builder.append(it.toString())
+            }
+        }
     }
 
 }

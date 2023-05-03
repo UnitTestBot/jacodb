@@ -123,7 +123,7 @@ private class JcGraphHolder(private val methodRef: JcMethodRef) {
     }
 
     val rawInstList: JcInstList<JcRawInst> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode().jsrInlined).build()
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode()).build()
         methodFeatures.fold(list) { value, feature ->
             feature.transformRawInstList(method, value)
         }
