@@ -17,11 +17,8 @@
 package org.jacodb.classtable
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.*
 import org.jacodb.impl.jacodb
-import org.jacodb.testing.allJars
 import java.io.File
 
 object ClassesExtractorTask : JcClassProcessingTask {
@@ -34,18 +31,30 @@ object ClassesExtractorTask : JcClassProcessingTask {
     }
 }
 
-private suspend fun extractClassesTableAsync(classPath: List<File>): Pair<List<JcClassOrInterface>, JcClasspath> {
+data class ClassesDatabase(
+    val classes: List<JcClassOrInterface>,
+    val classpath: JcClasspath
+)
+
+private suspend fun extractClassesTableAsync(
+    classPath: List<File>,
+    vararg features: JcFeature<*, *>
+): ClassesDatabase {
     val db = jacodb {
         useProcessJavaRuntime()
         loadByteCode(classPath)
+        installFeatures(*features)
     }
     val classpath = db.classpath(classPath)
     classpath.execute(ClassesExtractorTask)
 
-    return ClassesExtractorTask.classes to classpath
+    return ClassesDatabase(ClassesExtractorTask.classes, classpath)
 }
 
-fun extractClassesTable(classPath: List<File>): Pair<List<JcClassOrInterface>, JcClasspath> = runBlocking {
-    extractClassesTableAsync(classPath)
+fun extractClassesTable(
+    classPath: List<File>,
+    vararg features: JcFeature<*, *>
+): ClassesDatabase = runBlocking {
+    extractClassesTableAsync(classPath, *features)
 }
 

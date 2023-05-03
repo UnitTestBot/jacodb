@@ -17,6 +17,8 @@
 package org.jacodb.typesolver
 
 import com.google.gson.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
 import org.jacodb.classtable.extractClassesTable
 import org.jacodb.testing.allJars
 import org.jacodb.typesolver.table.*
@@ -186,26 +188,31 @@ class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> 
     }
 }
 
-fun main() {
-    val gson = GsonBuilder()
-        .registerTypeAdapter(ClassDeclaration::class.java, ClassDeclarationSerializer())
-        .registerTypeAdapter(InterfaceDeclaration::class.java, InterfaceDeclarationSerializer())
-        .registerTypeAdapter(org.jacodb.typesolver.table.Array::class.java, ArraySerializer())
-        .registerTypeAdapter(org.jacodb.typesolver.table.Class::class.java, ClassSerializer())
-        .registerTypeAdapter(org.jacodb.typesolver.table.Interface::class.java, InterfaceSerializer())
-        .registerTypeAdapter(Var::class.java, VarSerializer())
-        .registerTypeAdapter(Null::class.java, NullSerializer())
+fun createGsonBuilder(): GsonBuilder = GsonBuilder()
+    .registerTypeAdapter(ClassDeclaration::class.java, ClassDeclarationSerializer())
+    .registerTypeAdapter(InterfaceDeclaration::class.java, InterfaceDeclarationSerializer())
+    .registerTypeAdapter(org.jacodb.typesolver.table.Array::class.java, ArraySerializer())
+    .registerTypeAdapter(org.jacodb.typesolver.table.Class::class.java, ClassSerializer())
+    .registerTypeAdapter(org.jacodb.typesolver.table.Interface::class.java, InterfaceSerializer())
+    .registerTypeAdapter(Var::class.java, VarSerializer())
+    .registerTypeAdapter(Null::class.java, NullSerializer())
 //        .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
-        .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
-        .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
-        .setPrettyPrinting()
-        .create()
-    val (classes, classPath) = extractClassesTable(allJars)
-    val declarations = classes.mapNotNull { runCatching { it.toJvmDeclaration(classPath) }.getOrNull() }.toTypedArray()
-    val classesTable = ClassesTable(declarations)
+    .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
+    .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
+    .setPrettyPrinting()
+
+fun main() {
+    val gson = createGsonBuilder().create()
+    val (classes, classpath) = extractClassesTable(allJars)
+    val classesTable = makeClassesTable(classes, classpath)
     val json = gson.toJson(classesTable)
 
     File("all_jars.json").bufferedWriter().use {
         it.write(json)
     }
 }
+
+fun makeClassesTable(
+    classes: List<JcClassOrInterface>,
+    classpath: JcClasspath
+) = ClassesTable(classes.mapNotNull { runCatching { it.toJvmDeclaration(classpath) }.getOrNull() }.toTypedArray())
