@@ -90,6 +90,10 @@ class JcSettings {
         cacheSettings = JcCacheSettings().also { it.settings() }
     }
 
+    fun caching(settings: JcCacheSettings) = apply {
+        cacheSettings = settings
+    }
+
     fun bytecodeCaching(byteCodeCache: JcByteCodeCache) = apply {
         this.byteCodeSettings = byteCodeCache
     }
@@ -201,15 +205,15 @@ class JcCacheSettings {
 
     var byteCodeCache: JcByteCodeCache = JcByteCodeCache()
 
-    fun classes(maxSize: Long, expiration: Duration) {
+    fun classes(maxSize: Long, expiration: Duration) = apply {
         classes = maxSize to expiration
     }
 
-    fun types(maxSize: Long, expiration: Duration) {
+    fun types(maxSize: Long, expiration: Duration) = apply {
         types = maxSize to expiration
     }
 
-    fun graphs(maxSize: Long, expiration: Duration) {
+    fun graphs(maxSize: Long, expiration: Duration) = apply {
         graphs = maxSize to expiration
     }
 }

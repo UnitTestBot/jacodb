@@ -16,7 +16,6 @@
 
 package org.jacodb.testing.cfg
 
-import com.sun.mail.iap.Protocol
 import com.sun.mail.imap.IMAPMessage
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
