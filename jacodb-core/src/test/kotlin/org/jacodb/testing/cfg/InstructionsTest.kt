@@ -16,6 +16,7 @@
 
 package org.jacodb.testing.cfg
 
+import com.sun.mail.iap.Protocol
 import com.sun.mail.imap.IMAPMessage
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
@@ -58,6 +59,21 @@ class InstructionsTest : BaseTest() {
     fun `null ref test`() {
         val clazz = cp.findClass<DataHandler>()
         clazz.declaredMethods.first { it.name == "writeTo" }.flowGraph()
+    }
+
+    @Test
+    fun `Protocol test`() {
+        val clazz = cp.findClass("com.sun.mail.pop3.Protocol")
+        val method = clazz.declaredMethods.first { it.name == "<init>" }
+        method.flowGraph()
+    }
+
+    @Test
+    fun `SMTPSaslAuthenticator test`() {
+        val clazz = cp.findClass("com.sun.mail.smtp.SMTPSaslAuthenticator")
+        val method = clazz.declaredMethods.first { it.name == "authenticate" }
+        println(method.dumpInstructions())
+        method.flowGraph()
     }
 
     @Test

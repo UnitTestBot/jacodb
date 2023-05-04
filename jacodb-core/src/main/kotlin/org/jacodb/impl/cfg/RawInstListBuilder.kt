@@ -241,6 +241,7 @@ class RawInstListBuilder(
     private lateinit var currentFrame: Frame
     private val ENTRY = InsnNode(-1)
 
+    private val deadInstructions = hashSetOf<AbstractInsnNode>()
     private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
     private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
     private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
@@ -268,7 +269,7 @@ class RawInstListBuilder(
     private fun buildInstructions() {
         currentFrame = createInitialFrame()
         frames[ENTRY] = currentFrame
-        for (insn in methodNode.instructions) {
+        methodNode.instructions.forEachIndexed { index, insn ->
             when (insn) {
                 is InsnNode -> buildInsnNode(insn)
                 is FieldInsnNode -> buildFieldInsnNode(insn)
@@ -287,6 +288,10 @@ class RawInstListBuilder(
                 is TypeInsnNode -> buildTypeInsnNode(insn)
                 is VarInsnNode -> buildVarInsnNode(insn)
                 else -> error("Unknown insn node ${insn::class}")
+            }
+            val preds = predecessors[insn]
+            if (index != 1 && (preds.isNullOrEmpty() || preds.all { deadInstructions.contains(it) })) {
+                deadInstructions.add(insn)
             }
             frames[insn] = currentFrame
         }
@@ -422,7 +427,9 @@ class RawInstListBuilder(
 
     private fun peek(): JcRawValue = currentFrame.peek()
 
-    private fun local(variable: Int) = currentFrame.locals.getValue(variable)
+    private fun local(variable: Int): JcRawValue {
+        return currentFrame.locals.getValue(variable)
+    }
 
     private fun local(variable: Int, expr: JcRawValue, insn: AbstractInsnNode): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
@@ -1153,9 +1160,11 @@ class RawInstListBuilder(
     private fun buildLabelNode(insnNode: LabelNode) {
         val labelInst = label(insnNode)
         instructionList(insnNode) += labelInst
-        val predecessors = predecessors.getOrDefault(insnNode, emptySet()).filter {it !is LabelNode}
+        val predecessors = predecessors.getOrDefault(insnNode, emptySet()).filter { !deadInstructions.contains(it) }
         val predecessorFrames = predecessors.mapNotNull { frames[it] }
-        if (predecessors.size == predecessorFrames.size) {
+        if (predecessorFrames.size == 1) {
+            currentFrame = predecessorFrames.first()
+        } else if (predecessors.size == predecessorFrames.size) {
             currentFrame = mergeFrames(predecessors.zip(predecessorFrames).toMap())
         }
         when (val tryCatch = methodNode.tryCatchBlocks.firstOrNull { it.handler == insnNode }) {
