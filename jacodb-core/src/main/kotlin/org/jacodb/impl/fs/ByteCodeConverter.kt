@@ -21,6 +21,7 @@ import org.jacodb.api.ClassSource
 import org.jacodb.api.JcClasspath
 import org.jacodb.impl.bytecode.computeFrames
 import org.jacodb.impl.bytecode.hasFrameInfo
+import org.jacodb.impl.bytecode.inlineJsrs
 import org.jacodb.impl.storage.AnnotationValueKind
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.AnnotationValue
@@ -141,7 +142,9 @@ val ClassSource.info: ClassInfo
 
 val ClassSource.fullAsmNode: ClassNode
     get() {
-        return newClassNode(ClassReader.EXPAND_FRAMES)
+        return newClassNode(ClassReader.EXPAND_FRAMES).also {
+            it.inlineJsrs()
+        }
     }
 
 fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
