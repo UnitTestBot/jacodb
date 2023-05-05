@@ -18,14 +18,36 @@ package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.DumpableAnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.engine.*
-import org.jacodb.analysis.paths.*
+import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.FlowFunctionsSpace
+import org.jacodb.analysis.engine.IFDSResult
+import org.jacodb.analysis.engine.IFDSVertex
+import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.ElementAccessor
+import org.jacodb.analysis.paths.FieldAccessor
+import org.jacodb.analysis.paths.isDereferencedAt
+import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcConstant
+import org.jacodb.api.cfg.JcEqExpr
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcNeqExpr
+import org.jacodb.api.cfg.JcNewArrayExpr
+import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcNullConstant
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.isStatic
@@ -54,33 +76,17 @@ class NpeAnalyzer(
     }
 
     override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
-        val npes = findNPEInstructions(ifdsResult)
-        val vulnerabilities = npes.map {
-            VulnerabilityInstance(
-                value,
-                it.source.toString(),
-                it.path.toString(),
-                it.possibleStackTrace.map { it.toString() })
-        }
-        return DumpableAnalysisResult(vulnerabilities)
-    }
-
-    private data class NPELocation(val source: JcInst, val path: AccessPath, val possibleStackTrace: List<JcInst>)
-
-    /**
-     * The method finds all places where NPE may occur
-     */
-    private fun findNPEInstructions(ifdsResult: IFDSResult): List<NPELocation> {
-        val possibleNPEInstructions = mutableListOf<NPELocation>()
+        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<NPETaintNode>().forEach { fact ->
                 if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
-                    val possibleStackTrace = ifdsResult.resolvePossibleStackTrace(IFDSVertex(inst, fact))
-                    possibleNPEInstructions.add(NPELocation(inst, fact.variable, possibleStackTrace))
+                    vulnerabilities.add(
+                        ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability(value)
+                    )
                 }
             }
         }
-        return possibleNPEInstructions
+        return DumpableAnalysisResult(vulnerabilities)
     }
 }
 

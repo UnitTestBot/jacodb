@@ -69,6 +69,7 @@ class NpeAnalysisTest : BaseTest() {
         private fun Sequence<JcClassOrInterface>.toArguments(cwe: String): Stream<Arguments> = map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> bannedTests.any { className.contains(it) } }
+//            .filter { it.contains("_45") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
@@ -248,9 +249,6 @@ class NpeAnalysisTest : BaseTest() {
         val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        goodMethod.flowGraph()
-        badMethod.flowGraph()
-
         val goodNPE = findNpeSources(goodMethod)
         val badNPE = findNpeSources(badMethod)
 
@@ -263,7 +261,7 @@ class NpeAnalysisTest : BaseTest() {
         val npes = findNpeSources(method)
 
         // TODO: think about better assertions here
-        assertEquals(expectedLocations.toSet(), npes.map { it.source }.toSet())
+        assertEquals(expectedLocations.toSet(), npes.map { it.sink }.toSet())
     }
 
     @Test

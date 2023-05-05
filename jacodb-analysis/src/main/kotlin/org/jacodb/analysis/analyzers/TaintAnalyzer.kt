@@ -18,14 +18,24 @@ package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.DumpableAnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.engine.*
+import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.FlowFunctionsSpace
+import org.jacodb.analysis.engine.IFDSResult
+import org.jacodb.analysis.engine.IFDSVertex
+import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.FieldAccessor
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.allValues
 import org.jacodb.api.ext.cfg.callExpr
 
@@ -55,21 +65,7 @@ class TaintAnalyzer(
     }
 
     override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
-        val taints = findTaintInstructions(ifdsResult)
-        val vulnerabilities = taints.map {
-            VulnerabilityInstance(
-                value,
-                source = "undefined",
-                it.path,
-                it.possibleStackTrace.map { it.toString() })
-        }
-        return DumpableAnalysisResult(vulnerabilities)
-    }
-
-    private data class TaintLocation(val path: String, val possibleStackTrace: List<JcInst>)
-
-    private fun findTaintInstructions(ifdsResult: IFDSResult): List<TaintLocation> {
-        val possibleTaintInstructions = mutableListOf<TaintLocation>()
+        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (fact.activation == null && inst.callExpr?.method?.name == "test" && inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark") {
@@ -91,14 +87,17 @@ class TaintAnalyzer(
                             }
                             append(it.accesses.joinToString("."))
                         }
-                        possibleTaintInstructions.add(TaintLocation(fullPath, ifdsResult.resolvePossibleStackTrace(
-                            IFDSVertex(inst, fact)
-                        )))
+
+                        vulnerabilities.add(
+                            ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability(value).copy(
+                                sink = fullPath
+                            )
+                        )
                     }
                 }
             }
         }
-        return possibleTaintInstructions
+        return DumpableAnalysisResult(vulnerabilities)
     }
 }
 

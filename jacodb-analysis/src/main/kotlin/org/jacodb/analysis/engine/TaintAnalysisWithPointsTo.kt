@@ -55,7 +55,7 @@ class TaintAnalysisWithPointsTo(
             val newFact = if (updateActivation && fact.activation == null) fact.updateActivation(pred) else fact // TODO: think between pred and v.statement
             val newStatement = pred ?: v.statement
             graph.entryPoint(u.statement.location.method).forEach {
-                instance.propagate(
+                instance.addNewPathEdge(
                     IFDSEdge(
                         IFDSVertex(it, u.domainFact),
                         IFDSVertex(newStatement, newFact)
@@ -63,7 +63,7 @@ class TaintAnalysisWithPointsTo(
                 )
                 if (propZero) {
                     // Propagating zero fact
-                    instance.propagate(
+                    instance.addNewPathEdge(
                         IFDSEdge(
                             IFDSVertex(it, u.domainFact),
                             IFDSVertex(newStatement, ZEROFact)

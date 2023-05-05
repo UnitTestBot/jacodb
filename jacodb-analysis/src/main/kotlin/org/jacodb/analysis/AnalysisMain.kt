@@ -46,9 +46,9 @@ import java.util.*
 @Serializable
 data class VulnerabilityInstance(
     val vulnerabilityType: String,
-    val source: String,
+    val sources: List<String>,
     val sink: String,
-    val intermediatePoints: List<String>
+    val realisationPaths: List<List<String>>
 )
 
 @Serializable
