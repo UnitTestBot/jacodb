@@ -206,6 +206,9 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                     ) to offset!!.toShortArray()
                 }
         }
+        if (calls.isEmpty()) {
+            return emptySequence()
+        }
 
         return BatchedSequence(50) { offset, batchSize ->
             var position = offset ?: 0

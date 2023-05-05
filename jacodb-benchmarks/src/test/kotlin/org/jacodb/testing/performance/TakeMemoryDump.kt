@@ -25,14 +25,15 @@ import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.FIELDS
 import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
 import org.jacodb.impl.storage.jooq.tables.references.METHODS
+import org.jacodb.testing.allClasspath
 
 fun main() {
     var start = System.currentTimeMillis()
     runBlocking {
         val db = jacodb {
-            loadByteCode(allIdeaJarsAbsolute)
+            loadByteCode(allClasspath)
             persistent(
-                "d:\\work\\jacodb\\jacodb-idea-usages.db",
+                "d:\\work\\jacodb\\jacodb-classpath.db",
             )
             installFeatures(InMemoryHierarchy, Usages)
         }.also {
