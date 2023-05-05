@@ -222,7 +222,7 @@ infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean 
     if (another == this) {
         return true
     }
-    if (another.isInterface && !isInterface) {
+    if (isInterface && !another.isInterface) {
         return false
     }
     return allSuperHierarchy.any { it == another }
