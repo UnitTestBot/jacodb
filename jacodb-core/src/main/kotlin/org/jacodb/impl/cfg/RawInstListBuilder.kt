@@ -241,18 +241,18 @@ class RawInstListBuilder(
     val method: JcMethod,
     private val methodNode: MethodNode
 ) {
-    private val frames = mutableMapOf<AbstractInsnNode, Frame>()
-    private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
+    private val frames = hashMapOf<AbstractInsnNode, Frame>()
+    private val labels = hashMapOf<LabelNode, JcRawLabelInst>()
     private lateinit var lastFrameState: FrameState
     private lateinit var currentFrame: Frame
     private val ENTRY = InsnNode(-1)
 
     private val deadInstructions = hashSetOf<AbstractInsnNode>()
-    private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
-    private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
-    private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val localTypeRefinement = mutableMapOf<JcRawLocalVar, JcRawLocalVar>()
+    private val predecessors = hashMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
+    private val instructions = hashMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
+    private val laterAssignments = hashMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val laterStackAssignments = hashMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val localTypeRefinement = hashMapOf<JcRawLocalVar, JcRawLocalVar>()
     private var labelCounter = 0
     private var localCounter = 0
     private var argCounter = 0

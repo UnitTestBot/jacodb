@@ -18,7 +18,6 @@
 
 package org.jacodb.api.ext
 
-import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcField
@@ -186,13 +185,23 @@ val JcClassOrInterface.constructors: List<JcMethod>
     }
 
 
-val JcClassOrInterface.allSuperHierarchy: LinkedHashSet<JcClassOrInterface>
+val JcClassOrInterface.allSuperHierarchy: Set<JcClassOrInterface>
     get() {
-        val result = LinkedHashSet<JcClassOrInterface>()
-        forAllSuperHierarchy {
-            result.add(it)
+        return allSuperHierarchySequence.toMutableSet()
+    }
+
+val JcClassOrInterface.allSuperHierarchySequence: Sequence<JcClassOrInterface>
+    get() {
+        return sequence {
+            superClass?.let {
+                yield(it)
+                yieldAll(it.allSuperHierarchySequence)
+            }
+            yieldAll(interfaces)
+            interfaces.forEach {
+                yieldAll(it.allSuperHierarchySequence)
+            }
         }
-        return result
     }
 
 val JcClassOrInterface.superClasses: List<JcClassOrInterface>
@@ -206,27 +215,17 @@ val JcClassOrInterface.superClasses: List<JcClassOrInterface>
         return result
     }
 
-
-/**
- * @return all interfaces and classes retrieved recursively from this ClassId
- */
-fun JcClassOrInterface.forAllSuperHierarchy(action: (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
-    val parents = (interfaces + superClass).filterNotNull()
-    parents.forEach {
-        action(it)
-    }
-    val result = parents.toMutableSet()
-    parents.forEach {
-        it.forAllSuperHierarchy(action)
-    }
-    return result.toPersistentList()
-}
-
 infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean {
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    return another == this || another in allSuperHierarchy
+    if (another == this) {
+        return true
+    }
+    if (another.isInterface && !isInterface) {
+        return false
+    }
+    return allSuperHierarchy.any { it == another }
 }
 
 val JcClassOrInterface.isKotlin: Boolean
