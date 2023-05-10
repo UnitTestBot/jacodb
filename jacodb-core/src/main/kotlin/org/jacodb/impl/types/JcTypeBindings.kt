@@ -86,6 +86,9 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
 
 class JcTypeVariableDeclarationImpl(
     override val symbol: String,
-    override val bounds: List<JcRefType>,
+    private val classpath: JcClasspath,
+    private val jvmBounds: List<JvmType>,
     override val owner: JcAccessible
-) : JcTypeVariableDeclaration
+) : JcTypeVariableDeclaration {
+    override val bounds: List<JcRefType> get() = jvmBounds.map { classpath.typeOf(it) as JcRefType }
+}

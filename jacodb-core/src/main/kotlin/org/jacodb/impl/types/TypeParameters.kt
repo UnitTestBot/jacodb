@@ -67,6 +67,5 @@ fun JvmTypeParameterDeclaration.asJcDeclaration(owner: JcAccessible): JcTypeVari
         is JcMethod -> owner.enclosingClass.classpath
         else -> throw IllegalStateException("Unknown owner type $owner")
     }
-    val bounds = bounds?.map { classpath.typeOf(it) as JcRefType }
-    return JcTypeVariableDeclarationImpl(symbol, bounds.orEmpty(), owner = owner)
+    return JcTypeVariableDeclarationImpl(symbol, classpath, bounds.orEmpty(), owner = owner)
 }
