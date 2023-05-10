@@ -19,7 +19,6 @@ package org.jacodb.testing.types
 import com.zaxxer.hikari.pool.HikariPool
 import com.zaxxer.hikari.util.ConcurrentBag
 import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClassType
 import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.toType
@@ -76,9 +75,14 @@ class TypesTest : BaseTypesTest() {
     }
 
     @Test
-    fun `inner-outer classes recursion`(){
+    fun `inner-outer classes recursion`() {
         cp.findClass<HikariPool>().toType().interfaces
         cp.findClass<ConcurrentBag<*>>().toType()
+    }
+
+    @Test
+    fun `kotlin private inline fun`() {
+        cp.findClass("kotlin.text.RegexKt\$fromInt\$1\$1").toType().interfaces.single().typeArguments
     }
 
 }
