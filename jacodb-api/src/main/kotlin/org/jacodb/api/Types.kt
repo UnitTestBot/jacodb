@@ -17,6 +17,7 @@
 package org.jacodb.api
 
 import org.jacodb.api.ext.objectClass
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.LocalVariableNode
 
 interface JcTypedField : JcAccessible {
@@ -101,6 +102,9 @@ interface JcClassType : JcRefType, JcAccessible {
 
     val innerTypes: List<JcClassType>
 }
+
+val JcClassType.isInterface: Boolean
+    get() = access and Opcodes.ACC_INTERFACE != 0
 
 interface JcTypeVariable : JcRefType {
     val symbol: String

@@ -16,10 +16,10 @@
 
 package org.jacodb.typesolver.table
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.objectClass
+import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.typeParameters
 import kotlin.Array
@@ -55,12 +55,18 @@ data class InterfaceDeclaration(val iname: String, val iparams: Array<out JvmTyp
 data class ClassesTable(val table: Array<out JvmDeclaration>)
 
 fun JcClassOrInterface.toJvmDeclaration(classpath: JcClasspath): JvmDeclaration {
+    if ("java.lang.constant.ClassDesc" in this.name) {
+        println("")
+    }
+
+    val type = toType()
+
     val typeParams = typeParameters.mapIndexed { index, param -> param.toJvmType(index, classpath) }.toTypedArray()
-    val supers = interfaces.map { it.toJvmType(classpath) }.toTypedArray()
+    val supers = type.interfaces.map { it.toJvmType(classpath) }.toTypedArray()
 
     return when {
         isInterface -> InterfaceDeclaration(name, typeParams, supers)
-        else -> ClassDeclaration(name, typeParams, superClass?.toJvmType(classpath), supers)
+        else -> ClassDeclaration(name, typeParams, type.superType?.toJvmType(classpath), supers)
     }
 }
 
@@ -76,11 +82,15 @@ fun JvmTypeParameterDeclaration.toJvmType(index: Int, classpath: JcClasspath): V
     }
 }
 
-fun JcClassOrInterface.toJvmType(classpath: JcClasspath): JvmType {
+fun JcClassType.toJvmType(classpath: JcClasspath): JvmType {
 //    val typeParams = typeParameters.map { it.toJvmTypeArgument(classpath) }.toTypedArray()
-    val typeParams = typeParameters.mapIndexed { index, param -> param.toJvmType(index, classpath) }.toTypedArray()
+    val typeParams = typeArguments.mapIndexed { index, param -> param.toJvmType(index, classpath) }.toTypedArray()
 
-    return if (isInterface) Interface(name, typeParams) else Class(name, typeParams)
+    return if (isInterface) Interface(typeName, typeParams) else Class(typeName, typeParams)
+}
+
+private fun JcRefType.toJvmType(index: Int, classpath: JcClasspath): JvmType {
+    TODO("Not yet implemented")
 }
 
 private fun JvmTypeParameterDeclaration.toJvmTypeArgument(classpath: JcClasspath): JvmTypeArgument {

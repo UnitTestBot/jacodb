@@ -207,9 +207,9 @@ fun main() {
     val classesTable = makeClassesTable(classes, classpath)
     val json = gson.toJson(classesTable)
 
-    File("all_jars.json").bufferedWriter().use {
-        it.write(json)
-    }
+//    File("all_jars.json").bufferedWriter().use {
+//        it.write(json)
+//    }
 }
 
 fun makeClassesTable(

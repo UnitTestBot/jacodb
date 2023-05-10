@@ -75,6 +75,7 @@ data class Configuration(
 fun writeTypeQueries(configuration: Configuration) {
     with(configuration) {
         random = Random(randomSeed)
+        // TODO use InMemoryHierarchy feature?
         val (classes, jcClasspath) = extractClassesTable(classpathConfiguration.toClasspath)
         val hierarchy = runBlocking { jcClasspath.hierarchyExt() }
 
