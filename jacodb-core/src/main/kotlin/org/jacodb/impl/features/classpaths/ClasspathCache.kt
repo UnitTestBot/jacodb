@@ -36,7 +36,6 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.JcCacheSettings
-import org.jacodb.impl.bytecode.jsrInlined
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.JcMethodRefImpl
 import org.jacodb.impl.cfg.RawInstListBuilder
