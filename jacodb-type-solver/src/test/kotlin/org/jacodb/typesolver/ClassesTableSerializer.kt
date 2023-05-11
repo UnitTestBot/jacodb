@@ -174,20 +174,24 @@ class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
     }
 }
 
+class PairSerializer : JsonSerializer<Pair<JvmWildcardPolarity, JvmType>> {
+    override fun serialize(src: Pair<JvmWildcardPolarity, JvmType>, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+        val array = JsonArray()
+
+        array.add(context.serialize(src.first))
+        array.add(context.serialize(src.second))
+
+        return array
+    }
+}
+
 class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> {
     override fun serialize(src: org.jacodb.typesolver.table.Wildcard, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val array = JsonArray()
         val prefix = "Wildcard"
         array.add(prefix)
 
-        val boundArray = JsonArray()
-        src.bound?.let {
-            boundArray.add(context.serialize(it.first))
-            boundArray.add(context.serialize(it.second))
-
-
-        }
-        array.add(boundArray)
+        array.add(context.serialize(src.bound))
 
         return array
     }
@@ -204,6 +208,7 @@ fun createGsonBuilder(): GsonBuilder = GsonBuilder()
     .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
+    .serializeNulls()
     .setPrettyPrinting()
 
 fun main() {
@@ -212,6 +217,7 @@ fun main() {
     val classesTable = makeClassesTable(classes, classpath)
     val json = gson.toJson(classesTable)
 
+    // jdk.internal.jshell.tool.Selector$SelectorBuilder$SelectorCollector - Intersect
     File("all_jars.json").bufferedWriter().use {
         it.write(json)
     }
