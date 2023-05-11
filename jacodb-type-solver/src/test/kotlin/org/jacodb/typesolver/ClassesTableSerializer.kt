@@ -98,7 +98,7 @@ class ClassSerializer : JsonSerializer<org.jacodb.typesolver.table.Class> {
 
         array.add(prefix)
         array.add(src.cname)
-        array.add(context.serialize(src.typeParameters))
+        array.add(context.serialize(src.typeArguments))
 
         return array
     }
@@ -111,7 +111,7 @@ class InterfaceSerializer : JsonSerializer<org.jacodb.typesolver.table.Interface
 
         array.add(prefix)
         array.add(src.iname)
-        array.add(context.serialize(src.typeParameters))
+        array.add(context.serialize(src.typeArguments))
 
         return array
     }
@@ -153,11 +153,16 @@ class NullSerializer : JsonSerializer<org.jacodb.typesolver.table.Null> {
 
 class IntersectSerializer : JsonSerializer<org.jacodb.typesolver.table.Intersect> {
     override fun serialize(src: org.jacodb.typesolver.table.Intersect, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
-        TODO()
+        val array = JsonArray()
+        val prefix = "Intersect"
+        array.add(prefix)
+        array.add(context.serialize(src.types))
+
+        return array
     }
 }
 
-/*class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
+class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
     override fun serialize(src: org.jacodb.typesolver.table.Type, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val array = JsonArray()
         val prefix = "Type"
@@ -167,7 +172,7 @@ class IntersectSerializer : JsonSerializer<org.jacodb.typesolver.table.Intersect
 
         return array
     }
-}*/
+}
 
 class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> {
     override fun serialize(src: org.jacodb.typesolver.table.Wildcard, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
@@ -196,8 +201,8 @@ fun createGsonBuilder(): GsonBuilder = GsonBuilder()
     .registerTypeAdapter(org.jacodb.typesolver.table.Interface::class.java, InterfaceSerializer())
     .registerTypeAdapter(Var::class.java, VarSerializer())
     .registerTypeAdapter(Null::class.java, NullSerializer())
-//        .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
-//    .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
+    .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
+    .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
     .setPrettyPrinting()
 
@@ -207,9 +212,9 @@ fun main() {
     val classesTable = makeClassesTable(classes, classpath)
     val json = gson.toJson(classesTable)
 
-//    File("all_jars.json").bufferedWriter().use {
-//        it.write(json)
-//    }
+    File("all_jars.json").bufferedWriter().use {
+        it.write(json)
+    }
 }
 
 fun makeClassesTable(
