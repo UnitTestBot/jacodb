@@ -157,7 +157,7 @@ class IntersectSerializer : JsonSerializer<org.jacodb.typesolver.table.Intersect
     }
 }
 
-class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
+/*class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
     override fun serialize(src: org.jacodb.typesolver.table.Type, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val array = JsonArray()
         val prefix = "Type"
@@ -167,7 +167,7 @@ class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
 
         return array
     }
-}
+}*/
 
 class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> {
     override fun serialize(src: org.jacodb.typesolver.table.Wildcard, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
@@ -197,7 +197,7 @@ fun createGsonBuilder(): GsonBuilder = GsonBuilder()
     .registerTypeAdapter(Var::class.java, VarSerializer())
     .registerTypeAdapter(Null::class.java, NullSerializer())
 //        .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
-    .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
+//    .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
     .setPrettyPrinting()
 
@@ -215,4 +215,20 @@ fun main() {
 fun makeClassesTable(
     classes: List<JcClassOrInterface>,
     classpath: JcClasspath
-) = ClassesTable(classes.mapNotNull { runCatching { it.toJvmDeclaration(classpath) }.getOrNull() }.toTypedArray())
+) = ClassesTable(classes.toJvmDeclarationsSafe(classpath).toTypedArray())
+
+private fun List<JcClassOrInterface>.toJvmDeclarationsSafe(
+    classpath: JcClasspath
+) = mapNotNull {
+        runCatching { it.toJvmDeclaration(classpath) }
+            .fold({ it }) { error ->
+//                    if (!(error is NoClassInClasspathException)) {
+                println("Class ${it.name}")
+                println("Error: $error")
+//                        println("Stacktrace: ${error.stackTraceToString()}")
+                println()
+//                    }
+
+                null
+            }
+    }

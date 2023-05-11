@@ -106,7 +106,7 @@ fun writeTypeQueries(configuration: Configuration) {
 }
 
 fun main() {
-    writeTypeQueries(Configuration(ClasspathConfiguration.GUAVA_JAR))
+    writeTypeQueries(Configuration(ClasspathConfiguration.ALL_JARS))
 }
 
 fun generateUpperBounds(type: JcClassOrInterface, hierarchy: HierarchyExtension, jcClasspath: JcClasspath): Types {
