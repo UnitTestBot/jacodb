@@ -168,7 +168,7 @@ class JcDatabaseImpl(
                     }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
-            }.awaitAll()
+            }.joinAll()
             persistence.createIndexes()
             locationsRegistry.afterProcessing(this@process)
             backgroundJobs.remove(backgroundJobId)
