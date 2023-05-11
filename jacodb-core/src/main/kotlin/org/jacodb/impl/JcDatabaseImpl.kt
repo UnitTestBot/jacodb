@@ -81,11 +81,11 @@ class JcDatabaseImpl(
         persistence.setup()
         locationsRegistry.cleanup()
         val runtime = JavaRuntime(settings.jre).allLocations
-        locationsRegistry.setup(runtime).new.process()
+        locationsRegistry.setup(runtime).new.process(false)
         locationsRegistry.registerIfNeeded(
             settings.predefinedDirOrJars.filter { it.exists() }
                 .map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
-        ).new.process()
+        ).new.process(true)
     }
 
     private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
@@ -99,7 +99,7 @@ class JcDatabaseImpl(
         assertNotClosed()
         val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
-            .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
+            .also { it.new.process(true) }.registered + locationsRegistry.runtimeLocations
         return classpathOf(processed, features)
     }
 
@@ -137,10 +137,10 @@ class JcDatabaseImpl(
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {
         assertNotClosed()
-        locationsRegistry.registerIfNeeded(locations).new.process()
+        locationsRegistry.registerIfNeeded(locations).new.process(true)
     }
 
-    private suspend fun List<RegisteredLocation>.process(): List<RegisteredLocation> {
+    private suspend fun List<RegisteredLocation>.process(createIndexes: Boolean): List<RegisteredLocation> {
         withContext(Dispatchers.IO) {
             map { location ->
                 async {
@@ -169,7 +169,9 @@ class JcDatabaseImpl(
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
             }.joinAll()
-            persistence.createIndexes()
+            if(createIndexes) {
+                persistence.createIndexes()
+            }
             locationsRegistry.afterProcessing(this@process)
             backgroundJobs.remove(backgroundJobId)
         }
@@ -178,7 +180,7 @@ class JcDatabaseImpl(
 
     override suspend fun refresh() {
         awaitBackgroundJobs()
-        locationsRegistry.refresh().new.process()
+        locationsRegistry.refresh().new.process(true)
         val result = locationsRegistry.cleanup()
         classesVfs.visit(RemoveLocationsVisitor(result.outdated, settings.byteCodeSettings.prefixes))
     }

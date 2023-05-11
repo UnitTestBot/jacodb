@@ -20,6 +20,7 @@ import com.zaxxer.hikari.pool.HikariPool
 import com.zaxxer.hikari.util.ConcurrentBag
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcPrimitiveType
+import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.toType
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -82,7 +83,9 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `kotlin private inline fun`() {
-        cp.findClass("kotlin.text.RegexKt\$fromInt\$1\$1").toType().interfaces.single().typeArguments
+        val type = cp.findClass("kotlin.text.RegexKt\$fromInt\$1\$1").toType().interfaces.single().typeArguments.first()
+        type as JcTypeVariable
+        assertTrue(type.bounds.isNotEmpty())
     }
 
 }
