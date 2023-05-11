@@ -16,27 +16,24 @@
 
 package org.jacodb.analysis.impl
 
-import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.TaintAnalysisFactory
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.paths.toPath
-import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
-import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -124,14 +121,11 @@ class Points2Test : BaseTest() {
     }
 
     private fun findTaints(method: JcMethod): List<String> {
-        val graph = runBlocking {
-            SimplifiedJcApplicationGraph(
-                JcApplicationGraphImpl(cp, cp.usagesExt()),
-                SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes +
-                        listOf("pointerbench.benchmark.internal")
-            )
-        }
-        val all = AllOverridesDevirtualizer(graph, cp)
+        val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
+            .plus("pointerbench.benchmark.internal")
+
+        val graph = JcSimplifiedGraphFactory(bannedPackagePrefixes).createGraph(cp)
+        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
         val factory = TaintAnalysisFactory {
             if (it is JcAssignInst &&
                 it.callExpr?.method?.name == "taint" &&
@@ -142,7 +136,7 @@ class Points2Test : BaseTest() {
                 emptyList()
             }
         }
-        val ifds = factory.createAnalysisEngine(graph, all, File("a"))
+        val ifds = factory.createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
         return result.foundVulnerabilities.map { it.sink }

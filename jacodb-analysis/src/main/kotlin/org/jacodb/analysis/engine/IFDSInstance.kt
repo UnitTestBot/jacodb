@@ -27,8 +27,7 @@ import java.util.*
 class IFDSInstance(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
-    private val devirtualizer: Devirtualizer,
-    private val listeners: MutableList<IFDSInstanceListener> = mutableListOf()
+    private val devirtualizer: Devirtualizer
 ): AnalysisEngine {
 
     private class EdgesStorage {
@@ -64,6 +63,8 @@ class IFDSInstance(
     private val callSitesOf: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSVertex<DomainFact>>> = mutableMapOf()
 
     private val flowSpace get() = analyzer.flowFunctions
+
+    private val listeners: MutableList<IFDSInstanceListener> = mutableListOf()
 
     fun addListener(listener: IFDSInstanceListener) = listeners.add(listener)
 

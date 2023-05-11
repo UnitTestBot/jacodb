@@ -24,13 +24,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KotlinLogging
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintAnalyzer
 import org.jacodb.analysis.engine.Analyzer
-import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.analysis.points2.Devirtualizer
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
@@ -69,7 +71,6 @@ interface AnalysisEngineFactory : Factory {
     fun createAnalysisEngine(
         graph: JcApplicationGraph,
         points2Engine: Points2Engine,
-        cacheDir: File
     ): AnalysisEngine
 }
 
@@ -80,7 +81,6 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(
         graph: JcApplicationGraph,
         points2Engine: Points2Engine,
-        cacheDir: File
     ): AnalysisEngine {
         val analyzer = getAnalyzer(graph)
         val instance = TaintAnalysisWithPointsTo(graph, analyzer, points2Engine)
@@ -98,44 +98,53 @@ class NPEAnalysisFactory : FlowDroidFactory() {
     }
 }
 
-class TaintAnalysisFactory(private val generates: (JcInst) -> List<DomainFact>) : FlowDroidFactory() {
+class TaintAnalysisFactory(private val generates: (JcInst) -> List<TaintAnalysisNode>) : FlowDroidFactory() {
     override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
         return TaintAnalyzer(graph.classpath, graph, graph, generates)
     }
 }
 
 interface Points2EngineFactory : Factory {
-    fun createPoints2Engine(graph: JcApplicationGraph, cacheDir: File): Points2Engine
+    fun createPoints2Engine(graph: JcApplicationGraph): Points2Engine
 }
 
 interface GraphFactory : Factory {
-    fun createGraph(cacheDir: File, classpath: String): JcApplicationGraph
-}
+    fun createGraph(classpath: JcClasspath): JcApplicationGraph
 
-class JcGraphFactory : GraphFactory {
-    override val name: String = "JacoDB-graph"
-
-    override fun createGraph(
-        cacheDir: File,
-        classpath: String
-    ): JcApplicationGraph = runBlocking {
-        val classpathHash = classpath.hashCode()
+    fun createGraph(classpath: List<File>, cacheDir: File): JcApplicationGraph = runBlocking {
+        val classpathHash = classpath.toString().hashCode()
         val persistentPath = cacheDir.resolve("jacodb-for-$classpathHash")
-        val classpathAsFiles = classpath.split(File.pathSeparatorChar).sorted().map { File(it) }
+
         val jcdb = jacodb {
-            loadByteCode(classpathAsFiles)
+            loadByteCode(classpath)
             persistent(persistentPath.absolutePath)
             installFeatures(InMemoryHierarchy, Usages)
         }
-        val cp = jcdb.classpath(classpathAsFiles)
-        JcApplicationGraphImpl(cp, cp.usagesExt())
+        val cp = jcdb.classpath(classpath)
+        createGraph(cp)
+    }
+}
+
+class JcSimplifiedGraphFactory(
+    private val bannedPackagePrefixes: List<String>? = null
+) : GraphFactory {
+    override val name: String = "JacoDB-graph simplified for IFDS"
+
+    override fun createGraph(
+        classpath: JcClasspath
+    ): JcApplicationGraph = runBlocking {
+        val mainGraph = JcApplicationGraphImpl(classpath, classpath.usagesExt())
+        if (bannedPackagePrefixes != null) {
+            SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
+        } else {
+            SimplifiedJcApplicationGraph(mainGraph)
+        }
     }
 }
 
 class JcNaivePoints2EngineFactory : Points2EngineFactory {
     override fun createPoints2Engine(
         graph: JcApplicationGraph,
-        cacheDir: File
     ): Points2Engine {
         val cp = graph.classpath
         return AllOverridesDevirtualizer(graph, cp)
@@ -226,9 +235,10 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("Provided path to cache directory is not directory")
     }
 
-    val graph = graphFactory.createGraph(cacheDir, classpath)
-    val points2Engine = points2Factory.createPoints2Engine(graph, cacheDir)
-    val analysisEngine = engineFactory.createAnalysisEngine(graph, points2Engine, cacheDir)
+    val classpathAsFiles = classpath.split(File.pathSeparatorChar).sorted().map { File(it) }
+    val graph = graphFactory.createGraph(classpathAsFiles, cacheDir)
+    val points2Engine = points2Factory.createPoints2Engine(graph)
+    val analysisEngine = engineFactory.createAnalysisEngine(graph, points2Engine)
     val analysisResult = analysisEngine.analyze()
     val json = Json { prettyPrint = true }
 

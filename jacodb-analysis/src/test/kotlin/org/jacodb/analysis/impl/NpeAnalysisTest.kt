@@ -19,12 +19,12 @@ package org.jacodb.analysis.impl
 import NPEExamples
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.NPEAnalysisFactory
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
-import org.jacodb.analysis.points2.AllOverridesDevirtualizer
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
@@ -42,7 +42,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.File
 import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
@@ -275,9 +274,9 @@ class NpeAnalysisTest : BaseTest() {
     }
 
     private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
-        val graph = runBlocking { SimplifiedJcApplicationGraph(JcApplicationGraphImpl(cp, cp.usagesExt())) }
-        val all = AllOverridesDevirtualizer(graph, cp)
-        val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, all, File("a"))
+        val graph = JcSimplifiedGraphFactory().createGraph(cp)
+        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
+        val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
         return result.foundVulnerabilities.filter { it.vulnerabilityType == NpeAnalyzer.value }
