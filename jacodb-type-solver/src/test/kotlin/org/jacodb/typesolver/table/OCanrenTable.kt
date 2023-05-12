@@ -24,6 +24,7 @@ import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.typeParameters
 import org.jacodb.typesolver.table.JvmWildcardPolarity.Extends
 import org.jacodb.typesolver.table.JvmWildcardPolarity.Super
+import org.jacodb.typesolver.table.PrimitiveType.*
 import kotlin.Array
 
 enum class JvmWildcardPolarity {
@@ -31,34 +32,35 @@ enum class JvmWildcardPolarity {
     Super;
 }
 
-sealed class JvmTypeArgument
+sealed interface JvmTypeArgument
 
-data class Type(val type: JvmType) : JvmTypeArgument()
-data class Wildcard(val bound: Pair<JvmWildcardPolarity, JvmType>?) : JvmTypeArgument()
+data class Type(val type: JvmType) : JvmTypeArgument
+data class Wildcard(val bound: Pair<JvmWildcardPolarity, JvmType>?) : JvmTypeArgument
 
-sealed class JvmType
+sealed interface JvmType
 
-data class Array(val elementType: JvmType) : JvmType()
+data class Array(val elementType: JvmType) : JvmType
 //data class Class(val cname: String, val typeParameters: Array<out JvmTypeArgument>) : JvmType()
 //data class Interface(val iname: String, val typeParameters: Array<out JvmTypeArgument>) : JvmType()
-data class Class(val cname: String, val typeArguments: Array<out JvmTypeArgument>) : JvmType()
-data class Interface(val iname: String, val typeArguments: Array<out JvmTypeArgument>) : JvmType()
-data class Var(val id: String, val index: Int, val upb: JvmType, val lwb: JvmType?) : JvmType()
-object Null : JvmType() {
+data class Class(val cname: String, val typeArguments: Array<out JvmTypeArgument>) : JvmType
+data class Interface(val iname: String, val typeArguments: Array<out JvmTypeArgument>) : JvmType
+data class Var(val id: String, val index: Int, val upb: JvmType, val lwb: JvmType?) : JvmType
+object Null : JvmType {
     override fun toString(): String = "Null"
 }
-object UnboundWildcardAsJvmType : JvmType()
-data class Intersect(val types: Array<out JvmType>) : JvmType()
-sealed class PrimitiveType : JvmType()
-object PrimitiveByte : PrimitiveType()
-object PrimitiveShort : PrimitiveType()
-object PrimitiveInt : PrimitiveType()
-object PrimitiveLong : PrimitiveType()
-object PrimitiveFloat : PrimitiveType()
-object PrimitiveDouble : PrimitiveType()
-object PrimitiveBoolean : PrimitiveType()
-object PrimitiveChar : PrimitiveType()
-object PrimitiveVoid : PrimitiveType()
+object UnboundWildcardAsJvmType : JvmType
+data class Intersect(val types: Array<out JvmType>) : JvmType
+enum class PrimitiveType(val jvmName: String) : JvmType {
+    PrimitiveByte("byte"),
+    PrimitiveShort("short"),
+    PrimitiveInt("int"),
+    PrimitiveLong("long"),
+    PrimitiveFloat("float"),
+    PrimitiveDouble("double"),
+    PrimitiveBoolean("boolean"),
+    PrimitiveChar("int"),
+    PrimitiveVoid("void");
+}
 
 sealed class JvmDeclaration
 

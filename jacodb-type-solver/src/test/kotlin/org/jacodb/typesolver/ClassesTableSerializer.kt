@@ -80,7 +80,11 @@ class InterfaceDeclarationSerializer : JsonSerializer<InterfaceDeclaration> {
 }
 
 class ArraySerializer : JsonSerializer<org.jacodb.typesolver.table.Array> {
-    override fun serialize(src: org.jacodb.typesolver.table.Array, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: org.jacodb.typesolver.table.Array,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Array"
 
@@ -91,8 +95,12 @@ class ArraySerializer : JsonSerializer<org.jacodb.typesolver.table.Array> {
     }
 }
 
-class ClassSerializer : JsonSerializer<org.jacodb.typesolver.table.Class> {
-    override fun serialize(src: org.jacodb.typesolver.table.Class, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+class ClassSerializer : JsonSerializer<Class> {
+    override fun serialize(
+        src: Class,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Class"
 
@@ -104,8 +112,12 @@ class ClassSerializer : JsonSerializer<org.jacodb.typesolver.table.Class> {
     }
 }
 
-class InterfaceSerializer : JsonSerializer<org.jacodb.typesolver.table.Interface> {
-    override fun serialize(src: org.jacodb.typesolver.table.Interface, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+class InterfaceSerializer : JsonSerializer<Interface> {
+    override fun serialize(
+        src: Interface,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Interface"
 
@@ -118,7 +130,11 @@ class InterfaceSerializer : JsonSerializer<org.jacodb.typesolver.table.Interface
 }
 
 class VarSerializer : JsonSerializer<org.jacodb.typesolver.table.Var> {
-    override fun serialize(src: org.jacodb.typesolver.table.Var, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: org.jacodb.typesolver.table.Var,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Var"
 
@@ -142,7 +158,11 @@ class VarSerializer : JsonSerializer<org.jacodb.typesolver.table.Var> {
 }
 
 class NullSerializer : JsonSerializer<org.jacodb.typesolver.table.Null> {
-    override fun serialize(src: org.jacodb.typesolver.table.Null, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: org.jacodb.typesolver.table.Null,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Null"
         array.add(prefix)
@@ -152,7 +172,11 @@ class NullSerializer : JsonSerializer<org.jacodb.typesolver.table.Null> {
 }
 
 class IntersectSerializer : JsonSerializer<org.jacodb.typesolver.table.Intersect> {
-    override fun serialize(src: org.jacodb.typesolver.table.Intersect, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: org.jacodb.typesolver.table.Intersect,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Intersect"
         array.add(prefix)
@@ -163,7 +187,11 @@ class IntersectSerializer : JsonSerializer<org.jacodb.typesolver.table.Intersect
 }
 
 class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
-    override fun serialize(src: org.jacodb.typesolver.table.Type, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: org.jacodb.typesolver.table.Type,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Type"
         array.add(prefix)
@@ -175,7 +203,11 @@ class TypeSerializer : JsonSerializer<org.jacodb.typesolver.table.Type> {
 }
 
 class PairSerializer : JsonSerializer<Pair<JvmWildcardPolarity, JvmType>> {
-    override fun serialize(src: Pair<JvmWildcardPolarity, JvmType>, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+    override fun serialize(
+        src: Pair<JvmWildcardPolarity, JvmType>,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
 
         array.add(context.serialize(src.first))
@@ -185,8 +217,12 @@ class PairSerializer : JsonSerializer<Pair<JvmWildcardPolarity, JvmType>> {
     }
 }
 
-class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> {
-    override fun serialize(src: org.jacodb.typesolver.table.Wildcard, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+class WildcardSerializer : JsonSerializer<Wildcard> {
+    override fun serialize(
+        src: Wildcard,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
         val array = JsonArray()
         val prefix = "Wildcard"
         array.add(prefix)
@@ -197,17 +233,34 @@ class WildcardSerializer : JsonSerializer<org.jacodb.typesolver.table.Wildcard> 
     }
 }
 
+class PrimitiveTypeSerializer : JsonSerializer<PrimitiveType> {
+    override fun serialize(
+        src: PrimitiveType,
+        typeOfSrc: Type,
+        context: JsonSerializationContext
+    ): JsonElement {
+        val array = JsonArray()
+        val prefix = "Primitive"
+        array.add(prefix)
+
+        array.add(src.jvmName)
+
+        return array
+    }
+}
+
 fun createGsonBuilder(): GsonBuilder = GsonBuilder()
     .registerTypeAdapter(ClassDeclaration::class.java, ClassDeclarationSerializer())
     .registerTypeAdapter(InterfaceDeclaration::class.java, InterfaceDeclarationSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Array::class.java, ArraySerializer())
-    .registerTypeAdapter(org.jacodb.typesolver.table.Class::class.java, ClassSerializer())
-    .registerTypeAdapter(org.jacodb.typesolver.table.Interface::class.java, InterfaceSerializer())
+    .registerTypeAdapter(Class::class.java, ClassSerializer())
+    .registerTypeAdapter(Interface::class.java, InterfaceSerializer())
     .registerTypeAdapter(Var::class.java, VarSerializer())
     .registerTypeAdapter(Null::class.java, NullSerializer())
     .registerTypeAdapter(Intersect::class.java, IntersectSerializer())
     .registerTypeAdapter(org.jacodb.typesolver.table.Type::class.java, TypeSerializer())
-    .registerTypeAdapter(org.jacodb.typesolver.table.Wildcard::class.java, WildcardSerializer())
+    .registerTypeAdapter(Wildcard::class.java, WildcardSerializer())
+    .registerTypeAdapter(PrimitiveType::class.java, PrimitiveTypeSerializer())
     .serializeNulls()
     .setPrettyPrinting()
 
@@ -231,15 +284,15 @@ fun makeClassesTable(
 private fun List<JcClassOrInterface>.toJvmDeclarationsSafe(
     classpath: JcClasspath
 ) = mapNotNull {
-        runCatching { it.toJvmDeclaration(classpath) }
-            .fold({ it }) { error ->
+    runCatching { it.toJvmDeclaration(classpath) }
+        .fold({ it }) { error ->
 //                    if (!(error is NoClassInClasspathException)) {
-                println("Class ${it.name}")
-                println("Error: $error")
+            println("Class ${it.name}")
+            println("Error: $error")
 //                        println("Stacktrace: ${error.stackTraceToString()}")
-                println()
+            println()
 //                    }
 
-                null
-            }
-    }
+            null
+        }
+}
