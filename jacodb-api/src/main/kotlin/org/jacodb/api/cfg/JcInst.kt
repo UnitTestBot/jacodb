@@ -752,12 +752,14 @@ data class JcSpecialCallExpr(
 }
 
 
-interface JcValue : JcExpr {
+interface JcValue : JcExpr
+
+interface JcSimpleValue : JcValue {
+
     override val operands: List<JcValue>
         get() = emptyList()
-}
 
-interface JcSimpleValue : JcValue
+}
 
 data class JcThis(override val type: JcType) : JcLocal {
 
@@ -807,6 +809,9 @@ data class JcFieldRef(
 ) : JcComplexValue {
     override val type: JcType get() = this.field.fieldType
 
+    override val operands: List<JcValue>
+        get() = instance?.let { listOf(it) }.orEmpty()
+
     override fun toString(): String = "${instance ?: field.enclosingType.typeName}.${field.name}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -820,6 +825,9 @@ data class JcArrayAccess(
     override val type: JcType
 ) : JcComplexValue {
     override fun toString(): String = "$array[$index]"
+
+    override val operands: List<JcValue>
+        get() = listOf(array, index)
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcArrayAccess(this)
