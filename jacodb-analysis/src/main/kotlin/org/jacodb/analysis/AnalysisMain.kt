@@ -26,7 +26,9 @@ import mu.KotlinLogging
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintAnalyzer
+import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.IFDSInstance
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
@@ -72,6 +74,19 @@ interface AnalysisEngineFactory : Factory {
         graph: JcApplicationGraph,
         points2Engine: Points2Engine,
     ): AnalysisEngine
+}
+
+class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
+    override fun createAnalysisEngine(graph: JcApplicationGraph, points2Engine: Points2Engine): AnalysisEngine {
+        return IFDSInstance(
+            graph,
+            UnusedVariableAnalyzer(graph.classpath, graph),
+            points2Engine.obtainDevirtualizer()
+        )
+    }
+
+    override val name: String
+        get() = "Jacodb-Unused-Variable"
 }
 
 abstract class FlowDroidFactory : AnalysisEngineFactory {

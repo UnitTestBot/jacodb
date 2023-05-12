@@ -26,14 +26,19 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintForwardFunctions(
     protected val classpath: JcClasspath,
     protected val graph: ApplicationGraph<JcMethod, JcInst>,
     protected val platform: JcAnalysisPlatform,
-    protected val maxPathLength: Int
 ) : FlowFunctionsSpace {
 
     abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>

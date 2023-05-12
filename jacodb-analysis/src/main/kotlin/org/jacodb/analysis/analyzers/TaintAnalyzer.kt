@@ -105,9 +105,9 @@ private class TaintForwardFunctions(
     classpath: JcClasspath,
     graph: ApplicationGraph<JcMethod, JcInst>,
     platform: JcAnalysisPlatform,
-    maxPathLength: Int,
+    private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
-) : AbstractTaintForwardFunctions(classpath, graph, platform, maxPathLength) {
+) : AbstractTaintForwardFunctions(classpath, graph, platform) {
 
     override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
 

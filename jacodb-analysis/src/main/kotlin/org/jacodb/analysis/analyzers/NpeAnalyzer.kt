@@ -95,8 +95,8 @@ private class NPEForwardFunctions(
     classpath: JcClasspath,
     graph: ApplicationGraph<JcMethod, JcInst>,
     platform: JcAnalysisPlatform,
-    maxPathLength: Int
-) : AbstractTaintForwardFunctions(classpath, graph, platform, maxPathLength) {
+    private val maxPathLength: Int
+) : AbstractTaintForwardFunctions(classpath, graph, platform) {
 
     override val inIds: List<SpaceId> get() = listOf(NpeAnalyzer, ZEROFact.id)
 

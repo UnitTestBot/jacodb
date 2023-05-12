@@ -68,6 +68,11 @@ class NPETaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
         get() = NpeAnalyzer
 }
 
+data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst): DomainFact {
+    override val id: SpaceId
+        get() = UnusedVariableAnalyzer
+}
+
 class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
     override fun updateActivation(newActivation: JcInst?): TaintAnalysisNode {
         return TaintAnalysisNode(variable, newActivation)
