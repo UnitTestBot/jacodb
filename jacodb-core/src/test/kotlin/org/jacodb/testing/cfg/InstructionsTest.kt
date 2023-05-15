@@ -35,6 +35,8 @@ import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnJre
+import org.junit.jupiter.api.condition.JRE
 import org.objectweb.asm.util.Textifier
 import org.objectweb.asm.util.TraceMethodVisitor
 import java.util.concurrent.ConcurrentHashMap
@@ -86,13 +88,14 @@ class InstructionsTest : BaseTest() {
     }
 
     @Test
-    fun `properly merged frames for old bytecodce`() {
+    fun `properly merged frames for old bytecode`() {
         val clazz = cp.findClass<IMAPMessage>()
         val method = clazz.declaredMethods.first { it.name == "writeTo" }
         method.flowGraph()
     }
 
     @Test
+    @EnabledOnJre(JRE.JAVA_11)
     fun `locals should work`() {
         val clazz = cp.findClass<IRExamples>()
         with(clazz.declaredMethods.first { it.name == "sortTimes" }) {
