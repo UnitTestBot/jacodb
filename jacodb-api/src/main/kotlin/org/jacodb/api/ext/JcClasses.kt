@@ -233,6 +233,7 @@ val JcClassOrInterface.isKotlin: Boolean
         return annotations.any { it.matches("kotlin.Metadata") }
     }
 
+
 private val JcClassOrInterface.simpleBinaryName: String?
     get() {
         // top level class

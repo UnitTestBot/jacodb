@@ -13,7 +13,6 @@ on:
       - main
       - 'feature-**'
       - '*/feature-**'
-      - 'kononov-volkov-ifds'
   pull_request:
     branches:
       - main

@@ -21,7 +21,6 @@ import org.jacodb.api.ClassSource
 import org.jacodb.api.JcClasspath
 import org.jacodb.impl.bytecode.computeFrames
 import org.jacodb.impl.bytecode.hasFrameInfo
-import org.jacodb.impl.bytecode.inlineJsrs
 import org.jacodb.impl.storage.AnnotationValueKind
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.AnnotationValue
@@ -104,7 +103,7 @@ private fun AnnotationNode.asAnnotationInfo(visible: Boolean) = AnnotationInfo(
 private fun List<AnnotationNode>?.asAnnotationInfos(visible: Boolean): List<AnnotationInfo> =
     orEmpty().map { it.asAnnotationInfo(visible) }.toImmutableList()
 
-fun MethodNode.asMethodInfo(): MethodInfo {
+private fun MethodNode.asMethodInfo(): MethodInfo {
     val params = Type.getArgumentTypes(desc).map { it.className }.toImmutableList()
     return MethodInfo(
         name = name,
