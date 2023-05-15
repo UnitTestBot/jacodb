@@ -31,7 +31,9 @@ import org.jacodb.api.cfg.JcRawExpr
 import org.jacodb.api.cfg.JcRawExprVisitor
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.cfg.JcRawInstVisitor
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.LocalResolver
+import org.jacodb.api.cfg.ValueResolver
 
 fun JcInstList<JcRawInst>.apply(visitor: JcRawInstVisitor<Unit>): JcInstList<JcRawInst> {
     instructions.forEach { it.accept(visitor) }
@@ -114,5 +116,16 @@ val JcInst.callExpr: JcCallExpr?
 
 val JcInstList<JcInst>.locals: Set<JcLocal>
     get() {
-        return instructions.flatMap { it.accept(LocalResolver) }.toSet()
+        val resolver = LocalResolver().also {res ->
+            forEach { it.accept(res) }
+        }
+        return resolver.result
+    }
+
+val JcInstList<JcInst>.values: Set<JcValue>
+    get() {
+        val resolver = ValueResolver().also {res ->
+            forEach { it.accept(res) }
+        }
+        return resolver.result
     }

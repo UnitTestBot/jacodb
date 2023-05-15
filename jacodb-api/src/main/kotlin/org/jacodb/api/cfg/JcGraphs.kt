@@ -18,23 +18,50 @@
 
 package org.jacodb.api.cfg
 
-object LocalResolver : DefaultJcInstVisitor<Set<JcLocal>>, DefaultJcExprVisitor<Set<JcLocal>> {
+abstract class TypedExprResolver<T : JcExpr> : DefaultJcInstVisitor<Set<T>>, DefaultJcExprVisitor<Set<T>> {
 
-    override val defaultInstHandler: (JcInst) -> Set<JcLocal>
-        get() = { (it.operands.locals + it.operands.flatMap { it.operands.locals }).toSet() }
+    val result = hashSetOf<T>()
 
-    override val defaultExprHandler: (JcExpr) -> Set<JcLocal>
+    override val defaultInstHandler: (JcInst) -> Set<T>
         get() = {
-            val childs = it.operands.locals.toSet()
-            when {
-                it is JcLocal && childs.isEmpty() -> setOf(it)
-                it is JcLocal -> childs + it
-                else -> childs
+            it.operands.forEach {
+                addIfMatched(it)
+                it.operands.forEach {
+                    addIfMatched(it)
+                }
             }
+            emptySet()
         }
 
-    private val List<JcExpr>.locals get() = filterIsInstance<JcLocal>()
+    override val defaultExprHandler: (JcExpr) -> Set<T>
+        get() = {
+            it.operands.forEach {
+                addIfMatched(it)
+            }
+            addIfMatched(it)
+            emptySet()
+        }
 
+    protected abstract fun matches(expr: JcExpr): T?
+
+    private fun addIfMatched(expr: JcExpr) = matches(expr)?.let { result.add(it) }
+
+}
+
+
+class LocalResolver : TypedExprResolver<JcLocal>() {
+
+    override fun matches(expr: JcExpr): JcLocal? {
+        return expr as? JcLocal
+    }
+
+}
+
+class ValueResolver : TypedExprResolver<JcValue>() {
+
+    override fun matches(expr: JcExpr): JcValue? {
+        return expr as? JcValue
+    }
 }
 
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
@@ -63,11 +90,33 @@ fun <R, E, T : JcExprVisitor<E>> JcExpr.applyAndGet(visitor: T, getter: (T) -> R
 
 val JcGraph.locals: Set<JcLocal>
     get() {
-        return collect(LocalResolver).flatMap { it.orEmpty() }.toSet()
+        val resolver = LocalResolver().also {
+            collect(it)
+        }
+        return resolver.result
     }
 
 val JcInst.locals: Set<JcLocal>
     get() {
-        return accept(LocalResolver)?.toSet().orEmpty()
+        val resolver = LocalResolver().also {
+            accept(it)
+        }
+        return resolver.result
     }
 
+
+val JcInst.values: Set<JcValue>
+    get() {
+        val resolver = ValueResolver().also {
+            accept(it)
+        }
+        return resolver.result
+    }
+
+val JcGraph.values: Set<JcValue>
+    get() {
+        val resolver = ValueResolver().also {
+            collect(it)
+        }
+        return resolver.result
+    }
