@@ -20,18 +20,24 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.paths.*
-import org.jacodb.api.JcClasspath
+import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.minus
+import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
+import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.*
+import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintBackwardFunctions(
-    protected val classpath: JcClasspath,
-    protected val graph: ApplicationGraph<JcMethod, JcInst>,
-    protected val platform: JcAnalysisPlatform,
+    protected val graph: JcApplicationGraph,
     override val backward: FlowFunctionsSpace,
     protected val maxPathLength: Int,
 ) : FlowFunctionsSpace {
@@ -103,7 +109,7 @@ abstract class AbstractTaintBackwardFunctions(
             }
 
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
             }
 
             callExpr.args.zip(formalParams).forEach { (actual, formal) ->
@@ -180,7 +186,7 @@ abstract class AbstractTaintBackwardFunctions(
             val actualParams = callExpr.args
             val callee = graph.methodOf(exitStatement)
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
             }
 
             formalParams.zip(actualParams).forEach { (formal, actual) ->

@@ -27,6 +27,4 @@ interface ApplicationGraph<Method, Statement> {
     fun exitPoints(method: Method): Sequence<Statement>
 
     fun methodOf(node: Statement): Method
-
-    fun visitedMethods(): Sequence<Method>
 }

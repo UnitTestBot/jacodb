@@ -50,7 +50,7 @@ class JcSettings {
     var predefinedDirOrJars: List<File> = persistentListOf()
         private set
 
-    var cacheSettings: JcCacheSettings = JcCacheSettings(10_000, Duration.ofSeconds(10))
+    var cacheSettings: JcCacheSettings = JcCacheSettings()
         private set
 
     var byteCodeSettings: JcByteCodeCache = JcByteCodeCache()
@@ -86,8 +86,12 @@ class JcSettings {
         persistentType = type
     }
 
-    fun classCaching(maxSize: Long, expiration: Duration) = apply {
-        cacheSettings = JcCacheSettings(maxSize, expiration)
+    fun caching(settings: JcCacheSettings.() -> Unit) = apply {
+        cacheSettings = JcCacheSettings().also { it.settings() }
+    }
+
+    fun caching(settings: JcCacheSettings) = apply {
+        cacheSettings = settings
     }
 
     fun bytecodeCaching(byteCodeCache: JcByteCodeCache) = apply {
@@ -194,4 +198,22 @@ enum class PredefinedPersistenceType : JcPersistenceType {
 
 class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
 
-class JcCacheSettings(val maxSize: Long, val expiration: Duration, val byteCodeCache: JcByteCodeCache = JcByteCodeCache())
+class JcCacheSettings {
+    var classes: Pair<Long, Duration> = 10_000L to Duration.ofMinutes(1)
+    var types: Pair<Long, Duration> = 10_000L to Duration.ofMinutes(1)
+    var graphs: Pair<Long, Duration> = 10_000L to Duration.ofMinutes(1)
+
+    var byteCodeCache: JcByteCodeCache = JcByteCodeCache()
+
+    fun classes(maxSize: Long, expiration: Duration) = apply {
+        classes = maxSize to expiration
+    }
+
+    fun types(maxSize: Long, expiration: Duration) = apply {
+        types = maxSize to expiration
+    }
+
+    fun graphs(maxSize: Long, expiration: Duration) = apply {
+        graphs = maxSize to expiration
+    }
+}

@@ -25,7 +25,6 @@ import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.MethodResolution
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
@@ -53,7 +52,7 @@ class JcTypedMethodImpl(
     override val access: Int
         get() = this.method.access
 
-    private val info by lazy(LazyThreadSafetyMode.NONE) {
+    private val info by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val signature = MethodSignature.withDeclarations(method)
         val impl = signature as? MethodResolutionImpl
         val substitutor = if (!method.isStatic) {
@@ -64,7 +63,7 @@ class JcTypedMethodImpl(
 
         TypedMethodInfo(
             substitutor = substitutor,
-            resolution = MethodSignature.withDeclarations(method)
+            resolution = signature
         )
     }
 
@@ -106,7 +105,7 @@ class JcTypedMethodImpl(
             }
         }
 
-    override val returnType: JcType by lazy(LazyThreadSafetyMode.NONE) {
+    override val returnType: JcType by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val typeName = method.returnType.typeName
         val info = info
         val impl = info.impl

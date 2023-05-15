@@ -21,32 +21,18 @@ import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
 
-class JcInstLocation(
-    val method: JcMethod,
-    val index: Int,
-    val lineNumber: Int
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as JcInstLocation
-
-        if (method != other.method) return false
-        if (index != other.index) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = method.hashCode()
-        result = 31 * result + index
-        return result
-    }
+interface TypedMethodRef {
+    val name: String
+    val method: JcTypedMethod
 }
 
+interface JcInstLocation {
+    val method: JcMethod
+    val index: Int
+    val lineNumber: Int
+}
 
-sealed interface JcInst {
+interface JcInst {
     val location: JcInstLocation
     val operands: List<JcExpr>
 
@@ -55,7 +41,7 @@ sealed interface JcInst {
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
 
-abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
+abstract class AbstractJcInst(override val location: JcInstLocation) : JcInst {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -72,18 +58,7 @@ abstract class AbstractJcInst(override val location: JcInstLocation): JcInst {
     }
 }
 
-class JcNoopInst(location: JcInstLocation): AbstractJcInst(location) {
-    override val operands: List<JcExpr>
-        get() = emptyList()
-
-    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-        return visitor.visitJcNoopInst(this)
-    }
-
-    override fun toString(): String = "noop"
-}
-
-data class JcInstRef constructor(
+data class JcInstRef(
     val index: Int
 )
 
@@ -145,7 +120,7 @@ class JcCallInst(
     }
 }
 
-sealed interface JcTerminatingInst : JcInst
+interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
     location: JcInstLocation,
@@ -191,7 +166,7 @@ class JcCatchInst(
     }
 }
 
-sealed interface JcBranchingInst : JcInst {
+interface JcBranchingInst : JcInst {
     val successors: List<JcInstRef>
 }
 
@@ -250,7 +225,7 @@ class JcSwitchInst(
     }
 }
 
-sealed interface JcExpr {
+interface JcExpr {
     val type: JcType
     val operands: List<JcValue>
 
@@ -367,7 +342,7 @@ data class JcMulExpr(
     }
 }
 
-sealed interface JcConditionExpr : JcBinaryExpr
+interface JcConditionExpr : JcBinaryExpr
 
 data class JcEqExpr(
     override val type: JcType,
@@ -650,7 +625,7 @@ data class JcInstanceOfExpr(
     }
 }
 
-sealed interface JcCallExpr : JcExpr {
+interface JcCallExpr : JcExpr {
     val method: JcTypedMethod
     val args: List<JcValue>
 
@@ -660,7 +635,7 @@ sealed interface JcCallExpr : JcExpr {
         get() = args
 }
 
-sealed interface JcInstanceCallExpr : JcCallExpr {
+interface JcInstanceCallExpr : JcCallExpr {
     val instance: JcValue
 }
 
@@ -687,23 +662,27 @@ data class JcPhiExpr(
  * object, but stores a reference to the actual method
  */
 data class JcLambdaExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val args: List<JcValue>,
 ) : JcCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLambdaExpr(this)
     }
 }
 
 data class JcDynamicCallExpr(
-    val bsm: JcTypedMethod,
+    private val bsmRef: TypedMethodRef,
     val bsmArgs: List<BsmArg>,
     val callCiteMethodName: String,
     val callCiteArgTypes: List<JcType>,
     val callCiteReturnType: JcType,
     val callCiteArgs: List<JcValue>
 ) : JcCallExpr {
-    override val method get() = bsm
+
+    override val method get() = bsmRef.method
     override val args get() = callCiteArgs
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -716,15 +695,18 @@ data class JcDynamicCallExpr(
  * are both represented with `JcVirtualCallExpr` for simplicity
  */
 data class JcVirtualCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val instance: JcValue,
     override val args: List<JcValue>,
 ) : JcInstanceCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override val operands: List<JcValue>
         get() = listOf(instance) + args
 
     override fun toString(): String =
-        "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcVirtualCallExpr(this)
@@ -733,11 +715,14 @@ data class JcVirtualCallExpr(
 
 
 data class JcStaticCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val args: List<JcValue>,
 ) : JcCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun toString(): String =
-        "${method.method.enclosingClass.name}.${method.name}${
+        "${method.method.enclosingClass.name}.${methodRef.name}${
             args.joinToString(
                 prefix = "(",
                 postfix = ")",
@@ -751,12 +736,15 @@ data class JcStaticCallExpr(
 }
 
 data class JcSpecialCallExpr(
-    override val method: JcTypedMethod,
+    private val methodRef: TypedMethodRef,
     override val instance: JcValue,
     override val args: List<JcValue>,
 ) : JcInstanceCallExpr {
+
+    override val method: JcTypedMethod get() = methodRef.method
+
     override fun toString(): String =
-        "$instance.${method.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcSpecialCallExpr(this)
@@ -764,12 +752,14 @@ data class JcSpecialCallExpr(
 }
 
 
-sealed interface JcValue : JcExpr {
+interface JcValue : JcExpr
+
+interface JcSimpleValue : JcValue {
+
     override val operands: List<JcValue>
         get() = emptyList()
-}
 
-sealed interface JcSimpleValue : JcValue
+}
 
 data class JcThis(override val type: JcType) : JcLocal {
 
@@ -783,7 +773,7 @@ data class JcThis(override val type: JcType) : JcLocal {
     }
 }
 
-sealed interface JcLocal : JcSimpleValue {
+interface JcLocal : JcSimpleValue {
     val name: String
 }
 
@@ -811,13 +801,16 @@ data class JcLocalVar(override val name: String, override val type: JcType) : Jc
     }
 }
 
-sealed interface JcComplexValue : JcValue
+interface JcComplexValue : JcValue
 
 data class JcFieldRef(
     val instance: JcValue?,
     val field: JcTypedField
 ) : JcComplexValue {
     override val type: JcType get() = this.field.fieldType
+
+    override val operands: List<JcValue>
+        get() = instance?.let { listOf(it) }.orEmpty()
 
     override fun toString(): String = "${instance ?: field.enclosingType.typeName}.${field.name}"
 
@@ -833,14 +826,17 @@ data class JcArrayAccess(
 ) : JcComplexValue {
     override fun toString(): String = "$array[$index]"
 
+    override val operands: List<JcValue>
+        get() = listOf(array, index)
+
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcArrayAccess(this)
     }
 }
 
-sealed interface JcConstant : JcSimpleValue
+interface JcConstant : JcSimpleValue
 
-sealed interface JcNumericConstant : JcConstant {
+interface JcNumericConstant : JcConstant {
 
     val value: Number
 

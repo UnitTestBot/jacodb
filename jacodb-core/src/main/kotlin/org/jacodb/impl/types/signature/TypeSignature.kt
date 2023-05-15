@@ -20,13 +20,14 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.Malformed
 import org.jacodb.api.Pure
 import org.jacodb.api.TypeResolution
-import org.jacodb.impl.bytecode.kmTypeParameters
+import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.JvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureVisitor
 
-internal class TypeSignature(jcClass: JcClassOrInterface) : Signature<TypeResolution>(jcClass, jcClass.kmTypeParameters) {
+internal class TypeSignature(jcClass: JcClassOrInterface) :
+    Signature<TypeResolution>(jcClass, jcClass.kMetadata?.kmTypeParameters) {
 
     private val interfaceTypes = ArrayList<JvmType>()
     private lateinit var superClass: JvmType

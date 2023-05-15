@@ -42,10 +42,13 @@ sealed class JcSignal(val jcdb: JcDatabase) {
 
     /** can be used for creating persistence scheme */
     class BeforeIndexing(jcdb: JcDatabase, val clearOnStart: Boolean) : JcSignal(jcdb)
+
     /** can be used to create persistence indexes after data batch upload */
     class AfterIndexing(jcdb: JcDatabase) : JcSignal(jcdb)
+
     /** can be used for cleanup index data when location is removed */
     class LocationRemoved(jcdb: JcDatabase, val location: RegisteredLocation) : JcSignal(jcdb)
+
     /**
      * rebuild all
      */

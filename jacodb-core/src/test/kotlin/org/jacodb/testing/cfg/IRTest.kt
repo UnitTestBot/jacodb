@@ -38,18 +38,15 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcNoopInst
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcSwitchInst
 import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.JcThrowInst
 import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.applyAndGet
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isAbstract
-import org.jacodb.api.ext.isAnnotation
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.isKotlin
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
@@ -63,7 +60,6 @@ import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
-import org.jacodb.impl.cfg.applyAndGet
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.hierarchyExt
@@ -288,15 +284,7 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
-    override fun visitJcNoopInst(inst: JcNoopInst) {
-        if (inst != jcGraph.entry) {
-            assertTrue(jcGraph.predecessors(inst).isNotEmpty())
-        }
-
-        assertTrue(jcGraph.catchers(inst).all { catch ->
-            inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
-        })
-        assertTrue(jcGraph.throwers(inst).isEmpty())
+    override fun visitExternalJcInst(inst: JcInst) {
     }
 }
 
@@ -373,16 +361,18 @@ class IRTest : BaseTest() {
 
 
     private fun testClass(klass: JcClassOrInterface) = try {
-        val classNode = klass.bytecode()
+        val classNode = klass.asmNode()
         classNode.methods = klass.declaredMethods.filter { it.enclosingClass == klass }.map {
             if (it.isAbstract) {
-                it.body()
+                it.asmNode()
             } else {
 //            val oldBody = it.body()
 //            println()
 //            println("Old body: ${oldBody.print()}")
                 val instructionList = it.rawInstList
-
+                it.instList.forEachIndexed { index, inst ->
+                    assertEquals(index, inst.location.index, "indexes not matched for $it at $index")
+                }
 //            println("Instruction list: $instructionList")
                 val graph = it.flowGraph()
                 if (!it.enclosingClass.isKotlin) {

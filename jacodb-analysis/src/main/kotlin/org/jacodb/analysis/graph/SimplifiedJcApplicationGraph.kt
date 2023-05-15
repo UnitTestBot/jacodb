@@ -18,9 +18,12 @@ package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcNoopInst
+import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.impl.cfg.JcInstLocationImpl
+import org.jacodb.impl.cfg.JcMethodRefImpl
 
 /**
  * This is adopted specially for IFDS [JcApplicationGraph] that
@@ -39,7 +42,7 @@ class SimplifiedJcApplicationGraph(
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
-        return JcNoopInst(JcInstLocation(method, -1, -1))
+        return JcNoopInst(JcInstLocationImpl(JcMethodRefImpl(method), -1, -1))
     }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
@@ -91,4 +94,16 @@ class SimplifiedJcApplicationGraph(
 //            "java.util.regex."
         )
     }
+}
+
+
+data class JcNoopInst(override val location: JcInstLocation): JcInst {
+    override val operands: List<JcExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: JcInstVisitor<T>): T {
+        return visitor.visitExternalJcInst(this)
+    }
+
+    override fun toString(): String = "noop"
 }

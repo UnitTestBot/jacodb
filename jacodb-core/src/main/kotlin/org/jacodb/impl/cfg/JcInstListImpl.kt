@@ -17,14 +17,16 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcMutableInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.cfg.JcRawInstVisitor
 import org.jacodb.api.cfg.JcRawLabelInst
 
-class JcInstListImpl<INST>(
+open class JcInstListImpl<INST>(
     instructions: List<INST>
 ) : Iterable<INST>, JcInstList<INST> {
-    private val _instructions = instructions.toMutableList()
+    protected val _instructions = instructions.toMutableList()
+
     override val instructions: List<INST> get() = _instructions
 
     override val size get() = instructions.size
@@ -36,12 +38,19 @@ class JcInstListImpl<INST>(
     fun getOrElse(index: Int, defaultValue: (Int) -> INST) = instructions.getOrElse(index, defaultValue)
     override fun iterator(): Iterator<INST> = instructions.iterator()
 
+    override fun toMutableList() = JcMutableInstListImpl(_instructions)
+
     override fun toString(): String = _instructions.joinToString(separator = "\n") {
         when (it) {
             is JcRawLabelInst -> "$it"
             else -> "  $it"
         }
     }
+
+}
+
+class JcMutableInstListImpl<INST>(instructions: List<INST>) : JcInstListImpl<INST>(instructions),
+    JcMutableInstList<INST> {
 
     override fun insertBefore(inst: INST, vararg newInstructions: INST) = insertBefore(inst, newInstructions.toList())
     override fun insertBefore(inst: INST, newInstructions: Collection<INST>) {

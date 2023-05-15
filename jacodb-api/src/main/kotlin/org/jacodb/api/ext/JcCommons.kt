@@ -19,6 +19,8 @@
 package org.jacodb.api.ext
 
 import org.jacodb.api.JcAccessible
+import org.jacodb.api.JcAnnotated
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
@@ -27,7 +29,6 @@ import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.throwClassNotFound
 import java.io.Serializable
 import java.lang.Cloneable
-import java.util.*
 
 fun String.jvmName(): String {
     return when {
@@ -117,4 +118,12 @@ internal fun <Container : JcAccessible, Result : JcAccessible> Container.findEle
         it.findElements(false, packageName, currentPackage, getAccessibles, nextHierarchy, predicate)
     }
 
+}
+
+fun JcAnnotated.hasAnnotation(className: String): Boolean {
+    return annotations.any { it.matches(className) }
+}
+
+fun JcAnnotated.annotation(className: String): JcAnnotation? {
+    return annotations.firstOrNull { it.matches(className) }
 }

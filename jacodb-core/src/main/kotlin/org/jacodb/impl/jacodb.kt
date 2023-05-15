@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("JacoDB")
+
 package org.jacodb.impl
 
 import kotlinx.coroutines.GlobalScope
@@ -30,7 +31,7 @@ suspend fun jacodb(settings: JcSettings): JcDatabase {
     val featureRegistry = FeaturesRegistry(settings.features)
     val javaRuntime = JavaRuntime(settings.jre)
     val persistence = (settings.persistentType ?: PredefinedPersistenceType.SQLITE)
-        .newPersistence(javaRuntime,featureRegistry,settings)
+        .newPersistence(javaRuntime, featureRegistry, settings)
     return JcDatabaseImpl(
         javaRuntime = javaRuntime,
         persistence = persistence,

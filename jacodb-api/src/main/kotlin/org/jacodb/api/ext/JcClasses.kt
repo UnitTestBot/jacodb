@@ -18,27 +18,12 @@
 
 package org.jacodb.api.ext
 
-import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
-
-
-val JcClassOrInterface.isAnnotation: Boolean
-    get() {
-        return access and Opcodes.ACC_ANNOTATION != 0
-    }
-
-/**
- * is class is interface
- */
-val JcClassOrInterface.isInterface: Boolean
-    get() {
-        return access and Opcodes.ACC_INTERFACE != 0
-    }
 
 
 val JcClassOrInterface.isLocalOrAnonymous: Boolean
@@ -200,36 +185,47 @@ val JcClassOrInterface.constructors: List<JcMethod>
     }
 
 
-val JcClassOrInterface.allSuperHierarchy: LinkedHashSet<JcClassOrInterface>
+val JcClassOrInterface.allSuperHierarchy: Set<JcClassOrInterface>
     get() {
-        val result = LinkedHashSet<JcClassOrInterface>()
-        forEachSuperClasses {
-            result.add(it)
+        return allSuperHierarchySequence.toMutableSet()
+    }
+
+val JcClassOrInterface.allSuperHierarchySequence: Sequence<JcClassOrInterface>
+    get() {
+        return sequence {
+            superClass?.let {
+                yield(it)
+                yieldAll(it.allSuperHierarchySequence)
+            }
+            yieldAll(interfaces)
+            interfaces.forEach {
+                yieldAll(it.allSuperHierarchySequence)
+            }
+        }
+    }
+
+val JcClassOrInterface.superClasses: List<JcClassOrInterface>
+    get() {
+        val result = arrayListOf<JcClassOrInterface>()
+        var t = superClass
+        while (t != null) {
+            result.add(t)
+            t = t.superClass
         }
         return result
     }
-
-
-/**
- * @return all interfaces and classes retrieved recursively from this ClassId
- */
-fun JcClassOrInterface.forEachSuperClasses(action: (JcClassOrInterface) -> Unit): List<JcClassOrInterface> {
-    val parents = (interfaces + superClass).filterNotNull()
-    parents.forEach {
-        action(it)
-    }
-    val result = parents.toMutableSet()
-    parents.forEach {
-        it.forEachSuperClasses(action)
-    }
-    return result.toPersistentList()
-}
 
 infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean {
     if (another == classpath.findClassOrNull<Any>()) {
         return true
     }
-    return another == this || another in allSuperHierarchy
+    if (another == this) {
+        return true
+    }
+    if (isInterface && !another.isInterface) {
+        return false
+    }
+    return allSuperHierarchy.any { it == another }
 }
 
 val JcClassOrInterface.isKotlin: Boolean

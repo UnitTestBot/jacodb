@@ -21,16 +21,18 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDeclaration
 import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.objectClass
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.features.classpaths.VirtualLocation
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
+@JvmDefaultWithoutCompatibility
 interface JcVirtualClass : JcClassOrInterface {
     override val declaredFields: List<JcVirtualField>
     override val declaredMethods: List<JcVirtualMethod>
+
+    override fun <T> extensionValue(key: String): T? = null
 
     fun bind(classpath: JcClasspath, virtualLocation: VirtualLocation) {
     }
@@ -70,14 +72,14 @@ open class JcVirtualClassImpl(
 
     override val simpleName: String get() = name.substringAfterLast(".")
 
-    override fun bytecode(): ClassNode {
+    override fun asmNode(): ClassNode {
         throw IllegalStateException("Can't get ASM node for Virtual class")
     }
 
     override val isAnonymous: Boolean
         get() = false
 
-    override fun binaryBytecode(): ByteArray {
+    override fun bytecode(): ByteArray {
         throw IllegalStateException("Can't get bytecode for Virtual class")
     }
 

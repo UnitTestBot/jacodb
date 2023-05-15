@@ -111,7 +111,21 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
     }
 
     override fun flush(jooq: DSLContext) {
+        val names = HashSet<String>()
+        usages.forEach { (calleeClass, calleeEntry) ->
+            names.add(calleeClass.className)
+            calleeEntry.forEach { (info, callers) ->
+                names.add(info.first)
+                callers.forEach { (caller, _) ->
+                    names.add(caller)
+                }
+            }
+        }
+        names.forEach {
+            interner.findOrNew(it)
+        }
         jooq.withoutAutoCommit { conn ->
+            interner.flush(conn)
             conn.runBatch(CALLS) {
                 usages.forEach { (calleeClass, calleeEntry) ->
                     val calleeId = calleeClass.className.symbolId
@@ -131,7 +145,6 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
                     }
                 }
             }
-            interner.flush(conn)
         }
     }
 
@@ -205,6 +218,9 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                         locationId = locationId!!
                     ) to offset!!.toShortArray()
                 }
+        }
+        if (calls.isEmpty()) {
+            return emptySequence()
         }
 
         return BatchedSequence(50) { offset, batchSize ->

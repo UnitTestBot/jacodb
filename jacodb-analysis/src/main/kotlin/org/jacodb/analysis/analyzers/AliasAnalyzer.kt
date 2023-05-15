@@ -22,23 +22,18 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IFDSResult
 import org.jacodb.analysis.engine.IFDSVertex
 import org.jacodb.analysis.paths.FieldAccessor
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.ext.cfg.allValues
+import org.jacodb.api.cfg.values
 
 open class AliasAnalyzer(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     generates: (JcInst) -> List<DomainFact>,
     isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
-) : TaintAnalyzer(classpath, graph, platform, generates, isSink, maxPathLength) {
+) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
 
     override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
@@ -48,12 +43,12 @@ open class AliasAnalyzer(
                     fact.variable.let {
                         val name = when (val x = it.value) {
                             is JcArgument -> x.name
-                            is JcLocal -> platform.flowGraph(inst.location.method).instructions
-                                .first { x in it.operands.flatMap { it.allValues } }
+                            is JcLocal -> inst.location.method.flowGraph().instructions
+                                .first { x in it.operands.flatMap { it.values } }
                                 .lineNumber
                                 .toString()
-
                             null -> (it.accesses[0] as FieldAccessor).field.enclosingClass.simpleName
+                            else -> error("Unknown local type")
                         }
 
                         val fullPath = buildString {

@@ -78,9 +78,12 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null) : 
  *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
  *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
  */
-class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType(isNullable) {
+internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmRefType(isNullable) {
 
-    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null) : this(declaration.symbol, isNullable) {
+    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null) : this(
+        declaration.symbol,
+        isNullable
+    ) {
         this.declaration = declaration
     }
 
@@ -110,7 +113,7 @@ class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null) : JvmType
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
-internal sealed class JvmWildcard: JvmType(isNullable = true)
+internal sealed class JvmWildcard : JvmType(isNullable = true)
 
 internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 

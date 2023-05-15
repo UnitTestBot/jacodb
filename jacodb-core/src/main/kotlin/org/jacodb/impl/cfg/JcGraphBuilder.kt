@@ -16,9 +16,157 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcType
+import org.jacodb.api.TypeName
+import org.jacodb.api.cfg.BsmHandle
+import org.jacodb.api.cfg.JcAddExpr
+import org.jacodb.api.cfg.JcAndExpr
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcArrayAccess
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcBinaryExpr
+import org.jacodb.api.cfg.JcBool
+import org.jacodb.api.cfg.JcByte
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcCastExpr
+import org.jacodb.api.cfg.JcCatchInst
+import org.jacodb.api.cfg.JcChar
+import org.jacodb.api.cfg.JcClassConstant
+import org.jacodb.api.cfg.JcCmpExpr
+import org.jacodb.api.cfg.JcCmpgExpr
+import org.jacodb.api.cfg.JcCmplExpr
+import org.jacodb.api.cfg.JcConditionExpr
+import org.jacodb.api.cfg.JcDivExpr
+import org.jacodb.api.cfg.JcDouble
+import org.jacodb.api.cfg.JcDynamicCallExpr
+import org.jacodb.api.cfg.JcEnterMonitorInst
+import org.jacodb.api.cfg.JcEqExpr
+import org.jacodb.api.cfg.JcExitMonitorInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcFloat
+import org.jacodb.api.cfg.JcGeExpr
+import org.jacodb.api.cfg.JcGotoInst
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcGtExpr
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcInstLocation
+import org.jacodb.api.cfg.JcInstRef
+import org.jacodb.api.cfg.JcInstanceOfExpr
+import org.jacodb.api.cfg.JcInt
+import org.jacodb.api.cfg.JcLambdaExpr
+import org.jacodb.api.cfg.JcLeExpr
+import org.jacodb.api.cfg.JcLengthExpr
+import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcLong
+import org.jacodb.api.cfg.JcLtExpr
+import org.jacodb.api.cfg.JcMethodConstant
+import org.jacodb.api.cfg.JcMulExpr
+import org.jacodb.api.cfg.JcNegExpr
+import org.jacodb.api.cfg.JcNeqExpr
+import org.jacodb.api.cfg.JcNewArrayExpr
+import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcNullConstant
+import org.jacodb.api.cfg.JcOrExpr
+import org.jacodb.api.cfg.JcRawAddExpr
+import org.jacodb.api.cfg.JcRawAndExpr
+import org.jacodb.api.cfg.JcRawArgument
+import org.jacodb.api.cfg.JcRawArrayAccess
+import org.jacodb.api.cfg.JcRawAssignInst
+import org.jacodb.api.cfg.JcRawBinaryExpr
+import org.jacodb.api.cfg.JcRawBool
+import org.jacodb.api.cfg.JcRawByte
+import org.jacodb.api.cfg.JcRawCallInst
+import org.jacodb.api.cfg.JcRawCastExpr
+import org.jacodb.api.cfg.JcRawCatchInst
+import org.jacodb.api.cfg.JcRawChar
+import org.jacodb.api.cfg.JcRawClassConstant
+import org.jacodb.api.cfg.JcRawCmpExpr
+import org.jacodb.api.cfg.JcRawCmpgExpr
+import org.jacodb.api.cfg.JcRawCmplExpr
+import org.jacodb.api.cfg.JcRawDivExpr
+import org.jacodb.api.cfg.JcRawDouble
+import org.jacodb.api.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.cfg.JcRawEqExpr
+import org.jacodb.api.cfg.JcRawExitMonitorInst
+import org.jacodb.api.cfg.JcRawExprVisitor
+import org.jacodb.api.cfg.JcRawFieldRef
+import org.jacodb.api.cfg.JcRawFloat
+import org.jacodb.api.cfg.JcRawGeExpr
+import org.jacodb.api.cfg.JcRawGotoInst
+import org.jacodb.api.cfg.JcRawGtExpr
+import org.jacodb.api.cfg.JcRawIfInst
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.cfg.JcRawInstVisitor
+import org.jacodb.api.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.cfg.JcRawInt
+import org.jacodb.api.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.cfg.JcRawLabelInst
+import org.jacodb.api.cfg.JcRawLabelRef
+import org.jacodb.api.cfg.JcRawLeExpr
+import org.jacodb.api.cfg.JcRawLengthExpr
+import org.jacodb.api.cfg.JcRawLineNumberInst
+import org.jacodb.api.cfg.JcRawLocalVar
+import org.jacodb.api.cfg.JcRawLong
+import org.jacodb.api.cfg.JcRawLtExpr
+import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMulExpr
+import org.jacodb.api.cfg.JcRawNegExpr
+import org.jacodb.api.cfg.JcRawNeqExpr
+import org.jacodb.api.cfg.JcRawNewArrayExpr
+import org.jacodb.api.cfg.JcRawNewExpr
+import org.jacodb.api.cfg.JcRawNullConstant
+import org.jacodb.api.cfg.JcRawOrExpr
+import org.jacodb.api.cfg.JcRawRemExpr
+import org.jacodb.api.cfg.JcRawReturnInst
+import org.jacodb.api.cfg.JcRawShlExpr
+import org.jacodb.api.cfg.JcRawShort
+import org.jacodb.api.cfg.JcRawShrExpr
+import org.jacodb.api.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.cfg.JcRawStaticCallExpr
+import org.jacodb.api.cfg.JcRawStringConstant
+import org.jacodb.api.cfg.JcRawSubExpr
+import org.jacodb.api.cfg.JcRawSwitchInst
+import org.jacodb.api.cfg.JcRawThis
+import org.jacodb.api.cfg.JcRawThrowInst
+import org.jacodb.api.cfg.JcRawUshrExpr
+import org.jacodb.api.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.cfg.JcRawXorExpr
+import org.jacodb.api.cfg.JcRemExpr
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcShlExpr
+import org.jacodb.api.cfg.JcShort
+import org.jacodb.api.cfg.JcShrExpr
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcStaticCallExpr
+import org.jacodb.api.cfg.JcStringConstant
+import org.jacodb.api.cfg.JcSubExpr
+import org.jacodb.api.cfg.JcSwitchInst
+import org.jacodb.api.cfg.JcThis
+import org.jacodb.api.cfg.JcThrowInst
+import org.jacodb.api.cfg.JcUshrExpr
+import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.JcXorExpr
+import org.jacodb.api.ext.boolean
+import org.jacodb.api.ext.byte
+import org.jacodb.api.ext.char
+import org.jacodb.api.ext.double
+import org.jacodb.api.ext.findFieldOrNull
+import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.ext.float
+import org.jacodb.api.ext.int
+import org.jacodb.api.ext.long
+import org.jacodb.api.ext.objectType
+import org.jacodb.api.ext.short
+import org.jacodb.api.ext.toType
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcGraphBuilder(
@@ -27,6 +175,7 @@ class JcGraphBuilder(
 ) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
 
     val classpath: JcClasspath = method.enclosingClass.classpath
+    private val methodRef = JcMethodRefImpl(method)
 
     private val instMap = mutableMapOf<JcRawInst, JcInst>()
     private var currentLineNumber = 0
@@ -166,7 +315,7 @@ class JcGraphBuilder(
     }
 
     private fun newLocation(): JcInstLocation {
-        return JcInstLocation(method, index, currentLineNumber).also {
+        return JcInstLocationImpl(methodRef, index, currentLineNumber).also {
             index++
         }
     }
@@ -259,46 +408,21 @@ class JcGraphBuilder(
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType)
 
-    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
-        val sb = buildString {
-            append("(")
-            argTypes.forEach {
-                append(it.typeName.jvmName())
-            }
-            append(")")
-            append(returnType.typeName.jvmName())
-        }
-        var methodOrNull = findMethodOrNull(name, sb)
-        if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
-            methodOrNull = findMethodOrNull {
-                val method = it.method
-                method.name == name && method.annotations.any { it.name == "java.lang.invoke.MethodHandle\$PolymorphicSignature" }
-            } // weak consumption. may fail
-        }
-        return methodOrNull ?: error("Could not find a method with correct signature $typeName#$name$sb")
-    }
-
-    private val JcRawCallExpr.typedMethod: JcTypedMethod
-        get() {
-            val klass = declaringClass.asType as JcClassType
-            return klass.getMethod(methodName, argumentTypes, returnType)
-        }
-
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
         val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
         when (lambdaBases.size) {
             1 -> {
                 val base = lambdaBases.first()
                 val klass = base.declaringClass.asType as JcClassType
-                val typedBase = klass.getMethod(base.name, base.argTypes, base.returnType)
+                val ref = TypedMethodRefImpl(klass, base.name, base.argTypes, base.returnType)
 
-                return JcLambdaExpr(typedBase, expr.args.map { it.accept(this) as JcValue })
+                return JcLambdaExpr(ref, expr.args.map { it.accept(this) as JcValue })
             }
 
             else -> {
-                val bsm = expr.typedMethod
+
                 return JcDynamicCallExpr(
-                    bsm,
+                    classpath.methodRef(expr),
                     expr.bsmArgs,
                     expr.callCiteMethodName,
                     expr.callCiteArgTypes.map { it.asType },
@@ -311,37 +435,29 @@ class JcGraphBuilder(
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.objectType
-        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args
+            instance.type.methodRef(expr), instance, args
         )
     }
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
-        val klass = instance.type as? JcClassType ?: classpath.objectType
-        val method = klass.getMethod(expr.methodName, expr.argumentTypes, expr.returnType)
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            method, instance, args
+            instance.type.methodRef(expr), instance, args
         )
     }
 
     override fun visitJcRawStaticCallExpr(expr: JcRawStaticCallExpr): JcExpr {
-        val method = expr.typedMethod
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcStaticCallExpr(method, args)
+        return JcStaticCallExpr(classpath.methodRef(expr), args)
     }
 
     override fun visitJcRawSpecialCallExpr(expr: JcRawSpecialCallExpr): JcExpr {
-        val method = expr.typedMethod
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcSpecialCallExpr(
-            method, instance, args,
-        )
+        return JcSpecialCallExpr(classpath.methodRef(expr), instance, args)
     }
 
     override fun visitJcRawThis(value: JcRawThis): JcExpr =

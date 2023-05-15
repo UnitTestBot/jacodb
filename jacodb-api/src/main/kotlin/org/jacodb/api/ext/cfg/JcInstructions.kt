@@ -18,7 +18,22 @@
 
 package org.jacodb.api.ext.cfg
 
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.DefaultJcExprVisitor
+import org.jacodb.api.cfg.DefaultJcInstVisitor
+import org.jacodb.api.cfg.JcArrayAccess
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcRawExpr
+import org.jacodb.api.cfg.JcRawExprVisitor
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.cfg.JcRawInstVisitor
+import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.LocalResolver
+import org.jacodb.api.cfg.ValueResolver
 
 fun JcInstList<JcRawInst>.apply(visitor: JcRawInstVisitor<Unit>): JcInstList<JcRawInst> {
     instructions.forEach { it.accept(visitor) }
@@ -49,21 +64,23 @@ fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T
 object FieldRefVisitor : DefaultJcExprVisitor<JcFieldRef?>, DefaultJcInstVisitor<JcFieldRef?> {
 
     override val defaultExprHandler: (JcExpr) -> JcFieldRef?
-        get() = {
-            it.allValues.filterIsInstance<JcFieldRef>().firstOrNull()
-        }
+        get() = { null }
 
     override val defaultInstHandler: (JcInst) -> JcFieldRef?
         get() = {
             it.operands.map { it.accept(this) }.firstOrNull { it != null }
         }
+
+    override fun visitJcFieldRef(value: JcFieldRef): JcFieldRef {
+        return value
+    }
 }
 
 object ArrayAccessVisitor : DefaultJcExprVisitor<JcArrayAccess?>, DefaultJcInstVisitor<JcArrayAccess?> {
 
     override val defaultExprHandler: (JcExpr) -> JcArrayAccess?
         get() = {
-            it.allValues.filterIsInstance<JcArrayAccess>().firstOrNull()
+            it.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
         }
 
     override val defaultInstHandler: (JcInst) -> JcArrayAccess?
@@ -97,11 +114,18 @@ val JcInst.callExpr: JcCallExpr?
         return accept(CallExprVisitor)
     }
 
-val JcExpr.allValues: List<JcValue>
+val JcInstList<JcInst>.locals: Set<JcLocal>
     get() {
-        return if (this is JcValue) {
-            listOf(this)
-        } else {
-            operands
+        val resolver = LocalResolver().also {res ->
+            forEach { it.accept(res) }
         }
+        return resolver.result
+    }
+
+val JcInstList<JcInst>.values: Set<JcValue>
+    get() {
+        val resolver = ValueResolver().also {res ->
+            forEach { it.accept(res) }
+        }
+        return resolver.result
     }

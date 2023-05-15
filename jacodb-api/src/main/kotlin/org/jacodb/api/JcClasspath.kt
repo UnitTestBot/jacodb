@@ -18,10 +18,12 @@ package org.jacodb.api
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import java.io.Closeable
+import java.util.*
 import java.util.concurrent.Future
 
 /**
@@ -101,23 +103,59 @@ interface JcClassProcessingTask : JcClasspathTask {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathFeature {
 
-    fun tryFindClass(classpath: JcClasspath, name: String): JcClassOrInterface? = null
-    fun tryFindType(classpath: JcClasspath, name: String): JcType? = null
-
-    fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
-    fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
-
-    fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
-    fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
-
     fun on(event: JcClasspathFeatureEvent) {
     }
 
 }
 
+@JvmDefaultWithoutCompatibility
+interface JcClasspathExtFeature : JcClasspathFeature {
+
+    /**
+     * semantic of method is like this:
+     * - not empty optional for found class
+     * - empty optional for class that we know is not exist in classpath
+     * - null for case when we do not know
+     */
+    fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? = null
+
+    /**
+     * semantic is the same as for `tryFindClass` method
+     */
+    fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? = null
+
+}
+
+@JvmDefaultWithoutCompatibility
+interface JcClassExtFeature : JcClasspathFeature {
+
+    fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
+    fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
+
+    fun extensionValuesOf(clazz: JcClassOrInterface): Map<String, Any>? = null
+
+}
+
+@JvmDefaultWithoutCompatibility
+interface JcInstExtFeature : JcClasspathFeature {
+
+    fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> = list
+    fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
+}
+
+interface JcMethodExtFeature : JcClasspathFeature {
+
+    fun flowGraph(method: JcMethod): JcGraph
+    fun instList(method: JcMethod): JcInstList<JcInst>
+    fun rawInstList(method: JcMethod): JcInstList<JcRawInst>
+
+}
+
+
 fun JcClasspath.broadcast(event: JcClasspathFeatureEvent) = features?.forEach { it.on(event) }
 
-interface JcClasspathFeatureEvent
+sealed interface JcClasspathFeatureEvent
 
 data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
 data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent
+data class JcClassNotFound(val name: String) : JcClasspathFeatureEvent

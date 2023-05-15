@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import mu.KotlinLogging
+import mu.KLogging
 import org.jacodb.analysis.analyzers.AliasAnalyzer
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
@@ -81,7 +81,7 @@ class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(graph: JcApplicationGraph, points2Engine: Points2Engine): AnalysisEngine {
         return IFDSInstance(
             graph,
-            UnusedVariableAnalyzer(graph.classpath, graph),
+            UnusedVariableAnalyzer(graph),
             points2Engine.obtainDevirtualizer()
         )
     }
@@ -110,7 +110,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
 
 class NPEAnalysisFactory : FlowDroidFactory() {
     override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
-        return NpeAnalyzer(graph.classpath, graph, graph)
+        return NpeAnalyzer(graph)
     }
 }
 
@@ -119,7 +119,7 @@ class AliasAnalysisFactory(
     private val isSink: (JcInst, DomainFact) -> Boolean,
 ) : FlowDroidFactory() {
     override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
-        return AliasAnalyzer(graph.classpath, graph, graph, generates, isSink)
+        return AliasAnalyzer(graph, generates, isSink)
     }
 }
 
@@ -186,7 +186,7 @@ private inline fun <reified T : Factory> factoryChoice(): ArgType.Choice<T> {
     return ArgType.Choice(factories, nameToFactory, factoryToName)
 }
 
-private val logger = KotlinLogging.logger {}
+private val logger = object : KLogging() {}.logger
 
 
 class AnalysisMain {

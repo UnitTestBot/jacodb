@@ -16,8 +16,16 @@
 
 package org.jacodb.analysis.paths
 
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.cfg.allValues
+import org.jacodb.api.cfg.JcArrayAccess
+import org.jacodb.api.cfg.JcCastExpr
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcLengthExpr
+import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.values
 
 internal fun JcExpr.toPathOrNull(): AccessPath? {
     if (this is JcCastExpr) {
@@ -92,7 +100,7 @@ fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
         }
     }
 
-    return expr.allValues
+    return expr.values
         .mapNotNull { it.toPathOrNull() }
         .any {
             it.minus(this)?.isNotEmpty() == true

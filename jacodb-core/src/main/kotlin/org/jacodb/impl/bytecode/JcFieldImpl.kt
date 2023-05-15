@@ -20,6 +20,7 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcField
 import org.jacodb.impl.types.FieldInfo
 import org.jacodb.impl.types.TypeNameImpl
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcFieldImpl(
     override val enclosingClass: JcClassOrInterface,
@@ -39,7 +40,7 @@ class JcFieldImpl(
     override val signature: String?
         get() = info.signature
 
-    override val annotations by lazy {
+    override val annotations by lazy(PUBLICATION) {
         info.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
     }
 
@@ -52,5 +53,9 @@ class JcFieldImpl(
 
     override fun hashCode(): Int {
         return 31 * enclosingClass.hashCode() + name.hashCode()
+    }
+
+    override fun toString(): String {
+        return "$enclosingClass#$name"
     }
 }

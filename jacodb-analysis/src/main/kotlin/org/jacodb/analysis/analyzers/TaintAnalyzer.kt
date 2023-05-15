@@ -26,24 +26,19 @@ import org.jacodb.analysis.engine.IFDSVertex
 import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcValue
 
 
 abstract class TaintAnalyzer(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    protected val platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     generates: (JcInst) -> List<DomainFact>,
     val isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(classpath, graph, platform, maxPathLength, generates)
+    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates)
     override val backward: Analyzer = object : Analyzer {
         override val backward: Analyzer
             get() = this@TaintAnalyzer
@@ -77,12 +72,10 @@ abstract class TaintAnalyzer(
 }
 
 private class TaintForwardFunctions(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
-) : AbstractTaintForwardFunctions(classpath, graph, platform) {
+) : AbstractTaintForwardFunctions(graph) {
 
     override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
 
@@ -113,16 +106,14 @@ private class TaintForwardFunctions(
         return listOf(ZEROFact)
     }
 
-    override val backward: FlowFunctionsSpace by lazy { TaintBackwardFunctions(classpath, graph, platform, this, maxPathLength) }
+    override val backward: FlowFunctionsSpace by lazy { TaintBackwardFunctions(graph, this, maxPathLength) }
 }
 
 
 private class TaintBackwardFunctions(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     backward: FlowFunctionsSpace,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(classpath, graph, platform, backward, maxPathLength) {
+) : AbstractTaintBackwardFunctions(graph, backward, maxPathLength) {
     override val inIds: List<SpaceId> = listOf(TaintAnalyzer, ZEROFact.id)
 }

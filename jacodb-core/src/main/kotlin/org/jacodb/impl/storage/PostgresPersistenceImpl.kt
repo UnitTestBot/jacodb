@@ -42,9 +42,9 @@ class PostgresPersistenceImpl(
         jooq = DSL.using(dataSource, SQLDialect.POSTGRES, Settings().withExecuteLogging(false))
         write {
             if (clearOnStart) {
-                jooq.executeQueriesFrom("postgres/drop-schema.sql")
+                jooq.executeQueries(getScript("drop-schema.sql"))
             }
-            jooq.executeQueriesFrom("postgres/create-schema.sql")
+            jooq.executeQueries(getScript("create-schema.sql"))
         }
     }
 
@@ -58,8 +58,8 @@ class PostgresPersistenceImpl(
     }
 
     override fun createIndexes() {
-        jooq.executeQueriesFrom("postgres/create-constraint-function.sql", asSingle = true)
-        jooq.executeQueriesFrom("postgres/add-indexes.sql")
+        jooq.executeQueries("create-constraint-function.sql", asSingle = true)
+        jooq.executeQueries("add-indexes.sql")
     }
 
     override fun getScript(name: String): String {

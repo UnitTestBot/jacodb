@@ -19,16 +19,13 @@ package org.jacodb.impl.bytecode
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.JcParameter
 import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.impl.cfg.JcGraphBuilder
-import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
@@ -37,7 +34,7 @@ import org.objectweb.asm.tree.MethodNode
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
     private val source: ClassSource,
-    private val features: List<JcClasspathFeature>?,
+    private val classpathCache: JcMethodExtFeature,
     override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
 
@@ -61,28 +58,15 @@ class JcMethodImpl(
 
     override val description get() = methodInfo.desc
 
-    override fun body(): MethodNode {
-        return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
+    override fun asmNode(): MethodNode {
+        return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
     }
 
-    override val rawInstList: JcInstList<JcRawInst> by lazy {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, body().jsrInlined).build()
-        features?.fold(list) { value, feature ->
-            feature.transformRawInstList(this, value)
-        } ?: list
-    }
+    override val rawInstList: JcInstList<JcRawInst> get() = classpathCache.rawInstList(this)
 
-    override fun flowGraph(): JcGraph {
-        return JcGraphBuilder(this, rawInstList).buildFlowGraph()
-    }
+    override fun flowGraph() = classpathCache.flowGraph(this)
 
-    override val instList: JcInstList<JcInst> by lazy {
-        val list: JcInstList<JcInst> = JcGraphBuilder(this, rawInstList).buildInstList()
-        features?.fold(list) { value, feature ->
-            feature.transformInstList(this, value)
-        } ?: list
-
-    }
+    override val instList: JcInstList<JcInst> get() = classpathCache.instList(this)
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcMethodImpl) {
@@ -93,6 +77,10 @@ class JcMethodImpl(
 
     override fun hashCode(): Int {
         return 31 * enclosingClass.hashCode() + name.hashCode()
+    }
+
+    override fun toString(): String {
+        return "${enclosingClass}#$name(${parameters.joinToString { it.type.typeName }})"
     }
 
 }

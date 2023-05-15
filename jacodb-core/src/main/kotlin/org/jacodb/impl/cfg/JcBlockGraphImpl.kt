@@ -33,12 +33,12 @@ class JcBlockGraphImpl(
     private val catchersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
-    override val basicBlocks: List<JcBasicBlock> get() = _basicBlocks
-    override val entry: JcBasicBlock get() = basicBlocks.first()
+    override val entry: JcBasicBlock get() = first()
 
     override val entries: List<JcBasicBlock>
         get() = listOf(entry)
-    override val exits: List<JcBasicBlock> get() = basicBlocks.filter { successors(it).isEmpty() }
+
+    override val exits: List<JcBasicBlock> get() = filter { successors(it).isEmpty() }
 
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
@@ -102,6 +102,18 @@ class JcBlockGraphImpl(
     override fun instructions(block: JcBasicBlock): List<JcInst> =
         (block.start.index..block.end.index).map { jcGraph.instructions[it] }
 
+    override fun block(inst: JcInst): JcBasicBlock {
+        assert(inst.location.method == jcGraph.method) {
+            "required method of instruction ${jcGraph.method} but got ${inst.location.method}"
+        }
+        for (basicBlock in entries) {
+            if (basicBlock.contains(inst)) {
+                return basicBlock
+            }
+        }
+        throw IllegalStateException("block not found for $inst in ${jcGraph.method}")
+    }
+
     /**
      * `successors` and `predecessors` represent normal control flow
      */
@@ -114,5 +126,5 @@ class JcBlockGraphImpl(
     override fun catchers(node: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(node, emptySet())
     override fun throwers(node: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(node, emptySet())
 
-    override fun iterator(): Iterator<JcBasicBlock> = basicBlocks.iterator()
+    override fun iterator(): Iterator<JcBasicBlock> = _basicBlocks.iterator()
 }

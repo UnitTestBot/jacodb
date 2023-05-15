@@ -30,7 +30,7 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcExpr
@@ -39,15 +39,15 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.ext.cfg.allValues
+import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
 
 class UnusedVariableAnalyzer(
-    classpath: JcClasspath,
-    val graph: ApplicationGraph<JcMethod, JcInst>
+
+    val graph: JcApplicationGraph
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(classpath)
+    override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
     override val backward: Analyzer
         get() = error("No backward analysis for Unused variable")
 
@@ -56,7 +56,7 @@ class UnusedVariableAnalyzer(
     }
 
     private fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
-        return this in expr.allValues.map { it.toPathOrNull() }
+        return this in expr.values.map { it.toPathOrNull() }
     }
 
     private fun AccessPath.isUsedAt(inst: JcInst): Boolean {

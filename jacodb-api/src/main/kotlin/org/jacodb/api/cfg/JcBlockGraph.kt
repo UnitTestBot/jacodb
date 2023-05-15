@@ -28,14 +28,25 @@ package org.jacodb.api.cfg
  * guaranteed to end with a terminating (i.e. `JcTerminatingInst` or `JcBranchingInst`) instruction.
  * However, any terminating instruction is guaranteed to be the last instruction of a basic block.
  */
-data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef)
+data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef) {
 
-interface JcBlockGraph: JcBytecodeGraph<JcBasicBlock> {
+    fun contains(inst: JcInst): Boolean {
+        return inst.location.index <= end.index && inst.location.index >= start.index
+    }
+
+    fun contains(inst: JcInstRef): Boolean {
+        return inst.index <= end.index && inst.index >= start.index
+    }
+
+}
+
+interface JcBlockGraph : JcBytecodeGraph<JcBasicBlock> {
     val jcGraph: JcGraph
-    val basicBlocks: List<JcBasicBlock>
     val entry: JcBasicBlock
     override val exits: List<JcBasicBlock>
     fun instructions(block: JcBasicBlock): List<JcInst>
+
+    fun block(inst: JcInst): JcBasicBlock
 
     /**
      * `successors` and `predecessors` represent normal control flow

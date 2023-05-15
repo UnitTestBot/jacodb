@@ -24,7 +24,7 @@ import java.util.jar.JarFile
 /**
  * workaround for java 9 feature for multi-release jars
  */
-class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFile?)  {
+class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFile?) {
     companion object {
         private const val META_INF = "META-INF/"
         private const val META_INF_VERSIONS = META_INF + "versions/"
@@ -46,7 +46,7 @@ class JarFacade(private val runtimeVersion: Int, private val getter: () -> JarFi
         }
     }
 
-    val classes: Map<String, JarEntry> by lazy(LazyThreadSafetyMode.NONE) {
+    val classes: Map<String, JarEntry> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val result = entries.orEmpty().toMutableMap()
         if (isMultiRelease) {
             var version = 9

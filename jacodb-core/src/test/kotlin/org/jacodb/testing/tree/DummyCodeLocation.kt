@@ -27,7 +27,7 @@ open class DummyCodeLocation(private val name: String) : JcByteCodeLocation, Reg
     override val id: Long
         get() = name.longHash
 
-    override val fsId: String
+    override val fileSystemId: String
         get() = name
 
     override val isRuntime: Boolean

@@ -32,10 +32,8 @@ import org.jacodb.analysis.paths.isDereferencedAt
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcAnalysisPlatform
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcConstant
@@ -48,18 +46,15 @@ import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
 import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.locals
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.isStatic
-import org.jacodb.impl.analysis.locals
 
 class NpeAnalyzer(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(classpath, graph, platform, maxPathLength)
+    override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(graph, maxPathLength)
     override val backward: Analyzer = object : Analyzer {
         override val backward: Analyzer
             get() = this@NpeAnalyzer
@@ -92,11 +87,9 @@ class NpeAnalyzer(
 
 
 private class NPEForwardFunctions(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     private val maxPathLength: Int
-) : AbstractTaintForwardFunctions(classpath, graph, platform) {
+) : AbstractTaintForwardFunctions(graph) {
 
     override val inIds: List<SpaceId> get() = listOf(NpeAnalyzer, ZEROFact.id)
 
@@ -181,7 +174,7 @@ private class NPEForwardFunctions(
         }
 
         // Following are some ad-hoc magic for if statements to change facts after instructions like if (x != null)
-        val currentBranch = platform.flowGraph(graph.methodOf(inst)).ref(nextInst)
+        val currentBranch = graph.methodOf(inst).flowGraph().ref(nextInst)
         if (fact == ZEROFact) {
             if (inst.pathComparedWithNull != null) {
                 if ((inst.condition is JcEqExpr && currentBranch == inst.trueBranch) ||
@@ -227,7 +220,7 @@ private class NPEForwardFunctions(
         //  an increase of false positives and significant performance drop
 
         // Possibly null arguments
-        result += platform.flowGraph(method).locals
+        result += method.flowGraph().locals
             .filterIsInstance<JcArgument>()
             .filter { it.type.nullable != false }
             .map { NPETaintNode(AccessPath.fromLocal(it)) }
@@ -252,16 +245,14 @@ private class NPEForwardFunctions(
         return result
     }
 
-    override val backward: FlowFunctionsSpace by lazy { NPEBackwardFunctions(classpath, graph, platform, this, maxPathLength) }
+    override val backward: FlowFunctionsSpace by lazy { NPEBackwardFunctions(graph, this, maxPathLength) }
 }
 
 private class NPEBackwardFunctions(
-    classpath: JcClasspath,
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    platform: JcAnalysisPlatform,
+    graph: JcApplicationGraph,
     backward: FlowFunctionsSpace,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(classpath, graph, platform, backward, maxPathLength) {
+) : AbstractTaintBackwardFunctions(graph, backward, maxPathLength) {
     override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
 }
 

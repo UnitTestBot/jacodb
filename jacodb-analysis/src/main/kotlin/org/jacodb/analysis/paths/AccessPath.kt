@@ -18,7 +18,6 @@ package org.jacodb.analysis.paths
 
 import org.jacodb.api.JcField
 import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.ext.isStatic
 
 /**
  * This class is used to represent an access path that is needed for problems

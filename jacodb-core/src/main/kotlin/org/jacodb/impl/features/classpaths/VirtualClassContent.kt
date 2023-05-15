@@ -16,13 +16,15 @@
 
 package org.jacodb.impl.features.classpaths
 
+import org.jacodb.api.JcClassExtFeature
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcField
+import org.jacodb.api.JcInstExtFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 
-class VirtualClassContent(private val builders: List<VirtualClassContentBuilder>) : JcClasspathFeature {
+class VirtualClassContent(private val builders: List<VirtualClassContentBuilder>) : JcClassExtFeature,
+    JcInstExtFeature {
 
     companion object {
 

@@ -72,6 +72,7 @@ import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
 import org.jacodb.api.cfg.JcRawNewArrayExpr
 import org.jacodb.api.cfg.JcRawNewExpr
+import org.jacodb.api.cfg.JcRawNullConstant
 import org.jacodb.api.cfg.JcRawOrExpr
 import org.jacodb.api.cfg.JcRawRemExpr
 import org.jacodb.api.cfg.JcRawReturnInst
@@ -89,7 +90,6 @@ import org.jacodb.api.cfg.JcRawUshrExpr
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.api.ext.isStatic
 import org.jacodb.impl.cfg.util.CLASS_CLASS
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.cfg.util.METHOD_HANDLE_CLASS
@@ -241,17 +241,18 @@ class RawInstListBuilder(
     val method: JcMethod,
     private val methodNode: MethodNode
 ) {
-    private val frames = mutableMapOf<AbstractInsnNode, Frame>()
-    private val labels = mutableMapOf<LabelNode, JcRawLabelInst>()
+    private val frames = hashMapOf<AbstractInsnNode, Frame>()
+    private val labels = hashMapOf<LabelNode, JcRawLabelInst>()
     private lateinit var lastFrameState: FrameState
     private lateinit var currentFrame: Frame
     private val ENTRY = InsnNode(-1)
 
-    private val predecessors = mutableMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
-    private val instructions = mutableMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
-    private val laterAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val laterStackAssignments = mutableMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
-    private val localTypeRefinement = mutableMapOf<JcRawLocalVar, JcRawLocalVar>()
+    private val deadInstructions = hashSetOf<AbstractInsnNode>()
+    private val predecessors = hashMapOf<AbstractInsnNode, MutableList<AbstractInsnNode>>()
+    private val instructions = hashMapOf<AbstractInsnNode, MutableList<JcRawInst>>()
+    private val laterAssignments = hashMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val laterStackAssignments = hashMapOf<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
+    private val localTypeRefinement = hashMapOf<JcRawLocalVar, JcRawLocalVar>()
     private var labelCounter = 0
     private var localCounter = 0
     private var argCounter = 0
@@ -274,7 +275,7 @@ class RawInstListBuilder(
     private fun buildInstructions() {
         currentFrame = createInitialFrame()
         frames[ENTRY] = currentFrame
-        for (insn in methodNode.instructions) {
+        methodNode.instructions.forEachIndexed { index, insn ->
             when (insn) {
                 is InsnNode -> buildInsnNode(insn)
                 is FieldInsnNode -> buildFieldInsnNode(insn)
@@ -293,6 +294,10 @@ class RawInstListBuilder(
                 is TypeInsnNode -> buildTypeInsnNode(insn)
                 is VarInsnNode -> buildVarInsnNode(insn)
                 else -> error("Unknown insn node ${insn::class}")
+            }
+            val preds = predecessors[insn]
+            if (index != 1 && (preds.isNullOrEmpty() || preds.all { deadInstructions.contains(it) })) {
+                deadInstructions.add(insn)
             }
             frames[insn] = currentFrame
         }
@@ -428,12 +433,14 @@ class RawInstListBuilder(
 
     private fun peek(): JcRawValue = currentFrame.peek()
 
-    private fun local(variable: Int) = currentFrame.locals.getValue(variable)
+    private fun local(variable: Int): JcRawValue {
+        return currentFrame.locals.getValue(variable)
+    }
 
     private fun local(variable: Int, expr: JcRawValue, insn: AbstractInsnNode): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
-            if (oldVar.typeName == expr.typeName) {
+            if (oldVar.typeName == expr.typeName || expr is JcRawNullConstant) {
                 JcRawAssignInst(method, oldVar, expr)
             } else if (expr is JcRawSimpleValue) {
                 currentFrame = currentFrame.put(variable, expr)
@@ -585,7 +592,8 @@ class RawInstListBuilder(
         val value = pop()
         val index = pop()
         val arrayRef = pop()
-        instructionList(insn) += JcRawAssignInst(method,
+        instructionList(insn) += JcRawAssignInst(
+            method,
             JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()),
             value
         )
@@ -1017,7 +1025,8 @@ class RawInstListBuilder(
                 )
             }
 
-            instructionList(insnNode) += JcRawCatchInst(method,
+            instructionList(insnNode) += JcRawCatchInst(
+                    method,
                 throwable,
                 labelRef(currentEntry),
                 entries
@@ -1164,9 +1173,11 @@ class RawInstListBuilder(
     private fun buildLabelNode(insnNode: LabelNode) {
         val labelInst = label(insnNode)
         instructionList(insnNode) += labelInst
-        val predecessors = predecessors.getOrDefault(insnNode, emptySet())
+        val predecessors = predecessors.getOrDefault(insnNode, emptySet()).filter { !deadInstructions.contains(it) }
         val predecessorFrames = predecessors.mapNotNull { frames[it] }
-        if (predecessors.size == predecessorFrames.size) {
+        if (predecessorFrames.size == 1) {
+            currentFrame = predecessorFrames.first()
+        } else if (predecessors.size == predecessorFrames.size) {
             currentFrame = mergeFrames(predecessors.zip(predecessorFrames).toMap())
         }
 
@@ -1190,7 +1201,8 @@ class RawInstListBuilder(
             is String -> push(JcRawStringConstant(cst, STRING_CLASS.typeName()))
             is Type -> {
                 val assignment = nextRegister(CLASS_CLASS.typeName())
-                instructionList(insnNode) += JcRawAssignInst(method,
+                instructionList(insnNode) += JcRawAssignInst(
+                    method,
                     assignment,
                     JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
                 )
@@ -1199,7 +1211,8 @@ class RawInstListBuilder(
 
             is Handle -> {
                 val assignment = nextRegister(CLASS_CLASS.typeName())
-                instructionList(insnNode) += JcRawAssignInst(method,
+                instructionList(insnNode) += JcRawAssignInst(
+                    method,
                     assignment,
                     JcRawMethodConstant(
                         cst.owner.typeName(),
@@ -1320,7 +1333,11 @@ class RawInstListBuilder(
             Opcodes.ANEWARRAY -> {
                 val length = pop()
                 val assignment = nextRegister(type.asArray())
-                instructionList(insnNode) += JcRawAssignInst(method, assignment, JcRawNewArrayExpr(type.asArray(), length))
+                instructionList(insnNode) += JcRawAssignInst(
+                    method,
+                    assignment,
+                    JcRawNewArrayExpr(type.asArray(), length)
+                )
                 push(assignment)
             }
 
@@ -1332,7 +1349,8 @@ class RawInstListBuilder(
 
             Opcodes.INSTANCEOF -> {
                 val assignment = nextRegister(PredefinedPrimitives.Boolean.typeName())
-                instructionList(insnNode) += JcRawAssignInst(method,
+                instructionList(insnNode) += JcRawAssignInst(
+                    method,
                     assignment,
                     JcRawInstanceOfExpr(PredefinedPrimitives.Boolean.typeName(), pop(), type)
                 )
@@ -1345,7 +1363,11 @@ class RawInstListBuilder(
 
     private fun buildVarInsnNode(insnNode: VarInsnNode) {
         when (insnNode.opcode) {
-            in Opcodes.ISTORE..Opcodes.ASTORE -> local(insnNode.`var`, pop(), insnNode)?.let { instructionList(insnNode).add(it) }
+            in Opcodes.ISTORE..Opcodes.ASTORE -> local(
+                insnNode.`var`,
+                pop(),
+                insnNode
+            )?.let { instructionList(insnNode).add(it) }
 
             in Opcodes.ILOAD..Opcodes.ALOAD -> push(local(insnNode.`var`))
             else -> error("Unknown opcode ${insnNode.opcode} in VarInsnNode")

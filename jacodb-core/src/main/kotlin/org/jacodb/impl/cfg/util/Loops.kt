@@ -15,12 +15,14 @@
  */
 
 @file:JvmName("JcLoops")
+
 package org.jacodb.impl.cfg.util
 
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.cfg.graphs.findDominators
 import java.util.*
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 
 class JcLoop(
@@ -28,7 +30,7 @@ class JcLoop(
     val head: JcInst,
     val instructions: List<JcInst>
 ) {
-    val exits: Collection<JcInst> by lazy(LazyThreadSafetyMode.NONE) {
+    val exits: Collection<JcInst> by lazy(PUBLICATION) {
         val result = hashSetOf<JcInst>()
         for (s in instructions) {
             graph.successors(s).forEach {
@@ -63,7 +65,8 @@ class JcLoop(
 
 }
 
-val JcGraph.loops: Set<JcLoop> get() {
+val JcGraph.loops: Set<JcLoop>
+    get() {
         val finder = findDominators()
         val loops = HashMap<JcInst, MutableList<JcInst>>()
         instructions.forEach { inst ->

@@ -37,6 +37,7 @@ import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.JcFeature
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
+import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.filterExisted
@@ -80,25 +81,25 @@ class JcDatabaseImpl(
         persistence.setup()
         locationsRegistry.cleanup()
         val runtime = JavaRuntime(settings.jre).allLocations
-        locationsRegistry.setup(runtime).new.process()
+        locationsRegistry.setup(runtime).new.process(false)
         locationsRegistry.registerIfNeeded(
             settings.predefinedDirOrJars.filter { it.exists() }
                 .map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
-        ).new.process()
+        ).new.process(true)
     }
 
     private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
-        if (this!= null && any { it is ClasspathCache }) {
-            return this
+        if (this != null && any { it is ClasspathCache }) {
+            return listOf(KotlinMetadata) + this
         }
-        return listOf(ClasspathCache(settings.cacheSettings.maxSize, settings.cacheSettings.expiration)) + this.orEmpty()
+        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata) + this.orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
         assertNotClosed()
         val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
-            .also { it.new.process() }.registered + locationsRegistry.runtimeLocations
+            .also { it.new.process(true) }.registered + locationsRegistry.runtimeLocations
         return classpathOf(processed, features)
     }
 
@@ -136,10 +137,10 @@ class JcDatabaseImpl(
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {
         assertNotClosed()
-        locationsRegistry.registerIfNeeded(locations).new.process()
+        locationsRegistry.registerIfNeeded(locations).new.process(true)
     }
 
-    private suspend fun List<RegisteredLocation>.process(): List<RegisteredLocation> {
+    private suspend fun List<RegisteredLocation>.process(createIndexes: Boolean): List<RegisteredLocation> {
         withContext(Dispatchers.IO) {
             map { location ->
                 async {
@@ -157,11 +158,20 @@ class JcDatabaseImpl(
                 async {
                     val sources = location.sources
                     parentScope.ifActive { persistence.persist(location, sources) }
-                    parentScope.ifActive { classesVfs.visit(RemoveLocationsVisitor(listOf(location), settings.byteCodeSettings.prefixes)) }
+                    parentScope.ifActive {
+                        classesVfs.visit(
+                            RemoveLocationsVisitor(
+                                listOf(location),
+                                settings.byteCodeSettings.prefixes
+                            )
+                        )
+                    }
                     parentScope.ifActive { featureRegistry.index(location, sources) }
                 }
-            }.awaitAll()
-            persistence.createIndexes()
+            }.joinAll()
+            if(createIndexes) {
+                persistence.createIndexes()
+            }
             locationsRegistry.afterProcessing(this@process)
             backgroundJobs.remove(backgroundJobId)
         }
@@ -170,7 +180,7 @@ class JcDatabaseImpl(
 
     override suspend fun refresh() {
         awaitBackgroundJobs()
-        locationsRegistry.refresh().new.process()
+        locationsRegistry.refresh().new.process(true)
         val result = locationsRegistry.cleanup()
         classesVfs.visit(RemoveLocationsVisitor(result.outdated, settings.byteCodeSettings.prefixes))
     }

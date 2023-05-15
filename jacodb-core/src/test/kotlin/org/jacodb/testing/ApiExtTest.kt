@@ -19,10 +19,23 @@ package org.jacodb.testing
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcType
-import org.jacodb.api.ext.*
+import org.jacodb.api.ext.autoboxIfNeeded
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.ext.isSubClassOf
+import org.jacodb.api.ext.short
+import org.jacodb.api.ext.unboxIfNeeded
 import org.jacodb.testing.hierarchies.Creature
-import org.jacodb.testing.hierarchies.Creature.*
-import org.junit.jupiter.api.Assertions.*
+import org.jacodb.testing.hierarchies.Creature.Animal
+import org.jacodb.testing.hierarchies.Creature.Bird
+import org.jacodb.testing.hierarchies.Creature.Dinosaur
+import org.jacodb.testing.hierarchies.Creature.DinosaurImpl
+import org.jacodb.testing.hierarchies.Creature.Fish
+import org.jacodb.testing.hierarchies.Creature.Pterodactyl
+import org.jacodb.testing.hierarchies.Creature.TRex
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")

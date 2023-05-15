@@ -234,7 +234,7 @@ internal class Simplifier {
                     inst.lhv as JcRawLocalVar,
                     ::mutableSetOf
                 ) += jcClasspath.findTypeOrNull(inst.rhv.typeName.typeName)
-                    ?: error("Could not find type")
+                    ?: error("Could not find type ${inst.rhv.typeName.typeName}")
             }
         }
         val replacement = types.filterValues { it.size > 1 }

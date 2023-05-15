@@ -34,8 +34,6 @@ class BackwardApplicationGraph<Method, Statement>(
     override fun exitPoints(method: Method) = forward.entryPoint(method)
 
     override fun methodOf(node: Statement) = forward.methodOf(node)
-
-    override fun visitedMethods() = forward.visitedMethods()
 }
 
 val <Method, Statement> ApplicationGraph<Method, Statement>.reversed

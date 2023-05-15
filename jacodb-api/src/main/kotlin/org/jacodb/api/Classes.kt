@@ -20,9 +20,11 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
+@JvmDefaultWithoutCompatibility
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     val classpath: JcClasspath
@@ -34,14 +36,31 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val isAnonymous: Boolean
 
-    fun bytecode(): ClassNode
-    fun binaryBytecode(): ByteArray
+    fun asmNode(): ClassNode
+    fun bytecode(): ByteArray
 
     val superClass: JcClassOrInterface?
     val outerMethod: JcMethod?
     val outerClass: JcClassOrInterface?
     val interfaces: List<JcClassOrInterface>
     val innerClasses: List<JcClassOrInterface>
+
+    fun <T> extensionValue(key: String): T?
+
+
+    val isAnnotation: Boolean
+        get() {
+            return access and Opcodes.ACC_ANNOTATION != 0
+        }
+
+    /**
+     * is class is interface
+     */
+    val isInterface: Boolean
+        get() {
+            return access and Opcodes.ACC_INTERFACE != 0
+        }
+
 
 }
 
@@ -70,11 +89,41 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 
     val exceptions: List<TypeName>
 
-    fun body(): MethodNode
+    fun asmNode(): MethodNode
     fun flowGraph(): JcGraph
 
     val rawInstList: JcInstList<JcRawInst>
     val instList: JcInstList<JcInst>
+
+    /**
+     * is method has `native` modifier
+     */
+    val isNative: Boolean
+        get() {
+            return access and Opcodes.ACC_NATIVE != 0
+        }
+
+    /**
+     * is item has `synchronized` modifier
+     */
+    val isSynchronized: Boolean
+        get() {
+            return access and Opcodes.ACC_SYNCHRONIZED != 0
+        }
+
+    /**
+     * return true if method is constructor
+     */
+    val isConstructor: Boolean
+        get() {
+            return name == "<init>"
+        }
+
+    val isClassInitializer: Boolean
+        get() {
+            return name == "<clinit>"
+        }
+
 
 }
 
@@ -94,4 +143,8 @@ interface JcParameter : JcAnnotated, JcAccessible {
 
 interface TypeName {
     val typeName: String
+}
+
+interface JcMethodRef {
+    val method: JcMethod
 }

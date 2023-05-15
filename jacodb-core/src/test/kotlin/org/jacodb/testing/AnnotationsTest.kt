@@ -65,6 +65,6 @@ class AnnotationsTest : BaseTest() {
     }
 
     private val jbNullable = "org.jetbrains.annotations.Nullable"
-    private val jbNotNull  = "org.jetbrains.annotations.NotNull"
+    private val jbNotNull = "org.jetbrains.annotations.NotNull"
     private val JcAnnotated.annotationsSimple get() = annotations.map { it.name }
 }

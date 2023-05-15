@@ -15,20 +15,16 @@
  */
 
 @file:JvmName("JcHierarchies")
+
 package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.*
+import kotlinx.coroutines.future.future
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findDeclaredMethodOrNull
-import org.jacodb.api.ext.isClassInitializer
-import org.jacodb.api.ext.isConstructor
-import org.jacodb.api.ext.isFinal
-import org.jacodb.api.ext.isPrivate
-import org.jacodb.api.ext.isStatic
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
