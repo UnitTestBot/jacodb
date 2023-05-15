@@ -23,11 +23,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KotlinLogging
+import org.jacodb.analysis.analyzers.AliasAnalyzer
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.analyzers.TaintAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IFDSInstance
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -113,9 +114,12 @@ class NPEAnalysisFactory : FlowDroidFactory() {
     }
 }
 
-class TaintAnalysisFactory(private val generates: (JcInst) -> List<TaintAnalysisNode>) : FlowDroidFactory() {
+class AliasAnalysisFactory(
+    private val generates: (JcInst) -> List<TaintAnalysisNode>,
+    private val isSink: (JcInst, DomainFact) -> Boolean,
+) : FlowDroidFactory() {
     override fun getAnalyzer(graph: JcApplicationGraph): Analyzer {
-        return TaintAnalyzer(graph.classpath, graph, graph, generates)
+        return AliasAnalyzer(graph.classpath, graph, graph, generates, isSink)
     }
 }
 

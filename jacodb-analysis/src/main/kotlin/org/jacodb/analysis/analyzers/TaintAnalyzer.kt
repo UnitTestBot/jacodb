@@ -25,27 +25,22 @@ import org.jacodb.analysis.engine.IFDSResult
 import org.jacodb.analysis.engine.IFDSVertex
 import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.paths.FieldAccessor
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcAnalysisPlatform
-import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.allValues
-import org.jacodb.api.ext.cfg.callExpr
 
 
-// TODO: this is experimental raw implementation with hardcoded constants, rewrite it with proper interfaces
-class TaintAnalyzer(
+abstract class TaintAnalyzer(
     classpath: JcClasspath,
     graph: ApplicationGraph<JcMethod, JcInst>,
-    private val platform: JcAnalysisPlatform,
+    protected val platform: JcAnalysisPlatform,
     generates: (JcInst) -> List<DomainFact>,
+    val isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(classpath, graph, platform, maxPathLength, generates)
@@ -68,30 +63,10 @@ class TaintAnalyzer(
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
-                if (fact.activation == null && inst.callExpr?.method?.name == "test" && inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark") {
+                if (isSink(inst, fact)) {
                     fact.variable.let {
-
-                        val name = when(val x = it.value) {
-                            is JcArgument -> x.name
-                            is JcLocal -> platform.flowGraph(inst.location.method).instructions
-                                .first { x in it.operands.flatMap { it.allValues } }
-                                .lineNumber
-                                .toString()
-                            null -> (it.accesses[0] as FieldAccessor).field.enclosingClass.simpleName
-                        }
-
-                        val fullPath = buildString {
-                            append(name)
-                            if (it.accesses.isNotEmpty()) {
-                                append(".")
-                            }
-                            append(it.accesses.joinToString("."))
-                        }
-
                         vulnerabilities.add(
-                            ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability(value).copy(
-                                sink = fullPath
-                            )
+                            ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability(value)
                         )
                     }
                 }

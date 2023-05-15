@@ -16,14 +16,16 @@
 
 package org.jacodb.analysis.impl
 
+import org.jacodb.analysis.AliasAnalysisFactory
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.TaintAnalysisFactory
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -37,7 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-class Points2Test : BaseTest() {
+class AliasAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
 
         @JvmStatic
@@ -120,22 +122,32 @@ class Points2Test : BaseTest() {
         assertEquals(emptyList<String>(), foundFromNotMay)
     }
 
+    private fun generates(inst: JcInst): List<TaintAnalysisNode> {
+        return if (inst is JcAssignInst &&
+            inst.callExpr?.method?.name == "taint" &&
+            inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark"
+        ) {
+            listOf(TaintAnalysisNode(inst.lhv.toPath()))
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun isSink(inst: JcInst, fact: DomainFact): Boolean {
+        if (fact !is TaintAnalysisNode || fact.activation != null) {
+            return false
+        }
+        return inst.callExpr?.method?.name == "test" &&
+                inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark"
+    }
+
     private fun findTaints(method: JcMethod): List<String> {
         val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
             .plus("pointerbench.benchmark.internal")
 
         val graph = JcSimplifiedGraphFactory(bannedPackagePrefixes).createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
-        val factory = TaintAnalysisFactory {
-            if (it is JcAssignInst &&
-                it.callExpr?.method?.name == "taint" &&
-                it.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark"
-            ) {
-                listOf(TaintAnalysisNode(it.lhv.toPath()))
-            } else {
-                emptyList()
-            }
-        }
+        val factory = AliasAnalysisFactory(::generates, ::isSink)
         val ifds = factory.createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
