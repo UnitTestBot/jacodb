@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.impl.features.SyncUsagesExtension
@@ -27,42 +27,49 @@ import org.jacodb.impl.features.SyncUsagesExtension
  * Possible we will need JcRawInst instead of JcInst
  */
 open class JcApplicationGraphImpl(
-    val classpath: JcClasspath,
+    override val classpath: JcClasspath,
     protected val usages: SyncUsagesExtension
-) : ApplicationGraph<JcMethod, JcInst> {
+) : JcApplicationGraph {
+    private val methods = mutableSetOf<JcMethod>()
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.flowGraph().predecessors(node).asSequence()
+        return node.location.method.flowGraph().predecessors(node).asSequence() +
+                node.location.method.flowGraph().throwers(node).asSequence()
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.flowGraph().successors(node).asSequence()
+        return node.location.method.flowGraph().successors(node).asSequence() +
+                node.location.method.flowGraph().catchers(node).asSequence()
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
         return node.callExpr?.method?.method?.let {
+            methods.add(it)
             sequenceOf(it)
         } ?: emptySequence()
     }
 
     override fun callers(method: JcMethod): Sequence<JcInst> {
+        methods.add(method)
         return usages.findUsages(method).flatMap {
             it.flowGraph().instructions.filter { inst ->
                 inst.callExpr?.method?.method == method
-            }
+            }.asSequence()
         }
     }
 
 
     override fun entryPoint(method: JcMethod): Sequence<JcInst> {
+        methods.add(method)
         return method.flowGraph().entries.asSequence()
     }
 
     override fun exitPoints(method: JcMethod): Sequence<JcInst> {
+        methods.add(method)
         return method.flowGraph().exits.asSequence()
     }
 
     override fun methodOf(node: JcInst): JcMethod {
-        return node.location.method
+        return node.location.method.also { methods.add(it) }
     }
 }

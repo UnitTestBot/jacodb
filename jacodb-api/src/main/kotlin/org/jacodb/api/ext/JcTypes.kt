@@ -171,7 +171,7 @@ fun JcClassType.findFieldOrNull(name: String): JcTypedField? {
     return findElements(
         packageName = { jcClass.packageName },
         getAccessibles = { declaredFields },
-        nextHierarchy = { superType?.let { listOf(it) } },
+        nextHierarchy = { listOfNotNull(superType) + interfaces},
     ) {
         it.name == name
     }

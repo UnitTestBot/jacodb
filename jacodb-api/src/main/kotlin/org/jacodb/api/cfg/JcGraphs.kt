@@ -104,6 +104,13 @@ val JcInst.locals: Set<JcLocal>
         return resolver.result
     }
 
+val JcExpr.values: Set<JcValue>
+    get() {
+        val resolver = ValueResolver().also {
+            accept(it)
+        }
+        return resolver.result
+    }
 
 val JcInst.values: Set<JcValue>
     get() {

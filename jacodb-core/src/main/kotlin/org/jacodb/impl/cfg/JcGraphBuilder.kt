@@ -457,9 +457,7 @@ class JcGraphBuilder(
     override fun visitJcRawSpecialCallExpr(expr: JcRawSpecialCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcSpecialCallExpr(
-            instance.type.methodRef(expr), instance, args
-        )
+        return JcSpecialCallExpr(classpath.methodRef(expr), instance, args)
     }
 
     override fun visitJcRawThis(value: JcRawThis): JcExpr =

@@ -14,21 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.api.analysis
 
-import kotlinx.coroutines.runBlocking
-import org.jacodb.impl.features.InMemoryHierarchy
-import org.jacodb.impl.features.Usages
-import org.jacodb.impl.features.usagesExt
-import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Test
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcInst
 
-class AnalysisTest : BaseTest() {
-    companion object : WithDB(Usages, InMemoryHierarchy)
-
-    @Test
-    fun `analyse something`() = runBlocking {
-        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-    }
+interface JcApplicationGraph : ApplicationGraph<JcMethod, JcInst> {
+    val classpath: JcClasspath
 }
