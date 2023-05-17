@@ -51,7 +51,7 @@ fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypeParameterD
     if (!isStatic) {
         val fromOuter = outerClass?.allVisibleTypeParameters()
         val fromMethod = outerMethod?.allVisibleTypeParameters()
-        return (direct + (fromMethod ?: fromOuter).orEmpty()).toPersistentMap()
+        return ((fromMethod ?: fromOuter).orEmpty() + direct).toPersistentMap()
     }
     return direct
 }
