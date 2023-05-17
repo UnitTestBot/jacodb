@@ -26,8 +26,12 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.impl.fs.BuildFolderLocation
 import org.jacodb.impl.jacodb
+import soot.SootMethod
+import soot.jimple.Stmt
+import soot.tagkit.LineNumberTag
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.system.measureTimeMillis
 
 
 data class User(val login: String)
@@ -66,6 +70,16 @@ private val JcInst.ref: String
         return "${method.enclosingClass.name}.${method.name}($sourceFile:${location.lineNumber})"
     }
 
+private fun SootMethod.ref(stmt: Stmt): String {
+    return "${declaringClass.name}.${name}:${stmt.lineNumber})"
+}
+
+private val Stmt.lineNumber: String
+    get() {
+        return tags.filterIsInstance<LineNumberTag>().firstOrNull()?.lineNumber?.toString() ?: "unknown"
+    }
+
+
 interface MaybePath
 
 object NoPath : MaybePath
@@ -73,6 +87,7 @@ object NoPath : MaybePath
 class AccessPath(private val list: List<String>) : MaybePath {
 
     constructor(inst: JcInst) : this(listOf(inst.ref))
+    constructor(method: SootMethod, stmt: Stmt) : this(listOf(method.ref(stmt)))
 
     fun add(inst: JcInst): AccessPath {
         return join(AccessPath(inst))
@@ -86,17 +101,24 @@ class AccessPath(private val list: List<String>) : MaybePath {
         return AccessPath(list + another.ref)
     }
 
+    fun join(method: SootMethod, stmt: Stmt): AccessPath {
+        return AccessPath(list + method.ref(stmt))
+    }
+
     override fun toString(): String {
         return buildString {
+            append("Performance issue found:")
             list.forEach {
-                appendLine(it)
+                appendLine()
+                append("\t")
+                append(it)
             }
         }
     }
 }
 
-private val highPerformance = HighPerformance::class.java.name
-private val slow = Slow::class.java.name
+internal val highPerformance = HighPerformance::class.java.name
+internal val slow = Slow::class.java.name
 
 class HighPerformanceChecker : JcClassProcessingTask {
 
@@ -162,12 +184,15 @@ private val classpath: List<String>
     }
 
 fun main() {
-    runBlocking {
-        val db = jacodb {
-            loadByteCode(allClasspath)
+    println("JacoDB tooks: " + measureTimeMillis {
+        runBlocking {
+            val db = jacodb {
+                loadByteCode(allClasspath)
+            }
+            val cp = db.classpath(allClasspath)
+            val checker = HighPerformanceChecker()
+            cp.execute(checker)
         }
-        val cp = db.classpath(allClasspath)
-        val checker = HighPerformanceChecker()
-        cp.execute(checker)
-    }
+    } + "ms to finish")
+
 }

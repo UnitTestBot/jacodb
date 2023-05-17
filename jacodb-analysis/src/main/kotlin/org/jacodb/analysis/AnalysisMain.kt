@@ -99,9 +99,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         points2Engine: Points2Engine,
     ): AnalysisEngine {
         val analyzer = getAnalyzer(graph)
-        val instance = TaintAnalysisWithPointsTo(graph, analyzer, points2Engine)
-
-        return instance
+        return TaintAnalysisWithPointsTo(graph, analyzer, points2Engine)
     }
 
     override val name: String

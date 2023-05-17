@@ -44,7 +44,6 @@ import org.jacodb.api.ext.cfg.callExpr
 
 
 class UnusedVariableAnalyzer(
-
     val graph: JcApplicationGraph
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
