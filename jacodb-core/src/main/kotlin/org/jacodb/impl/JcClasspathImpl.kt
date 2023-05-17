@@ -108,7 +108,7 @@ class JcClasspathImpl(
     }
 
     override fun findTypeOrNull(name: String): JcType? {
-        val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindType(this, name) }
+        val result = classpathExtFeature.firstNotNullOfOrNull { it.tryFindType(this, name) }
         if (result != null) {
             return result.orElse(null)
         }

@@ -90,7 +90,7 @@ internal class Simplifier {
         // remove instructions like `a = a`
         instructionList = cleanSelfAssignments(instructionList)
         // fix some typing errors and normalize the types of all local variables
-        return normalizeTypes(jcClasspath, instructionList)
+        return normalizeTypes(instructionList)
     }
 
 
@@ -224,17 +224,15 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(
-        jcClasspath: JcClasspath,
         instList: JcInstListImpl<JcRawInst>
     ): JcInstListImpl<JcRawInst> {
-        val types = mutableMapOf<JcRawLocalVar, MutableSet<JcType>>()
+        val types = mutableMapOf<JcRawLocalVar, MutableSet<String>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst && inst.lhv is JcRawLocalVar && inst.rhv !is JcRawNullConstant) {
                 types.getOrPut(
                     inst.lhv as JcRawLocalVar,
                     ::mutableSetOf
-                ) += jcClasspath.findTypeOrNull(inst.rhv.typeName.typeName)
-                    ?: error("Could not find type ${inst.rhv.typeName.typeName}")
+                ) += inst.rhv.typeName.typeName
             }
         }
         val replacement = types.filterValues { it.size > 1 }
