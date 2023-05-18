@@ -21,7 +21,7 @@ jobs:
       - name: Publish package
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          gradle-version: 7.4.2
+          gradle-version: 7.6.1
           arguments: |
             publish
             -Pactor=${{ github.actor }}
