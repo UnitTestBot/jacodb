@@ -42,10 +42,6 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
-    private val lazyAsm: MethodNode by softLazy {
-        enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
-    }
-
     override val exceptions: List<TypeName>
         get() {
             return methodInfo.exceptions.map { TypeNameImpl(it) }
@@ -62,7 +58,7 @@ class JcMethodImpl(
     override val description get() = methodInfo.desc
 
     override fun asmNode(): MethodNode {
-        return lazyAsm
+        return enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
     }
 
     override val rawInstList: JcInstList<JcRawInst> get() = classpathCache.rawInstList(this)
