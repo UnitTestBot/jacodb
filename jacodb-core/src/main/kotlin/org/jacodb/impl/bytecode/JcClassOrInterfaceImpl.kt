@@ -32,6 +32,8 @@ import org.jacodb.impl.fs.LazyClassSourceImpl
 import org.jacodb.impl.fs.fullAsmNodeWithFrames
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
+import org.jacodb.impl.weakLazy
+import org.objectweb.asm.tree.ClassNode
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassOrInterfaceImpl(
@@ -102,7 +104,11 @@ class JcClassOrInterfaceImpl(
     override val access: Int
         get() = info.access
 
-    override fun asmNode() = classSource.fullAsmNodeWithFrames(classpath)
+    private val lazyAsmNode: ClassNode by weakLazy {
+        classSource.fullAsmNodeWithFrames(classpath)
+    }
+
+    override fun asmNode() = lazyAsmNode
     override fun bytecode(): ByteArray = classSource.byteCode
 
     override fun <T> extensionValue(key: String): T? {
@@ -143,7 +149,7 @@ class JcClassOrInterfaceImpl(
         }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, cache) }
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, cache) }
         when {
             classFeatures.isNotEmpty() -> {
                 val modifiedMethods = result.toMutableList()

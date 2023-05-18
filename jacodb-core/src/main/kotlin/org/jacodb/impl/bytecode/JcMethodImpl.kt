@@ -16,7 +16,6 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -26,14 +25,14 @@ import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.impl.fs.fullAsmNode
+import org.jacodb.impl.softLazy
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
+import org.jacodb.impl.weakLazy
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
-    private val source: ClassSource,
     private val classpathCache: JcMethodExtFeature,
     override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
@@ -42,6 +41,10 @@ class JcMethodImpl(
     override val access: Int get() = methodInfo.access
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
+
+    private val lazyAsm: MethodNode by softLazy {
+        enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
+    }
 
     override val exceptions: List<TypeName>
         get() {
@@ -59,7 +62,7 @@ class JcMethodImpl(
     override val description get() = methodInfo.desc
 
     override fun asmNode(): MethodNode {
-        return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
+        return lazyAsm
     }
 
     override val rawInstList: JcInstList<JcRawInst> get() = classpathCache.rawInstList(this)

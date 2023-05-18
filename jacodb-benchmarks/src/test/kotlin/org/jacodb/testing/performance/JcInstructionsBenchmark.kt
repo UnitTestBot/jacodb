@@ -1,0 +1,122 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package org.jacodb.testing.performance
+
+import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.ext.findClass
+import org.jacodb.impl.JcCacheSettings
+import org.jacodb.impl.JcClasspathImpl
+import org.jacodb.impl.cfg.JcGraphBuilder
+import org.jacodb.impl.cfg.RawInstListBuilder
+import org.jacodb.impl.features.classpaths.ClasspathCache
+import org.jacodb.impl.jacodb
+import org.jacodb.testing.allClasspath
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Level
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.Setup
+import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.Warmup
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+
+@State(Scope.Benchmark)
+@Fork(1)
+@Warmup(iterations = 2)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Measurement(iterations = 100, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+class JcInstructionsBenchmark {
+
+    object NoInstructionsCache : ClasspathCache(JcCacheSettings()) {
+
+        override fun instList(method: JcMethod): JcInstList<JcInst> {
+            return JcGraphBuilder(method, rawInstList(method)).buildInstList()
+        }
+
+        override fun rawInstList(method: JcMethod): JcInstList<JcRawInst> {
+            return RawInstListBuilder(method, method.asmNode()).build()
+        }
+
+        override fun flowGraph(method: JcMethod): JcGraph {
+            return JcGraphBuilder(method, rawInstList(method)).buildFlowGraph()
+        }
+
+    }
+
+    private lateinit var db: JcDatabase
+    private lateinit var cp: JcClasspath
+
+    @Setup(Level.Iteration)
+    fun setup() {
+        runBlocking {
+            db = jacodb {
+                useProcessJavaRuntime()
+                loadByteCode(allClasspath)
+            }
+            cp = db.classpath(allClasspath, listOf(NoInstructionsCache))
+        }
+    }
+
+    @Benchmark
+    fun rawInstList() {
+        cp.findClass<JcClasspathImpl>()
+    }
+
+    @Benchmark
+    fun instList() {
+        cp.findClass<JcClasspathImpl>()
+    }
+
+    @Benchmark
+    fun flowGraph() {
+        cp.findClass<JcClasspathImpl>()
+    }
+
+}
+
+@OptIn(ExperimentalTime::class)
+fun main() {
+    val cp = runBlocking {
+        val db = jacodb {
+            useProcessJavaRuntime()
+            loadByteCode(allClasspath)
+        }
+        db.classpath(allClasspath, listOf(JcInstructionsBenchmark.NoInstructionsCache))
+    }
+    repeat(3000) {
+        println("$it consumes " + measureTime {
+            cp.findClass<JcClasspathImpl>().declaredMethods.forEach {
+                it.rawInstList
+            }
+        })
+    }
+}

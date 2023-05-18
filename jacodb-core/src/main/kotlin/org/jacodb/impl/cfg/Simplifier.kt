@@ -17,11 +17,11 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcType
 import org.jacodb.api.cfg.JcRawAssignInst
 import org.jacodb.api.cfg.JcRawCatchInst
 import org.jacodb.api.cfg.JcRawComplexValue
 import org.jacodb.api.cfg.JcRawConstant
+import org.jacodb.api.cfg.JcRawExpr
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.cfg.JcRawLabelInst
 import org.jacodb.api.cfg.JcRawLocalVar
@@ -29,8 +29,8 @@ import org.jacodb.api.cfg.JcRawNullConstant
 import org.jacodb.api.cfg.JcRawSimpleValue
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.ext.cfg.applyAndGet
+import org.jacodb.api.cfg.AbstractFullRawExprSetCollector
 import org.jacodb.impl.cfg.util.ExprMapper
-import org.jacodb.impl.cfg.util.FullExprSetCollector
 import org.jacodb.impl.cfg.util.InstructionFilter
 
 /**
@@ -95,21 +95,17 @@ internal class Simplifier {
 
 
     private fun computeUseCases(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawInst>> {
-        val uses = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
+        val uses = hashMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
         for (inst in instList) {
             when (inst) {
                 is JcRawAssignInst -> {
                     if (inst.lhv is JcRawComplexValue) {
-                        inst.lhv.applyAndGet(FullExprSetCollector()) { it.exprs }
-                            .filterIsInstance<JcRawSimpleValue>()
-                            .filter { it !is JcRawConstant }
+                        inst.lhv.applyAndGet(SimplifierCollector()) { it.exprs }
                             .forEach {
                                 uses.getOrPut(it, ::mutableSetOf).add(inst)
                             }
                     }
-                    inst.rhv.applyAndGet(FullExprSetCollector()) { it.exprs }
-                        .filterIsInstance<JcRawSimpleValue>()
-                        .filter { it !is JcRawConstant }
+                    inst.rhv.applyAndGet(SimplifierCollector()) { it.exprs }
                         .forEach {
                             uses.getOrPut(it, ::mutableSetOf).add(inst)
                         }
@@ -117,10 +113,7 @@ internal class Simplifier {
 
                 is JcRawCatchInst -> {}
                 else -> {
-                    inst.operands
-                        .flatMapTo(mutableSetOf()) { expr -> expr.applyAndGet(FullExprSetCollector()) { it.exprs } }
-                        .filterIsInstance<JcRawSimpleValue>()
-                        .filter { it !is JcRawConstant }
+                    inst.applyAndGet(SimplifierCollector()) { it.exprs }
                         .forEach {
                             uses.getOrPut(it, ::mutableSetOf).add(inst)
                         }
@@ -132,7 +125,7 @@ internal class Simplifier {
 
     private fun cleanRepeatedAssignments(instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
         val instructions = mutableListOf<JcRawInst>()
-        val equalities = mutableMapOf<JcRawSimpleValue, JcRawSimpleValue>()
+        val equalities = hashMapOf<JcRawSimpleValue, JcRawSimpleValue>()
         for (inst in instList) {
             when (inst) {
                 is JcRawAssignInst -> {
@@ -241,4 +234,16 @@ internal class Simplifier {
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }
+}
+
+
+private class SimplifierCollector : AbstractFullRawExprSetCollector() {
+    val exprs = hashSetOf<JcRawSimpleValue>()
+
+    override fun ifMatches(expr: JcRawExpr) {
+        if (expr is JcRawSimpleValue && expr !is JcRawConstant) {
+            exprs.add(expr)
+        }
+    }
+
 }

@@ -39,6 +39,7 @@ import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.JcMethodRefImpl
 import org.jacodb.impl.cfg.RawInstListBuilder
+import org.jacodb.impl.weakLazy
 import java.time.Duration
 import java.util.*
 
@@ -110,7 +111,7 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     }
 }
 
-private class JcGraphHolder(private val methodRef: JcMethodRef) {
+class JcGraphHolder(private val methodRef: JcMethodRef) {
 
     private val method get() = methodRef.method
     private lateinit var classpath: JcClasspath

@@ -109,9 +109,9 @@ interface JcExprVisitor<T> {
     fun visitJcStringConstant(value: JcStringConstant): T
     fun visitJcClassConstant(value: JcClassConstant): T
     fun visitJcMethodConstant(value: JcMethodConstant): T
-    fun visitJcPhiExpr(value: JcPhiExpr): T
+    fun visitJcPhiExpr(expr: JcPhiExpr): T
 
-    fun visitExternalJcExpr(value: JcExpr): T
+    fun visitExternalJcExpr(expr: JcExpr): T
 }
 
 
@@ -216,7 +216,7 @@ interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
 
     override fun visitJcMethodConstant(value: JcMethodConstant): T = defaultExprHandler(value)
 
-    override fun visitJcPhiExpr(value: JcPhiExpr): T = defaultExprHandler(value)
+    override fun visitJcPhiExpr(expr: JcPhiExpr): T = defaultExprHandler(expr)
 
-    override fun visitExternalJcExpr(value: JcExpr): T = defaultExprHandler(value)
+    override fun visitExternalJcExpr(expr: JcExpr): T = defaultExprHandler(expr)
 }

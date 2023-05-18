@@ -18,50 +18,28 @@
 
 package org.jacodb.api.cfg
 
-abstract class TypedExprResolver<T : JcExpr> : DefaultJcInstVisitor<Set<T>>, DefaultJcExprVisitor<Set<T>> {
-
+abstract class TypedExprResolver<T : JcExpr> : AbstractFullExprSetCollector() {
     val result = hashSetOf<T>()
-
-    override val defaultInstHandler: (JcInst) -> Set<T>
-        get() = {
-            it.operands.forEach {
-                addIfMatched(it)
-                it.operands.forEach {
-                    addIfMatched(it)
-                }
-            }
-            emptySet()
-        }
-
-    override val defaultExprHandler: (JcExpr) -> Set<T>
-        get() = {
-            it.operands.forEach {
-                addIfMatched(it)
-            }
-            addIfMatched(it)
-            emptySet()
-        }
-
-    protected abstract fun matches(expr: JcExpr): T?
-
-    private fun addIfMatched(expr: JcExpr) = matches(expr)?.let { result.add(it) }
-
 }
 
 
 class LocalResolver : TypedExprResolver<JcLocal>() {
 
-    override fun matches(expr: JcExpr): JcLocal? {
-        return expr as? JcLocal
+    override fun ifMatches(expr: JcExpr) {
+        if (expr is JcLocal) {
+            result.add(expr)
+        }
     }
 
 }
 
 class ValueResolver : TypedExprResolver<JcValue>() {
-
-    override fun matches(expr: JcExpr): JcValue? {
-        return expr as? JcValue
+    override fun ifMatches(expr: JcExpr) {
+        if (expr is JcValue) {
+            result.add(expr)
+        }
     }
+
 }
 
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
