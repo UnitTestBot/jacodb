@@ -70,7 +70,7 @@ class JcClasspathImpl(
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
-        val result = classpathExtFeature?.firstNotNullOfOrNull { it.tryFindClass(this, name) }
+        val result = classpathExtFeature.firstNotNullOfOrNull { it.tryFindClass(this, name) }
         if (result != null) {
             return result.orElse(null)
         }

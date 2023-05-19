@@ -177,18 +177,16 @@ class JcGraphBuilder(
     val classpath: JcClasspath = method.enclosingClass.classpath
     private val methodRef = JcMethodRefImpl(method)
 
-    private val instMap = mutableMapOf<JcRawInst, JcInst>()
+    private val instMap = identityMap<JcRawInst, JcInst>()
     private var currentLineNumber = 0
     private var index = 0
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
-    private val inst2Index: Map<JcRawInst, Int> = run {
-        val res = mutableMapOf<JcRawInst, Int>()
+    private val inst2Index: Map<JcRawInst, Int> = identityMap<JcRawInst, Int>().also {
         var index = 0
         for (inst in instList) {
-            res[inst] = index
+            it[inst] = index
             if (inst !is JcRawLabelInst && inst !is JcRawLineNumberInst) ++index
         }
-        res
     }
 
     private fun reset() {
@@ -222,9 +220,8 @@ class JcGraphBuilder(
         }
     }
 
-    private val TypeName.asType
-        get() = classpath.findTypeOrNull(this)
-            ?: error("Could not find type $this")
+    private fun TypeName.asType() = classpath.findTypeOrNull(this)
+        ?: error("Could not find type $this")
 
     private fun label2InstRef(labelRef: JcRawLabelRef) =
         JcInstRef(inst2Index[labels.getValue(labelRef)]!!)
@@ -266,7 +263,7 @@ class JcGraphBuilder(
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): JcInst = handle(inst) {
         val location = newLocation()
-        val throwableTypes = inst.entries.map { it.acceptedThrowable.asType }
+        val throwableTypes = inst.entries.map { it.acceptedThrowable.asType() }
         val throwers = inst.entries.flatMap {
             val result = mutableListOf<JcInstRef>()
             var current = instList.indexOf(labels.getValue(it.startInclusive))
@@ -324,7 +321,7 @@ class JcGraphBuilder(
         expr: JcRawBinaryExpr,
         handler: (JcType, JcValue, JcValue) -> JcBinaryExpr
     ): JcBinaryExpr {
-        val type = expr.typeName.asType
+        val type = expr.typeName.asType()
         val lhv = expr.lhv.accept(this) as JcValue
         val rhv = expr.rhv.accept(this) as JcValue
         return handler(type, lhv, rhv)
@@ -395,25 +392,25 @@ class JcGraphBuilder(
     }
 
     override fun visitJcRawNegExpr(expr: JcRawNegExpr): JcExpr =
-        JcNegExpr(expr.typeName.asType, expr.operand.accept(this) as JcValue)
+        JcNegExpr(expr.typeName.asType(), expr.operand.accept(this) as JcValue)
 
     override fun visitJcRawCastExpr(expr: JcRawCastExpr): JcExpr =
-        JcCastExpr(expr.typeName.asType, expr.operand.accept(this) as JcValue)
+        JcCastExpr(expr.typeName.asType(), expr.operand.accept(this) as JcValue)
 
-    override fun visitJcRawNewExpr(expr: JcRawNewExpr): JcExpr = JcNewExpr(expr.typeName.asType)
+    override fun visitJcRawNewExpr(expr: JcRawNewExpr): JcExpr = JcNewExpr(expr.typeName.asType())
 
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr): JcExpr =
-        JcNewArrayExpr(expr.typeName.asType, expr.dimensions.map { it.accept(this) as JcValue })
+        JcNewArrayExpr(expr.typeName.asType(), expr.dimensions.map { it.accept(this) as JcValue })
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
-        JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType)
+        JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType())
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
         val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
         when (lambdaBases.size) {
             1 -> {
                 val base = lambdaBases.first()
-                val klass = base.declaringClass.asType as JcClassType
+                val klass = base.declaringClass.asType() as JcClassType
                 val ref = TypedMethodRefImpl(klass, base.name, base.argTypes, base.returnType)
 
                 return JcLambdaExpr(ref, expr.args.map { it.accept(this) as JcValue })
@@ -425,8 +422,8 @@ class JcGraphBuilder(
                     classpath.methodRef(expr),
                     expr.bsmArgs,
                     expr.callCiteMethodName,
-                    expr.callCiteArgTypes.map { it.asType },
-                    expr.callCiteReturnType.asType,
+                    expr.callCiteArgTypes.map { it.asType() },
+                    expr.callCiteReturnType.asType(),
                     expr.args.map { it.accept(this) as JcValue }
                 )
             }
@@ -464,15 +461,15 @@ class JcGraphBuilder(
         JcThis(method.enclosingClass.toType())
 
     override fun visitJcRawArgument(value: JcRawArgument): JcExpr = method.parameters[value.index].let {
-        JcArgument.of(it.index, value.name, it.type.asType)
+        JcArgument.of(it.index, value.name, it.type.asType())
     }
 
     override fun visitJcRawLocalVar(value: JcRawLocalVar): JcExpr =
-        JcLocalVar(value.name, value.typeName.asType)
+        JcLocalVar(value.name, value.typeName.asType())
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val instance = value.instance?.accept(this) as? JcValue
-        val klass = (instance?.type ?: value.declaringClass.asType) as JcClassType
+        val klass = (instance?.type ?: value.declaringClass.asType()) as JcClassType
         val field = klass.findFieldOrNull(value.fieldName)
             ?: throw IllegalStateException("${klass.typeName}#${value.fieldName} not found")
         return JcFieldRef(value.instance?.accept(this) as? JcValue, field)
@@ -482,7 +479,7 @@ class JcGraphBuilder(
         JcArrayAccess(
             value.array.accept(this) as JcValue,
             value.index.accept(this) as JcValue,
-            value.typeName.asType
+            value.typeName.asType()
         )
 
     override fun visitJcRawBool(value: JcRawBool): JcExpr = JcBool(value.value, classpath.boolean)
@@ -505,18 +502,18 @@ class JcGraphBuilder(
         JcNullConstant(classpath.objectType)
 
     override fun visitJcRawStringConstant(value: JcRawStringConstant): JcExpr =
-        JcStringConstant(value.value, value.typeName.asType)
+        JcStringConstant(value.value, value.typeName.asType())
 
     override fun visitJcRawClassConstant(value: JcRawClassConstant): JcExpr =
-        JcClassConstant(value.className.asType, value.typeName.asType)
+        JcClassConstant(value.className.asType(), value.typeName.asType())
 
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant): JcExpr {
-        val klass = value.declaringClass.asType as JcClassType
-        val argumentTypes = value.argumentTypes.map { it.asType }
-        val returnType = value.returnType.asType
+        val klass = value.declaringClass.asType() as JcClassType
+        val argumentTypes = value.argumentTypes.map { it.asType() }
+        val returnType = value.returnType.asType()
         val constant = klass.declaredMethods.first {
             it.name == value.name && it.returnType == returnType && it.parameters.map { param -> param.type } == argumentTypes
         }
-        return JcMethodConstant(constant, value.typeName.asType)
+        return JcMethodConstant(constant, value.typeName.asType())
     }
 }

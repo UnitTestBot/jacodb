@@ -79,6 +79,9 @@ benchmark {
         register("sootup") {
             include("SootupBenchmarks")
         }
+        register("instructions") {
+            include("JcInstructionsBenchmark")
+        }
         register("awaitBackground") {
             include("JcdbJvmBackgroundBenchmarks")
             include("JcdbAllClasspathBackgroundBenchmarks")

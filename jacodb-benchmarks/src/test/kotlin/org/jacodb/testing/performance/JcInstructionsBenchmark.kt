@@ -34,7 +34,6 @@ import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
-import org.openjdk.jmh.annotations.Fork
 import org.openjdk.jmh.annotations.Level
 import org.openjdk.jmh.annotations.Measurement
 import org.openjdk.jmh.annotations.Mode
@@ -49,11 +48,10 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @State(Scope.Benchmark)
-@Fork(1)
-@Warmup(iterations = 2)
+@Warmup(iterations = 5)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Measurement(iterations = 100, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 1000, time = 1, timeUnit = TimeUnit.NANOSECONDS)
 class JcInstructionsBenchmark {
 
     object NoInstructionsCache : ClasspathCache(JcCacheSettings()) {
@@ -75,7 +73,7 @@ class JcInstructionsBenchmark {
     private lateinit var db: JcDatabase
     private lateinit var cp: JcClasspath
 
-    @Setup(Level.Iteration)
+    @Setup(Level.Trial)
     fun setup() {
         runBlocking {
             db = jacodb {
@@ -88,17 +86,21 @@ class JcInstructionsBenchmark {
 
     @Benchmark
     fun rawInstList() {
-        cp.findClass<JcClasspathImpl>()
+        runFor<JcClasspathImpl> { it.rawInstList }
     }
 
     @Benchmark
     fun instList() {
-        cp.findClass<JcClasspathImpl>()
+        runFor<JcClasspathImpl> { it.instList }
     }
 
     @Benchmark
     fun flowGraph() {
-        cp.findClass<JcClasspathImpl>()
+        runFor<JcClasspathImpl> { it.flowGraph() }
+    }
+
+    private inline fun <reified T> runFor(call: (JcMethod) -> Unit) {
+        cp.findClass<T>().declaredMethods.forEach(call)
     }
 
 }
@@ -115,7 +117,7 @@ fun main() {
     repeat(3000) {
         println("$it consumes " + measureTime {
             cp.findClass<JcClasspathImpl>().declaredMethods.forEach {
-                it.rawInstList
+                it.flowGraph()
             }
         })
     }
