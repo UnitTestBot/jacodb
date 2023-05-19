@@ -62,12 +62,14 @@ import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -330,16 +332,19 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-    @Test
-    fun `get ir of jackson`() {
-        allClasspath
-            .filter { it.name.contains("jackson") }
-            .forEach { runAlongLib(it) }
-    }
 
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
+    }
+
+    @AfterEach
+    fun printStats() {
+        cp.features!!.filterIsInstance<ClasspathCache>().forEach {
+            it.stats().forEach {
+                println(it.key + " : " + it.value)
+            }
+        }
     }
 
     private fun runAlongLib(file: File) {

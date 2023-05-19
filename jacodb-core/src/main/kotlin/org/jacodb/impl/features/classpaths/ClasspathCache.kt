@@ -18,6 +18,7 @@ package org.jacodb.impl.features.classpaths
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
+import com.google.common.cache.CacheStats
 import org.jacodb.api.JcClassFoundEvent
 import org.jacodb.api.JcClassNotFound
 import org.jacodb.api.JcClassOrInterface
@@ -25,10 +26,8 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.JcClasspathFeatureEvent
-import org.jacodb.api.JcInstExtFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodRef
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.cfg.JcGraph
@@ -36,10 +35,9 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.JcCacheSettings
-import org.jacodb.impl.cfg.JcGraphBuilder
-import org.jacodb.impl.cfg.JcMethodRefImpl
-import org.jacodb.impl.cfg.RawInstListBuilder
-import org.jacodb.impl.weakLazy
+import org.jacodb.impl.cfg.nonCachedFlowGraph
+import org.jacodb.impl.cfg.nonCachedInstList
+import org.jacodb.impl.cfg.nonCachedRawInstList
 import java.time.Duration
 import java.util.*
 
@@ -57,10 +55,24 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     private val typesCache = segmentBuilder(settings.types)
         .build<String, Optional<JcType>>()
 
-    private val graphCache = segmentBuilder(settings.graphs)
-        .build(object : CacheLoader<JcMethodRef, JcGraphHolder>() {
-            override fun load(key: JcMethodRef): JcGraphHolder {
-                return JcGraphHolder(key)
+    private val rawInstCache = segmentBuilder(settings.graphs)
+        .build(object : CacheLoader<JcMethod, JcInstList<JcRawInst>>() {
+            override fun load(key: JcMethod): JcInstList<JcRawInst> {
+                return nonCachedRawInstList(key)
+            }
+        });
+
+    private val instCache = segmentBuilder(settings.graphs, weakValues = true)
+        .build(object : CacheLoader<JcMethod, JcInstList<JcInst>>() {
+            override fun load(key: JcMethod): JcInstList<JcInst> {
+                return nonCachedInstList(key)
+            }
+        });
+
+    private val cfgCache = segmentBuilder(settings.graphs, weakValues = true)
+        .build(object : CacheLoader<JcMethod, JcGraph>() {
+            override fun load(key: JcMethod): JcGraph {
+                return nonCachedFlowGraph(key)
             }
         });
 
@@ -73,19 +85,9 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         return typesCache.getIfPresent(name)
     }
 
-    override fun flowGraph(method: JcMethod): JcGraph = method.holder().flowGraph
-
-    private fun JcMethod.holder(): JcGraphHolder {
-        return graphCache.getUnchecked(JcMethodRefImpl(this)).also {
-            it.bind(enclosingClass.classpath)
-        }
-    }
-
-    override fun instList(method: JcMethod): JcInstList<JcInst> = method.holder().instList
-
-    override fun rawInstList(method: JcMethod): JcInstList<JcRawInst> =
-        method.holder().rawInstList
-
+    override fun flowGraph(method: JcMethod) = cfgCache.getUnchecked(method)
+    override fun instList(method: JcMethod) = instCache.getUnchecked(method)
+    override fun rawInstList(method: JcMethod) = rawInstCache.getUnchecked(method)
 
     override fun on(event: JcClasspathFeatureEvent) {
         when (event) {
@@ -100,44 +102,27 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         }
     }
 
-    protected fun segmentBuilder(settings: Pair<Long, Duration>): CacheBuilder<Any, Any> {
+    protected fun segmentBuilder(settings: Pair<Long, Duration>, weakValues: Boolean = false): CacheBuilder<Any, Any> {
         val maxSize = settings.first
         val expiration = settings.second
 
         return CacheBuilder.newBuilder()
             .expireAfterAccess(expiration)
-            .softValues()
-            .maximumSize(maxSize)
-    }
-}
-
-class JcGraphHolder(private val methodRef: JcMethodRef) {
-
-    private val method get() = methodRef.method
-    private lateinit var classpath: JcClasspath
-    private lateinit var methodFeatures: List<JcInstExtFeature>
-
-    fun bind(classpath: JcClasspath) {
-        this.classpath = classpath
-        this.methodFeatures = classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
+            .recordStats()
+            .maximumSize(maxSize).let {
+                if (weakValues) {
+                    it.weakValues()
+                } else {
+                    it.softValues()
+                }
+            }
     }
 
-    val rawInstList: JcInstList<JcRawInst> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode()).build()
-        methodFeatures.fold(list) { value, feature ->
-            feature.transformRawInstList(method, value)
-        }
+    open fun stats(): Map<String, CacheStats> = buildMap {
+        this["classes"] = classesCache.stats()
+        this["types"] = typesCache.stats()
+        this["cfg"] = cfgCache.stats()
+        this["raw-instructions"] = rawInstCache.stats()
+        this["instructions"] = instCache.stats()
     }
-
-    val flowGraph by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        JcGraphBuilder(method, rawInstList).buildFlowGraph()
-    }
-
-    val instList: JcInstList<JcInst> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val list: JcInstList<JcInst> = JcGraphBuilder(method, rawInstList).buildInstList()
-        methodFeatures.fold(list) { value, feature ->
-            feature.transformInstList(method, value)
-        }
-    }
-
 }

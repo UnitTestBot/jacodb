@@ -179,8 +179,8 @@ fun JcTypedMethod.methodRef(): TypedMethodRef {
 
 
 class JcMethodRefImpl(method: JcMethod) : JcMethodRef {
-
     private val classpath = method.enclosingClass.classpath
+
     private val className: String = method.enclosingClass.name
     private val name: String = method.name
     private val description: String = method.description

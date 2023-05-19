@@ -24,6 +24,8 @@ import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcInstExtFeature
+import org.jacodb.api.JcMethod
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.cfg.DefaultJcExprVisitor
 import org.jacodb.api.cfg.DefaultJcInstVisitor
@@ -42,10 +44,12 @@ import org.jacodb.api.cfg.JcGotoInst
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcLambdaExpr
 import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
+import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.cfg.JcRemExpr
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
@@ -336,3 +340,23 @@ open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisito
 
 }
 
+private val JcMethod.methodFeatures
+    get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
+
+fun nonCachedRawInstList(method: JcMethod): JcInstList<JcRawInst> {
+    val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode()).build()
+    return method.methodFeatures.fold(list) { value, feature ->
+        feature.transformRawInstList(method, value)
+    }
+}
+
+fun nonCachedFlowGraph(method: JcMethod): JcGraph {
+    return JcGraphBuilder(method, method.rawInstList).buildFlowGraph()
+}
+
+fun nonCachedInstList(method: JcMethod): JcInstList<JcInst> {
+    val list: JcInstList<JcInst> = JcGraphBuilder(method, method.rawInstList).buildInstList()
+    return method.methodFeatures.fold(list) { value, feature ->
+        feature.transformInstList(method, value)
+    }
+}
