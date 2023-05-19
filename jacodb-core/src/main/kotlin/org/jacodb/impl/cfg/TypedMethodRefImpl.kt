@@ -46,7 +46,7 @@ interface MethodSignatureRef : TypedMethodRef {
     }
 
     fun findDeclaredMethod(): JcTypedMethod? {
-        return type.findDeclaredMethod {true}
+        return type.findDeclaredMethod { true }
     }
 
     fun JcClassType.findDeclaredMethod(filter: (JcTypedMethod) -> Boolean): JcTypedMethod? {
@@ -161,10 +161,10 @@ fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
 }
 
 fun JcType.methodRef(expr: JcRawCallExpr): TypedMethodRef {
-    return when(expr) {
+    return when (expr) {
         is JcRawStaticCallExpr -> TypedStaticMethodRefImpl((this as JcClassType).classpath, expr)
         is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl((this as JcClassType).classpath, expr)
-        else ->TypedMethodRefImpl(this, expr)
+        else -> TypedMethodRefImpl(this, expr)
     }
 }
 
