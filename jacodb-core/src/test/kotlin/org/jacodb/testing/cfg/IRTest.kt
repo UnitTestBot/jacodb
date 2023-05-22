@@ -67,8 +67,8 @@ import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
+import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -338,6 +338,13 @@ class IRTest : BaseTest() {
         runAlongLib(guavaLib)
     }
 
+    // todo: make this test green
+//    @Test
+    fun `get ir of kotlinx-coroutines`() {
+//        testClass(cp.findClass("kotlinx.coroutines.ThreadContextElementKt"))
+        runAlongLib(kotlinxCoroutines)
+    }
+
     @AfterEach
     fun printStats() {
         cp.features!!.filterIsInstance<ClasspathCache>().forEach {
@@ -371,29 +378,34 @@ class IRTest : BaseTest() {
             if (it.isAbstract) {
                 it.asmNode()
             } else {
+                try {
 //            val oldBody = it.body()
 //            println()
 //            println("Old body: ${oldBody.print()}")
-                val instructionList = it.rawInstList
-                it.instList.forEachIndexed { index, inst ->
-                    assertEquals(index, inst.location.index, "indexes not matched for $it at $index")
-                }
-//            println("Instruction list: $instructionList")
-                val graph = it.flowGraph()
-                if (!it.enclosingClass.isKotlin) {
-                    graph.instructions.forEach {
-                        assertTrue(it.lineNumber > 0, "$it should have line number")
+                    val instructionList = it.rawInstList
+                    it.instList.forEachIndexed { index, inst ->
+                        assertEquals(index, inst.location.index, "indexes not matched for $it at $index")
                     }
-                }
-                graph.applyAndGet(OverridesResolver(ext)) {}
-                JcGraphChecker(it, graph).check()
+//            println("Instruction list: $instructionList")
+                    val graph = it.flowGraph()
+                    if (!it.enclosingClass.isKotlin) {
+                        graph.instructions.forEach {
+                            assertTrue(it.lineNumber > 0, "$it should have line number")
+                        }
+                    }
+                    graph.applyAndGet(OverridesResolver(ext)) {}
+                    JcGraphChecker(it, graph).check()
 //            println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
-                val newBody = MethodNodeBuilder(it, instructionList).build()
+                    val newBody = MethodNodeBuilder(it, instructionList).build()
 //            println("New body: ${newBody.print()}")
 //            println()
-                newBody
+                    newBody
+                } catch (e: Exception) {
+                    throw IllegalStateException("error handling $it", e)
+                }
+
             }
         }
         val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)

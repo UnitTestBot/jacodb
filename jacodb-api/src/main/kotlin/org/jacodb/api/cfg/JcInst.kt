@@ -637,6 +637,10 @@ interface JcCallExpr : JcExpr {
 
 interface JcInstanceCallExpr : JcCallExpr {
     val instance: JcValue
+
+    override val operands: List<JcValue>
+        get() = listOf(instance) + args
+
 }
 
 data class JcPhiExpr(
@@ -701,9 +705,6 @@ data class JcVirtualCallExpr(
 ) : JcInstanceCallExpr {
 
     override val method: JcTypedMethod get() = methodRef.method
-
-    override val operands: List<JcValue>
-        get() = listOf(instance) + args
 
     override fun toString(): String =
         "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"

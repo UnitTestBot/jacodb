@@ -40,6 +40,11 @@ class ValueResolver : TypedExprResolver<JcValue>() {
         }
     }
 
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) {
+        ifMatches(expr)
+        expr.args.forEach { it.accept(this) }
+    }
+
 }
 
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {
