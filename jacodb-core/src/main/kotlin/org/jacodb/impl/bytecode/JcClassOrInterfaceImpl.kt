@@ -29,6 +29,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
+import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.fs.fullAsmNodeWithFrames
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
@@ -105,7 +106,7 @@ class JcClassOrInterfaceImpl(
         get() = info.access
 
     private val lazyAsmNode: ClassNode by weakLazy {
-        classSource.fullAsmNodeWithFrames(classpath)
+        classSource.fullAsmNode
     }
 
     override fun asmNode() = lazyAsmNode
