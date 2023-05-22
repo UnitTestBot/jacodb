@@ -39,12 +39,6 @@ class ValueResolver : TypedExprResolver<JcValue>() {
             result.add(expr)
         }
     }
-
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) {
-        ifMatches(expr)
-        expr.args.forEach { it.accept(this) }
-    }
-
 }
 
 fun JcGraph.apply(visitor: JcInstVisitor<Unit>): JcGraph {

@@ -61,8 +61,12 @@ class UnusedVariableAnalyzer(
     private fun AccessPath.isUsedAt(inst: JcInst): Boolean {
         val callExpr = inst.callExpr
 
-        // TODO: currently we use here that `this` is not in `operands` of JcSpecialCallExpr, this may be wrong
         if (callExpr != null) {
+            // Don't count constructor calls as usages
+            if (callExpr.method.method.isConstructor && isUsedAt((callExpr as JcSpecialCallExpr).instance)) {
+                return false
+            }
+
             if (graph.callees(inst).none()) {
                 return isUsedAt(callExpr)
             }
