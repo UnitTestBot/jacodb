@@ -52,9 +52,6 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
 
     companion object : KLogging()
 
-    /**
-     *
-     */
     private val classesCache = segmentBuilder(settings.classes)
         .build<String, Optional<JcClassOrInterface>>()
 
@@ -66,21 +63,21 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
             override fun load(key: JcMethod): JcInstList<JcRawInst> {
                 return nonCachedRawInstList(key)
             }
-        });
+        })
 
     private val instCache = segmentBuilder(settings.instLists)
         .build(object : CacheLoader<JcMethod, JcInstList<JcInst>>() {
             override fun load(key: JcMethod): JcInstList<JcInst> {
                 return nonCachedInstList(key)
             }
-        });
+        })
 
     private val cfgCache = segmentBuilder(settings.flowGraphs)
         .build(object : CacheLoader<JcMethod, JcGraph>() {
             override fun load(key: JcMethod): JcGraph {
                 return nonCachedFlowGraph(key)
             }
-        });
+        })
 
 
     override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
