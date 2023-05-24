@@ -27,9 +27,10 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.joda.time.DateTime
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-//@Disabled("Running time is more then 10 minutes")
+@Disabled("Running time is more then 10 minutes")
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
