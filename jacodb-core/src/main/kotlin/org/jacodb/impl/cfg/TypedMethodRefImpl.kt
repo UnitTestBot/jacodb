@@ -160,14 +160,6 @@ fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
     return TypedMethodRefImpl(this, expr)
 }
 
-fun JcType.methodRef(expr: JcRawCallExpr): TypedMethodRef {
-    return when (expr) {
-        is JcRawStaticCallExpr -> TypedStaticMethodRefImpl((this as JcClassType).classpath, expr)
-        is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl((this as JcClassType).classpath, expr)
-        else -> TypedMethodRefImpl(this, expr)
-    }
-}
-
 fun JcTypedMethod.methodRef(): TypedMethodRef {
     return TypedMethodRefImpl(
         enclosingType as JcClassType,

@@ -25,10 +25,8 @@ import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.impl.softLazy
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
-import org.jacodb.impl.weakLazy
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(

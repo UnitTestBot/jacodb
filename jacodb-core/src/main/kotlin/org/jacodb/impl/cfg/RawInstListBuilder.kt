@@ -445,7 +445,7 @@ class RawInstListBuilder(
     private fun local(variable: Int, expr: JcRawValue, insn: AbstractInsnNode): JcRawAssignInst? {
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
-            if (oldVar.typeName == expr.typeName || expr is JcRawNullConstant) {
+            if (oldVar.typeName == expr.typeName || (expr is JcRawNullConstant && !oldVar.typeName.isPrimitive)) {
                 JcRawAssignInst(method, oldVar, expr)
             } else if (expr is JcRawSimpleValue) {
                 currentFrame = currentFrame.put(variable, expr)

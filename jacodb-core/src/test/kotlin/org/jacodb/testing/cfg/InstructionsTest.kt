@@ -24,8 +24,6 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.locals
-import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
@@ -119,8 +117,8 @@ class InstructionsTest : BaseTest() {
     @Test
     fun `java 5 bytecode processed correctly`() {
         val jars = cp.registeredLocations.map { it.path }
-            .filter { it.contains("mail-1.4.7.jar") || it.contains("activation-1.1.jar") }
-        assertEquals(2, jars.size)
+            .filter { it.contains("mail-1.4.7.jar") || it.contains("activation-1.1.jar") || it.contains("joda-time-2.12.5.jar") }
+        assertEquals(3, jars.size)
         val list = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
         runBlocking {
             cp.execute(object : JcClassProcessingTask {
