@@ -32,13 +32,16 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcBranchingInst
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
+import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
@@ -77,7 +80,13 @@ class UnusedVariableAnalyzer(
             return false
         }
         if (inst is JcAssignInst) {
+            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess).index)) {
+                return true
+            }
             return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
+        }
+        if (inst is JcTerminatingInst || inst is JcBranchingInst) {
+            return inst.operands.any { isUsedAt(it) }
         }
         return false
     }
@@ -96,7 +105,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, listOf(it.toString()), it.toString(), emptyList())
+            VulnerabilityInstance(value, listOf(it.location.toString()), it.location.toString() + "cmd = " + it.toString(), emptyList())
         }
         return DumpableAnalysisResult(vulnerabilities)
     }
@@ -122,7 +131,11 @@ private class UnusedVariableForwardFunctions(
 
             if (fact == ZEROFact) {
                 val toPath = current.lhv.toPathOrNull() ?: return listOf(ZEROFact)
-                return listOf(ZEROFact, UnusedVariableNode(toPath, current))
+                return if (!toPath.isOnHeap) {
+                    listOf(ZEROFact, UnusedVariableNode(toPath, current))
+                } else {
+                    listOf(ZEROFact)
+                }
             }
 
             if (fact !is UnusedVariableNode) {
