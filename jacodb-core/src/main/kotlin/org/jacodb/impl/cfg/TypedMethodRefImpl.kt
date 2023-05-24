@@ -132,7 +132,7 @@ data class TypedMethodRefImpl(
         raw.returnType
     )
 
-    override val method: JcTypedMethod by weakLazy {
+    override val method: JcTypedMethod by softLazy {
         type.getMethod(name, argTypes, returnType)
     }
 

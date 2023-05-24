@@ -19,6 +19,7 @@ package org.jacodb.impl.features.classpaths
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.CacheStats
+import mu.KLogging
 import org.jacodb.api.JcClassFoundEvent
 import org.jacodb.api.JcClassNotFound
 import org.jacodb.api.JcClassOrInterface
@@ -34,11 +35,13 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.impl.JcCacheSegmentSettings
 import org.jacodb.impl.JcCacheSettings
+import org.jacodb.impl.ValueStoreType
 import org.jacodb.impl.cfg.nonCachedFlowGraph
 import org.jacodb.impl.cfg.nonCachedInstList
 import org.jacodb.impl.cfg.nonCachedRawInstList
-import java.time.Duration
+import java.text.NumberFormat
 import java.util.*
 
 
@@ -46,6 +49,9 @@ import java.util.*
  * any class cache should extend this class
  */
 open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, JcMethodExtFeature {
+
+    companion object : KLogging()
+
     /**
      *
      */
@@ -55,21 +61,21 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     private val typesCache = segmentBuilder(settings.types)
         .build<String, Optional<JcType>>()
 
-    private val rawInstCache = segmentBuilder(settings.graphs)
+    private val rawInstCache = segmentBuilder(settings.rawInstLists)
         .build(object : CacheLoader<JcMethod, JcInstList<JcRawInst>>() {
             override fun load(key: JcMethod): JcInstList<JcRawInst> {
                 return nonCachedRawInstList(key)
             }
         });
 
-    private val instCache = segmentBuilder(settings.graphs, weakValues = true)
+    private val instCache = segmentBuilder(settings.instLists)
         .build(object : CacheLoader<JcMethod, JcInstList<JcInst>>() {
             override fun load(key: JcMethod): JcInstList<JcInst> {
                 return nonCachedInstList(key)
             }
         });
 
-    private val cfgCache = segmentBuilder(settings.graphs, weakValues = true)
+    private val cfgCache = segmentBuilder(settings.flowGraphs)
         .build(object : CacheLoader<JcMethod, JcGraph>() {
             override fun load(key: JcMethod): JcGraph {
                 return nonCachedFlowGraph(key)
@@ -102,18 +108,18 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         }
     }
 
-    protected fun segmentBuilder(settings: Pair<Long, Duration>, weakValues: Boolean = false): CacheBuilder<Any, Any> {
-        val maxSize = settings.first
-        val expiration = settings.second
+    protected fun segmentBuilder(settings: JcCacheSegmentSettings): CacheBuilder<Any, Any> {
+        val maxSize = settings.maxSize
+        val expiration = settings.expiration
 
         return CacheBuilder.newBuilder()
             .expireAfterAccess(expiration)
             .recordStats()
             .maximumSize(maxSize).let {
-                if (weakValues) {
-                    it.weakValues()
-                } else {
-                    it.softValues()
+                when (settings.valueStoreType) {
+                    ValueStoreType.WEAK -> it.weakValues()
+                    ValueStoreType.SOFT -> it.softValues()
+                    else -> it
                 }
             }
     }
@@ -124,5 +130,17 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         this["cfg"] = cfgCache.stats()
         this["raw-instructions"] = rawInstCache.stats()
         this["instructions"] = instCache.stats()
+    }
+
+    open fun dumpStats() {
+        stats().entries.toList()
+            .sortedBy { it.key }
+            .forEach { (key, stat) ->
+                logger.info("$key cache hit rate: ${stat.hitRate().forPercentages()}, total count ${stat.requestCount()}")
+            }
+    }
+
+    protected fun Double.forPercentages(): String {
+        return NumberFormat.getPercentInstance().format(this)
     }
 }
