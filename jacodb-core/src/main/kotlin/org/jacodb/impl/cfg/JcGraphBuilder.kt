@@ -434,7 +434,7 @@ class JcGraphBuilder(
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            instance.type.methodRef(expr), instance, args
+            classpath.methodRef(expr), instance, args
         )
     }
 
@@ -442,7 +442,7 @@ class JcGraphBuilder(
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
         return JcVirtualCallExpr(
-            instance.type.methodRef(expr), instance, args
+            classpath.methodRef(expr), instance, args
         )
     }
 
