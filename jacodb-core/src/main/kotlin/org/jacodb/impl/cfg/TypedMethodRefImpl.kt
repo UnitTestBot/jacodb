@@ -213,6 +213,10 @@ class JcInstLocationImpl(
     override val lineNumber: Int
 ) : JcInstLocation {
 
+    override fun toString(): String {
+        return "${methodRef.method.enclosingClass.name}#${methodRef.method.name}:$lineNumber"
+    }
+
     override val method: JcMethod by softLazy {
         methodRef.method
     }
