@@ -19,12 +19,14 @@ package org.jacodb.analysis.points2
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.Points2Engine
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
+import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.impl.features.hierarchyExt
 
 /**
@@ -42,14 +44,21 @@ class AllOverridesDevirtualizer(
 
     override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
         val methods = initialGraph.callees(sink).toList()
-        if (sink.callExpr !is JcVirtualCallExpr)
-            return methods
+        val callExpr = sink.callExpr as? JcVirtualCallExpr ?: return methods
+        val instanceClass = (callExpr.instance.type as JcClassType).jcClass
+
         return methods
             .flatMap { method ->
                 if (bannedPackagePrefixes.any { method.enclosingClass.name.startsWith(it) })
                     listOf(method)
                 else {
-                    val allOverrides = hierarchyExtension.findOverrides(method)
+                    val allOverrides = hierarchyExtension
+                        .findOverrides(method)
+                        .filter {
+                            it.enclosingClass isSubClassOf instanceClass ||
+                            // TODO: use only down-most override here
+                            instanceClass isSubClassOf it.enclosingClass
+                        }
 
                     // TODO: maybe filter inaccessible methods here?
                     return if (limit != null) {
