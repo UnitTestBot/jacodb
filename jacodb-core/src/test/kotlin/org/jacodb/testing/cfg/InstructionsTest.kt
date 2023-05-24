@@ -22,7 +22,12 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcGeExpr
+import org.jacodb.api.cfg.JcGtExpr
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInt
 import org.jacodb.api.cfg.JcLocalVar
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
@@ -56,6 +61,27 @@ class InstructionsTest : BaseTest() {
         val assign = instructions[firstUse + 1] as JcAssignInst
         assertEquals("%4", (assign.lhv as JcLocalVar).name)
         assertEquals("%1", (assign.rhv as JcLocalVar).name)
+    }
+
+    @Test
+    fun `cmp insts`() {
+        val clazz = cp.findClass<Conditionals>()
+        val method = clazz.declaredMethods.first { it.name == "main" }
+        val instructions = method.instList.instructions
+        val cmpExprs = instructions.filterIsInstance<JcIfInst>().map { it.condition }
+        assertEquals(4, cmpExprs.size)
+
+        val geZero = cmpExprs[0] as JcGeExpr
+        assertEquals(0 to 0, (geZero.lhv as JcArgument).index to (geZero.rhv as JcInt).value)
+
+        val gtZero = cmpExprs[1] as JcGtExpr
+        assertEquals(0 to 0, (gtZero.lhv as JcArgument).index to (gtZero.rhv as JcInt).value)
+
+        val geOther = cmpExprs[2] as JcGeExpr
+        assertEquals(0 to 1, (geOther.lhv as JcArgument).index to (geOther.rhv as JcArgument).index)
+
+        val gtOther = cmpExprs[3] as JcGtExpr
+        assertEquals(0 to 1, (gtOther.lhv as JcArgument).index to (gtOther.rhv as JcArgument).index)
     }
 
     @Test
