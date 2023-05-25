@@ -18,6 +18,7 @@ package org.jacodb.testing.cfg
 
 import com.sun.mail.imap.IMAPMessage
 import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
@@ -38,6 +39,7 @@ import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.EnabledOnJre
 import org.junit.jupiter.api.condition.JRE
 import org.objectweb.asm.util.Textifier
@@ -123,7 +125,7 @@ class InstructionsTest : BaseTest() {
         val clazz = cp.findClass<IRExamples>()
         with(clazz.declaredMethods.first { it.name == "sortTimes" }) {
             assertEquals(9, instList.locals.size)
-            assertEquals(13, instList.values .size)
+            assertEquals(13, instList.values.size)
         }
 
         with(clazz.declaredMethods.first { it.name == "test" }) {
@@ -141,10 +143,21 @@ class InstructionsTest : BaseTest() {
     }
 
     @Test
-    fun `java 5 bytecode processed correctly`() {
+    @EnabledOnJre(JRE.JAVA_8)
+    fun `java 5 bytecode processed correctly on java 8`() {
+        runAlong("mail-1.4.7.jar", "joda-time-2.12.5.jar")
+    }
+
+    @Test
+    @DisabledOnJre(JRE.JAVA_8)
+    fun `java 5 bytecode processed correctly on java 9+`() {
+        runAlong("mail-1.4.7.jar", "activation-1.1.jar", "joda-time-2.12.5.jar")
+    }
+
+    private fun runAlong(vararg patters: String) {
         val jars = cp.registeredLocations.map { it.path }
-            .filter { it.contains("mail-1.4.7.jar") || it.contains("activation-1.1.jar") || it.contains("joda-time-2.12.5.jar") }
-        assertEquals(3, jars.size)
+            .filter { patters.any { pattern -> it.contains(pattern) } }
+        assertEquals(patters.size, jars.size)
         val list = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
         runBlocking {
             cp.execute(object : JcClassProcessingTask {
@@ -163,6 +176,7 @@ class InstructionsTest : BaseTest() {
                 try {
                     it.flowGraph()
                 } catch (e: Exception) {
+                    KLogging().logger.error(e) { "can't process $it" }
                     failed.add(it)
                 }
             }
@@ -172,7 +186,6 @@ class InstructionsTest : BaseTest() {
             "Failed to process methods: \n${failed.joinToString("\n") { it.enclosingClass.name + "#" + it.name }}"
         )
     }
-
 }
 
 fun JcMethod.dumpInstructions(): String {
