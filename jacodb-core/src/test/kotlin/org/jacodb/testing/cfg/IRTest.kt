@@ -47,6 +47,7 @@ import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.cfg.applyAndGet
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.isKotlin
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
@@ -56,7 +57,7 @@ import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.cfg.JcBlockGraphImpl
-import org.jacodb.impl.cfg.JcGraphBuilder
+import org.jacodb.impl.cfg.JcInstListBuilder
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
@@ -319,7 +320,8 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<BinarySearchTree<*>.BinarySearchTreeIterator>())
     }
 
-    @Test
+
+        @Test
     fun `get ir of self`() {
         testClass(cp.findClass<JcClasspathImpl>())
         testClass(cp.findClass<JcClassOrInterfaceImpl>())
@@ -328,7 +330,7 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<Simplifier>())
         testClass(cp.findClass<JcDatabaseImpl>())
         testClass(cp.findClass<ExprMapper>())
-        testClass(cp.findClass<JcGraphBuilder>())
+        testClass(cp.findClass<JcInstListBuilder>())
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 

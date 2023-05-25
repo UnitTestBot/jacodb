@@ -38,6 +38,7 @@ import org.jacodb.api.JcFeature
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
+import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.filterExisted
@@ -88,11 +89,11 @@ class JcDatabaseImpl(
         ).new.process(true)
     }
 
-    private fun List<JcClasspathFeature>?.appendCaching(): List<JcClasspathFeature> {
+    private fun List<JcClasspathFeature>?.appendBuiltInFeatures(): List<JcClasspathFeature> {
         if (this != null && any { it is ClasspathCache }) {
-            return listOf(KotlinMetadata) + this
+            return listOf(KotlinMetadata, MethodInstructionsFeature) + this
         }
-        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata) + this.orEmpty()
+        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature) + orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
@@ -107,7 +108,7 @@ class JcDatabaseImpl(
         return JcClasspathImpl(
             locationsRegistry.newSnapshot(locations),
             this,
-            features.appendCaching(),
+            features.appendBuiltInFeatures(),
             classesVfs
         )
     }

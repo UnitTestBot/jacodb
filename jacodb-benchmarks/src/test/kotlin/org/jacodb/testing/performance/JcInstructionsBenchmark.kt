@@ -27,10 +27,8 @@ import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.JcClasspathImpl
-import org.jacodb.impl.cfg.nonCachedFlowGraph
-import org.jacodb.impl.cfg.nonCachedInstList
-import org.jacodb.impl.cfg.nonCachedRawInstList
 import org.jacodb.impl.features.classpaths.ClasspathCache
+import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.Benchmark
@@ -57,17 +55,11 @@ class JcInstructionsBenchmark {
 
     object NoInstructionsCache : ClasspathCache(JcCacheSettings()) {
 
-        override fun instList(method: JcMethod): JcInstList<JcInst> {
-            return nonCachedInstList(method)
-        }
+        override fun instList(method: JcMethod): JcInstList<JcInst>? = null
 
-        override fun rawInstList(method: JcMethod): JcInstList<JcRawInst> {
-            return nonCachedRawInstList(method)
-        }
+        override fun rawInstList(method: JcMethod): JcInstList<JcRawInst>? = null
 
-        override fun flowGraph(method: JcMethod): JcGraph {
-            return nonCachedFlowGraph(method)
-        }
+        override fun flowGraph(method: JcMethod): JcGraph? = null
 
     }
 

@@ -21,12 +21,11 @@ import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassExtFeature
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
 import org.jacodb.impl.fs.fullAsmNode
@@ -39,10 +38,10 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource,
-    features: List<JcClasspathFeature>,
+    private val featuresChain: JcFeaturesChain,
 ) : JcClassOrInterface {
 
-    private val cache = features.filterIsInstance<JcMethodExtFeature>().first()
+    private val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
 
     private val cachedInfo: ClassInfo? = when (classSource) {
         is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
@@ -50,11 +49,9 @@ class JcClassOrInterfaceImpl(
         else -> null // maybe we do not need to do right now
     }
 
-    private val classFeatures = features.filterIsInstance<JcClassExtFeature>()
-
     private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->
-            classFeatures.forEach {
+            featuresChain.newRequest().run<JcClassExtFeature> {
                 map.putAll(it.extensionValuesOf(this).orEmpty())
             }
         }
@@ -134,9 +131,9 @@ class JcClassOrInterfaceImpl(
         get() {
             val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
             return when {
-                classFeatures.isNotEmpty() -> {
+                hasClassFeatures -> {
                     val modifiedFields = result.toMutableList()
-                    classFeatures.forEach {
+                    featuresChain.newRequest().run<JcClassExtFeature> {
                         it.fieldsOf(this)?.let {
                             modifiedFields.addAll(it)
                         }
@@ -149,11 +146,11 @@ class JcClassOrInterfaceImpl(
         }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, cache) }
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, featuresChain) }
         when {
-            classFeatures.isNotEmpty() -> {
+            hasClassFeatures -> {
                 val modifiedMethods = result.toMutableList()
-                classFeatures.forEach {
+                featuresChain.newRequest().run<JcClassExtFeature> {
                     it.methodsOf(this)?.let {
                         modifiedMethods.addAll(it)
                     }

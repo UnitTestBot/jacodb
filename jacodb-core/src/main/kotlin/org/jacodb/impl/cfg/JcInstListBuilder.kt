@@ -169,10 +169,7 @@ import org.jacodb.api.ext.short
 import org.jacodb.api.ext.toType
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
-class JcGraphBuilder(
-    val method: JcMethod,
-    val instList: JcInstList<JcRawInst>
-) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
+class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
 
     val classpath: JcClasspath = method.enclosingClass.classpath
     private val methodRef = JcMethodRefImpl(method)
@@ -192,12 +189,6 @@ class JcGraphBuilder(
     private fun reset() {
         currentLineNumber = 0
         index = 0
-    }
-
-    fun buildFlowGraph(): JcGraph {
-        return JcGraphImpl(method, instList.mapNotNull { convertRawInst(it) }).also {
-            reset()
-        }
     }
 
     fun buildInstList(): JcInstList<JcInst> {
@@ -433,17 +424,13 @@ class JcGraphBuilder(
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcVirtualCallExpr(
-            classpath.methodRef(expr), instance, args
-        )
+        return JcVirtualCallExpr(classpath.methodRef(expr), instance, args)
     }
 
     override fun visitJcRawInterfaceCallExpr(expr: JcRawInterfaceCallExpr): JcExpr {
         val instance = expr.instance.accept(this) as JcValue
         val args = expr.args.map { it.accept(this) as JcValue }
-        return JcVirtualCallExpr(
-            classpath.methodRef(expr), instance, args
-        )
+        return JcVirtualCallExpr(classpath.methodRef(expr), instance, args)
     }
 
     override fun visitJcRawStaticCallExpr(expr: JcRawStaticCallExpr): JcExpr {
@@ -457,8 +444,7 @@ class JcGraphBuilder(
         return JcSpecialCallExpr(classpath.methodRef(expr), instance, args)
     }
 
-    override fun visitJcRawThis(value: JcRawThis): JcExpr =
-        JcThis(method.enclosingClass.toType())
+    override fun visitJcRawThis(value: JcRawThis): JcExpr = JcThis(method.enclosingClass.toType())
 
     override fun visitJcRawArgument(value: JcRawArgument): JcExpr = method.parameters[value.index].let {
         JcArgument.of(it.index, value.name, it.type.asType())
