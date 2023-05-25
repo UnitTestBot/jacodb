@@ -102,6 +102,7 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
                 if (result.instructions.isEmpty()) {
                     instCache.put(method, result as JcInstList<JcInst>)
                     rawInstCache.put(method, result as JcInstList<JcRawInst>)
+                    return
                 }
                 if (result.instructions.first() is JcInst) {
                     instCache.put(method, result as JcInstList<JcInst>)
