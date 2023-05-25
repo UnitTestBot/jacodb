@@ -103,7 +103,7 @@ interface JcClassProcessingTask : JcClasspathTask {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathFeature {
 
-    fun on(event: JcClasspathFeatureEvent) {
+    fun on(result: Any?, vararg input: Any) {
     }
 
 }
@@ -145,17 +145,8 @@ interface JcInstExtFeature : JcClasspathFeature {
 
 interface JcMethodExtFeature : JcClasspathFeature {
 
-    fun flowGraph(method: JcMethod): JcGraph
-    fun instList(method: JcMethod): JcInstList<JcInst>
-    fun rawInstList(method: JcMethod): JcInstList<JcRawInst>
+    fun flowGraph(method: JcMethod): JcGraph? = null
+    fun instList(method: JcMethod): JcInstList<JcInst>? = null
+    fun rawInstList(method: JcMethod): JcInstList<JcRawInst>? = null
 
 }
-
-
-fun JcClasspath.broadcast(event: JcClasspathFeatureEvent) = features?.forEach { it.on(event) }
-
-sealed interface JcClasspathFeatureEvent
-
-data class JcClassFoundEvent(val clazz: JcClassOrInterface) : JcClasspathFeatureEvent
-data class JcTypeFoundEvent(val type: JcType) : JcClasspathFeatureEvent
-data class JcClassNotFound(val name: String) : JcClasspathFeatureEvent

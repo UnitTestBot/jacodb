@@ -17,20 +17,15 @@
 package org.jacodb.impl.features.classpaths
 
 import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
 import com.google.common.cache.CacheStats
 import mu.KLogging
-import org.jacodb.api.JcClassFoundEvent
-import org.jacodb.api.JcClassNotFound
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
-import org.jacodb.api.JcClasspathFeatureEvent
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
@@ -38,9 +33,6 @@ import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.JcCacheSegmentSettings
 import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.ValueStoreType
-import org.jacodb.impl.cfg.nonCachedFlowGraph
-import org.jacodb.impl.cfg.nonCachedInstList
-import org.jacodb.impl.cfg.nonCachedRawInstList
 import java.text.NumberFormat
 import java.util.*
 
@@ -59,25 +51,13 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         .build<String, Optional<JcType>>()
 
     private val rawInstCache = segmentBuilder(settings.rawInstLists)
-        .build(object : CacheLoader<JcMethod, JcInstList<JcRawInst>>() {
-            override fun load(key: JcMethod): JcInstList<JcRawInst> {
-                return nonCachedRawInstList(key)
-            }
-        })
+        .build<JcMethod, JcInstList<JcRawInst>>()
 
     private val instCache = segmentBuilder(settings.instLists)
-        .build(object : CacheLoader<JcMethod, JcInstList<JcInst>>() {
-            override fun load(key: JcMethod): JcInstList<JcInst> {
-                return nonCachedInstList(key)
-            }
-        })
+        .build<JcMethod, JcInstList<JcInst>>()
 
     private val cfgCache = segmentBuilder(settings.flowGraphs)
-        .build(object : CacheLoader<JcMethod, JcGraph>() {
-            override fun load(key: JcMethod): JcGraph {
-                return nonCachedFlowGraph(key)
-            }
-        })
+        .build<JcMethod, JcGraph>()
 
 
     override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
@@ -88,24 +68,52 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         return typesCache.getIfPresent(name)
     }
 
-    override fun flowGraph(method: JcMethod) = cfgCache.getUnchecked(method)
-    override fun instList(method: JcMethod) = instCache.getUnchecked(method)
-    override fun rawInstList(method: JcMethod) = rawInstCache.getUnchecked(method)
+    override fun flowGraph(method: JcMethod) = cfgCache.getIfPresent(method)
+    override fun instList(method: JcMethod) = instCache.getIfPresent(method)
+    override fun rawInstList(method: JcMethod) = rawInstCache.getIfPresent(method)
 
-    override fun on(event: JcClasspathFeatureEvent) {
-        when (event) {
-            is JcClassFoundEvent -> classesCache.put(event.clazz.name, Optional.of(event.clazz))
-            is JcClassNotFound -> classesCache.put(event.name, Optional.empty())
-            is JcTypeFoundEvent -> {
-                val type = event.type
-                if (type is JcClassType && type.typeParameters.isEmpty()) {
-                    typesCache.put(event.type.typeName, Optional.of(event.type))
+    override fun on(result: Any?, vararg input: Any) {
+        if (result == null) {
+            return
+        }
+        when (result) {
+            is Optional<*> -> {
+                if (result.isPresent) {
+                    val found = result.get()
+                    if (found is JcClassOrInterface) {
+                        classesCache.put(found.name, Optional.of(found))
+                    } else if (found is JcClassType && found.typeParameters.isEmpty()) {
+                        typesCache.put(found.typeName, Optional.of(found))
+                    }
+                } else {
+                    val name = input[0] as String
+                    classesCache.put(name, Optional.empty())
+                    typesCache.put(name, Optional.empty())
+                }
+            }
+
+            is JcGraph -> {
+                val method = input[0] as JcMethod
+                cfgCache.put(method, result)
+            }
+
+            is JcInstList<*> -> {
+                val method = input[0] as JcMethod
+                if (result.instructions.isEmpty()) {
+                    instCache.put(method, result as JcInstList<JcInst>)
+                    rawInstCache.put(method, result as JcInstList<JcRawInst>)
+                }
+                if (result.instructions.first() is JcInst) {
+                    instCache.put(method, result as JcInstList<JcInst>)
+                } else {
+                    rawInstCache.put(method, result as JcInstList<JcRawInst>)
                 }
             }
         }
     }
 
-    protected fun segmentBuilder(settings: JcCacheSegmentSettings): CacheBuilder<Any, Any> {
+    protected fun segmentBuilder(settings: JcCacheSegmentSettings)
+            : CacheBuilder<Any, Any> {
         val maxSize = settings.maxSize
         val expiration = settings.expiration
 
@@ -133,7 +141,11 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         stats().entries.toList()
             .sortedBy { it.key }
             .forEach { (key, stat) ->
-                logger.info("$key cache hit rate: ${stat.hitRate().forPercentages()}, total count ${stat.requestCount()}")
+                logger.info(
+                    "$key cache hit rate: ${
+                        stat.hitRate().forPercentages()
+                    }, total count ${stat.requestCount()}"
+                )
             }
     }
 

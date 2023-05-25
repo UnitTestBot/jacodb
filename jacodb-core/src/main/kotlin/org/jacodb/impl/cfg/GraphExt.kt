@@ -339,24 +339,3 @@ open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisito
     }
 
 }
-
-private val JcMethod.methodFeatures
-    get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
-
-fun nonCachedRawInstList(method: JcMethod): JcInstList<JcRawInst> {
-    val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode()).build()
-    return method.methodFeatures.fold(list) { value, feature ->
-        feature.transformRawInstList(method, value)
-    }
-}
-
-fun nonCachedFlowGraph(method: JcMethod): JcGraph {
-    return JcGraphBuilder(method, method.rawInstList).buildFlowGraph()
-}
-
-fun nonCachedInstList(method: JcMethod): JcInstList<JcInst> {
-    val list: JcInstList<JcInst> = JcGraphBuilder(method, method.rawInstList).buildInstList()
-    return method.methodFeatures.fold(list) { value, feature ->
-        feature.transformInstList(method, value)
-    }
-}

@@ -24,8 +24,6 @@ import kotlinx.coroutines.withContext
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClassFoundEvent
-import org.jacodb.api.JcClassNotFound
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
@@ -33,33 +31,32 @@ import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcClasspathTask
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeFoundEvent
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.broadcast
 import org.jacodb.api.ext.toType
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.vfs.ClasspathVfs
 import org.jacodb.impl.vfs.GlobalClassesVfs
+import java.util.*
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
     override val db: JcDatabaseImpl,
     override val features: List<JcClasspathFeature>,
     globalClassVFS: GlobalClassesVfs
-) : JcClasspath {
+) : JcClasspath, JcClasspathExtFeature {
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
-
-    private val classpathExtFeature = features.filterIsInstance<JcClasspathExtFeature>()
+    private val featuresChain = JcFeaturesChain(features + this)
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
@@ -69,20 +66,34 @@ class JcClasspathImpl(
         }
     }
 
-    override fun findClassOrNull(name: String): JcClassOrInterface? {
-        val result = classpathExtFeature.firstNotNullOfOrNull { it.tryFindClass(this, name) }
-        if (result != null) {
-            return result.orElse(null)
-        }
+    override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface> {
         val source = classpathVfs.firstClassOrNull(name)
         val jcClass = source?.let { toJcClass(it.source) }
             ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
                 toJcClass(it)
             }
-        if (jcClass == null) {
-            broadcast(JcClassNotFound(name))
+        return Optional.ofNullable(jcClass)
+    }
+
+    override fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? {
+        if (name.endsWith("[]")) {
+            val targetName = name.removeSuffix("[]")
+            return findTypeOrNull(targetName)?.let {
+                Optional.of(JcArrayTypeImpl(it, true))
+            }
         }
-        return jcClass
+        val predefined = PredefinedPrimitives.of(name, this)
+        if (predefined != null) {
+            return Optional.of(predefined)
+        }
+        val clazz = findClassOrNull(name) ?: return Optional.empty()
+        return Optional.of(typeOf(clazz))
+    }
+
+    override fun findClassOrNull(name: String): JcClassOrInterface? {
+        return featuresChain.newRequest(name).call<JcClasspathExtFeature, Optional<JcClassOrInterface>> {
+            it.tryFindClass(this, name)
+        }?.orElse(null)
     }
 
     override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
@@ -92,9 +103,7 @@ class JcClasspathImpl(
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
             nullable = null
-        ).also {
-            broadcast(JcTypeFoundEvent(it))
-        }
+        )
     }
 
     override fun arrayTypeOf(elementType: JcType): JcArrayType {
@@ -102,27 +111,13 @@ class JcClasspathImpl(
     }
 
     override fun toJcClass(source: ClassSource): JcClassOrInterface {
-        return JcClassOrInterfaceImpl(this, source, features).also {
-            broadcast(JcClassFoundEvent(it))
-        }
+        return JcClassOrInterfaceImpl(this, source, featuresChain)
     }
 
     override fun findTypeOrNull(name: String): JcType? {
-        val result = classpathExtFeature.firstNotNullOfOrNull { it.tryFindType(this, name) }
-        if (result != null) {
-            return result.orElse(null)
-        }
-        if (name.endsWith("[]")) {
-            val targetName = name.removeSuffix("[]")
-            return findTypeOrNull(targetName)?.let {
-                JcArrayTypeImpl(it, true)
-            } ?: targetName.throwClassNotFound()
-        }
-        val predefined = PredefinedPrimitives.of(name, this)
-        if (predefined != null) {
-            return predefined
-        }
-        return typeOf(findClassOrNull(name) ?: return null)
+        return featuresChain.newRequest(name).call<JcClasspathExtFeature, Optional<JcType>> {
+            it.tryFindType(this, name)
+        }?.orElse(null)
     }
 
     override suspend fun <T : JcClasspathTask> execute(task: T): T {

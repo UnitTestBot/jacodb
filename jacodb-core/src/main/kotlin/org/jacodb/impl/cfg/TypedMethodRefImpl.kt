@@ -51,7 +51,7 @@ interface MethodSignatureRef : TypedMethodRef {
 
     fun JcClassType.findDeclaredMethod(filter: (JcTypedMethod) -> Boolean): JcTypedMethod? {
         val types = argTypes.joinToString { it.typeName }
-        return this.declaredMethods.first { it.name == name && filter(it) && it.method.parameters.joinToString { it.type.typeName } == types }
+        return this.declaredMethods.firstOrNull { it.name == name && filter(it) && it.method.parameters.joinToString { it.type.typeName } == types }
     }
 
     val methodNotFoundMessage: String
@@ -86,7 +86,9 @@ data class TypedStaticMethodRefImpl(
     )
 
     override val method: JcTypedMethod by weakLazy {
-        findDeclaredMethod { it.isStatic } ?: throw IllegalStateException(methodNotFoundMessage)
+        findDeclaredMethod { it.isStatic } ?: type.superType?.let {
+            TypedStaticMethodRefImpl(it, name, argTypes, returnType).method
+        } ?: throw IllegalStateException(methodNotFoundMessage)
     }
 }
 
@@ -105,7 +107,9 @@ data class TypedSpecialMethodRefImpl(
     )
 
     override val method: JcTypedMethod by weakLazy {
-        findDeclaredMethod() ?: throw IllegalStateException(methodNotFoundMessage)
+        findDeclaredMethod() ?: type.superType?.let {
+            TypedSpecialMethodRefImpl(it, name, argTypes, returnType).method
+        } ?: throw IllegalStateException(methodNotFoundMessage)
     }
 
 }
@@ -158,8 +162,8 @@ data class TypedMethodRefImpl(
 
 fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
     return when (expr) {
-        is JcRawStaticCallExpr -> TypedStaticMethodRefImpl((this as JcClassType).classpath, expr)
-        is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl((this as JcClassType).classpath, expr)
+        is JcRawStaticCallExpr -> TypedStaticMethodRefImpl(this, expr)
+        is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl(this, expr)
         else -> TypedMethodRefImpl(this, expr)
     }
 }

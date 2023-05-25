@@ -37,17 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class JavaApiTest {
 
-    private static class ArgumentResolver extends TypedExprResolver<JcArgument> {
-
-        @Override
-        public void ifMatches(@NotNull JcExpr jcExpr) {
-            if (jcExpr instanceof JcArgument) {
-                getResult().add((JcArgument) jcExpr);
-            }
-        }
-
-    }
-
     @Test
     public void createJcdb() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
