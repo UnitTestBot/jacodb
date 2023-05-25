@@ -39,6 +39,7 @@ import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.jcdbSignature
 import org.jacodb.api.ext.jvmSignature
 import org.jacodb.api.ext.methods
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
@@ -483,7 +484,28 @@ abstract class DatabaseEnvTest {
         method.parameters.forEach {
             assertNotNull(it.method)
         }
+    }
 
+    @Test
+    fun `class caching feature works for not existed class`() {
+        val notExistedClass = "xxx.Xxx"
+        val clazz = cp.findClassOrNull(notExistedClass)
+        assertNull(clazz)
+        val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
+        val optional = cache.tryFindClass(cp, notExistedClass)
+        assertNotNull(optional)
+        assertFalse(optional!!.isPresent)
+    }
+
+    @Test
+    fun `class caching feature works for existed class`() {
+        val existedClass = "java.lang.String"
+        val clazz = cp.findClassOrNull(existedClass)
+        assertNotNull(clazz)
+        val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
+        val optional = cache.tryFindClass(cp, existedClass)
+        assertNotNull(optional)
+        assertTrue(optional!!.isPresent)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
