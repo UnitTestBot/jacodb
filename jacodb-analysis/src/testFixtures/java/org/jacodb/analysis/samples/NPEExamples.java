@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+package org.jacodb.analysis.samples;
+
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("ALL")
