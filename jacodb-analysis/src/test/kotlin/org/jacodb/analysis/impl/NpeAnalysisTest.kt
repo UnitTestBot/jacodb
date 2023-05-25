@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.impl
 
-import NPEExamples
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
@@ -25,6 +24,7 @@ import org.jacodb.analysis.NPEAnalysisFactory
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.samples.NPEExamples
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
