@@ -89,15 +89,16 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
     }
 
     override fun registerIfNeeded(locations: List<JcByteCodeLocation>): RegistrationResult {
+        val uniqueLocations = locations.toSet()
         return persistence.write {
             val result = arrayListOf<RegisteredLocation>()
             val toAdd = arrayListOf<JcByteCodeLocation>()
-            val fsId = locations.map { it.fileSystemId }
+            val fsId = uniqueLocations.map { it.fileSystemId }
             val existed = it.selectFrom(BYTECODELOCATIONS)
                 .where(BYTECODELOCATIONS.UNIQUEID.`in`(fsId))
                 .fetch().associateBy { it.uniqueid }
 
-            locations.forEach {
+            uniqueLocations.forEach {
                 val found = existed[it.fileSystemId]
                 if (found == null) {
                     toAdd += it

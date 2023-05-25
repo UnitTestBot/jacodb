@@ -91,7 +91,7 @@ class JcDatabaseImpl(
 
     private fun List<JcClasspathFeature>?.appendBuiltInFeatures(): List<JcClasspathFeature> {
         if (this != null && any { it is ClasspathCache }) {
-            return listOf(KotlinMetadata, MethodInstructionsFeature) + this
+            return this + listOf(KotlinMetadata, MethodInstructionsFeature)
         }
         return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature) + orEmpty()
     }
