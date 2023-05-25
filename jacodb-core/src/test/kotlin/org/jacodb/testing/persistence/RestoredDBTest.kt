@@ -29,14 +29,14 @@ class RestoredDBTest : DatabaseEnvTest() {
 
     companion object : WithRestoredDB()
 
-    override val cp: JcClasspath
-        get() = runBlocking {
+    override val cp: JcClasspath by lazy {
+        runBlocking {
             val withDB = this@RestoredDBTest.javaClass.withDB
             withDB.db.classpath(allClasspath)
         }
+    }
 
-    override val hierarchyExt: HierarchyExtension
-        get() = runBlocking { cp.hierarchyExt() }
+    override val hierarchyExt: HierarchyExtension by lazy { runBlocking { cp.hierarchyExt() } }
 
 
 }
