@@ -157,7 +157,11 @@ data class TypedMethodRefImpl(
 }
 
 fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
-    return TypedMethodRefImpl(this, expr)
+    return when (expr) {
+        is JcRawStaticCallExpr -> TypedStaticMethodRefImpl((this as JcClassType).classpath, expr)
+        is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl((this as JcClassType).classpath, expr)
+        else -> TypedMethodRefImpl(this, expr)
+    }
 }
 
 fun JcTypedMethod.methodRef(): TypedMethodRef {
