@@ -33,6 +33,7 @@ import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
 import org.jacodb.impl.weakLazy
 import org.objectweb.asm.tree.ClassNode
+import java.util.*
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassOrInterfaceImpl(
@@ -129,36 +130,31 @@ class JcClassOrInterfaceImpl(
 
     override val declaredFields: List<JcField>
         get() {
-            val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
-            return when {
-                hasClassFeatures -> {
-                    val modifiedFields = result.toMutableList()
-                    featuresChain.newRequest().run<JcClassExtFeature> {
-                        it.fieldsOf(this)?.let {
-                            modifiedFields.addAll(it)
-                        }
+            val default = info.fields.map { JcFieldImpl(this, it) }
+            if (hasClassFeatures) {
+                val result = TreeSet<JcField> { o1, o2 -> o1.name.compareTo(o2.name) }
+                featuresChain.newRequest().run<JcClassExtFeature> {
+                    it.fieldsOf(this)?.let {
+                        result.addAll(it)
                     }
-                    modifiedFields
                 }
-
-                else -> result
+                return (result + default).toList()
             }
+            return default
         }
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, featuresChain) }
-        when {
-            hasClassFeatures -> {
-                val modifiedMethods = result.toMutableList()
-                featuresChain.newRequest().run<JcClassExtFeature> {
-                    it.methodsOf(this)?.let {
-                        modifiedMethods.addAll(it)
-                    }
+        val default = info.methods.map { toJcMethod(it, featuresChain) }
+        if (hasClassFeatures) {
+            val result = TreeSet<JcMethod> { o1, o2 -> (o1.name + o1.description).compareTo(o2.name + o2.description) }
+            featuresChain.newRequest().run<JcClassExtFeature> {
+                it.methodsOf(this)?.let {
+                    result.addAll(it)
                 }
-                modifiedMethods
             }
-
-            else -> result
+            (result + default).toList()
+        } else {
+            default
         }
     }
 
