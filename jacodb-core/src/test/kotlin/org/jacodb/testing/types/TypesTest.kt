@@ -16,14 +16,15 @@
 
 package org.jacodb.testing.types
 
-import com.zaxxer.hikari.pool.HikariPool
-import com.zaxxer.hikari.util.ConcurrentBag
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.toType
+import org.jacodb.impl.types.JcClassTypeImpl
+import org.jacodb.impl.types.substition.JcSubstitutor
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -98,6 +99,29 @@ class TypesTest : BaseTypesTest() {
 
         val secondParam = cacheVisitorType.typeArguments[1]
         assertEquals(secondParam.jcClass, cp.findClass("sun.security.ssl.SSLSessionImpl"))
+    }
+
+    private val listClass = List::class.java.name
+
+    @Test
+    fun `raw types equality`() {
+        val rawType1 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
+        val rawType2 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
+        assertEquals(rawType1, rawType2)
+    }
+
+    interface X : List<String>
+    interface Y : List<String>
+
+    @Test
+    fun `parametrized types equality`() {
+        val rawType = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
+        val type1 = cp.findClass<X>().toType().interfaces.first()
+        val type2 = cp.findClass<Y>().toType().interfaces.first()
+        assertNotEquals(rawType, type1)
+        assertNotEquals(rawType, type2)
+
+        assertNotEquals(type1, type2)
     }
 
 }
