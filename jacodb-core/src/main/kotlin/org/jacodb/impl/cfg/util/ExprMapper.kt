@@ -318,9 +318,9 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
             else -> JcRawDynamicCallExpr(
                 expr.bsm,
                 expr.bsmArgs,
-                expr.callCiteMethodName,
-                expr.callCiteArgTypes,
-                expr.callCiteReturnType,
+                expr.callSiteMethodName,
+                expr.callSiteArgTypes,
+                expr.callSiteReturnType,
                 newArgs
             )
         }
