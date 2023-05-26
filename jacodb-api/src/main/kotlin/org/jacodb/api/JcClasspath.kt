@@ -103,9 +103,17 @@ interface JcClassProcessingTask : JcClasspathTask {
 @JvmDefaultWithoutCompatibility
 interface JcClasspathFeature {
 
-    fun on(result: Any?, vararg input: Any) {
+    fun on(event: JcFeatureEvent) {
     }
 
+    fun event(result: Any, input: Array<Any>): JcFeatureEvent? = null
+
+}
+
+interface JcFeatureEvent {
+    val feature: JcClasspathFeature
+    val result: Any
+    val input: Array<Any>
 }
 
 @JvmDefaultWithoutCompatibility
