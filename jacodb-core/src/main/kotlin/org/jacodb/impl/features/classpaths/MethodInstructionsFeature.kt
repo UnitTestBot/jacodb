@@ -16,6 +16,7 @@
 
 package org.jacodb.impl.features.classpaths
 
+import org.jacodb.api.JcFeatureEvent
 import org.jacodb.api.JcInstExtFeature
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
@@ -26,6 +27,7 @@ import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.cfg.JcGraphImpl
 import org.jacodb.impl.cfg.JcInstListBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
+import org.jacodb.impl.features.JcFeatureEventImpl
 
 object MethodInstructionsFeature : JcMethodExtFeature {
 
@@ -49,6 +51,10 @@ object MethodInstructionsFeature : JcMethodExtFeature {
         return method.methodFeatures.fold(list) { value, feature ->
             feature.transformRawInstList(method, value)
         }
+    }
+
+    override fun event(result: Any, input: Array<Any>): JcFeatureEvent {
+        return JcFeatureEventImpl(this, result, input)
     }
 
 }
