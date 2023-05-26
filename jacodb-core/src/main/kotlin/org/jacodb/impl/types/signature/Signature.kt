@@ -22,7 +22,10 @@ import org.jacodb.api.Resolution
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 
-internal abstract class Signature<T : Resolution>(val owner: JcAccessible, private val kmTypeParameters: List<KmTypeParameter>?) :
+internal abstract class Signature<T : Resolution>(
+    val owner: JcAccessible,
+    private val kmTypeParameters: List<KmTypeParameter>?
+) :
     TypeRegistrant.RejectingSignatureVisitor(), TypeRegistrant {
 
     protected val typeVariables = ArrayList<JvmTypeParameterDeclaration>()

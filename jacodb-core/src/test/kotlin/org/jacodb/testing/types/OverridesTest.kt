@@ -20,8 +20,6 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isConstructor
-import org.jacodb.api.ext.isSynthetic
 import org.jacodb.api.ext.methods
 import org.jacodb.api.ext.toType
 import org.jacodb.testing.hierarchies.Overrides
@@ -33,7 +31,7 @@ import java.io.Closeable
 class OverridesTest : BaseTypesTest() {
 
     @Test
-    fun `types methods should respect overrides `() {
+    fun `types methods should respect overrides`() {
         val impl1 = cp.findClass<Overrides.Impl1>().toType()
         assertEquals(1, impl1.constructors.size)
         assertEquals(2, impl1.declaredMethods.typedNotSynthetic().size)

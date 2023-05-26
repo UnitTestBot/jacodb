@@ -44,7 +44,8 @@ val JcType.nullabilityTree: TypeNullabilityTree
         return when (this) {
             is JcClassType -> TypeNullabilityTree(nullable, typeArguments.map { it.nullabilityTree })
             is JcArrayType -> TypeNullabilityTree(nullable, listOf(elementType.nullabilityTree))
-            is JcBoundedWildcard -> (upperBounds + lowerBounds).map { it.nullabilityTree }.single()  // For bounded wildcard we are interested only in nullability of bound, not of the wildcard itself
+            is JcBoundedWildcard -> (upperBounds + lowerBounds).map { it.nullabilityTree }
+                .single()  // For bounded wildcard we are interested only in nullability of bound, not of the wildcard itself
             is JcUnboundWildcard -> TypeNullabilityTree(nullable, listOf())
             is JcTypeVariable -> TypeNullabilityTree(nullable, bounds.map { it.nullabilityTree })
             is JcTypeVariableDeclaration -> TypeNullabilityTree(nullable, bounds.map { it.nullabilityTree })

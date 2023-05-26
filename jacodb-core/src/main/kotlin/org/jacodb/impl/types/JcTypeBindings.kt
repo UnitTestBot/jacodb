@@ -43,22 +43,27 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
         is JvmClassRefType -> typeOf(findClass(jvmType.name), jvmType.isNullable, jvmType.annotations)
         is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType), jvmType.isNullable, jvmType.annotations)
         is JvmParameterizedType -> {
-            val clazz = findClass(jvmType.name)
-            JcClassTypeImpl(
-                clazz,
-                null,
-                parameters ?: jvmType.parameterTypes,
-                nullable = jvmType.isNullable,
-                jvmType.annotations
-            )
+            val params = parameters ?: jvmType.parameterTypes
+            when {
+                params.isNotEmpty() -> JcClassTypeImpl(
+                        this,
+                        jvmType.name,
+                        null,
+                        params,
+                        nullable = jvmType.isNullable,
+                        jvmType.annotations
+                    )
+                // raw types
+                else -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
+            }
         }
 
         is JvmParameterizedType.JvmNestedType -> {
-            val clazz = findClass(jvmType.name)
             val outerParameters = (jvmType.ownerType as? JvmParameterizedType)?.parameterTypes
             val outerType = typeOf(jvmType.ownerType, parameters ?: outerParameters)
             JcClassTypeImpl(
-                clazz,
+                this,
+                jvmType.name,
                 outerType as JcClassTypeImpl,
                 jvmType.parameterTypes,
                 nullable = jvmType.isNullable,
@@ -88,6 +93,9 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
 
 class JcTypeVariableDeclarationImpl(
     override val symbol: String,
-    override val bounds: List<JcRefType>,
+    private val classpath: JcClasspath,
+    private val jvmBounds: List<JvmType>,
     override val owner: JcAccessible
-) : JcTypeVariableDeclaration
+) : JcTypeVariableDeclaration {
+    override val bounds: List<JcRefType> get() = jvmBounds.map { classpath.typeOf(it) as JcRefType }
+}

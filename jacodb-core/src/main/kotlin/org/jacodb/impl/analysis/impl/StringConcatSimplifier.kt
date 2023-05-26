@@ -37,6 +37,7 @@ import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.autoboxIfNeeded
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcGraphImpl
+import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
 
@@ -80,7 +81,7 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
                     val concatMethod = stringType.methods.first {
                         it.name == "concat" && it.parameters.size == 1 && it.parameters.first().type == stringType
                     }
-                    val newConcatExpr = JcVirtualCallExpr(concatMethod, firstStr, listOf(secondStr))
+                    val newConcatExpr = JcVirtualCallExpr(concatMethod.methodRef(), firstStr, listOf(secondStr))
                     result += JcAssignInst(inst.location, lhv, newConcatExpr)
                     instructionReplacements[inst] = result.first()
                     catchReplacements[inst] = result
@@ -111,7 +112,7 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
                 val method = boxedType.methods.first {
                     it.name == "toString" && it.parameters.size == 1 && it.parameters.first().type == value.type
                 }
-                val toStringExpr = JcStaticCallExpr(method, listOf(value))
+                val toStringExpr = JcStaticCallExpr(method.methodRef(), listOf(value))
                 val assignment = JcLocalVar("${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
@@ -123,7 +124,7 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
                 val method = boxedType.methods.first {
                     it.name == "toString" && it.parameters.isEmpty()
                 }
-                val toStringExpr = JcVirtualCallExpr(method, value, emptyList())
+                val toStringExpr = JcVirtualCallExpr(method.methodRef(), value, emptyList())
                 val assignment = JcLocalVar("${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
@@ -143,6 +144,7 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
         inst.location,
         inst.throwable,
+        inst.throwableTypes,
         inst.throwers.flatMap { indicesOf(it) }
     )
 

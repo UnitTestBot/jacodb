@@ -71,7 +71,7 @@ class DatabaseLifecycleTest {
         val barKt = cp.findClass<BarKt>()
         db.awaitBackgroundJobs()
         assertTrue(testDirClone.deleteRecursively())
-        assertNotNull(barKt.declaredMethods.first().body())
+        assertNotNull(barKt.declaredMethods.first().asmNode())
 
         db.refresh()
 
@@ -85,7 +85,7 @@ class DatabaseLifecycleTest {
         }
 
         with(cp.findClass<BarKt>()) {
-            assertNotNull(declaredMethods.first().body())
+            assertNotNull(declaredMethods.first().asmNode())
         }
 
         cp.close()
@@ -103,7 +103,7 @@ class DatabaseLifecycleTest {
 
         assertNotNull(
             runBlocking {
-                barKt.declaredMethods.first().body()
+                barKt.declaredMethods.first().asmNode()
             }
         )
     }
@@ -129,7 +129,7 @@ class DatabaseLifecycleTest {
         db.awaitBackgroundJobs() // is required for deleting jar
 
         assertTrue(guavaLibClone.deleteWithRetries(3))
-        assertNotNull(abstractCacheClass.declaredMethods.first().body())
+        assertNotNull(abstractCacheClass.declaredMethods.first().asmNode())
 
         db.refresh()
         withRegistry {
@@ -152,7 +152,7 @@ class DatabaseLifecycleTest {
         assertNotNull(abstractCacheClass!!)
 
         assertNotNull(
-            abstractCacheClass.declaredMethods.first().body()
+            abstractCacheClass.declaredMethods.first().asmNode()
         )
     }
 
@@ -166,7 +166,7 @@ class DatabaseLifecycleTest {
             val abstractCacheClass = findClass<AbstractCache<*, *>>()
 
             assertNotNull(
-                abstractCacheClass.declaredMethods.first().body()
+                abstractCacheClass.declaredMethods.first().asmNode()
             )
         }
         withContext(Dispatchers.IO) {
@@ -188,7 +188,7 @@ class DatabaseLifecycleTest {
     fun `jar should not be blocked after method read`() = runBlocking {
         val cp = db.classpath(listOf(guavaLibClone))
         val clazz = cp.findClass<Iterators>()
-        assertNotNull(clazz.declaredMethods.first().body())
+        assertNotNull(clazz.declaredMethods.first().asmNode())
         db.awaitBackgroundJobs()
         assertTrue(guavaLibClone.deleteWithRetries(3))
     }

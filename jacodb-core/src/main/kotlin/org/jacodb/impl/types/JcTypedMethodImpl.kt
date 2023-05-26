@@ -16,7 +16,6 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
@@ -24,9 +23,8 @@ import org.jacodb.api.JcTypeVariableDeclaration
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.MethodResolution
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.isStatic
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
@@ -56,7 +54,7 @@ class JcTypedMethodImpl(
     override val access: Int
         get() = this.method.access
 
-    private val info by lazy(LazyThreadSafetyMode.NONE) {
+    private val info by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val signature = MethodSignature.withDeclarations(method)
         val impl = signature as? MethodResolutionImpl
         val substitutor = if (!method.isStatic) {
@@ -67,7 +65,7 @@ class JcTypedMethodImpl(
 
         TypedMethodInfo(
             substitutor = substitutor,
-            resolution = MethodSignature.withDeclarations(method)
+            resolution = signature
         )
     }
 
@@ -80,11 +78,14 @@ class JcTypedMethodImpl(
             return impl.typeVariables.map { it.asJcDeclaration(method) }
         }
 
-    override val exceptions: List<JcClassOrInterface>
+    override val exceptions: List<JcRefType>
         get() {
-            val impl = info.impl ?: return emptyList()
-            return impl.exceptionTypes.map {
-                classpath.findClass(it.name)
+            val typesFromSignature = info.impl?.exceptionTypes?.map {
+                classpath.typeOf(info.substitutor.substitute(it)) as JcRefType
+            } ?: emptyList()
+
+            return typesFromSignature.ifEmpty {
+                method.exceptions.map { classpath.findTypeOrNull(it) as JcRefType }
             }
         }
 
@@ -106,7 +107,7 @@ class JcTypedMethodImpl(
             }
         }
 
-    override val returnType: JcType by lazy(LazyThreadSafetyMode.NONE) {
+    override val returnType: JcType by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val typeName = method.returnType.typeName
         val info = info
         val impl = info.impl

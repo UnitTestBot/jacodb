@@ -38,7 +38,7 @@ interface JcPointsToAnalysis<Context> {
     /**
      * @return the set of objects pointed to by instance field [field] of the objects pointed to by [local] in context [context].
      */
-    fun reachingObjects(local: JcLocal, field: JcField): JcPointsToSet  = reachingObjects(local, field, null)
+    fun reachingObjects(local: JcLocal, field: JcField): JcPointsToSet = reachingObjects(local, field, null)
     fun reachingObjects(local: JcLocal, field: JcField, context: Context? = null): JcPointsToSet
 
     /**

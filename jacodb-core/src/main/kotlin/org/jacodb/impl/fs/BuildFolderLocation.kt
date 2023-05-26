@@ -30,18 +30,19 @@ class BuildFolderLocation(folder: File) : AbstractByteCodeLocation(folder) {
     override val type: LocationType
         get() = LocationType.APP
 
-    override val fsId by lazy { currentHash() }
+    override val fileSystemId by lazy { currentHash() }
 
     override fun currentHash(): String {
-        var lastModifiedDate = jarOrFolder.lastModified()
-        jarOrFolder.walk().onEnter {
-            val lastModified = it.lastModified()
-            if (lastModifiedDate < lastModified) {
-                lastModifiedDate = lastModified
+        return buildString {
+            append(jarOrFolder.absolutePath)
+            append(jarOrFolder.lastModified())
+            jarOrFolder.walk().onEnter {
+                append(it.lastModified())
+                append(it.name)
+                true
             }
-            true
-        }
-        return jarOrFolder.absolutePath + lastModifiedDate
+
+        }.shaHash
     }
 
     override fun createRefreshed() = BuildFolderLocation(jarOrFolder)

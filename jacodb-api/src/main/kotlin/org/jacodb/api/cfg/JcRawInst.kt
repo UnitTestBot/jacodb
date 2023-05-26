@@ -146,17 +146,22 @@ class JcRawThrowInst(
     }
 }
 
+data class JcRawCatchEntry(
+    val acceptedThrowable: TypeName,
+    val startInclusive: JcRawLabelRef,
+    val endExclusive: JcRawLabelRef
+)
+
 class JcRawCatchInst(
     override val owner: JcMethod,
     val throwable: JcRawValue,
     val handler: JcRawLabelRef,
-    val startInclusive: JcRawLabelRef,
-    val endExclusive: JcRawLabelRef
+    val entries: List<JcRawCatchEntry>,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "catch ($throwable: ${throwable.typeName}) $startInclusive - $endExclusive"
+    override fun toString(): String = "catch ($throwable: ${throwable.typeName})"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCatchInst(this)
@@ -639,6 +644,10 @@ sealed interface JcRawCallExpr : JcRawExpr {
         get() = args
 }
 
+sealed interface JcRawInstanceExpr: JcRawCallExpr {
+    val instance: JcRawValue
+}
+
 sealed interface BsmArg
 
 data class BsmIntArg(val value: Int) : BsmArg {
@@ -703,9 +712,9 @@ data class JcRawVirtualCallExpr(
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
     override val returnType: TypeName,
-    val instance: JcRawValue,
+    override val instance: JcRawValue,
     override val args: List<JcRawValue>,
-) : JcRawCallExpr {
+) : JcRawInstanceExpr {
     override val operands: List<JcRawValue>
         get() = listOf(instance) + args
 
@@ -722,9 +731,9 @@ data class JcRawInterfaceCallExpr(
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
     override val returnType: TypeName,
-    val instance: JcRawValue,
+    override val instance: JcRawValue,
     override val args: List<JcRawValue>,
-) : JcRawCallExpr {
+) : JcRawInstanceExpr {
     override val operands: List<JcRawValue>
         get() = listOf(instance) + args
 
@@ -756,9 +765,9 @@ data class JcRawSpecialCallExpr(
     override val methodName: String,
     override val argumentTypes: List<TypeName>,
     override val returnType: TypeName,
-    val instance: JcRawValue,
+    override val instance: JcRawValue,
     override val args: List<JcRawValue>,
-) : JcRawCallExpr {
+) : JcRawInstanceExpr {
     override fun toString(): String =
         "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 

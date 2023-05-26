@@ -16,9 +16,13 @@
 
 package org.jacodb.testing.types
 
+import com.zaxxer.hikari.pool.HikariPool
+import com.zaxxer.hikari.util.ConcurrentBag
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.ext.isConstructor
+import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.toType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -70,4 +74,30 @@ class TypesTest : BaseTypesTest() {
         assertEquals(false, actualParameters.first().type.nullable)
         assertEquals(true, actualParameters.get(1).type.nullable)
     }
+
+    @Test
+    fun `inner-outer classes recursion`() {
+        cp.findClass("com.zaxxer.hikari.pool.HikariPool").toType().interfaces
+        cp.findClass("com.zaxxer.hikari.util.ConcurrentBag").toType()
+    }
+
+    @Test
+    fun `kotlin private inline fun`() {
+        val type = cp.findClass("kotlin.text.RegexKt\$fromInt\$1\$1").toType().interfaces.single().typeArguments.first()
+        type as JcTypeVariable
+        assertTrue(type.bounds.isNotEmpty())
+    }
+
+    @Test
+    fun `interfaces types test`() {
+        val sessionCacheVisitorType = cp.findClass("sun.security.ssl.SSLSessionContextImpl\$SessionCacheVisitor").toType()
+        val cacheVisitorType = sessionCacheVisitorType.interfaces.first()
+        val firstParam = cacheVisitorType.typeArguments.first()
+
+        assertEquals(firstParam.jcClass, cp.findClass("sun.security.ssl.SessionId"))
+
+        val secondParam = cacheVisitorType.typeArguments[1]
+        assertEquals(secondParam.jcClass, cp.findClass("sun.security.ssl.SSLSessionImpl"))
+    }
+
 }

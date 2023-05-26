@@ -117,13 +117,14 @@ internal interface JvmTypeVisitor {
 }
 
 
-internal val Map<String, JvmTypeParameterDeclaration>.fixDeclarationVisitor: JvmTypeVisitor get() {
-    val declarations = this
-    return object : JvmTypeVisitor {
+internal val Map<String, JvmTypeParameterDeclaration>.fixDeclarationVisitor: JvmTypeVisitor
+    get() {
+        val declarations = this
+        return object : JvmTypeVisitor {
 
-        override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
-            type.declaration = declarations[type.symbol]!!
-            return type
+            override fun visitTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
+                type.declaration = declarations[type.symbol]!!
+                return type
+            }
         }
     }
-}

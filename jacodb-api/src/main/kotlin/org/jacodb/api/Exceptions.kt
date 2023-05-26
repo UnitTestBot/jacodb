@@ -27,5 +27,5 @@ fun String.throwClassNotFound(): Nothing {
 }
 
 inline fun <reified T> throwClassNotFound(): Nothing {
-    throw NoClassInClasspathException(T::class.java.name)
+    T::class.java.name.throwClassNotFound()
 }

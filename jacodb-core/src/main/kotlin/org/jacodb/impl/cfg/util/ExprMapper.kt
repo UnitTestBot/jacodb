@@ -88,6 +88,7 @@ import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
 
 class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRawInst>, JcRawExprVisitor<JcRawExpr> {
+
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcRawInst {
         val newLhv = inst.lhv.accept(this) as JcRawValue
         val newRhv = inst.rhv.accept(this)
@@ -149,7 +150,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         val newThrowable = inst.throwable.accept(this) as JcRawValue
         return when (inst.throwable) {
             newThrowable -> inst
-            else -> JcRawCatchInst(inst.owner, newThrowable, inst.handler, inst.startInclusive, inst.endExclusive)
+            else -> JcRawCatchInst(inst.owner, newThrowable, inst.handler, inst.entries)
         }
     }
 
@@ -174,12 +175,11 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         }
     }
 
-    private fun <T : JcRawExpr> exprHandler(expr: T, handler: () -> JcRawExpr): JcRawExpr {
-        if (expr in mapping) return mapping.getValue(expr)
-        return handler()
+    private inline fun <T : JcRawExpr> exprHandler(expr: T, handler: () -> JcRawExpr): JcRawExpr {
+        return mapping.getOrElse(expr, handler)
     }
 
-    private fun <T : JcRawBinaryExpr> binaryHandler(expr: T, handler: (TypeName, JcRawValue, JcRawValue) -> T) =
+    private inline fun <T : JcRawBinaryExpr> binaryHandler(expr: T, handler: (TypeName, JcRawValue, JcRawValue) -> T) =
         exprHandler(expr) {
             val newLhv = expr.lhv.accept(this) as JcRawValue
             val newRhv = expr.rhv.accept(this) as JcRawValue

@@ -18,29 +18,43 @@ package org.jacodb.impl.bytecode
 
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassExtFeature
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
-import org.jacodb.impl.fs.fullAsmNodeWithFrames
+import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
+import org.jacodb.impl.weakLazy
+import org.objectweb.asm.tree.ClassNode
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassOrInterfaceImpl(
     override val classpath: JcClasspath,
     private val classSource: ClassSource,
-    private val features: List<JcClasspathFeature>?
+    private val featuresChain: JcFeaturesChain,
 ) : JcClassOrInterface {
+
+    private val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
 
     private val cachedInfo: ClassInfo? = when (classSource) {
         is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
         is ClassSourceImpl -> classSource.info // we can easily read link let's do it
         else -> null // maybe we do not need to do right now
+    }
+
+    private val extensionData by lazy(PUBLICATION) {
+        HashMap<String, Any>().also { map ->
+            featuresChain.newRequest().run<JcClassExtFeature> {
+                map.putAll(it.extensionValuesOf(this).orEmpty())
+            }
+        }
     }
 
     val info by lazy { cachedInfo ?: classSource.info }
@@ -56,35 +70,47 @@ class JcClassOrInterfaceImpl(
     override val annotations: List<JcAnnotation>
         get() = info.annotations.map { JcAnnotationImpl(it, classpath) }
 
-    override val interfaces by lazy(LazyThreadSafetyMode.NONE) {
-        info.interfaces.map {
-            classpath.findClass(it)
+    override val interfaces: List<JcClassOrInterface>
+        get() {
+            return info.interfaces.map {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val superClass by lazy(LazyThreadSafetyMode.NONE) {
-        info.superClass?.let {
-            classpath.findClass(it)
+    override val superClass: JcClassOrInterface?
+        get() {
+            return info.superClass?.let {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val outerClass by lazy(LazyThreadSafetyMode.NONE) {
-        info.outerClass?.className?.let {
-            classpath.findClass(it)
+    override val outerClass: JcClassOrInterface?
+        get() {
+            return info.outerClass?.className?.let {
+                classpath.findClass(it)
+            }
         }
-    }
 
-    override val innerClasses by lazy(LazyThreadSafetyMode.NONE) {
-        info.innerClasses.map {
-            classpath.findClass(it)
+    override val innerClasses: List<JcClassOrInterface>
+        get() {
+            return info.innerClasses.map {
+                classpath.findClass(it)
+            }
         }
-    }
 
     override val access: Int
         get() = info.access
 
-    override fun bytecode() = classSource.fullAsmNodeWithFrames(classpath)
-    override fun binaryBytecode(): ByteArray = classSource.byteCode
+    private val lazyAsmNode: ClassNode by weakLazy {
+        classSource.fullAsmNode
+    }
+
+    override fun asmNode() = lazyAsmNode
+    override fun bytecode(): ByteArray = classSource.byteCode
+
+    override fun <T> extensionValue(key: String): T? {
+        return extensionData[key] as? T
+    }
 
     override val isAnonymous: Boolean
         get() {
@@ -101,35 +127,37 @@ class JcClassOrInterfaceImpl(
             return null
         }
 
-    override val declaredFields: List<JcField> by lazy(LazyThreadSafetyMode.NONE) {
-        val fields = info.fields
-        val result: List<JcField> = fields.map { JcFieldImpl(this, it) }
-        when {
-            !features.isNullOrEmpty() -> {
-                val modifiedFields = result.toMutableList()
-                features.forEach {
-                    it.fieldsOf(this)?.let {
-                        modifiedFields.addAll(it)
+    override val declaredFields: List<JcField>
+        get() {
+            val result: List<JcField> = info.fields.map { JcFieldImpl(this, it) }
+            return when {
+                hasClassFeatures -> {
+                    val modifiedFields = result.toMutableList()
+                    featuresChain.newRequest().run<JcClassExtFeature> {
+                        it.fieldsOf(this)?.let {
+                            modifiedFields.addAll(it)
+                        }
                     }
+                    modifiedFields
                 }
-                modifiedFields
-            }
-            else -> result
-        }
-    }
 
-    override val declaredMethods: List<JcMethod> by lazy(LazyThreadSafetyMode.NONE) {
-        val result: List<JcMethod> = info.methods.map { toJcMethod(it, classSource, features) }
+                else -> result
+            }
+        }
+
+    override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
+        val result: List<JcMethod> = info.methods.map { toJcMethod(it, featuresChain) }
         when {
-            !features.isNullOrEmpty() -> {
+            hasClassFeatures -> {
                 val modifiedMethods = result.toMutableList()
-                features.forEach {
+                featuresChain.newRequest().run<JcClassExtFeature> {
                     it.methodsOf(this)?.let {
                         modifiedMethods.addAll(it)
                     }
                 }
                 modifiedMethods
             }
+
             else -> result
         }
     }
@@ -143,5 +171,9 @@ class JcClassOrInterfaceImpl(
 
     override fun hashCode(): Int {
         return 31 * declaration.hashCode() + name.hashCode()
+    }
+
+    override fun toString(): String {
+        return "(id:${declaration.location.id})$name"
     }
 }

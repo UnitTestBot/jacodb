@@ -44,11 +44,10 @@ import org.jacodb.api.cfg.JcSwitchInst
 import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.JcThrowInst
 import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.applyAndGet
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.isAbstract
-import org.jacodb.api.ext.isAnnotation
-import org.jacodb.api.ext.isInterface
+import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.isKotlin
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
@@ -58,19 +57,20 @@ import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.cfg.JcBlockGraphImpl
-import org.jacodb.impl.cfg.JcGraphBuilder
+import org.jacodb.impl.cfg.JcInstListBuilder
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
-import org.jacodb.impl.cfg.applyAndGet
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
+import org.jacodb.testing.kotlinxCoroutines
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -287,6 +287,8 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
+    override fun visitExternalJcInst(inst: JcInst) {
+    }
 }
 
 class IRTest : BaseTest() {
@@ -318,7 +320,8 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<BinarySearchTree<*>.BinarySearchTreeIterator>())
     }
 
-    @Test
+
+        @Test
     fun `get ir of self`() {
         testClass(cp.findClass<JcClasspathImpl>())
         testClass(cp.findClass<JcClassOrInterfaceImpl>())
@@ -327,20 +330,28 @@ class IRTest : BaseTest() {
         testClass(cp.findClass<Simplifier>())
         testClass(cp.findClass<JcDatabaseImpl>())
         testClass(cp.findClass<ExprMapper>())
-        testClass(cp.findClass<JcGraphBuilder>())
+        testClass(cp.findClass<JcInstListBuilder>())
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-    @Test
-    fun `get ir of jackson`() {
-        allClasspath
-            .filter { it.name.contains("jackson") }
-            .forEach { runAlongLib(it) }
-    }
 
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
+    }
+
+    // todo: make this test green
+//    @Test
+    fun `get ir of kotlinx-coroutines`() {
+//        testClass(cp.findClass("kotlinx.coroutines.ThreadContextElementKt"))
+        runAlongLib(kotlinxCoroutines)
+    }
+
+    @AfterEach
+    fun printStats() {
+        cp.features!!.filterIsInstance<ClasspathCache>().forEach {
+            it.dumpStats()
+        }
     }
 
     private fun runAlongLib(file: File) {
@@ -362,32 +373,39 @@ class IRTest : BaseTest() {
 
 
     private fun testClass(klass: JcClassOrInterface) = try {
-        val classNode = klass.bytecode()
+        val classNode = klass.asmNode()
         classNode.methods = klass.declaredMethods.filter { it.enclosingClass == klass }.map {
-            if (it.isAbstract) {
-                it.body()
+            if (it.isAbstract || it.name.contains("$\$forInline")) {
+                it.asmNode()
             } else {
+                try {
 //            val oldBody = it.body()
 //            println()
 //            println("Old body: ${oldBody.print()}")
-                val instructionList = it.rawInstList
-
-//            println("Instruction list: $instructionList")
-                val graph = it.flowGraph()
-                if (!it.enclosingClass.isKotlin) {
-                    graph.instructions.forEach {
-                        assertTrue(it.lineNumber > 0, "$it should have line number")
+                    val instructionList = it.rawInstList
+                    it.instList.forEachIndexed { index, inst ->
+                        assertEquals(index, inst.location.index, "indexes not matched for $it at $index")
                     }
-                }
-                graph.applyAndGet(OverridesResolver(ext)) {}
-                JcGraphChecker(it, graph).check()
+//            println("Instruction list: $instructionList")
+                    val graph = it.flowGraph()
+                    if (!it.enclosingClass.isKotlin) {
+                        graph.instructions.forEach {
+                            assertTrue(it.lineNumber > 0, "$it should have line number")
+                        }
+                    }
+                    graph.applyAndGet(OverridesResolver(ext)) {}
+                    JcGraphChecker(it, graph).check()
 //            println("Graph: $graph")
 //            graph.view("/usr/bin/dot", "/usr/bin/firefox", false)
 //            graph.blockGraph().view("/usr/bin/dot", "/usr/bin/firefox")
-                val newBody = MethodNodeBuilder(it, instructionList).build()
+                    val newBody = MethodNodeBuilder(it, instructionList).build()
 //            println("New body: ${newBody.print()}")
 //            println()
-                newBody
+                    newBody
+                } catch (e: Exception) {
+                    throw IllegalStateException("error handling $it", e)
+                }
+
             }
         }
         val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)

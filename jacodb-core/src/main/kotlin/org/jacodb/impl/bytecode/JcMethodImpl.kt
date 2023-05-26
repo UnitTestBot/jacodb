@@ -20,9 +20,10 @@ import org.objectweb.asm.TypeReference
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.JcParameter
+import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
@@ -32,16 +33,14 @@ import org.jacodb.impl.cfg.JcGraphBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
-import org.jacodb.impl.types.signature.MethodResolutionImpl
-import org.jacodb.impl.types.signature.MethodSignature
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
-    private val source: ClassSource,
-    private val features: List<JcClasspathFeature>?,
+    private val featuresChain: JcFeaturesChain,
     override val enclosingClass: JcClassOrInterface
 ) : JcMethod {
 
@@ -50,16 +49,10 @@ class JcMethodImpl(
     override val signature: String? get() = methodInfo.signature
     override val returnType = TypeNameImpl(methodInfo.returnClass)
 
-    override val exceptions: List<JcClassOrInterface> by lazy(LazyThreadSafetyMode.NONE) {
-        val methodSignature = MethodSignature.of(this)
-        if (methodSignature is MethodResolutionImpl) {
-            methodSignature.exceptionTypes.map {
-                enclosingClass.classpath.findClass(it.name)
-            }
-        } else {
-            emptyList()
+    override val exceptions: List<TypeName>
+        get() {
+            return methodInfo.exceptions.map { TypeNameImpl(it) }
         }
-    }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)
 
@@ -84,27 +77,25 @@ class JcMethodImpl(
 
     override val description get() = methodInfo.desc
 
-    override fun body(): MethodNode {
-        return source.fullAsmNode.methods.first { it.name == name && it.desc == methodInfo.desc }
+    override fun asmNode(): MethodNode {
+        return enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
     }
 
-    override val rawInstList: JcInstList<JcRawInst> by lazy {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(this, body().jsrInlined).build()
-        features?.fold(list) { value, feature ->
-            feature.transformRawInstList(this, value)
-        } ?: list
-    }
+    override val rawInstList: JcInstList<JcRawInst>
+        get() {
+            return featuresChain.newRequest(this)
+                .call<JcMethodExtFeature, JcInstList<JcRawInst>> { it.rawInstList(this) }!!
+        }
 
     override fun flowGraph(): JcGraph {
-        return JcGraphBuilder(this, rawInstList).buildFlowGraph()
+        return featuresChain.newRequest(this)
+            .call<JcMethodExtFeature, JcGraph> { it.flowGraph(this) }!!
     }
 
-    override val instList: JcInstList<JcInst> by lazy {
-        val list: JcInstList<JcInst> = JcGraphBuilder(this, rawInstList).buildInstList()
-        features?.fold(list) { value, feature ->
-            feature.transformInstList(this, value)
-        } ?: list
 
+    override val instList: JcInstList<JcInst> get() {
+        return featuresChain.newRequest(this)
+            .call<JcMethodExtFeature, JcInstList<JcInst>> { it.instList(this) }!!
     }
 
     override fun equals(other: Any?): Boolean {
@@ -116,6 +107,10 @@ class JcMethodImpl(
 
     override fun hashCode(): Int {
         return 31 * enclosingClass.hashCode() + name.hashCode()
+    }
+
+    override fun toString(): String {
+        return "${enclosingClass}#$name(${parameters.joinToString { it.type.typeName }})"
     }
 
 }

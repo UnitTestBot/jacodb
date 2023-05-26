@@ -17,7 +17,6 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.ext.isSynthetic
 import org.jacodb.testing.types.Comparables.ComparableTest1
 import org.jacodb.testing.types.Comparables.ComparableTest2
 import org.jacodb.testing.types.Comparables.ComparableTest3

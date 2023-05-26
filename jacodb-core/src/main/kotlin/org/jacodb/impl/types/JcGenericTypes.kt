@@ -26,6 +26,7 @@ import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.JcTypeVariableDeclaration
 import org.jacodb.api.JcUnboundWildcard
 import org.jacodb.api.ext.objectClass
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcUnboundWildcardImpl(override val classpath: JcClasspath) :
     JcUnboundWildcard {
@@ -58,14 +59,14 @@ class JcBoundedWildcardImpl(
 
     override val typeName: String
         get() {
-            val (name, bounds) = when{
+            val (name, bounds) = when {
                 upperBounds.isNotEmpty() -> "extends" to upperBounds
                 else -> "super" to lowerBounds
             }
             return "? $name ${bounds.joinToString(" & ") { it.typeName }}"
         }
 
-    override val jcClass: JcClassOrInterface by lazy(LazyThreadSafetyMode.NONE) {
+    override val jcClass: JcClassOrInterface by lazy(PUBLICATION) {
         val obj = classpath.objectClass
         lowerBounds.firstNotNullOfOrNull { it.jcClass.takeIf { it != obj } } ?: obj
     }
@@ -93,7 +94,7 @@ class JcTypeVariableImpl(
     override val bounds: List<JcRefType>
         get() = declaration.bounds
 
-    override val jcClass: JcClassOrInterface by lazy(LazyThreadSafetyMode.NONE) {
+    override val jcClass: JcClassOrInterface by lazy(PUBLICATION) {
         val obj = classpath.objectClass
         bounds.firstNotNullOfOrNull { it.jcClass.takeIf { it != obj } } ?: obj
     }

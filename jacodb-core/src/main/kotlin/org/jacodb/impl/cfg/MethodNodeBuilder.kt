@@ -96,8 +96,6 @@ import org.jacodb.api.cfg.JcRawUshrExpr
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.api.ext.isStatic
-import org.jacodb.api.ext.jvmName
 import org.jacodb.impl.cfg.util.baseElementType
 import org.jacodb.impl.cfg.util.internalDesc
 import org.jacodb.impl.cfg.util.isDWord
@@ -190,7 +188,7 @@ class MethodNodeBuilder(
                 if (it.access == Opcodes.ACC_PUBLIC) 0 else it.access
             )
         }
-        mn.exceptions = method.exceptions.map { it.simpleName.jvmName() }
+        mn.exceptions = method.exceptions.map { it.jvmClassName }
         mn.instructions = currentInsnList
         mn.tryCatchBlocks = tryCatchNodeList
         mn.maxLocals = localIndex
@@ -329,12 +327,14 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawCatchInst(inst: JcRawCatchInst) {
-        tryCatchNodeList += TryCatchBlockNode(
-            label(inst.startInclusive),
-            label(inst.endExclusive),
-            label(inst.handler),
-            inst.throwable.typeName.internalDesc
-        )
+        tryCatchNodeList += inst.entries.map {
+            TryCatchBlockNode(
+                label(it.startInclusive),
+                label(it.endExclusive),
+                label(inst.handler),
+                it.acceptedThrowable.internalDesc
+            )
+        }
         updateStackInfo(1)
         currentInsnList.add(storeValue(inst.throwable))
     }

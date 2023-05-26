@@ -1,5 +1,3 @@
-
-import de.undercouch.gradle.tasks.download.Download
 import org.jooq.codegen.GenerationTool
 import org.jooq.meta.jaxb.Configuration
 import org.jooq.meta.jaxb.Database
@@ -29,7 +27,6 @@ buildscript {
 }
 
 plugins {
-    id("de.undercouch.download") version "5.3.0"
     `java-test-fixtures`
 }
 
@@ -40,11 +37,11 @@ kotlin.sourceSets["main"].kotlin {
 dependencies {
     implementation(project(":jacodb-api"))
 
-    api(group = "io.github.microutils", name = "kotlin-logging", version = "1.8.3")
-    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = kotlinVersion)
-    api(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = kotlinVersion)
-    api(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version = "1.3.3")
-    api(group = "info.leadinglight", name = "jdot", version = "1.0")
+    implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.8.3")
+    implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = kotlinVersion)
+    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = kotlinVersion)
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version = "1.3.3")
+    implementation(group = "info.leadinglight", name = "jdot", version = "1.0")
 
     implementation(group = "org.postgresql", name = "postgresql", version = "42.5.1")
     implementation(group = "com.zaxxer", name = "HikariCP", version = "5.0.1")
@@ -52,6 +49,9 @@ dependencies {
 
     implementation(group = "com.google.guava", name = "guava", version = "31.1-jre")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version = kmetadataVersion)
+    testImplementation(group = "javax.activation", name = "activation", version = "1.1")
+    testImplementation(group = "javax.mail", name = "mail", version = "1.4.7")
+    testImplementation(group = "joda-time", name = "joda-time", version = "2.12.5")
 
     testFixturesImplementation(project(":jacodb-api"))
 
@@ -62,46 +62,8 @@ dependencies {
     testFixturesImplementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
     testFixturesImplementation(group = "org.mockito", name = "mockito-core", version = "4.8.0")
     testFixturesImplementation(group = "org.jetbrains", name = "annotations", version = "20.1.0")
-    testImplementation(group = "org.unittestbot.soot", name = "soot-utbot-fork", version = "4.4.0-FORK-2")
+    testImplementation(group =  "org.slf4j", name = "slf4j-simple", version = "1.6.1")
 
-}
-
-tasks.register<Download>("downloadIdeaCommunity") {
-    src(rootProject.properties.get("intellij_community_url") as String)
-    dest("idea-community/idea-community.zip")
-}
-
-tasks.register<Copy>("downloadAndUnzipIdeaCommunity") {
-    dependsOn("downloadIdeaCommunity")
-    val downloadIdeaCommunity by tasks.getting(Download::class)
-
-    from(zipTree(downloadIdeaCommunity.dest))
-    into("idea-community/unzip")
-}
-
-benchmark {
-    configurations {
-        named("main") {
-            include("JcdbLifeCycleBenchmarks")
-            include("RestoreJcdbBenchmark")
-        }
-        register("jcdb") {
-            include("JcdbBenchmarks")
-        }
-        register("soot") {
-            include("SootBenchmarks")
-        }
-        register("awaitBackground") {
-            include("JcdbJvmBackgroundBenchmarks")
-            include("JcdbAllClasspathBackgroundBenchmarks")
-            include("JcdbIdeaBackgroundBenchmarks")
-        }
-    }
-}
-
-val benchmarkTasks = listOf("testJcdbBenchmark", "testSootBenchmark", "testAwaitBackgroundBenchmark")
-tasks.matching { benchmarkTasks.contains(it.name) }.configureEach {
-    dependsOn("downloadAndUnzipIdeaCommunity")
 }
 
 tasks.register("generateSqlScheme") {

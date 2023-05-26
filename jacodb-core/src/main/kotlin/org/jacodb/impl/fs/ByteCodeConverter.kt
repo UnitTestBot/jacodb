@@ -125,6 +125,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         access = access,
         annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
                 + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
+        exceptions = exceptions.map { it.className },
         parametersInfo = List(params.size) { index ->
             ParameterInfo(
                 index = index,
@@ -148,22 +149,24 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
 )
 
 
-val ClassSource.info: ClassInfo get() {
-    return newClassNode(ClassReader.SKIP_CODE).asClassInfo(byteCode)
-}
-
-val ClassSource.fullAsmNode: ClassNode get() {
-    return newClassNode(ClassReader.EXPAND_FRAMES)
-}
-
-fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
-    var classNode = fullAsmNode
-    classNode = when {
-        classNode.hasFrameInfo -> classNode
-        else -> classNode.computeFrames(classpath)
+val ClassSource.info: ClassInfo
+    get() {
+        return newClassNode(ClassReader.SKIP_CODE).asClassInfo(byteCode)
     }
-    return classNode
-}
+
+val ClassSource.fullAsmNode: ClassNode
+    get() {
+        return newClassNode(ClassReader.EXPAND_FRAMES)
+    }
+
+//fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
+//    var classNode = fullAsmNode
+//    classNode = when {
+//        classNode.hasFrameInfo -> classNode
+//        else -> classNode.computeFrames(classpath)
+//    }
+//    return classNode
+//}
 
 private fun ClassSource.newClassNode(level: Int): ClassNode {
     return ClassNode(Opcodes.ASM9).also {

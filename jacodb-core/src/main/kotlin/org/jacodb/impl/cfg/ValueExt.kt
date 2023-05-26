@@ -15,10 +15,21 @@
  */
 
 @file:JvmName("JcValues")
+
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.TypeName
+import org.jacodb.api.cfg.JcBool
+import org.jacodb.api.cfg.JcByte
+import org.jacodb.api.cfg.JcDouble
+import org.jacodb.api.cfg.JcFloat
+import org.jacodb.api.cfg.JcInt
+import org.jacodb.api.cfg.JcLong
+import org.jacodb.api.cfg.JcRawNullConstant
+import org.jacodb.api.cfg.JcRawStringConstant
+import org.jacodb.api.cfg.JcShort
 import org.jacodb.api.ext.boolean
 import org.jacodb.api.ext.byte
 import org.jacodb.api.ext.double

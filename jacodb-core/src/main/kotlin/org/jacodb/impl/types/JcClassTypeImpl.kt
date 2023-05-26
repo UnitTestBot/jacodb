@@ -19,15 +19,12 @@ package org.jacodb.impl.types
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.ext.isConstructor
-import org.jacodb.api.ext.isPackagePrivate
-import org.jacodb.api.ext.isProtected
-import org.jacodb.api.ext.isPublic
-import org.jacodb.api.ext.isStatic
+import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.signature.JvmClassRefType
@@ -37,9 +34,11 @@ import org.jacodb.impl.types.signature.TypeResolutionImpl
 import org.jacodb.impl.types.signature.TypeSignature
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.types.substition.substitute
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 open class JcClassTypeImpl(
-    override val jcClass: JcClassOrInterface,
+    override val classpath: JcClasspath,
+    val name: String,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutor.empty,
     override val nullable: Boolean?,
@@ -47,17 +46,18 @@ open class JcClassTypeImpl(
 ) : JcClassType {
 
     constructor(
-        jcClass: JcClassOrInterface,
+        classpath: JcClasspath,
+        name: String,
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
         nullable: Boolean?,
         annotations: List<JcAnnotation>
-    ) : this(jcClass, outerType, jcClass.substitute(parameters, outerType?.substitutor), nullable, annotations)
+    ) : this(classpath, name, outerType, classpath.substitute(name, parameters, outerType?.substitutor), nullable, annotations)
 
-    private val resolutionImpl by lazy(LazyThreadSafetyMode.NONE) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
-    private val declaredTypeParameters by lazy(LazyThreadSafetyMode.NONE) { jcClass.typeParameters }
+    private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
+    private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
 
-    override val classpath get() = jcClass.classpath
+    override val jcClass: JcClassOrInterface get() = classpath.findClass(name)
 
     override val access: Int
         get() = jcClass.access
@@ -94,60 +94,68 @@ open class JcClassTypeImpl(
         }
 
 
-    override val superType: JcClassType? by lazy(LazyThreadSafetyMode.NONE) {
-        val superClass = jcClass.superClass ?: return@lazy null
-        resolutionImpl?.let {
-            val newSubstitutor = superSubstitutor(superClass, it.superClass)
-            JcClassTypeImpl(superClass, outerType, newSubstitutor, nullable, annotations)
-        } ?: superClass.toType()
-    }
+    override val superType: JcClassType?
+        get() {
+            val superClass = jcClass.superClass ?: return null
+            return resolutionImpl?.let {
+                val newSubstitutor = superSubstitutor(superClass, it.superClass)
+                JcClassTypeImpl(classpath, superClass.name, outerType, newSubstitutor, nullable, annotations)
+            } ?: superClass.toType()
+        }
 
-    override val interfaces: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
-        jcClass.interfaces.map { iface ->
-            val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
-            if (ifaceType != null) {
-                val newSubstitutor = superSubstitutor(iface, ifaceType)
-                JcClassTypeImpl(iface, null, newSubstitutor, nullable, annotations)
-            } else {
-                iface.toType()
+    override val interfaces: List<JcClassType>
+        get() {
+            return jcClass.interfaces.map { iface ->
+                val ifaceType = resolutionImpl?.interfaceType?.firstOrNull { it.isReferencesClass(iface.name) }
+                if (ifaceType != null) {
+                    val newSubstitutor = superSubstitutor(iface, ifaceType)
+                    JcClassTypeImpl(classpath, iface.name, null, newSubstitutor, nullable, annotations)
+                } else {
+                    iface.toType()
+                }
             }
         }
-    }
 
-    override val innerTypes: List<JcClassType> by lazy(LazyThreadSafetyMode.NONE) {
-        jcClass.innerClasses.map {
-            val outerMethod = it.outerMethod
-            val outerClass = it.outerClass
+    override val innerTypes: List<JcClassType>
+        get() {
+            return jcClass.innerClasses.map {
+                val outerMethod = it.outerMethod
+                val outerClass = it.outerClass
 
-            val innerParameters = (
-                    outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
-                    )?.values?.toList().orEmpty()
-            val innerSubstitutor = when {
-                it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
-                else -> substitutor.newScope(innerParameters)
+                val innerParameters = (
+                        outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
+                        )?.values?.toList().orEmpty()
+                val innerSubstitutor = when {
+                    it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
+                    else -> substitutor.newScope(innerParameters)
+                }
+                JcClassTypeImpl(classpath, it.name, this, innerSubstitutor, true, annotations)
             }
-            JcClassTypeImpl(it, this, innerSubstitutor, true, annotations)
         }
-    }
 
-    override val declaredMethods by lazy(LazyThreadSafetyMode.NONE) {
-        typedMethods(true, fromSuperTypes = false, jcClass.packageName)
-    }
+    override val declaredMethods: List<JcTypedMethod>
+        get() {
+            return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
+        }
 
-    override val methods by lazy(LazyThreadSafetyMode.NONE) {
-        //let's calculate visible methods from super types
-        typedMethods(true, fromSuperTypes = true, jcClass.packageName)
-    }
+    override val methods: List<JcTypedMethod>
+        get() {
+            //let's calculate visible methods from super types
+            return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
+        }
 
-    override val declaredFields by lazy(LazyThreadSafetyMode.NONE) {
-        typedFields(true, fromSuperTypes = false, jcClass.packageName)
-    }
+    override val declaredFields: List<JcTypedField>
+        get() {
+            return typedFields(true, fromSuperTypes = false, jcClass.packageName)
+        }
 
-    override val fields by lazy(LazyThreadSafetyMode.NONE) {
-        typedFields(true, fromSuperTypes = true, jcClass.packageName)
-    }
+    override val fields: List<JcTypedField>
+        get() {
+            return typedFields(true, fromSuperTypes = true, jcClass.packageName)
+        }
 
-    override fun copyWithNullability(nullability: Boolean?) = JcClassTypeImpl(jcClass, outerType, substitutor, nullability, annotations)
+    override fun copyWithNullability(nullability: Boolean?) =
+        JcClassTypeImpl(classpath, name, outerType, substitutor, nullability, annotations)
 
     override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType =
         JcClassTypeImpl(jcClass, outerType, substitutor, nullable, annotations)

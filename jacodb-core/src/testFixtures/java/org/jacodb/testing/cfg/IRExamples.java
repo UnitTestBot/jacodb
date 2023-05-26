@@ -17,6 +17,7 @@
 package org.jacodb.testing.cfg;
 
 import java.io.*;
+import java.net.DatagramSocket;
 
 public class IRExamples {
     int x;
@@ -113,7 +114,31 @@ public class IRExamples {
         }
     }
 
+    static public void multiCatch(DatagramSocket s) {
+        try {
+            s.receive(null);
+        } catch (IOException | IllegalStateException e) {
+        }
+    }
+
     public String concatTest(String s, int a) {
         return s + a;
+    }
+
+    public void initStringWithNull(String arg) {
+        String myString = null;
+
+        if (myString != null) {
+            myString.length();
+        }
+    }
+
+    public int testArrays(String[] arg) {
+        int index = 12;
+        String x = arg[index];
+        if(x != null) {
+            return x.length();
+        }
+        return -1;
     }
 }

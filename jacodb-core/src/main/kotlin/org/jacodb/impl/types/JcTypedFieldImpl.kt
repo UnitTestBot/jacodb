@@ -27,6 +27,7 @@ import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
 import org.jacodb.impl.types.substition.JcSubstitutor
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcTypedFieldImpl(
     override val enclosingType: JcRefType,
@@ -38,7 +39,7 @@ class JcTypedFieldImpl(
         get() = this.field.access
 
     private val classpath = field.enclosingClass.classpath
-    private val resolvedType by lazy(LazyThreadSafetyMode.NONE) {
+    private val resolvedType by lazy(PUBLICATION) {
         val resolution = FieldSignature.of(field) as? FieldResolutionImpl
         resolution?.fieldType
     }

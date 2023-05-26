@@ -33,6 +33,14 @@ val guavaLib: File
         }
     }
 
+val kotlinxCoroutines: File
+    get() {
+        val corotines = classpath.first { it.contains("kotlinx-coroutines-") }
+        return File(corotines).also {
+            Assertions.assertTrue(it.isFile && it.exists())
+        }
+    }
+
 val allJars: List<File>
     get() {
         return classpath.filter { it.endsWith(".jar") }.map { File(it) }
@@ -42,7 +50,9 @@ val allJars: List<File>
 private val classpath: List<String>
     get() {
         val classpath = System.getProperty("java.class.path")
-        return classpath.split(File.pathSeparatorChar).toList()
+        return classpath.split(File.pathSeparatorChar)
+            .filter { !it.contains("sootup") }
+            .toList()
     }
 
 

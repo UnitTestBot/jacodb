@@ -94,9 +94,10 @@ class JcSubstitutorImpl(
                 if (ignoredSymbols.contains(type.symbol)) {
                     return type
                 }
-                return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }?.let {
-                    relaxNullabilityAndAnnotationsAfterSubstitution(type, it)
-                } ?: type
+                return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
+                    ?.let {
+                        relaxNullabilityAndAnnotationsAfterSubstitution(type, it)
+                    } ?: type
             }
         }
         return JvmTypeParameterDeclarationImpl(

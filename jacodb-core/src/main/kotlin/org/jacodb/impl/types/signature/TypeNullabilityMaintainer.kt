@@ -25,7 +25,13 @@ internal fun JvmType.copyWith(nullability: Boolean?, annotations: List<JcAnnotat
     when (this) {
         is JvmArrayType -> JvmArrayType(elementType, nullability, annotations)
         is JvmClassRefType -> JvmClassRefType(name, nullability, annotations)
-        is JvmParameterizedType.JvmNestedType -> JvmParameterizedType.JvmNestedType(name, parameterTypes, ownerType, nullability, annotations)
+        is JvmParameterizedType.JvmNestedType -> JvmParameterizedType.JvmNestedType(
+            name,
+            parameterTypes,
+            ownerType,
+            nullability
+        , annotations)
+
         is JvmParameterizedType -> JvmParameterizedType(name, parameterTypes, nullability, annotations)
 
         is JvmTypeVariable -> JvmTypeVariable(symbol, nullability, annotations).also {

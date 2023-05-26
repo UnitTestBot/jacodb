@@ -32,10 +32,11 @@ import org.objectweb.asm.signature.SignatureVisitor
 
 val logger = object : KLogging() {}.logger
 
-internal class MethodSignature(private val method: JcMethod) : Signature<MethodResolution>(method, method.kmFunction?.typeParameters) {
+internal class MethodSignature(private val method: JcMethod) :
+    Signature<MethodResolution>(method, method.kmFunction?.typeParameters) {
 
     private val parameterTypes = ArrayList<JvmType>()
-    private val exceptionTypes = ArrayList<JvmClassRefType>()
+    private val exceptionTypes = ArrayList<JvmRefType>()
     private lateinit var returnType: JvmType
 
     override fun visitParameterType(): SignatureVisitor {
@@ -86,7 +87,7 @@ internal class MethodSignature(private val method: JcMethod) : Signature<MethodR
 
     private inner class ExceptionTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            exceptionTypes.add(token as JvmClassRefType)
+            exceptionTypes.add(token as JvmRefType)
         }
     }
 

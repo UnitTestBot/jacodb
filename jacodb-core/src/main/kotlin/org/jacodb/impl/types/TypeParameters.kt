@@ -22,7 +22,6 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcTypeVariableDeclaration
-import org.jacodb.api.ext.isStatic
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
@@ -52,7 +51,7 @@ fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypeParameterD
     if (!isStatic) {
         val fromOuter = outerClass?.allVisibleTypeParameters()
         val fromMethod = outerMethod?.allVisibleTypeParameters()
-        return (direct + (fromMethod ?: fromOuter).orEmpty()).toPersistentMap()
+        return ((fromMethod ?: fromOuter).orEmpty() + direct).toPersistentMap()
     }
     return direct
 }
@@ -68,6 +67,5 @@ fun JvmTypeParameterDeclaration.asJcDeclaration(owner: JcAccessible): JcTypeVari
         is JcMethod -> owner.enclosingClass.classpath
         else -> throw IllegalStateException("Unknown owner type $owner")
     }
-    val bounds = bounds?.map { classpath.typeOf(it) as JcRefType }
-    return JcTypeVariableDeclarationImpl(symbol, bounds.orEmpty(), owner = owner)
+    return JcTypeVariableDeclarationImpl(symbol, classpath, bounds.orEmpty(), owner = owner)
 }

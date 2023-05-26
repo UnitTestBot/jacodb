@@ -52,5 +52,7 @@ public class WithInner {
 
 
 class WithInner1<T extends Collection<?>> {
-
+    public static void main(String[] args) {
+        new WithInner1<List<String>>();
+    }
 }

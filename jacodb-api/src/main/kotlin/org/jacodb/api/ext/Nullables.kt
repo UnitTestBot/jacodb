@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("Nullables")
+
 package org.jacodb.api.ext
 
 import org.jacodb.api.JcAnnotated

@@ -73,7 +73,8 @@ interface JcDatabase : Closeable {
     suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath
     suspend fun classpath(dirOrJars: List<File>): JcClasspath = classpath(dirOrJars, null)
     fun asyncClasspath(dirOrJars: List<File>) = GlobalScope.future { classpath(dirOrJars) }
-    fun asyncClasspath(dirOrJars: List<File>, features: List<JcClasspathFeature>?) = GlobalScope.future { classpath(dirOrJars, features) }
+    fun asyncClasspath(dirOrJars: List<File>, features: List<JcClasspathFeature>?) =
+        GlobalScope.future { classpath(dirOrJars, features) }
 
     fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath
 

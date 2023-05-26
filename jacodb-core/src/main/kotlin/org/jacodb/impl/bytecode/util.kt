@@ -30,7 +30,7 @@ val ClassNode.hasFrameInfo: Boolean
     }
 
 
-internal val MethodNode.jsrInlined: MethodNode
+val MethodNode.jsrInlined: MethodNode
     get() {
         return JSRInlinerAdapter(null, access, name, desc, signature, exceptions?.toTypedArray()).also {
             accept(it)

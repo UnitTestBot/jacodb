@@ -89,16 +89,17 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
     }
 
     override fun registerIfNeeded(locations: List<JcByteCodeLocation>): RegistrationResult {
+        val uniqueLocations = locations.toSet()
         return persistence.write {
             val result = arrayListOf<RegisteredLocation>()
             val toAdd = arrayListOf<JcByteCodeLocation>()
-            val fsId = locations.map { it.fsId }
+            val fsId = uniqueLocations.map { it.fileSystemId }
             val existed = it.selectFrom(BYTECODELOCATIONS)
                 .where(BYTECODELOCATIONS.UNIQUEID.`in`(fsId))
                 .fetch().associateBy { it.uniqueid }
 
-            locations.forEach {
-                val found = existed[it.fsId]
+            uniqueLocations.forEach {
+                val found = existed[it.fileSystemId]
                 if (found == null) {
                     toAdd += it
                 } else {
@@ -113,7 +114,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
                     val (id, location) = it
                     setLong(1, id)
                     setString(2, location.path)
-                    setString(3, location.fsId)
+                    setString(3, location.fileSystemId)
                     setBoolean(4, location.type == LocationType.RUNTIME)
                     setInt(5, LocationState.INITIAL.ordinal)
                     setNull(6, Types.BIGINT)
@@ -217,7 +218,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
         }
         val record = BytecodelocationsRecord().also {
             it.path = path
-            it.uniqueid = fsId
+            it.uniqueid = fileSystemId
             it.runtime = type == LocationType.RUNTIME
         }
         record.insert()
@@ -226,7 +227,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
 
     private fun JcByteCodeLocation.findOrNull(dslContext: DSLContext): BytecodelocationsRecord? {
         return dslContext.selectFrom(BYTECODELOCATIONS)
-            .where(BYTECODELOCATIONS.PATH.eq(path).and(BYTECODELOCATIONS.UNIQUEID.eq(fsId))).fetchAny()
+            .where(BYTECODELOCATIONS.PATH.eq(path).and(BYTECODELOCATIONS.UNIQUEID.eq(fileSystemId))).fetchAny()
     }
 
 }

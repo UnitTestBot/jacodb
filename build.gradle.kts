@@ -1,5 +1,3 @@
-import kotlinx.benchmark.gradle.JvmBenchmarkTarget
-import kotlinx.benchmark.gradle.benchmark
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val kotlinVersion: String by rootProject
@@ -8,6 +6,7 @@ val junit5Version: String by project
 val semVer: String? by project
 
 group = "org.jacodb"
+
 project.version = semVer ?: "1.0-SNAPSHOT"
 
 buildscript {
@@ -18,28 +17,28 @@ buildscript {
 }
 
 plugins {
-    val kotlinVersion = "1.7.20"
+    val kotlinVersion = "1.7.21"
 
     `java-library`
     `maven-publish`
+    signing
     `java-test-fixtures`
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
-    kotlin("plugin.serialization") version kotlinVersion
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.4"
     id("org.cadixdev.licenser") version "0.6.1"
-
 }
 
-subprojects {
+repositories {
+    mavenCentral()
+}
+
+allprojects {
     group = rootProject.group
     version = rootProject.version
 
     apply {
         plugin("maven-publish")
         plugin("kotlin")
-        plugin("org.jetbrains.kotlinx.benchmark")
-        plugin("org.jetbrains.kotlin.plugin.serialization")
         plugin("org.jetbrains.kotlin.plugin.allopen")
         plugin("org.cadixdev.licenser")
     }
@@ -64,7 +63,6 @@ subprojects {
             }
         }
         testImplementation(group = "com.google.guava", name = "guava", version = "31.1-jre")
-        testImplementation(group = "org.jetbrains.kotlinx", name = "kotlinx-benchmark-runtime", version = "0.4.4")
     }
 
     tasks {
@@ -105,28 +103,18 @@ subprojects {
             }
         }
 
+        val sourcesJar by creating(Jar::class) {
+            archiveClassifier.set("sources")
+            from(sourceSets.getByName("main").kotlin.srcDirs)
+        }
+
+        artifacts {
+            archives(sourcesJar)
+        }
     }
 
     allOpen {
         annotation("org.openjdk.jmh.annotations.State")
-    }
-
-    benchmark {
-        configurations {
-            named("main") { // main configuration is created automatically, but you can change its defaults
-                warmups = 3 // number of warmup iterations
-                iterations = 5 // number of iterations
-            }
-        }
-
-        // Setup configurations
-        targets {
-            // This one matches sourceSet name above
-            register("test") {
-                this as JvmBenchmarkTarget
-                jmhVersion = "1.21"
-            }
-        }
     }
 
     license {
@@ -137,32 +125,99 @@ subprojects {
 
     publishing {
         publications {
-            create<MavenPublication>("jar") {
+            register<MavenPublication>("jar") {
                 from(components["java"])
-                groupId = "org.utbot"
-                artifactId = project.name
-            }
-        }
-    }
+                artifact(tasks.named("sourcesJar"))
 
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
-                credentials {
-                    username = project.findProperty("gprUser") as? String ?: System.getenv("USERNAME")
-                    password = project.findProperty("gprKey") as? String ?: System.getenv("TOKEN")
+                groupId = "org.jacodb"
+                artifactId = project.name
+
+                pom {
+                    packaging = "jar"
+                    name.set("org.jacodb")
+                    description.set("analyse JVM bytecode with pleasure")
+                    issueManagement {
+                        url.set("https://github.com/UnitTestBot/jacodb/issues")
+                    }
+                    scm {
+                        connection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                        developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+                        url.set("https://www.jacodb.org")
+                    }
+                    url.set("https://www.jacodb.org")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("lehvolk")
+                            name.set("Alexey Volkov")
+                            email.set("lehvolk@yandex.ru")
+                        }
+                        developer {
+                            id.set("volivan239")
+                            name.set("Ivan Volkov")
+                            email.set("lehvolk@yandex.ru")
+                        }
+                        developer {
+                            id.set("AbdullinAM")
+                            name.set("Azat Abdullin")
+                            email.set("azat.aam@gmail.com")
+                        }
+                        developer {
+                            id.set("UnitTestBot")
+                            name.set("UnitTestBot Team")
+                        }
+                    }
                 }
             }
         }
-        publications {
-            create<MavenPublication>("gpr") {
-                from(components["java"])
-                groupId = "org.utbot"
-                artifactId = project.name
+    }
+
+}
+
+val repoUrl: String? = project.properties["repoUrl"] as? String ?: "https://maven.pkg.github.com/UnitTestBot/jacodb"
+
+if (!repoUrl.isNullOrEmpty()) {
+    configure(
+        listOf(
+            project(":jacodb-api"),
+            project(":jacodb-core"),
+            project(":jacodb-analysis"),
+        )
+    ) {
+        publishing {
+            repositories {
+                maven {
+                    name = "repo"
+                    url = uri(repoUrl)
+                    val actor: String? by project
+                    val token: String? by project
+
+                    credentials {
+                        username = actor
+                        password = token
+                    }
+                }
             }
         }
     }
+}
 
+signing {
+    val gpgKey: String? by project
+    val gpgPassphrase: String? by project
+    useInMemoryPgpKeys(gpgKey, gpgPassphrase)
+
+    sign(publishing.publications["jar"])
+}
+
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
 }

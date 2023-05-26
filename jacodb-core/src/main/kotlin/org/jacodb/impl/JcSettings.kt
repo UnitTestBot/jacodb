@@ -50,7 +50,7 @@ class JcSettings {
     var predefinedDirOrJars: List<File> = persistentListOf()
         private set
 
-    var cacheSettings: JcCacheSettings = JcCacheSettings(10_000, Duration.ofSeconds(10))
+    var cacheSettings: JcCacheSettings = JcCacheSettings()
         private set
 
     var byteCodeSettings: JcByteCodeCache = JcByteCodeCache()
@@ -86,8 +86,12 @@ class JcSettings {
         persistentType = type
     }
 
-    fun classCaching(maxSize: Long, expiration: Duration) = apply {
-        cacheSettings = JcCacheSettings(maxSize, expiration)
+    fun caching(settings: JcCacheSettings.() -> Unit) = apply {
+        cacheSettings = JcCacheSettings().also { it.settings() }
+    }
+
+    fun caching(settings: JcCacheSettings) = apply {
+        cacheSettings = settings
     }
 
     fun bytecodeCaching(byteCodeCache: JcByteCodeCache) = apply {
@@ -194,4 +198,45 @@ enum class PredefinedPersistenceType : JcPersistenceType {
 
 class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
 
-class JcCacheSettings(val maxSize: Long, val expiration: Duration, val byteCodeCache: JcByteCodeCache = JcByteCodeCache())
+data class JcCacheSegmentSettings(
+    val valueStoreType: ValueStoreType = ValueStoreType.STRONG,
+    val maxSize: Long = 10_000,
+    val expiration: Duration = Duration.ofMinutes(1)
+)
+
+enum class ValueStoreType { WEAK, SOFT, STRONG }
+
+
+class JcCacheSettings {
+    var classes: JcCacheSegmentSettings = JcCacheSegmentSettings()
+    var types: JcCacheSegmentSettings = JcCacheSegmentSettings()
+    var rawInstLists: JcCacheSegmentSettings = JcCacheSegmentSettings()
+    var instLists: JcCacheSegmentSettings = JcCacheSegmentSettings()
+    var flowGraphs: JcCacheSegmentSettings = JcCacheSegmentSettings()
+
+    @JvmOverloads
+    fun classes(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
+        classes = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+    }
+
+    @JvmOverloads
+    fun types(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
+        types = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+    }
+
+    @JvmOverloads
+    fun rawInstLists(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
+        rawInstLists = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+    }
+
+    @JvmOverloads
+    fun instLists(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
+        instLists = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+    }
+
+    @JvmOverloads
+    fun flowGraphs(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
+        flowGraphs = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+    }
+
+}

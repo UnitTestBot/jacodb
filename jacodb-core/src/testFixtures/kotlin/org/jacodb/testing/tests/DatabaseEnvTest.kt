@@ -33,16 +33,13 @@ import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.hasBody
 import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.isEnum
-import org.jacodb.api.ext.isFinal
-import org.jacodb.api.ext.isInterface
 import org.jacodb.api.ext.isLocal
 import org.jacodb.api.ext.isMemberClass
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.isPrivate
-import org.jacodb.api.ext.isPublic
 import org.jacodb.api.ext.jcdbSignature
 import org.jacodb.api.ext.jvmSignature
 import org.jacodb.api.ext.methods
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
@@ -377,8 +374,8 @@ abstract class DatabaseEnvTest {
 
         val method = runnable.declaredMethods.first()
         assertFalse(method.hasBody)
-        assertNotNull(method.body())
-        assertTrue(method.body().instructions.toList().isEmpty())
+        assertNotNull(method.asmNode())
+        assertTrue(method.asmNode().instructions.toList().isEmpty())
     }
 
     @Test
@@ -453,21 +450,24 @@ abstract class DatabaseEnvTest {
         val fakeFieldName = "fakeField"
         val fakeMethodName = "fakeMethod"
         val cp = runBlocking {
-            cp.db.classpath(allClasspath, listOf(VirtualClassContent
-                .builder()
-                .content {
-                    matcher { it.name == "java.lang.String" }
-                    field { builder, _ ->
-                        builder.name(fakeFieldName)
-                        builder.type(PredefinedPrimitives.Int)
-                    }
-                    method { builder, _ ->
-                        builder.name(fakeMethodName)
-                        builder.returnType(PredefinedPrimitives.Int)
-                        builder.params(PredefinedPrimitives.Int)
-                    }
-                }.build()
-            ))
+            cp.db.classpath(
+                allClasspath, listOf(
+                    VirtualClassContent
+                        .builder()
+                        .content {
+                            matcher { it.name == "java.lang.String" }
+                            field { builder, _ ->
+                                builder.name(fakeFieldName)
+                                builder.type(PredefinedPrimitives.Int)
+                            }
+                            method { builder, _ ->
+                                builder.name(fakeMethodName)
+                                builder.returnType(PredefinedPrimitives.Int)
+                                builder.params(PredefinedPrimitives.Int)
+                            }
+                        }.build()
+                )
+            )
         }
         val clazz = cp.findClass<String>()
         val field = clazz.findDeclaredFieldOrNull(fakeFieldName)
@@ -484,7 +484,28 @@ abstract class DatabaseEnvTest {
         method.parameters.forEach {
             assertNotNull(it.method)
         }
+    }
 
+    @Test
+    fun `class caching feature works for not existed class`() {
+        val notExistedClass = "xxx.Xxx"
+        val clazz = cp.findClassOrNull(notExistedClass)
+        assertNull(clazz)
+        val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
+        val optional = cache.tryFindClass(cp, notExistedClass)
+        assertNotNull(optional)
+        assertFalse(optional!!.isPresent)
+    }
+
+    @Test
+    fun `class caching feature works for existed class`() {
+        val existedClass = "java.lang.String"
+        val clazz = cp.findClassOrNull(existedClass)
+        assertNotNull(clazz)
+        val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
+        val optional = cache.tryFindClass(cp, existedClass)
+        assertNotNull(optional)
+        assertTrue(optional!!.isPresent)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

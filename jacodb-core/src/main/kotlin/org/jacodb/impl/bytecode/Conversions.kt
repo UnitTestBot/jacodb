@@ -16,19 +16,15 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.ClassSource
 import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.MethodInfo
-import org.jacodb.impl.vfs.ClassVfsItem
 
-fun JcClasspath.toJcClass(item: ClassVfsItem?): JcClassOrInterface? {
-    item ?: return null
-    return toJcClass(item.source)
-}
-
-fun JcClassOrInterface.toJcMethod(methodInfo: MethodInfo, source: ClassSource, features: List<JcClasspathFeature>?): JcMethod {
-    return JcMethodImpl(methodInfo, source, features, this)
+fun JcClassOrInterface.toJcMethod(
+    methodInfo: MethodInfo,
+    featuresChain: JcFeaturesChain
+): JcMethod {
+    return JcMethodImpl(methodInfo, featuresChain, this)
 }

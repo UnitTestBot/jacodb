@@ -71,5 +71,13 @@ public class Overrides {
         public String runMain(String in) {
             return super.runMain(in);
         }
+
+        interface A {
+            void a();
+        }
+
+        interface B extends A {
+            void b();
+        }
     }
 }
