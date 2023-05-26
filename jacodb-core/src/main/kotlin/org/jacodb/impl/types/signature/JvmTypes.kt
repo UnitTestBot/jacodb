@@ -31,9 +31,11 @@ sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotatio
     abstract val displayName: String
 }
 
-internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>) : JvmType(isNullable, annotations)
+internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
+    : JvmType(isNullable, annotations)
 
-internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : JvmRefType(isNullable, annotations) {
+internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+    : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = elementType.displayName + "[]"
@@ -65,8 +67,8 @@ internal class JvmParameterizedType(
 
 }
 
-internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>
-) : JvmRefType(isNullable, annotations) {
+internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+    : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = name
@@ -82,8 +84,8 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, an
  *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
  *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
  */
-internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>
-) : JvmRefType(isNullable, annotations) {
+internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+    : JvmRefType(isNullable, annotations) {
 
     constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : this(
         declaration.symbol,
@@ -141,7 +143,8 @@ internal object JvmUnboundWildcard : JvmWildcard() {
         get() = "*"
 }
 
-internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf()) : JvmRefType(isNullable = false, annotations) {
+internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf())
+    : JvmRefType(isNullable = false, annotations) {
 
     companion object {
         fun of(descriptor: Char): JvmType {
@@ -163,4 +166,34 @@ internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation>
     override val displayName: String
         get() = ref
 
+}
+
+internal interface JvmTypeVisitor<ContextType> {
+    fun visitType(type: JvmType, context: ContextType): JvmType {
+        return when (type) {
+            is JvmPrimitiveType -> type
+            is JvmBoundWildcard.JvmLowerBoundWildcard -> visitLowerBound(type, context)
+            is JvmBoundWildcard.JvmUpperBoundWildcard -> visitUpperBound(type, context)
+            is JvmParameterizedType -> visitParameterizedType(type, context)
+            is JvmArrayType -> visitArrayType(type, context)
+            is JvmClassRefType -> visitClassRef(type, context)
+            is JvmTypeVariable -> visitTypeVariable(type, context)
+            is JvmUnboundWildcard -> type
+            is JvmParameterizedType.JvmNestedType -> visitNested(type, context)
+        }
+    }
+
+    fun visitUpperBound(type: JvmBoundWildcard.JvmUpperBoundWildcard, context: ContextType): JvmType
+
+    fun visitLowerBound(type: JvmBoundWildcard.JvmLowerBoundWildcard, context: ContextType): JvmType
+
+    fun visitArrayType(type: JvmArrayType, context: ContextType): JvmType
+
+    fun visitTypeVariable(type: JvmTypeVariable, context: ContextType): JvmType
+
+    fun visitClassRef(type: JvmClassRefType, context: ContextType): JvmType
+
+    fun visitNested(type: JvmParameterizedType.JvmNestedType, context: ContextType): JvmType
+
+    fun visitParameterizedType(type: JvmParameterizedType, context: ContextType): JvmType
 }

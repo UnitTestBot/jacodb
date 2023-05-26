@@ -26,7 +26,7 @@ import org.jacodb.impl.bytecode.kmFunction
 import org.jacodb.impl.bytecode.kmReturnType
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
-import org.jacodb.impl.types.substition.JvmTypeVisitor
+import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureVisitor
 
@@ -64,11 +64,11 @@ internal class MethodSignature(private val method: JcMethod) :
     private inner class ParameterTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
             var outToken = method.parameters[parameterTypes.size].kmType?.let {
-                token.relaxWithKmType(it)
+                JvmTypeKMetadataUpdateVisitor.visitType(token, it)
             } ?: token
 
             (method as? JcMethodImpl)?.let {
-                outToken = outToken.relaxWithAnnotations(it.parameterTypeAnnotationInfos(parameterTypes.size), it.enclosingClass.classpath)
+                outToken = outToken.withTypeAnnotations(it.parameterTypeAnnotationInfos(parameterTypes.size), it.enclosingClass.classpath)
             }
 
             parameterTypes.add(outToken)
@@ -77,10 +77,10 @@ internal class MethodSignature(private val method: JcMethod) :
 
     private inner class ReturnTypeTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            returnType = method.kmReturnType?.let { token.relaxWithKmType(it) } ?: token
+            returnType = method.kmReturnType?.let { JvmTypeKMetadataUpdateVisitor.visitType(token, it) } ?: token
 
             (method as? JcMethodImpl)?.let {
-                returnType = returnType.relaxWithAnnotations(it.returnTypeAnnotationInfos, it.enclosingClass.classpath)
+                returnType = returnType.withTypeAnnotations(it.returnTypeAnnotationInfos, it.enclosingClass.classpath)
             }
         }
     }
@@ -93,7 +93,7 @@ internal class MethodSignature(private val method: JcMethod) :
 
     companion object : KLogging() {
 
-        private fun MethodResolutionImpl.apply(visitor: JvmTypeVisitor) = MethodResolutionImpl(
+        private fun MethodResolutionImpl.apply(visitor: RecursiveJvmTypeVisitor) = MethodResolutionImpl(
             visitor.visitType(returnType),
             parameterTypes.map { visitor.visitType(it) },
             exceptionTypes,

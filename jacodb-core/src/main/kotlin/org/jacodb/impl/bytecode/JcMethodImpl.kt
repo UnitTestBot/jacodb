@@ -17,7 +17,6 @@
 package org.jacodb.impl.bytecode
 
 import org.objectweb.asm.TypeReference
-import org.jacodb.api.ClassSource
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -28,10 +27,6 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.ext.findClass
-import org.jacodb.impl.cfg.JcGraphBuilder
-import org.jacodb.impl.cfg.RawInstListBuilder
-import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.MethodInfo

@@ -31,7 +31,7 @@ class JcSubstitutorImpl(
     override val substitutions: PersistentMap<JvmTypeParameterDeclaration, JvmType> = persistentMapOf()
 ) : JcSubstitutor {
 
-    private val substitutionTypeVisitor = object : JvmTypeVisitor {
+    private val substitutionTypeVisitor = object : RecursiveJvmTypeVisitor {
 
         override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
             val direct = substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
@@ -88,7 +88,7 @@ class JcSubstitutorImpl(
         declaration: JvmTypeParameterDeclaration,
         ignoredSymbols: Set<String>
     ): JvmTypeParameterDeclaration {
-        val visitor = object : JvmTypeVisitor {
+        val visitor = object : RecursiveJvmTypeVisitor {
 
             override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
                 if (ignoredSymbols.contains(type.symbol)) {

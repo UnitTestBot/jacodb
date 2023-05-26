@@ -158,7 +158,7 @@ open class JcClassTypeImpl(
         JcClassTypeImpl(classpath, name, outerType, substitutor, nullability, annotations)
 
     override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType =
-        JcClassTypeImpl(jcClass, outerType, substitutor, nullable, annotations)
+        JcClassTypeImpl(classpath, name, outerType, substitutor, nullable, annotations)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
