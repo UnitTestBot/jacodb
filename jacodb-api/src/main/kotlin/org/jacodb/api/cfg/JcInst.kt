@@ -680,14 +680,14 @@ data class JcLambdaExpr(
 data class JcDynamicCallExpr(
     private val bsmRef: TypedMethodRef,
     val bsmArgs: List<BsmArg>,
-    val callCiteMethodName: String,
-    val callCiteArgTypes: List<JcType>,
-    val callCiteReturnType: JcType,
-    val callCiteArgs: List<JcValue>
+    val callSiteMethodName: String,
+    val callSiteArgTypes: List<JcType>,
+    val callSiteReturnType: JcType,
+    val callSiteArgs: List<JcValue>
 ) : JcCallExpr {
 
     override val method get() = bsmRef.method
-    override val args get() = callCiteArgs
+    override val args get() = callSiteArgs
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcDynamicCallExpr(this)

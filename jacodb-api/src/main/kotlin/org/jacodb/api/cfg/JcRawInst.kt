@@ -690,17 +690,17 @@ data class BsmHandle(
 data class JcRawDynamicCallExpr(
     val bsm: BsmHandle,
     val bsmArgs: List<BsmArg>,
-    val callCiteMethodName: String,
-    val callCiteArgTypes: List<TypeName>,
-    val callCiteReturnType: TypeName,
-    val callCiteArgs: List<JcRawValue>
+    val callSiteMethodName: String,
+    val callSiteArgTypes: List<TypeName>,
+    val callSiteReturnType: TypeName,
+    val callSiteArgs: List<JcRawValue>
 ) : JcRawCallExpr {
     override val declaringClass get() = bsm.declaringClass
     override val methodName get() = bsm.name
     override val argumentTypes get() = bsm.argTypes
     override val returnType get() = bsm.returnType
     override val typeName get() = returnType
-    override val args get() = callCiteArgs
+    override val args get() = callSiteArgs
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawDynamicCallExpr(this)

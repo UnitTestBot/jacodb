@@ -51,7 +51,6 @@ import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcFloat
 import org.jacodb.api.cfg.JcGeExpr
 import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcGtExpr
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
@@ -412,9 +411,9 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
                 return JcDynamicCallExpr(
                     classpath.methodRef(expr),
                     expr.bsmArgs,
-                    expr.callCiteMethodName,
-                    expr.callCiteArgTypes.map { it.asType() },
-                    expr.callCiteReturnType.asType(),
+                    expr.callSiteMethodName,
+                    expr.callSiteArgTypes.map { it.asType() },
+                    expr.callSiteReturnType.asType(),
                     expr.args.map { it.accept(this) as JcValue }
                 )
             }
