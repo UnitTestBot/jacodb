@@ -29,6 +29,7 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcClasspathTask
+import org.jacodb.api.JcFeatureEvent
 import org.jacodb.api.JcRefType
 import org.jacodb.api.JcType
 import org.jacodb.api.PredefinedPrimitives
@@ -36,6 +37,7 @@ import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.ext.toType
 import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
+import org.jacodb.impl.features.JcFeatureEventImpl
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
@@ -50,13 +52,13 @@ class JcClasspathImpl(
     override val db: JcDatabaseImpl,
     override val features: List<JcClasspathFeature>,
     globalClassVFS: GlobalClassesVfs
-) : JcClasspath, JcClasspathExtFeature {
+) : JcClasspath {
 
     override val locations: List<JcByteCodeLocation> = locationsRegistrySnapshot.locations.mapNotNull { it.jcLocation }
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
-    private val featuresChain = JcFeaturesChain(features + this)
+    private val featuresChain = JcFeaturesChain(features + JcClasspathFeatureImpl())
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
@@ -64,30 +66,6 @@ class JcClasspathImpl(
                 close()
             }
         }
-    }
-
-    override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface> {
-        val source = classpathVfs.firstClassOrNull(name)
-        val jcClass = source?.let { toJcClass(it.source) }
-            ?: db.persistence.findClassSourceByName(this, locationsRegistrySnapshot.locations, name)?.let {
-                toJcClass(it)
-            }
-        return Optional.ofNullable(jcClass)
-    }
-
-    override fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? {
-        if (name.endsWith("[]")) {
-            val targetName = name.removeSuffix("[]")
-            return findTypeOrNull(targetName)?.let {
-                Optional.of(JcArrayTypeImpl(it, true))
-            }
-        }
-        val predefined = PredefinedPrimitives.of(name, this)
-        if (predefined != null) {
-            return Optional.of(predefined)
-        }
-        val clazz = findClassOrNull(name) ?: return Optional.empty()
-        return Optional.of(typeOf(clazz))
     }
 
     override fun findClassOrNull(name: String): JcClassOrInterface? {
@@ -148,4 +126,38 @@ class JcClasspathImpl(
         locationsRegistrySnapshot.close()
     }
 
+    private inner class JcClasspathFeatureImpl: JcClasspathExtFeature{
+
+        override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface> {
+            val source = classpathVfs.firstClassOrNull(name)
+            val jcClass = source?.let { toJcClass(it.source) }
+                ?: db.persistence.findClassSourceByName(this@JcClasspathImpl, locationsRegistrySnapshot.locations, name)?.let {
+                    toJcClass(it)
+                }
+            return Optional.ofNullable(jcClass)
+        }
+
+        override fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? {
+            if (name.endsWith("[]")) {
+                val targetName = name.removeSuffix("[]")
+                return findTypeOrNull(targetName)?.let {
+                    Optional.of(JcArrayTypeImpl(it, true))
+                }
+            }
+            val predefined = PredefinedPrimitives.of(name, this@JcClasspathImpl)
+            if (predefined != null) {
+                return Optional.of(predefined)
+            }
+            val clazz = findClassOrNull(name) ?: return Optional.empty()
+            return Optional.of(typeOf(clazz))
+        }
+
+        override fun event(result: Any, input: Array<Any>): JcFeatureEvent {
+            return JcFeatureEventImpl(this, result, input)
+        }
+
+    }
+
 }
+
+

@@ -17,30 +17,31 @@
 package org.jacodb.impl.features
 
 import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcFeatureEvent
 
 class JcFeaturesChain(val features: List<JcClasspathFeature>) {
 
-    fun newRequest(vararg input: Any) = JcFeaturesRequest(features, *input)
+    fun newRequest(vararg input: Any) = JcFeaturesRequest(features, arrayOf(*input))
 
 }
 
-class JcFeaturesRequest(val features: List<JcClasspathFeature>, vararg i: Any) {
-
-    val input = i
+class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array<Any>) {
 
     inline fun <reified T : JcClasspathFeature, W> call(call: (T) -> W?): W? {
         var result: W? = null
+        var event: JcFeatureEvent? = null
         for (feature in features) {
             if (feature is T) {
                 result = call(feature)
                 if (result != null) {
+                    event = feature.event(result, input)
                     break
                 }
             }
         }
-        if (result != null) {
+        if (result != null && event != null) {
             for (feature in features) {
-                feature.on(result, *input)
+                feature.on(event)
             }
         }
         return result
@@ -56,3 +57,10 @@ class JcFeaturesRequest(val features: List<JcClasspathFeature>, vararg i: Any) {
     }
 
 }
+
+
+class JcFeatureEventImpl(
+    override val feature: JcClasspathFeature,
+    override val result: Any,
+    override val input: Array<Any>
+) : JcFeatureEvent

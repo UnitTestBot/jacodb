@@ -23,6 +23,7 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
+import org.jacodb.api.JcFeatureEvent
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.api.JcType
@@ -72,10 +73,9 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     override fun instList(method: JcMethod) = instCache.getIfPresent(method)
     override fun rawInstList(method: JcMethod) = rawInstCache.getIfPresent(method)
 
-    override fun on(result: Any?, vararg input: Any) {
-        if (result == null) {
-            return
-        }
+    override fun on(event: JcFeatureEvent) {
+        val result = event.result
+        val input = event.input
         when (result) {
             is Optional<*> -> {
                 if (result.isPresent) {
