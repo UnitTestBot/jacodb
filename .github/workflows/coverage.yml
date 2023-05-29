@@ -1,4 +1,4 @@
-name: Update coverage
+name: Generate coverage report
 
 on:
   push:
@@ -35,6 +35,9 @@ jobs:
           badges-directory: docs/badges
           generate-branches-badge: true
           generate-summary: true
+          jacoco-csv-file: >
+            jacodb-analysis/build/reports/jacoco/test/jacocoTestReport.csv
+            jacodb-core/build/reports/jacoco/test/jacocoTestReport.csv
 
       - name: Log coverage percentages to workflow output
         run: |
