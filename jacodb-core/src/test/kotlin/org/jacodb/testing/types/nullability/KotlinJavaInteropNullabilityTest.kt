@@ -20,7 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassType
 import org.jacodb.testing.KotlinNullabilityExamples
 import org.jacodb.testing.types.BaseTypesTest
-import org.jacodb.testing.usages.NullAnnotationExamples
+import org.jacodb.testing.types.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

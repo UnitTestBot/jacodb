@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.testing.usages;
+package org.jacodb.testing.types;
 
 import org.jacodb.testing.KotlinNullabilityExamples;
 import org.jetbrains.annotations.NotNull;

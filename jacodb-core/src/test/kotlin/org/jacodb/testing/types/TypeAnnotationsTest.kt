@@ -22,7 +22,6 @@ import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcBoundedWildcard
 import org.jacodb.api.JcClassType
 import org.jacodb.impl.types.JcClassTypeImpl
-import org.jacodb.testing.usages.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

@@ -19,20 +19,35 @@
 package org.jacodb.api.ext
 
 import org.jacodb.api.JcAnnotated
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
 
-const val NotNull = "org.jetbrains.annotations.NotNull"
-const val Nullable = "org.jetbrains.annotations.Nullable"
+val JcAnnotation.isNotNullAnnotation: Boolean
+    get() = NullabilityAnnotations.notNullAnnotations.any { matches(it) }
+
+val JcAnnotation.isNullableAnnotation: Boolean
+    get() = NullabilityAnnotations.nullableAnnotations.any { matches(it) }
+
+private object NullabilityAnnotations {
+    val notNullAnnotations = listOf(
+        "org.jetbrains.annotations.NotNull",
+        "lombok.NonNull"
+    )
+
+    val nullableAnnotations = listOf(
+        "org.jetbrains.annotations.Nullable"
+    )
+}
 
 private fun JcAnnotated.isNullable(type: TypeName): Boolean? =
     when {
         PredefinedPrimitives.matches(type.typeName) -> false
-        annotations.any { it.matches(NotNull) } -> false
-        annotations.any { it.matches(Nullable) } -> true
+        annotations.any { it.isNotNullAnnotation } -> false
+        annotations.any { it.isNullableAnnotation } -> true
         else -> null
     }
 

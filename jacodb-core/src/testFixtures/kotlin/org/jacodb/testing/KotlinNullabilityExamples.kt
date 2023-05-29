@@ -16,7 +16,7 @@
 
 package org.jacodb.testing
 
-import org.jacodb.testing.usages.NullAnnotationExamples
+import org.jacodb.testing.types.NullAnnotationExamples
 
 class KotlinNullabilityExamples {
     class SomeContainer<E>(

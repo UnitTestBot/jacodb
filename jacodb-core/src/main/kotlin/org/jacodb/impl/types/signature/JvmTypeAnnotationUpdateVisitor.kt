@@ -17,13 +17,13 @@
 package org.jacodb.impl.types.signature
 
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.isNotNullAnnotation
+import org.jacodb.api.ext.isNullableAnnotation
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.types.AnnotationInfo
-import org.jacodb.impl.types.isNotNullAnnotation
-import org.jacodb.impl.types.isNullableAnnotation
 import org.objectweb.asm.TypePath
 
-internal data class AnnotationUpdateVisitorContext(val annotationInfo: AnnotationInfo) {
+private data class AnnotationUpdateVisitorContext(val annotationInfo: AnnotationInfo) {
     var step: Int = 0
 
     /**
@@ -65,7 +65,7 @@ internal data class AnnotationUpdateVisitorContext(val annotationInfo: Annotatio
  *
  * @param cp [JcClasspath] instance needed to instantiate [JcAnnotationImpl]
  */
-internal class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
+private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
     : JvmTypeVisitor<AnnotationUpdateVisitorContext> {
     override fun visitUpperBound(
         type: JvmBoundWildcard.JvmUpperBoundWildcard,
