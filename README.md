@@ -1,4 +1,5 @@
 [![ci status](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml)
+[![Coverage](./docs/badges/jacoco.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/coverage.yml)
 
 ## Overview
 
