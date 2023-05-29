@@ -28,6 +28,7 @@ jobs:
           gradle-version: 7.6.1
           arguments: |
             publish
+            -PsemVer=${{inputs.semVer}}
             -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
             -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
             -PgpgKey=${{ secrets.OSSRH_GPG_SECRET_KEY }}
