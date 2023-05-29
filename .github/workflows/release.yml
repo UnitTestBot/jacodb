@@ -31,6 +31,6 @@ jobs:
             -PsemVer=${{inputs.semVer}}
             -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
             -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
-            -PgpgKey=${{ secrets.OSSRH_GPG_SECRET_KEY }}
+            -PgpgKey="${{ secrets.OSSRH_GPG_SECRET_KEY }}"
             -PgpgPassphrase=${{ secrets.OSSRH_GPG_SECRET_PASSPHRASE }}
             -PrepoUrl=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
