@@ -47,12 +47,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jacoco-report
-          path: build/reports/jacoco/
+          path: jacodb-*/build/reports/jacoco/
 
       - name: Commit and push the coverage badges and summary file
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          cd badges
+          cd docs/badges
           if [[ `git status --porcelain *.svg *.json` ]]; then
             git config --global user.name 'github-actions'
             git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
