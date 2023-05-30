@@ -28,6 +28,7 @@ jobs:
           gradle-version: 7.6.1
           arguments: |
             publish
+            -PincludeDokka=true
             -PsemVer=${{inputs.semVer}}
             -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
             -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
