@@ -1,0 +1,1 @@
+org.gradle.jvmargs=-XX:MaxMetaspaceSize=1048m -XX:MaxPermSize=1048m -Xmx2g
