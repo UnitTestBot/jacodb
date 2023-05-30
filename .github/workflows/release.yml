@@ -34,3 +34,13 @@ jobs:
             -PgpgKey="${{ secrets.OSSRH_GPG_SECRET_KEY }}"
             -PgpgPassphrase=${{ secrets.OSSRH_GPG_SECRET_PASSPHRASE }}
             -PrepoUrl=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            jacodb-api/build/libs/jacodb-api-${{inputs.semVer}}.jar
+            jacodb-analysis/build/libs/jacodb-analysis-${{inputs.semVer}}.jar
+            jacodb-core/build/libs/jacodb-core-${{inputs.semVer}}.jar
+            jacodb-cli/build/libs/jacodb-cli-${{inputs.semVer}}.jar
+            jacodb-examples/build/libs/jacodb-examples-${{inputs.semVer}}.jar
