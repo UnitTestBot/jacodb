@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.cli
 
-import org.jacodb.analysis.AnalysisMain
+import org.jacodb.testing.analysis.NPEExamples
 import org.junit.jupiter.api.Test
 
 class CliTest {
@@ -24,8 +24,7 @@ class CliTest {
     fun `test basic analysis cli api`() {
         val args = listOf(
             "-a", CliTest::class.java.getResource("/config.json")?.file ?: error("Can't find file with config"),
-            "-c", "tmp-analysis-db",
-            "-s", "org.jacodb.analysis.samples.NPEExamples"
+            "-s", NPEExamples::class.java.name
         )
         AnalysisMain().run(args)
     }

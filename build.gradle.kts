@@ -171,7 +171,7 @@ if (!repoUrl.isNullOrEmpty()) {
         listOf(
             project(":jacodb-api"),
             project(":jacodb-core"),
-//            project(":jacodb-analysis"),
+            project(":jacodb-analysis"),
         )
     ) {
         publishing {
