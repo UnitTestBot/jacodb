@@ -4,6 +4,7 @@ val kotlinVersion: String by rootProject
 val coroutinesVersion: String by rootProject
 val junit5Version: String by project
 val semVer: String? by project
+val includeDokka: String? by project
 
 group = "org.jacodb"
 
@@ -125,6 +126,7 @@ allprojects {
             archiveClassifier.set("javadoc")
         }
 
+
         val sourcesJar by creating(Jar::class) {
             archiveClassifier.set("sources")
             from(sourceSets.getByName("main").kotlin.srcDirs)
@@ -132,7 +134,9 @@ allprojects {
 
         artifacts {
             archives(sourcesJar)
-            archives(dokkaJavadocJar)
+            if (includeDokka != null) {
+                archives(dokkaJavadocJar)
+            }
         }
     }
 
@@ -170,7 +174,7 @@ if (!repoUrl.isNullOrEmpty()) {
         listOf(
             project(":jacodb-api"),
             project(":jacodb-core"),
-//            project(":jacodb-analysis"),
+            project(":jacodb-analysis"),
         )
     ) {
         publishing {

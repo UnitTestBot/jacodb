@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.samples;
+package org.jacodb.testing.analysis;
 
 import org.jetbrains.annotations.NotNull;
 

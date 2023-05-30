@@ -110,7 +110,7 @@ class UnusedVariableTest : BaseTest() {
 
     private fun findUnusedVariables(method: JcMethod): List<VulnerabilityInstance> {
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
+        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val ifds = UnusedVariableAnalysisFactory().createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
