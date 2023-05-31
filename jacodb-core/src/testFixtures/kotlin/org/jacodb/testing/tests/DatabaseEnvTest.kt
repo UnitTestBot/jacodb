@@ -514,11 +514,16 @@ abstract class DatabaseEnvTest {
         }
         val clazz = cp.findClass<Bar>()
         val field = clazz.findDeclaredFieldOrNull(fieldName)
+
+        val fields = clazz.declaredFields.filter { it.name == fieldName }
+        assertTrue(fields.size == 1)
+
         assertTrue(field is JcVirtualField)
         assertEquals(PredefinedPrimitives.Int, field!!.type.typeName)
         assertNotNull(field.enclosingClass)
 
-        val method = clazz.declaredMethods.first { it.name == methodName }
+        val method = clazz.declaredMethods.single { it.name == methodName }
+
         assertTrue(method is JcVirtualMethod)
         assertEquals(byteArrayTypeName, method.returnType.typeName)
         assertEquals(1, method.parameters.size)
