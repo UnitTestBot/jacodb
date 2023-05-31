@@ -315,9 +315,9 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
                         is BsmTypeArg -> arg.copy(arg.typeName.eliminateApproximation())
                     }
                 },
-                callCiteMethodName,
-                callCiteArgTypes.map { it.eliminateApproximation() },
-                callCiteReturnType.eliminateApproximation(),
+                callSiteMethodName,
+                callSiteArgTypes.map { it.eliminateApproximation() },
+                callSiteReturnType.eliminateApproximation(),
                 newArgs
             )
         }

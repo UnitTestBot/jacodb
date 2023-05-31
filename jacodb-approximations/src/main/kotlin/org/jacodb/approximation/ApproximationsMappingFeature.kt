@@ -26,6 +26,8 @@ import org.jacodb.approximation.annotation.ApproximationFor
 import org.jacodb.impl.fs.className
 import org.jooq.DSLContext
 import org.objectweb.asm.tree.ClassNode
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 // TODO we need somehow to remove approximation classes from the hierarchy to avoid presence of them in the inheritors of Object
 
@@ -41,8 +43,8 @@ import org.objectweb.asm.tree.ClassNode
  *  See [JcDatabase.awaitBackgroundJobs].
  */
 object ApproximationsMappingFeature : JcFeature<Any?, Any?> {
-    private val originalToApproximation: MutableMap<OriginalClassName, ApproximationClassName> = mutableMapOf()
-    private val approximationToOriginal: MutableMap<ApproximationClassName, OriginalClassName> = mutableMapOf()
+    private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName> = ConcurrentHashMap()
+    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName> = ConcurrentHashMap()
 
     override suspend fun query(classpath: JcClasspath, req: Any?): Sequence<Any?> {
         // returns an empty sequence for now, all requests are made using
@@ -75,8 +77,8 @@ object ApproximationsMappingFeature : JcFeature<Any?, Any?> {
 }
 
 private class ApproximationIndexer(
-    private val originalToApproximation: MutableMap<OriginalClassName, ApproximationClassName>,
-    private val approximationToOriginal: MutableMap<ApproximationClassName, OriginalClassName>
+    private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName>,
+    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName>
 ) : ByteCodeIndexer {
     override fun index(classNode: ClassNode) {
         val annotations = classNode.visibleAnnotations ?: return
