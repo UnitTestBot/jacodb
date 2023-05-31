@@ -1,5 +1,7 @@
 [![ci status](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml)
+[![Maven](https://maven-badges.herokuapp.com/maven-central/org.jacodb/jacodb-api/badge.svg)](https://central.sonatype.com/search?smo=true&q=org.jacodb)
 [![Coverage](./docs/badges/jacoco.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/coverage.yml)
+
 
 ## Overview
 
