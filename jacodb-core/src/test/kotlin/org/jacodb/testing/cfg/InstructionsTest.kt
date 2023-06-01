@@ -154,6 +154,14 @@ class InstructionsTest : BaseTest() {
         runAlong("mail-1.4.7.jar", "activation-1.1.jar", "joda-time-2.12.5.jar")
     }
 
+    @Test
+    fun `constant ldc instructions`() {
+        val clazz = cp.findClass("TestLDC")
+        clazz.declaredMethods.forEach {
+            it.flowGraph()
+        }
+    }
+
     private fun runAlong(vararg patters: String) {
         val jars = cp.registeredLocations.map { it.path }
             .filter { patters.any { pattern -> it.contains(pattern) } }

@@ -126,6 +126,7 @@ abstract class AbstractFullRawExprSetCollector : JcRawExprVisitor<Unit>, Default
     override fun visitJcRawStringConstant(value: JcRawStringConstant) = ifMatches(value)
     override fun visitJcRawClassConstant(value: JcRawClassConstant) = ifMatches(value)
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant) = ifMatches(value)
+    override fun visitJcRawMethodType(value: JcRawMethodType) = ifMatches(value)
 
     abstract fun ifMatches(expr: JcRawExpr)
 }
@@ -235,14 +236,14 @@ abstract class AbstractFullExprSetCollector : JcExprVisitor<Any>, DefaultJcInstV
         return Unit
     }
 
-    override fun visitJcArrayAccess(value: JcArrayAccess) : Any{
+    override fun visitJcArrayAccess(value: JcArrayAccess): Any {
         ifMatches(value)
         value.array.accept(this)
         value.index.accept(this)
         return Unit
     }
 
-    override fun visitJcPhiExpr(expr: JcPhiExpr) : Any{
+    override fun visitJcPhiExpr(expr: JcPhiExpr): Any {
         ifMatches(expr)
         expr.args.forEach { it.accept(this) }
         expr.values.forEach { it.accept(this) }
@@ -250,18 +251,19 @@ abstract class AbstractFullExprSetCollector : JcExprVisitor<Any>, DefaultJcInstV
     }
 
     override fun visitExternalJcExpr(expr: JcExpr): Any = ifMatches(expr)
-    override fun visitJcBool(value: JcBool) : Any= ifMatches(value)
+    override fun visitJcBool(value: JcBool): Any = ifMatches(value)
     override fun visitJcByte(value: JcByte): Any = ifMatches(value)
-    override fun visitJcChar(value: JcChar) : Any= ifMatches(value)
+    override fun visitJcChar(value: JcChar): Any = ifMatches(value)
     override fun visitJcShort(value: JcShort): Any = ifMatches(value)
     override fun visitJcInt(value: JcInt): Any = ifMatches(value)
     override fun visitJcLong(value: JcLong): Any = ifMatches(value)
     override fun visitJcFloat(value: JcFloat): Any = ifMatches(value)
     override fun visitJcDouble(value: JcDouble): Any = ifMatches(value)
     override fun visitJcNullConstant(value: JcNullConstant): Any = ifMatches(value)
-    override fun visitJcStringConstant(value: JcStringConstant) : Any= ifMatches(value)
-    override fun visitJcClassConstant(value: JcClassConstant) : Any= ifMatches(value)
-    override fun visitJcMethodConstant(value: JcMethodConstant) : Any= ifMatches(value)
+    override fun visitJcStringConstant(value: JcStringConstant): Any = ifMatches(value)
+    override fun visitJcClassConstant(value: JcClassConstant): Any = ifMatches(value)
+    override fun visitJcMethodConstant(value: JcMethodConstant): Any = ifMatches(value)
+    override fun visitJcMethodType(value: JcMethodType): Any = ifMatches(value)
 
     abstract fun ifMatches(expr: JcExpr)
 }

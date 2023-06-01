@@ -66,6 +66,7 @@ import org.jacodb.api.cfg.JcLocalVar
 import org.jacodb.api.cfg.JcLong
 import org.jacodb.api.cfg.JcLtExpr
 import org.jacodb.api.cfg.JcMethodConstant
+import org.jacodb.api.cfg.JcMethodType
 import org.jacodb.api.cfg.JcMulExpr
 import org.jacodb.api.cfg.JcNegExpr
 import org.jacodb.api.cfg.JcNeqExpr
@@ -116,6 +117,7 @@ import org.jacodb.api.cfg.JcRawLocalVar
 import org.jacodb.api.cfg.JcRawLong
 import org.jacodb.api.cfg.JcRawLtExpr
 import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMethodType
 import org.jacodb.api.cfg.JcRawMulExpr
 import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
@@ -500,5 +502,13 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
             it.name == value.name && it.returnType == returnType && it.parameters.map { param -> param.type } == argumentTypes
         }
         return JcMethodConstant(constant, value.typeName.asType())
+    }
+
+    override fun visitJcRawMethodType(value: JcRawMethodType): JcExpr {
+        return JcMethodType(
+            value.argumentTypes.map { it.asType() },
+            value.returnType.asType(),
+            value.typeName.asType()
+        )
     }
 }

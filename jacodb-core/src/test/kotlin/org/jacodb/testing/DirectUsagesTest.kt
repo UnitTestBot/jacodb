@@ -19,6 +19,7 @@ package org.jacodb.testing
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.CONSTRUCTOR
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.usedFields
 import org.jacodb.api.ext.usedMethods
@@ -38,7 +39,7 @@ class DirectUsagesTest : BaseTest() {
 
         assertEquals(
             listOf(
-                "<init>" to listOf("java.lang.Object#<init>"),
+                CONSTRUCTOR to listOf("java.lang.Object#<init>"),
                 "setCalled" to listOf(
                     "java.io.PrintStream#println",
                 ),
@@ -63,7 +64,7 @@ class DirectUsagesTest : BaseTest() {
 
             assertEquals(
                 listOf(
-                    "<init>" to listOf("java.lang.Object#<init>"),
+                    CONSTRUCTOR to listOf("java.lang.Object#<init>"),
                     "setCalled" to listOf(
                         "java.io.PrintStream#println",
                     ),
@@ -84,7 +85,7 @@ class DirectUsagesTest : BaseTest() {
 
         assertEquals(
             listOf(
-                "<init>" to listOf(
+                CONSTRUCTOR to listOf(
                     "reads" to listOf(),
                     "writes" to listOf()
                 ),

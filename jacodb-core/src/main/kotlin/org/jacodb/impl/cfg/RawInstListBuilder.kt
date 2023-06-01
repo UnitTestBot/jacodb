@@ -38,6 +38,7 @@ import org.jacodb.api.cfg.JcRawAndExpr
 import org.jacodb.api.cfg.JcRawArgument
 import org.jacodb.api.cfg.JcRawArrayAccess
 import org.jacodb.api.cfg.JcRawAssignInst
+import org.jacodb.api.cfg.JcRawCallExpr
 import org.jacodb.api.cfg.JcRawCallInst
 import org.jacodb.api.cfg.JcRawCastExpr
 import org.jacodb.api.cfg.JcRawCatchEntry
@@ -67,6 +68,7 @@ import org.jacodb.api.cfg.JcRawLineNumberInst
 import org.jacodb.api.cfg.JcRawLocalVar
 import org.jacodb.api.cfg.JcRawLtExpr
 import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMethodType
 import org.jacodb.api.cfg.JcRawMulExpr
 import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
@@ -92,7 +94,10 @@ import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
 import org.jacodb.impl.cfg.util.CLASS_CLASS
 import org.jacodb.impl.cfg.util.ExprMapper
+import org.jacodb.impl.cfg.util.METHOD_HANDLES_CLASS
+import org.jacodb.impl.cfg.util.METHOD_HANDLES_LOOKUP_CLASS
 import org.jacodb.impl.cfg.util.METHOD_HANDLE_CLASS
+import org.jacodb.impl.cfg.util.METHOD_TYPE_CLASS
 import org.jacodb.impl.cfg.util.NULL
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.cfg.util.STRING_CLASS
@@ -103,6 +108,7 @@ import org.jacodb.impl.cfg.util.isArray
 import org.jacodb.impl.cfg.util.isDWord
 import org.jacodb.impl.cfg.util.isPrimitive
 import org.jacodb.impl.cfg.util.typeName
+import org.objectweb.asm.ConstantDynamic
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -232,12 +238,13 @@ private val AbstractInsnNode.isTerminateInst
 
 private val TryCatchBlockNode.typeOrDefault get() = this.type ?: THROWABLE_CLASS
 
-private val Collection<TryCatchBlockNode>.commonTypeOrDefault get() = map { it.type }
-    .distinct()
-    .singleOrNull()
-    ?: THROWABLE_CLASS
+private val Collection<TryCatchBlockNode>.commonTypeOrDefault
+    get() = map { it.type }
+        .distinct()
+        .singleOrNull()
+        ?: THROWABLE_CLASS
 
-internal fun <K, V> identityMap(): MutableMap<K,V> = IdentityHashMap()
+internal fun <K, V> identityMap(): MutableMap<K, V> = IdentityHashMap()
 
 internal fun <K, V> Map<out K, V>.toIdentityMap(): Map<K, V> = toMap()
 
@@ -273,7 +280,8 @@ class RawInstListBuilder(
 
         // after all the frame info resolution we can refine type info for some local variables,
         // so we replace all the old versions of the variables with the type refined ones
-        val localsNormalizedInstructionList = originalInstructionList.map(ExprMapper(localTypeRefinement.toIdentityMap()))
+        val localsNormalizedInstructionList =
+            originalInstructionList.map(ExprMapper(localTypeRefinement.toIdentityMap()))
         return Simplifier().simplify(method.enclosingClass.classpath, localsNormalizedInstructionList)
     }
 
@@ -535,8 +543,7 @@ class RawInstListBuilder(
         val locals = hashMapOf<Int, JcRawValue>()
         argCounter = 0
         if (!method.isStatic) {
-            val thisRef = JcRawThis(method.enclosingClass.name.typeName())
-            locals[argCounter++] = thisRef
+            locals[argCounter++] = thisRef()
         }
         for (parameter in method.parameters) {
             val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
@@ -547,6 +554,8 @@ class RawInstListBuilder(
 
         return Frame(locals.toPersistentMap(), persistentListOf())
     }
+
+    private fun thisRef() = JcRawThis(method.enclosingClass.name.typeName())
 
     private fun buildInsnNode(insn: InsnNode) {
         when (insn.opcode) {
@@ -1031,7 +1040,7 @@ class RawInstListBuilder(
             }
 
             instructionList(insnNode) += JcRawCatchInst(
-                    method,
+                method,
                 throwable,
                 labelRef(currentEntry),
                 entries
@@ -1197,19 +1206,48 @@ class RawInstListBuilder(
         instructionList(insnNode) += JcRawLineNumberInst(method, insnNode.line, labelRef(insnNode.start))
     }
 
+    private fun ldcValue(cst: Any): JcRawValue {
+        return when (cst) {
+            is Int -> JcRawInt(cst)
+            is Float -> JcRawFloat(cst)
+            is Double -> JcRawDouble(cst)
+            is Long -> JcRawLong(cst)
+            is String -> JcRawStringConstant(cst, STRING_CLASS.typeName())
+            is Type -> JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
+            is Handle -> {
+                JcRawMethodConstant(
+                    cst.owner.typeName(),
+                    cst.name,
+                    Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
+                    Type.getReturnType(cst.desc).descriptor.typeName(),
+                    METHOD_HANDLE_CLASS.typeName()
+                )
+            }
+
+            else -> error("Can't convert LDC value: $cst of type ${cst::class.java.name}")
+        }
+    }
+
     private fun buildLdcInsnNode(insnNode: LdcInsnNode) {
         when (val cst = insnNode.cst) {
-            is Int -> push(JcRawInt(cst))
-            is Float -> push(JcRawFloat(cst))
-            is Double -> push(JcRawDouble(cst))
-            is Long -> push(JcRawLong(cst))
+            is Int -> push(ldcValue(cst))
+            is Float -> push(ldcValue(cst))
+            is Double -> push(ldcValue(cst))
+            is Long -> push(ldcValue(cst))
             is String -> push(JcRawStringConstant(cst, STRING_CLASS.typeName()))
             is Type -> {
                 val assignment = nextRegister(CLASS_CLASS.typeName())
                 instructionList(insnNode) += JcRawAssignInst(
                     method,
                     assignment,
-                    JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
+                    when (cst.sort) {
+                        Type.METHOD -> JcRawMethodType(
+                            cst.argumentTypes.map { it.descriptor.typeName() },
+                            cst.returnType.descriptor.typeName(),
+                            METHOD_TYPE_CLASS.typeName()
+                        )
+                        else -> ldcValue(cst)
+                    }
                 )
                 push(assignment)
             }
@@ -1219,18 +1257,61 @@ class RawInstListBuilder(
                 instructionList(insnNode) += JcRawAssignInst(
                     method,
                     assignment,
-                    JcRawMethodConstant(
-                        cst.owner.typeName(),
-                        cst.name,
-                        Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
-                        Type.getReturnType(cst.desc).descriptor.typeName(),
-                        METHOD_HANDLE_CLASS.typeName()
-                    )
+                    ldcValue(cst)
                 )
                 push(assignment)
             }
 
-            else -> error("Unknown LDC constant: $cst")
+            is ConstantDynamic -> {
+                val methodHande = cst.bootstrapMethod
+                val assignment = nextRegister(CLASS_CLASS.typeName())
+                val exprs = arrayListOf<JcRawValue>()
+                repeat(cst.bootstrapMethodArgumentCount) {
+                    exprs.add(
+                        ldcValue(cst.getBootstrapMethodArgument(it - 1))
+                    )
+                }
+                val methodCall: JcRawCallExpr = when (cst.bootstrapMethod.tag) {
+                    Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(
+                        methodHande.owner.typeName(),
+                        cst.name,
+                        Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeName() },
+                        Type.getReturnType(methodHande.desc).descriptor.typeName(),
+                        thisRef(),
+                        exprs
+                    )
+
+                    else -> {
+                        val lookupAssignment = nextRegister(METHOD_HANDLES_LOOKUP_CLASS.typeName())
+                        instructionList(insnNode) += JcRawAssignInst(
+                            method,
+                            lookupAssignment,
+                            JcRawStaticCallExpr(
+                                METHOD_HANDLES_CLASS.typeName(),
+                                "lookup",
+                                emptyList(),
+                                METHOD_HANDLES_LOOKUP_CLASS.typeName(),
+                                emptyList()
+                            )
+                        )
+                        JcRawStaticCallExpr(
+                            methodHande.owner.typeName(),
+                            methodHande.name,
+                            Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeName() },
+                            Type.getReturnType(methodHande.desc).descriptor.typeName(),
+                            listOf(
+                                lookupAssignment,
+                                JcRawStringConstant(cst.name, STRING_CLASS.typeName()),
+                                JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
+                            ) + exprs
+                        )
+                    }
+                }
+                instructionList(insnNode) += JcRawAssignInst(method, assignment, methodCall)
+                push(assignment)
+            }
+
+            else -> error("Unknown LDC constant: $cst and type ${cst::class.java.name}")
         }
     }
 

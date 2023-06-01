@@ -112,6 +112,7 @@ interface JcRawExprVisitor<T> {
     fun visitJcRawStringConstant(value: JcRawStringConstant): T
     fun visitJcRawClassConstant(value: JcRawClassConstant): T
     fun visitJcRawMethodConstant(value: JcRawMethodConstant): T
+    fun visitJcRawMethodType(value: JcRawMethodType): T
 }
 
 @JvmDefaultWithoutCompatibility
@@ -214,4 +215,6 @@ interface DefaultJcRawExprVisitor<T> : JcRawExprVisitor<T> {
     override fun visitJcRawClassConstant(value: JcRawClassConstant): T = defaultExprHandler(value)
 
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant): T = defaultExprHandler(value)
+
+    override fun visitJcRawMethodType(value: JcRawMethodType): T = defaultExprHandler(value)
 }

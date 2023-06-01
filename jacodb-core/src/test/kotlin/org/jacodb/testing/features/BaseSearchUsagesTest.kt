@@ -18,6 +18,7 @@ package org.jacodb.testing.features
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.FieldUsageMode
+import org.jacodb.api.ext.CONSTRUCTOR
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -124,7 +125,7 @@ abstract class BaseSearchUsagesTest : BaseTest() {
         val usages = methodsUsages<MethodA>()
         assertEquals(
             sortedMapOf(
-                "<init>" to setOf(
+                CONSTRUCTOR to setOf(
                     "org.jacodb.testing.usages.methods.MethodB#hoho",
                     "org.jacodb.testing.usages.methods.MethodC#<init>"
                 ),

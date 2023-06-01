@@ -1168,3 +1168,21 @@ data class JcMethodConstant(
         return visitor.visitJcMethodConstant(this)
     }
 }
+
+data class JcMethodType(
+    val argumentTypes: List<JcType>,
+    val returnType: JcType,
+    override val type: JcType
+) : JcConstant {
+    override fun toString(): String = "${
+        argumentTypes.joinToString(
+            prefix = "(",
+            postfix = ")",
+            separator = ", "
+        )
+    }:${returnType}"
+
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcMethodType(this)
+    }
+}
