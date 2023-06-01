@@ -67,10 +67,10 @@ fun JcClassOrInterface.findFieldOrNull(name: String): JcField? {
     }
 }
 
-fun JcClassOrInterface.findDeclaredFieldOrNull(name: String): JcField? = declaredFields.firstOrNull { it.name == name }
+fun JcClassOrInterface.findDeclaredFieldOrNull(name: String): JcField? = declaredFields.singleOrNull { it.name == name }
 
 fun JcClassOrInterface.findDeclaredMethodOrNull(name: String, desc: String? = null): JcMethod? {
-    return declaredMethods.firstOrNull { it.name == name && (desc == null || it.description == desc) }
+    return declaredMethods.singleOrNull { it.name == name && (desc == null || it.description == desc) }
 }
 
 

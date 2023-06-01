@@ -47,4 +47,8 @@ open class JcVirtualFieldImpl(
         get() = null
     override val annotations: List<JcAnnotation>
         get() = emptyList()
+
+    override fun toString(): String {
+        return "virtual $enclosingClass#$name"
+    }
 }

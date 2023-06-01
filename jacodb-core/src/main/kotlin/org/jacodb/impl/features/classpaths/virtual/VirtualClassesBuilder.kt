@@ -92,7 +92,7 @@ open class VirtualClassesBuilder {
             this._name = name
         }
 
-        fun build(): JcVirtualField {
+        open fun build(): JcVirtualField {
             return JcVirtualFieldImpl(_name, access, type)
         }
 
@@ -124,7 +124,7 @@ open class VirtualClassesBuilder {
             returnType = TypeNameImpl(name)
         }
 
-        val description: String
+        open val description: String
             get() {
                 return buildString {
                     append("(")
