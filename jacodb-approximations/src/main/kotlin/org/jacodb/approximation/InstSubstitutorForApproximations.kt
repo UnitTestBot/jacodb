@@ -70,6 +70,7 @@ import org.jacodb.api.cfg.JcRawLocalVar
 import org.jacodb.api.cfg.JcRawLong
 import org.jacodb.api.cfg.JcRawLtExpr
 import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMethodType
 import org.jacodb.api.cfg.JcRawMulExpr
 import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
@@ -472,6 +473,16 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
             JcRawMethodConstant(
                 declaringClass.eliminateApproximation(),
                 name,
+                argumentTypes.map { it.eliminateApproximation() },
+                returnType.eliminateApproximation(),
+                typeName.eliminateApproximation()
+            )
+        }
+    }
+
+    override fun visitJcRawMethodType(value: JcRawMethodType): JcRawExpr {
+        return with(value) {
+            JcRawMethodType(
                 argumentTypes.map { it.eliminateApproximation() },
                 returnType.eliminateApproximation(),
                 typeName.eliminateApproximation()
