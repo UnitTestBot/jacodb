@@ -24,7 +24,6 @@ import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcRawAssignInst
 import org.jacodb.api.cfg.JcRawCallInst
 import org.jacodb.api.cfg.JcRawFieldRef
-import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredFieldOrNull
 import org.jacodb.approximation.ApproximationsInstructionsFeature
@@ -37,20 +36,15 @@ import org.jacodb.approximation.JcEnrichedVirtualMethod
 import org.jacodb.approximation.toApproximationName
 import org.jacodb.approximation.toOriginalName
 import org.jacodb.approximations.target.KotlinClass
-import org.jacodb.impl.features.hierarchyExt
-import org.jacodb.testing.CleanDB
+import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.jacodb.testing.tests.DatabaseEnvTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(CleanDB::class)
-class ApproximationsTest : DatabaseEnvTest() {
+class ApproximationsTest : BaseTest() {
     companion object : WithDB(ApproximationsMappingFeature)
 
     override val cp: JcClasspath = runBlocking {
@@ -58,16 +52,8 @@ class ApproximationsTest : DatabaseEnvTest() {
         db.classpath(allClasspath, features)
     }
 
-    override val hierarchyExt: HierarchyExtension
-        get() = runBlocking { cp.hierarchyExt() }
-
-    @BeforeEach
-    fun waitForParsing() = runBlocking {
-        db.awaitBackgroundJobs()
-    }
-
     @Test
-    fun testKotlinApproximation() {
+    fun `kotlin approximation`() {
         val classec = cp.findClass<KotlinClass>()
 
         val originalClassName = KotlinClass::class.qualifiedName!!.toOriginalName()
@@ -79,7 +65,7 @@ class ApproximationsTest : DatabaseEnvTest() {
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     @Test
-    fun testJavaApproximation() {
+    fun `java approximation`() {
         val classec = cp.findClass<Integer>()
 
         val originalClassName = "java.lang.Integer".toOriginalName()
@@ -91,7 +77,7 @@ class ApproximationsTest : DatabaseEnvTest() {
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     @Test
-    fun testIntegerApproximation() {
+    fun `integer approximation`() {
         val classec = cp.findClass<Integer>()
 
         val field = classec.findDeclaredFieldOrNull("value")
@@ -104,7 +90,7 @@ class ApproximationsTest : DatabaseEnvTest() {
     }
 
     @Test
-    fun testReplacedFields() {
+    fun `replaced fields`() {
         val classec = cp.findClass<KotlinClass>()
         val fields = classec.declaredFields
 
@@ -127,7 +113,7 @@ class ApproximationsTest : DatabaseEnvTest() {
     }
 
     @Test
-    fun testReplacedMethods() {
+    fun `replaced methods`() {
         val classec = cp.findClass<KotlinClass>()
         val methods = classec.declaredMethods
 
@@ -152,7 +138,7 @@ class ApproximationsTest : DatabaseEnvTest() {
     }
 
     @Test
-    fun testReplaceApproximationsInMethodBody() {
+    fun `replace approximations in methodBody`() {
         val classec = cp.findClass<KotlinClass>()
         val method = classec.declaredMethods.single { it.name == "useSameApproximationTarget" }
 

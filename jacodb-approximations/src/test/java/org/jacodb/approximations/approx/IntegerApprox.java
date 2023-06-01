@@ -16,9 +16,10 @@
 
 package org.jacodb.approximations.approx;
 
-import org.jacodb.approximation.annotation.ApproximationFor;
+import org.jacodb.approximation.annotation.Approximate;
 
-@ApproximationFor(target = java.lang.Integer.class)
+
+@Approximate(java.lang.Integer.class)
 public class IntegerApprox {
     private final int value;
 

@@ -22,8 +22,11 @@ import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcFeature
 import org.jacodb.api.JcSignal
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.approximation.annotation.ApproximationFor
+import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.impl.fs.className
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jooq.DSLContext
 import org.objectweb.asm.tree.ClassNode
 import java.util.concurrent.ConcurrentHashMap
@@ -58,7 +61,25 @@ object ApproximationsMappingFeature : JcFeature<Any?, Any?> {
     ): ByteCodeIndexer = ApproximationIndexer(originalToApproximation, approximationToOriginal)
 
     override fun onSignal(signal: JcSignal) {
-        // do nothing
+        val persistence = signal.jcdb.persistence
+        persistence.read { jooq ->
+            val approxSymbol = persistence.findSymbolId(approximationAnnotationClassName)
+            jooq.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
+                .from(ANNOTATIONS)
+                .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
+                .join(ANNOTATIONVALUES).on(ANNOTATIONVALUES.ANNOTATION_ID.eq(ANNOTATIONS.ID))
+                .where(
+                    ANNOTATIONS.ANNOTATION_NAME.eq(approxSymbol).and(
+                        ANNOTATIONVALUES.NAME.eq("value")
+                    )
+                )
+                .fetch().forEach { (approximation, original) ->
+                    val approximationClassName = persistence.findSymbolName(approximation!!).toApproximationName()
+                    val originalClassName = persistence.findSymbolName(original!!).toOriginalName()
+                    originalToApproximation[originalClassName] = approximationClassName
+                    approximationToOriginal[approximationClassName] = originalClassName
+                }
+        }
     }
 
     /**
@@ -117,7 +138,7 @@ private class ApproximationIndexer(
     }
 }
 
-private val approximationAnnotationClassName = ApproximationFor::class.qualifiedName!!
+private val approximationAnnotationClassName = Approximate::class.qualifiedName!!
 
 @JvmInline
 value class ApproximationClassName(val className: String) {

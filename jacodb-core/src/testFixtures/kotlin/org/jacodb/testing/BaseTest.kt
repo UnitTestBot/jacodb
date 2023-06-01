@@ -31,7 +31,7 @@ import kotlin.reflect.full.companionObjectInstance
 @ExtendWith(CleanDB::class)
 abstract class BaseTest {
 
-    protected val cp: JcClasspath = runBlocking {
+    protected open val cp: JcClasspath = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
         withDB.db.classpath(allClasspath)
     }
@@ -62,7 +62,7 @@ open class WithDB(vararg features: JcFeature<*, *>) {
 
     open var db = runBlocking {
         jacodb {
-//            persistent("D:\\work\\jcdb\\jcdb-index.db")
+//            persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             installFeatures(*allFeatures)
