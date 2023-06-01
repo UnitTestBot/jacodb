@@ -175,6 +175,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-api"),
             project(":jacodb-core"),
             project(":jacodb-analysis"),
+            project(":jacodb-approximations"),
         )
     ) {
         publishing {
