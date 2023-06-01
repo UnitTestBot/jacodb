@@ -16,12 +16,12 @@
 
 package org.jacodb.approximations.approx
 
-import org.jacodb.approximation.annotation.ApproximationFor
+import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.approximations.target.ClassForField
 import org.jacodb.approximations.target.KotlinClass
 import org.jetbrains.annotations.NotNull
 
-@ApproximationFor(target = KotlinClass::class)
+@Approximate(KotlinClass::class)
 class KotlinClassApprox {
     @NotNull
     private val artificialField: ClassForField = ClassForField()
