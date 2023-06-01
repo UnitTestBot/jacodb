@@ -48,7 +48,7 @@ class DirectUsagesTest : BaseTest() {
                     "java.util.ArrayList#add",
                     "java.io.PrintStream#println",
                 )
-            ),
+            ).sortedBy { it.first },
             usages
         )
     }
@@ -72,7 +72,7 @@ class DirectUsagesTest : BaseTest() {
                         "java.util.ArrayList#add",
                         "java.io.PrintStream#println",
                     )
-                ),
+                ).sortedBy { it.first },
                 usages
             )
         }
@@ -91,12 +91,12 @@ class DirectUsagesTest : BaseTest() {
                 "newSmth" to listOf(
                     "reads" to listOf(
                         "java.lang.System#out",
-                        "org.jacodb.testing.usages.direct.DirectA#result",
                         "org.jacodb.testing.usages.direct.DirectA#called",
+                        "org.jacodb.testing.usages.direct.DirectA#result",
                     ),
                     "writes" to listOf(
-                        "org.jacodb.testing.usages.direct.DirectA#result",
                         "org.jacodb.testing.usages.direct.DirectA#called",
+                        "org.jacodb.testing.usages.direct.DirectA#result",
                     )
                 ),
                 "setCalled" to listOf(
@@ -108,7 +108,7 @@ class DirectUsagesTest : BaseTest() {
                         "org.jacodb.testing.usages.direct.DirectA#called",
                     )
                 )
-            ),
+            ).sortedBy { it.first },
             usages
         )
     }
@@ -120,8 +120,8 @@ class DirectUsagesTest : BaseTest() {
             classId.declaredMethods.map {
                 val usages = it.usedFields
                 it.name to listOf(
-                    "reads" to usages.reads.map { it.enclosingClass.name + "#" + it.name },
-                    "writes" to usages.writes.map { it.enclosingClass.name + "#" + it.name }
+                    "reads" to usages.reads.map { it.enclosingClass.name + "#" + it.name }.sortedBy { it },
+                    "writes" to usages.writes.map { it.enclosingClass.name + "#" + it.name }.sortedBy { it }
                 )
             }
                 .toMap()
@@ -138,7 +138,7 @@ class DirectUsagesTest : BaseTest() {
 
             methods.map {
                 it.name to it.usedMethods.map { it.enclosingClass.name + "#" + it.name }.toImmutableList()
-            }.filterNot { it.second.isEmpty() }
+            }.filterNot { it.second.isEmpty() }.sortedBy { it.first }
         }
     }
 
