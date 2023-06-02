@@ -73,6 +73,7 @@ import org.jacodb.api.cfg.JcRawLocalVar
 import org.jacodb.api.cfg.JcRawLong
 import org.jacodb.api.cfg.JcRawLtExpr
 import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMethodType
 import org.jacodb.api.cfg.JcRawMulExpr
 import org.jacodb.api.cfg.JcRawNegExpr
 import org.jacodb.api.cfg.JcRawNeqExpr
@@ -868,4 +869,9 @@ class MethodNodeBuilder(
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant) {
         error("Could not load method constant $value")
     }
+
+    override fun visitJcRawMethodType(value: JcRawMethodType) {
+        error("Could not load method constant $value")
+    }
+
 }

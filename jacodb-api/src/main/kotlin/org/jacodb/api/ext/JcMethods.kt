@@ -26,6 +26,9 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
+
+const val CONSTRUCTOR = "<init>"
+
 /**
  * is method has `strictfp` modifier
  */
