@@ -52,6 +52,7 @@ fun JcClassOrInterface.toType(): JcClassType {
 
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")
 
+const val JAVA_OBJECT = "java.lang.Object"
 
 /**
  * find field by name
