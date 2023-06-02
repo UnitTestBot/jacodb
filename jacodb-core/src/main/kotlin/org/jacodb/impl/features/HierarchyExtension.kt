@@ -24,10 +24,15 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.api.ext.JAVA_OBJECT
 import org.jacodb.api.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
+import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jooq.Record3
+import org.jooq.SelectConditionStep
 import java.util.concurrent.Future
 
 @Suppress("SqlResolve")
@@ -102,21 +107,18 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }
         val name = jcClass.name
 
-        return cp.subClasses(name, allHierarchy, full).map { record ->
-            cp.toJcClass(
-                PersistenceClassSource(
-                    classpath = cp,
-                    locationId = record.locationId,
-                    classId = record.id,
-                    className = record.name
-                ).bind(record.byteCode)
-            )
-        }
+        return cp.subClasses(name, allHierarchy).map { cp.toJcClass(it) }
     }
 
 
-    private fun JcClasspath.subClasses(name: String, allHierarchy: Boolean, full: Boolean): Sequence<ClassRecord> {
+    private fun JcClasspath.subClasses(
+        name: String,
+        allHierarchy: Boolean
+    ): Sequence<PersistenceClassSource> {
         val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
+        if (name == JAVA_OBJECT) {
+            return allClassesExceptObject(!allHierarchy)
+        }
         return BatchedSequence(50) { offset, batchSize ->
             val query = when {
                 allHierarchy -> allHierarchyQuery(locationIds, offset)
@@ -126,12 +128,12 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
                 val cursor = it.fetchLazy(query, name)
                 cursor.fetchNext(batchSize).map { record ->
                     val id = record.get(CLASSES.ID)!!
-                    id to ClassRecord(
-                        id = record.get(CLASSES.ID)!!,
-                        name = record.get("name_name") as String,
-                        locationId = record.get(CLASSES.LOCATION_ID)!!,
-                        byteCode = if (full) record.get(CLASSES.BYTECODE) else null
-                    )
+                    id to PersistenceClassSource(
+                        classpath = this,
+                        classId = record.get(CLASSES.ID)!!,
+                        className = record.get("name_name") as String,
+                        locationId = record.get(CLASSES.LOCATION_ID)!!
+                    ).bind(record.get(CLASSES.BYTECODE))
                 }.also {
                     cursor.close()
                 }
@@ -141,14 +143,6 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     }
 }
 
-private class ClassRecord(
-    val id: Long,
-    val name: String,
-    val locationId: Long,
-    val byteCode: ByteArray? = null
-)
-
-
 suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
     db.awaitBackgroundJobs()
     return HierarchyExtensionImpl(this)
@@ -156,3 +150,60 @@ suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
 
 fun JcClasspath.asyncHierarchy(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
 
+private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(cp: JcClasspath, batchSize: Int): List<Pair<Long, PersistenceClassSource>>{
+    return orderBy(CLASSES.ID)
+        .limit(batchSize)
+        .fetch()
+        .mapNotNull { (classId, className, locationId) ->
+            classId!! to PersistenceClassSource(
+                classpath = cp,
+                classId = classId,
+                className = className!!,
+                locationId = locationId!!
+            )
+        }
+}
+
+internal fun JcClasspath.allClassesExceptObject(direct: Boolean): Sequence<PersistenceClassSource> {
+    val locationIds = registeredLocations.map { it.id }
+    if (direct) {
+        return BatchedSequence(50) { offset, batchSize ->
+            db.persistence.read { jooq ->
+                val whereCondition = if (offset == null) {
+                    CLASSES.LOCATION_ID.`in`(locationIds)
+                } else {
+                    CLASSES.LOCATION_ID.`in`(locationIds).and(
+                        CLASSES.ID.greaterThan(offset)
+                    )
+                }
+                jooq.select(CLASSES.ID, SYMBOLS.NAME, CLASSES.LOCATION_ID)
+                    .from(CLASSES)
+                    .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
+                    .where(
+                        whereCondition
+                            .and(CLASSES.ID.notIn(jooq.select(CLASSHIERARCHIES.SUPER_ID).from(
+                                CLASSHIERARCHIES)))
+                            .and(SYMBOLS.NAME.notEqual(JAVA_OBJECT))
+                    )
+                    .batchingProcess(this, batchSize)
+                }
+            }
+        }
+        return BatchedSequence(50) { offset, batchSize ->
+            db.persistence.read { jooq ->
+                val whereCondition = if (offset == null) {
+                    CLASSES.LOCATION_ID.`in`(locationIds)
+                } else {
+                    CLASSES.LOCATION_ID.`in`(locationIds).and(
+                        CLASSES.ID.greaterThan(offset)
+                    )
+                }
+
+                jooq.select(CLASSES.ID, SYMBOLS.NAME, CLASSES.LOCATION_ID)
+                    .from(CLASSES)
+                    .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
+                    .where(whereCondition.and(SYMBOLS.NAME.notEqual(JAVA_OBJECT)))
+                    .batchingProcess(this, batchSize)
+            }
+        }
+    }
