@@ -60,6 +60,10 @@ open class WithDB(vararg features: JcFeature<*, *>) {
 
     protected var allFeatures = features.toList().toTypedArray()
 
+    init {
+        System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
+    }
+
     open var db = runBlocking {
         jacodb {
 //            persistent("D:\\work\\jacodb\\jcdb-index.db")
