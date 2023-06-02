@@ -35,6 +35,8 @@ import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
 
+val defaultBatchSize: Int get() = System.getProperty("org.jacodb.impl.storage.defaultBatchSize", "100").toInt()
+
 abstract class AbstractJcDatabasePersistenceImpl(
     private val javaRuntime: JavaRuntime,
     private val featuresRegistry: FeaturesRegistry,

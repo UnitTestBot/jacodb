@@ -101,4 +101,8 @@ open class JcVirtualMethodImpl(
     override fun bind(clazz: JcClassOrInterface) {
         enclosingClass = clazz
     }
+
+    override fun toString(): String {
+        return "virtual ${enclosingClass}#$name(${parameters.joinToString { it.type.typeName }})"
+    }
 }

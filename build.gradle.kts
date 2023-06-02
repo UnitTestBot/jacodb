@@ -4,6 +4,7 @@ val kotlinVersion: String by rootProject
 val coroutinesVersion: String by rootProject
 val junit5Version: String by project
 val semVer: String? by project
+val includeDokka: String? by project
 
 group = "org.jacodb"
 
@@ -25,7 +26,10 @@ plugins {
     `java-test-fixtures`
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
+    id("org.jetbrains.dokka") version "1.7.20"
+
     id("org.cadixdev.licenser") version "0.6.1"
+    jacoco
 }
 
 repositories {
@@ -41,6 +45,9 @@ allprojects {
         plugin("kotlin")
         plugin("org.jetbrains.kotlin.plugin.allopen")
         plugin("org.cadixdev.licenser")
+        plugin("jacoco")
+        plugin("signing")
+        plugin("org.jetbrains.dokka")
     }
 
     repositories {
@@ -95,13 +102,30 @@ allprojects {
                 allWarningsAsErrors = false
             }
         }
+
+        jacocoTestReport {
+            dependsOn(test) // tests are required to run before generating the report
+            reports {
+                csv.required.set(true)
+            }
+
+        }
+
         withType<Test> {
             useJUnitPlatform()
             jvmArgs = listOf("-Xmx2g", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=heapdump.hprof")
             testLogging {
                 events("passed", "skipped", "failed")
             }
+            finalizedBy(jacocoTestReport) // report is always generated after tests run
         }
+
+        val dokkaJavadocJar by creating(Jar::class) {
+            dependsOn(dokkaJavadoc)
+            from(dokkaJavadoc.flatMap { it.outputDirectory })
+            archiveClassifier.set("javadoc")
+        }
+
 
         val sourcesJar by creating(Jar::class) {
             archiveClassifier.set("sources")
@@ -110,6 +134,9 @@ allprojects {
 
         artifacts {
             archives(sourcesJar)
+            if (includeDokka != null) {
+                archives(dokkaJavadocJar)
+            }
         }
     }
 
@@ -128,51 +155,12 @@ allprojects {
             register<MavenPublication>("jar") {
                 from(components["java"])
                 artifact(tasks.named("sourcesJar"))
+                artifact(tasks.named("dokkaJavadocJar"))
 
                 groupId = "org.jacodb"
                 artifactId = project.name
-
-                pom {
-                    packaging = "jar"
-                    name.set("org.jacodb")
-                    description.set("analyse JVM bytecode with pleasure")
-                    issueManagement {
-                        url.set("https://github.com/UnitTestBot/jacodb/issues")
-                    }
-                    scm {
-                        connection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
-                        developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
-                        url.set("https://www.jacodb.org")
-                    }
-                    url.set("https://www.jacodb.org")
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("lehvolk")
-                            name.set("Alexey Volkov")
-                            email.set("lehvolk@yandex.ru")
-                        }
-                        developer {
-                            id.set("volivan239")
-                            name.set("Ivan Volkov")
-                            email.set("lehvolk@yandex.ru")
-                        }
-                        developer {
-                            id.set("AbdullinAM")
-                            name.set("Azat Abdullin")
-                            email.set("azat.aam@gmail.com")
-                        }
-                        developer {
-                            id.set("UnitTestBot")
-                            name.set("UnitTestBot Team")
-                        }
-                    }
-                }
+                addPom()
+                signPublication(this@allprojects)
             }
         }
     }
@@ -187,6 +175,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-api"),
             project(":jacodb-core"),
             project(":jacodb-analysis"),
+            project(":jacodb-approximations"),
         )
     ) {
         publishing {
@@ -207,17 +196,62 @@ if (!repoUrl.isNullOrEmpty()) {
     }
 }
 
-signing {
-    val gpgKey: String? by project
-    val gpgPassphrase: String? by project
-    useInMemoryPgpKeys(gpgKey, gpgPassphrase)
 
-    sign(publishing.publications["jar"])
+fun MavenPublication.signPublication(project: Project) = with(project) {
+    signing {
+        val gpgKey: String? by project
+        val gpgPassphrase: String? by project
+        val gpgKeyValue = gpgKey?.removeSurrounding("\"")
+        val gpgPasswordValue = gpgPassphrase
+
+        if (gpgKeyValue != null && gpgPasswordValue != null) {
+            useInMemoryPgpKeys(gpgKeyValue, gpgPasswordValue)
+
+            sign(this@signPublication)
+        }
+    }
 }
 
-
-tasks.javadoc {
-    if (JavaVersion.current().isJava9Compatible) {
-        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+fun MavenPublication.addPom() {
+    pom {
+        packaging = "jar"
+        name.set("org.jacodb")
+        description.set("analyse JVM bytecode with pleasure")
+        issueManagement {
+            url.set("https://github.com/UnitTestBot/jacodb/issues")
+        }
+        scm {
+            connection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+            developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
+            url.set("https://www.jacodb.org")
+        }
+        url.set("https://www.jacodb.org")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("lehvolk")
+                name.set("Alexey Volkov")
+                email.set("lehvolk@yandex.ru")
+            }
+            developer {
+                id.set("volivan239")
+                name.set("Ivan Volkov")
+                email.set("lehvolk@yandex.ru")
+            }
+            developer {
+                id.set("AbdullinAM")
+                name.set("Azat Abdullin")
+                email.set("azat.aam@gmail.com")
+            }
+            developer {
+                id.set("UnitTestBot")
+                name.set("UnitTestBot Team")
+            }
+        }
     }
 }

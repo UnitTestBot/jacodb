@@ -14,19 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl
+package org.jacodb.approximation
 
-import org.jacodb.analysis.AnalysisMain
-import org.junit.jupiter.api.Test
+import org.jacodb.api.TypeName
+import org.jacodb.approximation.ApproximationsMappingFeature.findOriginalByApproximationOrNull
+import org.jacodb.impl.types.TypeNameImpl
 
-class CliTest {
-    @Test
-    fun `test basic analysis cli api`() {
-        val args = listOf(
-            "-a", CliTest::class.java.getResource("/config.json")?.file ?: error("Can't find file with config"),
-            "-c", "tmp-analysis-db",
-            "-s", "org.jacodb.analysis.samples.NPEExamples"
-        )
-        AnalysisMain().run(args)
-    }
+fun String.toApproximationName() = ApproximationClassName(this)
+fun String.toOriginalName() = OriginalClassName(this)
+
+fun TypeName.eliminateApproximation(): TypeName {
+    val originalClassName = findOriginalByApproximationOrNull(typeName.toApproximationName()) ?: return this
+    return TypeNameImpl(originalClassName)
 }

@@ -146,7 +146,7 @@ class AliasAnalysisTest : BaseTest() {
             .plus("pointerbench.benchmark.internal")
 
         val graph = JcSimplifiedGraphFactory(bannedPackagePrefixes).createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
+        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val factory = AliasAnalysisFactory(::generates, ::isSink)
         val ifds = factory.createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)

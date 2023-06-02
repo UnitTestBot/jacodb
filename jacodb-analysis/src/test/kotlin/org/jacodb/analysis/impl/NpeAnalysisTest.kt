@@ -24,7 +24,6 @@ import org.jacodb.analysis.NPEAnalysisFactory
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.samples.NPEExamples
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
@@ -37,6 +36,7 @@ import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
+import org.jacodb.testing.analysis.NPEExamples
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -269,7 +269,7 @@ class NpeAnalysisTest : BaseTest() {
 
     private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
+        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()

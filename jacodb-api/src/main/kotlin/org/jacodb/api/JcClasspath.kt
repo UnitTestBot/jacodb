@@ -139,7 +139,9 @@ interface JcClasspathExtFeature : JcClasspathFeature {
 interface JcClassExtFeature : JcClasspathFeature {
 
     fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? = null
+    fun fieldsOf(clazz: JcClassOrInterface, originalFields: List<JcField>): List<JcField>? = fieldsOf(clazz)
     fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = null
+    fun methodsOf(clazz: JcClassOrInterface, originalMethods: List<JcMethod>): List<JcMethod>? = methodsOf(clazz)
 
     fun extensionValuesOf(clazz: JcClassOrInterface): Map<String, Any>? = null
 
@@ -152,6 +154,7 @@ interface JcInstExtFeature : JcClasspathFeature {
     fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> = list
 }
 
+@JvmDefaultWithoutCompatibility
 interface JcMethodExtFeature : JcClasspathFeature {
 
     fun flowGraph(method: JcMethod): JcGraph? = null

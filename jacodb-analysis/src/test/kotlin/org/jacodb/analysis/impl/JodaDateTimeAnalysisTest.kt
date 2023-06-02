@@ -38,7 +38,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory().createPoints2Engine(graph)
+        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val ifds = factory.createAnalysisEngine(graph, points2Engine)
         clazz.declaredMethods
             .forEach { ifds.addStart(it) }
