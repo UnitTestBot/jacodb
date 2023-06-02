@@ -44,6 +44,7 @@ import org.junit.jupiter.api.condition.EnabledOnJre
 import org.junit.jupiter.api.condition.JRE
 import org.objectweb.asm.util.Textifier
 import org.objectweb.asm.util.TraceMethodVisitor
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.activation.DataHandler
 
@@ -168,7 +169,8 @@ class InstructionsTest : BaseTest() {
         assertEquals(patters.size, jars.size)
         val list = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
         runBlocking {
-            cp.execute(object : JcClassProcessingTask {
+            val pureClasspath = cp.db.classpath(jars.map { File(it) })
+            pureClasspath.execute(object : JcClassProcessingTask {
                 override fun shouldProcess(registeredLocation: RegisteredLocation): Boolean {
                     return !registeredLocation.isRuntime && jars.contains(registeredLocation.path)
                 }
