@@ -28,6 +28,7 @@ import org.jacodb.api.ext.JAVA_OBJECT
 import org.jacodb.api.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
+import org.jacodb.impl.storage.defaultBatchSize
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
@@ -119,7 +120,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         if (name == JAVA_OBJECT) {
             return allClassesExceptObject(!allHierarchy)
         }
-        return BatchedSequence(50) { offset, batchSize ->
+        return BatchedSequence(defaultBatchSize) { offset, batchSize ->
             val query = when {
                 allHierarchy -> allHierarchyQuery(locationIds, offset)
                 else -> directSubClassesQuery(locationIds, offset)
@@ -167,7 +168,7 @@ private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(
 internal fun JcClasspath.allClassesExceptObject(direct: Boolean): Sequence<PersistenceClassSource> {
     val locationIds = registeredLocations.map { it.id }
     if (direct) {
-        return BatchedSequence(50) { offset, batchSize ->
+        return BatchedSequence(defaultBatchSize) { offset, batchSize ->
             db.persistence.read { jooq ->
                 val whereCondition = if (offset == null) {
                     CLASSES.LOCATION_ID.`in`(locationIds)
@@ -189,7 +190,7 @@ internal fun JcClasspath.allClassesExceptObject(direct: Boolean): Sequence<Persi
                 }
             }
         }
-        return BatchedSequence(50) { offset, batchSize ->
+        return BatchedSequence(defaultBatchSize) { offset, batchSize ->
             db.persistence.read { jooq ->
                 val whereCondition = if (offset == null) {
                     CLASSES.LOCATION_ID.`in`(locationIds)

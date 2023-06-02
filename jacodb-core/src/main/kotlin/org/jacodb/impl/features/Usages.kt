@@ -26,6 +26,7 @@ import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.BatchedSequence
+import org.jacodb.impl.storage.defaultBatchSize
 import org.jacodb.impl.storage.eqOrNull
 import org.jacodb.impl.storage.executeQueries
 import org.jacodb.impl.storage.jooq.tables.references.CALLS
@@ -223,7 +224,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
             return emptySequence()
         }
 
-        return BatchedSequence(50) { offset, batchSize ->
+        return BatchedSequence(defaultBatchSize) { offset, batchSize ->
             var position = offset ?: 0
             val classes = calls.drop(position.toInt()).take(batchSize)
             val classIds = classes.map { it.first.classId }.toSet()
