@@ -21,9 +21,10 @@ import org.jacodb.api.FieldResolution
 import org.jacodb.api.JcField
 import org.jacodb.api.Malformed
 import org.jacodb.api.Pure
+import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
-import org.jacodb.impl.types.substition.JvmTypeVisitor
+import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureReader
 
@@ -32,7 +33,10 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
     private lateinit var fieldType: JvmType
 
     override fun register(token: JvmType) {
-        fieldType = field?.kmType?.let { token.relaxWithKmType(it) } ?: token
+        fieldType = field?.kmType?.let { JvmTypeKMetadataUpdateVisitor.visitType(token, it) } ?: token
+        (field as? JcFieldImpl)?.let {
+            fieldType = fieldType.withTypeAnnotations(it.typeAnnotationInfos, it.enclosingClass.classpath)
+        }
     }
 
     fun resolve(): FieldResolution {
@@ -41,7 +45,7 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
 
     companion object : KLogging() {
 
-        private fun FieldResolutionImpl.apply(visitor: JvmTypeVisitor) =
+        private fun FieldResolutionImpl.apply(visitor: RecursiveJvmTypeVisitor) =
             FieldResolutionImpl(visitor.visitType(fieldType))
 
         fun of(field: JcField): FieldResolution {

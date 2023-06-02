@@ -27,8 +27,10 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.features.JcFeaturesChain
+import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.MethodInfo
 import org.jacodb.impl.types.TypeNameImpl
+import org.objectweb.asm.TypeReference
 import org.objectweb.asm.tree.MethodNode
 
 class JcMethodImpl(
@@ -53,7 +55,20 @@ class JcMethodImpl(
         get() = methodInfo.parametersInfo.map { JcParameterImpl(this, it) }
 
     override val annotations: List<JcAnnotation>
-        get() = methodInfo.annotations.map { JcAnnotationImpl(it, enclosingClass.classpath) }
+        get() = methodInfo.annotations
+            .filter { it.typeRef == null } // Type annotations are stored with method in bytecode, but they are not a part of method in language
+            .map { JcAnnotationImpl(it, enclosingClass.classpath) }
+
+    internal val returnTypeAnnotationInfos: List<AnnotationInfo>
+        get() = methodInfo.annotations.filter {
+            it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_RETURN
+        }
+
+    internal fun parameterTypeAnnotationInfos(parameterIndex: Int): List<AnnotationInfo> =
+        methodInfo.annotations.filter {
+            it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_FORMAL_PARAMETER
+                    && TypeReference(it.typeRef).formalParameterIndex == parameterIndex
+        }
 
     override val description get() = methodInfo.desc
 

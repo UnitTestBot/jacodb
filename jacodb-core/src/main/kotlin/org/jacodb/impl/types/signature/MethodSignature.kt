@@ -21,20 +21,22 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.Malformed
 import org.jacodb.api.MethodResolution
 import org.jacodb.api.Pure
+import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.bytecode.kmFunction
 import org.jacodb.impl.bytecode.kmReturnType
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
-import org.jacodb.impl.types.substition.JvmTypeVisitor
+import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureVisitor
+
+val logger = object : KLogging() {}.logger
 
 internal class MethodSignature(private val method: JcMethod) :
     Signature<MethodResolution>(method, method.kmFunction?.typeParameters) {
 
     private val parameterTypes = ArrayList<JvmType>()
     private val exceptionTypes = ArrayList<JvmRefType>()
-
     private lateinit var returnType: JvmType
 
     override fun visitParameterType(): SignatureVisitor {
@@ -61,18 +63,24 @@ internal class MethodSignature(private val method: JcMethod) :
 
     private inner class ParameterTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            val outToken = method.parameters[parameterTypes.size].kmType?.let {
-                token.relaxWithKmType(it)
+            var outToken = method.parameters[parameterTypes.size].kmType?.let {
+                JvmTypeKMetadataUpdateVisitor.visitType(token, it)
             } ?: token
+
+            (method as? JcMethodImpl)?.let {
+                outToken = outToken.withTypeAnnotations(it.parameterTypeAnnotationInfos(parameterTypes.size), it.enclosingClass.classpath)
+            }
+
             parameterTypes.add(outToken)
         }
     }
 
     private inner class ReturnTypeTypeRegistrant : TypeRegistrant {
         override fun register(token: JvmType) {
-            returnType = token
-            method.kmReturnType?.let {
-                returnType = returnType.relaxWithKmType(it)
+            returnType = method.kmReturnType?.let { JvmTypeKMetadataUpdateVisitor.visitType(token, it) } ?: token
+
+            (method as? JcMethodImpl)?.let {
+                returnType = returnType.withTypeAnnotations(it.returnTypeAnnotationInfos, it.enclosingClass.classpath)
             }
         }
     }
@@ -85,7 +93,7 @@ internal class MethodSignature(private val method: JcMethod) :
 
     companion object : KLogging() {
 
-        private fun MethodResolutionImpl.apply(visitor: JvmTypeVisitor) = MethodResolutionImpl(
+        private fun MethodResolutionImpl.apply(visitor: RecursiveJvmTypeVisitor) = MethodResolutionImpl(
             visitor.visitType(returnType),
             parameterTypes.map { visitor.visitType(it) },
             exceptionTypes,

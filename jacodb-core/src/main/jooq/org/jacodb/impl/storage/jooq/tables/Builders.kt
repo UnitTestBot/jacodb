@@ -20,9 +20,11 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.BuildersRecord
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
+import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row5
@@ -34,6 +36,14 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.indexes.BUILDERSJOIN
+import org.jacodb.impl.storage.jooq.indexes.BUILDERSSEARCH
+import org.jacodb.impl.storage.jooq.indexes.BUILDERSSORTING
+import org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_BYTECODELOCATIONS_1
+import org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_2
+import org.jacodb.impl.storage.jooq.tables.records.BuildersRecord
 
 
 /**
@@ -48,7 +58,7 @@ open class Builders(
     parameters: Array<Field<*>?>?
 ): TableImpl<BuildersRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -113,33 +123,28 @@ open class Builders(
     constructor(): this(DSL.name("Builders"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, BuildersRecord>): this(Internal.createPathAlias(child, key), child, key, BUILDERS, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getReferences(): List<ForeignKey<BuildersRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_2,
-        org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_1,
-        org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_BYTECODELOCATIONS_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getIndexes(): List<Index> = listOf(BUILDERSJOIN, BUILDERSSEARCH, BUILDERSSORTING)
+    override fun getReferences(): List<ForeignKey<BuildersRecord, *>> = listOf(FK_BUILDERS_SYMBOLS_2, FK_BUILDERS_SYMBOLS_1, FK_BUILDERS_BYTECODELOCATIONS_1)
 
     private lateinit var _fkBuildersSymbols_2: Symbols
     private lateinit var _fkBuildersSymbols_1: Symbols
     private lateinit var _bytecodelocations: Bytecodelocations
     fun fkBuildersSymbols_2(): Symbols {
         if (!this::_fkBuildersSymbols_2.isInitialized)
-            _fkBuildersSymbols_2 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_2)
+            _fkBuildersSymbols_2 = Symbols(this, FK_BUILDERS_SYMBOLS_2)
 
         return _fkBuildersSymbols_2;
     }
     fun fkBuildersSymbols_1(): Symbols {
         if (!this::_fkBuildersSymbols_1.isInitialized)
-            _fkBuildersSymbols_1 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_SYMBOLS_1)
+            _fkBuildersSymbols_1 = Symbols(this, FK_BUILDERS_SYMBOLS_1)
 
         return _fkBuildersSymbols_1;
     }
     fun bytecodelocations(): Bytecodelocations {
         if (!this::_bytecodelocations.isInitialized)
-            _bytecodelocations = Bytecodelocations(this,
-                org.jacodb.impl.storage.jooq.keys.FK_BUILDERS_BYTECODELOCATIONS_1
-            )
+            _bytecodelocations = Bytecodelocations(this, FK_BUILDERS_BYTECODELOCATIONS_1)
 
         return _bytecodelocations;
     }

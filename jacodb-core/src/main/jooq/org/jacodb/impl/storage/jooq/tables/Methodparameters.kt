@@ -20,7 +20,8 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.MethodparametersRecord
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -35,6 +36,11 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_METHODS_1
+import org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.PK_METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.records.MethodparametersRecord
 
 
 /**
@@ -49,7 +55,7 @@ open class Methodparameters(
     parameters: Array<Field<*>?>?
 ): TableImpl<MethodparametersRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -119,26 +125,22 @@ open class Methodparameters(
     constructor(): this(DSL.name("MethodParameters"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, MethodparametersRecord>): this(Internal.createPathAlias(child, key), child, key, METHODPARAMETERS, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getPrimaryKey(): UniqueKey<MethodparametersRecord> =
-        org.jacodb.impl.storage.jooq.keys.PK_METHODPARAMETERS
-    override fun getKeys(): List<UniqueKey<MethodparametersRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_METHODPARAMETERS)
-    override fun getReferences(): List<ForeignKey<MethodparametersRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_SYMBOLS_1,
-        org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_METHODS_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<MethodparametersRecord> = PK_METHODPARAMETERS
+    override fun getKeys(): List<UniqueKey<MethodparametersRecord>> = listOf(PK_METHODPARAMETERS)
+    override fun getReferences(): List<ForeignKey<MethodparametersRecord, *>> = listOf(FK_METHODPARAMETERS_SYMBOLS_1, FK_METHODPARAMETERS_METHODS_1)
 
     private lateinit var _symbols: Symbols
     private lateinit var _methods: Methods
     fun symbols(): Symbols {
         if (!this::_symbols.isInitialized)
-            _symbols = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_SYMBOLS_1)
+            _symbols = Symbols(this, FK_METHODPARAMETERS_SYMBOLS_1)
 
         return _symbols;
     }
     fun methods(): Methods {
         if (!this::_methods.isInitialized)
-            _methods = Methods(this, org.jacodb.impl.storage.jooq.keys.FK_METHODPARAMETERS_METHODS_1)
+            _methods = Methods(this, FK_METHODPARAMETERS_METHODS_1)
 
         return _methods;
     }

@@ -222,7 +222,7 @@ private class NPEForwardFunctions(
         // Possibly null arguments
         result += method.flowGraph().locals
             .filterIsInstance<JcArgument>()
-            .filter { it.type.nullable != false }
+            .filter { method.parameters[it.index].isNullable != false }
             .map { NPETaintNode(AccessPath.fromLocal(it)) }
 
         // Possibly null statics

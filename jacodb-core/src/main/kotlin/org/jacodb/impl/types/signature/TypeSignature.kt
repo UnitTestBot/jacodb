@@ -22,7 +22,7 @@ import org.jacodb.api.Pure
 import org.jacodb.api.TypeResolution
 import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
-import org.jacodb.impl.types.substition.JvmTypeVisitor
+import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
 import org.objectweb.asm.signature.SignatureVisitor
 
@@ -62,7 +62,7 @@ internal class TypeSignature(jcClass: JcClassOrInterface) :
 
     companion object {
 
-        private fun TypeResolutionImpl.apply(visitor: JvmTypeVisitor) = TypeResolutionImpl(
+        private fun TypeResolutionImpl.apply(visitor: RecursiveJvmTypeVisitor) = TypeResolutionImpl(
             visitor.visitType(superClass),
             interfaceType.map { visitor.visitType(it) },
             typeVariables.map { visitor.visitDeclaration(it) }

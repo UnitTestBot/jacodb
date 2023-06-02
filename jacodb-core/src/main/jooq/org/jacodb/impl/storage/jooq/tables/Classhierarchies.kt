@@ -20,10 +20,8 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.ClasshierarchiesRecord
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row4
@@ -36,6 +34,11 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_CLASSES_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.PK_CLASSHIERARCHIES
+import org.jacodb.impl.storage.jooq.tables.records.ClasshierarchiesRecord
 
 
 /**
@@ -50,7 +53,7 @@ open class Classhierarchies(
     parameters: Array<Field<*>?>?
 ): TableImpl<ClasshierarchiesRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -110,27 +113,22 @@ open class Classhierarchies(
     constructor(): this(DSL.name("ClassHierarchies"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, ClasshierarchiesRecord>): this(Internal.createPathAlias(child, key), child, key, CLASSHIERARCHIES, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(org.jacodb.impl.storage.jooq.indexes.`CLASS HIERARCHIES`)
-    override fun getPrimaryKey(): UniqueKey<ClasshierarchiesRecord> =
-        org.jacodb.impl.storage.jooq.keys.PK_CLASSHIERARCHIES
-    override fun getKeys(): List<UniqueKey<ClasshierarchiesRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_CLASSHIERARCHIES)
-    override fun getReferences(): List<ForeignKey<ClasshierarchiesRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_CLASSES_1,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_SYMBOLS_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<ClasshierarchiesRecord> = PK_CLASSHIERARCHIES
+    override fun getKeys(): List<UniqueKey<ClasshierarchiesRecord>> = listOf(PK_CLASSHIERARCHIES)
+    override fun getReferences(): List<ForeignKey<ClasshierarchiesRecord, *>> = listOf(FK_CLASSHIERARCHIES_CLASSES_1, FK_CLASSHIERARCHIES_SYMBOLS_1)
 
     private lateinit var _classes: Classes
     private lateinit var _symbols: Symbols
     fun classes(): Classes {
         if (!this::_classes.isInitialized)
-            _classes = Classes(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_CLASSES_1)
+            _classes = Classes(this, FK_CLASSHIERARCHIES_CLASSES_1)
 
         return _classes;
     }
     fun symbols(): Symbols {
         if (!this::_symbols.isInitialized)
-            _symbols = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSHIERARCHIES_SYMBOLS_1)
+            _symbols = Symbols(this, FK_CLASSHIERARCHIES_SYMBOLS_1)
 
         return _symbols;
     }

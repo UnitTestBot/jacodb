@@ -20,7 +20,6 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.ClassesRecord
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -35,6 +34,14 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSES_BYTECODELOCATIONS_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSES_METHODS_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSES_OUTERCLASSES_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_2
+import org.jacodb.impl.storage.jooq.keys.PK_CLASSES
+import org.jacodb.impl.storage.jooq.tables.records.ClassesRecord
 
 
 /**
@@ -49,7 +56,7 @@ open class Classes(
     parameters: Array<Field<*>?>?
 ): TableImpl<ClassesRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -134,16 +141,10 @@ open class Classes(
     constructor(): this(DSL.name("Classes"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, ClassesRecord>): this(Internal.createPathAlias(child, key), child, key, CLASSES, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getPrimaryKey(): UniqueKey<ClassesRecord> = org.jacodb.impl.storage.jooq.keys.PK_CLASSES
-    override fun getKeys(): List<UniqueKey<ClassesRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_CLASSES)
-    override fun getReferences(): List<ForeignKey<ClassesRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_2,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSES_BYTECODELOCATIONS_1,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_1,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSES_OUTERCLASSES_1,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSES_METHODS_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<ClassesRecord> = PK_CLASSES
+    override fun getKeys(): List<UniqueKey<ClassesRecord>> = listOf(PK_CLASSES)
+    override fun getReferences(): List<ForeignKey<ClassesRecord, *>> = listOf(FK_CLASSES_SYMBOLS_2, FK_CLASSES_BYTECODELOCATIONS_1, FK_CLASSES_SYMBOLS_1, FK_CLASSES_OUTERCLASSES_1, FK_CLASSES_METHODS_1)
 
     private lateinit var _fkClassesSymbols_2: Symbols
     private lateinit var _bytecodelocations: Bytecodelocations
@@ -152,33 +153,31 @@ open class Classes(
     private lateinit var _methods: Methods
     fun fkClassesSymbols_2(): Symbols {
         if (!this::_fkClassesSymbols_2.isInitialized)
-            _fkClassesSymbols_2 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_2)
+            _fkClassesSymbols_2 = Symbols(this, FK_CLASSES_SYMBOLS_2)
 
         return _fkClassesSymbols_2;
     }
     fun bytecodelocations(): Bytecodelocations {
         if (!this::_bytecodelocations.isInitialized)
-            _bytecodelocations = Bytecodelocations(this,
-                org.jacodb.impl.storage.jooq.keys.FK_CLASSES_BYTECODELOCATIONS_1
-            )
+            _bytecodelocations = Bytecodelocations(this, FK_CLASSES_BYTECODELOCATIONS_1)
 
         return _bytecodelocations;
     }
     fun fkClassesSymbols_1(): Symbols {
         if (!this::_fkClassesSymbols_1.isInitialized)
-            _fkClassesSymbols_1 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSES_SYMBOLS_1)
+            _fkClassesSymbols_1 = Symbols(this, FK_CLASSES_SYMBOLS_1)
 
         return _fkClassesSymbols_1;
     }
     fun outerclasses(): Outerclasses {
         if (!this::_outerclasses.isInitialized)
-            _outerclasses = Outerclasses(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSES_OUTERCLASSES_1)
+            _outerclasses = Outerclasses(this, FK_CLASSES_OUTERCLASSES_1)
 
         return _outerclasses;
     }
     fun methods(): Methods {
         if (!this::_methods.isInitialized)
-            _methods = Methods(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSES_METHODS_1)
+            _methods = Methods(this, FK_CLASSES_METHODS_1)
 
         return _methods;
     }

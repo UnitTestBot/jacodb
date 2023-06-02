@@ -20,10 +20,8 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.FieldsRecord
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row6
@@ -36,6 +34,12 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_CLASSES_1
+import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_2
+import org.jacodb.impl.storage.jooq.keys.PK_FIELDS
+import org.jacodb.impl.storage.jooq.tables.records.FieldsRecord
 
 
 /**
@@ -50,7 +54,7 @@ open class Fields(
     parameters: Array<Field<*>?>?
 ): TableImpl<FieldsRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -120,34 +124,29 @@ open class Fields(
     constructor(): this(DSL.name("Fields"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, FieldsRecord>): this(Internal.createPathAlias(child, key), child, key, FIELDS, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(org.jacodb.impl.storage.jooq.indexes.FIELDS_CLASS_ID_NAME)
-    override fun getPrimaryKey(): UniqueKey<FieldsRecord> = org.jacodb.impl.storage.jooq.keys.PK_FIELDS
-    override fun getKeys(): List<UniqueKey<FieldsRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_FIELDS)
-    override fun getReferences(): List<ForeignKey<FieldsRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_2,
-        org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_1,
-        org.jacodb.impl.storage.jooq.keys.FK_FIELDS_CLASSES_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<FieldsRecord> = PK_FIELDS
+    override fun getKeys(): List<UniqueKey<FieldsRecord>> = listOf(PK_FIELDS)
+    override fun getReferences(): List<ForeignKey<FieldsRecord, *>> = listOf(FK_FIELDS_SYMBOLS_2, FK_FIELDS_SYMBOLS_1, FK_FIELDS_CLASSES_1)
 
     private lateinit var _fkFieldsSymbols_2: Symbols
     private lateinit var _fkFieldsSymbols_1: Symbols
     private lateinit var _classes: Classes
     fun fkFieldsSymbols_2(): Symbols {
         if (!this::_fkFieldsSymbols_2.isInitialized)
-            _fkFieldsSymbols_2 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_2)
+            _fkFieldsSymbols_2 = Symbols(this, FK_FIELDS_SYMBOLS_2)
 
         return _fkFieldsSymbols_2;
     }
     fun fkFieldsSymbols_1(): Symbols {
         if (!this::_fkFieldsSymbols_1.isInitialized)
-            _fkFieldsSymbols_1 = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_1)
+            _fkFieldsSymbols_1 = Symbols(this, FK_FIELDS_SYMBOLS_1)
 
         return _fkFieldsSymbols_1;
     }
     fun classes(): Classes {
         if (!this::_classes.isInitialized)
-            _classes = Classes(this, org.jacodb.impl.storage.jooq.keys.FK_FIELDS_CLASSES_1)
+            _classes = Classes(this, FK_FIELDS_CLASSES_1)
 
         return _classes;
     }

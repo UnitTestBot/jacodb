@@ -72,8 +72,8 @@ class TypesTest : BaseTypesTest() {
         val type = findType<Example>()
         val actualParameters = type.declaredMethods.single { it.name == "f" }.parameters
         assertEquals(listOf("notNullable", "nullable"), actualParameters.map { it.name })
-        assertEquals(false, actualParameters.first().nullable)
-        assertEquals(true, actualParameters.get(1).nullable)
+        assertEquals(false, actualParameters.first().type.nullable)
+        assertEquals(true, actualParameters.get(1).type.nullable)
     }
 
     @Test
@@ -105,8 +105,8 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `raw types equality`() {
-        val rawType1 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
-        val rawType2 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
+        val rawType1 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
+        val rawType2 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
         assertEquals(rawType1, rawType2)
     }
 
@@ -115,7 +115,7 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `parametrized types equality`() {
-        val rawType = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false)
+        val rawType = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
         val type1 = cp.findClass<X>().toType().interfaces.first()
         val type2 = cp.findClass<Y>().toType().interfaces.first()
         assertNotEquals(rawType, type1)

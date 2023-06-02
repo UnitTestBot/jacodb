@@ -20,7 +20,8 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.OuterclassesRecord
+import kotlin.collections.List
+
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -35,6 +36,10 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_OUTERCLASSES_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.PK_OUTERCLASSES
+import org.jacodb.impl.storage.jooq.tables.records.OuterclassesRecord
 
 
 /**
@@ -49,7 +54,7 @@ open class Outerclasses(
     parameters: Array<Field<*>?>?
 ): TableImpl<OuterclassesRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -114,15 +119,15 @@ open class Outerclasses(
     constructor(): this(DSL.name("OuterClasses"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, OuterclassesRecord>): this(Internal.createPathAlias(child, key), child, key, OUTERCLASSES, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getPrimaryKey(): UniqueKey<OuterclassesRecord> = org.jacodb.impl.storage.jooq.keys.PK_OUTERCLASSES
-    override fun getKeys(): List<UniqueKey<OuterclassesRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_OUTERCLASSES)
-    override fun getReferences(): List<ForeignKey<OuterclassesRecord, *>> = listOf(org.jacodb.impl.storage.jooq.keys.FK_OUTERCLASSES_SYMBOLS_1)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<OuterclassesRecord> = PK_OUTERCLASSES
+    override fun getKeys(): List<UniqueKey<OuterclassesRecord>> = listOf(PK_OUTERCLASSES)
+    override fun getReferences(): List<ForeignKey<OuterclassesRecord, *>> = listOf(FK_OUTERCLASSES_SYMBOLS_1)
 
     private lateinit var _symbols: Symbols
     fun symbols(): Symbols {
         if (!this::_symbols.isInitialized)
-            _symbols = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_OUTERCLASSES_SYMBOLS_1)
+            _symbols = Symbols(this, FK_OUTERCLASSES_SYMBOLS_1)
 
         return _symbols;
     }
