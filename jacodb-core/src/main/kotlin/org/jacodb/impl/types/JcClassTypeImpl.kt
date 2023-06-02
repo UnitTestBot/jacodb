@@ -52,7 +52,14 @@ open class JcClassTypeImpl(
         parameters: List<JvmType>,
         nullable: Boolean?,
         annotations: List<JcAnnotation>
-    ) : this(classpath, name, outerType, classpath.substitute(name, parameters, outerType?.substitutor), nullable, annotations)
+    ) : this(
+        classpath,
+        name,
+        outerType,
+        classpath.substitute(name, parameters, outerType?.substitutor),
+        nullable,
+        annotations
+    )
 
     private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
@@ -72,7 +79,11 @@ open class JcClassTypeImpl(
         }
         val outer = outerType
         val name = if (outer != null) {
-            outer.typeName + "." + jcClass.simpleName
+            if (jcClass.isAnonymous) {
+                outer.typeName + "$" + jcClass.simpleName.substringAfter("\$")
+            } else {
+                outer.typeName + "." + jcClass.simpleName.substringAfter("\$")
+            }
         } else {
             jcClass.name
         }
