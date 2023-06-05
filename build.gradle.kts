@@ -8,7 +8,7 @@ val includeDokka: String? by project
 
 group = "org.jacodb"
 
-project.version = semVer ?: "1.0-SNAPSHOT"
+project.version = semVer ?: "1.1-SNAPSHOT"
 
 buildscript {
     repositories {
