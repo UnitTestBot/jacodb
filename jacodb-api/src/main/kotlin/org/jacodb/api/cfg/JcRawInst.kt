@@ -959,6 +959,21 @@ data class JcRawMethodConstant(
     }
 }
 
+data class JcRawMethodType(
+    val argumentTypes: List<TypeName>,
+    val returnType: TypeName,
+    private val methodType: TypeName
+) : JcRawConstant {
+    override val typeName: TypeName = methodType
+
+    override fun toString(): String =
+        "${argumentTypes.joinToString(prefix = "(", postfix = ")")}:$returnType"
+
+    override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
+        return visitor.visitJcRawMethodType(this)
+    }
+}
+
 //
 //fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
 //    val idx: Int = instructions.indexOf(inst)

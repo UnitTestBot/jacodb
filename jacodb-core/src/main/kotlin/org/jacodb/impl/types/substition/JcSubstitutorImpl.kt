@@ -19,26 +19,27 @@ package org.jacodb.impl.types.substition
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
+import org.jacodb.api.ext.isNotNullAnnotation
 import org.jacodb.impl.types.signature.JvmType
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
 import org.jacodb.impl.types.signature.JvmTypeVariable
-import org.jacodb.impl.types.signature.copyWithNullability
+import org.jacodb.impl.types.signature.copyWith
 
 class JcSubstitutorImpl(
     // map declaration -> actual type or type variable
     override val substitutions: PersistentMap<JvmTypeParameterDeclaration, JvmType> = persistentMapOf()
 ) : JcSubstitutor {
 
-    private val substitutionTypeVisitor = object : JvmTypeVisitor {
+    private val substitutionTypeVisitor = object : RecursiveJvmTypeVisitor {
 
         override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
             val direct = substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
             if (direct != null) {
-                return relaxNullabilityAfterSubstitution(type, direct)
+                return relaxNullabilityAndAnnotationsAfterSubstitution(type, direct)
             }
             return type.declaration?.let {
-                JvmTypeVariable(visitDeclaration(it, context), type.isNullable)
+                JvmTypeVariable(visitDeclaration(it, context), type.isNullable, type.annotations)
             } ?: type
         }
     }
@@ -61,7 +62,7 @@ class JcSubstitutorImpl(
             (filtered + declarations.associateWith {
                 // TODO: nullability=false is a hack here: there is no TypeVariable at this moment
                 //  so we need "neutral" element, such that its substitution by other type would return the latter
-                JvmTypeVariable(substitute(it, incomingSymbols), false)
+                JvmTypeVariable(substitute(it, incomingSymbols), false, listOf())
             }).toPersistentMap()
         )
     }
@@ -87,7 +88,7 @@ class JcSubstitutorImpl(
         declaration: JvmTypeParameterDeclaration,
         ignoredSymbols: Set<String>
     ): JvmTypeParameterDeclaration {
-        val visitor = object : JvmTypeVisitor {
+        val visitor = object : RecursiveJvmTypeVisitor {
 
             override fun visitUnprocessedTypeVariable(type: JvmTypeVariable, context: VisitorContext): JvmType {
                 if (ignoredSymbols.contains(type.symbol)) {
@@ -95,7 +96,7 @@ class JcSubstitutorImpl(
                 }
                 return substitutions.firstNotNullOfOrNull { if (it.key.symbol == type.symbol) it.value else null }
                     ?.let {
-                        relaxNullabilityAfterSubstitution(type, it)
+                        relaxNullabilityAndAnnotationsAfterSubstitution(type, it)
                     } ?: type
             }
         }
@@ -125,20 +126,23 @@ class JcSubstitutorImpl(
      * This data was obtained empirically, and you may check it by looking at derived types for fields/properties of
      * `NullAnnotationExamples.ktContainerOfUndefined`, `KotlinNullabilityExamples.javaContainerOfNullable`, etc.
      */
-    private fun relaxNullabilityAfterSubstitution(typeVar: JvmTypeVariable, type: JvmType): JvmType {
+    private fun relaxNullabilityAndAnnotationsAfterSubstitution(typeVar: JvmTypeVariable, type: JvmType): JvmType {
         val typeVarNullability = typeVar.isNullable
         val substNullability = type.isNullable
-        // TODO: Java's `@NotNull T` and Kotlin `T` behave differently (see the table), treat the first one correctly
+        val newAnnotations = typeVar.annotations + type.annotations
         return when {
             // T? and Java @Nullable T will always produce nullable type
-            typeVarNullability == true -> type.copyWithNullability(true)
+            typeVarNullability == true -> type.copyWith(true, newAnnotations)
 
             // We don't know nullability of Java's T unless it is replaced with nullable type (in which case it is nullable)
-            typeVarNullability == null && substNullability == true -> type
-            typeVarNullability == null && substNullability != true -> type.copyWithNullability(null)
+            typeVarNullability == null && substNullability == true -> type.copyWith(true, newAnnotations)
+            typeVarNullability == null && substNullability != true -> type.copyWith(null, newAnnotations)
 
-            // Kotlin's default T doesn't change nullability
-            else -> type
+            // If above conditions not met and there is @NotNull annotation, the type is restricted to be notNullable
+            typeVar.annotations.any { it.isNotNullAnnotation } -> type.copyWith(false, newAnnotations)
+
+            // Otherwise, type variable is Kotlin's default T, and it doesn't change nullability
+            else -> type.copyWith(type.isNullable, newAnnotations)
         }
     }
 

@@ -8,7 +8,7 @@ val includeDokka: String? by project
 
 group = "org.jacodb"
 
-project.version = semVer ?: "1.0-SNAPSHOT"
+project.version = semVer ?: "1.1-SNAPSHOT"
 
 buildscript {
     repositories {
@@ -175,6 +175,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-api"),
             project(":jacodb-core"),
             project(":jacodb-analysis"),
+            project(":jacodb-approximations"),
         )
     ) {
         publishing {

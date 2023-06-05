@@ -10,13 +10,12 @@ name: Build and run tests
 on:
   push:
     branches:
-      - main
-      - develop
-      - 'feature-**'
-      - '*/feature-**'
+      - '*'
+      - '*/*'
   pull_request:
     branches:
       - main
+      - develop
 
 permissions:
   contents: read

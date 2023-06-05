@@ -48,7 +48,6 @@ interface JcTypedMethodParameter {
     val type: JcType
     val name: String?
     val enclosingMethod: JcTypedMethod
-    val nullable: Boolean?
 }
 
 interface JcType {
@@ -56,6 +55,9 @@ interface JcType {
     val typeName: String
 
     val nullable: Boolean?
+    val annotations: List<JcAnnotation>
+
+    fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType
 }
 
 interface JcPrimitiveType : JcType {
@@ -109,11 +111,15 @@ interface JcTypeVariable : JcRefType {
 interface JcBoundedWildcard : JcRefType {
     val upperBounds: List<JcRefType>
     val lowerBounds: List<JcRefType>
+
+    override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType = this
 }
 
 interface JcUnboundWildcard : JcRefType {
     override val jcClass: JcClassOrInterface
         get() = classpath.objectClass
+
+    override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType = this
 
 }
 

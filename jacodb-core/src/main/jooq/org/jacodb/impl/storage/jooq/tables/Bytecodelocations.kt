@@ -20,10 +20,8 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.jooq.Field
 import org.jooq.ForeignKey
-import org.jooq.Index
 import org.jooq.Name
 import org.jooq.Record
 import org.jooq.Row6
@@ -36,6 +34,10 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1
+import org.jacodb.impl.storage.jooq.keys.PK_BYTECODELOCATIONS
+import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 
 
 /**
@@ -50,7 +52,7 @@ open class Bytecodelocations(
     parameters: Array<Field<*>?>?
 ): TableImpl<BytecodelocationsRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -120,19 +122,15 @@ open class Bytecodelocations(
     constructor(): this(DSL.name("BytecodeLocations"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, BytecodelocationsRecord>): this(Internal.createPathAlias(child, key), child, key, BYTECODELOCATIONS, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getIndexes(): List<Index> = listOf(org.jacodb.impl.storage.jooq.indexes.BYTECODELOCATIONS_HASH)
-    override fun getPrimaryKey(): UniqueKey<BytecodelocationsRecord> =
-        org.jacodb.impl.storage.jooq.keys.PK_BYTECODELOCATIONS
-    override fun getKeys(): List<UniqueKey<BytecodelocationsRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_BYTECODELOCATIONS)
-    override fun getReferences(): List<ForeignKey<BytecodelocationsRecord, *>> = listOf(org.jacodb.impl.storage.jooq.keys.FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1)
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<BytecodelocationsRecord> = PK_BYTECODELOCATIONS
+    override fun getKeys(): List<UniqueKey<BytecodelocationsRecord>> = listOf(PK_BYTECODELOCATIONS)
+    override fun getReferences(): List<ForeignKey<BytecodelocationsRecord, *>> = listOf(FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1)
 
     private lateinit var _bytecodelocations: Bytecodelocations
     fun bytecodelocations(): Bytecodelocations {
         if (!this::_bytecodelocations.isInitialized)
-            _bytecodelocations = Bytecodelocations(this,
-                org.jacodb.impl.storage.jooq.keys.FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1
-            )
+            _bytecodelocations = Bytecodelocations(this, FK_BYTECODELOCATIONS_BYTECODELOCATIONS_1)
 
         return _bytecodelocations;
     }

@@ -20,7 +20,6 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jacodb.impl.storage.jooq.tables.records.ClassinnerclassesRecord
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Name
@@ -35,6 +34,11 @@ import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_CLASSES_1
+import org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_SYMBOLS_1
+import org.jacodb.impl.storage.jooq.keys.PK_CLASSINNERCLASSES
+import org.jacodb.impl.storage.jooq.tables.records.ClassinnerclassesRecord
 
 
 /**
@@ -49,7 +53,7 @@ open class Classinnerclasses(
     parameters: Array<Field<*>?>?
 ): TableImpl<ClassinnerclassesRecord>(
     alias,
-    org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA,
+    DefaultSchema.DEFAULT_SCHEMA,
     child,
     path,
     aliased,
@@ -104,26 +108,22 @@ open class Classinnerclasses(
     constructor(): this(DSL.name("ClassInnerClasses"), null)
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, ClassinnerclassesRecord>): this(Internal.createPathAlias(child, key), child, key, CLASSINNERCLASSES, null)
-    override fun getSchema(): Schema = org.jacodb.impl.storage.jooq.DefaultSchema.DEFAULT_SCHEMA
-    override fun getPrimaryKey(): UniqueKey<ClassinnerclassesRecord> =
-        org.jacodb.impl.storage.jooq.keys.PK_CLASSINNERCLASSES
-    override fun getKeys(): List<UniqueKey<ClassinnerclassesRecord>> = listOf(org.jacodb.impl.storage.jooq.keys.PK_CLASSINNERCLASSES)
-    override fun getReferences(): List<ForeignKey<ClassinnerclassesRecord, *>> = listOf(
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_CLASSES_1,
-        org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_SYMBOLS_1
-    )
+    override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getPrimaryKey(): UniqueKey<ClassinnerclassesRecord> = PK_CLASSINNERCLASSES
+    override fun getKeys(): List<UniqueKey<ClassinnerclassesRecord>> = listOf(PK_CLASSINNERCLASSES)
+    override fun getReferences(): List<ForeignKey<ClassinnerclassesRecord, *>> = listOf(FK_CLASSINNERCLASSES_CLASSES_1, FK_CLASSINNERCLASSES_SYMBOLS_1)
 
     private lateinit var _classes: Classes
     private lateinit var _symbols: Symbols
     fun classes(): Classes {
         if (!this::_classes.isInitialized)
-            _classes = Classes(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_CLASSES_1)
+            _classes = Classes(this, FK_CLASSINNERCLASSES_CLASSES_1)
 
         return _classes;
     }
     fun symbols(): Symbols {
         if (!this::_symbols.isInitialized)
-            _symbols = Symbols(this, org.jacodb.impl.storage.jooq.keys.FK_CLASSINNERCLASSES_SYMBOLS_1)
+            _symbols = Symbols(this, FK_CLASSINNERCLASSES_SYMBOLS_1)
 
         return _symbols;
     }

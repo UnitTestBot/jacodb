@@ -22,6 +22,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
 import org.jacodb.api.ClassSource
+import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface
@@ -74,18 +75,19 @@ class JcClasspathImpl(
         }?.orElse(null)
     }
 
-    override fun typeOf(jcClass: JcClassOrInterface): JcRefType {
+    override fun typeOf(jcClass: JcClassOrInterface, nullability: Boolean?, annotations: List<JcAnnotation>): JcRefType {
         return JcClassTypeImpl(
             this,
             jcClass.name,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
             JcSubstitutor.empty,
-            nullable = null
+            nullability,
+            annotations
         )
     }
 
-    override fun arrayTypeOf(elementType: JcType): JcArrayType {
-        return JcArrayTypeImpl(elementType, null)
+    override fun arrayTypeOf(elementType: JcType, nullability: Boolean?, annotations: List<JcAnnotation>): JcArrayType {
+        return JcArrayTypeImpl(elementType, nullability, annotations)
     }
 
     override fun toJcClass(source: ClassSource): JcClassOrInterface {

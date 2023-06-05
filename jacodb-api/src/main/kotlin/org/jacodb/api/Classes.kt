@@ -20,6 +20,7 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.ext.CONSTRUCTOR
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -116,7 +117,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
      */
     val isConstructor: Boolean
         get() {
-            return name == "<init>"
+            return name == CONSTRUCTOR
         }
 
     val isClassInitializer: Boolean

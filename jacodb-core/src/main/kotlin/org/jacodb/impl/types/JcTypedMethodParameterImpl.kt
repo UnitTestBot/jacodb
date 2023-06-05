@@ -23,6 +23,8 @@ import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.JcTypedMethodParameter
 import org.jacodb.api.ext.isNullable
 import org.jacodb.api.throwClassNotFound
+import org.jacodb.impl.bytecode.JcAnnotationImpl
+import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.JvmType
 import org.jacodb.impl.types.substition.JcSubstitutor
 
@@ -40,15 +42,15 @@ class JcTypedMethodParameterImpl(
             val typeName = parameter.type.typeName
             val type = jvmType?.let {
                 classpath.typeOf(substitutor.substitute(jvmType))
-            } ?: classpath.findTypeOrNull(typeName) ?: typeName.throwClassNotFound()
+            } ?: classpath.findTypeOrNull(typeName)
+                ?.copyWithAnnotations(
+                    (enclosingMethod.method as? JcMethodImpl)?.parameterTypeAnnotationInfos(parameter.index)?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
+                ) ?: typeName.throwClassNotFound()
 
             return parameter.isNullable?.let {
                 (type as? JcRefType)?.copyWithNullability(it)
             } ?: type
         }
-
-    override val nullable: Boolean?
-        get() = parameter.isNullable //if (type != null && type.nullable) parameter.isNullable else false
 
     override val name: String?
         get() = parameter.name
