@@ -1,7 +1,8 @@
-[![ci status](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/build-and-test.yml)
 [![Maven](https://maven-badges.herokuapp.com/maven-central/org.jacodb/jacodb-api/badge.svg)](https://central.sonatype.com/search?smo=true&q=org.jacodb)
+[![Last Release](https://img.shields.io/github/release-date/unittestbot/jacodb.svg?logo=github)](https://github.com/unittestbot/jacodb/releases/latest)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+![Pure Java + Kotlin](https://img.shields.io/badge/100%25-java%2bkotlin-orange.svg)
 [![Coverage](./docs/badges/jacoco.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/coverage.yml)
-
 
 ## Overview
 
