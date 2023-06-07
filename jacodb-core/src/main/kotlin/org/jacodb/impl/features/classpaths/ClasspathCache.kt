@@ -40,7 +40,6 @@ import org.jacodb.impl.ValueStoreType
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcFlowGraphResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
-import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedTypeResultImpl
 import java.text.NumberFormat
 
 
@@ -89,7 +88,6 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         when (val result = event.result) {
             is JcResolvedClassResult -> {
                 classesCache.put(result.name, result)
-                typesCache.put(result.name, JcResolvedTypeResultImpl(result.name, null))
             }
 
             is JcResolvedTypeResult -> {
