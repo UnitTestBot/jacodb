@@ -86,9 +86,7 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
 
     override fun on(event: JcFeatureEvent) {
         when (val result = event.result) {
-            is JcResolvedClassResult -> {
-                classesCache.put(result.name, result)
-            }
+            is JcResolvedClassResult -> classesCache.put(result.name, result)
 
             is JcResolvedTypeResult -> {
                 val found = result.type
@@ -97,15 +95,9 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
                 }
             }
 
-            is JcFlowGraphResult -> {
-                cfgCache.put(result.method, result.flowGraph)
-            }
-            is JcInstListResult -> {
-                instCache.put(result.method, result.instList)
-            }
-            is JcRawInstListResult -> {
-                rawInstCache.put(result.method, result.rawInstList)
-            }
+            is JcFlowGraphResult -> cfgCache.put(result.method, result.flowGraph)
+            is JcInstListResult -> instCache.put(result.method, result.instList)
+            is JcRawInstListResult -> rawInstCache.put(result.method, result.rawInstList)
         }
     }
 
