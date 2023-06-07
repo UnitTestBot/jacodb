@@ -18,6 +18,9 @@ package org.jacodb.approximation
 
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
+import org.jacodb.api.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
@@ -43,22 +46,20 @@ class JcEnrichedVirtualMethod(
 ) : JcVirtualMethodImpl(name, access, returnType, parameters, description) {
 
     override val rawInstList: JcInstList<JcRawInst>
-        get() = featuresChain
-            .newRequest(this)
-            .call<JcMethodExtFeature, JcInstList<JcRawInst>> { it.rawInstList(this) }!!
+        get() = featuresChain.call<JcMethodExtFeature, JcRawInstListResult> {
+            it.rawInstList(this)
+        }!!.rawInstList
 
     override val instList: JcInstList<JcInst>
-        get() = featuresChain
-            .newRequest(this)
-            .call<JcMethodExtFeature, JcInstList<JcInst>> { it.instList(this) }!!
-
+        get() = featuresChain.call<JcMethodExtFeature, JcInstListResult> {
+            it.instList(this)
+        }!!.instList
 
     override fun asmNode(): MethodNode = asmNode
 
-    override fun flowGraph(): JcGraph =
-        featuresChain
-            .newRequest(this)
-            .call<JcMethodExtFeature, JcGraph> { it.flowGraph(this) }!!
+    override fun flowGraph(): JcGraph =featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> {
+        it.flowGraph(this)
+    }!!.flowGraph
 
     override val signature: String?
         get() = null

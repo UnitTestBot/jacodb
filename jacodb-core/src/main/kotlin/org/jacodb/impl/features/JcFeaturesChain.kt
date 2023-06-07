@@ -23,10 +23,6 @@ class JcFeaturesChain(val features: List<JcClasspathFeature>) {
 
     fun newRequest(vararg input: Any) = JcFeaturesRequest(features, arrayOf(*input))
 
-}
-
-class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array<Any>) {
-
     inline fun <reified T : JcClasspathFeature, W> call(call: (T) -> W?): W? {
         var result: W? = null
         var event: JcFeatureEvent? = null
@@ -34,7 +30,7 @@ class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array
             if (feature is T) {
                 result = call(feature)
                 if (result != null) {
-                    event = feature.event(result, input)
+                    event = feature.event(result)
                     break
                 }
             }
@@ -47,13 +43,18 @@ class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array
         return result
     }
 
+
+}
+
+class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array<Any>) {
+
+
     inline fun <reified T : JcClasspathFeature> run(call: (T) -> Unit) {
         for (feature in features) {
             if (feature is T) {
                 call(feature)
             }
         }
-
     }
 
 }
@@ -62,5 +63,4 @@ class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array
 class JcFeatureEventImpl(
     override val feature: JcClasspathFeature,
     override val result: Any,
-    override val input: Array<Any>
 ) : JcFeatureEvent

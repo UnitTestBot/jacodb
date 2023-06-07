@@ -44,7 +44,7 @@ interface JcVirtualMethod : JcMethod {
         get() = JcInstListImpl(emptyList())
 
     override fun flowGraph(): JcGraph {
-        return MethodInstructionsFeature.flowGraph(this)
+        return MethodInstructionsFeature.flowGraph(this).flowGraph
     }
 }
 

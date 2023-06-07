@@ -153,8 +153,9 @@ interface JcDatabasePersistence : Closeable {
     val symbolInterner: JCDBSymbolsInterner
     fun findBytecode(classId: Long): ByteArray
 
-    fun findClassSourceByName(cp: JcClasspath, locations: List<RegisteredLocation>, fullName: String): ClassSource?
-    fun findClassSources(location: RegisteredLocation): List<ClassSource>
+    fun findClassSourceByName(cp: JcClasspath, fullName: String): ClassSource?
+    fun findClassSources(db: JcDatabase, location: RegisteredLocation): List<ClassSource>
+    fun findClassSources(cp: JcClasspath, fullName: String): List<ClassSource>
 
     fun createIndexes() {}
 

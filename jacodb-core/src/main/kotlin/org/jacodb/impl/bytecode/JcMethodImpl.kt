@@ -20,6 +20,9 @@ import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
+import org.jacodb.api.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
 import org.jacodb.api.JcParameter
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
@@ -78,19 +81,16 @@ class JcMethodImpl(
 
     override val rawInstList: JcInstList<JcRawInst>
         get() {
-            return featuresChain.newRequest(this)
-                .call<JcMethodExtFeature, JcInstList<JcRawInst>> { it.rawInstList(this) }!!
+            return featuresChain.call<JcMethodExtFeature, JcRawInstListResult> { it.rawInstList(this) }!!.rawInstList
         }
 
     override fun flowGraph(): JcGraph {
-        return featuresChain.newRequest(this)
-            .call<JcMethodExtFeature, JcGraph> { it.flowGraph(this) }!!
+        return featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> { it.flowGraph(this) }!!.flowGraph
     }
 
 
     override val instList: JcInstList<JcInst> get() {
-        return featuresChain.newRequest(this)
-            .call<JcMethodExtFeature, JcInstList<JcInst>> { it.instList(this) }!!
+        return featuresChain.call<JcMethodExtFeature, JcInstListResult> { it.instList(this) }!!.instList
     }
 
     override fun equals(other: Any?): Boolean {

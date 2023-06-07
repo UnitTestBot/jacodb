@@ -39,4 +39,10 @@ class ClasspathVfs(
             locationIds.contains(it)
         }
     }
+
+    fun findClassNodes(fullName: String): List<ClassVfsItem> {
+        return globalClassVFS.findClassNodes(fullName) {
+            locationIds.contains(it)
+        }
+    }
 }

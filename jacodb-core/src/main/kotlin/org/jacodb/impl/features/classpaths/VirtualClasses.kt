@@ -21,9 +21,9 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathExtFeature
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
-import java.util.*
 
 open class VirtualClasses(
     val classes: List<JcVirtualClass>,
@@ -46,13 +46,17 @@ open class VirtualClasses(
 
     private val map = classes.associateBy { it.name }
 
-    override fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? {
+    override fun tryFindClass(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedClassResult? {
         val clazz = map[name]
         if (clazz != null) {
             clazz.bind(classpath, virtualLocation)
-            return Optional.of(clazz)
+            return JcResolvedClassResultImpl(name, clazz)
         }
         return null
+    }
+
+    override fun findClasses(classpath: JcClasspath, name: String): List<JcClassOrInterface>? {
+        return listOfNotNull(map[name])
     }
 
 }

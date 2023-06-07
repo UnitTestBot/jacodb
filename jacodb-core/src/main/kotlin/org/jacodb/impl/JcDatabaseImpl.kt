@@ -195,7 +195,7 @@ class JcDatabaseImpl(
             val parentScope = this
             locations.map {
                 async {
-                    val addedClasses = persistence.findClassSources(it)
+                    val addedClasses = persistence.findClassSources(this@JcDatabaseImpl, it)
                     parentScope.ifActive { featureRegistry.index(it, addedClasses) }
                 }
             }.joinAll()
