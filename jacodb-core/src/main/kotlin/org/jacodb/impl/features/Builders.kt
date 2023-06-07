@@ -192,7 +192,7 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
                 jooq.select(BUILDERS.OFFSET, SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, BUILDERS.PRIORITY)
                     .from(BUILDERS)
                     .join(SYMBOLS).on(SYMBOLS.ID.eq(BUILDERS.BUILDER_CLASS_SYMBOL_ID))
-                    .join(CLASSES).on(CLASSES.NAME.eq(BUILDERS.BUILDER_CLASS_SYMBOL_ID).and(BUILDERS.LOCATION_ID.eq(CLASSES.ID)))
+                    .join(CLASSES).on(CLASSES.NAME.eq(BUILDERS.BUILDER_CLASS_SYMBOL_ID).and(BUILDERS.LOCATION_ID.eq(CLASSES.LOCATION_ID)))
                     .where(
                         BUILDERS.CLASS_SYMBOL_ID.`in`(classNameIds).and(BUILDERS.LOCATION_ID.`in`(locationIds))
                     )
