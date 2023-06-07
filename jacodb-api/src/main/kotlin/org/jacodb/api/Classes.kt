@@ -145,7 +145,3 @@ interface JcParameter : JcAnnotated, JcAccessible {
 interface TypeName {
     val typeName: String
 }
-
-interface JcMethodRef {
-    val method: JcMethod
-}
