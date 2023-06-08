@@ -26,6 +26,7 @@ import org.jacodb.impl.vfs.RemoveLocationsVisitor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class GlobalClassVfsTest {
@@ -70,8 +71,16 @@ class GlobalClassVfsTest {
             assertEquals("Simple", name)
             assertEquals(lib1, location)
         }
+        with(limitedTree.findClassNodes("xxx.Simple")) {
+            assertEquals(1, size)
+            with(first()) {
+                assertEquals("Simple", name)
+                assertEquals(lib1, location)
+            }
+        }
 
         assertNull(limitedTree.firstClassOrNull("xxx.zzz.Simple"))
+        assertTrue(limitedTree.findClassNodes("xxx.zzz.Simple").isEmpty())
     }
 
     @Test

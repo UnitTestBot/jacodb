@@ -59,7 +59,6 @@ inline fun <reified T> JcClasspath.findClass(): JcClassOrInterface {
     return findClassOrNull<T>() ?: throwClassNotFound<T>()
 }
 
-
 val JcClasspath.void: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Void)
 val JcClasspath.boolean: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Boolean)
 val JcClasspath.short: JcPrimitiveType get() = PredefinedPrimitive(this, PredefinedPrimitives.Short)

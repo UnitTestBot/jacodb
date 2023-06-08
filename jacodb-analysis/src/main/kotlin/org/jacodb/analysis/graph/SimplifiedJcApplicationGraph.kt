@@ -23,7 +23,6 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.impl.cfg.JcInstLocationImpl
-import org.jacodb.impl.cfg.JcMethodRefImpl
 
 /**
  * This is adopted specially for IFDS [JcApplicationGraph] that
@@ -42,7 +41,7 @@ class SimplifiedJcApplicationGraph(
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
-        return JcNoopInst(JcInstLocationImpl(JcMethodRefImpl(method), -1, -1))
+        return JcNoopInst(JcInstLocationImpl(method, -1, -1))
     }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {

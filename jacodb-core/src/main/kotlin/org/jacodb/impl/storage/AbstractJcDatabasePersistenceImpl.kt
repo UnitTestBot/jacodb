@@ -19,18 +19,20 @@ package org.jacodb.impl.storage
 import org.jacodb.api.ClassSource
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.FeaturesRegistry
 import org.jacodb.impl.JcInternalSignal
-import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.JavaRuntime
+import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jacodb.impl.vfs.PersistentByteCodeLocation
+import org.jooq.Condition
 import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
@@ -110,35 +112,41 @@ abstract class AbstractJcDatabasePersistenceImpl(
         }
     }
 
-    override fun findClassSourceByName(
-        cp: JcClasspath,
-        locations: List<RegisteredLocation>,
-        fullName: String
-    ): ClassSource? {
-        val ids = locations.map { it.id }
+    override fun findClassSourceByName(cp: JcClasspath, fullName: String): ClassSource? {
         val symbolId = findSymbolId(fullName) ?: return null
-        val found = jooq.select(CLASSES.LOCATION_ID, CLASSES.BYTECODE).from(CLASSES)
-            .where(CLASSES.NAME.eq(symbolId).and(CLASSES.LOCATION_ID.`in`(ids)))
-            .fetchAny() ?: return null
-        val locationId = found.component1()!!
-        val byteCode = found.component2()!!
-        return ClassSourceImpl(
-            location = PersistentByteCodeLocation(cp, locationId),
-            className = fullName,
-            byteCode = byteCode
-        )
+        return cp.db.classSources(CLASSES.NAME.eq(symbolId).and(cp.clause), single = true).firstOrNull()
     }
 
-    override fun findClassSources(location: RegisteredLocation): List<ClassSource> {
-        val classes = jooq.select(CLASSES.LOCATION_ID, CLASSES.BYTECODE, SYMBOLS.NAME).from(CLASSES)
+    override fun findClassSources(db: JcDatabase, location: RegisteredLocation): List<ClassSource> {
+        return db.classSources(CLASSES.LOCATION_ID.eq(location.id))
+    }
+
+    override fun findClassSources(cp: JcClasspath, fullName: String): List<ClassSource> {
+        val symbolId = findSymbolId(fullName) ?: return emptyList()
+        return cp.db.classSources(CLASSES.NAME.eq(symbolId).and(cp.clause))
+    }
+
+    private val JcClasspath.clause: Condition
+        get() {
+            val ids = registeredLocations.map { it.id }
+            return CLASSES.LOCATION_ID.`in`(ids)
+        }
+
+    private fun JcDatabase.classSources(clause: Condition, single: Boolean = false): List<ClassSource> {
+        val classesQuery = jooq.select(CLASSES.LOCATION_ID, CLASSES.ID, CLASSES.BYTECODE, SYMBOLS.NAME).from(CLASSES)
             .join(SYMBOLS).on(CLASSES.NAME.eq(SYMBOLS.ID))
-            .where(CLASSES.LOCATION_ID.eq(location.id))
-            .fetch()
-        return classes.map { (locationId, array, name) ->
-            ClassSourceImpl(
-                location = location,
+            .where(clause)
+        val classes = when {
+            single -> listOfNotNull(classesQuery.fetchAny())
+            else -> classesQuery.fetch()
+        }
+        return classes.map { (locationId, classId, bytecode, name) ->
+            PersistenceClassSource(
+                db = this,
                 className = name!!,
-                byteCode = array!!
+                classId = classId!!,
+                locationId = locationId!!,
+                cachedByteCode = bytecode
             )
         }
     }

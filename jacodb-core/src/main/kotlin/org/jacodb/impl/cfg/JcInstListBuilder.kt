@@ -173,7 +173,6 @@ import org.jacodb.api.ext.toType
 class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
 
     val classpath: JcClasspath = method.enclosingClass.classpath
-    private val methodRef = JcMethodRefImpl(method)
 
     private val instMap = identityMap<JcRawInst, JcInst>()
     private var currentLineNumber = 0
@@ -304,7 +303,7 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
     }
 
     private fun newLocation(): JcInstLocation {
-        return JcInstLocationImpl(methodRef, index, currentLineNumber).also {
+        return JcInstLocationImpl(method, index, currentLineNumber).also {
             index++
         }
     }
