@@ -41,6 +41,7 @@ jobs:
           draft: true
           files: |
             jacodb-api/build/libs/jacodb-api-${{inputs.semVer}}.jar
+            jacodb-approximations/build/libs/jacodb-approximations-${{inputs.semVer}}.jar
             jacodb-analysis/build/libs/jacodb-analysis-${{inputs.semVer}}.jar
             jacodb-core/build/libs/jacodb-core-${{inputs.semVer}}.jar
             jacodb-cli/build/libs/jacodb-cli-${{inputs.semVer}}.jar
