@@ -23,7 +23,6 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import java.io.Closeable
-import java.util.*
 import java.util.concurrent.Future
 
 /**
@@ -50,15 +49,31 @@ interface JcClasspath : Closeable {
     fun findClassOrNull(name: String): JcClassOrInterface?
 
     /**
+     * in case of jar-hell there could be few classes with same name inside classpath
+     * @param name - class name
+     *
+     * @return list of classes with that name
+     */
+    fun findClasses(name: String): Set<JcClassOrInterface>
+
+    /**
      *  @param name full name of the type
      *
      * @return class or interface or null if there is no such class found in locations
      */
     fun findTypeOrNull(name: String): JcType?
 
-    fun typeOf(jcClass: JcClassOrInterface, nullability: Boolean? = null, annotations: List<JcAnnotation> = listOf()): JcRefType
+    fun typeOf(
+        jcClass: JcClassOrInterface,
+        nullability: Boolean? = null,
+        annotations: List<JcAnnotation> = listOf()
+    ): JcRefType
 
-    fun arrayTypeOf(elementType: JcType, nullability: Boolean? = null, annotations: List<JcAnnotation> = listOf()): JcArrayType
+    fun arrayTypeOf(
+        elementType: JcType,
+        nullability: Boolean? = null,
+        annotations: List<JcAnnotation> = listOf()
+    ): JcArrayType
 
     fun toJcClass(source: ClassSource): JcClassOrInterface
 
@@ -107,18 +122,32 @@ interface JcClasspathFeature {
     fun on(event: JcFeatureEvent) {
     }
 
-    fun event(result: Any, input: Array<Any>): JcFeatureEvent? = null
+    fun event(result: Any): JcFeatureEvent? = null
 
 }
 
 interface JcFeatureEvent {
     val feature: JcClasspathFeature
     val result: Any
-    val input: Array<Any>
 }
 
 @JvmDefaultWithoutCompatibility
 interface JcClasspathExtFeature : JcClasspathFeature {
+
+    interface JcResolvedClassResult {
+        val name: String
+        val clazz: JcClassOrInterface?
+    }
+
+    interface JcResolvedClassesResult {
+        val name: String
+        val clazz: List<JcClassOrInterface>
+    }
+
+    interface JcResolvedTypeResult {
+        val name: String
+        val type: JcType?
+    }
 
     /**
      * semantic of method is like this:
@@ -126,12 +155,14 @@ interface JcClasspathExtFeature : JcClasspathFeature {
      * - empty optional for class that we know is not exist in classpath
      * - null for case when we do not know
      */
-    fun tryFindClass(classpath: JcClasspath, name: String): Optional<JcClassOrInterface>? = null
+    fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? = null
 
     /**
      * semantic is the same as for `tryFindClass` method
      */
-    fun tryFindType(classpath: JcClasspath, name: String): Optional<JcType>? = null
+    fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? = null
+
+    fun findClasses(classpath: JcClasspath, name: String): List<JcClassOrInterface>? = null
 
 }
 
@@ -157,8 +188,21 @@ interface JcInstExtFeature : JcClasspathFeature {
 @JvmDefaultWithoutCompatibility
 interface JcMethodExtFeature : JcClasspathFeature {
 
-    fun flowGraph(method: JcMethod): JcGraph? = null
-    fun instList(method: JcMethod): JcInstList<JcInst>? = null
-    fun rawInstList(method: JcMethod): JcInstList<JcRawInst>? = null
+    interface JcFlowGraphResult {
+        val method: JcMethod
+        val flowGraph: JcGraph
+    }
+    interface JcInstListResult {
+        val method: JcMethod
+        val instList: JcInstList<JcInst>
+    }
+    interface JcRawInstListResult {
+        val method: JcMethod
+        val rawInstList: JcInstList<JcRawInst>
+    }
+
+    fun flowGraph(method: JcMethod): JcFlowGraphResult? = null
+    fun instList(method: JcMethod): JcInstListResult? = null
+    fun rawInstList(method: JcMethod): JcRawInstListResult? = null
 
 }

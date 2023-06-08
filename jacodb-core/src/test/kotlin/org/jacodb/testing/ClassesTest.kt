@@ -19,8 +19,12 @@ package org.jacodb.testing
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.impl.features.duplicatedClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.tests.DatabaseEnvTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 
@@ -34,5 +38,16 @@ class ClassesTest : DatabaseEnvTest() {
     override val hierarchyExt: HierarchyExtension
         get() = runBlocking { cp.hierarchyExt() }
 
+    @Test
+    fun `diagnostics should work`() {
+        val duplicates = runBlocking { cp.duplicatedClasses() }
+        println(duplicates.entries.joinToString("\n") { it.key + " found " + it.value + " times"})
+        assertTrue(duplicates.isNotEmpty())
+        assertTrue(duplicates.values.all { it > 1 })
+        duplicates.entries.forEach { (name, count) ->
+            val classes = cp.findClasses(name)
+            assertEquals(count, classes.size, "Expected count for $name is $count but was ${classes.size}")
+        }
+    }
 }
 

@@ -19,7 +19,6 @@ package org.jacodb.impl.cfg
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodRef
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.TypeName
@@ -28,7 +27,6 @@ import org.jacodb.api.cfg.JcRawCallExpr
 import org.jacodb.api.cfg.JcRawSpecialCallExpr
 import org.jacodb.api.cfg.JcRawStaticCallExpr
 import org.jacodb.api.cfg.TypedMethodRef
-import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.jvmName
@@ -177,48 +175,14 @@ fun JcTypedMethod.methodRef(): TypedMethodRef {
     )
 }
 
-
-class JcMethodRefImpl(method: JcMethod) : JcMethodRef {
-    private val classpath = method.enclosingClass.classpath
-
-    private val className: String = method.enclosingClass.name
-    private val name: String = method.name
-    private val description: String = method.description
-
-    override val method get() = classpath.findClass(className).findMethodOrNull(name, description)!!
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as JcMethodRefImpl
-
-        if (className != other.className) return false
-        if (name != other.name) return false
-        return description == other.description
-    }
-
-    override fun hashCode(): Int {
-        var result = className.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + description.hashCode()
-        return result
-    }
-
-}
-
 class JcInstLocationImpl(
-    val methodRef: JcMethodRef,
+    override val method: JcMethod,
     override val index: Int,
     override val lineNumber: Int
 ) : JcInstLocation {
 
     override fun toString(): String {
-        return "${methodRef.method.enclosingClass.name}#${methodRef.method.name}:$lineNumber"
-    }
-
-    override val method: JcMethod by softLazy {
-        methodRef.method
+        return "${method.enclosingClass.name}#${method.name}:$lineNumber"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -228,12 +192,12 @@ class JcInstLocationImpl(
         other as JcInstLocationImpl
 
         if (index != other.index) return false
-        return methodRef == other.methodRef
+        return method == other.method
     }
 
     override fun hashCode(): Int {
         var result = index
-        result = 31 * result + methodRef.hashCode()
+        result = 31 * result + method.hashCode()
         return result
     }
 

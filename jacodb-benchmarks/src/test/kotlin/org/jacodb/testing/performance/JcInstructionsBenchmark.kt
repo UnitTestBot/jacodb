@@ -20,15 +20,10 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.JcClasspathImpl
 import org.jacodb.impl.features.classpaths.ClasspathCache
-import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.Benchmark
@@ -55,11 +50,11 @@ class JcInstructionsBenchmark {
 
     object NoInstructionsCache : ClasspathCache(JcCacheSettings()) {
 
-        override fun instList(method: JcMethod): JcInstList<JcInst>? = null
+        override fun instList(method: JcMethod) = null
 
-        override fun rawInstList(method: JcMethod): JcInstList<JcRawInst>? = null
+        override fun rawInstList(method: JcMethod) = null
 
-        override fun flowGraph(method: JcMethod): JcGraph? = null
+        override fun flowGraph(method: JcMethod) = null
 
     }
 

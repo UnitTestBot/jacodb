@@ -18,7 +18,6 @@ package org.jacodb.impl.vfs
 
 import org.jacodb.api.JavaVersion
 import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.RegisteredLocation
@@ -35,17 +34,17 @@ class PersistentByteCodeLocation(
     private val cachedLocation: JcByteCodeLocation? = null
 ) : RegisteredLocation {
 
-    constructor(jcdb: JcDatabase, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
-        jcdb.persistence,
-        jcdb.runtimeVersion,
+    constructor(db: JcDatabase, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
+        db.persistence,
+        db.runtimeVersion,
         record.id!!,
         record,
         location
     )
 
-    constructor(cp: JcClasspath, locationId: Long) : this(
-        cp.db.persistence,
-        cp.db.runtimeVersion,
+    constructor(db: JcDatabase, locationId: Long) : this(
+        db.persistence,
+        db.runtimeVersion,
         locationId,
         null,
         null

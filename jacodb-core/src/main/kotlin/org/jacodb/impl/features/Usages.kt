@@ -204,7 +204,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
             jooq.select(CLASSES.ID, CALLS.CALLER_METHOD_OFFSETS, SYMBOLS.NAME, CLASSES.LOCATION_ID)
                 .from(CALLS)
                 .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                .join(CLASSES).on(CLASSES.NAME.eq(CALLS.CALLER_CLASS_SYMBOL_ID))
+                .join(CLASSES).on(CLASSES.NAME.eq(CALLS.CALLER_CLASS_SYMBOL_ID).and(CLASSES.LOCATION_ID.eq(CALLS.LOCATION_ID)))
                 .where(
                     CALLS.CALLEE_CLASS_SYMBOL_ID.`in`(className)
                         .and(CALLS.CALLEE_NAME_SYMBOL_ID.eq(name))
@@ -213,7 +213,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                         .and(CALLS.LOCATION_ID.`in`(locationIds))
                 ).fetch().mapNotNull { (classId, offset, className, locationId) ->
                     PersistenceClassSource(
-                        classpath,
+                        classpath.db,
                         className!!,
                         classId = classId!!,
                         locationId = locationId!!

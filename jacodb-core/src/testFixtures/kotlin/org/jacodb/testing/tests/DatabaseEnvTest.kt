@@ -441,10 +441,40 @@ abstract class DatabaseEnvTest {
             assertTrue(method is JcVirtualMethod)
             assertNotNull(method?.enclosingClass)
         }
+
+        val classes = cp.findClasses(fakeClassName)
+        assertEquals(1, classes.size)
     }
 
     @Test
-    fun `virtual fields and methods of `() {
+    fun `class override should work`() {
+        val fakeClassName = "java.lang.String"
+        val fakeMethodName = "fakeMethod"
+        val cp = runBlocking {
+            cp.db.classpath(allClasspath, listOf(VirtualClasses.builder {
+                virtualClass(fakeClassName) {
+                    method(fakeMethodName) {
+                        returnType(PredefinedPrimitives.Int)
+                        params(PredefinedPrimitives.Int)
+                    }
+                }
+            }))
+        }
+        val clazz = cp.findClass(fakeClassName)
+        assertTrue(clazz is JcVirtualClass)
+
+        with(clazz) {
+            val method = findDeclaredMethodOrNull(fakeMethodName, "(I)I")
+            assertTrue(method is JcVirtualMethod)
+            assertNotNull(method?.enclosingClass)
+        }
+
+        val classes = cp.findClasses(fakeClassName)
+        assertEquals(2, classes.size)
+    }
+
+    @Test
+    fun `virtual fields and methods of virtual classes`() {
         val fakeFieldName = "fakeField"
         val fakeMethodName = "fakeMethod"
         val cp = runBlocking {
@@ -540,7 +570,7 @@ abstract class DatabaseEnvTest {
         val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
         val optional = cache.tryFindClass(cp, notExistedClass)
         assertNotNull(optional)
-        assertFalse(optional!!.isPresent)
+        assertNull(optional!!.clazz)
     }
 
     @Test
@@ -551,7 +581,7 @@ abstract class DatabaseEnvTest {
         val cache = cp.features?.first { it is ClasspathCache } as ClasspathCache
         val optional = cache.tryFindClass(cp, existedClass)
         assertNotNull(optional)
-        assertTrue(optional!!.isPresent)
+        assertNotNull(optional!!.clazz)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
