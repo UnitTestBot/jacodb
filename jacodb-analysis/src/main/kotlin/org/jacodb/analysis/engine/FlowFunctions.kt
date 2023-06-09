@@ -16,13 +16,17 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
 interface FlowFunctionInstance {
     val inIds: List<SpaceId>
     fun compute(fact: DomainFact): Collection<DomainFact>
+
+//    fun compute(facts: Collection<DomainFact>): Set<DomainFact> {
+//        return facts.flatMap { compute(it) }.toSet()
+//    }
 }
 
 interface SpaceId {
@@ -43,6 +47,7 @@ object ZEROFact : DomainFact {
 
 interface FlowFunctionsSpace {
     val inIds: List<SpaceId>
+    fun obtainAllPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> = obtainStartFacts(startStatement)
     fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact>
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
@@ -55,5 +60,5 @@ interface FlowFunctionsSpace {
 interface Analyzer {
     val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
-    fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult
+    fun calculateSources(ifdsResult: IFDSResult): AnalysisResult
 }

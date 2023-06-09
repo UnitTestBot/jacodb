@@ -27,7 +27,6 @@ import org.jacodb.api.cfg.JcInst
 class IFDSResult(
     val graph: ApplicationGraph<JcMethod, JcInst>,
     val pathEdges: List<IFDSEdge<DomainFact>>,
-    val summaryEdges: List<IFDSEdge<DomainFact>>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
     val pathEdgesPreds: Map<IFDSEdge<DomainFact>, Set<PathEdgePredecessor<DomainFact>>>,
     val summaryEdgeToStartToEndEdges: Map<IFDSEdge<DomainFact>, Set<IFDSEdge<DomainFact>>>
@@ -103,13 +102,13 @@ class IFDSResult(
                     }
                     THROUGH_SUMMARY -> {
                         val summaryEdge = IFDSEdge(pred.predEdge.v, v)
-                        summaryEdgeToStartToEndEdges[summaryEdge].orEmpty().forEach { startToEndEdge ->
+                        summaryEdgeToStartToEndEdges[summaryEdge]?.forEach { startToEndEdge ->
                             addEdge(startToEndEdge.v, lastVertex) // Return to next vertex
                             addEdge(pred.predEdge.v, startToEndEdge.u) // Call to start
                             dfs(startToEndEdge, startToEndEdge.v, true) // Expand summary edge
-                            if (startToEndEdge.u.domainFact != ZEROFact) {
+//                            if (startToEndEdge.u.domainFact != ZEROFact) {
                                 dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
-                            }
+//                            }
                         }
                     }
                     UNKNOWN -> {

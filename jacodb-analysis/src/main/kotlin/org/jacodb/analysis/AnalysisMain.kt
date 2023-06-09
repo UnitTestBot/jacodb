@@ -25,6 +25,7 @@ import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IFDSInstance
 import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
+import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
@@ -37,7 +38,7 @@ import org.jacodb.impl.features.usagesExt
 import java.util.*
 
 @Serializable
-data class VulnerabilityInstance(
+data class DumpableVulnerabilityInstance(
     val vulnerabilityType: String,
     val sources: List<String>,
     val sink: String,
@@ -45,7 +46,29 @@ data class VulnerabilityInstance(
 )
 
 @Serializable
-data class DumpableAnalysisResult(val foundVulnerabilities: List<VulnerabilityInstance>)
+data class DumpableAnalysisResult(val foundVulnerabilities: List<DumpableVulnerabilityInstance>)
+
+data class VulnerabilityInstance(
+    val vulnerabilityType: String,
+    val realisationsGraph: TaintRealisationsGraph
+) {
+    fun toDumpable(maxPathsCount: Int = 100): DumpableVulnerabilityInstance {
+        return DumpableVulnerabilityInstance(
+            vulnerabilityType,
+            realisationsGraph.sources.map { it.statement.toString() },
+            realisationsGraph.sink.statement.toString(),
+            realisationsGraph.getAllPaths().take(maxPathsCount).map { intermediatePoints ->
+                intermediatePoints.map { it.statement.toString() }
+            }.toList()
+        )
+    }
+}
+
+data class AnalysisResult(val vulnerabilities: List<VulnerabilityInstance>) {
+    fun toDumpable(): DumpableAnalysisResult {
+        return DumpableAnalysisResult(vulnerabilities.map { it.toDumpable() })
+    }
+}
 
 typealias AnalysesOptions = Map<String, String>
 
@@ -53,7 +76,7 @@ typealias AnalysesOptions = Map<String, String>
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 interface AnalysisEngine {
-    fun analyze(): DumpableAnalysisResult
+    fun analyze(): AnalysisResult
     fun addStart(method: JcMethod)
 }
 

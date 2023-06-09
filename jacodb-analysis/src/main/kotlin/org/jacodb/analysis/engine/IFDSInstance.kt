@@ -17,7 +17,7 @@
 package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.CALL_TO_START
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
@@ -219,14 +219,13 @@ class IFDSInstance(
         return IFDSResult(
             graph,
             pathEdges.getAll().toList(),
-            summaryEdges.getAll().toList(),
             resultFacts,
             pathEdgesPreds,
             summaryEdgeToStartToEndEdges
         )
     }
 
-    override fun analyze(): DumpableAnalysisResult {
+    override fun analyze(): AnalysisResult {
         run()
 
         val ifdsResult = collectResults()

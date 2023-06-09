@@ -16,13 +16,19 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.VulnerabilityInstance
+import org.jacodb.analysis.DumpableVulnerabilityInstance
 
-data class TaintRealisationsGraph(
+class TaintRealisationsGraph(
     val sink: IFDSVertex<DomainFact>,
-    val sources: Set<IFDSVertex<DomainFact>>,
-    val edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
+    sources: Set<IFDSVertex<DomainFact>>,
+    edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
 ) {
+    var sources: Set<IFDSVertex<DomainFact>> = sources
+        private set
+
+    var edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>> = edges
+        private set
+
     private fun getAllPaths(curPath: MutableList<IFDSVertex<DomainFact>>): Sequence<List<IFDSVertex<DomainFact>>> = sequence {
         val v = curPath.last()
 
@@ -40,14 +46,14 @@ data class TaintRealisationsGraph(
         }
     }
 
-    private fun getAllPaths(): Sequence<List<IFDSVertex<DomainFact>>> = sequence {
+    fun getAllPaths(): Sequence<List<IFDSVertex<DomainFact>>> = sequence {
         sources.forEach {
             yieldAll(getAllPaths(mutableListOf(it)))
         }
     }
 
-    fun toVulnerability(vulnerabilityType: String, maxPathsCount: Int = 100): VulnerabilityInstance {
-        return VulnerabilityInstance(
+    fun toVulnerability(vulnerabilityType: String, maxPathsCount: Int = 100): DumpableVulnerabilityInstance {
+        return DumpableVulnerabilityInstance(
             vulnerabilityType,
             sources.map { it.statement.toString() },
             sink.statement.toString(),
@@ -55,5 +61,20 @@ data class TaintRealisationsGraph(
                 intermediatePoints.map { it.statement.toString() }
             }.toList()
         )
+    }
+
+    fun mergeWithUpGraph(upGraph: TaintRealisationsGraph, entryPoints: Set<IFDSVertex<DomainFact>>) {
+        val validEntryPoints = entryPoints.intersect(edges.keys).ifEmpty {
+            return
+        }
+
+        sources = sources + upGraph.sources
+
+        val newEdges = edges.toMutableMap()
+        for ((source, dests) in upGraph.edges) {
+            newEdges[source] = newEdges.getOrDefault(source, emptySet()) + dests
+        }
+        newEdges[upGraph.sink] = newEdges.getOrDefault(upGraph.sink, emptySet()) + validEntryPoints
+        edges = newEdges
     }
 }

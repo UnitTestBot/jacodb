@@ -18,10 +18,10 @@ package org.jacodb.analysis.impl
 
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.DumpableVulnerabilityInstance
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -108,12 +108,12 @@ class UnusedVariableTest : BaseTest() {
         assertTrue(good.isEmpty(), "found problem in good method of $message")
     }
 
-    private fun findUnusedVariables(method: JcMethod): List<VulnerabilityInstance> {
+    private fun findUnusedVariables(method: JcMethod): List<DumpableVulnerabilityInstance> {
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val ifds = UnusedVariableAnalysisFactory().createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
-        return result.foundVulnerabilities.filter { it.vulnerabilityType == UnusedVariableAnalyzer.value }
+        return result.toDumpable().foundVulnerabilities.filter { it.vulnerabilityType == UnusedVariableAnalyzer.value }
     }
 }

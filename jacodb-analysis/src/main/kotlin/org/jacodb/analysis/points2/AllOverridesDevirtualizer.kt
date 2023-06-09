@@ -45,7 +45,7 @@ class AllOverridesDevirtualizer(
     override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
         val methods = initialGraph.callees(sink).toList()
         val callExpr = sink.callExpr as? JcVirtualCallExpr ?: return methods
-        val instanceClass = (callExpr.instance.type as JcClassType).jcClass
+        val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass ?: return methods
 
         return methods
             .flatMap { method ->

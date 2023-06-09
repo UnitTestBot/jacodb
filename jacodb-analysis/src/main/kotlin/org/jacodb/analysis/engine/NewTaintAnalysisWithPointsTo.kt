@@ -16,14 +16,28 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.AnalysisResult
-import org.jacodb.analysis.Points2Engine
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
@@ -31,21 +45,24 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class TaintAnalysisWithPointsTo(
+class NewTaintAnalysisWithPointsTo(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
-    points2Engine: Points2Engine,
-): AnalysisEngine {
+    devirtualizer: Devirtualizer,
+    context: AnalysisContext,
+    unitResolver: UnitResolver<*>,
+    methods: List<JcMethod>
+) {
 
-    private val forward: IFDSInstance = IFDSInstance(graph, analyzer, points2Engine.obtainDevirtualizer())
+    private val forward = IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, methods)
 
-    private val backward: IFDSInstance = IFDSInstance(graph.reversed, analyzer.backward, points2Engine.obtainDevirtualizer())
+    private val backward = IFDSUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, methods)
 
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
         fun IFDSEdge<*>.handoverPathEdgeTo(
-            instance: IFDSInstance,
+            instance: IFDSUnitInstance<*>,
             pred: JcInst?,
             updateActivation: Boolean,
             propZero: Boolean
@@ -124,7 +141,7 @@ class TaintAnalysisWithPointsTo(
         })
     }
 
-    override fun addStart(method: JcMethod) = forward.addStart(method)
+    fun addStart(method: JcMethod) = forward.addStart(method)
 
-    override fun analyze(): AnalysisResult = forward.analyze()
+    fun ifdsResults(): Map<JcMethod, IFDSMethodSummary> = forward.analyze()
 }

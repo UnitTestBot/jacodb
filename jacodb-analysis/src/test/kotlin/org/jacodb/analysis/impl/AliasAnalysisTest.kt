@@ -151,6 +151,6 @@ class AliasAnalysisTest : BaseTest() {
         val ifds = factory.createAnalysisEngine(graph, points2Engine)
         ifds.addStart(method)
         val result = ifds.analyze()
-        return result.foundVulnerabilities.map { it.sink }
+        return result.toDumpable().foundVulnerabilities.map { it.sink }
     }
 }
