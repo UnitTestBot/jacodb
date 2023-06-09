@@ -17,7 +17,7 @@
 package org.jacodb.approximation
 
 import org.jacodb.api.TypeName
-import org.jacodb.approximation.ApproximationsMappingFeature.findOriginalByApproximationOrNull
+import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.impl.types.TypeNameImpl
 
 fun String.toApproximationName() = ApproximationClassName(this)

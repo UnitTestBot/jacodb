@@ -95,7 +95,7 @@ import org.jacodb.api.cfg.JcRawUshrExpr
 import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.approximation.ApproximationsMappingFeature.findOriginalByApproximationOrNull
+import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.impl.types.TypeNameImpl
 
 /**
