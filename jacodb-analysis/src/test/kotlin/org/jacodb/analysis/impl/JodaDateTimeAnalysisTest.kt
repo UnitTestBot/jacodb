@@ -23,7 +23,7 @@ import org.jacodb.analysis.NPEAnalysisFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.engine.IFDSUnitTraverser
-import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.PackageUnitResolver
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -41,9 +41,8 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), MethodUnitResolver, points2Engine.obtainDevirtualizer())
-        clazz.declaredMethods
-            .forEach { ifds.addStart(it) }
+        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), PackageUnitResolver, points2Engine.obtainDevirtualizer())
+        clazz.declaredMethods.forEach { ifds.addStart(it) }
         val result = ifds.analyze().toDumpable().foundVulnerabilities
 
         result.forEachIndexed { ind, vulnerability ->

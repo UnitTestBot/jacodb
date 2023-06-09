@@ -170,6 +170,7 @@ class IFDSUnitInstance<UnitType>(
                             for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(callerStatement, returnSite, n).compute(d2)) {
                                 val returnSiteVertex = IFDSVertex(returnSite, returnSiteFact)
                                 val newEdge = IFDSEdge(predEdge.u, returnSiteVertex)
+                                summaryEdgeToStartToEndEdges.getOrPut(IFDSEdge(predEdge.v, returnSiteVertex)) { mutableSetOf() }.add(curEdge)
                                 propagate(newEdge, PathEdgePredecessor(predEdge, THROUGH_SUMMARY))
                             }
                         }
@@ -220,12 +221,10 @@ class IFDSUnitInstance<UnitType>(
             graph.methodOf(it.realisationsGraph.sink.statement) == method
         }
 
-        // TODO: Delete externVulnerabilities here
-//        val externVulnerabilities = externCallees.flatMap { graph.callees(it.key.statement).toList() }.flatMap {
-//            context.summaries[it]?.foundVulnerabilities?.vulnerabilities.orEmpty()
-//        }.distinct()
         val actualResult = AnalysisResult(relevantVulnerabilities)
-        val relevantExternCallees = externCallees.filterKeys { graph.methodOf(it.statement) == method }
+        val relevantExternCallees = externCallees.filterKeys { graph.methodOf(it.statement) == method }.mapValues { (callVertex, sVertexes) ->
+            sVertexes to fullResults.resolveTaintRealisationsGraph(callVertex)
+        }
         return IFDSMethodSummary(factsAtExits, relevantExternCallees, actualResult)
     }
 

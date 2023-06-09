@@ -20,6 +20,6 @@ import org.jacodb.analysis.AnalysisResult
 
 data class IFDSMethodSummary(
     val factsAtExits: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
-    val externCallees: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
+    val externCallees: Map<IFDSVertex<DomainFact>, Pair<Set<IFDSVertex<DomainFact>>, TaintRealisationsGraph>>,
     val foundVulnerabilities: AnalysisResult
 )

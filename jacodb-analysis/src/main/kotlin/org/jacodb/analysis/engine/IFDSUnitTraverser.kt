@@ -18,6 +18,7 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -39,6 +40,7 @@ class IFDSUnitTraverser<UnitType>(
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
+    private val externEdgesByExternMethod: MutableMap<JcMethod, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
 
     override fun analyze(): AnalysisResult {
         println("${foundMethods.values.sumOf { it.size }}, ${unitsQueue.size}")
@@ -51,34 +53,61 @@ class IFDSUnitTraverser<UnitType>(
 //            val ifdsInstance = IFDSUnitInstance(graph, analyzer, devirtualizer, context, listOf(next))
             val ifdsInstance = NewTaintAnalysisWithPointsTo(graph, analyzer, devirtualizer, context, unitResolver, foundMethods[next].orEmpty().toList())
             val results = ifdsInstance.ifdsResults()
-
-//            for ((caller, calleeFacts) in summary.externCallees) {
-//                val upGraph = fullResults.resolveTaintRealisationsGraph(caller)
-//                for (calledMethod in graph.callees(caller.statement)) {
-//                    context.summaries[calledMethod]?.let { calledMethodSummary->
-//                        calledMethodSummary.foundVulnerabilities.vulnerabilities.map {
-//                            it.realisationsGraph.mergeWithUpGraph(upGraph, calleeFacts)
-//                        }
-//                    }
-//                }
-//            }
+            for ((_, summary) in results) {
+                for ((inc, outcs) in summary.externCallees) {
+                    for (outc in outcs.first) {
+                        val calledMethod = outc.statement.location.method
+                        val newEdge = IFDSEdge(inc, outc)
+                        externEdgesByExternMethod.getOrPut(calledMethod) { mutableSetOf() }.add(newEdge)
+                    }
+                }
+            }
             results.forEach { (method, summary) ->
                 context.summaries[method] = summary
             }
         }
 
-        // TODO: merge realisations graph here or smth like this
         // TODO: think about correct filters for overall results
         val vulnerabilities = context.summaries.flatMap { (_, summary) ->
-            summary.foundVulnerabilities.vulnerabilities.filter { true ||
-                it.realisationsGraph.sources.any {
+            summary.foundVulnerabilities.vulnerabilities.filter {
+                val fullRealisationsGraph = extendRealisationsGraph(it.realisationsGraph)
+                fullRealisationsGraph.sources.any {
                     it.statement.location.method in initMethods || it.domainFact == ZEROFact
                 }
-
-            }
+            }.map { VulnerabilityInstance(it.vulnerabilityType, extendRealisationsGraph(it.realisationsGraph)) }
         }.distinct()
 
         return AnalysisResult(vulnerabilities)
+    }
+
+    private val TaintRealisationsGraph.methods: List<JcMethod>
+        get() {
+            return (edges.keys.map { it.statement.location.method } + listOf(sink.statement.location.method)).distinct()
+        }
+
+    fun extendRealisationsGraph(graph: TaintRealisationsGraph): TaintRealisationsGraph {
+        var result = graph
+        val methodQueue: MutableSet<JcMethod> = graph.methods.toMutableSet()
+        val addedMethods: MutableSet<JcMethod> = mutableSetOf()
+        while (methodQueue.isNotEmpty()) {
+            val method = methodQueue.first()
+            methodQueue.remove(method)
+            addedMethods.add(method)
+            for (externCallEdge in externEdgesByExternMethod[method].orEmpty()) {
+                val caller = externCallEdge.u.statement.location.method
+                val (entryPoints, upGraph) = context.summaries[caller]!!.externCallees[externCallEdge.u]!!
+                val newValue = result.mergeWithUpGraph(upGraph, entryPoints)
+                if (result != newValue) {
+                    result = newValue
+                    for (nMethod in upGraph.methods) {
+                        if (nMethod !in addedMethods) {
+                            methodQueue.add(nMethod)
+                        }
+                    }
+                }
+            }
+        }
+        return result
     }
 
     private fun getAllDependencies(method: JcMethod): Set<JcMethod> {

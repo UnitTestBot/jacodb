@@ -20,14 +20,9 @@ import org.jacodb.analysis.DumpableVulnerabilityInstance
 
 class TaintRealisationsGraph(
     val sink: IFDSVertex<DomainFact>,
-    sources: Set<IFDSVertex<DomainFact>>,
-    edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
+    val sources: Set<IFDSVertex<DomainFact>>,
+    val edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
 ) {
-    var sources: Set<IFDSVertex<DomainFact>> = sources
-        private set
-
-    var edges: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>> = edges
-        private set
 
     private fun getAllPaths(curPath: MutableList<IFDSVertex<DomainFact>>): Sequence<List<IFDSVertex<DomainFact>>> = sequence {
         val v = curPath.last()
@@ -63,18 +58,18 @@ class TaintRealisationsGraph(
         )
     }
 
-    fun mergeWithUpGraph(upGraph: TaintRealisationsGraph, entryPoints: Set<IFDSVertex<DomainFact>>) {
+    fun mergeWithUpGraph(upGraph: TaintRealisationsGraph, entryPoints: Set<IFDSVertex<DomainFact>>): TaintRealisationsGraph {
         val validEntryPoints = entryPoints.intersect(edges.keys).ifEmpty {
-            return
+            return this
         }
 
-        sources = sources + upGraph.sources
+        val newSources = sources + upGraph.sources
 
         val newEdges = edges.toMutableMap()
         for ((source, dests) in upGraph.edges) {
             newEdges[source] = newEdges.getOrDefault(source, emptySet()) + dests
         }
         newEdges[upGraph.sink] = newEdges.getOrDefault(upGraph.sink, emptySet()) + validEntryPoints
-        edges = newEdges
+        return TaintRealisationsGraph(sink, newSources, newEdges)
     }
 }
