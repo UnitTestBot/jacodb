@@ -16,14 +16,17 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.analysis.AnalysisEngineFactory
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.NPEAnalysisFactory
-import org.jacodb.analysis.UnusedVariableAnalysisFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
+import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
+import org.jacodb.analysis.engine.ClassUnitResolver
+import org.jacodb.analysis.engine.IFDSInstanceProvider
+import org.jacodb.analysis.engine.IFDSUnitInstance
 import org.jacodb.analysis.engine.IFDSUnitTraverser
-import org.jacodb.analysis.engine.PackageUnitResolver
+import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -32,18 +35,17 @@ import org.jacodb.testing.WithDB
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
 
-//@Disabled("Running time is more then 10 minutes")
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    fun testOneFactory(factory: AnalysisEngineFactory) {
+    fun testOne(analyzer: Analyzer, unitResolver: UnitResolver<*>, ifdsInstanceProvider: IFDSInstanceProvider) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), PackageUnitResolver, points2Engine.obtainDevirtualizer())
-        clazz.declaredMethods.forEach { ifds.addStart(it) }
-        val result = ifds.analyze().toDumpable().foundVulnerabilities
+        val engine = IFDSUnitTraverser(graph, analyzer, unitResolver, points2Engine.obtainDevirtualizer(), ifdsInstanceProvider)
+        clazz.declaredMethods.forEach { engine.addStart(it) }
+        val result = engine.analyze().toDumpable().foundVulnerabilities
 
         result.forEachIndexed { ind, vulnerability ->
             println("VULNERABILITY $ind:")
@@ -53,11 +55,11 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOneFactory(UnusedVariableAnalysisFactory())
+        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(true), IFDSUnitInstance)
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOneFactory(NPEAnalysisFactory())
+        testOne(NpeAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(true), BidiIFDSForTaintAnalysis)
     }
 }

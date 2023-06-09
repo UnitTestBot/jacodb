@@ -25,7 +25,6 @@ import org.jacodb.api.analysis.JcApplicationGraph
 
 class AnalysisContext {
     val summaries: MutableMap<JcMethod, IFDSMethodSummary> = mutableMapOf()
-//    val pendingMethods: MutableMap<JcMethod, MutableSet<JcMethod>> = mutableMapOf()
 }
 
 class IFDSUnitTraverser<UnitType>(
@@ -33,6 +32,7 @@ class IFDSUnitTraverser<UnitType>(
     private val analyzer: Analyzer,
     private val unitResolver: UnitResolver<UnitType>,
     private val devirtualizer: Devirtualizer,
+    private val ifdsInstanceProvider: IFDSInstanceProvider
 ) : AnalysisEngine {
     private val context = AnalysisContext()
     private val initMethods: MutableSet<JcMethod> = mutableSetOf()
@@ -45,14 +45,15 @@ class IFDSUnitTraverser<UnitType>(
     override fun analyze(): AnalysisResult {
         println("${foundMethods.values.sumOf { it.size }}, ${unitsQueue.size}")
         while (unitsQueue.isNotEmpty()) {
-            println("${unitsQueue.size} units left")
+            println("${unitsQueue.size} unit(s) left")
+
             // TODO: do smth smarter here
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
 //            val ifdsInstance = IFDSUnitInstance(graph, analyzer, devirtualizer, context, listOf(next))
-            val ifdsInstance = NewTaintAnalysisWithPointsTo(graph, analyzer, devirtualizer, context, unitResolver, foundMethods[next].orEmpty().toList())
-            val results = ifdsInstance.ifdsResults()
+            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, analyzer, devirtualizer, context, unitResolver, foundMethods[next].orEmpty().toList())
+            val results = ifdsInstance.analyze()
             for ((_, summary) in results) {
                 for ((inc, outcs) in summary.externCallees) {
                     for (outc in outcs.first) {
@@ -66,6 +67,8 @@ class IFDSUnitTraverser<UnitType>(
                 context.summaries[method] = summary
             }
         }
+
+        println("HERE")
 
         // TODO: think about correct filters for overall results
         val vulnerabilities = context.summaries.flatMap { (_, summary) ->
@@ -85,7 +88,7 @@ class IFDSUnitTraverser<UnitType>(
             return (edges.keys.map { it.statement.location.method } + listOf(sink.statement.location.method)).distinct()
         }
 
-    fun extendRealisationsGraph(graph: TaintRealisationsGraph): TaintRealisationsGraph {
+    private fun extendRealisationsGraph(graph: TaintRealisationsGraph): TaintRealisationsGraph {
         var result = graph
         val methodQueue: MutableSet<JcMethod> = graph.methods.toMutableSet()
         val addedMethods: MutableSet<JcMethod> = mutableSetOf()
@@ -116,9 +119,6 @@ class IFDSUnitTraverser<UnitType>(
             devirtualizer.findPossibleCallees(inst).forEach {
                 result.add(it)
             }
-//            graph.callees(inst).forEach {
-//                result.add(it)
-//            }
         }
         return result
     }
@@ -142,5 +142,4 @@ class IFDSUnitTraverser<UnitType>(
         initMethods.add(method)
         internalAddStart(method)
     }
-
 }

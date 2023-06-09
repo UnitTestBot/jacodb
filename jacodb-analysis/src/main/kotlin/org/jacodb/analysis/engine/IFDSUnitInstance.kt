@@ -33,12 +33,12 @@ class IFDSUnitInstance<UnitType>(
     private val context: AnalysisContext,
     private val unitResolver: UnitResolver<UnitType>,
     methods: List<JcMethod>
-) {
+): IFDSInstance {
     private val unit: UnitType
 
     private class EdgesStorage {
         private val byStart: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
-        private val byEnd:   MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
+
         operator fun contains(e: IFDSEdge<DomainFact>): Boolean {
             return e in getByStart(e.u)
         }
@@ -46,10 +46,6 @@ class IFDSUnitInstance<UnitType>(
         fun add(e: IFDSEdge<DomainFact>) {
             byStart
                 .getOrPut(e.u) { mutableSetOf() }
-                .add(e)
-
-            byEnd
-                .getOrPut(e.v) { mutableSetOf() }
                 .add(e)
         }
 
@@ -81,7 +77,7 @@ class IFDSUnitInstance<UnitType>(
         }
     }
 
-    fun addStart(method: JcMethod) {
+    override fun addStart(method: JcMethod) {
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainAllPossibleStartFacts(sPoint)) {
                 val vertex = IFDSVertex(sPoint, sFact)
@@ -228,10 +224,23 @@ class IFDSUnitInstance<UnitType>(
         return IFDSMethodSummary(factsAtExits, relevantExternCallees, actualResult)
     }
 
-    fun analyze(): Map<JcMethod, IFDSMethodSummary> {
+    override fun analyze(): Map<JcMethod, IFDSMethodSummary> {
         run()
 
         val methods = fullResults.pathEdges.map { graph.methodOf(it.u.statement) }.distinct()
         return methods.associateWith { getMethodSummary(it) }
+    }
+
+    companion object : IFDSInstanceProvider {
+        override fun createInstance(
+            graph: ApplicationGraph<JcMethod, JcInst>,
+            analyzer: Analyzer,
+            devirtualizer: Devirtualizer,
+            context: AnalysisContext,
+            unitResolver: UnitResolver<*>,
+            methods: List<JcMethod>
+        ): IFDSInstance {
+            return IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, methods)
+        }
     }
 }

@@ -107,7 +107,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, TaintRealisationsGraph(IFDSVertex(it, ZEROFact), emptySet(), emptyMap()))
+            VulnerabilityInstance(value, TaintRealisationsGraph(IFDSVertex(it, ZEROFact), setOf(IFDSVertex(it, ZEROFact)), emptyMap()))
         }
         return AnalysisResult(vulnerabilities)
     }

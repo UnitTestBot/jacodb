@@ -45,14 +45,14 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class NewTaintAnalysisWithPointsTo(
+class BidiIFDSForTaintAnalysis(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
     devirtualizer: Devirtualizer,
     context: AnalysisContext,
     unitResolver: UnitResolver<*>,
     methods: List<JcMethod>
-) {
+): IFDSInstance {
 
     private val forward = IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, methods)
 
@@ -141,7 +141,20 @@ class NewTaintAnalysisWithPointsTo(
         })
     }
 
-    fun addStart(method: JcMethod) = forward.addStart(method)
+    override fun addStart(method: JcMethod) = forward.addStart(method)
 
-    fun ifdsResults(): Map<JcMethod, IFDSMethodSummary> = forward.analyze()
+    override fun analyze(): Map<JcMethod, IFDSMethodSummary> = forward.analyze()
+
+    companion object : IFDSInstanceProvider {
+        override fun createInstance(
+            graph: ApplicationGraph<JcMethod, JcInst>,
+            analyzer: Analyzer,
+            devirtualizer: Devirtualizer,
+            context: AnalysisContext,
+            unitResolver: UnitResolver<*>,
+            methods: List<JcMethod>
+        ): IFDSInstance {
+            return BidiIFDSForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, methods)
+        }
+    }
 }

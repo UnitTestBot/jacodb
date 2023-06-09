@@ -22,6 +22,7 @@ import org.jacodb.analysis.DumpableVulnerabilityInstance
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IFDSUnitTraverser
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -271,7 +272,7 @@ class NpeAnalysisTest : BaseTest() {
     private fun findNpeSources(method: JcMethod): List<DumpableVulnerabilityInstance> {
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), ClassUnitResolver(true), points2Engine.obtainDevirtualizer()) //NPEAnalysisFactory().createAnalysisEngine(graph, points2Engine)
+        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), ClassUnitResolver(true), points2Engine.obtainDevirtualizer(), BidiIFDSForTaintAnalysis)
         ifds.addStart(method)
         val result = ifds.analyze().toDumpable()
         return result.foundVulnerabilities.filter { it.vulnerabilityType == NpeAnalyzer.value }
