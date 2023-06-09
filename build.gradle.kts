@@ -108,7 +108,6 @@ allprojects {
             reports {
                 csv.required.set(true)
             }
-
         }
 
         withType<Test> {
@@ -118,25 +117,6 @@ allprojects {
                 events("passed", "skipped", "failed")
             }
             finalizedBy(jacocoTestReport) // report is always generated after tests run
-        }
-
-        val dokkaJavadocJar by creating(Jar::class) {
-            dependsOn(dokkaJavadoc)
-            from(dokkaJavadoc.flatMap { it.outputDirectory })
-            archiveClassifier.set("javadoc")
-        }
-
-
-        val sourcesJar by creating(Jar::class) {
-            archiveClassifier.set("sources")
-            from(sourceSets.getByName("main").kotlin.srcDirs)
-        }
-
-        artifacts {
-            archives(sourcesJar)
-            if (includeDokka != null) {
-                archives(dokkaJavadocJar)
-            }
         }
     }
 
@@ -149,22 +129,6 @@ allprojects {
         include("**/*.java")
         header(rootProject.file("docs/copyright/COPYRIGHT_HEADER.txt"))
     }
-
-    publishing {
-        publications {
-            register<MavenPublication>("jar") {
-                from(components["java"])
-                artifact(tasks.named("sourcesJar"))
-                artifact(tasks.named("dokkaJavadocJar"))
-
-                groupId = "org.jacodb"
-                artifactId = project.name
-                addPom()
-                signPublication(this@allprojects)
-            }
-        }
-    }
-
 }
 
 val repoUrl: String? = project.properties["repoUrl"] as? String ?: "https://maven.pkg.github.com/UnitTestBot/jacodb"
@@ -178,7 +142,40 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-approximations"),
         )
     ) {
+        tasks {
+            val dokkaJavadocJar by creating(Jar::class) {
+                dependsOn(dokkaJavadoc)
+                from(dokkaJavadoc.flatMap { it.outputDirectory })
+                archiveClassifier.set("javadoc")
+            }
+
+            val sourcesJar by creating(Jar::class) {
+                archiveClassifier.set("sources")
+                from(sourceSets.getByName("main").kotlin.srcDirs)
+            }
+
+            artifacts {
+                archives(sourcesJar)
+                if (includeDokka != null) {
+                    archives(dokkaJavadocJar)
+                }
+            }
+
+        }
         publishing {
+            publications {
+                register<MavenPublication>("jar") {
+                    from(components["java"])
+                    artifact(tasks.named("sourcesJar"))
+                    artifact(tasks.named("dokkaJavadocJar"))
+
+                    groupId = "org.jacodb"
+                    artifactId = project.name
+                    addPom()
+                    signPublication(this@configure)
+                }
+            }
+
             repositories {
                 maven {
                     name = "repo"
@@ -195,6 +192,21 @@ if (!repoUrl.isNullOrEmpty()) {
         }
     }
 }
+
+configure(listOf(rootProject)) {
+    tasks {
+        dokkaHtmlMultiModule {
+            removeChildTasks(
+                listOf(
+                    project(":jacodb-examples"),
+                    project(":jacodb-cli"),
+                    project(":jacodb-benchmarks")
+                )
+            )
+        }
+    }
+}
+
 
 
 fun MavenPublication.signPublication(project: Project) = with(project) {
