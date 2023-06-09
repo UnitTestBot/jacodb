@@ -26,11 +26,9 @@ import org.jacodb.api.cfg.JcRawCallInst
 import org.jacodb.api.cfg.JcRawFieldRef
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.approximation.ApproximationsInstructionsFeature
-import org.jacodb.approximation.ApproximationsMappingFeature
-import org.jacodb.approximation.ApproximationsMappingFeature.findApproximationByOriginOrNull
-import org.jacodb.approximation.ApproximationsMappingFeature.findOriginalByApproximationOrNull
-import org.jacodb.approximation.ClassContentApproximationFeature
+import org.jacodb.approximation.Approximations
+import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
+import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.approximation.JcEnrichedVirtualField
 import org.jacodb.approximation.JcEnrichedVirtualMethod
 import org.jacodb.approximation.toApproximationName
@@ -45,10 +43,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ApproximationsTest : BaseTest() {
-    companion object : WithDB(ApproximationsMappingFeature)
+    companion object : WithDB(Approximations)
 
     override val cp: JcClasspath = runBlocking {
-        val features = listOf(ClassContentApproximationFeature, ApproximationsInstructionsFeature)
+        val features = listOf(Approximations)
         db.classpath(allClasspath, features)
     }
 

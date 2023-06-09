@@ -17,12 +17,21 @@
 package org.jacodb.approximation
 
 import org.jacodb.api.ByteCodeIndexer
+import org.jacodb.api.JcClassExtFeature
+import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcFeature
+import org.jacodb.api.JcField
+import org.jacodb.api.JcInstExtFeature
+import org.jacodb.api.JcMethod
 import org.jacodb.api.JcSignal
 import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
+import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
@@ -45,7 +54,8 @@ import java.util.concurrent.ConcurrentMap
  *  otherwise you might get incomplete mapping.
  *  See [JcDatabase.awaitBackgroundJobs].
  */
-object ApproximationsMappingFeature : JcFeature<Any?, Any?> {
+object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeature {
+
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName> = ConcurrentHashMap()
     private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName> = ConcurrentHashMap()
 
@@ -80,6 +90,32 @@ object ApproximationsMappingFeature : JcFeature<Any?, Any?> {
                     approximationToOriginal[approximationClassName] = originalClassName
                 }
         }
+    }
+
+    /**
+     * Returns a list of [JcEnrichedVirtualField] if there is an approximation for [clazz] and null otherwise.
+     */
+    override fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? {
+        val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
+        val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
+
+        return approximationClass.declaredFields.map { TransformerIntoVirtual.transformIntoVirtualField(clazz, it) }
+    }
+
+    /**
+     * Returns a list of [JcEnrichedVirtualMethod] if there is an approximation for [clazz] and null otherwise.
+     */
+    override fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? {
+        val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
+        val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
+
+        return approximationClass.declaredMethods.map {
+            approximationClass.classpath.transformMethodIntoVirtual(clazz, it)
+        }
+    }
+
+    override fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
+        return JcInstListImpl(list.map { it.accept(InstSubstitutorForApproximations) })
     }
 
     /**
