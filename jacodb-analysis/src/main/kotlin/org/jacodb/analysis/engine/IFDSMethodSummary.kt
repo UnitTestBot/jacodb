@@ -16,6 +16,15 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.analysis.AnalysisResult
 
-data class IFDSVertex(val statement: JcInst, val domainFact: DomainFact)
+data class CalleeInfo(
+    val factsAtCalleeStart: Set<IFDSVertex>,
+    val callsiteRealisationsGraph: TaintRealisationsGraph
+)
+
+data class IFDSMethodSummary(
+    val factsAtExits: Map<IFDSVertex, Set<IFDSVertex>>,
+    val crossUnitCallees: Map<IFDSVertex, CalleeInfo>,
+    val foundVulnerabilities: AnalysisResult
+)

@@ -16,14 +16,16 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IFDSResult
+import org.jacodb.analysis.engine.IFDSVertex
 import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
@@ -50,6 +52,8 @@ class UnusedVariableAnalyzer(
     val graph: JcApplicationGraph
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
+    override val name: String = value
+
     override val backward: Analyzer
         get() = error("No backward analysis for Unused variable")
 
@@ -61,7 +65,7 @@ class UnusedVariableAnalyzer(
         return this in expr.values.map { it.toPathOrNull() }
     }
 
-    private fun AccessPath.isUsedAt(inst: JcInst): Boolean {
+    private fun AccessPath.isUsedAt(inst: JcInst, withResult: IFDSResult): Boolean {
         val callExpr = inst.callExpr
 
         if (callExpr != null) {
@@ -70,7 +74,7 @@ class UnusedVariableAnalyzer(
                 return false
             }
 
-            if (graph.callees(inst).none()) {
+            if (graph.callees(inst).none() || inst in withResult.crossUnitCallees.keys.map { it.statement }) {
                 return isUsedAt(callExpr)
             }
 
@@ -91,7 +95,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
+    override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -99,15 +103,15 @@ class UnusedVariableAnalyzer(
                     used[fact.initStatement] = false
                 }
 
-                if (fact.variable.isUsedAt(inst)) {
+                if (fact.variable.isUsedAt(inst, ifdsResult)) {
                     used[fact.initStatement] = true
                 }
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, listOf(it.location.toString()), it.location.toString() + "cmd = " + it.toString(), emptyList())
+            VulnerabilityInstance(value, TaintRealisationsGraph(IFDSVertex(it, ZEROFact), setOf(IFDSVertex(it, ZEROFact)), emptyMap()))
         }
-        return DumpableAnalysisResult(vulnerabilities)
+        return AnalysisResult(vulnerabilities)
     }
 }
 
@@ -199,9 +203,5 @@ private class UnusedVariableForwardFunctions(
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             return if (fact == ZEROFact) listOf(ZEROFact) else emptyList()
         }
-
     }
-
-    override val backward: FlowFunctionsSpace
-        get() = error("No backward FF for unused variable")
 }

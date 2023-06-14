@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
@@ -55,13 +55,17 @@ class NpeAnalyzer(
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(graph, maxPathLength)
+    override val name: String = value
+
     override val backward: Analyzer = object : Analyzer {
         override val backward: Analyzer
             get() = this@NpeAnalyzer
         override val flowFunctions: FlowFunctionsSpace
-            get() = this@NpeAnalyzer.flowFunctions.backward
+            get() = NPEBackwardFunctions(graph, maxPathLength)
+        override val name: String
+            get() = value
 
-        override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
+        override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
             error("Do not call sources for backward analyzer instance")
         }
     }
@@ -70,18 +74,21 @@ class NpeAnalyzer(
         override val value: String = "npe-analysis"
     }
 
-    override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
+    override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<NPETaintNode>().forEach { fact ->
                 if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
                     vulnerabilities.add(
-                        ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability(value)
+                        VulnerabilityInstance(
+                            value,
+                            ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact))
+                        )
                     )
                 }
             }
         }
-        return DumpableAnalysisResult(vulnerabilities)
+        return AnalysisResult(vulnerabilities)
     }
 }
 
@@ -244,15 +251,12 @@ private class NPEForwardFunctions(
 
         return result
     }
-
-    override val backward: FlowFunctionsSpace by lazy { NPEBackwardFunctions(graph, this, maxPathLength) }
 }
 
 private class NPEBackwardFunctions(
     graph: JcApplicationGraph,
-    backward: FlowFunctionsSpace,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, backward, maxPathLength) {
+) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
     override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
 }
 

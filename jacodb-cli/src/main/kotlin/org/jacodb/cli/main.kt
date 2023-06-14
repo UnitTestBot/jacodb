@@ -27,7 +27,7 @@ import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.AnalysisEngineFactory
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.Factory
 import org.jacodb.analysis.GraphFactory
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
@@ -134,7 +134,6 @@ fun main(args: Array<String>) {
     val config = Json.decodeFromString<AnalysisConfig>(configFile.readText())
 
     val classpathAsFiles = classpath.split(File.pathSeparatorChar).sorted().map { File(it) }
-    val classpathHash = classpath.hashCode()
 
     val cp = runBlocking {
         val jacodb = jacodb {
@@ -164,7 +163,7 @@ fun main(args: Array<String>) {
         engine.analyze()
     }
 
-    val mergedResult = DumpableAnalysisResult(analysisResults.flatMap { it.foundVulnerabilities })
+    val mergedResult = AnalysisResult(analysisResults.flatMap { it.vulnerabilities }).toDumpable()
 
     val json = Json { prettyPrint = true }
     outputFile.outputStream().use { fileOutputStream ->

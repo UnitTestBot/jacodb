@@ -42,18 +42,29 @@ class AllOverridesDevirtualizer(
         classpath.hierarchyExt()
     }
 
+    private val cache: MutableMap<JcMethod, List<JcMethod>> = mutableMapOf()
+
+    private fun getOverrides(method: JcMethod): List<JcMethod> {
+        return if (cache.containsKey(method)) {
+            cache[method]!!
+        } else {
+            val res = hierarchyExtension.findOverrides(method).toList()
+            cache[method] = res
+            res
+        }
+    }
+
     override fun findPossibleCallees(sink: JcInst): Collection<JcMethod> {
         val methods = initialGraph.callees(sink).toList()
         val callExpr = sink.callExpr as? JcVirtualCallExpr ?: return methods
-        val instanceClass = (callExpr.instance.type as JcClassType).jcClass
+        val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass ?: return methods
 
         return methods
             .flatMap { method ->
                 if (bannedPackagePrefixes.any { method.enclosingClass.name.startsWith(it) })
                     listOf(method)
                 else {
-                    val allOverrides = hierarchyExtension
-                        .findOverrides(method)
+                    val allOverrides = getOverrides(method)
                         .filter {
                             it.enclosingClass isSubClassOf instanceClass ||
                             // TODO: use only down-most override here

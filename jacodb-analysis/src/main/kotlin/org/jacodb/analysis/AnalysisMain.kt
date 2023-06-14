@@ -22,9 +22,12 @@ import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.IFDSInstance
-import org.jacodb.analysis.engine.TaintAnalysisWithPointsTo
+import org.jacodb.analysis.engine.IFDSUnitInstance
+import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.points2.AllOverridesDevirtualizer
@@ -37,7 +40,7 @@ import org.jacodb.impl.features.usagesExt
 import java.util.*
 
 @Serializable
-data class VulnerabilityInstance(
+data class DumpableVulnerabilityInstance(
     val vulnerabilityType: String,
     val sources: List<String>,
     val sink: String,
@@ -45,7 +48,29 @@ data class VulnerabilityInstance(
 )
 
 @Serializable
-data class DumpableAnalysisResult(val foundVulnerabilities: List<VulnerabilityInstance>)
+data class DumpableAnalysisResult(val foundVulnerabilities: List<DumpableVulnerabilityInstance>)
+
+data class VulnerabilityInstance(
+    val vulnerabilityType: String,
+    val realisationsGraph: TaintRealisationsGraph
+) {
+    fun toDumpable(maxPathsCount: Int): DumpableVulnerabilityInstance {
+        return DumpableVulnerabilityInstance(
+            vulnerabilityType,
+            realisationsGraph.sources.map { it.statement.toString() },
+            realisationsGraph.sink.statement.toString(),
+            realisationsGraph.getAllPaths().take(maxPathsCount).map { intermediatePoints ->
+                intermediatePoints.map { it.statement.toString() }
+            }.toList()
+        )
+    }
+}
+
+data class AnalysisResult(val vulnerabilities: List<VulnerabilityInstance>) {
+    fun toDumpable(maxPathsCount: Int = 10): DumpableAnalysisResult {
+        return DumpableAnalysisResult(vulnerabilities.map { it.toDumpable(maxPathsCount) })
+    }
+}
 
 typealias AnalysesOptions = Map<String, String>
 
@@ -53,7 +78,7 @@ typealias AnalysesOptions = Map<String, String>
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 interface AnalysisEngine {
-    fun analyze(): DumpableAnalysisResult
+    fun analyze(): AnalysisResult
     fun addStart(method: JcMethod)
 }
 
@@ -74,10 +99,12 @@ interface AnalysisEngineFactory : Factory {
 
 class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(graph: JcApplicationGraph, points2Engine: Points2Engine): AnalysisEngine {
-        return IFDSInstance(
+        return IFDSUnitTraverser(
             graph,
             UnusedVariableAnalyzer(graph),
-            points2Engine.obtainDevirtualizer()
+            SingletonUnitResolver,
+            points2Engine.obtainDevirtualizer(),
+            IFDSUnitInstance
         )
     }
 
@@ -94,7 +121,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         points2Engine: Points2Engine,
     ): AnalysisEngine {
         val analyzer = graph.analyzer
-        return TaintAnalysisWithPointsTo(graph, analyzer, points2Engine)
+        return IFDSUnitTraverser(graph, analyzer, SingletonUnitResolver, points2Engine.obtainDevirtualizer(), BidiIFDSForTaintAnalysis)
     }
 
     override val name: String

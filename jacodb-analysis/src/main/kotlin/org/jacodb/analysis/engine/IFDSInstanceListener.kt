@@ -19,6 +19,6 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.cfg.JcInst
 
 interface IFDSInstanceListener {
-    fun onPropagate(e: IFDSEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) = Unit
-    fun onExitPoint(e: IFDSEdge<DomainFact>) = Unit
+    fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) = Unit
+    fun onExitPoint(e: IFDSEdge) = Unit
 }
