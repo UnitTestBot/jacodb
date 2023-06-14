@@ -18,11 +18,13 @@ package org.jacodb.analysis.impl
 
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.DumpableVulnerabilityInstance
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.NPEAnalysisFactory
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
+import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -69,7 +71,7 @@ class NpeAnalysisTest : BaseTest() {
         private fun Sequence<JcClassOrInterface>.toArguments(cwe: String): Stream<Arguments> = map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> bannedTests.any { className.contains(it) } }
-//            .filter { it.contains("_45") }
+//            .filter { it.contains("Integer_68a") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
@@ -248,8 +250,8 @@ class NpeAnalysisTest : BaseTest() {
         val goodNPE = findNpeSources(goodMethod)
         val badNPE = findNpeSources(badMethod)
 
-        assertTrue(badNPE.isNotEmpty())
         assertTrue(goodNPE.isEmpty())
+        assertTrue(badNPE.isNotEmpty())
     }
 
     private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) {
@@ -267,12 +269,12 @@ class NpeAnalysisTest : BaseTest() {
         print(results)
     }
 
-    private fun findNpeSources(method: JcMethod): List<VulnerabilityInstance> {
+    private fun findNpeSources(method: JcMethod): List<DumpableVulnerabilityInstance> {
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val ifds = NPEAnalysisFactory().createAnalysisEngine(graph, points2Engine)
+        val ifds = IFDSUnitTraverser(graph, NpeAnalyzer(graph), SingletonUnitResolver, points2Engine.obtainDevirtualizer(), BidiIFDSForTaintAnalysis)
         ifds.addStart(method)
-        val result = ifds.analyze()
+        val result = ifds.analyze().toDumpable()
         return result.foundVulnerabilities.filter { it.vulnerabilityType == NpeAnalyzer.value }
     }
 }

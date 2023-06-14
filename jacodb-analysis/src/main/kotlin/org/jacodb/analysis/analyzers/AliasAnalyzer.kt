@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.DumpableAnalysisResult
+import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IFDSResult
@@ -28,14 +28,14 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.values
 
-open class AliasAnalyzer(
+class AliasAnalyzer(
     graph: JcApplicationGraph,
     generates: (JcInst) -> List<DomainFact>,
     isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
 ) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
 
-    override fun calculateSources(ifdsResult: IFDSResult): DumpableAnalysisResult {
+    override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
@@ -60,15 +60,17 @@ open class AliasAnalyzer(
                         }
 
                         vulnerabilities.add(
-                            ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact)).toVulnerability("alias")
-                                .copy(
-                                    sink = fullPath
-                                )
+                            VulnerabilityInstance(
+                                value,
+                                ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact))
+                            )
                         )
                     }
                 }
             }
         }
-        return DumpableAnalysisResult(vulnerabilities)
+        return AnalysisResult(vulnerabilities)
     }
+
+    override val name: String = value
 }
