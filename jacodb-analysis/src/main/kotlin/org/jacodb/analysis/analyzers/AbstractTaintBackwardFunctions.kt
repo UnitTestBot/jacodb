@@ -38,7 +38,6 @@ import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintBackwardFunctions(
     protected val graph: JcApplicationGraph,
-    override val backward: FlowFunctionsSpace,
     protected val maxPathLength: Int,
 ) : FlowFunctionsSpace {
     

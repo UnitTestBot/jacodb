@@ -22,10 +22,10 @@ import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
-import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IFDSInstanceProvider
 import org.jacodb.analysis.engine.IFDSUnitInstance
 import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -55,11 +55,11 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(true), IFDSUnitInstance)
+        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, IFDSUnitInstance)
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(NpeAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(true), BidiIFDSForTaintAnalysis)
+        testOne(NpeAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, BidiIFDSForTaintAnalysis)
     }
 }

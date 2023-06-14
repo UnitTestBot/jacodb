@@ -40,10 +40,13 @@ abstract class TaintAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates)
     override val backward: Analyzer = object : Analyzer {
+        override val name: String
+            get() = this@TaintAnalyzer.name
+
         override val backward: Analyzer
             get() = this@TaintAnalyzer
         override val flowFunctions: FlowFunctionsSpace
-            get() = this@TaintAnalyzer.flowFunctions.backward
+            get() = TaintBackwardFunctions(graph, maxPathLength)
 
         override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
             error("Do not call sources for backward analyzer instance")
@@ -108,15 +111,12 @@ private class TaintForwardFunctions(
     override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)
     }
-
-    override val backward: FlowFunctionsSpace by lazy { TaintBackwardFunctions(graph, this, maxPathLength) }
 }
 
 
 private class TaintBackwardFunctions(
     graph: JcApplicationGraph,
-    backward: FlowFunctionsSpace,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, backward, maxPathLength) {
+) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
     override val inIds: List<SpaceId> = listOf(TaintAnalyzer, ZEROFact.id)
 }

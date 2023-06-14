@@ -53,12 +53,12 @@ interface FlowFunctionsSpace {
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
     fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance
     fun obtainExitToReturnSiteFlowFunction(callStatement: JcInst, returnSite: JcInst, exitStatement: JcInst): FlowFunctionInstance
-
-    val backward: FlowFunctionsSpace
 }
 
 interface Analyzer {
     val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
+    val name: String
+
     fun calculateSources(ifdsResult: IFDSResult): AnalysisResult
 }

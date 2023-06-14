@@ -28,7 +28,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.values
 
-open class AliasAnalyzer(
+class AliasAnalyzer(
     graph: JcApplicationGraph,
     generates: (JcInst) -> List<DomainFact>,
     isSink: (JcInst, DomainFact) -> Boolean,
@@ -71,4 +71,6 @@ open class AliasAnalyzer(
         }
         return AnalysisResult(vulnerabilities)
     }
+
+    override val name: String = value
 }

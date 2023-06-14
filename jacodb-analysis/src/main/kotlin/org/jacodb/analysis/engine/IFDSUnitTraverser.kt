@@ -22,9 +22,10 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.impl.fs.logger
 
-class AnalysisContext {
-    val summaries: MutableMap<JcMethod, IFDSMethodSummary> = mutableMapOf()
+interface AnalysisContext {
+    val summaries: Map<JcMethod, IFDSMethodSummary>
 }
 
 class IFDSUnitTraverser<UnitType>(
@@ -34,71 +35,85 @@ class IFDSUnitTraverser<UnitType>(
     private val devirtualizer: Devirtualizer,
     private val ifdsInstanceProvider: IFDSInstanceProvider
 ) : AnalysisEngine {
-    private val context = AnalysisContext()
+    private val contextInternal: MutableMap<JcMethod, IFDSMethodSummary> = mutableMapOf()
+    private val context = object : AnalysisContext {
+        override val summaries: Map<JcMethod, IFDSMethodSummary>
+            get() = contextInternal
+    }
+
     private val initMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
-    private val externEdgesByExternMethod: MutableMap<JcMethod, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
+    private val crossUnitCallees: MutableMap<JcMethod, MutableSet<IFDSEdge>> = mutableMapOf()
 
     override fun analyze(): AnalysisResult {
-        println("${foundMethods.values.sumOf { it.size }}, ${unitsQueue.size}")
+        logger.info { "Started analysis ${analyzer.name}" }
+        logger.info { "Amount of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
-            println("${unitsQueue.size} unit(s) left")
+            logger.info { "${unitsQueue.size} unit(s) left" }
 
             // TODO: do smth smarter here
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
-//            val ifdsInstance = IFDSUnitInstance(graph, analyzer, devirtualizer, context, listOf(next))
-            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, analyzer, devirtualizer, context, unitResolver, foundMethods[next].orEmpty().toList())
+            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, analyzer, devirtualizer, context, unitResolver, next)
+            for (method in foundMethods[next].orEmpty()) {
+                ifdsInstance.addStart(method)
+            }
+
             val results = ifdsInstance.analyze()
+
+            // Relaxing of crossUnitCallees
             for ((_, summary) in results) {
-                for ((inc, outcs) in summary.externCallees) {
-                    for (outc in outcs.first) {
-                        val calledMethod = outc.statement.location.method
+                for ((inc, outcs) in summary.crossUnitCallees) {
+                    for (outc in outcs.factsAtCalleeStart) {
+                        val calledMethod = graph.methodOf(outc.statement)
                         val newEdge = IFDSEdge(inc, outc)
-                        externEdgesByExternMethod.getOrPut(calledMethod) { mutableSetOf() }.add(newEdge)
+                        crossUnitCallees.getOrPut(calledMethod) { mutableSetOf() }.add(newEdge)
                     }
                 }
             }
+
             results.forEach { (method, summary) ->
-                context.summaries[method] = summary
+                contextInternal[method] = summary
             }
         }
 
-        println("HERE")
-
+        logger.info { "Restoring full realisation paths..." }
         // TODO: think about correct filters for overall results
         val vulnerabilities = context.summaries.flatMap { (_, summary) ->
-            summary.foundVulnerabilities.vulnerabilities.filter {
-                val fullRealisationsGraph = extendRealisationsGraph(it.realisationsGraph)
-                fullRealisationsGraph.sources.any {
-                    it.statement.location.method in initMethods || it.domainFact == ZEROFact
+            summary.foundVulnerabilities.vulnerabilities
+                .map { VulnerabilityInstance(it.vulnerabilityType, extendRealisationsGraph(it.realisationsGraph)) }
+                .filter {
+                    it.realisationsGraph.sources.any { source ->
+                        graph.methodOf(source.statement) in initMethods || source.domainFact == ZEROFact
+                    }
                 }
-            }.map { VulnerabilityInstance(it.vulnerabilityType, extendRealisationsGraph(it.realisationsGraph)) }
-        }.distinct()
+        }
 
+        logger.info { "Analysis completed" }
         return AnalysisResult(vulnerabilities)
     }
 
     private val TaintRealisationsGraph.methods: List<JcMethod>
         get() {
-            return (edges.keys.map { it.statement.location.method } + listOf(sink.statement.location.method)).distinct()
+            return (edges.keys.map { graph.methodOf(it.statement) } +
+                    listOf(graph.methodOf(sink.statement))).distinct()
         }
 
-    private fun extendRealisationsGraph(graph: TaintRealisationsGraph): TaintRealisationsGraph {
-        var result = graph
-        val methodQueue: MutableSet<JcMethod> = graph.methods.toMutableSet()
+    private fun extendRealisationsGraph(realisationsGraph: TaintRealisationsGraph): TaintRealisationsGraph {
+        var result = realisationsGraph
+        val methodQueue: MutableSet<JcMethod> = realisationsGraph.methods.toMutableSet()
         val addedMethods: MutableSet<JcMethod> = mutableSetOf()
         while (methodQueue.isNotEmpty()) {
             val method = methodQueue.first()
             methodQueue.remove(method)
             addedMethods.add(method)
-            for (externCallEdge in externEdgesByExternMethod[method].orEmpty()) {
-                val caller = externCallEdge.u.statement.location.method
-                val (entryPoints, upGraph) = context.summaries[caller]!!.externCallees[externCallEdge.u]!!
+            for (crossUnitEdge in crossUnitCallees[method].orEmpty()) {
+                val caller = graph.methodOf(crossUnitEdge.u.statement)
+                val (entryPoints, upGraph) = context.summaries[caller]!!.crossUnitCallees[crossUnitEdge.u]!!
                 val newValue = result.mergeWithUpGraph(upGraph, entryPoints)
                 if (result != newValue) {
                     result = newValue

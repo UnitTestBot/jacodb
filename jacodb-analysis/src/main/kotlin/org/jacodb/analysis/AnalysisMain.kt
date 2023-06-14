@@ -54,7 +54,7 @@ data class VulnerabilityInstance(
     val vulnerabilityType: String,
     val realisationsGraph: TaintRealisationsGraph
 ) {
-    fun toDumpable(maxPathsCount: Int = 100): DumpableVulnerabilityInstance {
+    fun toDumpable(maxPathsCount: Int): DumpableVulnerabilityInstance {
         return DumpableVulnerabilityInstance(
             vulnerabilityType,
             realisationsGraph.sources.map { it.statement.toString() },
@@ -67,8 +67,8 @@ data class VulnerabilityInstance(
 }
 
 data class AnalysisResult(val vulnerabilities: List<VulnerabilityInstance>) {
-    fun toDumpable(): DumpableAnalysisResult {
-        return DumpableAnalysisResult(vulnerabilities.map { it.toDumpable() })
+    fun toDumpable(maxPathsCount: Int = 10): DumpableAnalysisResult {
+        return DumpableAnalysisResult(vulnerabilities.map { it.toDumpable(maxPathsCount) })
     }
 }
 

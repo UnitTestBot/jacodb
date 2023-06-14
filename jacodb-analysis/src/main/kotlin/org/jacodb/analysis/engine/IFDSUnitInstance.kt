@@ -17,6 +17,7 @@
 package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
@@ -32,37 +33,36 @@ class IFDSUnitInstance<UnitType>(
     private val devirtualizer: Devirtualizer,
     private val context: AnalysisContext,
     private val unitResolver: UnitResolver<UnitType>,
-    methods: List<JcMethod>
-): IFDSInstance {
     private val unit: UnitType
+): IFDSInstance {
 
     private class EdgesStorage {
-        private val byStart: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
+        private val byStart: MutableMap<IFDSVertex, MutableSet<IFDSEdge>> = mutableMapOf()
 
-        operator fun contains(e: IFDSEdge<DomainFact>): Boolean {
+        operator fun contains(e: IFDSEdge): Boolean {
             return e in getByStart(e.u)
         }
 
-        fun add(e: IFDSEdge<DomainFact>) {
+        fun add(e: IFDSEdge) {
             byStart
                 .getOrPut(e.u) { mutableSetOf() }
                 .add(e)
         }
 
-        fun getByStart(start: IFDSVertex<DomainFact>): Set<IFDSEdge<DomainFact>> = byStart.getOrDefault(start, emptySet())
+        fun getByStart(start: IFDSVertex): Set<IFDSEdge> = byStart.getOrDefault(start, emptySet())
 
-        fun getAll(): Set<IFDSEdge<DomainFact>> {
+        fun getAll(): Set<IFDSEdge> {
             return byStart.flatMap { it.value.toList() }.toSet()
         }
     }
 
     private val pathEdges = EdgesStorage()
     private val startToEndEdges = EdgesStorage()
-    private val workList: Queue<IFDSEdge<DomainFact>> = LinkedList()
-    private val summaryEdgeToStartToEndEdges: MutableMap<IFDSEdge<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
-    private val callSitesOf: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSEdge<DomainFact>>> = mutableMapOf()
-    private val pathEdgesPreds: MutableMap<IFDSEdge<DomainFact>, MutableSet<PathEdgePredecessor<DomainFact>>> = mutableMapOf()
-    private val externCallees: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSVertex<DomainFact>>> = mutableMapOf()
+    private val workList: Queue<IFDSEdge> = LinkedList()
+    private val summaryEdgeToStartToEndEdges: MutableMap<IFDSEdge, MutableSet<IFDSEdge>> = mutableMapOf()
+    private val callSitesOf: MutableMap<IFDSVertex, MutableSet<IFDSEdge>> = mutableMapOf()
+    private val pathEdgesPreds: MutableMap<IFDSEdge, MutableSet<PathEdgePredecessor>> = mutableMapOf()
+    private val crossUnitCallees: MutableMap<IFDSVertex, MutableSet<IFDSVertex>> = mutableMapOf()
 
     private val flowSpace get() = analyzer.flowFunctions
 
@@ -70,14 +70,8 @@ class IFDSUnitInstance<UnitType>(
 
     fun addListener(listener: IFDSInstanceListener) = listeners.add(listener)
 
-    init {
-        unit = unitResolver.resolve(methods.first())
-        for (method in methods) {
-            addStart(method)
-        }
-    }
-
     override fun addStart(method: JcMethod) {
+        require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainAllPossibleStartFacts(sPoint)) {
                 val vertex = IFDSVertex(sPoint, sFact)
@@ -87,7 +81,7 @@ class IFDSUnitInstance<UnitType>(
         }
     }
 
-    private fun propagate(e: IFDSEdge<DomainFact>, pred: PathEdgePredecessor<DomainFact>): Boolean {
+    private fun propagate(e: IFDSEdge, pred: PathEdgePredecessor): Boolean {
         pathEdgesPreds.getOrPut(e) { mutableSetOf() }.add(pred)
         if (e !in pathEdges) {
             pathEdges.add(e)
@@ -102,7 +96,7 @@ class IFDSUnitInstance<UnitType>(
         return false
     }
 
-    fun addNewPathEdge(e: IFDSEdge<DomainFact>): Boolean {
+    fun addNewPathEdge(e: IFDSEdge): Boolean {
         return propagate(e, PathEdgePredecessor(e, PathEdgePredecessorKind.UNKNOWN))
     }
 
@@ -147,7 +141,7 @@ class IFDSUnitInstance<UnitType>(
                                 }
 
                                 if (callee.isExtern) {
-                                    externCallees.getOrPut(v) { mutableSetOf() }.add(sVertex)
+                                    crossUnitCallees.getOrPut(v) { mutableSetOf() }.add(sVertex)
                                 } else {
                                     callSitesOf.getOrPut(sVertex) { mutableSetOf() }.add(curEdge)
                                     val nextEdge = IFDSEdge(sVertex, sVertex)
@@ -195,52 +189,61 @@ class IFDSUnitInstance<UnitType>(
         }
 
         IFDSResult(
-            graph,
             pathEdges.getAll().toList(),
             resultFacts,
             pathEdgesPreds,
-            summaryEdgeToStartToEndEdges
+            summaryEdgeToStartToEndEdges,
+            crossUnitCallees
         )
     }
 
-    private fun getMethodSummary(method: JcMethod): IFDSMethodSummary {
-        val factsAtExits = mutableMapOf<IFDSVertex<DomainFact>, MutableSet<IFDSVertex<DomainFact>>>()
-
-        for (pathEdge in pathEdges.getAll()) {
-            if (pathEdge.v.statement in graph.exitPoints(method)) {
-                factsAtExits.getOrPut(pathEdge.u) { mutableSetOf() }.add(pathEdge.v)
-            }
-        }
-
-        // TODO: invoke calculateSources only once by analyze() call
-        val relevantVulnerabilities = analyzer.calculateSources(fullResults).vulnerabilities.filter {
-            graph.methodOf(it.realisationsGraph.sink.statement) == method
-        }
-
-        val actualResult = AnalysisResult(relevantVulnerabilities)
-        val relevantExternCallees = externCallees.filterKeys { graph.methodOf(it.statement) == method }.mapValues { (callVertex, sVertexes) ->
-            sVertexes to fullResults.resolveTaintRealisationsGraph(callVertex)
-        }
-        return IFDSMethodSummary(factsAtExits, relevantExternCallees, actualResult)
-    }
-
     override fun analyze(): Map<JcMethod, IFDSMethodSummary> {
+        // TODO: rewrite this method cleaner
         run()
 
         val methods = fullResults.pathEdges.map { graph.methodOf(it.u.statement) }.distinct()
-        return methods.associateWith { getMethodSummary(it) }
+
+        val factsAtExits = mutableMapOf<JcMethod, MutableMap<IFDSVertex, MutableSet<IFDSVertex>>>()
+        for (pathEdge in pathEdges.getAll()) {
+            val method = graph.methodOf(pathEdge.u.statement)
+            if (pathEdge.v.statement in graph.exitPoints(method)) {
+                factsAtExits.getOrPut(method) { mutableMapOf() }.getOrPut(pathEdge.u) { mutableSetOf() }.add(pathEdge.v)
+            }
+        }
+
+        val relevantVulnerabilities = mutableMapOf<JcMethod, MutableList<VulnerabilityInstance>>()
+        analyzer.calculateSources(fullResults).vulnerabilities.forEach {
+            relevantVulnerabilities.getOrPut(graph.methodOf(it.realisationsGraph.sink.statement)) { mutableListOf() }
+                .add(it)
+        }
+
+        val sortedCrossUnitCallees = mutableMapOf<JcMethod, MutableMap<IFDSVertex, CalleeInfo>>()
+        crossUnitCallees.forEach { (callVertex, sVertexes) ->
+            val method = graph.methodOf(callVertex.statement)
+            sortedCrossUnitCallees.getOrPut(method) { mutableMapOf() }[callVertex] = CalleeInfo(
+                sVertexes,
+                fullResults.resolveTaintRealisationsGraph(callVertex)
+            )
+        }
+        return methods.associateWith {
+            IFDSMethodSummary(
+                factsAtExits[it].orEmpty(),
+                sortedCrossUnitCallees[it].orEmpty(),
+                AnalysisResult(relevantVulnerabilities[it].orEmpty())
+            )
+        }
     }
 
     companion object : IFDSInstanceProvider {
-        override fun createInstance(
+        override fun <UnitType> createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
             devirtualizer: Devirtualizer,
             context: AnalysisContext,
-            unitResolver: UnitResolver<*>,
-            methods: List<JcMethod>
+            unitResolver: UnitResolver<UnitType>,
+            unit: UnitType
         ): IFDSInstance {
-            return IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, methods)
+            return IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }
 }

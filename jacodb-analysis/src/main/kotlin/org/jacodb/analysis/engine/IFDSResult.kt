@@ -20,52 +20,27 @@ import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
 class IFDSResult(
-    val graph: ApplicationGraph<JcMethod, JcInst>,
-    val pathEdges: List<IFDSEdge<DomainFact>>,
+    val pathEdges: List<IFDSEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
-    val pathEdgesPreds: Map<IFDSEdge<DomainFact>, Set<PathEdgePredecessor<DomainFact>>>,
-    val summaryEdgeToStartToEndEdges: Map<IFDSEdge<DomainFact>, Set<IFDSEdge<DomainFact>>>
+    val pathEdgesPreds: Map<IFDSEdge, Set<PathEdgePredecessor>>,
+    val summaryEdgeToStartToEndEdges: Map<IFDSEdge, Set<IFDSEdge>>,
+    val crossUnitCallees: Map<IFDSVertex, Set<IFDSVertex>>
 ) {
-    /**
-     * Given a vertex and a startMethod, returns a stacktrace that may have lead to this vertex
-     */
-    fun resolvePossibleStackTrace(vertex: IFDSVertex<DomainFact>): List<JcInst> {
-        val result = mutableListOf(vertex.statement)
-        var curVertex = vertex
-        while (curVertex.domainFact != ZEROFact) {
-            // TODO: Note that taking not first element may cause to infinite loop in this implementation
-            val startVertex = pathEdges.first { it.v == curVertex }.u
-            if (startVertex.domainFact == ZEROFact) {
-                break
-            }
-            val predEdge = pathEdgesPreds[IFDSEdge(startVertex, startVertex)]
-                .orEmpty()
-                .first { it.kind == CALL_TO_START }
-                .predEdge
+    private inner class RealisationsGraphBuilder(private val sink: IFDSVertex) {
+        private val sources: MutableSet<IFDSVertex> = mutableSetOf()
+        private val edges: MutableMap<IFDSVertex, MutableSet<IFDSVertex>> = mutableMapOf()
+        private val visited: MutableSet<IFDSEdge> = mutableSetOf()
 
-            curVertex = predEdge.v
-            result.add(curVertex.statement)
-        }
-        return result.reversed()
-    }
-
-    private inner class RealisationsGraphBuilder(private val sink: IFDSVertex<DomainFact>) {
-        private val sources: MutableSet<IFDSVertex<DomainFact>> = mutableSetOf()
-        private val edges: MutableMap<IFDSVertex<DomainFact>, MutableSet<IFDSVertex<DomainFact>>> = mutableMapOf()
-        private val visited: MutableSet<IFDSEdge<DomainFact>> = mutableSetOf()
-
-        private fun addEdge(from: IFDSVertex<DomainFact>, to: IFDSVertex<DomainFact>) {
+        private fun addEdge(from: IFDSVertex, to: IFDSVertex) {
             if (from != to) {
                 edges.getOrPut(from) { mutableSetOf() }.add(to)
             }
         }
 
-        private fun dfs(e: IFDSEdge<DomainFact>, lastVertex: IFDSVertex<DomainFact>, stopAtMethodStart: Boolean) {
+        private fun dfs(e: IFDSEdge, lastVertex: IFDSVertex, stopAtMethodStart: Boolean) {
             if (e in visited) {
                 return
             }
@@ -134,7 +109,7 @@ class IFDSResult(
         }
     }
 
-    fun resolveTaintRealisationsGraph(vertex: IFDSVertex<DomainFact>): TaintRealisationsGraph {
+    fun resolveTaintRealisationsGraph(vertex: IFDSVertex): TaintRealisationsGraph {
         return RealisationsGraphBuilder(vertex).build()
     }
 }

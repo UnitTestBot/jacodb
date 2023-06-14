@@ -16,22 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-/*
- *  Copyright 2022 UnitTestBot contributors (utbot.org)
- * <p>
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- * <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.paths.startsWith
@@ -45,23 +29,23 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class BidiIFDSForTaintAnalysis(
+class BidiIFDSForTaintAnalysis<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
     devirtualizer: Devirtualizer,
     context: AnalysisContext,
-    unitResolver: UnitResolver<*>,
-    methods: List<JcMethod>
+    unitResolver: UnitResolver<UnitType>,
+    unit: UnitType
 ): IFDSInstance {
 
-    private val forward = IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, methods)
+    private val forward = IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
 
-    private val backward = IFDSUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, methods)
+    private val backward = IFDSUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
 
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
-        fun IFDSEdge<*>.handoverPathEdgeTo(
+        fun IFDSEdge.handoverPathEdgeTo(
             instance: IFDSUnitInstance<*>,
             pred: JcInst?,
             updateActivation: Boolean,
@@ -93,7 +77,7 @@ class BidiIFDSForTaintAnalysis(
         // Forward initiates backward analysis and waits until it finishes
         // Backward analysis does not initiate forward one, because it will run with updated queue after the backward finishes
         forward.addListener(object: IFDSInstanceListener {
-            override fun onPropagate(e: IFDSEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) {
+            override fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) {
                 val fact = e.v.domainFact as? TaintNode ?: return
                 if (fact.variable.isOnHeap && factIsNew) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true, propZero = true)
@@ -103,7 +87,7 @@ class BidiIFDSForTaintAnalysis(
         })
 
         backward.addListener(object: IFDSInstanceListener {
-            override fun onPropagate(e: IFDSEdge<DomainFact>, pred: JcInst?, factIsNew: Boolean) {
+            override fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
                 val curInst = v.statement
                 val fact = (v.domainFact as? TaintNode) ?: return
@@ -132,7 +116,7 @@ class BidiIFDSForTaintAnalysis(
                 }
             }
 
-            override fun onExitPoint(e: IFDSEdge<DomainFact>) {
+            override fun onExitPoint(e: IFDSEdge) {
                 val fact = e.v.domainFact as? TaintNode ?: return
                 if (fact.variable.isOnHeap) {
                     e.handoverPathEdgeTo(forward, pred = null, updateActivation = false, propZero = false)
@@ -146,15 +130,15 @@ class BidiIFDSForTaintAnalysis(
     override fun analyze(): Map<JcMethod, IFDSMethodSummary> = forward.analyze()
 
     companion object : IFDSInstanceProvider {
-        override fun createInstance(
+        override fun <UnitType> createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
             devirtualizer: Devirtualizer,
             context: AnalysisContext,
-            unitResolver: UnitResolver<*>,
-            methods: List<JcMethod>
+            unitResolver: UnitResolver<UnitType>,
+            unit: UnitType
         ): IFDSInstance {
-            return BidiIFDSForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, methods)
+            return BidiIFDSForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }
 }

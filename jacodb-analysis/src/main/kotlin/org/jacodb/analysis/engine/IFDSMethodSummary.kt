@@ -18,8 +18,13 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisResult
 
+data class CalleeInfo(
+    val factsAtCalleeStart: Set<IFDSVertex>,
+    val callsiteRealisationsGraph: TaintRealisationsGraph
+)
+
 data class IFDSMethodSummary(
-    val factsAtExits: Map<IFDSVertex<DomainFact>, Set<IFDSVertex<DomainFact>>>,
-    val externCallees: Map<IFDSVertex<DomainFact>, Pair<Set<IFDSVertex<DomainFact>>, TaintRealisationsGraph>>,
+    val factsAtExits: Map<IFDSVertex, Set<IFDSVertex>>,
+    val crossUnitCallees: Map<IFDSVertex, CalleeInfo>,
     val foundVulnerabilities: AnalysisResult
 )
