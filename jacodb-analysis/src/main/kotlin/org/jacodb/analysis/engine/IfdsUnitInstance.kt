@@ -27,61 +27,61 @@ import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.*
 
-class IFDSUnitInstance<UnitType>(
+class IfdsUnitInstance<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
     private val devirtualizer: Devirtualizer,
     private val context: AnalysisContext,
     private val unitResolver: UnitResolver<UnitType>,
     private val unit: UnitType
-): IFDSInstance {
+): IfdsInstance {
 
     private class EdgesStorage {
-        private val byStart: MutableMap<IFDSVertex, MutableSet<IFDSEdge>> = mutableMapOf()
+        private val byStart: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
 
-        operator fun contains(e: IFDSEdge): Boolean {
+        operator fun contains(e: IfdsEdge): Boolean {
             return e in getByStart(e.u)
         }
 
-        fun add(e: IFDSEdge) {
+        fun add(e: IfdsEdge) {
             byStart
                 .getOrPut(e.u) { mutableSetOf() }
                 .add(e)
         }
 
-        fun getByStart(start: IFDSVertex): Set<IFDSEdge> = byStart.getOrDefault(start, emptySet())
+        fun getByStart(start: IfdsVertex): Set<IfdsEdge> = byStart.getOrDefault(start, emptySet())
 
-        fun getAll(): Set<IFDSEdge> {
+        fun getAll(): Set<IfdsEdge> {
             return byStart.flatMap { it.value.toList() }.toSet()
         }
     }
 
     private val pathEdges = EdgesStorage()
     private val startToEndEdges = EdgesStorage()
-    private val workList: Queue<IFDSEdge> = LinkedList()
-    private val summaryEdgeToStartToEndEdges: MutableMap<IFDSEdge, MutableSet<IFDSEdge>> = mutableMapOf()
-    private val callSitesOf: MutableMap<IFDSVertex, MutableSet<IFDSEdge>> = mutableMapOf()
-    private val pathEdgesPreds: MutableMap<IFDSEdge, MutableSet<PathEdgePredecessor>> = mutableMapOf()
-    private val crossUnitCallees: MutableMap<IFDSVertex, MutableSet<IFDSVertex>> = mutableMapOf()
+    private val workList: Queue<IfdsEdge> = LinkedList()
+    private val summaryEdgeToStartToEndEdges: MutableMap<IfdsEdge, MutableSet<IfdsEdge>> = mutableMapOf()
+    private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
+    private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = mutableMapOf()
+    private val crossUnitCallees: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
 
     private val flowSpace get() = analyzer.flowFunctions
 
-    private val listeners: MutableList<IFDSInstanceListener> = mutableListOf()
+    private val listeners: MutableList<IfdsInstanceListener> = mutableListOf()
 
-    fun addListener(listener: IFDSInstanceListener) = listeners.add(listener)
+    fun addListener(listener: IfdsInstanceListener) = listeners.add(listener)
 
     override fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainAllPossibleStartFacts(sPoint)) {
-                val vertex = IFDSVertex(sPoint, sFact)
-                val edge = IFDSEdge(vertex, vertex)
+                val vertex = IfdsVertex(sPoint, sFact)
+                val edge = IfdsEdge(vertex, vertex)
                 propagate(edge, PathEdgePredecessor(edge, NO_PREDECESSOR))
             }
         }
     }
 
-    private fun propagate(e: IFDSEdge, pred: PathEdgePredecessor): Boolean {
+    private fun propagate(e: IfdsEdge, pred: PathEdgePredecessor): Boolean {
         pathEdgesPreds.getOrPut(e) { mutableSetOf() }.add(pred)
         if (e !in pathEdges) {
             pathEdges.add(e)
@@ -96,7 +96,7 @@ class IFDSUnitInstance<UnitType>(
         return false
     }
 
-    fun addNewPathEdge(e: IFDSEdge): Boolean {
+    fun addNewPathEdge(e: IfdsEdge): Boolean {
         return propagate(e, PathEdgePredecessor(e, PathEdgePredecessorKind.UNKNOWN))
     }
 
@@ -114,7 +114,7 @@ class IFDSUnitInstance<UnitType>(
                 val returnSitesOfN = graph.successors(n)
                 for (returnSite in returnSitesOfN) {
                     for (fact in flowSpace.obtainCallToReturnFlowFunction(n, returnSite).compute(d2)) {
-                        val newEdge = IFDSEdge(u, IFDSVertex(returnSite, fact))
+                        val newEdge = IfdsEdge(u, IfdsVertex(returnSite, fact))
                         propagate(newEdge, PathEdgePredecessor(curEdge, SEQUENT))
                     }
                     for (callee in callees) {
@@ -122,7 +122,7 @@ class IFDSUnitInstance<UnitType>(
                         for (sPoint in graph.entryPoint(callee)) {
                             for (sFact in factsAtStart) {
 
-                                val sVertex = IFDSVertex(sPoint, sFact)
+                                val sVertex = IfdsVertex(sPoint, sFact)
                                 val exitVertexes = if (callee.isExtern) {
                                     context.summaries[callee]?.factsAtExits?.get(sVertex).orEmpty()
                                 } else {
@@ -132,9 +132,9 @@ class IFDSUnitInstance<UnitType>(
                                 for ((exitStatement, eFact) in exitVertexes) {
                                     val finalFacts = flowSpace.obtainExitToReturnSiteFlowFunction(n, returnSite, exitStatement).compute(eFact)
                                     for (finalFact in finalFacts) {
-                                        val summaryEdge = IFDSEdge(v, IFDSVertex(returnSite, finalFact))
-                                        val startToEndEdge = IFDSEdge(IFDSVertex(sPoint, sFact), IFDSVertex(exitStatement, eFact))
-                                        val newEdge = IFDSEdge(u, IFDSVertex(returnSite, finalFact))
+                                        val summaryEdge = IfdsEdge(v, IfdsVertex(returnSite, finalFact))
+                                        val startToEndEdge = IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(exitStatement, eFact))
+                                        val newEdge = IfdsEdge(u, IfdsVertex(returnSite, finalFact))
                                         summaryEdgeToStartToEndEdges.getOrPut(summaryEdge) { mutableSetOf() }.add(startToEndEdge)
                                         propagate(newEdge, PathEdgePredecessor(curEdge, THROUGH_SUMMARY))
                                     }
@@ -144,7 +144,7 @@ class IFDSUnitInstance<UnitType>(
                                     crossUnitCallees.getOrPut(v) { mutableSetOf() }.add(sVertex)
                                 } else {
                                     callSitesOf.getOrPut(sVertex) { mutableSetOf() }.add(curEdge)
-                                    val nextEdge = IFDSEdge(sVertex, sVertex)
+                                    val nextEdge = IfdsEdge(sVertex, sVertex)
                                     propagate(nextEdge, PathEdgePredecessor(curEdge, PathEdgePredecessorKind.CALL_TO_START))
                                 }
                             }
@@ -158,9 +158,9 @@ class IFDSUnitInstance<UnitType>(
                         val callerStatement = predEdge.v.statement
                         for (returnSite in graph.successors(callerStatement)) {
                             for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(callerStatement, returnSite, n).compute(d2)) {
-                                val returnSiteVertex = IFDSVertex(returnSite, returnSiteFact)
-                                val newEdge = IFDSEdge(predEdge.u, returnSiteVertex)
-                                summaryEdgeToStartToEndEdges.getOrPut(IFDSEdge(predEdge.v, returnSiteVertex)) { mutableSetOf() }.add(curEdge)
+                                val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
+                                val newEdge = IfdsEdge(predEdge.u, returnSiteVertex)
+                                summaryEdgeToStartToEndEdges.getOrPut(IfdsEdge(predEdge.v, returnSiteVertex)) { mutableSetOf() }.add(curEdge)
                                 propagate(newEdge, PathEdgePredecessor(predEdge, THROUGH_SUMMARY))
                             }
                         }
@@ -173,7 +173,7 @@ class IFDSUnitInstance<UnitType>(
                     val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
                     val d3Set = flowFunction.compute(d2)
                     for (d3 in d3Set) {
-                        val newEdge = IFDSEdge(u, IFDSVertex(m, d3))
+                        val newEdge = IfdsEdge(u, IfdsVertex(m, d3))
                         propagate(newEdge, PathEdgePredecessor(curEdge, SEQUENT))
                     }
                 }
@@ -181,14 +181,14 @@ class IFDSUnitInstance<UnitType>(
         }
     }
 
-    private val fullResults: IFDSResult by lazy {
+    private val fullResults: IfdsResult by lazy {
         val resultFacts = mutableMapOf<JcInst, MutableSet<DomainFact>>()
 
         for (pathEdge in pathEdges.getAll()) {
             resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
         }
 
-        IFDSResult(
+        IfdsResult(
             pathEdges.getAll().toList(),
             resultFacts,
             pathEdgesPreds,
@@ -197,13 +197,13 @@ class IFDSUnitInstance<UnitType>(
         )
     }
 
-    override fun analyze(): Map<JcMethod, IFDSMethodSummary> {
+    override fun analyze(): Map<JcMethod, IfdsMethodSummary> {
         // TODO: rewrite this method cleaner
         run()
 
         val methods = fullResults.pathEdges.map { graph.methodOf(it.u.statement) }.distinct()
 
-        val factsAtExits = mutableMapOf<JcMethod, MutableMap<IFDSVertex, MutableSet<IFDSVertex>>>()
+        val factsAtExits = mutableMapOf<JcMethod, MutableMap<IfdsVertex, MutableSet<IfdsVertex>>>()
         for (pathEdge in pathEdges.getAll()) {
             val method = graph.methodOf(pathEdge.u.statement)
             if (pathEdge.v.statement in graph.exitPoints(method)) {
@@ -217,7 +217,7 @@ class IFDSUnitInstance<UnitType>(
                 .add(it)
         }
 
-        val sortedCrossUnitCallees = mutableMapOf<JcMethod, MutableMap<IFDSVertex, CalleeInfo>>()
+        val sortedCrossUnitCallees = mutableMapOf<JcMethod, MutableMap<IfdsVertex, CalleeInfo>>()
         crossUnitCallees.forEach { (callVertex, sVertexes) ->
             val method = graph.methodOf(callVertex.statement)
             sortedCrossUnitCallees.getOrPut(method) { mutableMapOf() }[callVertex] = CalleeInfo(
@@ -226,7 +226,7 @@ class IFDSUnitInstance<UnitType>(
             )
         }
         return methods.associateWith {
-            IFDSMethodSummary(
+            IfdsMethodSummary(
                 factsAtExits[it].orEmpty(),
                 sortedCrossUnitCallees[it].orEmpty(),
                 AnalysisResult(relevantVulnerabilities[it].orEmpty())
@@ -234,7 +234,7 @@ class IFDSUnitInstance<UnitType>(
         }
     }
 
-    companion object : IFDSInstanceProvider {
+    companion object : IfdsInstanceProvider {
         override fun <UnitType> createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
@@ -242,8 +242,8 @@ class IFDSUnitInstance<UnitType>(
             context: AnalysisContext,
             unitResolver: UnitResolver<UnitType>,
             unit: UnitType
-        ): IFDSInstance {
-            return IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
+        ): IfdsInstance {
+            return IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }
 }

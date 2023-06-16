@@ -25,19 +25,19 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.impl.fs.logger
 
 interface AnalysisContext {
-    val summaries: Map<JcMethod, IFDSMethodSummary>
+    val summaries: Map<JcMethod, IfdsMethodSummary>
 }
 
-class IFDSUnitTraverser<UnitType>(
+class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer,
     private val unitResolver: UnitResolver<UnitType>,
     private val devirtualizer: Devirtualizer,
-    private val ifdsInstanceProvider: IFDSInstanceProvider
+    private val ifdsInstanceProvider: IfdsInstanceProvider
 ) : AnalysisEngine {
-    private val contextInternal: MutableMap<JcMethod, IFDSMethodSummary> = mutableMapOf()
+    private val contextInternal: MutableMap<JcMethod, IfdsMethodSummary> = mutableMapOf()
     private val context = object : AnalysisContext {
-        override val summaries: Map<JcMethod, IFDSMethodSummary>
+        override val summaries: Map<JcMethod, IfdsMethodSummary>
             get() = contextInternal
     }
 
@@ -46,7 +46,7 @@ class IFDSUnitTraverser<UnitType>(
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
-    private val crossUnitCallees: MutableMap<JcMethod, MutableSet<IFDSEdge>> = mutableMapOf()
+    private val crossUnitCallees: MutableMap<JcMethod, MutableSet<IfdsEdge>> = mutableMapOf()
 
     override fun analyze(): AnalysisResult {
         logger.info { "Started analysis ${analyzer.name}" }
@@ -70,7 +70,7 @@ class IFDSUnitTraverser<UnitType>(
                 for ((inc, outcs) in summary.crossUnitCallees) {
                     for (outc in outcs.factsAtCalleeStart) {
                         val calledMethod = graph.methodOf(outc.statement)
-                        val newEdge = IFDSEdge(inc, outc)
+                        val newEdge = IfdsEdge(inc, outc)
                         crossUnitCallees.getOrPut(calledMethod) { mutableSetOf() }.add(newEdge)
                     }
                 }

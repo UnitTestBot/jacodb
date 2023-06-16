@@ -16,9 +16,15 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.analysis.AnalysisResult
 
-interface IFDSInstanceListener {
-    fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) = Unit
-    fun onExitPoint(e: IFDSEdge) = Unit
-}
+data class CalleeInfo(
+    val factsAtCalleeStart: Set<IfdsVertex>,
+    val callsiteRealisationsGraph: TaintRealisationsGraph
+)
+
+data class IfdsMethodSummary(
+    val factsAtExits: Map<IfdsVertex, Set<IfdsVertex>>,
+    val crossUnitCallees: Map<IfdsVertex, CalleeInfo>,
+    val foundVulnerabilities: AnalysisResult
+)

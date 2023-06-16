@@ -16,15 +16,24 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.points2.Devirtualizer
+import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.cfg.JcInst
 
-data class CalleeInfo(
-    val factsAtCalleeStart: Set<IFDSVertex>,
-    val callsiteRealisationsGraph: TaintRealisationsGraph
-)
+interface IfdsInstance {
+    fun addStart(method: JcMethod)
 
-data class IFDSMethodSummary(
-    val factsAtExits: Map<IFDSVertex, Set<IFDSVertex>>,
-    val crossUnitCallees: Map<IFDSVertex, CalleeInfo>,
-    val foundVulnerabilities: AnalysisResult
-)
+    fun analyze(): Map<JcMethod, IfdsMethodSummary>
+}
+
+interface IfdsInstanceProvider {
+    fun <UnitType> createInstance(
+        graph: ApplicationGraph<JcMethod, JcInst>,
+        analyzer: Analyzer,
+        devirtualizer: Devirtualizer,
+        context: AnalysisContext,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType
+    ): IfdsInstance
+}

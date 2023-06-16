@@ -21,8 +21,8 @@ import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
-import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
+import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.api.ext.constructors
@@ -209,12 +209,12 @@ class NpeAnalysisTest : BaseAnalysisTest() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
             val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
 
-            return IFDSUnitTraverser(
+            return IfdsUnitTraverser(
                 graph,
                 NpeAnalyzer(graph),
                 SingletonUnitResolver,
                 points2Engine.obtainDevirtualizer(),
-                BidiIFDSForTaintAnalysis
+                BidiIfdsForTaintAnalysis
             )
         }
 }

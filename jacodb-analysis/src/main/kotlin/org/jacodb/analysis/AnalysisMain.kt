@@ -22,10 +22,10 @@ import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
-import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
+import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.IFDSUnitInstance
-import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.IfdsUnitInstance
+import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -103,12 +103,12 @@ interface AnalysisEngineFactory : Factory {
 
 class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(graph: JcApplicationGraph, points2Engine: Points2Engine): AnalysisEngine {
-        return IFDSUnitTraverser(
+        return IfdsUnitTraverser(
             graph,
             UnusedVariableAnalyzer(graph),
             SingletonUnitResolver,
             points2Engine.obtainDevirtualizer(),
-            IFDSUnitInstance
+            IfdsUnitInstance
         )
     }
 
@@ -125,7 +125,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         points2Engine: Points2Engine,
     ): AnalysisEngine {
         val analyzer = graph.analyzer
-        return IFDSUnitTraverser(graph, analyzer, SingletonUnitResolver, points2Engine.obtainDevirtualizer(), BidiIFDSForTaintAnalysis)
+        return IfdsUnitTraverser(graph, analyzer, SingletonUnitResolver, points2Engine.obtainDevirtualizer(), BidiIfdsForTaintAnalysis)
     }
 
     override val name: String

@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.engine
 
-data class IFDSEdge(val u: IFDSVertex, val v: IFDSVertex)
+data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex)
 
 enum class PathEdgePredecessorKind {
     NO_PREDECESSOR,
@@ -27,6 +27,6 @@ enum class PathEdgePredecessorKind {
 }
 
 data class PathEdgePredecessor(
-    val predEdge: IFDSEdge,
+    val predEdge: IfdsEdge,
     val kind: PathEdgePredecessorKind
 )

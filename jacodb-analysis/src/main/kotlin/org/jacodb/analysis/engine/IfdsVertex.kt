@@ -16,24 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.points2.Devirtualizer
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
-interface IFDSInstance {
-    fun addStart(method: JcMethod)
-
-    fun analyze(): Map<JcMethod, IFDSMethodSummary>
-}
-
-interface IFDSInstanceProvider {
-    fun <UnitType> createInstance(
-        graph: ApplicationGraph<JcMethod, JcInst>,
-        analyzer: Analyzer,
-        devirtualizer: Devirtualizer,
-        context: AnalysisContext,
-        unitResolver: UnitResolver<UnitType>,
-        unit: UnitType
-    ): IFDSInstance
-}
+data class IfdsVertex(val statement: JcInst, val domainFact: DomainFact)

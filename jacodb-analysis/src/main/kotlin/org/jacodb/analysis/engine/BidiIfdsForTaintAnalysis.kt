@@ -29,24 +29,24 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class BidiIFDSForTaintAnalysis<UnitType>(
+class BidiIfdsForTaintAnalysis<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
     devirtualizer: Devirtualizer,
     context: AnalysisContext,
     unitResolver: UnitResolver<UnitType>,
     unit: UnitType
-): IFDSInstance {
+): IfdsInstance {
 
-    private val forward = IFDSUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
+    private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
 
-    private val backward = IFDSUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
+    private val backward = IfdsUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
 
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
-        fun IFDSEdge.handoverPathEdgeTo(
-            instance: IFDSUnitInstance<*>,
+        fun IfdsEdge.handoverPathEdgeTo(
+            instance: IfdsUnitInstance<*>,
             pred: JcInst?,
             updateActivation: Boolean,
             propZero: Boolean
@@ -57,17 +57,17 @@ class BidiIFDSForTaintAnalysis<UnitType>(
             val newStatement = pred ?: v.statement
             graph.entryPoint(u.statement.location.method).forEach {
                 instance.addNewPathEdge(
-                    IFDSEdge(
-                        IFDSVertex(it, u.domainFact),
-                        IFDSVertex(newStatement, newFact)
+                    IfdsEdge(
+                        IfdsVertex(it, u.domainFact),
+                        IfdsVertex(newStatement, newFact)
                     )
                 )
                 if (propZero) {
                     // Propagating zero fact
                     instance.addNewPathEdge(
-                        IFDSEdge(
-                            IFDSVertex(it, u.domainFact),
-                            IFDSVertex(newStatement, ZEROFact)
+                        IfdsEdge(
+                            IfdsVertex(it, u.domainFact),
+                            IfdsVertex(newStatement, ZEROFact)
                         )
                     )
                 }
@@ -76,8 +76,8 @@ class BidiIFDSForTaintAnalysis<UnitType>(
 
         // Forward initiates backward analysis and waits until it finishes
         // Backward analysis does not initiate forward one, because it will run with updated queue after the backward finishes
-        forward.addListener(object: IFDSInstanceListener {
-            override fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) {
+        forward.addListener(object: IfdsInstanceListener {
+            override fun onPropagate(e: IfdsEdge, pred: JcInst?, factIsNew: Boolean) {
                 val fact = e.v.domainFact as? TaintNode ?: return
                 if (fact.variable.isOnHeap && factIsNew) {
                     e.handoverPathEdgeTo(backward, pred, updateActivation = true, propZero = true)
@@ -86,8 +86,8 @@ class BidiIFDSForTaintAnalysis<UnitType>(
             }
         })
 
-        backward.addListener(object: IFDSInstanceListener {
-            override fun onPropagate(e: IFDSEdge, pred: JcInst?, factIsNew: Boolean) {
+        backward.addListener(object: IfdsInstanceListener {
+            override fun onPropagate(e: IfdsEdge, pred: JcInst?, factIsNew: Boolean) {
                 val v = e.v
                 val curInst = v.statement
                 val fact = (v.domainFact as? TaintNode) ?: return
@@ -116,7 +116,7 @@ class BidiIFDSForTaintAnalysis<UnitType>(
                 }
             }
 
-            override fun onExitPoint(e: IFDSEdge) {
+            override fun onExitPoint(e: IfdsEdge) {
                 val fact = e.v.domainFact as? TaintNode ?: return
                 if (fact.variable.isOnHeap) {
                     e.handoverPathEdgeTo(forward, pred = null, updateActivation = false, propZero = false)
@@ -127,9 +127,9 @@ class BidiIFDSForTaintAnalysis<UnitType>(
 
     override fun addStart(method: JcMethod) = forward.addStart(method)
 
-    override fun analyze(): Map<JcMethod, IFDSMethodSummary> = forward.analyze()
+    override fun analyze(): Map<JcMethod, IfdsMethodSummary> = forward.analyze()
 
-    companion object : IFDSInstanceProvider {
+    companion object : IfdsInstanceProvider {
         override fun <UnitType> createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
@@ -137,8 +137,8 @@ class BidiIFDSForTaintAnalysis<UnitType>(
             context: AnalysisContext,
             unitResolver: UnitResolver<UnitType>,
             unit: UnitType
-        ): IFDSInstance {
-            return BidiIFDSForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, unit)
+        ): IfdsInstance {
+            return BidiIfdsForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }
 }

@@ -18,4 +18,7 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.api.cfg.JcInst
 
-data class IFDSVertex(val statement: JcInst, val domainFact: DomainFact)
+interface IfdsInstanceListener {
+    fun onPropagate(e: IfdsEdge, pred: JcInst?, factIsNew: Boolean) = Unit
+    fun onExitPoint(e: IfdsEdge) = Unit
+}

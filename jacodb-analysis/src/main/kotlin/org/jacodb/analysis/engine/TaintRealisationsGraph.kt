@@ -19,12 +19,12 @@ package org.jacodb.analysis.engine
 import org.jacodb.analysis.DumpableVulnerabilityInstance
 
 class TaintRealisationsGraph(
-    val sink: IFDSVertex,
-    val sources: Set<IFDSVertex>,
-    val edges: Map<IFDSVertex, Set<IFDSVertex>>,
+    val sink: IfdsVertex,
+    val sources: Set<IfdsVertex>,
+    val edges: Map<IfdsVertex, Set<IfdsVertex>>,
 ) {
 
-    private fun getAllPaths(curPath: MutableList<IFDSVertex>): Sequence<List<IFDSVertex>> = sequence {
+    private fun getAllPaths(curPath: MutableList<IfdsVertex>): Sequence<List<IfdsVertex>> = sequence {
         val v = curPath.last()
 
         if (v == sink) {
@@ -41,7 +41,7 @@ class TaintRealisationsGraph(
         }
     }
 
-    fun getAllPaths(): Sequence<List<IFDSVertex>> = sequence {
+    fun getAllPaths(): Sequence<List<IfdsVertex>> = sequence {
         sources.forEach {
             yieldAll(getAllPaths(mutableListOf(it)))
         }
@@ -58,7 +58,7 @@ class TaintRealisationsGraph(
         )
     }
 
-    fun mergeWithUpGraph(upGraph: TaintRealisationsGraph, entryPoints: Set<IFDSVertex>): TaintRealisationsGraph {
+    fun mergeWithUpGraph(upGraph: TaintRealisationsGraph, entryPoints: Set<IfdsVertex>): TaintRealisationsGraph {
         val validEntryPoints = entryPoints.intersect(edges.keys).ifEmpty {
             return this
         }

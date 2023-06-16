@@ -22,8 +22,8 @@ import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
-import org.jacodb.analysis.engine.IFDSResult
-import org.jacodb.analysis.engine.IFDSVertex
+import org.jacodb.analysis.engine.IfdsResult
+import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.engine.ZEROFact
@@ -65,7 +65,7 @@ class UnusedVariableAnalyzer(
         return this in expr.values.map { it.toPathOrNull() }
     }
 
-    private fun AccessPath.isUsedAt(inst: JcInst, withResult: IFDSResult): Boolean {
+    private fun AccessPath.isUsedAt(inst: JcInst, withResult: IfdsResult): Boolean {
         val callExpr = inst.callExpr
 
         if (callExpr != null) {
@@ -95,7 +95,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
+    override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -109,7 +109,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, TaintRealisationsGraph(IFDSVertex(it, ZEROFact), setOf(IFDSVertex(it, ZEROFact)), emptyMap()))
+            VulnerabilityInstance(value, TaintRealisationsGraph(IfdsVertex(it, ZEROFact), setOf(IfdsVertex(it, ZEROFact)), emptyMap()))
         }
         return AnalysisResult(vulnerabilities)
     }

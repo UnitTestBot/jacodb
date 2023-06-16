@@ -60,5 +60,5 @@ interface Analyzer {
     val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
 
-    fun calculateSources(ifdsResult: IFDSResult): AnalysisResult
+    fun calculateSources(ifdsResult: IfdsResult): AnalysisResult
 }

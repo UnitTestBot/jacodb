@@ -22,25 +22,25 @@ import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
 import org.jacodb.api.cfg.JcInst
 
-class IFDSResult(
-    val pathEdges: List<IFDSEdge>,
+class IfdsResult(
+    val pathEdges: List<IfdsEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
-    val pathEdgesPreds: Map<IFDSEdge, Set<PathEdgePredecessor>>,
-    val summaryEdgeToStartToEndEdges: Map<IFDSEdge, Set<IFDSEdge>>,
-    val crossUnitCallees: Map<IFDSVertex, Set<IFDSVertex>>
+    val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>,
+    val summaryEdgeToStartToEndEdges: Map<IfdsEdge, Set<IfdsEdge>>,
+    val crossUnitCallees: Map<IfdsVertex, Set<IfdsVertex>>
 ) {
-    private inner class RealisationsGraphBuilder(private val sink: IFDSVertex) {
-        private val sources: MutableSet<IFDSVertex> = mutableSetOf()
-        private val edges: MutableMap<IFDSVertex, MutableSet<IFDSVertex>> = mutableMapOf()
-        private val visited: MutableSet<IFDSEdge> = mutableSetOf()
+    private inner class RealisationsGraphBuilder(private val sink: IfdsVertex) {
+        private val sources: MutableSet<IfdsVertex> = mutableSetOf()
+        private val edges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
+        private val visited: MutableSet<IfdsEdge> = mutableSetOf()
 
-        private fun addEdge(from: IFDSVertex, to: IFDSVertex) {
+        private fun addEdge(from: IfdsVertex, to: IfdsVertex) {
             if (from != to) {
                 edges.getOrPut(from) { mutableSetOf() }.add(to)
             }
         }
 
-        private fun dfs(e: IFDSEdge, lastVertex: IFDSVertex, stopAtMethodStart: Boolean) {
+        private fun dfs(e: IfdsEdge, lastVertex: IfdsVertex, stopAtMethodStart: Boolean) {
             if (e in visited) {
                 return
             }
@@ -76,21 +76,19 @@ class IFDSResult(
                         }
                     }
                     THROUGH_SUMMARY -> {
-                        val summaryEdge = IFDSEdge(pred.predEdge.v, v)
+                        val summaryEdge = IfdsEdge(pred.predEdge.v, v)
                         summaryEdgeToStartToEndEdges[summaryEdge]?.forEach { startToEndEdge ->
                             addEdge(startToEndEdge.v, lastVertex) // Return to next vertex
                             addEdge(pred.predEdge.v, startToEndEdge.u) // Call to start
                             dfs(startToEndEdge, startToEndEdge.v, true) // Expand summary edge
-//                            if (startToEndEdge.u.domainFact != ZEROFact) {
-                                dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
-//                            }
+                            dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
                         }
                     }
                     UNKNOWN -> {
                         addEdge(pred.predEdge.v, lastVertex) // Turning point
                         // TODO: ideally, we should analyze the place from which the edge was given to ifds,
                         //  for now we just go to method start
-                        dfs(IFDSEdge(pred.predEdge.u, pred.predEdge.u), pred.predEdge.v, stopAtMethodStart)
+                        dfs(IfdsEdge(pred.predEdge.u, pred.predEdge.u), pred.predEdge.v, stopAtMethodStart)
                     }
                     NO_PREDECESSOR -> {
                         sources.add(v)
@@ -109,7 +107,7 @@ class IFDSResult(
         }
     }
 
-    fun resolveTaintRealisationsGraph(vertex: IFDSVertex): TaintRealisationsGraph {
+    fun resolveTaintRealisationsGraph(vertex: IfdsVertex): TaintRealisationsGraph {
         return RealisationsGraphBuilder(vertex).build()
     }
 }
