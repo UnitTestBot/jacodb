@@ -41,7 +41,8 @@ class SimplifiedJcApplicationGraph(
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
-        return JcNoopInst(JcInstLocationImpl(method, -1, -1))
+        val methodEntryLineNumber = method.flowGraph().entries.firstOrNull()?.lineNumber
+        return JcNoopInst(JcInstLocationImpl(method, -1, methodEntryLineNumber?.let { it - 1 } ?: -1))
     }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
