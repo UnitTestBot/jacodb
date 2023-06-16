@@ -84,7 +84,7 @@ class UnusedVariableAnalyzer(
             return false
         }
         if (inst is JcAssignInst) {
-            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess).index)) {
+            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
                 return true
             }
             return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
