@@ -16,12 +16,15 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.JcNaivePoints2EngineFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
+import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IFDSInstanceProvider
 import org.jacodb.analysis.engine.IFDSUnitInstance
 import org.jacodb.analysis.engine.IFDSUnitTraverser
@@ -38,24 +41,23 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    fun testOne(analyzer: Analyzer, unitResolver: UnitResolver<*>, ifdsInstanceProvider: IFDSInstanceProvider) {
+    private fun testOne(analyzer: Analyzer, unitResolver: UnitResolver<*>, ifdsInstanceProvider: IFDSInstanceProvider) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
         val engine = IFDSUnitTraverser(graph, analyzer, unitResolver, points2Engine.obtainDevirtualizer(), ifdsInstanceProvider)
         clazz.declaredMethods.forEach { engine.addStart(it) }
-        val result = engine.analyze().toDumpable().foundVulnerabilities
+        val result = engine.analyze().toDumpable()
 
-        result.forEachIndexed { ind, vulnerability ->
-            println("VULNERABILITY $ind:")
-            println(vulnerability)
-        }
+        println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
+        val json = Json { prettyPrint = true }
+        json.encodeToStream(result, System.out)
     }
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, IFDSUnitInstance)
+        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(false), IFDSUnitInstance)
     }
 
     @Test
