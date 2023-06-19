@@ -19,6 +19,7 @@ package org.jacodb.analysis.impl
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
+import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass

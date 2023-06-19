@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
@@ -95,7 +94,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -111,7 +110,7 @@ class UnusedVariableAnalyzer(
         val vulnerabilities = used.filterValues { !it }.keys.map {
             VulnerabilityInstance(value, TaintRealisationsGraph(IfdsVertex(it, ZEROFact), setOf(IfdsVertex(it, ZEROFact)), emptyMap()))
         }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
     }
 }
 

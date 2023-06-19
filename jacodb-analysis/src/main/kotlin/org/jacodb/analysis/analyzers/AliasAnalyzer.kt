@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
@@ -35,7 +34,7 @@ class AliasAnalyzer(
     maxPathLength: Int = 5
 ) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
 
-    override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
@@ -69,7 +68,7 @@ class AliasAnalyzer(
                 }
             }
         }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
     }
 
     override val name: String = value

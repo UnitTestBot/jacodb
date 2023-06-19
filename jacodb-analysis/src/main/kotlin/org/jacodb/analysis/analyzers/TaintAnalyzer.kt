@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
@@ -48,7 +47,7 @@ abstract class TaintAnalyzer(
         override val flowFunctions: FlowFunctionsSpace
             get() = TaintBackwardFunctions(graph, maxPathLength)
 
-        override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
             error("Do not call sources for backward analyzer instance")
         }
     }
@@ -57,7 +56,7 @@ abstract class TaintAnalyzer(
         override val value: String = "taint analysis"
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
@@ -73,7 +72,7 @@ abstract class TaintAnalyzer(
                 }
             }
         }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
     }
 }
 

@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.VulnerabilityInstance
 
 data class CalleeInfo(
     val factsAtCalleeStart: Set<IfdsVertex>,
@@ -26,5 +26,5 @@ data class CalleeInfo(
 data class IfdsMethodSummary(
     val factsAtExits: Map<IfdsVertex, Set<IfdsVertex>>,
     val crossUnitCallees: Map<IfdsVertex, CalleeInfo>,
-    val foundVulnerabilities: AnalysisResult
+    val foundVulnerabilities: List<VulnerabilityInstance> // AnalysisResult
 )

@@ -29,13 +29,13 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class BidiIfdsForTaintAnalysis<UnitType>(
+class BidiIfdsForTaintAnalysis(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
     devirtualizer: Devirtualizer,
     context: AnalysisContext,
-    unitResolver: UnitResolver<UnitType>,
-    unit: UnitType
+    unitResolver: UnitResolver<*>,
+    unit: Any?
 ): IfdsInstance {
 
     private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
@@ -46,7 +46,7 @@ class BidiIfdsForTaintAnalysis<UnitType>(
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
         fun IfdsEdge.handoverPathEdgeTo(
-            instance: IfdsUnitInstance<*>,
+            instance: IfdsUnitInstance,
             pred: JcInst?,
             updateActivation: Boolean,
             propZero: Boolean
@@ -130,13 +130,13 @@ class BidiIfdsForTaintAnalysis<UnitType>(
     override fun analyze(): Map<JcMethod, IfdsMethodSummary> = forward.analyze()
 
     companion object : IfdsInstanceProvider {
-        override fun <UnitType> createInstance(
+        override fun createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
             devirtualizer: Devirtualizer,
             context: AnalysisContext,
-            unitResolver: UnitResolver<UnitType>,
-            unit: UnitType
+            unitResolver: UnitResolver<*>,
+            unit: Any?
         ): IfdsInstance {
             return BidiIfdsForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }

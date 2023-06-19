@@ -17,7 +17,7 @@
 package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
@@ -57,7 +57,7 @@ class UnusedVariableTest : BaseAnalysisTest() {
     private val engine: AnalysisEngine
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
-            val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-            return UnusedVariableAnalysisFactory().createAnalysisEngine(graph, points2Engine)
+            val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
+            return UnusedVariableAnalysisFactory().createAnalysisEngine(graph, devirtualizer)
         }
 }

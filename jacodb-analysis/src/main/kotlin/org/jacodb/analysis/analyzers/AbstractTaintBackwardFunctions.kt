@@ -25,6 +25,7 @@ import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
@@ -40,6 +41,7 @@ abstract class AbstractTaintBackwardFunctions(
     protected val graph: JcApplicationGraph,
     protected val maxPathLength: Int,
 ) : FlowFunctionsSpace {
+    private val classpath: JcClasspath = graph.classpath
     
     override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
         return emptyList()
@@ -108,7 +110,7 @@ abstract class AbstractTaintBackwardFunctions(
             }
 
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
             }
 
             callExpr.args.zip(formalParams).forEach { (actual, formal) ->
@@ -185,7 +187,7 @@ abstract class AbstractTaintBackwardFunctions(
             val actualParams = callExpr.args
             val callee = graph.methodOf(exitStatement)
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
             }
 
             formalParams.zip(actualParams).forEach { (formal, actual) ->

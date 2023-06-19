@@ -18,7 +18,7 @@ package org.jacodb.analysis.impl
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
@@ -30,6 +30,7 @@ import org.jacodb.analysis.engine.IfdsUnitInstance
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -45,8 +46,8 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val engine = IfdsUnitTraverser(graph, analyzer, unitResolver, points2Engine.obtainDevirtualizer(), ifdsInstanceProvider)
+        val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
+        val engine = IfdsUnitTraverser(graph, analyzer, unitResolver, devirtualizer, ifdsInstanceProvider)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze().toDumpable()
 

@@ -27,15 +27,15 @@ import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.AnalysisEngineFactory
-import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.DevirtualizerFactory
 import org.jacodb.analysis.Factory
 import org.jacodb.analysis.GraphFactory
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.NPEAnalysisFactory
-import org.jacodb.analysis.Points2EngineFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
 import org.jacodb.analysis.loadFactories
+import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -104,12 +104,12 @@ fun main(args: Array<String>) {
         shortName = "g",
         description = "Type of code graph to be used by analysis."
     ).default(JcSimplifiedGraphFactory())
-    val points2Factory by parser.option(
-        factoryChoice<Points2EngineFactory>(),
+    val devirtualizerFactory by parser.option(
+        factoryChoice<DevirtualizerFactory>(),
         fullName = "points2",
         shortName = "p2",
         description = "Type of points-to engine."
-    ).default(JcNaivePoints2EngineFactory)
+    ).default(JcNaiveDevirtualizerFactory)
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -147,26 +147,24 @@ fun main(args: Array<String>) {
     }
 
     val graph = graphFactory.createGraph(cp)
-    val points2Engine = points2Factory.createPoints2Engine(graph)
+    val devirtualizer = devirtualizerFactory.createDevirtualizer(graph)
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
 
     val analysisEngines = loadAnalysisEngineFactoriesByConfig(config).map {
-        it.createAnalysisEngine(graph, points2Engine)
+        it.createAnalysisEngine(graph, devirtualizer)
     }
 
-    val analysisResults = analysisEngines.map { engine ->
+    val analysisResults = analysisEngines.flatMap { engine ->
         startJcClasses.forEach { clazz ->
             clazz.declaredMethods.forEach {
                 engine.addStart(it)
             }
         }
         engine.analyze()
-    }
-
-    val mergedResult = AnalysisResult(analysisResults.flatMap { it.vulnerabilities }).toDumpable()
+    }.toDumpable()
 
     val json = Json { prettyPrint = true }
     outputFile.outputStream().use { fileOutputStream ->
-        json.encodeToStream(mergedResult, fileOutputStream)
+        json.encodeToStream(analysisResults, fileOutputStream)
     }
 }

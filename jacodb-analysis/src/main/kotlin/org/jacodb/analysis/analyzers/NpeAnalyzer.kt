@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
@@ -65,7 +64,7 @@ class NpeAnalyzer(
         override val name: String
             get() = value
 
-        override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
             error("Do not call sources for backward analyzer instance")
         }
     }
@@ -74,7 +73,7 @@ class NpeAnalyzer(
         override val value: String = "npe-analysis"
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): AnalysisResult {
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<NPETaintNode>().forEach { fact ->
@@ -88,7 +87,7 @@ class NpeAnalyzer(
                 }
             }
         }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
     }
 }
 

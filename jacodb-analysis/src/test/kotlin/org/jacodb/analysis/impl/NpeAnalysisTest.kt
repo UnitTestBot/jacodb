@@ -18,7 +18,7 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
+import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
@@ -207,13 +207,13 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     private val engine: AnalysisEngine
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
-            val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
+            val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
 
             return IfdsUnitTraverser(
                 graph,
                 NpeAnalyzer(graph),
                 SingletonUnitResolver,
-                points2Engine.obtainDevirtualizer(),
+                devirtualizer,
                 BidiIfdsForTaintAnalysis
             )
         }

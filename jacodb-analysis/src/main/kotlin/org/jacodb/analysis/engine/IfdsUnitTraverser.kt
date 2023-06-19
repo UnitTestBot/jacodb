@@ -17,7 +17,6 @@
 package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
@@ -48,7 +47,7 @@ class IfdsUnitTraverser<UnitType>(
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
     private val crossUnitCallees: MutableMap<JcMethod, MutableSet<IfdsEdge>> = mutableMapOf()
 
-    override fun analyze(): AnalysisResult {
+    override fun analyze(): List<VulnerabilityInstance> {
         logger.info { "Started analysis ${analyzer.name}" }
         logger.info { "Amount of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
@@ -84,7 +83,7 @@ class IfdsUnitTraverser<UnitType>(
         logger.info { "Restoring full realisation paths..." }
         // TODO: think about correct filters for overall results
         val vulnerabilities = context.summaries.flatMap { (_, summary) ->
-            summary.foundVulnerabilities.vulnerabilities
+            summary.foundVulnerabilities
                 .map { VulnerabilityInstance(it.vulnerabilityType, extendRealisationsGraph(it.realisationsGraph)) }
                 .filter {
                     it.realisationsGraph.sources.any { source ->
@@ -94,7 +93,7 @@ class IfdsUnitTraverser<UnitType>(
         }
 
         logger.info { "Analysis completed" }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
     }
 
     private val TaintRealisationsGraph.methods: List<JcMethod>

@@ -20,15 +20,15 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.packageName
 
-interface UnitResolver<UnitType> {
+fun interface UnitResolver<UnitType> {
     fun resolve(method: JcMethod): UnitType
 }
 
-object MethodUnitResolver: UnitResolver<JcMethod> {
-    override fun resolve(method: JcMethod): JcMethod {
-        return method
-    }
-}
+val MethodUnitResolver = UnitResolver { method -> method }
+
+val PackageUnitResolver = UnitResolver { method -> method.enclosingClass.packageName }
+
+val SingletonUnitResolver = UnitResolver { _ -> Unit }
 
 class ClassUnitResolver(private val includeNested: Boolean): UnitResolver<JcClassOrInterface> {
     override fun resolve(method: JcMethod): JcClassOrInterface {
@@ -38,14 +38,4 @@ class ClassUnitResolver(private val includeNested: Boolean): UnitResolver<JcClas
             method.enclosingClass
         }
     }
-}
-
-object PackageUnitResolver: UnitResolver<String> {
-    override fun resolve(method: JcMethod): String {
-        return method.enclosingClass.packageName
-    }
-}
-
-object SingletonUnitResolver: UnitResolver<Unit> {
-    override fun resolve(method: JcMethod) = Unit
 }

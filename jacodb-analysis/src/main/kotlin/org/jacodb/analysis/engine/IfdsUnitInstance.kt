@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
@@ -27,13 +26,13 @@ import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.*
 
-class IfdsUnitInstance<UnitType>(
+class IfdsUnitInstance(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
     private val devirtualizer: Devirtualizer,
     private val context: AnalysisContext,
-    private val unitResolver: UnitResolver<UnitType>,
-    private val unit: UnitType
+    private val unitResolver: UnitResolver<*>,
+    private val unit: Any?
 ): IfdsInstance {
 
     private class EdgesStorage {
@@ -212,7 +211,7 @@ class IfdsUnitInstance<UnitType>(
         }
 
         val relevantVulnerabilities = mutableMapOf<JcMethod, MutableList<VulnerabilityInstance>>()
-        analyzer.calculateSources(fullResults).vulnerabilities.forEach {
+        analyzer.calculateSources(fullResults).forEach {
             relevantVulnerabilities.getOrPut(graph.methodOf(it.realisationsGraph.sink.statement)) { mutableListOf() }
                 .add(it)
         }
@@ -229,19 +228,19 @@ class IfdsUnitInstance<UnitType>(
             IfdsMethodSummary(
                 factsAtExits[it].orEmpty(),
                 sortedCrossUnitCallees[it].orEmpty(),
-                AnalysisResult(relevantVulnerabilities[it].orEmpty())
+                relevantVulnerabilities[it].orEmpty()
             )
         }
     }
 
     companion object : IfdsInstanceProvider {
-        override fun <UnitType> createInstance(
+        override fun createInstance(
             graph: ApplicationGraph<JcMethod, JcInst>,
             analyzer: Analyzer,
             devirtualizer: Devirtualizer,
             context: AnalysisContext,
-            unitResolver: UnitResolver<UnitType>,
-            unit: UnitType
+            unitResolver: UnitResolver<*>,
+            unit: Any?
         ): IfdsInstance {
             return IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }

@@ -70,10 +70,8 @@ data class VulnerabilityInstance(
     }
 }
 
-data class AnalysisResult(val vulnerabilities: List<VulnerabilityInstance>) {
-    fun toDumpable(maxPathsCount: Int = 10): DumpableAnalysisResult {
-        return DumpableAnalysisResult(vulnerabilities.map { it.toDumpable(maxPathsCount) })
-    }
+fun List<VulnerabilityInstance>.toDumpable(maxPathsCount: Int = 10): DumpableAnalysisResult {
+    return DumpableAnalysisResult(map { it.toDumpable(maxPathsCount) })
 }
 
 typealias AnalysesOptions = Map<String, String>
@@ -82,12 +80,8 @@ typealias AnalysesOptions = Map<String, String>
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 interface AnalysisEngine {
-    fun analyze(): AnalysisResult
+    fun analyze(): List<VulnerabilityInstance>
     fun addStart(method: JcMethod)
-}
-
-interface Points2Engine {
-    fun obtainDevirtualizer(): Devirtualizer
 }
 
 interface Factory {
@@ -97,17 +91,17 @@ interface Factory {
 interface AnalysisEngineFactory : Factory {
     fun createAnalysisEngine(
         graph: JcApplicationGraph,
-        points2Engine: Points2Engine,
+        devirtualizer: Devirtualizer,
     ): AnalysisEngine
 }
 
 class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
-    override fun createAnalysisEngine(graph: JcApplicationGraph, points2Engine: Points2Engine): AnalysisEngine {
+    override fun createAnalysisEngine(graph: JcApplicationGraph, devirtualizer: Devirtualizer): AnalysisEngine {
         return IfdsUnitTraverser(
             graph,
             UnusedVariableAnalyzer(graph),
             SingletonUnitResolver,
-            points2Engine.obtainDevirtualizer(),
+            devirtualizer,
             IfdsUnitInstance
         )
     }
@@ -122,10 +116,10 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
 
     override fun createAnalysisEngine(
         graph: JcApplicationGraph,
-        points2Engine: Points2Engine,
+        devirtualizer: Devirtualizer,
     ): AnalysisEngine {
         val analyzer = graph.analyzer
-        return IfdsUnitTraverser(graph, analyzer, SingletonUnitResolver, points2Engine.obtainDevirtualizer(), BidiIfdsForTaintAnalysis)
+        return IfdsUnitTraverser(graph, analyzer, SingletonUnitResolver, devirtualizer, BidiIfdsForTaintAnalysis)
     }
 
     override val name: String
@@ -149,8 +143,8 @@ class AliasAnalysisFactory(
         }
 }
 
-interface Points2EngineFactory : Factory {
-    fun createPoints2Engine(graph: JcApplicationGraph): Points2Engine
+interface DevirtualizerFactory : Factory {
+    fun createDevirtualizer(graph: JcApplicationGraph): Devirtualizer
 }
 
 interface GraphFactory : Factory {
@@ -174,10 +168,10 @@ class JcSimplifiedGraphFactory(
     }
 }
 
-object JcNaivePoints2EngineFactory : Points2EngineFactory {
-    override fun createPoints2Engine(
+object JcNaiveDevirtualizerFactory : DevirtualizerFactory {
+    override fun createDevirtualizer(
         graph: JcApplicationGraph,
-    ): Points2Engine {
+    ): Devirtualizer {
         val cp = graph.classpath
         return AllOverridesDevirtualizer(graph, cp)
     }

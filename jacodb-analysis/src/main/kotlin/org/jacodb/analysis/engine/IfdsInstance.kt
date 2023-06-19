@@ -28,12 +28,12 @@ interface IfdsInstance {
 }
 
 interface IfdsInstanceProvider {
-    fun <UnitType> createInstance(
+    fun createInstance(
         graph: ApplicationGraph<JcMethod, JcInst>,
         analyzer: Analyzer,
         devirtualizer: Devirtualizer,
         context: AnalysisContext,
-        unitResolver: UnitResolver<UnitType>,
-        unit: UnitType
+        unitResolver: UnitResolver<*>,
+        unit: Any?
     ): IfdsInstance
 }

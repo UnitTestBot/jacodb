@@ -17,8 +17,6 @@
 package org.jacodb.analysis.points2
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.Points2Engine
-import org.jacodb.analysis.points2.AllOverridesDevirtualizer.Companion.bannedPackagePrefixes
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -37,7 +35,7 @@ class AllOverridesDevirtualizer(
     private val initialGraph: JcApplicationGraph,
     private val classpath: JcClasspath,
     private val limit: Int? = null
-) : Points2Engine, Devirtualizer {
+) : Devirtualizer {
     private val hierarchyExtension = runBlocking {
         classpath.hierarchyExt()
     }
@@ -88,9 +86,5 @@ class AllOverridesDevirtualizer(
             "java.",
             "kotlin."
         )
-    }
-
-    override fun obtainDevirtualizer(): Devirtualizer {
-        return this
     }
 }

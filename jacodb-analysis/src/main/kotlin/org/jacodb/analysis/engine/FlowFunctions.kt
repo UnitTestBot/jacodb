@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisResult
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
@@ -60,5 +60,5 @@ interface Analyzer {
     val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
 
-    fun calculateSources(ifdsResult: IfdsResult): AnalysisResult
+    fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance>
 }
