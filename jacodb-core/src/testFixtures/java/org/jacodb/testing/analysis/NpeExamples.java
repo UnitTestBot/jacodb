@@ -19,7 +19,7 @@ package org.jacodb.testing.analysis;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("ALL")
-public class NPEExamples {
+public class NpeExamples {
 
     static class SimpleClassWithField {
         public String field;

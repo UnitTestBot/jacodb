@@ -55,13 +55,13 @@ abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = nul
     }
 }
 
-class NPETaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
-    override fun updateActivation(newActivation: JcInst?): NPETaintNode {
-        return NPETaintNode(variable, newActivation)
+class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+    override fun updateActivation(newActivation: JcInst?): NpeTaintNode {
+        return NpeTaintNode(variable, newActivation)
     }
 
     override fun moveToOtherPath(newPath: AccessPath): TaintNode {
-        return NPETaintNode(newPath, activation)
+        return NpeTaintNode(newPath, activation)
     }
 
     override val id: SpaceId

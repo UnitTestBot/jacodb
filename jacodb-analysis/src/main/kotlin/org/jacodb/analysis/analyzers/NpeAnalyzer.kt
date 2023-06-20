@@ -56,14 +56,14 @@ class NpeAnalyzer(
     graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(graph, maxPathLength)
+    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
     override val name: String = value
 
     override val backward: Analyzer = object : Analyzer {
         override val backward: Analyzer
             get() = this@NpeAnalyzer
         override val flowFunctions: FlowFunctionsSpace
-            get() = NPEBackwardFunctions(graph, maxPathLength)
+            get() = NpeBackwardFunctions(graph, maxPathLength)
         override val name: String
             get() = value
 
@@ -79,7 +79,7 @@ class NpeAnalyzer(
     override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
-            facts.filterIsInstance<NPETaintNode>().forEach { fact ->
+            facts.filterIsInstance<NpeTaintNode>().forEach { fact ->
                 if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
                     vulnerabilities.add(
                         VulnerabilityInstance(
@@ -95,7 +95,7 @@ class NpeAnalyzer(
 }
 
 
-private class NPEForwardFunctions(
+private class NpeForwardFunctions(
     graph: JcApplicationGraph,
     private val maxPathLength: Int
 ) : AbstractTaintForwardFunctions(graph) {
@@ -118,7 +118,7 @@ private class NPEForwardFunctions(
         val default = if (dropFact) emptyList() else listOf(fact)
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
         val factPath = when (fact) {
-            is NPETaintNode -> fact.variable
+            is NpeTaintNode -> fact.variable
             ZEROFact -> null
             else -> return emptyList()
         }
@@ -129,7 +129,7 @@ private class NPEForwardFunctions(
 
         if (from is JcNullConstant || (from is JcCallExpr && from.method.method.treatAsNullable)) {
             return if (fact == ZEROFact) {
-                listOf(ZEROFact, NPETaintNode(toPath)) // taint is generated here
+                listOf(ZEROFact, NpeTaintNode(toPath)) // taint is generated here
             } else {
                 if (factPath.startsWith(toPath)) {
                     emptyList()
@@ -143,7 +143,7 @@ private class NPEForwardFunctions(
             val arrayType = from.type as JcArrayType
             if (arrayType.elementType.nullable != false) {
                 val arrayElemPath = AccessPath.fromOther(toPath, List(arrayType.dimensions) { ElementAccessor })
-                return listOf(ZEROFact, NPETaintNode(arrayElemPath))
+                return listOf(ZEROFact, NpeTaintNode(arrayElemPath))
             }
         }
 
@@ -159,7 +159,7 @@ private class NPEForwardFunctions(
             return listOf(ZEROFact)
         }
 
-        fact as NPETaintNode
+        fact as NpeTaintNode
 
         // TODO: slightly differs from original paper, think what's correct
         val fromPath = from.toPathOrNull()?.limit(maxPathLength) ?: return default
@@ -169,7 +169,7 @@ private class NPEForwardFunctions(
 
     override fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact> {
         val factPath = when (fact) {
-            is NPETaintNode -> fact.variable
+            is NpeTaintNode -> fact.variable
             ZEROFact -> null
             else -> return emptyList()
         }
@@ -190,13 +190,13 @@ private class NPEForwardFunctions(
                     (inst.condition is JcNeqExpr && currentBranch == inst.falseBranch)) {
                     // This is a hack: instructions like `return null` in branch of next will be considered only if
                     //  the fact holds (otherwise we could not get there)
-                    return listOf(NPETaintNode(inst.pathComparedWithNull!!))
+                    return listOf(NpeTaintNode(inst.pathComparedWithNull!!))
                 }
             }
             return listOf(ZEROFact)
         }
 
-        fact as NPETaintNode
+        fact as NpeTaintNode
 
         // This handles cases like if (x != null) expr1 else expr2, where edges to expr1 and to expr2 should be different
         // (because x == null will be held at expr2 but won't be held at expr1)
@@ -232,13 +232,13 @@ private class NPEForwardFunctions(
         result += method.flowGraph().locals
             .filterIsInstance<JcArgument>()
             .filter { method.parameters[it.index].isNullable != false }
-            .map { NPETaintNode(AccessPath.fromLocal(it)) }
+            .map { NpeTaintNode(AccessPath.fromLocal(it)) }
 
         // Possibly null statics
         // TODO: handle statics in a more general manner
         result += method.enclosingClass.fields
             .filter { it.isNullable != false && it.isStatic }
-            .map { NPETaintNode(AccessPath.fromStaticField(it)) }
+            .map { NpeTaintNode(AccessPath.fromStaticField(it)) }
 
         val thisInstance = method.thisInstance
 
@@ -246,7 +246,7 @@ private class NPEForwardFunctions(
         result += method.enclosingClass.fields
             .filter { it.isNullable != false && !it.isStatic }
             .map {
-                NPETaintNode(
+                NpeTaintNode(
                     AccessPath.fromOther(AccessPath.fromLocal(thisInstance), listOf(FieldAccessor(it)))
                 )
             }
@@ -255,7 +255,7 @@ private class NPEForwardFunctions(
     }
 }
 
-private class NPEBackwardFunctions(
+private class NpeBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
@@ -266,14 +266,14 @@ class NpeAnalyzerV2(
     graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(graph, maxPathLength)
+    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
     override val name: String = value
 
     override val backward: Analyzer = object : Analyzer {
         override val backward: Analyzer
             get() = this@NpeAnalyzerV2
         override val flowFunctions: FlowFunctionsSpace
-            get() = NPEPrecalcBackwardFunctions(graph, maxPathLength)
+            get() = NpePrecalcBackwardFunctions(graph, maxPathLength)
         override val name: String
             get() = value
 
@@ -289,7 +289,7 @@ class NpeAnalyzerV2(
     override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
         val vulnerabilities = mutableListOf<VulnerabilityInstance>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
-            facts.filterIsInstance<NPETaintNode>().forEach { fact ->
+            facts.filterIsInstance<NpeTaintNode>().forEach { fact ->
                 if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
                     vulnerabilities.add(
                         VulnerabilityInstance(
@@ -304,7 +304,7 @@ class NpeAnalyzerV2(
     }
 }
 
-class NPEPrecalcBackwardFunctions(
+class NpePrecalcBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int
 ) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
@@ -317,7 +317,7 @@ class NPEPrecalcBackwardFunctions(
                 .mapNotNull { it.toPathOrNull() }
                 .filter { it.isDereferencedAt(atInst) }
                 .filterNot { it == thisInstance }
-                .map { NPETaintNode(it) }
+                .map { NpeTaintNode(it) }
             return listOf(ZEROFact) + derefs
         }
 
@@ -344,7 +344,7 @@ class NPEPrecalcBackwardFunctions(
         return listOf(ZEROFact) + values
             .mapNotNull { it.toPathOrNull() }
             .filterNot { it == startStatement.location.method.thisInstance.toPath() }
-            .map { NPETaintNode(it) }
+            .map { NpeTaintNode(it) }
     }
 }
 

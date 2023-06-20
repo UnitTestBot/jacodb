@@ -32,7 +32,7 @@ import org.jacodb.analysis.Factory
 import org.jacodb.analysis.GraphFactory
 import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.NPEAnalysisFactory
+import org.jacodb.analysis.NpeAnalysisFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
 import org.jacodb.analysis.loadFactories
 import org.jacodb.analysis.toDumpable
@@ -61,7 +61,7 @@ class AnalysisMain {
 fun loadAnalysisEngineFactoriesByConfig(config: AnalysisConfig): List<AnalysisEngineFactory> {
     return config.analyses.mapNotNull { (analysis, _) ->
         when (analysis) {
-            "NPE" -> NPEAnalysisFactory()
+            "NPE" -> NpeAnalysisFactory()
             "Unused" -> UnusedVariableAnalysisFactory()
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }

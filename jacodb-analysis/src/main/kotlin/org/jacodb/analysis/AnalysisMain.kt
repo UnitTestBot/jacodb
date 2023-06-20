@@ -126,7 +126,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         get() = "flow-droid"
 }
 
-class NPEAnalysisFactory : FlowDroidFactory() {
+class NpeAnalysisFactory : FlowDroidFactory() {
     override val JcApplicationGraph.analyzer: Analyzer
         get() {
             return NpeAnalyzer(this)

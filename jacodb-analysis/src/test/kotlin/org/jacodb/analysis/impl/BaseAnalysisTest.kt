@@ -98,11 +98,11 @@ abstract class BaseAnalysisTest : BaseTest() {
         val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        val goodNPE = findSinks(goodMethod, engine, vulnerabilityType)
-        val badNPE = findSinks(badMethod, engine, vulnerabilityType)
+        val goodNpe = findSinks(goodMethod, engine, vulnerabilityType)
+        val badNpe = findSinks(badMethod, engine, vulnerabilityType)
 
-        assertTrue(goodNPE.isEmpty())
-        assertTrue(badNPE.isNotEmpty())
+        assertTrue(goodNpe.isEmpty())
+        assertTrue(badNpe.isNotEmpty())
     }
 
     protected fun findSinks(method: JcMethod, engine: AnalysisEngine, vulnerabilityType: String): Set<String> {

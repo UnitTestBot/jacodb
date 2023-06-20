@@ -16,7 +16,7 @@
 
 package org.jacodb.cli
 
-import org.jacodb.testing.analysis.NPEExamples
+import org.jacodb.testing.analysis.NpeExamples
 import org.junit.jupiter.api.Test
 
 class CliTest {
@@ -24,7 +24,7 @@ class CliTest {
     fun `test basic analysis cli api`() {
         val args = listOf(
             "-a", CliTest::class.java.getResource("/config.json")?.file ?: error("Can't find file with config"),
-            "-s", NPEExamples::class.java.name
+            "-s", NpeExamples::class.java.name
         )
         AnalysisMain().run(args)
     }

@@ -117,7 +117,7 @@ abstract class AbstractTaintBackwardFunctions(
                 // FilterNot is needed for reasons described in comment for symmetric case in
                 //  AbstractTaintForwardFunctions.obtainExitToReturnSiteFlowFunction
                 ans += transmitBackDataFlow(actual, formal, callStatement, fact, dropFact = true)
-                    .filterNot { it is NPETaintNode && !it.variable.isOnHeap }
+                    .filterNot { it is NpeTaintNode && !it.variable.isOnHeap }
             }
 
             return ans

@@ -29,7 +29,7 @@ import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
-import org.jacodb.testing.analysis.NPEExamples
+import org.jacodb.testing.analysis.NpeExamples
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -60,17 +60,17 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `analyze simple NPE`() {
-        testOneMethod<NPEExamples>("npeOnLength", listOf("%3 = %2.length()"))
+        testOneMethod<NpeExamples>("npeOnLength", listOf("%3 = %2.length()"))
     }
 
     @Test
     fun `analyze no NPE`() {
-        testOneMethod<NPEExamples>("noNPE", emptyList())
+        testOneMethod<NpeExamples>("noNPE", emptyList())
     }
 
     @Test
     fun `analyze NPE after fun with two exits`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "npeAfterTwoExits",
             listOf("%4 = %2.length()", "%5 = %3.length()")
         )
@@ -78,12 +78,12 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `no NPE after checked access`() {
-        testOneMethod<NPEExamples>("checkedAccess", emptyList())
+        testOneMethod<NpeExamples>("checkedAccess", emptyList())
     }
 
     @Test
     fun `consecutive NPEs handled properly`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "consecutiveNPEs",
             listOf("%2 = arg$0.length()", "%4 = arg$0.length()")
         )
@@ -91,7 +91,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `npe on virtual call when possible`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "possibleNPEOnVirtualCall",
             listOf("%0 = arg\$0.length()")
         )
@@ -99,7 +99,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `no npe on virtual call when impossible`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "noNPEOnVirtualCall",
             emptyList()
         )
@@ -107,22 +107,22 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `basic test for NPE on fields`() {
-        testOneMethod<NPEExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
+        testOneMethod<NpeExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
     }
 
     @Test
     fun `simple points-to analysis`() {
-        testOneMethod<NPEExamples>("simplePoints2", listOf("%5 = %4.length()"))
+        testOneMethod<NpeExamples>("simplePoints2", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `complex aliasing`() {
-        testOneMethod<NPEExamples>("complexAliasing", listOf("%6 = %5.length()"))
+        testOneMethod<NpeExamples>("complexAliasing", listOf("%6 = %5.length()"))
     }
 
     @Test
     fun `context injection in points-to`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "contextInjection",
             listOf("%6 = %5.length()", "%3 = %2.length()")
         )
@@ -130,17 +130,17 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `activation points maintain flow sensitivity`() {
-        testOneMethod<NPEExamples>("flowSensitive", listOf("%8 = %7.length()"))
+        testOneMethod<NpeExamples>("flowSensitive", listOf("%8 = %7.length()"))
     }
 
     @Test
     fun `overridden null assignment in callee don't affect next caller's instructions`() {
-        testOneMethod<NPEExamples>("overriddenNullInCallee", emptyList())
+        testOneMethod<NpeExamples>("overriddenNullInCallee", emptyList())
     }
 
     @Test
     fun `recursive classes handled correctly`() {
-        testOneMethod<NPEExamples>(
+        testOneMethod<NpeExamples>(
             "recursiveClass",
             listOf("%10 = %9.toString()", "%15 = %14.toString()")
         )
@@ -148,37 +148,37 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `NPE on uninitialized array element dereferencing`() {
-        testOneMethod<NPEExamples>("simpleArrayNPE", listOf("%5 = %4.length()"))
+        testOneMethod<NpeExamples>("simpleArrayNPE", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `no NPE on array element dereferencing after initialization`() {
-        testOneMethod<NPEExamples>("noNPEAfterArrayInit", emptyList())
+        testOneMethod<NpeExamples>("noNPEAfterArrayInit", emptyList())
     }
 
     @Test
     fun `array aliasing`() {
-        testOneMethod<NPEExamples>("arrayAliasing", listOf("%5 = %4.length()"))
+        testOneMethod<NpeExamples>("arrayAliasing", listOf("%5 = %4.length()"))
     }
 
     @Test
     fun `mixed array and class aliasing`() {
-        testOneMethod<NPEExamples>("mixedArrayClassAliasing", listOf("%13 = %12.length()"))
+        testOneMethod<NpeExamples>("mixedArrayClassAliasing", listOf("%13 = %12.length()"))
     }
 
     @Test
     fun `dereferencing field of null object`() {
-        testOneMethod<NPEExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
+        testOneMethod<NpeExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
     }
 
     @Test
     fun `dereferencing copy of value saved before null assignment produce no npe`() {
-        testOneMethod<NPEExamples>("copyBeforeNullAssignment", emptyList())
+        testOneMethod<NpeExamples>("copyBeforeNullAssignment", emptyList())
     }
 
     @Test
     fun `assigning null to copy doesn't affect original value`() {
-        testOneMethod<NPEExamples>("nullAssignmentToCopy", emptyList())
+        testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
     @ParameterizedTest
@@ -195,7 +195,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `analyse something`() {
-        val testingMethod = cp.findClass<NPEExamples>().declaredMethods.single { it.name == "id" }
+        val testingMethod = cp.findClass<NpeExamples>().declaredMethods.single { it.name == "id" }
         val results = testingMethod.flowGraph()
         print(results)
     }
