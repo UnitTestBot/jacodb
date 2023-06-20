@@ -101,8 +101,8 @@ class IfdsUnitInstance(
         return propagate(e, PathEdgePredecessor(e, UNKNOWN))
     }
 
-    fun addStartFact(method: JcMethod, fact: DomainFact) {
-        graph.entryPoint(method).forEach {
+    override fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
+        return graph.entryPoint(method).any {
             val vertex = IfdsVertex(it, fact)
             val edge = IfdsEdge(vertex, vertex)
             propagate(edge, PathEdgePredecessor(edge, NO_PREDECESSOR))
@@ -244,16 +244,11 @@ class IfdsUnitInstance(
         }
     }
 
-    companion object : IfdsInstanceProvider {
-        override fun createInstance(
-            graph: ApplicationGraph<JcMethod, JcInst>,
-            analyzer: Analyzer,
-            devirtualizer: Devirtualizer,
-            context: AnalysisContext,
-            unitResolver: UnitResolver<*>,
-            unit: Any?
-        ): IfdsInstance {
-            return IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
+    companion object {
+        fun createProvider(
+            analyzer: Analyzer
+        ) = IfdsInstanceProvider { graph, devirtualizer, context, unitResolver, unit ->
+            IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }
 }

@@ -19,7 +19,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import org.jacodb.analysis.analyzers.AliasAnalyzer
 import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.analyzers.TaintBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
@@ -99,10 +101,9 @@ class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(graph: JcApplicationGraph, devirtualizer: Devirtualizer): AnalysisEngine {
         return IfdsUnitTraverser(
             graph,
-            UnusedVariableAnalyzer(graph),
             SingletonUnitResolver,
             devirtualizer,
-            IfdsUnitInstance
+            IfdsUnitInstance.createProvider(UnusedVariableAnalyzer(graph))
         )
     }
 
@@ -112,14 +113,21 @@ class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
 
 abstract class FlowDroidFactory : AnalysisEngineFactory {
 
-    protected abstract val JcApplicationGraph.analyzer: Analyzer
+    protected abstract val JcApplicationGraph.forwardAnalyzer: Analyzer
+    protected abstract val JcApplicationGraph.backwardAnalyzer: Analyzer
 
     override fun createAnalysisEngine(
         graph: JcApplicationGraph,
         devirtualizer: Devirtualizer,
     ): AnalysisEngine {
-        val analyzer = graph.analyzer
-        return IfdsUnitTraverser(graph, analyzer, SingletonUnitResolver, devirtualizer, BidiIfdsForTaintAnalysis)
+        val forwardAnalyzer = graph.forwardAnalyzer
+        val backwardAnalyzer = graph.backwardAnalyzer
+        return IfdsUnitTraverser(
+            graph,
+            SingletonUnitResolver,
+            devirtualizer,
+            BidiIfdsForTaintAnalysis.createProvider(forwardAnalyzer, backwardAnalyzer)
+        )
     }
 
     override val name: String
@@ -127,9 +135,14 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
 }
 
 class NpeAnalysisFactory : FlowDroidFactory() {
-    override val JcApplicationGraph.analyzer: Analyzer
+    override val JcApplicationGraph.forwardAnalyzer: Analyzer
         get() {
             return NpeAnalyzer(this)
+        }
+
+    override val JcApplicationGraph.backwardAnalyzer: Analyzer
+        get() {
+            return NpeFlowdroidBackwardAnalyzer(this)
         }
 }
 
@@ -137,9 +150,14 @@ class AliasAnalysisFactory(
     private val generates: (JcInst) -> List<TaintAnalysisNode>,
     private val isSink: (JcInst, DomainFact) -> Boolean,
 ) : FlowDroidFactory() {
-    override val JcApplicationGraph.analyzer: Analyzer
+    override val JcApplicationGraph.forwardAnalyzer: Analyzer
         get() {
             return AliasAnalyzer(this, generates, isSink)
+        }
+
+    override val JcApplicationGraph.backwardAnalyzer: Analyzer
+        get() {
+            return TaintBackwardAnalyzer(this)
         }
 }
 

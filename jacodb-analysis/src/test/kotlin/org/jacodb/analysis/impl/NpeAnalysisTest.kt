@@ -21,7 +21,7 @@ import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.NpeAnalyzerV2
+import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
 import org.jacodb.analysis.engine.MethodUnitResolver
@@ -212,10 +212,12 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
             return IfdsUnitTraverser(
                 graph,
-                NpeAnalyzerV2(graph),
                 MethodUnitResolver,//SingletonUnitResolver,
                 devirtualizer,
-                IfdsWithBackwardPreSearch//BidiIfdsForTaintAnalysis
+                IfdsWithBackwardPreSearch.createProvider(
+                    NpeAnalyzer(graph),
+                    NpePrecalcBackwardAnalyzer(graph)
+                )//BidiIfdsForTaintAnalysis
             )
         }
 }

@@ -51,10 +51,6 @@ class UnusedVariableAnalyzer(
     val graph: JcApplicationGraph
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
-    override val name: String = value
-
-    override val backward: Analyzer
-        get() = error("No backward analysis for Unused variable")
 
     companion object : SpaceId {
         override val value: String = "unused variable analysis"

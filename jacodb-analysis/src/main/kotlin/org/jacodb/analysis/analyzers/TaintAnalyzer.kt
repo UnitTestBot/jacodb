@@ -38,19 +38,6 @@ abstract class TaintAnalyzer(
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates)
-    override val backward: Analyzer = object : Analyzer {
-        override val name: String
-            get() = this@TaintAnalyzer.name
-
-        override val backward: Analyzer
-            get() = this@TaintAnalyzer
-        override val flowFunctions: FlowFunctionsSpace
-            get() = TaintBackwardFunctions(graph, maxPathLength)
-
-        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-            error("Do not call sources for backward analyzer instance")
-        }
-    }
 
     companion object : SpaceId {
         override val value: String = "taint analysis"
@@ -73,6 +60,14 @@ abstract class TaintAnalyzer(
             }
         }
         return vulnerabilities
+    }
+}
+
+class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) : Analyzer {
+    override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, maxPathLength)
+
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+        error("Do not call sources for backward analyzer instance")
     }
 }
 

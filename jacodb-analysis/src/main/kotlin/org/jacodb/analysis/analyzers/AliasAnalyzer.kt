@@ -70,6 +70,4 @@ class AliasAnalyzer(
         }
         return vulnerabilities
     }
-
-    override val name: String = value
 }

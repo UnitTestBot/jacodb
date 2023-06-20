@@ -56,8 +56,6 @@ interface FlowFunctionsSpace {
 }
 
 interface Analyzer {
-    val name: String
-    val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
 
     fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance>

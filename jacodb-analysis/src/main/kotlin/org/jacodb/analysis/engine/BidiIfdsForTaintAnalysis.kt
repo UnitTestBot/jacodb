@@ -21,7 +21,6 @@ import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
@@ -30,17 +29,14 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
 class BidiIfdsForTaintAnalysis(
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    analyzer: Analyzer,
-    devirtualizer: Devirtualizer,
-    context: AnalysisContext,
-    unitResolver: UnitResolver<*>,
-    unit: Any?
+    val forward: IfdsUnitInstance,
+    val backward: IfdsUnitInstance,
+    graph: ApplicationGraph<JcMethod, JcInst>
 ): IfdsInstance {
 
-    private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
-
-    private val backward = IfdsUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
+//    private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
+//
+//    private val backward = IfdsUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
 
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
@@ -126,19 +122,18 @@ class BidiIfdsForTaintAnalysis(
     }
 
     override fun addStart(method: JcMethod) = forward.addStart(method)
+    override fun addStartFact(method: JcMethod, fact: DomainFact) = forward.addStartFact(method, fact)
 
     override fun analyze(): Map<JcMethod, IfdsMethodSummary> = forward.analyze()
 
-    companion object : IfdsInstanceProvider {
-        override fun createInstance(
-            graph: ApplicationGraph<JcMethod, JcInst>,
-            analyzer: Analyzer,
-            devirtualizer: Devirtualizer,
-            context: AnalysisContext,
-            unitResolver: UnitResolver<*>,
-            unit: Any?
-        ): IfdsInstance {
-            return BidiIfdsForTaintAnalysis(graph, analyzer, devirtualizer, context, unitResolver, unit)
+    companion object {
+        fun createProvider(
+            forwardAnalyzer: Analyzer,
+            backwardAnalyzer: Analyzer,
+        ) = IfdsInstanceProvider { graph, devirtualizer, context, unitResolver, unit ->
+            val forward = IfdsUnitInstance(graph, forwardAnalyzer, devirtualizer, context, unitResolver, unit)
+            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, devirtualizer, context, unitResolver, unit)
+            BidiIfdsForTaintAnalysis(forward, backward, graph)
         }
     }
 }

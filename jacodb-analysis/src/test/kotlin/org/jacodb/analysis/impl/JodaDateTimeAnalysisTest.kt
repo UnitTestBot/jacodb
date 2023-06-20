@@ -20,9 +20,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.analyzers.NpeAnalyzerV2
+import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
-import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsInstanceProvider
 import org.jacodb.analysis.engine.IfdsUnitInstance
@@ -42,12 +42,12 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    private fun testOne(analyzer: Analyzer, unitResolver: UnitResolver<*>, ifdsInstanceProvider: IfdsInstanceProvider) {
+    private fun testOne(unitResolver: UnitResolver<*>, ifdsInstanceProvider: IfdsInstanceProvider) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
-        val engine = IfdsUnitTraverser(graph, analyzer, unitResolver, devirtualizer, ifdsInstanceProvider)
+        val engine = IfdsUnitTraverser(graph, unitResolver, devirtualizer, ifdsInstanceProvider)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze().toDumpable()
 
@@ -58,11 +58,13 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(false), IfdsUnitInstance)
+        testOne(ClassUnitResolver(false), IfdsUnitInstance.createProvider(UnusedVariableAnalyzer(graph)))
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(NpeAnalyzerV2(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, IfdsWithBackwardPreSearch)// BidiIfdsForTaintAnalysis)
+        testOne(MethodUnitResolver, IfdsWithBackwardPreSearch.createProvider(NpeAnalyzer(graph), NpePrecalcBackwardAnalyzer(graph)))
     }
+
+    private val graph = JcSimplifiedGraphFactory().createGraph(cp)
 }

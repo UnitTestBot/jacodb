@@ -29,7 +29,6 @@ interface AnalysisContext {
 
 class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
-    private val analyzer: Analyzer,
     private val unitResolver: UnitResolver<UnitType>,
     private val devirtualizer: Devirtualizer,
     private val ifdsInstanceProvider: IfdsInstanceProvider
@@ -48,7 +47,7 @@ class IfdsUnitTraverser<UnitType>(
     private val crossUnitCallees: MutableMap<JcMethod, MutableSet<IfdsEdge>> = mutableMapOf()
 
     override fun analyze(): List<VulnerabilityInstance> {
-        logger.info { "Started analysis ${analyzer.name}" }
+        logger.info { "Started traversing" }
         logger.info { "Amount of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
             logger.info { "${unitsQueue.size} unit(s) left" }
@@ -57,7 +56,7 @@ class IfdsUnitTraverser<UnitType>(
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
-            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, analyzer, devirtualizer, context, unitResolver, next)
+            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, devirtualizer, context, unitResolver, next)
             for (method in foundMethods[next].orEmpty()) {
                 ifdsInstance.addStart(method)
             }

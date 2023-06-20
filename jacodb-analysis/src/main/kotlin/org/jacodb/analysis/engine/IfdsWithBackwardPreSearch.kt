@@ -17,26 +17,20 @@
 package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.graph.reversed
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcInst
 
 class IfdsWithBackwardPreSearch(
-    graph: ApplicationGraph<JcMethod, JcInst>,
-    analyzer: Analyzer,
-    devirtualizer: Devirtualizer,
-    context: AnalysisContext,
-    unitResolver: UnitResolver<*>,
-    unit: Any?
+    private val forward: IfdsInstance,
+    private val backward: IfdsInstance,
 ) : IfdsInstance {
-    private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
-
-    private val backward = IfdsUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
 
     override fun addStart(method: JcMethod) {
         backward.addStart(method)
         forward.addStart(method)
+    }
+
+    override fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
+        return forward.addStartFact(method, fact)
     }
 
     override fun analyze(): Map<JcMethod, IfdsMethodSummary> {
@@ -49,16 +43,14 @@ class IfdsWithBackwardPreSearch(
         return forward.analyze()
     }
 
-    companion object : IfdsInstanceProvider {
-        override fun createInstance(
-            graph: ApplicationGraph<JcMethod, JcInst>,
-            analyzer: Analyzer,
-            devirtualizer: Devirtualizer,
-            context: AnalysisContext,
-            unitResolver: UnitResolver<*>,
-            unit: Any?
-        ): IfdsInstance {
-            return IfdsWithBackwardPreSearch(graph, analyzer, devirtualizer, context, unitResolver, unit)
+    companion object {
+        fun createProvider(
+            forwardAnalyzer: Analyzer,
+            backwardAnalyzer: Analyzer,
+        ) = IfdsInstanceProvider { graph, devirtualizer, context, unitResolver, unit ->
+            val forward = IfdsUnitInstance(graph, forwardAnalyzer, devirtualizer, context, unitResolver, unit)
+            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, devirtualizer, context, unitResolver, unit)
+            IfdsWithBackwardPreSearch(forward, backward)
         }
     }
 }

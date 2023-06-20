@@ -57,20 +57,6 @@ class NpeAnalyzer(
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
-    override val name: String = value
-
-    override val backward: Analyzer = object : Analyzer {
-        override val backward: Analyzer
-            get() = this@NpeAnalyzer
-        override val flowFunctions: FlowFunctionsSpace
-            get() = NpeBackwardFunctions(graph, maxPathLength)
-        override val name: String
-            get() = value
-
-        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-            error("Do not call sources for backward analyzer instance")
-        }
-    }
 
     companion object : SpaceId {
         override val value: String = "npe-analysis"
@@ -255,6 +241,17 @@ private class NpeForwardFunctions(
     }
 }
 
+class NpeFlowdroidBackwardAnalyzer(
+    graph: JcApplicationGraph,
+    maxPathLength: Int = 5
+) : Analyzer {
+    override val flowFunctions: FlowFunctionsSpace = NpeBackwardFunctions(graph, maxPathLength)
+
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+        error("Should never be called")
+    }
+}
+
 private class NpeBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int,
@@ -262,45 +259,14 @@ private class NpeBackwardFunctions(
     override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
 }
 
-class NpeAnalyzerV2(
+class NpePrecalcBackwardAnalyzer(
     graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
-    override val name: String = value
-
-    override val backward: Analyzer = object : Analyzer {
-        override val backward: Analyzer
-            get() = this@NpeAnalyzerV2
-        override val flowFunctions: FlowFunctionsSpace
-            get() = NpePrecalcBackwardFunctions(graph, maxPathLength)
-        override val name: String
-            get() = value
-
-        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-            return emptyList()
-        }
-    }
-
-    companion object : SpaceId {
-        override val value: String = "npe-analysis"
-    }
+    override val flowFunctions: FlowFunctionsSpace = NpePrecalcBackwardFunctions(graph, maxPathLength)
 
     override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
-        ifdsResult.resultFacts.forEach { (inst, facts) ->
-            facts.filterIsInstance<NpeTaintNode>().forEach { fact ->
-                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
-                    vulnerabilities.add(
-                        VulnerabilityInstance(
-                            value,
-                            ifdsResult.resolveTaintRealisationsGraph(IfdsVertex(inst, fact))
-                        )
-                    )
-                }
-            }
-        }
-        return vulnerabilities
+        return emptyList()
     }
 }
 
