@@ -34,10 +34,6 @@ class BidiIfdsForTaintAnalysis(
     graph: ApplicationGraph<JcMethod, JcInst>
 ): IfdsInstance {
 
-//    private val forward = IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
-//
-//    private val backward = IfdsUnitInstance(graph.reversed, analyzer.backward, devirtualizer, context, unitResolver, unit)
-
     init {
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover

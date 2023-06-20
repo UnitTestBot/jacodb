@@ -173,7 +173,8 @@ private class NpeForwardFunctions(
         if (fact == ZEROFact) {
             if (inst.pathComparedWithNull != null) {
                 if ((inst.condition is JcEqExpr && currentBranch == inst.trueBranch) ||
-                    (inst.condition is JcNeqExpr && currentBranch == inst.falseBranch)) {
+                    (inst.condition is JcNeqExpr && currentBranch == inst.falseBranch)
+                ) {
                     // This is a hack: instructions like `return null` in branch of next will be considered only if
                     //  the fact holds (otherwise we could not get there)
                     return listOf(NpeTaintNode(inst.pathComparedWithNull!!))

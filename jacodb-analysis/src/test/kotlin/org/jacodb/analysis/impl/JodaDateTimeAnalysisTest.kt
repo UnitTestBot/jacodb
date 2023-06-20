@@ -49,11 +49,12 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
         val engine = IfdsUnitTraverser(graph, unitResolver, devirtualizer, ifdsInstanceProvider)
         clazz.declaredMethods.forEach { engine.addStart(it) }
-        val result = engine.analyze().toDumpable()
+        val result = engine.analyze()
+        val kek = result.toDumpable()
 
-        println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
+        println("Vulnerabilities found: ${kek.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
-        json.encodeToStream(result, System.out)
+        json.encodeToStream(kek, System.out)
     }
 
     @Test

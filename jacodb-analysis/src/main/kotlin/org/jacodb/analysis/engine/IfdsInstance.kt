@@ -18,8 +18,7 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.analysis.JcApplicationGraph
 
 interface IfdsInstance {
     fun analyze(): Map<JcMethod, IfdsMethodSummary>
@@ -31,7 +30,7 @@ interface IfdsInstance {
 
 fun interface IfdsInstanceProvider {
     fun createInstance(
-        graph: ApplicationGraph<JcMethod, JcInst>,
+        graph: JcApplicationGraph,//ApplicationGraph<JcMethod, JcInst>,
         devirtualizer: Devirtualizer,
         context: AnalysisContext,
         unitResolver: UnitResolver<*>,

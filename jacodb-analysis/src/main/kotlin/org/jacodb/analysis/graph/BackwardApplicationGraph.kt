@@ -16,7 +16,11 @@
 
 package org.jacodb.analysis.graph
 
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 
 class BackwardApplicationGraph<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>
@@ -40,3 +44,16 @@ val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
     get() = if (this is BackwardApplicationGraph) {
         this.forward
     } else BackwardApplicationGraph(this)
+
+class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
+    JcApplicationGraph, ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
+    override val classpath: JcClasspath
+        get() = forward.classpath
+}
+
+val JcApplicationGraph.reversed: JcApplicationGraph
+    get() = if (this is BackwardJcApplicationGraph) {
+        this.forward
+    } else {
+        BackwardJcApplicationGraph(this)
+    }
