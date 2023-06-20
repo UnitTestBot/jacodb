@@ -28,7 +28,9 @@ import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.FieldAccessor
 import org.jacodb.analysis.paths.isDereferencedAt
+import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcMethod
@@ -46,6 +48,7 @@ import org.jacodb.api.cfg.JcNewExpr
 import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
+import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
@@ -257,6 +260,92 @@ private class NPEBackwardFunctions(
     maxPathLength: Int,
 ) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
     override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
+}
+
+class NpeAnalyzerV2(
+    graph: JcApplicationGraph,
+    maxPathLength: Int = 5
+) : Analyzer {
+    override val flowFunctions: FlowFunctionsSpace = NPEForwardFunctions(graph, maxPathLength)
+    override val name: String = value
+
+    override val backward: Analyzer = object : Analyzer {
+        override val backward: Analyzer
+            get() = this@NpeAnalyzerV2
+        override val flowFunctions: FlowFunctionsSpace
+            get() = NPEPrecalcBackwardFunctions(graph, maxPathLength)
+        override val name: String
+            get() = value
+
+        override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+            return emptyList()
+        }
+    }
+
+    companion object : SpaceId {
+        override val value: String = "npe-analysis"
+    }
+
+    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
+        ifdsResult.resultFacts.forEach { (inst, facts) ->
+            facts.filterIsInstance<NPETaintNode>().forEach { fact ->
+                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+                    vulnerabilities.add(
+                        VulnerabilityInstance(
+                            value,
+                            ifdsResult.resolveTaintRealisationsGraph(IfdsVertex(inst, fact))
+                        )
+                    )
+                }
+            }
+        }
+        return vulnerabilities
+    }
+}
+
+class NPEPrecalcBackwardFunctions(
+    graph: JcApplicationGraph,
+    maxPathLength: Int
+) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
+    override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
+
+    override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+        val thisInstance = atInst.location.method.thisInstance.toPath()
+        if (fact == ZEROFact) {
+            val derefs = atInst.values
+                .mapNotNull { it.toPathOrNull() }
+                .filter { it.isDereferencedAt(atInst) }
+                .filterNot { it == thisInstance }
+                .map { NPETaintNode(it) }
+            return listOf(ZEROFact) + derefs
+        }
+
+        if (fact !is TaintNode || fact.id !in inIds) {
+            return emptyList()
+        }
+
+        val factPath = (fact as? TaintNode)?.variable
+        val default = if (dropFact) emptyList() else listOf(fact)
+        val toPath = to.toPathOrNull() ?: return default
+        val fromPath = from.toPathOrNull() ?: return default
+
+        val diff = factPath.minus(fromPath)
+        if (diff != null) {
+            return listOf(fact.moveToOtherPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength))).filterNot {
+                it.variable == thisInstance
+            }
+        }
+        return default
+    }
+
+    override fun obtainStartFacts(startStatement: JcInst): List<DomainFact> {
+        val values = startStatement.values
+        return listOf(ZEROFact) + values
+            .mapNotNull { it.toPathOrNull() }
+            .filterNot { it == startStatement.location.method.thisInstance.toPath() }
+            .map { NPETaintNode(it) }
+    }
 }
 
 private val JcMethod.treatAsNullable: Boolean

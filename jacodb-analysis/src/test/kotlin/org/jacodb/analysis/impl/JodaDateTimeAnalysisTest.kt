@@ -20,14 +20,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.analyzers.NpeAnalyzer
+import org.jacodb.analysis.analyzers.NpeAnalyzerV2
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
-import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsInstanceProvider
 import org.jacodb.analysis.engine.IfdsUnitInstance
 import org.jacodb.analysis.engine.IfdsUnitTraverser
+import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.toDumpable
@@ -63,6 +63,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() {
-        testOne(NpeAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, BidiIfdsForTaintAnalysis)
+        testOne(NpeAnalyzerV2(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, IfdsWithBackwardPreSearch)// BidiIfdsForTaintAnalysis)
     }
 }

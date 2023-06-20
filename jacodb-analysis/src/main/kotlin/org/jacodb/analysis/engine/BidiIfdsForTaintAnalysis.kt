@@ -30,7 +30,7 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
 class BidiIfdsForTaintAnalysis(
-    private val graph: ApplicationGraph<JcMethod, JcInst>,
+    graph: ApplicationGraph<JcMethod, JcInst>,
     analyzer: Analyzer,
     devirtualizer: Devirtualizer,
     context: AnalysisContext,

@@ -43,7 +43,7 @@ abstract class AbstractTaintBackwardFunctions(
 ) : FlowFunctionsSpace {
     private val classpath: JcClasspath = graph.classpath
     
-    override fun obtainStartFacts(startStatement: JcInst): Collection<TaintNode> {
+    override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return emptyList()
     }
 

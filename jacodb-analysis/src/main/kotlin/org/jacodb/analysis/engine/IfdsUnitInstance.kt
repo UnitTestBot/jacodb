@@ -17,9 +17,11 @@
 package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.VulnerabilityInstance
+import org.jacodb.analysis.engine.PathEdgePredecessorKind.CALL_TO_START
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
+import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
 import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -86,7 +88,7 @@ class IfdsUnitInstance(
             pathEdges.add(e)
             workList.add(e)
             val isNew =
-                pred.kind != SEQUENT && pred.kind != PathEdgePredecessorKind.UNKNOWN || pred.predEdge.v.domainFact != e.v.domainFact
+                pred.kind != SEQUENT && pred.kind != UNKNOWN || pred.predEdge.v.domainFact != e.v.domainFact
             val predInst =
                 pred.predEdge.v.statement.takeIf { it != e.v.statement && it.location.method == e.v.statement.location.method }
             listeners.forEach { it.onPropagate(e, predInst, isNew) }
@@ -96,7 +98,15 @@ class IfdsUnitInstance(
     }
 
     fun addNewPathEdge(e: IfdsEdge): Boolean {
-        return propagate(e, PathEdgePredecessor(e, PathEdgePredecessorKind.UNKNOWN))
+        return propagate(e, PathEdgePredecessor(e, UNKNOWN))
+    }
+
+    fun addStartFact(method: JcMethod, fact: DomainFact) {
+        graph.entryPoint(method).forEach {
+            val vertex = IfdsVertex(it, fact)
+            val edge = IfdsEdge(vertex, vertex)
+            propagate(edge, PathEdgePredecessor(edge, NO_PREDECESSOR))
+        }
     }
 
     private val JcMethod.isExtern: Boolean
@@ -120,10 +130,11 @@ class IfdsUnitInstance(
                         val factsAtStart = flowSpace.obtainCallToStartFlowFunction(n, callee).compute(d2)
                         for (sPoint in graph.entryPoint(callee)) {
                             for (sFact in factsAtStart) {
-
                                 val sVertex = IfdsVertex(sPoint, sFact)
-                                val exitVertexes = if (callee.isExtern) {
-                                    context.summaries[callee]?.factsAtExits?.get(sVertex).orEmpty()
+                                val exitVertexes: Iterable<IfdsVertex> = if (callee.isExtern) {
+                                    context.summaries[callee]?.factsAtExits?.get(sVertex) ?: graph.exitPoints(callee).map {
+                                        IfdsVertex(it, sVertex.domainFact)
+                                    }.toSet()
                                 } else {
                                     startToEndEdges.getByStart(sVertex).map { it.v }
                                 }
@@ -144,7 +155,7 @@ class IfdsUnitInstance(
                                 } else {
                                     callSitesOf.getOrPut(sVertex) { mutableSetOf() }.add(curEdge)
                                     val nextEdge = IfdsEdge(sVertex, sVertex)
-                                    propagate(nextEdge, PathEdgePredecessor(curEdge, PathEdgePredecessorKind.CALL_TO_START))
+                                    propagate(nextEdge, PathEdgePredecessor(curEdge, CALL_TO_START))
                                 }
                             }
                         }
@@ -180,7 +191,7 @@ class IfdsUnitInstance(
         }
     }
 
-    private val fullResults: IfdsResult by lazy {
+    val fullResults: IfdsResult by lazy {
         val resultFacts = mutableMapOf<JcInst, MutableSet<DomainFact>>()
 
         for (pathEdge in pathEdges.getAll()) {

@@ -51,6 +51,7 @@ abstract class BaseAnalysisTest : BaseTest() {
             .map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
+//            .filter { it.contains("Integer_66a") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
