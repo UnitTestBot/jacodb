@@ -21,7 +21,13 @@ import org.jacodb.api.JcFeatureEvent
 
 class JcFeaturesChain(val features: List<JcClasspathFeature>) {
 
-    fun newRequest(vararg input: Any) = JcFeaturesRequest(features, arrayOf(*input))
+    inline fun <reified T : JcClasspathFeature> run(call: (T) -> Unit) {
+        for (feature in features) {
+            if (feature is T) {
+                call(feature)
+            }
+        }
+    }
 
     inline fun <reified T : JcClasspathFeature, W> call(call: (T) -> W?): W? {
         var result: W? = null
@@ -42,23 +48,7 @@ class JcFeaturesChain(val features: List<JcClasspathFeature>) {
         }
         return result
     }
-
-
 }
-
-class JcFeaturesRequest(val features: List<JcClasspathFeature>, val input: Array<Any>) {
-
-
-    inline fun <reified T : JcClasspathFeature> run(call: (T) -> Unit) {
-        for (feature in features) {
-            if (feature is T) {
-                call(feature)
-            }
-        }
-    }
-
-}
-
 
 class JcFeatureEventImpl(
     override val feature: JcClasspathFeature,
