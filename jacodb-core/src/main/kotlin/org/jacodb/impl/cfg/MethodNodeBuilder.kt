@@ -862,7 +862,7 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawClassConstant(value: JcRawClassConstant) {
-        currentInsnList.add(LdcInsnNode(value.className.jvmClassName))
+        currentInsnList.add(LdcInsnNode(Type.getType(value.className.jvmTypeName)))
         updateStackInfo(1)
     }
 
