@@ -23,6 +23,9 @@ import org.jacodb.api.JcDeclaration
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.objectClass
 import org.jacodb.impl.bytecode.JcDeclarationImpl
+import org.jacodb.impl.bytecode.joinFeatureFields
+import org.jacodb.impl.bytecode.joinFeatureMethods
+import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.VirtualLocation
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
@@ -41,16 +44,23 @@ interface JcVirtualClass : JcClassOrInterface {
 open class JcVirtualClassImpl(
     override val name: String,
     override val access: Int = Opcodes.ACC_PUBLIC,
-    override val declaredFields: List<JcVirtualField>,
-    override val declaredMethods: List<JcVirtualMethod>
+    private val initialFields: List<JcVirtualField>,
+    private val initialMethods: List<JcVirtualMethod>
 ) : JcVirtualClass {
 
-    init {
-        declaredFields.forEach { it.bind(this) }
-        declaredMethods.forEach { it.bind(this) }
-    }
+    private val featuresChain get() = JcFeaturesChain(classpath.features.orEmpty())
 
     private lateinit var virtualLocation: VirtualLocation
+
+    override val declaredFields: List<JcVirtualField> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val default = initialFields.onEach { it.bind(this) }
+        default.joinFeatureFields(this, featuresChain).map { it as JcVirtualField }
+    }
+
+    override val declaredMethods: List<JcVirtualMethod> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val default = initialMethods.onEach { it.bind(this) }
+        default.joinFeatureMethods(this, featuresChain).map { it as JcVirtualMethod }
+    }
 
     override val declaration: JcDeclaration
         get() = JcDeclarationImpl.of(virtualLocation, this)

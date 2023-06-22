@@ -42,8 +42,6 @@ class JcClassOrInterfaceImpl(
     private val featuresChain: JcFeaturesChain,
 ) : JcClassOrInterface {
 
-    private val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
-
     private val cachedInfo: ClassInfo? = when (classSource) {
         is LazyClassSourceImpl -> classSource.info // that means that we are loading bytecode. It can be removed let's cache info
         is ClassSourceImpl -> classSource.info // we can easily read link let's do it
@@ -52,7 +50,7 @@ class JcClassOrInterfaceImpl(
 
     private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->
-            featuresChain.newRequest().run<JcClassExtFeature> {
+            featuresChain.run<JcClassExtFeature> {
                 map.putAll(it.extensionValuesOf(this).orEmpty())
             }
         }
@@ -131,55 +129,12 @@ class JcClassOrInterfaceImpl(
     override val declaredFields: List<JcField>
         get() {
             val default = info.fields.map { JcFieldImpl(this, it) }
-            if (hasClassFeatures) {
-                val additional = TreeSet<JcField> { o1, o2 -> o1.name.compareTo(o2.name) }
-                featuresChain.newRequest().run<JcClassExtFeature> {
-                    it.fieldsOf(this, default)?.let {
-                        additional.addAll(it)
-                    }
-                }
-                if (additional.isNotEmpty()) {
-                    val additionalMap = additional.associateBy { it.name }.toMutableMap()
-                    // we need to preserve order of methods
-                    return default.map {
-                        val uniqueName = it.name
-                        additionalMap[uniqueName]?.also {
-                            additionalMap.remove(uniqueName)
-                        } ?: it
-                    } + additionalMap.values
-                }
-            }
-            return default
+            return default.joinFeatureFields(this, featuresChain)
         }
-
-    private val JcMethod.uniqueName: String get() = name + description
 
     override val declaredMethods: List<JcMethod> by lazy(PUBLICATION) {
         val default = info.methods.map { toJcMethod(it, featuresChain) }
-        if (hasClassFeatures) {
-            val additional = TreeSet<JcMethod> { o1, o2 ->
-                o1.uniqueName.compareTo(o2.uniqueName)
-            }
-            featuresChain.newRequest().run<JcClassExtFeature> {
-                it.methodsOf(this, default)?.let {
-                    additional.addAll(it)
-                }
-            }
-            if (additional.isNotEmpty()) {
-                val additionalMap = additional.associateBy { it.uniqueName }.toMutableMap()
-                // we need to preserve order of methods
-                default.map {
-                    val uniqueName = it.uniqueName
-                    additionalMap[uniqueName]?.also {
-                        additionalMap.remove(uniqueName)
-                    } ?: it
-                } + additionalMap.values
-            } else {
-                default
-            }
-        } else {
-            default
-        }
+        default.joinFeatureMethods(this, featuresChain)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -196,4 +151,60 @@ class JcClassOrInterfaceImpl(
     override fun toString(): String {
         return "(id:${declaration.location.id})$name"
     }
+}
+
+fun List<JcField>.joinFeatureFields(
+    jcClassOrInterface: JcClassOrInterface,
+    featuresChain: JcFeaturesChain
+): List<JcField> {
+    val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
+    if (hasClassFeatures) {
+        val additional = TreeSet<JcField> { o1, o2 -> o1.name.compareTo(o2.name) }
+        featuresChain.run<JcClassExtFeature> {
+            it.fieldsOf(jcClassOrInterface, this)?.let {
+                additional.addAll(it)
+            }
+        }
+        if (additional.isNotEmpty()) {
+            return appendOrOverride(additional) { it.name }
+        }
+    }
+    return this
+}
+
+fun List<JcMethod>.joinFeatureMethods(
+    jcClassOrInterface: JcClassOrInterface,
+    featuresChain: JcFeaturesChain
+): List<JcMethod> {
+    val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
+    if (hasClassFeatures) {
+        val additional = TreeSet<JcMethod> { o1, o2 ->
+            o1.uniqueName.compareTo(o2.uniqueName)
+        }
+        featuresChain.run<JcClassExtFeature> {
+            it.methodsOf(jcClassOrInterface, this)?.let {
+                additional.addAll(it)
+            }
+        }
+        if (additional.isNotEmpty()) {
+            return appendOrOverride(additional) { it.uniqueName }
+        }
+    }
+    return this
+}
+
+private val JcMethod.uniqueName: String get() = name + description
+
+private inline fun <T> List<T>.appendOrOverride(additional: Set<T>, getKey: (T) -> String): List<T> {
+    if (additional.isNotEmpty()) {
+        val additionalMap = additional.associateBy(getKey).toMutableMap()
+        // we need to preserve order
+        return map {
+            val uniqueName = getKey(it)
+            additionalMap[uniqueName]?.also {
+                additionalMap.remove(uniqueName)
+            } ?: it
+        } + additionalMap.values
+    }
+    return this
 }
