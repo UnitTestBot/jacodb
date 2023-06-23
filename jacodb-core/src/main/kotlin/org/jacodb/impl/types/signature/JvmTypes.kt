@@ -31,10 +31,10 @@ sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotatio
     abstract val displayName: String
 }
 
-internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
+sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
     : JvmType(isNullable, annotations)
 
-internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
     : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
@@ -42,7 +42,7 @@ internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = nul
 
 }
 
-internal class JvmParameterizedType(
+class JvmParameterizedType(
     val name: String,
     val parameterTypes: List<JvmType>,
     isNullable: Boolean? = null,
@@ -67,7 +67,7 @@ internal class JvmParameterizedType(
 
 }
 
-internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
     : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
@@ -84,7 +84,7 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, an
  *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
  *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
  */
-internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
+class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
     : JvmRefType(isNullable, annotations) {
 
     constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : this(
@@ -120,30 +120,30 @@ internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, 
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
-internal sealed class JvmWildcard : JvmType(isNullable = true, listOf())
+sealed class JvmWildcard : JvmType(isNullable = true, listOf())
 
-internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
+sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 
-    internal class JvmUpperBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
+    class JvmUpperBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
         override val displayName: String
             get() = "? extends ${bound.displayName}"
 
     }
 
-    internal class JvmLowerBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
+    class JvmLowerBoundWildcard(boundType: JvmType) : JvmBoundWildcard(boundType) {
         override val displayName: String
             get() = "? super ${bound.displayName}"
 
     }
 }
 
-internal object JvmUnboundWildcard : JvmWildcard() {
+object JvmUnboundWildcard : JvmWildcard() {
 
     override val displayName: String
         get() = "*"
 }
 
-internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf())
+class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf())
     : JvmRefType(isNullable = false, annotations) {
 
     companion object {
@@ -168,7 +168,7 @@ internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation>
 
 }
 
-internal interface JvmTypeVisitor<ContextType> {
+interface JvmTypeVisitor<ContextType> {
     fun visitType(type: JvmType, context: ContextType): JvmType {
         return when (type) {
             is JvmPrimitiveType -> type
