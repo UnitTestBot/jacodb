@@ -108,6 +108,7 @@ import org.jacodb.impl.cfg.util.isArray
 import org.jacodb.impl.cfg.util.isDWord
 import org.jacodb.impl.cfg.util.isPrimitive
 import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.ConstantDynamic
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
@@ -201,6 +202,32 @@ private fun List<*>?.parseStack(): SortedMap<Int, TypeName> {
         result[index] = type
     }
     return result.toSortedMap()
+}
+
+private val primitiveWeights = mapOf(
+    PredefinedPrimitives.Boolean to 0,
+    PredefinedPrimitives.Byte to 1,
+    PredefinedPrimitives.Char to 1,
+    PredefinedPrimitives.Short to 2,
+    PredefinedPrimitives.Int to 3,
+    PredefinedPrimitives.Long to 4,
+    PredefinedPrimitives.Float to 5,
+    PredefinedPrimitives.Double to 6
+)
+
+private fun maxOfPrimitiveTypes(first: String, second: String): String {
+    val weight1 = primitiveWeights[first] ?: 0
+    val weight2 = primitiveWeights[second] ?: 0
+    return when {
+        weight1 >= weight2 -> first
+        else -> second
+    }
+}
+
+private fun String.lessThen(anotherPrimitive: String): Boolean {
+    val weight1 = primitiveWeights[anotherPrimitive] ?: 0
+    val weight2 = primitiveWeights[this] ?: 0
+    return weight2 <= weight1
 }
 
 private val Type.asTypeName: BsmArg
@@ -734,23 +761,38 @@ class RawInstListBuilder(
     private fun buildBinary(insn: InsnNode) {
         val rhv = pop()
         val lhv = pop()
+        val resolvedType = resolveType(lhv.typeName, rhv.typeName)
         val expr = when (val opcode = insn.opcode) {
-            in Opcodes.IADD..Opcodes.DADD -> JcRawAddExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.ISUB..Opcodes.DSUB -> JcRawSubExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IMUL..Opcodes.DMUL -> JcRawMulExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IDIV..Opcodes.DDIV -> JcRawDivExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IREM..Opcodes.DREM -> JcRawRemExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.ISHL..Opcodes.LSHL -> JcRawShlExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.ISHR..Opcodes.LSHR -> JcRawShrExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IUSHR..Opcodes.LUSHR -> JcRawUshrExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IAND..Opcodes.LAND -> JcRawAndExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IOR..Opcodes.LOR -> JcRawOrExpr(lhv.typeName, lhv, rhv)
-            in Opcodes.IXOR..Opcodes.LXOR -> JcRawXorExpr(lhv.typeName, lhv, rhv)
+            in Opcodes.IADD..Opcodes.DADD -> JcRawAddExpr(resolvedType, lhv, rhv)
+            in Opcodes.ISUB..Opcodes.DSUB -> JcRawSubExpr(resolvedType, lhv, rhv)
+            in Opcodes.IMUL..Opcodes.DMUL -> JcRawMulExpr(resolvedType, lhv, rhv)
+            in Opcodes.IDIV..Opcodes.DDIV -> JcRawDivExpr(resolvedType, lhv, rhv)
+            in Opcodes.IREM..Opcodes.DREM -> JcRawRemExpr(resolvedType, lhv, rhv)
+            in Opcodes.ISHL..Opcodes.LSHL -> JcRawShlExpr(resolvedType, lhv, rhv)
+            in Opcodes.ISHR..Opcodes.LSHR -> JcRawShrExpr(resolvedType, lhv, rhv)
+            in Opcodes.IUSHR..Opcodes.LUSHR -> JcRawUshrExpr(resolvedType, lhv, rhv)
+            in Opcodes.IAND..Opcodes.LAND -> JcRawAndExpr(resolvedType, lhv, rhv)
+            in Opcodes.IOR..Opcodes.LOR -> JcRawOrExpr(resolvedType, lhv, rhv)
+            in Opcodes.IXOR..Opcodes.LXOR -> JcRawXorExpr(resolvedType, lhv, rhv)
             else -> error("Unknown binary opcode: $opcode")
         }
-        val assignment = nextRegister(lhv.typeName)
+        val assignment = nextRegister(resolvedType)
         instructionList(insn) += JcRawAssignInst(method, assignment, expr)
         push(assignment)
+    }
+
+    private fun resolveType(left: TypeName, right: TypeName): TypeName {
+        val leftName = left.typeName
+        val rightName = right.typeName
+        val leftIsPrimitive = PredefinedPrimitives.matches(leftName)
+        if (leftIsPrimitive && leftName != rightName) {
+            val max = maxOfPrimitiveTypes(leftName, rightName)
+            return when {
+                max.lessThen(PredefinedPrimitives.Int)-> TypeNameImpl(PredefinedPrimitives.Int)
+                else -> TypeNameImpl(max)
+            }
+        }
+        return left
     }
 
     private fun buildUnary(insn: InsnNode) {
@@ -1246,6 +1288,7 @@ class RawInstListBuilder(
                             cst.returnType.descriptor.typeName(),
                             METHOD_TYPE_CLASS.typeName()
                         )
+
                         else -> ldcValue(cst)
                     }
                 )
