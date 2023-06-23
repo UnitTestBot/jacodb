@@ -30,13 +30,17 @@ import org.jacodb.api.cfg.JcGtExpr
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInt
 import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.primitives.Primitives
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
@@ -195,6 +199,17 @@ class InstructionsTest : BaseTest() {
             failed.isEmpty(),
             "Failed to process methods: \n${failed.joinToString("\n") { it.enclosingClass.name + "#" + it.name }}"
         )
+    }
+
+    @Test
+    fun `resolving primitive types for local variables should work`() {
+        val clazz = cp.findClass<Primitives>()
+        clazz.declaredMethods.filter { !it.isConstructor }.forEach {
+            val returnValue = (it.instList.last() as JcReturnInst).returnValue
+            assertNotNull(returnValue!!)
+            val expected = cp.findTypeOrNull(it.returnType.typeName)
+            assertEquals(expected, returnValue.type, "types not matched for ${it.humanReadableSignature}")
+        }
     }
 }
 
