@@ -23,6 +23,7 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.classtable.extractClassesTable
+import org.jacodb.impl.features.HierarchyExtensionImpl
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.typesolver.createGsonBuilder
@@ -44,7 +45,7 @@ abstract class AbstractTypeQuery {
 
     protected lateinit var classes: List<JcClassOrInterface>
     protected lateinit var jcClasspath: JcClasspath
-    protected lateinit var hierarchy: HierarchyExtension
+    protected lateinit var hierarchy: HierarchyExtensionImpl
 
     @BeforeEach
     fun setupHierarchy() {
@@ -57,8 +58,14 @@ abstract class AbstractTypeQuery {
         hierarchy = runBlocking { jcClasspath.hierarchyExt() }
     }
 
-    protected data class TypeQueryWithUpperBound(
+    protected data class SingleTypeQueryWithUpperBound(
         val upperBound: JvmType,
+        val expectedAnswersNumber: Int,
+        val rawExpectedAnswers: List<JvmType>
+    )
+
+    protected data class SequentialTypeQueryWithUpperBound(
+        val upperBounds: List<JvmType>,
         val expectedAnswersNumber: Int,
         val rawExpectedAnswers: List<JvmType>
     )
@@ -80,3 +87,8 @@ internal val JcClassType.allSuperHierarchySequence: Sequence<JcClassTypeImpl>
 
 internal val JcClassType.allSuperHierarchy: Set<JcClassTypeImpl>
     get() = allSuperHierarchySequence.toSet()
+
+internal fun HierarchyExtensionImpl.findSubClassesIncluding(
+    name: String,
+    allHierarchy: Boolean
+): Sequence<JcClassOrInterface> = findSubClasses(name, allHierarchy) + cp.findClassOrNull(name)!!

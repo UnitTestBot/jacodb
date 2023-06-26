@@ -37,7 +37,7 @@ import org.jooq.SelectConditionStep
 import java.util.concurrent.Future
 
 @Suppress("SqlResolve")
-class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
+class HierarchyExtensionImpl(val cp: JcClasspath) : HierarchyExtension {
 
     companion object {
         private fun allHierarchyQuery(locationIds: String, sinceId: Long?) = """

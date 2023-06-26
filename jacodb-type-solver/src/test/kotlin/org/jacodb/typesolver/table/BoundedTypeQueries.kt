@@ -54,8 +54,12 @@ class BoundedTypeQueries : AbstractTypeQuery() {
         for (upperBoundName in upperBoundNames) {
             val upperBound = classes.single { it.name == upperBoundName }.toJvmTypeWithTypeArguments()
             val expectedAnswers = hierarchy
-                .findSubClasses(upperBoundName, allHierarchy = true)
+                .findSubClassesIncluding(upperBoundName, allHierarchy = true)
                 .filter {
+                    if (it.name == upperBoundName) {
+                        return@filter true
+                    }
+
                     val superHierarchy = it
                         .toType()
                         .allSuperHierarchy
@@ -73,7 +77,7 @@ class BoundedTypeQueries : AbstractTypeQuery() {
                 .map { it.toJvmType(jcClasspath) }
                 .toList()
 
-            val query = TypeQueryWithUpperBound(upperBound, expectedAnswers.size, expectedAnswers)
+            val query = SingleTypeQueryWithUpperBound(upperBound, expectedAnswers.size, expectedAnswers)
             val json = gson.toJson(query)
 
             Path("only_type_queries", "single_queries", "extends_${wildcardClass.simpleName.toLowerCase()}_type_variables").let {
