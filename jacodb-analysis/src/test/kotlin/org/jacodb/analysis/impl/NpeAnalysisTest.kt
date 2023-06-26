@@ -218,11 +218,11 @@ class NpeAnalysisTest : BaseAnalysisTest() {
                 graph,
                 SingletonUnitResolver,
             ) { graph, context, unitResolver, unit ->
-                val forward = BidiIfdsForTaintAnalysis.createProvider(
+                val forward = BidiIfdsForTaintAnalysis.createProvider<Unit>(
                     NpeAnalyzer(graph),
                     NpeFlowdroidBackwardAnalyzer(graph)
                 ).createInstance(graph, context, unitResolver, unit)
-                val backward = IfdsUnitInstance.createProvider(NpePrecalcBackwardAnalyzer(graph))
+                val backward = IfdsUnitInstance.createProvider<Unit>(NpePrecalcBackwardAnalyzer(graph))
                     .createInstance(graph.reversed, context, unitResolver, unit)
                 IfdsWithBackwardPreSearch(forward, backward)
             }

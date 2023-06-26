@@ -27,12 +27,12 @@ import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.*
 
-class IfdsUnitInstance(
+class IfdsUnitInstance<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
     private val context: AnalysisContext,
-    private val unitResolver: UnitResolver<*>,
-    private val unit: Any?
+    private val unitResolver: UnitResolver<UnitType>,
+    private val unit: UnitType
 ): IfdsInstance {
 
     private class EdgesStorage {
@@ -243,9 +243,9 @@ class IfdsUnitInstance(
     }
 
     companion object {
-        fun createProvider(
+        fun <UnitType> createProvider(
             analyzer: Analyzer
-        ) = IfdsInstanceFactory { graph, context, unitResolver, unit ->
+        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
             IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
         }
     }

@@ -44,10 +44,10 @@ class IfdsWithBackwardPreSearch(
     }
 
     companion object {
-        fun createProvider(
+        fun <UnitType> createProvider(
             forwardAnalyzer: Analyzer,
             backwardAnalyzer: Analyzer,
-        ) = IfdsInstanceFactory { graph, context, unitResolver, unit ->
+        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
             val forward = IfdsUnitInstance(graph, forwardAnalyzer, context, unitResolver, unit)
             val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, context, unitResolver, unit)
             IfdsWithBackwardPreSearch(forward, backward)

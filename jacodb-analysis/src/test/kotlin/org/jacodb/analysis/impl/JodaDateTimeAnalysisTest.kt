@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    private fun testOne(unitResolver: UnitResolver<*>, ifdsInstanceFactory: IfdsInstanceFactory) {
+    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsInstanceFactory: IfdsInstanceFactory<UnitType>) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
@@ -62,15 +62,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() {
-//        testOne(MethodUnitResolver) { graph, devirtualizer, context, unitResolver, unit ->
-//            val forward = BidiIfdsForTaintAnalysis.createProvider(
-//                NpeAnalyzer(graph),
-//                NpeFlowdroidBackwardAnalyzer(graph)
-//            ).createInstance(graph, devirtualizer, context, unitResolver, unit)
-//            val backward = IfdsUnitInstance.createProvider(NpePrecalcBackwardAnalyzer(graph))
-//                .createInstance(graph.reversed, devirtualizer, context, unitResolver, unit)
-//            IfdsWithBackwardPreSearch(forward, backward)
-//        }
          testOne(MethodUnitResolver, IfdsWithBackwardPreSearch.createProvider(NpeAnalyzer(graph), NpePrecalcBackwardAnalyzer(graph)))
     }
 

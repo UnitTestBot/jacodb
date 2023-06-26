@@ -27,11 +27,11 @@ interface IfdsInstance {
     fun analyze(): Map<JcMethod, IfdsMethodSummary>
 }
 
-fun interface IfdsInstanceFactory {
+fun interface IfdsInstanceFactory<UnitType> {
     fun createInstance(
         graph: JcApplicationGraph,//ApplicationGraph<JcMethod, JcInst>,
         context: AnalysisContext,
-        unitResolver: UnitResolver<*>,
-        unit: Any?
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType
     ): IfdsInstance
 }

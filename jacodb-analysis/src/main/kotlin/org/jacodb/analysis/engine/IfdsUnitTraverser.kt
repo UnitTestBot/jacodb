@@ -29,7 +29,7 @@ interface AnalysisContext {
 class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
-    private val ifdsInstanceFactory: IfdsInstanceFactory
+    private val ifdsInstanceFactory: IfdsInstanceFactory<UnitType>
 ) : AnalysisEngine {
     private val contextInternal: MutableMap<JcMethod, IfdsMethodSummary> = mutableMapOf()
     private val context = object : AnalysisContext {
