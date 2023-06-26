@@ -32,8 +32,6 @@ import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.TaintRealisationsGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
-import org.jacodb.analysis.points2.AllOverridesDevirtualizer
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -92,17 +90,15 @@ interface Factory {
 
 interface AnalysisEngineFactory : Factory {
     fun createAnalysisEngine(
-        graph: JcApplicationGraph,
-        devirtualizer: Devirtualizer,
+        graph: JcApplicationGraph
     ): AnalysisEngine
 }
 
 class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
-    override fun createAnalysisEngine(graph: JcApplicationGraph, devirtualizer: Devirtualizer): AnalysisEngine {
+    override fun createAnalysisEngine(graph: JcApplicationGraph): AnalysisEngine {
         return IfdsUnitTraverser(
             graph,
             SingletonUnitResolver,
-            devirtualizer,
             IfdsUnitInstance.createProvider(UnusedVariableAnalyzer(graph))
         )
     }
@@ -117,15 +113,13 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
     protected abstract val JcApplicationGraph.backwardAnalyzer: Analyzer
 
     override fun createAnalysisEngine(
-        graph: JcApplicationGraph,
-        devirtualizer: Devirtualizer,
+        graph: JcApplicationGraph
     ): AnalysisEngine {
         val forwardAnalyzer = graph.forwardAnalyzer
         val backwardAnalyzer = graph.backwardAnalyzer
         return IfdsUnitTraverser(
             graph,
             SingletonUnitResolver,
-            devirtualizer,
             BidiIfdsForTaintAnalysis.createProvider(forwardAnalyzer, backwardAnalyzer)
         )
     }
@@ -161,10 +155,6 @@ class AliasAnalysisFactory(
         }
 }
 
-interface DevirtualizerFactory : Factory {
-    fun createDevirtualizer(graph: JcApplicationGraph): Devirtualizer
-}
-
 interface GraphFactory : Factory {
     fun createGraph(classpath: JcClasspath): JcApplicationGraph
 }
@@ -184,18 +174,6 @@ class JcSimplifiedGraphFactory(
             SimplifiedJcApplicationGraph(mainGraph)
         }
     }
-}
-
-object JcNaiveDevirtualizerFactory : DevirtualizerFactory {
-    override fun createDevirtualizer(
-        graph: JcApplicationGraph,
-    ): Devirtualizer {
-        val cp = graph.classpath
-        return AllOverridesDevirtualizer(graph, cp)
-    }
-
-    override val name: String
-        get() = "naive-p2"
 }
 
 inline fun <reified T : Factory> loadFactories(): List<T> {

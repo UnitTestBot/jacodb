@@ -126,9 +126,9 @@ class BidiIfdsForTaintAnalysis(
         fun createProvider(
             forwardAnalyzer: Analyzer,
             backwardAnalyzer: Analyzer,
-        ) = IfdsInstanceFactory { graph, devirtualizer, context, unitResolver, unit ->
-            val forward = IfdsUnitInstance(graph, forwardAnalyzer, devirtualizer, context, unitResolver, unit)
-            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, devirtualizer, context, unitResolver, unit)
+        ) = IfdsInstanceFactory { graph, context, unitResolver, unit ->
+            val forward = IfdsUnitInstance(graph, forwardAnalyzer, context, unitResolver, unit)
+            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, context, unitResolver, unit)
             BidiIfdsForTaintAnalysis(forward, backward, graph)
         }
     }

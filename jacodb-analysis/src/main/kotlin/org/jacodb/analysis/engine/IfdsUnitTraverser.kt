@@ -18,7 +18,6 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.impl.fs.logger
@@ -30,7 +29,6 @@ interface AnalysisContext {
 class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
-    private val devirtualizer: Devirtualizer,
     private val ifdsInstanceFactory: IfdsInstanceFactory
 ) : AnalysisEngine {
     private val contextInternal: MutableMap<JcMethod, IfdsMethodSummary> = mutableMapOf()
@@ -56,7 +54,7 @@ class IfdsUnitTraverser<UnitType>(
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
-            val ifdsInstance = ifdsInstanceFactory.createInstance(graph, devirtualizer, context, unitResolver, next)
+            val ifdsInstance = ifdsInstanceFactory.createInstance(graph, context, unitResolver, next)
             for (method in foundMethods[next].orEmpty()) {
                 ifdsInstance.addStart(method)
             }
@@ -129,7 +127,7 @@ class IfdsUnitTraverser<UnitType>(
     private fun getAllDependencies(method: JcMethod): Set<JcMethod> {
         val result = mutableSetOf<JcMethod>()
         for (inst in method.flowGraph().instructions) {
-            devirtualizer.findPossibleCallees(inst).forEach {
+            graph.callees(inst).forEach {
                 result.add(it)
             }
         }

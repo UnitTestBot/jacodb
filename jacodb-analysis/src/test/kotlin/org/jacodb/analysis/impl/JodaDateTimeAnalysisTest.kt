@@ -18,7 +18,6 @@ package org.jacodb.analysis.impl
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
@@ -46,8 +45,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
-        val engine = IfdsUnitTraverser(graph, unitResolver, devirtualizer, ifdsInstanceFactory)
+        val engine = IfdsUnitTraverser(graph, unitResolver, ifdsInstanceFactory)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze()
         val kek = result.toDumpable()

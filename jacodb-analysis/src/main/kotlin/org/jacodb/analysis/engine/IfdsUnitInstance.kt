@@ -22,7 +22,6 @@ import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.cfg.JcInst
@@ -31,7 +30,6 @@ import java.util.*
 class IfdsUnitInstance(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
-    private val devirtualizer: Devirtualizer,
     private val context: AnalysisContext,
     private val unitResolver: UnitResolver<*>,
     private val unit: Any?
@@ -118,7 +116,7 @@ class IfdsUnitInstance(
             val (u, v) = curEdge
             val (n, d2) = v
 
-            val callees = devirtualizer.findPossibleCallees(n).toList()
+            val callees = graph.callees(n).toList()
             if (callees.isNotEmpty()) {
                 val returnSitesOfN = graph.successors(n)
                 for (returnSite in returnSitesOfN) {
@@ -247,8 +245,8 @@ class IfdsUnitInstance(
     companion object {
         fun createProvider(
             analyzer: Analyzer
-        ) = IfdsInstanceFactory { graph, devirtualizer, context, unitResolver, unit ->
-            IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
+        ) = IfdsInstanceFactory { graph, context, unitResolver, unit ->
+            IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
         }
     }
 }

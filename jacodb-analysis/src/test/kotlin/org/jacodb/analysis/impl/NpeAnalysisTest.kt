@@ -18,7 +18,6 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
@@ -27,7 +26,7 @@ import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
 import org.jacodb.analysis.engine.IfdsUnitInstance
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
-import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.ext.constructors
@@ -214,19 +213,17 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     private val engine: AnalysisEngine
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
-            val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
 
             return IfdsUnitTraverser(
                 graph,
-                MethodUnitResolver,//SingletonUnitResolver,
-                devirtualizer
-            ) { graph, devirtualizer, context, unitResolver, unit ->
+                SingletonUnitResolver,
+            ) { graph, context, unitResolver, unit ->
                 val forward = BidiIfdsForTaintAnalysis.createProvider(
                     NpeAnalyzer(graph),
                     NpeFlowdroidBackwardAnalyzer(graph)
-                ).createInstance(graph, devirtualizer, context, unitResolver, unit)
+                ).createInstance(graph, context, unitResolver, unit)
                 val backward = IfdsUnitInstance.createProvider(NpePrecalcBackwardAnalyzer(graph))
-                    .createInstance(graph.reversed, devirtualizer, context, unitResolver, unit)
+                    .createInstance(graph.reversed, context, unitResolver, unit)
                 IfdsWithBackwardPreSearch(forward, backward)
             }
         }
