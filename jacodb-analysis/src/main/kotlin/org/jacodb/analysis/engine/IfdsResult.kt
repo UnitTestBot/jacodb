@@ -29,7 +29,7 @@ class IfdsResult(
     val summaryEdgeToStartToEndEdges: Map<IfdsEdge, Set<IfdsEdge>>,
     val crossUnitCallees: Map<IfdsVertex, Set<IfdsVertex>>
 ) {
-    private inner class RealisationsGraphBuilder(private val sink: IfdsVertex) {
+    private inner class TraceGraphBuilder(private val sink: IfdsVertex) {
         private val sources: MutableSet<IfdsVertex> = mutableSetOf()
         private val edges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
         private val visited: MutableSet<IfdsEdge> = mutableSetOf()
@@ -98,16 +98,16 @@ class IfdsResult(
             }
         }
 
-        fun build(): TaintRealisationsGraph {
+        fun build(): TraceGraph {
             val initEdges = pathEdges.filter { it.v == sink }
             initEdges.forEach {
                 dfs(it, it.v, false)
             }
-            return TaintRealisationsGraph(sink, sources, edges)
+            return TraceGraph(sink, sources, edges)
         }
     }
 
-    fun resolveTaintRealisationsGraph(vertex: IfdsVertex): TaintRealisationsGraph {
-        return RealisationsGraphBuilder(vertex).build()
+    fun resolveTraceGraph(vertex: IfdsVertex): TraceGraph {
+        return TraceGraphBuilder(vertex).build()
     }
 }

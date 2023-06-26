@@ -221,7 +221,7 @@ class IfdsUnitInstance<UnitType>(
 
         val relevantVulnerabilities = mutableMapOf<JcMethod, MutableList<VulnerabilityInstance>>()
         analyzer.calculateSources(fullResults).forEach {
-            relevantVulnerabilities.getOrPut(graph.methodOf(it.realisationsGraph.sink.statement)) { mutableListOf() }
+            relevantVulnerabilities.getOrPut(graph.methodOf(it.traceGraph.sink.statement)) { mutableListOf() }
                 .add(it)
         }
 
@@ -230,7 +230,7 @@ class IfdsUnitInstance<UnitType>(
             val method = graph.methodOf(callVertex.statement)
             sortedCrossUnitCallees.getOrPut(method) { mutableMapOf() }[callVertex] = CalleeInfo(
                 sVertexes,
-                fullResults.resolveTaintRealisationsGraph(callVertex)
+                fullResults.resolveTraceGraph(callVertex)
             )
         }
         return methods.associateWith {

@@ -27,10 +27,8 @@ import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.AnalysisEngineFactory
-import org.jacodb.analysis.DevirtualizerFactory
 import org.jacodb.analysis.Factory
 import org.jacodb.analysis.GraphFactory
-import org.jacodb.analysis.JcNaiveDevirtualizerFactory
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.NpeAnalysisFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
@@ -104,12 +102,6 @@ fun main(args: Array<String>) {
         shortName = "g",
         description = "Type of code graph to be used by analysis."
     ).default(JcSimplifiedGraphFactory())
-    val devirtualizerFactory by parser.option(
-        factoryChoice<DevirtualizerFactory>(),
-        fullName = "points2",
-        shortName = "p2",
-        description = "Type of points-to engine."
-    ).default(JcNaiveDevirtualizerFactory)
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -147,11 +139,10 @@ fun main(args: Array<String>) {
     }
 
     val graph = graphFactory.createGraph(cp)
-    val devirtualizer = devirtualizerFactory.createDevirtualizer(graph)
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
 
     val analysisEngines = loadAnalysisEngineFactoriesByConfig(config).map {
-        it.createAnalysisEngine(graph, devirtualizer)
+        it.createAnalysisEngine(graph)
     }
 
     val analysisResults = analysisEngines.flatMap { engine ->

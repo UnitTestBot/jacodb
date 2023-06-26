@@ -29,7 +29,7 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsUnitInstance
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.SingletonUnitResolver
-import org.jacodb.analysis.engine.TaintRealisationsGraph
+import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.api.JcClasspath
@@ -44,7 +44,7 @@ data class DumpableVulnerabilityInstance(
     val vulnerabilityType: String,
     val sources: List<String>,
     val sink: String,
-    val realisationPaths: List<List<String>>
+    val traces: List<List<String>>
 )
 
 @Serializable
@@ -52,7 +52,7 @@ data class DumpableAnalysisResult(val foundVulnerabilities: List<DumpableVulnera
 
 data class VulnerabilityInstance(
     val vulnerabilityType: String,
-    val realisationsGraph: TaintRealisationsGraph
+    val traceGraph: TraceGraph
 ) {
     private fun JcInst.prettyPrint(): String {
         return "${toString()} (${location.method.enclosingClass.name}#${location.method.name}:${location.lineNumber})"
@@ -61,9 +61,9 @@ data class VulnerabilityInstance(
     fun toDumpable(maxPathsCount: Int): DumpableVulnerabilityInstance {
         return DumpableVulnerabilityInstance(
             vulnerabilityType,
-            realisationsGraph.sources.map { it.statement.prettyPrint() },
-            realisationsGraph.sink.statement.prettyPrint(),
-            realisationsGraph.getAllPaths().take(maxPathsCount).map { intermediatePoints ->
+            traceGraph.sources.map { it.statement.prettyPrint() },
+            traceGraph.sink.statement.prettyPrint(),
+            traceGraph.getAllTraces().take(maxPathsCount).map { intermediatePoints ->
                 intermediatePoints.map { it.statement.prettyPrint() }
             }.toList()
         )

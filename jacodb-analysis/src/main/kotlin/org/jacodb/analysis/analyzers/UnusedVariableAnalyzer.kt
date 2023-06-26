@@ -24,7 +24,7 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SpaceId
-import org.jacodb.analysis.engine.TaintRealisationsGraph
+import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
@@ -104,7 +104,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, TaintRealisationsGraph(IfdsVertex(it, ZEROFact), setOf(IfdsVertex(it, ZEROFact)), emptyMap()))
+            VulnerabilityInstance(value, TraceGraph(IfdsVertex(it, ZEROFact), setOf(IfdsVertex(it, ZEROFact)), emptyMap()))
         }
         return vulnerabilities
     }

@@ -20,7 +20,7 @@ import org.jacodb.analysis.VulnerabilityInstance
 
 data class CalleeInfo(
     val factsAtCalleeStart: Set<IfdsVertex>,
-    val callsiteRealisationsGraph: TaintRealisationsGraph
+    val callsiteRealisationsGraph: TraceGraph
 )
 
 data class IfdsMethodSummary(

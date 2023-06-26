@@ -61,7 +61,7 @@ class AliasAnalyzer(
                         vulnerabilities.add(
                             VulnerabilityInstance(
                                 value,
-                                ifdsResult.resolveTaintRealisationsGraph(IfdsVertex(inst, fact))
+                                ifdsResult.resolveTraceGraph(IfdsVertex(inst, fact))
                             )
                         )
                     }

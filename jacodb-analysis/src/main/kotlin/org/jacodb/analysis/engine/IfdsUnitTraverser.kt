@@ -77,13 +77,13 @@ class IfdsUnitTraverser<UnitType>(
             }
         }
 
-        logger.info { "Restoring full realisation paths..." }
+        logger.info { "Restoring traces..." }
         // TODO: think about correct filters for overall results
         val vulnerabilities = context.summaries.flatMap { (_, summary) ->
             summary.foundVulnerabilities
-                .map { VulnerabilityInstance(it.vulnerabilityType, extendRealisationsGraph(it.realisationsGraph)) }
+                .map { VulnerabilityInstance(it.vulnerabilityType, extendTraceGraph(it.traceGraph)) }
                 .filter {
-                    it.realisationsGraph.sources.any { source ->
+                    it.traceGraph.sources.any { source ->
                         graph.methodOf(source.statement) in initMethods || source.domainFact == ZEROFact
                     }
                 }
@@ -93,15 +93,15 @@ class IfdsUnitTraverser<UnitType>(
         return vulnerabilities
     }
 
-    private val TaintRealisationsGraph.methods: List<JcMethod>
+    private val TraceGraph.methods: List<JcMethod>
         get() {
             return (edges.keys.map { graph.methodOf(it.statement) } +
                     listOf(graph.methodOf(sink.statement))).distinct()
         }
 
-    private fun extendRealisationsGraph(realisationsGraph: TaintRealisationsGraph): TaintRealisationsGraph {
-        var result = realisationsGraph
-        val methodQueue: MutableSet<JcMethod> = realisationsGraph.methods.toMutableSet()
+    private fun extendTraceGraph(traceGraph: TraceGraph): TraceGraph {
+        var result = traceGraph
+        val methodQueue: MutableSet<JcMethod> = traceGraph.methods.toMutableSet()
         val addedMethods: MutableSet<JcMethod> = mutableSetOf()
         while (methodQueue.isNotEmpty()) {
             val method = methodQueue.first()
