@@ -21,14 +21,14 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 
 interface IfdsInstance {
-    fun analyze(): Map<JcMethod, IfdsMethodSummary>
-
     fun addStart(method: JcMethod)
 
     fun addStartFact(method: JcMethod, fact: DomainFact): Boolean
+
+    fun analyze(): Map<JcMethod, IfdsMethodSummary>
 }
 
-fun interface IfdsInstanceProvider {
+fun interface IfdsInstanceFactory {
     fun createInstance(
         graph: JcApplicationGraph,//ApplicationGraph<JcMethod, JcInst>,
         devirtualizer: Devirtualizer,

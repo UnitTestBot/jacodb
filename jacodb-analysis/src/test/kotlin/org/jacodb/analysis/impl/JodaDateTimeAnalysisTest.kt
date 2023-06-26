@@ -24,7 +24,7 @@ import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.ClassUnitResolver
-import org.jacodb.analysis.engine.IfdsInstanceProvider
+import org.jacodb.analysis.engine.IfdsInstanceFactory
 import org.jacodb.analysis.engine.IfdsUnitInstance
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
@@ -42,12 +42,12 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    private fun testOne(unitResolver: UnitResolver<*>, ifdsInstanceProvider: IfdsInstanceProvider) {
+    private fun testOne(unitResolver: UnitResolver<*>, ifdsInstanceFactory: IfdsInstanceFactory) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val devirtualizer = JcNaiveDevirtualizerFactory.createDevirtualizer(graph)
-        val engine = IfdsUnitTraverser(graph, unitResolver, devirtualizer, ifdsInstanceProvider)
+        val engine = IfdsUnitTraverser(graph, unitResolver, devirtualizer, ifdsInstanceFactory)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze()
         val kek = result.toDumpable()
@@ -64,7 +64,16 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, IfdsWithBackwardPreSearch.createProvider(NpeAnalyzer(graph), NpePrecalcBackwardAnalyzer(graph)))
+//        testOne(MethodUnitResolver) { graph, devirtualizer, context, unitResolver, unit ->
+//            val forward = BidiIfdsForTaintAnalysis.createProvider(
+//                NpeAnalyzer(graph),
+//                NpeFlowdroidBackwardAnalyzer(graph)
+//            ).createInstance(graph, devirtualizer, context, unitResolver, unit)
+//            val backward = IfdsUnitInstance.createProvider(NpePrecalcBackwardAnalyzer(graph))
+//                .createInstance(graph.reversed, devirtualizer, context, unitResolver, unit)
+//            IfdsWithBackwardPreSearch(forward, backward)
+//        }
+         testOne(MethodUnitResolver, IfdsWithBackwardPreSearch.createProvider(NpeAnalyzer(graph), NpePrecalcBackwardAnalyzer(graph)))
     }
 
     private val graph = JcSimplifiedGraphFactory().createGraph(cp)

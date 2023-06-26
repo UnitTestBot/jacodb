@@ -247,7 +247,7 @@ class IfdsUnitInstance(
     companion object {
         fun createProvider(
             analyzer: Analyzer
-        ) = IfdsInstanceProvider { graph, devirtualizer, context, unitResolver, unit ->
+        ) = IfdsInstanceFactory { graph, devirtualizer, context, unitResolver, unit ->
             IfdsUnitInstance(graph, analyzer, devirtualizer, context, unitResolver, unit)
         }
     }

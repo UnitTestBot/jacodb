@@ -31,7 +31,7 @@ class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val devirtualizer: Devirtualizer,
-    private val ifdsInstanceProvider: IfdsInstanceProvider
+    private val ifdsInstanceFactory: IfdsInstanceFactory
 ) : AnalysisEngine {
     private val contextInternal: MutableMap<JcMethod, IfdsMethodSummary> = mutableMapOf()
     private val context = object : AnalysisContext {
@@ -56,7 +56,7 @@ class IfdsUnitTraverser<UnitType>(
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
-            val ifdsInstance = ifdsInstanceProvider.createInstance(graph, devirtualizer, context, unitResolver, next)
+            val ifdsInstance = ifdsInstanceFactory.createInstance(graph, devirtualizer, context, unitResolver, next)
             for (method in foundMethods[next].orEmpty()) {
                 ifdsInstance.addStart(method)
             }
