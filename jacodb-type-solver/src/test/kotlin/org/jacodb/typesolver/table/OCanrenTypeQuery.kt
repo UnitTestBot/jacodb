@@ -20,16 +20,17 @@ import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.allSuperHierarchy
 import org.jacodb.classtable.extractClassesTable
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.testing.allJars
 import org.jacodb.testing.guavaLib
 import org.jacodb.typesolver.createGsonBuilder
 import org.jacodb.typesolver.makeClassesTable
-import org.junit.jupiter.api.Test
 import java.io.File
 import java.lang.reflect.Type
 import kotlin.Array
@@ -141,89 +142,3 @@ private fun chooseType(classes: Collection<JcClassOrInterface>): JcClassOrInterf
 
 private fun <T> Collection<T>.takeRandomElements(): List<T> = shuffled(random).take(random.nextInt(size))
 
-class TypeQueries {
-    private val configuration: Configuration = Configuration(ClasspathConfiguration.ALL_JARS)
-
-    data class TypeQueryWithUpperBound(val upperBound: JvmType, val expectedAnswersNumber: Int, val expectedAnswers: List<JvmType>)
-
-    @Test
-    fun writeArtificialUnboundedTypeQueries() {
-        with(configuration) {
-            // TODO use InMemoryHierarchy feature?
-            val (classes, jcClasspath) = extractClassesTable(classpathConfiguration.toClasspath)
-            val hierarchy = runBlocking { jcClasspath.hierarchyExt() }
-
-            val gson = createGsonBuilder().create()
-
-            val upperBoundNames = arrayOf(
-                "java.lang.Iterable",
-                "java.util.Collection",
-                "java.util.List",
-                "java.util.Set",
-                "java.util.HashSet",
-                "java.util.SortedSet",
-                "java.util.NavigableSet"
-            )
-            for (upperBoundName in upperBoundNames) {
-                val upperBound = classes.single { it.name == upperBoundName }.toJvmType(jcClasspath)
-                val expectedAnswers = hierarchy
-                    .findSubClasses(upperBoundName, allHierarchy = true)
-                    .sortedBy { it.name }
-                    .map { it.toJvmType(jcClasspath) }
-                    .toList()
-
-                val query = TypeQueryWithUpperBound(upperBound, expectedAnswers.size, expectedAnswers)
-                val json = gson.toJson(query)
-
-                Path("only_type_queries", "artificial", "unbound_type_variables").let {
-                    it.toFile().mkdirs()
-
-                    Path(it.toString(), "$upperBoundName.json").toFile().bufferedWriter().use { writer ->
-                        writer.write(json)
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
-    fun writeArtificialBoundTypeQueries() {
-        with(configuration) {
-            // TODO use InMemoryHierarchy feature?
-            val (classes, jcClasspath) = extractClassesTable(classpathConfiguration.toClasspath)
-            val hierarchy = runBlocking { jcClasspath.hierarchyExt() }
-
-            val gson = createGsonBuilder().create()
-
-            val upperBoundNames = arrayOf(
-                "java.lang.Iterable",
-                "java.util.Collection",
-                "java.util.List",
-                "java.util.Set",
-                "java.util.HashSet",
-                "java.util.SortedSet",
-                "java.util.NavigableSet"
-            )
-            val typeVariable = TODO()
-            for (upperBoundName in upperBoundNames) {
-                val upperBound = classes.single { it.name == upperBoundName }.toJvmType(jcClasspath)
-                val expectedAnswers = hierarchy
-                    .findSubClasses(upperBoundName, allHierarchy = true)
-                    .sortedBy { it.name }
-                    .map { it.toJvmType(jcClasspath) }
-                    .toList()
-
-                val query = TypeQueryWithUpperBound(upperBound, expectedAnswers.size, expectedAnswers)
-                val json = gson.toJson(query)
-
-                Path("only_type_queries", "artificial", "unbound_type_variables").let {
-                    it.toFile().mkdirs()
-
-                    Path(it.toString(), "$upperBoundName.json").toFile().bufferedWriter().use { writer ->
-                        writer.write(json)
-                    }
-                }
-            }
-        }
-    }
-}

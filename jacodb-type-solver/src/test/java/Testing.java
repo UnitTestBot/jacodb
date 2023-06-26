@@ -14,9 +14,24 @@
  *  limitations under the License.
  */
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class Testing<T1, T2 extends Set<Integer>> extends Ancestor<T1, Set<T2>> implements ParametrizedFirst<T1, Ancestor<T1, T2>>, ParametrizedSecond<ParametrizedFirst<T1, String>, T1> {
+    public static void main(String[] args) {
+        List<Number> list = new ArrayList<>();
+        list.add(1);
+        list.add(2.0);
+
+        Integer[] ints = new Integer[1];
+        ints[0] = 10;
+
+        Number[] numbers = ints;
+
+        Iterable<Integer> integerList = new ArrayList<>();
+        Iterable<? extends Number> numberList = integerList;
+    }
 }
 
 interface ParametrizedFirst<F1, F2> {}
