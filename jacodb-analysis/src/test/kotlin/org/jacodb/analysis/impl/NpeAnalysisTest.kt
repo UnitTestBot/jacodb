@@ -22,13 +22,12 @@ import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
-import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysis
-import org.jacodb.analysis.engine.IfdsUnitInstance
+import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysisFactory
+import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
 import org.jacodb.analysis.engine.IfdsUnitTraverser
-import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
+import org.jacodb.analysis.engine.IfdsWithBackwardPreSearchFactory
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
@@ -64,8 +63,6 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     @Test
     fun `analyze simple NPE`() {
         testOneMethod<NpeExamples>("npeOnLength", listOf("%3 = %2.length()"))
-//        val method = cp.findClass<NpeExamples>().declaredMethods.single { it.name == "npeOnLength" }
-//        println(method.flowGraph())
     }
 
     @Test
@@ -217,14 +214,10 @@ class NpeAnalysisTest : BaseAnalysisTest() {
             return IfdsUnitTraverser(
                 graph,
                 SingletonUnitResolver,
-            ) { graph, context, unitResolver, unit ->
-                val forward = BidiIfdsForTaintAnalysis.createProvider<Unit>(
-                    NpeAnalyzer(graph),
-                    NpeFlowdroidBackwardAnalyzer(graph)
-                ).createInstance(graph, context, unitResolver, unit)
-                val backward = IfdsUnitInstance.createProvider<Unit>(NpePrecalcBackwardAnalyzer(graph))
-                    .createInstance(graph.reversed, context, unitResolver, unit)
-                IfdsWithBackwardPreSearch(forward, backward)
-            }
+                IfdsWithBackwardPreSearchFactory(
+                    BidiIfdsForTaintAnalysisFactory(NpeAnalyzer(graph), NpeFlowdroidBackwardAnalyzer(graph)),
+                    IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
+                )
+            )
         }
 }

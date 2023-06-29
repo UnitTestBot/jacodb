@@ -18,39 +18,39 @@ package org.jacodb.analysis.engine
 
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 
-class IfdsWithBackwardPreSearch(
-    private val forward: IfdsInstance,
-    private val backward: IfdsInstance,
-) : IfdsInstance {
+class IfdsWithBackwardPreSearchFactory(
+    private val forward: IfdsInstanceFactory,
+    private val backward: IfdsInstanceFactory,
+) : IfdsInstanceFactory() {
 
-    override fun addStart(method: JcMethod) {
-        backward.addStart(method)
-        forward.addStart(method)
-    }
+    override fun <UnitType> createInstance(
+        graph: JcApplicationGraph,
+        context: AnalysisContext,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+        startFacts: Map<JcMethod, Set<DomainFact>>
+    ): Map<JcMethod, IfdsMethodSummary> {
+        val backwardResults = backward.createInstance(graph.reversed, context, unitResolver, unit, startMethods, emptyMap())
 
-    override fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
-        return forward.addStartFact(method, fact)
-    }
-
-    override fun analyze(): Map<JcMethod, IfdsMethodSummary> {
-        val backwardResults = backward.analyze()
-        backwardResults.forEach { (method, summary) ->
-            summary.factsAtExits.values.flatten().forEach {
-                forward.addStartFact(method, it.domainFact)
+        return buildIfdsInstance(forward, graph, context, unitResolver, unit) {
+            startMethods.forEach {
+                addStart(it)
             }
-        }
-        return forward.analyze()
-    }
 
-    companion object {
-        fun <UnitType> createProvider(
-            forwardAnalyzer: Analyzer,
-            backwardAnalyzer: Analyzer,
-        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
-            val forward = IfdsUnitInstance(graph, forwardAnalyzer, context, unitResolver, unit)
-            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, context, unitResolver, unit)
-            IfdsWithBackwardPreSearch(forward, backward)
+            backwardResults.forEach { (method, summary) ->
+                summary.factsAtExits.values.flatten().forEach {
+                    addStartFact(method, it.domainFact)
+                }
+            }
+
+            startFacts.forEach { (method, facts) ->
+                facts.forEach { fact ->
+                    addStartFact(method, fact)
+                }
+            }
         }
     }
 }

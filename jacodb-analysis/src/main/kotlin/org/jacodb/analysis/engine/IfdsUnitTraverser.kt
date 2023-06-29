@@ -29,7 +29,7 @@ interface AnalysisContext {
 class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
-    private val ifdsInstanceFactory: IfdsInstanceFactory<UnitType>
+    private val ifdsInstanceFactory: IfdsInstanceFactory
 ) : AnalysisEngine {
     private val contextInternal: MutableMap<JcMethod, IfdsMethodSummary> = mutableMapOf()
     private val context = object : AnalysisContext {
@@ -54,15 +54,14 @@ class IfdsUnitTraverser<UnitType>(
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
-            val ifdsInstance = ifdsInstanceFactory.createInstance(graph, context, unitResolver, next)
-            for (method in foundMethods[next].orEmpty()) {
-                ifdsInstance.addStart(method)
+            val ifdsInstanceResults = buildIfdsInstance(ifdsInstanceFactory, graph, context, unitResolver, next) {
+                for (method in foundMethods[next].orEmpty()) {
+                    addStart(method)
+                }
             }
 
-            val results = ifdsInstance.analyze()
-
             // Relaxing of crossUnitCallees
-            for ((_, summary) in results) {
+            for ((_, summary) in ifdsInstanceResults) {
                 for ((inc, outcs) in summary.crossUnitCallees) {
                     for (outc in outcs.factsAtCalleeStart) {
                         val calledMethod = graph.methodOf(outc.statement)
@@ -72,7 +71,7 @@ class IfdsUnitTraverser<UnitType>(
                 }
             }
 
-            results.forEach { (method, summary) ->
+            ifdsInstanceResults.forEach { (method, summary) ->
                 contextInternal[method] = summary
             }
         }

@@ -24,9 +24,9 @@ import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsInstanceFactory
-import org.jacodb.analysis.engine.IfdsUnitInstance
+import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
 import org.jacodb.analysis.engine.IfdsUnitTraverser
-import org.jacodb.analysis.engine.IfdsWithBackwardPreSearch
+import org.jacodb.analysis.engine.IfdsWithBackwardPreSearchFactory
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.toDumpable
@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsInstanceFactory: IfdsInstanceFactory<UnitType>) {
+    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsInstanceFactory: IfdsInstanceFactory) {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
@@ -57,12 +57,14 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(ClassUnitResolver(false), IfdsUnitInstance.createProvider(UnusedVariableAnalyzer(graph)))
+        testOne(ClassUnitResolver(false), IfdsUnitInstanceFactory(UnusedVariableAnalyzer(graph)))
     }
 
     @Test
     fun `test NPE analysis`() {
-         testOne(MethodUnitResolver, IfdsWithBackwardPreSearch.createProvider(NpeAnalyzer(graph), NpePrecalcBackwardAnalyzer(graph)))
+        val forwardBuilder = IfdsUnitInstanceFactory(NpeAnalyzer(graph))
+        val backwardBuilder = IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
+        testOne(MethodUnitResolver, IfdsWithBackwardPreSearchFactory(forwardBuilder, backwardBuilder))
     }
 
     private val graph = JcSimplifiedGraphFactory().createGraph(cp)

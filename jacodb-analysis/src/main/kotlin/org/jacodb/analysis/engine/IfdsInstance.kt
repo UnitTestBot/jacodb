@@ -19,19 +19,66 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 
-interface IfdsInstance {
-    fun addStart(method: JcMethod)
-
-    fun addStartFact(method: JcMethod, fact: DomainFact): Boolean
-
-    fun analyze(): Map<JcMethod, IfdsMethodSummary>
+abstract class IfdsInstanceFactory {
+    abstract fun <UnitType> createInstance(
+        graph: JcApplicationGraph,
+        context: AnalysisContext,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+        startFacts: Map<JcMethod, Set<DomainFact>>
+    ): Map<JcMethod, IfdsMethodSummary>
 }
 
-fun interface IfdsInstanceFactory<UnitType> {
-    fun createInstance(
-        graph: JcApplicationGraph,//ApplicationGraph<JcMethod, JcInst>,
+class IfdsInstanceBuilder {
+    private val startMethods: MutableList<JcMethod> = mutableListOf()
+    private val startFacts: MutableMap<JcMethod, MutableSet<DomainFact>> = mutableMapOf()
+
+    fun addStart(method: JcMethod) {
+        startMethods.add(method)
+    }
+
+    fun addStartFact(method: JcMethod, fact: DomainFact) {
+        startFacts.getOrPut(method) { mutableSetOf() }.add(fact)
+    }
+
+    fun <UnitType> build(
+        factory: IfdsInstanceFactory,
+        graph: JcApplicationGraph,
         context: AnalysisContext,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType
-    ): IfdsInstance
+    ): Map<JcMethod, IfdsMethodSummary> {
+        return factory.createInstance(graph, context, unitResolver, unit, startMethods, startFacts)
+    }
 }
+
+fun <UnitType> buildIfdsInstance(
+    factory: IfdsInstanceFactory,
+    graph: JcApplicationGraph,
+    context: AnalysisContext,
+    unitResolver: UnitResolver<UnitType>,
+    unit: UnitType,
+    actions: IfdsInstanceBuilder.() -> Unit
+): Map<JcMethod, IfdsMethodSummary> {
+    val builder = IfdsInstanceBuilder()
+    builder.actions()
+    return builder.build(factory, graph, context, unitResolver, unit)
+}
+
+//interface IfdsInstance {
+//    fun addStart(method: JcMethod)
+//
+//    fun addStartFact(method: JcMethod, fact: DomainFact): Boolean
+//
+//    fun analyze(): Map<JcMethod, IfdsMethodSummary>
+//}
+
+//fun interface IfdsInstanceFactory<UnitType> {
+//    fun createInstance(
+//        graph: JcApplicationGraph,//ApplicationGraph<JcMethod, JcInst>,
+//        context: AnalysisContext,
+//        unitResolver: UnitResolver<UnitType>,
+//        unit: UnitType
+//    ): IfdsInstance
+//}

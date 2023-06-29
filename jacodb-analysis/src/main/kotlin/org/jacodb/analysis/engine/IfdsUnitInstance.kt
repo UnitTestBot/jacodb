@@ -24,8 +24,32 @@ import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.*
+
+class IfdsUnitInstanceFactory(private val analyzer: Analyzer) : IfdsInstanceFactory() {
+    override fun <UnitType> createInstance(
+        graph: JcApplicationGraph,
+        context: AnalysisContext,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+        startFacts: Map<JcMethod, Set<DomainFact>>
+    ): Map<JcMethod, IfdsMethodSummary> {
+
+        val instance = IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
+        startMethods.forEach {
+            instance.addStart(it)
+        }
+        startFacts.forEach { (method, facts) ->
+            facts.forEach { fact ->
+                instance.addStartFact(method, fact)
+            }
+        }
+        return instance.analyze()
+    }
+}
 
 class IfdsUnitInstance<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
@@ -33,7 +57,7 @@ class IfdsUnitInstance<UnitType>(
     private val context: AnalysisContext,
     private val unitResolver: UnitResolver<UnitType>,
     private val unit: UnitType
-): IfdsInstance {
+) {
 
     private class EdgesStorage {
         private val byStart: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
@@ -69,7 +93,7 @@ class IfdsUnitInstance<UnitType>(
 
     fun addListener(listener: IfdsInstanceListener) = listeners.add(listener)
 
-    override fun addStart(method: JcMethod) {
+    fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainAllPossibleStartFacts(sPoint)) {
@@ -99,7 +123,7 @@ class IfdsUnitInstance<UnitType>(
         return propagate(e, PathEdgePredecessor(e, UNKNOWN))
     }
 
-    override fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
+    fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
         return graph.entryPoint(method).any {
             val vertex = IfdsVertex(it, fact)
             val edge = IfdsEdge(vertex, vertex)
@@ -205,7 +229,7 @@ class IfdsUnitInstance<UnitType>(
         )
     }
 
-    override fun analyze(): Map<JcMethod, IfdsMethodSummary> {
+    fun analyze(): Map<JcMethod, IfdsMethodSummary> {
         // TODO: rewrite this method cleaner
         run()
 
@@ -242,11 +266,11 @@ class IfdsUnitInstance<UnitType>(
         }
     }
 
-    companion object {
-        fun <UnitType> createProvider(
-            analyzer: Analyzer
-        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
-            IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
-        }
-    }
+//    companion object {
+//        fun <UnitType> createProvider(
+//            analyzer: Analyzer
+//        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
+//            IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
+//        }
+//    }
 }

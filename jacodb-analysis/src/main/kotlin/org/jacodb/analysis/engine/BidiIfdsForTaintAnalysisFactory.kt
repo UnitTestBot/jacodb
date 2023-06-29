@@ -22,19 +22,39 @@ import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
-class BidiIfdsForTaintAnalysis<UnitType>(
-    val forward: IfdsUnitInstance<UnitType>,
-    val backward: IfdsUnitInstance<UnitType>,
-    graph: ApplicationGraph<JcMethod, JcInst>
-): IfdsInstance {
+// TODO: this should be seriously rewritten
+class BidiIfdsForTaintAnalysisFactory(
+    private val forwardAnalyzer: Analyzer,//: IfdsUnitInstance<UnitType>,
+    private val backwardAnalyzer: Analyzer,//: IfdsUnitInstance<UnitType>,
+): IfdsInstanceFactory() {
 
-    init {
+    override fun <UnitType> createInstance(
+        graph: JcApplicationGraph,
+        context: AnalysisContext,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+        startFacts: Map<JcMethod, Set<DomainFact>>
+    ): Map<JcMethod, IfdsMethodSummary> {
+        val forward = IfdsUnitInstance(graph, forwardAnalyzer, context, unitResolver, unit)
+        val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, context, unitResolver, unit)
+
+        startMethods.forEach { method ->
+            forward.addStart(method)
+        }
+
+        startFacts.forEach { (method, facts) ->
+            facts.forEach { fact ->
+                forward.addStartFact(method, fact)
+            }
+        }
+
         // In forward and backward analysis same function will have different entryPoints, so we have to change
         // `from` vertex of pathEdges properly at handover
         fun IfdsEdge.handoverPathEdgeTo(
@@ -115,21 +135,6 @@ class BidiIfdsForTaintAnalysis<UnitType>(
                 }
             }
         })
-    }
-
-    override fun addStart(method: JcMethod) = forward.addStart(method)
-    override fun addStartFact(method: JcMethod, fact: DomainFact) = forward.addStartFact(method, fact)
-
-    override fun analyze(): Map<JcMethod, IfdsMethodSummary> = forward.analyze()
-
-    companion object {
-        fun <UnitType> createProvider(
-            forwardAnalyzer: Analyzer,
-            backwardAnalyzer: Analyzer,
-        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
-            val forward = IfdsUnitInstance(graph, forwardAnalyzer, context, unitResolver, unit)
-            val backward = IfdsUnitInstance(graph.reversed, backwardAnalyzer, context, unitResolver, unit)
-            BidiIfdsForTaintAnalysis(forward, backward, graph)
-        }
+        return forward.analyze()
     }
 }
