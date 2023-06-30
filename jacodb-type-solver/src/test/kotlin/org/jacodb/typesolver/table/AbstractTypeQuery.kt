@@ -31,32 +31,7 @@ import org.junit.jupiter.api.BeforeEach
 import kotlin.Array
 
 abstract class AbstractTypeQuery {
-    protected val configuration: Configuration = Configuration(ClasspathConfiguration.ALL_JARS)
-    protected val gson: Gson = createGsonBuilder().create()
-    protected val upperBoundNames: Array<String> = arrayOf(
-        "java.lang.Iterable",
-        "java.util.Collection",
-        "java.util.List",
-        "java.util.Set",
-        "java.util.HashSet",
-        "java.util.SortedSet",
-        "java.util.NavigableSet"
-    )
 
-    protected lateinit var classes: List<JcClassOrInterface>
-    protected lateinit var jcClasspath: JcClasspath
-    protected lateinit var hierarchy: HierarchyExtensionImpl
-
-    @BeforeEach
-    fun setupHierarchy() {
-        with(configuration) {
-            val classesWithClasspath = extractClassesTable(classpathConfiguration.toClasspath)
-            classes = classesWithClasspath.classes
-            jcClasspath = classesWithClasspath.classpath
-        }
-
-        hierarchy = runBlocking { jcClasspath.hierarchyExt() }
-    }
 
     protected data class SingleTypeQueryWithUpperBound(
         val upperBound: JvmType,

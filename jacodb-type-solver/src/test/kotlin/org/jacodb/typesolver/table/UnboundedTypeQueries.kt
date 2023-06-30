@@ -16,12 +16,46 @@
 
 package org.jacodb.typesolver.table
 
+import com.google.gson.Gson
+import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.classtable.extractClassesTable
+import org.jacodb.impl.features.HierarchyExtensionImpl
+import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.typesolver.createGsonBuilder
 import org.junit.jupiter.api.Test
+import kotlin.Array
 import kotlin.io.path.Path
 
 // TODO use InMemoryHierarchy feature?
 class UnboundedTypeQueries : AbstractTypeQuery() {
+    protected val configuration: Configuration = Configuration(ClasspathConfiguration.ALL_JARS)
+    protected val gson: Gson = createGsonBuilder().create()
+    protected val upperBoundNames: Array<String> = arrayOf(
+        "java.lang.Iterable",
+        "java.util.Collection",
+        "java.util.List",
+        "java.util.Set",
+        "java.util.HashSet",
+        "java.util.SortedSet",
+        "java.util.NavigableSet"
+    )
+
+    protected val classes: List<JcClassOrInterface>
+    protected val jcClasspath: JcClasspath
+    protected val hierarchy: HierarchyExtensionImpl
+
+    init {
+        with(configuration) {
+            val classesWithClasspath = extractClassesTable(classpathConfiguration.toClasspath)
+            classes = classesWithClasspath.classes
+            jcClasspath = classesWithClasspath.classpath
+        }
+
+        hierarchy = runBlocking { jcClasspath.hierarchyExt() }
+    }
+
     @Test
     fun writeArtificialUnboundedTypeQueries() {
         for (upperBoundName in upperBoundNames) {
