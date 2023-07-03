@@ -105,6 +105,9 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
             is JcSignal.Drop -> {
                 hierarchies[signal.jcdb]?.clear()
             }
+            is JcSignal.Closed -> {
+                hierarchies.remove(signal.jcdb)
+            }
 
             else -> Unit
         }
