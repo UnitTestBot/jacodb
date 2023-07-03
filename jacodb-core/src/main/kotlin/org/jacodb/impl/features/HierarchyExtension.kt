@@ -25,6 +25,7 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.JAVA_OBJECT
+import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
@@ -78,6 +79,10 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
             return cp.findSubclassesInMemory(name, allHierarchy, false)
         }
         return findSubClasses(jcClass, allHierarchy)
+    }
+
+    override fun classWithSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+        return sequenceOf(cp.findClass(name)) + findSubClasses(name, allHierarchy)
     }
 
     override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
