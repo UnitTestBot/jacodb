@@ -20,13 +20,9 @@ import com.google.common.collect.Lists;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
-import org.jacodb.api.cfg.JcArgument;
-import org.jacodb.api.cfg.JcExpr;
-import org.jacodb.api.cfg.TypedExprResolver;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.Usages;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

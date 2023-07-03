@@ -25,7 +25,6 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.JAVA_OBJECT
-import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
@@ -70,26 +69,27 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 
     }
 
-    override fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+    override fun findSubClasses(name: String, allHierarchy: Boolean, includeOwn: Boolean): Sequence<JcClassOrInterface> {
         val jcClass = cp.findClassOrNull(name) ?: return emptySequence()
-        if (jcClass.isFinal) {
-            return emptySequence()
-        }
-        if (cp.db.isInstalled(InMemoryHierarchy)) {
-            return cp.findSubclassesInMemory(name, allHierarchy, false)
-        }
-        return findSubClasses(jcClass, allHierarchy)
+        return when {
+            jcClass.isFinal -> emptySequence()
+            cp.db.isInstalled(InMemoryHierarchy) -> cp.findSubclassesInMemory(name, allHierarchy, false)
+            else -> findSubClasses(jcClass, allHierarchy, false)
+        }.appendOwn(jcClass, includeOwn)
     }
 
-    override fun classWithSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
-        return sequenceOf(cp.findClass(name)) + findSubClasses(name, allHierarchy)
+    private fun Sequence<JcClassOrInterface>.appendOwn(root: JcClassOrInterface, includeOwn: Boolean): Sequence<JcClassOrInterface> {
+        return if(includeOwn) sequenceOf(root) + this else this
     }
 
-    override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> {
+    override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean, includeOwn: Boolean): Sequence<JcClassOrInterface> {
         if (jcClass.isFinal) {
-            return emptySequence()
+            return emptySequence<JcClassOrInterface>().appendOwn(jcClass, includeOwn)
         }
-        return findSubClasses(jcClass, allHierarchy, false)
+        return when {
+            jcClass.isFinal -> emptySequence()
+            else -> explicitSubClasses(jcClass, allHierarchy, false)
+        }.appendOwn(jcClass, includeOwn)
     }
 
     override fun findOverrides(jcMethod: JcMethod, includeAbstract: Boolean): Sequence<JcMethod> {
@@ -98,12 +98,12 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }
         val desc = jcMethod.description
         val name = jcMethod.name
-        return findSubClasses(jcMethod.enclosingClass, allHierarchy = true, true)
+        return explicitSubClasses(jcMethod.enclosingClass, allHierarchy = true, true)
             .mapNotNull { it.findDeclaredMethodOrNull(name, desc) }
             .filter { !it.isPrivate }
     }
 
-    private fun findSubClasses(
+    private fun explicitSubClasses(
         jcClass: JcClassOrInterface,
         allHierarchy: Boolean,
         full: Boolean
