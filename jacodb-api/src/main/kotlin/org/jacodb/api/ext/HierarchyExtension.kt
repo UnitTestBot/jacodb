@@ -32,12 +32,22 @@ interface HierarchyExtension {
     fun findSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface>
 
     /**
+     * @return same as `findSubClasses` but with instance of this class
+     */
+    fun classWithSubClasses(name: String, allHierarchy: Boolean): Sequence<JcClassOrInterface>
+
+    /**
      * find all subclasses or implementations if name points to interface. If [allHierarchy] is true then search
      * will be done recursively
      *
      * @return list with unique ClassId
      */
     fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface>
+
+    /**
+     * @return same as `findSubClasses` but with instance of this class
+     */
+    fun classWithSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean): Sequence<JcClassOrInterface> = sequenceOf(jcClass) + findSubClasses(jcClass, allHierarchy)
 
     /**
      * find overrides of current method
