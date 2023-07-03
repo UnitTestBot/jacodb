@@ -122,6 +122,32 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
     }
 
     /**
+     * Returns a list of [JcEnrichedVirtualField] if there is an approximation for [clazz] and null otherwise.
+     */
+    override fun fieldsOf(clazz: JcClassOrInterface): List<JcField>? {
+        val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
+        val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
+
+        return approximationClass.declaredFields.map { TransformerIntoVirtual.transformIntoVirtualField(clazz, it) }
+    }
+
+    /**
+     * Returns a list of [JcEnrichedVirtualMethod] if there is an approximation for [clazz] and null otherwise.
+     */
+    override fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? {
+        val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
+        val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
+
+        return approximationClass.declaredMethods.map {
+            approximationClass.classpath.transformMethodIntoVirtual(clazz, it)
+        }
+    }
+
+    override fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
+        return JcInstListImpl(list.map { it.accept(InstSubstitutorForApproximations) })
+    }
+
+    /**
      * Returns a name of the approximation class for [className] if it exists and null otherwise.
      */
     fun findApproximationByOriginOrNull(
