@@ -77,6 +77,16 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
             this.runtimeLocations = it.registered
         }
     }
+//
+//    fun restorePure() {
+//        runtimeLocations = persistence.read {
+//            it.selectFrom(BYTECODELOCATIONS)
+//                .where(BYTECODELOCATIONS.RUNTIME.eq(true))
+//                .fetch {
+//                    PersistentByteCodeLocation(jcdb, it.id!!)
+//                }
+//        }
+//    }
 
     override fun afterProcessing(locations: List<RegisteredLocation>) {
         val ids = locations.map { it.id }
