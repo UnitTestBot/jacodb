@@ -39,6 +39,7 @@ import org.jacodb.api.ext.isNullable
 import org.jacodb.api.ext.jcdbSignature
 import org.jacodb.api.ext.jvmSignature
 import org.jacodb.api.ext.methods
+import org.jacodb.api.ext.toType
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
@@ -57,6 +58,7 @@ import org.jacodb.testing.allClasspath
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.skipAssertionsOn
 import org.jacodb.testing.structure.FieldsAndMethods
+import org.jacodb.testing.structure.HiddenFieldSuperClass.HiddenFieldSuccClass
 import org.jacodb.testing.usages.Generics
 import org.jacodb.testing.usages.HelloWorldAnonymousClasses
 import org.jacodb.testing.usages.WithInner
@@ -503,7 +505,7 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClass(fakeClassName)
         assertTrue(clazz is JcVirtualClass)
 
-        with(clazz){
+        with(clazz) {
             val method = findDeclaredMethodOrNull(fakeMethodName2, "(I)I")
             assertTrue(method is JcVirtualMethod)
             assertNotNull(method?.enclosingClass)
@@ -622,6 +624,12 @@ abstract class DatabaseEnvTest {
         val optional = cache.tryFindClass(cp, existedClass)
         assertNotNull(optional)
         assertNotNull(optional!!.clazz)
+    }
+
+    @Test
+    fun `hidden fields`() {
+        val hiddenFieldSuccClass = cp.findClass<HiddenFieldSuccClass>()
+        assertTrue(hiddenFieldSuccClass.toType().fields.size == hiddenFieldSuccClass.fields.size)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {
