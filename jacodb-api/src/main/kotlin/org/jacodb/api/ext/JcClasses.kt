@@ -176,7 +176,7 @@ private fun JcClassOrInterface.fields(
     if (!fromSuperTypes) {
         return fieldSet
     }
-    val result = fieldSet.toMutableSet()
+    val result = fieldSet.toSortedSet(UnsafeHierarchyFieldComparator)
     result.addAll(
         superClass?.fields(false, fromSuperTypes = true, packageName).orEmpty()
     )
@@ -249,3 +249,12 @@ private val JcClassOrInterface.simpleBinaryName: String?
             throw InternalError("Malformed class name", ex)
         }
     }
+
+
+// call with SAFE. comparator works only on methods from one hierarchy
+internal object UnsafeHierarchyFieldComparator : Comparator<JcField> {
+
+    override fun compare(o1: JcField, o2: JcField): Int {
+        return o1.name.compareTo(o2.name)
+    }
+}
