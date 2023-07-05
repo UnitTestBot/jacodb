@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
@@ -58,5 +57,7 @@ interface FlowFunctionsSpace {
 interface Analyzer {
     val flowFunctions: FlowFunctionsSpace
 
-    fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance>
+    fun findVulnerabilities(edge: IfdsEdge): List<VulnerabilityLocation> = emptyList()
+
+    fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> = emptyList()
 }

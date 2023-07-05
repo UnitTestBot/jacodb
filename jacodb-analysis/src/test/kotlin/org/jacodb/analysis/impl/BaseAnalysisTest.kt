@@ -51,7 +51,7 @@ abstract class BaseAnalysisTest : BaseTest() {
             .map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
-//            .filter { it.contains("Integer_66a") }
+//            .filter { it.contains("Integer_68a") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
@@ -77,14 +77,15 @@ abstract class BaseAnalysisTest : BaseTest() {
         )
     }
 
+    protected abstract val engine: AnalysisEngine
+
     protected inline fun <reified T> testOneAnalysisOnOneMethod(
-        engine: AnalysisEngine,
         vulnerabilityType: String,
         methodName: String,
         expectedLocations: Collection<String>,
     ) {
         val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
-        val sinks = findSinks(method, engine, vulnerabilityType)
+        val sinks = findSinks(method, vulnerabilityType)
 
         // TODO: think about better assertions here
         assertEquals(expectedLocations.size, sinks.size)
@@ -93,21 +94,22 @@ abstract class BaseAnalysisTest : BaseTest() {
         }
     }
 
-    protected fun testSingleJulietClass(engine: AnalysisEngine, vulnerabilityType: String, className: String) {
+    protected fun testSingleJulietClass(vulnerabilityType: String, className: String) {
         val clazz = cp.findClass(className)
         val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        val goodNpe = findSinks(goodMethod, engine, vulnerabilityType)
-        val badNpe = findSinks(badMethod, engine, vulnerabilityType)
+        val goodIssues = findSinks(goodMethod, vulnerabilityType)
+        val badIssues = findSinks(badMethod, vulnerabilityType)
 
-        assertTrue(goodNpe.isEmpty())
-        assertTrue(badNpe.isNotEmpty())
+        assertTrue(goodIssues.isEmpty())
+        assertTrue(badIssues.isNotEmpty())
     }
 
-    protected fun findSinks(method: JcMethod, engine: AnalysisEngine, vulnerabilityType: String): Set<String> {
-        engine.addStart(method)
-        val sinks = engine.analyze().toDumpable().foundVulnerabilities.filter { it.vulnerabilityType == vulnerabilityType }
+    protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<String> {
+        val engineInstance = engine
+        engineInstance.addStart(method)
+        val sinks = engineInstance.analyze().toDumpable().foundVulnerabilities.filter { it.vulnerabilityType == vulnerabilityType }
         return sinks.map { it.sink }.toSet()
     }
 }

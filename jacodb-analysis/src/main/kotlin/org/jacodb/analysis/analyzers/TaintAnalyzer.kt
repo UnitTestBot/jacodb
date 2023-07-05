@@ -16,13 +16,13 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -43,18 +43,13 @@ abstract class TaintAnalyzer(
         override val value: String = "taint analysis"
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+        val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (isSink(inst, fact)) {
                     fact.variable.let {
-                        vulnerabilities.add(
-                            VulnerabilityInstance(
-                                value,
-                                ifdsResult.resolveTraceGraph(IfdsVertex(inst, fact))
-                            )
-                        )
+                        vulnerabilities.add(VulnerabilityLocation(value, IfdsVertex(inst, fact)))
                     }
                 }
             }
@@ -66,7 +61,7 @@ abstract class TaintAnalyzer(
 class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, maxPathLength)
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         error("Do not call sources for backward analyzer instance")
     }
 }

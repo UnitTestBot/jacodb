@@ -16,45 +16,54 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.VulnerabilityInstance
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.yield
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.CALL_TO_START
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
 import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
-import java.util.*
 
-class IfdsUnitInstanceFactory(private val analyzer: Analyzer) : IfdsInstanceFactory() {
-    override fun <UnitType> createInstance(
+class IfdsUnitInstanceFactory(private val analyzer: Analyzer) : IfdsInstanceFactory {
+    override suspend fun <UnitType> createInstance(
         graph: JcApplicationGraph,
-        context: AnalysisContext,
+        summary: Summary,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
         startMethods: List<JcMethod>,
         startFacts: Map<JcMethod, Set<DomainFact>>
-    ): Map<JcMethod, IfdsMethodSummary> {
+    ) {
+        val instance = IfdsUnitInstance(graph, analyzer, summary, unitResolver, unit)
 
-        val instance = IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
         startMethods.forEach {
             instance.addStart(it)
         }
+
         startFacts.forEach { (method, facts) ->
             facts.forEach { fact ->
                 instance.addStartFact(method, fact)
             }
         }
-        return instance.analyze()
+
+        instance.analyze()
     }
 }
 
 class IfdsUnitInstance<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
-    private val context: AnalysisContext,
+    private val summary: Summary,
     private val unitResolver: UnitResolver<UnitType>,
     private val unit: UnitType
 ) {
@@ -81,17 +90,18 @@ class IfdsUnitInstance<UnitType>(
 
     private val pathEdges = EdgesStorage()
     private val startToEndEdges = EdgesStorage()
-    private val workList: Queue<IfdsEdge> = LinkedList()
     private val summaryEdgeToStartToEndEdges: MutableMap<IfdsEdge, MutableSet<IfdsEdge>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
     private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = mutableMapOf()
     private val crossUnitCallees: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
+    private val summaryHandlers: MutableMap<JcMethod, SummarySender> = mutableMapOf()
 
     private val flowSpace get() = analyzer.flowFunctions
 
-    private val listeners: MutableList<IfdsInstanceListener> = mutableListOf()
-
-    fun addListener(listener: IfdsInstanceListener) = listeners.add(listener)
+    private fun stashSummaryFact(method: JcMethod, fact: SummaryFact) {
+        val handler = summaryHandlers.getOrPut(method) { summary.createSender(method) }
+        handler.send(fact)
+    }
 
     fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
@@ -106,37 +116,48 @@ class IfdsUnitInstance<UnitType>(
 
     private fun propagate(e: IfdsEdge, pred: PathEdgePredecessor): Boolean {
         pathEdgesPreds.getOrPut(e) { mutableSetOf() }.add(pred)
+
         if (e !in pathEdges) {
             pathEdges.add(e)
-            workList.add(e)
-            val isNew =
-                pred.kind != SEQUENT && pred.kind != UNKNOWN || pred.predEdge.v.domainFact != e.v.domainFact
-            val predInst =
-                pred.predEdge.v.statement.takeIf { it != e.v.statement && it.location.method == e.v.statement.location.method }
-            listeners.forEach { it.onPropagate(e, predInst, isNew) }
+            require(workList.trySend(e).isSuccess)
+
+            val summaryFacts = analyzer.findVulnerabilities(e)
+
+            summaryFacts.forEach { stashSummaryFact(e.method, it) }
+
+            if (e.v.statement in graph.exitPoints(e.method)) {
+                stashSummaryFact(e.method, SummaryEdgeFact(e))
+            }
+
             return true
         }
         return false
     }
 
-    fun addNewPathEdge(e: IfdsEdge): Boolean {
-        return propagate(e, PathEdgePredecessor(e, UNKNOWN))
-    }
-
     fun addStartFact(method: JcMethod, fact: DomainFact): Boolean {
-        return graph.entryPoint(method).any {
+        return graph.entryPoint(method).map {
             val vertex = IfdsVertex(it, fact)
             val edge = IfdsEdge(vertex, vertex)
             propagate(edge, PathEdgePredecessor(edge, NO_PREDECESSOR))
-        }
+        }.any()
     }
 
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    fun run() {
-        while (!workList.isEmpty()) {
-            val curEdge = workList.poll()
+    private val workList = Channel<IfdsEdge>(Channel.UNLIMITED)
+
+    private suspend fun takeNewEdge(): IfdsEdge? {
+        return try {
+            workList.receive()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    suspend fun run() = coroutineScope {
+        while (isActive) {
+            val curEdge = takeNewEdge() ?: break
             val (u, v) = curEdge
             val (n, d2) = v
 
@@ -153,24 +174,29 @@ class IfdsUnitInstance<UnitType>(
                         for (sPoint in graph.entryPoint(callee)) {
                             for (sFact in factsAtStart) {
                                 val sVertex = IfdsVertex(sPoint, sFact)
-                                val exitVertexes: Iterable<IfdsVertex> = if (callee.isExtern) {
-                                    context.summaries[callee]?.factsAtExits?.get(sVertex) ?: graph.exitPoints(callee).map {
-                                        IfdsVertex(it, sVertex.domainFact)
-                                    }.toSet()
+
+                                val exitVertexes: Flow<IfdsVertex> = if (callee.isExtern) {
+                                    summary.getFactsFiltered<SummaryEdgeFact>(callee, sVertex)
+                                        .filter { it.edge.u == sVertex }
+                                        .map { it.edge.v }
                                 } else {
-                                    startToEndEdges.getByStart(sVertex).map { it.v }
+                                    startToEndEdges.getByStart(sVertex).map { it.v }.asFlow()
                                 }
 
-                                for ((exitStatement, eFact) in exitVertexes) {
-                                    val finalFacts = flowSpace.obtainExitToReturnSiteFlowFunction(n, returnSite, exitStatement).compute(eFact)
+                                exitVertexes.onEach { (eStatement, eFact) ->
+                                    val finalFacts =
+                                        flowSpace.obtainExitToReturnSiteFlowFunction(n, returnSite, eStatement)
+                                            .compute(eFact)
                                     for (finalFact in finalFacts) {
                                         val summaryEdge = IfdsEdge(v, IfdsVertex(returnSite, finalFact))
-                                        val startToEndEdge = IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(exitStatement, eFact))
+                                        val startToEndEdge =
+                                            IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
                                         val newEdge = IfdsEdge(u, IfdsVertex(returnSite, finalFact))
-                                        summaryEdgeToStartToEndEdges.getOrPut(summaryEdge) { mutableSetOf() }.add(startToEndEdge)
+                                        summaryEdgeToStartToEndEdges.getOrPut(summaryEdge) { mutableSetOf() }
+                                            .add(startToEndEdge)
                                         propagate(newEdge, PathEdgePredecessor(curEdge, THROUGH_SUMMARY))
                                     }
-                                }
+                                }.launchIn(this)
 
                                 if (callee.isExtern) {
                                     crossUnitCallees.getOrPut(v) { mutableSetOf() }.add(sVertex)
@@ -185,7 +211,6 @@ class IfdsUnitInstance<UnitType>(
                 }
             } else {
                 if (n in graph.exitPoints(graph.methodOf(n))) {
-                    listeners.forEach { it.onExitPoint(curEdge) }
                     for (predEdge in callSitesOf[u].orEmpty()) {
                         val callerStatement = predEdge.v.statement
                         for (returnSite in graph.successors(callerStatement)) {
@@ -210,6 +235,7 @@ class IfdsUnitInstance<UnitType>(
                     }
                 }
             }
+            yield()
         }
     }
 
@@ -229,48 +255,39 @@ class IfdsUnitInstance<UnitType>(
         )
     }
 
-    fun analyze(): Map<JcMethod, IfdsMethodSummary> {
-        // TODO: rewrite this method cleaner
-        run()
+    private fun postActions() {
+        analyzer.findPostIfdsVulnerabilities(fullResults).forEach { vulnerability ->
+            stashSummaryFact(vulnerability.sink.method, vulnerability)
+        }
 
         val methods = fullResults.pathEdges.map { graph.methodOf(it.u.statement) }.distinct()
 
-        val factsAtExits = mutableMapOf<JcMethod, MutableMap<IfdsVertex, MutableSet<IfdsVertex>>>()
-        for (pathEdge in pathEdges.getAll()) {
-            val method = graph.methodOf(pathEdge.u.statement)
-            if (pathEdge.v.statement in graph.exitPoints(method)) {
-                factsAtExits.getOrPut(method) { mutableMapOf() }.getOrPut(pathEdge.u) { mutableSetOf() }.add(pathEdge.v)
-            }
-        }
-
-        val relevantVulnerabilities = mutableMapOf<JcMethod, MutableList<VulnerabilityInstance>>()
-        analyzer.calculateSources(fullResults).forEach {
-            relevantVulnerabilities.getOrPut(graph.methodOf(it.traceGraph.sink.statement)) { mutableListOf() }
-                .add(it)
-        }
-
-        val sortedCrossUnitCallees = mutableMapOf<JcMethod, MutableMap<IfdsVertex, CalleeInfo>>()
         crossUnitCallees.forEach { (callVertex, sVertexes) ->
             val method = graph.methodOf(callVertex.statement)
-            sortedCrossUnitCallees.getOrPut(method) { mutableMapOf() }[callVertex] = CalleeInfo(
-                sVertexes,
-                fullResults.resolveTraceGraph(callVertex)
-            )
+            stashSummaryFact(method, CalleeFact(callVertex, sVertexes))
         }
-        return methods.associateWith {
-            IfdsMethodSummary(
-                factsAtExits[it].orEmpty(),
-                sortedCrossUnitCallees[it].orEmpty(),
-                relevantVulnerabilities[it].orEmpty()
-            )
+
+        methods.forEach { method ->
+            val vulnerabilityLocations = summary
+                .getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
+                .map { it.sink }
+            val crossUnitCallesLocations = summary
+                .getCurrentFactsFiltered<CalleeFact>(method, null)
+                .map { it.vertex }
+
+            (vulnerabilityLocations + crossUnitCallesLocations)
+                .distinct()
+                .forEach { vertex ->
+                    val graph = fullResults.resolveTraceGraph(vertex)
+                    stashSummaryFact(method, TraceGraphFact(graph))
+                }
         }
     }
 
-//    companion object {
-//        fun <UnitType> createProvider(
-//            analyzer: Analyzer
-//        ) = IfdsInstanceFactory<UnitType> { graph, context, unitResolver, unit ->
-//            IfdsUnitInstance(graph, analyzer, context, unitResolver, unit)
-//        }
-//    }
+    suspend fun analyze() =
+        try {
+            run()
+        } finally {
+            postActions()
+        }
 }

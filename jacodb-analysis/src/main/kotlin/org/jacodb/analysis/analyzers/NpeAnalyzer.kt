@@ -16,13 +16,13 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
+import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsResult
-import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
@@ -62,19 +62,11 @@ class NpeAnalyzer(
         override val value: String = "npe-analysis"
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
-        ifdsResult.resultFacts.forEach { (inst, facts) ->
-            facts.filterIsInstance<NpeTaintNode>().forEach { fact ->
-                if (fact.activation == null && fact.variable.isDereferencedAt(inst)) {
-                    vulnerabilities.add(
-                        VulnerabilityInstance(
-                            value,
-                            ifdsResult.resolveTraceGraph(IfdsVertex(inst, fact))
-                        )
-                    )
-                }
-            }
+    override fun findVulnerabilities(edge: IfdsEdge): List<VulnerabilityLocation> {
+        val vulnerabilities = mutableListOf<VulnerabilityLocation>()
+        val (inst, fact) = edge.v
+        if (fact is NpeTaintNode && fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+            vulnerabilities.add(VulnerabilityLocation(value, edge.v))
         }
         return vulnerabilities
     }
@@ -248,7 +240,7 @@ class NpeFlowdroidBackwardAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeBackwardFunctions(graph, maxPathLength)
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         error("Should never be called")
     }
 }
@@ -266,7 +258,7 @@ class NpePrecalcBackwardAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpePrecalcBackwardFunctions(graph, maxPathLength)
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         return emptyList()
     }
 }

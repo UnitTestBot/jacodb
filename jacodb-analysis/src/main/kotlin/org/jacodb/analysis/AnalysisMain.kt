@@ -15,8 +15,10 @@
  */
 
 package org.jacodb.analysis
+//import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysisFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import mu.KLogging
 import org.jacodb.analysis.analyzers.AliasAnalyzer
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
@@ -24,7 +26,6 @@ import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
-import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysisFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
 import org.jacodb.analysis.engine.IfdsUnitTraverser
@@ -120,7 +121,9 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         return IfdsUnitTraverser(
             graph,
             SingletonUnitResolver,
-            BidiIfdsForTaintAnalysisFactory(forwardAnalyzer, backwardAnalyzer)
+            IfdsUnitInstanceFactory(forwardAnalyzer)
+//            IfdsWithBackwardPreSearchFactory(forwardAnalyzer, backwardAnalyzer)
+//            BidiIfdsForTaintAnalysisFactory(forwardAnalyzer, backwardAnalyzer)
         )
     }
 
@@ -180,3 +183,5 @@ inline fun <reified T : Factory> loadFactories(): List<T> {
     assert(T::class.java != Factory::class.java)
     return ServiceLoader.load(T::class.java).toList()
 }
+
+internal val logger = object : KLogging() {}.logger

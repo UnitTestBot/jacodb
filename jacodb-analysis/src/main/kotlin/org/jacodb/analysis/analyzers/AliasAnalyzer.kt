@@ -16,10 +16,10 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.paths.FieldAccessor
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
@@ -34,8 +34,8 @@ class AliasAnalyzer(
     maxPathLength: Int = 5
 ) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
-        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+        val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (isSink(inst, fact)) {
@@ -59,9 +59,9 @@ class AliasAnalyzer(
                         }
 
                         vulnerabilities.add(
-                            VulnerabilityInstance(
+                            VulnerabilityLocation(
                                 value,
-                                ifdsResult.resolveTraceGraph(IfdsVertex(inst, fact))
+                                IfdsVertex(inst, fact)
                             )
                         )
                     }

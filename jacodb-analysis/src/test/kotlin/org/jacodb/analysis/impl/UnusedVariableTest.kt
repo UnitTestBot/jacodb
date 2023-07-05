@@ -50,10 +50,10 @@ class UnusedVariableTest : BaseAnalysisTest() {
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
     fun `test on Juliet's CWE 563`(className: String) {
-        testSingleJulietClass(engine, vulnerabilityType, className)
+        testSingleJulietClass(vulnerabilityType, className)
     }
 
-    private val engine: AnalysisEngine
+    override val engine: AnalysisEngine
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
             return UnusedVariableAnalysisFactory().createAnalysisEngine(graph)

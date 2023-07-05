@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
@@ -24,7 +23,7 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SpaceId
-import org.jacodb.analysis.engine.TraceGraph
+import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
@@ -90,7 +89,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun calculateSources(ifdsResult: IfdsResult): List<VulnerabilityInstance> {
+    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -104,7 +103,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityInstance(value, TraceGraph(IfdsVertex(it, ZEROFact), setOf(IfdsVertex(it, ZEROFact)), emptyMap()))
+            VulnerabilityLocation(value, IfdsVertex(it, ZEROFact))
         }
         return vulnerabilities
     }

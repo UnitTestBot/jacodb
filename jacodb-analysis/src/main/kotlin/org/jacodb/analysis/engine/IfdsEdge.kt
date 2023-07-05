@@ -16,7 +16,16 @@
 
 package org.jacodb.analysis.engine
 
-data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex)
+import org.jacodb.api.JcMethod
+
+data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex) {
+    init {
+        require(u.method == v.method)
+    }
+
+    val method: JcMethod
+        get() = u.method
+}
 
 enum class PathEdgePredecessorKind {
     NO_PREDECESSOR,

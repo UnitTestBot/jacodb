@@ -20,9 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
-import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysisFactory
 import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.IfdsWithBackwardPreSearchFactory
@@ -202,12 +200,12 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         print(results)
     }
 
-    private fun testJuliet(className: String) = testSingleJulietClass(engine, vulnerabilityType, className)
+    private fun testJuliet(className: String) = testSingleJulietClass(vulnerabilityType, className)
 
     private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) =
-        testOneAnalysisOnOneMethod<T>(engine, vulnerabilityType, methodName, expectedLocations)
+        testOneAnalysisOnOneMethod<T>(vulnerabilityType, methodName, expectedLocations)
 
-    private val engine: AnalysisEngine
+    override val engine: AnalysisEngine
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
 
@@ -215,9 +213,14 @@ class NpeAnalysisTest : BaseAnalysisTest() {
                 graph,
                 SingletonUnitResolver,
                 IfdsWithBackwardPreSearchFactory(
-                    BidiIfdsForTaintAnalysisFactory(NpeAnalyzer(graph), NpeFlowdroidBackwardAnalyzer(graph)),
+                    IfdsUnitInstanceFactory(NpeAnalyzer(graph)),
                     IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
                 )
+//                IfdsUnitInstanceFactory(NpeAnalyzer(graph))
+//                IfdsWithBackwardPreSearchFactory(
+//                    BidiIfdsForTaintAnalysisFactory(NpeAnalyzer(graph), NpeFlowdroidBackwardAnalyzer(graph)),
+//                    IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
+//                )
             )
         }
 }

@@ -72,4 +72,8 @@ class TraceGraph(
         newEdges[upGraph.sink] = newEdges.getOrDefault(upGraph.sink, emptySet()) + validEntryPoints
         return TraceGraph(sink, newSources, newEdges)
     }
+
+    companion object {
+        fun bySink(sink: IfdsVertex) = TraceGraph(sink, setOf(sink), emptyMap())
+    }
 }

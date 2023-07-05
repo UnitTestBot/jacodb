@@ -16,6 +16,10 @@
 
 package org.jacodb.analysis.engine
 
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -23,26 +27,40 @@ import org.jacodb.api.analysis.JcApplicationGraph
 class IfdsWithBackwardPreSearchFactory(
     private val forward: IfdsInstanceFactory,
     private val backward: IfdsInstanceFactory,
-) : IfdsInstanceFactory() {
+) : IfdsInstanceFactory {
 
-    override fun <UnitType> createInstance(
+    override suspend fun <UnitType> createInstance(
         graph: JcApplicationGraph,
-        context: AnalysisContext,
+        summary: Summary,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
         startMethods: List<JcMethod>,
         startFacts: Map<JcMethod, Set<DomainFact>>
-    ): Map<JcMethod, IfdsMethodSummary> {
-        val backwardResults = backward.createInstance(graph.reversed, context, unitResolver, unit, startMethods, emptyMap())
+    ) = coroutineScope {
+        val backwardSummary = SummaryImpl()
 
-        return buildIfdsInstance(forward, graph, context, unitResolver, unit) {
+         val job = launch {
+            backward.createInstance(
+                graph.reversed,
+                backwardSummary,
+                unitResolver,
+                unit,
+                startMethods,
+                emptyMap()
+            )
+        }
+
+        delay(20)
+        job.cancelAndJoin()
+
+        buildIfdsInstance(forward, graph, summary, unitResolver, unit) {
             startMethods.forEach {
                 addStart(it)
             }
 
-            backwardResults.forEach { (method, summary) ->
-                summary.factsAtExits.values.flatten().forEach {
-                    addStartFact(method, it.domainFact)
+            backwardSummary.knownMethods.forEach { method ->
+                backwardSummary.getCurrentFactsFiltered<SummaryEdgeFact>(method, null).forEach { summary ->
+                    addStartFact(method, summary.edge.v.domainFact)
                 }
             }
 
