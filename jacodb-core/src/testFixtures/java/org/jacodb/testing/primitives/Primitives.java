@@ -34,4 +34,7 @@ public class Primitives {
         return s + c;
     }
 
+    public int example(char s, char c) {
+        return s + c;
+    }
 }
