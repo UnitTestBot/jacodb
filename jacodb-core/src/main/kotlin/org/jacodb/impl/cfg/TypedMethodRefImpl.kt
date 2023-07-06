@@ -16,146 +16,211 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcRawCallExpr
-import org.jacodb.api.cfg.JcRawSpecialCallExpr
-import org.jacodb.api.cfg.JcRawStaticCallExpr
-import org.jacodb.api.cfg.TypedMethodRef
+import org.jacodb.api.*
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.jvmName
-import org.jacodb.api.ext.objectType
 import org.jacodb.api.ext.packageName
+import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy
+import org.objectweb.asm.Type
 
-interface MethodSignatureRef : TypedMethodRef {
-    val type: JcClassType
-    val argTypes: List<TypeName>
+abstract class MethodSignatureRef(
+        val type: JcClassType,
+        override val name: String,
+        argTypes: List<TypeName>,
+        returnType: TypeName,
+) : TypedMethodRef {
 
-    fun findDeclaredMethod(filter: (JcTypedMethod) -> Boolean): JcTypedMethod? {
-        return type.findDeclaredMethod(filter)
+    companion object {
+        private val alwaysTrue: (JcTypedMethod) -> Boolean = { true }
     }
 
-    fun findDeclaredMethod(): JcTypedMethod? {
-        return type.findDeclaredMethod { true }
-    }
-
-    fun JcClassType.findDeclaredMethod(filter: (JcTypedMethod) -> Boolean): JcTypedMethod? {
-        val types = argTypes.joinToString { it.typeName }
-        return this.declaredMethods.firstOrNull { it.name == name && filter(it) && it.method.parameters.joinToString { it.type.typeName } == types }
-    }
-
-    val methodNotFoundMessage: String
-        get() {
-            return buildString {
-                append("Can't find method '")
-                append(type.typeName)
-                append("#")
-                append(name)
-                append("(")
-                argTypes.forEach {
-                    append(it.typeName)
-                    append(",")
-                }
-                append(")")
-            }
+    protected val description: String = buildString {
+        append("(")
+        argTypes.forEach {
+            append(it.typeName.jvmName())
         }
-}
-
-data class TypedStaticMethodRefImpl(
-    override val type: JcClassType,
-    override val name: String,
-    override val argTypes: List<TypeName>,
-    val returnType: TypeName
-) : MethodSignatureRef {
-
-    constructor(classpath: JcClasspath, raw: JcRawStaticCallExpr) : this(
-        classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
-        raw.methodName,
-        raw.argumentTypes,
-        raw.returnType
-    )
-
-    override val method: JcTypedMethod by weakLazy {
-        findDeclaredMethod { it.isStatic } ?: type.superType?.let {
-            TypedStaticMethodRefImpl(it, name, argTypes, returnType).method
-        } ?: throw IllegalStateException(methodNotFoundMessage)
-    }
-}
-
-data class TypedSpecialMethodRefImpl(
-    override val type: JcClassType,
-    override val name: String,
-    override val argTypes: List<TypeName>,
-    val returnType: TypeName
-) : MethodSignatureRef {
-
-    constructor(classpath: JcClasspath, raw: JcRawSpecialCallExpr) : this(
-        classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
-        raw.methodName,
-        raw.argumentTypes,
-        raw.returnType
-    )
-
-    override val method: JcTypedMethod by weakLazy {
-        findDeclaredMethod() ?: type.superType?.let {
-            TypedSpecialMethodRefImpl(it, name, argTypes, returnType).method
-        } ?: throw IllegalStateException(methodNotFoundMessage)
+        append(")")
+        append(returnType.typeName.jvmName())
     }
 
-}
-
-
-data class TypedMethodRefImpl(
-    override val type: JcClassType,
-    override val name: String,
-    override val argTypes: List<TypeName>,
-    val returnType: TypeName
-) : MethodSignatureRef {
-
-    constructor(classpath: JcClasspath, raw: JcRawCallExpr) : this(
-        classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
-        raw.methodName,
-        raw.argumentTypes,
-        raw.returnType
-    )
-
-    constructor(type: JcType, raw: JcRawCallExpr) : this(
-        (type as? JcClassType) ?: type.classpath.objectType,
-        raw.methodName,
-        raw.argumentTypes,
-        raw.returnType
-    )
-
-    override val method: JcTypedMethod by softLazy {
-        type.getMethod(name, argTypes, returnType)
+    private fun List<JcTypedMethod>.findMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
+        return firstOrNull { it.name == name && filter(it) && it.method.description == description }
     }
 
-    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
-        val sb = buildString {
-            append("(")
-            argTypes.forEach {
-                append(it.typeName.jvmName())
-            }
-            append(")")
-            append(returnType.typeName.jvmName())
+    protected fun JcClassType.findTypedMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod {
+        return findMethodOrNull(filter) ?: throw IllegalStateException(this.methodNotFoundMessage)
+    }
+
+    protected fun JcClassType.findTypedMethodOrNull(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
+        var methodOrNull = findMethodOrNull {
+            it.name == name && filter(it) && it.method.description == description
         }
-        var methodOrNull = findMethodOrNull(name, sb)
         if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
             methodOrNull = findMethodOrNull {
                 val method = it.method
                 method.name == name && method.hasAnnotation("java.lang.invoke.MethodHandle\$PolymorphicSignature")
             } // weak consumption. may fail
         }
-        return methodOrNull ?: error("Could not find a method with correct signature $typeName#$name$sb")
+        return methodOrNull
     }
+
+    fun JcClassType.findClassMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
+        return declaredMethods.findMethod(filter) ?: superType?.findClassMethod(filter)
+    }
+
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MethodSignatureRef) return false
+
+        if (type != other.type) return false
+        if (name != other.name) return false
+        return description == other.description
+    }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + description.hashCode()
+        return result
+    }
+
+    protected val methodNotFoundMessage: String
+        get() {
+            return type.methodNotFoundMessage
+        }
+
+    protected val JcType.methodNotFoundMessage: String
+        get() {
+            val argumentTypes = Type.getArgumentTypes(description).map { it.descriptor.typeName() }
+            return buildString {
+                append("Can't find method '")
+                append(typeName)
+                append("#")
+                append(name)
+                append("(")
+                argumentTypes.joinToString(", ") { it.typeName }
+                append(")'")
+            }
+        }
+
+}
+
+class TypedStaticMethodRefImpl(
+        type: JcClassType,
+        name: String,
+        argTypes: List<TypeName>,
+        returnType: TypeName
+) : MethodSignatureRef(type, name, argTypes, returnType) {
+
+    constructor(classpath: JcClasspath, raw: JcRawStaticCallExpr) : this(
+            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            raw.methodName,
+            raw.argumentTypes,
+            raw.returnType
+    )
+
+    override val method: JcTypedMethod by weakLazy {
+        type.findClassMethod { it.isStatic } ?: throw IllegalStateException(methodNotFoundMessage)
+    }
+}
+
+class TypedSpecialMethodRefImpl(
+        type: JcClassType,
+        name: String,
+        argTypes: List<TypeName>,
+        returnType: TypeName
+) : MethodSignatureRef(type, name, argTypes, returnType) {
+
+    constructor(classpath: JcClasspath, raw: JcRawSpecialCallExpr) : this(
+            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            raw.methodName,
+            raw.argumentTypes,
+            raw.returnType
+    )
+
+    override val method: JcTypedMethod by weakLazy {
+        type.findClassMethod() ?: throw IllegalStateException(methodNotFoundMessage)
+    }
+
+}
+
+class VirtualMethodRefImpl(
+        type: JcClassType,
+        private val actualType: JcClassType,
+        name: String,
+        argTypes: List<TypeName>,
+        returnType: TypeName
+) : MethodSignatureRef(type, name, argTypes, returnType), VirtualTypedMethodRef {
+
+    companion object {
+        private fun JcRawCallExpr.resolvedType(classpath: JcClasspath): Pair<JcClassType, JcClassType> {
+            val declared = classpath.findTypeOrNull(declaringClass.typeName) as JcClassType
+            if (this is JcRawInstanceExpr) {
+                val instance = instance
+                if (instance is JcRawLocal) {
+                    val actualType = classpath.findTypeOrNull(instance.typeName.typeName)
+                    if (actualType is JcClassType) {
+                        return declared to actualType
+                    }
+                }
+            }
+            return declared to declared
+        }
+
+        fun of(classpath: JcClasspath, raw: JcRawCallExpr): VirtualMethodRefImpl {
+            val (declared, actual) = raw.resolvedType(classpath)
+            return VirtualMethodRefImpl(
+                    declared,
+                    actual,
+                    raw.methodName,
+                    raw.argumentTypes,
+                    raw.returnType
+            )
+        }
+
+        fun of(type: JcClassType, method: JcTypedMethod): VirtualMethodRefImpl {
+            return VirtualMethodRefImpl(
+                    type, type,
+                    method.name,
+                    method.method.parameters.map { it.type },
+                    method.method.returnType
+            )
+        }
+    }
+
+    override val method: JcTypedMethod by softLazy {
+        actualType.findTypedMethodOrNull { !it.isPrivate } ?: declaredMethod
+    }
+
+    override val declaredMethod: JcTypedMethod by softLazy {
+        type.findTypedMethod { !it.isPrivate }
+    }
+}
+
+
+class TypedMethodRefImpl(
+        type: JcClassType,
+        name: String,
+        argTypes: List<TypeName>,
+        returnType: TypeName
+) : MethodSignatureRef(type, name, argTypes, returnType) {
+
+    constructor(classpath: JcClasspath, raw: JcRawCallExpr) : this(
+            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            raw.methodName,
+            raw.argumentTypes,
+            raw.returnType
+    )
+
+    override val method: JcTypedMethod by softLazy {
+        type.findTypedMethod()
+    }
+
 }
 
 fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
@@ -168,17 +233,17 @@ fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
 
 fun JcTypedMethod.methodRef(): TypedMethodRef {
     return TypedMethodRefImpl(
-        enclosingType as JcClassType,
-        method.name,
-        method.parameters.map { it.type },
-        method.returnType
+            enclosingType as JcClassType,
+            method.name,
+            method.parameters.map { it.type },
+            method.returnType
     )
 }
 
 class JcInstLocationImpl(
-    override val method: JcMethod,
-    override val index: Int,
-    override val lineNumber: Int
+        override val method: JcMethod,
+        override val index: Int,
+        override val lineNumber: Int
 ) : JcInstLocation {
 
     override fun toString(): String {
