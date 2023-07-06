@@ -27,15 +27,15 @@ data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex) {
         get() = u.method
 }
 
-enum class PathEdgePredecessorKind {
-    NO_PREDECESSOR,
-    UNKNOWN,
-    SEQUENT,
-    CALL_TO_START,
-    THROUGH_SUMMARY
+sealed interface PredecessorKind {
+    object NoPredecessor : PredecessorKind
+    object Unknown : PredecessorKind
+    object Sequent : PredecessorKind
+    object CallToStart : PredecessorKind
+    class ThroughSummary(val summaryEdge: IfdsEdge) : PredecessorKind
 }
 
 data class PathEdgePredecessor(
     val predEdge: IfdsEdge,
-    val kind: PathEdgePredecessorKind
+    val kind: PredecessorKind
 )

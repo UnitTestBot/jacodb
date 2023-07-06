@@ -46,7 +46,6 @@ object ZEROFact : DomainFact {
 
 interface FlowFunctionsSpace {
     val inIds: List<SpaceId>
-    fun obtainAllPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> = obtainStartFacts(startStatement)
     fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact>
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
@@ -57,7 +56,10 @@ interface FlowFunctionsSpace {
 interface Analyzer {
     val flowFunctions: FlowFunctionsSpace
 
-    fun findVulnerabilities(edge: IfdsEdge): List<VulnerabilityLocation> = emptyList()
+    val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = true
 
-    fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> = emptyList()
+    fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> = emptyList()
+
+    fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<SummaryFact> = emptyList()
 }

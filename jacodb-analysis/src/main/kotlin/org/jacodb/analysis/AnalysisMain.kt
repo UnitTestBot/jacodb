@@ -27,7 +27,7 @@ import org.jacodb.analysis.analyzers.TaintBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
+import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.TraceGraph
@@ -100,7 +100,7 @@ class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
         return IfdsUnitTraverser(
             graph,
             SingletonUnitResolver,
-            IfdsUnitInstanceFactory(UnusedVariableAnalyzer(graph))
+            IfdsBaseUnitRunner(UnusedVariableAnalyzer(graph))
         )
     }
 
@@ -121,7 +121,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
         return IfdsUnitTraverser(
             graph,
             SingletonUnitResolver,
-            IfdsUnitInstanceFactory(forwardAnalyzer)
+            IfdsBaseUnitRunner(forwardAnalyzer)
 //            IfdsWithBackwardPreSearchFactory(forwardAnalyzer, backwardAnalyzer)
 //            BidiIfdsForTaintAnalysisFactory(forwardAnalyzer, backwardAnalyzer)
         )

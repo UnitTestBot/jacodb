@@ -43,7 +43,7 @@ abstract class TaintAnalyzer(
         override val value: String = "taint analysis"
     }
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
@@ -59,9 +59,12 @@ abstract class TaintAnalyzer(
 }
 
 class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) : Analyzer {
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = false
+
     override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, maxPathLength)
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         error("Do not call sources for backward analyzer instance")
     }
 }

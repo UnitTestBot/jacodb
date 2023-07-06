@@ -34,7 +34,7 @@ class AliasAnalyzer(
     maxPathLength: Int = 5
 ) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->

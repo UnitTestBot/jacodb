@@ -37,7 +37,6 @@ import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBranchingInst
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
@@ -59,7 +58,7 @@ class UnusedVariableAnalyzer(
         return this in expr.values.map { it.toPathOrNull() }
     }
 
-    private fun AccessPath.isUsedAt(inst: JcInst, withResult: IfdsResult): Boolean {
+    private fun AccessPath.isUsedAt(inst: JcInst): Boolean {
         val callExpr = inst.callExpr
 
         if (callExpr != null) {
@@ -68,14 +67,7 @@ class UnusedVariableAnalyzer(
                 return false
             }
 
-            if (graph.callees(inst).none() || inst in withResult.crossUnitCallees.keys.map { it.statement }) {
-                return isUsedAt(callExpr)
-            }
-
-            if (callExpr is JcInstanceCallExpr) {
-                return isUsedAt(callExpr.instance)
-            }
-            return false
+            return isUsedAt(callExpr)
         }
         if (inst is JcAssignInst) {
             if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
@@ -89,7 +81,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -97,7 +89,7 @@ class UnusedVariableAnalyzer(
                     used[fact.initStatement] = false
                 }
 
-                if (fact.variable.isUsedAt(inst, ifdsResult)) {
+                if (fact.variable.isUsedAt(inst)) {
                     used[fact.initStatement] = true
                 }
             }
@@ -177,9 +169,7 @@ private class UnusedVariableForwardFunctions(
                 return emptyList()
             }
 
-            return formalParams.zip(callExpr.args)
-                .filter { (_, actual) -> actual.toPathOrNull() == fact.variable }
-                .map { UnusedVariableNode(it.first.toPath(), fact.initStatement) }
+            return emptyList()
         }
 
     }

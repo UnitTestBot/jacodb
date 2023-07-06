@@ -20,10 +20,13 @@ import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.IfdsResult
+import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.engine.PathEdgeFact
 import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.FieldAccessor
@@ -36,12 +39,14 @@ import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcConstant
 import org.jacodb.api.cfg.JcEqExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcNeqExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
@@ -49,11 +54,12 @@ import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
+import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
 class NpeAnalyzer(
-    graph: JcApplicationGraph,
+    val graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
@@ -62,13 +68,37 @@ class NpeAnalyzer(
         override val value: String = "npe-analysis"
     }
 
-    override fun findVulnerabilities(edge: IfdsEdge): List<VulnerabilityLocation> {
+    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> {
+//        logger.info { "Got vertex: ${edge.v}" }
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()
-        val (inst, fact) = edge.v
-        if (fact is NpeTaintNode && fact.activation == null && fact.variable.isDereferencedAt(inst)) {
+        val (inst, fact0) = edge.v
+        if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
             vulnerabilities.add(VulnerabilityLocation(value, edge.v))
         }
         return vulnerabilities
+
+        // TODO: get rid of copy-paste here
+        val v = edge.v
+        val curInst = v.statement
+        val fact = (v.domainFact as? TaintNode) ?: return vulnerabilities
+
+        if (!fact.variable.isOnHeap) {
+            return vulnerabilities
+        }
+
+        val newFact = if (fact.activation == null) fact.updateActivation(curInst) else fact // TODO: think between pred and curInst
+        val newStatements = graph.predecessors(v.statement)
+        logger.warn { "Forward-to-backward: $newFact to inst $newStatements, context = ${edge.u.domainFact}" }
+        return vulnerabilities + newStatements.flatMap { newStatement ->
+            graph.exitPoints(edge.method).map {
+                PathEdgeFact(
+                    IfdsEdge(
+                        IfdsVertex(it, edge.u.domainFact),
+                        IfdsVertex(newStatement, newFact)
+                    )
+                )
+            }
+        }.toList()
     }
 }
 
@@ -235,13 +265,59 @@ private class NpeForwardFunctions(
 }
 
 class NpeFlowdroidBackwardAnalyzer(
-    graph: JcApplicationGraph,
+    val graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeBackwardFunctions(graph, maxPathLength)
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
-        error("Should never be called")
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = false
+
+    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> {
+        val v = edge.v
+        val curInst = v.statement
+        val fact = (v.domainFact as? TaintNode) ?: return emptyList()
+        var canBeKilled = false
+
+        if (!fact.variable.isOnHeap) {
+            return emptyList()
+        }
+
+        if (curInst is JcAssignInst && fact.variable.startsWith(curInst.lhv.toPath())) {
+            canBeKilled = true
+        }
+
+        if (curInst in graph.exitPoints(v.method)) {
+            canBeKilled = true
+        }
+
+        curInst.callExpr?.let { callExpr ->
+            if (callExpr is JcInstanceCallExpr && fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                canBeKilled = true
+            }
+            callExpr.args.forEach {
+                if (fact.variable.startsWith(it.toPathOrNull())) {
+                    canBeKilled = true
+                }
+            }
+        }
+
+        if (canBeKilled) {
+            val newStatements = graph.predecessors(v.statement)
+//            logger.warn { "Backward-to-forward: $fact to inst $newStatements, context = ${edge.u.domainFact}" }
+            return newStatements.flatMap { newStatement ->
+                graph.exitPoints(edge.method).map {
+                    PathEdgeFact(
+                        IfdsEdge(
+                            IfdsVertex(it, edge.u.domainFact),
+                            IfdsVertex(newStatement, fact)
+                        )
+                    )
+                }
+            }.toList()
+//            e.handoverPathEdgeTo(forward, pred, updateActivation = false, propZero = false)
+        }
+        return emptyList()
     }
 }
 
@@ -253,13 +329,18 @@ private class NpeBackwardFunctions(
 }
 
 class NpePrecalcBackwardAnalyzer(
-    graph: JcApplicationGraph,
+    val graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpePrecalcBackwardFunctions(graph, maxPathLength)
 
-    override fun findPostIfdsVulnerabilities(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
-        return emptyList()
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = false
+
+    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> = buildList {
+        if (edge.v.statement in graph.exitPoints(edge.method)) {
+            add(PathEdgeFact(IfdsEdge(edge.v, edge.v)))
+        }
     }
 }
 

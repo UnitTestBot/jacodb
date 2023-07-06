@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.job
@@ -36,14 +35,14 @@ import java.util.concurrent.ConcurrentHashMap
 class IfdsUnitTraverser<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
-    private val ifdsInstanceFactory: IfdsInstanceFactory
+    private val ifdsUnitRunner: IfdsUnitRunner
 ) : AnalysisEngine {
     private val initMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
-    private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CalleeFact>> = mutableMapOf()
+    private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
     private val summary: Summary = SummaryImpl()
     private val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
     private val scope = BackgroundScope()
@@ -60,8 +59,6 @@ class IfdsUnitTraverser<UnitType>(
         logger.info { "Started traversing" }
         logger.info { "Amount of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
-            logger.info { "${unitsQueue.size} unit(s) left" }
-
             // TODO: do smth smarter here
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
@@ -72,34 +69,35 @@ class IfdsUnitTraverser<UnitType>(
             }
 
             unitJobs[next] = launch {
-                buildIfdsInstance(ifdsInstanceFactory, graph, summary, unitResolver, next) {
-                    for (method in foundMethods[next].orEmpty()) {
-                        addStart(method)
-                    }
+                ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
+            }.also {
+                it.invokeOnCompletion { _ ->
+                    logger.info { "Job for $next completed, remaining: ${unitJobs.values.count { it.isActive }}" }
                 }
             }
         }
 
-        delay(250)
-//        error("A")
+        logger.info { "Waiting for units to be analyzed" }
+//        delay(20000)
+        logger.info { "Starting to cancel units" }
 
         coroutineScope {
-            unitJobs.values.forEach { it.cancel() }
+//            unitJobs.values.forEach { it.cancel() }
             unitJobs.values.forEach { it.join() }
         }
 
         scope.coroutineContext.job.cancelAndJoin()
 
+
+        logger.info { "Restoring traces..." }
+
         foundMethods.values.flatten().forEach { method ->
-            for (calleeFact in summary.getCurrentFactsFiltered<CalleeFact>(method, null)) {
-                for (sFact in calleeFact.factsAtCalleeStart) {
-                    val calledMethod = graph.methodOf(sFact.statement)
-                    crossUnitCallers.getOrPut(calledMethod) { mutableSetOf() }.add(calleeFact)
-                }
+            for (crossUnitCall in summary.getCurrentFactsFiltered<CrossUnitCallFact>(method, null)) {
+                val calledMethod = graph.methodOf(crossUnitCall.calleeVertex.statement)
+                crossUnitCallers.getOrPut(calledMethod) { mutableSetOf() }.add(crossUnitCall)
             }
         }
 
-        logger.info { "Restoring traces..." }
         foundVulnerabilities
             .map { VulnerabilityInstance(it.vulnerabilityType, extendTraceGraph(it.sink.traceGraph)) }
             .filter {
@@ -122,9 +120,10 @@ class IfdsUnitTraverser<UnitType>(
         while (methodQueue.isNotEmpty()) {
             val method = methodQueue.first()
             methodQueue.remove(method)
-            for (callee in crossUnitCallers[method].orEmpty()) {
-                val sFacts = callee.factsAtCalleeStart
-                val upGraph = callee.vertex.traceGraph
+            for (callFact in crossUnitCallers[method].orEmpty()) {
+                // TODO: merge calleeVertices here
+                val sFacts = setOf(callFact.calleeVertex)
+                val upGraph = callFact.callerVertex.traceGraph
                 val newValue = result.mergeWithUpGraph(upGraph, sFacts)
                 if (result != newValue) {
                     result = newValue

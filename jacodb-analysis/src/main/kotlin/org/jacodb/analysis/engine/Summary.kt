@@ -23,15 +23,25 @@ import kotlinx.coroutines.flow.filterIsInstance
 import org.jacodb.api.JcMethod
 import java.util.concurrent.ConcurrentHashMap
 
-sealed interface SummaryFact
+sealed interface SummaryFact {
+    val method: JcMethod
+}
 
-data class VulnerabilityLocation(val vulnerabilityType: String, val sink: IfdsVertex) : SummaryFact
+data class VulnerabilityLocation(val vulnerabilityType: String, val sink: IfdsVertex) : SummaryFact {
+    override val method: JcMethod = sink.method
+}
 
-data class SummaryEdgeFact(val edge: IfdsEdge) : SummaryFact
+data class PathEdgeFact(val edge: IfdsEdge) : SummaryFact {
+    override val method: JcMethod = edge.method
+}
 
-data class CalleeFact(val vertex: IfdsVertex, val factsAtCalleeStart: Set<IfdsVertex>) : SummaryFact
+data class CrossUnitCallFact(val callerVertex: IfdsVertex, val calleeVertex: IfdsVertex) : SummaryFact {
+    override val method: JcMethod = callerVertex.method
+}
 
-data class TraceGraphFact(val graph: TraceGraph) : SummaryFact
+data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
+    override val method: JcMethod = graph.sink.method
+}
 
 fun interface SummarySender {
     fun send(fact: SummaryFact)
@@ -47,7 +57,7 @@ interface Summary {
     val knownMethods: List<JcMethod>
 }
 
-class SummaryImpl: Summary {
+class SummaryImpl : Summary {
     private val loadedFacts: MutableMap<JcMethod, MutableSet<SummaryFact>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<SummaryFact>> = ConcurrentHashMap()
 

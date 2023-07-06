@@ -21,11 +21,12 @@ import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
-import org.jacodb.analysis.engine.IfdsUnitInstanceFactory
+import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.IfdsUnitTraverser
-import org.jacodb.analysis.engine.IfdsWithBackwardPreSearchFactory
-import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
@@ -211,16 +212,18 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
             return IfdsUnitTraverser(
                 graph,
-                SingletonUnitResolver,
-                IfdsWithBackwardPreSearchFactory(
-                    IfdsUnitInstanceFactory(NpeAnalyzer(graph)),
-                    IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
-                )
-//                IfdsUnitInstanceFactory(NpeAnalyzer(graph))
-//                IfdsWithBackwardPreSearchFactory(
-//                    BidiIfdsForTaintAnalysisFactory(NpeAnalyzer(graph), NpeFlowdroidBackwardAnalyzer(graph)),
-//                    IfdsUnitInstanceFactory(NpePrecalcBackwardAnalyzer(graph))
+                MethodUnitResolver,
+//                ParallelBidiIfdsUnitRunner(
+//                    SequentialBidiIfdsUnitRunner(
+//                        IfdsBaseUnitRunner(NpeAnalyzer(graph)),
+//                        IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed))
+//                    ),
+//                    IfdsBaseUnitRunner(NpeFlowdroidBackwardAnalyzer(graph.reversed))
 //                )
+                ParallelBidiIfdsUnitRunner(
+                    IfdsBaseUnitRunner(NpeAnalyzer(graph)),
+                    IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed))
+                )
             )
         }
 }

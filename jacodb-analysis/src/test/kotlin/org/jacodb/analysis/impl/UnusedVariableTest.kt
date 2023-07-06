@@ -42,6 +42,9 @@ class UnusedVariableTest : BaseAnalysisTest() {
 
             // Expected answers are strange, seems to be problem in tests
             "_12",
+
+            // The variable isn't expected to be detected as unused actually
+            "_81"
         ))
 
         private val vulnerabilityType = UnusedVariableAnalyzer.value

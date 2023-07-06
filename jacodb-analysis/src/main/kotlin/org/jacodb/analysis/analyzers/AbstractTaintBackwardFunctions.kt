@@ -44,7 +44,7 @@ abstract class AbstractTaintBackwardFunctions(
     private val classpath: JcClasspath = graph.classpath
     
     override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
-        return emptyList()
+        return listOf(ZEROFact)
     }
 
     open fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {

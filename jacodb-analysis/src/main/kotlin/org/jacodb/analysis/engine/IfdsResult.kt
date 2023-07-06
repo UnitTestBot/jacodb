@@ -15,19 +15,12 @@
  */
 
 package org.jacodb.analysis.engine
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.CALL_TO_START
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.NO_PREDECESSOR
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.SEQUENT
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.THROUGH_SUMMARY
-import org.jacodb.analysis.engine.PathEdgePredecessorKind.UNKNOWN
 import org.jacodb.api.cfg.JcInst
 
 class IfdsResult(
     val pathEdges: List<IfdsEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
-    val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>,
-    val summaryEdgeToStartToEndEdges: Map<IfdsEdge, Set<IfdsEdge>>,
-    val crossUnitCallees: Map<IfdsVertex, Set<IfdsVertex>>
+    val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>
 ) {
     private inner class TraceGraphBuilder(private val sink: IfdsVertex) {
         private val sources: MutableSet<IfdsVertex> = mutableSetOf()
@@ -61,13 +54,13 @@ class IfdsResult(
 
             for (pred in pathEdgesPreds[e].orEmpty()) {
                 when (pred.kind) {
-                    CALL_TO_START -> {
+                    is PredecessorKind.CallToStart -> {
                         if (!stopAtMethodStart) {
                             addEdge(pred.predEdge.v, lastVertex)
                             dfs(pred.predEdge, pred.predEdge.v, false)
                         }
                     }
-                    SEQUENT -> {
+                    is PredecessorKind.Sequent -> {
                         if (pred.predEdge.v.domainFact == v.domainFact) {
                             dfs(pred.predEdge, lastVertex, stopAtMethodStart)
                         } else {
@@ -75,22 +68,24 @@ class IfdsResult(
                             dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart)
                         }
                     }
-                    THROUGH_SUMMARY -> {
-                        val summaryEdge = IfdsEdge(pred.predEdge.v, v)
-                        summaryEdgeToStartToEndEdges[summaryEdge]?.forEach { startToEndEdge ->
-                            addEdge(startToEndEdge.v, lastVertex) // Return to next vertex
-                            addEdge(pred.predEdge.v, startToEndEdge.u) // Call to start
-                            dfs(startToEndEdge, startToEndEdge.v, true) // Expand summary edge
-                            dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
+                    is PredecessorKind.ThroughSummary -> {
+                        val startToEndEdge = pred.kind.summaryEdge
+                        addEdge(startToEndEdge.v, lastVertex) // Return to next vertex
+                        addEdge(pred.predEdge.v, startToEndEdge.u) // Call to start
+                        dfs(startToEndEdge, startToEndEdge.v, true) // Expand summary edge
+                        dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
+                    }
+                    is PredecessorKind.Unknown -> {
+                        addEdge(pred.predEdge.v, lastVertex)
+                        if (pred.predEdge.u == pred.predEdge.v && !stopAtMethodStart) {
+                            sources.add(pred.predEdge.v)
+                        } else { // Turning point
+                            // TODO: ideally, we should analyze the place from which the edge was given to ifds,
+                            //  for now we just go to method start
+                            dfs(IfdsEdge(pred.predEdge.u, pred.predEdge.u), pred.predEdge.v, stopAtMethodStart)
                         }
                     }
-                    UNKNOWN -> {
-                        addEdge(pred.predEdge.v, lastVertex) // Turning point
-                        // TODO: ideally, we should analyze the place from which the edge was given to ifds,
-                        //  for now we just go to method start
-                        dfs(IfdsEdge(pred.predEdge.u, pred.predEdge.u), pred.predEdge.v, stopAtMethodStart)
-                    }
-                    NO_PREDECESSOR -> {
+                    is PredecessorKind.NoPredecessor -> {
                         sources.add(v)
                         addEdge(pred.predEdge.v, lastVertex)
                     }
