@@ -16,16 +16,9 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeVariableDeclaration
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.JcTypedMethodParameter
-import org.jacodb.api.MethodResolution
+import org.jacodb.api.*
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
@@ -136,5 +129,21 @@ class JcTypedMethodImpl(
         val info = info
         return classpath.typeOf(info.substitutor.substitute(variableSignature.fieldType))
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is JcTypedMethodImpl) return false
+
+        if (enclosingType != other.enclosingType) return false
+        if (method != other.method) return false
+        return typeArguments == other.typeArguments
+    }
+
+    override fun hashCode(): Int {
+        var result = enclosingType.hashCode()
+        result = 31 * result + method.hashCode()
+        return result
+    }
+
 
 }
