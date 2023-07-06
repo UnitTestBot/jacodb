@@ -18,25 +18,11 @@ package org.jacodb.impl.analysis.impl
 
 import org.jacodb.api.JcClassType
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.BsmStringArg
-import org.jacodb.api.cfg.DefaultJcInstVisitor
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcDynamicCallExpr
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcStringConstant
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.autoboxIfNeeded
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcGraphImpl
+import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
@@ -78,10 +64,11 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
                     val firstStr = stringify(inst, first, result)
                     val secondStr = stringify(inst, second, result)
 
-                    val concatMethod = stringType.methods.first {
+                    val concatMethod = stringType.declaredMethods.first {
                         it.name == "concat" && it.parameters.size == 1 && it.parameters.first().type == stringType
                     }
-                    val newConcatExpr = JcVirtualCallExpr(concatMethod.methodRef(), firstStr, listOf(secondStr))
+                    val methodRef = VirtualMethodRefImpl.of(stringType, concatMethod)
+                    val newConcatExpr = JcVirtualCallExpr(methodRef, firstStr, listOf(secondStr))
                     result += JcAssignInst(inst.location, lhv, newConcatExpr)
                     instructionReplacements[inst] = result.first()
                     catchReplacements[inst] = result
@@ -124,7 +111,8 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
                 val method = boxedType.methods.first {
                     it.name == "toString" && it.parameters.isEmpty()
                 }
-                val toStringExpr = JcVirtualCallExpr(method.methodRef(), value, emptyList())
+                val methodRef = VirtualMethodRefImpl.of(boxedType, method)
+                val toStringExpr = JcVirtualCallExpr(methodRef, value, emptyList())
                 val assignment = JcLocalVar("${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment

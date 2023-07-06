@@ -26,6 +26,10 @@ interface TypedMethodRef {
     val method: JcTypedMethod
 }
 
+interface VirtualTypedMethodRef : TypedMethodRef {
+    val declaredMethod: JcTypedMethod
+}
+
 interface JcInstLocation {
     val method: JcMethod
     val index: Int
@@ -598,7 +602,6 @@ data class JcNewArrayExpr(
     override val type: JcType,
     val dimensions: List<JcValue>
 ) : JcExpr {
-    constructor(type: JcType, length: JcValue) : this(type, listOf(length))
 
     override val operands: List<JcValue>
         get() = dimensions
@@ -637,6 +640,7 @@ interface JcCallExpr : JcExpr {
 
 interface JcInstanceCallExpr : JcCallExpr {
     val instance: JcValue
+    val declaredMethod: JcTypedMethod
 
     override val operands: List<JcValue>
         get() = listOf(instance) + args
@@ -699,12 +703,20 @@ data class JcDynamicCallExpr(
  * are both represented with `JcVirtualCallExpr` for simplicity
  */
 data class JcVirtualCallExpr(
-    private val methodRef: TypedMethodRef,
+    private val methodRef: VirtualTypedMethodRef,
     override val instance: JcValue,
     override val args: List<JcValue>,
 ) : JcInstanceCallExpr {
 
-    override val method: JcTypedMethod get() = methodRef.method
+    override val method: JcTypedMethod
+        get() {
+            return methodRef.method
+        }
+
+    override val declaredMethod: JcTypedMethod
+        get() {
+            return methodRef.declaredMethod
+        }
 
     override fun toString(): String =
         "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
@@ -743,6 +755,9 @@ data class JcSpecialCallExpr(
 ) : JcInstanceCallExpr {
 
     override val method: JcTypedMethod get() = methodRef.method
+
+    override val declaredMethod: JcTypedMethod
+        get() = method
 
     override fun toString(): String =
         "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"

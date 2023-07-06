@@ -23,25 +23,19 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcGeExpr
-import org.jacodb.api.cfg.JcGtExpr
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInt
-import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.cfg.RealMethodResolution.Virtual
+import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
 import org.jacodb.testing.primitives.Primitives
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.EnabledOnJre
@@ -210,6 +204,17 @@ class InstructionsTest : BaseTest() {
             val expected = cp.findTypeOrNull(it.returnType.typeName)
             assertEquals(expected, returnValue.type, "types not matched for ${it.humanReadableSignature}")
         }
+    }
+
+    @Test
+    fun `method resolution based on var`() {
+        val clazz = cp.findClass<RealMethodResolution>()
+        val insts = clazz.findMethodOrNull("test")!!.instList
+        val actionCallExpr = insts.instructions.firstNotNullOf {
+            (it as? JcCallInst)?.callExpr.takeIf { it is JcVirtualCallExpr }
+        } as JcVirtualCallExpr
+        assertEquals(cp.findClass<VirtualImpl>(), actionCallExpr.method.method.enclosingClass)
+        assertEquals(cp.findClass<Virtual>(), actionCallExpr.declaredMethod.method.enclosingClass)
     }
 }
 
