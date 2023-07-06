@@ -20,11 +20,8 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jacodb.api.ext.isNotNullAnnotation
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
-import org.jacodb.impl.types.signature.JvmTypeVariable
-import org.jacodb.impl.types.signature.copyWith
+import org.jacodb.impl.types.signature.*
+
 
 class JcSubstitutorImpl(
     // map declaration -> actual type or type variable
@@ -151,8 +148,8 @@ class JcSubstitutorImpl(
         if (javaClass != other?.javaClass) return false
 
         other as JcSubstitutorImpl
-
-        return substitutions == other.substitutions
+        if (substitutions.size != other.substitutions.size) return false
+        return substitutions.entries.all { it.value == other.substitutions[it.key] }
     }
 
     override fun hashCode(): Int {
