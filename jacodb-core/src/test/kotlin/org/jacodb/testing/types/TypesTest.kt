@@ -16,17 +16,16 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
+import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.substition.JcSubstitutor
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.io.InputStream
 
 class TypesTest : BaseTypesTest() {
 
@@ -123,5 +122,25 @@ class TypesTest : BaseTypesTest() {
 
         assertNotEquals(type1, type2)
     }
+
+    @Test
+    fun `parametrized typed method equality`() {
+        fun newListType(elementType: JcClassOrInterface? = null): JcClassType {
+            return JcClassTypeImpl(cp, listClass, null, elementType?.let {
+                listOf(JvmClassRefType(elementType.name, false, emptyList()))
+            } ?: emptyList(), false, emptyList())
+        }
+
+        val objectList = newListType(cp.findClass<Any>())
+        val stringList1 = newListType(cp.findClass<String>())
+        val stringList2 = newListType(cp.findClass<String>())
+        val isList = newListType(cp.findClass<InputStream>())
+
+        assertEquals(stringList1.iterator, stringList2.iterator)
+        assertNotEquals(isList.iterator, stringList1.iterator)
+        assertNotEquals(objectList.iterator, stringList1.iterator)
+    }
+
+    private val JcClassType.iterator get() = findMethodOrNull { it.name == "iterator" && it.parameters.isEmpty() }
 
 }

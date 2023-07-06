@@ -29,6 +29,24 @@ import org.jacodb.api.PredefinedPrimitives
 sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotation>) {
 
     abstract val displayName: String
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is JvmType) return false
+
+        if (isNullable != other.isNullable) return false
+        if (annotations != other.annotations) return false
+        return displayName == other.displayName
+    }
+
+    override fun hashCode(): Int {
+        var result = isNullable?.hashCode() ?: 0
+        result = 31 * result + annotations.hashCode()
+        result = 31 * result + displayName.hashCode()
+        return result
+    }
+
+
 }
 
 internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
