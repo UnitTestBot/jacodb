@@ -16,7 +16,10 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcArrayType
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcPrimitiveType
+import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.toType
@@ -90,7 +93,8 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `interfaces types test`() {
-        val sessionCacheVisitorType = cp.findClass("sun.security.ssl.SSLSessionContextImpl\$SessionCacheVisitor").toType()
+        val sessionCacheVisitorType =
+            cp.findClass("sun.security.ssl.SSLSessionContextImpl\$SessionCacheVisitor").toType()
         val cacheVisitorType = sessionCacheVisitorType.interfaces.first()
         val firstParam = cacheVisitorType.typeArguments.first()
 
@@ -104,42 +108,50 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `raw types equality`() {
-        val rawType1 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
-        val rawType2 = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
+        val rawType1 = rawList()
+        val rawType2 = rawList()
         assertEquals(rawType1, rawType2)
     }
 
-    interface X : List<String>
-    interface Y : List<String>
-
     @Test
     fun `parametrized types equality`() {
-        val rawType = JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
-        val type1 = cp.findClass<X>().toType().interfaces.first()
-        val type2 = cp.findClass<Y>().toType().interfaces.first()
+        val rawType = rawList()
+        val type1 = listType<String>()
+        val type2 = listType<String>()
         assertNotEquals(rawType, type1)
         assertNotEquals(rawType, type2)
 
-        assertNotEquals(type1, type2)
+        assertEquals(type1, type2)
     }
 
     @Test
     fun `parametrized typed method equality`() {
-        fun newListType(elementType: JcClassOrInterface? = null): JcClassType {
-            return JcClassTypeImpl(cp, listClass, null, elementType?.let {
-                listOf(JvmClassRefType(elementType.name, false, emptyList()))
-            } ?: emptyList(), false, emptyList())
-        }
 
-        val objectList = newListType(cp.findClass<Any>())
-        val stringList1 = newListType(cp.findClass<String>())
-        val stringList2 = newListType(cp.findClass<String>())
-        val isList = newListType(cp.findClass<InputStream>())
+        val objectList = listType<Any>()
+        val stringList1 = listType<String>()
+        val stringList2 = listType<String>()
+        val isList = listType<InputStream>()
 
         assertEquals(stringList1.iterator, stringList2.iterator)
         assertNotEquals(isList.iterator, stringList1.iterator)
         assertNotEquals(objectList.iterator, stringList1.iterator)
     }
+
+    private inline fun <reified T> listType(raw: Boolean = false): JcClassType {
+        val elementName = T::class.java.name
+        return JcClassTypeImpl(
+            cp, listClass, null,
+            when {
+                raw -> emptyList()
+                else -> listOf(JvmClassRefType(elementName, false, emptyList()))
+            }, false, emptyList()
+        )
+    }
+
+    private fun rawList(): JcClassType {
+        return JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
+    }
+
 
     private val JcClassType.iterator get() = findMethodOrNull { it.name == "iterator" && it.parameters.isEmpty() }
 
