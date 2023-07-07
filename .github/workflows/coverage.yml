@@ -2,8 +2,11 @@ name: Generate coverage report
 
 on:
   push:
-    branches: [ develop ]
-  workflow_dispatch:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
 
 jobs:
   build:
@@ -30,7 +33,7 @@ jobs:
         id: jacoco
         uses: cicirello/jacoco-badge-generator@v2
         with:
-          badges-directory: docs/badges
+          badges-directory: build/docs/badges
           generate-branches-badge: true
           generate-summary: true
           jacoco-csv-file: >
