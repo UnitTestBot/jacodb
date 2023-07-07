@@ -269,6 +269,11 @@ fun MavenPublication.addPom() {
                 email.set("azat.aam@gmail.com")
             }
             developer {
+                id.set("CaelmBleidd")
+                name.set("Alexey Menshutin")
+                email.set("alex.menshutin99@gmail.com")
+            }
+            developer {
                 id.set("sergeypospelov")
                 name.set("Sergey Pospelov")
                 email.set("sergeypospelov59@gmail.com")
