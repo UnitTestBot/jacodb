@@ -24,17 +24,17 @@ import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.cfg.*
+import org.jacodb.api.ext.*
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findMethodOrNull
-import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
 import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
+import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.primitives.Primitives
+import org.jacodb.testing.Common
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
@@ -216,6 +216,34 @@ class InstructionsTest : BaseTest() {
         assertEquals(cp.findClass<VirtualImpl>(), actionCallExpr.method.method.enclosingClass)
         assertEquals(cp.findClass<Virtual>(), actionCallExpr.declaredMethod.method.enclosingClass)
     }
+
+    @Test
+    fun `resolving field descriptors should work`() {
+        val parent = cp.findClass<Common.Common1>()
+        val child = cp.findClass<FieldsAndMethods.Common1Child>()
+
+        // public int field
+        val methodWithPublicFieldInt = child.findMethodOrNull("accessIntField")!!
+        val assignInstInt = methodWithPublicFieldInt.instList
+            .filterIsInstance<JcAssignInst>()
+            .single()
+        val fieldInt = (assignInstInt.rhv as JcFieldRef).field
+
+        assertEquals(parent, fieldInt.enclosingType.jcClass)
+        assertEquals(cp.int, fieldInt.fieldType)
+
+
+        // public boolean field
+        val methodWithPublicFieldBoolean = child.findMethodOrNull("accessBooleanField")!!
+        val assignInstBoolean = methodWithPublicFieldBoolean.instList
+            .filterIsInstance<JcAssignInst>()
+            .single()
+        val fieldBoolean = (assignInstBoolean.rhv as JcFieldRef).field
+
+        assertEquals(child, fieldBoolean.enclosingType.jcClass)
+        assertEquals(cp.boolean, fieldBoolean.fieldType)
+    }
+
 }
 
 fun JcMethod.dumpInstructions(): String {
