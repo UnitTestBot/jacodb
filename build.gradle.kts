@@ -261,7 +261,7 @@ fun MavenPublication.addPom() {
             developer {
                 id.set("volivan239")
                 name.set("Ivan Volkov")
-                email.set("lehvolk@yandex.ru")
+                email.set("volkov.ivan2004@gmail.com")
             }
             developer {
                 id.set("AbdullinAM")
