@@ -73,7 +73,7 @@ abstract class BaseAnalysisTest : BaseTest() {
             "_05", "_07",
 
             // TODO/Won't fix(?): unmodified non-final static variables not analyzed
-            "_10", "_14"
+            "_10", "_14",
         )
     }
 

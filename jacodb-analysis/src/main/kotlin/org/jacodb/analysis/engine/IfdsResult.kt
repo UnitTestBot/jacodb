@@ -69,10 +69,10 @@ class IfdsResult(
                         }
                     }
                     is PredecessorKind.ThroughSummary -> {
-                        val startToEndEdge = pred.kind.summaryEdge
-                        addEdge(startToEndEdge.v, lastVertex) // Return to next vertex
-                        addEdge(pred.predEdge.v, startToEndEdge.u) // Call to start
-                        dfs(startToEndEdge, startToEndEdge.v, true) // Expand summary edge
+                        val summaryEdge = pred.kind.summaryEdge
+                        addEdge(summaryEdge.v, lastVertex) // Return to next vertex
+                        addEdge(pred.predEdge.v, summaryEdge.u) // Call to start
+                        dfs(summaryEdge, summaryEdge.v, true) // Expand summary edge
                         dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
                     }
                     is PredecessorKind.Unknown -> {

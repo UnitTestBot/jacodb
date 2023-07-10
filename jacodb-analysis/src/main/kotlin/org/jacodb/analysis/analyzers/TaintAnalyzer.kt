@@ -25,6 +25,7 @@ import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
@@ -32,12 +33,12 @@ import org.jacodb.api.cfg.JcValue
 
 
 abstract class TaintAnalyzer(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     generates: (JcInst) -> List<DomainFact>,
     val isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates)
+    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(cp, maxPathLength, generates)
 
     companion object : SpaceId {
         override val value: String = "taint analysis"
@@ -70,10 +71,10 @@ class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) :
 }
 
 private class TaintForwardFunctions(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
-) : AbstractTaintForwardFunctions(graph) {
+) : AbstractTaintForwardFunctions(cp) {
 
     override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
 

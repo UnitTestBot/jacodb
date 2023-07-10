@@ -28,7 +28,7 @@ import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.IfdsUnitTraverser
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -97,7 +97,7 @@ interface AnalysisEngineFactory : Factory {
 
 class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
     override fun createAnalysisEngine(graph: JcApplicationGraph): AnalysisEngine {
-        return IfdsUnitTraverser(
+        return IfdsUnitManager(
             graph,
             SingletonUnitResolver,
             IfdsBaseUnitRunner(UnusedVariableAnalyzer(graph))
@@ -118,7 +118,7 @@ abstract class FlowDroidFactory : AnalysisEngineFactory {
     ): AnalysisEngine {
         val forwardAnalyzer = graph.forwardAnalyzer
         val backwardAnalyzer = graph.backwardAnalyzer
-        return IfdsUnitTraverser(
+        return IfdsUnitManager(
             graph,
             SingletonUnitResolver,
             IfdsBaseUnitRunner(forwardAnalyzer)
@@ -149,7 +149,7 @@ class AliasAnalysisFactory(
 ) : FlowDroidFactory() {
     override val JcApplicationGraph.forwardAnalyzer: Analyzer
         get() {
-            return AliasAnalyzer(this, generates, isSink)
+            return AliasAnalyzer(classpath, generates, isSink)
         }
 
     override val JcApplicationGraph.backwardAnalyzer: Analyzer

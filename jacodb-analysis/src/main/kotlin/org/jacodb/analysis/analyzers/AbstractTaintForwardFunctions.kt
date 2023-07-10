@@ -22,8 +22,8 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcExpr
@@ -34,7 +34,7 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintForwardFunctions(
-    protected val graph: JcApplicationGraph
+    protected val cp: JcClasspath
 ) : FlowFunctionsSpace {
 
     abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
@@ -73,7 +73,7 @@ abstract class AbstractTaintForwardFunctions(
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
             val actualParams = callExpr.args
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, cp.findTypeOrNull(it.type.typeName)!!)
             }
 
             formalParams.zip(actualParams).forEach { (formal, actual) ->
@@ -158,7 +158,7 @@ abstract class AbstractTaintForwardFunctions(
                 fact
             }
             val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, graph.classpath.findTypeOrNull(it.type.typeName)!!)
+                JcArgument.of(it.index, it.name, cp.findTypeOrNull(it.type.typeName)!!)
             }
 
             if (fact is TaintNode && fact.variable.isOnHeap) {

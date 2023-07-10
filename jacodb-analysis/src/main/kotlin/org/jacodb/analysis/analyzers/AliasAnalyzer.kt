@@ -21,18 +21,18 @@ import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.paths.FieldAccessor
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.values
 
 class AliasAnalyzer(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     generates: (JcInst) -> List<DomainFact>,
     isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
-) : TaintAnalyzer(graph, generates, isSink, maxPathLength) {
+) : TaintAnalyzer(cp, generates, isSink, maxPathLength) {
 
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()

@@ -26,7 +26,6 @@ import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.FieldAccessor
@@ -36,6 +35,7 @@ import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcArrayType
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
@@ -59,10 +59,10 @@ import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
 class NpeAnalyzer(
-    val graph: JcApplicationGraph,
+    graph: JcApplicationGraph,
     maxPathLength: Int = 5
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph, maxPathLength)
+    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph.classpath, maxPathLength)
 
     companion object : SpaceId {
         override val value: String = "npe-analysis"
@@ -78,35 +78,35 @@ class NpeAnalyzer(
         return vulnerabilities
 
         // TODO: get rid of copy-paste here
-        val v = edge.v
-        val curInst = v.statement
-        val fact = (v.domainFact as? TaintNode) ?: return vulnerabilities
-
-        if (!fact.variable.isOnHeap) {
-            return vulnerabilities
-        }
-
-        val newFact = if (fact.activation == null) fact.updateActivation(curInst) else fact // TODO: think between pred and curInst
-        val newStatements = graph.predecessors(v.statement)
-        logger.warn { "Forward-to-backward: $newFact to inst $newStatements, context = ${edge.u.domainFact}" }
-        return vulnerabilities + newStatements.flatMap { newStatement ->
-            graph.exitPoints(edge.method).map {
-                PathEdgeFact(
-                    IfdsEdge(
-                        IfdsVertex(it, edge.u.domainFact),
-                        IfdsVertex(newStatement, newFact)
-                    )
-                )
-            }
-        }.toList()
+//        val v = edge.v
+//        val curInst = v.statement
+//        val fact = (v.domainFact as? TaintNode) ?: return vulnerabilities
+//
+//        if (!fact.variable.isOnHeap) {
+//            return vulnerabilities
+//        }
+//
+//        val newFact = if (fact.activation == null) fact.updateActivation(curInst) else fact // TODO: think between pred and curInst
+//        val newStatements = graph.predecessors(v.statement)
+//        logger.warn { "Forward-to-backward: $newFact to inst $newStatements, context = ${edge.u.domainFact}" }
+//        return vulnerabilities + newStatements.flatMap { newStatement ->
+//            graph.exitPoints(edge.method).map {
+//                PathEdgeFact(
+//                    IfdsEdge(
+//                        IfdsVertex(it, edge.u.domainFact),
+//                        IfdsVertex(newStatement, newFact)
+//                    )
+//                )
+//            }
+//        }.toList()
     }
 }
 
 
 private class NpeForwardFunctions(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     private val maxPathLength: Int
-) : AbstractTaintForwardFunctions(graph) {
+) : AbstractTaintForwardFunctions(cp) {
 
     override val inIds: List<SpaceId> get() = listOf(NpeAnalyzer, ZEROFact.id)
 
@@ -191,11 +191,11 @@ private class NpeForwardFunctions(
         }
 
         // Following are some ad-hoc magic for if statements to change facts after instructions like if (x != null)
-        val currentBranch = graph.methodOf(inst).flowGraph().ref(nextInst)
+        val nextInstIsTrueBranch = nextInst.location.index == inst.trueBranch.index
         if (fact == ZEROFact) {
             if (inst.pathComparedWithNull != null) {
-                if ((inst.condition is JcEqExpr && currentBranch == inst.trueBranch) ||
-                    (inst.condition is JcNeqExpr && currentBranch == inst.falseBranch)
+                if ((inst.condition is JcEqExpr && nextInstIsTrueBranch) ||
+                    (inst.condition is JcNeqExpr && !nextInstIsTrueBranch)
                 ) {
                     // This is a hack: instructions like `return null` in branch of next will be considered only if
                     //  the fact holds (otherwise we could not get there)
@@ -212,7 +212,7 @@ private class NpeForwardFunctions(
         val expr = inst.condition
         val comparedPath = inst.pathComparedWithNull ?: return listOf(fact)
 
-        if ((expr is JcEqExpr && currentBranch == inst.trueBranch) || (expr is JcNeqExpr && currentBranch == inst.falseBranch)) {
+        if ((expr is JcEqExpr && nextInstIsTrueBranch) || (expr is JcNeqExpr && !nextInstIsTrueBranch)) {
             // comparedPath is null in this branch
             if (fact.variable.startsWith(comparedPath) && fact.activation == null) {
                 if (fact.variable == comparedPath) {
@@ -231,6 +231,7 @@ private class NpeForwardFunctions(
 
     override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
         val result = mutableListOf<DomainFact>(ZEROFact)
+//        return result
 
         val method = startStatement.location.method
 

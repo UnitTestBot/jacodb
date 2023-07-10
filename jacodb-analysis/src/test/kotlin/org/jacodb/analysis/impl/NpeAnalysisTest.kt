@@ -22,7 +22,7 @@ import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.IfdsUnitTraverser
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -210,7 +210,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         get() {
             val graph = JcSimplifiedGraphFactory().createGraph(cp)
 
-            return IfdsUnitTraverser(
+            return IfdsUnitManager(
                 graph,
                 MethodUnitResolver,
 //                ParallelBidiIfdsUnitRunner(

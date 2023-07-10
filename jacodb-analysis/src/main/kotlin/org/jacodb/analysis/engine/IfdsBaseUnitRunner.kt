@@ -33,7 +33,6 @@ import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.random.Random
 
 class IfdsBaseUnitRunner(private val analyzer: Analyzer) : IfdsUnitRunner {
     override suspend fun <UnitType> run(
@@ -60,7 +59,7 @@ private class IfdsInstance<UnitType>(
     private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
-    private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = mutableMapOf()
+    private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = ConcurrentHashMap()
     private val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = mutableSetOf()
     private val summaryHandlers: MutableMap<JcMethod, SummarySender> = mutableMapOf()
     private val visitedMethods: MutableSet<JcMethod> = mutableSetOf()
@@ -78,7 +77,7 @@ private class IfdsInstance<UnitType>(
         }
     }
 
-    fun addStart(method: JcMethod) {
+    private fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainStartFacts(sPoint)) {
@@ -132,14 +131,11 @@ private class IfdsInstance<UnitType>(
         startMethods.forEach { addStart(it) }
 
         while (isActive) {
-            if (Random.nextDouble() < 0.00001) {
-                println("kek")
-            }
             val curEdge = takeNewEdge() ?: throw CancellationException()
 
             if (curEdge.method !in visitedMethods) {
                 visitedMethods.add(curEdge.method)
-                summary
+                summary // Listen for incoming updates
                     .getFactsFiltered<PathEdgeFact>(curEdge.method, null)
                     .filter { it.edge.u.statement in graph.entryPoint(curEdge.method) } // Filter out backward edges
                     .onEach { propagate(it.edge, PathEdgePredecessor(it.edge, PredecessorKind.Unknown)) }
@@ -147,38 +143,38 @@ private class IfdsInstance<UnitType>(
             }
 
             val (u, v) = curEdge
-            val (n, d2) = v
+            val (curVertex, curFact) = v
 
-            val callees = graph.callees(n).toList()
+            val callees = graph.callees(curVertex).toList()
             if (callees.isNotEmpty()) {
-                val returnSitesOfN = graph.successors(n)
-                for (returnSite in returnSitesOfN) {
-                    for (fact in flowSpace.obtainCallToReturnFlowFunction(n, returnSite).compute(d2)) {
+                for (returnSite in graph.successors(curVertex)) {
+                    for (fact in flowSpace.obtainCallToReturnFlowFunction(curVertex, returnSite).compute(curFact)) {
                         val newEdge = IfdsEdge(u, IfdsVertex(returnSite, fact))
                         propagate(newEdge, PathEdgePredecessor(curEdge, PredecessorKind.Sequent))
                     }
                     for (callee in callees) {
-                        val factsAtStart = flowSpace.obtainCallToStartFlowFunction(n, callee).compute(d2)
+                        val factsAtStart = flowSpace.obtainCallToStartFlowFunction(curVertex, callee).compute(curFact)
                         for (sPoint in graph.entryPoint(callee)) {
                             for (sFact in factsAtStart) {
                                 val sVertex = IfdsVertex(sPoint, sFact)
 
-                                val exitVertexes: Flow<IfdsVertex> = if (callee.isExtern) {
-                                    stashSummaryFact(PathEdgeFact(IfdsEdge(sVertex, sVertex))) // Requesting info for this start fact
+                                val exitVertices: Flow<IfdsVertex> = if (callee.isExtern) {
+//                                    stashSummaryFact(PathEdgeFact(IfdsEdge(sVertex, sVertex))) // Requesting info for this start fact
                                     summary.getFactsFiltered<PathEdgeFact>(callee, sVertex)
                                         .filter { it.edge.u == sVertex && it.edge.v.statement in graph.exitPoints(callee) }
                                         .map { it.edge.v }
                                 } else {
+                                    val nextEdge = IfdsEdge(sVertex, sVertex)
+                                    propagate(nextEdge, PathEdgePredecessor(curEdge, PredecessorKind.CallToStart))
                                     summaryEdges[sVertex].orEmpty().asFlow()
                                 }
 
-                                exitVertexes.onEach { (eStatement, eFact) ->
+                                exitVertices.onEach { (eStatement, eFact) ->
                                     val finalFacts =
-                                        flowSpace.obtainExitToReturnSiteFlowFunction(n, returnSite, eStatement)
+                                        flowSpace.obtainExitToReturnSiteFlowFunction(curVertex, returnSite, eStatement)
                                             .compute(eFact)
                                     for (finalFact in finalFacts) {
-                                        val summaryEdge =
-                                            IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
+                                        val summaryEdge = IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
                                         val newEdge = IfdsEdge(u, IfdsVertex(returnSite, finalFact))
                                         propagate(newEdge, PathEdgePredecessor(curEdge, PredecessorKind.ThroughSummary(summaryEdge)))
                                     }
@@ -186,38 +182,40 @@ private class IfdsInstance<UnitType>(
 
                                 if (callee.isExtern) {
                                     if (analyzer.saveSummaryEdgesAndCrossUnitCalls) {
+//                                        launch {
+//                                            summary.getFactsFiltered<TraceGraphFact>(callee, null)
+//                                                .filter { sVertex in it.graph.edges.keys }
+//                                                .first()
+//                                            stashSummaryFact(CrossUnitCallFact(v, sVertex))
+//                                        }
                                         stashSummaryFact(CrossUnitCallFact(v, sVertex))
                                     }
                                 } else {
                                     callSitesOf.getOrPut(sVertex) { mutableSetOf() }.add(curEdge)
-                                    val nextEdge = IfdsEdge(sVertex, sVertex)
-                                    propagate(nextEdge, PathEdgePredecessor(curEdge, PredecessorKind.CallToStart))
                                 }
                             }
                         }
                     }
                 }
             } else {
-                if (n in graph.exitPoints(graph.methodOf(n))) {
-                    for (predEdge in callSitesOf[u].orEmpty()) {
-                        val callerStatement = predEdge.v.statement
+                if (curVertex in graph.exitPoints(graph.methodOf(curVertex))) {
+                    for (callerEdge in callSitesOf[u].orEmpty()) {
+                        val callerStatement = callerEdge.v.statement
                         for (returnSite in graph.successors(callerStatement)) {
-                            for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(callerStatement, returnSite, n).compute(d2)) {
+                            for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(callerStatement, returnSite, curVertex).compute(curFact)) {
                                 val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
-                                val newEdge = IfdsEdge(predEdge.u, returnSiteVertex)
-                                propagate(newEdge, PathEdgePredecessor(predEdge, PredecessorKind.ThroughSummary(curEdge)))
+                                val newEdge = IfdsEdge(callerEdge.u, returnSiteVertex)
+                                propagate(newEdge, PathEdgePredecessor(callerEdge, PredecessorKind.ThroughSummary(curEdge)))
                             }
                         }
                     }
                     summaryEdges.getOrPut(curEdge.u) { mutableSetOf() }.add(curEdge.v)
                 }
 
-                val nextInstrs = graph.successors(n)
-                for (m in nextInstrs) {
-                    val flowFunction = flowSpace.obtainSequentFlowFunction(n, m)
-                    val d3Set = flowFunction.compute(d2)
-                    for (d3 in d3Set) {
-                        val newEdge = IfdsEdge(u, IfdsVertex(m, d3))
+                for (nextInst in graph.successors(curVertex)) {
+                    val nextFacts = flowSpace.obtainSequentFlowFunction(curVertex, nextInst).compute(curFact)
+                    for (nextFact in nextFacts) {
+                        val newEdge = IfdsEdge(u, IfdsVertex(nextInst, nextFact))
                         propagate(newEdge, PathEdgePredecessor(curEdge, PredecessorKind.Sequent))
                     }
                 }
@@ -227,12 +225,11 @@ private class IfdsInstance<UnitType>(
     }
 
     private val fullResults: IfdsResult by lazy {
-        val resultFacts = mutableMapOf<JcInst, MutableSet<DomainFact>>()
         val allEdges = pathEdges.toList()
 
-        for (pathEdge in allEdges) {
-            resultFacts.getOrPut(pathEdge.v.statement) { mutableSetOf() }.add(pathEdge.v.domainFact)
-        }
+        val resultFacts = allEdges.groupBy({ it.v.statement }) {
+            it.v.domainFact
+        }.mapValues { (_, facts) -> facts.toSet() }
 
         IfdsResult(allEdges, resultFacts, pathEdgesPreds)
     }
@@ -242,11 +239,10 @@ private class IfdsInstance<UnitType>(
             stashSummaryFact(vulnerability)
         }
 
-        verticesWithTraceGraphNeeded
-            .forEach { vertex ->
-                val graph = fullResults.resolveTraceGraph(vertex)
-                stashSummaryFact(TraceGraphFact(graph))
-            }
+        verticesWithTraceGraphNeeded.forEach { vertex ->
+            val graph = fullResults.resolveTraceGraph(vertex)
+            stashSummaryFact(TraceGraphFact(graph))
+        }
     }
 
     suspend fun analyze() =

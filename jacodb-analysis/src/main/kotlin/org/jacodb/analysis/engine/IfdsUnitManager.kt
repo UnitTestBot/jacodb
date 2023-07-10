@@ -16,12 +16,12 @@
 
 package org.jacodb.analysis.engine
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
@@ -29,10 +29,9 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.impl.BackgroundScope
 import java.util.concurrent.ConcurrentHashMap
 
-class IfdsUnitTraverser<UnitType>(
+class IfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunner: IfdsUnitRunner
@@ -45,7 +44,6 @@ class IfdsUnitTraverser<UnitType>(
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
     private val summary: Summary = SummaryImpl()
     private val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
-    private val scope = BackgroundScope()
     private val foundVulnerabilities: MutableSet<VulnerabilityLocation> = ConcurrentHashMap.newKeySet()
 
     private val IfdsVertex.traceGraph: TraceGraph
@@ -55,18 +53,21 @@ class IfdsUnitTraverser<UnitType>(
             .singleOrNull { it.sink == this }
             ?: TraceGraph.bySink(this)
 
-    override fun analyze(): List<VulnerabilityInstance> = runBlocking {
+    override fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
+        val monitorJob = launch {
+            foundMethods.values.flatten().forEach { method ->
+                summary.getFactsFiltered<VulnerabilityLocation>(method, null)
+                    .onEach { foundVulnerabilities.add(it) }
+                    .launchIn(this)
+            }
+        }
+
         logger.info { "Started traversing" }
-        logger.info { "Amount of units to analyze: ${unitsQueue.size}" }
+        logger.info { "Number of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
             // TODO: do smth smarter here
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
-            foundMethods[next]!!.forEach { method ->
-                summary.getFactsFiltered<VulnerabilityLocation>(method, null)
-                    .onEach { foundVulnerabilities.add(it) }
-                    .launchIn(scope)
-            }
 
             unitJobs[next] = launch {
                 ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
@@ -78,7 +79,7 @@ class IfdsUnitTraverser<UnitType>(
         }
 
         logger.info { "Waiting for units to be analyzed" }
-//        delay(20000)
+//        delay(10000)
         logger.info { "Starting to cancel units" }
 
         coroutineScope {
@@ -86,7 +87,7 @@ class IfdsUnitTraverser<UnitType>(
             unitJobs.values.forEach { it.join() }
         }
 
-        scope.coroutineContext.job.cancelAndJoin()
+        monitorJob.cancelAndJoin()
 
 
         logger.info { "Restoring traces..." }

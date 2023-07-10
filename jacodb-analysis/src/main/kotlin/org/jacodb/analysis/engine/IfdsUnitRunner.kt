@@ -16,9 +16,7 @@
 
 package org.jacodb.analysis.engine
 
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
@@ -34,7 +32,7 @@ interface IfdsUnitRunner {
     )
 }
 
-class ParallelBidiIfdsUnitRunner (
+class ParallelBidiIfdsUnitRunner(
     private val forwardRunner: IfdsUnitRunner,
     private val backwardRunner: IfdsUnitRunner
 ) : IfdsUnitRunner {
@@ -67,13 +65,7 @@ class SequentialBidiIfdsUnitRunner(
         unit: UnitType,
         startMethods: List<JcMethod>
     ) = coroutineScope {
-
-        val job = launch {
-            backward.run(graph.reversed, summary, unitResolver, unit, startMethods)
-        }
-
-        delay(100)
-        job.cancelAndJoin()
+        backward.run(graph.reversed, summary, unitResolver, unit, startMethods)
 
         forward.run(graph, summary, unitResolver, unit, startMethods)
     }

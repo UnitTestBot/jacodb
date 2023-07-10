@@ -24,11 +24,12 @@ import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.IfdsUnitRunner
-import org.jacodb.analysis.engine.IfdsUnitTraverser
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -45,7 +46,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val clazz = cp.findClass<DateTime>()
 
         val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val engine = IfdsUnitTraverser(graph, unitResolver, ifdsUnitRunner)
+        val engine = IfdsUnitManager(graph, unitResolver, ifdsUnitRunner)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze()
         val kek = result.toDumpable()
@@ -62,8 +63,8 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() {
-        val forwardBuilder = IfdsBaseUnitRunner(NpeAnalyzer(graph))
-        val backwardBuilder = IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph))
+        val forwardBuilder = IfdsBaseUnitRunner(NpeAnalyzer(graph, 5))
+        val backwardBuilder = IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed, 5))
         testOne(MethodUnitResolver, ParallelBidiIfdsUnitRunner(forwardBuilder, backwardBuilder))
     }
 
