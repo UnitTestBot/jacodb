@@ -18,19 +18,15 @@ package org.jacodb.analysis.impl
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
-import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.createNpeRunner
 import org.jacodb.analysis.engine.ClassUnitResolver
-import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
-import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.graph.reversed
+import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.toDumpable
+import org.jacodb.analysis.unusedVariableRunner
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -44,26 +40,21 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-        val engine = IfdsUnitManager(graph, unitResolver, ifdsUnitRunner)
-        clazz.declaredMethods.forEach { engine.addStart(it) }
-        val result = engine.analyze()
-        val kek = result.toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods).toDumpable()
 
-        println("Vulnerabilities found: ${kek.foundVulnerabilities.size}")
+        println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
-        json.encodeToStream(kek, System.out)
+        json.encodeToStream(result, System.out)
     }
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(ClassUnitResolver(false), IfdsBaseUnitRunner(UnusedVariableAnalyzer(graph)))
+        testOne(ClassUnitResolver(false), unusedVariableRunner)
     }
 
     @Test
     fun `test NPE analysis`() {
-        val forwardBuilder = IfdsBaseUnitRunner(NpeAnalyzer(graph, 5))
-        val backwardBuilder = IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed, 5))
-        testOne(MethodUnitResolver, ParallelBidiIfdsUnitRunner(forwardBuilder, backwardBuilder))
+        testOne(MethodUnitResolver, createNpeRunner())
     }
 
     private val graph = buildApplicationGraph(cp, null)

@@ -18,7 +18,7 @@ package org.jacodb.analysis.impl
 
 import juliet.testcasesupport.AbstractTestCase
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.AnalysisEngine
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
@@ -77,7 +77,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         )
     }
 
-    protected abstract val engine: AnalysisEngine
+    protected abstract fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance>
 
     protected inline fun <reified T> testOneAnalysisOnOneMethod(
         vulnerabilityType: String,
@@ -107,9 +107,11 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<String> {
-        val engineInstance = engine
-        engineInstance.addStart(method)
-        val sinks = engineInstance.analyze().toDumpable().foundVulnerabilities.filter { it.vulnerabilityType == vulnerabilityType }
+        val sinks = launchAnalysis(listOf(method))
+            .toDumpable()
+            .foundVulnerabilities
+            .filter { it.vulnerabilityType == vulnerabilityType }
+
         return sinks.map { it.sink }.toSet()
     }
 }

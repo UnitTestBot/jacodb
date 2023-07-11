@@ -34,7 +34,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
 
-class IfdsBaseUnitRunner(private val analyzer: Analyzer) : IfdsUnitRunner {
+class IfdsBaseUnitRunner(private val analyzerFactory: AnalyzerFactory) : IfdsUnitRunner {
     override suspend fun <UnitType> run(
         graph: JcApplicationGraph,
         summary: Summary,
@@ -42,6 +42,7 @@ class IfdsBaseUnitRunner(private val analyzer: Analyzer) : IfdsUnitRunner {
         unit: UnitType,
         startMethods: List<JcMethod>
     ) {
+        val analyzer = analyzerFactory.createAnalyzer(graph)
         val instance = IfdsInstance(graph, analyzer, summary, unitResolver, unit, startMethods)
         instance.analyze()
     }

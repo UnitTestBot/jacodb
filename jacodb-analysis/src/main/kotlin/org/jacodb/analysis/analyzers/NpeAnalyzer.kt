@@ -17,6 +17,7 @@
 package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
@@ -59,7 +60,7 @@ import org.jacodb.api.ext.isNullable
 
 class NpeAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int = 5
+    maxPathLength: Int
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph.classpath, maxPathLength)
 
@@ -98,6 +99,10 @@ class NpeAnalyzer(
 //            }
 //        }.toList()
     }
+}
+
+fun NpeAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    NpeAnalyzer(graph, maxPathLength)
 }
 
 
@@ -301,7 +306,6 @@ class NpeFlowdroidBackwardAnalyzer(
 
         if (canBeKilled) {
             val newStatements = graph.predecessors(v.statement)
-//            logger.warn { "Backward-to-forward: $fact to inst $newStatements, context = ${edge.u.domainFact}" }
             return newStatements.flatMap { newStatement ->
                 graph.exitPoints(edge.method).map {
                     PathEdgeFact(
@@ -312,10 +316,13 @@ class NpeFlowdroidBackwardAnalyzer(
                     )
                 }
             }.toList()
-//            e.handoverPathEdgeTo(forward, pred, updateActivation = false, propZero = false)
         }
         return emptyList()
     }
+}
+
+fun NpeFlowdroidBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    NpeFlowdroidBackwardAnalyzer(graph, maxPathLength)
 }
 
 private class NpeBackwardFunctions(
@@ -337,6 +344,10 @@ class NpePrecalcBackwardAnalyzer(
             add(PathEdgeFact(IfdsEdge(edge.v, edge.v)))
         }
     }
+}
+
+fun NpePrecalcBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    NpePrecalcBackwardAnalyzer(graph, maxPathLength)
 }
 
 class NpePrecalcBackwardFunctions(

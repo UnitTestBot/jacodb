@@ -16,11 +16,13 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.UnusedVariableAnalysisFactory
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.buildApplicationGraph
 import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.unusedVariableRunner
+import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -57,9 +59,8 @@ class UnusedVariableTest : BaseAnalysisTest() {
         testSingleJulietClass(vulnerabilityType, className)
     }
 
-    override val engine: AnalysisEngine
-        get() {
-            val graph = buildApplicationGraph(cp, null)
-            return UnusedVariableAnalysisFactory.createAnalysisEngine(graph, SingletonUnitResolver)
-        }
+    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+        val graph = buildApplicationGraph(cp, null)
+        return runAnalysis(graph, SingletonUnitResolver, unusedVariableRunner, methods)
+    }
 }

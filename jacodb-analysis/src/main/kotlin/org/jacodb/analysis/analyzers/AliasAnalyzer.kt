@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.analyzers
 
+import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
@@ -70,4 +71,12 @@ class AliasAnalyzer(
         }
         return vulnerabilities
     }
+}
+
+fun AliasAnalyzerFactory(
+    generates: (JcInst) -> List<DomainFact>,
+    isSink: (JcInst, DomainFact) -> Boolean,
+    maxPathLength: Int = 5
+) = AnalyzerFactory { graph ->
+    AliasAnalyzer(graph.classpath, generates, isSink, maxPathLength)
 }

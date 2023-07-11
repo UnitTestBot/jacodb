@@ -17,6 +17,7 @@
 package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
@@ -98,6 +99,10 @@ class UnusedVariableAnalyzer(
         }
         return vulnerabilities
     }
+}
+
+val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
+    UnusedVariableAnalyzer(graph)
 }
 
 private class UnusedVariableForwardFunctions(

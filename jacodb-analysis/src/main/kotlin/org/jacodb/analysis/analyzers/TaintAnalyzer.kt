@@ -17,6 +17,7 @@
 package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
@@ -58,7 +59,7 @@ abstract class TaintAnalyzer(
     }
 }
 
-class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) : Analyzer {
+class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : Analyzer {
     override val saveSummaryEdgesAndCrossUnitCalls: Boolean
         get() = false
 
@@ -67,6 +68,10 @@ class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int = 5) :
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         error("Do not call sources for backward analyzer instance")
     }
+}
+
+fun TaintBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    TaintBackwardAnalyzer(graph, maxPathLength)
 }
 
 private class TaintForwardFunctions(

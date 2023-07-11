@@ -18,21 +18,20 @@ package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.AnalysisEngine
+import kotlinx.coroutines.withTimeout
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import java.util.concurrent.ConcurrentHashMap
 
 class IfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
-    private val ifdsUnitRunner: IfdsUnitRunner
-) : AnalysisEngine {
+    private val ifdsUnitRunner: IfdsUnitRunner,
+    private val timeoutMillis: Long = Long.MAX_VALUE
+) {
     private val initMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
@@ -40,8 +39,6 @@ class IfdsUnitManager<UnitType>(
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
     private val summary: Summary = SummaryImpl()
-    private val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
-    private val foundVulnerabilities: MutableSet<VulnerabilityLocation> = ConcurrentHashMap.newKeySet()
 
     private val IfdsVertex.traceGraph: TraceGraph
         get() = summary
@@ -50,7 +47,9 @@ class IfdsUnitManager<UnitType>(
             .singleOrNull { it.sink == this }
             ?: TraceGraph.bySink(this)
 
-    override fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
+    fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
+        val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
+
         logger.info { "Started traversing" }
         logger.info { "Number of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
@@ -59,26 +58,21 @@ class IfdsUnitManager<UnitType>(
             unitsQueue.remove(next)
 
             unitJobs[next] = launch {
-                ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
-            }.also {
-                it.invokeOnCompletion { _ ->
+                try {
+                    withTimeout(timeoutMillis) {
+                        ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
+                    }
+                } finally {
                     logger.info { "Job for $next completed, remaining: ${unitJobs.values.count { it.isActive }}" }
                 }
             }
         }
 
         logger.info { "Waiting for units to be analyzed" }
-//        delay(10000)
-//        logger.info { "Starting to cancel units" }
+        unitJobs.values.forEach { it.join() }
 
-        coroutineScope {
-//            unitJobs.values.forEach { it.cancel() }
-            unitJobs.values.forEach { it.join() }
-        }
-
-        foundMethods.values.flatten().forEach { method ->
+        val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
             summary.getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
-                .forEach { foundVulnerabilities.add(it) }
         }
 
         logger.info { "Restoring traces..." }
@@ -154,8 +148,22 @@ class IfdsUnitManager<UnitType>(
         dependsOn[unit] = dependsOn.getOrDefault(unit, 0) + dependencies.size
     }
 
-    override fun addStart(method: JcMethod) {
+    fun addStart(method: JcMethod) {
         initMethods.add(method)
         internalAddStart(method)
     }
+}
+
+fun runAnalysis(
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver<*>,
+    ifdsUnitRunner: IfdsUnitRunner,
+    methods: List<JcMethod>,
+    timeoutMillis: Long = Long.MAX_VALUE
+): List<VulnerabilityInstance> {
+    val manager = IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, timeoutMillis)
+    for (method in methods) {
+        manager.addStart(method)
+    }
+    return manager.analyze()
 }
