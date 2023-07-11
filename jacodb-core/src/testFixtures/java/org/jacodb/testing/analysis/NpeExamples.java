@@ -105,14 +105,8 @@ public class NpeExamples {
         SimpleClassWithField x = z.g;
         x.field = null;
     }
-
-    private String kek;
-
+    
     int npeOnLength() {
-//        if (kek instanceof String) {
-//            return kek.length();
-//        }
-//        return 0;
         String x = "abc";
         String y = "def";
         x = constNull(y);

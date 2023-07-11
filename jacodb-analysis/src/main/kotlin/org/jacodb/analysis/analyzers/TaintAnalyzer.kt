@@ -36,7 +36,7 @@ abstract class TaintAnalyzer(
     cp: JcClasspath,
     generates: (JcInst) -> List<DomainFact>,
     val isSink: (JcInst, DomainFact) -> Boolean,
-    maxPathLength: Int = 5
+    maxPathLength: Int
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(cp, maxPathLength, generates)
 
@@ -59,7 +59,11 @@ abstract class TaintAnalyzer(
     }
 }
 
-class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : Analyzer {
+fun TaintBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    TaintBackwardAnalyzer(graph, maxPathLength)
+}
+
+private class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : Analyzer {
     override val saveSummaryEdgesAndCrossUnitCalls: Boolean
         get() = false
 
@@ -68,10 +72,6 @@ class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : Ana
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         error("Do not call sources for backward analyzer instance")
     }
-}
-
-fun TaintBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
-    TaintBackwardAnalyzer(graph, maxPathLength)
 }
 
 private class TaintForwardFunctions(

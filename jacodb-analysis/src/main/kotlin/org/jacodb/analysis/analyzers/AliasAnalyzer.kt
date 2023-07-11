@@ -28,11 +28,19 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.values
 
-class AliasAnalyzer(
-    cp: JcClasspath,
+fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
     isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
+) = AnalyzerFactory { graph ->
+    AliasAnalyzer(graph.classpath, generates, isSink, maxPathLength)
+}
+
+private class AliasAnalyzer(
+    cp: JcClasspath,
+    generates: (JcInst) -> List<DomainFact>,
+    isSink: (JcInst, DomainFact) -> Boolean,
+    maxPathLength: Int
 ) : TaintAnalyzer(cp, generates, isSink, maxPathLength) {
 
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
@@ -71,12 +79,4 @@ class AliasAnalyzer(
         }
         return vulnerabilities
     }
-}
-
-fun AliasAnalyzerFactory(
-    generates: (JcInst) -> List<DomainFact>,
-    isSink: (JcInst, DomainFact) -> Boolean,
-    maxPathLength: Int = 5
-) = AnalyzerFactory { graph ->
-    AliasAnalyzer(graph.classpath, generates, isSink, maxPathLength)
 }
