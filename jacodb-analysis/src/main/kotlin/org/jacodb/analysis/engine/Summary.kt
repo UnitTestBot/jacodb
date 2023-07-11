@@ -63,9 +63,10 @@ class SummaryImpl : Summary {
 
     override fun createSender(method: JcMethod): SummarySender {
         return SummarySender { fact ->
-            loadedFacts.computeIfAbsent(method) { ConcurrentHashMap.newKeySet() }.add(fact)
-            val outFlow = outFlows.computeIfAbsent(method) { MutableSharedFlow(replay = Int.MAX_VALUE) }
-            require(outFlow.tryEmit(fact))
+            if (loadedFacts.computeIfAbsent(method) { ConcurrentHashMap.newKeySet() }.add(fact)) {
+                val outFlow = outFlows.computeIfAbsent(method) { MutableSharedFlow(replay = Int.MAX_VALUE) }
+                require(outFlow.tryEmit(fact))
+            }
         }
     }
 

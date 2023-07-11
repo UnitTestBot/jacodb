@@ -18,15 +18,11 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.JcSimplifiedGraphFactory
+import org.jacodb.analysis.NpeAnalysisFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
-import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.IfdsUnitManager
+import org.jacodb.analysis.buildApplicationGraph
 import org.jacodb.analysis.engine.MethodUnitResolver
-import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
@@ -49,7 +45,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         fun provideClassesForJuliet690(): Stream<Arguments> =
             provideClassesForJuliet(690)
 
-        private val vulnerabilityType = NpeAnalyzer.value
+        private const val vulnerabilityType = NpeAnalyzer.vulnerabilityType
     }
 
     @Test
@@ -207,23 +203,8 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         testOneAnalysisOnOneMethod<T>(vulnerabilityType, methodName, expectedLocations)
 
     override val engine: AnalysisEngine
-        get() {
-            val graph = JcSimplifiedGraphFactory().createGraph(cp)
-
-            return IfdsUnitManager(
-                graph,
-                MethodUnitResolver,
-//                ParallelBidiIfdsUnitRunner(
-//                    SequentialBidiIfdsUnitRunner(
-//                        IfdsBaseUnitRunner(NpeAnalyzer(graph)),
-//                        IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed))
-//                    ),
-//                    IfdsBaseUnitRunner(NpeFlowdroidBackwardAnalyzer(graph.reversed))
-//                )
-                ParallelBidiIfdsUnitRunner(
-                    IfdsBaseUnitRunner(NpeAnalyzer(graph)),
-                    IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed))
-                )
-            )
-        }
+        get() = NpeAnalysisFactory.createAnalysisEngine(
+            buildApplicationGraph(cp, null),
+            MethodUnitResolver
+        )
 }

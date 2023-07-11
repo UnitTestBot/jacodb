@@ -50,7 +50,7 @@ abstract class AbstractTaintBackwardFunctions(
             return listOf(ZEROFact)
         }
 
-        if (fact !is TaintNode || fact.id !in inIds) {
+        if (fact !is TaintNode) {
             return emptyList()
         }
 
@@ -68,8 +68,6 @@ abstract class AbstractTaintBackwardFunctions(
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {
-            override val inIds = this@AbstractTaintBackwardFunctions.inIds
-
             override fun compute(fact: DomainFact): Collection<DomainFact> {
                 // fact.activation != current needed here to jump over assignment where the fact appeared
                 return if (current is JcAssignInst && (fact !is TaintNode || fact.activation != current)) {
@@ -84,8 +82,6 @@ abstract class AbstractTaintBackwardFunctions(
         callStatement: JcInst,
         callee: JcMethod
     ): FlowFunctionInstance = object : FlowFunctionInstance {
-        override val inIds = this@AbstractTaintBackwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
@@ -126,8 +122,6 @@ abstract class AbstractTaintBackwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst
     ): FlowFunctionInstance = object: FlowFunctionInstance {
-        override val inIds = this@AbstractTaintBackwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             if (fact !is TaintNode) {
                 return if (fact == ZEROFact) {
@@ -177,8 +171,6 @@ abstract class AbstractTaintBackwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ): FlowFunctionInstance = object: FlowFunctionInstance {
-        override val inIds = this@AbstractTaintBackwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")

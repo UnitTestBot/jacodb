@@ -21,7 +21,6 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
-import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.toPathOrNull
@@ -40,8 +39,8 @@ abstract class TaintAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(cp, maxPathLength, generates)
 
-    companion object : SpaceId {
-        override val value: String = "taint analysis"
+    companion object {
+        val vulnerabilityType: String = "taint analysis"
     }
 
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
@@ -50,7 +49,7 @@ abstract class TaintAnalyzer(
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (isSink(inst, fact)) {
                     fact.variable.let {
-                        vulnerabilities.add(VulnerabilityLocation(value, IfdsVertex(inst, fact)))
+                        vulnerabilities.add(VulnerabilityLocation(vulnerabilityType, IfdsVertex(inst, fact)))
                     }
                 }
             }
@@ -75,8 +74,6 @@ private class TaintForwardFunctions(
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
 ) : AbstractTaintForwardFunctions(cp) {
-
-    override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
 
     override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         if (fact == ZEROFact) {
@@ -110,6 +107,4 @@ private class TaintForwardFunctions(
 private class TaintBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override val inIds: List<SpaceId> = listOf(TaintAnalyzer, ZEROFact.id)
-}
+) : AbstractTaintBackwardFunctions(graph, maxPathLength)

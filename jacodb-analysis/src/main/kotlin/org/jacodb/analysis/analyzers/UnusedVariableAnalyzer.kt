@@ -22,7 +22,6 @@ import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
-import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -50,8 +49,8 @@ class UnusedVariableAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
 
-    companion object : SpaceId {
-        override val value: String = "unused variable analysis"
+    companion object {
+        const val vulnerabilityType: String = "unused variable analysis"
     }
 
     private fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
@@ -95,7 +94,7 @@ class UnusedVariableAnalyzer(
             }
         }
         val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityLocation(value, IfdsVertex(it, ZEROFact))
+            VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact))
         }
         return vulnerabilities
     }
@@ -105,15 +104,11 @@ private class UnusedVariableForwardFunctions(
     val classpath: JcClasspath
 ) : FlowFunctionsSpace {
 
-    override val inIds: List<SpaceId> get() = listOf(UnusedVariableAnalyzer, ZEROFact.id)
-
     override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)
     }
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = object : FlowFunctionInstance {
-        override val inIds = this@UnusedVariableForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             if (current !is JcAssignInst) {
                 return listOf(fact)
@@ -149,8 +144,6 @@ private class UnusedVariableForwardFunctions(
     }
 
     override fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod) = object : FlowFunctionInstance {
-        override val inIds = this@UnusedVariableForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             val callExpr = callStatement.callExpr ?: error("Call expr is expected to be not-null")
             val formalParams = callee.parameters.map {
@@ -182,8 +175,6 @@ private class UnusedVariableForwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ) = object : FlowFunctionInstance {
-        override val inIds = this@UnusedVariableForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             return if (fact == ZEROFact) listOf(ZEROFact) else emptyList()
         }

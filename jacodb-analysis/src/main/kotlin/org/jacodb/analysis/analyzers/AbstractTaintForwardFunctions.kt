@@ -43,8 +43,6 @@ abstract class AbstractTaintForwardFunctions(
 
     override fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance =
         object : FlowFunctionInstance {
-            override val inIds = this@AbstractTaintForwardFunctions.inIds
-
             override fun compute(fact: DomainFact): Collection<DomainFact> {
                 if (fact is TaintNode && fact.activation == current) {
                     return listOf(fact.activatedCopy)
@@ -62,8 +60,6 @@ abstract class AbstractTaintForwardFunctions(
         callStatement: JcInst,
         callee: JcMethod
     ): FlowFunctionInstance = object : FlowFunctionInstance {
-        override val inIds = this@AbstractTaintForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             if (fact is TaintNode && fact.activation == callStatement) {
                 return emptyList()
@@ -97,8 +93,6 @@ abstract class AbstractTaintForwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst
     ): FlowFunctionInstance = object : FlowFunctionInstance {
-        override val inIds = this@AbstractTaintForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             if (fact == ZEROFact) {
                 return listOf(fact)
@@ -144,8 +138,6 @@ abstract class AbstractTaintForwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ): FlowFunctionInstance = object : FlowFunctionInstance {
-        override val inIds = this@AbstractTaintForwardFunctions.inIds
-
         override fun compute(fact: DomainFact): Collection<DomainFact> {
             val ans = mutableListOf<DomainFact>()
             val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")

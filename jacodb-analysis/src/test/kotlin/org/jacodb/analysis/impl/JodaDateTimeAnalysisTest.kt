@@ -18,10 +18,10 @@ package org.jacodb.analysis.impl
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
+import org.jacodb.analysis.buildApplicationGraph
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.IfdsUnitManager
@@ -44,8 +44,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-
-        val graph = JcSimplifiedGraphFactory().createGraph(cp)
         val engine = IfdsUnitManager(graph, unitResolver, ifdsUnitRunner)
         clazz.declaredMethods.forEach { engine.addStart(it) }
         val result = engine.analyze()
@@ -68,5 +66,5 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         testOne(MethodUnitResolver, ParallelBidiIfdsUnitRunner(forwardBuilder, backwardBuilder))
     }
 
-    private val graph = JcSimplifiedGraphFactory().createGraph(cp)
+    private val graph = buildApplicationGraph(cp, null)
 }

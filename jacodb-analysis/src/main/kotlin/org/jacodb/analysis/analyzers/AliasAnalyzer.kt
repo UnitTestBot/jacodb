@@ -60,7 +60,7 @@ class AliasAnalyzer(
 
                         vulnerabilities.add(
                             VulnerabilityLocation(
-                                value,
+                                vulnerabilityType,
                                 IfdsVertex(inst, fact)
                             )
                         )

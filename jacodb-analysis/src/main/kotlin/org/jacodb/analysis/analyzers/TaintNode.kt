@@ -17,7 +17,6 @@
 package org.jacodb.analysis.analyzers
 
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
@@ -25,6 +24,8 @@ import org.jacodb.api.cfg.JcInst
  * activation == null <=> activation point is passed
  */
 abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = null): DomainFact {
+    protected abstract val nodeType: String
+
     abstract fun updateActivation(newActivation: JcInst?): TaintNode
 
     abstract fun moveToOtherPath(newPath: AccessPath): TaintNode
@@ -33,7 +34,7 @@ abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = nul
         get() = updateActivation(null)
 
     override fun toString(): String {
-        return "[${id.value}]: $variable, activation point=$activation"
+        return "[$nodeType]: $variable, activation point=$activation"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -56,6 +57,9 @@ abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = nul
 }
 
 class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+    override val nodeType: String
+        get() = "NPE"
+
     override fun updateActivation(newActivation: JcInst?): NpeTaintNode {
         return NpeTaintNode(variable, newActivation)
     }
@@ -63,17 +67,14 @@ class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
     override fun moveToOtherPath(newPath: AccessPath): TaintNode {
         return NpeTaintNode(newPath, activation)
     }
-
-    override val id: SpaceId
-        get() = NpeAnalyzer
 }
 
-data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst): DomainFact {
-    override val id: SpaceId
-        get() = UnusedVariableAnalyzer
-}
+data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst): DomainFact
 
 class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+    override val nodeType: String
+        get() = "Taint analysis"
+
     override fun updateActivation(newActivation: JcInst?): TaintAnalysisNode {
         return TaintAnalysisNode(variable, newActivation)
     }
@@ -81,7 +82,4 @@ class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): Taint
     override fun moveToOtherPath(newPath: AccessPath): TaintNode {
         return TaintAnalysisNode(newPath, activation)
     }
-
-    override val id: SpaceId
-        get() = TaintAnalyzer
 }

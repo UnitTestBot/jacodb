@@ -18,10 +18,7 @@ package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.AnalysisEngine
@@ -54,14 +51,6 @@ class IfdsUnitManager<UnitType>(
             ?: TraceGraph.bySink(this)
 
     override fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
-        val monitorJob = launch {
-            foundMethods.values.flatten().forEach { method ->
-                summary.getFactsFiltered<VulnerabilityLocation>(method, null)
-                    .onEach { foundVulnerabilities.add(it) }
-                    .launchIn(this)
-            }
-        }
-
         logger.info { "Started traversing" }
         logger.info { "Number of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
@@ -80,15 +69,17 @@ class IfdsUnitManager<UnitType>(
 
         logger.info { "Waiting for units to be analyzed" }
 //        delay(10000)
-        logger.info { "Starting to cancel units" }
+//        logger.info { "Starting to cancel units" }
 
         coroutineScope {
 //            unitJobs.values.forEach { it.cancel() }
             unitJobs.values.forEach { it.join() }
         }
 
-        monitorJob.cancelAndJoin()
-
+        foundMethods.values.flatten().forEach { method ->
+            summary.getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
+                .forEach { foundVulnerabilities.add(it) }
+        }
 
         logger.info { "Restoring traces..." }
 

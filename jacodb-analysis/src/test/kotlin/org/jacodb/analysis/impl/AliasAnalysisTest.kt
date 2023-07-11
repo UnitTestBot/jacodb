@@ -17,9 +17,10 @@
 package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.AliasAnalysisFactory
-import org.jacodb.analysis.JcSimplifiedGraphFactory
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.buildApplicationGraph
 import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.toDumpable
@@ -147,9 +148,11 @@ class AliasAnalysisTest : BaseTest() {
         val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
             .plus("pointerbench.benchmark.internal")
 
-        val graph = JcSimplifiedGraphFactory(bannedPackagePrefixes).createGraph(cp)
-        val factory = AliasAnalysisFactory(::generates, ::isSink)
-        val ifds = factory.createAnalysisEngine(graph)
+        val graph = buildApplicationGraph(
+            cp,
+            SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes + bannedPackagePrefixes
+        )
+        val ifds = AliasAnalysisFactory(::generates, ::isSink).createAnalysisEngine(graph, MethodUnitResolver)
         ifds.addStart(method)
         val result = ifds.analyze()
         return result.toDumpable().foundVulnerabilities.map { it.sink }

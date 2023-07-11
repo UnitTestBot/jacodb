@@ -26,28 +26,19 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
-import org.jacodb.analysis.AnalysisEngineFactory
-import org.jacodb.analysis.Factory
-import org.jacodb.analysis.GraphFactory
-import org.jacodb.analysis.JcSimplifiedGraphFactory
+import org.jacodb.analysis.AnalysisEngine
 import org.jacodb.analysis.NpeAnalysisFactory
 import org.jacodb.analysis.UnusedVariableAnalysisFactory
-import org.jacodb.analysis.loadFactories
+import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.toDumpable
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import java.io.File
-
-
-private inline fun <reified T : Factory> factoryChoice(): ArgType.Choice<T> {
-    val factories = loadFactories<T>()
-    val nameToFactory = { requiredFactoryName: String -> factories.single { it.name == requiredFactoryName } }
-    val factoryToName = { factory: T -> factory.name }
-
-    return ArgType.Choice(factories, nameToFactory, factoryToName)
-}
 
 private val logger = object : KLogging() {}.logger
 
@@ -56,11 +47,15 @@ class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun loadAnalysisEngineFactoriesByConfig(config: AnalysisConfig): List<AnalysisEngineFactory> {
-    return config.analyses.mapNotNull { (analysis, _) ->
+fun loadAnalysisEnginesByConfig(config: AnalysisConfig, graph: JcApplicationGraph): List<AnalysisEngine> {
+    return config.analyses.mapNotNull { (analysis, options) ->
+        val unitResolver = options["UnitResolver"]?.let {
+            UnitResolver.getByName(it)
+        } ?: MethodUnitResolver
+
         when (analysis) {
-            "NPE" -> NpeAnalysisFactory()
-            "Unused" -> UnusedVariableAnalysisFactory()
+            "NPE" -> NpeAnalysisFactory.createAnalysisEngine(graph, unitResolver)
+            "Unused" -> UnusedVariableAnalysisFactory.createAnalysisEngine(graph, unitResolver)
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 null
@@ -96,12 +91,6 @@ fun main(args: Array<String>) {
         shortName = "o",
         description = "File where analysis report will be written. All parent directories will be created if not exists. File will be created if not exists. Existing file will be overwritten."
     ).default("report.txt") // TODO: create SARIF here
-    val graphFactory by parser.option(
-        factoryChoice<GraphFactory>(),
-        fullName = "graph-type",
-        shortName = "g",
-        description = "Type of code graph to be used by analysis."
-    ).default(JcSimplifiedGraphFactory())
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -138,12 +127,10 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
-    val graph = graphFactory.createGraph(cp)
+    val graph = buildApplicationGraph(cp, null)
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
 
-    val analysisEngines = loadAnalysisEngineFactoriesByConfig(config).map {
-        it.createAnalysisEngine(graph)
-    }
+    val analysisEngines = loadAnalysisEnginesByConfig(config, graph)
 
     val analysisResults = analysisEngines.flatMap { engine ->
         startJcClasses.forEach { clazz ->

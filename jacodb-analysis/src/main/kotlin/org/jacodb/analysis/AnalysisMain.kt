@@ -15,30 +15,30 @@
  */
 
 package org.jacodb.analysis
-//import org.jacodb.analysis.engine.BidiIfdsForTaintAnalysisFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import mu.KLogging
 import org.jacodb.analysis.analyzers.AliasAnalyzer
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.NpeFlowdroidBackwardAnalyzer
+import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzer
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintBackwardAnalyzer
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
-import org.jacodb.analysis.engine.Analyzer
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.IfdsUnitManager
-import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.IfdsUnitRunner
+import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.TraceGraph
+import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
+import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.usagesExt
-import java.util.*
 
 @Serializable
 data class DumpableVulnerabilityInstance(
@@ -56,7 +56,7 @@ data class VulnerabilityInstance(
     val traceGraph: TraceGraph
 ) {
     private fun JcInst.prettyPrint(): String {
-        return "${toString()} (${location.method.enclosingClass.name}#${location.method.name}:${location.lineNumber})"
+        return "${toString()} (${location.method}:${location.lineNumber})"
     }
 
     fun toDumpable(maxPathsCount: Int): DumpableVulnerabilityInstance {
@@ -71,7 +71,7 @@ data class VulnerabilityInstance(
     }
 }
 
-fun List<VulnerabilityInstance>.toDumpable(maxPathsCount: Int = 10): DumpableAnalysisResult {
+fun List<VulnerabilityInstance>.toDumpable(maxPathsCount: Int = 3): DumpableAnalysisResult {
     return DumpableAnalysisResult(map { it.toDumpable(maxPathsCount) })
 }
 
@@ -85,103 +85,65 @@ interface AnalysisEngine {
     fun addStart(method: JcMethod)
 }
 
-interface Factory {
-    val name: String
-}
-
-interface AnalysisEngineFactory : Factory {
+fun interface AnalysisEngineFactory {
     fun createAnalysisEngine(
-        graph: JcApplicationGraph
+        graph: JcApplicationGraph,
+        unitResolver: UnitResolver<*>
     ): AnalysisEngine
 }
 
-class UnusedVariableAnalysisFactory : AnalysisEngineFactory {
-    override fun createAnalysisEngine(graph: JcApplicationGraph): AnalysisEngine {
-        return IfdsUnitManager(
-            graph,
-            SingletonUnitResolver,
-            IfdsBaseUnitRunner(UnusedVariableAnalyzer(graph))
-        )
-    }
-
-    override val name: String
-        get() = "unused-variable"
+val UnusedVariableAnalysisFactory = AnalysisEngineFactory { graph, unitResolver ->
+    IfdsUnitManager(
+        graph,
+        unitResolver,
+        IfdsBaseUnitRunner(UnusedVariableAnalyzer(graph))
+    )
 }
 
-abstract class FlowDroidFactory : AnalysisEngineFactory {
-
-    protected abstract val JcApplicationGraph.forwardAnalyzer: Analyzer
-    protected abstract val JcApplicationGraph.backwardAnalyzer: Analyzer
-
-    override fun createAnalysisEngine(
-        graph: JcApplicationGraph
-    ): AnalysisEngine {
-        val forwardAnalyzer = graph.forwardAnalyzer
-        val backwardAnalyzer = graph.backwardAnalyzer
-        return IfdsUnitManager(
-            graph,
-            SingletonUnitResolver,
-            IfdsBaseUnitRunner(forwardAnalyzer)
-//            IfdsWithBackwardPreSearchFactory(forwardAnalyzer, backwardAnalyzer)
-//            BidiIfdsForTaintAnalysisFactory(forwardAnalyzer, backwardAnalyzer)
-        )
-    }
-
-    override val name: String
-        get() = "flow-droid"
+private fun createBidiIfdsEngine(
+    forwardRunner: IfdsUnitRunner,
+    backwardRunner: IfdsUnitRunner,
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver<*>
+): AnalysisEngine {
+    return IfdsUnitManager(
+        graph,
+        unitResolver,
+        ParallelBidiIfdsUnitRunner(forwardRunner, backwardRunner)
+    )
 }
 
-class NpeAnalysisFactory : FlowDroidFactory() {
-    override val JcApplicationGraph.forwardAnalyzer: Analyzer
-        get() {
-            return NpeAnalyzer(this)
-        }
-
-    override val JcApplicationGraph.backwardAnalyzer: Analyzer
-        get() {
-            return NpeFlowdroidBackwardAnalyzer(this)
-        }
+val NpeAnalysisFactory = AnalysisEngineFactory { graph, unitResolver ->
+    createBidiIfdsEngine(
+        IfdsBaseUnitRunner(NpeAnalyzer(graph)),
+        IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzer(graph.reversed)),
+        graph,
+        unitResolver
+    )
 }
 
 class AliasAnalysisFactory(
     private val generates: (JcInst) -> List<TaintAnalysisNode>,
     private val isSink: (JcInst, DomainFact) -> Boolean,
-) : FlowDroidFactory() {
-    override val JcApplicationGraph.forwardAnalyzer: Analyzer
-        get() {
-            return AliasAnalyzer(classpath, generates, isSink)
-        }
-
-    override val JcApplicationGraph.backwardAnalyzer: Analyzer
-        get() {
-            return TaintBackwardAnalyzer(this)
-        }
-}
-
-interface GraphFactory : Factory {
-    fun createGraph(classpath: JcClasspath): JcApplicationGraph
-}
-
-class JcSimplifiedGraphFactory(
-    private val bannedPackagePrefixes: List<String>? = null
-) : GraphFactory {
-    override val name: String = "ifds-simplification"
-
-    override fun createGraph(
-        classpath: JcClasspath
-    ): JcApplicationGraph = runBlocking {
-        val mainGraph = JcApplicationGraphImpl(classpath, classpath.usagesExt())
-        if (bannedPackagePrefixes != null) {
-            SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
-        } else {
-            SimplifiedJcApplicationGraph(mainGraph)
-        }
+) : AnalysisEngineFactory {
+    override fun createAnalysisEngine(graph: JcApplicationGraph, unitResolver: UnitResolver<*>): AnalysisEngine {
+        return createBidiIfdsEngine(
+            IfdsBaseUnitRunner(AliasAnalyzer(graph.classpath, generates, isSink)),
+            IfdsBaseUnitRunner(TaintBackwardAnalyzer(graph.reversed)),
+            graph,
+            unitResolver
+        )
     }
 }
 
-inline fun <reified T : Factory> loadFactories(): List<T> {
-    assert(T::class.java != Factory::class.java)
-    return ServiceLoader.load(T::class.java).toList()
+fun buildApplicationGraph(classpath: JcClasspath, bannedPackagePrefixes: List<String>?) = runBlocking {
+    val mainGraph = JcApplicationGraphImpl(classpath, classpath.usagesExt())
+    if (bannedPackagePrefixes != null) {
+        SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
+    } else {
+        SimplifiedJcApplicationGraph(mainGraph)
+    }
 }
+
 
 internal val logger = object : KLogging() {}.logger

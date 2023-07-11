@@ -22,7 +22,6 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.PathEdgeFact
-import org.jacodb.analysis.engine.SpaceId
 import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
@@ -64,16 +63,15 @@ class NpeAnalyzer(
 ) : Analyzer {
     override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph.classpath, maxPathLength)
 
-    companion object : SpaceId {
-        override val value: String = "npe-analysis"
+    companion object {
+        const val vulnerabilityType: String = "npe-analysis"
     }
 
     override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> {
-//        logger.info { "Got vertex: ${edge.v}" }
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         val (inst, fact0) = edge.v
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
-            vulnerabilities.add(VulnerabilityLocation(value, edge.v))
+            vulnerabilities.add(VulnerabilityLocation(vulnerabilityType, edge.v))
         }
         return vulnerabilities
 
@@ -107,8 +105,6 @@ private class NpeForwardFunctions(
     cp: JcClasspath,
     private val maxPathLength: Int
 ) : AbstractTaintForwardFunctions(cp) {
-
-    override val inIds: List<SpaceId> get() = listOf(NpeAnalyzer, ZEROFact.id)
 
     private val JcIfInst.pathComparedWithNull: AccessPath?
         get() {
@@ -325,9 +321,7 @@ class NpeFlowdroidBackwardAnalyzer(
 private class NpeBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
-}
+) : AbstractTaintBackwardFunctions(graph, maxPathLength)
 
 class NpePrecalcBackwardAnalyzer(
     val graph: JcApplicationGraph,
@@ -349,8 +343,6 @@ class NpePrecalcBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int
 ) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override val inIds: List<SpaceId> = listOf(NpeAnalyzer, ZEROFact.id)
-
     override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         val thisInstance = atInst.location.method.thisInstance.toPath()
         if (fact == ZEROFact) {
@@ -362,7 +354,7 @@ class NpePrecalcBackwardFunctions(
             return listOf(ZEROFact) + derefs
         }
 
-        if (fact !is TaintNode || fact.id !in inIds) {
+        if (fact !is TaintNode) {
             return emptyList()
         }
 
