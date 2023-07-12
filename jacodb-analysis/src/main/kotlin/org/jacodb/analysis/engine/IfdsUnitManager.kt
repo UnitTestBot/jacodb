@@ -30,7 +30,7 @@ class IfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunner: IfdsUnitRunner,
-    private val timeoutMillis: Long = Long.MAX_VALUE
+    private val timeoutMillis: Long
 ) {
     private val initMethods: MutableSet<JcMethod> = mutableSetOf()
 
@@ -50,32 +50,28 @@ class IfdsUnitManager<UnitType>(
     fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
         val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
 
-        logger.info { "Started traversing" }
-        logger.info { "Number of units to analyze: ${unitsQueue.size}" }
+        logger.info { "Starting analysis. Number of units to analyze: ${unitsQueue.size}" }
         while (unitsQueue.isNotEmpty()) {
             // TODO: do smth smarter here
             val next = unitsQueue.minBy { dependsOn[it]!! }
             unitsQueue.remove(next)
 
             unitJobs[next] = launch {
-                try {
-                    withTimeout(timeoutMillis) {
-                        ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
-                    }
-                } finally {
+                withTimeout(timeoutMillis) {
+                    ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
+                }
+            }.also {
+                it.invokeOnCompletion { _ ->
                     logger.info { "Job for $next completed, remaining: ${unitJobs.values.count { it.isActive }}" }
                 }
             }
         }
 
-        logger.info { "Waiting for units to be analyzed" }
         unitJobs.values.forEach { it.join() }
 
         val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
             summary.getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
         }
-
-        logger.info { "Restoring traces..." }
 
         foundMethods.values.flatten().forEach { method ->
             for (crossUnitCall in summary.getCurrentFactsFiltered<CrossUnitCallFact>(method, null)) {
@@ -83,6 +79,8 @@ class IfdsUnitManager<UnitType>(
                 crossUnitCallers.getOrPut(calledMethod) { mutableSetOf() }.add(crossUnitCall)
             }
         }
+
+        logger.info { "Restoring traces..." }
 
         foundVulnerabilities
             .map { VulnerabilityInstance(it.vulnerabilityType, extendTraceGraph(it.sink.traceGraph)) }

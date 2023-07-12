@@ -18,7 +18,8 @@ package org.jacodb.analysis.impl
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.UnusedVariableRunner
+import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.createNpeRunner
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsUnitRunner
@@ -26,7 +27,6 @@ import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.toDumpable
-import org.jacodb.analysis.unusedVariableRunner
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -40,7 +40,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods).toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods, 1000).toDumpable()
 
         println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
@@ -49,7 +49,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(ClassUnitResolver(false), unusedVariableRunner)
+        testOne(ClassUnitResolver(false), UnusedVariableRunner)
     }
 
     @Test
@@ -57,5 +57,5 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         testOne(MethodUnitResolver, createNpeRunner())
     }
 
-    private val graph = buildApplicationGraph(cp, null)
+    private val graph = createApplicationGraph(cp, null)
 }

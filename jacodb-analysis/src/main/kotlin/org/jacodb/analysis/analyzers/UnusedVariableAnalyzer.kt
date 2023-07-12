@@ -31,7 +31,6 @@ import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBranchingInst
@@ -109,67 +108,59 @@ private class UnusedVariableForwardFunctions(
     val classpath: JcClasspath
 ) : FlowFunctionsSpace {
 
-    override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
+    override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)
     }
 
-    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = object : FlowFunctionInstance {
-        override fun compute(fact: DomainFact): Collection<DomainFact> {
-            if (current !is JcAssignInst) {
-                return listOf(fact)
-            }
-
-            if (fact == ZEROFact) {
-                val toPath = current.lhv.toPathOrNull() ?: return listOf(ZEROFact)
-                return if (!toPath.isOnHeap) {
-                    listOf(ZEROFact, UnusedVariableNode(toPath, current))
-                } else {
-                    listOf(ZEROFact)
-                }
-            }
-
-            if (fact !is UnusedVariableNode) {
-                return emptyList()
-            }
-
-            val default = if (fact.variable == current.lhv.toPathOrNull()) emptyList() else listOf(fact)
-            val fromPath = current.rhv.toPathOrNull() ?: return default
-            val toPath = current.lhv.toPathOrNull() ?: return default
-
-            if (fromPath.isOnHeap || toPath.isOnHeap) {
-                return default
-            }
-
-            if (fromPath == fact.variable) {
-                return default.plus(UnusedVariableNode(toPath, fact.initStatement))
-            }
-            return default
+    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = FlowFunctionInstance { fact ->
+        if (current !is JcAssignInst) {
+            return@FlowFunctionInstance listOf(fact)
         }
 
+        if (fact == ZEROFact) {
+            val toPath = current.lhv.toPathOrNull() ?: return@FlowFunctionInstance listOf(ZEROFact)
+            return@FlowFunctionInstance if (!toPath.isOnHeap) {
+                listOf(ZEROFact, UnusedVariableNode(toPath, current))
+            } else {
+                listOf(ZEROFact)
+            }
+        }
+
+        if (fact !is UnusedVariableNode) {
+            return@FlowFunctionInstance emptyList()
+        }
+
+        val default = if (fact.variable == current.lhv.toPathOrNull()) emptyList() else listOf(fact)
+        val fromPath = current.rhv.toPathOrNull() ?: return@FlowFunctionInstance default
+        val toPath = current.lhv.toPathOrNull() ?: return@FlowFunctionInstance default
+
+        if (fromPath.isOnHeap || toPath.isOnHeap) {
+            return@FlowFunctionInstance default
+        }
+
+        if (fromPath == fact.variable) {
+            return@FlowFunctionInstance default.plus(UnusedVariableNode(toPath, fact.initStatement))
+        }
+        default
     }
 
-    override fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod) = object : FlowFunctionInstance {
-        override fun compute(fact: DomainFact): Collection<DomainFact> {
-            val callExpr = callStatement.callExpr ?: error("Call expr is expected to be not-null")
-            val formalParams = callee.parameters.map {
-                JcArgument.of(it.index, it.name, classpath.findTypeOrNull(it.type.typeName)!!)
-            }
+    override fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod) = FlowFunctionInstance { fact ->
+        val callExpr = callStatement.callExpr ?: error("Call expr is expected to be not-null")
+        val formalParams = classpath.getFormalParamsOf(callee)
 
-            if (fact == ZEROFact) {
-                // We don't show unused parameters for virtual calls
-                if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
-                    return listOf(ZEROFact)
-                }
-                return formalParams.map { UnusedVariableNode(it.toPath(), callStatement) }.plus(ZEROFact)
+        if (fact == ZEROFact) {
+            // We don't show unused parameters for virtual calls
+            if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
+                return@FlowFunctionInstance listOf(ZEROFact)
             }
-
-            if (fact !is UnusedVariableNode) {
-                return emptyList()
-            }
-
-            return emptyList()
+            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) }.plus(ZEROFact)
         }
 
+        if (fact !is UnusedVariableNode) {
+            return@FlowFunctionInstance emptyList()
+        }
+
+        emptyList()
     }
 
     override fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst) =
@@ -179,9 +170,11 @@ private class UnusedVariableForwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst
-    ) = object : FlowFunctionInstance {
-        override fun compute(fact: DomainFact): Collection<DomainFact> {
-            return if (fact == ZEROFact) listOf(ZEROFact) else emptyList()
+    ) = FlowFunctionInstance { fact ->
+        if (fact == ZEROFact) {
+            listOf(ZEROFact)
+        } else {
+            emptyList()
         }
     }
 }

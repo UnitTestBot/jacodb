@@ -74,7 +74,7 @@ typealias AnalysesOptions = Map<String, String>
 @Serializable
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
-val unusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
+val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
 
 fun createNpeRunner(maxPathLength: Int = 5) = ParallelBidiIfdsUnitRunner(
     IfdsBaseUnitRunner(NpeAnalyzerFactory(maxPathLength)),
@@ -90,7 +90,7 @@ fun createAliasRunner(
     IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(maxPathLength)),
 )
 
-fun buildApplicationGraph(classpath: JcClasspath, bannedPackagePrefixes: List<String>?) = runBlocking {
+fun createApplicationGraph(classpath: JcClasspath, bannedPackagePrefixes: List<String>?) = runBlocking {
     val mainGraph = JcApplicationGraphImpl(classpath, classpath.usagesExt())
     if (bannedPackagePrefixes != null) {
         SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)

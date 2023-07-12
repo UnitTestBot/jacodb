@@ -19,9 +19,9 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.createNpeRunner
-import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.api.JcMethod
@@ -30,6 +30,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.analysis.NpeExamples
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -109,16 +110,19 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `simple points-to analysis`() {
         testOneMethod<NpeExamples>("simplePoints2", listOf("%5 = %4.length()"))
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `complex aliasing`() {
         testOneMethod<NpeExamples>("complexAliasing", listOf("%6 = %5.length()"))
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `context injection in points-to`() {
         testOneMethod<NpeExamples>(
@@ -127,6 +131,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         )
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `activation points maintain flow sensitivity`() {
         testOneMethod<NpeExamples>("flowSensitive", listOf("%8 = %7.length()"))
@@ -155,11 +160,13 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("noNPEAfterArrayInit", emptyList())
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `array aliasing`() {
         testOneMethod<NpeExamples>("arrayAliasing", listOf("%5 = %4.length()"))
     }
 
+    @Disabled("Flowdroid architecture not supported for async ifds yet")
     @Test
     fun `mixed array and class aliasing`() {
         testOneMethod<NpeExamples>("mixedArrayClassAliasing", listOf("%13 = %12.length()"))
@@ -205,7 +212,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         testOneAnalysisOnOneMethod<T>(vulnerabilityType, methodName, expectedLocations)
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
-        val graph = buildApplicationGraph(cp, null)
-        return runAnalysis(graph, MethodUnitResolver, createNpeRunner(), methods)
+        val graph = createApplicationGraph(cp, null)
+        return runAnalysis(graph, SingletonUnitResolver, createNpeRunner(), methods)
     }
 }

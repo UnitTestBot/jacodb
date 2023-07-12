@@ -26,14 +26,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
+import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.createNpeRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.toDumpable
-import org.jacodb.analysis.unusedVariableRunner
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
@@ -57,7 +57,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
 
         val runner = when (analysis) {
             "NPE" -> createNpeRunner()
-            "Unused" -> unusedVariableRunner
+            "Unused" -> UnusedVariableRunner
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 return@mapNotNull null
@@ -131,7 +131,7 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
-    val graph = buildApplicationGraph(cp, null)
+    val graph = createApplicationGraph(cp, null)
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
     val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
 

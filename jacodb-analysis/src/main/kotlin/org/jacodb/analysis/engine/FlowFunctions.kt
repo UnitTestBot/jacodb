@@ -20,13 +20,10 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
-interface FlowFunctionInstance {
+fun interface FlowFunctionInstance {
     fun compute(fact: DomainFact): Collection<DomainFact>
-
-//    fun compute(facts: Collection<DomainFact>): Set<DomainFact> {
-//        return facts.flatMap { compute(it) }.toSet()
-//    }
 }
+
 interface DomainFact
 
 object ZEROFact : DomainFact {
@@ -34,7 +31,7 @@ object ZEROFact : DomainFact {
 }
 
 interface FlowFunctionsSpace {
-    fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact>
+    fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact>
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
     fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance

@@ -103,7 +103,7 @@ private class TaintForwardFunctions(
         return listOf(fact)
     }
 
-    override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
+    override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)
     }
 }

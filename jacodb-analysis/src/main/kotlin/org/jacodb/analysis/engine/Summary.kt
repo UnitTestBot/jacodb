@@ -71,7 +71,7 @@ class SummaryImpl : Summary {
     }
 
     override fun getFacts(method: JcMethod, startVertex: IfdsVertex?): SharedFlow<SummaryFact> {
-        return outFlows.getOrPut(method) {
+        return outFlows.computeIfAbsent(method) {
             MutableSharedFlow<SummaryFact>(replay = Int.MAX_VALUE).also { flow ->
                 loadedFacts[method].orEmpty().forEach { fact ->
                     require(flow.tryEmit(fact))

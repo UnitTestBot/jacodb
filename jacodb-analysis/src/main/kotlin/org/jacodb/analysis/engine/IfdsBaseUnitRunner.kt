@@ -61,14 +61,14 @@ private class IfdsInstance<UnitType>(
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
     private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = ConcurrentHashMap()
-    private val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = mutableSetOf()
-    private val summaryHandlers: MutableMap<JcMethod, SummarySender> = mutableMapOf()
+    private val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
+    private val summaryHandlers: MutableMap<JcMethod, SummarySender> = ConcurrentHashMap()
     private val visitedMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val flowSpace get() = analyzer.flowFunctions
 
     private fun stashSummaryFact(fact: SummaryFact) {
-        val handler = summaryHandlers.getOrPut(fact.method) { summary.createSender(fact.method) }
+        val handler = summaryHandlers.computeIfAbsent(fact.method) { summary.createSender(fact.method) }
         handler.send(fact)
         if (fact is VulnerabilityLocation) {
             verticesWithTraceGraphNeeded.add(fact.sink)
@@ -81,7 +81,7 @@ private class IfdsInstance<UnitType>(
     private fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
-            for (sFact in flowSpace.obtainStartFacts(sPoint)) {
+            for (sFact in flowSpace.obtainPossibleStartFacts(sPoint)) {
                 val vertex = IfdsVertex(sPoint, sFact)
                 val edge = IfdsEdge(vertex, vertex)
                 propagate(edge, PathEdgePredecessor(edge, PredecessorKind.NoPredecessor))
@@ -90,7 +90,6 @@ private class IfdsInstance<UnitType>(
     }
 
     private fun propagate(e: IfdsEdge, pred: PathEdgePredecessor): Boolean {
-        pathEdgesPreds.getOrPut(e) { mutableSetOf() }.add(pred)
         val predsSet = pathEdgesPreds.computeIfAbsent(e) { mutableSetOf() }
 
         synchronized(predsSet) {
@@ -120,7 +119,7 @@ private class IfdsInstance<UnitType>(
 
     private suspend fun takeNewEdge(): IfdsEdge? {
         return try {
-            withTimeout(200) {
+            withTimeout(100) {
                 workList.receive()
             }
         } catch (_: Exception) {

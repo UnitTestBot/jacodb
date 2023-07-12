@@ -17,7 +17,7 @@
 package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.buildApplicationGraph
+import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.createAliasRunner
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.MethodUnitResolver
@@ -149,7 +149,7 @@ class AliasAnalysisTest : BaseTest() {
         val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
             .plus("pointerbench.benchmark.internal")
 
-        val graph = buildApplicationGraph(
+        val graph = createApplicationGraph(
             cp,
             SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes + bannedPackagePrefixes
         )
