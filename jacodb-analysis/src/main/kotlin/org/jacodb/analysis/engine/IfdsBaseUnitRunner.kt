@@ -131,7 +131,7 @@ private class IfdsInstance<UnitType>(
         startMethods.forEach { addStart(it) }
 
         while (isActive) {
-            val curEdge = takeNewEdge() ?: throw CancellationException()
+            val curEdge = takeNewEdge() ?: throw EmptyQueueCancellationException
 
             if (curEdge.method !in visitedMethods) {
                 visitedMethods.add(curEdge.method)
@@ -245,10 +245,14 @@ private class IfdsInstance<UnitType>(
         }
     }
 
-    suspend fun analyze() =
+    suspend fun analyze() = coroutineScope {
         try {
             runTabulationAlgorithm()
-        } finally {
+        } catch (_: EmptyQueueCancellationException) {}
+        finally {
             postActions()
         }
+    }
 }
+
+private object EmptyQueueCancellationException: CancellationException()

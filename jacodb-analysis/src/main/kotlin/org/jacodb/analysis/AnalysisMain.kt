@@ -27,6 +27,7 @@ import org.jacodb.analysis.analyzers.UnusedVariableAnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
+import org.jacodb.analysis.engine.SequentialBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
@@ -76,7 +77,7 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
 
-fun createNpeRunner(maxPathLength: Int = 5) = ParallelBidiIfdsUnitRunner(
+fun createNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
     IfdsBaseUnitRunner(NpeAnalyzerFactory(maxPathLength)),
     IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
 )
