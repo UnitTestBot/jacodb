@@ -44,7 +44,7 @@ abstract class BaseAnalysisTest : BaseTest() {
             val hierarchyExt = cp.hierarchyExt()
             val baseClass = cp.findClass<AbstractTestCase>()
             val classes = hierarchyExt.findSubClasses(baseClass, false)
-            classes.toArguments("CWE$cweNum", cweSpecificBans)
+            classes.toArguments("CWE${cweNum}_", cweSpecificBans)
         }
 
         private fun Sequence<JcClassOrInterface>.toArguments(cwe: String, cweSpecificBans: List<String>): Stream<Arguments> = this

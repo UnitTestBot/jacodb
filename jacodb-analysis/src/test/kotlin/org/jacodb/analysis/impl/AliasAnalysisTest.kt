@@ -18,7 +18,6 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
@@ -138,7 +137,10 @@ class AliasAnalysisTest : BaseTest() {
         }
     }
 
-    private fun isSink(inst: JcInst, fact: DomainFact): Boolean {
+    private fun isSink(v: IfdsVertex): Boolean {
+        val fact = v.domainFact
+        val inst = v.statement
+
         if (fact !is TaintAnalysisNode || fact.activation != null) {
             return false
         }

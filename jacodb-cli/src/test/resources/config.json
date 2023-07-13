@@ -3,6 +3,7 @@
     "NPE": {},
     "Unused": {
       "UnitResolver": "class"
-    }
+    },
+    "SQL": {}
   }
 }

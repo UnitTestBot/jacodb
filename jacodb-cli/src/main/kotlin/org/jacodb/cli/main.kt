@@ -26,6 +26,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
+import org.jacodb.analysis.SqlInjectionRunner
 import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.MethodUnitResolver
@@ -58,6 +59,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
         val runner = when (analysis) {
             "NPE" -> newNpeRunner()
             "Unused" -> UnusedVariableRunner
+            "SQL" -> SqlInjectionRunner
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 return@mapNotNull null
