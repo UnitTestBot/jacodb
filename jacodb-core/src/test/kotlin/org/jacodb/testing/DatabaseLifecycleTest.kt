@@ -18,11 +18,7 @@ package org.jacodb.testing
 
 import com.google.common.cache.AbstractCache
 import com.google.common.collect.Iterators
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findClassOrNull
@@ -30,10 +26,9 @@ import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.fs.BuildFolderLocation
 import org.jacodb.impl.jacodb
 import org.jacodb.impl.storage.PersistentLocationRegistry
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -191,6 +186,37 @@ class DatabaseLifecycleTest {
         assertNotNull(clazz.declaredMethods.first().asmNode())
         db.awaitBackgroundJobs()
         assertTrue(guavaLibClone.deleteWithRetries(3))
+    }
+
+    @Test
+    fun `classes should not be duplicated`() {
+        runBlocking {
+            val location = "$tempFolder/${UUID.randomUUID()}.db"
+            var db = runBlocking {
+                jacodb {
+                    useProcessJavaRuntime()
+                    persistent(location)
+                }
+            }
+
+            val cp = db.classpath(listOf(guavaLibClone))
+            cp.findClass<Iterators>()
+            db.awaitBackgroundJobs()
+            db.close()
+            assertTrue(guavaLibClone.deleteWithRetries(3))
+            db = runBlocking {
+                jacodb {
+                    useProcessJavaRuntime()
+                    persistent(location)
+                }
+            }
+            db.awaitBackgroundJobs()
+            db.persistence.read {
+                it.selectFrom(CLASSES).where(CLASSES.LOCATION_ID.isNull).fetch { record ->
+                    fail<Any>("there should not be such records")
+                }
+            }
+        }
     }
 
     @AfterEach
