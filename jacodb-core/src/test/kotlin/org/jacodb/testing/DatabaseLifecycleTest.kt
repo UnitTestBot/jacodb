@@ -26,6 +26,7 @@ import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.fs.BuildFolderLocation
 import org.jacodb.impl.jacodb
 import org.jacodb.impl.storage.PersistentLocationRegistry
+import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -201,7 +202,6 @@ class DatabaseLifecycleTest {
 
             val cp = db.classpath(listOf(guavaLibClone))
             cp.findClass<Iterators>()
-            db.awaitBackgroundJobs()
             db.close()
             assertTrue(guavaLibClone.deleteWithRetries(3))
             db = runBlocking {
@@ -210,11 +210,12 @@ class DatabaseLifecycleTest {
                     persistent(location)
                 }
             }
-            db.awaitBackgroundJobs()
             db.persistence.read {
-                it.selectFrom(CLASSES).where(CLASSES.LOCATION_ID.isNull).fetch { record ->
-                    fail<Any>("there should not be such records")
-                }
+                it.select(CLASSES.ID, BYTECODELOCATIONS.ID).from(CLASSES)
+                    .leftJoin(BYTECODELOCATIONS).on(BYTECODELOCATIONS.ID.eq(CLASSES.LOCATION_ID))
+                    .where(BYTECODELOCATIONS.ID.isNull).fetch { (_, _) ->
+                        fail<Any>("there should not be such records")
+                    }
             }
         }
     }
