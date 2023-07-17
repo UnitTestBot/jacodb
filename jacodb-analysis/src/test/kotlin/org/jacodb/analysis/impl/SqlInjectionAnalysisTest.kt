@@ -16,12 +16,13 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.SqlInjectionRunner
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.TaintAnalyzer
-import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -34,10 +35,7 @@ import java.util.stream.Stream
 class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
-        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, listOf(
-            // TODO:
-            "executeBatch"
-        ))
+        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, emptyList())
 
         private const val vulnerabilityType = TaintAnalyzer.vulnerabilityType
     }
@@ -49,7 +47,9 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     }
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
-        val graph = createApplicationGraph(cp, null)
+        val graph = runBlocking {
+            cp.newApplicationGraph()
+        }
         return runAnalysis(graph, SingletonUnitResolver, SqlInjectionRunner, methods)
     }
 }

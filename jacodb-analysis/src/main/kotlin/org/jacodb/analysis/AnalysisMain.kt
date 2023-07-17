@@ -24,6 +24,7 @@ import org.jacodb.analysis.analyzers.SqlInjectionAnalyzerFactory
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintAnalyzerFactory
 import org.jacodb.analysis.analyzers.TaintBackwardAnalyzerFactory
+import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzerFactory
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.IfdsVertex
@@ -35,6 +36,7 @@ import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.usagesExt
 
@@ -89,26 +91,27 @@ fun newNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
 
 fun newAliasRunner(
     generates: (JcInst) -> List<TaintAnalysisNode>,
+    sanitizes: (JcExpr, TaintNode) -> Boolean,
     isSink: (IfdsVertex) -> Boolean,
     maxPathLength: Int = 5
 ) = ParallelBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(AliasAnalyzerFactory(generates, isSink, maxPathLength)),
+    IfdsBaseUnitRunner(AliasAnalyzerFactory(generates, sanitizes, isSink, maxPathLength)),
     IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(maxPathLength)),
 )
 
 fun newTaintRunner(
     isSourceMethod: (JcMethod) -> Boolean,
+    isSanitizeMethod: (JcMethod) -> Boolean,
     isSinkMethod: (JcMethod) -> Boolean,
-    maxPathLength: Int = 5,
-    spreading: Boolean = true
-) = IfdsBaseUnitRunner(TaintAnalyzerFactory(isSourceMethod, isSinkMethod, maxPathLength, spreading))
+    maxPathLength: Int = 5
+) = IfdsBaseUnitRunner(TaintAnalyzerFactory(isSourceMethod, isSanitizeMethod, isSinkMethod, maxPathLength))
 
 fun newTaintRunner(
     sourceMethodMatchers: List<String>,
+    sanitizeMethodMatchers: List<String>,
     sinkMethodMatchers: List<String>,
-    maxPathLength: Int = 5,
-    spreading: Boolean = true
-) = IfdsBaseUnitRunner(TaintAnalyzerFactory(sourceMethodMatchers, sinkMethodMatchers, maxPathLength, spreading))
+    maxPathLength: Int = 5
+) = IfdsBaseUnitRunner(TaintAnalyzerFactory(sourceMethodMatchers, sanitizeMethodMatchers, sinkMethodMatchers, maxPathLength))
 
 suspend fun JcClasspath.newApplicationGraph(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
     val mainGraph = JcApplicationGraphImpl(this, usagesExt())

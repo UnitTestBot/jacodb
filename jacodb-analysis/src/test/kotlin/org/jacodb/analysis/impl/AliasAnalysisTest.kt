@@ -18,6 +18,8 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.analyzers.TaintNode
+import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
@@ -27,6 +29,7 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
@@ -137,6 +140,10 @@ class AliasAnalysisTest : BaseTest() {
         }
     }
 
+    private fun isSanitizer(expr: JcExpr, fact: TaintNode): Boolean {
+        return false
+    }
+
     private fun isSink(v: IfdsVertex): Boolean {
         val fact = v.domainFact
         val inst = v.statement
@@ -161,7 +168,7 @@ class AliasAnalysisTest : BaseTest() {
         val result = runAnalysis(
             graph,
             MethodUnitResolver,
-            newAliasRunner(::generates, ::isSink),
+            newAliasRunner(::generates, ::isSanitizer, ::isSink),
             listOf(method)
         )
 
