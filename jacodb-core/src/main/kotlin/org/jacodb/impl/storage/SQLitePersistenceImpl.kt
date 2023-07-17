@@ -18,6 +18,8 @@ package org.jacodb.impl.storage
 
 import org.jacodb.impl.FeaturesRegistry
 import org.jacodb.impl.fs.JavaRuntime
+import org.jacodb.impl.fs.logger
+import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.conf.Settings
@@ -60,12 +62,27 @@ class SQLitePersistenceImpl(
         connection = dataSource.connection
         jooq = DSL.using(connection, SQLDialect.SQLITE, Settings().withExecuteLogging(false))
         write {
-            if (clearOnStart) {
+            if (clearOnStart || !runtimeProcessed) {
                 jooq.executeQueriesFrom("sqlite/drop-schema.sql")
             }
             jooq.executeQueriesFrom("sqlite/create-schema.sql")
         }
     }
+
+    private val runtimeProcessed: Boolean
+        get() {
+            try {
+                val count = jooq.fetchCount(
+                    BYTECODELOCATIONS,
+                    BYTECODELOCATIONS.STATE.notEqual(LocationState.PROCESSED.ordinal)
+                        .and(BYTECODELOCATIONS.RUNTIME.isTrue)
+                )
+                return count == 0
+            } catch (e: Exception) {
+                logger.warn("can't check that runtime libraries is processed with", e)
+                return false
+            }
+        }
 
     override fun <T> write(action: (DSLContext) -> T): T = lock.withLock {
         action(jooq)
