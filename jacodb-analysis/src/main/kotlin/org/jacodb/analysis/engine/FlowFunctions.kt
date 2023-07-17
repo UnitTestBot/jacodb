@@ -50,5 +50,5 @@ interface Analyzer {
 }
 
 fun interface AnalyzerFactory {
-    fun createAnalyzer(graph: JcApplicationGraph): Analyzer
+    fun newAnalyzer(graph: JcApplicationGraph): Analyzer
 }

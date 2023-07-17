@@ -18,6 +18,10 @@ package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -25,20 +29,25 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import java.util.concurrent.ConcurrentHashMap
 
 class IfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunner: IfdsUnitRunner,
-    private val timeoutMillis: Long
+    private val timeoutMillis: Long,
+    private val initMethods: List<JcMethod>
 ) {
-    private val initMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
     private val summary: Summary = SummaryImpl()
+
+    init {
+        initMethods.forEach { addStart(it) }
+    }
 
     private val IfdsVertex.traceGraph: TraceGraph
         get() = summary
@@ -48,26 +57,30 @@ class IfdsUnitManager<UnitType>(
             ?: TraceGraph.bySink(this)
 
     fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
-        val unitJobs: MutableMap<UnitType, Job> = mutableMapOf()
+        val unitJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
+        val unitsCount = unitsQueue.size
 
-        logger.info { "Starting analysis. Number of units to analyze: ${unitsQueue.size}" }
-        while (unitsQueue.isNotEmpty()) {
-            // TODO: do smth smarter here
-            val next = unitsQueue.minBy { dependsOn[it]!! }
-            unitsQueue.remove(next)
+        logger.info { "Starting analysis. Number of units to analyze: $unitsCount" }
 
-            unitJobs[next] = launch {
+        val progressLoggerJob = launch {
+            while (isActive) {
+                delay(1000)
+                logger.info { "Current progress: ${unitJobs.values.count { it.isCompleted }} / $unitsCount units completed" }
+            }
+        }
+
+        // TODO: do smth smarter here
+        unitsQueue.toList().forEach { unit ->
+            unitJobs[unit] = launch {
                 withTimeout(timeoutMillis) {
-                    ifdsUnitRunner.run(graph, summary, unitResolver, next, foundMethods[next]!!.toList())
-                }
-            }.also {
-                it.invokeOnCompletion { _ ->
-                    logger.info { "Job for $next completed, remaining: ${unitJobs.values.count { it.isActive }}" }
+                    ifdsUnitRunner.run(graph, summary, unitResolver, unit, foundMethods[unit]!!.toList())
                 }
             }
         }
 
-        unitJobs.values.forEach { it.join() }
+        unitJobs.values.joinAll()
+        progressLoggerJob.cancelAndJoin()
+        logger.info { "All jobs completed, gathering results..." }
 
         val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
             summary.getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
@@ -133,7 +146,7 @@ class IfdsUnitManager<UnitType>(
         return result
     }
 
-    private fun internalAddStart(method: JcMethod) {
+    private fun addStart(method: JcMethod) {
         val unit = unitResolver.resolve(method)
         if (method in foundMethods[unit].orEmpty()) {
             return
@@ -142,13 +155,8 @@ class IfdsUnitManager<UnitType>(
         unitsQueue.add(unit)
         foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
         val dependencies = getAllDependencies(method)
-        dependencies.forEach { internalAddStart(it) }
+        dependencies.forEach { addStart(it) }
         dependsOn[unit] = dependsOn.getOrDefault(unit, 0) + dependencies.size
-    }
-
-    fun addStart(method: JcMethod) {
-        initMethods.add(method)
-        internalAddStart(method)
     }
 }
 
@@ -159,9 +167,5 @@ fun runAnalysis(
     methods: List<JcMethod>,
     timeoutMillis: Long = Long.MAX_VALUE
 ): List<VulnerabilityInstance> {
-    val manager = IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, timeoutMillis)
-    for (method in methods) {
-        manager.addStart(method)
-    }
-    return manager.analyze()
+    return IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, timeoutMillis, methods).analyze()
 }

@@ -16,12 +16,13 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
-import org.jacodb.analysis.createApplicationGraph
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.UnusedVariableRunner
+import org.jacodb.analysis.newApplicationGraph
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -60,7 +61,9 @@ class UnusedVariableTest : BaseAnalysisTest() {
     }
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
-        val graph = createApplicationGraph(cp, null)
+        val graph = runBlocking {
+            cp.newApplicationGraph()
+        }
         return runAnalysis(graph, SingletonUnitResolver, UnusedVariableRunner, methods)
     }
 }

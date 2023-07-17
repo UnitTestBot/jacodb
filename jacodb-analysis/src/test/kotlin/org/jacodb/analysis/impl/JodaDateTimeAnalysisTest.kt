@@ -16,16 +16,17 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.UnusedVariableRunner
-import org.jacodb.analysis.createApplicationGraph
-import org.jacodb.analysis.createNpeRunner
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -40,7 +41,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods).toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods, 1000).toDumpable()
 
         println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
@@ -54,8 +55,10 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, createNpeRunner())
+        testOne(MethodUnitResolver, newNpeRunner())
     }
 
-    private val graph = createApplicationGraph(cp, null)
+    private val graph = runBlocking {
+        cp.newApplicationGraph()
+    }
 }

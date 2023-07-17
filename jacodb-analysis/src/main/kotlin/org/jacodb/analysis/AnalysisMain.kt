@@ -15,7 +15,6 @@
  */
 
 package org.jacodb.analysis
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import mu.KLogging
 import org.jacodb.analysis.analyzers.AliasAnalyzerFactory
@@ -32,6 +31,7 @@ import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.usagesExt
 
@@ -77,12 +77,12 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
 
-fun createNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
+fun newNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
     IfdsBaseUnitRunner(NpeAnalyzerFactory(maxPathLength)),
     IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
 )
 
-fun createAliasRunner(
+fun newAliasRunner(
     generates: (JcInst) -> List<TaintAnalysisNode>,
     isSink: (JcInst, DomainFact) -> Boolean,
     maxPathLength: Int = 5
@@ -91,9 +91,9 @@ fun createAliasRunner(
     IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(maxPathLength)),
 )
 
-fun createApplicationGraph(classpath: JcClasspath, bannedPackagePrefixes: List<String>?) = runBlocking {
-    val mainGraph = JcApplicationGraphImpl(classpath, classpath.usagesExt())
-    if (bannedPackagePrefixes != null) {
+suspend fun JcClasspath.newApplicationGraph(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
+    val mainGraph = JcApplicationGraphImpl(this, usagesExt())
+    return if (bannedPackagePrefixes != null) {
         SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
     } else {
         SimplifiedJcApplicationGraph(mainGraph)

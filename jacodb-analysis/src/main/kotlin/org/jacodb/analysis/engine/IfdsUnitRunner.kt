@@ -64,7 +64,7 @@ class SequentialBidiIfdsUnitRunner(
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
         startMethods: List<JcMethod>
-    ) = coroutineScope {
+    ) {
         backward.run(graph.reversed, summary, unitResolver, unit, startMethods)
 
         forward.run(graph, summary, unitResolver, unit, startMethods)

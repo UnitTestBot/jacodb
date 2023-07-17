@@ -16,13 +16,14 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.createApplicationGraph
-import org.jacodb.analysis.createAliasRunner
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
+import org.jacodb.analysis.newAliasRunner
+import org.jacodb.analysis.newApplicationGraph
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
@@ -149,15 +150,16 @@ class AliasAnalysisTest : BaseTest() {
         val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
             .plus("pointerbench.benchmark.internal")
 
-        val graph = createApplicationGraph(
-            cp,
-            SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes + bannedPackagePrefixes
-        )
+        val graph = runBlocking {
+            cp.newApplicationGraph(
+                SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes + bannedPackagePrefixes
+            )
+        }
 
         val result = runAnalysis(
             graph,
             MethodUnitResolver,
-            createAliasRunner(::generates, ::isSink),
+            newAliasRunner(::generates, ::isSink),
             listOf(method)
         )
 

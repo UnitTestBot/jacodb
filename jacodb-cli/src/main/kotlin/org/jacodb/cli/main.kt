@@ -28,11 +28,11 @@ import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.createApplicationGraph
-import org.jacodb.analysis.createNpeRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -56,7 +56,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
         } ?: MethodUnitResolver
 
         val runner = when (analysis) {
-            "NPE" -> createNpeRunner()
+            "NPE" -> newNpeRunner()
             "Unused" -> UnusedVariableRunner
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
@@ -131,7 +131,9 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
-    val graph = createApplicationGraph(cp, null)
+    val graph = runBlocking {
+        cp.newApplicationGraph()
+    }
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
     val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
 

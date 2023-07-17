@@ -42,7 +42,7 @@ class IfdsBaseUnitRunner(private val analyzerFactory: AnalyzerFactory) : IfdsUni
         unit: UnitType,
         startMethods: List<JcMethod>
     ) {
-        val analyzer = analyzerFactory.createAnalyzer(graph)
+        val analyzer = analyzerFactory.newAnalyzer(graph)
         val instance = IfdsInstance(graph, analyzer, summary, unitResolver, unit, startMethods)
         instance.analyze()
     }
@@ -119,7 +119,7 @@ private class IfdsInstance<UnitType>(
 
     private suspend fun takeNewEdge(): IfdsEdge? {
         return try {
-            withTimeout(100) {
+            withTimeout(30) {
                 workList.receive()
             }
         } catch (_: Exception) {
