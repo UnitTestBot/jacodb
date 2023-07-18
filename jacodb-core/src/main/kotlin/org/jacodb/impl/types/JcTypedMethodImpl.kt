@@ -95,7 +95,7 @@ class JcTypedMethodImpl(
                     enclosingMethod = this,
                     substitutor = methodInfo.substitutor,
                     parameter = jcParameter,
-                    jvmType = methodInfo.impl?.parameterTypes?.get(index)
+                    jvmType = methodInfo.impl?.parameterTypes?.getOrNull(index)
                 )
             }
         }
@@ -107,7 +107,8 @@ class JcTypedMethodImpl(
         val type = if (impl == null) {
             classpath.findTypeOrNull(typeName)
                 ?.copyWithAnnotations(
-                    (method as? JcMethodImpl)?.returnTypeAnnotationInfos?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
+                    (method as? JcMethodImpl)?.returnTypeAnnotationInfos?.map { JcAnnotationImpl(it, classpath) }
+                        ?: listOf()
                 )
                 ?: throw IllegalStateException("Can't resolve type by name $typeName")
         } else {
