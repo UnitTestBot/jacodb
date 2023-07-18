@@ -19,113 +19,12 @@ package org.jacodb.impl.cfg
 import org.jacodb.api.JcMethod
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.BsmDoubleArg
-import org.jacodb.api.cfg.BsmFloatArg
-import org.jacodb.api.cfg.BsmHandle
-import org.jacodb.api.cfg.BsmIntArg
-import org.jacodb.api.cfg.BsmLongArg
-import org.jacodb.api.cfg.BsmMethodTypeArg
-import org.jacodb.api.cfg.BsmStringArg
-import org.jacodb.api.cfg.BsmTypeArg
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawAddExpr
-import org.jacodb.api.cfg.JcRawAndExpr
-import org.jacodb.api.cfg.JcRawArgument
-import org.jacodb.api.cfg.JcRawArrayAccess
-import org.jacodb.api.cfg.JcRawAssignInst
-import org.jacodb.api.cfg.JcRawBool
-import org.jacodb.api.cfg.JcRawByte
-import org.jacodb.api.cfg.JcRawCallExpr
-import org.jacodb.api.cfg.JcRawCallInst
-import org.jacodb.api.cfg.JcRawCastExpr
-import org.jacodb.api.cfg.JcRawCatchInst
-import org.jacodb.api.cfg.JcRawChar
-import org.jacodb.api.cfg.JcRawClassConstant
-import org.jacodb.api.cfg.JcRawCmpExpr
-import org.jacodb.api.cfg.JcRawCmpgExpr
-import org.jacodb.api.cfg.JcRawCmplExpr
-import org.jacodb.api.cfg.JcRawComplexValue
-import org.jacodb.api.cfg.JcRawDivExpr
-import org.jacodb.api.cfg.JcRawDouble
-import org.jacodb.api.cfg.JcRawDynamicCallExpr
-import org.jacodb.api.cfg.JcRawEnterMonitorInst
-import org.jacodb.api.cfg.JcRawEqExpr
-import org.jacodb.api.cfg.JcRawExitMonitorInst
-import org.jacodb.api.cfg.JcRawExpr
-import org.jacodb.api.cfg.JcRawExprVisitor
-import org.jacodb.api.cfg.JcRawFieldRef
-import org.jacodb.api.cfg.JcRawFloat
-import org.jacodb.api.cfg.JcRawGeExpr
-import org.jacodb.api.cfg.JcRawGotoInst
-import org.jacodb.api.cfg.JcRawGtExpr
-import org.jacodb.api.cfg.JcRawIfInst
-import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.cfg.JcRawInstVisitor
-import org.jacodb.api.cfg.JcRawInstanceOfExpr
-import org.jacodb.api.cfg.JcRawInt
-import org.jacodb.api.cfg.JcRawInterfaceCallExpr
-import org.jacodb.api.cfg.JcRawLabelInst
-import org.jacodb.api.cfg.JcRawLabelRef
-import org.jacodb.api.cfg.JcRawLeExpr
-import org.jacodb.api.cfg.JcRawLengthExpr
-import org.jacodb.api.cfg.JcRawLineNumberInst
-import org.jacodb.api.cfg.JcRawLocalVar
-import org.jacodb.api.cfg.JcRawLong
-import org.jacodb.api.cfg.JcRawLtExpr
-import org.jacodb.api.cfg.JcRawMethodConstant
-import org.jacodb.api.cfg.JcRawMethodType
-import org.jacodb.api.cfg.JcRawMulExpr
-import org.jacodb.api.cfg.JcRawNegExpr
-import org.jacodb.api.cfg.JcRawNeqExpr
-import org.jacodb.api.cfg.JcRawNewArrayExpr
-import org.jacodb.api.cfg.JcRawNewExpr
-import org.jacodb.api.cfg.JcRawNullConstant
-import org.jacodb.api.cfg.JcRawOrExpr
-import org.jacodb.api.cfg.JcRawRemExpr
-import org.jacodb.api.cfg.JcRawReturnInst
-import org.jacodb.api.cfg.JcRawShlExpr
-import org.jacodb.api.cfg.JcRawShort
-import org.jacodb.api.cfg.JcRawShrExpr
-import org.jacodb.api.cfg.JcRawSpecialCallExpr
-import org.jacodb.api.cfg.JcRawStaticCallExpr
-import org.jacodb.api.cfg.JcRawStringConstant
-import org.jacodb.api.cfg.JcRawSubExpr
-import org.jacodb.api.cfg.JcRawSwitchInst
-import org.jacodb.api.cfg.JcRawThis
-import org.jacodb.api.cfg.JcRawThrowInst
-import org.jacodb.api.cfg.JcRawUshrExpr
-import org.jacodb.api.cfg.JcRawValue
-import org.jacodb.api.cfg.JcRawVirtualCallExpr
-import org.jacodb.api.cfg.JcRawXorExpr
-import org.jacodb.impl.cfg.util.baseElementType
-import org.jacodb.impl.cfg.util.internalDesc
-import org.jacodb.impl.cfg.util.isDWord
-import org.jacodb.impl.cfg.util.isPrimitive
-import org.jacodb.impl.cfg.util.jvmClassName
-import org.jacodb.impl.cfg.util.jvmTypeName
-import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.api.cfg.*
+import org.jacodb.impl.cfg.util.*
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.IntInsnNode
-import org.objectweb.asm.tree.InvokeDynamicInsnNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.LineNumberNode
-import org.objectweb.asm.tree.LookupSwitchInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.MethodNode
-import org.objectweb.asm.tree.MultiANewArrayInsnNode
-import org.objectweb.asm.tree.ParameterNode
-import org.objectweb.asm.tree.TableSwitchInsnNode
-import org.objectweb.asm.tree.TryCatchBlockNode
-import org.objectweb.asm.tree.TypeInsnNode
-import org.objectweb.asm.tree.VarInsnNode
+import org.objectweb.asm.tree.*
 
 private val PredefinedPrimitives.smallIntegers get() = setOf(Boolean, Byte, Char, Short, Int)
 
@@ -620,7 +519,13 @@ class MethodNodeBuilder(
     }
 
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr) {
-        val component = expr.typeName.baseElementType()
+        val component = run {
+            var type = expr.typeName
+            repeat(expr.dimensions.size) {
+                type = type.elementType()
+            }
+            type
+        }
         expr.dimensions.map { it.accept(this) }
         currentInsnList.add(
             when {
