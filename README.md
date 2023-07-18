@@ -2,7 +2,7 @@
 [![Last Release](https://img.shields.io/github/release-date/unittestbot/jacodb.svg?logo=github)](https://github.com/unittestbot/jacodb/releases/latest)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 ![Pure Java + Kotlin](https://img.shields.io/badge/100%25-java%2bkotlin-orange.svg)
-[![Coverage](./docs/badges/jacoco.svg)](https://github.com/UnitTestBot/jacodb/actions/workflows/coverage.yml)
+[![codecov](https://codecov.io/gh/UnitTestBot/jacodb/branch/develop/graph/badge.svg?token=KQ2IDRS0YP)](https://codecov.io/gh/UnitTestBot/jacodb)
 
 ## Overview
 
