@@ -51,6 +51,18 @@ jobs:
         with:
           files: "**/build/test-results/**/*.xml"
           check_name: "jdk 11 test results"
+      - name: Upload gradle reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle-reports
+          path: '**/build/reports/'
+          retention-days: 1
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
 
   jdk8:
 
