@@ -90,11 +90,9 @@ private class IfdsInstance<UnitType>(
     }
 
     private fun propagate(e: IfdsEdge, pred: PathEdgePredecessor): Boolean {
-        val predsSet = pathEdgesPreds.computeIfAbsent(e) { mutableSetOf() }
-
-        synchronized(predsSet) {
-            predsSet.add(pred)
-        }
+        pathEdgesPreds.computeIfAbsent(e) {
+            ConcurrentHashMap.newKeySet()
+        }.add(pred)
 
         if (pathEdges.add(e)) {
             require(workList.trySend(e).isSuccess)
@@ -133,8 +131,7 @@ private class IfdsInstance<UnitType>(
         while (isActive) {
             val curEdge = takeNewEdge() ?: throw EmptyQueueCancellationException
 
-            if (curEdge.method !in visitedMethods) {
-                visitedMethods.add(curEdge.method)
+            if (visitedMethods.add(curEdge.method)) {
                 summary // Listen for incoming updates
                     .getFactsFiltered<PathEdgeFact>(curEdge.method, null)
                     .filter { it.edge.u.statement in graph.entryPoint(curEdge.method) } // Filter out backward edges
@@ -166,7 +163,8 @@ private class IfdsInstance<UnitType>(
                                 } else {
                                     val nextEdge = IfdsEdge(sVertex, sVertex)
                                     propagate(nextEdge, PathEdgePredecessor(curEdge, PredecessorKind.CallToStart))
-                                    summaryEdges[sVertex].orEmpty().asFlow()
+                                    // .toList() is needed below to avoid ConcurrentModificationException
+                                    summaryEdges[sVertex].orEmpty().toList().asFlow()
                                 }
 
                                 exitVertices.onEach { (eStatement, eFact) ->
