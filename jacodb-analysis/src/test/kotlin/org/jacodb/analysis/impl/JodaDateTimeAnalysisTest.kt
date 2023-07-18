@@ -16,20 +16,18 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
-import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.analyzers.NpeAnalyzer
-import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
-import org.jacodb.analysis.engine.Analyzer
-import org.jacodb.analysis.engine.BidiIFDSForTaintAnalysis
+import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.engine.ClassUnitResolver
-import org.jacodb.analysis.engine.IFDSInstanceProvider
-import org.jacodb.analysis.engine.IFDSUnitInstance
-import org.jacodb.analysis.engine.IFDSUnitTraverser
+import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.newNpeRunner
+import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -41,14 +39,9 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
-    private fun testOne(analyzer: Analyzer, unitResolver: UnitResolver<*>, ifdsInstanceProvider: IFDSInstanceProvider) {
+    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-
-        val graph = JcSimplifiedGraphFactory().createGraph(cp)
-        val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-        val engine = IFDSUnitTraverser(graph, analyzer, unitResolver, points2Engine.obtainDevirtualizer(), ifdsInstanceProvider)
-        clazz.declaredMethods.forEach { engine.addStart(it) }
-        val result = engine.analyze().toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods, 1000).toDumpable()
 
         println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
@@ -57,11 +50,15 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(UnusedVariableAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), ClassUnitResolver(false), IFDSUnitInstance)
+        testOne(ClassUnitResolver(false), UnusedVariableRunner)
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(NpeAnalyzer(JcSimplifiedGraphFactory().createGraph(cp)), MethodUnitResolver, BidiIFDSForTaintAnalysis)
+        testOne(MethodUnitResolver, newNpeRunner())
+    }
+
+    private val graph = runBlocking {
+        cp.newApplicationGraph()
     }
 }

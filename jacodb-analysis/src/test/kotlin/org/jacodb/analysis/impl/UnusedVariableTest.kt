@@ -16,11 +16,14 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.analysis.AnalysisEngine
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
-import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.UnusedVariableAnalysisFactory
+import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.UnusedVariableRunner
+import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzer
+import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -43,21 +46,24 @@ class UnusedVariableTest : BaseAnalysisTest() {
 
             // Expected answers are strange, seems to be problem in tests
             "_12",
+
+            // The variable isn't expected to be detected as unused actually
+            "_81"
         ))
 
-        private val vulnerabilityType = UnusedVariableAnalyzer.value
+        private const val vulnerabilityType = UnusedVariableAnalyzer.vulnerabilityType
     }
 
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
     fun `test on Juliet's CWE 563`(className: String) {
-        testSingleJulietClass(engine, vulnerabilityType, className)
+        testSingleJulietClass(vulnerabilityType, className)
     }
 
-    private val engine: AnalysisEngine
-        get() {
-            val graph = JcSimplifiedGraphFactory().createGraph(cp)
-            val points2Engine = JcNaivePoints2EngineFactory.createPoints2Engine(graph)
-            return UnusedVariableAnalysisFactory().createAnalysisEngine(graph, points2Engine)
+    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+        val graph = runBlocking {
+            cp.newApplicationGraph()
         }
+        return runAnalysis(graph, SingletonUnitResolver, UnusedVariableRunner, methods)
+    }
 }

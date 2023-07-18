@@ -26,30 +26,21 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
-import org.jacodb.analysis.AnalysisEngineFactory
-import org.jacodb.analysis.AnalysisResult
-import org.jacodb.analysis.Factory
-import org.jacodb.analysis.GraphFactory
-import org.jacodb.analysis.JcNaivePoints2EngineFactory
-import org.jacodb.analysis.JcSimplifiedGraphFactory
-import org.jacodb.analysis.NPEAnalysisFactory
-import org.jacodb.analysis.Points2EngineFactory
-import org.jacodb.analysis.UnusedVariableAnalysisFactory
-import org.jacodb.analysis.loadFactories
+import org.jacodb.analysis.UnusedVariableRunner
+import org.jacodb.analysis.VulnerabilityInstance
+import org.jacodb.analysis.engine.MethodUnitResolver
+import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.newNpeRunner
+import org.jacodb.analysis.toDumpable
+import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import java.io.File
-
-
-private inline fun <reified T : Factory> factoryChoice(): ArgType.Choice<T> {
-    val factories = loadFactories<T>()
-    val nameToFactory = { requiredFactoryName: String -> factories.single { it.name == requiredFactoryName } }
-    val factoryToName = { factory: T -> factory.name }
-
-    return ArgType.Choice(factories, nameToFactory, factoryToName)
-}
 
 private val logger = object : KLogging() {}.logger
 
@@ -58,16 +49,22 @@ class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun loadAnalysisEngineFactoriesByConfig(config: AnalysisConfig): List<AnalysisEngineFactory> {
-    return config.analyses.mapNotNull { (analysis, _) ->
-        when (analysis) {
-            "NPE" -> NPEAnalysisFactory()
-            "Unused" -> UnusedVariableAnalysisFactory()
+fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, methods: List<JcMethod>): List<List<VulnerabilityInstance>> {
+    return config.analyses.mapNotNull { (analysis, options) ->
+        val unitResolver = options["UnitResolver"]?.let {
+            UnitResolver.getByName(it)
+        } ?: MethodUnitResolver
+
+        val runner = when (analysis) {
+            "NPE" -> newNpeRunner()
+            "Unused" -> UnusedVariableRunner
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
-                null
+                return@mapNotNull null
             }
         }
+
+        runAnalysis(graph, unitResolver, runner, methods)
     }
 }
 
@@ -98,18 +95,6 @@ fun main(args: Array<String>) {
         shortName = "o",
         description = "File where analysis report will be written. All parent directories will be created if not exists. File will be created if not exists. Existing file will be overwritten."
     ).default("report.txt") // TODO: create SARIF here
-    val graphFactory by parser.option(
-        factoryChoice<GraphFactory>(),
-        fullName = "graph-type",
-        shortName = "g",
-        description = "Type of code graph to be used by analysis."
-    ).default(JcSimplifiedGraphFactory())
-    val points2Factory by parser.option(
-        factoryChoice<Points2EngineFactory>(),
-        fullName = "points2",
-        shortName = "p2",
-        description = "Type of points-to engine."
-    ).default(JcNaivePoints2EngineFactory)
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -146,27 +131,16 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
-    val graph = graphFactory.createGraph(cp)
-    val points2Engine = points2Factory.createPoints2Engine(graph)
+    val graph = runBlocking {
+        cp.newApplicationGraph()
+    }
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
+    val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
 
-    val analysisEngines = loadAnalysisEngineFactoriesByConfig(config).map {
-        it.createAnalysisEngine(graph, points2Engine)
-    }
-
-    val analysisResults = analysisEngines.map { engine ->
-        startJcClasses.forEach { clazz ->
-            clazz.declaredMethods.forEach {
-                engine.addStart(it)
-            }
-        }
-        engine.analyze()
-    }
-
-    val mergedResult = AnalysisResult(analysisResults.flatMap { it.vulnerabilities }).toDumpable()
+    val analysesResults = launchAnalysesByConfig(config, graph, startJcMethods).flatten().toDumpable()
 
     val json = Json { prettyPrint = true }
     outputFile.outputStream().use { fileOutputStream ->
-        json.encodeToStream(mergedResult, fileOutputStream)
+        json.encodeToStream(analysesResults, fileOutputStream)
     }
 }

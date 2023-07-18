@@ -16,24 +16,26 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.points2.Devirtualizer
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.cfg.JcInst
 
-interface IFDSInstance {
-    fun addStart(method: JcMethod)
+data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex) {
+    init {
+        require(u.method == v.method)
+    }
 
-    fun analyze(): Map<JcMethod, IFDSMethodSummary>
+    val method: JcMethod
+        get() = u.method
 }
 
-interface IFDSInstanceProvider {
-    fun <UnitType> createInstance(
-        graph: ApplicationGraph<JcMethod, JcInst>,
-        analyzer: Analyzer,
-        devirtualizer: Devirtualizer,
-        context: AnalysisContext,
-        unitResolver: UnitResolver<UnitType>,
-        unit: UnitType
-    ): IFDSInstance
+sealed interface PredecessorKind {
+    object NoPredecessor : PredecessorKind
+    object Unknown : PredecessorKind
+    object Sequent : PredecessorKind
+    object CallToStart : PredecessorKind
+    class ThroughSummary(val summaryEdge: IfdsEdge) : PredecessorKind
 }
+
+data class PathEdgePredecessor(
+    val predEdge: IfdsEdge,
+    val kind: PredecessorKind
+)

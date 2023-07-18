@@ -16,16 +16,16 @@
 
 package org.jacodb.analysis.analyzers
 
-import org.jacodb.analysis.AnalysisResult
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
-import org.jacodb.analysis.engine.IFDSResult
-import org.jacodb.analysis.engine.IFDSVertex
-import org.jacodb.analysis.engine.SpaceId
+import org.jacodb.analysis.engine.IfdsResult
+import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
@@ -33,57 +33,52 @@ import org.jacodb.api.cfg.JcValue
 
 
 abstract class TaintAnalyzer(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     generates: (JcInst) -> List<DomainFact>,
     val isSink: (JcInst, DomainFact) -> Boolean,
-    maxPathLength: Int = 5
+    maxPathLength: Int
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates)
-    override val backward: Analyzer = object : Analyzer {
-        override val name: String
-            get() = this@TaintAnalyzer.name
+    override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(cp, maxPathLength, generates)
 
-        override val backward: Analyzer
-            get() = this@TaintAnalyzer
-        override val flowFunctions: FlowFunctionsSpace
-            get() = TaintBackwardFunctions(graph, maxPathLength)
-
-        override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
-            error("Do not call sources for backward analyzer instance")
-        }
+    companion object {
+        val vulnerabilityType: String = "taint analysis"
     }
 
-    companion object : SpaceId {
-        override val value: String = "taint analysis"
-    }
-
-    override fun calculateSources(ifdsResult: IFDSResult): AnalysisResult {
-        val vulnerabilities = mutableListOf<VulnerabilityInstance>()
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+        val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (isSink(inst, fact)) {
                     fact.variable.let {
-                        vulnerabilities.add(
-                            VulnerabilityInstance(
-                                value,
-                                ifdsResult.resolveTaintRealisationsGraph(IFDSVertex(inst, fact))
-                            )
-                        )
+                        vulnerabilities.add(VulnerabilityLocation(vulnerabilityType, IfdsVertex(inst, fact)))
                     }
                 }
             }
         }
-        return AnalysisResult(vulnerabilities)
+        return vulnerabilities
+    }
+}
+
+fun TaintBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+    TaintBackwardAnalyzer(graph, maxPathLength)
+}
+
+private class TaintBackwardAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : Analyzer {
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = false
+
+    override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, maxPathLength)
+
+    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+        error("Do not call sources for backward analyzer instance")
     }
 }
 
 private class TaintForwardFunctions(
-    graph: JcApplicationGraph,
+    cp: JcClasspath,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
-) : AbstractTaintForwardFunctions(graph) {
-
-    override val inIds: List<SpaceId> get() = listOf(TaintAnalyzer, ZEROFact.id)
+) : AbstractTaintForwardFunctions(cp) {
 
     override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         if (fact == ZEROFact) {
@@ -108,7 +103,7 @@ private class TaintForwardFunctions(
         return listOf(fact)
     }
 
-    override fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact> {
+    override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)
     }
 }
@@ -117,6 +112,4 @@ private class TaintForwardFunctions(
 private class TaintBackwardFunctions(
     graph: JcApplicationGraph,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override val inIds: List<SpaceId> = listOf(TaintAnalyzer, ZEROFact.id)
-}
+) : AbstractTaintBackwardFunctions(graph, maxPathLength)

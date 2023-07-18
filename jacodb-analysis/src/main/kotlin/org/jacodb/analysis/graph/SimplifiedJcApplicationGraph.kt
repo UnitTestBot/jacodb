@@ -16,13 +16,19 @@
 
 package org.jacodb.analysis.graph
 
+import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstLocation
 import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.impl.cfg.JcInstLocationImpl
+import org.jacodb.impl.features.hierarchyExt
 
 /**
  * This is adopted specially for IFDS [JcApplicationGraph] that
@@ -35,8 +41,23 @@ class SimplifiedJcApplicationGraph(
     private val impl: JcApplicationGraphImpl,
     private val bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
 ) : JcApplicationGraph by impl {
+    private val hierarchyExtension = runBlocking {
+        classpath.hierarchyExt()
+    }
 
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
+
+    private val cache: MutableMap<JcMethod, List<JcMethod>> = mutableMapOf()
+
+    private fun getOverrides(method: JcMethod): List<JcMethod> {
+        return if (cache.containsKey(method)) {
+            cache[method]!!
+        } else {
+            val res = hierarchyExtension.findOverrides(method).toList()
+            cache[method] = res
+            res
+        }
+    }
 
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
@@ -67,18 +88,41 @@ class SimplifiedJcApplicationGraph(
         }
     }
 
-    override fun callees(node: JcInst): Sequence<JcMethod> = impl.callees(node).filterNot { callee ->
-        bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
-    }.map {
-        val curSet = visitedCallers.getOrPut(it) { mutableSetOf() }
-        curSet.add(node)
-        it
+    private fun calleesUnmarked(node: JcInst): Sequence<JcMethod> {
+        val callees = impl.callees(node).filterNot { callee ->
+            bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
+        }
+
+        val callExpr = node.callExpr as? JcVirtualCallExpr ?: return callees
+        val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass ?: return callees
+
+        return callees
+            .flatMap { callee ->
+                val allOverrides = getOverrides(callee)
+                    .filter {
+                        it.enclosingClass isSubClassOf instanceClass ||
+                                // TODO: use only down-most override here
+                                instanceClass isSubClassOf it.enclosingClass
+                    }
+
+                // TODO: maybe filter inaccessible methods here?
+                allOverrides + sequenceOf(callee)
+            }
+    }
+
+    override fun callees(node: JcInst): Sequence<JcMethod> {
+        return calleesUnmarked(node).also {
+            it.forEach {
+                visitedCallers.getOrPut(it) { mutableSetOf() }.add(node)
+            }
+        }
     }
 
     /**
      * This is IFDS-algorithm aware optimization.
      * In IFDS we don't need all method callers, we need only method callers which we visited earlier.
      */
+    // TODO: Think if this optimization is really needed
     override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
 
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
