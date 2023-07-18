@@ -1,6 +1,8 @@
 {
   "analyses": {
     "NPE": {},
-    "Unused": {}
+    "Unused": {
+      "UnitResolver": "class"
+    }
   }
 }

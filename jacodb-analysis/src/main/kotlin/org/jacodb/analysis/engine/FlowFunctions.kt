@@ -16,39 +16,22 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.AnalysisResult
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
-interface FlowFunctionInstance {
-    val inIds: List<SpaceId>
+fun interface FlowFunctionInstance {
     fun compute(fact: DomainFact): Collection<DomainFact>
-
-//    fun compute(facts: Collection<DomainFact>): Set<DomainFact> {
-//        return facts.flatMap { compute(it) }.toSet()
-//    }
 }
 
-interface SpaceId {
-    val value: String
-}
-
-interface DomainFact {
-    val id: SpaceId
-}
+interface DomainFact
 
 object ZEROFact : DomainFact {
-    override val id = object : SpaceId {
-        override val value: String = "ZERO fact id"
-    }
-
     override fun toString() = "[ZERO fact]"
 }
 
 interface FlowFunctionsSpace {
-    val inIds: List<SpaceId>
-    fun obtainAllPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> = obtainStartFacts(startStatement)
-    fun obtainStartFacts(startStatement: JcInst): Collection<DomainFact>
+    fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact>
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
     fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance
@@ -56,9 +39,16 @@ interface FlowFunctionsSpace {
 }
 
 interface Analyzer {
-    val name: String
-    val backward: Analyzer
     val flowFunctions: FlowFunctionsSpace
 
-    fun calculateSources(ifdsResult: IFDSResult): AnalysisResult
+    val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = true
+
+    fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> = emptyList()
+
+    fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<SummaryFact> = emptyList()
+}
+
+fun interface AnalyzerFactory {
+    fun newAnalyzer(graph: JcApplicationGraph): Analyzer
 }

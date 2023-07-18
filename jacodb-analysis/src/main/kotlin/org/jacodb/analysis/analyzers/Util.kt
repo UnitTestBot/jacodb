@@ -19,12 +19,20 @@ package org.jacodb.analysis.analyzers
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.ext.toType
 
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
+
+fun JcClasspath.getFormalParamsOf(method: JcMethod): List<JcArgument> {
+    return method.parameters.map {
+        JcArgument.of(it.index, it.name, findTypeOrNull(it.type.typeName)!!)
+    }
+}
 
 fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dropFact: Boolean, maxPathLength: Int): List<TaintNode> {
     val factPath = fact.variable
