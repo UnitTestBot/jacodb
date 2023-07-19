@@ -77,7 +77,7 @@ private class IfdsInstance<UnitType>(
         }
     }
 
-    private fun addStart(method: JcMethod) {
+    private fun addStartMethod(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainPossibleStartFacts(sPoint)) {
@@ -115,7 +115,7 @@ private class IfdsInstance<UnitType>(
     private val workList = Channel<IfdsEdge>(Channel.UNLIMITED)
 
     private suspend fun runTabulationAlgorithm(): Unit = coroutineScope {
-        startMethods.forEach { addStart(it) }
+        startMethods.forEach { addStartMethod(it) }
 
         while (isActive) {
             val curEdge = workList.tryReceive().getOrNull() ?: throw EmptyQueueCancellationException

@@ -32,25 +32,25 @@ import org.jacodb.api.cfg.values
 fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
-    isSink: (IfdsVertex) -> Boolean,
+    sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
 ) = AnalyzerFactory { graph ->
-    AliasAnalyzer(graph, generates, sanitizes, isSink, maxPathLength)
+    AliasAnalyzer(graph, generates, sanitizes, sinks, maxPathLength)
 }
 
 private class AliasAnalyzer(
     graph: JcApplicationGraph,
     generates: (JcInst) -> List<DomainFact>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
-    isSink: (IfdsVertex) -> Boolean,
+    sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : TaintAnalyzer(graph, generates, sanitizes, isSink, maxPathLength) {
+) : TaintAnalyzer(graph, generates, sanitizes, sinks, maxPathLength) {
 
     override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
         val vulnerabilities = mutableListOf<VulnerabilityLocation>()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
-                if (isSink(IfdsVertex(inst, fact))) {
+                if (fact in sinks(inst)) {
                     fact.variable.let {
                         val name = when (val x = it.value) {
                             is JcArgument -> x.name

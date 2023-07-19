@@ -16,11 +16,15 @@
 
 package org.jacodb.analysis.analyzers
 
-fun SqlInjectionAnalyzerFactory(
-    maxPathLength: Int,
-) = TaintAnalyzerFactory(
+fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = TaintAnalyzerFactory(
     sqlSourceMatchers,
     sqlSanitizeMatchers,
+    sqlSinkMatchers,
+    maxPathLength
+)
+
+fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = TaintBackwardAnalyzerFactory(
+    sqlSourceMatchers,
     sqlSinkMatchers,
     maxPathLength
 )
