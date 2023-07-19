@@ -26,17 +26,20 @@ import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
@@ -214,7 +217,12 @@ private class TaintForwardFunctions(
     }
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
-        return listOf(ZEROFact)
+        val method = startStatement.location.method
+
+        // Possibly null arguments
+        return listOf(ZEROFact) + method.flowGraph().locals
+            .filterIsInstance<JcArgument>()
+            .map { TaintAnalysisNode(AccessPath.fromLocal(it)) }
     }
 }
 
