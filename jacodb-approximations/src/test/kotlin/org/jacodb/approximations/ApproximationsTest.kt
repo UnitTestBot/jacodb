@@ -17,30 +17,23 @@
 package org.jacodb.approximations
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.api.JavaVersion
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcRawAssignInst
-import org.jacodb.api.cfg.JcRawCallInst
-import org.jacodb.api.cfg.JcRawFieldRef
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.approximation.Approximations
+import org.jacodb.approximation.*
 import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
 import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
-import org.jacodb.approximation.JcEnrichedVirtualField
-import org.jacodb.approximation.JcEnrichedVirtualMethod
-import org.jacodb.approximation.toApproximationName
-import org.jacodb.approximation.toOriginalName
 import org.jacodb.approximations.target.KotlinClass
+import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.jacodb.testing.guavaLib
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class ApproximationsTest : BaseTest() {
     companion object : WithDB(Approximations)
@@ -205,5 +198,27 @@ class ApproximationsTest : BaseTest() {
         }
 
         assertTrue(types.none { findOriginalByApproximationOrNull(it.toApproximationName()) != null })
+    }
+
+    @Test
+    fun `run around guava`() {
+        runAlongLib(guavaLib)
+    }
+
+    private fun runAlongLib(file: File) {
+        val classes = JarLocation(file, isRuntime = false, object : JavaVersion {
+            override val majorVersion: Int
+                get() = 8
+        }).classes
+        assertNotNull(classes)
+        classes!!.forEach {
+            val clazz = cp.findClass(it.key)
+            if (!clazz.isAnnotation && !clazz.isInterface) {
+                println("Testing class: ${it.key}")
+                clazz.declaredMethods.forEach {
+                    it.flowGraph()
+                }
+            }
+        }
     }
 }
