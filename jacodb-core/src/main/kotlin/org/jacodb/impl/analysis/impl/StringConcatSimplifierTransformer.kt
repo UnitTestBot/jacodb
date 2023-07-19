@@ -17,29 +17,31 @@
 package org.jacodb.impl.analysis.impl
 
 import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.autoboxIfNeeded
 import org.jacodb.api.ext.findTypeOrNull
-import org.jacodb.impl.cfg.JcGraphImpl
+import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
+class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) : DefaultJcInstVisitor<JcInst> {
 
-class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst> {
     override val defaultInstHandler: (JcInst) -> JcInst
         get() = { it }
+
     private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
     private val instructions = mutableListOf<JcInst>()
     private val catchReplacements = mutableMapOf<JcInst, MutableList<JcInst>>()
     private val instructionIndices = mutableMapOf<JcInst, Int>()
 
-    private val stringType = jcGraph.classpath.findTypeOrNull<String>() as JcClassType
+    private val stringType = classpath.findTypeOrNull<String>() as JcClassType
 
-    fun build(): JcGraph {
+    fun transform(): JcInstList<JcInst> {
         var changed = false
-        for (inst in jcGraph) {
+        for (inst in list) {
             if (inst is JcAssignInst) {
                 val lhv = inst.lhv
                 val rhv = inst.rhv
@@ -81,15 +83,14 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
             }
         }
 
-        if (!changed) return jcGraph
+        if (!changed) return list
 
         /**
          * after we changed the instruction list, we need to examine new instruction list and
          * remap all the old JcInstRef's to new ones
          */
         instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
-        val mappedInstructions = instructions.map { it.accept(this) }
-        return JcGraphImpl(jcGraph.method, mappedInstructions)
+        return JcInstListImpl(instructions.map { it.accept(this) })
     }
 
     private fun stringify(inst: JcInst, value: JcValue, instList: MutableList<JcInst>): JcValue {
@@ -121,13 +122,16 @@ class StringConcatSimplifier(val jcGraph: JcGraph) : DefaultJcInstVisitor<JcInst
     }
 
     private fun indexOf(instRef: JcInstRef) = JcInstRef(
-        instructionIndices[instructionReplacements.getOrDefault(jcGraph.inst(instRef), jcGraph.inst(instRef))] ?: -1
+        instructionIndices[instructionReplacements.getOrDefault(list.get(instRef.index), list.get(instRef.index))] ?: -1
     )
 
-    private fun indicesOf(instRef: JcInstRef) =
-        catchReplacements.getOrDefault(jcGraph.inst(instRef), listOf(jcGraph.inst(instRef))).map {
+    private fun indicesOf(instRef: JcInstRef): List<JcInstRef> {
+        val index = list.get(instRef.index)
+        return catchReplacements.getOrDefault(index, listOf(index)).map {
             JcInstRef(instructions.indexOf(it))
+
         }
+    }
 
     override fun visitJcCatchInst(inst: JcCatchInst): JcInst = JcCatchInst(
         inst.location,
