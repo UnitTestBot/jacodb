@@ -18,6 +18,7 @@ package org.jacodb.impl.types
 
 import org.jacodb.api.*
 import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.ext.isEnum
 import org.jacodb.api.ext.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
@@ -90,6 +91,17 @@ class JcTypedMethodImpl(
     override val parameters: List<JcTypedMethodParameter>
         get() {
             val methodInfo = info
+            if (method.isConstructor && method.enclosingClass.isEnum) {
+                return method.parameters.map { jcParameter ->
+                    JcTypedMethodParameterImpl(
+                        enclosingMethod = this,
+                        substitutor = methodInfo.substitutor,
+                        parameter = jcParameter,
+                        jvmType = null
+                    )
+                }
+            }
+
             return method.parameters.mapIndexed { index, jcParameter ->
                 JcTypedMethodParameterImpl(
                     enclosingMethod = this,

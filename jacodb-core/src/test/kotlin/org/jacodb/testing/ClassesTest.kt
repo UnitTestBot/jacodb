@@ -24,7 +24,8 @@ import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.features.duplicatedClasses
 import org.jacodb.impl.features.hierarchyExt
-import org.jacodb.testing.structure.EnumExample
+import org.jacodb.testing.structure.EnumExamples.EnumWithField
+import org.jacodb.testing.structure.EnumExamples.SimpleEnum
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -56,10 +57,19 @@ class ClassesTest : DatabaseEnvTest() {
 
     @Test
     fun `enum constructor methods`() {
-        val enumType = cp.findTypeOrNull<EnumExample>() as JcClassType
+        val enumType = cp.findTypeOrNull<SimpleEnum>() as JcClassType
         val parameters = enumType.findMethodOrNull("<init>", desc = null)!!.parameters
         assertEquals("java.lang.String", parameters.first().type.typeName)
         assertEquals("int", parameters[1].type.typeName)
+    }
+
+    @Test
+    fun `enum constructor methods with fields`() {
+        val enumType = cp.findTypeOrNull<EnumWithField>() as JcClassType
+        val parameters = enumType.findMethodOrNull("<init>", desc = null)!!.parameters
+        assertEquals("java.lang.String", parameters.first().type.typeName)
+        assertEquals("int", parameters[1].type.typeName)
+        assertEquals("int", parameters[2].type.typeName)
     }
 }
 
