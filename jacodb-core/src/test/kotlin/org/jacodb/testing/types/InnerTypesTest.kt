@@ -50,7 +50,7 @@ class InnerTypesTest : BaseTypesTest() {
             "org.jacodb.testing.types.InnerClasses<W>.InnerState",
             "org.jacodb.testing.types.InnerClasses<W>$2",
             "org.jacodb.testing.types.InnerClasses<W>$1"
-        ), inners.map { it.typeName })
+        ), inners.map { it.typeName }.sortedDescending())
     }
 
     @Test
