@@ -20,7 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.TaintAnalyzer
 import org.jacodb.analysis.engine.SingletonUnitResolver
-import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newSqlInjectionRunner
 import org.jacodb.api.JcMethod

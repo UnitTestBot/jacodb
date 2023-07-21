@@ -30,7 +30,7 @@ import org.jacodb.analysis.UnusedVariableRunner
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.newSqlInjectionRunner

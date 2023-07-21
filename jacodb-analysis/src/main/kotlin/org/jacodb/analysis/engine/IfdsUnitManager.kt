@@ -27,7 +27,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
-import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
@@ -175,41 +175,4 @@ class IfdsUnitManager<UnitType>(
         dependencies.forEach { addStart(it) }
         dependsOn[unit] = dependsOn.getOrDefault(unit, 0) + dependencies.size
     }
-}
-
-/**
- * This is the entry point for every analysis.
- * Calling this function will find all vulnerabilities reachable from [methods].
- *
- * @param graph instance of [JcApplicationGraph] that provides mixture of CFG and call graph
- * (called supergraph in RHS95).
- * Usually built by [newApplicationGraphForAnalysis].
- *
- * @param unitResolver instance of [UnitResolver] which splits all methods into groups of methods, called units.
- * Units are analyzed concurrently, one unit will be analyzed with one call to [IfdsUnitRunner.run] method.
- * In general, larger units mean more precise, but also more resource-consuming analysis, so [unitResolver] allows
- * to reach compromise.
- * It is guaranteed that [Summary] passed to all units is the same, so they can share information through it.
- * However, the order of launching and terminating analysis for units is an implementation detail and may vary even for
- * consecutive calls of this method with same arguments.
- *
- * @param ifdsUnitRunner an [IfdsUnitRunner] instance that will be launched for each unit.
- * This is the main argument that defines the analysis.
- *
- * @param methods the list of method for analysis.
- * Each vulnerability will only be reported if it is reachable from one of these.
- *
- * @param timeoutMillis the maximum time for analysis.
- * Note that this does not include time for precalculations
- * (like searching for reachable methods and splitting them into units) and postcalculations (like restoring traces), so
- * the actual running time of this method may be longer.
- */
-fun runAnalysis(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver<*>,
-    ifdsUnitRunner: IfdsUnitRunner,
-    methods: List<JcMethod>,
-    timeoutMillis: Long = Long.MAX_VALUE
-): List<VulnerabilityInstance> {
-    return IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, methods, timeoutMillis).analyze()
 }

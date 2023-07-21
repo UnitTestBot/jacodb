@@ -20,7 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.engine.MethodUnitResolver
-import org.jacodb.analysis.engine.runAnalysis
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newAliasRunner

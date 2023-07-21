@@ -24,9 +24,9 @@ import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newNpeRunner
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
