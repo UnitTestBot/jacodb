@@ -21,7 +21,6 @@ import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.PathEdgeFact
 import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
@@ -39,14 +38,12 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcConstant
 import org.jacodb.api.cfg.JcEqExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcNeqExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
@@ -54,7 +51,6 @@ import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
-import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
@@ -287,6 +283,9 @@ class NpePrecalcBackwardFunctions(graph: JcApplicationGraph, maxPathLength: Int)
         return default
     }
 
+    override fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact> =
+        listOf(fact)
+
     override fun obtainPossibleStartFacts(startStatement: JcInst): List<DomainFact> {
         val values = startStatement.values
         return listOf(ZEROFact) + values
@@ -295,71 +294,6 @@ class NpePrecalcBackwardFunctions(graph: JcApplicationGraph, maxPathLength: Int)
             .map { NpeTaintNode(it) }
     }
 }
-
-
-fun NpeFlowdroidBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
-    NpeFlowdroidBackwardAnalyzer(graph, maxPathLength)
-}
-
-class NpeFlowdroidBackwardAnalyzer(
-    val graph: JcApplicationGraph,
-    maxPathLength: Int = 5
-) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace = NpeBackwardFunctions(graph, maxPathLength)
-
-    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
-        get() = false
-
-    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> {
-        val v = edge.v
-        val curInst = v.statement
-        val fact = (v.domainFact as? TaintNode) ?: return emptyList()
-        var canBeKilled = false
-
-        if (!fact.variable.isOnHeap) {
-            return emptyList()
-        }
-
-        if (curInst is JcAssignInst && fact.variable.startsWith(curInst.lhv.toPath())) {
-            canBeKilled = true
-        }
-
-        if (curInst in graph.exitPoints(v.method)) {
-            canBeKilled = true
-        }
-
-        curInst.callExpr?.let { callExpr ->
-            if (callExpr is JcInstanceCallExpr && fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                canBeKilled = true
-            }
-            callExpr.args.forEach {
-                if (fact.variable.startsWith(it.toPathOrNull())) {
-                    canBeKilled = true
-                }
-            }
-        }
-
-        if (canBeKilled) {
-            val newStatements = graph.predecessors(v.statement)
-            return newStatements.flatMap { newStatement ->
-                graph.exitPoints(edge.method).map {
-                    PathEdgeFact(
-                        IfdsEdge(
-                            IfdsVertex(it, edge.u.domainFact),
-                            IfdsVertex(newStatement, fact)
-                        )
-                    )
-                }
-            }.toList()
-        }
-        return emptyList()
-    }
-}
-
-private class NpeBackwardFunctions(
-    graph: JcApplicationGraph,
-    maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, maxPathLength)
 
 private val JcMethod.treatAsNullable: Boolean
     get() {

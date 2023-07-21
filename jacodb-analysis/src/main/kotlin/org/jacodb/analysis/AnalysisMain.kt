@@ -20,20 +20,19 @@ import mu.KLogging
 import org.jacodb.analysis.analyzers.AliasAnalyzerFactory
 import org.jacodb.analysis.analyzers.NpeAnalyzerFactory
 import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzerFactory
+import org.jacodb.analysis.analyzers.SqlInjectionAnalyzerFactory
+import org.jacodb.analysis.analyzers.SqlInjectionBackwardAnalyzerFactory
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.analyzers.TaintAnalyzerFactory
 import org.jacodb.analysis.analyzers.TaintBackwardAnalyzerFactory
+import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.analyzers.UnusedVariableAnalyzerFactory
-import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.ParallelBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.SequentialBidiIfdsUnitRunner
 import org.jacodb.analysis.engine.TraceGraph
-import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.impl.features.usagesExt
 
 @Serializable
 data class DumpableVulnerabilityInstance(
@@ -77,6 +76,11 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
 val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
 
+fun newSqlInjectionRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
+    IfdsBaseUnitRunner(SqlInjectionAnalyzerFactory(maxPathLength)),
+    IfdsBaseUnitRunner(SqlInjectionBackwardAnalyzerFactory(maxPathLength)),
+)
+
 fun newNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
     IfdsBaseUnitRunner(NpeAnalyzerFactory(maxPathLength)),
     IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
@@ -84,21 +88,29 @@ fun newNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
 
 fun newAliasRunner(
     generates: (JcInst) -> List<TaintAnalysisNode>,
-    isSink: (JcInst, DomainFact) -> Boolean,
+    sanitizes: (JcExpr, TaintNode) -> Boolean,
+    sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
-) = ParallelBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(AliasAnalyzerFactory(generates, isSink, maxPathLength)),
-    IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(maxPathLength)),
+) = IfdsBaseUnitRunner(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))
+
+fun newTaintRunner(
+    isSourceMethod: (JcMethod) -> Boolean,
+    isSanitizeMethod: (JcMethod) -> Boolean,
+    isSinkMethod: (JcMethod) -> Boolean,
+    maxPathLength: Int = 5
+) = SequentialBidiIfdsUnitRunner(
+    IfdsBaseUnitRunner(TaintAnalyzerFactory(isSourceMethod, isSanitizeMethod, isSinkMethod, maxPathLength)),
+    IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(isSourceMethod, isSinkMethod, maxPathLength))
 )
 
-suspend fun JcClasspath.newApplicationGraph(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
-    val mainGraph = JcApplicationGraphImpl(this, usagesExt())
-    return if (bannedPackagePrefixes != null) {
-        SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
-    } else {
-        SimplifiedJcApplicationGraph(mainGraph)
-    }
-}
-
+fun newTaintRunner(
+    sourceMethodMatchers: List<String>,
+    sanitizeMethodMatchers: List<String>,
+    sinkMethodMatchers: List<String>,
+    maxPathLength: Int = 5
+) = SequentialBidiIfdsUnitRunner(
+    IfdsBaseUnitRunner(TaintAnalyzerFactory(sourceMethodMatchers, sanitizeMethodMatchers, sinkMethodMatchers, maxPathLength)),
+    IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(sourceMethodMatchers, sinkMethodMatchers, maxPathLength))
+)
 
 internal val logger = object : KLogging() {}.logger

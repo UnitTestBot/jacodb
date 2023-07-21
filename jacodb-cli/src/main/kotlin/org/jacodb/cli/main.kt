@@ -31,8 +31,9 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraph
 import org.jacodb.analysis.newNpeRunner
+import org.jacodb.analysis.newSqlInjectionRunner
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -58,6 +59,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
         val runner = when (analysis) {
             "NPE" -> newNpeRunner()
             "Unused" -> UnusedVariableRunner
+            "SQL" -> newSqlInjectionRunner()
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 return@mapNotNull null

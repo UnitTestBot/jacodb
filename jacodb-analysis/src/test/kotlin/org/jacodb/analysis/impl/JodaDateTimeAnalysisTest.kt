@@ -25,7 +25,7 @@ import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraph
 import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
@@ -41,7 +41,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunner: IfdsUnitRunner) {
         val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods, 1000).toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunner, clazz.declaredMethods).toDumpable()
 
         println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }

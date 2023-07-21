@@ -22,7 +22,7 @@ import org.jacodb.analysis.analyzers.NpeAnalyzer
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraph
 import org.jacodb.analysis.newNpeRunner
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors

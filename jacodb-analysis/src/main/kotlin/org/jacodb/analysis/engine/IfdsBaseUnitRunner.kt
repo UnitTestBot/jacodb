@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -78,7 +77,7 @@ private class IfdsInstance<UnitType>(
         }
     }
 
-    private fun addStart(method: JcMethod) {
+    private fun addStartMethod(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         for (sPoint in graph.entryPoint(method)) {
             for (sFact in flowSpace.obtainPossibleStartFacts(sPoint)) {
@@ -115,21 +114,11 @@ private class IfdsInstance<UnitType>(
 
     private val workList = Channel<IfdsEdge>(Channel.UNLIMITED)
 
-    private suspend fun takeNewEdge(): IfdsEdge? {
-        return try {
-            withTimeout(30) {
-                workList.receive()
-            }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
     private suspend fun runTabulationAlgorithm(): Unit = coroutineScope {
-        startMethods.forEach { addStart(it) }
+        startMethods.forEach { addStartMethod(it) }
 
         while (isActive) {
-            val curEdge = takeNewEdge() ?: throw EmptyQueueCancellationException
+            val curEdge = workList.tryReceive().getOrNull() ?: throw EmptyQueueCancellationException
 
             if (visitedMethods.add(curEdge.method)) {
                 summary // Listen for incoming updates

@@ -18,16 +18,17 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.analyzers.TaintNode
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
 import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraph
 import org.jacodb.analysis.newAliasRunner
-import org.jacodb.analysis.newApplicationGraph
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
@@ -138,13 +139,9 @@ class AliasAnalysisTest : BaseTest() {
         }
     }
 
-    private fun isSink(inst: JcInst, fact: DomainFact): Boolean {
-        if (fact !is TaintAnalysisNode || fact.activation != null) {
-            return false
-        }
-        return inst.callExpr?.method?.name == "test" &&
-                inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark"
-    }
+    private fun isSanitizer(expr: JcExpr, fact: TaintNode): Boolean = TODO()
+
+    private fun sinks(inst: JcInst): List<TaintAnalysisNode> = TODO()
 
     private fun findTaints(method: JcMethod): List<String> {
         val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
@@ -159,7 +156,7 @@ class AliasAnalysisTest : BaseTest() {
         val result = runAnalysis(
             graph,
             MethodUnitResolver,
-            newAliasRunner(::generates, ::isSink),
+            newAliasRunner(::generates, ::isSanitizer, ::sinks),
             listOf(method)
         )
 
