@@ -21,7 +21,7 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.analyzers.TaintAnalyzer
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.graph.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newSqlInjectionRunner
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -48,7 +48,7 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
         val graph = runBlocking {
-            cp.newApplicationGraph()
+            cp.newApplicationGraphForAnalysis()
         }
         return runAnalysis(graph, SingletonUnitResolver, newSqlInjectionRunner(), methods)
     }

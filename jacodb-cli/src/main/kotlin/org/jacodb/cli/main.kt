@@ -31,7 +31,7 @@ import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.graph.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.newSqlInjectionRunner
 import org.jacodb.analysis.toDumpable
@@ -44,7 +44,6 @@ import org.jacodb.impl.jacodb
 import java.io.File
 
 private val logger = object : KLogging() {}.logger
-
 
 class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
@@ -66,6 +65,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
             }
         }
 
+        logger.info { "Launching analysis $analysis" }
         runAnalysis(graph, unitResolver, runner, methods)
     }
 }
@@ -134,8 +134,9 @@ fun main(args: Array<String>) {
     }
 
     val graph = runBlocking {
-        cp.newApplicationGraph()
+        cp.newApplicationGraphForAnalysis()
     }
+
     val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
     val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
 

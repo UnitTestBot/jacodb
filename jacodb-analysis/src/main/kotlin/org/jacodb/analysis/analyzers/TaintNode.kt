@@ -21,7 +21,11 @@ import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
 /**
- * activation == null <=> activation point is passed
+ * Abstract implementation for [DomainFact] that can be used for analysis where dataflow facts correlate with
+ * variables/values
+ *
+ * @property activation is the activation point, as described in ARF14. Null value means that activation point was
+ * passed (so, for analyses that do not use backward runner to taint aliases, [activation] will always be null).
  */
 abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = null): DomainFact {
     protected abstract val nodeType: String

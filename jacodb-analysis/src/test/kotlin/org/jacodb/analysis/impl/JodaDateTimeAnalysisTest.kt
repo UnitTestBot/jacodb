@@ -25,7 +25,7 @@ import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.graph.newApplicationGraph
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.newNpeRunner
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
@@ -59,6 +59,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
     }
 
     private val graph = runBlocking {
-        cp.newApplicationGraph()
+        cp.newApplicationGraphForAnalysis()
     }
 }

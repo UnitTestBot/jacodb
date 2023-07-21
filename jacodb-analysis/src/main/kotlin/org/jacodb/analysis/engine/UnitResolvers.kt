@@ -20,6 +20,14 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.packageName
 
+/**
+ * Sets a mapping from [JcMethod] to abstract domain [UnitType].
+ *
+ * Therefore, it splits all methods into units, containing one or more method each
+ * (unit is a set of methods with same value of [UnitType] returned by [resolve]).
+ *
+ * To get more info about how it is used in analysis, see [runAnalysis].
+ */
 fun interface UnitResolver<UnitType> {
     fun resolve(method: JcMethod): UnitType
 

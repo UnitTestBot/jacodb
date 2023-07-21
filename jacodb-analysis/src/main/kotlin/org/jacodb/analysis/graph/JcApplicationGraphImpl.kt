@@ -75,7 +75,10 @@ open class JcApplicationGraphImpl(
     }
 }
 
-suspend fun JcClasspath.newApplicationGraph(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
+/**
+ * Creates an instance of [SimplifiedJcApplicationGraph], see its docs for more info.
+ */
+suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
     val mainGraph = JcApplicationGraphImpl(this, usagesExt())
     return if (bannedPackagePrefixes != null) {
         SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)

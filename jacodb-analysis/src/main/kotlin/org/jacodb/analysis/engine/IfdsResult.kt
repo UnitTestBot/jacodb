@@ -17,6 +17,9 @@
 package org.jacodb.analysis.engine
 import org.jacodb.api.cfg.JcInst
 
+/**
+ * Aggregates all facts and edges found by tabulation algorithm
+ */
 class IfdsResult(
     val pathEdges: List<IfdsEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
@@ -102,6 +105,9 @@ class IfdsResult(
         }
     }
 
+    /**
+     * Builds a graph with traces to given [vertex].
+     */
     fun resolveTraceGraph(vertex: IfdsVertex): TraceGraph {
         return TraceGraphBuilder(vertex).build()
     }

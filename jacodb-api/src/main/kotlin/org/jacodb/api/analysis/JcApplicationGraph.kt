@@ -20,6 +20,9 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
+/**
+ * Interface for [ApplicationGraph] built with jacodb.
+ */
 interface JcApplicationGraph : ApplicationGraph<JcMethod, JcInst> {
     val classpath: JcClasspath
 }

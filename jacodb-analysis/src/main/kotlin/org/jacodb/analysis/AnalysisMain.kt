@@ -34,6 +34,9 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 
+/**
+ * Simplified version of [VulnerabilityInstance] that contains only serializable data.
+ */
 @Serializable
 data class DumpableVulnerabilityInstance(
     val vulnerabilityType: String,
@@ -45,6 +48,12 @@ data class DumpableVulnerabilityInstance(
 @Serializable
 data class DumpableAnalysisResult(val foundVulnerabilities: List<DumpableVulnerabilityInstance>)
 
+/**
+ * Represents a vulnerability (issue) found by analysis
+ *
+ * @property vulnerabilityType type of vulnerability as a string (e.g. "Possible NPE", "Unused variable")
+ * @property traceGraph contains sink, sources and traces that lead to occurrence of vulnerability
+ */
 data class VulnerabilityInstance(
     val vulnerabilityType: String,
     val traceGraph: TraceGraph
@@ -112,5 +121,6 @@ fun newTaintRunner(
     IfdsBaseUnitRunner(TaintAnalyzerFactory(sourceMethodMatchers, sanitizeMethodMatchers, sinkMethodMatchers, maxPathLength)),
     IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(sourceMethodMatchers, sinkMethodMatchers, maxPathLength))
 )
+
 
 internal val logger = object : KLogging() {}.logger

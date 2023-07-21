@@ -16,6 +16,9 @@
 
 package org.jacodb.api.analysis
 
+/**
+ * Provides both CFG and call graph (i.e., the supergraph in terms of RHS95 paper).
+ */
 interface ApplicationGraph<Method, Statement> {
     fun predecessors(node: Statement): Sequence<Statement>
     fun successors(node: Statement): Sequence<Statement>
