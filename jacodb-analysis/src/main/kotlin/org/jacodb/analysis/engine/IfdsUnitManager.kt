@@ -25,7 +25,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod

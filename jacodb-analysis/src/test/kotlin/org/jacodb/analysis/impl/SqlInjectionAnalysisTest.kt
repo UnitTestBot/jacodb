@@ -17,12 +17,12 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.analyzers.TaintAnalyzer
-import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.VulnerabilityInstance
+import org.jacodb.analysis.library.analyzers.TaintAnalyzer
+import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.newSqlInjectionRunner
+import org.jacodb.analysis.library.newSqlInjectionRunner
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages

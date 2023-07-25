@@ -17,14 +17,14 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.analyzers.TaintNode
-import org.jacodb.analysis.engine.MethodUnitResolver
-import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.graph.SimplifiedJcApplicationGraph
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.newAliasRunner
+import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.library.analyzers.TaintNode
+import org.jacodb.analysis.library.newAliasRunner
 import org.jacodb.analysis.paths.toPath
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
@@ -144,12 +144,12 @@ class AliasAnalysisTest : BaseTest() {
     private fun sinks(inst: JcInst): List<TaintAnalysisNode> = TODO()
 
     private fun findTaints(method: JcMethod): List<String> {
-        val bannedPackagePrefixes = SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes
+        val bannedPackagePrefixes = defaultBannedPackagePrefixes
             .plus("pointerbench.benchmark.internal")
 
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis(
-                SimplifiedJcApplicationGraph.defaultBannedPackagePrefixes + bannedPackagePrefixes
+                defaultBannedPackagePrefixes + bannedPackagePrefixes
             )
         }
 

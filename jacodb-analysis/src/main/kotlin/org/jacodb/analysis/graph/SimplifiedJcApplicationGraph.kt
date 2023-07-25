@@ -37,9 +37,9 @@ import org.jacodb.impl.features.hierarchyExt
  *  3. Adds a special [JcNoopInst] instruction to the beginning of each method
  *    (because backward analysis may want for method to start with neutral instruction)
  */
-class SimplifiedJcApplicationGraph(
+internal class SimplifiedJcApplicationGraph(
     private val impl: JcApplicationGraphImpl,
-    private val bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
+    private val bannedPackagePrefixes: List<String>,
 ) : JcApplicationGraph by impl {
     private val hierarchyExtension = runBlocking {
         classpath.hierarchyExt()
@@ -128,15 +128,6 @@ class SimplifiedJcApplicationGraph(
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
 
     companion object {
-        val defaultBannedPackagePrefixes: List<String> = listOf(
-            "kotlin.",
-            "java.",
-            "jdk.internal.",
-            "sun.",
-//            "kotlin.jvm.internal.",
-//            "java.security.",
-//            "java.util.regex."
-        )
     }
 }
 

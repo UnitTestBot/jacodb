@@ -15,24 +15,25 @@
  */
 
 @file:JvmName("RunnersLibrary")
-package org.jacodb.analysis
+package org.jacodb.analysis.library
 
-import org.jacodb.analysis.analyzers.AliasAnalyzerFactory
-import org.jacodb.analysis.analyzers.NpeAnalyzerFactory
-import org.jacodb.analysis.analyzers.NpePrecalcBackwardAnalyzerFactory
-import org.jacodb.analysis.analyzers.SqlInjectionAnalyzerFactory
-import org.jacodb.analysis.analyzers.SqlInjectionBackwardAnalyzerFactory
-import org.jacodb.analysis.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.analyzers.TaintAnalyzerFactory
-import org.jacodb.analysis.analyzers.TaintBackwardAnalyzerFactory
-import org.jacodb.analysis.analyzers.TaintNode
-import org.jacodb.analysis.analyzers.UnusedVariableAnalyzerFactory
 import org.jacodb.analysis.engine.IfdsBaseUnitRunner
 import org.jacodb.analysis.engine.SequentialBidiIfdsUnitRunner
+import org.jacodb.analysis.library.analyzers.AliasAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.NpeAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.NpePrecalcBackwardAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.SqlInjectionBackwardAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
+import org.jacodb.analysis.library.analyzers.TaintAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.TaintBackwardAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.TaintNode
+import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 
+//TODO: add docs here
 val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
 
 fun newSqlInjectionRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(

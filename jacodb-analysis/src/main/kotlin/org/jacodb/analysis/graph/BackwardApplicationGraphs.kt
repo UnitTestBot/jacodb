@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+@file:JvmName("BackwardApplicationGraphs")
 package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcClasspath
@@ -22,7 +23,7 @@ import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
-class BackwardApplicationGraph<Method, Statement>(
+private class BackwardApplicationGraph<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>
 ) : ApplicationGraph<Method, Statement> {
     override fun predecessors(node: Statement) = forward.successors(node)
@@ -43,9 +44,11 @@ class BackwardApplicationGraph<Method, Statement>(
 val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
     get() = if (this is BackwardApplicationGraph) {
         this.forward
-    } else BackwardApplicationGraph(this)
+    } else {
+        BackwardApplicationGraph(this)
+    }
 
-class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
+private class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
     JcApplicationGraph, ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
     override val classpath: JcClasspath
         get() = forward.classpath

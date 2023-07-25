@@ -26,14 +26,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
-import org.jacodb.analysis.UnusedVariableRunner
-import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.runAnalysis
+import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.newNpeRunner
-import org.jacodb.analysis.newSqlInjectionRunner
+import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.library.UnusedVariableRunner
+import org.jacodb.analysis.library.newNpeRunner
+import org.jacodb.analysis.library.newSqlInjectionRunner
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -96,7 +96,7 @@ fun main(args: Array<String>) {
         fullName = "output",
         shortName = "o",
         description = "File where analysis report will be written. All parent directories will be created if not exists. File will be created if not exists. Existing file will be overwritten."
-    ).default("report.txt") // TODO: create SARIF here
+    ).default("report.json") // TODO: create SARIF here
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",

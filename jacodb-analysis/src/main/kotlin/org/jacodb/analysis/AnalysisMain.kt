@@ -14,69 +14,27 @@
  *  limitations under the License.
  */
 
+@file:JvmName("AnalysisMain")
 package org.jacodb.analysis
+
 import kotlinx.serialization.Serializable
 import mu.KLogging
 import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.IfdsUnitRunner
 import org.jacodb.analysis.engine.Summary
-import org.jacodb.analysis.engine.TraceGraph
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
 
-/**
- * Simplified version of [VulnerabilityInstance] that contains only serializable data.
- */
-@Serializable
-data class DumpableVulnerabilityInstance(
-    val vulnerabilityType: String,
-    val sources: List<String>,
-    val sink: String,
-    val traces: List<List<String>>
-)
-
-@Serializable
-data class DumpableAnalysisResult(val foundVulnerabilities: List<DumpableVulnerabilityInstance>)
-
-/**
- * Represents a vulnerability (issue) found by analysis
- *
- * @property vulnerabilityType type of vulnerability as a string (e.g. "Possible NPE", "Unused variable")
- * @property traceGraph contains sink, sources and traces that lead to occurrence of vulnerability
- */
-data class VulnerabilityInstance(
-    val vulnerabilityType: String,
-    val traceGraph: TraceGraph
-) {
-    private fun JcInst.prettyPrint(): String {
-        return "${toString()} (${location.method}:${location.lineNumber})"
-    }
-
-    fun toDumpable(maxPathsCount: Int): DumpableVulnerabilityInstance {
-        return DumpableVulnerabilityInstance(
-            vulnerabilityType,
-            traceGraph.sources.map { it.statement.prettyPrint() },
-            traceGraph.sink.statement.prettyPrint(),
-            traceGraph.getAllTraces().take(maxPathsCount).map { intermediatePoints ->
-                intermediatePoints.map { it.statement.prettyPrint() }
-            }.toList()
-        )
-    }
-}
-
-fun List<VulnerabilityInstance>.toDumpable(maxPathsCount: Int = 3): DumpableAnalysisResult {
-    return DumpableAnalysisResult(map { it.toDumpable(maxPathsCount) })
-}
+internal val logger = object : KLogging() {}.logger
 
 typealias AnalysesOptions = Map<String, String>
 
 @Serializable
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
-internal val logger = object : KLogging() {}.logger
 
 /**
  * This is the entry point for every analysis.
