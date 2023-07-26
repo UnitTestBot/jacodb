@@ -29,12 +29,12 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
 import org.jacodb.testing.BaseTest
+import org.jacodb.testing.Common
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
 import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
-import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.primitives.Primitives
-import org.jacodb.testing.Common
+import org.jacodb.testing.structure.FieldsAndMethods
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
@@ -244,6 +244,15 @@ class InstructionsTest : BaseTest() {
         assertEquals(cp.boolean, fieldBoolean.fieldType)
     }
 
+    @Test
+    fun `private call with invokevirtual instruction`() {
+        val clazz = cp.findClass("VirtualInstructions")
+        val instList = clazz.declaredMethods.first { it.name == "run" }.instList
+        val callDoSmth = instList.mapNotNull { it.callExpr }. first {
+            it.toString().contains("doSmth")
+        }
+        assertEquals("doSmth", callDoSmth.method.method.name)
+    }
 }
 
 fun JcMethod.dumpInstructions(): String {

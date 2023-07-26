@@ -38,6 +38,10 @@ abstract class MethodSignatureRef(
         private val alwaysTrue: (JcTypedMethod) -> Boolean = { true }
     }
 
+    private fun predicate(additionalFilter: (JcTypedMethod) -> Boolean = alwaysTrue): (JcTypedMethod) -> Boolean = {
+        it.name == name && additionalFilter(it) && it.method.description == description
+    }
+
     protected val description: String = buildString {
         append("(")
         argTypes.forEach {
@@ -48,17 +52,16 @@ abstract class MethodSignatureRef(
     }
 
     private fun List<JcTypedMethod>.findMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
-        return firstOrNull { it.name == name && filter(it) && it.method.description == description }
+        return firstOrNull(predicate(filter))
     }
 
     protected fun JcClassType.findTypedMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod {
-        return findMethodOrNull(filter) ?: throw IllegalStateException(this.methodNotFoundMessage)
+        return findMethodOrNull(predicate(filter)) ?: throw IllegalStateException(this.methodNotFoundMessage)
     }
 
     protected fun JcClassType.findTypedMethodOrNull(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
-        var methodOrNull = findMethodOrNull {
-            it.name == name && filter(it) && it.method.description == description
-        }
+        var methodOrNull = findMethodOrNull(predicate(filter))
+
         if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
             methodOrNull = findMethodOrNull {
                 val method = it.method
@@ -194,11 +197,11 @@ class VirtualMethodRefImpl(
     }
 
     override val method: JcTypedMethod by softLazy {
-        actualType.findTypedMethodOrNull { !it.isPrivate } ?: declaredMethod
+        actualType.findTypedMethodOrNull() ?: declaredMethod
     }
 
     override val declaredMethod: JcTypedMethod by softLazy {
-        type.findTypedMethod { !it.isPrivate }
+        type.findTypedMethod()
     }
 }
 
