@@ -22,14 +22,13 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.impl.features.SyncUsagesExtension
-import org.jacodb.impl.features.usagesExt
 
 /**
  * Possible we will need JcRawInst instead of JcInst
  */
-open class JcApplicationGraphImpl(
+class JcApplicationGraphImpl(
     override val classpath: JcClasspath,
-    protected val usages: SyncUsagesExtension
+    private val usages: SyncUsagesExtension
 ) : JcApplicationGraph {
     private val methods = mutableSetOf<JcMethod>()
 
@@ -72,14 +71,5 @@ open class JcApplicationGraphImpl(
 
     override fun methodOf(node: JcInst): JcMethod {
         return node.location.method.also { methods.add(it) }
-    }
-}
-
-suspend fun JcClasspath.newApplicationGraph(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
-    val mainGraph = JcApplicationGraphImpl(this, usagesExt())
-    return if (bannedPackagePrefixes != null) {
-        SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
-    } else {
-        SimplifiedJcApplicationGraph(mainGraph)
     }
 }

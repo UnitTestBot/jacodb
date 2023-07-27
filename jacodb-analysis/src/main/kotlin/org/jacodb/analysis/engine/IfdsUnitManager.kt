@@ -25,18 +25,22 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.jacodb.analysis.VulnerabilityInstance
 import org.jacodb.analysis.logger
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Used to launch and manage [ifdsUnitRunner] jobs for units, reachable from [startMethods].
+ * See [runAnalysis] for more info.
+ */
 class IfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunner: IfdsUnitRunner,
-    private val timeoutMillis: Long,
-    private val initMethods: List<JcMethod>
+    private val startMethods: List<JcMethod>,
+    private val timeoutMillis: Long
 ) {
 
     private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
@@ -46,7 +50,7 @@ class IfdsUnitManager<UnitType>(
     private val summary: Summary = SummaryImpl()
 
     init {
-        initMethods.forEach { addStart(it) }
+        startMethods.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
@@ -56,6 +60,10 @@ class IfdsUnitManager<UnitType>(
             .singleOrNull { it.sink == this }
             ?: TraceGraph.bySink(this)
 
+    /**
+     * Launches [ifdsUnitRunner] for each observed unit, handles respective jobs,
+     * and gathers results into list of vulnerabilities, restoring full traces
+     */
     fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
         val unitJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
         val unitsCount = unitsQueue.size
@@ -101,7 +109,7 @@ class IfdsUnitManager<UnitType>(
             .map { VulnerabilityInstance(it.vulnerabilityType, extendTraceGraph(it.sink.traceGraph)) }
             .filter {
                 it.traceGraph.sources.any { source ->
-                    graph.methodOf(source.statement) in initMethods || source.domainFact == ZEROFact
+                    graph.methodOf(source.statement) in startMethods || source.domainFact == ZEROFact
                 }
             }
     }
@@ -112,6 +120,12 @@ class IfdsUnitManager<UnitType>(
                     listOf(graph.methodOf(sink.statement))).distinct()
         }
 
+    /**
+     * Given a [traceGraph], searches for other traceGraphs (from different units)
+     * and merges them into given if they extend any path leading to sink.
+     *
+     * This method allows to restore traces that pass through several units.
+     */
     private fun extendTraceGraph(traceGraph: TraceGraph): TraceGraph {
         var result = traceGraph
         val methodQueue: MutableSet<JcMethod> = traceGraph.methods.toMutableSet()
@@ -160,14 +174,4 @@ class IfdsUnitManager<UnitType>(
         dependencies.forEach { addStart(it) }
         dependsOn[unit] = dependsOn.getOrDefault(unit, 0) + dependencies.size
     }
-}
-
-fun runAnalysis(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver<*>,
-    ifdsUnitRunner: IfdsUnitRunner,
-    methods: List<JcMethod>,
-    timeoutMillis: Long = Long.MAX_VALUE
-): List<VulnerabilityInstance> {
-    return IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, timeoutMillis, methods).analyze()
 }

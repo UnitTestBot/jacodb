@@ -19,14 +19,14 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.UnusedVariableRunner
-import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsUnitRunner
-import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.graph.newApplicationGraph
-import org.jacodb.analysis.newNpeRunner
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.library.UnusedVariableRunner
+import org.jacodb.analysis.library.getClassUnitResolver
+import org.jacodb.analysis.library.newNpeRunner
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -50,7 +50,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(ClassUnitResolver(false), UnusedVariableRunner)
+        testOne(getClassUnitResolver(false), UnusedVariableRunner)
     }
 
     @Test
@@ -59,6 +59,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
     }
 
     private val graph = runBlocking {
-        cp.newApplicationGraph()
+        cp.newApplicationGraphForAnalysis()
     }
 }

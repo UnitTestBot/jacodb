@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.analyzers
+package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.minus

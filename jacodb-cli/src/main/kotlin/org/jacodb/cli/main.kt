@@ -26,25 +26,26 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
-import org.jacodb.analysis.UnusedVariableRunner
-import org.jacodb.analysis.VulnerabilityInstance
-import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.runAnalysis
-import org.jacodb.analysis.graph.newApplicationGraph
-import org.jacodb.analysis.newNpeRunner
-import org.jacodb.analysis.newSqlInjectionRunner
+import org.jacodb.analysis.engine.VulnerabilityInstance
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.library.UnusedVariableRunner
+import org.jacodb.analysis.library.newNpeRunner
+import org.jacodb.analysis.library.newSqlInjectionRunner
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 private val logger = object : KLogging() {}.logger
-
 
 class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
@@ -66,6 +67,7 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
             }
         }
 
+        logger.info { "Launching analysis $analysis" }
         runAnalysis(graph, unitResolver, runner, methods)
     }
 }
@@ -96,7 +98,7 @@ fun main(args: Array<String>) {
         fullName = "output",
         shortName = "o",
         description = "File where analysis report will be written. All parent directories will be created if not exists. File will be created if not exists. Existing file will be overwritten."
-    ).default("report.txt") // TODO: create SARIF here
+    ).default("report.json") // TODO: create SARIF here
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -133,11 +135,21 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
-    val graph = runBlocking {
-        cp.newApplicationGraph()
-    }
-    val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
+    val startClassesAsList = startClasses.split(";")
+    val startJcClasses = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
+    cp.executeAsync(object : JcClassProcessingTask {
+        override fun process(clazz: JcClassOrInterface) {
+            if (startClassesAsList.any { clazz.name.startsWith(it) }) {
+                startJcClasses.add(clazz)
+            }
+        }
+    }).get()
     val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
+
+
+    val graph = runBlocking {
+        cp.newApplicationGraphForAnalysis()
+    }
 
     val analysesResults = launchAnalysesByConfig(config, graph, startJcMethods).flatten().toDumpable()
 

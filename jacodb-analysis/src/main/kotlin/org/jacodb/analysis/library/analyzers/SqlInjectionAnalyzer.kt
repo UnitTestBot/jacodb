@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.analyzers
+package org.jacodb.analysis.library.analyzers
 
 fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = TaintAnalyzerFactory(
     sqlSourceMatchers,
