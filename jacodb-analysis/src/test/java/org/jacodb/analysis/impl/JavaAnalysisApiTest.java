@@ -33,6 +33,7 @@ import org.jacodb.impl.features.InMemoryHierarchy;
 import org.jacodb.impl.features.Usages;
 import org.jacodb.testing.LibrariesMixinKt;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -40,14 +41,16 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class JavaAnalysisApiTest {
-    private JcClasspath createJcClasspath() throws ExecutionException, InterruptedException {
+    private static JcClasspath classpath;
+
+    @BeforeAll
+    public static void initClasspath() throws ExecutionException, InterruptedException {
         JcDatabase instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE, InMemoryHierarchy.INSTANCE)).get();
-        return instance.asyncClasspath(LibrariesMixinKt.getAllClasspath()).get();
+        classpath = instance.asyncClasspath(LibrariesMixinKt.getAllClasspath()).get();
     }
 
     @Test
     public void testJavaAnalysisApi() throws ExecutionException, InterruptedException {
-        JcClasspath classpath = createJcClasspath();
         JcClassOrInterface analyzedClass = classpath.findClassOrNull("org.jacodb.testing.analysis.NpeExamples");
         Assertions.assertNotNull(analyzedClass);
 
@@ -69,9 +72,6 @@ public class JavaAnalysisApiTest {
 
     @Test
     public void testCustomBannedPackagesApi() throws ExecutionException, InterruptedException {
-        JcClasspath classpath = createJcClasspath();
-        Assertions.assertNotNull(classpath);
-
         List<String> bannedPackages = new ArrayList<>(ApplicationGraphFactory.getDefaultBannedPackagePrefixes());
         bannedPackages.add("my.package.that.wont.be.analyzed");
 
