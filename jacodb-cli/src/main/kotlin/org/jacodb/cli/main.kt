@@ -35,13 +35,15 @@ import org.jacodb.analysis.library.newNpeRunner
 import org.jacodb.analysis.library.newSqlInjectionRunner
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 private val logger = object : KLogging() {}.logger
 
@@ -133,12 +135,21 @@ fun main(args: Array<String>) {
         jacodb.classpath(classpathAsFiles)
     }
 
+    val startClassesAsList = startClasses.split(";")
+    val startJcClasses = ConcurrentHashMap.newKeySet<JcClassOrInterface>()
+    cp.executeAsync(object : JcClassProcessingTask {
+        override fun process(clazz: JcClassOrInterface) {
+            if (startClassesAsList.any { clazz.name.startsWith(it) }) {
+                startJcClasses.add(clazz)
+            }
+        }
+    }).get()
+    val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
+
+
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
-
-    val startJcClasses = startClasses.split(";").map { cp.findClass(it) }
-    val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
 
     val analysesResults = launchAnalysesByConfig(config, graph, startJcMethods).flatten().toDumpable()
 
