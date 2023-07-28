@@ -49,4 +49,5 @@ val defaultBannedPackagePrefixes: List<String> = listOf(
     "java.",
     "jdk.internal.",
     "sun.",
+    "javax.",
 )

@@ -39,6 +39,7 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
@@ -144,8 +145,7 @@ fun main(args: Array<String>) {
             }
         }
     }).get()
-    val startJcMethods = startJcClasses.flatMap { it.declaredMethods }
-
+    val startJcMethods = startJcClasses.flatMap { it.methods }.filter { it.isPublic }
 
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
