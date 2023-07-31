@@ -159,24 +159,31 @@ fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
 
 /**
  * find field by name
+ *
+ * @param name field name
  */
 fun JcClassType.findFieldOrNull(name: String): JcTypedField? {
     return lookup.field(name)
 }
 
+/**
+ * find method by name and description
+ *
+ * @param name method name
+ * @param desc method description
+ */
 fun JcClassType.findMethodOrNull(name: String, desc: String): JcTypedMethod? {
     return lookup.method(name, desc)
 }
 
 /**
  * find method by name and description
+ *
+ * This method doesn't support [org.jacodb.impl.features.classpaths.UnknownClasses] feature.
  */
-fun JcClassType.findMethodOrNull(
-    predicate: (JcTypedMethod) -> kotlin.Boolean
-): JcTypedMethod? {
+fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): JcTypedMethod? {
     // let's find method based on strict hierarchy
     // if method is not found then it's defined in interfaces
-
     return methods.firstOrNull(predicate)
 }
 

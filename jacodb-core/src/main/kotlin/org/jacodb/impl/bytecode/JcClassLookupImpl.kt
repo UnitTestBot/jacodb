@@ -96,7 +96,7 @@ internal abstract class JcClassLookup<Result : JcAccessible>(clazz: JcClassOrInt
         override val JcClassOrInterface.elements: List<JcField>
             get() = entry.declaredFields
 
-        override fun JcClassOrInterface.next() = listOfNotNull(superClass)
+        override fun JcClassOrInterface.next() = listOfNotNull(superClass) + interfaces
 
         override val predicate: (JcField) -> Boolean
             get() = { it.name == name }

@@ -97,7 +97,7 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
     internal class JcTypedFieldLookup(type: JcClassType, private val name: String) :
         JcClassTypeLookup<JcTypedField>(type) {
 
-        override fun JcClassType.next() = listOfNotNull(superType)
+        override fun JcClassType.next() = listOfNotNull(superType) + interfaces
 
         override val JcClassType.elements: List<JcTypedField>
             get() = declaredFields
