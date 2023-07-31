@@ -14,9 +14,12 @@ Information about classes, hierarchies, annotations, methods, fields, and their 
 
 ## Useful links
 
-- [Design overview and technical information](../../wiki/Design).
-- [Full api reference](../../wiki/Api-reference)
-- [3-address bytecode representation](../../wiki/Three-address-instruction-list-IR)
+- [Introduction](https://jacodb.org/documentation/basic-usage/)
+- [Full api reference](https://jacodb.org/docs/index.html)
+- [Database extensions (aka features)](https://jacodb.org/documentation/database-features/)
+- [Classpath extensions (aka features)](https://jacodb.org/documentation/classpath-features/)
+- [Bytecode instructions](https://jacodb.org/documentation/instructions/)
+- [Control flow graph](https://jacodb.org/documentation/graphs/)
 
 ## Installation
 
