@@ -16,11 +16,7 @@
 
 package org.jacodb.examples;
 
-import org.jacodb.api.JcClassOrInterface;
-import org.jacodb.api.JcClassType;
-import org.jacodb.api.JcClasspath;
-import org.jacodb.api.JcDatabase;
-import org.jacodb.api.JcType;
+import org.jacodb.api.*;
 import org.jacodb.api.ext.JcClasses;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
@@ -29,6 +25,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.io.File;
 import java.util.Arrays;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class JavaReadMeExamples {
@@ -40,6 +37,11 @@ public class JavaReadMeExamples {
     private static File lib2 = new File("2");
     private static File buildDir = new File("3");
 
+    public static void getStringFields() throws Exception {
+        JcDatabase database = JacoDB.async(new JcSettings().useProcessJavaRuntime()).get();
+        JcClassOrInterface clazz = database.asyncClasspath(emptyList()).get().findClassOrNull("java.lang.String");
+        System.out.println(clazz.getDeclaredFields());
+    }
 
     public static MethodNode findNormalDistribution() throws Exception {
         File commonsMath32 = new File("commons-math3-3.2.jar");

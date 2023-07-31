@@ -92,6 +92,40 @@ class JcUnknownField(enclosingClass: JcUnknownClass, name: String, type: TypeNam
     }
 }
 
+/**
+ * Feature for mocking references to unknown classes. I.e let's assume that we have:
+ *
+ * ```
+ * class Bar {
+ *
+ *      int x = 0;
+ *
+ *      public void run() {
+ *          System.out.println("Hello world");
+ *      }
+ * }
+ *
+ * class Foo extends Bar {
+ *
+ *      Bar f = new Bar();
+ *
+ *      public void call() {
+ *          System.out.println(f.x);
+ *          run();
+ *      }
+ * }
+ * ```
+ *
+ * Let's assume that we have classpath that contains class `Foo` and doesn't contain `Bar`. Default behavior for
+ * classpath is to fail on trying to access class that doesn't exist. i.e parsing method instructions will fail, reading
+ * class hierarchy will fail, resolving method will fail.
+ *
+ * UnknownClasses feature fix this behaviour. All references pointing to nowhere will be resolved as special implementation
+ * of [JcClassOrInterface] instance. Such instance will have **empty** [JcClassOrInterface.declaredFields] and
+ * [JcClassOrInterface.declaredMethods] but all resolutions done through [JcClassOrInterface.lookup] interface will return
+ * mocked instances
+ *
+ */
 object UnknownClasses : JcClasspathExtFeature {
     override fun tryFindClass(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedClassResult {
         return JcResolvedClassResultImpl(name, JcUnknownClass(classpath, name))

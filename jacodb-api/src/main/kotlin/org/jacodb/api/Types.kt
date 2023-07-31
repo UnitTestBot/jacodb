@@ -101,6 +101,12 @@ interface JcClassType : JcRefType, JcAccessible {
 
     val innerTypes: List<JcClassType>
 
+    /**
+     * lookup instance for this class. Use it to resolve field/method references from bytecode instructions
+     *
+     * It's not necessary that looked up method will return instance preserved in [JcClassType.declaredFields] or
+     * [JcClassType.declaredMethods] collections
+     */
     val lookup: JcLookup<JcTypedField, JcTypedMethod>
 
 }

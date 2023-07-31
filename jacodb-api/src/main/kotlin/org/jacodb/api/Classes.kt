@@ -48,6 +48,12 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     fun <T> extensionValue(key: String): T?
 
+    /**
+     * lookup instance for this class. Use it to resolve field/method references from bytecode instructions
+     *
+     * It's not necessary that looked up method will return instance preserved in [JcClassOrInterface.declaredFields] or
+     * [JcClassOrInterface.declaredMethods] collections
+     */
     val lookup: JcLookup<JcField, JcMethod>
 
     val isAnnotation: Boolean

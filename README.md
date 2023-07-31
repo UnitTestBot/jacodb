@@ -18,7 +18,39 @@ Information about classes, hierarchies, annotations, methods, fields, and their 
 - [Full api reference](../../wiki/Api-reference)
 - [3-address bytecode representation](../../wiki/Three-address-instruction-list-IR)
 
-## Examples
+## Installation
+
+Gradle:
+```kotlin
+    implementation(group = "org.jacodb", name = "jacodb-api", version = "1.2.0")
+    implementation(group = "org.jacodb", name = "jacodb-core", version = "1.2.0")
+    implementation(group = "org.jacodb", name = "jacodb-analysis", version = "1.2.0")
+```
+
+or 
+
+Maven:
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.jacodb</groupId>
+        <artifactId>jacodb-core</artifactId>
+        <verison>1.2.0</verison>
+    </dependency>
+    <dependency>
+        <groupId>org.jacodb</groupId>
+        <artifactId>jacodb-api</artifactId>
+        <verison>1.2.0</verison>
+    </dependency>
+    <dependency>
+        <groupId>org.jacodb</groupId>
+        <artifactId>jacodb-analysis</artifactId>
+        <verison>1.2.0</verison>
+    </dependency>
+</dependencies>
+```
+
+## Concepts
 
 API has two levels: the one representing in filesystem (**bytecode** and **classes**) and the one appearing at runtime (**types**).
 
@@ -26,6 +58,26 @@ API has two levels: the one representing in filesystem (**bytecode** and **class
 * **types** — represent types that can be nullable, parameterized, etc.
 
 Both levels are connected to `JcClasspath`. You can't modify **classes** retrieved from pure bytecode. **types** may be constructed manually by generics substitution.
+
+### Classes
+
+```java
+    public static void getStringFields() throws Exception {
+        JcDatabase database = JacoDB.async(new JcSettings().useProcessJavaRuntime()).get();
+        JcClassOrInterface clazz = database.asyncClasspath(emptyList()).get().findClassOrNull("java.lang.String");
+        System.out.println(clazz.getDeclaredFields());
+    }
+```
+
+Kotlin
+```kotlin
+    val database = jacodb {
+        useProcessJavaRuntime()
+    }
+    val clazz = database.classpath().findClassOrNull("java.lang.String")
+```
+
+More complex examples:
 
 Java
 ```java
@@ -55,14 +107,14 @@ class Example {
         System.out.println(JcClasses.getConstructors(jcClass).size());
 
         // At this point the database read the method bytecode and return the result.
-        return jcClass.getDeclaredMethods().get(0).body();
+        return jcClass.getDeclaredMethods().get(0).asmNode();
     }
 }
 ```
 
 Kotlin
 ```kotlin
-suspend fun findNormalDistribution(): Any {
+suspend fun findNormalDistribution(): MethodNode {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
     val buildDir = File("my-project/build/classes/java/main")
@@ -86,13 +138,12 @@ suspend fun findNormalDistribution(): Any {
     println(jcClass.annotations.size)
 
     // At this point the database read the method bytecode and return the result.
-    return jcClass.methods[0].body()
+    return jcClass.methods[0].asmNode()
 }
 ```
 
-
-
-Note: the `body` method returns `null` if the to-be-processed JAR-file was changed or removed. Class could be in incomplete environment (i.e super class, interface, return type or parameter of method is not found in classpath) then api will throw `NoClassInClasspathException` at runtime. 
+Class could be in incomplete environment (i.e super class, interface, return type or parameter of method is not found in classpath) then api will throw `NoClassInClasspathException` at runtime. 
+To fix this install `UnknownClasses` feature into classpath during creation.
 
 The database can watch for file system changes in the background and refresh the JAR-files explicitly:
 
@@ -117,7 +168,6 @@ Kotlin
         watchFileSystem()
         useProcessJavaRuntime()
         loadByteCode(listOf(lib1, buildDir))
-        persistent("")
     }
 
     // A user rebuilds the buildDir folder.
@@ -171,6 +221,46 @@ Kotlin
     }
 ```
 
+## Features
+
+Features could be used for whole `JcDatabase` or particular `JcClasspath`
+
+### Usages
+
+Database feature for searching usages of fields and methods.
+
+```kotlin
+val database = jacodb {
+    install(Usages)
+}
+```
+
+see [more](https://jacodb.org/documentation/database-features/#usages)
+
+### Unknown Classes
+
+Mocks unknown classes. It's a grace way to handle incomplete classpaths
+
+```kotlin
+val database = jacodb {}
+val classpath = database.classpath(listOf(UnknownClasses))
+
+val clazz = classpath.findClass("UnknownClasses") // will return `JcClassOrInterface` instance
+```
+
+see [more](https://jacodb.org/documentation/classpath-features/#unknownClasses)
+
+
+### InMemory hierarchy
+
+A bit faster hierarchy but consume more RAM memory:
+
+```kotlin
+val database = jacodb {
+    install(InMemoryHierarchy)
+}
+```
+see [more](https://jacodb.org/documentation/database-features/#inmemoryhierarchy)
 
 ## Multithreading
 
