@@ -16,33 +16,19 @@
 
 package org.jacodb.impl
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.withContext
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathExtFeature
+import kotlinx.coroutines.*
+import org.jacodb.api.*
 import org.jacodb.api.JcClasspathExtFeature.JcResolvedClassResult
 import org.jacodb.api.JcClasspathExtFeature.JcResolvedTypeResult
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcClasspathTask
-import org.jacodb.api.JcFeatureEvent
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.features.JcFeatureEventImpl
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedTypeResultImpl
+import org.jacodb.impl.features.classpaths.JcUnknownClass
+import org.jacodb.impl.features.classpaths.UnknownClasses
+import org.jacodb.impl.features.classpaths.isResolveAllToUnknown
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
 import org.jacodb.impl.types.JcClassTypeImpl
@@ -61,7 +47,11 @@ class JcClasspathImpl(
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
-    private val featuresChain = JcFeaturesChain(features + JcClasspathFeatureImpl())
+    private val featuresChain = run{
+        val strictFeatures = features.filter { it !is UnknownClasses }
+        val hasUnknownClasses = strictFeatures.size != features.size
+        JcFeaturesChain(strictFeatures + listOfNotNull(JcClasspathFeatureImpl(), UnknownClasses.takeIf { hasUnknownClasses }) )
+    }
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
         return db.new(this).also {
@@ -136,22 +126,29 @@ class JcClasspathImpl(
         }.toSet()
     }
 
+    override fun isInstalled(feature: JcClasspathFeature): Boolean {
+        return featuresChain.features.contains(feature)
+    }
+
     override fun close() {
         locationsRegistrySnapshot.close()
     }
 
     private inner class JcClasspathFeatureImpl : JcClasspathExtFeature {
 
-        override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult {
+        override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? {
             val source = classpathVfs.firstClassOrNull(name)
             val jcClass = source?.let { toJcClass(it.source) }
                 ?: db.persistence.findClassSourceByName(classpath, name)?.let {
                     toJcClass(it)
                 }
+            if (jcClass == null && isResolveAllToUnknown) {
+                return null
+            }
             return JcResolvedClassResultImpl(name, jcClass)
         }
 
-        override fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult {
+        override fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? {
             if (name.endsWith("[]")) {
                 val targetName = name.removeSuffix("[]")
                 return JcResolvedTypeResultImpl(name,
@@ -162,8 +159,11 @@ class JcClasspathImpl(
             if (predefined != null) {
                 return JcResolvedTypeResultImpl(name, predefined)
             }
-            val clazz = findClassOrNull(name) ?: return JcResolvedTypeResultImpl(name, null)
-            return JcResolvedTypeResultImpl(name, typeOf(clazz))
+            return when (val clazz = findClassOrNull(name)) {
+                null -> JcResolvedTypeResultImpl(name, null)
+                is JcUnknownClass -> null // delegating to UnknownClass feature
+                else -> JcResolvedTypeResultImpl(name, typeOf(clazz))
+            }
         }
 
         override fun findClasses(classpath: JcClasspath, name: String): List<JcClassOrInterface> {

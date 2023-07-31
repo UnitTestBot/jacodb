@@ -32,7 +32,10 @@ import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.fs.JarLocation
-import org.jacodb.testing.*
+import org.jacodb.testing.BaseTest
+import org.jacodb.testing.WithDB
+import org.jacodb.testing.guavaLib
+import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -254,17 +257,11 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
 
 class IRTest : BaseTest() {
 
-    companion object : WithDB(InMemoryHierarchy)
+    companion object : WithDB(InMemoryHierarchy, StringConcatSimplifier)
 
     private val target = Files.createTempDirectory("jcdb-temp")
 
-    override val cp: JcClasspath = runBlocking {
-        val features = listOf(StringConcatSimplifier)
-        db.classpath(allClasspath, features)
-    }
-
     private val ext = runBlocking { cp.hierarchyExt() }
-
 
     @Test
     fun `get ir of simple method`() {

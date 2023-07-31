@@ -100,6 +100,9 @@ interface JcClassType : JcRefType, JcAccessible {
     val interfaces: List<JcClassType>
 
     val innerTypes: List<JcClassType>
+
+    val lookup: JcLookup<JcTypedField, JcTypedMethod>
+
 }
 
 interface JcTypeVariable : JcRefType {

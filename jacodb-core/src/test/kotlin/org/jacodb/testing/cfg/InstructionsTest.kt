@@ -24,12 +24,16 @@ import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.ext.boolean
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
 import org.jacodb.api.ext.cfg.values
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.humanReadableSignature
+import org.jacodb.api.ext.int
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.Common
+import org.jacodb.testing.Common.CommonClass
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
 import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
@@ -209,7 +213,7 @@ class InstructionsTest : BaseTest() {
     @Test
     fun `method resolution based on var`() {
         val clazz = cp.findClass<RealMethodResolution>()
-        val insts = clazz.findMethodOrNull("test")!!.instList
+        val insts = clazz.declaredMethods.first { it.name == "test" }.instList
         val actionCallExpr = insts.instructions.firstNotNullOf {
             (it as? JcCallInst)?.callExpr.takeIf { it is JcVirtualCallExpr }
         } as JcVirtualCallExpr
@@ -223,7 +227,7 @@ class InstructionsTest : BaseTest() {
         val child = cp.findClass<FieldsAndMethods.Common1Child>()
 
         // public int field
-        val methodWithPublicFieldInt = child.findMethodOrNull("accessIntField")!!
+        val methodWithPublicFieldInt = child.declaredMethods.first { it.name == "accessIntField" }
         val assignInstInt = methodWithPublicFieldInt.instList
             .filterIsInstance<JcAssignInst>()
             .single()
@@ -234,7 +238,7 @@ class InstructionsTest : BaseTest() {
 
 
         // public boolean field
-        val methodWithPublicFieldBoolean = child.findMethodOrNull("accessBooleanField")!!
+        val methodWithPublicFieldBoolean = child.declaredMethods.first { it.name == "accessBooleanField" }
         val assignInstBoolean = methodWithPublicFieldBoolean.instList
             .filterIsInstance<JcAssignInst>()
             .single()
@@ -248,10 +252,20 @@ class InstructionsTest : BaseTest() {
     fun `private call with invokevirtual instruction`() {
         val clazz = cp.findClass("VirtualInstructions")
         val instList = clazz.declaredMethods.first { it.name == "run" }.instList
-        val callDoSmth = instList.mapNotNull { it.callExpr }. first {
+        val callDoSmth = instList.mapNotNull { it.callExpr }.first {
             it.toString().contains("doSmth")
         }
         assertEquals("doSmth", callDoSmth.method.method.name)
+    }
+
+    @Test
+    fun `call default method should be resolved`() {
+        val clazz = cp.findClass<CommonClass>()
+        val instList = clazz.declaredMethods.first { it.name == "run" }.instList
+        val callDefaultMethod = instList.mapNotNull { it.callExpr }.first {
+            it.toString().contains("defaultMethod")
+        }
+        assertEquals("defaultMethod", callDefaultMethod.method.method.name)
     }
 }
 

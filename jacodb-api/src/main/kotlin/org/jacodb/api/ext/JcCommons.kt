@@ -18,15 +18,7 @@
 
 package org.jacodb.api.ext
 
-import org.jacodb.api.JcAccessible
-import org.jacodb.api.JcAnnotated
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.*
 import java.io.Serializable
 import java.lang.Cloneable
 
@@ -96,28 +88,6 @@ internal object UnsafeHierarchyMethodComparator : Comparator<JcMethod> {
     override fun compare(o1: JcMethod, o2: JcMethod): Int {
         return (o1.name + o1.description).compareTo(o2.name + o2.description)
     }
-}
-
-internal fun <Container : JcAccessible, Result : JcAccessible> Container.findElements(
-    allowSearchAll: Boolean = true,
-    packageName: Container.() -> String,
-    classPackageName: String = packageName(this),
-    getAccessibles: Container.() -> List<Result>,
-    nextHierarchy: Container.() -> List<Container>?,
-    predicate: (Result) -> Boolean
-): Result? {
-    val currentPackage = packageName()
-    return getAccessibles().firstOrNull {
-        if (allowSearchAll) {
-            predicate(it)
-        } else {
-            (it.isPublic || it.isProtected || (it.isPackagePrivate && currentPackage == classPackageName)) &&
-                    predicate(it)
-        }
-    } ?: nextHierarchy()?.firstNotNullOfOrNull {
-        it.findElements(false, packageName, currentPackage, getAccessibles, nextHierarchy, predicate)
-    }
-
 }
 
 fun JcAnnotated.hasAnnotation(className: String): Boolean {

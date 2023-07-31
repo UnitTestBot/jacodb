@@ -16,22 +16,11 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedField
-import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
-import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.signature.JvmParameterizedType
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.signature.TypeResolutionImpl
-import org.jacodb.impl.types.signature.TypeSignature
+import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.types.substition.substitute
 import kotlin.LazyThreadSafetyMode.PUBLICATION
@@ -63,6 +52,7 @@ open class JcClassTypeImpl(
 
     private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
+    override val lookup: JcLookup<JcTypedField, JcTypedMethod> = JcClassTypeLookupImpl(this)
 
     override val jcClass: JcClassOrInterface get() = classpath.findClass(name)
 

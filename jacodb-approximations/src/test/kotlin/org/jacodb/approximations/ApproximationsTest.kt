@@ -16,9 +16,7 @@
 
 package org.jacodb.approximations
 
-import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcClasspath
 import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredFieldOrNull
@@ -29,29 +27,24 @@ import org.jacodb.approximations.target.KotlinClass
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.File
 
 class ApproximationsTest : BaseTest() {
-    companion object : WithDB(Approximations)
 
-    override val cp: JcClasspath = runBlocking {
-        val features = listOf(Approximations)
-        db.classpath(allClasspath, features)
-    }
+    companion object : WithDB(Approximations)
 
     @Test
     fun `kotlin approximation`() {
-        val classec = cp.findClass<KotlinClass>()
+        val classes = cp.findClass<KotlinClass>()
 
         val originalClassName = KotlinClass::class.qualifiedName!!.toOriginalName()
         val approximation = findApproximationByOriginOrNull(originalClassName)
 
         assertNotNull(approximation)
-        assertEquals(classec.name, findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
+        assertEquals(classes.name, findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")

@@ -16,13 +16,7 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.impl.features.JcFeaturesChain
@@ -47,6 +41,8 @@ class JcClassOrInterfaceImpl(
         is ClassSourceImpl -> classSource.info // we can easily read link let's do it
         else -> null // maybe we do not need to do right now
     }
+
+    override val lookup: JcLookup<JcField, JcMethod> = JcClassLookupImpl(this)
 
     private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->
@@ -151,6 +147,7 @@ class JcClassOrInterfaceImpl(
     override fun toString(): String {
         return "(id:${declaration.location.id})$name"
     }
+
 }
 
 fun List<JcField>.joinFeatureFields(

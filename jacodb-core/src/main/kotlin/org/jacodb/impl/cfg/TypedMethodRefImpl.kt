@@ -18,10 +18,7 @@ package org.jacodb.impl.cfg
 
 import org.jacodb.api.*
 import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.findMethodOrNull
-import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.jvmName
-import org.jacodb.api.ext.packageName
 import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy
@@ -34,14 +31,6 @@ abstract class MethodSignatureRef(
         returnType: TypeName,
 ) : TypedMethodRef {
 
-    companion object {
-        private val alwaysTrue: (JcTypedMethod) -> Boolean = { true }
-    }
-
-    private fun predicate(additionalFilter: (JcTypedMethod) -> Boolean = alwaysTrue): (JcTypedMethod) -> Boolean = {
-        it.name == name && additionalFilter(it) && it.method.description == description
-    }
-
     protected val description: String = buildString {
         append("(")
         argTypes.forEach {
@@ -50,31 +39,6 @@ abstract class MethodSignatureRef(
         append(")")
         append(returnType.typeName.jvmName())
     }
-
-    private fun List<JcTypedMethod>.findMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
-        return firstOrNull(predicate(filter))
-    }
-
-    protected fun JcClassType.findTypedMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod {
-        return findMethodOrNull(predicate(filter)) ?: throw IllegalStateException(this.methodNotFoundMessage)
-    }
-
-    protected fun JcClassType.findTypedMethodOrNull(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
-        var methodOrNull = findMethodOrNull(predicate(filter))
-
-        if (methodOrNull == null && jcClass.packageName == "java.lang.invoke") {
-            methodOrNull = findMethodOrNull {
-                val method = it.method
-                method.name == name && method.hasAnnotation("java.lang.invoke.MethodHandle\$PolymorphicSignature")
-            } // weak consumption. may fail
-        }
-        return methodOrNull
-    }
-
-    fun JcClassType.findClassMethod(filter: (JcTypedMethod) -> Boolean = alwaysTrue): JcTypedMethod? {
-        return declaredMethods.findMethod(filter) ?: superType?.findClassMethod(filter)
-    }
-
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -111,6 +75,10 @@ abstract class MethodSignatureRef(
             }
         }
 
+    fun JcType.throwNotFoundException(): Nothing {
+        throw IllegalStateException(this.methodNotFoundMessage)
+    }
+
 }
 
 class TypedStaticMethodRefImpl(
@@ -128,7 +96,7 @@ class TypedStaticMethodRefImpl(
     )
 
     override val method: JcTypedMethod by weakLazy {
-        type.findClassMethod { it.isStatic } ?: throw IllegalStateException(methodNotFoundMessage)
+        type.lookup.staticMethod(name, description) ?: throw IllegalStateException(methodNotFoundMessage)
     }
 }
 
@@ -147,7 +115,7 @@ class TypedSpecialMethodRefImpl(
     )
 
     override val method: JcTypedMethod by weakLazy {
-        type.findClassMethod() ?: throw IllegalStateException(methodNotFoundMessage)
+        type.lookup.specialMethod(name, description) ?: type.throwNotFoundException()
     }
 
 }
@@ -197,11 +165,11 @@ class VirtualMethodRefImpl(
     }
 
     override val method: JcTypedMethod by softLazy {
-        actualType.findTypedMethodOrNull() ?: declaredMethod
+        actualType.lookup.method(name, description) ?: declaredMethod
     }
 
     override val declaredMethod: JcTypedMethod by softLazy {
-        type.findTypedMethod()
+        type.lookup.method(name, description) ?: type.throwNotFoundException()
     }
 }
 
@@ -221,7 +189,7 @@ class TypedMethodRefImpl(
     )
 
     override val method: JcTypedMethod by softLazy {
-        type.findTypedMethod()
+        type.lookup.method(name, description) ?: type.throwNotFoundException()
     }
 
 }
