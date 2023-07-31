@@ -25,6 +25,14 @@ public class Common {
         }
     }
 
+    public static class CommonClass implements CommonInterface {
+
+        public void run() {
+            defaultMethod();
+        }
+
+    }
+
     public static class Common1 {
         public int publicField;
         protected int protectedField;

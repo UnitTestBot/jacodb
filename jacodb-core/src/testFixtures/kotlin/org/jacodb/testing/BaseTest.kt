@@ -18,6 +18,7 @@ package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcFeature
 import org.jacodb.impl.jacodb
@@ -33,7 +34,7 @@ abstract class BaseTest {
 
     protected open val cp: JcClasspath = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
-        withDB.db.classpath(allClasspath)
+        withDB.db.classpath(allClasspath, withDB.cpFeatures.toList())
     }
 
     @AfterEach
@@ -56,7 +57,7 @@ val Class<*>.withDB: WithDB
         return s.withDB
     }
 
-open class WithDB(vararg features: JcFeature<*, *>) {
+open class WithDB(vararg features: Any) {
 
     protected var allFeatures = features.toList().toTypedArray()
 
@@ -64,12 +65,15 @@ open class WithDB(vararg features: JcFeature<*, *>) {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
     }
 
+    val dbFeatures = allFeatures.mapNotNull { it as? JcFeature<*,*> }.toTypedArray()
+    val cpFeatures = allFeatures.mapNotNull { it as? JcClasspathFeature }.toTypedArray()
+
     open var db = runBlocking {
         jacodb {
 //            persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
-            installFeatures(*allFeatures)
+            installFeatures(*dbFeatures)
         }.also {
             it.awaitBackgroundJobs()
         }
@@ -98,7 +102,7 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
-                installFeatures(*allFeatures)
+                installFeatures(*dbFeatures)
             }.also {
                 it.awaitBackgroundJobs()
             }

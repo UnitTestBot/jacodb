@@ -83,6 +83,8 @@ interface JcClasspath : Closeable {
     suspend fun <T : JcClasspathTask> execute(task: T): T
 
     fun <T : JcClasspathTask> executeAsync(task: T): Future<T> = GlobalScope.future { execute(task) }
+
+    fun isInstalled(feature: JcClasspathFeature): Boolean
 }
 
 

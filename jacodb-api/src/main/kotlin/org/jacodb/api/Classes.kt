@@ -48,6 +48,7 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     fun <T> extensionValue(key: String): T?
 
+    val lookup: JcLookup<JcField, JcMethod>
 
     val isAnnotation: Boolean
         get() {
@@ -125,7 +126,6 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
             return name == "<clinit>"
         }
 
-
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {
@@ -145,3 +145,4 @@ interface JcParameter : JcAnnotated, JcAccessible {
 interface TypeName {
     val typeName: String
 }
+

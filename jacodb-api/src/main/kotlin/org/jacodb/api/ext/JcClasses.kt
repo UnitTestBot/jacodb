@@ -58,14 +58,7 @@ const val JAVA_OBJECT = "java.lang.Object"
  * find field by name
  */
 fun JcClassOrInterface.findFieldOrNull(name: String): JcField? {
-    return findElements(
-        allowSearchAll = true,
-        packageName = { packageName },
-        getAccessibles = { declaredFields },
-        nextHierarchy = { superClass?.let { listOf(it) } },
-    ) {
-        it.name == name
-    }
+    return lookup.field(name)
 }
 
 fun JcClassOrInterface.findDeclaredFieldOrNull(name: String): JcField? = declaredFields.singleOrNull { it.name == name }
@@ -81,28 +74,8 @@ fun JcClassOrInterface.findDeclaredMethodOrNull(name: String, desc: String? = nu
 /**
  * find method by name and description
  */
-fun JcClassOrInterface.findMethodOrNull(name: String, desc: String? = null): JcMethod? {
-    // let's find method based on strict hierarchy
-    // if method is not found then it's defined in interfaces
-    val predicate: (JcMethod) -> Boolean = {
-        it.name == name && (desc == null || it.description == desc)
-    }
-    val method = findElements(
-        packageName = { packageName },
-        getAccessibles = { declaredMethods },
-        nextHierarchy = { superClass?.let { listOf(it) } },
-        predicate = predicate
-    )
-    if (method != null) {
-        return method
-    }
-    // let's search interfaces
-    return findElements(
-        packageName = { packageName },
-        getAccessibles = { declaredMethods },
-        nextHierarchy = { interfaces },
-        predicate = predicate
-    )
+fun JcClassOrInterface.findMethodOrNull(name: String, desc: String): JcMethod? {
+    return lookup.method(name, desc)
 }
 
 /**

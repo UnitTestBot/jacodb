@@ -16,12 +16,9 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcMethod
+import org.jacodb.api.*
 import org.jacodb.api.ext.objectClass
+import org.jacodb.impl.bytecode.JcClassLookupImpl
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.bytecode.joinFeatureFields
 import org.jacodb.impl.bytecode.joinFeatureMethods
@@ -49,8 +46,9 @@ open class JcVirtualClassImpl(
 ) : JcVirtualClass {
 
     private val featuresChain get() = JcFeaturesChain(classpath.features.orEmpty())
-
     private lateinit var virtualLocation: VirtualLocation
+
+    override val lookup: JcLookup<JcField, JcMethod> = JcClassLookupImpl(this)
 
     override val declaredFields: List<JcVirtualField> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val default = initialFields.onEach { it.bind(this) }

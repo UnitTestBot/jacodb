@@ -18,14 +18,7 @@
 
 package org.jacodb.api.ext
 
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedField
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.*
 import java.lang.Boolean
 import java.lang.Byte
 import java.lang.Double
@@ -166,46 +159,31 @@ fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
 
 /**
  * find field by name
+ *
+ * @param name field name
  */
 fun JcClassType.findFieldOrNull(name: String): JcTypedField? {
-    return findElements(
-        packageName = { jcClass.packageName },
-        getAccessibles = { declaredFields },
-        nextHierarchy = { listOfNotNull(superType) + interfaces},
-    ) {
-        it.name == name
-    }
-}
-
-fun JcClassType.findMethodOrNull(name: String, desc: String?): JcTypedMethod? {
-    return findMethodOrNull {
-        it.name == name && (desc == null || it.method.description == desc)
-    }
+    return lookup.field(name)
 }
 
 /**
  * find method by name and description
+ *
+ * @param name method name
+ * @param desc method description
  */
-fun JcClassType.findMethodOrNull(
-    predicate: (JcTypedMethod) -> kotlin.Boolean
-): JcTypedMethod? {
+fun JcClassType.findMethodOrNull(name: String, desc: String): JcTypedMethod? {
+    return lookup.method(name, desc)
+}
+
+/**
+ * find method by name and description
+ *
+ * This method doesn't support [org.jacodb.impl.features.classpaths.UnknownClasses] feature.
+ */
+fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): JcTypedMethod? {
     // let's find method based on strict hierarchy
     // if method is not found then it's defined in interfaces
-    return findElements(
-        packageName = { jcClass.packageName },
-        getAccessibles = { declaredMethods },
-        nextHierarchy = { listOfNotNull(superType) + interfaces },
-        predicate = predicate
-    )
-//    if (method != null) {
-//        return method
-//    }
-//    // let's search interfaces
-//    return findElements(
-//        packageName = { jcClass.packageName },
-//        getAccessibles = { declaredMethods },
-//        nextHierarchy = { interfaces + superType?.interfaces.orEmpty() },
-//        predicate = predicate
-//    )
+    return methods.firstOrNull(predicate)
 }
 

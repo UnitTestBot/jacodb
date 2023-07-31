@@ -44,10 +44,3 @@ Call on each step of a lifecycle with respected signal.
 [AfterIndexing]: https://jacodb.org/docs/jacodb-api/org.jacodb.api/-jc-signal/-after-indexing/index.html
 [LocationRemoved]: https://jacodb.org/docs/jacodb-api/org.jacodb.api/-jc-signal/-location-removed/index.html
 [Drop]: https://jacodb.org/docs/jacodb-api/jacodb-api/org.jacodb.api/-jc-signal/-drop/index.html
-
-
-
-
-
-
-
