@@ -18,9 +18,7 @@ package org.jacodb.approximation
 
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
-import org.jacodb.api.JcMethodExtFeature.JcInstListResult
-import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
+import org.jacodb.api.JcMethodExtFeature.*
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
@@ -57,7 +55,7 @@ class JcEnrichedVirtualMethod(
 
     override fun asmNode(): MethodNode = asmNode
 
-    override fun flowGraph(): JcGraph =featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> {
+    override fun flowGraph(): JcGraph = featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> {
         it.flowGraph(this)
     }!!.flowGraph
 

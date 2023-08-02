@@ -42,7 +42,11 @@ class JcClassOrInterfaceImpl(
         else -> null // maybe we do not need to do right now
     }
 
-    override val lookup: JcLookup<JcField, JcMethod> = JcClassLookupImpl(this)
+    override val lookup: JcLookup<JcField, JcMethod> = ClassDelegatingLookup(
+        this,
+        featuresChain.classLookups,
+        JcClassLookupImpl(this)
+    )
 
     private val extensionData by lazy(PUBLICATION) {
         HashMap<String, Any>().also { map ->

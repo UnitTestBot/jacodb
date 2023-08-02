@@ -18,8 +18,11 @@ package org.jacodb.impl.features
 
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcFeatureEvent
+import org.jacodb.api.JcLookupExtFeature
 
 class JcFeaturesChain(val features: List<JcClasspathFeature>) {
+
+    val classLookups = features.filterIsInstance<JcLookupExtFeature>()
 
     inline fun <reified T : JcClasspathFeature> run(call: (T) -> Unit) {
         for (feature in features) {

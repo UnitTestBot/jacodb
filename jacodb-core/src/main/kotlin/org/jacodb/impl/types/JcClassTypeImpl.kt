@@ -20,12 +20,13 @@ import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
+import org.jacodb.impl.bytecode.TypeDelegatingLookup
 import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.substition.JcSubstitutor
 import org.jacodb.impl.types.substition.substitute
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
-open class JcClassTypeImpl(
+class JcClassTypeImpl(
     override val classpath: JcClasspath,
     val name: String,
     override val outerType: JcClassTypeImpl? = null,
@@ -52,7 +53,12 @@ open class JcClassTypeImpl(
 
     private val resolutionImpl by lazy(PUBLICATION) { TypeSignature.withDeclarations(jcClass) as? TypeResolutionImpl }
     private val declaredTypeParameters by lazy(PUBLICATION) { jcClass.typeParameters }
-    override val lookup: JcLookup<JcTypedField, JcTypedMethod> = JcClassTypeLookupImpl(this)
+
+    override val lookup: JcLookup<JcTypedField, JcTypedMethod> = TypeDelegatingLookup(
+        this,
+        classpath.features?.filterIsInstance<JcLookupExtFeature>().orEmpty(),
+        JcClassTypeLookupImpl(this)
+    )
 
     override val jcClass: JcClassOrInterface get() = classpath.findClass(name)
 

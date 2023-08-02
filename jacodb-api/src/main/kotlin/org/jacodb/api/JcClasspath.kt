@@ -180,6 +180,11 @@ interface JcClassExtFeature : JcClasspathFeature {
 
 }
 
+interface JcLookupExtFeature : JcClasspathFeature {
+    fun lookup(clazz: JcClassOrInterface): JcLookup<JcField, JcMethod>
+    fun lookup(type: JcClassType): JcLookup<JcTypedField, JcTypedMethod>
+}
+
 @JvmDefaultWithoutCompatibility
 interface JcInstExtFeature : JcClasspathFeature {
 
