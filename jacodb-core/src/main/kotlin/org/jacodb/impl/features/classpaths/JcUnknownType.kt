@@ -54,7 +54,7 @@ class JcUnknownType(override var classpath: JcClasspath, private val name: Strin
         get() = Opcodes.ACC_PUBLIC
 }
 
-class JcUnknownClassLookup(val clazz: JcUnknownClass) : JcLookup<JcField, JcMethod> {
+open class JcUnknownClassLookup(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {
 
     override fun specialMethod(name: String, description: String): JcMethod = method(name, description)
     override fun staticMethod(name: String, description: String): JcMethod = method(name, description)
@@ -69,7 +69,7 @@ class JcUnknownClassLookup(val clazz: JcUnknownClass) : JcLookup<JcField, JcMeth
 
 }
 
-class JcUnknownTypeLookup(val type: JcUnknownType) : JcLookup<JcTypedField, JcTypedMethod> {
+open class JcUnknownTypeLookup(val type: JcClassType) : JcLookup<JcTypedField, JcTypedMethod> {
 
     override fun specialMethod(name: String, description: String): JcTypedMethod = method(name, description)
     override fun staticMethod(name: String, description: String): JcTypedMethod = method(name, description)

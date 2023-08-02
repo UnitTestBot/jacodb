@@ -21,6 +21,7 @@ import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.classpaths.JcUnknownClass
+import org.jacodb.impl.features.classpaths.UnknownClassMethodsAndFields
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -28,7 +29,7 @@ import org.junit.jupiter.api.Test
 
 class UnknownClassesTest : BaseTest() {
 
-    companion object : WithDB(UnknownClasses)
+    companion object : WithDB(UnknownClasses, UnknownClassMethodsAndFields)
 
     @Test
     fun `unknown class is resolved`() {
@@ -58,6 +59,16 @@ class UnknownClassesTest : BaseTest() {
         val clazz = listOf(
             cp.findClass("PhantomClassSubclass"),
             cp.findClass("PhantomCodeConsumer")
+        )
+        clazz.forEach {
+            it.declaredMethods.forEach { it.assertCfg() }
+        }
+    }
+
+    @Test
+    fun `instructions with references to unknown fields and methods are resolved`() {
+        val clazz = listOf(
+            cp.findClass("PhantomDeclarationConsumer")
         )
         clazz.forEach {
             it.declaredMethods.forEach { it.assertCfg() }

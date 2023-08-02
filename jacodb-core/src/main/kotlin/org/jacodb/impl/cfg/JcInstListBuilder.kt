@@ -306,7 +306,7 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val type = value.declaringClass.asType() as JcClassType
-        val field = type.lookup.field(value.fieldName, value.declaringClass)
+        val field = type.lookup.field(value.fieldName, value.typeName)
             ?: throw IllegalStateException("${type.typeName}#${value.fieldName} not found")
         return JcFieldRef(value.instance?.accept(this) as? JcValue, field)
     }

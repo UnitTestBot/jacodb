@@ -38,7 +38,7 @@ class JcUnknownClass(override var classpath: JcClasspath, name: String) : JcVirt
 }
 
 class JcUnknownMethod(
-    enclosingClass: JcUnknownClass,
+    enclosingClass: JcClassOrInterface,
     name: String,
     description: String,
     returnType: TypeName,
@@ -51,17 +51,17 @@ class JcUnknownMethod(
 ) {
 
     companion object {
-        fun method(type: JcUnknownClass, name: String, description: String): JcMethod {
+        fun method(type: JcClassOrInterface, name: String, description: String): JcMethod {
             val methodType = Type.getMethodType(description)
             val returnType = TypeNameImpl(methodType.returnType.className.jcdbName())
             val paramsType = methodType.argumentTypes.map { TypeNameImpl(it.className.jcdbName()) }
             return JcUnknownMethod(type, name, description, returnType, paramsType)
         }
 
-        fun typedMethod(type: JcUnknownType, name: String, description: String): JcTypedMethod {
+        fun typedMethod(type: JcClassType, name: String, description: String): JcTypedMethod {
             return JcTypedMethodImpl(
                 type,
-                method(type.jcClass as JcUnknownClass, name, description),
+                method(type.jcClass, name, description),
                 JcSubstitutor.empty
             )
         }
@@ -72,7 +72,7 @@ class JcUnknownMethod(
     }
 }
 
-class JcUnknownField(enclosingClass: JcUnknownClass, name: String, type: TypeName) :
+class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, type: TypeName) :
     JcVirtualFieldImpl(name, type = type) {
 
     companion object {
@@ -80,7 +80,7 @@ class JcUnknownField(enclosingClass: JcUnknownClass, name: String, type: TypeNam
         fun typedField(type: JcClassType, name: String, fieldType: TypeName): JcTypedField {
             return JcTypedFieldImpl(
                 type,
-                JcUnknownField(type.jcClass as JcUnknownClass, name, fieldType),
+                JcUnknownField(type.jcClass, name, fieldType),
                 JcSubstitutor.empty
             )
         }
@@ -135,5 +135,43 @@ object UnknownClasses : JcClasspathExtFeature {
         return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name))
     }
 }
+
+/**
+ * Used for mocking of methods and fields refs that doesn't exist in code base of classpath
+ * ```
+ * class Bar {
+ *
+ *      int x = 0;
+ *
+ *      public void run() {
+ *          System.out.println("Hello world");
+ *      }
+ * }
+ *
+ * class Foo extends Bar {
+ *
+ *      Bar f = new Bar();
+ *
+ *      public void call() {
+ *          System.out.println(f.y);
+ *          f.runSomething();
+ *      }
+ * }
+ * ```
+ *
+ * 3-address representation of bytecode for Foo class can't resolve `Bar#y` field and `Bar#runSomething`
+ * method by default. With this feature such methods and fields will be resolved as JcUnknownField and JcUnknownMethod
+ */
+object UnknownClassMethodsAndFields : JcLookupExtFeature {
+
+    override fun lookup(clazz: JcClassOrInterface): JcLookup<JcField, JcMethod> {
+        return JcUnknownClassLookup(clazz)
+    }
+
+    override fun lookup(type: JcClassType): JcLookup<JcTypedField, JcTypedMethod> {
+        return JcUnknownTypeLookup(type)
+    }
+}
+
 
 val JcClasspath.isResolveAllToUnknown: Boolean get() = isInstalled(UnknownClasses)
