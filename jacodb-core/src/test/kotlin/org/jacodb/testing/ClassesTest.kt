@@ -20,11 +20,12 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.api.ext.enumValues
+import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.features.duplicatedClasses
 import org.jacodb.impl.features.hierarchyExt
-import org.jacodb.testing.structure.EnumExamples.EnumWithField
-import org.jacodb.testing.structure.EnumExamples.SimpleEnum
+import org.jacodb.testing.structure.EnumExamples.*
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -69,6 +70,13 @@ class ClassesTest : DatabaseEnvTest() {
         assertEquals("java.lang.String", parameters.first().type.typeName)
         assertEquals("int", parameters[1].type.typeName)
         assertEquals("int", parameters[2].type.typeName)
+    }
+
+    @Test
+    fun `enum values filter out static instances`() {
+        val enumType = cp.findClass<EnumWithStaticInstance>()
+        assertEquals(2, enumType.enumValues!!.size)
+        assertEquals(listOf("C1", "C2"), enumType.enumValues!!.map { it.name })
     }
 }
 
