@@ -539,7 +539,7 @@ class MethodNodeBuilder(
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr) {
         expr.operand.accept(this)
-        currentInsnList.add(TypeInsnNode(Opcodes.INSTANCEOF, expr.typeName.internalDesc))
+        currentInsnList.add(TypeInsnNode(Opcodes.INSTANCEOF, expr.targetType.internalDesc))
     }
 
 
