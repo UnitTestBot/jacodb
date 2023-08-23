@@ -20,6 +20,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -31,11 +34,23 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
 
+interface IfdsUnitCommunicator {
+    val incomingEdges: Flow<IfdsEdge>
+
+    fun subscribeForSummaryEdgesOf(method: JcMethod): Flow<IfdsEdge>
+
+    fun uploadSummaryFact(fact: SummaryFact)
+
+    fun addEdgeForOtherRunner(edge: IfdsEdge)
+
+    fun updateQueueStatus(isEmpty: Boolean)
+}
+
 /**
  * Used to launch and manage [ifdsUnitRunner] jobs for units, reachable from [startMethods].
  * See [runAnalysis] for more info.
  */
-class IfdsUnitManager<UnitType>(
+class MainIfdsUnitManager<UnitType>(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunner: IfdsUnitRunner,
@@ -47,15 +62,51 @@ class IfdsUnitManager<UnitType>(
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
-    private val summary: Summary = SummaryImpl()
+
+    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
+    private val tracesStorage = SummaryStorageImpl<TraceGraphFact>()
+    private val crossUnitCallsStorage = SummaryStorageImpl<CrossUnitCallFact>()
+    private val vulnerabilitiesStorage = SummaryStorageImpl<VulnerabilityLocation>()
+    private val unitJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
+    private val communicators: MutableMap<UnitType, MyIfdsUnitCommunicator> = ConcurrentHashMap()
+
+    inner class MyIfdsUnitCommunicator(private val unit: UnitType) : IfdsUnitCommunicator {
+        override val incomingEdges: MutableSharedFlow<IfdsEdge> = MutableSharedFlow(replay = Int.MAX_VALUE)
+
+        override fun subscribeForSummaryEdgesOf(method: JcMethod): Flow<IfdsEdge> {
+            return summaryEdgesStorage.getFacts(method, null).map {
+                it.edge
+            }
+        }
+
+        override fun uploadSummaryFact(fact: SummaryFact) {
+            when (fact) {
+                is CrossUnitCallFact -> crossUnitCallsStorage.addNewSender(fact.method).send(fact)
+                is SummaryEdgeFact -> summaryEdgesStorage.addNewSender(fact.method).send(fact)
+                is TraceGraphFact -> tracesStorage.addNewSender(fact.method).send(fact)
+                is VulnerabilityLocation -> vulnerabilitiesStorage.addNewSender(fact.method).send(fact)
+            }
+        }
+
+        override fun addEdgeForOtherRunner(edge: IfdsEdge) {
+            // TODO: cache queries for not yet launched units
+            communicators[unit]?.incomingEdges?.tryEmit(edge)
+        }
+
+        override fun updateQueueStatus(isEmpty: Boolean) {
+            if (isEmpty) {
+                unitJobs[unit]?.cancel()
+            }
+        }
+    }
 
     init {
         startMethods.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
-        get() = summary
-            .getCurrentFactsFiltered<TraceGraphFact>(method, this)
+        get() = tracesStorage
+            .getCurrentFacts(method, null)
             .map { it.graph }
             .singleOrNull { it.sink == this }
             ?: TraceGraph.bySink(this)
@@ -65,7 +116,6 @@ class IfdsUnitManager<UnitType>(
      * and gathers results into list of vulnerabilities, restoring full traces
      */
     fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
-        val unitJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
         val unitsCount = unitsQueue.size
 
         logger.info { "Starting analysis. Number of units to analyze: $unitsCount" }
@@ -81,11 +131,23 @@ class IfdsUnitManager<UnitType>(
 
         // TODO: do smth smarter here
         unitsQueue.toList().forEach { unit ->
-            unitJobs[unit] = launch {
+            val communicator = MyIfdsUnitCommunicator(unit)
+            communicators[unit] = communicator
+
+            val job = launch {
                 withTimeout(timeoutMillis) {
-                    ifdsUnitRunner.run(graph, summary, unitResolver, unit, foundMethods[unit]!!.toList())
+                    ifdsUnitRunner.run(
+                        graph,
+                        communicator,
+                        unitResolver,
+                        unit,
+                        foundMethods[unit]!!.toList()
+                    )
                 }
             }
+
+            unitJobs[unit] = job
+            // TODO: clear unitJobs and communicators on-fly
         }
 
         unitJobs.values.joinAll()
@@ -93,11 +155,11 @@ class IfdsUnitManager<UnitType>(
         logger.info { "All jobs completed, gathering results..." }
 
         val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
-            summary.getCurrentFactsFiltered<VulnerabilityLocation>(method, null)
+            vulnerabilitiesStorage.getCurrentFacts(method, null)
         }
 
         foundMethods.values.flatten().forEach { method ->
-            for (crossUnitCall in summary.getCurrentFactsFiltered<CrossUnitCallFact>(method, null)) {
+            for (crossUnitCall in crossUnitCallsStorage.getCurrentFacts(method, null)) {
                 val calledMethod = graph.methodOf(crossUnitCall.calleeVertex.statement)
                 crossUnitCallers.getOrPut(calledMethod) { mutableSetOf() }.add(crossUnitCall)
             }

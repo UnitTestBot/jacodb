@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.filterIsInstance
 import org.jacodb.api.JcMethod
 import java.util.concurrent.ConcurrentHashMap
 
@@ -31,7 +30,7 @@ data class VulnerabilityLocation(val vulnerabilityType: String, val sink: IfdsVe
     override val method: JcMethod = sink.method
 }
 
-data class PathEdgeFact(val edge: IfdsEdge) : SummaryFact {
+data class SummaryEdgeFact(val edge: IfdsEdge) : SummaryFact {
     override val method: JcMethod = edge.method
 }
 
@@ -43,55 +42,47 @@ data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
     override val method: JcMethod = graph.sink.method
 }
 
-fun interface SummarySender {
-    fun send(fact: SummaryFact)
+fun interface SummarySender<T: SummaryFact> {
+    fun send(fact: T)
 }
 
-interface Summary {
-    fun createSender(method: JcMethod): SummarySender
+interface SummaryStorage<T: SummaryFact> {
+    fun addNewSender(method: JcMethod): SummarySender<T>
 
-    fun getFacts(method: JcMethod, startVertex: IfdsVertex?): Flow<SummaryFact>
+    fun getFacts(method: JcMethod, startVertex: IfdsVertex?): Flow<T>
 
-    fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<SummaryFact>
+    fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<T>
 
     val knownMethods: List<JcMethod>
 }
 
-class SummaryImpl : Summary {
-    private val loadedFacts: MutableMap<JcMethod, MutableSet<SummaryFact>> = ConcurrentHashMap()
-    private val outFlows: MutableMap<JcMethod, MutableSharedFlow<SummaryFact>> = ConcurrentHashMap()
+class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
+    private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
+    private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 
-    override fun createSender(method: JcMethod): SummarySender {
+    override fun addNewSender(method: JcMethod): SummarySender<T> {
         return SummarySender { fact ->
-            if (loadedFacts.computeIfAbsent(method) { ConcurrentHashMap.newKeySet() }.add(fact)) {
+            if (summaries.computeIfAbsent(method) { ConcurrentHashMap.newKeySet() }.add(fact)) {
                 val outFlow = outFlows.computeIfAbsent(method) { MutableSharedFlow(replay = Int.MAX_VALUE) }
                 require(outFlow.tryEmit(fact))
             }
         }
     }
 
-    override fun getFacts(method: JcMethod, startVertex: IfdsVertex?): SharedFlow<SummaryFact> {
+    override fun getFacts(method: JcMethod, startVertex: IfdsVertex?): SharedFlow<T> {
         return outFlows.computeIfAbsent(method) {
-            MutableSharedFlow<SummaryFact>(replay = Int.MAX_VALUE).also { flow ->
-                loadedFacts[method].orEmpty().forEach { fact ->
+            MutableSharedFlow<T>(replay = Int.MAX_VALUE).also { flow ->
+                summaries[method].orEmpty().forEach { fact ->
                     require(flow.tryEmit(fact))
                 }
             }
         }
     }
 
-    override fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<SummaryFact> {
+    override fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<T> {
         return getFacts(method, startVertex).replayCache
     }
 
     override val knownMethods: List<JcMethod>
-        get() = loadedFacts.keys.toList()
-}
-
-inline fun <reified T : SummaryFact> Summary.getFactsFiltered(method: JcMethod, startVertex: IfdsVertex?): Flow<T> {
-    return getFacts(method, startVertex).filterIsInstance<T>()
-}
-
-inline fun <reified T : SummaryFact> Summary.getCurrentFactsFiltered(method: JcMethod, startVertex: IfdsVertex?): List<T> {
-    return getCurrentFacts(method, startVertex).filterIsInstance<T>()
+        get() = summaries.keys.toList()
 }

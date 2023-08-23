@@ -19,6 +19,7 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Interface for flow functions -- mappings of kind DomainFact -> Collection of DomainFacts
@@ -59,11 +60,11 @@ interface FlowFunctionsSpace {
  * [Analyzer] interface describes how facts are propagated and how vulnerabilities are produced by these facts during
  * the run of tabulation algorithm by [IfdsBaseUnitRunner].
  *
- * There are two methods that can turn facts into vulnerabilities or other [SummaryFact]s: [getSummaryFacts] and
- * [getSummaryFactsPostIfds]. First is called during the analysis, each time a new path edge is found, and second
+ * There are two methods that can turn facts into vulnerabilities or other [SummaryFact]s: [handleNewEdge] and
+ * [handleIfdsResult]. First is called during the analysis, each time a new path edge is found, and second
  * is called only after all path edges were found.
  * While some analyses really need full set of facts to find vulnerabilities, most analyses can report [SummaryFact]s
- * right after some fact is reached, so [getSummaryFacts] is a recommended way to report vulnerabilities when possible.
+ * right after some fact is reached, so [handleNewEdge] is a recommended way to report vulnerabilities when possible.
  *
  * Note that methods and properties of this interface may be accessed concurrently from different threads,
  * so the implementations should be thread-safe.
@@ -77,15 +78,14 @@ interface FlowFunctionsSpace {
 interface Analyzer {
     val flowFunctions: FlowFunctionsSpace
 
-    val saveSummaryEdgesAndCrossUnitCalls: Boolean
-        get() = true
-
     /**
      * This method is called by [IfdsBaseUnitRunner] each time a new path edge is found.
      *
      * @return [SummaryFact]s that are produced by this edge, that need to be saved to summary.
      */
-    fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> = emptyList()
+    fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator)
+
+    fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitCommunicator)
 
     /**
      * This method is called once by [IfdsBaseUnitRunner] when the propagation of facts is finished
@@ -93,7 +93,36 @@ interface Analyzer {
      *
      * @return [SummaryFact]s that can be obtained after the facts propagation was completed.
      */
-    fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<SummaryFact> = emptyList()
+    fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator)
+}
+
+abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyzer {
+    protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
+
+    abstract val saveSummaryEdgesAndCrossUnitCalls: Boolean
+
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+        if (saveSummaryEdgesAndCrossUnitCalls && edge.v.statement in graph.exitPoints(edge.method)) {
+            manager.uploadSummaryFact(SummaryEdgeFact(edge))
+        }
+    }
+
+    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitCommunicator) {
+        if (saveSummaryEdgesAndCrossUnitCalls) {
+            manager.uploadSummaryFact(fact)
+            verticesWithTraceGraphNeeded.add(fact.callerVertex)
+        }
+    }
+
+    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator) {
+        val traceGraphs = verticesWithTraceGraphNeeded.map {
+            ifdsResult.resolveTraceGraph(it)
+        }
+
+        traceGraphs.forEach {
+            manager.uploadSummaryFact(TraceGraphFact(it))
+        }
+    }
 }
 
 /**

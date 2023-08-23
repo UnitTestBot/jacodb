@@ -16,13 +16,12 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.PathEdgeFact
-import org.jacodb.analysis.engine.SummaryFact
+import org.jacodb.analysis.engine.IfdsUnitCommunicator
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -112,18 +111,20 @@ open class TaintAnalyzer(
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int
-) : Analyzer {
+) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates, sanitizes)
+
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = true
 
     companion object {
         const val vulnerabilityType: String = "taint analysis"
     }
 
-    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> {
-        return if (edge.v.domainFact in sinks(edge.v.statement)) {
-            listOf(VulnerabilityLocation(vulnerabilityType, edge.v))
-        } else {
-            emptyList()
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+        if (edge.v.domainFact in sinks(edge.v.statement)) {
+            manager.uploadSummaryFact(VulnerabilityLocation(vulnerabilityType, edge.v))
+            verticesWithTraceGraphNeeded.add(edge.v)
         }
     }
 }
@@ -154,15 +155,15 @@ private class TaintBackwardAnalyzer(
     generates: (JcInst) -> List<DomainFact>,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int
-) : Analyzer {
+) : AbstractAnalyzer(graph) {
     override val saveSummaryEdgesAndCrossUnitCalls: Boolean
         get() = false
 
     override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, generates, sinks, maxPathLength)
 
-    override fun getSummaryFacts(edge: IfdsEdge): List<SummaryFact> = buildList {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
         if (edge.v.statement in graph.exitPoints(edge.method)) {
-            add(PathEdgeFact(IfdsEdge(edge.v, edge.v)))
+            manager.addEdgeForOtherRunner(IfdsEdge(edge.v, edge.v))
         }
     }
 }

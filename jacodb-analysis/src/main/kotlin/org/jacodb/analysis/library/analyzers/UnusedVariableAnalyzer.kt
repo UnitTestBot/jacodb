@@ -16,12 +16,13 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
+import org.jacodb.analysis.engine.IfdsUnitCommunicator
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
@@ -44,10 +45,11 @@ import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
 
-class UnusedVariableAnalyzer(
-    val graph: JcApplicationGraph
-) : Analyzer {
+class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
+
+    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+        get() = true
 
     companion object {
         const val vulnerabilityType: String = "unused variable analysis"
@@ -80,7 +82,7 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator) {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -93,10 +95,11 @@ class UnusedVariableAnalyzer(
                 }
             }
         }
-        val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact))
+        used.filterValues { !it }.keys.map {
+            manager.uploadSummaryFact(
+                VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact))
+            )
         }
-        return vulnerabilities
     }
 }
 

@@ -19,9 +19,9 @@ package org.jacodb.analysis
 
 import kotlinx.serialization.Serializable
 import mu.KLogging
-import org.jacodb.analysis.engine.IfdsUnitManager
+import org.jacodb.analysis.engine.MainIfdsUnitManager
 import org.jacodb.analysis.engine.IfdsUnitRunner
-import org.jacodb.analysis.engine.Summary
+import org.jacodb.analysis.engine.SummaryStorage
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
@@ -48,7 +48,7 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
  * Units are analyzed concurrently, one unit will be analyzed with one call to [IfdsUnitRunner.run] method.
  * In general, larger units mean more precise, but also more resource-consuming analysis, so [unitResolver] allows
  * to reach compromise.
- * It is guaranteed that [Summary] passed to all units is the same, so they can share information through it.
+ * It is guaranteed that [SummaryStorage] passed to all units is the same, so they can share information through it.
  * However, the order of launching and terminating analysis for units is an implementation detail and may vary even for
  * consecutive calls of this method with same arguments.
  *
@@ -70,5 +70,5 @@ fun runAnalysis(
     methods: List<JcMethod>,
     timeoutMillis: Long = Long.MAX_VALUE
 ): List<VulnerabilityInstance> {
-    return IfdsUnitManager(graph, unitResolver, ifdsUnitRunner, methods, timeoutMillis).analyze()
+    return MainIfdsUnitManager(graph, unitResolver, ifdsUnitRunner, methods, timeoutMillis).analyze()
 }

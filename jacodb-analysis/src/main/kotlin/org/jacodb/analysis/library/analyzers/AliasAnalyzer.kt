@@ -19,6 +19,7 @@ package org.jacodb.analysis.library.analyzers
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
+import org.jacodb.analysis.engine.IfdsUnitCommunicator
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.paths.FieldAccessor
@@ -46,8 +47,7 @@ private class AliasAnalyzer(
     maxPathLength: Int,
 ) : TaintAnalyzer(graph, generates, sanitizes, sinks, maxPathLength) {
 
-    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
-        val vulnerabilities = mutableListOf<VulnerabilityLocation>()
+    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator) {
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (fact in sinks(inst)) {
@@ -70,16 +70,16 @@ private class AliasAnalyzer(
                             append(it.accesses.joinToString("."))
                         }
 
-                        vulnerabilities.add(
+                        manager.uploadSummaryFact(
                             VulnerabilityLocation(
                                 vulnerabilityType,
                                 IfdsVertex(inst, fact)
                             )
                         )
+                        verticesWithTraceGraphNeeded.add(IfdsVertex(inst, fact))
                     }
                 }
             }
         }
-        return vulnerabilities
     }
 }
