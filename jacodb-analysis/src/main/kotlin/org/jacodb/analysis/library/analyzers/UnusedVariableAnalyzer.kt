@@ -22,7 +22,7 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
-import org.jacodb.analysis.engine.IfdsUnitCommunicator
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
@@ -82,7 +82,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
         return false
     }
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator) {
+    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>) {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->

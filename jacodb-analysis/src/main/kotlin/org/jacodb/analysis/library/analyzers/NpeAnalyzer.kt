@@ -18,10 +18,11 @@ package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalyzerFactory
+import org.jacodb.analysis.engine.CrossUnitCallFact
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.IfdsUnitCommunicator
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -53,7 +54,7 @@ import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
-fun NpeAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+fun NpeAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
     NpeAnalyzer(graph, maxPathLength)
 }
 
@@ -67,7 +68,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
         const val vulnerabilityType: String = "npe-analysis"
     }
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
         val (inst, fact0) = edge.v
 
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
@@ -76,6 +77,11 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
         }
 
         super.handleNewEdge(edge, manager)
+    }
+
+    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitManager<*>) {
+        manager.addEdgeForOtherRunner(IfdsEdge(fact.calleeVertex, fact.calleeVertex))
+        super.handleNewCrossUnitCall(fact, manager)
     }
 }
 
@@ -216,7 +222,7 @@ private class NpeForwardFunctions(
     }
 }
 
-fun NpePrecalcBackwardAnalyzerFactory(maxPathLength: Int = 5) = AnalyzerFactory { graph ->
+fun NpePrecalcBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
     NpePrecalcBackwardAnalyzer(graph, maxPathLength)
 }
 
@@ -226,7 +232,7 @@ private class NpePrecalcBackwardAnalyzer(val graph: JcApplicationGraph, maxPathL
     override val saveSummaryEdgesAndCrossUnitCalls: Boolean
         get() = false
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
         if (edge.v.statement in graph.exitPoints(edge.method)) {
             manager.addEdgeForOtherRunner(IfdsEdge(edge.v, edge.v))
         }

@@ -17,6 +17,8 @@
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -34,41 +37,41 @@ import org.jacodb.api.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * This is a basic [IfdsUnitRunner], which launches one [IfdsInstance] for each [run] call.
+ * This is a basic [IfdsUnitRunnerFactory], which launches one [BaseIfdsUnitRunner] for each [newRunner] call.
  *
- * @property analyzerFactory used to build [Analyzer] instance, which then will be used by launched [IfdsInstance].
+ * @property analyzerFactory used to build [Analyzer] instance, which then will be used by launched [BaseIfdsUnitRunner].
  */
-class IfdsBaseUnitRunner(private val analyzerFactory: AnalyzerFactory) : IfdsUnitRunner {
-    override suspend fun <UnitType> run(
+class BaseIfdsUnitRunnerFactory(private val analyzerFactory: AnalyzerFactory) : IfdsUnitRunnerFactory {
+    override fun <UnitType> newRunner(
         graph: JcApplicationGraph,
-        manager: IfdsUnitCommunicator,
+        manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
-    ) {
+        startMethods: List<JcMethod>,
+        scope: CoroutineScope
+    ): IfdsUnitRunner<UnitType> {
         val analyzer = analyzerFactory.newAnalyzer(graph)
-        val instance = IfdsInstance(graph, analyzer, manager, unitResolver, unit, startMethods)
-        instance.analyze()
+        return BaseIfdsUnitRunner(graph, analyzer, manager, unitResolver, unit, startMethods, scope)
     }
 }
 
 /**
  * Encapsulates launch of tabulation algorithm, described in RHS95, for one unit
  */
-private class IfdsInstance<UnitType>(
+private class BaseIfdsUnitRunner<UnitType>(
     private val graph: ApplicationGraph<JcMethod, JcInst>,
     private val analyzer: Analyzer,
-    private val manager: IfdsUnitCommunicator,
+    private val manager: IfdsUnitManager<UnitType>,
     private val unitResolver: UnitResolver<UnitType>,
-    private val unit: UnitType,
-    startMethods: List<JcMethod>
-) {
+    override val unit: UnitType,
+    startMethods: List<JcMethod>,
+    scope: CoroutineScope
+) : IfdsUnitRunner<UnitType> {
 
     private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
     private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = ConcurrentHashMap()
-    private val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
     private val visitedMethods: MutableSet<JcMethod> = mutableSetOf()
 
     private val flowSpace get() = analyzer.flowFunctions
@@ -98,24 +101,22 @@ private class IfdsInstance<UnitType>(
      * It will check if the edge is new and, if success, add it to [workList]
      * and summarize all [SummaryFact]s produces by the edge.
      *
-     * @param e the new path edge
+     * @param edge the new path edge
      * @param pred the description of predecessor of the edge
      */
-    private fun propagate(e: IfdsEdge, pred: PathEdgePredecessor): Boolean {
-        pathEdgesPreds.computeIfAbsent(e) {
+    private fun propagate(edge: IfdsEdge, pred: PathEdgePredecessor): Boolean {
+        require(unitResolver.resolve(edge.method) == unit)
+
+        pathEdgesPreds.computeIfAbsent(edge) {
             ConcurrentHashMap.newKeySet()
         }.add(pred)
 
-        if (pathEdges.add(e)) {
-            require(workList.trySend(e).isSuccess)
-            analyzer.handleNewEdge(e, manager)
+        if (pathEdges.add(edge)) {
+            require(workList.trySend(edge).isSuccess)
+            analyzer.handleNewEdge(edge, manager)
             return true
         }
         return false
-    }
-
-    fun addEdge(e: IfdsEdge): Boolean {
-        return propagate(e, PathEdgePredecessor(e, PredecessorKind.Unknown))
     }
 
     private val JcMethod.isExtern: Boolean
@@ -132,12 +133,17 @@ private class IfdsInstance<UnitType>(
      */
     private suspend fun runTabulationAlgorithm(): Unit = coroutineScope {
         while (isActive) {
-            val curEdge = workList.tryReceive().getOrNull() ?: throw EmptyQueueCancellationException
+            val curEdge = workList.tryReceive().getOrNull() ?: run {//withTimeoutOrNull(20) { workList.receive() } ?: run {
+                manager.updateQueueStatus(true, this@BaseIfdsUnitRunner)
+                workList.receive().also {
+                    manager.updateQueueStatus(false, this@BaseIfdsUnitRunner)
+                }
+            }
 
             if (visitedMethods.add(curEdge.method)) {
                 // Listen for incoming updates
                 manager
-                    .subscribeForSummaryEdgesOf(curEdge.method)
+                    .subscribeForSummaryEdgesOf(curEdge.method, this@BaseIfdsUnitRunner)
                     .onEach { propagate(it, PathEdgePredecessor(it, PredecessorKind.Unknown)) }
                     .launchIn(this)
             }
@@ -168,7 +174,7 @@ private class IfdsInstance<UnitType>(
                                 val exitVertices: Flow<IfdsVertex> = if (callee.isExtern) {
 //                                    manager.addEdgeForOtherRunner(IfdsEdge(sVertex, sVertex))
                                     manager
-                                        .subscribeForSummaryEdgesOf(callee)
+                                        .subscribeForSummaryEdgesOf(callee, this@BaseIfdsUnitRunner)
                                         .filter { it.u == sVertex && it.v.statement in graph.exitPoints(callee) }
                                         .map { it.v }
                                 } else {
@@ -246,14 +252,22 @@ private class IfdsInstance<UnitType>(
     /**
      * Runs tabulation algorithm and updates [manager] with everything that is relevant.
      */
-    suspend fun analyze() = coroutineScope {
+    private suspend fun analyze() = coroutineScope {
         try {
             runTabulationAlgorithm()
-        } catch (_: EmptyQueueCancellationException) {}
-        finally {
+        } catch (_: EmptyQueueCancellationException) {
+        } finally {
             analyzer.handleIfdsResult(ifdsResult, manager)
         }
     }
+
+    override val job = scope.launch(start = CoroutineStart.LAZY) {
+        analyze()
+    }
+
+    override fun submitNewEdge(edge: IfdsEdge) {
+        propagate(edge, PathEdgePredecessor(edge, PredecessorKind.Unknown))
+    }
 }
 
-private object EmptyQueueCancellationException: CancellationException()
+internal object EmptyQueueCancellationException: CancellationException()

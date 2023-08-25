@@ -58,7 +58,7 @@ interface FlowFunctionsSpace {
 
 /**
  * [Analyzer] interface describes how facts are propagated and how vulnerabilities are produced by these facts during
- * the run of tabulation algorithm by [IfdsBaseUnitRunner].
+ * the run of tabulation algorithm by [BaseIfdsUnitRunnerFactory].
  *
  * There are two methods that can turn facts into vulnerabilities or other [SummaryFact]s: [handleNewEdge] and
  * [handleIfdsResult]. First is called during the analysis, each time a new path edge is found, and second
@@ -79,21 +79,21 @@ interface Analyzer {
     val flowFunctions: FlowFunctionsSpace
 
     /**
-     * This method is called by [IfdsBaseUnitRunner] each time a new path edge is found.
+     * This method is called by [BaseIfdsUnitRunnerFactory] each time a new path edge is found.
      *
      * @return [SummaryFact]s that are produced by this edge, that need to be saved to summary.
      */
-    fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator)
+    fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>)
 
-    fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitCommunicator)
+    fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitManager<*>)
 
     /**
-     * This method is called once by [IfdsBaseUnitRunner] when the propagation of facts is finished
+     * This method is called once by [BaseIfdsUnitRunnerFactory] when the propagation of facts is finished
      * (normally or due to cancellation).
      *
      * @return [SummaryFact]s that can be obtained after the facts propagation was completed.
      */
-    fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator)
+    fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>)
 }
 
 abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyzer {
@@ -101,20 +101,20 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
 
     abstract val saveSummaryEdgesAndCrossUnitCalls: Boolean
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
         if (saveSummaryEdgesAndCrossUnitCalls && edge.v.statement in graph.exitPoints(edge.method)) {
             manager.uploadSummaryFact(SummaryEdgeFact(edge))
         }
     }
 
-    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitCommunicator) {
+    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitManager<*>) {
         if (saveSummaryEdgesAndCrossUnitCalls) {
             manager.uploadSummaryFact(fact)
             verticesWithTraceGraphNeeded.add(fact.callerVertex)
         }
     }
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitCommunicator) {
+    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>) {
         val traceGraphs = verticesWithTraceGraphNeeded.map {
             ifdsResult.resolveTraceGraph(it)
         }
@@ -128,7 +128,7 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
 /**
  * A functional interface that allows to produce [Analyzer] by [JcApplicationGraph].
  *
- * It simplifies instantiation of [IfdsUnitRunner]s because this way you don't have to pass graph and reversed
+ * It simplifies instantiation of [IfdsUnitRunnerFactory]s because this way you don't have to pass graph and reversed
  * graph to [Analyzer]s directly, relying on runner to do it by itself.
  */
 fun interface AnalyzerFactory {

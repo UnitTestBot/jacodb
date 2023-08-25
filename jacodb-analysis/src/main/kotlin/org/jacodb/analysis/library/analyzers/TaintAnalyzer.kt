@@ -21,7 +21,7 @@ import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.IfdsUnitCommunicator
+import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -121,7 +121,7 @@ open class TaintAnalyzer(
         const val vulnerabilityType: String = "taint analysis"
     }
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
         if (edge.v.domainFact in sinks(edge.v.statement)) {
             manager.uploadSummaryFact(VulnerabilityLocation(vulnerabilityType, edge.v))
             verticesWithTraceGraphNeeded.add(edge.v)
@@ -161,7 +161,7 @@ private class TaintBackwardAnalyzer(
 
     override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, generates, sinks, maxPathLength)
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitCommunicator) {
+    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
         if (edge.v.statement in graph.exitPoints(edge.method)) {
             manager.addEdgeForOtherRunner(IfdsEdge(edge.v, edge.v))
         }
