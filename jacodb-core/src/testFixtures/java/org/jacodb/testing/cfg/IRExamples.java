@@ -141,4 +141,24 @@ public class IRExamples {
         }
         return -1;
     }
+
+    static public int testIinc(int x) {
+        return x++;
+    }
+
+    static public int[] testIincArrayIntIdx() {
+        int[] arr = new int[3];
+        int idx = 0;
+        arr[idx++] = 1;
+        arr[++idx] = 2;
+        return arr;
+    }
+
+    static public int[] testIincArrayByteIdx() {
+        int[] arr = new int[3];
+        byte idx = 0;
+        arr[idx++] = 1;
+        arr[++idx] = 2;
+        return arr;
+    }
 }

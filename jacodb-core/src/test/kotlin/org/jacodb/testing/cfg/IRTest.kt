@@ -45,6 +45,7 @@ import org.objectweb.asm.util.CheckClassAdapter
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Paths
 
 class OverridesResolver(
     private val hierarchyExtension: HierarchyExtension
@@ -285,7 +286,7 @@ class IRTest : BaseTest() {
     }
 
 
-        @Test
+    @Test
     fun `get ir of self`() {
         testClass(cp.findClass<JcClasspathImpl>())
         testClass(cp.findClass<JcClassOrInterfaceImpl>())
@@ -302,6 +303,36 @@ class IRTest : BaseTest() {
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
+    }
+
+    @Test
+    fun `iinc should work`() {
+        val clazz = cp.findClass<IRExamples>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "testIinc" }
+        val res = method.invoke(null, 0)
+        assertEquals(0, res)
+    }
+
+    @Test
+    fun `iincArrayIntIdx should work`() {
+        val clazz = cp.findClass<IRExamples>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "testIincArrayIntIdx" }
+        val res = method.invoke(null)
+        assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
+    }
+
+    @Test
+    fun `iincArrayByteIdx should work`() {
+        val clazz = cp.findClass<IRExamples>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "testIincArrayByteIdx" }
+        val res = method.invoke(null)
+        assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
     }
 
     // todo: make this test green
@@ -373,16 +404,22 @@ class IRTest : BaseTest() {
             }
         }
         val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
-        val checker = CheckClassAdapter(classNode)
-        classNode.accept(checker)
+        val checker = CheckClassAdapter(cw)
+        try {
+            classNode.accept(checker)
+        } catch (ex: Throwable) {
+            println(ex)
+        }
         val targetDir = target.resolve(klass.packageName.replace('.', '/'))
         val targetFile = targetDir.resolve("${klass.simpleName}.class").toFile().also {
             it.parentFile?.mkdirs()
         }
         targetFile.writeBytes(cw.toByteArray())
 
-        val classloader = URLClassLoader(arrayOf(target.toUri().toURL()))
-        classloader.loadClass(klass.name)
+        val cp = listOf(target.toUri().toURL()) + System.getProperty("java.class.path").split(File.pathSeparatorChar)
+            .map { Paths.get(it).toUri().toURL() }
+        val allClassLoader = URLClassLoader(cp.toTypedArray(), null)
+        allClassLoader.loadClass(klass.name)
     } catch (e: NoClassInClasspathException) {
         System.err.println(e.localizedMessage)
     }

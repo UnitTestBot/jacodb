@@ -481,11 +481,17 @@ class RawInstListBuilder(
         val oldVar = currentFrame.locals[variable]
         return if (oldVar != null) {
             if (oldVar.typeName == expr.typeName || (expr is JcRawNullConstant && !oldVar.typeName.isPrimitive)) {
+
+                fixStackVariableUsages(oldVar, insn)
+
                 JcRawAssignInst(method, oldVar, expr)
             } else if (expr is JcRawSimpleValue) {
                 currentFrame = currentFrame.put(variable, expr)
                 null
             } else {
+
+                fixStackVariableUsages(oldVar, insn)
+
                 val assignment = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
                 currentFrame = currentFrame.put(variable, assignment)
                 JcRawAssignInst(method, oldVar, expr)
@@ -1084,12 +1090,15 @@ class RawInstListBuilder(
                 )
             }
 
-            instructionList(insnNode) += JcRawCatchInst(
+
+            val catchInst = JcRawCatchInst(
                 method,
                 throwable,
                 labelRef(currentEntry),
                 entries
             )
+
+            instructionList(currentEntry).add(1, catchInst)
 
             push(throwable)
         }
@@ -1097,6 +1106,9 @@ class RawInstListBuilder(
 
     private fun buildIincInsnNode(insnNode: IincInsnNode) {
         val local = local(insnNode.`var`)
+
+        fixStackVariableUsages(local, insnNode)
+
         val add = JcRawAddExpr(local.typeName, local, JcRawInt(insnNode.incr))
         instructionList(insnNode) += JcRawAssignInst(method, local, add)
         local(insnNode.`var`, local, insnNode)
@@ -1504,5 +1516,21 @@ class RawInstListBuilder(
             in Opcodes.ILOAD..Opcodes.ALOAD -> push(local(insnNode.`var`))
             else -> error("Unknown opcode ${insnNode.opcode} in VarInsnNode")
         }
+    }
+
+    private fun fixStackVariableUsages(variable: JcRawValue, insn: AbstractInsnNode) {
+        for (i in currentFrame.stack.indices) {
+            val elem = currentFrame.stack[i]
+            if (!matchInst(elem, variable)) continue
+
+            val freshVar = nextRegister(elem.typeName)
+            instructionList(insn) += JcRawAssignInst(method, freshVar, elem)
+            currentFrame = currentFrame.copy(stack = currentFrame.stack.set(i, freshVar))
+        }
+    }
+
+    private fun matchInst(value: JcRawValue, target: JcRawValue): Boolean {
+        if (value == target) return true
+        return value.operands.any { matchInst(it, target) }
     }
 }

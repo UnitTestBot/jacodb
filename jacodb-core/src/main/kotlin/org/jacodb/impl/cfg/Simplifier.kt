@@ -65,18 +65,24 @@ internal class Simplifier {
             // because of potential dependencies between such variables
             val assignmentsMap = computeAssignments(instructionList)
             val replacements = assignmentsMap.filterValues { it.size == 1 }.map { it.key to it.value.first() }.toMap()
+            var instructionListUpdated = false
             instructionList = instructionList
                 .filterNot(InstructionFilter {
                     if (it !is JcRawAssignInst) return@InstructionFilter false
                     val lhv = it.lhv as? JcRawSimpleValue ?: return@InstructionFilter false
                     val rhv = it.rhv as? JcRawSimpleValue ?: return@InstructionFilter false
-                    replacements[lhv] == rhv && replacements[rhv] == lhv
+                    if (replacements[lhv] != rhv || replacements[rhv] != lhv) return@InstructionFilter false
+
+                    instructionListUpdated = true
+                    true
                 })
-                .map(ExprMapper(replacements.toMap()))
                 .filterNot(InstructionFilter {
-                    it is JcRawAssignInst && it.rhv == it.lhv
+                    if (it !is JcRawAssignInst || it.rhv != it.lhv) return@InstructionFilter false
+
+                    instructionListUpdated = true
+                    true
                 })
-        } while (replacements.isNotEmpty())
+        } while (instructionListUpdated)
 
         do {
             // trying to remove all the simple variables that are equivalent to some other simple variable
@@ -181,7 +187,7 @@ internal class Simplifier {
                 val rhv = inst.rhv
                 if (inst.lhv is JcRawSimpleValue
                     && rhv is JcRawLocalVar
-                    && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
+                    && uses.getOrDefault(inst.rhv, emptySet()).singleOrNull() == inst
                     && rhv !in reservedValues
                 ) {
                     val lhv = inst.lhv
