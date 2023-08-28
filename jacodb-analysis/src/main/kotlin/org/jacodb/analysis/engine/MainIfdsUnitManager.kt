@@ -65,6 +65,7 @@ class MainIfdsUnitManager<UnitType>(
     private val crossUnitCallsStorage = SummaryStorageImpl<CrossUnitCallFact>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<VulnerabilityLocation>()
     private val unitRunners: MutableMap<UnitType, IfdsUnitRunner<UnitType>> = ConcurrentHashMap()
+    private val dependencyController = IfdsRunnerDependencyController<UnitType>()
 
     private val IfdsVertex.traceGraph: TraceGraph
         get() = tracesStorage
@@ -97,6 +98,10 @@ class MainIfdsUnitManager<UnitType>(
                 }
             }
 
+            val controllerJob = launch {
+                dependencyController.dispatch()
+            }
+
             // TODO: do smth smarter here
             unitsQueue.toList().forEach { unit ->
                 val runner = ifdsUnitRunnerFactory.newRunner(
@@ -108,11 +113,13 @@ class MainIfdsUnitManager<UnitType>(
                     this@withTimeoutOrNull
                 )
                 unitRunners[unit] = runner
+                dependencyController.eventChannel.send(IfdsRunnerDependencyController.NewRunner(runner))
                 require(runner.job.start())
             }
 
             unitRunners.values.map { it.job }.joinAll()
             progressLoggerJob.cancelAndJoin()
+            controllerJob.cancelAndJoin()
         }
 
         logger.info { "All jobs completed, gathering results..." }
@@ -201,6 +208,11 @@ class MainIfdsUnitManager<UnitType>(
     }
 
     override fun subscribeForSummaryEdgesOf(method: JcMethod, runner: IfdsUnitRunner<UnitType>): Flow<IfdsEdge> {
+        require(
+            dependencyController.eventChannel
+                .trySend(IfdsRunnerDependencyController.NewDependency(runner.unit, unitResolver.resolve(method)))
+                .isSuccess
+        )
         return summaryEdgesStorage.getFacts(method, null).map {
             it.edge
         }
@@ -224,9 +236,14 @@ class MainIfdsUnitManager<UnitType>(
     }
 
     override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-        if (isEmpty) {
-            runner.job.cancel(EmptyQueueCancellationException)
+        require(
+            dependencyController.eventChannel
+                .trySend(IfdsRunnerDependencyController.QueueStatusUpdate(runner.unit, isEmpty))
+                .isSuccess
+        )
+//        if (isEmpty) {
+//            runner.job.cancel(EmptyQueueCancellationException)
 //            unitRunners.remove(runner.unit)
-        }
+//        }
     }
 }

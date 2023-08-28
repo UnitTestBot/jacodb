@@ -151,30 +151,3 @@ class BidiIfdsUnitRunnerFactory(
         }
     }
 }
-///**
-// * A composite [IfdsUnitRunnerFactory] that launches two runners (backward and forward) sequentially
-// * on the same unit with the same startMethods.
-// *
-// * First, it launches [backwardRunner] on the reversed graph and waits for its completion.
-// * Then it launches [forwardRunner] on the direct graph.
-// */
-//class SequentialBidiIfdsUnitRunner(
-//    private val forwardRunner: IfdsUnitRunner,
-//    private val backwardRunner: IfdsUnitRunner,
-//) : IfdsUnitRunner {
-//    override suspend fun <UnitType> run(
-//        graph: JcApplicationGraph,
-//        manager: IfdsUnitManager,
-//        unitResolver: UnitResolver<UnitType>,
-//        unit: UnitType,
-//        startMethods: List<JcMethod>
-//    ) {
-//        val forwardCommunicator = ForwardIfdsUnitManager(manager, unitResolver, unit)
-//        val backwardCommunicator = BackwardIfdsUnitManager(manager, unitResolver, unit)
-//        forwardCommunicator.backwardHandle = backwardCommunicator
-//        backwardCommunicator.forwardCommunicator = forwardCommunicator
-//
-//        backwardRunner.run(graph.reversed, backwardCommunicator, unitResolver, unit, startMethods)
-//        forwardRunner.run(graph, forwardCommunicator, unitResolver, unit, startMethods)
-//    }
-//}
