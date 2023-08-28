@@ -72,15 +72,20 @@ class BidiIfdsUnitRunnerFactory(
     private val backwardRunnerFactory: IfdsUnitRunnerFactory,
     private val isParallel: Boolean = true
 ) : IfdsUnitRunnerFactory {
-    override fun <UnitType> newRunner(
-        graph: JcApplicationGraph,
-        manager: IfdsUnitManager<UnitType>,
-        unitResolver: UnitResolver<UnitType>,
-        unit: UnitType,
+    private inner class BidiIfdsUnitRunner<UnitType>(
+        private val graph: JcApplicationGraph,
+        private val manager: IfdsUnitManager<UnitType>,
+        private val unitResolver: UnitResolver<UnitType>,
+        override val unit: UnitType,
         startMethods: List<JcMethod>,
-        scope: CoroutineScope,
-    ) = object : IfdsUnitRunner<UnitType> {
-        private val thisRef = this
+        scope: CoroutineScope
+    ) : IfdsUnitRunner<UnitType> {
+
+        @Volatile
+        private var forwardQueueIsEmpty: Boolean = false
+
+        @Volatile
+        private var backwardQueueIsEmpty: Boolean = false
 
         private val forwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> by manager {
 
@@ -93,7 +98,8 @@ class BidiIfdsUnitRunnerFactory(
             }
 
             override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-                manager.updateQueueStatus(isEmpty, thisRef)
+                forwardQueueIsEmpty = isEmpty
+                manager.updateQueueStatus(forwardQueueIsEmpty && backwardQueueIsEmpty, this@BidiIfdsUnitRunner)
             }
         }
 
@@ -113,9 +119,11 @@ class BidiIfdsUnitRunnerFactory(
             ): Flow<IfdsEdge> = emptyFlow()
 
             override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-                if (!isParallel) {
+                backwardQueueIsEmpty = isEmpty
+                if (!isParallel && isEmpty) {
                     runner.job.cancel()
                 }
+                manager.updateQueueStatus(forwardQueueIsEmpty && backwardQueueIsEmpty, this@BidiIfdsUnitRunner)
             }
         }
 
@@ -127,19 +135,12 @@ class BidiIfdsUnitRunnerFactory(
             forwardRunner?.submitNewEdge(edge)
         }
 
-        override val unit: UnitType = unit
-
         override val job: Job = scope.launch(start = CoroutineStart.LAZY) {
-            backwardRunner = backwardRunnerFactory.newRunner(
-                graph.reversed,
-                backwardManager,
-                unitResolver,
-                unit,
-                startMethods,
-                this
-            )
+            backwardRunner = backwardRunnerFactory
+                .newRunner(graph.reversed, backwardManager, unitResolver, unit, startMethods, this)
 
-            forwardRunner = forwardRunnerFactory.newRunner(graph, forwardManager, unitResolver, unit, startMethods, this)
+            forwardRunner = forwardRunnerFactory
+                .newRunner(graph, forwardManager, unitResolver, unit, startMethods, this)
 
             if (isParallel) {
                 backwardRunner!!.job.start()
@@ -150,4 +151,13 @@ class BidiIfdsUnitRunnerFactory(
             forwardRunner!!.job.join()
         }
     }
+
+    override fun <UnitType> newRunner(
+        graph: JcApplicationGraph,
+        manager: IfdsUnitManager<UnitType>,
+        unitResolver: UnitResolver<UnitType>,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+        scope: CoroutineScope,
+    ): IfdsUnitRunner<UnitType> = BidiIfdsUnitRunner(graph, manager, unitResolver, unit, startMethods, scope)
 }

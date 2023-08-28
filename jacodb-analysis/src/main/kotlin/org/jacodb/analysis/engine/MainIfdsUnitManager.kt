@@ -55,17 +55,37 @@ class MainIfdsUnitManager<UnitType>(
     private val timeoutMillis: Long
 ) : IfdsUnitManager<UnitType> {
 
-    private val unitsQueue: MutableSet<UnitType> = mutableSetOf()
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
-    private val dependsOn: MutableMap<UnitType, Int> = mutableMapOf()
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
     private val tracesStorage = SummaryStorageImpl<TraceGraphFact>()
     private val crossUnitCallsStorage = SummaryStorageImpl<CrossUnitCallFact>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<VulnerabilityLocation>()
+
     private val unitRunners: MutableMap<UnitType, IfdsUnitRunner<UnitType>> = ConcurrentHashMap()
     private val dependencyController = IfdsRunnerDependencyController<UnitType>()
+
+    private fun getAllDependencies(method: JcMethod): Set<JcMethod> {
+        val result = mutableSetOf<JcMethod>()
+        for (inst in method.flowGraph().instructions) {
+            graph.callees(inst).forEach {
+                result.add(it)
+            }
+        }
+        return result
+    }
+
+    private fun addStart(method: JcMethod) {
+        val unit = unitResolver.resolve(method)
+        if (method in foundMethods[unit].orEmpty()) {
+            return
+        }
+
+        foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
+        val dependencies = getAllDependencies(method)
+        dependencies.forEach { addStart(it) }
+    }
 
     private val IfdsVertex.traceGraph: TraceGraph
         get() = tracesStorage
@@ -86,14 +106,14 @@ class MainIfdsUnitManager<UnitType>(
                 addStart(it)
             }
 
-            val unitsCount = unitsQueue.size
-            logger.info { "Starting analysis. Number of found units: $unitsCount" }
+            val allUnits = foundMethods.keys.toList()
+            logger.info { "Starting analysis. Number of found units: ${allUnits.size}" }
 
             val progressLoggerJob = launch {
                 while (isActive) {
                     delay(1000)
                     logger.info {
-                        "Current progress: ${unitRunners.values.count { it.job.isCompleted }} / $unitsCount units completed"
+                        "Current progress: ${unitRunners.values.count { it.job.isCompleted }} / ${allUnits.size} units completed"
                     }
                 }
             }
@@ -103,7 +123,7 @@ class MainIfdsUnitManager<UnitType>(
             }
 
             // TODO: do smth smarter here
-            unitsQueue.toList().forEach { unit ->
+            allUnits.forEach { unit ->
                 val runner = ifdsUnitRunnerFactory.newRunner(
                     graph,
                     this@MainIfdsUnitManager,
@@ -184,29 +204,6 @@ class MainIfdsUnitManager<UnitType>(
         return result
     }
 
-    private fun getAllDependencies(method: JcMethod): Set<JcMethod> {
-        val result = mutableSetOf<JcMethod>()
-        for (inst in method.flowGraph().instructions) {
-            graph.callees(inst).forEach {
-                result.add(it)
-            }
-        }
-        return result
-    }
-
-    private fun addStart(method: JcMethod) {
-        val unit = unitResolver.resolve(method)
-        if (method in foundMethods[unit].orEmpty()) {
-            return
-        }
-
-        unitsQueue.add(unit)
-        foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
-        val dependencies = getAllDependencies(method)
-        dependencies.forEach { addStart(it) }
-        dependsOn[unit] = dependsOn.getOrDefault(unit, 0) + dependencies.size
-    }
-
     override fun subscribeForSummaryEdgesOf(method: JcMethod, runner: IfdsUnitRunner<UnitType>): Flow<IfdsEdge> {
         require(
             dependencyController.eventChannel
@@ -241,9 +238,5 @@ class MainIfdsUnitManager<UnitType>(
                 .trySend(IfdsRunnerDependencyController.QueueStatusUpdate(runner.unit, isEmpty))
                 .isSuccess
         )
-//        if (isEmpty) {
-//            runner.job.cancel(EmptyQueueCancellationException)
-//            unitRunners.remove(runner.unit)
-//        }
     }
 }

@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
 import java.util.concurrent.ConcurrentHashMap
 
 class IfdsRunnerDependencyController<UnitType> {
@@ -61,6 +62,9 @@ class IfdsRunnerDependencyController<UnitType> {
 
     suspend fun dispatch() = coroutineScope {
         for (event in eventReceiveChannel) {
+            if (!isActive) {
+                break
+            }
             when (event) {
                 is NewDependency -> {
                     edges.getOrPut(event.consumer) { ConcurrentHashMap.newKeySet() }.add(event.producer)

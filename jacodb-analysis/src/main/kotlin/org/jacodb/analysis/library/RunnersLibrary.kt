@@ -44,7 +44,7 @@ fun newSqlInjectionRunner(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
 fun newNpeRunner(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
     BaseIfdsUnitRunnerFactory(NpeAnalyzerFactory(maxPathLength)),
     BaseIfdsUnitRunnerFactory(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
-    isParallel = true
+    isParallel = false
 )
 
 fun newAliasRunner(

@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -235,7 +234,7 @@ private class BaseIfdsUnitRunner<UnitType>(
                     }
                 }
             }
-            yield()
+//            yield()
         }
     }
 
