@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.impl
 
-import juliet.testcasesupport.AbstractTestCase
+import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.toDumpable

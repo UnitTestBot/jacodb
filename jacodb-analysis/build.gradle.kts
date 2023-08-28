@@ -6,17 +6,23 @@ plugins {
     kotlin("plugin.serialization") version "1.7.20"
 }
 
+repositories {
+    maven(url = "https://jitpack.io")
+}
+
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-api"))
 
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(project(":jacodb-api"))
-    testImplementation(group = "javax.servlet", name = "servlet-api", version = "2.5")
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-params", version = "5.9.2")
-    testImplementation(files("src/test/resources/juliet.jar"))
     testImplementation(files("src/test/resources/pointerbench.jar"))
     testImplementation(group = "joda-time", name = "joda-time", version = "2.12.5")
+    testImplementation("com.github.Lipen.juliet-test-suite:support:1.3.6")
+    for (cweNum in listOf(89, 476, 563, 690)) {
+        testImplementation("com.github.Lipen.juliet-test-suite:cwe${cweNum}:1.3.6")
+    }
 
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.4.1")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
