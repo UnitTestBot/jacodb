@@ -252,9 +252,9 @@ class RawInstListBuilder(
             for ((variable, value) in assignments) {
                 if (value != frame[variable]) {
                     if (insn.isBranchingInst || insn.isTerminateInst) {
-                        addInstruction(insn, JcRawAssignInst(method, value, frame[variable]!!), insnList.lastIndex)
+                        insnList.addInst(insn, JcRawAssignInst(method, value, frame[variable]!!), insnList.lastIndex)
                     } else {
-                        addInstruction(insn, JcRawAssignInst(method, value, frame[variable]!!))
+                        insnList.addInst(insn, JcRawAssignInst(method, value, frame[variable]!!))
                     }
                 }
             }
@@ -265,9 +265,9 @@ class RawInstListBuilder(
             for ((variable, value) in assignments) {
                 if (value != frame.stack[variable]) {
                     if (insn.isBranchingInst || insn.isTerminateInst) {
-                        insnList.add(insnList.lastIndex, JcRawAssignInst(method, value, frame.stack[variable]))
+                        insnList.addInst(insn, JcRawAssignInst(method, value, frame.stack[variable]), insnList.lastIndex)
                     } else {
-                        insnList += JcRawAssignInst(method, value, frame.stack[variable])
+                        insnList.addInst(insn, JcRawAssignInst(method, value, frame.stack[variable]))
                     }
                 }
             }
@@ -403,20 +403,23 @@ class RawInstListBuilder(
     private fun instructionList(insn: AbstractInsnNode) = instructions.getOrPut(insn, ::mutableListOf)
 
     private fun addInstruction(insn: AbstractInsnNode, inst: JcRawInst, index: Int? = null) {
+            instructionList(insn).addInst(insn, inst, index)
+    }
 
+    private fun MutableList<JcRawInst>.addInst(node: AbstractInsnNode, inst: JcRawInst, index: Int? = null) {
         if (index != null) {
-            instructionList(insn).add(index, inst)
+            add(index, inst)
         } else {
-            instructionList(insn).add(inst)
+            add(inst)
         }
         if (postfixInstructions.isNotEmpty()) {
             when {
-                insn.isBranchingInst -> postfixInstructions.forEach {
-                    instructionList(insn).add(0, it.value)
+                node.isBranchingInst -> postfixInstructions.forEach {
+                    instructionList(node).add(0, it.value)
                 }
 
                 inst !is JcRawReturnInst -> postfixInstructions.forEach {
-                    instructionList(insn).add(it.value)
+                    instructionList(node).add(it.value)
                 }
             }
             postfixInstructions.clear()

@@ -272,7 +272,7 @@ class InstructionsTest : BaseInstructionsTest() {
     fun `iinc should work`() {
         val clazz = cp.findClass<Incrementation>()
 
-        val javaClazz = testClass(clazz) as Class<*>
+        val javaClazz = testAndLoadClass(clazz)
         val method = javaClazz.methods.first { it.name == "iinc" }
         val res = method.invoke(null, 0)
         assertEquals(0, res)
@@ -282,7 +282,7 @@ class InstructionsTest : BaseInstructionsTest() {
     fun `iinc arrayIntIdx should work`() {
         val clazz = cp.findClass<Incrementation>()
 
-        val javaClazz = testClass(clazz) as Class<*>
+        val javaClazz = testAndLoadClass(clazz)
         val method = javaClazz.methods.first { it.name == "iincArrayIntIdx" }
         val res = method.invoke(null)
         assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
@@ -292,7 +292,7 @@ class InstructionsTest : BaseInstructionsTest() {
     fun `iinc arrayByteIdx should work`() {
         val clazz = cp.findClass<Incrementation>()
 
-        val javaClazz = testClass(clazz) as Class<*>
+        val javaClazz = testAndLoadClass(clazz)
         val method = javaClazz.methods.first { it.name == "iincArrayByteIdx" }
         val res = method.invoke(null)
         assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
@@ -302,7 +302,7 @@ class InstructionsTest : BaseInstructionsTest() {
     fun `iinc for`() {
         val clazz = cp.findClass<Incrementation>()
 
-        val javaClazz = testClass(clazz) as Class<*>
+        val javaClazz = testAndLoadClass(clazz)
         val method = javaClazz.methods.first { it.name == "iincFor" }
         val res = method.invoke(null)
         assertArrayEquals(intArrayOf(0, 1, 2, 3, 4), res as IntArray)
