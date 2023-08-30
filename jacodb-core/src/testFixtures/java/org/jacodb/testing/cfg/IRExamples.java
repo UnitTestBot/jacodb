@@ -136,29 +136,10 @@ public class IRExamples {
     public int testArrays(String[] arg) {
         int index = 12;
         String x = arg[index];
-        if(x != null) {
+        if (x != null) {
             return x.length();
         }
         return -1;
     }
 
-    static public int testIinc(int x) {
-        return x++;
-    }
-
-    static public int[] testIincArrayIntIdx() {
-        int[] arr = new int[3];
-        int idx = 0;
-        arr[idx++] = 1;
-        arr[++idx] = 2;
-        return arr;
-    }
-
-    static public int[] testIincArrayByteIdx() {
-        int[] arr = new int[3];
-        byte idx = 0;
-        arr[idx++] = 1;
-        arr[++idx] = 2;
-        return arr;
-    }
 }

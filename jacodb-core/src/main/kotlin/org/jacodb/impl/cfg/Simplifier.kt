@@ -17,19 +17,8 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.cfg.JcRawAssignInst
-import org.jacodb.api.cfg.JcRawCatchInst
-import org.jacodb.api.cfg.JcRawComplexValue
-import org.jacodb.api.cfg.JcRawConstant
-import org.jacodb.api.cfg.JcRawExpr
-import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.cfg.JcRawLabelInst
-import org.jacodb.api.cfg.JcRawLocalVar
-import org.jacodb.api.cfg.JcRawNullConstant
-import org.jacodb.api.cfg.JcRawSimpleValue
-import org.jacodb.api.cfg.JcRawValue
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.cfg.applyAndGet
-import org.jacodb.api.cfg.AbstractFullRawExprSetCollector
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.cfg.util.InstructionFilter
 
@@ -65,24 +54,18 @@ internal class Simplifier {
             // because of potential dependencies between such variables
             val assignmentsMap = computeAssignments(instructionList)
             val replacements = assignmentsMap.filterValues { it.size == 1 }.map { it.key to it.value.first() }.toMap()
-            var instructionListUpdated = false
             instructionList = instructionList
                 .filterNot(InstructionFilter {
                     if (it !is JcRawAssignInst) return@InstructionFilter false
                     val lhv = it.lhv as? JcRawSimpleValue ?: return@InstructionFilter false
                     val rhv = it.rhv as? JcRawSimpleValue ?: return@InstructionFilter false
-                    if (replacements[lhv] != rhv || replacements[rhv] != lhv) return@InstructionFilter false
-
-                    instructionListUpdated = true
-                    true
+                    replacements[lhv] == rhv && replacements[rhv] == lhv
                 })
+                .map(ExprMapper(replacements.toMap()))
                 .filterNot(InstructionFilter {
-                    if (it !is JcRawAssignInst || it.rhv != it.lhv) return@InstructionFilter false
-
-                    instructionListUpdated = true
-                    true
+                    it is JcRawAssignInst && it.rhv == it.lhv
                 })
-        } while (instructionListUpdated)
+        } while (replacements.isNotEmpty())
 
         do {
             // trying to remove all the simple variables that are equivalent to some other simple variable
@@ -187,7 +170,7 @@ internal class Simplifier {
                 val rhv = inst.rhv
                 if (inst.lhv is JcRawSimpleValue
                     && rhv is JcRawLocalVar
-                    && uses.getOrDefault(inst.rhv, emptySet()).singleOrNull() == inst
+                    && uses.getOrDefault(inst.rhv, emptySet()).firstOrNull() == inst
                     && rhv !in reservedValues
                 ) {
                     val lhv = inst.lhv

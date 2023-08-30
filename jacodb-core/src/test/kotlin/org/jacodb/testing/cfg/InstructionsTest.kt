@@ -31,7 +31,6 @@ import org.jacodb.api.ext.cfg.values
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.int
-import org.jacodb.testing.BaseTest
 import org.jacodb.testing.Common
 import org.jacodb.testing.Common.CommonClass
 import org.jacodb.testing.WithDB
@@ -51,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.activation.DataHandler
 
 
-class InstructionsTest : BaseTest() {
+class InstructionsTest : BaseInstructionsTest() {
 
     companion object : WithDB()
 
@@ -267,6 +266,48 @@ class InstructionsTest : BaseTest() {
         }
         assertEquals("defaultMethod", callDefaultMethod.method.method.name)
     }
+
+
+    @Test
+    fun `iinc should work`() {
+        val clazz = cp.findClass<Incrementation>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "iinc" }
+        val res = method.invoke(null, 0)
+        assertEquals(0, res)
+    }
+
+    @Test
+    fun `iinc arrayIntIdx should work`() {
+        val clazz = cp.findClass<Incrementation>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "iincArrayIntIdx" }
+        val res = method.invoke(null)
+        assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
+    }
+
+    @Test
+    fun `iinc arrayByteIdx should work`() {
+        val clazz = cp.findClass<Incrementation>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "iincArrayByteIdx" }
+        val res = method.invoke(null)
+        assertArrayEquals(intArrayOf(1, 0, 2), res as IntArray)
+    }
+
+    @Test
+    fun `iinc for`() {
+        val clazz = cp.findClass<Incrementation>()
+
+        val javaClazz = testClass(clazz) as Class<*>
+        val method = javaClazz.methods.first { it.name == "iincFor" }
+        val res = method.invoke(null)
+        assertArrayEquals(intArrayOf(0, 1, 2, 3, 4), res as IntArray)
+    }
+
 }
 
 fun JcMethod.dumpInstructions(): String {
