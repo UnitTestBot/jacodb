@@ -409,15 +409,18 @@ class RawInstListBuilder(
         } else {
             instructionList(insn).add(inst)
         }
-        when {
-            insn.isBranchingInst -> postfixInstructions.forEach {
-                instructionList(insn).add(0, it.value)
+        if (postfixInstructions.isNotEmpty()) {
+            when {
+                insn.isBranchingInst -> postfixInstructions.forEach {
+                    instructionList(insn).add(0, it.value)
+                }
+
+                inst !is JcRawReturnInst -> postfixInstructions.forEach {
+                    instructionList(insn).add(it.value)
+                }
             }
-            inst !is JcRawReturnInst -> postfixInstructions.forEach {
-                instructionList(insn).add(it.value)
-            }
+            postfixInstructions.clear()
         }
-        postfixInstructions.clear()
     }
 
     private fun nextRegister(typeName: TypeName): JcRawValue {
