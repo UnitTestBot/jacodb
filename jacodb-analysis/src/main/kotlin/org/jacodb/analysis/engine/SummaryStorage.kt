@@ -49,9 +49,9 @@ fun interface SummarySender<T: SummaryFact> {
 interface SummaryStorage<T: SummaryFact> {
     fun addNewSender(method: JcMethod): SummarySender<T>
 
-    fun getFacts(method: JcMethod, startVertex: IfdsVertex?): Flow<T>
+    fun getFacts(method: JcMethod): Flow<T>
 
-    fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<T>
+    fun getCurrentFacts(method: JcMethod): List<T>
 
     val knownMethods: List<JcMethod>
 }
@@ -69,7 +69,7 @@ class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
         }
     }
 
-    override fun getFacts(method: JcMethod, startVertex: IfdsVertex?): SharedFlow<T> {
+    override fun getFacts(method: JcMethod): SharedFlow<T> {
         return outFlows.computeIfAbsent(method) {
             MutableSharedFlow<T>(replay = Int.MAX_VALUE).also { flow ->
                 summaries[method].orEmpty().forEach { fact ->
@@ -79,8 +79,8 @@ class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
         }
     }
 
-    override fun getCurrentFacts(method: JcMethod, startVertex: IfdsVertex?): List<T> {
-        return getFacts(method, startVertex).replayCache
+    override fun getCurrentFacts(method: JcMethod): List<T> {
+        return getFacts(method).replayCache
     }
 
     override val knownMethods: List<JcMethod>

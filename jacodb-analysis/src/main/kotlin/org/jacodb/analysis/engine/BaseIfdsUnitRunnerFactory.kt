@@ -16,19 +16,19 @@
 
 package org.jacodb.analysis.engine
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -63,7 +63,7 @@ private class BaseIfdsUnitRunner<UnitType>(
     private val manager: IfdsUnitManager<UnitType>,
     private val unitResolver: UnitResolver<UnitType>,
     override val unit: UnitType,
-    startMethods: List<JcMethod>,
+    private val startMethods: List<JcMethod>,
     scope: CoroutineScope
 ) : IfdsUnitRunner<UnitType> {
 
@@ -71,29 +71,13 @@ private class BaseIfdsUnitRunner<UnitType>(
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
     private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = ConcurrentHashMap()
-    private val visitedMethods: MutableSet<JcMethod> = mutableSetOf()
 
-    private val flowSpace get() = analyzer.flowFunctions
+    private val flowSpace = analyzer.flowFunctions
 
     /**
      * Queue containing all unprocessed path edges.
      */
     private val workList = Channel<IfdsEdge>(Channel.UNLIMITED)
-
-
-    init {
-        // Adding initial facts to workList
-        for (method in startMethods) {
-            require(unitResolver.resolve(method) == unit)
-            for (sPoint in graph.entryPoint(method)) {
-                for (sFact in flowSpace.obtainPossibleStartFacts(sPoint)) {
-                    val vertex = IfdsVertex(sPoint, sFact)
-                    val edge = IfdsEdge(vertex, vertex)
-                    propagate(edge, PathEdgePredecessor(edge, PredecessorKind.NoPredecessor))
-                }
-            }
-        }
-    }
 
     /**
      * This method should be called each time new path edge is observed.
@@ -103,7 +87,7 @@ private class BaseIfdsUnitRunner<UnitType>(
      * @param edge the new path edge
      * @param pred the description of predecessor of the edge
      */
-    private fun propagate(edge: IfdsEdge, pred: PathEdgePredecessor): Boolean {
+    private suspend fun propagate(edge: IfdsEdge, pred: PathEdgePredecessor): Boolean {
         require(unitResolver.resolve(edge.method) == unit)
 
         pathEdgesPreds.computeIfAbsent(edge) {
@@ -111,8 +95,10 @@ private class BaseIfdsUnitRunner<UnitType>(
         }.add(pred)
 
         if (pathEdges.add(edge)) {
-            require(workList.trySend(edge).isSuccess)
-            analyzer.handleNewEdge(edge, manager)
+            workList.send(edge)
+            analyzer.handleNewEdge(edge).forEach {
+                manager.handleEvent(it, this)
+            }
             return true
         }
         return false
@@ -132,19 +118,11 @@ private class BaseIfdsUnitRunner<UnitType>(
      */
     private suspend fun runTabulationAlgorithm(): Unit = coroutineScope {
         while (isActive) {
-            val curEdge = workList.tryReceive().getOrNull() ?: run {//withTimeoutOrNull(20) { workList.receive() } ?: run {
-                manager.updateQueueStatus(true, this@BaseIfdsUnitRunner)
+            val curEdge = workList.tryReceive().getOrNull() ?: run {
+                manager.handleEvent(QueueEmptinessChanged(true), this@BaseIfdsUnitRunner)
                 workList.receive().also {
-                    manager.updateQueueStatus(false, this@BaseIfdsUnitRunner)
+                    manager.handleEvent(QueueEmptinessChanged(false), this@BaseIfdsUnitRunner)
                 }
-            }
-
-            if (visitedMethods.add(curEdge.method)) {
-                // Listen for incoming updates
-                manager
-                    .subscribeForSummaryEdgesOf(curEdge.method, this@BaseIfdsUnitRunner)
-                    .onEach { propagate(it, PathEdgePredecessor(it, PredecessorKind.Unknown)) }
-                    .launchIn(this)
             }
 
             val (u, v) = curEdge
@@ -168,39 +146,48 @@ private class BaseIfdsUnitRunner<UnitType>(
                             for (sFact in factsAtStart) {
                                 val sVertex = IfdsVertex(sPoint, sFact)
 
-                                // Requesting to analyze callee from sVertex, similar to lines 14-16 of RHS95
-                                // Also, receiving summary edges for callee that start from sVertex
-                                val exitVertices: Flow<IfdsVertex> = if (callee.isExtern) {
-//                                    manager.addEdgeForOtherRunner(IfdsEdge(sVertex, sVertex))
-                                    manager
-                                        .subscribeForSummaryEdgesOf(callee, this@BaseIfdsUnitRunner)
-                                        .filter { it.u == sVertex && it.v.statement in graph.exitPoints(callee) }
-                                        .map { it.v }
-                                } else {
-                                    val nextEdge = IfdsEdge(sVertex, sVertex)
-                                    propagate(nextEdge, PathEdgePredecessor(curEdge, PredecessorKind.CallToStart))
-
-                                    // .toList() is needed below to avoid ConcurrentModificationException
-                                    summaryEdges[sVertex].orEmpty().toList().asFlow()
-                                }
-
-                                // Propagation through summary edges
-                                exitVertices.onEach { (eStatement, eFact) ->
-                                    val finalFacts =
-                                        flowSpace.obtainExitToReturnSiteFlowFunction(curVertex, returnSite, eStatement)
-                                            .compute(eFact)
+                                val handleExitVertex: suspend (IfdsVertex) -> Unit = { (eStatement, eFact) ->
+                                    val finalFacts = flowSpace
+                                        .obtainExitToReturnSiteFlowFunction(curVertex, returnSite, eStatement)
+                                        .compute(eFact)
                                     for (finalFact in finalFacts) {
                                         val summaryEdge = IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
                                         val newEdge = IfdsEdge(u, IfdsVertex(returnSite, finalFact))
                                         propagate(newEdge, PathEdgePredecessor(curEdge, PredecessorKind.ThroughSummary(summaryEdge)))
                                     }
-                                }.launchIn(this)
+                                }
 
-                                // Saving additional info
                                 if (callee.isExtern) {
-                                    analyzer.handleNewCrossUnitCall(CrossUnitCallFact(v, sVertex), manager)
+                                    // Notify about cross-unit call
+                                    analyzer.handleNewCrossUnitCall(CrossUnitCallFact(v, sVertex)).forEach {
+                                        manager.handleEvent(it, this@BaseIfdsUnitRunner)
+                                    }
+
+                                    // Waiting for exit vertices and handling them
+                                    val exitVertices = flow {
+                                        manager.handleEvent(
+                                            SubscriptionForSummaries(callee, this@flow),
+                                            this@BaseIfdsUnitRunner
+                                        )
+                                    }
+                                    exitVertices
+                                        .filter { it.u == sVertex }
+                                        .map { it.v }
+                                        .onEach(handleExitVertex)
+                                        .launchIn(this)
                                 } else {
+                                    // Save info about call for summary-facts that will be found later
                                     callSitesOf.getOrPut(sVertex) { mutableSetOf() }.add(curEdge)
+
+                                    // Initiating analysis for callee
+                                    val nextEdge = IfdsEdge(sVertex, sVertex)
+                                    propagate(nextEdge, PathEdgePredecessor(curEdge, PredecessorKind.CallToStart))
+
+                                    // Handling already-found summary edges
+                                    // .toList() is needed below to avoid ConcurrentModificationException
+                                    for (exitVertex in summaryEdges[sVertex].orEmpty().toList()) {
+                                        handleExitVertex(exitVertex)
+                                    }
                                 }
                             }
                         }
@@ -234,7 +221,6 @@ private class BaseIfdsUnitRunner<UnitType>(
                     }
                 }
             }
-//            yield()
         }
     }
 
@@ -253,10 +239,25 @@ private class BaseIfdsUnitRunner<UnitType>(
      */
     private suspend fun analyze() = coroutineScope {
         try {
+            // Adding initial facts to workList
+            for (method in startMethods) {
+                require(unitResolver.resolve(method) == unit)
+                for (sPoint in graph.entryPoint(method)) {
+                    for (sFact in flowSpace.obtainPossibleStartFacts(sPoint)) {
+                        val vertex = IfdsVertex(sPoint, sFact)
+                        val edge = IfdsEdge(vertex, vertex)
+                        propagate(edge, PathEdgePredecessor(edge, PredecessorKind.NoPredecessor))
+                    }
+                }
+            }
+
             runTabulationAlgorithm()
-        } catch (_: EmptyQueueCancellationException) {
         } finally {
-            analyzer.handleIfdsResult(ifdsResult, manager)
+            withContext(NonCancellable) {
+                analyzer.handleIfdsResult(ifdsResult).forEach {
+                    manager.handleEvent(it, this@BaseIfdsUnitRunner)
+                }
+            }
         }
     }
 
@@ -264,9 +265,7 @@ private class BaseIfdsUnitRunner<UnitType>(
         analyze()
     }
 
-    override fun submitNewEdge(edge: IfdsEdge) {
+    override suspend fun submitNewEdge(edge: IfdsEdge) {
         propagate(edge, PathEdgePredecessor(edge, PredecessorKind.Unknown))
     }
 }
-
-internal object EmptyQueueCancellationException: CancellationException()

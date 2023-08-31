@@ -20,7 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.UnusedVariableRunner
+import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzer
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
@@ -64,6 +64,6 @@ class UnusedVariableTest : BaseAnalysisTest() {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, SingletonUnitResolver, UnusedVariableRunner, methods)
+        return runAnalysis(graph, SingletonUnitResolver, UnusedVariableRunnerFactory, methods)
     }
 }

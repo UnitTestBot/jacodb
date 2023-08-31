@@ -59,7 +59,7 @@ public class JavaAnalysisApiTest {
                 .asyncNewApplicationGraphForAnalysis(classpath, null)
                 .get();
         UnitResolver<?> resolver = UnitResolversLibrary.getMethodUnitResolver();
-        IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunner();
+        IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunnerFactory();
 
         AnalysisMain.runAnalysis(
                 applicationGraph,

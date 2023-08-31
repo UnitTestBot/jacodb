@@ -17,11 +17,13 @@
 package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.AbstractAnalyzer
+import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.EdgeForOtherRunnerQuery
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.engine.IfdsUnitManager
+import org.jacodb.analysis.engine.NewSummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -114,16 +116,16 @@ open class TaintAnalyzer(
 ) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = TaintForwardFunctions(graph, maxPathLength, generates, sanitizes)
 
-    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+    override val isMainAnalyzer: Boolean
         get() = true
 
     companion object {
         const val vulnerabilityType: String = "taint analysis"
     }
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
+    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
         if (edge.v.domainFact in sinks(edge.v.statement)) {
-            manager.uploadSummaryFact(VulnerabilityLocation(vulnerabilityType, edge.v))
+            add(NewSummaryFact(VulnerabilityLocation(vulnerabilityType, edge.v)))
             verticesWithTraceGraphNeeded.add(edge.v)
         }
     }
@@ -156,14 +158,14 @@ private class TaintBackwardAnalyzer(
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int
 ) : AbstractAnalyzer(graph) {
-    override val saveSummaryEdgesAndCrossUnitCalls: Boolean
+    override val isMainAnalyzer: Boolean
         get() = false
 
     override val flowFunctions: FlowFunctionsSpace = TaintBackwardFunctions(graph, generates, sinks, maxPathLength)
 
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
+    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
         if (edge.v.statement in graph.exitPoints(edge.method)) {
-            manager.addEdgeForOtherRunner(IfdsEdge(edge.v, edge.v))
+            add(EdgeForOtherRunnerQuery(IfdsEdge(edge.v, edge.v)))
         }
     }
 }

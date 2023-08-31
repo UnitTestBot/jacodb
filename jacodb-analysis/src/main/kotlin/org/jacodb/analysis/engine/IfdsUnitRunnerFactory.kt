@@ -19,8 +19,6 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
@@ -30,7 +28,7 @@ interface IfdsUnitRunner<UnitType> {
     val unit: UnitType
     val job: Job
 
-    fun submitNewEdge(edge: IfdsEdge)
+    suspend fun submitNewEdge(edge: IfdsEdge)
 }
 
 /**
@@ -89,41 +87,53 @@ class BidiIfdsUnitRunnerFactory(
 
         private val forwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> by manager {
 
-            override fun addEdgeForOtherRunner(edge: IfdsEdge) {
-                if (unitResolver.resolve(edge.method) == unit) {
-                    backwardRunner?.submitNewEdge(edge)
-                } else {
-                    manager.addEdgeForOtherRunner(edge)
+            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+                when (event) {
+                    is EdgeForOtherRunnerQuery -> {
+                        if (unitResolver.resolve(event.edge.method) == unit) {
+                            backwardRunner?.submitNewEdge(event.edge)
+                        } else {
+                            manager.handleEvent(event, this@BidiIfdsUnitRunner)
+                        }
+                    }
+                    is NewSummaryFact -> {
+                        manager.handleEvent(event, this@BidiIfdsUnitRunner)
+                    }
+                    is QueueEmptinessChanged -> {
+                        forwardQueueIsEmpty = event.isEmpty
+                        val newEvent = QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
+                        manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
+                    }
+                    is SubscriptionForSummaries -> {
+                        manager.handleEvent(event, this@BidiIfdsUnitRunner)
+                    }
                 }
-            }
-
-            override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-                forwardQueueIsEmpty = isEmpty
-                manager.updateQueueStatus(forwardQueueIsEmpty && backwardQueueIsEmpty, this@BidiIfdsUnitRunner)
             }
         }
 
-        private val backwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> by manager {
+        private val backwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> {
+            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+                when (event) {
+                    is EdgeForOtherRunnerQuery -> {
+                        if (unitResolver.resolve(event.edge.method) == unit) {
+                            forwardRunner?.submitNewEdge(event.edge)
+                        }
+                    }
+                    is NewSummaryFact -> {
+                        manager.handleEvent(event, this@BidiIfdsUnitRunner)
+                    }
+                    is QueueEmptinessChanged -> {
+                        backwardQueueIsEmpty = event.isEmpty
+                        if (!isParallel && event.isEmpty) {
+                            runner.job.cancel()
+                        }
+                        val newEvent =
+                            QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
+                        manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
+                    }
 
-            override fun addEdgeForOtherRunner(edge: IfdsEdge) {
-                if (unitResolver.resolve(edge.method) == unit) {
-                    forwardRunner?.submitNewEdge(edge)
-                } else {
-                    manager.addEdgeForOtherRunner(edge)
+                    is SubscriptionForSummaries -> {}
                 }
-            }
-
-            override fun subscribeForSummaryEdgesOf(
-                method: JcMethod,
-                runner: IfdsUnitRunner<UnitType>
-            ): Flow<IfdsEdge> = emptyFlow()
-
-            override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-                backwardQueueIsEmpty = isEmpty
-                if (!isParallel && isEmpty) {
-                    runner.job.cancel()
-                }
-                manager.updateQueueStatus(forwardQueueIsEmpty && backwardQueueIsEmpty, this@BidiIfdsUnitRunner)
             }
         }
 
@@ -131,7 +141,7 @@ class BidiIfdsUnitRunnerFactory(
 
         private var forwardRunner: IfdsUnitRunner<UnitType>? = null
 
-        override fun submitNewEdge(edge: IfdsEdge) {
+        override suspend fun submitNewEdge(edge: IfdsEdge) {
             forwardRunner?.submitNewEdge(edge)
         }
 

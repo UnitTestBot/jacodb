@@ -34,27 +34,27 @@ import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 
 //TODO: add docs here
-val UnusedVariableRunner = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
+val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
 
-fun newSqlInjectionRunner(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
+fun newSqlInjectionRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
     BaseIfdsUnitRunnerFactory(SqlInjectionAnalyzerFactory(maxPathLength)),
     BaseIfdsUnitRunnerFactory(SqlInjectionBackwardAnalyzerFactory(maxPathLength)),
 )
 
-fun newNpeRunner(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
+fun newNpeRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
     BaseIfdsUnitRunnerFactory(NpeAnalyzerFactory(maxPathLength)),
     BaseIfdsUnitRunnerFactory(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
     isParallel = false
 )
 
-fun newAliasRunner(
+fun newAliasRunnerFactory(
     generates: (JcInst) -> List<TaintAnalysisNode>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
 ) = BaseIfdsUnitRunnerFactory(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))
 
-fun newTaintRunner(
+fun newTaintRunnerFactory(
     isSourceMethod: (JcMethod) -> Boolean,
     isSanitizeMethod: (JcMethod) -> Boolean,
     isSinkMethod: (JcMethod) -> Boolean,
@@ -64,7 +64,7 @@ fun newTaintRunner(
     BaseIfdsUnitRunnerFactory(TaintBackwardAnalyzerFactory(isSourceMethod, isSinkMethod, maxPathLength))
 )
 
-fun newTaintRunner(
+fun newTaintRunnerFactory(
     sourceMethodMatchers: List<String>,
     sanitizeMethodMatchers: List<String>,
     sinkMethodMatchers: List<String>,

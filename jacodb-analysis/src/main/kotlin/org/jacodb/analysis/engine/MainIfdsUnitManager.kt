@@ -17,10 +17,10 @@
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
@@ -28,20 +28,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jacodb.analysis.logger
-import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
-
-interface IfdsUnitManager<UnitType> {
-    fun subscribeForSummaryEdgesOf(method: JcMethod, runner: IfdsUnitRunner<UnitType>): Flow<IfdsEdge>
-
-    fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>)
-
-    fun uploadSummaryFact(fact: SummaryFact)
-
-    fun addEdgeForOtherRunner(edge: IfdsEdge)
-}
 
 /**
  * Used to launch and manage [ifdsUnitRunnerFactory] jobs for units, reachable from [startMethods].
@@ -63,10 +52,12 @@ class MainIfdsUnitManager<UnitType>(
     private val crossUnitCallsStorage = SummaryStorageImpl<CrossUnitCallFact>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<VulnerabilityLocation>()
 
-    private val unitRunners: MutableMap<UnitType, IfdsUnitRunner<UnitType>> = ConcurrentHashMap()
-    private val dependencyController = IfdsRunnerDependencyController<UnitType>()
+    private val aliveRunners: MutableMap<UnitType, IfdsUnitRunner<UnitType>> = ConcurrentHashMap()
+    private val queueEmptiness: MutableMap<UnitType, Boolean> = mutableMapOf()
+    private val dependencies: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
+    private val dependenciesRev: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
 
-    private fun getAllDependencies(method: JcMethod): Set<JcMethod> {
+    private fun getAllCallees(method: JcMethod): Set<JcMethod> {
         val result = mutableSetOf<JcMethod>()
         for (inst in method.flowGraph().instructions) {
             graph.callees(inst).forEach {
@@ -83,13 +74,13 @@ class MainIfdsUnitManager<UnitType>(
         }
 
         foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
-        val dependencies = getAllDependencies(method)
+        val dependencies = getAllCallees(method)
         dependencies.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
         get() = tracesStorage
-            .getCurrentFacts(method, null)
+            .getCurrentFacts(method)
             .map { it.graph }
             .singleOrNull { it.sink == this }
             ?: TraceGraph.bySink(this)
@@ -112,18 +103,21 @@ class MainIfdsUnitManager<UnitType>(
             val progressLoggerJob = launch {
                 while (isActive) {
                     delay(1000)
+                    val totalCount = allUnits.size
+                    val aliveCount = aliveRunners.size
+
                     logger.info {
-                        "Current progress: ${unitRunners.values.count { it.job.isCompleted }} / ${allUnits.size} units completed"
+                        "Current progress: ${totalCount - aliveCount} / $totalCount units completed"
                     }
                 }
             }
 
-            val controllerJob = launch {
-                dependencyController.dispatch()
+            launch {
+                dispatchDependencies()
             }
 
             // TODO: do smth smarter here
-            allUnits.forEach { unit ->
+            val allJobs = allUnits.map { unit ->
                 val runner = ifdsUnitRunnerFactory.newRunner(
                     graph,
                     this@MainIfdsUnitManager,
@@ -132,24 +126,24 @@ class MainIfdsUnitManager<UnitType>(
                     foundMethods[unit]!!.toList(),
                     this@withTimeoutOrNull
                 )
-                unitRunners[unit] = runner
-                dependencyController.eventChannel.send(IfdsRunnerDependencyController.NewRunner(runner))
+                aliveRunners[unit] = runner
                 require(runner.job.start())
+                runner.job
             }
 
-            unitRunners.values.map { it.job }.joinAll()
-            progressLoggerJob.cancelAndJoin()
-            controllerJob.cancelAndJoin()
+            allJobs.joinAll()
+            eventChannel.close()
+            progressLoggerJob.cancel()
         }
 
         logger.info { "All jobs completed, gathering results..." }
 
         val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
-            vulnerabilitiesStorage.getCurrentFacts(method, null)
+            vulnerabilitiesStorage.getCurrentFacts(method)
         }
 
         foundMethods.values.flatten().forEach { method ->
-            for (crossUnitCall in crossUnitCallsStorage.getCurrentFacts(method, null)) {
+            for (crossUnitCall in crossUnitCallsStorage.getCurrentFacts(method)) {
                 val calledMethod = graph.methodOf(crossUnitCall.calleeVertex.statement)
                 crossUnitCallers.getOrPut(calledMethod) { mutableSetOf() }.add(crossUnitCall)
             }
@@ -204,39 +198,69 @@ class MainIfdsUnitManager<UnitType>(
         return result
     }
 
-    override fun subscribeForSummaryEdgesOf(method: JcMethod, runner: IfdsUnitRunner<UnitType>): Flow<IfdsEdge> {
-        require(
-            dependencyController.eventChannel
-                .trySend(IfdsRunnerDependencyController.NewDependency(runner.unit, unitResolver.resolve(method)))
-                .isSuccess
-        )
-        return summaryEdgesStorage.getFacts(method, null).map {
-            it.edge
+    override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+        when (event) {
+            is EdgeForOtherRunnerQuery -> {
+                val otherRunner = aliveRunners[unitResolver.resolve(event.edge.method)] ?: return
+                if (otherRunner.job.isActive) {
+                    otherRunner.submitNewEdge(event.edge)
+                }
+            }
+            is NewSummaryFact -> {
+                when (val fact = event.fact) {
+                    is CrossUnitCallFact -> crossUnitCallsStorage.addNewSender(fact.method).send(fact)
+                    is SummaryEdgeFact -> summaryEdgesStorage.addNewSender(fact.method).send(fact)
+                    is TraceGraphFact -> tracesStorage.addNewSender(fact.method).send(fact)
+                    is VulnerabilityLocation -> vulnerabilitiesStorage.addNewSender(fact.method).send(fact)
+                }
+            }
+            is QueueEmptinessChanged -> {
+                eventChannel.send(Pair(event, runner))
+            }
+            is SubscriptionForSummaries -> {
+                eventChannel.send(Pair(event, runner))
+                summaryEdgesStorage.getFacts(event.method).map {
+                    it.edge
+                }.collect(event.collector)
+            }
         }
     }
 
-    override fun uploadSummaryFact(fact: SummaryFact) {
-        when (fact) {
-            is CrossUnitCallFact -> crossUnitCallsStorage.addNewSender(fact.method).send(fact)
-            is SummaryEdgeFact -> summaryEdgesStorage.addNewSender(fact.method).send(fact)
-            is TraceGraphFact -> tracesStorage.addNewSender(fact.method).send(fact)
-            is VulnerabilityLocation -> vulnerabilitiesStorage.addNewSender(fact.method).send(fact)
-        }
-    }
+    private val eventChannel: Channel<Pair<IfdsUnitRunnerEvent, IfdsUnitRunner<UnitType>>> =
+        Channel(capacity = Int.MAX_VALUE)
 
-    override fun addEdgeForOtherRunner(edge: IfdsEdge) {
-        // TODO: cache queries for not yet launched units
-        val otherRunner = unitRunners[unitResolver.resolve(edge.method)] ?: return
-        if (otherRunner.job.isActive) {
-            otherRunner.submitNewEdge(edge)
+    private suspend fun dispatchDependencies() = eventChannel.consumeEach { (event, runner) ->
+        when (event) {
+            is SubscriptionForSummaries -> {
+                dependencies.getOrPut(runner.unit) { mutableSetOf() }
+                    .add(unitResolver.resolve(event.method))
+                dependenciesRev.getOrPut(unitResolver.resolve(event.method)) { mutableSetOf() }
+                    .add(runner.unit)
+            }
+            is QueueEmptinessChanged -> {
+                if (runner.unit !in aliveRunners) {
+                    return@consumeEach
+                }
+                queueEmptiness[runner.unit] = event.isEmpty
+                if (event.isEmpty) {
+                    val toDelete = mutableListOf(runner.unit)
+                    while (toDelete.isNotEmpty()) {
+                        val current = toDelete.removeLast()
+                        if (current in aliveRunners &&
+                            dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
+                        ) {
+                            aliveRunners[current]!!.job.cancel()
+                            aliveRunners.remove(current)
+                            for (next in dependenciesRev[current].orEmpty()) {
+                                if (queueEmptiness[next] == true) {
+                                    toDelete.add(next)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else -> error("Unexpected event for dependency controller")
         }
-    }
-
-    override fun updateQueueStatus(isEmpty: Boolean, runner: IfdsUnitRunner<UnitType>) {
-        require(
-            dependencyController.eventChannel
-                .trySend(IfdsRunnerDependencyController.QueueStatusUpdate(runner.unit, isEmpty))
-                .isSuccess
-        )
     }
 }

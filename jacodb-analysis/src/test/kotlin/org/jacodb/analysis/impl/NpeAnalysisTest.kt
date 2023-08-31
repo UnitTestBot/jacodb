@@ -20,9 +20,9 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.analyzers.NpeAnalyzer
-import org.jacodb.analysis.library.newNpeRunner
+import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
@@ -215,6 +215,6 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, MethodUnitResolver, newNpeRunner(), methods)
+        return runAnalysis(graph, SingletonUnitResolver, newNpeRunnerFactory(), methods)
     }
 }

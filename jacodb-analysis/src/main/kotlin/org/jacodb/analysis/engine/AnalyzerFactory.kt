@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Interface for flow functions -- mappings of kind DomainFact -> Collection of DomainFacts
@@ -83,9 +82,9 @@ interface Analyzer {
      *
      * @return [SummaryFact]s that are produced by this edge, that need to be saved to summary.
      */
-    fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>)
+    fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent>
 
-    fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitManager<*>)
+    fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent>
 
     /**
      * This method is called once by [BaseIfdsUnitRunnerFactory] when the propagation of facts is finished
@@ -93,36 +92,7 @@ interface Analyzer {
      *
      * @return [SummaryFact]s that can be obtained after the facts propagation was completed.
      */
-    fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>)
-}
-
-abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyzer {
-    protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
-
-    abstract val saveSummaryEdgesAndCrossUnitCalls: Boolean
-
-    override fun handleNewEdge(edge: IfdsEdge, manager: IfdsUnitManager<*>) {
-        if (saveSummaryEdgesAndCrossUnitCalls && edge.v.statement in graph.exitPoints(edge.method)) {
-            manager.uploadSummaryFact(SummaryEdgeFact(edge))
-        }
-    }
-
-    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact, manager: IfdsUnitManager<*>) {
-        if (saveSummaryEdgesAndCrossUnitCalls) {
-            manager.uploadSummaryFact(fact)
-            verticesWithTraceGraphNeeded.add(fact.callerVertex)
-        }
-    }
-
-    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>) {
-        val traceGraphs = verticesWithTraceGraphNeeded.map {
-            ifdsResult.resolveTraceGraph(it)
-        }
-
-        traceGraphs.forEach {
-            manager.uploadSummaryFact(TraceGraphFact(it))
-        }
-    }
+    fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent>
 }
 
 /**

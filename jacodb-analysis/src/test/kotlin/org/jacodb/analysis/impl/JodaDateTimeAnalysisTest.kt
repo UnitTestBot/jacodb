@@ -23,9 +23,9 @@ import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.MethodUnitResolver
-import org.jacodb.analysis.library.UnusedVariableRunner
+import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.getClassUnitResolver
-import org.jacodb.analysis.library.newNpeRunner
+import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
 import org.jacodb.api.ext.findClass
@@ -41,7 +41,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
         val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 30000L).toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L).toDumpable()
 
         println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
         val json = Json { prettyPrint = true }
@@ -50,12 +50,12 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(getClassUnitResolver(false), UnusedVariableRunner)
+        testOne(getClassUnitResolver(false), UnusedVariableRunnerFactory)
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, newNpeRunner())
+        testOne(MethodUnitResolver, newNpeRunnerFactory())
     }
 
     private val graph = runBlocking {

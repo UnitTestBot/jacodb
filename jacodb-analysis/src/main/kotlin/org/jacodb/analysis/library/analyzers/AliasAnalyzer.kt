@@ -16,11 +16,12 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
-import org.jacodb.analysis.engine.IfdsUnitManager
 import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.engine.NewSummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.paths.FieldAccessor
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -47,8 +48,8 @@ private class AliasAnalyzer(
     maxPathLength: Int,
 ) : TaintAnalyzer(graph, generates, sanitizes, sinks, maxPathLength) {
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult, manager: IfdsUnitManager<*>) {
-        ifdsResult.resultFacts.forEach { (inst, facts) ->
+    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = buildList {
+        ifdsResult.resultFacts.map { (inst, facts) ->
             facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
                 if (fact in sinks(inst)) {
                     fact.variable.let {
@@ -70,16 +71,20 @@ private class AliasAnalyzer(
                             append(it.accesses.joinToString("."))
                         }
 
-                        manager.uploadSummaryFact(
-                            VulnerabilityLocation(
-                                vulnerabilityType,
-                                IfdsVertex(inst, fact)
+                        verticesWithTraceGraphNeeded.add(IfdsVertex(inst, fact))
+
+                        add(
+                            NewSummaryFact(
+                                VulnerabilityLocation(
+                                    vulnerabilityType,
+                                    IfdsVertex(inst, fact)
+                                )
                             )
                         )
-                        verticesWithTraceGraphNeeded.add(IfdsVertex(inst, fact))
                     }
                 }
             }
         }
+        addAll(super.handleIfdsResult(ifdsResult))
     }
 }
