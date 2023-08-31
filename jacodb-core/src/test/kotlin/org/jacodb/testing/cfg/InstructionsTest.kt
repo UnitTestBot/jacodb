@@ -35,6 +35,7 @@ import org.jacodb.testing.Common
 import org.jacodb.testing.Common.CommonClass
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
 import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
+import org.jacodb.testing.hierarchies.Inheritance
 import org.jacodb.testing.primitives.Primitives
 import org.jacodb.testing.structure.FieldsAndMethods
 import org.junit.jupiter.api.Assertions.*
