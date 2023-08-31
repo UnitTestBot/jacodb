@@ -6,10 +6,6 @@ plugins {
     kotlin("plugin.serialization") version "1.7.20"
 }
 
-repositories {
-    maven(url = "https://jitpack.io")
-}
-
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-api"))
