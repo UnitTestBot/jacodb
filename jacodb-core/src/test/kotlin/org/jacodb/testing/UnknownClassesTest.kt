@@ -37,6 +37,8 @@ class UnknownClassesTest : BaseTest() {
         assertTrue(clazz is JcUnknownClass)
         assertTrue(clazz.declaredMethods.isEmpty())
         assertTrue(clazz.declaredFields.isEmpty())
+
+        assertNotNull(clazz.declaration.location)
     }
 
     @Test
