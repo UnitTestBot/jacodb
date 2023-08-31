@@ -37,7 +37,7 @@ public class Conditionals {
         }
     }
 
-    public static void conditionInFor() {
+    public static Object conditionInFor() {
         Random rnd = new Random();
         List<Boolean> list = new ArrayList<>();
         int numFalse = 0;
@@ -56,6 +56,7 @@ public class Conditionals {
         for (int i = numFalse; i < 1000; i++)
             if (!list.get(i))
                 throw new RuntimeException("False negative: " + i);
+        return null;
     }
 
 }
