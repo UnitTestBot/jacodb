@@ -16,8 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -27,7 +25,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.ApplicationGraph
@@ -46,11 +43,10 @@ class BaseIfdsUnitRunnerFactory(private val analyzerFactory: AnalyzerFactory) : 
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>,
-        scope: CoroutineScope
+        startMethods: List<JcMethod>
     ): IfdsUnitRunner<UnitType> {
         val analyzer = analyzerFactory.newAnalyzer(graph)
-        return BaseIfdsUnitRunner(graph, analyzer, manager, unitResolver, unit, startMethods, scope)
+        return BaseIfdsUnitRunner(graph, analyzer, manager, unitResolver, unit, startMethods)
     }
 }
 
@@ -62,10 +58,9 @@ private class BaseIfdsUnitRunner<UnitType>(
     private val analyzer: Analyzer,
     private val manager: IfdsUnitManager<UnitType>,
     private val unitResolver: UnitResolver<UnitType>,
-    override val unit: UnitType,
-    private val startMethods: List<JcMethod>,
-    scope: CoroutineScope
-) : IfdsUnitRunner<UnitType> {
+    unit: UnitType,
+    private val startMethods: List<JcMethod>
+) : AbstractIfdsUnitRunner<UnitType>(unit) {
 
     private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
@@ -237,7 +232,7 @@ private class BaseIfdsUnitRunner<UnitType>(
     /**
      * Runs tabulation algorithm and updates [manager] with everything that is relevant.
      */
-    private suspend fun analyze() = coroutineScope {
+    override suspend fun run() = coroutineScope {
         try {
             // Adding initial facts to workList
             for (method in startMethods) {
@@ -259,10 +254,6 @@ private class BaseIfdsUnitRunner<UnitType>(
                 }
             }
         }
-    }
-
-    override val job = scope.launch(start = CoroutineStart.LAZY) {
-        analyze()
     }
 
     override suspend fun submitNewEdge(edge: IfdsEdge) {

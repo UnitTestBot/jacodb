@@ -123,12 +123,10 @@ class MainIfdsUnitManager<UnitType>(
                     this@MainIfdsUnitManager,
                     unitResolver,
                     unit,
-                    foundMethods[unit]!!.toList(),
-                    this@withTimeoutOrNull
+                    foundMethods[unit]!!.toList()
                 )
                 aliveRunners[unit] = runner
-                require(runner.job.start())
-                runner.job
+                runner.launchIn(this)
             }
 
             allJobs.joinAll()
@@ -202,7 +200,7 @@ class MainIfdsUnitManager<UnitType>(
         when (event) {
             is EdgeForOtherRunnerQuery -> {
                 val otherRunner = aliveRunners[unitResolver.resolve(event.edge.method)] ?: return
-                if (otherRunner.job.isActive) {
+                if (otherRunner.job?.isActive == true) {
                     otherRunner.submitNewEdge(event.edge)
                 }
             }
@@ -249,7 +247,7 @@ class MainIfdsUnitManager<UnitType>(
                         if (current in aliveRunners &&
                             dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
                         ) {
-                            aliveRunners[current]!!.job.cancel()
+                            aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
                             aliveRunners.remove(current)
                             for (next in dependenciesRev[current].orEmpty()) {
                                 if (queueEmptiness[next] == true) {
@@ -260,7 +258,7 @@ class MainIfdsUnitManager<UnitType>(
                     }
                 }
             }
-            else -> error("Unexpected event for dependency controller")
+            else -> error("Unexpected event for dependencies dispatcher")
         }
     }
 }
