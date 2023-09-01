@@ -48,9 +48,9 @@ jobs:
       - name: Build and run tests
         run: ./gradlew build --stacktrace
 
-      - name: Publish Test Results
+      - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: (!cancelled()) && matrix.jdk == env.main_jdk
+        if: always()
         with:
           files: "**/build/test-results/**/*.xml"
           check_name: "Test results on JDK ${{ matrix.jdk }}"
