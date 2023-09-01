@@ -33,7 +33,7 @@ import org.jacodb.api.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * This is a basic [IfdsUnitRunnerFactory], which launches one [BaseIfdsUnitRunner] for each [newRunner] call.
+ * This is a basic [IfdsUnitRunnerFactory], which creates one [BaseIfdsUnitRunner] for each [newRunner] call.
  *
  * @property analyzerFactory used to build [Analyzer] instance, which then will be used by launched [BaseIfdsUnitRunner].
  */
@@ -161,7 +161,7 @@ private class BaseIfdsUnitRunner<UnitType>(
                                     // Waiting for exit vertices and handling them
                                     val exitVertices = flow {
                                         manager.handleEvent(
-                                            SubscriptionForSummaries(callee, this@flow),
+                                            SubscriptionForSummaryEdges(callee, this@flow),
                                             this@BaseIfdsUnitRunner
                                         )
                                     }
@@ -230,7 +230,7 @@ private class BaseIfdsUnitRunner<UnitType>(
     }
 
     /**
-     * Runs tabulation algorithm and updates [manager] with everything that is relevant.
+     * Performs some initialization and runs tabulation algorithm, sending all relevant events to [manager].
      */
     override suspend fun run() = coroutineScope {
         try {

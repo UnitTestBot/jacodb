@@ -23,11 +23,26 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 
 /**
- * A composite [IfdsUnitRunnerFactory] that launches two runners (backward and forward) in parallel
+ * This factory produces composite runners. Each of them launches two runners (backward and forward)
  * on the same unit with the same startMethods.
  *
- * [backwardRunner] is launched on the reversed application graph,
- * while [forwardRunner] is launched on the direct graph.
+ * Backward runner is launched on the reversed application graph,
+ * while forward runner is launched on the direct graph.
+ *
+ * Both runners will be given their own managers with the following policy:
+ * - all [NewSummaryFact] events are delegated to the outer manager
+ * - [EdgeForOtherRunnerQuery] events are submitted to the other runner if the corresponding edge
+ * belongs to the same unit, otherwise they are transmitted to the outer manager (for forward runner)
+ * or ignored (for backward runner)
+ * - Queue is thought to be empty when queues of both forward and backward runners are empty.
+ * The [QueueEmptinessChanged] event is sent to outer manager correspondingly.
+ * - [SubscriptionForSummaryEdges] event is delegated to the outer manager for forward runner and
+ * is ignored for backward runner
+ *
+ * @param forwardRunnerFactory a factory that produces forward runner for each [newRunner] call
+ * @param backwardRunnerFactory a factory that produces backward runner for each [newRunner] call
+ * @param isParallel if true, the produced composite runner will launch backward and forward runners in parallel.
+ * Otherwise, the backward runner will be executed first, and after it, the forward runner will be executed.
  */
 class BidiIfdsUnitRunnerFactory(
     private val forwardRunnerFactory: IfdsUnitRunnerFactory,
@@ -67,7 +82,7 @@ class BidiIfdsUnitRunnerFactory(
                         val newEvent = QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
                         manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
                     }
-                    is SubscriptionForSummaries -> {
+                    is SubscriptionForSummaryEdges -> {
                         manager.handleEvent(event, this@BidiIfdsUnitRunner)
                     }
                 }
@@ -95,7 +110,7 @@ class BidiIfdsUnitRunnerFactory(
                         manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
                     }
 
-                    is SubscriptionForSummaries -> {}
+                    is SubscriptionForSummaryEdges -> {}
                 }
             }
         }

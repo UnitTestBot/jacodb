@@ -28,12 +28,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jacodb.analysis.logger
+import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Used to launch and manage [ifdsUnitRunnerFactory] jobs for units, reachable from [startMethods].
+ * This manager launches and manages [IfdsUnitRunner]s for all units, reachable from [startMethods].
+ * It also merges [TraceGraph]s from different units giving a complete [TraceGraph] for each vulnerability.
  * See [runAnalysis] for more info.
  */
 class MainIfdsUnitManager<UnitType>(
@@ -86,7 +88,7 @@ class MainIfdsUnitManager<UnitType>(
             ?: TraceGraph.bySink(this)
 
     /**
-     * Launches [ifdsUnitRunnerFactory] for each observed unit, handles respective jobs,
+     * Launches [IfdsUnitRunner] for each observed unit, handles respective jobs,
      * and gathers results into list of vulnerabilities, restoring full traces
      */
     fun analyze(): List<VulnerabilityInstance> = runBlocking(Dispatchers.Default) {
@@ -206,16 +208,16 @@ class MainIfdsUnitManager<UnitType>(
             }
             is NewSummaryFact -> {
                 when (val fact = event.fact) {
-                    is CrossUnitCallFact -> crossUnitCallsStorage.addNewSender(fact.method).send(fact)
-                    is SummaryEdgeFact -> summaryEdgesStorage.addNewSender(fact.method).send(fact)
-                    is TraceGraphFact -> tracesStorage.addNewSender(fact.method).send(fact)
-                    is VulnerabilityLocation -> vulnerabilitiesStorage.addNewSender(fact.method).send(fact)
+                    is CrossUnitCallFact -> crossUnitCallsStorage.send(fact)
+                    is SummaryEdgeFact -> summaryEdgesStorage.send(fact)
+                    is TraceGraphFact -> tracesStorage.send(fact)
+                    is VulnerabilityLocation -> vulnerabilitiesStorage.send(fact)
                 }
             }
             is QueueEmptinessChanged -> {
                 eventChannel.send(Pair(event, runner))
             }
-            is SubscriptionForSummaries -> {
+            is SubscriptionForSummaryEdges -> {
                 eventChannel.send(Pair(event, runner))
                 summaryEdgesStorage.getFacts(event.method).map {
                     it.edge
@@ -224,12 +226,13 @@ class MainIfdsUnitManager<UnitType>(
         }
     }
 
+    // Used to linearize all events that change dependencies or queue emptiness of runners
     private val eventChannel: Channel<Pair<IfdsUnitRunnerEvent, IfdsUnitRunner<UnitType>>> =
         Channel(capacity = Int.MAX_VALUE)
 
     private suspend fun dispatchDependencies() = eventChannel.consumeEach { (event, runner) ->
         when (event) {
-            is SubscriptionForSummaries -> {
+            is SubscriptionForSummaryEdges -> {
                 dependencies.getOrPut(runner.unit) { mutableSetOf() }
                     .add(unitResolver.resolve(event.method))
                 dependenciesRev.getOrPut(unitResolver.resolve(event.method)) { mutableSetOf() }
