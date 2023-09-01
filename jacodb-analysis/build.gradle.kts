@@ -15,9 +15,9 @@ dependencies {
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-params", version = "5.9.2")
     testImplementation(files("src/test/resources/pointerbench.jar"))
     testImplementation(group = "joda-time", name = "joda-time", version = "2.12.5")
-    testImplementation(group = "com.github.UnitTestBot.juliet-java-test-suite", name = "support", version = "1.3.1")
+    testImplementation(group = "com.github.UnitTestBot.juliet-java-test-suite", name = "support", version = "1.3.2")
     for (cweNum in listOf(89, 476, 563, 690)) {
-        testImplementation(group = "com.github.UnitTestBot.juliet-java-test-suite", name = "cwe${cweNum}", version = "1.3.1")
+        testImplementation(group = "com.github.UnitTestBot.juliet-java-test-suite", name = "cwe${cweNum}", version = "1.3.2")
     }
 
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.4.1")
