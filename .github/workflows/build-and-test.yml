@@ -19,6 +19,8 @@ jobs:
     # Skip duplicate build when pushing to already existing PR (in origin repo)
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
+    name: Build on JDK ${{ matrix.jdk }}
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
