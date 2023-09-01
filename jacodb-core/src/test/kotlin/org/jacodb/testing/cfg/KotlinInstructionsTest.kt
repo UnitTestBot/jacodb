@@ -40,4 +40,7 @@ class KotlinInstructionsTest: BaseInstructionsTest() {
 
     @Test
     fun `kotlin vararg test`() = runTest(Varargs::class.java.name)
+
+    @Test
+    fun `kotlin equals test`() = runTest(Equals::class.java.name)
 }
