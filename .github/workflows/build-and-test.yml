@@ -24,6 +24,8 @@ permissions:
 jobs:
   jdk11:
 
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
     runs-on: ubuntu-latest
 
     steps:
@@ -65,6 +67,8 @@ jobs:
 
   jdk8:
 
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
     runs-on: ubuntu-latest
 
     steps:
@@ -94,6 +98,8 @@ jobs:
           check_name: "jdk 8 test results"
 
   jdk19:
+
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ubuntu-latest
 
