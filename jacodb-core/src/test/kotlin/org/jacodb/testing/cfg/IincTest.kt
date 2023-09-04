@@ -17,11 +17,14 @@
 package org.jacodb.testing.cfg
 
 import org.jacodb.api.ext.findClass
+import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class IincTest : BaseInstructionsTest() {
+
+    companion object : WithDB()
 
     @Test
     fun `iinc should work`() {
