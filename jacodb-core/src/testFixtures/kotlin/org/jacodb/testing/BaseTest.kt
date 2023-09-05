@@ -65,12 +65,12 @@ open class WithDB(vararg features: Any) {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
     }
 
-    val dbFeatures = allFeatures.mapNotNull { it as? JcFeature<*,*> }.toTypedArray()
+    val dbFeatures = allFeatures.mapNotNull { it as? JcFeature<*, *> }.toTypedArray()
     val cpFeatures = allFeatures.mapNotNull { it as? JcClasspathFeature }.toTypedArray()
 
     open var db = runBlocking {
         jacodb {
-//            persistent("D:\\work\\jacodb\\jcdb-index.db")
+            // persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             installFeatures(*dbFeatures)
