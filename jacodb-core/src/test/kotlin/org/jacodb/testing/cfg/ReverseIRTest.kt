@@ -19,8 +19,9 @@ package org.jacodb.testing.cfg
 import org.jacodb.api.ext.findClass
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.ir.DoubleComparison
+import org.jacodb.testing.ir.InvokeMethodWithException
 import org.jacodb.testing.ir.WhenExpr
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ReverseIRTest : BaseInstructionsTest() {
@@ -30,13 +31,21 @@ class ReverseIRTest : BaseInstructionsTest() {
     fun comparison() {
         val clazz = testAndLoadClass(cp.findClass<DoubleComparison>())
         val m = clazz.declaredMethods.first { it.name == "box" }
-        Assertions.assertEquals("OK", m.invoke(null))
+        assertEquals("OK", m.invoke(null))
     }
 
     @Test
     fun `when`() {
         val clazz = testAndLoadClass(cp.findClass<WhenExpr>())
         val m = clazz.declaredMethods.first { it.name == "box" }
-        Assertions.assertEquals("OK", m.invoke(null))
+        assertEquals("OK", m.invoke(null))
     }
+
+    @Test
+    fun `local vars`() {
+        val clazz = testAndLoadClass(cp.findClass<InvokeMethodWithException>())
+        val m = clazz.declaredMethods.first { it.name == "box" }
+        assertEquals("OK", m.invoke(null))
+    }
+
 }
