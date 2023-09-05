@@ -46,7 +46,7 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Build and run tests
-        run: ./gradlew build --stacktrace
+        run: ./gradlew build --stacktrace --scan
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
