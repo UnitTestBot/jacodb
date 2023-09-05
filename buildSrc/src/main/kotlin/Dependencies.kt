@@ -189,7 +189,7 @@ object Libs {
         version = Versions.sootup
     )
 
-    // ?
+    // https://github.com/UnitTestBot/soot
     val soot_utbot_fork = dep(
         group = "org.unittestbot.soot",
         name = "soot-utbot-fork",
