@@ -16,13 +16,16 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.engine.Analyzer
+import org.jacodb.analysis.engine.AbstractAnalyzer
+import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.AnalyzerFactory
+import org.jacodb.analysis.engine.CrossUnitCallFact
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.engine.NewSummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
@@ -44,10 +47,11 @@ import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
 
-class UnusedVariableAnalyzer(
-    val graph: JcApplicationGraph
-) : Analyzer {
+class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
+
+    override val isMainAnalyzer: Boolean
+        get() = true
 
     companion object {
         const val vulnerabilityType: String = "unused variable analysis"
@@ -80,7 +84,11 @@ class UnusedVariableAnalyzer(
         return false
     }
 
-    override fun getSummaryFactsPostIfds(ifdsResult: IfdsResult): List<VulnerabilityLocation> {
+    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent> {
+        return emptyList()
+    }
+
+    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = buildList {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -93,10 +101,11 @@ class UnusedVariableAnalyzer(
                 }
             }
         }
-        val vulnerabilities = used.filterValues { !it }.keys.map {
-            VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact))
+        used.filterValues { !it }.keys.map {
+            add(
+                NewSummaryFact(VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact)))
+            )
         }
-        return vulnerabilities
     }
 }
 
