@@ -18,6 +18,7 @@ package org.jacodb.testing.cfg
 
 import org.jacodb.api.ext.findClass
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.ir.DefaultArgs
 import org.jacodb.testing.ir.DoubleComparison
 import org.jacodb.testing.ir.InvokeMethodWithException
 import org.jacodb.testing.ir.WhenExpr
@@ -44,6 +45,14 @@ class ReverseIRTest : BaseInstructionsTest() {
     @Test
     fun `local vars`() {
         val clazz = testAndLoadClass(cp.findClass<InvokeMethodWithException>())
+        val m = clazz.declaredMethods.first { it.name == "box" }
+        assertEquals("OK", m.invoke(null))
+    }
+
+//    @Test
+    fun `argument assignment`() {
+        val jcClass = cp.findClass<DefaultArgs>()
+        val clazz = testAndLoadClass(jcClass)
         val m = clazz.declaredMethods.first { it.name == "box" }
         assertEquals("OK", m.invoke(null))
     }
