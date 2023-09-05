@@ -3,17 +3,10 @@ name: Build and run tests
 on:
   push:
   pull_request:
-    branches:
-      - develop
+    types: [opened, reopened]
 
 jobs:
   build:
-    # Skip duplicate build when pushing to already existing PR
-    # Note: we decided NOT to skip duplicate builds,
-    #       since we upload test results via 'EnricoMi/publish-unit-test-result-action',
-    #       which requires 'pull_request' trigger for the bot to be able to add a comment to PR.
-    # if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-
     name: Build on JDK ${{ matrix.jdk }}
 
     runs-on: ubuntu-latest
