@@ -16,27 +16,29 @@
 
 package org.jacodb.testing.cfg
 
-import org.junit.jupiter.api.Assertions.assertEquals
+class InvokeMethodWithException {
 
-
-class Varargs {
-
-
-    fun <T> foo(vararg a: T) = a.size
-
-    inline fun <reified T> bar(block: () -> T): Array<T> {
-        assertEquals(2, foo(block(), block()))
-
-        return arrayOf(block(), block(), block())
+    class A {
+        fun lol(a: Int): Int {
+            return 888/a
+        }
     }
 
-    inline fun <reified T> empty() = arrayOf<T>()
+    fun box():String {
+        val method = A::class.java.getMethod("lol", Int::class.java)
+        var failed = false
+        try {
+            method.invoke(null, 0)
+        }
+        catch(e: Exception) {
+            failed = true
+        }
 
-    fun box(): String {
-        var i = 0
-        val a: Array<String> = bar() { i++; i.toString() }
-        assertEquals("345", a.joinToString(""))
-        return "OK"
+        return if (!failed) "fail" else "OK"
     }
 
+}
+
+fun main() {
+    println(InvokeMethodWithException().box())
 }
