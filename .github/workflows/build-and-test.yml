@@ -14,8 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         jdk: [8, 11, 19]
-    env:
-      main_jdk: 8
 
     steps:
       - uses: actions/checkout@v3
@@ -37,23 +35,23 @@ jobs:
         run: ./gradlew build --stacktrace --scan
 
       - name: Upload coverage reports to Codecov
+        if: matrix.jdk == '8'
         uses: codecov/codecov-action@v3
-        if: matrix.jdk == env.main_jdk
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results
-        if: always()
+        if: (!cancelled())
         uses: actions/upload-artifact@v3
         with:
           name: test-results-jdk${{ matrix.jdk }}
           path: ./**/build/test-results/
 
-      - name: Upload Gradle reports
-        if: always()
+      - name: Upload coverage reports
+        if: (!cancelled())
         uses: actions/upload-artifact@v3
         with:
-          name: gradle-reports-jdk${{ matrix.jdk }}
+          name: coverage-reports-jdk${{ matrix.jdk }}
           path: ./**/build/reports/
           retention-days: 1
 
@@ -62,7 +60,7 @@ jobs:
 
     runs-on: ubuntu-latest
     needs: build
-    if: always()
+    if: (!cancelled())
 
     permissions:
       contents: read
