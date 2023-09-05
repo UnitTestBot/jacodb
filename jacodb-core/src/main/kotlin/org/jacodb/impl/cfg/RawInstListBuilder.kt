@@ -252,7 +252,9 @@ class RawInstListBuilder(
             for ((variable, value) in assignments) {
                 val frameVariable = frame[variable]
                 if (frameVariable != null && value != frameVariable) {
-                    if (insn.isBranchingInst || insn.isTerminateInst) {
+                    if (insn.isBranchingInst) {
+                        insnList.addInst(insn, JcRawAssignInst(method, value, frameVariable), 0)
+                    }else if(insn.isTerminateInst) {
                         insnList.addInst(insn, JcRawAssignInst(method, value, frameVariable), insnList.lastIndex)
                     } else {
                         insnList.addInst(insn, JcRawAssignInst(method, value, frameVariable))

@@ -40,15 +40,15 @@ abstract class BaseInstructionsTest : BaseTest() {
 
     val ext = runBlocking { cp.hierarchyExt() }
 
-    protected fun testClass(klass: JcClassOrInterface) {
-        testAndLoadClass(klass, false)
+    protected fun testClass(klass: JcClassOrInterface, validateLineNumbers: Boolean = true) {
+        testAndLoadClass(klass, false, validateLineNumbers)
     }
 
     protected fun testAndLoadClass(klass: JcClassOrInterface): Class<*> {
-        return testAndLoadClass(klass, true)!!
+        return testAndLoadClass(klass, true, validateLineNumbers = true)!!
     }
 
-    private fun testAndLoadClass(klass: JcClassOrInterface, loadClass: Boolean): Class<*>? {
+    private fun testAndLoadClass(klass: JcClassOrInterface, loadClass: Boolean, validateLineNumbers: Boolean): Class<*>? {
         try {
             val classNode = klass.asmNode()
             classNode.methods = klass.declaredMethods.filter { it.enclosingClass == klass }.map {
@@ -63,8 +63,10 @@ abstract class BaseInstructionsTest : BaseTest() {
                         val graph = it.flowGraph()
                         if (!it.enclosingClass.isKotlin) {
                             val methodMsg = "$it should have line number"
-                            graph.instructions.forEach {
-                                Assertions.assertTrue(it.lineNumber > 0, methodMsg)
+                            if (validateLineNumbers) {
+                                graph.instructions.forEach {
+                                    Assertions.assertTrue(it.lineNumber > 0, methodMsg)
+                                }
                             }
                         }
                         graph.applyAndGet(OverridesResolver(ext)) {}
