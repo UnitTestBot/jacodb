@@ -2,9 +2,6 @@ name: Build and run tests
 
 on:
   push:
-    branches:
-      - '*'
-      - '*/*'
   pull_request:
     branches:
       - develop
@@ -16,8 +13,11 @@ permissions:
 
 jobs:
   build:
-    # Skip duplicate build when pushing to already existing PR (in origin repo)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # Skip duplicate build when pushing to already existing PR
+    # Note: we decided NOT to skip duplicate builds,
+    #       since we upload test results via 'EnricoMi/publish-unit-test-result-action',
+    #       which requires 'pull_request' trigger for the bot to be able to add a comment to PR.
+    # if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     name: Build on JDK ${{ matrix.jdk }}
 
@@ -46,7 +46,7 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Build and run tests
-        run: ./gradlew build --stacktrace
+        run: ./gradlew build --stacktrace --scan
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2

@@ -22,7 +22,7 @@ import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.MethodUnitResolver
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
-import org.jacodb.analysis.library.newAliasRunner
+import org.jacodb.analysis.library.newAliasRunnerFactory
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.toDumpable
@@ -156,7 +156,7 @@ class AliasAnalysisTest : BaseTest() {
         val result = runAnalysis(
             graph,
             MethodUnitResolver,
-            newAliasRunner(::generates, ::isSanitizer, ::sinks),
+            newAliasRunnerFactory(::generates, ::isSanitizer, ::sinks),
             listOf(method)
         )
 

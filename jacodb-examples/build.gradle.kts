@@ -1,13 +1,11 @@
-val coroutinesVersion: String by rootProject
-
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-api"))
     api(project(":jacodb-analysis"))
 
-    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = coroutinesVersion)
-    implementation(group = "org.unittestbot.soot", name = "soot-utbot-fork", version = "4.4.0-FORK-2")
-    implementation(group =  "org.slf4j", name = "slf4j-simple", version = "1.6.1")
+    implementation(Libs.slf4j_simple)
+    implementation(Libs.soot_utbot_fork)
+    implementation(Libs.kotlinx_coroutines_reactor)
 }
 
 tasks.create<JavaExec>("runJacoDBPerformanceAnalysis") {
