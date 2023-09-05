@@ -1,5 +1,5 @@
-build
-/.idea
-/.gradle
+.idea/
+.gradle/
+build/
 idea-community
-/*.db
+*.db
