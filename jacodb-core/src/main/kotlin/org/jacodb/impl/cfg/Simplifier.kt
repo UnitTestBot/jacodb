@@ -55,7 +55,7 @@ internal class Simplifier {
             val assignmentsMap = computeAssignments(instructionList)
             val replacements = assignmentsMap
                 .filter { (assignmentsMap[it.value.first()]?.let { it.size == 1 } ?: true) }
-                .filterValues { it.size == 1 }
+                .filterValues { it.size == 1 && it.first() is JcRawLocalVar }
                 .map { it.key to it.value.first() }
                 .toMap()
             instructionList = instructionList
@@ -179,10 +179,17 @@ internal class Simplifier {
                 ) {
                     val lhv = inst.lhv
                     val lhvUsage = uses.getOrDefault(lhv, emptySet()).firstOrNull()
+                    val assignInstructionToReplacement = instList.firstOrNull { it is JcRawAssignInst && it.lhv == lhv }
+                    val didNotAssignedBefore =
+                        lhvUsage == null ||
+                                assignInstructionToReplacement == null ||
+                                !instList.isBefore(assignInstructionToReplacement, lhvUsage)
                     if (lhvUsage == null || !instList.isBefore(lhvUsage, inst)) {
-                        replacements[rhv] = lhv
-                        reservedValues += lhv
-                        replacedInsts += inst
+                        if (didNotAssignedBefore) {
+                            replacements[rhv] = lhv
+                            reservedValues += lhv
+                            replacedInsts += inst
+                        }
                     }
                 }
             }
@@ -195,13 +202,13 @@ internal class Simplifier {
         return indexOf(one) < indexOf(another)
     }
 
-    private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawSimpleValue>> {
-        val assignments = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawSimpleValue>>()
+    private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawExpr>> {
+        val assignments = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawExpr>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst) {
                 val lhv = inst.lhv
                 val rhv = inst.rhv
-                if (lhv is JcRawLocalVar && rhv is JcRawLocalVar) {
+                if (lhv is JcRawLocalVar) {
                     assignments.getOrPut(lhv, ::mutableSetOf).add(rhv)
                 }
             }
