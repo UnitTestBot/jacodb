@@ -48,7 +48,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         fun provideClassesForJuliet690(): Stream<Arguments> =
             provideClassesForJuliet(690)
 
-        private const val vulnerabilityType = NpeAnalyzer.vulnerabilityType
+        private const val vulnerabilityType = NpeAnalyzer.ruleId
     }
 
     @Test

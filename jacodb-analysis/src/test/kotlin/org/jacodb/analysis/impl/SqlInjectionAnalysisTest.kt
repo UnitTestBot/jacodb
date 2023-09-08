@@ -20,7 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.analyzers.TaintAnalyzer
+import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzer
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
@@ -37,7 +37,7 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         @JvmStatic
         fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, emptyList())
 
-        private const val vulnerabilityType = TaintAnalyzer.vulnerabilityType
+        private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
     }
 
     @ParameterizedTest

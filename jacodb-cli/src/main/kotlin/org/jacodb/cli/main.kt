@@ -23,7 +23,6 @@ import kotlinx.cli.required
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.engine.UnitResolver
@@ -34,12 +33,11 @@ import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.toDumpable
+import org.jacodb.analysis.sarif.SarifReport
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
@@ -98,8 +96,8 @@ fun main(args: Array<String>) {
         ArgType.String,
         fullName = "output",
         shortName = "o",
-        description = "File where analysis report will be written. All parent directories will be created if not exists. File will be created if not exists. Existing file will be overwritten."
-    ).default("report.json") // TODO: create SARIF here
+        description = "File where analysis report (in SARIF format) will be written. File will be created if not exists. Existing file will be overwritten."
+    ).default("report.sarif")
     val classpath by parser.option(
         ArgType.String,
         fullName = "classpath",
@@ -145,16 +143,16 @@ fun main(args: Array<String>) {
             }
         }
     }).get()
-    val startJcMethods = startJcClasses.flatMap { it.methods }.filter { it.isPublic }
+    val startJcMethods = startJcClasses.flatMap { it.declaredMethods }.filter { !it.isPrivate }
 
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
 
-    val analysesResults = launchAnalysesByConfig(config, graph, startJcMethods).flatten().toDumpable()
+    val vulnerabilities = launchAnalysesByConfig(config, graph, startJcMethods).flatten()
+    val report = SarifReport.fromVulnerabilities(vulnerabilities)
 
-    val json = Json { prettyPrint = true }
     outputFile.outputStream().use { fileOutputStream ->
-        json.encodeToStream(analysesResults, fileOutputStream)
+        report.encodeToStream(fileOutputStream)
     }
 }

@@ -19,6 +19,7 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcMethod
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,7 +34,7 @@ sealed interface SummaryFact {
 /**
  * [SummaryFact] that denotes a possible vulnerability at [sink]
  */
-data class VulnerabilityLocation(val vulnerabilityType: String, val sink: IfdsVertex) : SummaryFact {
+data class VulnerabilityLocation(val vulnerabilityDescription: VulnerabilityDescription, val sink: IfdsVertex) : SummaryFact {
     override val method: JcMethod = sink.method
 }
 

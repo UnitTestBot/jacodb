@@ -31,6 +31,8 @@ import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.analysis.sarif.SarifMessage
+import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -54,7 +56,10 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
         get() = true
 
     companion object {
-        const val vulnerabilityType: String = "unused variable analysis"
+        const val ruleId: String = "unused-variable"
+        private val vulnerabilityMessage = SarifMessage("Assigned value is unused")
+
+        val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
     }
 
     private fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
@@ -103,7 +108,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
         }
         used.filterValues { !it }.keys.map {
             add(
-                NewSummaryFact(VulnerabilityLocation(vulnerabilityType, IfdsVertex(it, ZEROFact)))
+                NewSummaryFact(VulnerabilityLocation(vulnerabilityDescription, IfdsVertex(it, ZEROFact)))
             )
         }
     }

@@ -35,6 +35,8 @@ import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.analysis.sarif.SarifMessage
+import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -67,14 +69,16 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
         get() = true
 
     companion object {
-        const val vulnerabilityType: String = "npe-analysis"
+        const val ruleId: String = "npe-deref"
     }
 
     override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
         val (inst, fact0) = edge.v
 
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
-            add(NewSummaryFact((VulnerabilityLocation(vulnerabilityType, edge.v))))
+            val message = "Dereference of possibly-null ${fact0.variable}"
+            val desc = VulnerabilityDescription(SarifMessage(message), ruleId)
+            add(NewSummaryFact((VulnerabilityLocation(desc, edge.v))))
             verticesWithTraceGraphNeeded.add(edge.v)
         }
 
