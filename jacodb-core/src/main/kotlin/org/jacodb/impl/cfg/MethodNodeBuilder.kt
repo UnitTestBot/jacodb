@@ -248,6 +248,7 @@ class MethodNodeBuilder(
         val trueTarget = label(inst.trueBranch)
         val falseTarget = label(inst.falseBranch)
         val cond = inst.condition
+        var shouldReverse = false
         val (zeroValue, zeroCmpOpcode, defaultOpcode) = when (cond) {
             is JcRawEqExpr -> when {
                 cond.lhv.typeName.isPrimitive -> Triple(JcRawInt(0), Opcodes.IFEQ, Opcodes.IF_ICMPEQ)
@@ -259,10 +260,10 @@ class MethodNodeBuilder(
                 else -> Triple(JcRawNull(), Opcodes.IFNONNULL, Opcodes.IF_ACMPNE)
             }
 
-            is JcRawGeExpr -> Triple(JcRawInt(0), Opcodes.IFGE, Opcodes.IF_ICMPGE)
-            is JcRawGtExpr -> Triple(JcRawInt(0), Opcodes.IFGT, Opcodes.IF_ICMPGT)
-            is JcRawLeExpr -> Triple(JcRawInt(0), Opcodes.IFLE, Opcodes.IF_ICMPLE)
-            is JcRawLtExpr -> Triple(JcRawInt(0), Opcodes.IFLT, Opcodes.IF_ICMPLT)
+            is JcRawGeExpr -> Triple(JcRawInt(0), Opcodes.IFGE, Opcodes.IF_ICMPGE).also { shouldReverse = true }
+            is JcRawGtExpr -> Triple(JcRawInt(0), Opcodes.IFGT, Opcodes.IF_ICMPGT).also { shouldReverse = true }
+            is JcRawLeExpr -> Triple(JcRawInt(0), Opcodes.IFLE, Opcodes.IF_ICMPLE).also { shouldReverse = true }
+            is JcRawLtExpr -> Triple(JcRawInt(0), Opcodes.IFLT, Opcodes.IF_ICMPLT).also { shouldReverse = true }
             else -> error("Unknown condition expr: $cond")
         }
         val elseBranchTarget: LabelNode
@@ -270,8 +271,13 @@ class MethodNodeBuilder(
             when {
                 cond.lhv == zeroValue -> {
                     cond.rhv.accept(this)
-                    elseBranchTarget = trueTarget
-                    JumpInsnNode(zeroCmpOpcode, falseTarget)
+                    if (shouldReverse) {
+                        elseBranchTarget = trueTarget
+                        JumpInsnNode(zeroCmpOpcode, falseTarget)
+                    } else {
+                        elseBranchTarget = falseTarget
+                        JumpInsnNode(zeroCmpOpcode, trueTarget)
+                    }
                 }
 
                 cond.rhv == zeroValue -> {
