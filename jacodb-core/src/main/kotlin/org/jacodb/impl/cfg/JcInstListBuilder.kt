@@ -19,6 +19,7 @@ package org.jacodb.impl.cfg
 import org.jacodb.api.*
 import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.*
+import org.jacodb.impl.cfg.util.UNINIT_THIS
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
@@ -69,7 +70,13 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
         JcInstRef(inst2Index[labels.getValue(labelRef)]!!)
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
-        val lhv = inst.lhv.accept(this) as JcValue
+        val preprocessedLhv =
+            if (inst.lhv is JcRawLocalVar && inst.lhv.typeName == UNINIT_THIS) {
+                JcRawLocalVar((inst.lhv as JcRawLocalVar).name, inst.rhv.typeName)
+            } else {
+                inst.lhv
+            }
+        val lhv = preprocessedLhv.accept(this) as JcValue
         val rhv = inst.rhv.accept(this)
         JcAssignInst(newLocation(), lhv, rhv)
     }
