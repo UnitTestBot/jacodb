@@ -189,6 +189,7 @@ class RawInstListBuilder(
     private val laterStackAssignments = identityMap<AbstractInsnNode, MutableMap<Int, JcRawValue>>()
     private val localTypeRefinement = identityMap<JcRawLocalVar, JcRawLocalVar>()
     private val blackListForTypeRefinement = listOf(TOP, NULL, UNINIT_THIS)
+    private val localVarsToDestructionLabel = hashMapOf<Int, LabelNode>()
     private val postfixInstructions = hashMapOf<Int, JcRawInst>()
 
     private var labelCounter = 0
@@ -514,15 +515,22 @@ class RawInstListBuilder(
     private fun createInitialFrame(): Frame {
         val locals = hashMapOf<Int, JcRawValue>()
         argCounter = 0
-        if (!method.isStatic) {
-            locals[argCounter++] = thisRef()
+//        val locals = hashMapOf<Int, Pair<JcRawValue, LabelNode?>>()
+        argCounter = methodNode.localVariables.maxOf { it.index }
+        for ((i, local) in methodNode.localVariables.withIndex()) {
+            val argument = JcRawArgument.of(i, local.name, TypeNameImpl(local.desc))
+            locals[local.index] = argument
+            localVarsToDestructionLabel[local.index] = local.end
         }
-        for (parameter in method.parameters) {
-            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
-            locals[argCounter] = argument
-            if (argument.typeName.isDWord) argCounter += 2
-            else argCounter++
-        }
+//        if (!method.isStatic) {
+//            locals[argCounter++] = thisRef()
+//        }
+//        for (parameter in method.parameters) {
+//            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
+//            locals[argCounter] = argument
+//            if (argument.typeName.isDWord) argCounter += 2
+//            else argCounter++
+//        }
 
         return Frame(locals.toPersistentMap(), persistentListOf())
     }
@@ -1190,6 +1198,12 @@ class RawInstListBuilder(
             currentFrame = predecessorFrames.first()
         } else if (predecessors.size == predecessorFrames.size) {
             currentFrame = mergeFrames(predecessors.zip(predecessorFrames).toMap())
+        }
+
+        for ((localVarIndex, _) in currentFrame.locals) {
+            if (localVarsToDestructionLabel[localVarIndex] == insnNode) {
+                currentFrame.locals.remove(localVarIndex)
+            }
         }
 
         val catchEntries = methodNode.tryCatchBlocks.filter { it.handler == insnNode }
