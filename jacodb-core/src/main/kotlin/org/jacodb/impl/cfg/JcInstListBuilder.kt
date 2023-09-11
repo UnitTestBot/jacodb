@@ -30,6 +30,7 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
     private var currentLineNumber = 0
     private var index = 0
     private val labels = instList.filterIsInstance<JcRawLabelInst>().associateBy { it.ref }
+    private val convertedLocalVars = mutableMapOf<JcRawLocalVar, JcRawLocalVar>()
     private val inst2Index: Map<JcRawInst, Int> = identityMap<JcRawInst, Int>().also {
         var index = 0
         for (inst in instList) {
@@ -71,10 +72,14 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcInst = handle(inst) {
         val preprocessedLhv =
-            if (inst.lhv is JcRawLocalVar && inst.lhv.typeName == UNINIT_THIS) {
-                JcRawLocalVar((inst.lhv as JcRawLocalVar).name, inst.rhv.typeName)
-            } else {
-                inst.lhv
+            inst.lhv.let { unprocessedLhv ->
+                if (unprocessedLhv is JcRawLocalVar && unprocessedLhv.typeName == UNINIT_THIS) {
+                    convertedLocalVars.getOrPut(unprocessedLhv) {
+                        JcRawLocalVar(unprocessedLhv.name, inst.rhv.typeName)
+                    }
+                } else {
+                    unprocessedLhv
+                }
             }
         val lhv = preprocessedLhv.accept(this) as JcValue
         val rhv = inst.rhv.accept(this)
@@ -309,7 +314,9 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
     }
 
     override fun visitJcRawLocalVar(value: JcRawLocalVar): JcExpr =
-        JcLocalVar(value.name, value.typeName.asType())
+        convertedLocalVars[value]?.let { replacementForLocalVar ->
+            JcLocalVar(replacementForLocalVar.name, replacementForLocalVar.typeName.asType())
+        } ?: JcLocalVar(value.name, value.typeName.asType())
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val type = value.declaringClass.asType() as JcClassType
