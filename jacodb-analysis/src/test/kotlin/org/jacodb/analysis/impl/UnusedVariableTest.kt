@@ -51,7 +51,7 @@ class UnusedVariableTest : BaseAnalysisTest() {
             "_81"
         ))
 
-        private const val vulnerabilityType = UnusedVariableAnalyzer.vulnerabilityType
+        private const val vulnerabilityType = UnusedVariableAnalyzer.ruleId
     }
 
     @ParameterizedTest

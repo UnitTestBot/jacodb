@@ -25,7 +25,6 @@ import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.newAliasRunnerFactory
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcExpr
@@ -160,6 +159,6 @@ class AliasAnalysisTest : BaseTest() {
             listOf(method)
         )
 
-        return result.toDumpable().foundVulnerabilities.map { it.sink }
+        return result.map { it.traceGraph.sink.statement.toString() }
     }
 }

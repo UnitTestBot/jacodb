@@ -17,8 +17,6 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
@@ -27,7 +25,7 @@ import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.toDumpable
+import org.jacodb.analysis.sarif.SarifReport
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -41,11 +39,11 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
         val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L).toDumpable()
+        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
 
-        println("Vulnerabilities found: ${result.foundVulnerabilities.size}")
-        val json = Json { prettyPrint = true }
-        json.encodeToStream(result, System.out)
+        println("Vulnerabilities found: ${result.size}")
+        println("Generated report:")
+        SarifReport.fromVulnerabilities(result).encodeToStream(System.out)
     }
 
     @Test

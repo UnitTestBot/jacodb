@@ -21,15 +21,10 @@ import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
-import org.jacodb.analysis.engine.NewSummaryFact
-import org.jacodb.analysis.engine.VulnerabilityLocation
-import org.jacodb.analysis.paths.FieldAccessor
+import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.values
 
 fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
@@ -42,49 +37,12 @@ fun AliasAnalyzerFactory(
 
 private class AliasAnalyzer(
     graph: JcApplicationGraph,
-    generates: (JcInst) -> List<DomainFact>,
-    sanitizes: (JcExpr, TaintNode) -> Boolean,
-    sinks: (JcInst) -> List<TaintAnalysisNode>,
+    override val generates: (JcInst) -> List<DomainFact>,
+    override val sanitizes: (JcExpr, TaintNode) -> Boolean,
+    override val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : TaintAnalyzer(graph, generates, sanitizes, sinks, maxPathLength) {
+) : TaintAnalyzer(graph, maxPathLength) {
+    override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = TODO()
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = buildList {
-        ifdsResult.resultFacts.map { (inst, facts) ->
-            facts.filterIsInstance<TaintAnalysisNode>().forEach { fact ->
-                if (fact in sinks(inst)) {
-                    fact.variable.let {
-                        val name = when (val x = it.value) {
-                            is JcArgument -> x.name
-                            is JcLocal -> inst.location.method.flowGraph().instructions
-                                .first { x in it.operands.flatMap { it.values } }
-                                .lineNumber
-                                .toString()
-                            null -> (it.accesses[0] as FieldAccessor).field.enclosingClass.simpleName
-                            else -> error("Unknown local type")
-                        }
-
-                        val fullPath = buildString {
-                            append(name)
-                            if (it.accesses.isNotEmpty()) {
-                                append(".")
-                            }
-                            append(it.accesses.joinToString("."))
-                        }
-
-                        verticesWithTraceGraphNeeded.add(IfdsVertex(inst, fact))
-
-                        add(
-                            NewSummaryFact(
-                                VulnerabilityLocation(
-                                    vulnerabilityType,
-                                    IfdsVertex(inst, fact)
-                                )
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addAll(super.handleIfdsResult(ifdsResult))
-    }
+    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = TODO()
 }
