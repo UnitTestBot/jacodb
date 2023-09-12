@@ -23,16 +23,15 @@ import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.cfg.NullAssumptionAnalysisExample
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class NullabilityAssumptionAnalysisTest : BaseTest() {
 
-    companion object : WithDB(InMemoryHierarchy)
+    companion object : WithGlobalDB()
 
     @Test
     fun `null-assumption analysis should work`() {

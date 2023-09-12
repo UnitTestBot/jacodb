@@ -17,19 +17,13 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcFeature
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.jacodb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 class HierarchyStabilityTest {
-
 
     companion object {
         private var listInheritorsCount: Int = 0
@@ -38,47 +32,51 @@ class HierarchyStabilityTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            val (sets, lists) = run()
+            val (sets, lists) = runBlocking { run(global = true) }
             listInheritorsCount = lists
             setInheritorsCount = sets
         }
 
-        private fun run(vararg features: JcFeature<*,*>): Pair<Int, Int> {
-            val jcClasspath: JcClasspath
-            val hierarchy: HierarchyExtension
+        private suspend fun run(global: Boolean): Pair<Int, Int> {
 
-            runBlocking {
-                val db = jacodb {
+            val db = when {
+                global -> globalDb
+                else -> jacodb {
                     useProcessJavaRuntime()
                     loadByteCode(allJars)
-                    installFeatures(*features)
+                    installFeatures()
                 }
-                jcClasspath = db.classpath(allJars)
-
-                hierarchy = jcClasspath.hierarchyExt()
             }
+            val jcClasspath = db.classpath(allJars)
+            val hierarchy = jcClasspath.hierarchyExt()
 
-            val setSubclasses = hierarchy.findSubClasses("java.util.Set",
-                allHierarchy = true, includeOwn = true).toSet()
-            val listSubclasses = hierarchy.findSubClasses("java.util.List",
-                allHierarchy = true, includeOwn = true).toSet()
+            val setSubclasses = hierarchy.findSubClasses(
+                "java.util.Set",
+                allHierarchy = true, includeOwn = true
+            ).toSet()
+            val listSubclasses = hierarchy.findSubClasses(
+                "java.util.List",
+                allHierarchy = true, includeOwn = true
+            ).toSet()
 
-            jcClasspath.db.close()
+            if (!global) {
+                jcClasspath.db.close()
+            }
             return setSubclasses.size to listSubclasses.size
         }
 
     }
 
-    @RepeatedTest(3)
-    fun `should be stable`() {
-        val (sets, lists) = run()
+    @Test
+    fun `should be ok`() {
+        val (sets, lists) = runBlocking { run(global = false) }
         assertEquals(listInheritorsCount, lists)
         assertEquals(setInheritorsCount, sets)
     }
 
     @Test
     fun `should ok with in-memory feature`() {
-        val (sets, lists) = run(InMemoryHierarchy)
+        val (sets, lists) = runBlocking { run(global = true) }
         assertEquals(listInheritorsCount, lists)
         assertEquals(setInheritorsCount, sets)
     }

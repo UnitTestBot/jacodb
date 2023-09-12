@@ -21,15 +21,14 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.cfg.util.JcLoop
 import org.jacodb.impl.cfg.util.loops
-import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class LoopsTest : BaseTest() {
 
-    companion object : WithDB(InMemoryHierarchy)
+    companion object : WithGlobalDB()
 
     @Test
     fun `loop inside loop should work`() {

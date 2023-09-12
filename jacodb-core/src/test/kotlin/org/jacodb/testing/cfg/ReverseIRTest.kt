@@ -17,7 +17,6 @@
 package org.jacodb.testing.cfg
 
 import org.jacodb.api.ext.findClass
-import org.jacodb.testing.WithDB
 import org.jacodb.testing.ir.DoubleComparison
 import org.jacodb.testing.ir.InvokeMethodWithException
 import org.jacodb.testing.ir.WhenExpr
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ReverseIRTest : BaseInstructionsTest() {
-    companion object : WithDB()
 
     @Test
     fun comparison() {

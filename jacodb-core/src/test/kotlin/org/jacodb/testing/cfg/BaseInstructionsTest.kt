@@ -26,6 +26,7 @@ import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest
+import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
@@ -35,6 +36,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 abstract class BaseInstructionsTest : BaseTest() {
+
+    companion object : WithGlobalDB()
 
     private val target = Files.createTempDirectory("jcdb-temp")
 

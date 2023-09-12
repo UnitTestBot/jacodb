@@ -16,10 +16,14 @@
 
 package org.jacodb.testing;
 
+import org.jacodb.api.JcDatabase;
 import org.jacodb.api.cfg.JcArgument;
 import org.jacodb.api.cfg.JcExpr;
 import org.jacodb.api.cfg.TypedExprResolver;
+import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcCacheSettings;
+import org.jacodb.impl.JcSettings;
+import org.jacodb.impl.features.Usages;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
@@ -39,6 +43,14 @@ public class JavaApi {
 
     public static void cacheSettings() {
         new JcCacheSettings().types(10, Duration.of(1, ChronoUnit.MINUTES));
+    }
+
+    public static void getDatabase() {
+        try {
+            JcDatabase instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

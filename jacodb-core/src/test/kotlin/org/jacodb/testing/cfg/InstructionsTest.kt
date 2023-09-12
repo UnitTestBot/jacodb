@@ -33,7 +33,6 @@ import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.int
 import org.jacodb.testing.Common
 import org.jacodb.testing.Common.CommonClass
-import org.jacodb.testing.WithDB
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
 import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
 import org.jacodb.testing.primitives.Primitives
@@ -51,8 +50,6 @@ import javax.activation.DataHandler
 
 
 class InstructionsTest : BaseInstructionsTest() {
-
-    companion object : WithDB()
 
     @Test
     fun `assign inst`() {

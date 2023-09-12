@@ -16,13 +16,12 @@
 
 package org.jacodb.testing;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
-import org.jacodb.impl.JacoDB;
-import org.jacodb.impl.JcSettings;
-import org.jacodb.impl.features.Usages;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -33,39 +32,45 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class JavaApiTest {
 
-    @Test
-    public void createJcdb() throws ExecutionException, InterruptedException, IOException {
-        System.out.println("Creating database");
-        try (JcDatabase instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
-            System.out.println("Database is ready: " + instance);
+    private final Supplier<JcDatabase> db = Suppliers.memoize(() -> {
+        try {
+            return BaseTestKt.getGlobalDb();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    });
+
+    @Test
+    public void createJcdb() {
+        System.out.println("Creating database");
+        JcDatabase database = db.get();
+        assertNotNull(database);
+        System.out.println("Database is ready: " + database);
     }
 
     @Test
     public void createClasspath() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
-        try (JcDatabase instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
-            try (JcClasspath classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
-                JcClassOrInterface clazz = classpath.findClassOrNull("java.lang.String");
-                assertNotNull(clazz);
-                assertNotNull(classpath.asyncRefreshed(false).get());
-            }
-            System.out.println("Database is ready: " + instance);
+        JcDatabase instance = db.get();
+        try (JcClasspath classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
+            JcClassOrInterface clazz = classpath.findClassOrNull("java.lang.String");
+            assertNotNull(clazz);
+            assertNotNull(classpath.asyncRefreshed(false).get());
         }
+        System.out.println("Database is ready: " + instance);
     }
 
     @Test
     public void jcdbOperations() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
-        try (JcDatabase instance = JacoDB.async(new JcSettings().installFeatures(Usages.INSTANCE)).get()) {
-            instance.asyncLoad(getAllClasspath()).get();
-            System.out.println("asyncLoad finished");
-            instance.asyncRefresh().get();
-            System.out.println("asyncRefresh finished");
-            instance.asyncRebuildFeatures().get();
-            System.out.println("asyncRebuildFeatures finished");
-            instance.asyncAwaitBackgroundJobs().get();
-            System.out.println("asyncAwaitBackgroundJobs finished");
-        }
+        JcDatabase instance = db.get();
+        instance.asyncLoad(getAllClasspath()).get();
+        System.out.println("asyncLoad finished");
+        instance.asyncRefresh().get();
+        System.out.println("asyncRefresh finished");
+        instance.asyncRebuildFeatures().get();
+        System.out.println("asyncRebuildFeatures finished");
+        instance.asyncAwaitBackgroundJobs().get();
+        System.out.println("asyncAwaitBackgroundJobs finished");
     }
 }
