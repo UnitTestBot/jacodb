@@ -418,7 +418,7 @@ class RawInstListBuilder(
             } else {
                 val assignment = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
                 currentFrame = currentFrame.put(variable, assignment)
-                JcRawAssignInst(method, oldVar, expr)
+                JcRawAssignInst(method, assignment, expr)
             }
         } else {
             val newLocal = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
