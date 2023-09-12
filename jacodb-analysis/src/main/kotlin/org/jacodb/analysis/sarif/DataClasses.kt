@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.sarif
 
+import java.io.OutputStream
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -25,16 +26,12 @@ import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
-import java.io.OutputStream
-import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.Path
 
 @Serializable
 data class SarifMessage(val text: String)
 
 @Serializable
-data class SarifArtifactLocation(val uri: String)
+data class SarifArtifactLocation(val uri: String?)
 
 @Serializable
 data class SarifRegion(val startLine: Int)
@@ -51,17 +48,19 @@ data class SarifLocation(val physicalLocation: SarifPhysicalLocation, val logica
         private val JcMethod.fullyQualifiedName: String
             get() = "${enclosingClass.name}#${name}"
 
-        private val currentPath: Path = Paths.get("").toAbsolutePath()
-
-        fun fromInst(inst: JcInst): SarifLocation = SarifLocation(
-            physicalLocation = SarifPhysicalLocation(
-                SarifArtifactLocation("${currentPath.relativize(Path(inst.location.method.declaration.location.path))}"),
-                SarifRegion(inst.location.lineNumber)
-            ),
-            logicalLocations = listOf(
-                SarifLogicalLocation(inst.location.method.fullyQualifiedName)
+        fun fromInst(inst: JcInst, sourceFileResolver: SourceFileResolver): SarifLocation {
+            val instLocation = inst.location.method.declaration.location
+            val sourcePath = sourceFileResolver.resolveRelativeSourcePath(instLocation)
+            return SarifLocation(
+                physicalLocation = SarifPhysicalLocation(
+                    SarifArtifactLocation(sourcePath),
+                    SarifRegion(inst.location.lineNumber)
+                ),
+                logicalLocations = listOf(
+                    SarifLogicalLocation(inst.location.method.fullyQualifiedName)
+                )
             )
-        )
+        }
     }
 }
 
@@ -80,10 +79,10 @@ data class SarifThreadFlow(val locations: List<SarifThreadFlowLocation>)
 @Serializable
 data class SarifCodeFlow(val threadFlows: List<SarifThreadFlow>) {
     companion object {
-        fun fromTrace(trace: List<IfdsVertex>): SarifCodeFlow {
+        fun fromTrace(trace: List<IfdsVertex>, sourceFileResolver: SourceFileResolver): SarifCodeFlow {
             val threadFlow = trace.map {
                 SarifThreadFlowLocation(
-                    SarifLocation.fromInst(it.statement),
+                    SarifLocation.fromInst(it.statement, sourceFileResolver),
                     SarifState(SarifDomainFact(it.domainFact.toString()))
                 )
             }
@@ -101,12 +100,16 @@ data class SarifResult(
     val codeFlows: List<SarifCodeFlow>
 ) {
     companion object {
-        fun fromVulnerabilityInstance(instance: VulnerabilityInstance, maxPathsCount: Int): SarifResult = SarifResult(
+        fun fromVulnerabilityInstance(
+            instance: VulnerabilityInstance,
+            maxPathsCount: Int,
+            sourceFileResolver: SourceFileResolver
+        ): SarifResult = SarifResult(
             instance.vulnerabilityDescription.ruleId,
             instance.vulnerabilityDescription.message,
             instance.vulnerabilityDescription.level,
-            listOf(SarifLocation.fromInst(instance.traceGraph.sink.statement)),
-            instance.traceGraph.getAllTraces().take(maxPathsCount).map { SarifCodeFlow.fromTrace(it) }.toList()
+            listOf(SarifLocation.fromInst(instance.traceGraph.sink.statement, sourceFileResolver)),
+            instance.traceGraph.getAllTraces().take(maxPathsCount).map { SarifCodeFlow.fromTrace(it, sourceFileResolver) }.toList()
         )
     }
 }
@@ -161,14 +164,15 @@ data class SarifReport(
 
         fun fromVulnerabilities(
             vulnerabilities: List<VulnerabilityInstance>,
-            pathsCount: Int = defaultPathsCount
+            pathsCount: Int = defaultPathsCount,
+            sourceFileResolver: SourceFileResolver = SourceFileResolver { null }
         ): SarifReport = SarifReport(
             version = defaultVersion,
             schema = defaultSchema,
             runs = listOf(
                 SarifRun(
                     IfdsTool,
-                    vulnerabilities.map { SarifResult.fromVulnerabilityInstance(it, pathsCount) }
+                    vulnerabilities.map { SarifResult.fromVulnerabilityInstance(it, pathsCount, sourceFileResolver) }
                 )
             )
         )

@@ -16,6 +16,8 @@
 
 package org.jacodb.cli
 
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -41,8 +43,6 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 private val logger = object : KLogging() {}.logger
 

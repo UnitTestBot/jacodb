@@ -37,9 +37,6 @@ import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
-import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.Path
 
 private const val SARIF_SCHEMA =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
@@ -50,6 +47,7 @@ private const val DEFAULT_PATH_COUNT = 3
 fun sarifReportFromVulnerabilities(
     vulnerabilities: List<VulnerabilityInstance>,
     maxPathsCount: Int = DEFAULT_PATH_COUNT,
+    sourceFileResolver: SourceFileResolver = SourceFileResolver { null },
 ): SarifSchema210 {
     return SarifSchema210(
         schema = SARIF_SCHEMA,
@@ -76,11 +74,11 @@ fun sarifReportFromVulnerabilities(
                             SarifSeverityLevel.WARNING -> Level.Warning
                             // else -> Level.None
                         },
-                        locations = listOf(instToSarifLocation(instance.traceGraph.sink.statement)),
+                        locations = listOf(instToSarifLocation(instance.traceGraph.sink.statement, sourceFileResolver)),
                         codeFlows = instance.traceGraph
                             .getAllTraces()
                             .take(maxPathsCount)
-                            .map { traceToSarifCodeFlow(it) }
+                            .map { traceToSarifCodeFlow(it, sourceFileResolver) }
                             .toList(),
                     )
                 }
@@ -92,14 +90,13 @@ fun sarifReportFromVulnerabilities(
 private val JcMethod.fullyQualifiedName: String
     get() = "${enclosingClass.name}#${name}"
 
-private fun instToSarifLocation(inst: JcInst): Location {
-    val currentPath: Path = Paths.get("").toAbsolutePath()
+private fun instToSarifLocation(inst: JcInst, sourceFileResolver: SourceFileResolver): Location {
+    val instLocation = inst.location.method.declaration.location
+    val sourceLocation = sourceFileResolver.resolveRelativeSourcePath(instLocation)
     return Location(
         physicalLocation = PhysicalLocation(
             artifactLocation = ArtifactLocation(
-                uri = currentPath.relativize(
-                    Path(inst.location.method.declaration.location.path)
-                ).toString()
+                uri = sourceLocation
             ),
             region = Region(
                 startLine = inst.location.lineNumber.toLong()
@@ -113,12 +110,12 @@ private fun instToSarifLocation(inst: JcInst): Location {
     )
 }
 
-private fun traceToSarifCodeFlow(trace: List<IfdsVertex>): CodeFlow {
+private fun traceToSarifCodeFlow(trace: List<IfdsVertex>, sourceFileResolver: SourceFileResolver): CodeFlow {
     return CodeFlow(
         threadFlows = listOf(ThreadFlow(
             locations = trace.map {
                 ThreadFlowLocation(
-                    location = instToSarifLocation(it.statement),
+                    location = instToSarifLocation(it.statement, sourceFileResolver),
                     state = mapOf(
                         "domainFact" to MultiformatMessageString(
                             text = it.domainFact.toString()
