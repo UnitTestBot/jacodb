@@ -18,6 +18,7 @@ package org.jacodb.testing.cfg
 
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class KotlinInstructionsTest: BaseInstructionsTest() {
@@ -32,7 +33,7 @@ class KotlinInstructionsTest: BaseInstructionsTest() {
         val clazzInstance = javaClazz.constructors.first().newInstance()
         val method = javaClazz.methods.first { it.name == "box" }
         val res = method.invoke(clazzInstance)
-        Assertions.assertEquals("OK", res)
+        assertEquals("OK", res)
     }
 
     @Test
@@ -70,4 +71,7 @@ class KotlinInstructionsTest: BaseInstructionsTest() {
 
     @Test
     fun `kotlin default args`() = runTest(DefaultArgs::class.java.name)
+
+    @Test
+    fun `kotlin iinc`() = runTest(Iinc::class.java.name)
 }
