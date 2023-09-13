@@ -11,7 +11,7 @@ dependencies {
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_coroutines_core)
     implementation(Libs.kotlinx_serialization_json)
-    api(Libs.sarif4k)
+    implementation(Libs.sarif4k)
 
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(Libs.javax_servlet_api)
