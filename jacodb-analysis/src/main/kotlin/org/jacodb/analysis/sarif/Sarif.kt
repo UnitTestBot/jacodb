@@ -92,7 +92,8 @@ private val JcMethod.fullyQualifiedName: String
 
 private fun instToSarifLocation(inst: JcInst, sourceFileResolver: SourceFileResolver): Location {
     val instLocation = inst.location.method.declaration.location
-    val sourceLocation = sourceFileResolver.resolveRelativeSourcePath(instLocation)
+    val sourceLocation = sourceFileResolver.resolveSourcePath(instLocation)
+        ?: resolveRelativeSourcePath(instLocation) // fallback to relative path
     return Location(
         physicalLocation = PhysicalLocation(
             artifactLocation = ArtifactLocation(
