@@ -18,7 +18,6 @@ package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.IfdsVertex
-import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.analysis.JcApplicationGraph
 
@@ -32,7 +31,7 @@ class SqlInjectionAnalyzer(
 
     companion object {
         private const val ruleId: String = "SQL-injection"
-        private val vulnerabilityMessage = SarifMessage("SQL query with unchecked injection")
+        private const val vulnerabilityMessage = "SQL query with unchecked injection"
 
         val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
     }

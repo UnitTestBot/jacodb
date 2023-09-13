@@ -35,7 +35,6 @@ import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
@@ -77,7 +76,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
 
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
             val message = "Dereference of possibly-null ${fact0.variable}"
-            val desc = VulnerabilityDescription(SarifMessage(message), ruleId)
+            val desc = VulnerabilityDescription(message, ruleId)
             add(NewSummaryFact((VulnerabilityLocation(desc, edge.v))))
             verticesWithTraceGraphNeeded.add(edge.v)
         }

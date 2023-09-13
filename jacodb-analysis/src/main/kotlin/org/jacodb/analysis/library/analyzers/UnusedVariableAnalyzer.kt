@@ -31,7 +31,6 @@ import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -57,7 +56,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
 
     companion object {
         const val ruleId: String = "unused-variable"
-        private val vulnerabilityMessage = SarifMessage("Assigned value is unused")
+        private const val vulnerabilityMessage = "Assigned value is unused"
 
         val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
     }

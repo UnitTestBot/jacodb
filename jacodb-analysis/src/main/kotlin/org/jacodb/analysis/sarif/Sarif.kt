@@ -68,7 +68,7 @@ fun sarifReportFromVulnerabilities(
                     Result(
                         ruleID = instance.vulnerabilityDescription.ruleId,
                         message = Message(
-                            text = instance.vulnerabilityDescription.message.text
+                            text = instance.vulnerabilityDescription.message
                         ),
                         level = when (instance.vulnerabilityDescription.level) {
                             SarifSeverityLevel.ERROR -> Level.Error
