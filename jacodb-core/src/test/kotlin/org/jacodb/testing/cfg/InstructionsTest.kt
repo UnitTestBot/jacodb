@@ -31,7 +31,6 @@ import org.jacodb.api.ext.cfg.values
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.int
-import org.jacodb.testing.BaseTest
 import org.jacodb.testing.Common
 import org.jacodb.testing.Common.CommonClass
 import org.jacodb.testing.WithDB
@@ -51,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.activation.DataHandler
 
 
-class InstructionsTest : BaseTest() {
+class InstructionsTest : BaseInstructionsTest() {
 
     companion object : WithDB()
 
@@ -267,6 +266,7 @@ class InstructionsTest : BaseTest() {
         }
         assertEquals("defaultMethod", callDefaultMethod.method.method.name)
     }
+
 }
 
 fun JcMethod.dumpInstructions(): String {

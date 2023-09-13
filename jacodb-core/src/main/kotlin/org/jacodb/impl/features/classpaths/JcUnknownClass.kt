@@ -127,12 +127,17 @@ class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, type: Typ
  *
  */
 object UnknownClasses : JcClasspathExtFeature {
+
+    private val location = VirtualLocation()
+
     override fun tryFindClass(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedClassResult {
-        return JcResolvedClassResultImpl(name, JcUnknownClass(classpath, name))
+        return JcResolvedClassResultImpl(name, JcUnknownClass(classpath, name).also {
+            it.bind(classpath, location)
+        })
     }
 
     override fun tryFindType(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedTypeResult {
-        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name))
+        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name, location))
     }
 }
 

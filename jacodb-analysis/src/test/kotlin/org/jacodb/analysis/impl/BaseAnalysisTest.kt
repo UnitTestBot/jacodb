@@ -19,7 +19,6 @@ package org.jacodb.analysis.impl
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
-import org.jacodb.analysis.toDumpable
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
@@ -52,7 +51,7 @@ abstract class BaseAnalysisTest : BaseTest() {
             .map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
-//            .filter { it.contains("_66") }
+//            .filter { it.contains("_68") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
@@ -109,10 +108,9 @@ abstract class BaseAnalysisTest : BaseTest() {
 
     protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<String> {
         val sinks = launchAnalysis(listOf(method))
-            .toDumpable()
-            .foundVulnerabilities
-            .filter { it.vulnerabilityType == vulnerabilityType }
+            .filter { it.vulnerabilityDescription.ruleId == vulnerabilityType }
+            .map { it.traceGraph.sink.toString() }
 
-        return sinks.map { it.sink }.toSet()
+        return sinks.toSet()
     }
 }

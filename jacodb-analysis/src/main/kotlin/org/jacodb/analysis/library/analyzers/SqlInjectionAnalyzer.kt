@@ -16,18 +16,45 @@
 
 package org.jacodb.analysis.library.analyzers
 
-fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = TaintAnalyzerFactory(
-    sqlSourceMatchers,
-    sqlSanitizeMatchers,
-    sqlSinkMatchers,
-    maxPathLength
-)
+import org.jacodb.analysis.engine.AnalyzerFactory
+import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.sarif.SarifMessage
+import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.analysis.JcApplicationGraph
 
-fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = TaintBackwardAnalyzerFactory(
-    sqlSourceMatchers,
-    sqlSinkMatchers,
-    maxPathLength
-)
+class SqlInjectionAnalyzer(
+    graph: JcApplicationGraph,
+    maxPathLength: Int
+) : TaintAnalyzer(graph, maxPathLength) {
+    override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
+    override val sanitizes = isSanitizeMethodToSanitizes(sqlSanitizeMatchers.asMethodMatchers)
+    override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
+
+    companion object {
+        private const val ruleId: String = "SQL-injection"
+        private val vulnerabilityMessage = SarifMessage("SQL query with unchecked injection")
+
+        val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
+    }
+
+    override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = vulnerabilityDescription
+}
+
+class SqlInjectionBackwardAnalyzer(
+    graph: JcApplicationGraph,
+    maxPathLength: Int
+) : TaintBackwardAnalyzer(graph, maxPathLength) {
+    override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
+    override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
+}
+
+fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    SqlInjectionAnalyzer(graph, maxPathLength)
+}
+
+fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    SqlInjectionBackwardAnalyzer(graph, maxPathLength)
+}
 
 private val sqlSourceMatchers = listOf(
     "java\\.io.+",

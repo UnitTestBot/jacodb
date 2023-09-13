@@ -17,7 +17,7 @@
 package org.jacodb.analysis.impl;
 
 import org.jacodb.analysis.AnalysisMain;
-import org.jacodb.analysis.engine.IfdsUnitRunner;
+import org.jacodb.analysis.engine.IfdsUnitRunnerFactory;
 import org.jacodb.analysis.engine.UnitResolver;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.library.RunnersLibrary;
@@ -59,7 +59,7 @@ public class JavaAnalysisApiTest {
                 .asyncNewApplicationGraphForAnalysis(classpath, null)
                 .get();
         UnitResolver<?> resolver = UnitResolversLibrary.getMethodUnitResolver();
-        IfdsUnitRunner runner = RunnersLibrary.getUnusedVariableRunner();
+        IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunnerFactory();
 
         AnalysisMain.runAnalysis(
                 applicationGraph,

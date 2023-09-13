@@ -20,8 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.analyzers.TaintAnalyzer
-import org.jacodb.analysis.library.newSqlInjectionRunner
+import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzer
+import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -40,7 +40,7 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
             "s03", "s04"
         ))
 
-        private const val vulnerabilityType = TaintAnalyzer.vulnerabilityType
+        private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
     }
 
     @ParameterizedTest
@@ -53,6 +53,6 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, SingletonUnitResolver, newSqlInjectionRunner(), methods)
+        return runAnalysis(graph, SingletonUnitResolver, newSqlInjectionRunnerFactory(), methods)
     }
 }

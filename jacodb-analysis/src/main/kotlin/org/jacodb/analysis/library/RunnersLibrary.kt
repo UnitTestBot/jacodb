@@ -17,58 +17,36 @@
 @file:JvmName("RunnersLibrary")
 package org.jacodb.analysis.library
 
-import org.jacodb.analysis.engine.IfdsBaseUnitRunner
-import org.jacodb.analysis.engine.SequentialBidiIfdsUnitRunner
+import org.jacodb.analysis.engine.BaseIfdsUnitRunnerFactory
+import org.jacodb.analysis.engine.BidiIfdsUnitRunnerFactory
 import org.jacodb.analysis.library.analyzers.AliasAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.NpeAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.NpePrecalcBackwardAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.SqlInjectionBackwardAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.library.analyzers.TaintAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.TaintBackwardAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
-import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 
 //TODO: add docs here
-val UnusedVariableRunner = IfdsBaseUnitRunner(UnusedVariableAnalyzerFactory)
+val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
 
-fun newSqlInjectionRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(SqlInjectionAnalyzerFactory(maxPathLength)),
-    IfdsBaseUnitRunner(SqlInjectionBackwardAnalyzerFactory(maxPathLength)),
+fun newSqlInjectionRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
+    BaseIfdsUnitRunnerFactory(SqlInjectionAnalyzerFactory(maxPathLength)),
+    BaseIfdsUnitRunnerFactory(SqlInjectionBackwardAnalyzerFactory(maxPathLength)),
 )
 
-fun newNpeRunner(maxPathLength: Int = 5) = SequentialBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(NpeAnalyzerFactory(maxPathLength)),
-    IfdsBaseUnitRunner(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
+fun newNpeRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
+    BaseIfdsUnitRunnerFactory(NpeAnalyzerFactory(maxPathLength)),
+    BaseIfdsUnitRunnerFactory(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
+    isParallel = false
 )
 
-fun newAliasRunner(
+fun newAliasRunnerFactory(
     generates: (JcInst) -> List<TaintAnalysisNode>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
-) = IfdsBaseUnitRunner(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))
-
-fun newTaintRunner(
-    isSourceMethod: (JcMethod) -> Boolean,
-    isSanitizeMethod: (JcMethod) -> Boolean,
-    isSinkMethod: (JcMethod) -> Boolean,
-    maxPathLength: Int = 5
-) = SequentialBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(TaintAnalyzerFactory(isSourceMethod, isSanitizeMethod, isSinkMethod, maxPathLength)),
-    IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(isSourceMethod, isSinkMethod, maxPathLength))
-)
-
-fun newTaintRunner(
-    sourceMethodMatchers: List<String>,
-    sanitizeMethodMatchers: List<String>,
-    sinkMethodMatchers: List<String>,
-    maxPathLength: Int = 5
-) = SequentialBidiIfdsUnitRunner(
-    IfdsBaseUnitRunner(TaintAnalyzerFactory(sourceMethodMatchers, sanitizeMethodMatchers, sinkMethodMatchers, maxPathLength)),
-    IfdsBaseUnitRunner(TaintBackwardAnalyzerFactory(sourceMethodMatchers, sinkMethodMatchers, maxPathLength))
-)
+) = BaseIfdsUnitRunnerFactory(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))

@@ -23,11 +23,14 @@ import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
 
 
-class JcUnknownType(override var classpath: JcClasspath, private val name: String) : JcClassType {
+class JcUnknownType(override var classpath: JcClasspath, private val name: String, private val location: VirtualLocation) : JcClassType {
 
     override val lookup: JcLookup<JcTypedField, JcTypedMethod> = JcUnknownTypeLookup(this)
 
-    override val jcClass: JcClassOrInterface get() = JcUnknownClass(classpath, name)
+    override val jcClass: JcClassOrInterface = JcUnknownClass(classpath, name).also {
+        it.bind(classpath, location)
+    }
+
     override val outerType: JcClassType? = null
     override val declaredMethods: List<JcTypedMethod> = emptyList()
     override val methods: List<JcTypedMethod> = emptyList()
