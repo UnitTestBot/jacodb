@@ -16,26 +16,8 @@
 
 package org.jacodb.analysis.sarif
 
-import org.jacodb.api.RegisteredLocation
-import java.nio.file.Paths
+import org.jacodb.api.cfg.JcInst
 
-/**
- * Resolves source files paths from jacodb's [RegisteredLocation]s.
- */
 fun interface SourceFileResolver {
-
-    /**
-     * Returns source file path of the artifact with [location].
-     */
-    fun resolveSourcePath(location: RegisteredLocation): String?
-}
-
-
-/**
- * Returns source file path of the artifact with [location]
- * relative to the current directory.
- */
-fun resolveRelativeSourcePath(location: RegisteredLocation): String {
-    val currentPath = Paths.get("").toAbsolutePath()
-    return currentPath.relativize(Paths.get(location.path)).toString()
+    fun resolveSourcePath(inst: JcInst): String?
 }

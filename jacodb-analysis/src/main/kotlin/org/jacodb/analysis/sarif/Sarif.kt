@@ -37,6 +37,7 @@ import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
+import java.io.File
 
 private const val SARIF_SCHEMA =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
@@ -91,9 +92,12 @@ private val JcMethod.fullyQualifiedName: String
     get() = "${enclosingClass.name}#${name}"
 
 private fun instToSarifLocation(inst: JcInst, sourceFileResolver: SourceFileResolver): Location {
-    val instLocation = inst.location.method.declaration.location
-    val sourceLocation = sourceFileResolver.resolveSourcePath(instLocation)
-        ?: resolveRelativeSourcePath(instLocation) // fallback to relative path
+    val sourceLocation = sourceFileResolver.resolveSourcePath(inst)
+        ?: run {
+            val registeredLocation = inst.location.method.declaration.location
+            val classFile = inst.location.method.enclosingClass.name.replace('.', '/') + ".class"
+            File(registeredLocation.path).resolve(classFile).path
+        }
     return Location(
         physicalLocation = PhysicalLocation(
             artifactLocation = ArtifactLocation(
