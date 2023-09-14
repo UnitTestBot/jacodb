@@ -89,7 +89,15 @@ allprojects {
         }
 
         withType<Test> {
-            useJUnitPlatform()
+            val lifecycleTag = "lifecycle"
+            useJUnitPlatform {
+                val runLifecycleTests = project.hasProperty("lifecycleTests")
+                if (runLifecycleTests) {
+                    includeTags(lifecycleTag)
+                } else {
+                    excludeTags(lifecycleTag)
+                }
+            }
             testLogging {
                 events("passed", "skipped", "failed")
             }

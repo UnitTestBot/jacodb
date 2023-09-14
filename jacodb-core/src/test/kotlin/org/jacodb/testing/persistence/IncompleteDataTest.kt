@@ -26,6 +26,7 @@ import org.jacodb.impl.jacodb
 import org.jacodb.impl.storage.LocationState
 import org.jacodb.impl.storage.SQLitePersistenceImpl
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
+import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.allClasspath
 import org.jooq.DSLContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -35,6 +36,7 @@ import java.io.File
 import java.nio.file.Files
 
 
+@LifecycleTest
 class IncompleteDataTest {
 
     companion object {

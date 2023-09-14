@@ -26,8 +26,13 @@ import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Tag
 import java.nio.file.Files
 import kotlin.reflect.full.companionObjectInstance
+
+@Tag("lifecycle")
+annotation class LifecycleTest
+
 
 abstract class BaseTest {
 
