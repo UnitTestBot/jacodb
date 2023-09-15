@@ -17,6 +17,8 @@
 package org.jacodb.impl.types.signature
 
 import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
 import org.jacodb.api.PredefinedPrimitives
 
 /**
@@ -26,13 +28,14 @@ import org.jacodb.api.PredefinedPrimitives
  * - false -- means that type is non-nullable, a.k.a. T
  * - null -- means that type has unknown nullability, a.k.a. T!
  */
-sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotation>) {
-
-    abstract val displayName: String
+// todo: replace annotations with pure String list
+sealed class AbstractJvmType(
+    override val isNullable: Boolean?, 
+    override val annotations: List<JcAnnotation>): JvmType {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is JvmType) return false
+        if (other !is AbstractJvmType) return false
 
         if (isNullable != other.isNullable) return false
         if (annotations != other.annotations) return false
@@ -50,7 +53,7 @@ sealed class JvmType(val isNullable: Boolean?, val annotations: List<JcAnnotatio
 }
 
 internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
-    : JvmType(isNullable, annotations)
+    : AbstractJvmType(isNullable, annotations)
 
 internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
     : JvmRefType(isNullable, annotations) {
@@ -138,7 +141,7 @@ internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, 
 }
 
 // Nullability has no sense in wildcards, so we suppose them to be always nullable for definiteness
-internal sealed class JvmWildcard : JvmType(isNullable = true, listOf())
+internal sealed class JvmWildcard : AbstractJvmType(isNullable = true, listOf())
 
 internal sealed class JvmBoundWildcard(val bound: JvmType) : JvmWildcard() {
 
@@ -198,8 +201,11 @@ internal interface JvmTypeVisitor<ContextType> {
             is JvmTypeVariable -> visitTypeVariable(type, context)
             is JvmUnboundWildcard -> type
             is JvmParameterizedType.JvmNestedType -> visitNested(type, context)
+            else -> visitUnknownType(type, context)
         }
     }
+
+    fun visitUnknownType(type: JvmType, context: ContextType): JvmType = type
 
     fun visitUpperBound(type: JvmBoundWildcard.JvmUpperBoundWildcard, context: ContextType): JvmType
 

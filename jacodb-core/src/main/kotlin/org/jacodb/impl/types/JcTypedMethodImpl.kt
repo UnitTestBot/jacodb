@@ -26,7 +26,7 @@ import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
-import org.jacodb.impl.types.substition.JcSubstitutor
+import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.LocalVariableNode
 
@@ -54,7 +54,7 @@ class JcTypedMethodImpl(
         val substitutor = if (!method.isStatic) {
             parentSubstitutor.newScope(impl?.typeVariables.orEmpty())
         } else {
-            JcSubstitutor.empty.newScope(impl?.typeVariables.orEmpty())
+            JcSubstitutorImpl.empty.newScope(impl?.typeVariables.orEmpty())
         }
 
         TypedMethodInfo(

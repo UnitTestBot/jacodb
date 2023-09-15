@@ -17,12 +17,7 @@
 package org.jacodb.impl.types
 
 import kotlinx.collections.immutable.toPersistentMap
-import org.jacodb.api.JcAccessible
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcTypeVariableDeclaration
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
+import org.jacodb.api.*
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.jacodb.impl.types.signature.TypeResolutionImpl

@@ -16,6 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
+import org.jacodb.api.JvmType
 import org.jacodb.impl.types.signature.JvmPrimitiveType.Companion.of
 import org.jacodb.impl.types.signature.TypeExtractor.IncompleteToken.InnerClass
 import org.jacodb.impl.types.signature.TypeExtractor.IncompleteToken.TopLevelType
@@ -81,7 +82,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
         val isParameterized: Boolean
         val name: String
 
-        fun toToken(): JvmType?
+        fun toToken(): AbstractJvmType?
 
         abstract class AbstractBase() : IncompleteToken {
 
@@ -125,7 +126,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
 
         class TopLevelType(private val internalName: String) : AbstractBase() {
 
-            override fun toToken(): JvmType {
+            override fun toToken(): AbstractJvmType {
                 return if (isParameterized) JvmParameterizedType(name, parameters, null, listOf()) else JvmClassRefType(name, null, listOf())
             }
 
@@ -142,7 +143,7 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
 
         class InnerClass(private val internalName: String, private val outerTypeToken: IncompleteToken?) :
             AbstractBase() {
-            override fun toToken(): JvmType {
+            override fun toToken(): AbstractJvmType {
                 return if (isParameterized || outerTypeToken!!.isParameterized) JvmParameterizedType.JvmNestedType(
                     name,
                     parameters,

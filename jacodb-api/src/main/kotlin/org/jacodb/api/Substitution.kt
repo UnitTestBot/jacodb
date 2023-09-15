@@ -14,19 +14,21 @@
  *  limitations under the License.
  */
 
-package org.jacodb.impl.types.substition
+package org.jacodb.api
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.findClass
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
-import org.jacodb.impl.types.typeParameters
+interface JvmType {
+    val displayName: String
+    val isNullable: Boolean?
+    val annotations: List<JcAnnotation>
+}
+
+interface JvmTypeParameterDeclaration {
+    val symbol: String
+    val owner: JcAccessible
+    val bounds: List<JvmType>?
+}
 
 interface JcSubstitutor {
-
-    companion object {
-        val empty = JcSubstitutorImpl()
-    }
 
     /**
      * Returns a mapping that this substitutor contains for a given type parameter.
@@ -54,16 +56,4 @@ interface JcSubstitutor {
 
     val substitutions: Map<JvmTypeParameterDeclaration, JvmType>
 
-}
-
-fun JcClasspath.substitute(name: String, parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor {
-    val clazz = findClass(name)
-    val params = clazz.typeParameters
-    require(params.size == parameters.size) {
-        "Incorrect parameters specified for class $name: expected ${params.size} found ${parameters.size}"
-    }
-    val substitution = params.mapIndexed { index, declaration ->
-        declaration to parameters[index]
-    }.toMap()
-    return (outer ?: JcSubstitutor.empty).newScope(substitution)
 }

@@ -26,7 +26,7 @@ import org.jacodb.impl.features.classpaths.virtual.JcVirtualParameter
 import org.jacodb.impl.types.JcTypedFieldImpl
 import org.jacodb.impl.types.JcTypedMethodImpl
 import org.jacodb.impl.types.TypeNameImpl
-import org.jacodb.impl.types.substition.JcSubstitutor
+import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.objectweb.asm.Type
 
 class JcUnknownClass(override var classpath: JcClasspath, name: String) : JcVirtualClassImpl(
@@ -62,7 +62,7 @@ class JcUnknownMethod(
             return JcTypedMethodImpl(
                 type,
                 method(type.jcClass, name, description),
-                JcSubstitutor.empty
+                JcSubstitutorImpl.empty
             )
         }
     }
@@ -81,7 +81,7 @@ class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, type: Typ
             return JcTypedFieldImpl(
                 type,
                 JcUnknownField(type.jcClass, name, fieldType),
-                JcSubstitutor.empty
+                JcSubstitutorImpl.empty
             )
         }
 

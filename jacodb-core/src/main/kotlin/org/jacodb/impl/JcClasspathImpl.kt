@@ -32,7 +32,7 @@ import org.jacodb.impl.features.classpaths.isResolveAllToUnknown
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.types.JcArrayTypeImpl
 import org.jacodb.impl.types.JcClassTypeImpl
-import org.jacodb.impl.types.substition.JcSubstitutor
+import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.jacodb.impl.vfs.ClasspathVfs
 import org.jacodb.impl.vfs.GlobalClassesVfs
 
@@ -76,7 +76,7 @@ class JcClasspathImpl(
             this,
             jcClass.name,
             jcClass.outerClass?.toType() as? JcClassTypeImpl,
-            JcSubstitutor.empty,
+            JcSubstitutorImpl.empty,
             nullability,
             annotations
         )

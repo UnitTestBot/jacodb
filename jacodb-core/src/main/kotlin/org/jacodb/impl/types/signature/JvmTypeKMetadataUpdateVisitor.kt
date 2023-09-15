@@ -18,6 +18,8 @@ package org.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
 import org.jacodb.impl.bytecode.isNullable
 
 /**
@@ -85,7 +87,7 @@ internal object JvmTypeKMetadataUpdateVisitor : JvmTypeVisitor<KmType> {
         }
     }
 
-    private fun visitFinal(type: JvmType, context: KmType): JvmType {
+    private fun visitFinal(type: AbstractJvmType, context: KmType): JvmType {
         return type.copyWith(context.isNullable)
     }
 }

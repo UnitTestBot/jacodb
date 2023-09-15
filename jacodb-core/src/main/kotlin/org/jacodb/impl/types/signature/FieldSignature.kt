@@ -17,10 +17,7 @@
 package org.jacodb.impl.types.signature
 
 import mu.KLogging
-import org.jacodb.api.FieldResolution
-import org.jacodb.api.JcField
-import org.jacodb.api.Malformed
-import org.jacodb.api.Pure
+import org.jacodb.api.*
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
