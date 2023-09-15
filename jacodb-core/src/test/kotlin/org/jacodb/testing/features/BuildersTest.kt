@@ -19,11 +19,9 @@ package org.jacodb.testing.features
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.features.Builders
-import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.buildersExtension
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.builders.Hierarchy.HierarchyInterface
 import org.jacodb.testing.builders.Interfaces.Interface
 import org.jacodb.testing.builders.Simple
@@ -36,7 +34,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class BuildersTest : BaseTest() {
 
-    companion object : WithDB(InMemoryHierarchy, Builders)
+    companion object : WithGlobalDB()
 
     private val ext = runBlocking {
         cp.buildersExtension()

@@ -31,7 +31,6 @@ import org.jacodb.impl.cfg.JcInstListBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder
 import org.jacodb.impl.cfg.Simplifier
 import org.jacodb.impl.cfg.util.ExprMapper
-import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
@@ -255,7 +254,7 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
 
 class IRTest : BaseInstructionsTest() {
 
-    companion object : WithDB(InMemoryHierarchy, StringConcatSimplifier)
+    companion object : WithDB(StringConcatSimplifier)
 
     @Test
     fun `get ir of simple method`() {

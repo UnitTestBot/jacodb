@@ -22,18 +22,7 @@ import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 import org.jacodb.api.Pure
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.types.signature.FieldResolutionImpl
-import org.jacodb.impl.types.signature.FieldSignature
-import org.jacodb.impl.types.signature.JvmBoundWildcard
-import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.signature.JvmParameterizedType
-import org.jacodb.impl.types.signature.JvmPrimitiveType
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
-import org.jacodb.impl.types.signature.JvmTypeVariable
-import org.jacodb.impl.types.signature.MethodResolutionImpl
-import org.jacodb.impl.types.signature.MethodSignature
-import org.jacodb.impl.types.signature.TypeResolutionImpl
-import org.jacodb.impl.types.signature.TypeSignature
+import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.typeParameters
 import org.jacodb.testing.usages.Generics
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -42,7 +31,7 @@ import org.junit.jupiter.api.Test
 
 class SignatureTest : BaseTest() {
 
-    companion object : WithDB()
+    companion object : WithGlobalDB()
 
     @Test
     fun `get signature of class`() = runBlocking {

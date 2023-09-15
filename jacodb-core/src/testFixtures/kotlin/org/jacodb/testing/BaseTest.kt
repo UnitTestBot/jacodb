@@ -21,33 +21,37 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcFeature
+import org.jacodb.impl.features.Builders
+import org.jacodb.impl.features.InMemoryHierarchy
+import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.Tag
 import java.nio.file.Files
 import kotlin.reflect.full.companionObjectInstance
 
-@ExtendWith(CleanDB::class)
+@Tag("lifecycle")
+annotation class LifecycleTest
+
+
 abstract class BaseTest {
 
     protected open val cp: JcClasspath = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
-        withDB.db.classpath(allClasspath, withDB.cpFeatures.toList())
+        withDB.db.classpath(allClasspath, withDB.classpathFeatures.toList())
     }
 
     @AfterEach
-    fun close() {
+    open fun close() {
         cp.close()
     }
 
 }
 
-val Class<*>.withDB: WithDB
+val Class<*>.withDB: JcDatabaseHolder
     get() {
         val comp = kotlin.companionObjectInstance
-        if (comp is WithDB) {
+        if (comp is JcDatabaseHolder) {
             return comp
         }
         val s = superclass
@@ -57,7 +61,15 @@ val Class<*>.withDB: WithDB
         return s.withDB
     }
 
-open class WithDB(vararg features: Any) {
+
+interface JcDatabaseHolder {
+
+    val classpathFeatures: List<JcClasspathFeature>
+    val db: JcDatabase
+    fun cleanup()
+}
+
+open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     protected var allFeatures = features.toList().toTypedArray()
 
@@ -65,24 +77,44 @@ open class WithDB(vararg features: Any) {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
     }
 
-    val dbFeatures = allFeatures.mapNotNull { it as? JcFeature<*, *> }.toTypedArray()
-    val cpFeatures = allFeatures.mapNotNull { it as? JcClasspathFeature }.toTypedArray()
+    val dbFeatures = allFeatures.mapNotNull { it as? JcFeature<*, *> }
+    override val classpathFeatures = allFeatures.mapNotNull { it as? JcClasspathFeature }
 
-    open var db = runBlocking {
+    override var db = runBlocking {
         jacodb {
             // persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
-            installFeatures(*dbFeatures)
+            installFeatures(*dbFeatures.toTypedArray())
         }.also {
             it.awaitBackgroundJobs()
         }
     }
 
-    open fun cleanup() {
+    override  fun cleanup() {
         db.close()
     }
 }
+
+val globalDb by lazy {
+    WithDB(Usages, Builders, InMemoryHierarchy).db
+}
+
+open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDatabaseHolder {
+
+    init {
+        System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
+    }
+
+    override val classpathFeatures: List<JcClasspathFeature> = _classpathFeatures.toList()
+
+    override val db: JcDatabase get() = globalDb
+
+    override fun cleanup() {
+    }
+}
+
+
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 
@@ -102,21 +134,11 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
-                installFeatures(*dbFeatures)
+                installFeatures(*dbFeatures.toTypedArray())
             }.also {
                 it.awaitBackgroundJobs()
             }
         }
     }
 
-}
-
-
-class CleanDB : AfterAllCallback {
-    override fun afterAll(context: ExtensionContext) {
-        val companion = context.requiredTestClass.kotlin.companionObjectInstance
-        if (companion is WithDB) {
-            companion.cleanup()
-        }
-    }
 }

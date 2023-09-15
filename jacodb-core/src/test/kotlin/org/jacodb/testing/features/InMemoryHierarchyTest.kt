@@ -26,10 +26,9 @@ import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.WithRestoredDB
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.w3c.dom.Document
 import java.util.*
@@ -127,7 +126,7 @@ abstract class BaseInMemoryHierarchyTest : BaseTest() {
 }
 
 class InMemoryHierarchyTest : BaseInMemoryHierarchyTest() {
-    companion object : WithDB(InMemoryHierarchy)
+    companion object : WithGlobalDB()
 }
 
 class RegularHierarchyTest : BaseInMemoryHierarchyTest() {
@@ -138,5 +137,6 @@ class RegularHierarchyTest : BaseInMemoryHierarchyTest() {
 }
 
 class RestoredInMemoryHierarchyTest : BaseInMemoryHierarchyTest() {
+
     companion object : WithRestoredDB(InMemoryHierarchy)
 }

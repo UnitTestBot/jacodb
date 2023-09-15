@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test
 
 class AnnotationsTest : BaseTest() {
 
-    companion object : WithDB()
+    companion object : WithGlobalDB()
 
     @Test
     fun `field annotations`() = runBlocking {

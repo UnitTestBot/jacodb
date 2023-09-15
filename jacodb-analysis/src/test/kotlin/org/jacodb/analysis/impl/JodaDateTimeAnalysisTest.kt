@@ -27,15 +27,13 @@ import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.features.InMemoryHierarchy
-import org.jacodb.impl.features.Usages
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
 
 class JodaDateTimeAnalysisTest : BaseTest() {
-    companion object : WithDB(Usages, InMemoryHierarchy)
+    companion object : WithGlobalDB()
 
     private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
         val clazz = cp.findClass<DateTime>()

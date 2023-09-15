@@ -23,7 +23,6 @@ import org.jacodb.api.ext.CONSTRUCTOR
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.usedFields
 import org.jacodb.api.ext.usedMethods
-import org.jacodb.impl.features.Usages
 import org.jacodb.testing.usages.direct.DirectA
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,7 +30,7 @@ import org.junit.jupiter.api.Test
 
 class DirectUsagesTest : BaseTest() {
 
-    companion object : WithDB(Usages)
+    companion object : WithGlobalDB()
 
     @Test
     fun `find methods used in method`() {

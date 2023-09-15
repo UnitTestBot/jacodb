@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test
 
 class UnknownClassesTest : BaseTest() {
 
-    companion object : WithDB(UnknownClasses, UnknownClassMethodsAndFields)
+    companion object : WithGlobalDB(UnknownClasses, UnknownClassMethodsAndFields)
 
     @Test
     fun `unknown class is resolved`() {

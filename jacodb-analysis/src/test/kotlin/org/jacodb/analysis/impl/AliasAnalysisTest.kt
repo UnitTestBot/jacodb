@@ -31,10 +31,8 @@ import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.features.InMemoryHierarchy
-import org.jacodb.impl.features.Usages
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
@@ -45,7 +43,7 @@ import kotlin.streams.asStream
 
 @Disabled("Needs modifications after introduction of summaries")
 class AliasAnalysisTest : BaseTest() {
-    companion object : WithDB(Usages, InMemoryHierarchy) {
+    companion object : WithGlobalDB() {
 
         @JvmStatic
         fun provideForPointerBenchBasic(): Stream<Arguments> = listOf(

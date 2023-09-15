@@ -23,12 +23,10 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.impl.features.InMemoryHierarchy
-import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,7 +35,7 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 abstract class BaseAnalysisTest : BaseTest() {
-    companion object : WithDB(UnknownClasses, Usages, InMemoryHierarchy) {
+    companion object : WithGlobalDB(UnknownClasses) {
         @JvmStatic
         fun provideClassesForJuliet(cweNum: Int, cweSpecificBans: List<String> = emptyList()): Stream<Arguments> = runBlocking {
             val cp = db.classpath(allClasspath)
