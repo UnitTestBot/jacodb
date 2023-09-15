@@ -88,25 +88,21 @@ allprojects {
             }
         }
 
-        withType<Test> {
-            val lifecycleTag = "lifecycle"
+        test {
             useJUnitPlatform {
-                val runLifecycleTests = project.hasProperty("lifecycleTests")
-                if (runLifecycleTests) {
-                    includeTags(lifecycleTag)
-                } else {
-                    excludeTags(lifecycleTag)
-                }
+                excludeTags(Tests.lifecycleTag)
             }
-            testLogging {
-                events("passed", "skipped", "failed")
+            setup(jacocoTestReport)
+        }
+
+        val lifecycleTest by creating(Test::class) {
+            useJUnitPlatform {
+                includeTags(Tests.lifecycleTag)
             }
-            finalizedBy(jacocoTestReport) // report is always generated after tests run
-            jvmArgs = listOf("-Xmx2g", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=heapdump.hprof")
+            setup(jacocoTestReport)
         }
 
         jacocoTestReport {
-            dependsOn(test) // tests are required to run before generating the report
             classDirectories.setFrom(files(classDirectories.files.map {
                 fileTree(it) {
                     excludes.add("org/jacodb/impl/storage/jooq/**")
