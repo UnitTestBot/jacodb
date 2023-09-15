@@ -20,11 +20,13 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.WithRestoredDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.jacodb.testing.withDB
 
+@LifecycleTest
 class RestoredDBTest : DatabaseEnvTest() {
 
     companion object : WithRestoredDB()

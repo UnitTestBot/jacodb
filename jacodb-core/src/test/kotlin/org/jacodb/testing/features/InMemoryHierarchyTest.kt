@@ -24,10 +24,7 @@ import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.findSubclassesInMemory
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
-import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
-import org.jacodb.testing.WithGlobalDB
-import org.jacodb.testing.WithRestoredDB
+import org.jacodb.testing.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.w3c.dom.Document
@@ -136,6 +133,7 @@ class RegularHierarchyTest : BaseInMemoryHierarchyTest() {
         get() = false
 }
 
+@LifecycleTest
 class RestoredInMemoryHierarchyTest : BaseInMemoryHierarchyTest() {
 
     companion object : WithRestoredDB(InMemoryHierarchy)
