@@ -21,16 +21,19 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.bytecode.TypeDelegatingLookup
-import org.jacodb.impl.types.signature.*
-import org.jacodb.impl.types.substition.JcSubstitutor
-import org.jacodb.impl.types.substition.substitute
+import org.jacodb.impl.types.signature.JvmClassRefType
+import org.jacodb.impl.types.signature.JvmParameterizedType
+import org.jacodb.impl.types.signature.TypeResolutionImpl
+import org.jacodb.impl.types.signature.TypeSignature
+import org.jacodb.impl.types.substition.JcSubstitutorImpl
+import org.jacodb.impl.types.substition.SafeSubstitution
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassTypeImpl(
     override val classpath: JcClasspath,
     val name: String,
     override val outerType: JcClassTypeImpl? = null,
-    private val substitutor: JcSubstitutor = JcSubstitutor.empty,
+    private val substitutor: JcSubstitutor = JcSubstitutorImpl.empty,
     override val nullable: Boolean?,
     override val annotations: List<JcAnnotation>
 ) : JcClassType {
@@ -133,7 +136,7 @@ class JcClassTypeImpl(
                         outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
                         )?.values?.toList().orEmpty()
                 val innerSubstitutor = when {
-                    it.isStatic -> JcSubstitutor.empty.newScope(innerParameters)
+                    it.isStatic -> JcSubstitutorImpl.empty.newScope(innerParameters)
                     else -> substitutor.newScope(innerParameters)
                 }
                 JcClassTypeImpl(classpath, it.name, this, innerSubstitutor, true, annotations)
@@ -247,13 +250,22 @@ class JcClassTypeImpl(
         val superParameters = superClass.directTypeParameters()
         val substitutions = (superType as? JvmParameterizedType)?.parameterTypes
         if (substitutions == null || superParameters.size != substitutions.size) {
-            return JcSubstitutor.empty
+            return JcSubstitutorImpl.empty
         }
         return substitutor.fork(superParameters.mapIndexed { index, declaration -> declaration to substitutions[index] }
             .toMap())
 
     }
 
+}
+
+private fun JcClasspath.substitute(
+    name: String,
+    parameters: List<JvmType>,
+    substitutor: JcSubstitutor?
+): JcSubstitutor {
+    val genericsSubstitutor = features?.firstNotNullOfOrNull { it as? JcGenericsSubstitutionFeature } ?: SafeSubstitution
+    return genericsSubstitutor.substitute(findClass(name), parameters, substitutor)
 }
 
 fun JvmType.isReferencesClass(name: String): Boolean {

@@ -16,6 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
+import org.jacodb.api.JvmType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.signature.SignatureVisitor
 

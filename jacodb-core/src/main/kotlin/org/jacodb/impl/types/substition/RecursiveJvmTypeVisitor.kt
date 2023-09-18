@@ -16,16 +16,11 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.impl.types.signature.JvmArrayType
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmLowerBoundWildcard
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmUpperBoundWildcard
-import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.signature.JvmParameterizedType
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclaration
-import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
-import org.jacodb.impl.types.signature.JvmTypeVariable
-import org.jacodb.impl.types.signature.JvmTypeVisitor
 
 internal class VisitorContext(private val processed: HashSet<Any> = HashSet()) {
 

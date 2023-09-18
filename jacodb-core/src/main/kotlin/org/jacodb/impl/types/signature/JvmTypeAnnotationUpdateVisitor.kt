@@ -17,6 +17,7 @@
 package org.jacodb.impl.types.signature
 
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JvmType
 import org.jacodb.api.ext.isNotNullAnnotation
 import org.jacodb.api.ext.isNullableAnnotation
 import org.jacodb.impl.bytecode.JcAnnotationImpl
@@ -192,7 +193,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
     private fun unexpectedStepType(stepType: Int, kind: String): Nothing =
         error("Unexpected step type $stepType for $kind")
 
-    private fun handleInnerType(type: JvmType, context: AnnotationUpdateVisitorContext): JvmType {
+    private fun handleInnerType(type: AbstractJvmType, context: AnnotationUpdateVisitorContext): AbstractJvmType {
         context.step++
         return type
     }

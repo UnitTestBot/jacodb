@@ -25,7 +25,7 @@ import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.substition.JcSubstitutor
+import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.InputStream
@@ -149,7 +149,7 @@ class TypesTest : BaseTypesTest() {
     }
 
     private fun rawList(): JcClassType {
-        return JcClassTypeImpl(cp, listClass, null, JcSubstitutor.empty, false, emptyList())
+        return JcClassTypeImpl(cp, listClass, null, JcSubstitutorImpl.empty, false, emptyList())
     }
 
 

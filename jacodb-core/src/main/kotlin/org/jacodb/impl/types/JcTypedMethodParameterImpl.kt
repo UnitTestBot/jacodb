@@ -16,17 +16,10 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcParameter
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.JcTypedMethodParameter
+import org.jacodb.api.*
 import org.jacodb.api.ext.isNullable
-import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.substition.JcSubstitutor
 
 class JcTypedMethodParameterImpl(
     override val enclosingMethod: JcTypedMethod,

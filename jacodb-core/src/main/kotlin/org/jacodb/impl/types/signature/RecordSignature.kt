@@ -16,6 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
+import org.jacodb.api.JvmType
 import org.jacodb.api.Malformed
 import org.jacodb.api.Pure
 import org.jacodb.api.RecordComponentResolution

@@ -17,12 +17,8 @@
 package org.jacodb.impl.types.signature
 
 import org.jacodb.api.JcAccessible
-
-interface JvmTypeParameterDeclaration {
-    val symbol: String
-    val owner: JcAccessible
-    val bounds: List<JvmType>?
-}
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
 
 internal class JvmTypeParameterDeclarationImpl(
     override val symbol: String,

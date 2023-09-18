@@ -20,10 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.FieldUsageMode
 import org.jacodb.api.ext.CONSTRUCTOR
 import org.jacodb.api.ext.findClass
-import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
-import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.usages.fields.FieldA
 import org.jacodb.testing.usages.fields.FieldB
@@ -193,5 +191,5 @@ class InMemoryHierarchySearchUsagesTest : BaseSearchUsagesTest() {
 }
 
 class SearchUsagesTest : BaseSearchUsagesTest() {
-    companion object : WithDB(Usages)
+    companion object : WithGlobalDB()
 }

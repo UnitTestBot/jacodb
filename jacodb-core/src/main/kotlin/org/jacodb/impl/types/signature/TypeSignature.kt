@@ -16,10 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.Malformed
-import org.jacodb.api.Pure
-import org.jacodb.api.TypeResolution
+import org.jacodb.api.*
 import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor

@@ -16,22 +16,10 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcAccessible
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeVariableDeclaration
-import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.*
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.objectType
-import org.jacodb.impl.types.signature.JvmArrayType
-import org.jacodb.impl.types.signature.JvmBoundWildcard
-import org.jacodb.impl.types.signature.JvmClassRefType
-import org.jacodb.impl.types.signature.JvmParameterizedType
-import org.jacodb.impl.types.signature.JvmPrimitiveType
-import org.jacodb.impl.types.signature.JvmType
-import org.jacodb.impl.types.signature.JvmTypeVariable
-import org.jacodb.impl.types.signature.JvmUnboundWildcard
+import org.jacodb.impl.types.signature.*
 
 internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
     return when (jvmType) {
@@ -88,6 +76,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
         is JvmBoundWildcard.JvmLowerBoundWildcard -> JcBoundedWildcardImpl(
             upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType)
         )
+        else -> throw IllegalStateException("Unsupported type")
     }
 }
 
