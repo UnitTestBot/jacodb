@@ -474,7 +474,7 @@ class RawInstListBuilder(
             ?.desc
             ?.typeName()
 
-        return if (declaredTypeName != null && !declaredTypeName.isPrimitive) {
+        return if (declaredTypeName != null && !declaredTypeName.isPrimitive && !typeName.isArray) {
             JcRawLocalVar("%${localCounter++}", declaredTypeName)
         } else {
             JcRawLocalVar("%${localCounter++}", typeName)
