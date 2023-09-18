@@ -21,7 +21,10 @@ import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.typeParameters
 
-private fun List<JvmTypeParameterDeclaration>.substitute(parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor {
+private fun List<JvmTypeParameterDeclaration>.substitute(
+    parameters: List<JvmType>,
+    outer: JcSubstitutor?
+): JcSubstitutor {
     val substitution = mapIndexed { index, declaration ->
         declaration to parameters[index]
     }.toMap()
@@ -44,9 +47,9 @@ object SafeSubstitution : JcGenericsSubstitutionFeature {
     }
 }
 
-object IgnoreProblemsSubstitution : JcGenericsSubstitutionFeature {
+object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
 
-    private val jvmObjectType =  JvmClassRefType(OBJECT_CLASS, true, emptyList())
+    private val jvmObjectType = JvmClassRefType(OBJECT_CLASS, true, emptyList())
 
     override fun substitute(
         clazz: JcClassOrInterface,
@@ -57,9 +60,7 @@ object IgnoreProblemsSubstitution : JcGenericsSubstitutionFeature {
         if (params.size == parameters.size) {
             return params.substitute(parameters, outer)
         }
-        val substitution = params.mapIndexed { index, declaration ->
-            declaration to (declaration.bounds?.first() ?: jvmObjectType)
-        }.toMap()
+        val substitution = params.associateWith { it.bounds?.first() ?: jvmObjectType }
         return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
     }
 }

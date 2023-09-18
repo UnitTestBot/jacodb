@@ -185,7 +185,7 @@ interface JcLookupExtFeature : JcClasspathFeature {
     fun lookup(type: JcClassType): JcLookup<JcTypedField, JcTypedMethod>
 }
 
-interface JcGenericsSubstitutionFeature {
+interface JcGenericsSubstitutionFeature : JcClasspathFeature {
 
     fun substitute(clazz: JcClassOrInterface, parameters: List<JvmType>, outer: JcSubstitutor?): JcSubstitutor
 }
