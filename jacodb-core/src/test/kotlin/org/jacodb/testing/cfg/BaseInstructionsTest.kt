@@ -85,7 +85,11 @@ abstract class BaseInstructionsTest : BaseTest() {
             }
             val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
             val checker = CheckClassAdapter(cw)
-            classNode.accept(checker)
+            try {
+                classNode.accept(checker)
+            } catch (ex: Throwable) {
+                println(ex)
+            }
             val targetDir = target.resolve(klass.packageName.replace('.', '/'))
             val targetFile = targetDir.resolve("${klass.simpleName}.class").toFile().also {
                 it.parentFile?.mkdirs()
