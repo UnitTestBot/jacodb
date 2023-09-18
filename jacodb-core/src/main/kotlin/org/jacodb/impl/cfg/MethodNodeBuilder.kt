@@ -253,11 +253,13 @@ class MethodNodeBuilder(
         var shouldReverse = false
         val (zeroValue, zeroCmpOpcode, defaultOpcode) = when (cond) {
             is JcRawEqExpr -> when {
+                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(JcRawNull(), Opcodes.IFNULL, Opcodes.IF_ACMPEQ)
                 cond.lhv.typeName.isPrimitive -> Triple(JcRawInt(0), Opcodes.IFEQ, Opcodes.IF_ICMPEQ)
                 else -> Triple(JcRawNull(), Opcodes.IFNULL, Opcodes.IF_ACMPEQ)
             }
 
             is JcRawNeqExpr -> when {
+                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(JcRawNull(), Opcodes.IFNONNULL, Opcodes.IF_ACMPNE)
                 cond.lhv.typeName.isPrimitive -> Triple(JcRawInt(0), Opcodes.IFNE, Opcodes.IF_ICMPNE)
                 else -> Triple(JcRawNull(), Opcodes.IFNONNULL, Opcodes.IF_ACMPNE)
             }
