@@ -34,9 +34,7 @@ import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
-import org.jacodb.testing.WithDB
-import org.jacodb.testing.guavaLib
-import org.jacodb.testing.kotlinxCoroutines
+import org.jacodb.testing.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -306,10 +304,13 @@ class IRTest : BaseInstructionsTest() {
     // todo: make this test green
     @Test
     fun `get ir of kotlinx-coroutines`() {
-//        testClass(cp.findClass("kotlinx.coroutines.ThreadContextElementKt"))
         runAlongLib(kotlinxCoroutines, false)
     }
 
+    @Test
+    fun `get ir of kotlin stdlib`() {
+        runAlongLib(kotlinStdLib, false)
+    }
 
 
     @AfterEach
