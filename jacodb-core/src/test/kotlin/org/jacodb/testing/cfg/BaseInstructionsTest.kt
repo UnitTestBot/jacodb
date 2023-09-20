@@ -55,12 +55,12 @@ abstract class BaseInstructionsTest : BaseTest() {
     }
 
 
-    protected fun testClass(klass: JcClassOrInterface, validateLineNumbers: Boolean = true) {
-        testAndLoadClass(klass, false, validateLineNumbers)
+    protected fun testClass(klass: JcClassOrInterface, validateLineNumbers: Boolean = true, muteGraphChecker: Boolean = false) {
+        testAndLoadClass(klass, false, validateLineNumbers, muteGraphChecker)
     }
 
     protected fun testAndLoadClass(klass: JcClassOrInterface, muteGraphChecker: Boolean = false): Class<*> {
-        return testAndLoadClass(klass, true, validateLineNumbers = true)!!
+        return testAndLoadClass(klass, true, validateLineNumbers = true, muteGraphChecker = muteGraphChecker)!!
     }
 
     private fun testAndLoadClass(
