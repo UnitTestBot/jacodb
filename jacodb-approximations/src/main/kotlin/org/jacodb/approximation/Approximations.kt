@@ -155,13 +155,16 @@ private class ApproximationIndexer(
         val approximationClassName = classNode.name.className.toApproximationName()
 
         // Ensure that each approximation has one and only one
-        require(originalClassName !in originalToApproximation) {
+        val currentApproximation = originalToApproximation[originalClassName]
+        require(currentApproximation == null || currentApproximation == approximationClassName) {
             "An error occurred during approximations indexing: you tried to add `$approximationClassName` " +
                     "as an approximation for `$originalClassName`, but the target class is already " +
                     "associated with approximation `${originalToApproximation[originalClassName]}`. " +
                     "Only bijection between classes is allowed."
         }
-        require(approximationClassName !in approximationToOriginal) {
+
+        val currentOriginal = approximationToOriginal[approximationClassName]
+        require(currentOriginal == null || currentOriginal == originalClassName) {
             "An error occurred during approximations indexing: you tried to add `$approximationClassName` " +
                     "as an approximation for `$originalClassName`, but this approximation is already used for " +
                     "`${approximationToOriginal[approximationClassName]}`. " +
