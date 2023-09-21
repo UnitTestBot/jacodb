@@ -23,6 +23,7 @@ import org.jacodb.api.cfg.*
 import org.jacodb.impl.cfg.util.*
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.H_GETSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
@@ -562,7 +563,11 @@ class MethodNodeBuilder(
             tag,
             declaringClass.jvmClassName,
             name,
-            "(${argTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}",
+            if (argTypes.isEmpty() && tag <= H_GETSTATIC) {
+               returnType.jvmTypeName
+            } else {
+                "(${argTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}"
+            },
             isInterface
         )
     private val JcRawMethodConstant.asAsmType: Type
