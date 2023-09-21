@@ -48,6 +48,7 @@ private const val DEFAULT_PATH_COUNT = 3
 fun sarifReportFromVulnerabilities(
     vulnerabilities: List<VulnerabilityInstance>,
     maxPathsCount: Int = DEFAULT_PATH_COUNT,
+    isDeduplicate: Boolean = true,
     sourceFileResolver: SourceFileResolver = SourceFileResolver { null },
 ): SarifSchema210 {
     return SarifSchema210(
@@ -79,7 +80,7 @@ fun sarifReportFromVulnerabilities(
                         codeFlows = instance.traceGraph
                             .getAllTraces()
                             .take(maxPathsCount)
-                            .map { traceToSarifCodeFlow(it, sourceFileResolver) }
+                            .map { traceToSarifCodeFlow(it, sourceFileResolver, isDeduplicate) }
                             .toList(),
                     )
                 }
@@ -115,19 +116,41 @@ private fun instToSarifLocation(inst: JcInst, sourceFileResolver: SourceFileReso
     )
 }
 
-private fun traceToSarifCodeFlow(trace: List<IfdsVertex>, sourceFileResolver: SourceFileResolver): CodeFlow {
+private fun traceToSarifCodeFlow(
+    trace: List<IfdsVertex>,
+    sourceFileResolver: SourceFileResolver,
+    isDeduplicate: Boolean = true,
+): CodeFlow {
     return CodeFlow(
-        threadFlows = listOf(ThreadFlow(
-            locations = trace.map {
-                ThreadFlowLocation(
-                    location = instToSarifLocation(it.statement, sourceFileResolver),
-                    state = mapOf(
-                        "domainFact" to MultiformatMessageString(
-                            text = it.domainFact.toString()
+        threadFlows = listOf(
+            ThreadFlow(
+                locations = trace.map {
+                    ThreadFlowLocation(
+                        location = instToSarifLocation(it.statement, sourceFileResolver),
+                        state = mapOf(
+                            "domainFact" to MultiformatMessageString(
+                                text = it.domainFact.toString()
+                            )
                         )
                     )
-                )
-            }
-        ))
+                }.let {
+                    if (isDeduplicate) it.deduplicate() else it
+                }
+            )
+        )
     )
+}
+
+private fun List<ThreadFlowLocation>.deduplicate(): List<ThreadFlowLocation> {
+    if (isEmpty()) return emptyList()
+
+    return listOf(first()) + zipWithNext { a, b ->
+        val aLine = a.location!!.physicalLocation!!.region!!.startLine!!
+        val bLine = b.location!!.physicalLocation!!.region!!.startLine!!
+        if (aLine != bLine) {
+            b
+        } else {
+            null
+        }
+    }.filterNotNull()
 }
