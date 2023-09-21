@@ -1110,8 +1110,16 @@ class RawInstListBuilder(
             tag,
             owner.typeName(),
             name,
-            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
-            Type.getReturnType(desc).descriptor.typeName(),
+            if (desc.contains("(")) {
+                Type.getArgumentTypes(desc).map { it.descriptor.typeName() }
+            } else {
+                listOf()
+            },
+            if (desc.contains("(")) {
+                Type.getReturnType(desc).descriptor.typeName()
+            } else {
+                Type.getReturnType("(;)$desc").descriptor.typeName()
+            },
             isInterface
         )
 
@@ -1125,7 +1133,6 @@ class RawInstListBuilder(
 
     private fun buildInvokeDynamicInsn(insnNode: InvokeDynamicInsnNode) {
         val desc = insnNode.desc
-        val bsmMethod = insnNode.bsm.bsmHandleArg
         val bsmArgs = insnNode.bsmArgs.map {
             when (it) {
                 is Number -> bsmNumberArg(it)
@@ -1136,6 +1143,7 @@ class RawInstListBuilder(
             }
         }.reversed()
         val args = Type.getArgumentTypes(desc).map { pop() }.reversed()
+        val bsmMethod = insnNode.bsm.bsmHandleArg
         val expr = JcRawDynamicCallExpr(
             bsmMethod,
             bsmArgs,
