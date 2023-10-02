@@ -415,7 +415,10 @@ class RawInstListBuilder(
         override: Boolean = false
     ): JcRawAssignInst {
         val oldVar = currentFrame.locals[variable]?.let {
-            if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive) && it.typeName.typeName != PredefinedPrimitives.Null) {
+            if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive)
+                && it.typeName.typeName != PredefinedPrimitives.Null
+                && it !is JcRawArgument
+            ) {
                 null
             } else {
                 it
