@@ -19,7 +19,9 @@ package org.jacodb.impl.cfg
 import org.jacodb.api.*
 import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.*
+import org.jacodb.impl.cfg.util.LAMBDA_METAFACTORY_CLASS
 import org.jacodb.impl.cfg.util.UNINIT_THIS
+import org.jacodb.impl.cfg.util.typeName
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
@@ -259,29 +261,53 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType())
 
+    private val lambdaMetaFactory: TypeName by lazy { LAMBDA_METAFACTORY_CLASS.typeName() }
+    private val lambdaMetaFactoryMethodName: String = "metafactory"
+
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
-        val lambdaBases = expr.bsmArgs.filterIsInstance<BsmHandle>()
-        when (lambdaBases.size) {
-            1 -> {
-                val base = lambdaBases.first()
-                val klass = base.declaringClass.asType() as JcClassType
-                val ref = TypedMethodRefImpl(klass, base.name, base.argTypes, base.returnType)
-
-                return JcLambdaExpr(ref, expr.args.map { it.accept(this) as JcValue })
-            }
-
-            else -> {
-
-                return JcDynamicCallExpr(
-                    classpath.methodRef(expr),
-                    expr.bsmArgs,
-                    expr.callSiteMethodName,
-                    expr.callSiteArgTypes.map { it.asType() },
-                    expr.callSiteReturnType.asType(),
-                    expr.args.map { it.accept(this) as JcValue }
-                )
-            }
+        if (expr.bsm.declaringClass == lambdaMetaFactory && expr.bsm.name == lambdaMetaFactoryMethodName) {
+            val lambdaExpr = tryResolveJcLambdaExpr(expr)
+            if (lambdaExpr != null) return lambdaExpr
         }
+
+        return JcDynamicCallExpr(
+            classpath.methodRef(expr),
+            expr.bsmArgs,
+            expr.callSiteMethodName,
+            expr.callSiteArgTypes.map { it.asType() },
+            expr.callSiteReturnType.asType(),
+            expr.callSiteArgs.map { it.accept(this) as JcValue }
+        )
+    }
+
+    private fun tryResolveJcLambdaExpr(expr: JcRawDynamicCallExpr): JcLambdaExpr? {
+        if (expr.bsmArgs.size != 3) return null
+        val (interfaceMethodType, implementation, dynamicMethodType) = expr.bsmArgs
+
+        if (interfaceMethodType !is BsmMethodTypeArg) return null
+        if (dynamicMethodType !is BsmMethodTypeArg) return null
+        if (implementation !is BsmHandle) return null
+
+        // Check implementation signature match (starts with) call site arguments
+        for ((index, argType) in expr.callSiteArgTypes.withIndex()) {
+            if (argType != implementation.argTypes.getOrNull(index)) return null
+        }
+
+        val klass = implementation.declaringClass.asType() as JcClassType
+        val actualMethod = TypedMethodRefImpl(
+            klass, implementation.name, implementation.argTypes, implementation.returnType
+        )
+
+        return JcLambdaExpr(
+            classpath.methodRef(expr),
+            actualMethod,
+            interfaceMethodType,
+            dynamicMethodType,
+            expr.callSiteMethodName,
+            expr.callSiteArgTypes.map { it.asType() },
+            expr.callSiteReturnType.asType(),
+            expr.callSiteArgs.map { it.accept(this) as JcValue }
+        )
     }
 
     override fun visitJcRawVirtualCallExpr(expr: JcRawVirtualCallExpr): JcExpr {

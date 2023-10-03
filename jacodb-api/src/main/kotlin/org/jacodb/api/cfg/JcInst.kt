@@ -670,11 +670,18 @@ data class JcPhiExpr(
  * object, but stores a reference to the actual method
  */
 data class JcLambdaExpr(
-    private val methodRef: TypedMethodRef,
-    override val args: List<JcValue>,
+    private val bsmRef: TypedMethodRef,
+    val actualMethod: TypedMethodRef,
+    val interfaceMethodType: BsmMethodTypeArg,
+    val dynamicMethodType: BsmMethodTypeArg,
+    val callSiteMethodName: String,
+    val callSiteArgTypes: List<JcType>,
+    val callSiteReturnType: JcType,
+    val callSiteArgs: List<JcValue>
 ) : JcCallExpr {
 
-    override val method: JcTypedMethod get() = methodRef.method
+    override val method get() = bsmRef.method
+    override val args get() = callSiteArgs
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLambdaExpr(this)
