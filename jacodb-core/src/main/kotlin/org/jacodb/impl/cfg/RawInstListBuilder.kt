@@ -1109,9 +1109,12 @@ class RawInstListBuilder(
         val variable = insnNode.`var`
         val local = local(variable)
         val nextInst = insnNode.next
+        val prevInst = insnNode.previous
         val incrementedVariable = when {
             nextInst != null && nextInst.isBranchingInst -> local
             nextInst != null && nextInst is VarInsnNode && nextInst.`var` == variable -> local
+            //Workaround for if (x++) if x is function argument
+            prevInst != null && local is JcRawArgument && prevInst is VarInsnNode && prevInst.`var` == variable -> nextRegister(local.typeName)
             local is JcRawArgument -> local
             else -> nextRegister(local.typeName)
         }
