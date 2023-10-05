@@ -415,9 +415,11 @@ class RawInstListBuilder(
         override: Boolean = false
     ): JcRawAssignInst {
         val oldVar = currentFrame.locals[variable]?.let {
+            val infoFromLocalVars = methodNode.localVariables.find { it.index == variable && insn.isBetween(it.start, it.end) }
+            val isArg = variable < argCounter && infoFromLocalVars != null && infoFromLocalVars.start == methodNode.instructions.firstOrNull { it is LabelNode }
             if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive)
                 && it.typeName.typeName != PredefinedPrimitives.Null
-                && it !is JcRawArgument
+                && !isArg
             ) {
                 null
             } else {
