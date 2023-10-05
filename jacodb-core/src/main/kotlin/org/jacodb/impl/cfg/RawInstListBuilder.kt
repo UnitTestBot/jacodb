@@ -1112,6 +1112,7 @@ class RawInstListBuilder(
         val incrementedVariable = when {
             nextInst != null && nextInst.isBranchingInst -> local
             nextInst != null && nextInst is VarInsnNode && nextInst.`var` == variable -> local
+            local is JcRawArgument -> local
             else -> nextRegister(local.typeName)
         }
         val add = JcRawAddExpr(local.typeName, local, JcRawInt(insnNode.incr))
