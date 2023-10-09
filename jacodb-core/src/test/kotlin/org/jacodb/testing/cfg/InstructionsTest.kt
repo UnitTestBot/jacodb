@@ -314,7 +314,7 @@ class InstructionsTest : BaseInstructionsTest() {
     }
 
     @Test
-    fun `arg assignment`(){
+    fun `arg assignment`() {
         runTest(ArgAssignmentExample::class.java.name)
     }
 
