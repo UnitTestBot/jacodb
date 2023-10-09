@@ -19,9 +19,9 @@ package org.jacodb.impl.cfg
 import org.jacodb.api.*
 import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.*
-import org.jacodb.impl.cfg.util.LAMBDA_METAFACTORY_CLASS
 import org.jacodb.impl.cfg.util.UNINIT_THIS
-import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.impl.cfg.util.lambdaMetaFactory
+import org.jacodb.impl.cfg.util.lambdaMetaFactoryMethodName
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
 class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
@@ -260,9 +260,6 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType())
-
-    private val lambdaMetaFactory: TypeName by lazy { LAMBDA_METAFACTORY_CLASS.typeName() }
-    private val lambdaMetaFactoryMethodName: String = "metafactory"
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcExpr {
         if (expr.bsm.declaringClass == lambdaMetaFactory && expr.bsm.name == lambdaMetaFactoryMethodName) {
