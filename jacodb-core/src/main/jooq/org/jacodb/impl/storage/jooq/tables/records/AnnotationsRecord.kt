@@ -20,12 +20,12 @@
 package org.jacodb.impl.storage.jooq.tables.records
 
 
+import org.jacodb.impl.storage.jooq.tables.Annotations
 import org.jooq.Field
 import org.jooq.Record1
 import org.jooq.Record10
 import org.jooq.Row10
 import org.jooq.impl.UpdatableRecordImpl
-import org.jacodb.impl.storage.jooq.tables.Annotations
 
 
 /**

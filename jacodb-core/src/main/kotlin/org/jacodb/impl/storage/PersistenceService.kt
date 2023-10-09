@@ -16,42 +16,76 @@
 
 package org.jacodb.impl.storage
 
+import mu.KLogging
 import org.jacodb.api.JCDBSymbolsInterner
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
-import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
-import org.jacodb.impl.storage.jooq.tables.references.CLASSES
-import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
-import org.jacodb.impl.storage.jooq.tables.references.CLASSINNERCLASSES
-import org.jacodb.impl.storage.jooq.tables.references.FIELDS
-import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
-import org.jacodb.impl.storage.jooq.tables.references.METHODS
-import org.jacodb.impl.storage.jooq.tables.references.OUTERCLASSES
-import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
-import org.jacodb.impl.types.AnnotationInfo
-import org.jacodb.impl.types.AnnotationValue
-import org.jacodb.impl.types.AnnotationValueList
-import org.jacodb.impl.types.ClassInfo
-import org.jacodb.impl.types.ClassRef
-import org.jacodb.impl.types.EnumRef
-import org.jacodb.impl.types.FieldInfo
-import org.jacodb.impl.types.MethodInfo
-import org.jacodb.impl.types.ParameterInfo
-import org.jacodb.impl.types.PrimitiveValue
+import org.jacodb.impl.storage.jooq.tables.references.*
+import org.jacodb.impl.types.*
 import org.jooq.DSLContext
 import org.jooq.TableField
 import java.io.Closeable
 import java.sql.Connection
 import java.sql.Types
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
+data class AppVersion(val major: Int, val minor: Int) : Comparable<AppVersion> {
+
+    companion object {
+
+        val current: AppVersion
+            get() {
+                val clazz = PersistenceService::class.java
+                val pack = clazz.`package`
+                val version = pack.implementationVersion ?: Properties().also {
+                    it.load(clazz.getResourceAsStream("/jacodb.properties"))
+                }.getProperty("jacodb.version")
+                val last = version.indexOfLast { it == '.' || it.isDigit() }
+                val clearVersion = version.substring(0, last + 1)
+                return parse(clearVersion)
+            }
+
+        fun parse(version: String): AppVersion {
+            val ints = version.split(".")
+            return AppVersion(ints[0].toInt(), ints[1].toInt())
+        }
+    }
+
+    override fun compareTo(other: AppVersion): Int {
+        return when {
+            major > other.major -> 1
+            major == other.major -> minor - other.minor
+            else -> -1
+        }
+    }
+
+    val presentation get() = "$major.$minor"
+
+    override fun toString(): String {
+        return "[$major.$minor]"
+    }
+}
+
 class PersistenceService(private val persistence: AbstractJcDatabasePersistenceImpl) {
 
-    private val classIdGen = AtomicLong()
+    companion object : KLogging()
+
+    private val refactorings = JcRefactoringChain(
+        listOf(
+            AddAppmetadataAndRefactoring(),
+            UpdateUsageAndBuildersSchemeRefactoring()
+        )
+    )
+
+    private val currentAppVersion = AppVersion.current
+
+    private lateinit var version: AppVersion
+
+    val classIdGen = AtomicLong()
     private val symbolsIdGen = AtomicLong()
     private val methodIdGen = AtomicLong()
     private val fieldIdGen = AtomicLong()
@@ -62,6 +96,15 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
 
     fun setup() {
         persistence.read {
+            logger.info("Starting app version $currentAppVersion")
+            version = try {
+                val appVersion = it.selectFrom(APPLICATIONMETADATA).fetch().first()
+                logger.info("Restored app version is ${appVersion.version}")
+                AppVersion.parse(appVersion.version!!)
+            } catch (e: Exception) {
+                logger.info("fail to restore app version. Use [1.3] as fallback")
+                AppVersion(1, 3)
+            }
             classIdGen.set(CLASSES.ID.maxId ?: 0)
             symbolsIdGen.set(SYMBOLS.ID.maxId ?: 0)
             methodIdGen.set(METHODS.ID.maxId ?: 0)
@@ -70,6 +113,19 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
             annotationIdGen.set(ANNOTATIONS.ID.maxId ?: 0)
             annotationValueIdGen.set(ANNOTATIONVALUES.ID.maxId ?: 0)
             outerClassIdGen.set(OUTERCLASSES.ID.maxId ?: 0)
+        }
+        when {
+            version > currentAppVersion -> throw IllegalStateException("Can't start $currentAppVersion on $version database")
+            version == currentAppVersion -> {}
+            else -> persistence.write {
+                    refactorings.execute(it)
+                }
+        }
+        persistence.write {
+            it.deleteFrom(APPLICATIONMETADATA).execute()
+            it.insertInto(APPLICATIONMETADATA)
+                .set(APPLICATIONMETADATA.VERSION, currentAppVersion.presentation)
+                .execute()
         }
     }
 

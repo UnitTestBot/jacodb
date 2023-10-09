@@ -20,29 +20,23 @@
 package org.jacodb.impl.storage.jooq.tables.references
 
 
-import org.jacodb.impl.storage.jooq.tables.Annotationvalues
-import org.jacodb.impl.storage.jooq.tables.Builders
-import org.jacodb.impl.storage.jooq.tables.Bytecodelocations
-import org.jacodb.impl.storage.jooq.tables.Calls
-import org.jacodb.impl.storage.jooq.tables.Classes
-import org.jacodb.impl.storage.jooq.tables.Classhierarchies
-import org.jacodb.impl.storage.jooq.tables.Classinnerclasses
-import org.jacodb.impl.storage.jooq.tables.Fields
-import org.jacodb.impl.storage.jooq.tables.Methodparameters
-import org.jacodb.impl.storage.jooq.tables.Methods
-import org.jacodb.impl.storage.jooq.tables.Outerclasses
-import org.jacodb.impl.storage.jooq.tables.Symbols
+import org.jacodb.impl.storage.jooq.tables.*
 
 
 /**
  * The table <code>Annotations</code>.
  */
-val ANNOTATIONS = org.jacodb.impl.storage.jooq.tables.Annotations.ANNOTATIONS
+val ANNOTATIONS = Annotations.ANNOTATIONS
 
 /**
  * The table <code>AnnotationValues</code>.
  */
 val ANNOTATIONVALUES = Annotationvalues.ANNOTATIONVALUES
+
+/**
+ * The table <code>ApplicationMetadata</code>.
+ */
+val APPLICATIONMETADATA = Applicationmetadata.APPLICATIONMETADATA
 
 /**
  * The table <code>Builders</code>.
@@ -93,6 +87,11 @@ val METHODS = Methods.METHODS
  * The table <code>OuterClasses</code>.
  */
 val OUTERCLASSES = Outerclasses.OUTERCLASSES
+
+/**
+ * The table <code>Refactorings</code>.
+ */
+val REFACTORINGS = Refactorings.REFACTORINGS
 
 /**
  * The table <code>Symbols</code>.

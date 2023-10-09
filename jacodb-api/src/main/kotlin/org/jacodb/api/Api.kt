@@ -158,8 +158,6 @@ interface JcDatabasePersistence : Closeable {
     fun findClassSources(cp: JcClasspath, fullName: String): List<ClassSource>
 
     fun createIndexes() {}
-
-    fun getScript(name: String): String
 }
 
 interface RegisteredLocation {

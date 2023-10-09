@@ -20,23 +20,15 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jooq.Field
-import org.jooq.ForeignKey
-import org.jooq.Name
-import org.jooq.Record
-import org.jooq.Row2
-import org.jooq.Schema
-import org.jooq.Table
-import org.jooq.TableField
-import org.jooq.TableOptions
-import org.jooq.UniqueKey
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.indexes.SYMBOLS_NAME
+import org.jacodb.impl.storage.jooq.keys.PK_SYMBOLS
+import org.jacodb.impl.storage.jooq.tables.records.SymbolsRecord
+import org.jooq.*
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.jacodb.impl.storage.jooq.DefaultSchema
-import org.jacodb.impl.storage.jooq.keys.PK_SYMBOLS
-import org.jacodb.impl.storage.jooq.tables.records.SymbolsRecord
 
 
 /**
@@ -102,6 +94,7 @@ open class Symbols(
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, SymbolsRecord>): this(Internal.createPathAlias(child, key), child, key, SYMBOLS, null)
     override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getIndexes(): List<Index> = listOf(SYMBOLS_NAME)
     override fun getPrimaryKey(): UniqueKey<SymbolsRecord> = PK_SYMBOLS
     override fun getKeys(): List<UniqueKey<SymbolsRecord>> = listOf(PK_SYMBOLS)
     override fun `as`(alias: String): Symbols = Symbols(DSL.name(alias), this)

@@ -20,27 +20,14 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jooq.Field
-import org.jooq.ForeignKey
-import org.jooq.Name
-import org.jooq.Record
-import org.jooq.Row8
-import org.jooq.Schema
-import org.jooq.Table
-import org.jooq.TableField
-import org.jooq.TableOptions
-import org.jooq.UniqueKey
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.keys.*
+import org.jacodb.impl.storage.jooq.tables.records.AnnotationvaluesRecord
+import org.jooq.*
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.jacodb.impl.storage.jooq.DefaultSchema
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_ANNOTATIONS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_ANNOTATIONS_2
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_SYMBOLS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONVALUES_SYMBOLS_2
-import org.jacodb.impl.storage.jooq.keys.PK_ANNOTATIONVALUES
-import org.jacodb.impl.storage.jooq.tables.records.AnnotationvaluesRecord
 
 
 /**
