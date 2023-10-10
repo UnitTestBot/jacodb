@@ -20,26 +20,19 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jooq.Field
-import org.jooq.ForeignKey
-import org.jooq.Name
-import org.jooq.Record
-import org.jooq.Row6
-import org.jooq.Schema
-import org.jooq.Table
-import org.jooq.TableField
-import org.jooq.TableOptions
-import org.jooq.UniqueKey
-import org.jooq.impl.DSL
-import org.jooq.impl.Internal
-import org.jooq.impl.SQLDataType
-import org.jooq.impl.TableImpl
 import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.indexes.FIELDS_CLASSID
+import org.jacodb.impl.storage.jooq.indexes.FIELDS_CLASS_ID_NAME
 import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_CLASSES_1
 import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_1
 import org.jacodb.impl.storage.jooq.keys.FK_FIELDS_SYMBOLS_2
 import org.jacodb.impl.storage.jooq.keys.PK_FIELDS
 import org.jacodb.impl.storage.jooq.tables.records.FieldsRecord
+import org.jooq.*
+import org.jooq.impl.DSL
+import org.jooq.impl.Internal
+import org.jooq.impl.SQLDataType
+import org.jooq.impl.TableImpl
 
 
 /**
@@ -125,6 +118,7 @@ open class Fields(
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, FieldsRecord>): this(Internal.createPathAlias(child, key), child, key, FIELDS, null)
     override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getIndexes(): List<Index> = listOf(FIELDS_CLASS_ID_NAME, FIELDS_CLASSID)
     override fun getPrimaryKey(): UniqueKey<FieldsRecord> = PK_FIELDS
     override fun getKeys(): List<UniqueKey<FieldsRecord>> = listOf(PK_FIELDS)
     override fun getReferences(): List<ForeignKey<FieldsRecord, *>> = listOf(FK_FIELDS_SYMBOLS_2, FK_FIELDS_SYMBOLS_1, FK_FIELDS_CLASSES_1)

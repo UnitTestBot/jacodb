@@ -29,9 +29,9 @@ fun main() {
     runBlocking {
         val db = jacodb {
             loadByteCode(allClasspath)
-            persistent(
-                "d:\\work\\jacodb\\jacodb-classpath.db",
-            )
+//            persistent(
+//                "d:\\work\\jacodb\\jacodb-classpath.db",
+//            )
             installFeatures(InMemoryHierarchy, Usages, Builders)
         }.also {
             println("AWAITING db took ${System.currentTimeMillis() - start}ms")

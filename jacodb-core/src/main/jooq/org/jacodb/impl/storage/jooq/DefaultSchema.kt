@@ -20,24 +20,10 @@
 package org.jacodb.impl.storage.jooq
 
 
-import kotlin.collections.List
-
+import org.jacodb.impl.storage.jooq.tables.*
 import org.jooq.Catalog
 import org.jooq.Table
 import org.jooq.impl.SchemaImpl
-import org.jacodb.impl.storage.jooq.tables.Annotations
-import org.jacodb.impl.storage.jooq.tables.Annotationvalues
-import org.jacodb.impl.storage.jooq.tables.Builders
-import org.jacodb.impl.storage.jooq.tables.Bytecodelocations
-import org.jacodb.impl.storage.jooq.tables.Calls
-import org.jacodb.impl.storage.jooq.tables.Classes
-import org.jacodb.impl.storage.jooq.tables.Classhierarchies
-import org.jacodb.impl.storage.jooq.tables.Classinnerclasses
-import org.jacodb.impl.storage.jooq.tables.Fields
-import org.jacodb.impl.storage.jooq.tables.Methodparameters
-import org.jacodb.impl.storage.jooq.tables.Methods
-import org.jacodb.impl.storage.jooq.tables.Outerclasses
-import org.jacodb.impl.storage.jooq.tables.Symbols
 
 
 /**
@@ -62,6 +48,11 @@ open class DefaultSchema : SchemaImpl("", DefaultCatalog.DEFAULT_CATALOG) {
      * The table <code>AnnotationValues</code>.
      */
     val ANNOTATIONVALUES get() = Annotationvalues.ANNOTATIONVALUES
+
+    /**
+     * The table <code>ApplicationMetadata</code>.
+     */
+    val APPLICATIONMETADATA get() = Applicationmetadata.APPLICATIONMETADATA
 
     /**
      * The table <code>Builders</code>.
@@ -114,6 +105,11 @@ open class DefaultSchema : SchemaImpl("", DefaultCatalog.DEFAULT_CATALOG) {
     val OUTERCLASSES get() = Outerclasses.OUTERCLASSES
 
     /**
+     * The table <code>Refactorings</code>.
+     */
+    val REFACTORINGS get() = Refactorings.REFACTORINGS
+
+    /**
      * The table <code>Symbols</code>.
      */
     val SYMBOLS get() = Symbols.SYMBOLS
@@ -123,6 +119,7 @@ open class DefaultSchema : SchemaImpl("", DefaultCatalog.DEFAULT_CATALOG) {
     override fun getTables(): List<Table<*>> = listOf(
         Annotations.ANNOTATIONS,
         Annotationvalues.ANNOTATIONVALUES,
+        Applicationmetadata.APPLICATIONMETADATA,
         Builders.BUILDERS,
         Bytecodelocations.BYTECODELOCATIONS,
         Calls.CALLS,
@@ -133,6 +130,7 @@ open class DefaultSchema : SchemaImpl("", DefaultCatalog.DEFAULT_CATALOG) {
         Methodparameters.METHODPARAMETERS,
         Methods.METHODS,
         Outerclasses.OUTERCLASSES,
+        Refactorings.REFACTORINGS,
         Symbols.SYMBOLS
     )
 }

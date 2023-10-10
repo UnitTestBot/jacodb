@@ -3,8 +3,8 @@ import kotlinx.benchmark.gradle.JvmBenchmarkTarget
 
 plugins {
     `java-test-fixtures`
-    with(Plugins.GradleDownload) { id(id) version (version) }
-    with(Plugins.KotlinxBenchmark) { id(id) version (version) }
+    id(Plugins.GradleDownload)
+    id(Plugins.KotlinxBenchmark)
 }
 
 dependencies {

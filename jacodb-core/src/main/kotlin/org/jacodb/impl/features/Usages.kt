@@ -16,26 +16,13 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.ByteCodeIndexer
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.JcFeature
-import org.jacodb.api.JcSignal
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.*
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
-import org.jacodb.impl.storage.BatchedSequence
-import org.jacodb.impl.storage.defaultBatchSize
-import org.jacodb.impl.storage.eqOrNull
-import org.jacodb.impl.storage.executeQueries
+import org.jacodb.impl.storage.*
 import org.jacodb.impl.storage.jooq.tables.references.CALLS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
-import org.jacodb.impl.storage.longHash
-import org.jacodb.impl.storage.runBatch
-import org.jacodb.impl.storage.setNullableLong
-import org.jacodb.impl.storage.withoutAutoCommit
 import org.jooq.DSLContext
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
@@ -77,12 +64,11 @@ private class MethodMap(size: Int) {
     }
 }
 
-class UsagesIndexer(persistence: JcDatabasePersistence, private val location: RegisteredLocation) :
+class UsagesIndexer(private val location: RegisteredLocation) :
     ByteCodeIndexer {
 
     // callee_class -> (callee_name, callee_desc, opcode) -> caller
     private val usages = hashMapOf<String, HashMap<Triple<String, String?, Int>, HashMap<String, MethodMap>>>()
-    private val interner = persistence.symbolInterner
 
     override fun index(classNode: ClassNode) {
         val callerClass = Type.getObjectType(classNode.name).className
@@ -122,23 +108,19 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
                 }
             }
         }
-        names.forEach {
-            interner.findOrNew(it)
-        }
+
         jooq.withoutAutoCommit { conn ->
-            interner.flush(conn)
             conn.runBatch(CALLS) {
                 usages.forEach { (calleeClass, calleeEntry) ->
-                    val calleeId = calleeClass.className.symbolId
+                    val calleeId = calleeClass.className
                     calleeEntry.forEach { (info, callers) ->
                         val (calleeName, calleeDesc, opcode) = info
                         callers.forEach { (caller, offsets) ->
-                            val callerId = if (calleeClass == caller) calleeId else caller.symbolId
-                            setLong(1, calleeId)
-                            setLong(2, calleeName.symbolId)
+                            setString(1, calleeId)
+                            setString(2, calleeName)
                             setNullableLong(3, calleeDesc?.longHash)
                             setInt(4, opcode)
-                            setLong(5, callerId)
+                            setString(5, caller)
                             setBytes(6, offsets.result())
                             setLong(7, location.id)
                             addBatch()
@@ -148,41 +130,38 @@ class UsagesIndexer(persistence: JcDatabasePersistence, private val location: Re
             }
         }
     }
-
-    private inline val String.symbolId get() = interner.findOrNew(this)
 }
 
 
 object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 
+    fun create(jooq: DSLContext, drop: Boolean) {
+        if (drop) {
+            jooq.executeQueries("usages/drop-schema.sql".sqlScript())
+        }
+        jooq.executeQueries("usages/create-schema.sql".sqlScript())
+    }
+
     override fun onSignal(signal: JcSignal) {
         val jcdb = signal.jcdb
         when (signal) {
-            is JcSignal.BeforeIndexing -> {
-                jcdb.persistence.write {
-                    if (signal.clearOnStart) {
-                        it.executeQueries(jcdb.persistence.getScript("usages/drop-schema.sql"))
-                    }
-                    it.executeQueries(jcdb.persistence.getScript("usages/create-schema.sql"))
+            is JcSignal.BeforeIndexing -> jcdb.persistence.write {
+                if (signal.clearOnStart) {
+                    it.executeQueries("usages/drop-schema.sql".sqlScript())
                 }
+                it.executeQueries("usages/create-schema.sql".sqlScript())
             }
 
-            is JcSignal.LocationRemoved -> {
-                jcdb.persistence.write {
-                    it.deleteFrom(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
-                }
+            is JcSignal.LocationRemoved -> jcdb.persistence.write {
+                it.deleteFrom(CALLS).where(CALLS.LOCATION_ID.eq(signal.location.id)).execute()
             }
 
-            is JcSignal.AfterIndexing -> {
-                jcdb.persistence.write {
-                    it.executeQueries(jcdb.persistence.getScript("usages/add-indexes.sql"))
-                }
+            is JcSignal.AfterIndexing -> jcdb.persistence.write {
+                it.executeQueries("usages/add-indexes.sql".sqlScript())
             }
 
-            is JcSignal.Drop -> {
-                jcdb.persistence.write {
-                    it.deleteFrom(CALLS).execute()
-                }
+            is JcSignal.Drop -> jcdb.persistence.write {
+                it.deleteFrom(CALLS).execute()
             }
 
             else -> Unit
@@ -196,18 +175,19 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
     fun syncQuery(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
         val locationIds = classpath.registeredLocations.map { it.id }
         val persistence = classpath.db.persistence
-        val name = (req.methodName ?: req.field).let { persistence.findSymbolId(it!!) }
+        val name = req.methodName ?: req.field
         val desc = req.description?.longHash
-        val className = req.className.map { persistence.findSymbolId(it) }
+        val className = req.className
 
         val calls = persistence.read { jooq ->
             jooq.select(CLASSES.ID, CALLS.CALLER_METHOD_OFFSETS, SYMBOLS.NAME, CLASSES.LOCATION_ID)
                 .from(CALLS)
                 .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                .join(CLASSES).on(CLASSES.NAME.eq(CALLS.CALLER_CLASS_SYMBOL_ID).and(CLASSES.LOCATION_ID.eq(CALLS.LOCATION_ID)))
+                .join(CLASSES)
+                .on(SYMBOLS.NAME.eq(CALLS.CALLER_CLASS_NAME).and(CLASSES.LOCATION_ID.eq(CALLS.LOCATION_ID)))
                 .where(
-                    CALLS.CALLEE_CLASS_SYMBOL_ID.`in`(className)
-                        .and(CALLS.CALLEE_NAME_SYMBOL_ID.eq(name))
+                    CALLS.CALLEE_CLASS_NAME.`in`(className)
+                        .and(CALLS.CALLEE_NAME.eq(name))
                         .and(CALLS.CALLEE_DESC_HASH.eqOrNull(desc))
                         .and(CALLS.OPCODE.`in`(req.opcodes))
                         .and(CALLS.LOCATION_ID.`in`(locationIds))
@@ -245,8 +225,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
         }
     }
 
-    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) = UsagesIndexer(jcdb.persistence, location)
-
+    override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) = UsagesIndexer(location)
 
     private fun ByteArray.toShortArray(): ShortArray {
         val byteArray = this

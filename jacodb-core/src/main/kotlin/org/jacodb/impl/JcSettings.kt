@@ -23,7 +23,6 @@ import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcDatabasePersistence
 import org.jacodb.api.JcFeature
 import org.jacodb.impl.fs.JavaRuntime
-import org.jacodb.impl.storage.PostgresPersistenceImpl
 import org.jacodb.impl.storage.SQLitePersistenceImpl
 import java.io.File
 import java.time.Duration
@@ -178,22 +177,7 @@ enum class PredefinedPersistenceType : JcPersistenceType {
                 clearOnStart = settings.persistentClearOnStart ?: false
             )
         }
-    },
-    POSTGRES {
-        override fun newPersistence(
-            runtime: JavaRuntime,
-            featuresRegistry: FeaturesRegistry,
-            settings: JcSettings
-        ): JcDatabasePersistence {
-            return PostgresPersistenceImpl(
-                javaRuntime = runtime,
-                featuresRegistry = featuresRegistry,
-                jcdbUrl = settings.persistentLocation,
-                clearOnStart = settings.persistentClearOnStart ?: false
-            )
-        }
-    };
-
+    }
 }
 
 class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
@@ -225,9 +209,11 @@ class JcCacheSettings {
     }
 
     @JvmOverloads
-    fun rawInstLists(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
-        rawInstLists = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
-    }
+    fun rawInstLists(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) =
+        apply {
+            rawInstLists =
+                JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+        }
 
     @JvmOverloads
     fun instLists(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
@@ -235,8 +221,10 @@ class JcCacheSettings {
     }
 
     @JvmOverloads
-    fun flowGraphs(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) = apply {
-        flowGraphs = JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
-    }
+    fun flowGraphs(maxSize: Long, expiration: Duration, valueStoreType: ValueStoreType = ValueStoreType.STRONG) =
+        apply {
+            flowGraphs =
+                JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
+        }
 
 }

@@ -20,29 +20,18 @@
 package org.jacodb.impl.storage.jooq.tables
 
 
-import org.jooq.Field
-import org.jooq.ForeignKey
-import org.jooq.Name
-import org.jooq.Record
-import org.jooq.Row10
-import org.jooq.Schema
-import org.jooq.Table
-import org.jooq.TableField
-import org.jooq.TableOptions
-import org.jooq.UniqueKey
+import org.jacodb.impl.storage.jooq.DefaultSchema
+import org.jacodb.impl.storage.jooq.indexes.ANNOTATIONS_CLASSID
+import org.jacodb.impl.storage.jooq.indexes.ANNOTATIONS_FIELDID
+import org.jacodb.impl.storage.jooq.indexes.ANNOTATIONS_METHODID
+import org.jacodb.impl.storage.jooq.indexes.ANNOTATIONS_PARAMSID
+import org.jacodb.impl.storage.jooq.keys.*
+import org.jacodb.impl.storage.jooq.tables.records.AnnotationsRecord
+import org.jooq.*
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
-import org.jacodb.impl.storage.jooq.DefaultSchema
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_ANNOTATIONS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_CLASSES_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_FIELDS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_METHODPARAMETERS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_METHODS_1
-import org.jacodb.impl.storage.jooq.keys.FK_ANNOTATIONS_SYMBOLS_1
-import org.jacodb.impl.storage.jooq.keys.PK_ANNOTATIONS
-import org.jacodb.impl.storage.jooq.tables.records.AnnotationsRecord
 
 
 /**
@@ -148,6 +137,7 @@ open class Annotations(
 
     constructor(child: Table<out Record>, key: ForeignKey<out Record, AnnotationsRecord>): this(Internal.createPathAlias(child, key), child, key, ANNOTATIONS, null)
     override fun getSchema(): Schema = DefaultSchema.DEFAULT_SCHEMA
+    override fun getIndexes(): List<Index> = listOf(ANNOTATIONS_CLASSID, ANNOTATIONS_FIELDID, ANNOTATIONS_METHODID, ANNOTATIONS_PARAMSID)
     override fun getPrimaryKey(): UniqueKey<AnnotationsRecord> = PK_ANNOTATIONS
     override fun getKeys(): List<UniqueKey<AnnotationsRecord>> = listOf(PK_ANNOTATIONS)
     override fun getReferences(): List<ForeignKey<AnnotationsRecord, *>> = listOf(FK_ANNOTATIONS_SYMBOLS_1, FK_ANNOTATIONS_ANNOTATIONS_1, FK_ANNOTATIONS_CLASSES_1, FK_ANNOTATIONS_METHODS_1, FK_ANNOTATIONS_FIELDS_1, FK_ANNOTATIONS_METHODPARAMETERS_1)
