@@ -8,6 +8,7 @@ object Versions {
     const val dokka = "1.7.20"
     const val gradle_download = "5.3.0"
     const val gradle_versions = "0.47.0"
+    const val hikaricp = "5.0.1"
     const val guava = "31.1-jre"
     const val javax_activation = "1.1"
     const val javax_mail = "1.4.7"
@@ -156,6 +157,13 @@ object Libs {
         group = "org.jetbrains.kotlinx",
         name = "kotlinx-cli",
         version = Versions.kotlinx_cli
+    )
+
+    // https://github.com/brettwooldridge/HikariCP
+    val hikaricp = dep(
+        group = "com.zaxxer",
+        name = "HikariCP",
+        version = Versions.hikaricp
     )
 
     // https://github.com/xerial/sqlite-jdbc

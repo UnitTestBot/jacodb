@@ -22,6 +22,8 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.impl.storage.jooq.tables.references.APPLICATIONMETADATA
 import org.jacodb.impl.storage.jooq.tables.references.REFACTORINGS
 import org.jooq.DSLContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 abstract class JcRefactoring {
 
@@ -40,6 +42,7 @@ class JcRefactoringChain(private val chain: List<JcRefactoring>) {
 
     private val applied = hashSetOf<String>()
 
+    @OptIn(ExperimentalTime::class)
     fun execute(jooq: DSLContext) {
         try {
             applied.addAll(jooq.select(REFACTORINGS.NAME).from(REFACTORINGS).fetchArray(REFACTORINGS.NAME))
@@ -50,8 +53,11 @@ class JcRefactoringChain(private val chain: List<JcRefactoring>) {
         chain.forEach { ref ->
             jooq.connection {
                 if (!applied.contains(ref.name)) {
-                    ref.run(jooq)
-                    jooq.insertInto(REFACTORINGS).set(REFACTORINGS.NAME, ref.name).execute()
+                    val time = measureTime {
+                        ref.run(jooq)
+                        jooq.insertInto(REFACTORINGS).set(REFACTORINGS.NAME, ref.name).execute()
+                    }
+                    logger.info("Refactoring ${ref.name} took $time msc")
                 }
             }
         }

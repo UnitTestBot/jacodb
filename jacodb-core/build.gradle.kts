@@ -41,6 +41,7 @@ dependencies {
     testImplementation(Libs.javax_mail)
     testImplementation(Libs.joda_time)
     testImplementation(Libs.slf4j_simple)
+    testImplementation(Libs.hikaricp)
 
     testFixturesImplementation(project(":jacodb-api"))
     testFixturesImplementation(kotlin("reflect"))
