@@ -413,9 +413,14 @@ class RawInstListBuilder(
         expr: JcRawValue,
         insn: AbstractInsnNode,
         override: Boolean = false
-    ): JcRawAssignInst? {
+    ): JcRawAssignInst {
         val oldVar = currentFrame.locals[variable]?.let {
-            if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive) && it.typeName.typeName != PredefinedPrimitives.Null) {
+            val infoFromLocalVars = methodNode.localVariables.find { it.index == variable && insn.isBetween(it.start, it.end) }
+            val isArg = variable < argCounter && infoFromLocalVars != null && infoFromLocalVars.start == methodNode.instructions.firstOrNull { it is LabelNode }
+            if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive)
+                && it.typeName.typeName != PredefinedPrimitives.Null
+                && !isArg
+            ) {
                 null
             } else {
                 it
@@ -438,7 +443,18 @@ class RawInstListBuilder(
                 JcRawAssignInst(method, assignment, expr)
             }
         } else {
-            val newLocal = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
+            //We have to get type if rhv expression is NULL
+            val typeOfNewAssigment =
+                if (expr.typeName.typeName == PredefinedPrimitives.Null) {
+                    methodNode.localVariables
+                        .find { it.index == variable && insn.isBetween(it.start, it.end) }
+                        ?.desc?.typeName()
+                        ?: currentFrame.locals[variable]?.typeName
+                        ?: "java.lang.Object".typeName()
+                } else {
+                    expr.typeName
+                }
+            val newLocal = nextRegisterDeclaredVariable(typeOfNewAssigment, variable, insn)
             val result = JcRawAssignInst(method, newLocal, expr)
             currentFrame = currentFrame.put(variable, newLocal)
             result
@@ -922,8 +938,7 @@ class RawInstListBuilder(
                 val isArg =
                     if (actualLocalFromDebugInfo == null) {
                         variable < argCounter
-                    }
-                    else {
+                    } else {
                         actualLocalFromDebugInfo.start == methodNode.instructions.firstOrNull { it is LabelNode }
                     }
 
@@ -1094,9 +1109,13 @@ class RawInstListBuilder(
         val variable = insnNode.`var`
         val local = local(variable)
         val nextInst = insnNode.next
+        val prevInst = insnNode.previous
         val incrementedVariable = when {
             nextInst != null && nextInst.isBranchingInst -> local
             nextInst != null && nextInst is VarInsnNode && nextInst.`var` == variable -> local
+            //Workaround for if (x++) if x is function argument
+            prevInst != null && local is JcRawArgument && prevInst is VarInsnNode && prevInst.`var` == variable -> nextRegister(local.typeName)
+            local is JcRawArgument -> local
             else -> nextRegister(local.typeName)
         }
         val add = JcRawAddExpr(local.typeName, local, JcRawInt(insnNode.incr))
