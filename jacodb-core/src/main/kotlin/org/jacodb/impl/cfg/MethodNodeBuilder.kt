@@ -100,12 +100,16 @@ class MethodNodeBuilder(
         with(method.asmNode()) {
             mn.visibleAnnotations = visibleAnnotations
             mn.visibleTypeAnnotations = visibleTypeAnnotations
-            mn.visibleLocalVariableAnnotations = visibleLocalVariableAnnotations
             mn.visibleParameterAnnotations = visibleParameterAnnotations
             mn.invisibleAnnotations = invisibleAnnotations
             mn.invisibleTypeAnnotations = invisibleTypeAnnotations
-            mn.invisibleLocalVariableAnnotations = invisibleLocalVariableAnnotations
             mn.invisibleParameterAnnotations = invisibleParameterAnnotations
+
+            //            this two line of code relies on labels in method body properly organized.
+
+            //            mn.visibleLocalVariableAnnotations = visibleLocalVariableAnnotations
+            //            mn.invisibleLocalVariableAnnotations = invisibleLocalVariableAnnotations
+
         }
         return mn
     }
@@ -265,16 +269,27 @@ class MethodNodeBuilder(
         var shouldReverse = false
         val (zeroValue, zeroCmpOpcode, defaultOpcode) = when (cond) {
             is JcRawEqExpr -> when {
-                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(JcRawNull(), Opcodes.IFNULL, Opcodes.IF_ACMPEQ)
+                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(
+                    JcRawNull(),
+                    Opcodes.IFNULL,
+                    Opcodes.IF_ACMPEQ
+                )
+
                 cond.lhv.typeName.isPrimitive -> Triple(JcRawInt(0), Opcodes.IFEQ, Opcodes.IF_ICMPEQ)
                 else -> Triple(JcRawNull(), Opcodes.IFNULL, Opcodes.IF_ACMPEQ)
             }
 
             is JcRawNeqExpr -> when {
-                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(JcRawNull(), Opcodes.IFNONNULL, Opcodes.IF_ACMPNE)
+                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(
+                    JcRawNull(),
+                    Opcodes.IFNONNULL,
+                    Opcodes.IF_ACMPNE
+                )
+
                 cond.lhv.typeName.isPrimitive -> Triple(JcRawInt(0), Opcodes.IFNE, Opcodes.IF_ICMPNE)
                 else -> Triple(JcRawNull(), Opcodes.IFNONNULL, Opcodes.IF_ACMPNE)
             }
+
             is JcRawGeExpr -> Triple(JcRawInt(0), Opcodes.IFGE, Opcodes.IF_ICMPGE)
             is JcRawGtExpr -> Triple(JcRawInt(0), Opcodes.IFGT, Opcodes.IF_ICMPGT)
             is JcRawLeExpr -> Triple(JcRawInt(0), Opcodes.IFLE, Opcodes.IF_ICMPLE)
@@ -295,10 +310,12 @@ class MethodNodeBuilder(
                         }
                     JumpInsnNode(invertedZeroCmpOpcode, trueTarget)
                 }
+
                 cond.rhv == zeroValue -> {
                     cond.lhv.accept(this)
                     JumpInsnNode(zeroCmpOpcode, trueTarget)
                 }
+
                 else -> {
                     cond.lhv.accept(this)
                     cond.rhv.accept(this)
@@ -571,7 +588,7 @@ class MethodNodeBuilder(
             declaringClass.jvmClassName,
             name,
             if (argTypes.isEmpty() && tag <= H_GETSTATIC) {
-               returnType.jvmTypeName
+                returnType.jvmTypeName
             } else {
                 "(${argTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}"
             },
@@ -819,6 +836,7 @@ class MethodNodeBuilder(
                     }
                     nodesBetweenLabels.clear()
                 }
+
                 else -> nodesBetweenLabels.add(curInst)
             }
             ++i
