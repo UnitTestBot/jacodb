@@ -34,7 +34,7 @@ class JcSubstitutorImpl(
 ) : JcSubstitutor {
 
     //TODO! Implemented as proof of concept
-    constructor(substitutions: PersistentMap<JcTypeVariableDeclaration, JcType>) : this(
+    constructor(substitutions: HashMap<JcTypeVariableDeclaration, JcType>) : this(
         substitutions
             .mapKeys {
                 JvmTypeParameterDeclarationImpl(
