@@ -19,10 +19,10 @@ package org.jacodb.impl.types.substition
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
-import org.jacodb.api.JcSubstitutor
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.*
 import org.jacodb.api.ext.isNotNullAnnotation
+import org.jacodb.impl.types.signature.*
+import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
 import org.jacodb.impl.types.signature.JvmTypeVariable
 import org.jacodb.impl.types.signature.copyWith
@@ -32,6 +32,25 @@ class JcSubstitutorImpl(
     // map declaration -> actual type or type variable
     override val substitutions: PersistentMap<JvmTypeParameterDeclaration, JvmType> = persistentMapOf()
 ) : JcSubstitutor {
+
+    //TODO! Implemented as proof of concept
+    constructor(substitutions: PersistentMap<JcTypeVariableDeclaration, JcType>) : this(
+        substitutions
+            .mapKeys {
+                JvmTypeParameterDeclarationImpl(
+                    it.key.symbol,
+                    it.key.owner,
+                    it.key.bounds.map { JvmClassRefType(it.typeName, it.nullable, it.annotations) }
+                ) as JvmTypeParameterDeclaration
+            }
+            .mapValues {
+                JvmClassRefType(
+                    it.value.typeName,
+                    it.value.nullable,
+                    it.value.annotations
+                ) as JvmType
+            }.toPersistentMap()
+    )
 
     companion object {
 
