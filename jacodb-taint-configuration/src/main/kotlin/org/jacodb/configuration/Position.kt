@@ -16,22 +16,28 @@
 
 package org.jacodb.configuration
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 interface PositionResolver<R> {
     fun resolve(position: Position): R
 }
 
+@Serializable
 sealed interface Position
 
+@Serializable
+@SerialName("Argument")
 data class Argument(val number: Int) : Position
 
-object AnyArgument : Position {
-    override fun toString(): String = "AnyArgument"
-}
+@Serializable
+@SerialName("AnyArgument")
+object AnyArgument : Position
 
-object ThisArgument : Position {
-    override fun toString(): String = "This"
-}
+@Serializable
+@SerialName("This")
+object ThisArgument : Position
 
-object Result : Position {
-    override fun toString(): String = "Result"
-}
+@Serializable
+@SerialName("Result")
+object Result : Position

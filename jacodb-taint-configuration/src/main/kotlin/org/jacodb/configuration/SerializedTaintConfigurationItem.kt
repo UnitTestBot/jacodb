@@ -16,31 +16,48 @@
 
 package org.jacodb.configuration
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+
+@Serializable
 sealed interface SerializedTaintConfigurationItem
 
+@Serializable
+@SerialName("EntryPointSource")
 data class SerializedTaintEntryPointSource(
     val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
 
+@Serializable
+@SerialName("MethodSource")
 data class SerializedTaintMethodSource(
     val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
 
+@Serializable
+@SerialName("MethodSink")
 data class SerializedTaintMethodSink(
+    val ruleNote: String,
+    val cwe: List<Int>,
     val methodInfo: FunctionMatcher,
-    val condition: Condition,
+    val condition: Condition
 ) : SerializedTaintConfigurationItem
 
+@Serializable
+@SerialName("PassThrough")
 data class SerializedTaintPassThrough(
     val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
 
+@Serializable
+@SerialName("Cleaner")
 data class SerializedTaintCleaner(
     val methodInfo: FunctionMatcher,
     val condition: Condition,

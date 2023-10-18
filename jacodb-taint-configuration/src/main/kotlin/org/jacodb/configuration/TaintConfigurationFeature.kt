@@ -17,6 +17,11 @@
 package org.jacodb.configuration
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jacodb.api.*
 import org.jacodb.api.ext.*
 import org.jacodb.impl.features.hierarchyExt
@@ -24,11 +29,38 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 
-class TaintConfigurationFeature private constructor(jsonConfig: String) : JcClasspathFeature {
+class TaintConfigurationFeature private constructor(
+    jsonConfig: String,
+    additionalSerializersModule: SerializersModule?
+) : JcClasspathFeature {
     private val rulesByClass: MutableMap<JcClassOrInterface, List<SerializedTaintConfigurationItem>> = hashMapOf()
     private val rulesForMethod: MutableMap<JcMethod, List<TaintConfigurationItem>> = hashMapOf()
-    private val configuration: List<SerializedTaintConfigurationItem> = jsonConfig.deserialize()
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
+
+    private val configuration: List<SerializedTaintConfigurationItem> = run {
+        val serializers = additionalSerializersModule?.let {
+            SerializersModule {
+                include(defaultSerializationModule)
+                include(it)
+            }
+        } ?: defaultSerializationModule
+
+        val json = Json {
+            classDiscriminator = CLASS_DISCRIMINATOR
+            serializersModule = serializers
+            prettyPrint = true
+        }
+
+        json.decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig).map {
+            when (it) {
+                is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+            }
+        }
+    }
 
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
         resolveConfigForMethod(method)
@@ -207,6 +239,7 @@ class TaintConfigurationFeature private constructor(jsonConfig: String) : JcClas
     }
 
     private fun mkOr(conditions: List<Condition>) = if (conditions.size == 1) conditions.single() else Or(conditions)
+    private fun mkAnd(conditions: List<Condition>) = if (conditions.size == 1) conditions.single() else And(conditions)
 
     private fun inBounds(method: JcMethod, position: Position): Boolean =
         when (position) {
@@ -254,9 +287,9 @@ class TaintConfigurationFeature private constructor(jsonConfig: String) : JcClas
     }
 
     private inner class ConditionSpecializer(val method: JcMethod) : ConditionVisitor<Condition> {
-        override fun visit(condition: And): Condition = And(condition.conditions.map { it.accept(this) })
+        override fun visit(condition: And): Condition = mkAnd(condition.args.map { it.accept(this) })
 
-        override fun visit(condition: Or): Condition = Or(condition.conditions.map { it.accept(this) })
+        override fun visit(condition: Or): Condition = mkOr(condition.args.map { it.accept(this) })
 
         override fun visit(condition: Not): Condition = Not(condition.condition.accept(this))
 
@@ -324,9 +357,102 @@ class TaintConfigurationFeature private constructor(jsonConfig: String) : JcClas
     }
 
     companion object {
-        fun fromPath(configPath: Path) = TaintConfigurationFeature(configPath.readText())
-        fun fromJson(jsonConfig: String) = TaintConfigurationFeature(jsonConfig)
+        fun fromPath(
+            configPath: Path,
+            serializersModule: SerializersModule? = null
+        ) = TaintConfigurationFeature(configPath.readText(), serializersModule)
+
+        fun fromJson(
+            jsonConfig: String,
+            serializersModule: SerializersModule? = null
+        ) = TaintConfigurationFeature(jsonConfig, serializersModule)
+
+        private val defaultSerializationModule: SerializersModule
+            get() = SerializersModule {
+                polymorphic(Condition::class) {
+                    subclass(And::class)
+                    subclass(Or::class)
+                    subclass(Not::class)
+                    subclass(IsConstant::class)
+                    subclass(IsType::class)
+                    subclass(AnnotationType::class)
+                    subclass(ConstantEq::class)
+                    subclass(ConstantLt::class)
+                    subclass(ConstantGt::class)
+                    subclass(ConstantMatches::class)
+                    subclass(SourceFunctionMatches::class)
+                    subclass(CallParameterContainsMark::class)
+                    subclass(ConstantTrue::class)
+                    subclass(TypeMatches::class)
+                }
+
+                polymorphic(Action::class) {
+                    subclass(CopyAllMarks::class)
+                    subclass(AssignMark::class)
+                    subclass(RemoveAllMarks::class)
+                    subclass(RemoveMark::class)
+                    subclass(CopyMark::class)
+                }
+            }
+
+        private const val CLASS_DISCRIMINATOR = "_"
     }
+}
+
+private object ConditionSimplifier : ConditionVisitor<Condition> {
+    override fun visit(condition: And): Condition {
+        val unprocessed = condition.args.toMutableList()
+        val conjuncts = mutableListOf<Condition>()
+        while (unprocessed.isNotEmpty()) {
+            val it = unprocessed.removeLast()
+            if (it is And) {
+                unprocessed.addAll(it.args)
+                continue
+            }
+            conjuncts += it.accept(this)
+        }
+
+        return conjuncts.singleOrNull() ?: And(conjuncts.asReversed())
+    }
+
+    override fun visit(condition: Or): Condition {
+        val unprocessed = condition.args.toMutableList()
+        val conjuncts = mutableListOf<Condition>()
+        while (unprocessed.isNotEmpty()) {
+            val it = unprocessed.removeLast()
+            if (it is Or) {
+                unprocessed.addAll(it.args)
+                continue
+            }
+            conjuncts += it.accept(this)
+        }
+
+        return conjuncts.singleOrNull() ?: Or(conjuncts.asReversed())
+    }
+
+    override fun visit(condition: Not): Condition = Not(condition.condition.accept(this))
+
+    override fun visit(condition: IsConstant): Condition = condition
+
+    override fun visit(condition: IsType): Condition = condition
+
+    override fun visit(condition: AnnotationType): Condition = condition
+
+    override fun visit(condition: ConstantEq): Condition = condition
+
+    override fun visit(condition: ConstantLt): Condition = condition
+
+    override fun visit(condition: ConstantGt): Condition = condition
+
+    override fun visit(condition: ConstantMatches): Condition = condition
+
+    override fun visit(condition: SourceFunctionMatches): Condition = condition
+
+    override fun visit(condition: CallParameterContainsMark): Condition = condition
+
+    override fun visit(condition: ConstantTrue): Condition = condition
+
+    override fun visit(condition: TypeMatches): Condition = condition
 }
 
 fun JcClasspath.taintConfigurationFeature(): TaintConfigurationFeature = features

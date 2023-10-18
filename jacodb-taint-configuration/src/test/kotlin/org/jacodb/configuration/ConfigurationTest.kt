@@ -31,7 +31,7 @@ class ConfigurationTest : BaseTest() {
     companion object : WithDB()
 
     override val cp: JcClasspath = runBlocking {
-        val defaultConfigResource = TaintConfigurationFeature::class.java.getResourceAsStream("/defaultTaintConfig.json")
+        val defaultConfigResource = TaintConfigurationFeature::class.java.getResourceAsStream("/ourConfig.json")!!
         val configJson = defaultConfigResource.bufferedReader().readText()
         val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
         val features = listOf(configurationFeature)

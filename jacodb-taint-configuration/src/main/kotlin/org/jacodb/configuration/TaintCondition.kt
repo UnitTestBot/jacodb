@@ -16,7 +16,8 @@
 
 package org.jacodb.configuration
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.jacodb.api.JcType
 
 interface ConditionVisitor<R> {
@@ -42,110 +43,166 @@ interface Condition {
     fun <R> accept(conditionVisitor: ConditionVisitor<R>): R
 }
 
-data class And(@SerializedName("and") val conditions: List<Condition>) : Condition {
+@Serializable
+@SerialName("And")
+data class And(@SerialName("args") val args: List<Condition>) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-data class Or(@SerializedName("or") val conditions: List<Condition>) : Condition {
+@Serializable
+@SerialName("Or")
+data class Or(@SerialName("args") val args: List<Condition>) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-data class Not(@SerializedName("not") val condition: Condition) : Condition {
+@Serializable
+@SerialName("Not")
+data class Not(val condition: Condition) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-data class IsConstant(@SerializedName("isConstant") val position: Position) : Condition {
+@Serializable
+@SerialName("IsConstant")
+data class IsConstant(val position: Position) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("IsType")
 data class IsType(
-    @SerializedName("position") val position: Position,
-    @SerializedName("isType") val typeMatcher: TypeMatcher
+    @SerialName("position") val position: Position,
+    @SerialName("type") val typeMatcher: TypeMatcher
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("AnnotationType")
 data class AnnotationType(
-    @SerializedName("position") val position: Position,
-    @SerializedName("annotationType") val typeMatcher: TypeMatcher
+    @SerialName("position") val position: Position,
+    @SerialName("type") val typeMatcher: TypeMatcher
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("ConstantEq")
 data class ConstantEq(
-    @SerializedName("position") val position: Position,
-    @SerializedName("constantIsEqualTo") val value: ConstantValue
+    @SerialName("position") val position: Position,
+    @SerialName("constant") val value: ConstantValue
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("ConstantLt")
 data class ConstantLt(
-    @SerializedName("position") val position: Position,
-    @SerializedName("lessThanConstant") val value: ConstantValue
+    @SerialName("position") val position: Position,
+    @SerialName("constant") val value: ConstantValue
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("ConstantGt")
 data class ConstantGt(
-    @SerializedName("position") val position: Position,
-    @SerializedName("greaterThanConstant") val value: ConstantValue
+    @SerialName("position") val position: Position,
+    @SerialName("constant") val value: ConstantValue
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("ConstantMatches")
 data class ConstantMatches(
-    @SerializedName("position") val position: Position,
-    @SerializedName("matchesPattern") val pattern: String
+    @SerialName("position") val position: Position,
+    @SerialName("pattern") val pattern: String
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("SourceFunctionMatches")
 data class SourceFunctionMatches(
-    @SerializedName("position") val position: Position,
-    @SerializedName("functionSource") val functionMatcher: FunctionMatcher
+    @SerialName("position") val position: Position,
+    @SerialName("sourceFunction") val functionMatcher: FunctionMatcher
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
 // sink label
+@Serializable
+@SerialName("ContainsMark")
 data class CallParameterContainsMark(
-    @SerializedName("position") val position: Position,
-    @SerializedName("containsMark") val mark: TaintMark
+    @SerialName("position") val position: Position,
+    @SerialName("mark") val mark: TaintMark
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+@Serializable
+@SerialName("ConstantTrue")
 object ConstantTrue : Condition {
-    override fun toString(): String = "ConstantTrue"
-
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
 // Extra conditions
-data class TypeMatches(val position: Position, val type: JcType) : Condition {
+@Serializable
+@SerialName("TypeMatches")
+data class TypeMatches(val position: Position, @SerialName("type") val type: JcType) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-
+@Serializable
 sealed interface ConstantValue
+
+@Serializable
+@SerialName("IntValue")
 data class ConstantIntValue(val value: Int) : ConstantValue
+
+@Serializable
+@SerialName("BoolValue")
 data class ConstantBooleanValue(val value: Boolean) : ConstantValue
+
+@Serializable
+@SerialName("StringValue")
 data class ConstantStringValue(val value: String) : ConstantValue
 
+@Serializable
 sealed interface NameMatcher
+
+@Serializable
+@SerialName("NameMatches")
 data class NamePatternMatcher(val pattern: String) : NameMatcher
+
+@Serializable
+@SerialName("NameIsEqualTo")
 data class NameExactMatcher(val name: String) : NameMatcher
-object AnyNameMatcher : NameMatcher {
-    override fun toString(): String = "AnyNameMatches"
-}
 
+@Serializable
+@SerialName("AnyNameMatches")
+object AnyNameMatcher : NameMatcher
+
+@Serializable
 sealed interface TypeMatcher
-data class ClassMatcher(val pkg: NameMatcher, val classNameMatcher: NameMatcher) : TypeMatcher
-data class PrimitiveNameMatcher(val name: String) : TypeMatcher
-object AnyTypeMatcher : TypeMatcher {
-    override fun toString(): String = "AnyTypeMatches"
-}
 
+@Serializable
+@SerialName("ClassMatcher")
+data class ClassMatcher(
+    @SerialName("packageMatcher") val pkg: NameMatcher,
+    @SerialName("classNameMatcher") val classNameMatcher: NameMatcher
+) : TypeMatcher
+
+@Serializable
+@SerialName("PrimitiveNameMatches")
+data class PrimitiveNameMatcher(val name: String) : TypeMatcher
+
+@Serializable
+@SerialName("AnyTypeMatches")
+object AnyTypeMatcher : TypeMatcher
+
+@Serializable
+@SerialName("FunctionMatches")
 data class FunctionMatcher(
     val cls: ClassMatcher,
     val functionName: NameMatcher,
@@ -157,4 +214,6 @@ data class FunctionMatcher(
     val exclude: List<FunctionMatcher>
 )
 
+@Serializable
+@SerialName("ParameterMatches")
 data class ParameterMatcher(val index: Int, val typeMatcher: TypeMatcher)
