@@ -39,7 +39,7 @@ class ConfigurationTest : BaseTest() {
     }
 
     @Test
-    @Disabled
+//    @Disabled
     fun test() {
         val feature = cp.taintConfigurationFeature()
 

@@ -37,7 +37,7 @@ class TaintConfigurationFeature private constructor(
     private val rulesForMethod: MutableMap<JcMethod, List<TaintConfigurationItem>> = hashMapOf()
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
 
-    private val configuration: List<SerializedTaintConfigurationItem> = run {
+    private val configurationTrie: ConfigurationTrie by lazy {
         val serializers = additionalSerializersModule?.let {
             SerializersModule {
                 include(defaultSerializationModule)
@@ -51,7 +51,7 @@ class TaintConfigurationFeature private constructor(
             prettyPrint = true
         }
 
-        json.decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig).map {
+        val configuration = json.decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig).map {
             when (it) {
                 is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
                 is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
@@ -60,6 +60,8 @@ class TaintConfigurationFeature private constructor(
                 is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
             }
         }
+
+        ConfigurationTrie(configuration, ::matches)
     }
 
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
@@ -91,7 +93,7 @@ class TaintConfigurationFeature private constructor(
             return taintConfigurationItems
         }
 
-        val classRules = getClassRules(method.enclosingClass)
+        val classRules = configurationTrie.getRulesForClass(method.enclosingClass)
 
         val destination = mutableListOf<TaintConfigurationItem>()
 
@@ -124,20 +126,13 @@ class TaintConfigurationFeature private constructor(
     }
 
     private fun getClassRules(clazz: JcClassOrInterface) = rulesByClass.getOrPut(clazz) {
-        val currentPackage = clazz.packageName
-
-        configuration.filter {
-            val functionMatcher = it.methodInfo
-            val cls = functionMatcher.cls
-
-            cls.matches(currentPackage, clazz.simpleName)
-        }
+        configurationTrie.getRulesForClass(clazz)
     }
 
     private fun FunctionMatcher.matches(method: JcMethod): Boolean {
         val functionNameMatcher = functionName
         val functionName = if (method.isConstructor) "init^" else method.name
-        val functionNameMatches = functionNameMatcher.matches(functionName)
+        val functionNameMatches = matches(functionNameMatcher, functionName)
 
         if (!functionNameMatches) return false
 
@@ -152,7 +147,7 @@ class TaintConfigurationFeature private constructor(
 
         if (!returnTypeMatches) return false
 
-        // TODO function label?????
+        // TODO add function's label processing
 
         require(modifier == -1) {
             "Unexpected modifier matcher value $modifier"
@@ -169,19 +164,19 @@ class TaintConfigurationFeature private constructor(
     )
 
     private fun ClassMatcher.matches(pkgName: String, className: String): Boolean {
-        val packageMatches = pkg.matches(pkgName)
+        val packageMatches = matches(pkg, pkgName)
 
         if (!packageMatches) return false
 
-        return classNameMatcher.matches(className)
+        return matches(classNameMatcher, className)
     }
 
-    private fun NameMatcher.matches(nameToBeMatched: String): Boolean = when (this) {
+    private fun matches(nameMatcher: NameMatcher, nameToBeMatched: String): Boolean = when (nameMatcher) {
         AnyNameMatcher -> true
-        is NameExactMatcher -> nameToBeMatched == name
+        is NameExactMatcher -> nameToBeMatched == nameMatcher.name
         is NamePatternMatcher -> {
-            compiledRegex.getOrPut(pattern) {
-                pattern.toRegex()
+            compiledRegex.getOrPut(nameMatcher.pattern) {
+                nameMatcher.pattern.toRegex()
             }.matches(nameToBeMatched)
         }
     }
@@ -194,15 +189,6 @@ class TaintConfigurationFeature private constructor(
             AnyTypeMatcher -> true
             is ClassMatcher -> matches(typeName)
             is PrimitiveNameMatcher -> name == typeName
-        }
-
-    private val SerializedTaintConfigurationItem.methodInfo: FunctionMatcher
-        get() = when (this) {
-            is SerializedTaintCleaner -> methodInfo
-            is SerializedTaintEntryPointSource -> methodInfo
-            is SerializedTaintMethodSink -> methodInfo
-            is SerializedTaintMethodSource -> methodInfo
-            is SerializedTaintPassThrough -> methodInfo
         }
 
     private fun SerializedTaintConfigurationItem.resolveForMethod(method: JcMethod): TaintConfigurationItem =
@@ -320,14 +306,22 @@ class TaintConfigurationFeature private constructor(
                 return mkOr(position.map { TypeMatches(it, type) })
             }
 
-            // todo: reread, rethink, rewrite
+            val alternatives = typeMatcher.extractAlternatives()
+            val disjuncts = mutableListOf<Condition>()
 
-            val allClasses = runBlocking {
-                cp.hierarchyExt().findSubClasses(cp.objectClass, allHierarchy = true, includeOwn = true)
+            alternatives.forEach { classMatcher ->
+                val allClasses = runBlocking {
+                    cp.hierarchyExt().findSubClasses(cp.objectClass, allHierarchy = true, includeOwn = true)
+                }
+
+                val types = allClasses.filter {
+                    matches(classMatcher.pkg, it.packageName) && matches(classMatcher.classNameMatcher, it.simpleName)
+                }
+
+                disjuncts += types.flatMap { type -> position.map { TypeMatches(it, type.toType()) } }.toList()
             }
 
-            val types = allClasses.filter { pkgMatcher.matches(it.packageName) && clsMatcher.matches(it.simpleName) }
-            return mkOr(types.flatMap { type -> position.map { TypeMatches(it, type.toType()) } }.toList())
+            return mkOr(disjuncts)
         }
 
         override fun visit(condition: AnnotationType): Condition = TODO("Not yet implemented")
@@ -367,7 +361,7 @@ class TaintConfigurationFeature private constructor(
             serializersModule: SerializersModule? = null
         ) = TaintConfigurationFeature(jsonConfig, serializersModule)
 
-        private val defaultSerializationModule: SerializersModule
+        val defaultSerializationModule: SerializersModule
             get() = SerializersModule {
                 polymorphic(Condition::class) {
                     subclass(And::class)
@@ -454,7 +448,3 @@ private object ConditionSimplifier : ConditionVisitor<Condition> {
 
     override fun visit(condition: TypeMatches): Condition = condition
 }
-
-fun JcClasspath.taintConfigurationFeature(): TaintConfigurationFeature = features
-    ?.singleOrNull { it is TaintConfigurationFeature } as? TaintConfigurationFeature
-    ?: error("No taint configuration feature found")

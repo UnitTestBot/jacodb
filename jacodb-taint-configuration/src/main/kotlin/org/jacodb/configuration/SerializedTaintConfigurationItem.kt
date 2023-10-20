@@ -21,12 +21,23 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-sealed interface SerializedTaintConfigurationItem
+sealed interface SerializedTaintConfigurationItem {
+    val methodInfo: FunctionMatcher
+
+    fun updateMethodInfo(updatedMethodInfo: FunctionMatcher): SerializedTaintConfigurationItem =
+        when (this) {
+            is SerializedTaintCleaner -> copy(methodInfo = updatedMethodInfo)
+            is SerializedTaintEntryPointSource -> copy(methodInfo = updatedMethodInfo)
+            is SerializedTaintMethodSink -> copy(methodInfo = updatedMethodInfo)
+            is SerializedTaintMethodSource -> copy(methodInfo = updatedMethodInfo)
+            is SerializedTaintPassThrough -> copy(methodInfo = updatedMethodInfo)
+        }
+}
 
 @Serializable
 @SerialName("EntryPointSource")
 data class SerializedTaintEntryPointSource(
-    val methodInfo: FunctionMatcher,
+    override val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
@@ -34,7 +45,7 @@ data class SerializedTaintEntryPointSource(
 @Serializable
 @SerialName("MethodSource")
 data class SerializedTaintMethodSource(
-    val methodInfo: FunctionMatcher,
+    override val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
@@ -44,14 +55,14 @@ data class SerializedTaintMethodSource(
 data class SerializedTaintMethodSink(
     val ruleNote: String,
     val cwe: List<Int>,
-    val methodInfo: FunctionMatcher,
+    override val methodInfo: FunctionMatcher,
     val condition: Condition
 ) : SerializedTaintConfigurationItem
 
 @Serializable
 @SerialName("PassThrough")
 data class SerializedTaintPassThrough(
-    val methodInfo: FunctionMatcher,
+    override val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
@@ -59,7 +70,7 @@ data class SerializedTaintPassThrough(
 @Serializable
 @SerialName("Cleaner")
 data class SerializedTaintCleaner(
-    val methodInfo: FunctionMatcher,
+    override val methodInfo: FunctionMatcher,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : SerializedTaintConfigurationItem
