@@ -906,19 +906,19 @@ data class JcByte(override val value: Byte, override val type: JcType) : JcNumer
     }
 
     override fun minus(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.div(c.value.toByte()), type)
+        return JcInt(value - c.value.toByte(), type)
     }
 
     override fun times(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.times(c.value.toByte()), type)
+        return JcInt(value * c.value.toByte(), type)
     }
 
     override fun div(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.div(c.value.toByte()), type)
+        return JcInt(value / c.value.toByte(), type)
     }
 
     override fun rem(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.rem(c.value.toByte()), type)
+        return JcInt(value % c.value.toByte(), type)
     }
 
     override fun unaryMinus(): JcNumericConstant {
@@ -954,7 +954,7 @@ data class JcShort(override val value: Short, override val type: JcType) : JcNum
     }
 
     override fun minus(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.div(c.value.toShort()), type)
+        return JcInt(value - c.value.toShort(), type)
     }
 
     override fun times(c: JcNumericConstant): JcNumericConstant {
@@ -966,7 +966,7 @@ data class JcShort(override val value: Short, override val type: JcType) : JcNum
     }
 
     override fun rem(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.rem(c.value.toShort()), type)
+        return JcInt(value % c.value.toShort(), type)
     }
 
     override fun unaryMinus(): JcNumericConstant {
@@ -994,7 +994,7 @@ data class JcInt(override val value: Int, override val type: JcType) : JcNumeric
     }
 
     override fun minus(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.div(c.value.toInt()), type)
+        return JcInt(value - c.value.toInt(), type)
     }
 
     override fun times(c: JcNumericConstant): JcNumericConstant {
@@ -1006,7 +1006,7 @@ data class JcInt(override val value: Int, override val type: JcType) : JcNumeric
     }
 
     override fun rem(c: JcNumericConstant): JcNumericConstant {
-        return JcInt(value.rem(c.value.toInt()), type)
+        return JcInt(value % c.value.toInt(), type)
     }
 
     override fun unaryMinus(): JcNumericConstant {
@@ -1034,7 +1034,7 @@ data class JcLong(override val value: Long, override val type: JcType) : JcNumer
     }
 
     override fun minus(c: JcNumericConstant): JcNumericConstant {
-        return JcLong(value.div(c.value.toLong()), type)
+        return JcLong(value - c.value.toLong(), type)
     }
 
     override fun times(c: JcNumericConstant): JcNumericConstant {
@@ -1042,11 +1042,11 @@ data class JcLong(override val value: Long, override val type: JcType) : JcNumer
     }
 
     override fun div(c: JcNumericConstant): JcNumericConstant {
-        return JcLong(value.div(c.value.toLong()), type)
+        return JcLong(value / c.value.toLong(), type)
     }
 
     override fun rem(c: JcNumericConstant): JcNumericConstant {
-        return JcLong(value.rem(c.value.toLong()), type)
+        return JcLong(value % c.value.toLong(), type)
     }
 
     override fun unaryMinus(): JcNumericConstant {
@@ -1074,7 +1074,7 @@ data class JcFloat(override val value: Float, override val type: JcType) : JcNum
     }
 
     override fun minus(c: JcNumericConstant): JcNumericConstant {
-        return JcFloat(value.div(c.value.toFloat()), type)
+        return JcFloat(value - c.value.toFloat(), type)
     }
 
     override fun times(c: JcNumericConstant): JcNumericConstant {
@@ -1082,15 +1082,15 @@ data class JcFloat(override val value: Float, override val type: JcType) : JcNum
     }
 
     override fun div(c: JcNumericConstant): JcNumericConstant {
-        return JcFloat(value.div(c.value.toFloat()), type)
+        return JcFloat(value / c.value.toFloat(), type)
     }
 
     override fun rem(c: JcNumericConstant): JcNumericConstant {
-        return JcFloat(value.rem(c.value.toFloat()), type)
+        return JcFloat(value % c.value.toFloat(), type)
     }
 
     override fun unaryMinus(): JcNumericConstant {
-        return JcFloat(value.times(-1), type)
+        return JcFloat(-value, type)
     }
 
     override fun isLessThan(c: JcNumericConstant): Boolean {
