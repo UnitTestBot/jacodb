@@ -60,7 +60,7 @@ class ConfigurationTrie(
                     continue
                 }
 
-                is NameExactMatcher -> matchedPackageNameParts = simplifiedPkgMatcher.name.split(".")
+                is NameExactMatcher -> matchedPackageNameParts = simplifiedPkgMatcher.name.split(DOT_DELIMITER)
                 is NamePatternMatcher -> {
                     val (matchedParts, unmatchedParts) = simplifiedPkgMatcher.splitRegex()
                     matchedPackageNameParts = matchedParts
@@ -72,7 +72,7 @@ class ConfigurationTrie(
                 currentNode = currentNode.children[part] ?: NodeImpl(part).also { currentNode.children += part to it }
             }
 
-            if (unmatchedPackageNamePart != null && unmatchedPackageNamePart != ".*") {
+            if (unmatchedPackageNamePart != null && unmatchedPackageNamePart != ALL_MATCH) {
                 currentNode.unmatchedRules += configurationRule
                 continue
             }
@@ -92,7 +92,7 @@ class ConfigurationTrie(
                 is NamePatternMatcher -> {
                     val classPattern = simplifiedClassNameMatcher.pattern
 
-                    if (classPattern == ".*") {
+                    if (classPattern == ALL_MATCH) {
                         currentNode.rules += configurationRule
                         continue
                     }
@@ -110,7 +110,7 @@ class ConfigurationTrie(
 
         val className = clazz.simpleName
         val packageName = clazz.packageName
-        val nameParts = clazz.name.split(".")
+        val nameParts = clazz.name.split(DOT_DELIMITER)
 
         var currentNode: Node = rootNode
 

@@ -36,7 +36,7 @@ fun ClassMatcher.extractAlternatives(): Set<ClassMatcher> {
 
         when (val pkg = unprocessedMatcher.pkg) {
             AnyNameMatcher -> isAnyPackageAllowed = true
-            is NameExactMatcher -> matchedPackageParts = pkg.name.split(".")
+            is NameExactMatcher -> matchedPackageParts = pkg.name.split(DOT_DELIMITER)
             is NamePatternMatcher -> {
                 val alternatives = unprocessedMatcher.extractAlternativesToIfRequired(
                     { prevClassMatcher, newMatcher -> prevClassMatcher.copy(pkg = newMatcher) },
@@ -59,7 +59,7 @@ fun ClassMatcher.extractAlternatives(): Set<ClassMatcher> {
         }
 
         if (unmatchedPackagePart == null) {
-            val nameExactMatcher = NameExactMatcher(matchedPackageParts.joinToString("."))
+            val nameExactMatcher = NameExactMatcher(matchedPackageParts.joinToString(DOT_DELIMITER))
             unprocessedMatcher = unprocessedMatcher.copy(pkg = nameExactMatcher)
         }
 
@@ -79,7 +79,7 @@ fun ClassMatcher.extractAlternatives(): Set<ClassMatcher> {
 
                 val classPattern = alternatives.single().classNameMatcher as NamePatternMatcher
 
-                if (classPattern.pattern == ".*") {
+                if (classPattern.pattern == ALL_MATCH) {
                     results += unprocessedMatcher
                     continue
                 }
@@ -151,7 +151,7 @@ fun String.extractAlternatives(): Set<String> {
     while (queue.isNotEmpty()) {
         val last = queue.removeLast()
 
-        if ('|' !in last) {
+        if (ALTERNATIVE_MARK !in last) {
             result += last
             continue
         }
@@ -165,7 +165,7 @@ fun String.extractAlternatives(): Set<String> {
 }
 
 fun String.splitOnQuestionMark(): Set<String> {
-    if ('?' !in this) return setOf(this)
+    if (QUESTION_MARK !in this) return setOf(this)
 
     val queue = mutableListOf(this)
     val result = hashSetOf<String>()
@@ -173,7 +173,7 @@ fun String.splitOnQuestionMark(): Set<String> {
     questionMarkSplitter@ while (queue.isNotEmpty()) {
         val nextElement = queue.removeLast()
 
-        var questionMarkIndex = nextElement.indexOf('?')
+        var questionMarkIndex = nextElement.indexOf(QUESTION_MARK)
         while (questionMarkIndex > 0) {
             val prevSymbol = nextElement[questionMarkIndex - 1]
             when {
@@ -199,7 +199,7 @@ fun String.splitOnQuestionMark(): Set<String> {
                     }
 
                     if (balance != 0) {
-                        questionMarkIndex = nextElement.indexOf('?', questionMarkIndex + 1)
+                        questionMarkIndex = nextElement.indexOf(QUESTION_MARK, questionMarkIndex + 1)
                         continue
                     }
 
@@ -213,7 +213,7 @@ fun String.splitOnQuestionMark(): Set<String> {
                     continue@questionMarkSplitter
                 }
 
-                else -> questionMarkIndex = nextElement.indexOf('?', questionMarkIndex + 1)
+                else -> questionMarkIndex = nextElement.indexOf(QUESTION_MARK, questionMarkIndex + 1)
             }
         }
 
@@ -233,7 +233,12 @@ private fun String.removeRedundantParentheses(): String {
             '(' -> openParentheses += i to false
 
             ')' -> {
-                val nextSymbolIsImportant = if (i == lastIndex) false else get(i + 1) in "*?{+"
+                val nextSymbolIsImportant = if (i == lastIndex) {
+                    false
+                } else {
+                    get(i + 1) in SYMBOLS_FORBIDDING_TO_REMOVE_PARENTHESES
+                }
+
                 val (index, contaminated) = openParentheses.removeLast()
 
                 if (!contaminated && !nextSymbolIsImportant) {
@@ -291,7 +296,7 @@ private fun String.splitTheMostNestedAlternatives(): List<String> {
                 }
             }
 
-            '|' -> {
+            ALTERNATIVE_MARK -> {
                 if (!currentBracketsContainsAlternativeMark.last()) {
                     currentBracketsContainsAlternativeMark.removeLast()
                     currentBracketsContainsAlternativeMark += true
@@ -303,7 +308,7 @@ private fun String.splitTheMostNestedAlternatives(): List<String> {
     }
 
     if (levels == 0) {
-        return split("|")
+        return split(ALTERNATIVE_MARK)
     }
 
     val brackets = matchingIndicesByLevel.getValue(levels)
@@ -315,7 +320,7 @@ private fun String.splitTheMostNestedAlternatives(): List<String> {
 
     for ((i, indices) in brackets.withIndex()) {
         val (start, end) = indices
-        val alternatives = substring(start + 1, end).split("|")
+        val alternatives = substring(start + 1, end).split(ALTERNATIVE_MARK)
 
         val nextIndex = brackets.getOrNull(i + 1)?.first ?: length
         val suffix = substring(end + 1, nextIndex)
@@ -328,3 +333,9 @@ private fun String.splitTheMostNestedAlternatives(): List<String> {
 
     return prefixesValues
 }
+
+internal const val DOT_DELIMITER = "."
+internal const val ALL_MATCH = ".*"
+private const val QUESTION_MARK = '?'
+private const val ALTERNATIVE_MARK = '|'
+private const val SYMBOLS_FORBIDDING_TO_REMOVE_PARENTHESES = "*?{+"

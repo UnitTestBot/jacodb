@@ -159,8 +159,8 @@ class TaintConfigurationFeature private constructor(
     }
 
     private fun ClassMatcher.matches(fqn: String) = matches(
-        fqn.substringBeforeLast(".", missingDelimiterValue = ""),
-        fqn.substringAfterLast(".", missingDelimiterValue = fqn)
+        fqn.substringBeforeLast(DOT_DELIMITER, missingDelimiterValue = ""),
+        fqn.substringAfterLast(DOT_DELIMITER, missingDelimiterValue = fqn)
     )
 
     private fun ClassMatcher.matches(pkgName: String, className: String): Boolean {
@@ -302,7 +302,8 @@ class TaintConfigurationFeature private constructor(
             val cp = method.enclosingClass.classpath
 
             if (pkgMatcher is NameExactMatcher && clsMatcher is NameExactMatcher) {
-                val type = cp.findTypeOrNull("${pkgMatcher.name}.${clsMatcher.name}") ?: return mkOr(emptyList())
+                val type = cp.findTypeOrNull("${pkgMatcher.name}$DOT_DELIMITER${clsMatcher.name}")
+                    ?: return mkOr(emptyList())
                 return mkOr(position.map { TypeMatches(it, type) })
             }
 
