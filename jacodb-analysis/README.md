@@ -1,4 +1,4 @@
-# The `jacodb-analysis` module
+# Module `jacodb-analysis` 
 
 The `jacodb-analysis` module allows launching application dataflow analyses.
 It contains an API to write custom analyses, and several ready-to-use analyses.
