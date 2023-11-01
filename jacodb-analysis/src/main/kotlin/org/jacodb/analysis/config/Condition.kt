@@ -116,6 +116,7 @@ class ConditionEvaluator(
             }
 
             is ConstantStringValue -> {
+                // TODO: if 'value' is not string, convert it to string and compare with 'constant.value'
                 value is JcStringConstant && value.value == constant.value
             }
 
