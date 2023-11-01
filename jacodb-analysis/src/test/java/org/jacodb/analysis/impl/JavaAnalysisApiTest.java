@@ -56,7 +56,7 @@ public class JavaAnalysisApiTest {
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
         JcApplicationGraph applicationGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, null)
+                .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
         UnitResolver<?> resolver = UnitResolversLibrary.getMethodUnitResolver();
         IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunnerFactory();
@@ -76,7 +76,7 @@ public class JavaAnalysisApiTest {
         bannedPackages.add("my.package.that.wont.be.analyzed");
 
         JcApplicationGraph customGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, bannedPackages)
+                .newApplicationGraphForAnalysisAsync(classpath, bannedPackages)
                 .get();
         Assertions.assertNotNull(customGraph);
     }

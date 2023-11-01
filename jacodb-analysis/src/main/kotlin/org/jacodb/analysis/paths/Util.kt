@@ -23,50 +23,68 @@ import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLengthExpr
-import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.cfg.JcSimpleValue
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.values
 
+/**
+ * Converts `JcExpr` (in particular, `JcValue`) to `AccessPath`.
+ *   - For `JcSimpleValue`, this method simply wraps the value.
+ *   - For `JcArrayAccess` and `JcFieldRef`, this method "reverses" it and recursively constructs a list of accessors (`ElementAccessor` for array access, `FieldAccessor` for field access).
+ *   - Returns `null` when the conversion to `AccessPath` is not possible.
+ *
+ * Example:
+ *   `x.f[0].y` is `AccessPath(value = x, accesses = [Field(f), Element(0), Field(y)])`
+ */
 internal fun JcExpr.toPathOrNull(): AccessPath? {
-    if (this is JcCastExpr) {
-        return operand.toPathOrNull()
-    }
-    if (this is JcLocal) {
-        return AccessPath.fromLocal(this)
-    }
-
-    if (this is JcArrayAccess) {
-        return array.toPathOrNull()?.let {
-            AccessPath.fromOther(it, listOf(ElementAccessor))
+    return when (this) {
+        is JcSimpleValue -> {
+            AccessPath.from(this)
         }
-    }
 
-    if (this is JcFieldRef) {
-        val instance = instance // enables smart cast
+        is JcCastExpr -> {
+            operand.toPathOrNull()
+        }
 
-        return if (instance == null) {
-            AccessPath.fromStaticField(field.field)
-        } else {
-            instance.toPathOrNull()?.let {
-                AccessPath.fromOther(it, listOf(FieldAccessor(field.field)))
+        is JcArrayAccess -> {
+            array.toPathOrNull()?.let {
+                it / listOf(ElementAccessor(index))
             }
         }
+
+        is JcFieldRef -> {
+            val instance = instance // enables smart cast
+
+            if (instance == null) {
+                AccessPath.fromStaticField(field.field)
+            } else {
+                instance.toPathOrNull()?.let { it / FieldAccessor(field.field) }
+            }
+        }
+
+        else -> null
     }
-    return null
 }
 
 internal fun JcValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-internal fun AccessPath?.minus(other: AccessPath): List<Accessor>? {
+// this = value.x.y[0]
+// this = (value, accesses = listOf(Field, Field, Element))
+//
+// other = value.x
+// other = (value, accesses = listOf(Field))
+//
+// (this - other) = listOf(Field, Element) = ".y[0]"
+internal operator fun AccessPath?.minus(other: AccessPath): List<Accessor>? {
     if (this == null) {
         return null
     }
     if (value != other.value) {
         return null
     }
-    if (accesses.take(other.accesses.size) != other.accesses) {
+    if (this.accesses.take(other.accesses.size) != other.accesses) {
         return null
     }
 
@@ -77,8 +95,14 @@ internal fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     if (this == null || other == null) {
         return false
     }
-
-    return minus(other) != null
+    if (this.value != other.value) {
+        return false
+    }
+    // Unnecessary check:
+    // if (this.accesses.size < other.accesses.size) {
+    //     return false
+    // }
+    return this.accesses.take(other.accesses.size) == other.accesses
 }
 
 fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
@@ -86,15 +110,15 @@ fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
         return false
     }
 
-    (expr as? JcInstanceCallExpr)?.let {
-        val instancePath = it.instance.toPathOrNull()
+    if (expr is JcInstanceCallExpr) {
+        val instancePath = expr.instance.toPathOrNull()
         if (instancePath.startsWith(this)) {
             return true
         }
     }
 
-    (expr as? JcLengthExpr)?.let {
-        val arrayPath = it.array.toPathOrNull()
+    if (expr is JcLengthExpr) {
+        val arrayPath = expr.array.toPathOrNull()
         if (arrayPath.startsWith(this)) {
             return true
         }
@@ -103,7 +127,7 @@ fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
     return expr.values
         .mapNotNull { it.toPathOrNull() }
         .any {
-            it.minus(this)?.isNotEmpty() == true
+            (it - this)?.isNotEmpty() == true
         }
 }
 
@@ -113,4 +137,28 @@ fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
     }
 
     return inst.operands.any { isDereferencedAt(it) }
+}
+
+internal fun JcValue.isTaintedWith(fact: JcValue): Boolean {
+    if (this == fact) {
+        return true
+    }
+
+    return when (this) {
+        is JcFieldRef -> {
+            if (this.instance != null) {
+                this.instance!!.isTaintedWith(fact)
+            } else {
+                // static field
+                // TODO: ?
+                false
+            }
+        }
+
+        is JcArrayAccess -> {
+            this.array.isTaintedWith(fact)
+        }
+
+        else -> false
+    }
 }

@@ -160,6 +160,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-core"),
             project(":jacodb-analysis"),
             project(":jacodb-approximations"),
+            project(":jacodb-taint-configuration"),
         )
     ) {
         tasks {
@@ -187,7 +188,7 @@ if (!repoUrl.isNullOrEmpty()) {
                 register<MavenPublication>("jar") {
                     from(components["java"])
                     artifact(tasks.named("sourcesJar"))
-                    artifact(tasks.named("dokkaJavadocJar"))
+                    // artifact(tasks.named("dokkaJavadocJar"))
 
                     groupId = "org.jacodb"
                     artifactId = project.name

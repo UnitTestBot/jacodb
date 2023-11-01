@@ -42,11 +42,24 @@ abstract class AbstractTaintBackwardFunctions(
         return listOf(ZEROFact)
     }
 
-    abstract fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
+    abstract fun transmitBackDataFlow(
+        from: JcValue,
+        to: JcExpr,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact>
 
-    abstract fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact>
+    abstract fun transmitDataFlowAtNormalInst(
+        inst: JcInst,
+        nextInst: JcInst,
+        fact: DomainFact,
+    ): List<DomainFact>
 
-    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = FlowFunctionInstance { fact ->
+    override fun obtainSequentFlowFunction(
+        current: JcInst,
+        next: JcInst,
+    ) = FlowFunctionInstance { fact ->
         // fact.activation != current needed here to jump over assignment where the fact appeared
         if (current is JcAssignInst && (fact !is TaintNode || fact.activation != current)) {
             transmitBackDataFlow(current.lhv, current.rhv, current, fact, dropFact = false)
@@ -68,7 +81,7 @@ abstract class AbstractTaintBackwardFunctions(
             }
 
             if (callStatement is JcAssignInst) {
-                graph.entryPoint(callee).filterIsInstance<JcReturnInst>().forEach { returnInst ->
+                graph.entryPoints(callee).filterIsInstance<JcReturnInst>().forEach { returnInst ->
                     returnInst.returnValue?.let {
                         addAll(transmitBackDataFlow(callStatement.lhv, it, callStatement, fact, dropFact = true))
                     }

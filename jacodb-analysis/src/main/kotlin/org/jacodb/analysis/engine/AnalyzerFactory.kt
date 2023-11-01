@@ -36,7 +36,7 @@ interface DomainFact
  * A special [DomainFact] that always holds
  */
 object ZEROFact : DomainFact {
-    override fun toString() = "[ZERO fact]"
+    override fun toString(): String = "[ZERO fact]"
 }
 
 /**
@@ -49,21 +49,38 @@ interface FlowFunctionsSpace {
      * (these are needed to initiate worklist in ifds analysis)
      */
     fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact>
-    fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
-    fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
-    fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance
-    fun obtainExitToReturnSiteFlowFunction(callStatement: JcInst, returnSite: JcInst, exitStatement: JcInst): FlowFunctionInstance
+
+    fun obtainSequentFlowFunction(
+        current: JcInst,
+        next: JcInst,
+    ): FlowFunctionInstance
+
+    fun obtainCallToStartFlowFunction(
+        callStatement: JcInst,
+        callee: JcMethod,
+    ): FlowFunctionInstance
+
+    fun obtainCallToReturnFlowFunction(
+        callStatement: JcInst,
+        returnSite: JcInst,
+    ): FlowFunctionInstance
+
+    fun obtainExitToReturnSiteFlowFunction(
+        callStatement: JcInst,
+        returnSite: JcInst,
+        exitStatement: JcInst,
+    ): FlowFunctionInstance
 }
 
 /**
- * [Analyzer] interface describes how facts are propagated and how [AnalysisDependentEvent]s are produced by these facts during
- * the run of tabulation algorithm by [BaseIfdsUnitRunner].
+ * [Analyzer] interface describes how facts are propagated and how [AnalysisDependentEvent]s are
+ * produced by these facts during the run of tabulation algorithm by [BaseIfdsUnitRunner].
  *
- * Note that methods and properties of this interface may be accessed concurrently from different threads,
- * so the implementations should be thread-safe.
+ * Note that methods and properties of this interface may be accessed concurrently from different
+ * threads, so the implementations should be thread-safe.
  *
- * @property flowFunctions a [FlowFunctionsSpace] instance that describes how facts are generated and propagated
- * during run of tabulation algorithm.
+ * @property flowFunctions a [FlowFunctionsSpace] instance that describes how facts are generated
+ * and propagated during run of tabulation algorithm.
  */
 interface Analyzer {
     val flowFunctions: FlowFunctionsSpace

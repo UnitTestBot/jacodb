@@ -19,15 +19,15 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.JcMethod
 
 /**
- * Represents a directed (from [u] to [v]) edge between two ifds vertices
+ * Represents a directed (from [from] to [to]) edge between two ifds vertices
  */
-data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex) {
+data class IfdsEdge(val from: IfdsVertex, val to: IfdsVertex) {
     init {
-        require(u.method == v.method)
+        require(from.method == to.method)
     }
 
     val method: JcMethod
-        get() = u.method
+        get() = from.method
 }
 
 sealed interface PredecessorKind {

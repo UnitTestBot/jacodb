@@ -49,7 +49,6 @@ fun <T> JcInstList<JcRawInst>.collect(visitor: JcRawInstVisitor<T>): Collection<
     return instructions.map { it.accept(visitor) }
 }
 
-
 fun <R, E, T : JcRawInstVisitor<E>> JcRawInst.applyAndGet(visitor: T, getter: (T) -> R): R {
     this.accept(visitor)
     return getter(visitor)
@@ -59,7 +58,6 @@ fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T
     this.accept(visitor)
     return getter(visitor)
 }
-
 
 object FieldRefVisitor : DefaultJcExprVisitor<JcFieldRef?>, DefaultJcInstVisitor<JcFieldRef?> {
 
@@ -116,7 +114,7 @@ val JcInst.callExpr: JcCallExpr?
 
 val JcInstList<JcInst>.locals: Set<JcLocal>
     get() {
-        val resolver = LocalResolver().also {res ->
+        val resolver = LocalResolver().also { res ->
             forEach { it.accept(res) }
         }
         return resolver.result
@@ -124,7 +122,7 @@ val JcInstList<JcInst>.locals: Set<JcLocal>
 
 val JcInstList<JcInst>.values: Set<JcValue>
     get() {
-        val resolver = ValueResolver().also {res ->
+        val resolver = ValueResolver().also { res ->
             forEach { it.accept(res) }
         }
         return resolver.result

@@ -34,9 +34,9 @@ private class BackwardApplicationGraph<Method, Statement>(
 
     override fun callers(method: Method) = forward.callers(method)
 
-    override fun entryPoint(method: Method) = forward.exitPoints(method)
+    override fun entryPoints(method: Method) = forward.exitPoints(method)
 
-    override fun exitPoints(method: Method) = forward.entryPoint(method)
+    override fun exitPoints(method: Method) = forward.entryPoints(method)
 
     override fun methodOf(node: Statement) = forward.methodOf(node)
 }

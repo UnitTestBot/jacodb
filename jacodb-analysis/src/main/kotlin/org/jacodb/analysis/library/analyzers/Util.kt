@@ -34,7 +34,13 @@ fun JcClasspath.getFormalParamsOf(method: JcMethod): List<JcArgument> {
     }
 }
 
-fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dropFact: Boolean, maxPathLength: Int): List<TaintNode> {
+fun normalFactFlow(
+    fact: TaintNode,
+    fromPath: AccessPath,
+    toPath: AccessPath,
+    dropFact: Boolean,
+    maxPathLength: Int,
+): List<TaintNode> {
     val factPath = fact.variable
     val default = if (dropFact) emptyList() else listOf(fact)
 
@@ -42,8 +48,9 @@ fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dr
     //  #AnalysisTest.`dereferencing copy of value saved before null assignment produce no npe`
     val diff = factPath.minus(fromPath)
     if (diff != null && (fact.activation == null || fromPath != factPath)) {
+        val newPath = (toPath / diff).limit(maxPathLength)
         return default
-            .plus(fact.moveToOtherPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength)))
+            .plus(fact.moveToOtherPath(newPath))
             .distinct()
     }
 

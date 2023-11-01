@@ -16,7 +16,10 @@
 
 package org.jacodb.api.cfg
 
+import org.jacodb.api.JcArrayType
+import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
@@ -40,7 +43,7 @@ interface JcInst {
     val location: JcInstLocation
     val operands: List<JcExpr>
 
-    val lineNumber get() = location.lineNumber
+    val lineNumber: Int get() = location.lineNumber
 
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
@@ -63,13 +66,13 @@ abstract class AbstractJcInst(override val location: JcInstLocation) : JcInst {
 }
 
 data class JcInstRef(
-    val index: Int
+    val index: Int,
 )
 
 class JcAssignInst(
     location: JcInstLocation,
     val lhv: JcValue,
-    val rhv: JcExpr
+    val rhv: JcExpr,
 ) : AbstractJcInst(location) {
 
     override val operands: List<JcExpr>
@@ -84,7 +87,7 @@ class JcAssignInst(
 
 class JcEnterMonitorInst(
     location: JcInstLocation,
-    val monitor: JcValue
+    val monitor: JcValue,
 ) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(monitor)
@@ -98,7 +101,7 @@ class JcEnterMonitorInst(
 
 class JcExitMonitorInst(
     location: JcInstLocation,
-    val monitor: JcValue
+    val monitor: JcValue,
 ) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(monitor)
@@ -112,7 +115,7 @@ class JcExitMonitorInst(
 
 class JcCallInst(
     location: JcInstLocation,
-    val callExpr: JcCallExpr
+    val callExpr: JcCallExpr,
 ) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(callExpr)
@@ -128,7 +131,7 @@ interface JcTerminatingInst : JcInst
 
 class JcReturnInst(
     location: JcInstLocation,
-    val returnValue: JcValue?
+    val returnValue: JcValue?,
 ) : AbstractJcInst(location), JcTerminatingInst {
     override val operands: List<JcExpr>
         get() = listOfNotNull(returnValue)
@@ -142,7 +145,7 @@ class JcReturnInst(
 
 class JcThrowInst(
     location: JcInstLocation,
-    val throwable: JcValue
+    val throwable: JcValue,
 ) : AbstractJcInst(location), JcTerminatingInst {
     override val operands: List<JcExpr>
         get() = listOf(throwable)
@@ -158,7 +161,7 @@ class JcCatchInst(
     location: JcInstLocation,
     val throwable: JcValue,
     val throwableTypes: List<JcType>,
-    val throwers: List<JcInstRef>
+    val throwers: List<JcInstRef>,
 ) : AbstractJcInst(location) {
     override val operands: List<JcExpr>
         get() = listOf(throwable)
@@ -176,7 +179,7 @@ interface JcBranchingInst : JcInst {
 
 class JcGotoInst(
     location: JcInstLocation,
-    val target: JcInstRef
+    val target: JcInstRef,
 ) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = emptyList()
@@ -195,7 +198,7 @@ class JcIfInst(
     location: JcInstLocation,
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
-    val falseBranch: JcInstRef
+    val falseBranch: JcInstRef,
 ) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = listOf(condition)
@@ -214,7 +217,7 @@ class JcSwitchInst(
     location: JcInstLocation,
     val key: JcValue,
     val branches: Map<JcValue, JcInstRef>,
-    val default: JcInstRef
+    val default: JcInstRef,
 ) : AbstractJcInst(location), JcBranchingInst {
     override val operands: List<JcExpr>
         get() = listOf(key) + branches.keys
@@ -244,7 +247,7 @@ interface JcBinaryExpr : JcExpr {
 data class JcAddExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -259,7 +262,7 @@ data class JcAddExpr(
 data class JcAndExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -274,7 +277,7 @@ data class JcAndExpr(
 data class JcCmpExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -289,7 +292,7 @@ data class JcCmpExpr(
 data class JcCmpgExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -304,7 +307,7 @@ data class JcCmpgExpr(
 data class JcCmplExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -319,7 +322,7 @@ data class JcCmplExpr(
 data class JcDivExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -334,7 +337,7 @@ data class JcDivExpr(
 data class JcMulExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -351,7 +354,7 @@ interface JcConditionExpr : JcBinaryExpr
 data class JcEqExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -366,7 +369,7 @@ data class JcEqExpr(
 data class JcNeqExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -381,7 +384,7 @@ data class JcNeqExpr(
 data class JcGeExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -396,7 +399,7 @@ data class JcGeExpr(
 data class JcGtExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -411,7 +414,7 @@ data class JcGtExpr(
 data class JcLeExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -426,7 +429,7 @@ data class JcLeExpr(
 data class JcLtExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcConditionExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -441,7 +444,7 @@ data class JcLtExpr(
 data class JcOrExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -456,7 +459,7 @@ data class JcOrExpr(
 data class JcRemExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -471,7 +474,7 @@ data class JcRemExpr(
 data class JcShlExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -486,7 +489,7 @@ data class JcShlExpr(
 data class JcShrExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -501,7 +504,7 @@ data class JcShrExpr(
 data class JcSubExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -516,7 +519,7 @@ data class JcSubExpr(
 data class JcUshrExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -531,7 +534,7 @@ data class JcUshrExpr(
 data class JcXorExpr(
     override val type: JcType,
     override val lhv: JcValue,
-    override val rhv: JcValue
+    override val rhv: JcValue,
 ) : JcBinaryExpr {
     override val operands: List<JcValue>
         get() = listOf(lhv, rhv)
@@ -545,7 +548,7 @@ data class JcXorExpr(
 
 data class JcLengthExpr(
     override val type: JcType,
-    val array: JcValue
+    val array: JcValue,
 ) : JcExpr {
     override val operands: List<JcValue>
         get() = listOf(array)
@@ -559,7 +562,7 @@ data class JcLengthExpr(
 
 data class JcNegExpr(
     override val type: JcType,
-    val operand: JcValue
+    val operand: JcValue,
 ) : JcExpr {
     override val operands: List<JcValue>
         get() = listOf(operand)
@@ -573,7 +576,7 @@ data class JcNegExpr(
 
 data class JcCastExpr(
     override val type: JcType,
-    val operand: JcValue
+    val operand: JcValue,
 ) : JcExpr {
     override val operands: List<JcValue>
         get() = listOf(operand)
@@ -586,7 +589,7 @@ data class JcCastExpr(
 }
 
 data class JcNewExpr(
-    override val type: JcType
+    override val type: JcType,
 ) : JcExpr {
     override val operands: List<JcValue>
         get() = emptyList()
@@ -600,7 +603,7 @@ data class JcNewExpr(
 
 data class JcNewArrayExpr(
     override val type: JcType,
-    val dimensions: List<JcValue>
+    val dimensions: List<JcValue>,
 ) : JcExpr {
 
     override val operands: List<JcValue>
@@ -616,7 +619,7 @@ data class JcNewArrayExpr(
 data class JcInstanceOfExpr(
     override val type: JcType,
     val operand: JcValue,
-    val targetType: JcType
+    val targetType: JcType,
 ) : JcExpr {
     override val operands: List<JcValue>
         get() = listOf(operand)
@@ -650,7 +653,7 @@ interface JcInstanceCallExpr : JcCallExpr {
 data class JcPhiExpr(
     override val type: JcType,
     val values: List<JcValue>,
-    val args: List<JcArgument>
+    val args: List<JcArgument>,
 ) : JcExpr {
 
     override val operands: List<JcValue>
@@ -660,7 +663,6 @@ data class JcPhiExpr(
         return visitor.visitJcPhiExpr(this)
     }
 }
-
 
 /**
  * JcLambdaExpr is created when we can resolve the `invokedynamic` instruction.
@@ -694,7 +696,7 @@ data class JcDynamicCallExpr(
     val callSiteMethodName: String,
     val callSiteArgTypes: List<JcType>,
     val callSiteReturnType: JcType,
-    val callSiteArgs: List<JcValue>
+    val callSiteArgs: List<JcValue>,
 ) : JcCallExpr {
 
     override val method get() = bsmRef.method
@@ -726,13 +728,14 @@ data class JcVirtualCallExpr(
         }
 
     override fun toString(): String =
-        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcVirtualCallExpr(this)
     }
 }
-
 
 data class JcStaticCallExpr(
     private val methodRef: TypedMethodRef,
@@ -743,11 +746,7 @@ data class JcStaticCallExpr(
 
     override fun toString(): String =
         "${method.method.enclosingClass.name}.${methodRef.name}${
-            args.joinToString(
-                prefix = "(",
-                postfix = ")",
-                separator = ", "
-            )
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
         }"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -767,21 +766,20 @@ data class JcSpecialCallExpr(
         get() = method
 
     override fun toString(): String =
-        "$instance.${methodRef.name}${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.${methodRef.name}${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcSpecialCallExpr(this)
     }
 }
 
-
 interface JcValue : JcExpr
 
 interface JcSimpleValue : JcValue {
-
     override val operands: List<JcValue>
         get() = emptyList()
-
 }
 
 data class JcThis(override val type: JcType) : JcLocal {
@@ -800,7 +798,11 @@ interface JcLocal : JcSimpleValue {
     val name: String
 }
 
-data class JcArgument(val index: Int, override val name: String, override val type: JcType) : JcLocal {
+data class JcArgument(
+    val index: Int,
+    override val name: String,
+    override val type: JcType,
+) : JcLocal {
 
     companion object {
         @JvmStatic
@@ -827,9 +829,17 @@ data class JcLocalVar(override val name: String, override val type: JcType) : Jc
 interface JcComplexValue : JcValue
 
 data class JcFieldRef(
-    val instance: JcValue?,
-    val field: JcTypedField
+    val instance: JcValue?, // null when field is static
+    val field: JcTypedField,
 ) : JcComplexValue {
+    init {
+        if (instance == null) {
+            require(field.isStatic)
+        } else {
+            require(!field.isStatic)
+        }
+    }
+
     override val type: JcType get() = this.field.fieldType
 
     override val operands: List<JcValue>
@@ -845,7 +855,7 @@ data class JcFieldRef(
 data class JcArrayAccess(
     val array: JcValue,
     val index: JcValue,
-    override val type: JcType
+    override val type: JcType,
 ) : JcComplexValue {
     override fun toString(): String = "$array[$index]"
 
@@ -889,8 +899,10 @@ interface JcNumericConstant : JcConstant {
 
 }
 
-
-data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
+data class JcBool(
+    val value: Boolean,
+    override val type: JcPrimitiveType,
+) : JcConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -898,7 +910,10 @@ data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcByte(override val value: Byte, override val type: JcType) : JcNumericConstant {
+data class JcByte(
+    override val value: Byte,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -938,7 +953,10 @@ data class JcByte(override val value: Byte, override val type: JcType) : JcNumer
     }
 }
 
-data class JcChar(val value: Char, override val type: JcType) : JcConstant {
+data class JcChar(
+    val value: Char,
+    override val type: JcPrimitiveType,
+) : JcConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -946,7 +964,10 @@ data class JcChar(val value: Char, override val type: JcType) : JcConstant {
     }
 }
 
-data class JcShort(override val value: Short, override val type: JcType) : JcNumericConstant {
+data class JcShort(
+    override val value: Short,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -986,7 +1007,10 @@ data class JcShort(override val value: Short, override val type: JcType) : JcNum
     }
 }
 
-data class JcInt(override val value: Int, override val type: JcType) : JcNumericConstant {
+data class JcInt(
+    override val value: Int,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1026,7 +1050,10 @@ data class JcInt(override val value: Int, override val type: JcType) : JcNumeric
     }
 }
 
-data class JcLong(override val value: Long, override val type: JcType) : JcNumericConstant {
+data class JcLong(
+    override val value: Long,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1066,7 +1093,10 @@ data class JcLong(override val value: Long, override val type: JcType) : JcNumer
     }
 }
 
-data class JcFloat(override val value: Float, override val type: JcType) : JcNumericConstant {
+data class JcFloat(
+    override val value: Float,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1106,7 +1136,10 @@ data class JcFloat(override val value: Float, override val type: JcType) : JcNum
     }
 }
 
-data class JcDouble(override val value: Double, override val type: JcType) : JcNumericConstant {
+data class JcDouble(
+    override val value: Double,
+    override val type: JcPrimitiveType,
+) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1154,7 +1187,10 @@ data class JcNullConstant(override val type: JcType) : JcConstant {
     }
 }
 
-data class JcStringConstant(val value: String, override val type: JcType) : JcConstant {
+data class JcStringConstant(
+    val value: String,
+    override val type: JcType,
+) : JcConstant {
     override fun toString(): String = "\"$value\""
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -1165,7 +1201,10 @@ data class JcStringConstant(val value: String, override val type: JcType) : JcCo
 /**
  * klass may be JcClassType or JcArrayType for constructions like byte[].class
  */
-data class JcClassConstant(val klass: JcType, override val type: JcType) : JcConstant {
+data class JcClassConstant(
+    val klass: JcType,
+    override val type: JcType,
+) : JcConstant {
 
     override fun toString(): String = "${klass.typeName}.class"
 
@@ -1176,7 +1215,7 @@ data class JcClassConstant(val klass: JcType, override val type: JcType) : JcCon
 
 data class JcMethodConstant(
     val method: JcTypedMethod,
-    override val type: JcType
+    override val type: JcType,
 ) : JcConstant {
     override fun toString(): String = "${method.method.enclosingClass.name}::${method.name}${
         method.parameters.joinToString(
@@ -1194,7 +1233,7 @@ data class JcMethodConstant(
 data class JcMethodType(
     val argumentTypes: List<JcType>,
     val returnType: JcType,
-    override val type: JcType
+    override val type: JcType,
 ) : JcConstant {
     override fun toString(): String = "${
         argumentTypes.joinToString(

@@ -62,6 +62,7 @@ abstract class AbstractIfdsUnitRunner<UnitType>(final override val unit: UnitTyp
     private var _job: Job? = null
 
     final override val job: Job? by ::_job
+    // TODO: final override val job: Job? get() = _job
 
     final override fun launchIn(scope: CoroutineScope): Job = scope.launch(start = CoroutineStart.LAZY) {
         run()
@@ -91,6 +92,6 @@ interface IfdsUnitRunnerFactory {
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
-    ) : IfdsUnitRunner<UnitType>
+        startMethods: List<JcMethod>,
+    ): IfdsUnitRunner<UnitType>
 }

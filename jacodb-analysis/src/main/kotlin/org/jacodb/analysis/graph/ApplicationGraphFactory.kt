@@ -17,6 +17,7 @@
 @file:JvmName("ApplicationGraphFactory")
 package org.jacodb.analysis.graph
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import org.jacodb.api.JcClasspath
@@ -36,13 +37,15 @@ suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: Li
     }
 }
 
-fun JcClasspath.asyncNewApplicationGraphForAnalysis(
+// Async adapter for calling it from Java.
+// https://stackoverflow.com/a/52887677/3592218
+@OptIn(DelicateCoroutinesApi::class)
+fun JcClasspath.newApplicationGraphForAnalysisAsync(
     bannedPackagePrefixes: List<String>? = null
-): CompletableFuture<JcApplicationGraph> {
-    return GlobalScope.future {
+): CompletableFuture<JcApplicationGraph> =
+    GlobalScope.future {
         newApplicationGraphForAnalysis(bannedPackagePrefixes)
     }
-}
 
 val defaultBannedPackagePrefixes: List<String> = listOf(
     "kotlin.",

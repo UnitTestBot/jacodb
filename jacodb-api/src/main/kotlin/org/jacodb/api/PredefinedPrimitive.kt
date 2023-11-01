@@ -36,7 +36,11 @@ object PredefinedPrimitives {
     private val valueSet = values.toHashSet()
 
     @JvmStatic
-    fun of(name: String, cp: JcClasspath, annotations: List<JcAnnotation> = listOf()): JcPrimitiveType? {
+    fun of(
+        name: String,
+        cp: JcClasspath,
+        annotations: List<JcAnnotation> = listOf(),
+    ): JcPrimitiveType? {
         if (valueSet.contains(name)) {
             return PredefinedPrimitive(cp, name, annotations)
         }
@@ -52,8 +56,11 @@ object PredefinedPrimitives {
 /**
  * Predefined primitive types
  */
-class PredefinedPrimitive(override val classpath: JcClasspath, override val typeName: String,
-                          override val annotations: List<JcAnnotation> = listOf()) : JcPrimitiveType {
+class PredefinedPrimitive(
+    override val classpath: JcClasspath,
+    override val typeName: String,
+    override val annotations: List<JcAnnotation> = listOf(),
+) : JcPrimitiveType {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

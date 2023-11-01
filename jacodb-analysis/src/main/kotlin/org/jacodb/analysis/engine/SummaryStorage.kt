@@ -34,7 +34,10 @@ sealed interface SummaryFact {
 /**
  * [SummaryFact] that denotes a possible vulnerability at [sink]
  */
-data class VulnerabilityLocation(val vulnerabilityDescription: VulnerabilityDescription, val sink: IfdsVertex) : SummaryFact {
+data class VulnerabilityLocation(
+    val vulnerabilityDescription: VulnerabilityDescription,
+    val sink: IfdsVertex,
+) : SummaryFact {
     override val method: JcMethod = sink.method
 }
 
@@ -49,7 +52,10 @@ data class SummaryEdgeFact(val edge: IfdsEdge) : SummaryFact {
  * Saves info about cross-unit call.
  * This info could later be used to restore full [TraceGraph]s
  */
-data class CrossUnitCallFact(val callerVertex: IfdsVertex, val calleeVertex: IfdsVertex) : SummaryFact {
+data class CrossUnitCallFact(
+    val callerVertex: IfdsVertex,
+    val calleeVertex: IfdsVertex,
+) : SummaryFact {
     override val method: JcMethod = callerVertex.method
 }
 
@@ -63,7 +69,7 @@ data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
-interface SummaryStorage<T: SummaryFact> {
+interface SummaryStorage<T : SummaryFact> {
     /**
      * Adds [fact] to summary of its method
      */
@@ -87,24 +93,27 @@ interface SummaryStorage<T: SummaryFact> {
     val knownMethods: List<JcMethod>
 }
 
-class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
+class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
     private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 
     override fun send(fact: T) {
-        if (summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)) {
-            val outFlow = outFlows.computeIfAbsent(fact.method) { MutableSharedFlow(replay = Int.MAX_VALUE) }
-            require(outFlow.tryEmit(fact))
+        val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
+        if (isNew) {
+            val flow = outFlows.computeIfAbsent(fact.method) {
+                MutableSharedFlow(replay = Int.MAX_VALUE)
+            }
+            check(flow.tryEmit(fact))
         }
     }
 
     override fun getFacts(method: JcMethod): SharedFlow<T> {
         return outFlows.computeIfAbsent(method) {
-            MutableSharedFlow<T>(replay = Int.MAX_VALUE).also { flow ->
-                summaries[method].orEmpty().forEach { fact ->
-                    require(flow.tryEmit(fact))
-                }
+            val flow = MutableSharedFlow<T>(replay = Int.MAX_VALUE)
+            for (fact in summaries[method].orEmpty()) {
+                check(flow.tryEmit(fact))
             }
+            flow
         }
     }
 

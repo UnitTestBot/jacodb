@@ -78,7 +78,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
             return isUsedAt(callExpr)
         }
         if (inst is JcAssignInst) {
-            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
+            if (inst.lhv is JcArrayAccess && isUsedAt(inst.lhv as JcArrayAccess)) {
                 return true
             }
             return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
@@ -153,8 +153,9 @@ private class UnusedVariableForwardFunctions(
         }
 
         if (fromPath == fact.variable) {
-            return@FlowFunctionInstance default.plus(UnusedVariableNode(toPath, fact.initStatement))
+            return@FlowFunctionInstance default + UnusedVariableNode(toPath, fact.initStatement)
         }
+
         default
     }
 
@@ -167,7 +168,7 @@ private class UnusedVariableForwardFunctions(
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
                 return@FlowFunctionInstance listOf(ZEROFact)
             }
-            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) }.plus(ZEROFact)
+            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) } + ZEROFact
         }
 
         if (fact !is UnusedVariableNode) {

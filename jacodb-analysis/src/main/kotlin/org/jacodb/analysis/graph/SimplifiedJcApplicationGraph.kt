@@ -71,7 +71,7 @@ internal class SimplifiedJcApplicationGraph(
         return if (node == getStartInst(method)) {
             emptySequence()
         } else {
-            if (node in impl.entryPoint(method)) {
+            if (node in impl.entryPoints(method)) {
                 sequenceOf(getStartInst(method))
             } else {
                 impl.predecessors(node)
@@ -82,7 +82,7 @@ internal class SimplifiedJcApplicationGraph(
     override fun successors(node: JcInst): Sequence<JcInst> {
         val method = methodOf(node)
         return if (node == getStartInst(method)) {
-            impl.entryPoint(method)
+            impl.entryPoints(method)
         } else {
             impl.successors(node)
         }
@@ -101,8 +101,8 @@ internal class SimplifiedJcApplicationGraph(
                 val allOverrides = getOverrides(callee)
                     .filter {
                         it.enclosingClass isSubClassOf instanceClass ||
-                                // TODO: use only down-most override here
-                                instanceClass isSubClassOf it.enclosingClass
+                            // TODO: use only down-most override here
+                            instanceClass isSubClassOf it.enclosingClass
                     }
 
                 // TODO: maybe filter inaccessible methods here?
@@ -112,8 +112,8 @@ internal class SimplifiedJcApplicationGraph(
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
         return calleesUnmarked(node).also {
-            it.forEach {
-                visitedCallers.getOrPut(it) { mutableSetOf() }.add(node)
+            it.forEach { method ->
+                visitedCallers.getOrPut(method) { mutableSetOf() }.add(node)
             }
         }
     }
@@ -123,16 +123,15 @@ internal class SimplifiedJcApplicationGraph(
      * In IFDS we don't need all method callers, we need only method callers which we visited earlier.
      */
     // TODO: Think if this optimization is really needed
-    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
+    override fun callers(method: JcMethod): Sequence<JcInst> =
+        visitedCallers[method].orEmpty().asSequence()
 
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
+    override fun entryPoints(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
 
-    companion object {
-    }
+    companion object
 }
 
-
-data class JcNoopInst(override val location: JcInstLocation): JcInst {
+data class JcNoopInst(override val location: JcInstLocation) : JcInst {
     override val operands: List<JcExpr>
         get() = emptyList()
 

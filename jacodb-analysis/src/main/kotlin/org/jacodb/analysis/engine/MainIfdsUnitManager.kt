@@ -43,7 +43,7 @@ class MainIfdsUnitManager<UnitType>(
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     private val startMethods: List<JcMethod>,
-    private val timeoutMillis: Long
+    private val timeoutMillis: Long,
 ) : IfdsUnitManager<UnitType> {
 
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
@@ -163,7 +163,7 @@ class MainIfdsUnitManager<UnitType>(
     private val TraceGraph.methods: List<JcMethod>
         get() {
             return (edges.keys.map { graph.methodOf(it.statement) } +
-                    listOf(graph.methodOf(sink.statement))).distinct()
+                listOf(graph.methodOf(sink.statement))).distinct()
         }
 
     /**
@@ -201,11 +201,15 @@ class MainIfdsUnitManager<UnitType>(
     override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
         when (event) {
             is EdgeForOtherRunnerQuery -> {
-                val otherRunner = aliveRunners[unitResolver.resolve(event.edge.method)] ?: return
+                check(event.edge.from == event.edge.to) { "Edge for other runner must be a loop-edge" }
+                val method = event.edge.method
+                val unit = unitResolver.resolve(method)
+                val otherRunner = aliveRunners[unit] ?: return
                 if (otherRunner.job?.isActive == true) {
                     otherRunner.submitNewEdge(event.edge)
                 }
             }
+
             is NewSummaryFact -> {
                 when (val fact = event.fact) {
                     is CrossUnitCallFact -> crossUnitCallsStorage.send(fact)
@@ -214,14 +218,14 @@ class MainIfdsUnitManager<UnitType>(
                     is VulnerabilityLocation -> vulnerabilitiesStorage.send(fact)
                 }
             }
+
             is QueueEmptinessChanged -> {
                 eventChannel.send(Pair(event, runner))
             }
+
             is SubscriptionForSummaryEdges -> {
                 eventChannel.send(Pair(event, runner))
-                summaryEdgesStorage.getFacts(event.method).map {
-                    it.edge
-                }.collect(event.collector)
+                summaryEdgesStorage.getFacts(event.method).map { it.edge }.collect(event.collector)
             }
         }
     }
@@ -230,38 +234,43 @@ class MainIfdsUnitManager<UnitType>(
     private val eventChannel: Channel<Pair<IfdsUnitRunnerEvent, IfdsUnitRunner<UnitType>>> =
         Channel(capacity = Int.MAX_VALUE)
 
-    private suspend fun dispatchDependencies() = eventChannel.consumeEach { (event, runner) ->
-        when (event) {
-            is SubscriptionForSummaryEdges -> {
-                dependencies.getOrPut(runner.unit) { mutableSetOf() }
-                    .add(unitResolver.resolve(event.method))
-                dependenciesRev.getOrPut(unitResolver.resolve(event.method)) { mutableSetOf() }
-                    .add(runner.unit)
-            }
-            is QueueEmptinessChanged -> {
-                if (runner.unit !in aliveRunners) {
-                    return@consumeEach
+    // TODO: replace async dispatcher with a synchronous one
+    private suspend fun dispatchDependencies() {
+        eventChannel.consumeEach { (event, runner) ->
+            when (event) {
+                is SubscriptionForSummaryEdges -> {
+                    dependencies.getOrPut(runner.unit) { mutableSetOf() }
+                        .add(unitResolver.resolve(event.method))
+                    dependenciesRev.getOrPut(unitResolver.resolve(event.method)) { mutableSetOf() }
+                        .add(runner.unit)
                 }
-                queueEmptiness[runner.unit] = event.isEmpty
-                if (event.isEmpty) {
-                    val toDelete = mutableListOf(runner.unit)
-                    while (toDelete.isNotEmpty()) {
-                        val current = toDelete.removeLast()
-                        if (current in aliveRunners &&
-                            dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
-                        ) {
-                            aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
-                            aliveRunners.remove(current)
-                            for (next in dependenciesRev[current].orEmpty()) {
-                                if (queueEmptiness[next] == true) {
-                                    toDelete.add(next)
+
+                is QueueEmptinessChanged -> {
+                    if (runner.unit !in aliveRunners) {
+                        return@consumeEach
+                    }
+                    queueEmptiness[runner.unit] = event.isEmpty
+                    if (event.isEmpty) {
+                        val toDelete = mutableListOf(runner.unit)
+                        while (toDelete.isNotEmpty()) {
+                            val current = toDelete.removeLast()
+                            if (current in aliveRunners &&
+                                dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
+                            ) {
+                                aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
+                                aliveRunners.remove(current)
+                                for (next in dependenciesRev[current].orEmpty()) {
+                                    if (queueEmptiness[next] == true) {
+                                        toDelete.add(next)
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+                else -> error("Unexpected event for dependencies dispatcher")
             }
-            else -> error("Unexpected event for dependencies dispatcher")
         }
     }
 }

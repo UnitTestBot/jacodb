@@ -47,7 +47,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 class BidiIfdsUnitRunnerFactory(
     private val forwardRunnerFactory: IfdsUnitRunnerFactory,
     private val backwardRunnerFactory: IfdsUnitRunnerFactory,
-    private val isParallel: Boolean = true
+    private val isParallel: Boolean = true,
 ) : IfdsUnitRunnerFactory {
     private inner class BidiIfdsUnitRunner<UnitType>(
         graph: JcApplicationGraph,
@@ -74,14 +74,17 @@ class BidiIfdsUnitRunnerFactory(
                             manager.handleEvent(event, this@BidiIfdsUnitRunner)
                         }
                     }
+
                     is NewSummaryFact -> {
                         manager.handleEvent(event, this@BidiIfdsUnitRunner)
                     }
+
                     is QueueEmptinessChanged -> {
                         forwardQueueIsEmpty = event.isEmpty
                         val newEvent = QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
                         manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
                     }
+
                     is SubscriptionForSummaryEdges -> {
                         manager.handleEvent(event, this@BidiIfdsUnitRunner)
                     }
@@ -97,9 +100,11 @@ class BidiIfdsUnitRunnerFactory(
                             forwardRunner.submitNewEdge(event.edge)
                         }
                     }
+
                     is NewSummaryFact -> {
                         manager.handleEvent(event, this@BidiIfdsUnitRunner)
                     }
+
                     is QueueEmptinessChanged -> {
                         backwardQueueIsEmpty = event.isEmpty
                         if (!isParallel && event.isEmpty) {
@@ -148,6 +153,6 @@ class BidiIfdsUnitRunnerFactory(
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
+        startMethods: List<JcMethod>,
     ): IfdsUnitRunner<UnitType> = BidiIfdsUnitRunner(graph, manager, unitResolver, unit, startMethods)
 }

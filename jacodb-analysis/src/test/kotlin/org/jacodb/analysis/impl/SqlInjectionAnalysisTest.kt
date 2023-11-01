@@ -27,6 +27,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -35,10 +36,13 @@ import java.util.stream.Stream
 class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
-        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, listOf(
-            // Not working yet (#156)
-            "s03", "s04"
-        ))
+        fun provideClassesForJuliet89(): Stream<Arguments> =
+            provideClassesForJuliet(
+                89, listOf(
+                    // Not working yet (#156)
+                    "s03", "s04"
+                )
+            )
 
         private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
     }
@@ -46,6 +50,14 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet89")
     fun `test on Juliet's CWE 89`(className: String) {
+        println(className)
+        testSingleJulietClass(vulnerabilityType, className)
+    }
+
+    @Test
+    fun `test on specific Juliet's CWE 89`() {
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s02.CWE89_SQL_Injection__File_executeQuery_02"
         testSingleJulietClass(vulnerabilityType, className)
     }
 

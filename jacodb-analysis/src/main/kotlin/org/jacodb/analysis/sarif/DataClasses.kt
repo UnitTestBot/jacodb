@@ -185,5 +185,7 @@ enum class SarifSeverityLevel {
 data class VulnerabilityDescription(
     val message: SarifMessage,
     val ruleId: String,
-    val level: SarifSeverityLevel = SarifSeverityLevel.WARNING
+    val level: SarifSeverityLevel = SarifSeverityLevel.WARNING,
+    // TODO: don't miss the triggered rule!
+    // TODO: add val rule: Rule,
 )

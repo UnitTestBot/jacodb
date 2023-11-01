@@ -28,18 +28,22 @@ import org.jacodb.impl.features.SyncUsagesExtension
  */
 open class JcApplicationGraphImpl(
     override val classpath: JcClasspath,
-    private val usages: SyncUsagesExtension
+    private val usages: SyncUsagesExtension,
 ) : JcApplicationGraph {
     private val methods = mutableSetOf<JcMethod>()
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.flowGraph().predecessors(node).asSequence() +
-                node.location.method.flowGraph().throwers(node).asSequence()
+        val graph = node.location.method.flowGraph()
+        val predecessors = graph.predecessors(node)
+        val throwers = graph.throwers(node)
+        return predecessors.asSequence() + throwers.asSequence()
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
-        return node.location.method.flowGraph().successors(node).asSequence() +
-                node.location.method.flowGraph().catchers(node).asSequence()
+        val graph = node.location.method.flowGraph()
+        val successors = graph.successors(node)
+        val catchers = graph.catchers(node)
+        return successors.asSequence() + catchers.asSequence()
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
@@ -58,8 +62,7 @@ open class JcApplicationGraphImpl(
         }
     }
 
-
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> {
+    override fun entryPoints(method: JcMethod): Sequence<JcInst> {
         methods.add(method)
         return method.flowGraph().entries.asSequence()
     }

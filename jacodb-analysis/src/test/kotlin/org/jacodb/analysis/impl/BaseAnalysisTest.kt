@@ -20,14 +20,17 @@ import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
+import org.jacodb.configuration.TaintConfigurationFeature
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
+import org.jacodb.testing.withDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.provider.Arguments
@@ -37,7 +40,10 @@ import kotlin.streams.asStream
 abstract class BaseAnalysisTest : BaseTest() {
     companion object : WithGlobalDB(UnknownClasses) {
         @JvmStatic
-        fun provideClassesForJuliet(cweNum: Int, cweSpecificBans: List<String> = emptyList()): Stream<Arguments> = runBlocking {
+        fun provideClassesForJuliet(
+            cweNum: Int,
+            cweSpecificBans: List<String> = emptyList(),
+        ): Stream<Arguments> = runBlocking {
             val cp = db.classpath(allClasspath)
             val hierarchyExt = cp.hierarchyExt()
             val baseClass = cp.findClass<AbstractTestCase>()
@@ -45,11 +51,14 @@ abstract class BaseAnalysisTest : BaseTest() {
             classes.toArguments("CWE${cweNum}_", cweSpecificBans)
         }
 
-        private fun Sequence<JcClassOrInterface>.toArguments(cwe: String, cweSpecificBans: List<String>): Stream<Arguments> = this
+        private fun Sequence<JcClassOrInterface>.toArguments(
+            cwe: String,
+            cweSpecificBans: List<String>,
+        ): Stream<Arguments> = this
             .map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
-//            .filter { it.contains("_68") }
+            // .filter { it.contains("_68") }
             .sorted()
             .map { Arguments.of(it) }
             .asStream()
@@ -73,6 +82,17 @@ abstract class BaseAnalysisTest : BaseTest() {
             // TODO/Won't fix(?): unmodified non-final static variables not analyzed
             "_10", "_14",
         )
+    }
+
+    override val cp: JcClasspath = runBlocking {
+        val defaultConfigResource = this.javaClass.getResourceAsStream("/config.json")
+        if (defaultConfigResource != null) {
+            val configJson = defaultConfigResource.bufferedReader().readText()
+            val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
+            db.classpath(allClasspath, listOf(configurationFeature) + BaseAnalysisTest.classpathFeatures)
+        } else {
+            super.cp
+        }
     }
 
     protected abstract fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance>

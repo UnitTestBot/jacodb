@@ -45,7 +45,7 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
      * Otherwise, returns empty list.
      */
     override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> {
-        return if (isMainAnalyzer && edge.v.statement in graph.exitPoints(edge.method)) {
+        return if (isMainAnalyzer && edge.to.statement in graph.exitPoints(edge.method)) {
             listOf(NewSummaryFact(SummaryEdgeFact(edge)))
         } else {
             emptyList()

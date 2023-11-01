@@ -50,7 +50,7 @@ fun JcClassOrInterface.toType(): JcClassType {
     return classpath.typeOf(this) as JcClassType
 }
 
-val JcClassOrInterface.packageName get() = name.substringBeforeLast(".")
+val JcClassOrInterface.packageName get() = name.substringBeforeLast(".", missingDelimiterValue = "")
 
 const val JAVA_OBJECT = "java.lang.Object"
 

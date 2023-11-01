@@ -35,7 +35,10 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithGlobalDB()
 
-    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
+    private fun <UnitType> testOne(
+        unitResolver: UnitResolver<UnitType>,
+        ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
+    ) {
         val clazz = cp.findClass<DateTime>()
         val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
 
