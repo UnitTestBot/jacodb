@@ -18,39 +18,25 @@ package org.jacodb.configuration
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 
 class ConfigurationTest : BaseTest() {
     companion object : WithDB()
 
-    override val cp: JcClasspath by lazy {
-        runBlocking {
-            val configPath = "/ourConfig.json"
-            val defaultConfigResource = TaintConfigurationFeature::class.java.getResourceAsStream(configPath)
-                ?: error("No such resource found: $configPath")
-            val configJson = defaultConfigResource.bufferedReader().readText()
-            val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
-            val features = listOf(configurationFeature, UnknownClasses)
-            db.classpath(allClasspath, features)
-        }
+    override val cp: JcClasspath = runBlocking {
+        val configPath = "/testJsonConfig.json"
+        val testConfig = this::class.java.getResourceAsStream(configPath)
+            ?: error("No such resource found: $configPath")
+        val configJson = testConfig.bufferedReader().readText()
+        val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
+        val features = listOf(configurationFeature, UnknownClasses)
+        db.classpath(allClasspath, features)
     }
 
-    @Test
-    @Disabled("We must have a special file with configs for tests")
-    fun test() {
-        val feature = cp.taintConfigurationFeature()
+    private val taintFeature = cp.taintConfigurationFeature()
 
-        val clazz = cp.findClass<java.net.URL>()
-        val rules = clazz.methods.associateWith { feature.getConfigForMethod(it) }
 
-        assertTrue(rules.any { it.value.isNotEmpty() })
-    }
 }
