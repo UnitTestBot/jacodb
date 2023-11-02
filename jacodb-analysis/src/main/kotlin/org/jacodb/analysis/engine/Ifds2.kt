@@ -277,7 +277,8 @@ class TaintForwardFlowFunctions(
             return emptyList()
         }
 
-        TODO()
+        // Pass-through:
+        return listOf(fact)
     }
 
     override fun obtainSequentFlowFunction(
