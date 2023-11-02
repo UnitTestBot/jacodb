@@ -63,28 +63,19 @@ interface DefaultConditionVisitor : ConditionVisitor<Boolean> {
         return !condition.arg.accept(this)
     }
 
-    override fun visit(condition: IsConstant): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: IsType): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: AnnotationType): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: ConstantEq): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: ConstantLt): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: ConstantGt): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: ConstantMatches): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: SourceFunctionMatches): Boolean = defaultConditionHandler(condition)
-
-    override fun visit(condition: CallParameterContainsMark): Boolean = defaultConditionHandler(condition)
-
     override fun visit(condition: ConstantTrue): Boolean {
         return true
     }
 
+    override fun visit(condition: IsConstant): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: IsType): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: AnnotationType): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantEq): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantLt): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantGt): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantMatches): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: SourceFunctionMatches): Boolean = defaultConditionHandler(condition)
+    override fun visit(condition: CallParameterContainsMark): Boolean = defaultConditionHandler(condition)
     override fun visit(condition: TypeMatches): Boolean = defaultConditionHandler(condition)
 }
 
