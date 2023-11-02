@@ -187,12 +187,14 @@ private class BaseIfdsUnitRunner<UnitType>(
                         val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(current))
                         val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(current))
                         val facts = mutableSetOf<DomainFact>()
-                        for (item in config.filterIsInstance<TaintMethodSource>()) {
-                            if (item.condition.accept(conditionEvaluator)) {
-                                facts += item.actionsAfter
-                                    .filterIsInstance<AssignMark>()
-                                    .map { action -> actionEvaluator.evaluate(action) }
-                                    .map { TaintAnalysisNode(it.variable) }
+                        if (currentFact == ZEROFact) {
+                            for (item in config.filterIsInstance<TaintMethodSource>()) {
+                                if (item.condition.accept(conditionEvaluator)) {
+                                    facts += item.actionsAfter
+                                        .filterIsInstance<AssignMark>()
+                                        .map { action -> actionEvaluator.evaluate(action) }
+                                        .map { TaintAnalysisNode(it.variable) }
+                                }
                             }
                         }
                         if (currentFact is TaintAnalysisNode) {
