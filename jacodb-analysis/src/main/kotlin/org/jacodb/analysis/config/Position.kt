@@ -18,10 +18,13 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.configuration.AnyArgument
 import org.jacodb.configuration.Argument
 import org.jacodb.configuration.Position
@@ -30,35 +33,39 @@ import org.jacodb.configuration.Result
 import org.jacodb.configuration.This
 
 class CallPositionResolverToAccessPath(
-    val callExpr: JcCallExpr,
+    val callInst: JcInst,
 ) : PositionResolver<AccessPath> {
     override fun resolve(position: Position): AccessPath {
         return when (position) {
             AnyArgument -> error("Unexpected $position")
 
-            is Argument -> callExpr.args[position.index].toPathOrNull()
-                ?: error("Cannot resolve $position for $callExpr")
+            is Argument -> callInst.callExpr?.args?.get(position.index)?.toPathOrNull()
+                ?: error("Cannot resolve $position for $callInst")
 
-            This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()
-                ?: error("Cannot resolve $position for $callExpr")
+            This -> (callInst.callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()
+                ?: error("Cannot resolve $position for $callInst")
 
-            Result -> callExpr.toPathOrNull()
-                ?: error("Cannot resolve $position for $callExpr")
+            Result -> if (callInst is JcAssignInst) {
+                callInst.lhv.toPathOrNull()
+            } else {
+                callInst.callExpr?.toPathOrNull()
+            } ?: error("Cannot resolve $position for $callInst")
         }
     }
 }
 
 class CallPositionResolverToJcValue(
-    val callExpr: JcCallExpr,
+    val callInst: JcInst,
 ) : PositionResolver<JcValue> {
     override fun resolve(position: Position): JcValue {
         return when (position) {
             AnyArgument -> error("Unexpected $position")
 
-            is Argument -> callExpr.args[position.index]
+            is Argument -> callInst.callExpr?.args?.get(position.index)
+                ?: error("Cannot resolve $position for $callInst")
 
-            This -> (callExpr as? JcInstanceCallExpr)?.instance
-                ?: error("Cannot resolve $position for $callExpr")
+            This -> (callInst.callExpr as? JcInstanceCallExpr)?.instance
+                ?: error("Cannot resolve $position for $callInst")
 
             Result -> error("Unexpected $position")
         }

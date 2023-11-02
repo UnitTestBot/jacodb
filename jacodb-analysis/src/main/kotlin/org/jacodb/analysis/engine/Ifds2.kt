@@ -242,16 +242,16 @@ class TaintForwardFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
     ) = FlowFunction { fact ->
-        val callExpr = callStatement.callExpr!!
+        // val callExpr = callStatement.callExpr!!
 
         // adhoc to satisfy types
         if (fact !is Tainted) return@FlowFunction emptyList()
 
         val conditionEvaluator = FactAwareConditionEvaluator(
             fact,
-            CallPositionResolverToJcValue(callExpr)
+            CallPositionResolverToJcValue(callStatement)
         )
-        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callExpr))
+        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
         val actionEvaluatorFactAware = FactAwareTaintActionEvaluator(fact, actionEvaluator)
 
         val resultingFacts = mutableSetOf<Tainted>()

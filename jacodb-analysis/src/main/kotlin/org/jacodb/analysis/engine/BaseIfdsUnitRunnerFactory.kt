@@ -184,9 +184,8 @@ private class BaseIfdsUnitRunner<UnitType>(
                     for (callee in currentCallees) {
                         graph.classpath.features?.singleOrNull { it is TaintConfigurationFeature } ?: continue
                         val config = graph.classpath.taintConfigurationFeature().getConfigForMethod(callee)
-                        val callExpr = current.callExpr!!
-                        val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(callExpr))
-                        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callExpr))
+                        val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(current))
+                        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(current))
                         val facts = mutableSetOf<DomainFact>()
                         for (item in config.filterIsInstance<TaintMethodSource>()) {
                             if (item.condition.accept(conditionEvaluator)) {
