@@ -204,7 +204,7 @@ private class TaintForwardFunctions(
 
     override fun transmitDataFlowAtNormalInst(
         inst: JcInst,
-        nextInst: JcInst,
+        nextInst: JcInst, // unused
         fact: DomainFact,
     ): List<DomainFact> {
         // Generate new facts:

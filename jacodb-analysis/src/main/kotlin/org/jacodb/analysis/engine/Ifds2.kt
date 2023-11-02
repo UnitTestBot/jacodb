@@ -24,12 +24,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.CallPositionResolverToAccessPath
 import org.jacodb.analysis.config.CallPositionResolverToJcValue
+import org.jacodb.analysis.config.ConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.FactAwareTaintActionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
+import org.jacodb.analysis.library.analyzers.getFormalParamsOf
+import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -37,6 +40,8 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.configuration.AssignMark
@@ -45,6 +50,7 @@ import org.jacodb.configuration.CopyMark
 import org.jacodb.configuration.RemoveAllMarks
 import org.jacodb.configuration.RemoveMark
 import org.jacodb.configuration.TaintMark
+import org.jacodb.configuration.TaintMethodSource
 import org.jacodb.configuration.actionsAfter
 import org.jacodb.configuration.condition
 
@@ -118,7 +124,7 @@ interface FlowFunctionsSpace2 {
      */
     fun obtainSequentFlowFunction(
         current: JcInst,
-        next: JcInst,
+        // next: JcInst,
     ): FlowFunction
 
     /**
@@ -186,6 +192,25 @@ class TaintForwardFlowFunctions(
     private val config: TaintConfig,
     private val cp: JcClasspath,
 ) : FlowFunctionsSpace2 {
+    private fun generates(inst: JcInst): List<Tainted> {
+        if (inst.callExpr == null) return emptyList()
+        val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(inst))
+        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(inst))
+        val facts = mutableSetOf<Tainted>()
+        for (item in config.items.filterIsInstance<TaintMethodSource>()) {
+            if (item.condition.accept(conditionEvaluator)) {
+                facts += item.actionsAfter
+                    .filterIsInstance<AssignMark>()
+                    .map { action -> actionEvaluator.evaluate(action) }
+            }
+        }
+        return facts.toList()
+    }
+
+    // private fun sanitizes(inst: JcInst, fact: Tainted): Boolean {
+    // ...
+    // }
+
     override fun obtainPossibleStartFacts(startStatement: JcInst): List<Fact> {
         // FIXME
         // TODO: handle TaintEntryPointSource
@@ -196,27 +221,31 @@ class TaintForwardFlowFunctions(
     private fun transmitDataFlow(
         from: JcExpr,
         to: JcValue,
-        atInst: JcInst,
+        inst: JcInst,
         fact: Fact,
     ): List<Fact> {
         if (fact == ZeroFact) {
-            return listOf(ZeroFact) // TODO: + generates(atInst)
+            return listOf(ZeroFact) + generates(inst)
         }
 
         if (fact !is Tainted) {
             return emptyList()
         }
 
+        // val isSanitizes = sanitizes(from, fact)
+        // val toPath = to.toPathOrNull() ?: return emptyList()
+
         TODO()
     }
 
+    // TODO: rename / refactor
     private fun transmitDataFlowAtNormalInst(
         inst: JcInst,
-        nextInst: JcInst,
+        // nextInst: JcInst,
         fact: Fact,
     ): List<Fact> {
         if (fact == ZeroFact) {
-            return listOf(ZeroFact) // TODO: + generates(atInst)
+            return listOf(ZeroFact) + generates(inst)
         }
 
         if (fact !is Tainted) {
@@ -228,13 +257,13 @@ class TaintForwardFlowFunctions(
 
     override fun obtainSequentFlowFunction(
         current: JcInst,
-        next: JcInst,
+        // next: JcInst,
     ) = FlowFunction { fact ->
         if (current is JcAssignInst) {
             // Note: 'next' is ignored
             transmitDataFlow(current.rhv, current.lhv, current, fact)
         } else {
-            transmitDataFlowAtNormalInst(current, next, fact)
+            transmitDataFlowAtNormalInst(current/*, next*/, fact)
         }
     }
 
@@ -275,16 +304,79 @@ class TaintForwardFlowFunctions(
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
         callee: JcMethod,
-    ) = FlowFunction {
-        TODO()
+    ) = FlowFunction { fact ->
+        if (fact == ZeroFact) {
+            return@FlowFunction listOf(ZeroFact) // TODO: + entry point config?
+        }
+
+        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        val actualParams = callExpr.args
+        val formalParams = cp.getFormalParamsOf(callee)
+
+        buildSet {
+            // Transmit facts on arguments ('actual' to 'formal'):
+            for ((formal, actual) in formalParams.zip(actualParams)) {
+                addAll(transmitDataFlow(actual, formal, callStatement, fact))
+            }
+
+            // Transmit facts on instance ('instance' to 'this'):
+            if (callExpr is JcInstanceCallExpr) {
+                addAll(transmitDataFlow(callExpr.instance, callee.thisInstance, callStatement, fact))
+            }
+
+            // TODO: check
+            // Transmit facts on static value:
+            if (fact is Tainted && fact.variable.isStatic) {
+                add(fact)
+            }
+
+            // TODO: can't happen here, because we already handled ZeroFact at the beginning.
+            // // Transmit zero fact:
+            // if (fact == ZeroFact) {
+            //     add(fact)
+            // }
+        }
     }
 
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-    ) = FlowFunction {
-        TODO()
+    ) = FlowFunction { fact ->
+        // TODO: do we even need to return non-empty list for zero fact here?
+        if (fact == ZeroFact) {
+            return@FlowFunction listOf(ZeroFact)
+        }
+
+        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        val actualParams = callExpr.args
+        val callee = exitStatement.location.method
+        val formalParams = cp.getFormalParamsOf(callee)
+
+        buildSet {
+            // Transmit facts on arguments ('formal' back to 'actual'), if they are passed by-ref:
+            for ((formal, actual) in formalParams.zip(actualParams)) {
+                addAll(transmitDataFlow(formal, actual, exitStatement, fact))
+            }
+
+            // Transmit facts on instance ('this' to 'instance'):
+            if (callExpr is JcInstanceCallExpr) {
+                addAll(transmitDataFlow(callee.thisInstance, callExpr.instance, exitStatement, fact))
+            }
+
+            // Transmit facts on static value:
+            if (fact is Tainted && fact.variable.isStatic) {
+                add(fact)
+            }
+
+            // Transmit facts on return value (from 'returnValue' to 'lhv'):
+            if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
+                // Note: returnValue can be null here in some weird cases, e.g. in lambda.
+                exitStatement.returnValue?.let { returnValue ->
+                    addAll(transmitDataFlow(returnValue, callStatement.lhv, exitStatement, fact))
+                }
+            }
+        }
     }
 }
 
@@ -524,7 +616,7 @@ class Ifds<UnitType>(
                 // Simple propagation to the next instruction:
                 for (next in graph.successors(current)) {
                     val factsAtNext = flowSpace
-                        .obtainSequentFlowFunction(current, next)
+                        .obtainSequentFlowFunction(current/*, next*/)
                         .compute(currentFact)
                     for (nextFact in factsAtNext) {
                         val nextVertex = Vertex(next, nextFact)

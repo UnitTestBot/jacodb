@@ -36,7 +36,7 @@ abstract class AbstractTaintForwardFunctions(
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
-    abstract fun transmitDataFlow(
+    protected abstract fun transmitDataFlow(
         from: JcExpr,
         to: JcValue,
         atInst: JcInst,
@@ -44,7 +44,7 @@ abstract class AbstractTaintForwardFunctions(
         dropFact: Boolean,
     ): List<DomainFact>
 
-    abstract fun transmitDataFlowAtNormalInst(
+    protected abstract fun transmitDataFlowAtNormalInst(
         inst: JcInst,
         nextInst: JcInst,
         fact: DomainFact,
