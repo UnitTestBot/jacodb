@@ -33,7 +33,7 @@ import org.jacodb.configuration.Result
 import org.jacodb.configuration.This
 
 class CallPositionResolverToAccessPath(
-    val callStatement: JcInst,
+    private val callStatement: JcInst,
 ) : PositionResolver<AccessPath> {
     override fun resolve(position: Position): AccessPath {
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
@@ -56,7 +56,7 @@ class CallPositionResolverToAccessPath(
 }
 
 class CallPositionResolverToJcValue(
-    val callStatement: JcInst,
+    private val callStatement: JcInst,
 ) : PositionResolver<JcValue> {
     override fun resolve(position: Position): JcValue {
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
