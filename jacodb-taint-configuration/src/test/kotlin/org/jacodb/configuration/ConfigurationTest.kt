@@ -18,6 +18,7 @@ package org.jacodb.configuration
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.api.ext.objectType
@@ -94,6 +95,26 @@ class ConfigurationTest : BaseTest() {
     @Test
     fun testCleanerMethod() {
         val method = cp.findClass<java.util.ArrayList<*>>().methods.first() { it.name == "clear" }
+        val rules = taintFeature.getConfigForMethod(method)
+
+        assertTrue(rules.singleOrNull() != null)
+    }
+
+    @Test
+    fun testParametersMatches() {
+        val method = cp.findClass<java.lang.StringBuilder>().constructors.first {
+            it.parameters.singleOrNull()?.type?.typeName == "java.lang.String"
+        }
+        val rules = taintFeature.getConfigForMethod(method)
+
+        assertTrue(rules.singleOrNull() != null)
+    }
+
+    @Test
+    fun testPrimitiveParametersInMatcher() {
+        val method = cp.findClass<java.io.Writer>().methods.first {
+            it.name.startsWith("write") && it.parameters.firstOrNull()?.type?.typeName == "int"
+        }
         val rules = taintFeature.getConfigForMethod(method)
 
         assertTrue(rules.singleOrNull() != null)

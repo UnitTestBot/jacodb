@@ -33,20 +33,9 @@ data class TaintMethodSource(
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
-data class TaintFieldSource(
-    val fieldInfo: JcField,
-    val condition: Condition,
-    val actionsAfter: List<Action>,
-) : TaintConfigurationItem
-
 data class TaintMethodSink(
     val condition: Condition,
     val methodInfo: JcMethod,
-) : TaintConfigurationItem
-
-data class TaintFieldSink(
-    val condition: Condition,
-    val fieldInfo: JcField,
 ) : TaintConfigurationItem
 
 data class TaintPassThrough(

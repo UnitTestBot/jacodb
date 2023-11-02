@@ -347,5 +347,137 @@
         }
       }
     ]
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.lang"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "StringBuilder"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "init^"
+      },
+      "parametersMatchers": [
+        {
+          "index": 0,
+          "typeMatcher": {
+            "_": "ClassMatcher",
+            "packageMatcher": {
+              "_": "NameIsEqualTo",
+              "name": "java.lang"
+            },
+            "classNameMatcher": {
+              "_": "NameIsEqualTo",
+              "name": "String"
+            }
+          }
+        }
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "This"
+        }
+      }
+    ]
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "System Information Leak",
+    "cwe": [
+      497
+    ],
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.io"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": "Writer|OutputStream"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "write.*"
+      },
+      "parametersMatchers": [
+        {
+          "index": 0,
+          "typeMatcher": {
+            "_": "PrimitiveNameMatches",
+            "name": "int"
+          }
+        }
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "And",
+      "args": [
+        {
+          "_": "IsType",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "type": {
+            "_": "PrimitiveNameMatches",
+            "name": "int"
+          }
+        },
+        {
+          "_": "IsConstant",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          }
+        },
+        {
+          "_": "ConstantEq",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "constant": {
+            "_": "IntValue",
+            "value": 0
+          }
+        }
+      ]
+    }
   }
 ]
