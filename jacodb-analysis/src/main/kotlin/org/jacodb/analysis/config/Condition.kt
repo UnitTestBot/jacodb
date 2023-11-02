@@ -47,23 +47,22 @@ import org.jacodb.configuration.PositionResolver
 import org.jacodb.configuration.SourceFunctionMatches
 import org.jacodb.configuration.TypeMatches
 
-interface DefaultConditionVisitor : ConditionVisitor<Boolean> {
-    val defaultConditionHandler: (Condition) -> Boolean
-        get() = { false }
-
-    override fun visit(condition: And): Boolean {
+abstract class DefaultConditionVisitor(
+    private val defaultConditionHandler: (Condition) -> Boolean = { false },
+) : ConditionVisitor<Boolean> {
+    final override fun visit(condition: And): Boolean {
         return condition.args.all { it.accept(this) }
     }
 
-    override fun visit(condition: Or): Boolean {
+    final override fun visit(condition: Or): Boolean {
         return condition.args.any { it.accept(this) }
     }
 
-    override fun visit(condition: Not): Boolean {
+    final override fun visit(condition: Not): Boolean {
         return !condition.arg.accept(this)
     }
 
-    override fun visit(condition: ConstantTrue): Boolean {
+    final override fun visit(condition: ConstantTrue): Boolean {
         return true
     }
 
@@ -81,7 +80,7 @@ interface DefaultConditionVisitor : ConditionVisitor<Boolean> {
 
 class ConditionEvaluator(
     internal val positionResolver: PositionResolver<JcValue>,
-) : DefaultConditionVisitor {
+) : DefaultConditionVisitor() {
     override fun visit(condition: IsConstant): Boolean {
         val value = positionResolver.resolve(condition.position)
         return value is JcConstant
