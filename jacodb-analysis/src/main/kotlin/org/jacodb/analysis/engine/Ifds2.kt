@@ -120,12 +120,11 @@ interface FlowFunctionsSpace2 {
      *     ||
      *     || (sequent edge)
      *     ||
-     *   [ DO() ] :: next
+     *   [ DO() ]
      * ```
      */
     fun obtainSequentFlowFunction(
         current: JcInst,
-        // next: JcInst,
     ): FlowFunction
 
     /**
@@ -219,21 +218,11 @@ class TaintForwardFlowFunctions(
     }
 
     // TODO: rename / refactor
-    private fun transmitDataFlow(
+    private fun transmitTaint(
         from: JcExpr,
         to: JcValue,
-        inst: JcInst,
-        fact: Fact,
+        fact: Tainted,
     ): List<Fact> {
-        if (fact == ZeroFact) {
-            return listOf(ZeroFact) + generates(inst)
-        }
-
-        if (fact !is Tainted) {
-            // TODO: check whether we need to return empty or [fact] here.
-            return emptyList()
-        }
-
         val toPath = to.toPathOrNull() ?: return emptyList() // FIXME: check, add comment
         val fromPath = from.toPathOrNull() ?: TODO() // TODO: how to handle it?
 
@@ -263,32 +252,30 @@ class TaintForwardFlowFunctions(
     }
 
     // TODO: rename / refactor
-    private fun transmitDataFlowAtNormalInst(
+    private fun transmitTaintNormal(
         inst: JcInst,
-        // nextInst: JcInst,
-        fact: Fact,
+        fact: Tainted,
     ): List<Fact> {
-        if (fact == ZeroFact) {
-            return listOf(ZeroFact) + generates(inst)
-        }
-
-        if (fact !is Tainted) {
-            return emptyList()
-        }
-
+        // TODO: read the config in order to determine whether to pass-through the 'fact'.
         // Pass-through:
         return listOf(fact)
     }
 
     override fun obtainSequentFlowFunction(
         current: JcInst,
-        // next: JcInst,
     ) = FlowFunction { fact ->
+        if (fact == ZeroFact) {
+            return@FlowFunction listOf(ZeroFact) + generates(current)
+        }
+
+        if (fact !is Tainted) {
+            return@FlowFunction emptyList()
+        }
+
         if (current is JcAssignInst) {
-            // Note: 'next' is ignored
-            transmitDataFlow(current.rhv, current.lhv, current, fact)
+            transmitTaint(current.rhv, current.lhv, fact)
         } else {
-            transmitDataFlowAtNormalInst(current/*, next*/, fact)
+            transmitTaintNormal(current, fact)
         }
     }
 
@@ -298,10 +285,11 @@ class TaintForwardFlowFunctions(
     ) = FlowFunction { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
-        // If fact is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.
+        // If 'fact' is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.
         // For other facts (Tainted only?), handle PassThrough/Cleaner items.
         // TODO: what to do with "other facts" on CopyAllMarks/RemoveAllMarks?
 
+        // Handle MethodSource config items:
         if (fact == ZeroFact) {
             val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(callStatement))
             val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
@@ -317,15 +305,18 @@ class TaintForwardFlowFunctions(
             return@FlowFunction facts + ZeroFact
         }
 
-        // adhoc to satisfy types
-        if (fact !is Tainted) return@FlowFunction emptyList()
+        // FIXME: adhoc to satisfy types
+        if (fact !is Tainted) {
+            // TODO: what to return here?
+            return@FlowFunction emptyList()
+        }
 
         val conditionEvaluator = FactAwareConditionEvaluator(
             fact,
             CallPositionResolverToJcValue(callStatement)
         )
         val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
-        // val actionEvaluatorFactAware = FactAwareTaintActionEvaluator(fact, actionEvaluator)
+        // val actionEvaluatorVisitor = FactAwareTaintActionEvaluator(fact, actionEvaluator)
         val resultingFacts = mutableSetOf<Tainted>()
 
         for (item in config.items.filterIsInstance<TaintPassThrough>()) {
@@ -368,6 +359,11 @@ class TaintForwardFlowFunctions(
             return@FlowFunction listOf(ZeroFact) // TODO: + entry point config?
         }
 
+        if (fact !is Tainted) {
+            // TODO: what to return here?
+            return@FlowFunction emptyList()
+        }
+
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val formalParams = cp.getFormalParamsOf(callee)
@@ -375,12 +371,12 @@ class TaintForwardFlowFunctions(
         buildSet {
             // Transmit facts on arguments ('actual' to 'formal'):
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitDataFlow(actual, formal, callStatement, fact))
+                addAll(transmitTaint(actual, formal, fact))
             }
 
             // Transmit facts on instance ('instance' to 'this'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitDataFlow(callExpr.instance, callee.thisInstance, callStatement, fact))
+                addAll(transmitTaint(callExpr.instance, callee.thisInstance, fact))
             }
 
             // TODO: check
@@ -407,6 +403,11 @@ class TaintForwardFlowFunctions(
             return@FlowFunction listOf(ZeroFact)
         }
 
+        if (fact !is Tainted) {
+            // TODO: what to return here?
+            return@FlowFunction emptyList()
+        }
+
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val callee = exitStatement.location.method
@@ -415,12 +416,12 @@ class TaintForwardFlowFunctions(
         buildSet {
             // Transmit facts on arguments ('formal' back to 'actual'), if they are passed by-ref:
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitDataFlow(formal, actual, exitStatement, fact))
+                addAll(transmitTaint(formal, actual, fact))
             }
 
             // Transmit facts on instance ('this' to 'instance'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitDataFlow(callee.thisInstance, callExpr.instance, exitStatement, fact))
+                addAll(transmitTaint(callee.thisInstance, callExpr.instance, fact))
             }
 
             // Transmit facts on static value:
@@ -432,7 +433,7 @@ class TaintForwardFlowFunctions(
             if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
                 // Note: returnValue can be null here in some weird cases, e.g. in lambda.
                 exitStatement.returnValue?.let { returnValue ->
-                    addAll(transmitDataFlow(returnValue, callStatement.lhv, exitStatement, fact))
+                    addAll(transmitTaint(returnValue, callStatement.lhv, fact))
                 }
             }
         }
