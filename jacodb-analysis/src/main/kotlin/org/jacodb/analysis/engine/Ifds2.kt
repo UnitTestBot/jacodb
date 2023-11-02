@@ -194,7 +194,7 @@ class TaintForwardFlowFunctions(
     private val config: TaintConfig,
     private val cp: JcClasspath,
 ) : FlowFunctionsSpace2 {
-    private fun generates(inst: JcInst): List<Tainted> {
+    private fun generates(inst: JcInst): Collection<Tainted> {
         if (inst.callExpr == null) return emptyList()
         val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(inst))
         val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(inst))
@@ -206,7 +206,7 @@ class TaintForwardFlowFunctions(
                     .map { action -> actionEvaluator.evaluate(action) }
             }
         }
-        return facts.toList()
+        return facts
     }
 
     // private fun sanitizes(inst: JcInst, fact: Tainted): Boolean {
