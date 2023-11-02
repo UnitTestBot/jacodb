@@ -107,23 +107,25 @@ abstract class AbstractTaintForwardFunctions(
         }
 
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-        val actualParams = callExpr.args
 
-        for (actual in actualParams) {
+        for (actual in callExpr.args) {
+            // Possibly tainted actual parameter:
             if (fact.variable.startsWith(actual.toPathOrNull())) {
                 return@FlowFunctionInstance emptyList() // Will be handled by summary edge
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
+            // Possibly tainted instance:
             if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
                 return@FlowFunctionInstance emptyList() // Will be handled by summary edge
             }
         }
 
         if (callStatement is JcAssignInst) {
+            // Possibly tainted lhv:
             if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
-                return@FlowFunctionInstance emptyList()
+                return@FlowFunctionInstance emptyList() // Overridden by rhv
             }
         }
 
