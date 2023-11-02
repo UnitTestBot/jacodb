@@ -34,6 +34,8 @@ import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -229,13 +231,36 @@ class TaintForwardFlowFunctions(
         }
 
         if (fact !is Tainted) {
+            // TODO: check whether we need to return empty or [fact] here.
             return emptyList()
         }
 
-        // val isSanitizes = sanitizes(from, fact)
-        // val toPath = to.toPathOrNull() ?: return emptyList()
+        val toPath = to.toPathOrNull() ?: return emptyList() // FIXME: check, add comment
+        val fromPath = from.toPathOrNull() ?: TODO() // TODO: how to handle it?
 
-        TODO()
+        // 'from' is tainted with 'fact':
+        if (fromPath.startsWith(fact.variable)) {
+            val newTaint = fact.copy(variable = toPath)
+            // Both 'from' and 'to' are now tainted:
+            return listOf(fact, newTaint)
+        }
+
+        // Some sub-path in 'to' is tainted with 'fact':
+        if (fact.variable.startsWith(toPath)) {
+            // Drop 'fact' taint:
+            return emptyList()
+        }
+
+        // 'to' is tainted (strictly) with 'fact':
+        // Note: "non-strict" case is handled above.
+        if (toPath.startsWith(fact.variable)) {
+            // No drop:
+            return listOf(fact)
+        }
+
+        // Neither 'from' nor 'to' is tainted with 'fact':
+        // Simply pass-through:
+        return listOf(fact)
     }
 
     // TODO: rename / refactor
