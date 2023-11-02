@@ -18,10 +18,20 @@ package org.jacodb.configuration
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.ext.findClass
+import org.jacodb.api.ext.methods
+import org.jacodb.api.ext.objectType
 import org.jacodb.impl.features.classpaths.UnknownClasses
+import org.jacodb.impl.features.classpaths.VirtualLocation
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethodImpl
+import org.jacodb.impl.features.classpaths.virtual.JcVirtualParameter
+import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class ConfigurationTest : BaseTest() {
     companion object : WithDB()
@@ -38,5 +48,54 @@ class ConfigurationTest : BaseTest() {
 
     private val taintFeature = cp.taintConfigurationFeature()
 
+    @Test
+    fun testVirtualMethod() {
+        val virtualParameter = JcVirtualParameter(0, TypeNameImpl(cp.objectType.typeName))
 
+        val method = JcVirtualMethodImpl(
+            name = "setValue",
+            returnType = TypeNameImpl(cp.objectType.typeName),
+            parameters = listOf(virtualParameter),
+            description = ""
+        )
+
+        val clazz = JcVirtualClassImpl(
+            name = "com.service.model.SimpleRequest",
+            initialFields = emptyList(),
+            initialMethods = listOf(method)
+        )
+        clazz.bind(cp, VirtualLocation())
+
+        method.bind(clazz)
+
+        val configs = taintFeature.getConfigForMethod(method)
+        val rule = configs.single() as TaintPassThrough
+
+        assertEquals(ConstantTrue, rule.condition)
+        assertEquals(2, rule.actionsAfter.size)
+    }
+
+    @Test
+    fun testSinkMethod() {
+        val method = cp.findClass<java.util.Properties>().methods.first { it.name == "store" }
+        val rules = taintFeature.getConfigForMethod(method)
+
+        assertTrue(rules.singleOrNull() != null)
+    }
+
+    @Test
+    fun testSourceMethod() {
+        val method = cp.findClass<System>().methods.first { it.name == "getProperty" }
+        val rules = taintFeature.getConfigForMethod(method)
+
+        assertTrue(rules.singleOrNull() != null)
+    }
+
+    @Test
+    fun testCleanerMethod() {
+        val method = cp.findClass<java.util.ArrayList<*>>().methods.first() { it.name == "clear" }
+        val rules = taintFeature.getConfigForMethod(method)
+
+        assertTrue(rules.singleOrNull() != null)
+    }
 }

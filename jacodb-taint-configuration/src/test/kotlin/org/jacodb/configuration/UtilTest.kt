@@ -16,6 +16,7 @@
 
 package org.jacodb.configuration
 
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class UtilTest {
@@ -65,4 +66,40 @@ class UtilTest {
         require(classAPattern == 2)
     }
 
+    @Test
+    fun splitOnQuestionMarkWithoutTheMark() {
+        val emptyLine = ""
+        val simpleLine = "abc"
+
+        assertSame(emptyLine, emptyLine.splitOnQuestionMark().single())
+        assertSame(simpleLine, simpleLine.splitOnQuestionMark().single())
+    }
+
+    @Test
+    fun splitOnQuestionMarkTest() {
+        val line = "zxc?(asd(qwe)?(bnm))?"
+
+        val result = line.splitOnQuestionMark()
+
+        assertEquals(6, result.size)
+
+        assertTrue(result.singleOrNull { it == "zxc(asd(qwe)(bnm))" } != null)
+        assertTrue(result.singleOrNull { it == "zxc(asd(bnm))" } != null)
+        assertTrue(result.singleOrNull { it == "zxc" } != null)
+        assertTrue(result.singleOrNull { it == "zx" } != null)
+        assertTrue(result.singleOrNull { it == "zx(asd(qwe)(bnm))" } != null)
+        assertTrue(result.singleOrNull { it == "zx(asd(bnm))" } != null)
+    }
+
+    @Test
+    fun incorrectQuestionMarkSequences() {
+        val line = "abc)?"
+        assertSame(line, line.splitOnQuestionMark().single())
+    }
+
+    @Test
+    fun questionMarkOnGroup() {
+        val line = "[a-z]?"
+        assertSame(line, line.splitOnQuestionMark().single())
+    }
 }

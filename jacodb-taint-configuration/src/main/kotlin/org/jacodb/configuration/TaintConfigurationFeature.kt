@@ -93,7 +93,7 @@ class TaintConfigurationFeature private constructor(
             return taintConfigurationItems
         }
 
-        val classRules = configurationTrie.getRulesForClass(method.enclosingClass)
+        val classRules = getClassRules(method.enclosingClass)
 
         val destination = mutableListOf<TaintConfigurationItem>()
 
@@ -231,7 +231,7 @@ class TaintConfigurationFeature private constructor(
         when (position) {
             AnyArgument -> method.parameters.isNotEmpty()
             is Argument -> position.number in method.parameters.indices
-            Result -> method.returnType.typeName == PredefinedPrimitives.Void
+            Result -> method.returnType.typeName != PredefinedPrimitives.Void
             ThisArgument -> !method.isStatic
         }
 
@@ -325,7 +325,7 @@ class TaintConfigurationFeature private constructor(
             return mkOr(disjuncts)
         }
 
-        override fun visit(condition: AnnotationType): Condition = TODO("Not yet implemented")
+        override fun visit(condition: AnnotationType): Condition = ConstantTrue // TODO("Not yet implemented")
 
         override fun visit(condition: ConstantEq): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
@@ -339,9 +339,7 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantMatches): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
 
-        override fun visit(condition: SourceFunctionMatches): Condition {
-            TODO("Not yet implemented")
-        }
+        override fun visit(condition: SourceFunctionMatches): Condition = ConstantTrue // TODO Not implemented yet
 
         override fun visit(condition: CallParameterContainsMark): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
