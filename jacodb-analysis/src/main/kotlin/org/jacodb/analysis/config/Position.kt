@@ -68,7 +68,11 @@ class CallPositionResolverToJcValue(
             This -> (callExpr as? JcInstanceCallExpr)?.instance
                 ?: error("Cannot resolve $position for $callStatement")
 
-            Result -> error("Unexpected $position")
+            Result -> if (callStatement is JcAssignInst) {
+                callStatement.lhv
+            } else {
+                error("Cannot resolve $position for $callStatement")
+            }
         }
     }
 }
