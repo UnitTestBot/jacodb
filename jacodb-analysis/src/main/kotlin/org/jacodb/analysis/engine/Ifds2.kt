@@ -26,7 +26,6 @@ import org.jacodb.analysis.config.CallPositionResolverToAccessPath
 import org.jacodb.analysis.config.CallPositionResolverToJcValue
 import org.jacodb.analysis.config.ConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
-import org.jacodb.analysis.config.FactAwareTaintActionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
@@ -51,10 +50,10 @@ import org.jacodb.configuration.CopyAllMarks
 import org.jacodb.configuration.CopyMark
 import org.jacodb.configuration.RemoveAllMarks
 import org.jacodb.configuration.RemoveMark
+import org.jacodb.configuration.TaintCleaner
 import org.jacodb.configuration.TaintMark
 import org.jacodb.configuration.TaintMethodSource
-import org.jacodb.configuration.actionsAfter
-import org.jacodb.configuration.condition
+import org.jacodb.configuration.TaintPassThrough
 
 interface Fact
 
@@ -297,7 +296,26 @@ class TaintForwardFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
     ) = FlowFunction { fact ->
-        // val callExpr = callStatement.callExpr!!
+        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+
+        // If fact is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.
+        // For other facts (Tainted only?), handle PassThrough/Cleaner items.
+        // TODO: what to do with "other facts" on CopyAllMarks/RemoveAllMarks?
+
+        if (fact == ZeroFact) {
+            val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(callStatement))
+            val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
+            // TODO: replace with buildSet?
+            val facts = mutableSetOf<Tainted>()
+            for (item in config.items.filterIsInstance<TaintMethodSource>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    facts += item.actionsAfter
+                        .filterIsInstance<AssignMark>()
+                        .map { action -> actionEvaluator.evaluate(action) }
+                }
+            }
+            return@FlowFunction facts + ZeroFact
+        }
 
         // adhoc to satisfy types
         if (fact !is Tainted) return@FlowFunction emptyList()
@@ -307,23 +325,38 @@ class TaintForwardFlowFunctions(
             CallPositionResolverToJcValue(callStatement)
         )
         val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
-        val actionEvaluatorFactAware = FactAwareTaintActionEvaluator(fact, actionEvaluator)
-
+        // val actionEvaluatorFactAware = FactAwareTaintActionEvaluator(fact, actionEvaluator)
         val resultingFacts = mutableSetOf<Tainted>()
-        for (item in config.items) {
+
+        for (item in config.items.filterIsInstance<TaintPassThrough>()) {
             if (item.condition.accept(conditionEvaluator)) {
-                resultingFacts += item.actionsAfter.mapNotNull { action ->
-                    when (action) {
-                        is CopyAllMarks -> actionEvaluator.evaluate(action, fact)
-                        is CopyMark -> actionEvaluator.evaluate(action, fact)
-                        is AssignMark -> actionEvaluator.evaluate(action)
-                        is RemoveAllMarks -> actionEvaluator.evaluate(action, fact)
-                        is RemoveMark -> actionEvaluator.evaluate(action, fact)
-                        else -> error("Unexpected action: $action")
+                resultingFacts += item.actionsAfter
+                    .filterIsInstance<CopyMark>()
+                    .mapNotNull { action ->
+                        actionEvaluator.evaluate(action, fact)
                     }
-                }
+                resultingFacts += item.actionsAfter
+                    .filterIsInstance<CopyAllMarks>()
+                    .mapNotNull { action ->
+                        actionEvaluator.evaluate(action, fact)
+                    }
             }
         }
+        for (item in config.items.filterIsInstance<TaintCleaner>()) {
+            if (item.condition.accept(conditionEvaluator)) {
+                resultingFacts += item.actionsAfter
+                    .filterIsInstance<RemoveMark>()
+                    .mapNotNull { action ->
+                        actionEvaluator.evaluate(action, fact)
+                    }
+                resultingFacts += item.actionsAfter
+                    .filterIsInstance<RemoveAllMarks>()
+                    .mapNotNull { action ->
+                        actionEvaluator.evaluate(action, fact)
+                    }
+            }
+        }
+
         resultingFacts
     }
 
