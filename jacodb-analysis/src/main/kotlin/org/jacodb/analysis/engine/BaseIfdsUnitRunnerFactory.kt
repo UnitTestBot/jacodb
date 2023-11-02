@@ -34,7 +34,6 @@ import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.configuration.AssignMark
 import org.jacodb.configuration.CopyAllMarks
 import org.jacodb.configuration.CopyMark
