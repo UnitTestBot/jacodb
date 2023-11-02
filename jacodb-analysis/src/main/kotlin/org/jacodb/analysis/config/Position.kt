@@ -35,44 +35,42 @@ import org.jacodb.configuration.This
 class CallPositionResolverToAccessPath(
     private val callStatement: JcInst,
 ) : PositionResolver<AccessPath> {
-    override fun resolve(position: Position): AccessPath {
-        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-        return when (position) {
-            AnyArgument -> error("Unexpected $position")
+    private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
-            is Argument -> callExpr.args[position.index].toPathOrNull()
-                ?: error("Cannot resolve $position for $callStatement")
+    override fun resolve(position: Position): AccessPath = when (position) {
+        AnyArgument -> error("Unexpected $position")
 
-            This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()
-                ?: error("Cannot resolve $position for $callStatement")
+        is Argument -> callExpr.args[position.index].toPathOrNull()
+            ?: error("Cannot resolve $position for $callStatement")
 
-            Result -> if (callStatement is JcAssignInst) {
-                callStatement.lhv.toPathOrNull()
-            } else {
-                callExpr.toPathOrNull()
-            } ?: error("Cannot resolve $position for $callStatement")
-        }
+        This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()
+            ?: error("Cannot resolve $position for $callStatement")
+
+        Result -> if (callStatement is JcAssignInst) {
+            callStatement.lhv.toPathOrNull()
+        } else {
+            callExpr.toPathOrNull()
+        } ?: error("Cannot resolve $position for $callStatement")
     }
 }
 
 class CallPositionResolverToJcValue(
     private val callStatement: JcInst,
 ) : PositionResolver<JcValue> {
-    override fun resolve(position: Position): JcValue {
-        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-        return when (position) {
-            AnyArgument -> error("Unexpected $position")
+    private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
-            is Argument -> callExpr.args[position.index]
+    override fun resolve(position: Position): JcValue = when (position) {
+        AnyArgument -> error("Unexpected $position")
 
-            This -> (callExpr as? JcInstanceCallExpr)?.instance
-                ?: error("Cannot resolve $position for $callStatement")
+        is Argument -> callExpr.args[position.index]
 
-            Result -> if (callStatement is JcAssignInst) {
-                callStatement.lhv
-            } else {
-                error("Cannot resolve $position for $callStatement")
-            }
+        This -> (callExpr as? JcInstanceCallExpr)?.instance
+            ?: error("Cannot resolve $position for $callStatement")
+
+        Result -> if (callStatement is JcAssignInst) {
+            callStatement.lhv
+        } else {
+            error("Cannot resolve $position for $callStatement")
         }
     }
 }
