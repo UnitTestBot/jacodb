@@ -579,7 +579,6 @@ class Ifds<UnitType>(
     private val unitResolver: UnitResolver<UnitType>,
     private val unit: UnitType,
     private val startMethods: List<JcMethod>,
-    private val config: TaintConfig,
 ) {
     private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
 
