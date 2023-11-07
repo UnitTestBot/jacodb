@@ -293,6 +293,15 @@ class TaintForwardFlowFunctions(
         // For other facts (Tainted only?), handle PassThrough/Cleaner items.
         // TODO: what to do with "other facts" on CopyAllMarks/RemoveAllMarks?
 
+        // TODO: the call-to-return flow function should also return (or somehow mark internally)
+        //  whether we need to analyze the callee. For example, when we have MethodSource,
+        //  PassThrough or Cleaner for a call statement, we do not need to analyze the callee at all.
+        //  However, when we do not have such items in our config, we have to perform the whole analysis
+        //  of the callee: calling call-to-start flow function, launching the analysis of the callee,
+        //  awaiting for summary edges, and finally executing the exit-to-return flow function.
+        //  In such case, the call-to-return flow function should return empty list of facts,
+        //  since they are going to be "handled by the summary edge".
+
         // Handle MethodSource config items:
         if (fact == ZeroFact) {
             // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
