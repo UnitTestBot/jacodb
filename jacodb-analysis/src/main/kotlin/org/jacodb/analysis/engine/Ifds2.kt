@@ -246,8 +246,7 @@ class TaintForwardFlowFunctions(
             return listOf(fact)
         }
 
-        // Neither 'from' nor 'to' is tainted with 'fact':
-        // Simply pass-through:
+        // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
         return listOf(fact)
     }
 
