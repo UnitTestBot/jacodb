@@ -14,16 +14,14 @@
  *  limitations under the License.
  */
 
+@file:Suppress("PublicApiImplicitType")
+
 package org.jacodb.taint.configuration
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
-import kotlinx.serialization.serializer
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspathFeature
 import org.jacodb.api.JcMethod
@@ -55,12 +53,10 @@ class TaintConfigurationFeature private constructor(
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
 
     private val configurationTrie: ConfigurationTrie by lazy {
-        val serializers = additionalSerializersModule?.let {
-            SerializersModule {
-                include(defaultSerializationModule)
-                include(it)
-            }
-        } ?: defaultSerializationModule
+        val serializers = SerializersModule {
+            include(defaultSerializationModule)
+            additionalSerializersModule?.let { include(it) }
+        }
 
         val json = Json {
             classDiscriminator = CLASS_DISCRIMINATOR
@@ -68,20 +64,21 @@ class TaintConfigurationFeature private constructor(
             prettyPrint = true
         }
 
-        val configuration = json.decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig).map {
-            when (it) {
-                is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+        val configuration = json
+            .decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig)
+            .map {
+                when (it) {
+                    is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                    is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                    is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                    is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                    is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                }
             }
-        }
 
         ConfigurationTrie(configuration, ::matches)
     }
 
-    @Synchronized
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
         resolveConfigForMethod(method)
 
@@ -110,7 +107,7 @@ class TaintConfigurationFeature private constructor(
             return taintConfigurationItems
         }
 
-        val classRules = configurationTrie.getRulesForClass(method.enclosingClass)
+        val classRules = getClassRules(method.enclosingClass)
         val destination = mutableListOf<TaintConfigurationItem>()
         classRules.mapNotNullTo(destination) {
             val functionMatcher = it.methodInfo
@@ -244,7 +241,7 @@ class TaintConfigurationFeature private constructor(
             AnyArgument -> method.parameters.isNotEmpty()
             is Argument -> position.index in method.parameters.indices
             This -> !method.isStatic
-            Result -> method.returnType.typeName == PredefinedPrimitives.Void
+            Result -> method.returnType.typeName != PredefinedPrimitives.Void
         }
 
     private inner class ActionSpecializer(val method: JcMethod) : TaintActionVisitor<List<Action>> {
@@ -338,7 +335,7 @@ class TaintConfigurationFeature private constructor(
             return mkOr(disjuncts)
         }
 
-        override fun visit(condition: AnnotationType): Condition = TODO("Not yet implemented")
+        override fun visit(condition: AnnotationType): Condition = ConstantTrue // TODO("Not yet implemented")
 
         override fun visit(condition: ConstantEq): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
@@ -352,7 +349,7 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantMatches): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
 
-        override fun visit(condition: SourceFunctionMatches): Condition = TODO("Not yet implemented")
+        override fun visit(condition: SourceFunctionMatches): Condition = ConstantTrue // TODO Not implemented yet
 
         override fun visit(condition: CallParameterContainsMark): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
@@ -375,41 +372,14 @@ class TaintConfigurationFeature private constructor(
             serializersModule: SerializersModule? = null,
         ) = fromJson(configPath.readText(), serializersModule)
 
-        val defaultSerializationModule: SerializersModule
-            get() = SerializersModule {
-                polymorphic(Condition::class) {
-                    subclass(And::class)
-                    subclass(Or::class)
-                    subclass(Not::class)
-                    subclass(IsConstant::class)
-                    subclass(IsType::class)
-                    subclass(AnnotationType::class)
-                    subclass(ConstantEq::class)
-                    subclass(ConstantLt::class)
-                    subclass(ConstantGt::class)
-                    subclass(ConstantMatches::class)
-                    subclass(SourceFunctionMatches::class)
-                    subclass(CallParameterContainsMark::class)
-                    subclass(ConstantTrue::class)
-                    subclass(TypeMatches::class)
-                }
-
-                polymorphic(Action::class) {
-                    subclass(CopyAllMarks::class)
-                    subclass(CopyMark::class)
-                    subclass(RemoveAllMarks::class)
-                    subclass(RemoveMark::class)
-                    // subclass(AssignMark::class)
-                    subclass<AssignMark>()
-                }
-            }
+        val defaultSerializationModule = SerializersModule {
+            include(conditionModule)
+            include(actionModule)
+        }
 
         private const val CLASS_DISCRIMINATOR = "_"
     }
 }
-
-inline fun <reified T : Any> PolymorphicModuleBuilder<T>.subclass(): Unit =
-    subclass(T::class, serializer())
 
 private object ConditionSimplifier : ConditionVisitor<Condition> {
     override fun visit(condition: And): Condition {

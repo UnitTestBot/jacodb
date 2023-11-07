@@ -14,10 +14,15 @@
  *  limitations under the License.
  */
 
+@file:Suppress("PublicApiImplicitType")
+
 package org.jacodb.taint.configuration
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jacodb.api.JcType
 
 interface ConditionVisitor<out R> {
@@ -44,6 +49,25 @@ interface ConditionVisitor<out R> {
 
 interface Condition {
     fun <R> accept(conditionVisitor: ConditionVisitor<R>): R
+}
+
+val conditionModule = SerializersModule {
+    polymorphic(Condition::class) {
+        subclass(And::class)
+        subclass(Or::class)
+        subclass(Not::class)
+        subclass(IsConstant::class)
+        subclass(IsType::class)
+        subclass(AnnotationType::class)
+        subclass(ConstantEq::class)
+        subclass(ConstantLt::class)
+        subclass(ConstantGt::class)
+        subclass(ConstantMatches::class)
+        subclass(SourceFunctionMatches::class)
+        subclass(CallParameterContainsMark::class)
+        subclass(ConstantTrue::class)
+        subclass(TypeMatches::class)
+    }
 }
 
 @Serializable

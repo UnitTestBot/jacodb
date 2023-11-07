@@ -14,10 +14,15 @@
  *  limitations under the License.
  */
 
+@file:Suppress("PublicApiImplicitType")
+
 package org.jacodb.taint.configuration
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 interface TaintActionVisitor<out R> {
     fun visit(action: CopyAllMarks): R
@@ -31,6 +36,16 @@ interface TaintActionVisitor<out R> {
 
 interface Action {
     fun <R> accept(visitor: TaintActionVisitor<R>): R
+}
+
+val actionModule = SerializersModule {
+    polymorphic(Action::class) {
+        subclass(CopyAllMarks::class)
+        subclass(CopyMark::class)
+        subclass(AssignMark::class)
+        subclass(RemoveAllMarks::class)
+        subclass(RemoveMark::class)
+    }
 }
 
 // TODO add marks for aliases (if you pass an object and return it from the function)
