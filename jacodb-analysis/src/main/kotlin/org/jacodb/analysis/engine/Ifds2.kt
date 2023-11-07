@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.CallPositionResolverToAccessPath
 import org.jacodb.analysis.config.CallPositionResolverToJcValue
 import org.jacodb.analysis.config.ConditionEvaluator
@@ -495,10 +494,7 @@ class Manager<UnitType>(
             }
 
             is NewSummaryEdge -> {
-                // FIXME
-                runBlocking {
-                    summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
-                }
+                summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
             }
         }
     }
