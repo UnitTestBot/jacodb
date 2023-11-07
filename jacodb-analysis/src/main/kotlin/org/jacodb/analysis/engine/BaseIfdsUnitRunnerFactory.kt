@@ -149,9 +149,9 @@ private class BaseIfdsUnitRunner<UnitType>(
                     // Propagating through the call-to-return-site edge (lines 17-19 in RHS'95).
                     //
                     //   START main :: (s, d1)
-                    //    ||
-                    //    || (path edge)
-                    //    ||
+                    //    |
+                    //    | (path edge)
+                    //    |
                     //   CALL p :: (n, d2)
                     //    :
                     //    : (call-to-return-site edge)
@@ -249,12 +249,12 @@ private class BaseIfdsUnitRunner<UnitType>(
                     // Propagating through the call.
                     //
                     //   START main :: (s, d1)
-                    //    ||
+                    //    |
                     //   CALL p :: (n, d2)
                     //    : \
                     //    :  \
                     //    :  START p :: (s_p, d3)
-                    //    :   ||
+                    //    :   |
                     //    :  EXIT p :: (e_p, d4)
                     //    :  /
                     //    : /
@@ -341,12 +341,12 @@ private class BaseIfdsUnitRunner<UnitType>(
                     // Propagating through the newly found summary edge (lines 22-31 of RHS'95).
                     //
                     //   START outer :: (s_c, d3)
-                    //    ||
+                    //    |
                     //   CALL p :: (c, d4)
                     //    : \
                     //    :  \
                     //    :  START p :: (s_p, d1)
-                    //    :   ||
+                    //    :   |
                     //    :  EXIT p :: (e_p, d2)
                     //    :  /
                     //    : /
@@ -389,13 +389,13 @@ private class BaseIfdsUnitRunner<UnitType>(
                 // so this part should be done for exit vertices as well.
                 //
                 //   START main :: (s, d1)
-                //    ||
-                //    || (path edge)
-                //    ||
+                //    |
+                //    | (path edge)
+                //    |
                 //   INSTRUCTION :: (n, d2)
-                //    ||
-                //    || (path edge)
-                //    ||
+                //    |
+                //    | (path edge)
+                //    |
                 //   INSTRUCTION :: (m, d3)
                 //
                 // New path edge:

@@ -117,9 +117,9 @@ interface FlowFunctionsSpace2 {
      *
      * ```
      *   [ DO() ] :: current
-     *     ||
-     *     || (sequent edge)
-     *     ||
+     *     |
+     *     | (sequent edge)
+     *     |
      *   [ DO() ]
      * ```
      */
@@ -132,9 +132,9 @@ interface FlowFunctionsSpace2 {
      *
      * ```
      * [ CALL p ] :: callStatement
-     *   ||
-     *   || (call-to-return-site edge)
-     *   ||
+     *   :
+     *   : (call-to-return-site edge)
+     *   :
      * [ RETURN FROM p ] :: returnSite
      * ```
      */
