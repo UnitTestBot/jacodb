@@ -160,6 +160,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-core"),
             project(":jacodb-analysis"),
             project(":jacodb-approximations"),
+            project(":jacodb-taint-configuration"),
         )
     ) {
         tasks {
