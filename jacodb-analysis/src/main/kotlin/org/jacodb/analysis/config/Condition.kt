@@ -48,8 +48,24 @@ import org.jacodb.configuration.SourceFunctionMatches
 import org.jacodb.configuration.TypeMatches
 
 abstract class DefaultConditionVisitor<R>(
-    protected val defaultConditionHandler: (Condition) -> R,
+    private val defaultConditionHandler: (Condition) -> R,
 ) : ConditionVisitor<R> {
+
+    override fun visit(condition: And): R = defaultConditionHandler(condition)
+    override fun visit(condition: Or): R = defaultConditionHandler(condition)
+    override fun visit(condition: Not): R = defaultConditionHandler(condition)
+    override fun visit(condition: IsConstant): R = defaultConditionHandler(condition)
+    override fun visit(condition: IsType): R = defaultConditionHandler(condition)
+    override fun visit(condition: AnnotationType): R = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantEq): R = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantLt): R = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantGt): R = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantMatches): R = defaultConditionHandler(condition)
+    override fun visit(condition: SourceFunctionMatches): R = defaultConditionHandler(condition)
+    override fun visit(condition: CallParameterContainsMark): R = defaultConditionHandler(condition)
+    override fun visit(condition: ConstantTrue): R = defaultConditionHandler(condition)
+    override fun visit(condition: TypeMatches): R = defaultConditionHandler(condition)
+
     final override fun visit(condition: Condition): R = defaultConditionHandler(condition)
 }
 
@@ -72,17 +88,6 @@ abstract class DefaultConditionEvaluator(
     final override fun visit(condition: ConstantTrue): Boolean {
         return true
     }
-
-    override fun visit(condition: IsConstant): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: IsType): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: AnnotationType): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantEq): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantLt): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantGt): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantMatches): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: SourceFunctionMatches): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: CallParameterContainsMark): Boolean = defaultConditionHandler(condition)
-    override fun visit(condition: TypeMatches): Boolean = defaultConditionHandler(condition)
 }
 
 class ConditionEvaluator(
