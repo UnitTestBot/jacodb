@@ -199,10 +199,12 @@ class TaintForwardFlowFunctions(
     //     for (item in config.items.filterIsInstance<TaintMethodSource>()) {
     //         if (item.condition.accept(conditionEvaluator)) {
     //             for (action in item.actionsAfter) {
-    //                 if (action is AssignMark) {
-    //                     facts += actionEvaluator.evaluate(action)
-    //                 } else {
-    //                     error("$action is not supported for $item")
+    //                 when (action) {
+    //                     is AssignMark -> {
+    //                         facts += actionEvaluator.evaluate(action)
+    //                     }
+    //
+    //                     else -> error("$action is not supported for $item")
     //                 }
     //             }
     //         }
@@ -311,10 +313,12 @@ class TaintForwardFlowFunctions(
             for (item in config.items.filterIsInstance<TaintMethodSource>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
-                        if (action is AssignMark) {
-                            facts += actionEvaluator.evaluate(action)
-                        } else {
-                            error("$action is not supported for $item")
+                        when (action) {
+                            is AssignMark -> {
+                                facts += actionEvaluator.evaluate(action)
+                            }
+
+                            else -> error("$action is not supported for $item")
                         }
                     }
                 }
@@ -339,18 +343,22 @@ class TaintForwardFlowFunctions(
         for (item in config.items.filterIsInstance<TaintPassThrough>()) {
             if (item.condition.accept(conditionEvaluator)) {
                 for (action in item.actionsAfter) {
-                    if (action is CopyMark) {
-                        val newTaint = actionEvaluator.evaluate(action, fact)
-                        if (newTaint != null) {
-                            resultingFacts += newTaint
+                    when (action) {
+                        is CopyMark -> {
+                            val newTaint = actionEvaluator.evaluate(action, fact)
+                            if (newTaint != null) {
+                                resultingFacts += newTaint
+                            }
                         }
-                    } else if (action is CopyAllMarks) {
-                        val newTaint = actionEvaluator.evaluate(action, fact)
-                        if (newTaint != null) {
-                            resultingFacts += newTaint
+
+                        is CopyAllMarks -> {
+                            val newTaint = actionEvaluator.evaluate(action, fact)
+                            if (newTaint != null) {
+                                resultingFacts += newTaint
+                            }
                         }
-                    } else {
-                        error("$action is not supported for $item")
+
+                        else -> error("$action is not supported for $item")
                     }
                 }
             }
@@ -358,18 +366,22 @@ class TaintForwardFlowFunctions(
         for (item in config.items.filterIsInstance<TaintCleaner>()) {
             if (item.condition.accept(conditionEvaluator)) {
                 for (action in item.actionsAfter) {
-                    if (action is RemoveMark) {
-                        val newTaint = actionEvaluator.evaluate(action, fact)
-                        if (newTaint != null) {
-                            resultingFacts += newTaint
+                    when (action) {
+                        is RemoveMark -> {
+                            val newTaint = actionEvaluator.evaluate(action, fact)
+                            if (newTaint != null) {
+                                resultingFacts += newTaint
+                            }
                         }
-                    } else if (action is RemoveAllMarks) {
-                        val newTaint = actionEvaluator.evaluate(action, fact)
-                        if (newTaint != null) {
-                            resultingFacts += newTaint
+
+                        is RemoveAllMarks -> {
+                            val newTaint = actionEvaluator.evaluate(action, fact)
+                            if (newTaint != null) {
+                                resultingFacts += newTaint
+                            }
                         }
-                    } else {
-                        error("$action is not supported for $item")
+
+                        else -> error("$action is not supported for $item")
                     }
                 }
             }
