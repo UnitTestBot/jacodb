@@ -20,7 +20,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jacodb.api.JcType
 
-interface ConditionVisitor<R> {
+interface ConditionVisitor<out R> {
     fun visit(condition: And): R
     fun visit(condition: Or): R
     fun visit(condition: Not): R

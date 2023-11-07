@@ -19,7 +19,7 @@ package org.jacodb.configuration
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface TaintActionVisitor<R> {
+interface TaintActionVisitor<out R> {
     fun visit(action: CopyAllMarks): R
     fun visit(action: CopyMark): R
     fun visit(action: AssignMark): R
