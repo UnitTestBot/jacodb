@@ -255,7 +255,6 @@ class TaintForwardFlowFunctions(
         inst: JcInst,
         fact: Tainted,
     ): List<Fact> {
-        // TODO: read the config in order to determine whether to pass-through the 'fact'.
         // Pass-through:
         return listOf(fact)
     }
