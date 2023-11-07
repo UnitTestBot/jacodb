@@ -436,7 +436,9 @@ private object ConditionSimplifier : ConditionVisitor<Condition> {
         return conjuncts.singleOrNull() ?: Or(conjuncts.asReversed())
     }
 
-    override fun visit(condition: Not): Condition = Not(condition.arg.accept(this))
+    override fun visit(condition: Not): Condition {
+        return Not(condition.arg.accept(this))
+    }
 
     override fun visit(condition: IsConstant): Condition = condition
 
