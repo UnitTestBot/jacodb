@@ -37,20 +37,18 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
         fun provideClassesForJuliet89(): Stream<Arguments> =
-            provideClassesForJuliet(
-                89, listOf(
-                    // Not working yet (#156)
-                    "s03", "s04"
-                )
-            )
+            provideClassesForJuliet(89, specificBansCwe89)
 
         private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
+        private val specificBansCwe89: List<String> = listOf(
+            // Not working yet (#156)
+            "s03", "s04"
+        )
     }
 
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet89")
     fun `test on Juliet's CWE 89`(className: String) {
-        println(className)
         testSingleJulietClass(vulnerabilityType, className)
     }
 
@@ -60,6 +58,10 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         // val className = "juliet.testcases.CWE89_SQL_Injection.s02.CWE89_SQL_Injection__File_executeQuery_02"
         // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_13"
         testSingleJulietClass(vulnerabilityType, className)
+
+        for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
+            testSingleJulietClass(vulnerabilityType, className)
+        }
     }
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {

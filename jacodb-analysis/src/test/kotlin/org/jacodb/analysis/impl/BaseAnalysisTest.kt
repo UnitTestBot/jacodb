@@ -19,18 +19,16 @@ package org.jacodb.analysis.impl
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
-import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
-import org.jacodb.testing.withDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.provider.Arguments
@@ -39,29 +37,28 @@ import kotlin.streams.asStream
 
 abstract class BaseAnalysisTest : BaseTest() {
     companion object : WithGlobalDB(UnknownClasses) {
+        fun getJulietClasses(
+            cweNum: Int,
+            cweSpecificBans: List<String> = emptyList(),
+        ): Sequence<String> = runBlocking {
+            val cp = db.classpath(allClasspath)
+            val hierarchyExt = cp.hierarchyExt()
+            val baseClass = cp.findClass<AbstractTestCase>()
+            hierarchyExt.findSubClasses(baseClass, false)
+                .map { it.name }
+                .filter { it.contains("CWE${cweNum}_") }
+                .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
+                .sorted()
+        }
+
         @JvmStatic
         fun provideClassesForJuliet(
             cweNum: Int,
             cweSpecificBans: List<String> = emptyList(),
-        ): Stream<Arguments> = runBlocking {
-            val cp = db.classpath(allClasspath)
-            val hierarchyExt = cp.hierarchyExt()
-            val baseClass = cp.findClass<AbstractTestCase>()
-            val classes = hierarchyExt.findSubClasses(baseClass, false)
-            classes.toArguments("CWE${cweNum}_", cweSpecificBans)
-        }
-
-        private fun Sequence<JcClassOrInterface>.toArguments(
-            cwe: String,
-            cweSpecificBans: List<String>,
-        ): Stream<Arguments> = this
-            .map { it.name }
-            .filter { it.contains(cwe) }
-            .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }
-            // .filter { it.contains("_68") }
-            .sorted()
-            .map { Arguments.of(it) }
-            .asStream()
+        ): Stream<Arguments> =
+            getJulietClasses(cweNum, cweSpecificBans)
+                .map { Arguments.of(it) }
+                .asStream()
 
         private val commonJulietBans = listOf(
             // TODO: containers not supported
@@ -113,6 +110,8 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     protected fun testSingleJulietClass(vulnerabilityType: String, className: String) {
+        println(className)
+
         val clazz = cp.findClass(className)
         val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
