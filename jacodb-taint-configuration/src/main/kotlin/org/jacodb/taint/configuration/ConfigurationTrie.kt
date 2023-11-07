@@ -21,7 +21,7 @@ import org.jacodb.api.ext.packageName
 
 class ConfigurationTrie(
     configuration: List<SerializedTaintConfigurationItem>,
-    private val nameMatcher: (NameMatcher, String) -> Boolean
+    private val nameMatcher: (NameMatcher, String) -> Boolean,
 ) {
     private val unprocessedRules: MutableList<SerializedTaintConfigurationItem> = configuration.toMutableList()
     private val rootNode: RootNode = RootNode()
@@ -114,7 +114,7 @@ class ConfigurationTrie(
 
         var currentNode: Node = rootNode
 
-        for (namePart in nameParts) {
+        for (i in 0..nameParts.size) {
             results += currentNode.unmatchedRules.filter {
                 val classMatcher = it.methodInfo.cls
                 nameMatcher(classMatcher.pkg, packageName) && nameMatcher(classMatcher.classNameMatcher, className)
@@ -122,7 +122,8 @@ class ConfigurationTrie(
 
             results += currentNode.rules
 
-            currentNode = currentNode.children[namePart] ?: break
+            // We must process rules containing in the leaf, therefore, we have to spin one more iteration
+            currentNode = nameParts.getOrNull(i)?.let { currentNode.children[it] } ?: break
         }
 
         return results
@@ -141,27 +142,6 @@ class ConfigurationTrie(
             get() = error("Must not be called for the root")
         override val rules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
         override val unmatchedRules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
-
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as RootNode
-
-            if (children != other.children) return false
-            if (rules != other.rules) return false
-            if (unmatchedRules != other.unmatchedRules) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = children.hashCode()
-            result = 31 * result + rules.hashCode()
-            result = 31 * result + unmatchedRules.hashCode()
-            return result
-        }
     }
 
     private data class NodeImpl(
@@ -173,7 +153,7 @@ class ConfigurationTrie(
     }
 
     private data class Leaf(
-        override val value: String
+        override val value: String,
     ) : Node() {
         override val children: MutableMap<String, Node>
             get() = error("Leaf nodes do not have children")
