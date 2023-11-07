@@ -19,8 +19,6 @@ package org.jacodb.analysis.config
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcValue
@@ -73,65 +71,4 @@ class CallPositionResolverToJcValue(
             error("Cannot resolve $position for $callStatement")
         }
     }
-}
-
-class CallPositionResolver2(
-    val callExpr: JcCallExpr,
-) : PositionResolver<ResolvedPosition<*>?> {
-    override fun resolve(position: Position): ResolvedPosition<*>? = when (position) {
-        AnyArgument -> error("Unexpected $position")
-
-        is Argument -> {
-            val value = resolveArgument(position.index)
-            ResolvedJcValue(position, value)
-        }
-
-        This -> {
-            resolveThis()?.let { ResolvedJcValue(position, it) }
-        }
-
-        Result -> {
-            val expr = resolveResult()
-            ResolvedJcExpr(position, expr)
-        }
-    }
-
-    fun resolveArgument(index: Int): JcValue {
-        return callExpr.args[index]
-    }
-
-    fun resolveThis(): JcValue? {
-        return if (callExpr is JcInstanceCallExpr) {
-            callExpr.instance
-        } else {
-            null
-        }
-    }
-
-    fun resolveResult(): JcExpr {
-        return callExpr
-    }
-}
-
-sealed class ResolvedPosition<T>(
-    val position: Position,
-    val resolved: T,
-)
-
-class ResolvedJcValue(position: Position, resolved: JcValue) :
-    ResolvedPosition<JcValue>(position, resolved)
-
-class ResolvedJcExpr(position: Position, resolved: JcExpr) :
-    ResolvedPosition<JcExpr>(position, resolved)
-
-fun resolveArgument(position: Argument, callExpr: JcCallExpr): JcValue {
-    return callExpr.args[position.index]
-}
-
-fun resolveThis(position: This, callExpr: JcInstanceCallExpr): JcValue {
-    return callExpr.instance
-}
-
-fun resolveResult(position: Result, callExpr: JcCallExpr): JcExpr {
-    return callExpr
 }
