@@ -22,6 +22,7 @@ import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcTypeVariable
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.api.ext.humanReadableSignature
 import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.signature.JvmClassRefType
@@ -135,6 +136,15 @@ class TypesTest : BaseTypesTest() {
         assertEquals(stringList1.iterator, stringList2.iterator)
         assertNotEquals(isList.iterator, stringList1.iterator)
         assertNotEquals(objectList.iterator, stringList1.iterator)
+    }
+
+    @Test
+    fun `humanReadableSignature should work`() {
+        val type = listType<String>()
+        assertEquals(
+            "java.util.List<java.lang.String>#isEmpty():boolean",
+            type.declaredMethods.first { it.name == "isEmpty" }.humanReadableSignature
+        )
     }
 
     private inline fun <reified T> listType(raw: Boolean = false): JcClassType {
