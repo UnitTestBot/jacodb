@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintConfigurationItem
 
 class TaintConfig(
     val items: List<TaintConfigurationItem>,

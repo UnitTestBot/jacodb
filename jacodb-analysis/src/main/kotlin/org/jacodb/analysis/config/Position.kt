@@ -25,12 +25,12 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.configuration.AnyArgument
-import org.jacodb.configuration.Argument
-import org.jacodb.configuration.Position
-import org.jacodb.configuration.PositionResolver
-import org.jacodb.configuration.Result
-import org.jacodb.configuration.This
+import org.jacodb.taint.configuration.AnyArgument
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.Position
+import org.jacodb.taint.configuration.PositionResolver
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.This
 
 class CallPositionResolverToAccessPath(
     private val callStatement: JcInst,

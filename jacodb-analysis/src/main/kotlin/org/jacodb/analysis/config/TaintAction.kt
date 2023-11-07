@@ -19,14 +19,14 @@ package org.jacodb.analysis.config
 import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
-import org.jacodb.configuration.Action
-import org.jacodb.configuration.AssignMark
-import org.jacodb.configuration.CopyAllMarks
-import org.jacodb.configuration.CopyMark
-import org.jacodb.configuration.PositionResolver
-import org.jacodb.configuration.RemoveAllMarks
-import org.jacodb.configuration.RemoveMark
-import org.jacodb.configuration.TaintActionVisitor
+import org.jacodb.taint.configuration.Action
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.CopyMark
+import org.jacodb.taint.configuration.PositionResolver
+import org.jacodb.taint.configuration.RemoveAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.TaintActionVisitor
 
 class TaintActionEvaluator(
     internal val positionResolver: PositionResolver<AccessPath>,

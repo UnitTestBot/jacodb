@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.configuration
+package org.jacodb.taint.configuration
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString

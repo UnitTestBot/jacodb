@@ -26,26 +26,26 @@ import org.jacodb.api.cfg.JcInt
 import org.jacodb.api.cfg.JcStringConstant
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isSubClassOf
-import org.jacodb.configuration.And
-import org.jacodb.configuration.AnnotationType
-import org.jacodb.configuration.CallParameterContainsMark
-import org.jacodb.configuration.Condition
-import org.jacodb.configuration.ConditionVisitor
-import org.jacodb.configuration.ConstantBooleanValue
-import org.jacodb.configuration.ConstantEq
-import org.jacodb.configuration.ConstantGt
-import org.jacodb.configuration.ConstantIntValue
-import org.jacodb.configuration.ConstantLt
-import org.jacodb.configuration.ConstantMatches
-import org.jacodb.configuration.ConstantStringValue
-import org.jacodb.configuration.ConstantTrue
-import org.jacodb.configuration.IsConstant
-import org.jacodb.configuration.IsType
-import org.jacodb.configuration.Not
-import org.jacodb.configuration.Or
-import org.jacodb.configuration.PositionResolver
-import org.jacodb.configuration.SourceFunctionMatches
-import org.jacodb.configuration.TypeMatches
+import org.jacodb.taint.configuration.And
+import org.jacodb.taint.configuration.AnnotationType
+import org.jacodb.taint.configuration.CallParameterContainsMark
+import org.jacodb.taint.configuration.Condition
+import org.jacodb.taint.configuration.ConditionVisitor
+import org.jacodb.taint.configuration.ConstantBooleanValue
+import org.jacodb.taint.configuration.ConstantEq
+import org.jacodb.taint.configuration.ConstantGt
+import org.jacodb.taint.configuration.ConstantIntValue
+import org.jacodb.taint.configuration.ConstantLt
+import org.jacodb.taint.configuration.ConstantMatches
+import org.jacodb.taint.configuration.ConstantStringValue
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.IsConstant
+import org.jacodb.taint.configuration.IsType
+import org.jacodb.taint.configuration.Not
+import org.jacodb.taint.configuration.Or
+import org.jacodb.taint.configuration.PositionResolver
+import org.jacodb.taint.configuration.SourceFunctionMatches
+import org.jacodb.taint.configuration.TypeMatches
 
 abstract class DefaultConditionVisitor<R>(
     private val defaultConditionHandler: (Condition) -> R,

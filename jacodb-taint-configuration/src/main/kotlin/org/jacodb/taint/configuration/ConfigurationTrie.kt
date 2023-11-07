@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.configuration
+package org.jacodb.taint.configuration
 
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.ext.packageName

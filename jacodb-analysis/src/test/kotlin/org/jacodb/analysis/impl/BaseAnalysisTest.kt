@@ -24,7 +24,7 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest

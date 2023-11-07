@@ -45,15 +45,15 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.configuration.AssignMark
-import org.jacodb.configuration.CopyAllMarks
-import org.jacodb.configuration.CopyMark
-import org.jacodb.configuration.RemoveAllMarks
-import org.jacodb.configuration.RemoveMark
-import org.jacodb.configuration.TaintCleaner
-import org.jacodb.configuration.TaintMark
-import org.jacodb.configuration.TaintMethodSource
-import org.jacodb.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.CopyMark
+import org.jacodb.taint.configuration.RemoveAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
 
 interface Fact
 

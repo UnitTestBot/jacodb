@@ -34,16 +34,16 @@ import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.configuration.AssignMark
-import org.jacodb.configuration.CopyAllMarks
-import org.jacodb.configuration.CopyMark
-import org.jacodb.configuration.RemoveAllMarks
-import org.jacodb.configuration.RemoveMark
-import org.jacodb.configuration.TaintCleaner
-import org.jacodb.configuration.TaintConfigurationFeature
-import org.jacodb.configuration.TaintMethodSource
-import org.jacodb.configuration.TaintPassThrough
-import org.jacodb.configuration.taintConfigurationFeature
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.CopyMark
+import org.jacodb.taint.configuration.RemoveAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.taintConfigurationFeature
 import java.util.concurrent.ConcurrentHashMap
 
 /**
