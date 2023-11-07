@@ -223,9 +223,9 @@ class TaintForwardFlowFunctions(
 
     // TODO: rename / refactor
     private fun transmitTaint(
+        fact: Tainted,
         from: JcExpr,
         to: JcValue,
-        fact: Tainted,
     ): List<Fact> {
         val toPath = to.toPathOrNull() ?: return emptyList() // FIXME: check, add comment
         val fromPath = from.toPathOrNull() ?: TODO() // TODO: how to handle it?
@@ -256,8 +256,8 @@ class TaintForwardFlowFunctions(
 
     // TODO: rename / refactor
     private fun transmitTaintNormal(
-        inst: JcInst,
         fact: Tainted,
+        inst: JcInst,
     ): List<Fact> {
         // Pass-through:
         return listOf(fact)
@@ -277,9 +277,9 @@ class TaintForwardFlowFunctions(
         }
 
         if (current is JcAssignInst) {
-            transmitTaint(current.rhv, current.lhv, fact)
+            transmitTaint(fact, current.rhv, current.lhv)
         } else {
-            transmitTaintNormal(current, fact)
+            transmitTaintNormal(fact, current)
         }
     }
 
@@ -399,12 +399,12 @@ class TaintForwardFlowFunctions(
         buildSet {
             // Transmit facts on arguments ('actual' to 'formal'):
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(actual, formal, fact))
+                addAll(transmitTaint(fact, actual, formal))
             }
 
             // Transmit facts on instance ('instance' to 'this'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(callExpr.instance, callee.thisInstance, fact))
+                addAll(transmitTaint(fact, callExpr.instance, callee.thisInstance))
             }
 
             // TODO: check
@@ -444,12 +444,12 @@ class TaintForwardFlowFunctions(
         buildSet {
             // Transmit facts on arguments ('formal' back to 'actual'), if they are passed by-ref:
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(formal, actual, fact))
+                addAll(transmitTaint(fact, formal, actual))
             }
 
             // Transmit facts on instance ('this' to 'instance'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(callee.thisInstance, callExpr.instance, fact))
+                addAll(transmitTaint(fact, callee.thisInstance, callExpr.instance))
             }
 
             // Transmit facts on static value:
@@ -461,7 +461,7 @@ class TaintForwardFlowFunctions(
             if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
                 // Note: returnValue can be null here in some weird cases, e.g. in lambda.
                 exitStatement.returnValue?.let { returnValue ->
-                    addAll(transmitTaint(returnValue, callStatement.lhv, fact))
+                    addAll(transmitTaint(fact, returnValue, callStatement.lhv))
                 }
             }
         }
