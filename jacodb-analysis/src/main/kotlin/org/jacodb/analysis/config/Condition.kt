@@ -50,23 +50,7 @@ import org.jacodb.configuration.TypeMatches
 abstract class DefaultConditionVisitor<R>(
     protected val defaultConditionHandler: (Condition) -> R,
 ) : ConditionVisitor<R> {
-    final override fun visit(condition: Condition): R = when (condition) {
-        is And -> visit(condition)
-        is Or -> visit(condition)
-        is Not -> visit(condition)
-        is ConstantTrue -> visit(condition)
-        is IsConstant -> visit(condition)
-        is IsType -> visit(condition)
-        is AnnotationType -> visit(condition)
-        is ConstantEq -> visit(condition)
-        is ConstantLt -> visit(condition)
-        is ConstantGt -> visit(condition)
-        is ConstantMatches -> visit(condition)
-        is SourceFunctionMatches -> visit(condition)
-        is CallParameterContainsMark -> visit(condition)
-        is TypeMatches -> visit(condition)
-        else -> defaultConditionHandler(condition)
-    }
+    final override fun visit(condition: Condition): R = defaultConditionHandler(condition)
 }
 
 abstract class DefaultConditionEvaluator(
