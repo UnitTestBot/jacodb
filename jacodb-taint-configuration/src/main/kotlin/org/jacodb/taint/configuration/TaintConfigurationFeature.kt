@@ -131,8 +131,9 @@ class TaintConfigurationFeature private constructor(
                 }
             }
 
-        rulesForMethod[method] = destination.distinct()
-        return rulesForMethod.getValue(method)
+        val rules = destination.distinct()
+        rulesForMethod[method] = rules
+        return rules
     }
 
     private fun getClassRules(clazz: JcClassOrInterface) = rulesByClass.getOrPut(clazz) {
