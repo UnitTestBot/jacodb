@@ -29,7 +29,6 @@ import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.analysis.NpeExamples
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
