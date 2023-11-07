@@ -276,6 +276,8 @@ class TaintConfigurationFeature private constructor(
 
         override fun visit(action: RemoveMark): List<Action> =
             specializePosition(method, action.position).map { action.copy(position = it) }
+
+        override fun visit(action: Action): List<Action> = error("Must not occur here")
     }
 
     private inner class ConditionSpecializer(val method: JcMethod) : ConditionVisitor<Condition> {

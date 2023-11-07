@@ -19,6 +19,7 @@ package org.jacodb.analysis.config
 import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.configuration.Action
 import org.jacodb.configuration.AssignMark
 import org.jacodb.configuration.CopyAllMarks
 import org.jacodb.configuration.CopyMark
@@ -105,5 +106,9 @@ class FactAwareTaintActionEvaluator(
 
     override fun visit(action: RemoveMark): Tainted? {
         return evaluator.evaluate(action, fact)
+    }
+
+    override fun visit(action: Action): Tainted? {
+        error("$this cannot handle $action")
     }
 }
