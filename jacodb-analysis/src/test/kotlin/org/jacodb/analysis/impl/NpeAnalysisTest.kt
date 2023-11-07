@@ -17,10 +17,10 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.analyzers.NpeAnalyzer
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis

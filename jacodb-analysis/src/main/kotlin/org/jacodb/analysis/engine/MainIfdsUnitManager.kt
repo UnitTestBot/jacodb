@@ -38,13 +38,13 @@ import java.util.concurrent.ConcurrentHashMap
  * It also merges [TraceGraph]s from different units giving a complete [TraceGraph] for each vulnerability.
  * See [runAnalysis] for more info.
  */
-class MainIfdsUnitManager<UnitType>(
+class MainIfdsUnitManager(
     private val graph: JcApplicationGraph,
-    private val unitResolver: UnitResolver<UnitType>,
+    private val unitResolver: UnitResolver,
     private val ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     private val startMethods: List<JcMethod>,
     private val timeoutMillis: Long,
-) : IfdsUnitManager<UnitType> {
+) : IfdsUnitManager {
 
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val crossUnitCallers: MutableMap<JcMethod, MutableSet<CrossUnitCallFact>> = mutableMapOf()
@@ -54,7 +54,7 @@ class MainIfdsUnitManager<UnitType>(
     private val crossUnitCallsStorage = SummaryStorageImpl<CrossUnitCallFact>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<VulnerabilityLocation>()
 
-    private val aliveRunners: MutableMap<UnitType, IfdsUnitRunner<UnitType>> = ConcurrentHashMap()
+    private val aliveRunners: MutableMap<UnitType, IfdsUnitRunner> = ConcurrentHashMap()
     private val queueEmptiness: MutableMap<UnitType, Boolean> = mutableMapOf()
     private val dependencies: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
     private val dependenciesRev: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
@@ -198,7 +198,7 @@ class MainIfdsUnitManager<UnitType>(
         return result
     }
 
-    override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+    override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner) {
         when (event) {
             is EdgeForOtherRunnerQuery -> {
                 check(event.edge.from == event.edge.to) { "Edge for other runner must be a loop-edge" }
@@ -231,7 +231,7 @@ class MainIfdsUnitManager<UnitType>(
     }
 
     // Used to linearize all events that change dependencies or queue emptiness of runners
-    private val eventChannel: Channel<Pair<IfdsUnitRunnerEvent, IfdsUnitRunner<UnitType>>> =
+    private val eventChannel: Channel<Pair<IfdsUnitRunnerEvent, IfdsUnitRunner>> =
         Channel(capacity = Int.MAX_VALUE)
 
     // TODO: replace async dispatcher with a synchronous one

@@ -25,10 +25,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
 import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
@@ -50,9 +50,13 @@ class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, methods: List<JcMethod>): List<List<VulnerabilityInstance>> {
+fun launchAnalysesByConfig(
+    config: AnalysisConfig,
+    graph: JcApplicationGraph,
+    methods: List<JcMethod>,
+): List<List<VulnerabilityInstance>> {
     return config.analyses.mapNotNull { (analysis, options) ->
-        val unitResolver = options["UnitResolver"]?.let {
+        val unitResolver: UnitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)
         } ?: MethodUnitResolver
 
@@ -70,7 +74,6 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
         runAnalysis(graph, unitResolver, runner, methods)
     }
 }
-
 
 fun main(args: Array<String>) {
     val parser = ArgParser("taint-analysis")

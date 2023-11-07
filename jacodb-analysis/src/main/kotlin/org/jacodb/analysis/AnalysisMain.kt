@@ -65,7 +65,7 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
  */
 fun runAnalysis(
     graph: JcApplicationGraph,
-    unitResolver: UnitResolver<*>,
+    unitResolver: UnitResolver,
     ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     methods: List<JcMethod>,
     timeoutMillis: Long = Long.MAX_VALUE

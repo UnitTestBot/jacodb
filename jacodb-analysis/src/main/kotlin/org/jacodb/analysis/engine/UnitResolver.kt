@@ -18,14 +18,20 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.library.MethodUnitResolver
-import org.jacodb.analysis.library.PackageUnitResolver
-import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.packageName
+
+interface UnitType
+
+data class MethodUnit(val method: JcMethod) : UnitType
+
+data class ClassUnit(val clazz: JcClassOrInterface) : UnitType
+
+data class PackageUnit(val packageName: String) : UnitType
+
+object SingletonUnit : UnitType
 
 /**
  * Sets a mapping from [JcMethod] to abstract domain [UnitType].
@@ -35,57 +41,28 @@ import org.jacodb.api.ext.packageName
  *
  * To get more info about how it is used in analysis, see [runAnalysis].
  */
-fun interface UnitResolver<UnitType> {
+fun interface UnitResolver {
+    // Alternative interface: '<out U : UnitType>'
+
     fun resolve(method: JcMethod): UnitType
 
     companion object {
-        fun getByName(name: String): UnitResolver<*> {
-            return when (name) {
-                "method" -> MethodUnitResolver
-                "class" -> getClassUnitResolver(false)
-                "package" -> PackageUnitResolver
-                "singleton" -> SingletonUnitResolver
-                else -> error("Unknown unit resolver $name")
-            }
-        }
-    }
-}
-
-//-------------------------------------------------------------------
-
-interface UnitType2
-
-data class MethodUnit(val method: JcMethod) : UnitType2
-
-data class ClassUnit(val clazz: JcClassOrInterface) : UnitType2
-
-data class PackageUnit(val packageName: String) : UnitType2
-
-object SingletonUnit : UnitType2
-
-//-------------------------------------------------------------------
-
-// Alternative interface: '<out U : UnitType2>'
-fun interface UnitResolver2 {
-    fun resolve(method: JcMethod): UnitType2
-
-    companion object {
-        fun getByName(name: String): UnitResolver2 = when (name) {
-            "method" -> MethodUnitResolver2
-            "class" -> ClassUnitResolver2(false)
-            "package" -> PackageUnitResolver2
-            "singleton" -> SingletonUnitResolver2
+        fun getByName(name: String): UnitResolver = when (name) {
+            "method" -> MethodUnitResolver
+            "class" -> ClassUnitResolver(false)
+            "package" -> PackageUnitResolver
+            "singleton" -> SingletonUnitResolver
             else -> error("Unknown unit resolver '$name'")
         }
     }
 }
 
-val MethodUnitResolver2 = UnitResolver2 { method ->
+val MethodUnitResolver = UnitResolver { method ->
     MethodUnit(method)
 }
 
 @Suppress("FunctionName")
-fun ClassUnitResolver2(includeNested: Boolean) = UnitResolver2 { method ->
+fun ClassUnitResolver(includeNested: Boolean) = UnitResolver { method ->
     val clazz = if (includeNested) {
         generateSequence(method.enclosingClass) { it.outerClass }.last()
     } else {
@@ -94,10 +71,10 @@ fun ClassUnitResolver2(includeNested: Boolean) = UnitResolver2 { method ->
     ClassUnit(clazz)
 }
 
-val PackageUnitResolver2 = UnitResolver2 { method ->
+val PackageUnitResolver = UnitResolver { method ->
     PackageUnit(method.enclosingClass.packageName)
 }
 
-val SingletonUnitResolver2 = UnitResolver2 { _ ->
+val SingletonUnitResolver = UnitResolver { _ ->
     SingletonUnit
 }

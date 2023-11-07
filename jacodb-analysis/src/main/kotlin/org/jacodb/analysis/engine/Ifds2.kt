@@ -489,13 +489,13 @@ class TaintForwardFlowFunctions(
 //     }
 // }
 
-class Manager<UnitType>(
+class Manager(
     private val graph: JcApplicationGraph,
-    private val unitResolver: UnitResolver<UnitType>,
+    private val unitResolver: UnitResolver,
 ) {
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
 
-    suspend fun handleEvent(event: Event, runner: Ifds<UnitType>) {
+    suspend fun handleEvent(event: Event, runner: Ifds) {
         when (event) {
             is EdgeForAnotherRunner -> {
                 // val method = event.edge.method
@@ -572,11 +572,11 @@ class TaintAnalyzer(
     }
 }
 
-class Ifds<UnitType>(
+class Ifds(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer2,
-    private val manager: Manager<UnitType>,
-    private val unitResolver: UnitResolver<UnitType>,
+    private val manager: Manager,
+    private val unitResolver: UnitResolver,
     private val unit: UnitType,
     private val startMethods: List<JcMethod>,
 ) {

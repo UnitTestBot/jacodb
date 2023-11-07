@@ -51,14 +51,16 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @property analyzerFactory used to build [Analyzer] instance, which then will be used by launched [BaseIfdsUnitRunner].
  */
-class BaseIfdsUnitRunnerFactory(private val analyzerFactory: AnalyzerFactory) : IfdsUnitRunnerFactory {
-    override fun <UnitType> newRunner(
+class BaseIfdsUnitRunnerFactory(
+    private val analyzerFactory: AnalyzerFactory,
+) : IfdsUnitRunnerFactory {
+    override fun newRunner(
         graph: JcApplicationGraph,
-        manager: IfdsUnitManager<UnitType>,
-        unitResolver: UnitResolver<UnitType>,
+        manager: IfdsUnitManager,
+        unitResolver: UnitResolver,
         unit: UnitType,
         startMethods: List<JcMethod>,
-    ): IfdsUnitRunner<UnitType> {
+    ): IfdsUnitRunner {
         val analyzer = analyzerFactory.newAnalyzer(graph)
         return BaseIfdsUnitRunner(graph, analyzer, manager, unitResolver, unit, startMethods)
     }
@@ -67,14 +69,14 @@ class BaseIfdsUnitRunnerFactory(private val analyzerFactory: AnalyzerFactory) : 
 /**
  * Encapsulates a launch of tabulation algorithm, described in RHS'95, for one unit.
  */
-private class BaseIfdsUnitRunner<UnitType>(
+private class BaseIfdsUnitRunner(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer,
-    private val manager: IfdsUnitManager<UnitType>,
-    private val unitResolver: UnitResolver<UnitType>,
+    private val manager: IfdsUnitManager,
+    private val unitResolver: UnitResolver,
     unit: UnitType,
     private val startMethods: List<JcMethod>,
-) : AbstractIfdsUnitRunner<UnitType>(unit) {
+) : AbstractIfdsUnitRunner(unit) {
 
     private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()

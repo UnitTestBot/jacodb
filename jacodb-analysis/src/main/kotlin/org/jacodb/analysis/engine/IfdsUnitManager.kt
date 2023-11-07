@@ -27,8 +27,8 @@ import org.jacodb.api.JcMethod
  * - saving the [NewSummaryFact]s produced by runners
  * - managing lifecycles of the launched runners
  */
-interface IfdsUnitManager<UnitType> {
-    suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>)
+interface IfdsUnitManager {
+    suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner)
 }
 
 // TODO: provide visitor for this interface

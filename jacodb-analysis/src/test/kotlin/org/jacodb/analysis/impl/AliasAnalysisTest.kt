@@ -19,7 +19,7 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.newAliasRunnerFactory

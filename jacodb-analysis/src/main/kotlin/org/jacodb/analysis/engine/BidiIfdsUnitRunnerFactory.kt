@@ -49,13 +49,22 @@ class BidiIfdsUnitRunnerFactory(
     private val backwardRunnerFactory: IfdsUnitRunnerFactory,
     private val isParallel: Boolean = true,
 ) : IfdsUnitRunnerFactory {
-    private inner class BidiIfdsUnitRunner<UnitType>(
+
+    override fun newRunner(
         graph: JcApplicationGraph,
-        private val manager: IfdsUnitManager<UnitType>,
-        private val unitResolver: UnitResolver<UnitType>,
+        manager: IfdsUnitManager,
+        unitResolver: UnitResolver,
         unit: UnitType,
         startMethods: List<JcMethod>,
-    ) : AbstractIfdsUnitRunner<UnitType>(unit) {
+    ): IfdsUnitRunner = BidiIfdsUnitRunner(graph, manager, unitResolver, unit, startMethods)
+
+    private inner class BidiIfdsUnitRunner(
+        graph: JcApplicationGraph,
+        private val manager: IfdsUnitManager,
+        private val unitResolver: UnitResolver,
+        unit: UnitType,
+        startMethods: List<JcMethod>,
+    ) : AbstractIfdsUnitRunner(unit) {
 
         @Volatile
         private var forwardQueueIsEmpty: Boolean = false
@@ -63,8 +72,8 @@ class BidiIfdsUnitRunnerFactory(
         @Volatile
         private var backwardQueueIsEmpty: Boolean = false
 
-        private val forwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> by manager {
-            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+        private val forwardManager: IfdsUnitManager = object : IfdsUnitManager by manager {
+            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner) {
                 when (event) {
                     is EdgeForOtherRunnerQuery -> {
                         if (unitResolver.resolve(event.edge.method) == unit) {
@@ -91,8 +100,8 @@ class BidiIfdsUnitRunnerFactory(
             }
         }
 
-        private val backwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> {
-            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
+        private val backwardManager: IfdsUnitManager = object : IfdsUnitManager {
+            override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner) {
                 when (event) {
                     is EdgeForOtherRunnerQuery -> {
                         if (unitResolver.resolve(event.edge.method) == unit) {
@@ -119,10 +128,10 @@ class BidiIfdsUnitRunnerFactory(
             }
         }
 
-        private val backwardRunner: IfdsUnitRunner<UnitType> = backwardRunnerFactory
+        private val backwardRunner: IfdsUnitRunner = backwardRunnerFactory
             .newRunner(graph.reversed, backwardManager, unitResolver, unit, startMethods)
 
-        private val forwardRunner: IfdsUnitRunner<UnitType> = forwardRunnerFactory
+        private val forwardRunner: IfdsUnitRunner = forwardRunnerFactory
             .newRunner(graph, forwardManager, unitResolver, unit, startMethods)
 
         override suspend fun submitNewEdge(edge: IfdsEdge) {
@@ -146,12 +155,4 @@ class BidiIfdsUnitRunnerFactory(
             }
         }
     }
-
-    override fun <UnitType> newRunner(
-        graph: JcApplicationGraph,
-        manager: IfdsUnitManager<UnitType>,
-        unitResolver: UnitResolver<UnitType>,
-        unit: UnitType,
-        startMethods: List<JcMethod>,
-    ): IfdsUnitRunner<UnitType> = BidiIfdsUnitRunner(graph, manager, unitResolver, unit, startMethods)
 }
