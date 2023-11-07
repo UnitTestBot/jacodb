@@ -356,6 +356,8 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantTrue): Condition = condition
 
         override fun visit(condition: TypeMatches): Condition = error("Must not occur here")
+
+        override fun visit(condition: Condition): Condition = condition
     }
 
     companion object {
@@ -451,4 +453,6 @@ private object ConditionSimplifier : ConditionVisitor<Condition> {
     override fun visit(condition: CallParameterContainsMark): Condition = condition
     override fun visit(condition: ConstantTrue): Condition = condition
     override fun visit(condition: TypeMatches): Condition = condition
+
+    override fun visit(condition: Condition): Condition = condition
 }

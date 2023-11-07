@@ -37,6 +37,9 @@ interface ConditionVisitor<R> {
 
     // extra conditions
     fun visit(condition: TypeMatches): R
+
+    // external type
+    fun visit(condition: Condition): R
 }
 
 interface Condition {
