@@ -192,20 +192,24 @@ class TaintForwardFlowFunctions(
     private val config: TaintConfig,
     private val cp: JcClasspath,
 ) : FlowFunctionsSpace2 {
-    private fun generates(inst: JcInst): Collection<Tainted> {
-        if (inst.callExpr == null) return emptyList()
-        val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(inst))
-        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(inst))
-        val facts = mutableSetOf<Tainted>()
-        for (item in config.items.filterIsInstance<TaintMethodSource>()) {
-            if (item.condition.accept(conditionEvaluator)) {
-                facts += item.actionsAfter
-                    .filterIsInstance<AssignMark>()
-                    .map { action -> actionEvaluator.evaluate(action) }
-            }
-        }
-        return facts
-    }
+    // private fun generates(inst: JcInst): Collection<Tainted> {
+    //     if (inst.callExpr == null) return emptyList()
+    //     val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(inst))
+    //     val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(inst))
+    //     val facts = mutableSetOf<Tainted>()
+    //     for (item in config.items.filterIsInstance<TaintMethodSource>()) {
+    //         if (item.condition.accept(conditionEvaluator)) {
+    //             for (action in item.actionsAfter) {
+    //                 if (action is AssignMark) {
+    //                     facts += actionEvaluator.evaluate(action)
+    //                 } else {
+    //                     error("$action is not supported for $item")
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     return facts
+    // }
 
     // private fun sanitizes(inst: JcInst, fact: Tainted): Boolean {
     // ...
@@ -263,7 +267,9 @@ class TaintForwardFlowFunctions(
         current: JcInst,
     ) = FlowFunction { fact ->
         if (fact == ZeroFact) {
-            return@FlowFunction listOf(ZeroFact) + generates(current)
+            // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
+            //        and 'generates' is only applicable for calls.
+            return@FlowFunction listOf(ZeroFact) // + generates(current)
         }
 
         if (fact !is Tainted) {
@@ -279,7 +285,7 @@ class TaintForwardFlowFunctions(
 
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
-        returnSite: JcInst,
+        returnSite: JcInst, // unused?
     ) = FlowFunction { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
@@ -289,15 +295,20 @@ class TaintForwardFlowFunctions(
 
         // Handle MethodSource config items:
         if (fact == ZeroFact) {
+            // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
             val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(callStatement))
             val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
             // TODO: replace with buildSet?
             val facts = mutableSetOf<Tainted>()
             for (item in config.items.filterIsInstance<TaintMethodSource>()) {
                 if (item.condition.accept(conditionEvaluator)) {
-                    facts += item.actionsAfter
-                        .filterIsInstance<AssignMark>()
-                        .map { action -> actionEvaluator.evaluate(action) }
+                    for (action in item.actionsAfter) {
+                        if (action is AssignMark) {
+                            facts += actionEvaluator.evaluate(action)
+                        } else {
+                            error("$action is not supported for $item")
+                        }
+                    }
                 }
             }
             return@FlowFunction facts + ZeroFact
@@ -319,30 +330,40 @@ class TaintForwardFlowFunctions(
 
         for (item in config.items.filterIsInstance<TaintPassThrough>()) {
             if (item.condition.accept(conditionEvaluator)) {
-                resultingFacts += item.actionsAfter
-                    .filterIsInstance<CopyMark>()
-                    .mapNotNull { action ->
-                        actionEvaluator.evaluate(action, fact)
+                for (action in item.actionsAfter) {
+                    if (action is CopyMark) {
+                        val newTaint = actionEvaluator.evaluate(action, fact)
+                        if (newTaint != null) {
+                            resultingFacts += newTaint
+                        }
+                    } else if (action is CopyAllMarks) {
+                        val newTaint = actionEvaluator.evaluate(action, fact)
+                        if (newTaint != null) {
+                            resultingFacts += newTaint
+                        }
+                    } else {
+                        error("$action is not supported for $item")
                     }
-                resultingFacts += item.actionsAfter
-                    .filterIsInstance<CopyAllMarks>()
-                    .mapNotNull { action ->
-                        actionEvaluator.evaluate(action, fact)
-                    }
+                }
             }
         }
         for (item in config.items.filterIsInstance<TaintCleaner>()) {
             if (item.condition.accept(conditionEvaluator)) {
-                resultingFacts += item.actionsAfter
-                    .filterIsInstance<RemoveMark>()
-                    .mapNotNull { action ->
-                        actionEvaluator.evaluate(action, fact)
+                for (action in item.actionsAfter) {
+                    if (action is RemoveMark) {
+                        val newTaint = actionEvaluator.evaluate(action, fact)
+                        if (newTaint != null) {
+                            resultingFacts += newTaint
+                        }
+                    } else if (action is RemoveAllMarks) {
+                        val newTaint = actionEvaluator.evaluate(action, fact)
+                        if (newTaint != null) {
+                            resultingFacts += newTaint
+                        }
+                    } else {
+                        error("$action is not supported for $item")
                     }
-                resultingFacts += item.actionsAfter
-                    .filterIsInstance<RemoveAllMarks>()
-                    .mapNotNull { action ->
-                        actionEvaluator.evaluate(action, fact)
-                    }
+                }
             }
         }
 
