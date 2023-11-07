@@ -485,6 +485,16 @@ class Manager<UnitType>(
 
     suspend fun handleEvent(event: Event, runner: Ifds<UnitType>) {
         when (event) {
+            is EdgeForAnotherRunner -> {
+                // val method = event.edge.method
+                // val unit = unitResolver.resolve(method)
+                // val otherRunner = aliveRunners[unit] ?: return
+                // if (otherRunner.job?.isActive == true) {
+                //     otherRunner.submitNewEdge(event.edge)
+                // }
+                TODO()
+            }
+
             is SubscriptionForSummaryEdges2 -> {
                 summaryEdgesStorage
                     .getFacts(event.method)
@@ -511,6 +521,16 @@ data class NewSummaryEdge(
     val edge: Edge,
 ) : Event {
     val method: JcMethod = edge.method
+}
+
+// TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
+//       the first instruction of the analyzed method together with a fact.
+data class EdgeForAnotherRunner(
+    val edge: Edge,
+) : Event {
+    init {
+        check(edge.from == edge.to) { "Edge for another runner must be a loop" }
+    }
 }
 
 interface Analyzer2 {
