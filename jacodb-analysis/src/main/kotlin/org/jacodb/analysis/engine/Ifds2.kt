@@ -572,8 +572,6 @@ class TaintAnalyzer(
     }
 }
 
-private fun <T> magic(): T = error("No magic!")
-
 class Ifds<UnitType>(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer2,
