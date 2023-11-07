@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.configuration
+package org.jacodb.taint.configuration
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

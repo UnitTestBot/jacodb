@@ -14,9 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.configuration
+package org.jacodb.taint.configuration
 
-import org.jacodb.api.JcField
 import org.jacodb.api.JcMethod
 
 sealed interface TaintConfigurationItem

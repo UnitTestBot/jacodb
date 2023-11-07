@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.configuration
+package org.jacodb.taint.configuration
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClasspath
@@ -31,7 +31,8 @@ import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ConfigurationTest : BaseTest() {
