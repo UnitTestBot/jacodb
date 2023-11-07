@@ -64,7 +64,6 @@ class BidiIfdsUnitRunnerFactory(
         private var backwardQueueIsEmpty: Boolean = false
 
         private val forwardManager: IfdsUnitManager<UnitType> = object : IfdsUnitManager<UnitType> by manager {
-
             override suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>) {
                 when (event) {
                     is EdgeForOtherRunnerQuery -> {
