@@ -81,6 +81,7 @@ class TaintConfigurationFeature private constructor(
         ConfigurationTrie(configuration, ::matches)
     }
 
+    @Synchronized
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
         resolveConfigForMethod(method)
 
