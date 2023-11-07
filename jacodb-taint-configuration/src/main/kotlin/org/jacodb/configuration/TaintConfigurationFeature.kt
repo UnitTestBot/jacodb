@@ -441,24 +441,14 @@ private object ConditionSimplifier : ConditionVisitor<Condition> {
     }
 
     override fun visit(condition: IsConstant): Condition = condition
-
     override fun visit(condition: IsType): Condition = condition
-
     override fun visit(condition: AnnotationType): Condition = condition
-
     override fun visit(condition: ConstantEq): Condition = condition
-
     override fun visit(condition: ConstantLt): Condition = condition
-
     override fun visit(condition: ConstantGt): Condition = condition
-
     override fun visit(condition: ConstantMatches): Condition = condition
-
     override fun visit(condition: SourceFunctionMatches): Condition = condition
-
     override fun visit(condition: CallParameterContainsMark): Condition = condition
-
     override fun visit(condition: ConstantTrue): Condition = condition
-
     override fun visit(condition: TypeMatches): Condition = condition
 }
