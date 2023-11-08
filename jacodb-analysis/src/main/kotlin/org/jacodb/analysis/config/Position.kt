@@ -33,7 +33,8 @@ import org.jacodb.taint.configuration.This
 class CallPositionToAccessPathResolver(
     private val callStatement: JcInst,
 ) : PositionResolver<AccessPath> {
-    private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+    private val callExpr = callStatement.callExpr
+        ?: error("Call statement should have non-null callExpr")
 
     override fun resolve(position: Position): AccessPath = when (position) {
         AnyArgument -> error("Unexpected $position")
@@ -55,7 +56,8 @@ class CallPositionToAccessPathResolver(
 class CallPositionToJcValueResolver(
     private val callStatement: JcInst,
 ) : PositionResolver<JcValue> {
-    private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+    private val callExpr = callStatement.callExpr
+        ?: error("Call statement should have non-null callExpr")
 
     override fun resolve(position: Position): JcValue = when (position) {
         AnyArgument -> error("Unexpected $position")
