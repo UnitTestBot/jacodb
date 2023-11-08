@@ -68,11 +68,25 @@ class TaintConfigurationFeature private constructor(
             .decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig)
             .map {
                 when (it) {
-                    is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
-                    is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
-                    is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
-                    is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
-                    is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
+                    is SerializedTaintEntryPointSource -> it.copy(
+                        condition = it.condition.accept(ConditionSimplifier())
+                    )
+
+                    is SerializedTaintMethodSource -> it.copy(
+                        condition = it.condition.accept(ConditionSimplifier())
+                    )
+
+                    is SerializedTaintMethodSink -> it.copy(
+                        condition = it.condition.accept(ConditionSimplifier())
+                    )
+
+                    is SerializedTaintPassThrough -> it.copy(
+                        condition = it.condition.accept(ConditionSimplifier())
+                    )
+
+                    is SerializedTaintCleaner -> it.copy(
+                        condition = it.condition.accept(ConditionSimplifier())
+                    )
                 }
             }
 
