@@ -50,6 +50,7 @@ import org.jacodb.taint.configuration.TypeMatches
 abstract class DefaultConditionVisitor<out R>(
     private val defaultConditionHandler: (Condition) -> R,
 ) : ConditionVisitor<R> {
+    final override fun visit(condition: Condition): R = defaultConditionHandler(condition)
 
     override fun visit(condition: And): R = defaultConditionHandler(condition)
     override fun visit(condition: Or): R = defaultConditionHandler(condition)
@@ -65,8 +66,6 @@ abstract class DefaultConditionVisitor<out R>(
     override fun visit(condition: CallParameterContainsMark): R = defaultConditionHandler(condition)
     override fun visit(condition: ConstantTrue): R = defaultConditionHandler(condition)
     override fun visit(condition: TypeMatches): R = defaultConditionHandler(condition)
-
-    final override fun visit(condition: Condition): R = defaultConditionHandler(condition)
 }
 
 abstract class DefaultConditionEvaluator(
