@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.ConditionEvaluator
+import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.config.TaintConfig
@@ -306,7 +306,7 @@ class TaintForwardFlowFunctions(
         // Handle MethodSource config items:
         if (fact == ZeroFact) {
             // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
-            val conditionEvaluator = ConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+            val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
             val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
             // TODO: replace with buildSet?
             val facts = mutableSetOf<Tainted>()

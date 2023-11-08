@@ -90,7 +90,7 @@ abstract class DefaultConditionEvaluator(
     }
 }
 
-class ConditionEvaluator(
+class BasicConditionEvaluator(
     internal val positionResolver: PositionResolver<JcValue>,
 ) : DefaultConditionEvaluator() {
     override fun visit(condition: IsConstant): Boolean {
@@ -181,17 +181,17 @@ class ConditionEvaluator(
 
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
-    private val conditionEvaluator: ConditionEvaluator,
-) : ConditionVisitor<Boolean> by conditionEvaluator {
+    private val basicConditionEvaluator: BasicConditionEvaluator,
+) : ConditionVisitor<Boolean> by basicConditionEvaluator {
 
     constructor(
         fact: Tainted,
         positionResolver: PositionResolver<JcValue>,
-    ) : this(fact, ConditionEvaluator(positionResolver))
+    ) : this(fact, BasicConditionEvaluator(positionResolver))
 
     override fun visit(condition: CallParameterContainsMark): Boolean {
         if (fact.mark == condition.mark) {
-            val value = conditionEvaluator.positionResolver.resolve(condition.position)
+            val value = basicConditionEvaluator.positionResolver.resolve(condition.position)
             val variable = value.toPath()
             if (variable.startsWith(fact.variable)) {
                 return true

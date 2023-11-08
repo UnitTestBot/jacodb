@@ -28,7 +28,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.ConditionEvaluator
+import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
@@ -185,12 +185,12 @@ private class BaseIfdsUnitRunner(
                     for (callee in currentCallees) {
                         graph.classpath.features?.singleOrNull { it is TaintConfigurationFeature } ?: continue
                         val config = graph.classpath.taintConfigurationFeature().getConfigForMethod(callee)
-                        val conditionEvaluator = ConditionEvaluator(CallPositionToJcValueResolver(current))
+                        val basicConditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(current))
                         val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(current))
                         val facts = mutableSetOf<DomainFact>()
                         if (currentFact == ZEROFact) {
                             for (item in config.filterIsInstance<TaintMethodSource>()) {
-                                if (item.condition.accept(conditionEvaluator)) {
+                                if (item.condition.accept(basicConditionEvaluator)) {
                                     facts += item.actionsAfter
                                         .filterIsInstance<AssignMark>()
                                         .map { action -> actionEvaluator.evaluate(action) }
@@ -199,10 +199,9 @@ private class BaseIfdsUnitRunner(
                             }
                         }
                         if (currentFact is TaintAnalysisNode) {
-                            @Suppress("NAME_SHADOWING")
                             val conditionEvaluator = FactAwareConditionEvaluator(
                                 Tainted(currentFact),
-                                conditionEvaluator
+                                basicConditionEvaluator
                             )
                             for (item in config.filterIsInstance<TaintPassThrough>()) {
                                 if (item.condition.accept(conditionEvaluator)) {
