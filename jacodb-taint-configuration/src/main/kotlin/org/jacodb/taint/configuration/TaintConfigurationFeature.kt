@@ -68,11 +68,11 @@ class TaintConfigurationFeature private constructor(
             .decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig)
             .map {
                 when (it) {
-                    is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                    is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                    is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                    is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                    is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+                    is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
+                    is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
+                    is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
+                    is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
+                    is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier()))
                 }
             }
 
@@ -362,6 +362,60 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: Condition): Condition = condition
     }
 
+    private inner class ConditionSimplifier : ConditionVisitor<Condition> {
+        override fun visit(condition: And): Condition {
+            val unprocessed = condition.args.toMutableList()
+            val conjuncts = mutableListOf<Condition>()
+            while (unprocessed.isNotEmpty()) {
+                val it = unprocessed.removeLast()
+                if (it is And) {
+                    unprocessed.addAll(it.args)
+                    continue
+                }
+                conjuncts += it.accept(this)
+            }
+            return mkAnd(conjuncts.asReversed())
+        }
+
+        override fun visit(condition: Or): Condition {
+            val unprocessed = condition.args.toMutableList()
+            val conjuncts = mutableListOf<Condition>()
+            while (unprocessed.isNotEmpty()) {
+                val it = unprocessed.removeLast()
+                if (it is Or) {
+                    unprocessed.addAll(it.args)
+                    continue
+                }
+                conjuncts += it.accept(this)
+            }
+            return mkOr(conjuncts.asReversed())
+        }
+
+        override fun visit(condition: Not): Condition {
+            val arg = condition.arg.accept(this)
+            return if (arg is Not) {
+                // Eliminate double negation:
+                arg.arg
+            } else {
+                Not(arg)
+            }
+        }
+
+        override fun visit(condition: IsConstant): Condition = condition
+        override fun visit(condition: IsType): Condition = condition
+        override fun visit(condition: AnnotationType): Condition = condition
+        override fun visit(condition: ConstantEq): Condition = condition
+        override fun visit(condition: ConstantLt): Condition = condition
+        override fun visit(condition: ConstantGt): Condition = condition
+        override fun visit(condition: ConstantMatches): Condition = condition
+        override fun visit(condition: SourceFunctionMatches): Condition = condition
+        override fun visit(condition: CallParameterContainsMark): Condition = condition
+        override fun visit(condition: ConstantTrue): Condition = condition
+        override fun visit(condition: TypeMatches): Condition = condition
+
+        override fun visit(condition: Condition): Condition = condition
+    }
+
     companion object {
         fun fromJson(
             jsonConfig: String,
@@ -380,60 +434,4 @@ class TaintConfigurationFeature private constructor(
 
         private const val CLASS_DISCRIMINATOR = "_"
     }
-}
-
-private object ConditionSimplifier : ConditionVisitor<Condition> {
-    override fun visit(condition: And): Condition {
-        val unprocessed = condition.args.toMutableList()
-        val conjuncts = mutableListOf<Condition>()
-        while (unprocessed.isNotEmpty()) {
-            val it = unprocessed.removeLast()
-            if (it is And) {
-                unprocessed.addAll(it.args)
-                continue
-            }
-            conjuncts += it.accept(this)
-        }
-
-        return conjuncts.singleOrNull() ?: And(conjuncts.asReversed())
-    }
-
-    override fun visit(condition: Or): Condition {
-        val unprocessed = condition.args.toMutableList()
-        val conjuncts = mutableListOf<Condition>()
-        while (unprocessed.isNotEmpty()) {
-            val it = unprocessed.removeLast()
-            if (it is Or) {
-                unprocessed.addAll(it.args)
-                continue
-            }
-            conjuncts += it.accept(this)
-        }
-
-        return conjuncts.singleOrNull() ?: Or(conjuncts.asReversed())
-    }
-
-    override fun visit(condition: Not): Condition {
-        val arg = condition.arg.accept(this)
-        return if (arg is Not) {
-            // Eliminate double negation:
-            arg.arg
-        } else {
-            Not(arg)
-        }
-    }
-
-    override fun visit(condition: IsConstant): Condition = condition
-    override fun visit(condition: IsType): Condition = condition
-    override fun visit(condition: AnnotationType): Condition = condition
-    override fun visit(condition: ConstantEq): Condition = condition
-    override fun visit(condition: ConstantLt): Condition = condition
-    override fun visit(condition: ConstantGt): Condition = condition
-    override fun visit(condition: ConstantMatches): Condition = condition
-    override fun visit(condition: SourceFunctionMatches): Condition = condition
-    override fun visit(condition: CallParameterContainsMark): Condition = condition
-    override fun visit(condition: ConstantTrue): Condition = condition
-    override fun visit(condition: TypeMatches): Condition = condition
-
-    override fun visit(condition: Condition): Condition = condition
 }
