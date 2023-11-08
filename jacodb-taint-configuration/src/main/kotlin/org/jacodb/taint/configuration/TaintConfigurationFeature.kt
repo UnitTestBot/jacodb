@@ -378,31 +378,31 @@ class TaintConfigurationFeature private constructor(
 
     private inner class ConditionSimplifier : ConditionVisitor<Condition> {
         override fun visit(condition: And): Condition {
-            val unprocessed = condition.args.toMutableList()
-            val conjuncts = mutableListOf<Condition>()
-            while (unprocessed.isNotEmpty()) {
-                val it = unprocessed.removeLast().accept(this)
+            val queue = ArrayDeque(condition.args)
+            val args = mutableListOf<Condition>()
+            while (queue.isNotEmpty()) {
+                val it = queue.removeFirst().accept(this)
                 if (it is And) {
-                    unprocessed.addAll(it.args)
+                    queue += it.args
                 } else {
-                    conjuncts += it
+                    args += it
                 }
             }
-            return mkAnd(conjuncts.asReversed())
+            return mkAnd(args)
         }
 
         override fun visit(condition: Or): Condition {
-            val unprocessed = condition.args.toMutableList()
-            val disjuncts = mutableListOf<Condition>()
-            while (unprocessed.isNotEmpty()) {
-                val it = unprocessed.removeLast().accept(this)
+            val queue = ArrayDeque(condition.args)
+            val args = mutableListOf<Condition>()
+            while (queue.isNotEmpty()) {
+                val it = queue.removeLast().accept(this)
                 if (it is Or) {
-                    unprocessed.addAll(it.args)
+                    queue += it.args
                 } else {
-                    disjuncts += it
+                    args += it
                 }
             }
-            return mkOr(disjuncts.asReversed())
+            return mkOr(args)
         }
 
         override fun visit(condition: Not): Condition {
