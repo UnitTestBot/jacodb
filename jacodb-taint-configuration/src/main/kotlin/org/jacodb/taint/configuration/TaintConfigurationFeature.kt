@@ -393,16 +393,16 @@ class TaintConfigurationFeature private constructor(
 
         override fun visit(condition: Or): Condition {
             val unprocessed = condition.args.toMutableList()
-            val conjuncts = mutableListOf<Condition>()
+            val disjuncts = mutableListOf<Condition>()
             while (unprocessed.isNotEmpty()) {
                 val it = unprocessed.removeLast().accept(this)
                 if (it is Or) {
                     unprocessed.addAll(it.args)
                 } else {
-                    conjuncts += it
+                    disjuncts += it
                 }
             }
-            return mkOr(conjuncts.asReversed())
+            return mkOr(disjuncts.asReversed())
         }
 
         override fun visit(condition: Not): Condition {
