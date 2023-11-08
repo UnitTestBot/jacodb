@@ -414,7 +414,13 @@ private object ConditionSimplifier : ConditionVisitor<Condition> {
     }
 
     override fun visit(condition: Not): Condition {
-        return Not(condition.arg.accept(this))
+        val arg = condition.arg.accept(this)
+        return if (arg is Not) {
+            // Eliminate double negation:
+            arg.arg
+        } else {
+            Not(arg)
+        }
     }
 
     override fun visit(condition: IsConstant): Condition = condition
