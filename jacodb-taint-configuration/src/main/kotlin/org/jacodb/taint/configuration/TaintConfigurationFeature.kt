@@ -381,12 +381,12 @@ class TaintConfigurationFeature private constructor(
             val unprocessed = condition.args.toMutableList()
             val conjuncts = mutableListOf<Condition>()
             while (unprocessed.isNotEmpty()) {
-                val it = unprocessed.removeLast()
+                val it = unprocessed.removeLast().accept(this)
                 if (it is And) {
                     unprocessed.addAll(it.args)
-                    continue
+                } else {
+                    conjuncts += it
                 }
-                conjuncts += it.accept(this)
             }
             return mkAnd(conjuncts.asReversed())
         }
@@ -395,12 +395,12 @@ class TaintConfigurationFeature private constructor(
             val unprocessed = condition.args.toMutableList()
             val conjuncts = mutableListOf<Condition>()
             while (unprocessed.isNotEmpty()) {
-                val it = unprocessed.removeLast()
+                val it = unprocessed.removeLast().accept(this)
                 if (it is Or) {
                     unprocessed.addAll(it.args)
-                    continue
+                } else {
+                    conjuncts += it
                 }
-                conjuncts += it.accept(this)
             }
             return mkOr(conjuncts.asReversed())
         }
