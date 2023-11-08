@@ -339,12 +339,10 @@ class TaintConfigurationFeature private constructor(
                 val allClasses = runBlocking {
                     cp.hierarchyExt().findSubClasses(cp.objectClass, allHierarchy = true, includeOwn = true)
                 }
-
                 val types = allClasses.filter {
                     matches(classMatcher.pkg, it.packageName) && matches(classMatcher.classNameMatcher, it.simpleName)
                 }
-
-                disjuncts += types.flatMap { type -> position.map { TypeMatches(it, type.toType()) } }.toList()
+                disjuncts += types.flatMap { type -> position.map { TypeMatches(it, type.toType()) } }
             }
 
             return mkOr(disjuncts)
