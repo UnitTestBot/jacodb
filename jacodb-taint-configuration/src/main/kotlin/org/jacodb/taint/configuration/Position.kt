@@ -19,7 +19,7 @@ package org.jacodb.taint.configuration
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-fun interface PositionResolver<R> {
+fun interface PositionResolver<out R> {
     fun resolve(position: Position): R
 }
 
