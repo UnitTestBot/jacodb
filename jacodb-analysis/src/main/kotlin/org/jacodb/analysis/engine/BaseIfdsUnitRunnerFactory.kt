@@ -26,8 +26,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import org.jacodb.analysis.config.CallPositionResolverToAccessPath
-import org.jacodb.analysis.config.CallPositionResolverToJcValue
+import org.jacodb.analysis.config.CallPositionToAccessPathResolver
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.ConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
@@ -185,8 +185,8 @@ private class BaseIfdsUnitRunner(
                     for (callee in currentCallees) {
                         graph.classpath.features?.singleOrNull { it is TaintConfigurationFeature } ?: continue
                         val config = graph.classpath.taintConfigurationFeature().getConfigForMethod(callee)
-                        val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(current))
-                        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(current))
+                        val conditionEvaluator = ConditionEvaluator(CallPositionToJcValueResolver(current))
+                        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(current))
                         val facts = mutableSetOf<DomainFact>()
                         if (currentFact == ZEROFact) {
                             for (item in config.filterIsInstance<TaintMethodSource>()) {

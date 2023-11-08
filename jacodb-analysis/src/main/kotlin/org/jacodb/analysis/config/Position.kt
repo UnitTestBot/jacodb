@@ -30,7 +30,7 @@ import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.This
 
-class CallPositionResolverToAccessPath(
+class CallPositionToAccessPathResolver(
     private val callStatement: JcInst,
 ) : PositionResolver<AccessPath> {
     private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
@@ -52,7 +52,7 @@ class CallPositionResolverToAccessPath(
     }
 }
 
-class CallPositionResolverToJcValue(
+class CallPositionToJcValueResolver(
     private val callStatement: JcInst,
 ) : PositionResolver<JcValue> {
     private val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")

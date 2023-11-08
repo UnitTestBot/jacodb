@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import org.jacodb.analysis.config.CallPositionResolverToAccessPath
-import org.jacodb.analysis.config.CallPositionResolverToJcValue
+import org.jacodb.analysis.config.CallPositionToAccessPathResolver
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.ConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
@@ -306,8 +306,8 @@ class TaintForwardFlowFunctions(
         // Handle MethodSource config items:
         if (fact == ZeroFact) {
             // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
-            val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(callStatement))
-            val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
+            val conditionEvaluator = ConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
             // TODO: replace with buildSet?
             val facts = mutableSetOf<Tainted>()
             for (item in config.items.filterIsInstance<TaintMethodSource>()) {
@@ -334,9 +334,9 @@ class TaintForwardFlowFunctions(
 
         val conditionEvaluator = FactAwareConditionEvaluator(
             fact,
-            CallPositionResolverToJcValue(callStatement)
+            CallPositionToJcValueResolver(callStatement)
         )
-        val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(callStatement))
+        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
         // val actionEvaluatorVisitor = FactAwareTaintActionEvaluator(fact, actionEvaluator)
         val resultingFacts = mutableSetOf<Tainted>()
 
