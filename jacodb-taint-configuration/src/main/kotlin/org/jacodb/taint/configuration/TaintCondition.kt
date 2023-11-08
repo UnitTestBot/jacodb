@@ -39,8 +39,6 @@ interface ConditionVisitor<out R> {
     fun visit(condition: SourceFunctionMatches): R
     fun visit(condition: CallParameterContainsMark): R
     fun visit(condition: ConstantTrue): R
-
-    // extra conditions
     fun visit(condition: TypeMatches): R
 
     // external type
@@ -181,7 +179,6 @@ object ConstantTrue : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-// Extra conditions
 @Serializable
 @SerialName("TypeMatches")
 data class TypeMatches(
