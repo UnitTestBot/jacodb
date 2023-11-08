@@ -47,7 +47,7 @@ import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.SourceFunctionMatches
 import org.jacodb.taint.configuration.TypeMatches
 
-abstract class DefaultConditionVisitor<R>(
+abstract class DefaultConditionVisitor<out R>(
     private val defaultConditionHandler: (Condition) -> R,
 ) : ConditionVisitor<R> {
 
