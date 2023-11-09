@@ -228,8 +228,8 @@ private class TaintForwardFunctions(
             return emptyList()
         }
 
+        // TODO: do no do this:
         val factIsPassed = callExpr.values.any {
-            // TODO: it.isTaintedWith(fact.variable) || ...
             it.toPathOrNull().startsWith(fact.variable) || fact.variable.startsWith(it.toPathOrNull())
         }
         return if (factIsPassed && !sanitizes(callExpr, fact)) {

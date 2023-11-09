@@ -223,6 +223,7 @@ class TaintForwardFlowFunctions(
     }
 
     // TODO: rename / refactor
+    // TODO: consider splitting into transmitTaintAssign / transmitTaintArgument
     private fun transmitTaint(
         fact: Tainted,
         from: JcExpr,
@@ -232,6 +233,7 @@ class TaintForwardFlowFunctions(
         val fromPath = from.toPathOrNull() ?: TODO() // TODO: how to handle it?
 
         // 'from' is tainted with 'fact':
+        // TODO: replace with ==, in general case
         if (fromPath.startsWith(fact.variable)) {
             val newTaint = fact.copy(variable = toPath)
             // Both 'from' and 'to' are now tainted:
@@ -263,6 +265,8 @@ class TaintForwardFlowFunctions(
         // Pass-through:
         return listOf(fact)
     }
+
+    // TODO: consider transmitTaintSequent / transmitTaintCall
 
     override fun obtainSequentFlowFunction(
         current: JcInst,
@@ -627,6 +631,7 @@ class Ifds(
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
 
+            // TODO: replace with (current.callExpr != null)
             val currentCallees = graph.callees(current).toList()
             val currentIsCall = currentCallees.isNotEmpty()
             // FIXME: [old] val currentIsExit = current in graph.exitPoints(graph.methodOf(current))

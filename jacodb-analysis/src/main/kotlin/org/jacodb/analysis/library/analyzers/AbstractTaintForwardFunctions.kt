@@ -76,6 +76,8 @@ abstract class AbstractTaintForwardFunctions(
         val actualParams = callExpr.args
         val formalParams = cp.getFormalParamsOf(callee)
         buildList {
+            // TODO: when dropFact=true, consider removing (note: once!) the fact afterwards
+
             formalParams.zip(actualParams).forEach { (formal, actual) ->
                 addAll(transmitDataFlow(actual, formal, callStatement, fact, dropFact = true))
             }
