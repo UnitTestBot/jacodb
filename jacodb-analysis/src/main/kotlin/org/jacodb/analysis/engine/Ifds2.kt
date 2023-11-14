@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.BasicConditionEvaluator
@@ -351,17 +352,11 @@ class TaintForwardFlowFunctions(
                 for (action in item.actionsAfter) {
                     when (action) {
                         is CopyMark -> {
-                            val newTaint = actionEvaluator.evaluate(action, fact)
-                            if (newTaint != null) {
-                                resultingFacts += newTaint
-                            }
+                                resultingFacts += actionEvaluator.evaluate(action, fact)
                         }
 
                         is CopyAllMarks -> {
-                            val newTaint = actionEvaluator.evaluate(action, fact)
-                            if (newTaint != null) {
-                                resultingFacts += newTaint
-                            }
+                                resultingFacts += actionEvaluator.evaluate(action, fact)
                         }
 
                         else -> error("$action is not supported for $item")
@@ -374,17 +369,11 @@ class TaintForwardFlowFunctions(
                 for (action in item.actionsAfter) {
                     when (action) {
                         is RemoveMark -> {
-                            val newTaint = actionEvaluator.evaluate(action, fact)
-                            if (newTaint != null) {
-                                resultingFacts += newTaint
-                            }
+                                resultingFacts += actionEvaluator.evaluate(action, fact)
                         }
 
                         is RemoveAllMarks -> {
-                            val newTaint = actionEvaluator.evaluate(action, fact)
-                            if (newTaint != null) {
-                                resultingFacts += newTaint
-                            }
+                                resultingFacts += actionEvaluator.evaluate(action, fact)
                         }
 
                         else -> error("$action is not supported for $item")
@@ -615,14 +604,24 @@ class Ifds(
     }
 
     private fun propagate(edge: Edge): Boolean {
+        // Propagated edge must be in the same unit:
         require(unitResolver.resolve(edge.method) == unit)
 
         if (pathEdges.add(edge)) {
+            // Add edge to worklist:
             workList.add(edge)
-            // TODO: send 'edge' to subscribers/manager
-            // TODO: something.handleNewEdge(edge)
+
+            // Send edge to the analyzer/manager:
+            for (event in analyzer.handleNewEdge(edge)) {
+                // FIXME: make 'propagate' suspend fun and remove this runBlocking block:
+                runBlocking {
+                    manager.handleEvent(event, this@Ifds)
+                }
+            }
+
             return true
         }
+
         return false
     }
 

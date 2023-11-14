@@ -14,13 +14,22 @@
  *  limitations under the License.
  */
 
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.BasicConditionEvaluator
+import org.jacodb.analysis.config.CallPositionToAccessPathResolver
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
+import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.engine.toDomainFact
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
@@ -32,6 +41,15 @@ import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.CopyMark
+import org.jacodb.taint.configuration.RemoveAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
 
 abstract class AbstractTaintForwardFunctions(
     protected val config: TaintConfig,
@@ -98,8 +116,38 @@ abstract class AbstractTaintForwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
     ) = FlowFunctionInstance { fact ->
+        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+
+        val config = cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+            ?.let { feature ->
+                val callee = callExpr.method.method
+                println("Extracting config for callee = $callee")
+                feature.getConfigForMethod(callee)
+            }
+
         if (fact == ZEROFact) {
-            return@FlowFunctionInstance listOf(fact)
+            val facts = mutableSetOf<Tainted>()
+            if (config != null) {
+                val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+                val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                // TODO: replace with buildSet?
+                for (item in config.filterIsInstance<TaintMethodSource>()) {
+                    if (item.condition.accept(conditionEvaluator)) {
+                        for (action in item.actionsAfter) {
+                            when (action) {
+                                is AssignMark -> {
+                                    facts += actionEvaluator.evaluate(action)
+                                }
+
+                                else -> error("$action is not supported for $item")
+                            }
+                        }
+                    }
+                }
+            }
+            return@FlowFunctionInstance facts.map { TaintAnalysisNode(it.variable) } + ZEROFact
         }
 
         if (fact !is TaintNode || fact.variable.isStatic) {
@@ -110,7 +158,61 @@ abstract class AbstractTaintForwardFunctions(
             return@FlowFunctionInstance listOf(fact.activatedCopy)
         }
 
-        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        if (config != null) {
+            val conditionEvaluator = FactAwareConditionEvaluator(
+                Tainted(fact),
+                CallPositionToJcValueResolver(callStatement)
+            )
+            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+            val facts = mutableSetOf<Tainted>()
+            var defaultBehavior = true
+
+            for (item in config.filterIsInstance<TaintPassThrough>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is CopyMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is CopyAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+            for (item in config.filterIsInstance<TaintCleaner>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+
+            if (!defaultBehavior) {
+                if (facts.size > 0) {
+                    println("Got ${facts.size} facts from config: $facts")
+                }
+                return@FlowFunctionInstance facts.map { it.toDomainFact() }
+            } else {
+                // Fall back to the default behavior, as if there were no config at all.
+            }
+        }
 
         for (actual in callExpr.args) {
             // Possibly tainted actual parameter:
