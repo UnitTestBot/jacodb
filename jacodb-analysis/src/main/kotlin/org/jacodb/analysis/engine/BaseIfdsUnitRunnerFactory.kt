@@ -26,9 +26,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
@@ -183,67 +183,74 @@ private class BaseIfdsUnitRunner(
 
                     // Extract summaries from the config:
                     for (callee in currentCallees) {
-                        graph.classpath.features?.singleOrNull { it is TaintConfigurationFeature } ?: continue
-                        val config = graph.classpath.taintConfigurationFeature().getConfigForMethod(callee)
-                        val basicConditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(current))
-                        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(current))
-                        val facts = mutableSetOf<DomainFact>()
-                        if (currentFact == ZEROFact) {
-                            for (item in config.filterIsInstance<TaintMethodSource>()) {
-                                if (item.condition.accept(basicConditionEvaluator)) {
-                                    facts += item.actionsAfter
-                                        .filterIsInstance<AssignMark>()
-                                        .map { action -> actionEvaluator.evaluate(action) }
-                                        .map { TaintAnalysisNode(it.variable) }
-                                }
-                            }
-                        }
-                        if (currentFact is TaintAnalysisNode) {
-                            val conditionEvaluator = FactAwareConditionEvaluator(
-                                Tainted(currentFact),
-                                basicConditionEvaluator
+                        if (!analyzer.isSkipped(callee)) {
+                            graph.classpath.features?.singleOrNull { it is TaintConfigurationFeature } ?: continue
+                            val feature = graph.classpath.taintConfigurationFeature()
+                            val config = feature.getConfigForMethod(callee)
+                            val basicConditionEvaluator = BasicConditionEvaluator(
+                                CallPositionToJcValueResolver(current)
                             )
-                            for (item in config.filterIsInstance<TaintPassThrough>()) {
-                                if (item.condition.accept(conditionEvaluator)) {
-                                    facts += item.actionsAfter
-                                        .filterIsInstance<CopyMark>()
-                                        .mapNotNull { action ->
-                                            actionEvaluator.evaluate(action, Tainted(currentFact))
-                                        }
-                                        .map { TaintAnalysisNode(it.variable) }
-                                    facts += item.actionsAfter
-                                        .filterIsInstance<CopyAllMarks>()
-                                        .mapNotNull { action ->
-                                            actionEvaluator.evaluate(action, Tainted(currentFact))
-                                        }
-                                        .map { TaintAnalysisNode(it.variable) }
+                            val actionEvaluator = TaintActionEvaluator(
+                                CallPositionToAccessPathResolver(current)
+                            )
+                            val facts = mutableSetOf<DomainFact>()
+                            if (currentFact == ZEROFact) {
+                                for (item in config.filterIsInstance<TaintMethodSource>()) {
+                                    if (item.condition.accept(basicConditionEvaluator)) {
+                                        facts += item.actionsAfter
+                                            .filterIsInstance<AssignMark>()
+                                            .map { action -> actionEvaluator.evaluate(action) }
+                                            .map { TaintAnalysisNode(it.variable) }
+                                    }
                                 }
                             }
-                            for (item in config.filterIsInstance<TaintCleaner>()) {
-                                if (item.condition.accept(conditionEvaluator)) {
-                                    facts += item.actionsAfter
-                                        .filterIsInstance<RemoveMark>()
-                                        .mapNotNull { action ->
-                                            actionEvaluator.evaluate(action, Tainted(currentFact))
-                                        }
-                                        .map { TaintAnalysisNode(it.variable) }
-                                    facts += item.actionsAfter
-                                        .filterIsInstance<RemoveAllMarks>()
-                                        .mapNotNull { action ->
-                                            actionEvaluator.evaluate(action, Tainted(currentFact))
-                                        }
-                                        .map { TaintAnalysisNode(it.variable) }
+                            if (currentFact is TaintAnalysisNode) {
+                                val conditionEvaluator = FactAwareConditionEvaluator(
+                                    Tainted(currentFact),
+                                    basicConditionEvaluator
+                                )
+                                for (item in config.filterIsInstance<TaintPassThrough>()) {
+                                    if (item.condition.accept(conditionEvaluator)) {
+                                        facts += item.actionsAfter
+                                            .filterIsInstance<CopyMark>()
+                                            .mapNotNull { action ->
+                                                actionEvaluator.evaluate(action, Tainted(currentFact))
+                                            }
+                                            .map { TaintAnalysisNode(it.variable) }
+                                        facts += item.actionsAfter
+                                            .filterIsInstance<CopyAllMarks>()
+                                            .mapNotNull { action ->
+                                                actionEvaluator.evaluate(action, Tainted(currentFact))
+                                            }
+                                            .map { TaintAnalysisNode(it.variable) }
+                                    }
+                                }
+                                for (item in config.filterIsInstance<TaintCleaner>()) {
+                                    if (item.condition.accept(conditionEvaluator)) {
+                                        facts += item.actionsAfter
+                                            .filterIsInstance<RemoveMark>()
+                                            .mapNotNull { action ->
+                                                actionEvaluator.evaluate(action, Tainted(currentFact))
+                                            }
+                                            .map { TaintAnalysisNode(it.variable) }
+                                        facts += item.actionsAfter
+                                            .filterIsInstance<RemoveAllMarks>()
+                                            .mapNotNull { action ->
+                                                actionEvaluator.evaluate(action, Tainted(currentFact))
+                                            }
+                                            .map { TaintAnalysisNode(it.variable) }
+                                    }
                                 }
                             }
-                        }
-                        if (facts.size > 0) {
-                            println("Got ${facts.size} facts from config: $facts")
-                        }
-                        for (returnSiteFact in facts) {
-                            val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
-                            val newEdge = IfdsEdge(startVertex, returnSiteVertex)
-                            val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.Sequent)
-                            propagate(newEdge, predecessor)
+                            if (facts.size > 0) {
+                                println("Got ${facts.size} facts from config: $facts")
+                            }
+                            for (returnSiteFact in facts) {
+                                val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
+                                val newEdge = IfdsEdge(startVertex, returnSiteVertex)
+                                val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.Sequent)
+                                propagate(newEdge, predecessor)
+                            }
                         }
                     }
 

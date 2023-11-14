@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.DomainFact
@@ -30,18 +31,21 @@ fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
-    maxPathLength: Int = 5
+    maxPathLength: Int = 5,
 ) = AnalyzerFactory { graph ->
-    AliasAnalyzer(graph, generates, sanitizes, sinks, maxPathLength)
+    // TODO: make config the factory argument
+    val config = TaintConfig(emptyList())
+    AliasAnalyzer(config, graph, generates, sanitizes, sinks, maxPathLength)
 }
 
 private class AliasAnalyzer(
+    config: TaintConfig,
     graph: JcApplicationGraph,
     override val generates: (JcInst) -> List<DomainFact>,
     override val sanitizes: (JcExpr, TaintNode) -> Boolean,
     override val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : TaintAnalyzer(graph, maxPathLength) {
+) : TaintAnalyzer(config, graph, maxPathLength) {
     override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = TODO()
 
     override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = TODO()

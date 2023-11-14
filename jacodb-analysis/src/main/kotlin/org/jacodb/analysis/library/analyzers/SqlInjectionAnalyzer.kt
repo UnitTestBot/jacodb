@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.SarifMessage
@@ -23,9 +24,10 @@ import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.analysis.JcApplicationGraph
 
 class SqlInjectionAnalyzer(
+    config: TaintConfig,
     graph: JcApplicationGraph,
-    maxPathLength: Int
-) : TaintAnalyzer(graph, maxPathLength) {
+    maxPathLength: Int,
+) : TaintAnalyzer(config, graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sanitizes = isSanitizeMethodToSanitizes(sqlSanitizeMatchers.asMethodMatchers)
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
@@ -42,14 +44,16 @@ class SqlInjectionAnalyzer(
 
 class SqlInjectionBackwardAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int
+    maxPathLength: Int,
 ) : TaintBackwardAnalyzer(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
 }
 
 fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    SqlInjectionAnalyzer(graph, maxPathLength)
+    // TODO: make config the factory argument
+    val config = TaintConfig(emptyList())
+    SqlInjectionAnalyzer(config, graph, maxPathLength)
 }
 
 fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->

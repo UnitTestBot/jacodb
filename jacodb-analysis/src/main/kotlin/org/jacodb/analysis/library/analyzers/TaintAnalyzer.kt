@@ -16,6 +16,9 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.BasicConditionEvaluator
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.DomainFact
@@ -44,6 +47,7 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.taint.configuration.TaintMethodSource
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->
@@ -89,6 +93,7 @@ internal val List<String>.asMethodMatchers: (JcMethod) -> Boolean
     }
 
 abstract class TaintAnalyzer(
+    protected val config: TaintConfig,
     graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
@@ -97,11 +102,32 @@ abstract class TaintAnalyzer(
     abstract val sinks: (JcInst) -> List<TaintAnalysisNode>
 
     override val flowFunctions: FlowFunctionsSpace by lazy {
-        TaintForwardFunctions(graph, maxPathLength, generates, sanitizes)
+        TaintForwardFunctions(config, graph, maxPathLength, generates, sanitizes)
     }
 
     override val isMainAnalyzer: Boolean
         get() = true
+
+    private val skipped: MutableMap<JcMethod, Boolean> = mutableMapOf()
+    override fun isSkipped(method: JcMethod): Boolean {
+        return skipped.getOrPut(method) {
+            // TODO: read the config and assign True if there is a MethodSource item, and False otherwise.
+            // Note: the computed value is cached.
+
+            fun <T> magic(): T = TODO()
+            val current: JcInst = magic()
+            val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(current))
+
+            // FIXME: we need the call itself in order to evaluate the condition
+            for (item in config.items) {
+                if (item is TaintMethodSource) {
+                    item.condition.accept(conditionEvaluator)
+                }
+            }
+
+            TODO()
+        }
+    }
 
     protected abstract fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription
 
@@ -138,11 +164,12 @@ abstract class TaintBackwardAnalyzer(
 }
 
 private class TaintForwardFunctions(
+    config: TaintConfig,
     graph: JcApplicationGraph,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
     private val sanitizes: (JcExpr, TaintNode) -> Boolean,
-) : AbstractTaintForwardFunctions(graph.classpath) {
+) : AbstractTaintForwardFunctions(config, graph.classpath) {
 
     override fun transmitDataFlow(
         from: JcExpr,

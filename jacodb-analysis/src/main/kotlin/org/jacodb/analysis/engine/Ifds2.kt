@@ -31,6 +31,7 @@ import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
+import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
@@ -188,8 +189,8 @@ interface FlowFunctionsSpace2 {
 
 @Suppress("PublicApiImplicitType")
 class TaintForwardFlowFunctions(
-    private val config: TaintConfig,
     private val cp: JcClasspath,
+    private val config: TaintConfig,
 ) : FlowFunctionsSpace2 {
     // private fun generates(inst: JcInst): Collection<Tainted> {
     //     if (inst.callExpr == null) return emptyList()
@@ -224,6 +225,7 @@ class TaintForwardFlowFunctions(
 
     // TODO: rename / refactor
     // TODO: consider splitting into transmitTaintAssign / transmitTaintArgument
+    // TODO: consider: moveTaint/copyTaint
     private fun transmitTaint(
         fact: Tainted,
         from: JcExpr,
@@ -556,11 +558,11 @@ interface Analyzer2 {
 }
 
 class TaintAnalyzer(
-    private val config: TaintConfig,
     private val graph: JcApplicationGraph,
+    private val config: TaintConfig,
 ) : Analyzer2 {
     override val flowFunctions: FlowFunctionsSpace2 by lazy {
-        TaintForwardFlowFunctions(config, graph.classpath)
+        TaintForwardFlowFunctions(graph.classpath, config)
     }
 
     private fun isExitPoint(statement: JcInst): Boolean {
@@ -591,6 +593,8 @@ class Ifds(
     private val pathEdges: MutableSet<Edge> = mutableSetOf()
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
+
+    private val skippedMethodsForAnalysis: MutableSet<JcMethod> = mutableSetOf()
 
     fun run() {
         // TODO: maybe move 'startMethods' to 'run' arguments?
@@ -651,26 +655,55 @@ class Ifds(
 
                     // Propagate through the call:
                     for (callee in currentCallees) {
-                        val factsAtCalleeStart = flowSpace
-                            .obtainCallToStartFlowFunction(current, callee)
-                            .compute(currentFact)
-                        for (calleeStart in graph.entryPoints(callee)) {
-                            for (calleeStartFact in factsAtCalleeStart) {
-                                val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
+                        // TODO: check whether we need to analyze the callee (or it was skipped due to MethodSource)
+                        if (callee in skippedMethodsForAnalysis) {
+                            logger.info { "Skipping method $callee" }
+                        } else {
+                            val factsAtCalleeStart = flowSpace
+                                .obtainCallToStartFlowFunction(current, callee)
+                                .compute(currentFact)
+                            for (calleeStart in graph.entryPoints(callee)) {
+                                for (calleeStartFact in factsAtCalleeStart) {
+                                    val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
 
-                                if (callee.isExtern) {
-                                    // TODO: Initialize analysis for callee
-                                    // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
+                                    if (callee.isExtern) {
+                                        // TODO: Initialize analysis for callee
+                                        // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
 
-                                    // Subscribe on summary edges:
-                                    val summaries = flow {
-                                        val event = SubscriptionForSummaryEdges2(callee, this@flow)
-                                        manager.handleEvent(event, this@Ifds)
-                                    }
-                                    summaries
-                                        .filter { it.from == calleeStartVertex }
-                                        .map { it.to }
-                                        .onEach { (exit, exitFact) ->
+                                        // Subscribe on summary edges:
+                                        val summaries = flow {
+                                            val event = SubscriptionForSummaryEdges2(callee, this@flow)
+                                            manager.handleEvent(event, this@Ifds)
+                                        }
+                                        summaries
+                                            .filter { it.from == calleeStartVertex }
+                                            .map { it.to }
+                                            .onEach { (exit, exitFact) ->
+                                                val finalFacts = flowSpace
+                                                    .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
+                                                    .compute(exitFact)
+                                                for (returnSiteFact in finalFacts) {
+                                                    val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+                                                    val newEdge = Edge(startVertex, returnSiteVertex)
+                                                    propagate(newEdge)
+                                                }
+                                            }
+                                        // TODO: add `.launchIn(this)` to the above Flow
+
+                                        TODO()
+                                    } else {
+                                        // Save info about the call for summary edges that will be found later:
+                                        callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
+
+                                        // Initialize analysis for callee:
+                                        run {
+                                            val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
+                                            propagate(newEdge)
+                                        }
+
+                                        // Handle already-found summary edges:
+                                        val exits = summaryEdges[calleeStartVertex].orEmpty()
+                                        for ((exit, exitFact) in exits) {
                                             val finalFacts = flowSpace
                                                 .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
                                                 .compute(exitFact)
@@ -679,30 +712,6 @@ class Ifds(
                                                 val newEdge = Edge(startVertex, returnSiteVertex)
                                                 propagate(newEdge)
                                             }
-                                        }
-                                    // TODO: add `.launchIn(this)` to the above Flow
-
-                                    TODO()
-                                } else {
-                                    // Save info about the call for summary edges that will be found later:
-                                    callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
-
-                                    // Initialize analysis for callee:
-                                    run {
-                                        val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                        propagate(newEdge)
-                                    }
-
-                                    // Handle already-found summary edges:
-                                    val exits = summaryEdges[calleeStartVertex].orEmpty()
-                                    for ((exit, exitFact) in exits) {
-                                        val finalFacts = flowSpace
-                                            .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
-                                            .compute(exitFact)
-                                        for (returnSiteFact in finalFacts) {
-                                            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                            val newEdge = Edge(startVertex, returnSiteVertex)
-                                            propagate(newEdge)
                                         }
                                     }
                                 }

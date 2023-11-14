@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
@@ -33,6 +34,7 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintForwardFunctions(
+    protected val config: TaintConfig,
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
@@ -131,6 +133,7 @@ abstract class AbstractTaintForwardFunctions(
             }
         }
 
+        // TODO: do we even need to call this here???
         transmitDataFlowAtNormalInst(callStatement, returnSite, fact)
     }
 
@@ -152,7 +155,7 @@ abstract class AbstractTaintForwardFunctions(
 
         buildList {
             if (fact is TaintNode && fact.variable.isOnHeap) {
-                // If there is some method A.f(formal: T) that is called like A.f(actual) then
+                // If there is some method A::f(formal: T) that is called like a.f(actual) then
                 //  1. For all g^k, k >= 1, we should propagate back from formal.g^k to actual.g^k (as they are on heap)
                 //  2. We shouldn't propagate from formal to actual (as formal is local)
                 //  Second case is why we need check for isOnHeap
