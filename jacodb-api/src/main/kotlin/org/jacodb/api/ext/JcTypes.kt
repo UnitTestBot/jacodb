@@ -194,3 +194,7 @@ val JcTypedMethod.humanReadableSignature: String get() {
     } ?: ""
     return "${enclosingType.typeName}#$generics$name($params):${returnType.typeName}"
 }
+
+fun JcClasspath.findType(name: String): JcType {
+    return findTypeOrNull(name) ?: throw TypeNotFoundException(name)
+}
