@@ -353,53 +353,53 @@ class TaintForwardFlowFunctions(
             return@FlowFunction emptyList()
         }
 
-        if (config != null) {
-            val conditionEvaluator = FactAwareConditionEvaluator(
-                fact,
-                CallPositionToJcValueResolver(callStatement)
-            )
-            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-            val facts = mutableSetOf<Tainted>()
-
-            for (item in config.filterIsInstance<TaintPassThrough>()) {
-                if (item.condition.accept(conditionEvaluator)) {
-                    for (action in item.actionsAfter) {
-                        when (action) {
-                            is CopyMark -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is CopyAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            else -> error("$action is not supported for $item")
-                        }
-                    }
-                }
-            }
-            for (item in config.filterIsInstance<TaintCleaner>()) {
-                if (item.condition.accept(conditionEvaluator)) {
-                    for (action in item.actionsAfter) {
-                        when (action) {
-                            is RemoveMark -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is RemoveAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            else -> error("$action is not supported for $item")
-                        }
-                    }
-                }
-            }
-
-            return@FlowFunction facts
+        if (config == null) {
+            return@FlowFunction emptyList()
         }
 
-        emptyList()
+        val conditionEvaluator = FactAwareConditionEvaluator(
+            fact,
+            CallPositionToJcValueResolver(callStatement)
+        )
+        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+        val facts = mutableSetOf<Tainted>()
+
+        for (item in config.filterIsInstance<TaintPassThrough>()) {
+            if (item.condition.accept(conditionEvaluator)) {
+                for (action in item.actionsAfter) {
+                    when (action) {
+                        is CopyMark -> {
+                            facts += actionEvaluator.evaluate(action, fact)
+                        }
+
+                        is CopyAllMarks -> {
+                            facts += actionEvaluator.evaluate(action, fact)
+                        }
+
+                        else -> error("$action is not supported for $item")
+                    }
+                }
+            }
+        }
+        for (item in config.filterIsInstance<TaintCleaner>()) {
+            if (item.condition.accept(conditionEvaluator)) {
+                for (action in item.actionsAfter) {
+                    when (action) {
+                        is RemoveMark -> {
+                            facts += actionEvaluator.evaluate(action, fact)
+                        }
+
+                        is RemoveAllMarks -> {
+                            facts += actionEvaluator.evaluate(action, fact)
+                        }
+
+                        else -> error("$action is not supported for $item")
+                    }
+                }
+            }
+        }
+
+        facts
     }
 
     override fun obtainCallToStartFlowFunction(
