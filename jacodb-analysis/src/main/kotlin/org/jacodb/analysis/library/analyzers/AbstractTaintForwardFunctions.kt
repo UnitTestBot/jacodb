@@ -52,7 +52,6 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 
 abstract class AbstractTaintForwardFunctions(
-    protected val config: TaintConfig,
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 

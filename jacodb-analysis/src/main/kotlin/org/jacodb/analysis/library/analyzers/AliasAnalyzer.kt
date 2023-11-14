@@ -33,19 +33,16 @@ fun AliasAnalyzerFactory(
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5,
 ) = AnalyzerFactory { graph ->
-    // TODO: make config the factory argument
-    val config = TaintConfig(emptyList())
-    AliasAnalyzer(config, graph, generates, sanitizes, sinks, maxPathLength)
+    AliasAnalyzer(graph, generates, sanitizes, sinks, maxPathLength)
 }
 
 private class AliasAnalyzer(
-    config: TaintConfig,
     graph: JcApplicationGraph,
     override val generates: (JcInst) -> List<DomainFact>,
     override val sanitizes: (JcExpr, TaintNode) -> Boolean,
     override val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : TaintAnalyzer(config, graph, maxPathLength) {
+) : TaintAnalyzer(graph, maxPathLength) {
     override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = TODO()
 
     override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = TODO()

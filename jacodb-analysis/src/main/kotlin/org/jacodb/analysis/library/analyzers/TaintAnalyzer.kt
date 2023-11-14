@@ -93,7 +93,6 @@ internal val List<String>.asMethodMatchers: (JcMethod) -> Boolean
     }
 
 abstract class TaintAnalyzer(
-    protected val config: TaintConfig,
     graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
@@ -102,7 +101,7 @@ abstract class TaintAnalyzer(
     abstract val sinks: (JcInst) -> List<TaintAnalysisNode>
 
     override val flowFunctions: FlowFunctionsSpace by lazy {
-        TaintForwardFunctions(config, graph, maxPathLength, generates, sanitizes)
+        TaintForwardFunctions(graph, maxPathLength, generates, sanitizes)
     }
 
     override val isMainAnalyzer: Boolean
@@ -164,12 +163,11 @@ abstract class TaintBackwardAnalyzer(
 }
 
 private class TaintForwardFunctions(
-    config: TaintConfig,
     graph: JcApplicationGraph,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
     private val sanitizes: (JcExpr, TaintNode) -> Boolean,
-) : AbstractTaintForwardFunctions(config, graph.classpath) {
+) : AbstractTaintForwardFunctions(graph.classpath) {
 
     override fun transmitDataFlow(
         from: JcExpr,

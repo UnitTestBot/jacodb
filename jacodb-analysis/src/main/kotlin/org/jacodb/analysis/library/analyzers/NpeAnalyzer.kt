@@ -60,17 +60,14 @@ import org.jacodb.api.ext.fields
 import org.jacodb.api.ext.isNullable
 
 fun NpeAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    // FIXME: make config the factory argument
-    val config = TaintConfig(emptyList())
-    NpeAnalyzer(config, graph, maxPathLength)
+    NpeAnalyzer(graph, maxPathLength)
 }
 
 class NpeAnalyzer(
-    config: TaintConfig,
     graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
-    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(config, graph.classpath, maxPathLength)
+    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph.classpath, maxPathLength)
 
     override val isMainAnalyzer: Boolean
         get() = true
@@ -99,10 +96,9 @@ class NpeAnalyzer(
 }
 
 private class NpeForwardFunctions(
-    config: TaintConfig,
     cp: JcClasspath,
     private val maxPathLength: Int,
-) : AbstractTaintForwardFunctions(config, cp) {
+) : AbstractTaintForwardFunctions(cp) {
 
     private val JcIfInst.pathComparedWithNull: AccessPath?
         get() {
