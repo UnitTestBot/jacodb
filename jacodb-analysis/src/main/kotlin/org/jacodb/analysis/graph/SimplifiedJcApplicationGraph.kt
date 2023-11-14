@@ -90,7 +90,7 @@ internal class SimplifiedJcApplicationGraph(
 
     private fun calleesUnmarked(node: JcInst): Sequence<JcMethod> {
         val callees = impl.callees(node).filterNot { callee ->
-            bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
+            bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) } && callee.name != "getenv"
         }
 
         val callExpr = node.callExpr as? JcVirtualCallExpr ?: return callees
