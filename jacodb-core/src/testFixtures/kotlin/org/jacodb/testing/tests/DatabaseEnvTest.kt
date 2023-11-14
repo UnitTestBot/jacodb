@@ -21,53 +21,22 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.constructors
-import org.jacodb.api.ext.enumValues
-import org.jacodb.api.ext.fields
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findClassOrNull
-import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.api.ext.findDeclaredMethodOrNull
-import org.jacodb.api.ext.findMethodOrNull
-import org.jacodb.api.ext.hasBody
-import org.jacodb.api.ext.humanReadableSignature
-import org.jacodb.api.ext.isEnum
-import org.jacodb.api.ext.isLocal
-import org.jacodb.api.ext.isMemberClass
-import org.jacodb.api.ext.isNullable
-import org.jacodb.api.ext.jcdbSignature
-import org.jacodb.api.ext.jvmSignature
-import org.jacodb.api.ext.methods
-import org.jacodb.api.ext.toType
+import org.jacodb.api.ext.*
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
-import org.jacodb.testing.A
-import org.jacodb.testing.B
-import org.jacodb.testing.Bar
-import org.jacodb.testing.C
-import org.jacodb.testing.D
-import org.jacodb.testing.Enums
-import org.jacodb.testing.Foo
-import org.jacodb.testing.SuperDuper
-import org.jacodb.testing.allClasspath
+import org.jacodb.testing.*
 import org.jacodb.testing.hierarchies.Creature
-import org.jacodb.testing.skipAssertionsOn
 import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.structure.HiddenFieldSuperClass.HiddenFieldSuccClass
 import org.jacodb.testing.usages.Generics
 import org.jacodb.testing.usages.HelloWorldAnonymousClasses
 import org.jacodb.testing.usages.WithInner
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.JRE
@@ -224,7 +193,7 @@ abstract class DatabaseEnvTest {
             assertEquals(DocumentType::class.java.name, returnType.typeName)
             assertEquals("getDoctype()org.w3c.dom.DocumentType;", jcdbSignature)
             assertEquals("getDoctype()Lorg/w3c/dom/DocumentType;", jvmSignature)
-            assertEquals("org.w3c.dom.DocumentType getDoctype()", humanReadableSignature)
+            assertEquals("org.w3c.dom.Document#getDoctype():org.w3c.dom.DocumentType", humanReadableSignature)
             assertTrue(isPublic)
         }
 
@@ -233,12 +202,12 @@ abstract class DatabaseEnvTest {
             assertEquals(Element::class.java.name, returnType.typeName)
             assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", jcdbSignature)
             assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", jvmSignature)
-            assertEquals("org.w3c.dom.Element createElement(java.lang.String)", humanReadableSignature)
+            assertEquals("org.w3c.dom.Document#createElement(java.lang.String):org.w3c.dom.Element", humanReadableSignature)
         }
 
         with(methods.first { it.name == "importNode" }) {
             assertEquals("importNode(org.w3c.dom.Node;boolean;)org.w3c.dom.Node;", jcdbSignature)
-            assertEquals("org.w3c.dom.Node importNode(org.w3c.dom.Node,boolean)", humanReadableSignature)
+            assertEquals("org.w3c.dom.Document#importNode(org.w3c.dom.Node,boolean):org.w3c.dom.Node", humanReadableSignature)
         }
     }
 

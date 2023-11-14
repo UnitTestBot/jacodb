@@ -187,3 +187,14 @@ fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): 
     return methods.firstOrNull(predicate)
 }
 
+val JcTypedMethod.humanReadableSignature: String get() {
+    val params = parameters.joinToString(",") { it.type.typeName }
+    val generics = typeParameters.takeIf { it.isNotEmpty() }?.let{
+        it.joinToString(prefix = "<", separator = ",", postfix = ">") { it.symbol }
+    } ?: ""
+    return "${enclosingType.typeName}#$generics$name($params):${returnType.typeName}"
+}
+
+fun JcClasspath.findType(name: String): JcType {
+    return findTypeOrNull(name) ?: throw TypeNotFoundException(name)
+}
