@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.flow.FlowCollector
@@ -22,12 +24,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
@@ -52,6 +53,7 @@ import org.jacodb.taint.configuration.CopyMark
 import org.jacodb.taint.configuration.RemoveAllMarks
 import org.jacodb.taint.configuration.RemoveMark
 import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
@@ -191,7 +193,6 @@ interface FlowFunctionsSpace2 {
 @Suppress("PublicApiImplicitType")
 class TaintForwardFlowFunctions(
     private val cp: JcClasspath,
-    private val config: TaintConfig,
 ) : FlowFunctionsSpace2 {
     // private fun generates(inst: JcInst): Collection<Tainted> {
     //     if (inst.callExpr == null) return emptyList()
@@ -297,6 +298,15 @@ class TaintForwardFlowFunctions(
     ) = FlowFunction { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
+        val config = cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+            ?.let { feature ->
+                val callee = callExpr.method.method
+                println("Extracting config for callee = $callee")
+                feature.getConfigForMethod(callee)
+            }
+
         // If 'fact' is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.
         // For other facts (Tainted only?), handle PassThrough/Cleaner items.
         // TODO: what to do with "other facts" on CopyAllMarks/RemoveAllMarks?
@@ -313,24 +323,28 @@ class TaintForwardFlowFunctions(
         // Handle MethodSource config items:
         if (fact == ZeroFact) {
             // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
-            val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
-            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-            // TODO: replace with buildSet?
-            val facts = mutableSetOf<Tainted>()
-            for (item in config.items.filterIsInstance<TaintMethodSource>()) {
-                if (item.condition.accept(conditionEvaluator)) {
-                    for (action in item.actionsAfter) {
-                        when (action) {
-                            is AssignMark -> {
-                                facts += actionEvaluator.evaluate(action)
-                            }
+            if (config != null) {
+                val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+                val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                // TODO: replace with buildSet?
+                val facts = mutableSetOf<Tainted>()
+                for (item in config.filterIsInstance<TaintMethodSource>()) {
+                    if (item.condition.accept(conditionEvaluator)) {
+                        for (action in item.actionsAfter) {
+                            when (action) {
+                                is AssignMark -> {
+                                    facts += actionEvaluator.evaluate(action)
+                                }
 
-                            else -> error("$action is not supported for $item")
+                                else -> error("$action is not supported for $item")
+                            }
                         }
                     }
                 }
+                return@FlowFunction facts + ZeroFact
+            } else {
+                return@FlowFunction listOf(ZeroFact)
             }
-            return@FlowFunction facts + ZeroFact
         }
 
         // FIXME: adhoc to satisfy types
@@ -339,50 +353,53 @@ class TaintForwardFlowFunctions(
             return@FlowFunction emptyList()
         }
 
-        val conditionEvaluator = FactAwareConditionEvaluator(
-            fact,
-            CallPositionToJcValueResolver(callStatement)
-        )
-        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-        // val actionEvaluatorVisitor = FactAwareTaintActionEvaluator(fact, actionEvaluator)
-        val resultingFacts = mutableSetOf<Tainted>()
+        if (config != null) {
+            val conditionEvaluator = FactAwareConditionEvaluator(
+                fact,
+                CallPositionToJcValueResolver(callStatement)
+            )
+            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+            val facts = mutableSetOf<Tainted>()
 
-        for (item in config.items.filterIsInstance<TaintPassThrough>()) {
-            if (item.condition.accept(conditionEvaluator)) {
-                for (action in item.actionsAfter) {
-                    when (action) {
-                        is CopyMark -> {
-                                resultingFacts += actionEvaluator.evaluate(action, fact)
+            for (item in config.filterIsInstance<TaintPassThrough>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is CopyMark -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            is CopyAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            else -> error("$action is not supported for $item")
                         }
-
-                        is CopyAllMarks -> {
-                                resultingFacts += actionEvaluator.evaluate(action, fact)
-                        }
-
-                        else -> error("$action is not supported for $item")
                     }
                 }
             }
-        }
-        for (item in config.items.filterIsInstance<TaintCleaner>()) {
-            if (item.condition.accept(conditionEvaluator)) {
-                for (action in item.actionsAfter) {
-                    when (action) {
-                        is RemoveMark -> {
-                                resultingFacts += actionEvaluator.evaluate(action, fact)
-                        }
+            for (item in config.filterIsInstance<TaintCleaner>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
 
-                        is RemoveAllMarks -> {
-                                resultingFacts += actionEvaluator.evaluate(action, fact)
-                        }
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
 
-                        else -> error("$action is not supported for $item")
+                            else -> error("$action is not supported for $item")
+                        }
                     }
                 }
             }
+
+            return@FlowFunction facts
         }
 
-        resultingFacts
+        emptyList()
     }
 
     override fun obtainCallToStartFlowFunction(
@@ -548,10 +565,9 @@ interface Analyzer2 {
 
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
-    private val config: TaintConfig,
 ) : Analyzer2 {
     override val flowFunctions: FlowFunctionsSpace2 by lazy {
-        TaintForwardFlowFunctions(graph.classpath, config)
+        TaintForwardFlowFunctions(graph.classpath)
     }
 
     private fun isExitPoint(statement: JcInst): Boolean {
