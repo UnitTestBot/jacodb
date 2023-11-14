@@ -18,6 +18,7 @@ package org.jacodb.impl.cfg
 
 import org.jacodb.api.*
 import org.jacodb.api.cfg.*
+import org.jacodb.api.ext.findType
 import org.jacodb.api.ext.jvmName
 import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.softLazy
@@ -76,7 +77,7 @@ abstract class MethodSignatureRef(
         }
 
     fun JcType.throwNotFoundException(): Nothing {
-        throw IllegalStateException(this.methodNotFoundMessage)
+        throw MethodNotFoundException(this.methodNotFoundMessage)
     }
 
 }
@@ -89,14 +90,14 @@ class TypedStaticMethodRefImpl(
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
     constructor(classpath: JcClasspath, raw: JcRawStaticCallExpr) : this(
-            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
             raw.returnType
     )
 
     override val method: JcTypedMethod by weakLazy {
-        type.lookup.staticMethod(name, description) ?: throw IllegalStateException(methodNotFoundMessage)
+        type.lookup.staticMethod(name, description) ?: type.throwNotFoundException()
     }
 }
 
@@ -108,7 +109,7 @@ class TypedSpecialMethodRefImpl(
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
     constructor(classpath: JcClasspath, raw: JcRawSpecialCallExpr) : this(
-            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
             raw.returnType
@@ -130,7 +131,7 @@ class VirtualMethodRefImpl(
 
     companion object {
         private fun JcRawCallExpr.resolvedType(classpath: JcClasspath): Pair<JcClassType, JcClassType> {
-            val declared = classpath.findTypeOrNull(declaringClass.typeName) as JcClassType
+            val declared = classpath.findType(declaringClass.typeName) as JcClassType
             if (this is JcRawInstanceExpr) {
                 val instance = instance
                 if (instance is JcRawLocal) {
@@ -182,7 +183,7 @@ class TypedMethodRefImpl(
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
     constructor(classpath: JcClasspath, raw: JcRawCallExpr) : this(
-            classpath.findTypeOrNull(raw.declaringClass.typeName) as JcClassType,
+            classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
             raw.returnType
