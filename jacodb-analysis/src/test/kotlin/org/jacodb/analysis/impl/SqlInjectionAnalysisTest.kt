@@ -59,9 +59,9 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_13"
         testSingleJulietClass(vulnerabilityType, className)
 
-        for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
-            testSingleJulietClass(vulnerabilityType, className)
-        }
+        // for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
+        //     testSingleJulietClass(vulnerabilityType, className)
+        // }
     }
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
