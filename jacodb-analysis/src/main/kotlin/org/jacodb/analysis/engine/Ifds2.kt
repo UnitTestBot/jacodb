@@ -491,16 +491,6 @@ class TaintForwardFlowFunctions(
     }
 }
 
-// interface EdgeObserver {
-//     fun handleNewEdge(edge: Edge)
-// }
-//
-// class EdgeObserverImpl : EdgeObserver {
-//     override fun handleNewEdge(edge: Edge) {
-//         println("new edge: $edge")
-//     }
-// }
-
 class Manager(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver,
