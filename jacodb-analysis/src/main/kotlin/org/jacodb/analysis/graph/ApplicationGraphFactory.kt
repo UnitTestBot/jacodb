@@ -37,8 +37,11 @@ suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: Li
     }
 }
 
-// Async adapter for calling it from Java.
-// https://stackoverflow.com/a/52887677/3592218
+/**
+ * Async adapter for calling [newApplicationGraphForAnalysis] from Java.
+ *
+ * See also: [answer on StackOverflow](https://stackoverflow.com/a/52887677/3592218).
+ */
 @OptIn(DelicateCoroutinesApi::class)
 fun JcClasspath.newApplicationGraphForAnalysisAsync(
     bannedPackagePrefixes: List<String>? = null
