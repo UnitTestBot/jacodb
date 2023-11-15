@@ -667,114 +667,118 @@ class Ifds(
     }
 
     private suspend fun tabulationAlgorithm() {
-        for (currentEdge in workList) {
-            val (startVertex, currentVertex) = currentEdge
-            val (current, currentFact) = currentVertex
-            // TODO: replace with (current.callExpr != null)
-            val currentCallees = graph.callees(current).toList()
-            val currentIsCall = currentCallees.isNotEmpty()
-            // FIXME: [old] val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
-            val currentIsExit = current in graph.exitPoints(current.location.method)
-            if (currentIsCall) {
-                for (returnSite in graph.successors(current)) {
-                    // Propagate through the call-to-return-site edge:
-                    val factsAtReturnSite = flowSpace
-                        .obtainCallToReturnSiteFlowFunction(current, returnSite)
-                        .compute(currentFact)
-                    for (returnSiteFact in factsAtReturnSite) {
-                        val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                        val newEdge = Edge(startVertex, returnSiteVertex)
-                        propagate(newEdge)
-                    }
+        for (edge in workList) {
+            handle(edge)
+        }
+    }
 
-                    // Propagate through the call:
-                    for (callee in currentCallees) {
-                        // TODO: check whether we need to analyze the callee (or it was skipped due to MethodSource)
-                        if (analyzer.isSkipped(callee)) {
-                            logger.info { "Skipping method $callee" }
-                        } else {
-                            val factsAtCalleeStart = flowSpace
-                                .obtainCallToStartFlowFunction(current, callee)
-                                .compute(currentFact)
-                            for (calleeStart in graph.entryPoints(callee)) {
-                                for (calleeStartFact in factsAtCalleeStart) {
-                                    val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
+    private suspend fun handle(currentEdge: Edge) {
+        val (startVertex, currentVertex) = currentEdge
+        val (current, currentFact) = currentVertex
+        // TODO: replace with (current.callExpr != null)
+        val currentCallees = graph.callees(current).toList()
+        val currentIsCall = currentCallees.isNotEmpty()
+        // FIXME: [old] val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
+        val currentIsExit = current in graph.exitPoints(current.location.method)
+        if (currentIsCall) {
+            for (returnSite in graph.successors(current)) {
+                // Propagate through the call-to-return-site edge:
+                val factsAtReturnSite = flowSpace
+                    .obtainCallToReturnSiteFlowFunction(current, returnSite)
+                    .compute(currentFact)
+                for (returnSiteFact in factsAtReturnSite) {
+                    val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+                    val newEdge = Edge(startVertex, returnSiteVertex)
+                    propagate(newEdge)
+                }
 
-                                    if (callee.isExtern) {
-                                        // Initialize analysis of callee:
-                                        // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
-                                        // for (event in analyzer.)
+                // Propagate through the call:
+                for (callee in currentCallees) {
+                    // TODO: check whether we need to analyze the callee (or it was skipped due to MethodSource)
+                    if (analyzer.isSkipped(callee)) {
+                        logger.info { "Skipping method $callee" }
+                    } else {
+                        val factsAtCalleeStart = flowSpace
+                            .obtainCallToStartFlowFunction(current, callee)
+                            .compute(currentFact)
+                        for (calleeStart in graph.entryPoints(callee)) {
+                            for (calleeStartFact in factsAtCalleeStart) {
+                                val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
 
-                                        // Subscribe on summary edges:
-                                        val event = SubscriptionForSummaryEdges2(callee) {
-                                            if (it.from == calleeStartVertex) {
-                                                handleSummaryEdge(it, startVertex, current, returnSite)
-                                            }
+                                if (callee.isExtern) {
+                                    // Initialize analysis of callee:
+                                    // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
+                                    // for (event in analyzer.)
+
+                                    // Subscribe on summary edges:
+                                    val event = SubscriptionForSummaryEdges2(callee) {
+                                        if (it.from == calleeStartVertex) {
+                                            handleSummaryEdge(it, startVertex, current, returnSite)
                                         }
-                                        manager.handleEvent(event, this@Ifds)
-                                    } else {
-                                        // Save info about the call for summary edges that will be found later:
-                                        callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
-
-                                        // Initialize analysis of callee:
-                                        this@Ifds.run {
-                                            val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                            this@Ifds.propagate(newEdge)
-                                        }
-
-                                        // Handle already-found summary edges:
-                                        for (exitVertex in summaryEdges[calleeStartVertex].orEmpty()) {
-                                            val edge = Edge(calleeStartVertex, exitVertex)
-                                            handleSummaryEdge(edge, startVertex, current, returnSite)
-                                        }
-                                        // val exits = summaryEdges[calleeStartVertex].orEmpty()
-                                        // for ((exit, exitFact) in exits) {
-                                        //     val finalFacts = flowSpace
-                                        //         .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
-                                        //         .compute(exitFact)
-                                        //     for (returnSiteFact in finalFacts) {
-                                        //         val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                        //         val newEdge = Edge(startVertex, returnSiteVertex)
-                                        //         propagate(newEdge)
-                                        //     }
-                                        // }
                                     }
+                                    manager.handleEvent(event, this@Ifds)
+                                } else {
+                                    // Save info about the call for summary edges that will be found later:
+                                    callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
+
+                                    // Initialize analysis of callee:
+                                    this@Ifds.run {
+                                        val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
+                                        this@Ifds.propagate(newEdge)
+                                    }
+
+                                    // Handle already-found summary edges:
+                                    for (exitVertex in summaryEdges[calleeStartVertex].orEmpty()) {
+                                        val edge = Edge(calleeStartVertex, exitVertex)
+                                        handleSummaryEdge(edge, startVertex, current, returnSite)
+                                    }
+                                    // val exits = summaryEdges[calleeStartVertex].orEmpty()
+                                    // for ((exit, exitFact) in exits) {
+                                    //     val finalFacts = flowSpace
+                                    //         .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
+                                    //         .compute(exitFact)
+                                    //     for (returnSiteFact in finalFacts) {
+                                    //         val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+                                    //         val newEdge = Edge(startVertex, returnSiteVertex)
+                                    //         propagate(newEdge)
+                                    //     }
+                                    // }
                                 }
                             }
                         }
                     }
                 }
-            } else {
-                if (currentIsExit) {
-                    // Propagate through the summary edge:
-                    for (callerPathEdge in callSitesOf[startVertex].orEmpty()) {
-                        val caller = callerPathEdge.to.statement
-                        for (returnSite in graph.successors(caller)) {
-                            val factsAtReturnSite = flowSpace
-                                .obtainExitToReturnSiteFlowFunction(caller, returnSite, current)
-                                .compute(currentFact)
-                            for (returnSiteFact in factsAtReturnSite) {
-                                val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                val newEdge = Edge(callerPathEdge.from, returnSiteVertex)
-                                propagate(newEdge)
-                            }
+            }
+        } else {
+            if (currentIsExit) {
+                // Propagate through the summary edge:
+                for (callerPathEdge in callSitesOf[startVertex].orEmpty()) {
+                    val caller = callerPathEdge.to.statement
+                    for (returnSite in graph.successors(caller)) {
+                        val factsAtReturnSite = flowSpace
+                            .obtainExitToReturnSiteFlowFunction(caller, returnSite, current)
+                            .compute(currentFact)
+                        for (returnSiteFact in factsAtReturnSite) {
+                            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+                            val newEdge = Edge(callerPathEdge.from, returnSiteVertex)
+                            propagate(newEdge)
                         }
                     }
-
-                    // Add new summary edge:
-                    summaryEdges.getOrPut(startVertex) { mutableSetOf() }.add(currentVertex)
                 }
 
-                // Simple propagation to the next instruction:
-                for (next in graph.successors(current)) {
-                    val factsAtNext = flowSpace
-                        .obtainSequentFlowFunction(current/*, next*/)
-                        .compute(currentFact)
-                    for (nextFact in factsAtNext) {
-                        val nextVertex = Vertex(next, nextFact)
-                        val newEdge = Edge(startVertex, nextVertex)
-                        propagate(newEdge)
-                    }
+                // Add new summary edge:
+                summaryEdges.getOrPut(startVertex) { mutableSetOf() }.add(currentVertex)
+            }
+
+            // Simple propagation to the next instruction:
+            for (next in graph.successors(current)) {
+                val factsAtNext = flowSpace
+                    .obtainSequentFlowFunction(current/*, next*/)
+                    .compute(currentFact)
+                for (nextFact in factsAtNext) {
+                    val nextVertex = Vertex(next, nextFact)
+                    val newEdge = Edge(startVertex, nextVertex)
+                    propagate(newEdge)
                 }
             }
         }
