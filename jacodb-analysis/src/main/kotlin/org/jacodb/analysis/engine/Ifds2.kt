@@ -19,9 +19,7 @@
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.onFailure
-import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.filter
@@ -62,6 +60,7 @@ import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+import java.util.concurrent.ConcurrentHashMap
 
 interface Fact
 
@@ -501,17 +500,27 @@ class Manager(
     private val unitResolver: UnitResolver,
 ) {
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
+    private val runners: MutableMap<UnitType, Ifds> = ConcurrentHashMap()
+
+    fun newRunner(
+        graph: JcApplicationGraph,
+        unitResolver: UnitResolver,
+        unit: UnitType,
+        analyzer: Analyzer2,
+    ): Ifds {
+        check(unit !in runners) { "Runner for $unit already exists" }
+        val runner = Ifds(graph, analyzer, this@Manager, unitResolver, unit)
+        runners[unit] = runner
+        return runner
+    }
 
     suspend fun handleEvent(event: Event, runner: Ifds) {
         when (event) {
-            is EdgeForAnotherRunner -> {
-                // val method = event.edge.method
-                // val unit = unitResolver.resolve(method)
-                // val otherRunner = aliveRunners[unit] ?: return
-                // if (otherRunner.job?.isActive == true) {
-                //     otherRunner.submitNewEdge(event.edge)
-                // }
-                TODO()
+            is EdgeForOtherRunner -> {
+                val method = event.edge.method
+                val unit = unitResolver.resolve(method)
+                val otherRunner = runners[unit] ?: error("No runner for $unit")
+                otherRunner.submitNewEdge(event.edge)
             }
 
             is SubscriptionForSummaryEdges2 -> {
@@ -544,7 +553,7 @@ data class NewSummaryEdge(
 
 // TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
 //       the first instruction of the analyzed method together with a fact.
-data class EdgeForAnotherRunner(
+data class EdgeForOtherRunner(
     val edge: Edge,
 ) : Event {
     init {
@@ -555,7 +564,10 @@ data class EdgeForAnotherRunner(
 interface Analyzer2 {
     val flowFunctions: FlowFunctionsSpace2
 
+    fun isSkipped(method: JcMethod): Boolean = false
+
     fun handleNewEdge(edge: Edge): List<Event>
+    fun handleCrossUnitCall(caller: Vertex, callee: Vertex): List<Event>
 }
 
 class TaintAnalyzer(
@@ -576,6 +588,10 @@ class TaintAnalyzer(
         // TODO: check whether 'edge.to.statement' is sink. If it is a sink (due to config, or by some other reason),
         //       return a new event with found vulnerability. Do not forget to include the config's rule for a sink.
     }
+
+    override fun handleCrossUnitCall(caller: Vertex, callee: Vertex): List<Event> = buildList {
+        add(EdgeForOtherRunner(Edge(callee, callee)))
+    }
 }
 
 class Ifds(
@@ -584,20 +600,15 @@ class Ifds(
     private val manager: Manager,
     private val unitResolver: UnitResolver,
     private val unit: UnitType,
-    private val startMethods: List<JcMethod>,
 ) {
     private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
 
     private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
-    private val pathEdges: MutableSet<Edge> = mutableSetOf()
+    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
-    private val skippedMethodsForAnalysis: MutableSet<JcMethod> = mutableSetOf()
-
-    fun run() {
-        // TODO: maybe move 'startMethods' to 'run' arguments?
-
+    fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
             require(unitResolver.resolve(method) == unit)
             for (start in graph.entryPoints(method)) {
@@ -613,7 +624,12 @@ class Ifds(
         tabulationAlgorithm()
     }
 
+    fun submitNewEdge(edge: Edge) {
+        propagate(edge)
+    }
+
     private fun propagate(edge: Edge): Boolean {
+        // TODO: replace comment with 'require' string argument
         // Propagated edge must be in the same unit:
         require(unitResolver.resolve(edge.method) == unit)
 
@@ -643,13 +659,11 @@ class Ifds(
         for (currentEdge in workList) {
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
-
             // TODO: replace with (current.callExpr != null)
             val currentCallees = graph.callees(current).toList()
             val currentIsCall = currentCallees.isNotEmpty()
             // FIXME: [old] val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
             val currentIsExit = current in graph.exitPoints(current.location.method)
-
             if (currentIsCall) {
                 for (returnSite in graph.successors(current)) {
                     // Propagate through the call-to-return-site edge:
@@ -665,7 +679,7 @@ class Ifds(
                     // Propagate through the call:
                     for (callee in currentCallees) {
                         // TODO: check whether we need to analyze the callee (or it was skipped due to MethodSource)
-                        if (callee in skippedMethodsForAnalysis) {
+                        if (analyzer.isSkipped(callee)) {
                             logger.info { "Skipping method $callee" }
                         } else {
                             val factsAtCalleeStart = flowSpace
@@ -676,8 +690,9 @@ class Ifds(
                                     val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
 
                                     if (callee.isExtern) {
-                                        // TODO: Initialize analysis for callee
+                                        // Initialize analysis of callee:
                                         // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
+                                        // for (event in analyzer.)
 
                                         // Subscribe on summary edges:
                                         val summaries = flow {
@@ -704,10 +719,10 @@ class Ifds(
                                         // Save info about the call for summary edges that will be found later:
                                         callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
 
-                                        // Initialize analysis for callee:
-                                        run {
+                                        // Initialize analysis of callee:
+                                        this@Ifds.run {
                                             val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                            propagate(newEdge)
+                                            this@Ifds.propagate(newEdge)
                                         }
 
                                         // Handle already-found summary edges:
