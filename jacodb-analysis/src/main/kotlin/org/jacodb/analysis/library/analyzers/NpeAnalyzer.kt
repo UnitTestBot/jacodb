@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.AnalyzerFactory

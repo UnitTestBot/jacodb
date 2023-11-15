@@ -54,7 +54,7 @@ interface IfdsUnitRunner {
  * The latter is the main method of runner, that should do all its work.
  */
 abstract class AbstractIfdsUnitRunner(
-    final override val unit: UnitType
+    final override val unit: UnitType,
 ) : IfdsUnitRunner {
     /**
      * The main method of the runner, which will be called by [launchIn]

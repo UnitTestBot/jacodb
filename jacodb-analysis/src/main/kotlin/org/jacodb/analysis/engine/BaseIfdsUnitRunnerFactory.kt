@@ -26,24 +26,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import org.jacodb.analysis.config.BasicConditionEvaluator
-import org.jacodb.analysis.config.CallPositionToAccessPathResolver
-import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.FactAwareConditionEvaluator
-import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.CopyMark
-import org.jacodb.taint.configuration.RemoveAllMarks
-import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.TaintCleaner
-import org.jacodb.taint.configuration.TaintConfigurationFeature
-import org.jacodb.taint.configuration.TaintMethodSource
-import org.jacodb.taint.configuration.TaintPassThrough
-import org.jacodb.taint.configuration.taintConfigurationFeature
 import java.util.concurrent.ConcurrentHashMap
 
 /**

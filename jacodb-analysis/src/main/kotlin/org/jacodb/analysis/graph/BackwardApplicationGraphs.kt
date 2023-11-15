@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("BackwardApplicationGraphs")
+
 package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcClasspath
@@ -24,7 +25,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
 private class BackwardApplicationGraph<Method, Statement>(
-    val forward: ApplicationGraph<Method, Statement>
+    val forward: ApplicationGraph<Method, Statement>,
 ) : ApplicationGraph<Method, Statement> {
     override fun predecessors(node: Statement) = forward.successors(node)
 

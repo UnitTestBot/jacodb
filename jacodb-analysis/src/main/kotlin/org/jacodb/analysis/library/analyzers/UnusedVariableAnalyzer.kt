@@ -48,7 +48,6 @@ import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
-
 class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
 
@@ -119,7 +118,7 @@ val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
 }
 
 private class UnusedVariableForwardFunctions(
-    val classpath: JcClasspath
+    val classpath: JcClasspath,
 ) : FlowFunctionsSpace {
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
@@ -184,7 +183,7 @@ private class UnusedVariableForwardFunctions(
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst
+        exitStatement: JcInst,
     ) = FlowFunctionInstance { fact ->
         if (fact == ZEROFact) {
             listOf(ZEROFact)

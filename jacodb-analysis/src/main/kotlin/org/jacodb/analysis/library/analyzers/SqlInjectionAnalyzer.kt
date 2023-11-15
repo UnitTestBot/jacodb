@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.SarifMessage

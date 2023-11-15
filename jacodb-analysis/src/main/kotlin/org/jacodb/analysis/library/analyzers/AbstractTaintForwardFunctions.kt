@@ -23,7 +23,6 @@ import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
