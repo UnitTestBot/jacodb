@@ -18,6 +18,11 @@
 
 package org.jacodb.analysis.engine
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consume
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -583,8 +588,7 @@ class Ifds(
 ) {
     private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
 
-    // private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
-    private val workList: ArrayDeque<Edge> = ArrayDeque()
+    private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
     private val pathEdges: MutableSet<Edge> = mutableSetOf()
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
@@ -615,9 +619,10 @@ class Ifds(
 
         if (pathEdges.add(edge)) {
             // Add edge to worklist:
-            workList.add(edge)
+            // FIXME: make 'propagate' suspend fun and use 'workList.send(edge)' here
+            workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
 
-            // Send edge to the analyzer/manager:
+            // Send edge to analyzer/manager:
             for (event in analyzer.handleNewEdge(edge)) {
                 // FIXME: make 'propagate' suspend fun and remove this runBlocking block:
                 runBlocking {
@@ -634,9 +639,8 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    private fun tabulationAlgorithm() {
-        while (workList.isNotEmpty()) {
-            val currentEdge = workList.removeFirst()
+    private fun tabulationAlgorithm() = runBlocking {
+        for (currentEdge in workList) {
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
 
