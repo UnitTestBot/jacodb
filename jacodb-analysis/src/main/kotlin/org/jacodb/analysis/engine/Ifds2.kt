@@ -620,6 +620,10 @@ class Ifds(
         tabulationAlgorithm()
     }
 
+    fun stop() {
+        workList.close()
+    }
+
     fun submitNewEdge(edge: Edge): Unit = runBlocking {
         propagate(edge)
     }
