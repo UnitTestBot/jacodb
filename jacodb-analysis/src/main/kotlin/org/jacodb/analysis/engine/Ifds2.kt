@@ -21,9 +21,11 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -514,7 +516,7 @@ class Manager(
         return runner
     }
 
-    suspend fun handleEvent(event: Event, runner: Ifds) {
+    suspend fun handleEvent(event: Event, runner: Ifds): Unit = coroutineScope {
         when (event) {
             is EdgeForOtherRunner -> {
                 val method = event.edge.method
@@ -531,6 +533,15 @@ class Manager(
                     .collect(event.collector)
             }
 
+            is SubscriptionForSummaryEdges3 -> {
+                summaryEdgesStorage
+                    .getFacts(event.method)
+                    .map { it.edge }
+                    .map { Edge(it) }
+                    .onEach(event.handle)
+                    .launchIn(this@coroutineScope)
+            }
+
             is NewSummaryEdge -> {
                 summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
             }
@@ -543,6 +554,11 @@ sealed interface Event
 data class SubscriptionForSummaryEdges2(
     val method: JcMethod,
     val collector: FlowCollector<Edge>,
+) : Event
+
+data class SubscriptionForSummaryEdges3(
+    val method: JcMethod,
+    val handle: (Edge) -> Unit,
 ) : Event
 
 data class NewSummaryEdge(
@@ -655,6 +671,24 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
+    private fun handleSummaryEdge(
+        edge: Edge,
+        startVertex: Vertex,
+        caller: JcInst,
+        returnSite: JcInst,
+    ) {
+        // val calleeStartVertex = edge.from
+        val (exit, exitFact) = edge.to
+        val finalFacts = flowSpace
+            .obtainExitToReturnSiteFlowFunction(caller, returnSite, exit)
+            .compute(exitFact)
+        for (returnSiteFact in finalFacts) {
+            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+            val newEdge = Edge(startVertex, returnSiteVertex)
+            propagate(newEdge)
+        }
+    }
+
     private fun tabulationAlgorithm() = runBlocking {
         for (currentEdge in workList) {
             val (startVertex, currentVertex) = currentEdge
@@ -695,26 +729,22 @@ class Ifds(
                                         // for (event in analyzer.)
 
                                         // Subscribe on summary edges:
-                                        val summaries = flow {
-                                            val event = SubscriptionForSummaryEdges2(callee, this@flow)
-                                            manager.handleEvent(event, this@Ifds)
-                                        }
-                                        summaries
-                                            .filter { it.from == calleeStartVertex }
-                                            .map { it.to }
-                                            .onEach { (exit, exitFact) ->
-                                                val finalFacts = flowSpace
-                                                    .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
-                                                    .compute(exitFact)
-                                                for (returnSiteFact in finalFacts) {
-                                                    val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                                    val newEdge = Edge(startVertex, returnSiteVertex)
-                                                    propagate(newEdge)
-                                                }
-                                            }
-                                        // TODO: add `.launchIn(this)` to the above Flow
+                                        // val summaries = flow {
+                                        //     val event = SubscriptionForSummaryEdges2(callee, this@flow)
+                                        //     manager.handleEvent(event, this@Ifds)
+                                        // }
+                                        // summaries
+                                        //     .filter { it.from == calleeStartVertex }
+                                        //     .onEach {
+                                        //         handleSummaryEdge(it, startVertex, current, returnSite)
+                                        //     }
+                                        //     .launchIn(this@runBlocking)
 
-                                        TODO()
+                                        // TODO: another version:
+                                        val event = SubscriptionForSummaryEdges3(callee) { edge ->
+                                            handleSummaryEdge(edge, startVertex, current, returnSite)
+                                        }
+                                        manager.handleEvent(event, this@Ifds)
                                     } else {
                                         // Save info about the call for summary edges that will be found later:
                                         callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
@@ -726,17 +756,21 @@ class Ifds(
                                         }
 
                                         // Handle already-found summary edges:
-                                        val exits = summaryEdges[calleeStartVertex].orEmpty()
-                                        for ((exit, exitFact) in exits) {
-                                            val finalFacts = flowSpace
-                                                .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
-                                                .compute(exitFact)
-                                            for (returnSiteFact in finalFacts) {
-                                                val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                                val newEdge = Edge(startVertex, returnSiteVertex)
-                                                propagate(newEdge)
-                                            }
+                                        for (exitVertex in summaryEdges[calleeStartVertex].orEmpty()) {
+                                            val edge = Edge(calleeStartVertex, exitVertex)
+                                            handleSummaryEdge(edge, startVertex, current, returnSite)
                                         }
+                                        // val exits = summaryEdges[calleeStartVertex].orEmpty()
+                                        // for ((exit, exitFact) in exits) {
+                                        //     val finalFacts = flowSpace
+                                        //         .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
+                                        //         .compute(exitFact)
+                                        //     for (returnSiteFact in finalFacts) {
+                                        //         val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+                                        //         val newEdge = Edge(startVertex, returnSiteVertex)
+                                        //         propagate(newEdge)
+                                        //     }
+                                        // }
                                     }
                                 }
                             }
