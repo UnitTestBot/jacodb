@@ -19,15 +19,9 @@
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.onFailure
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
@@ -533,15 +527,6 @@ class Manager(
                     .collect(event.collector)
             }
 
-            is SubscriptionForSummaryEdges3 -> {
-                summaryEdgesStorage
-                    .getFacts(event.method)
-                    .map { it.edge }
-                    .map { Edge(it) }
-                    .onEach(event.handle)
-                    .launchIn(this@coroutineScope)
-            }
-
             is NewSummaryEdge -> {
                 summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
             }
@@ -554,11 +539,6 @@ sealed interface Event
 data class SubscriptionForSummaryEdges2(
     val method: JcMethod,
     val collector: FlowCollector<Edge>,
-) : Event
-
-data class SubscriptionForSummaryEdges3(
-    val method: JcMethod,
-    val handle: (Edge) -> Unit,
 ) : Event
 
 data class NewSummaryEdge(
@@ -624,7 +604,7 @@ class Ifds(
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
-    fun run(startMethods: List<JcMethod>) {
+    fun run(startMethods: List<JcMethod>): Unit = runBlocking {
         for (method in startMethods) {
             require(unitResolver.resolve(method) == unit)
             for (start in graph.entryPoints(method)) {
@@ -640,11 +620,11 @@ class Ifds(
         tabulationAlgorithm()
     }
 
-    fun submitNewEdge(edge: Edge) {
+    fun submitNewEdge(edge: Edge): Unit = runBlocking {
         propagate(edge)
     }
 
-    private fun propagate(edge: Edge): Boolean {
+    private suspend fun propagate(edge: Edge): Boolean {
         // TODO: replace comment with 'require' string argument
         // Propagated edge must be in the same unit:
         require(unitResolver.resolve(edge.method) == unit)
@@ -652,14 +632,11 @@ class Ifds(
         if (pathEdges.add(edge)) {
             // Add edge to worklist:
             // FIXME: make 'propagate' suspend fun and use 'workList.send(edge)' here
-            workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
+            workList.send(edge)
 
             // Send edge to analyzer/manager:
             for (event in analyzer.handleNewEdge(edge)) {
-                // FIXME: make 'propagate' suspend fun and remove this runBlocking block:
-                runBlocking {
-                    manager.handleEvent(event, this@Ifds)
-                }
+                manager.handleEvent(event, this@Ifds)
             }
 
             return true
@@ -671,7 +648,7 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    private fun handleSummaryEdge(
+    private suspend fun handleSummaryEdge(
         edge: Edge,
         startVertex: Vertex,
         caller: JcInst,
@@ -689,7 +666,7 @@ class Ifds(
         }
     }
 
-    private fun tabulationAlgorithm() = runBlocking {
+    private suspend fun tabulationAlgorithm() {
         for (currentEdge in workList) {
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
@@ -729,20 +706,10 @@ class Ifds(
                                         // for (event in analyzer.)
 
                                         // Subscribe on summary edges:
-                                        // val summaries = flow {
-                                        //     val event = SubscriptionForSummaryEdges2(callee, this@flow)
-                                        //     manager.handleEvent(event, this@Ifds)
-                                        // }
-                                        // summaries
-                                        //     .filter { it.from == calleeStartVertex }
-                                        //     .onEach {
-                                        //         handleSummaryEdge(it, startVertex, current, returnSite)
-                                        //     }
-                                        //     .launchIn(this@runBlocking)
-
-                                        // TODO: another version:
-                                        val event = SubscriptionForSummaryEdges3(callee) { edge ->
-                                            handleSummaryEdge(edge, startVertex, current, returnSite)
+                                        val event = SubscriptionForSummaryEdges2(callee) {
+                                            if (it.from == calleeStartVertex) {
+                                                handleSummaryEdge(it, startVertex, current, returnSite)
+                                            }
                                         }
                                         manager.handleEvent(event, this@Ifds)
                                     } else {
