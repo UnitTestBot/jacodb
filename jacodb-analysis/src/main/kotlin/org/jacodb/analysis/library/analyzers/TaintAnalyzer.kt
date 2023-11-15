@@ -16,9 +16,6 @@
 
 package org.jacodb.analysis.library.analyzers
 
-import org.jacodb.analysis.config.BasicConditionEvaluator
-import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.TaintConfig
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.DomainFact
@@ -47,7 +44,6 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.taint.configuration.TaintMethodSource
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->
