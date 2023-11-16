@@ -245,7 +245,7 @@ fun NpePrecalcBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { gr
 }
 
 private class NpePrecalcBackwardAnalyzer(
-    val graph: JcApplicationGraph,
+    graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
 

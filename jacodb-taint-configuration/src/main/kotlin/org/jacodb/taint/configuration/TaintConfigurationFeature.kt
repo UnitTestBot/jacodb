@@ -40,6 +40,7 @@ import org.jacodb.api.ext.objectClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.short
 import org.jacodb.api.ext.toType
+import org.jacodb.impl.cfg.util.isArray
 import org.jacodb.impl.features.hierarchyExt
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -257,6 +258,7 @@ class TaintConfigurationFeature private constructor(
             is Argument -> position.index in method.parameters.indices
             This -> !method.isStatic
             Result -> method.returnType.typeName != PredefinedPrimitives.Void
+            ResultAnyElement -> method.returnType.isArray
         }
 
     private inner class ActionSpecializer(val method: JcMethod) : TaintActionVisitor<List<Action>> {
@@ -364,7 +366,7 @@ class TaintConfigurationFeature private constructor(
 
         override fun visit(condition: SourceFunctionMatches): Condition = ConstantTrue // TODO Not implemented yet
 
-        override fun visit(condition: CallParameterContainsMark): Condition =
+        override fun visit(condition: ContainsMark): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
 
         override fun visit(condition: ConstantTrue): Condition = condition
@@ -393,7 +395,7 @@ class TaintConfigurationFeature private constructor(
             val queue = ArrayDeque(condition.args)
             val args = mutableListOf<Condition>()
             while (queue.isNotEmpty()) {
-                val it = queue.removeLast().accept(this)
+                val it = queue.removeFirst().accept(this)
                 if (it is Or) {
                     queue += it.args
                 } else {
@@ -421,7 +423,7 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantGt): Condition = condition
         override fun visit(condition: ConstantMatches): Condition = condition
         override fun visit(condition: SourceFunctionMatches): Condition = condition
-        override fun visit(condition: CallParameterContainsMark): Condition = condition
+        override fun visit(condition: ContainsMark): Condition = condition
         override fun visit(condition: ConstantTrue): Condition = condition
         override fun visit(condition: TypeMatches): Condition = condition
 

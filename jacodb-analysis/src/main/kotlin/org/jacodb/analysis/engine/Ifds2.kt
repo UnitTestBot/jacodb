@@ -66,18 +66,18 @@ data class Tainted(
     val variable: AccessPath,
     val mark: TaintMark,
 ) : Fact {
-    constructor(fact: TaintNode) : this(fact.variable, TaintMark("Taint"))
+    constructor(fact: TaintNode) : this(fact.variable, TaintMark(fact.nodeType))
 }
 
 fun DomainFact.toFact(): Fact = when (this) {
     ZEROFact -> ZeroFact
-    is TaintNode -> Tainted(variable, TaintMark("Taint"))
-    else -> TODO()
+    is TaintNode -> Tainted(this)
+    else -> object : Fact {}
 }
 
 fun Fact.toDomainFact(): DomainFact = when (this) {
     ZeroFact -> ZEROFact
-    is Tainted -> TaintAnalysisNode(variable)
+    is Tainted -> TaintAnalysisNode(variable, nodeType = mark.name)
     else -> object : DomainFact {}
 }
 
@@ -302,9 +302,9 @@ class TaintForwardFlowFunctions(
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
             ?.let { feature ->
-                val callee = callExpr.method.method
-                println("Extracting config for callee = $callee")
-                feature.getConfigForMethod(callee)
+                val method = callExpr.method.method
+                logger.info { "Extracting config for $method" }
+                feature.getConfigForMethod(method)
             }
 
         // If 'fact' is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.

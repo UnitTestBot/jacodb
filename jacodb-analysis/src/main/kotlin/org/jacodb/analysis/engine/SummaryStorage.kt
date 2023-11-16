@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcMethod
+import org.jacodb.taint.configuration.TaintMethodSink
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -37,6 +38,7 @@ sealed interface SummaryFact {
 data class VulnerabilityLocation(
     val vulnerabilityDescription: VulnerabilityDescription,
     val sink: IfdsVertex,
+    val rule: TaintMethodSink? = null,
 ) : SummaryFact {
     override val method: JcMethod = sink.method
 }

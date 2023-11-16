@@ -17,6 +17,7 @@
 package org.jacodb.analysis.config
 
 import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
@@ -28,6 +29,7 @@ import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.Position
 import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.This
 
 class CallPositionToAccessPathResolver(
@@ -50,6 +52,15 @@ class CallPositionToAccessPathResolver(
         } else {
             callExpr.toPathOrNull()
         } ?: error("Cannot resolve $position for $callStatement")
+
+        ResultAnyElement -> {
+            val path = if (callStatement is JcAssignInst) {
+                callStatement.lhv.toPathOrNull()
+            } else {
+                callExpr.toPathOrNull()
+            } ?: error("Cannot resolve $position for $callStatement")
+            path / ElementAccessor(null)
+        }
     }
 }
 
@@ -72,5 +83,7 @@ class CallPositionToJcValueResolver(
         } else {
             error("Cannot resolve $position for $callStatement")
         }
+
+        ResultAnyElement -> error("Cannot resolve $position for $callStatement")
     }
 }

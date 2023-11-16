@@ -76,8 +76,8 @@ class MainIfdsUnitManager(
         }
 
         foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
-        val dependencies = getAllCallees(method)
-        dependencies.forEach { addStart(it) }
+        // val dependencies = getAllCallees(method)
+        // dependencies.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
@@ -101,6 +101,13 @@ class MainIfdsUnitManager(
 
             val allUnits = foundMethods.keys.toList()
             logger.info { "Starting analysis. Number of found units: ${allUnits.size}" }
+            for ((i, entry) in foundMethods.entries.withIndex()) {
+                val (unit, methods) = entry
+                logger.info { "Unit [${i + 1}/${foundMethods.size}] :: $unit :: total ${methods.size} methods" }
+                for ((j, method) in methods.withIndex()) {
+                    logger.info { "- Method [${j + 1}/${methods.size}] $method" }
+                }
+            }
 
             val progressLoggerJob = launch {
                 while (isActive) {
@@ -152,7 +159,7 @@ class MainIfdsUnitManager(
         logger.info { "Restoring traces..." }
 
         foundVulnerabilities
-            .map { VulnerabilityInstance(it.vulnerabilityDescription, extendTraceGraph(it.sink.traceGraph)) }
+            .map { VulnerabilityInstance(it.vulnerabilityDescription, extendTraceGraph(it.sink.traceGraph), it.rule) }
             .filter {
                 it.traceGraph.sources.any { source ->
                     graph.methodOf(source.statement) in startMethods || source.domainFact == ZEROFact

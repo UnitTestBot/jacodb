@@ -28,7 +28,7 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
-import org.jacodb.taint.configuration.CallParameterContainsMark
+import org.jacodb.taint.configuration.ContainsMark
 import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
@@ -63,7 +63,7 @@ abstract class DefaultConditionVisitor<out R>(
     override fun visit(condition: ConstantGt): R = defaultConditionHandler(condition)
     override fun visit(condition: ConstantMatches): R = defaultConditionHandler(condition)
     override fun visit(condition: SourceFunctionMatches): R = defaultConditionHandler(condition)
-    override fun visit(condition: CallParameterContainsMark): R = defaultConditionHandler(condition)
+    override fun visit(condition: ContainsMark): R = defaultConditionHandler(condition)
     override fun visit(condition: ConstantTrue): R = defaultConditionHandler(condition)
     override fun visit(condition: TypeMatches): R = defaultConditionHandler(condition)
 }
@@ -157,7 +157,7 @@ class BasicConditionEvaluator(
         TODO("Not implemented yet")
     }
 
-    override fun visit(condition: CallParameterContainsMark): Boolean {
+    override fun visit(condition: ContainsMark): Boolean {
         error("This visitor does not support condition $condition. Use FactAwareConditionEvaluator instead")
     }
 
@@ -181,14 +181,14 @@ class BasicConditionEvaluator(
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
     private val basicConditionEvaluator: BasicConditionEvaluator,
-) : ConditionVisitor<Boolean> by basicConditionEvaluator {
+) : DefaultConditionEvaluator() {
 
     constructor(
         fact: Tainted,
         positionResolver: PositionResolver<JcValue>,
     ) : this(fact, BasicConditionEvaluator(positionResolver))
 
-    override fun visit(condition: CallParameterContainsMark): Boolean {
+    override fun visit(condition: ContainsMark): Boolean {
         if (fact.mark == condition.mark) {
             val value = basicConditionEvaluator.positionResolver.resolve(condition.position)
             val variable = value.toPath()
@@ -197,5 +197,43 @@ class FactAwareConditionEvaluator(
             }
         }
         return false
+    }
+
+    // Delegates
+
+    override fun visit(condition: IsConstant): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: IsType): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: AnnotationType): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: ConstantEq): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: ConstantLt): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: ConstantGt): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: ConstantMatches): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: SourceFunctionMatches): Boolean {
+        return basicConditionEvaluator.visit(condition)
+    }
+
+    override fun visit(condition: TypeMatches): Boolean {
+        return basicConditionEvaluator.visit(condition)
     }
 }

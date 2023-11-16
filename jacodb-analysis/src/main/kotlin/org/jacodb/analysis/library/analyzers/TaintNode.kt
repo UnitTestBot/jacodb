@@ -17,6 +17,7 @@
 package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.DomainFact
+import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
@@ -31,7 +32,7 @@ abstract class TaintNode(
     val variable: AccessPath,
     val activation: JcInst? = null,
 ) : DomainFact {
-    protected abstract val nodeType: String
+    internal abstract val nodeType: String
 
     abstract fun updateActivation(newActivation: JcInst?): TaintNode
 
@@ -87,15 +88,16 @@ data class UnusedVariableNode(
 class TaintAnalysisNode(
     variable: AccessPath,
     activation: JcInst? = null,
+    override val nodeType: String, // = "Taint analysis"
 ) : TaintNode(variable, activation) {
-    override val nodeType: String
-        get() = "Taint analysis"
+
+    constructor(fact: Tainted) : this(fact.variable, nodeType=fact.mark.name)
 
     override fun updateActivation(newActivation: JcInst?): TaintAnalysisNode {
-        return TaintAnalysisNode(variable, newActivation)
+        return TaintAnalysisNode(variable, newActivation, nodeType)
     }
 
     override fun moveToOtherPath(newPath: AccessPath): TaintAnalysisNode {
-        return TaintAnalysisNode(newPath, activation)
+        return TaintAnalysisNode(newPath, activation, nodeType)
     }
 }

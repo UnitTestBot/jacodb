@@ -48,7 +48,7 @@ import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
-class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
+class UnusedVariableAnalyzer(graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
 
     override val isMainAnalyzer: Boolean

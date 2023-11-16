@@ -37,7 +37,7 @@ interface ConditionVisitor<out R> {
     fun visit(condition: ConstantGt): R
     fun visit(condition: ConstantMatches): R
     fun visit(condition: SourceFunctionMatches): R
-    fun visit(condition: CallParameterContainsMark): R
+    fun visit(condition: ContainsMark): R
     fun visit(condition: ConstantTrue): R
     fun visit(condition: TypeMatches): R
 
@@ -62,7 +62,7 @@ val conditionModule = SerializersModule {
         subclass(ConstantGt::class)
         subclass(ConstantMatches::class)
         subclass(SourceFunctionMatches::class)
-        subclass(CallParameterContainsMark::class)
+        subclass(ContainsMark::class)
         subclass(ConstantTrue::class)
         subclass(TypeMatches::class)
     }
@@ -163,10 +163,9 @@ data class SourceFunctionMatches(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
-// sink label
 @Serializable
 @SerialName("ContainsMark")
-data class CallParameterContainsMark(
+data class ContainsMark(
     @SerialName("position") val position: Position,
     @SerialName("mark") val mark: TaintMark,
 ) : Condition {

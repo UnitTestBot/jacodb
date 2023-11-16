@@ -105,7 +105,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         // TODO: think about better assertions here
         assertEquals(expectedLocations.size, sinks.size)
         expectedLocations.forEach { expected ->
-            assertTrue(sinks.any { it.contains(expected) })
+            assertTrue(sinks.map { it.traceGraph.sink.toString() }.any { it.contains(expected) })
         }
     }
 
@@ -117,16 +117,25 @@ abstract class BaseAnalysisTest : BaseTest() {
         val badMethod = clazz.methods.single { it.name == "bad" }
 
         val goodIssues = findSinks(goodMethod, vulnerabilityType)
+        println("goodIssues: ${goodIssues.size} total")
+        for (issue in goodIssues) {
+            println("  - $issue")
+        }
+
         val badIssues = findSinks(badMethod, vulnerabilityType)
+        println("badIssues: ${badIssues.size} total")
+        for (issue in badIssues) {
+            println("  - $issue")
+        }
 
         assertTrue(goodIssues.isEmpty())
         assertTrue(badIssues.isNotEmpty())
     }
 
-    protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<String> {
+    protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<VulnerabilityInstance> {
         val sinks = launchAnalysis(listOf(method))
             .filter { it.vulnerabilityDescription.ruleId == vulnerabilityType }
-            .map { it.traceGraph.sink.toString() }
+        // .map { it.traceGraph.sink.toString() }
 
         return sinks.toSet()
     }

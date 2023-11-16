@@ -58,7 +58,7 @@ fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { 
 
 private val sqlSourceMatchers = listOf(
     "java\\.io.+",
-    "java\\.lang\\.System\\#getenv",
+    // "java\\.lang\\.System\\#getenv",
     "java\\.sql\\.ResultSet#get.+"
 )
 

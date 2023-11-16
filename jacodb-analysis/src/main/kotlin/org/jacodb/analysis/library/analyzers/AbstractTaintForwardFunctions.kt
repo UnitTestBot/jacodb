@@ -29,6 +29,7 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.engine.toDomainFact
+import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
@@ -120,9 +121,9 @@ abstract class AbstractTaintForwardFunctions(
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
             ?.let { feature ->
-                val callee = callExpr.method.method
-                println("Extracting config for callee = $callee")
-                feature.getConfigForMethod(callee)
+                val method = callExpr.method.method // callee
+                logger.info { "Extracting config for $method" }
+                feature.getConfigForMethod(method)
             }
 
         if (fact == ZEROFact) {
@@ -145,7 +146,8 @@ abstract class AbstractTaintForwardFunctions(
                     }
                 }
             }
-            return@FlowFunctionInstance facts.map { TaintAnalysisNode(it.variable) } + ZEROFact
+            // logger.info { "call-to-return-site flow function for fact=$fact returns ${facts.size} facts: $facts" }
+            return@FlowFunctionInstance facts.map { TaintAnalysisNode(it) } + ZEROFact
         }
 
         if (fact !is TaintNode || fact.variable.isStatic) {

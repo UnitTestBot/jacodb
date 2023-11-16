@@ -41,3 +41,7 @@ object This : Position
 @Serializable
 @SerialName("Result")
 object Result : Position
+
+@Serializable
+@SerialName("ResultAnyElement")
+object ResultAnyElement : Position

@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap
  * but in backward analyzers this should be set to false
  */
 abstract class AbstractAnalyzer(
-    private val graph: JcApplicationGraph,
+    protected val graph: JcApplicationGraph,
 ) : Analyzer {
     protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
 

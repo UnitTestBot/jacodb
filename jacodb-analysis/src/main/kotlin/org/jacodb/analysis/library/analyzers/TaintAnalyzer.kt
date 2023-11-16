@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.DomainFact
@@ -24,8 +26,10 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.NewSummaryFact
+import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
@@ -44,13 +48,15 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintMethodSink
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->
         val callExpr = inst.callExpr?.takeIf { isSourceMethod(it.method.method) }
             ?: return@generates emptyList()
         if (inst is JcAssignInst && isSourceMethod(callExpr.method.method)) {
-            listOf(TaintAnalysisNode(inst.lhv.toPath()))
+            listOf(TaintAnalysisNode(inst.lhv.toPath(), nodeType = "TAINT"))
         } else {
             emptyList()
         }
@@ -63,7 +69,7 @@ fun isSinkMethodToSinks(isSinkMethod: (JcMethod) -> Boolean): (JcInst) -> List<T
             ?: return@sinks emptyList()
         callExpr.values
             .mapNotNull { it.toPathOrNull() }
-            .map { TaintAnalysisNode(it) }
+            .map { TaintAnalysisNode(it, nodeType = "TAINT") }
     }
 }
 
@@ -127,18 +133,64 @@ abstract class TaintAnalyzer(
     protected abstract fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription
 
     override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
-        if (edge.to.domainFact in sinks(edge.to.statement)) {
-            val desc = generateDescriptionForSink(edge.to)
-            add(NewSummaryFact(VulnerabilityLocation(desc, edge.to)))
-            verticesWithTraceGraphNeeded.add(edge.to)
+        val configOk = run {
+            val callExpr = edge.to.statement.callExpr ?: return@run false
+
+            val config = graph.classpath.features
+                ?.singleOrNull { it is TaintConfigurationFeature }
+                ?.let { it as TaintConfigurationFeature }
+                ?.let { feature ->
+                    val method = callExpr.method.method
+                    logger.info { "Extracting config for $method" }
+                    feature.getConfigForMethod(method)
+                } ?: return@run false
+
+            if (edge.to.domainFact !is TaintNode) {
+                return@run false
+            }
+
+            // Determine whether 'edge.to' is a sink via config:
+            val conditionEvaluator = FactAwareConditionEvaluator(
+                Tainted(edge.to.domainFact),
+                CallPositionToJcValueResolver(edge.to.statement),
+            )
+            var isSink = false
+            var triggeredItem: TaintMethodSink? = null
+            for (item in config.filterIsInstance<TaintMethodSink>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    isSink = true
+                    triggeredItem = item
+                    break
+                }
+                // FIXME: unconditionally let it be the sink.
+                // isSink = true
+                // triggeredItem = item
+                // break
+            }
+            if (isSink) {
+                val desc = generateDescriptionForSink(edge.to)
+                add(NewSummaryFact(VulnerabilityLocation(desc, edge.to, triggeredItem)))
+                verticesWithTraceGraphNeeded.add(edge.to)
+            }
+            true
         }
-        // TODO: for some reason, the following code absent here:
-        // addAll(super.handleNewEdge(edge))
+
+        if (!configOk) {
+            // "config"-less behavior:
+            if (edge.to.domainFact in sinks(edge.to.statement)) {
+                val desc = generateDescriptionForSink(edge.to)
+                add(NewSummaryFact(VulnerabilityLocation(desc, edge.to)))
+                verticesWithTraceGraphNeeded.add(edge.to)
+            }
+        }
+
+        // "Default" behavior:
+        addAll(super.handleNewEdge(edge))
     }
 }
 
 abstract class TaintBackwardAnalyzer(
-    val graph: JcApplicationGraph,
+    graph: JcApplicationGraph,
     maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
     abstract val generates: (JcInst) -> List<DomainFact>
@@ -270,7 +322,7 @@ private class TaintForwardFunctions(
         // Possibly null arguments
         this += method.flowGraph().locals
             .filterIsInstance<JcArgument>()
-            .map { TaintAnalysisNode(AccessPath.from(it)) }
+            .map { TaintAnalysisNode(AccessPath.from(it), nodeType = "TAINT") }
     }
 }
 
@@ -308,7 +360,7 @@ private class TaintBackwardFunctions(
                 return listOf(fact.moveToOtherPath(newPath))
             }
         } else if (factPath.startsWith(fromPath) || (to is JcInstanceCallExpr && factPath.startsWith(to.instance.toPath()))) {
-            return to.values.mapNotNull { it.toPathOrNull() }.map { TaintAnalysisNode(it) }
+            return to.values.mapNotNull { it.toPathOrNull() }.map { TaintAnalysisNode(it, nodeType = "TAINT") }
         }
         return default
     }
@@ -327,7 +379,7 @@ private class TaintBackwardFunctions(
 
         val callExpr = inst.callExpr as? JcInstanceCallExpr ?: return listOf(fact)
         if (fact.variable.startsWith(callExpr.instance.toPath())) {
-            return inst.values.mapNotNull { it.toPathOrNull() }.map { TaintAnalysisNode(it) }
+            return inst.values.mapNotNull { it.toPathOrNull() }.map { TaintAnalysisNode(it, nodeType = "TAINT") }
         }
 
         return listOf(fact)

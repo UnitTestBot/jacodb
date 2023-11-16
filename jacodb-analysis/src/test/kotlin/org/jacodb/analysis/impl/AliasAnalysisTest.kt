@@ -17,9 +17,9 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.newAliasRunnerFactory
@@ -129,7 +129,7 @@ class AliasAnalysisTest : BaseTest() {
             inst.callExpr?.method?.name == "taint" &&
             inst.callExpr?.method?.method?.enclosingClass?.simpleName == "Benchmark"
         ) {
-            listOf(TaintAnalysisNode(inst.lhv.toPath()))
+            listOf(TaintAnalysisNode(inst.lhv.toPath(), nodeType = "TAINT"))
         } else {
             emptyList()
         }

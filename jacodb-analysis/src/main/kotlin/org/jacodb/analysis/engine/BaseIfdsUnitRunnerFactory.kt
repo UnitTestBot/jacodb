@@ -26,8 +26,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import org.jacodb.analysis.logger
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.ext.cfg.callExpr
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -127,7 +129,8 @@ private class BaseIfdsUnitRunner(
             val (current, currentFact) = currentVertex
 
             val currentCallees = graph.callees(current).toList()
-            val currentIsCall = currentCallees.isNotEmpty()
+            // val currentIsCall = currentCallees.isNotEmpty()
+            val currentIsCall = current.callExpr != null
             val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
 
             if (currentIsCall) {
@@ -361,7 +364,7 @@ private class BaseIfdsUnitRunner(
                     val startFacts = flowSpace.obtainPossibleStartFacts(startStatement)
                     for (startFact in startFacts) {
                         val vertex = IfdsVertex(startStatement, startFact)
-                        val edge = IfdsEdge(vertex, vertex)
+                        val edge = IfdsEdge(vertex, vertex) // loop
                         val predecessor = PathEdgePredecessor(edge, PredecessorKind.NoPredecessor)
                         propagate(edge, predecessor)
                     }
@@ -371,6 +374,12 @@ private class BaseIfdsUnitRunner(
             // Run the tabulation algorithm:
             runTabulationAlgorithm()
         } finally {
+            logger.info { "Finishing ${this@BaseIfdsUnitRunner}" }
+            logger.info { "Total ${pathEdges.size} path edges" }
+            for ((i, edge) in pathEdges.sortedBy { it.toString() }.withIndex()) {
+                logger.info { " - [${i + 1}/${pathEdges.size}] $edge" }
+            }
+
             // Post-process left-over events:
             withContext(NonCancellable) {
                 analyzer.handleIfdsResult(ifdsResult).forEach {
