@@ -652,6 +652,21 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
+    private data class BackInfo(
+        val startVertex: Vertex,
+        val caller: JcInst,
+        val returnSite: JcInst,
+    )
+
+    private val backInfoForCallee: MutableMap<Vertex, BackInfo> = mutableMapOf()
+
+    suspend fun handleSummaryEdge(edge: Edge) {
+        val info = backInfoForCallee[edge.from]
+        if (info != null) {
+            handleSummaryEdge(edge, info.startVertex, info.caller, info.returnSite)
+        }
+    }
+
     private suspend fun handleSummaryEdge(
         edge: Edge,
         startVertex: Vertex,
@@ -720,6 +735,7 @@ class Ifds(
                                             handleSummaryEdge(it, startVertex, current, returnSite)
                                         }
                                     }
+                                    backInfoForCallee[calleeStartVertex] = BackInfo(startVertex, current, returnSite)
                                     manager.handleEvent(event, this@Ifds)
                                 } else {
                                     // Save info about the call for summary edges that will be found later:
