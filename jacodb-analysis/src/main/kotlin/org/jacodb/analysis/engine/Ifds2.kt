@@ -763,8 +763,9 @@ class Ifds(
                             .obtainExitToReturnSiteFlowFunction(caller, returnSite, current)
                             .compute(currentFact)
                         for (returnSiteFact in factsAtReturnSite) {
+                            val callerStartVertex = callerPathEdge.from
                             val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                            val newEdge = Edge(callerPathEdge.from, returnSiteVertex)
+                            val newEdge = Edge(callerStartVertex, returnSiteVertex)
                             propagate(newEdge)
                         }
                     }
