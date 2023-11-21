@@ -1489,7 +1489,7 @@ class RawInstListBuilder(
         repeat(insnNode.dims) {
             dimensions += pop()
         }
-        val expr = JcRawNewArrayExpr(insnNode.desc.typeName(), dimensions)
+        val expr = JcRawNewArrayExpr(insnNode.desc.typeName(), dimensions.reversed())
         val assignment = nextRegister(expr.typeName)
         addInstruction(insnNode, JcRawAssignInst(method, assignment, expr))
         push(assignment)

@@ -606,7 +606,13 @@ data class JcNewArrayExpr(
     override val operands: List<JcValue>
         get() = dimensions
 
-    override fun toString(): String = "new ${type.typeName}${dimensions.joinToString("") { "[$it]" }}"
+    override fun toString(): String {
+        var curDim = 0
+        val typeNameWithDimensions = Regex("\\[(.*?)]").replace(type.typeName) {
+            "[${dimensions.getOrNull(curDim++) ?: ""}]"
+        }
+        return "new $typeNameWithDimensions"
+    }
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcNewArrayExpr(this)
