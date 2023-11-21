@@ -615,7 +615,6 @@ data class JcRawNewArrayExpr(
             "[${dimensions.getOrNull(curDim++) ?: ""}]"
         }
         return "new $typeNameWithDimensions"
-
     }
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
