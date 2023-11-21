@@ -606,10 +606,21 @@ data class JcNewArrayExpr(
     override val operands: List<JcValue>
         get() = dimensions
 
-    override fun toString(): String = "new ${type.typeName}${dimensions.joinToString("") { "[$it]" }}"
+    override fun toString(): String = "new ${arrayTypeToStringWithDimensions(type.typeName, dimensions)}"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcNewArrayExpr(this)
+    }
+
+    companion object {
+        private val regexToProcessDimensions = Regex("\\[(.*?)]")
+
+        private fun arrayTypeToStringWithDimensions(typeName: String, dimensions: List<JcValue>) {
+            var curDim = 0
+            regexToProcessDimensions.replace(typeName) {
+                "[${dimensions.getOrNull(curDim++) ?: ""}]"
+            }
+        }
     }
 }
 
