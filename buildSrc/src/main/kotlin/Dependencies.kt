@@ -21,6 +21,7 @@ object Versions {
     const val junit = "5.9.2"
     const val kotlin = "1.7.21"
     const val kotlin_logging = "1.8.3"
+    const val kotlin_logging5 = "5.1.0"
     const val kotlinx_benchmark = "0.4.4"
     const val kotlinx_cli = "0.3.5"
     const val kotlinx_collections_immutable = "0.3.5"
@@ -63,6 +64,13 @@ object Libs {
         group = "io.github.microutils",
         name = "kotlin-logging",
         version = Versions.kotlin_logging
+    )
+
+    // https://github.com/oshai/kotlin-logging
+    val kotlin_logging5 = dep(
+        group = "io.github.oshai",
+        name = "kotlin-logging",
+        version = Versions.kotlin_logging5
     )
 
     // https://github.com/qos-ch/slf4j

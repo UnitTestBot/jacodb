@@ -26,11 +26,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import org.jacodb.analysis.logger
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.cfg.callExpr
 import java.util.concurrent.ConcurrentHashMap
+
+private val logger = io.github.oshai.kotlinlogging.KotlinLogging.logger {}
 
 /**
  * This is a basic [IfdsUnitRunnerFactory], which creates one [BaseIfdsUnitRunner] for each [newRunner] call.
