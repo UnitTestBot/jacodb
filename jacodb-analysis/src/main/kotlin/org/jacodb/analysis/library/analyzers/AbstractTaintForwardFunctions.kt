@@ -18,6 +18,7 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
@@ -29,7 +30,6 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.engine.toDomainFact
-import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
@@ -50,6 +50,8 @@ import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+
+private val logger = KotlinLogging.logger {}
 
 abstract class AbstractTaintForwardFunctions(
     protected val cp: JcClasspath,
@@ -116,13 +118,13 @@ abstract class AbstractTaintForwardFunctions(
         returnSite: JcInst,
     ) = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        val callee = callExpr.method.method
 
         val config = cp.features
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
             ?.let { feature ->
-                val callee = callExpr.method.method
-                logger.info { "Extracting config for $callee" }
+                logger.debug { "Extracting config for $callee" }
                 feature.getConfigForMethod(callee)
             }
 
@@ -146,7 +148,7 @@ abstract class AbstractTaintForwardFunctions(
                     }
                 }
             }
-            // logger.info { "call-to-return-site flow function for fact=$fact returns ${facts.size} facts: $facts" }
+            logger.debug { "call-to-return-site flow function for callee=$callee, fact=$fact returns ${facts.size} facts: $facts" }
             return@FlowFunctionInstance facts.map { TaintAnalysisNode(it) } + ZEROFact
         }
 
@@ -206,7 +208,7 @@ abstract class AbstractTaintForwardFunctions(
 
             if (!defaultBehavior) {
                 if (facts.size > 0) {
-                    println("Got ${facts.size} facts from config: $facts")
+                    println("Got ${facts.size} facts from config for $callee: $facts")
                 }
                 return@FlowFunctionInstance facts.map { it.toDomainFact() }
             } else {

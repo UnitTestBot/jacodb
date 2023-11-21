@@ -297,13 +297,13 @@ class TaintForwardFlowFunctions(
         returnSite: JcInst, // unused?
     ) = FlowFunction { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        val callee = callExpr.method.method
 
         val config = cp.features
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
             ?.let { feature ->
-                val callee = callExpr.method.method
-                logger.info { "Extracting config for $callee" }
+                logger.debug { "Extracting config for $callee" }
                 feature.getConfigForMethod(callee)
             }
 

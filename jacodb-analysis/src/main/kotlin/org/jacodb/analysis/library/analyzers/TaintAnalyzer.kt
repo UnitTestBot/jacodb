@@ -135,13 +135,13 @@ abstract class TaintAnalyzer(
     override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
         val configOk = run {
             val callExpr = edge.to.statement.callExpr ?: return@run false
+            val callee = callExpr.method.method
 
             val config = graph.classpath.features
                 ?.singleOrNull { it is TaintConfigurationFeature }
                 ?.let { it as TaintConfigurationFeature }
                 ?.let { feature ->
-                    val callee = callExpr.method.method
-                    logger.info { "Extracting config for $callee" }
+                    logger.debug { "Extracting config for $callee" }
                     feature.getConfigForMethod(callee)
                 } ?: return@run false
 
