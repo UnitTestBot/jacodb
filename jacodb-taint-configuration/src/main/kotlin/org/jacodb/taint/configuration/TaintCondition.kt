@@ -176,6 +176,8 @@ data class ContainsMark(
 @SerialName("ConstantTrue")
 object ConstantTrue : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
+
+    override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
@@ -221,7 +223,9 @@ data class NamePatternMatcher(
 
 @Serializable
 @SerialName("AnyNameMatches")
-object AnyNameMatcher : NameMatcher
+object AnyNameMatcher : NameMatcher {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("TypeMatcher")
@@ -240,7 +244,9 @@ data class ClassMatcher(
 
 @Serializable
 @SerialName("AnyTypeMatches")
-object AnyTypeMatcher : TypeMatcher
+object AnyTypeMatcher : TypeMatcher {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("FunctionMatches")

@@ -36,12 +36,18 @@ data class Argument(@SerialName("number") val index: Int) : Position
 
 @Serializable
 @SerialName("This")
-object This : Position
+object This : Position {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("Result")
-object Result : Position
+object Result : Position {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("ResultAnyElement")
-object ResultAnyElement : Position
+object ResultAnyElement : Position {
+    override fun toString(): String = javaClass.simpleName
+}
