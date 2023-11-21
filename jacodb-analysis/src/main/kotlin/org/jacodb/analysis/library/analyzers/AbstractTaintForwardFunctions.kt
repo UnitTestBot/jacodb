@@ -121,9 +121,9 @@ abstract class AbstractTaintForwardFunctions(
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
             ?.let { feature ->
-                val method = callExpr.method.method // callee
-                logger.info { "Extracting config for $method" }
-                feature.getConfigForMethod(method)
+                val callee = callExpr.method.method
+                logger.info { "Extracting config for $callee" }
+                feature.getConfigForMethod(callee)
             }
 
         if (fact == ZEROFact) {

@@ -140,9 +140,9 @@ abstract class TaintAnalyzer(
                 ?.singleOrNull { it is TaintConfigurationFeature }
                 ?.let { it as TaintConfigurationFeature }
                 ?.let { feature ->
-                    val method = callExpr.method.method
-                    logger.info { "Extracting config for $method" }
-                    feature.getConfigForMethod(method)
+                    val callee = callExpr.method.method
+                    logger.info { "Extracting config for $callee" }
+                    feature.getConfigForMethod(callee)
                 } ?: return@run false
 
             if (edge.to.domainFact !is TaintNode) {
