@@ -126,6 +126,8 @@ private class BaseIfdsUnitRunner(
                 }
             }
 
+            logger.debug { "Propagating $currentEdge" }
+
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
 
