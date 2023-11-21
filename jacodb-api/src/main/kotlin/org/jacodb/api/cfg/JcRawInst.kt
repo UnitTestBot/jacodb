@@ -609,16 +609,21 @@ data class JcRawNewArrayExpr(
     override val operands: List<JcRawValue>
         get() = dimensions
 
-    override fun toString(): String {
-        var curDim = 0
-        val typeNameWithDimensions = Regex("\\[(.*?)]").replace("$typeName") {
-            "[${dimensions.getOrNull(curDim++) ?: ""}]"
-        }
-        return "new $typeNameWithDimensions"
-    }
+    override fun toString(): String = "new ${arrayTypeToStringWithDimensions(typeName, dimensions)}"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
+    }
+    
+    companion object {
+        private val regexToProcessDimensions = Regex("\\[(.*?)]")
+
+        private fun arrayTypeToStringWithDimensions(typeName: TypeName, dimensions: List<JcRawValue>) {
+            var curDim = 0
+            regexToProcessDimensions.replace("$typeName") {
+                "[${dimensions.getOrNull(curDim++) ?: ""}]"
+            }
+        }
     }
 }
 
