@@ -94,6 +94,7 @@ private class BaseIfdsUnitRunner(
         pathEdgesPreds.computeIfAbsent(edge) { ConcurrentHashMap.newKeySet() }.add(pred)
 
         if (pathEdges.add(edge)) {
+            logger.debug { "Propagating $edge" }
             workList.send(edge)
             analyzer.handleNewEdge(edge).forEach {
                 manager.handleEvent(it, this)
@@ -125,8 +126,6 @@ private class BaseIfdsUnitRunner(
                     manager.handleEvent(QueueEmptinessChanged(false), this@BaseIfdsUnitRunner)
                 }
             }
-
-            logger.debug { "Propagating $currentEdge" }
 
             val (startVertex, currentVertex) = currentEdge
             val (current, currentFact) = currentVertex
