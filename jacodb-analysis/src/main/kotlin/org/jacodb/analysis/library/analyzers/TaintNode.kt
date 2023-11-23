@@ -42,7 +42,11 @@ abstract class TaintNode(
         get() = updateActivation(null)
 
     override fun toString(): String {
-        return "[$nodeType]: $variable, activation point=$activation"
+        return if (activation != null) {
+            "[$nodeType]: $variable, activation=$activation"
+        } else {
+            "[$nodeType]: $variable"
+        }
     }
 
     override fun equals(other: Any?): Boolean {
