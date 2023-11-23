@@ -169,7 +169,9 @@ abstract class TaintAnalyzer(
             }
             if (isSink) {
                 val desc = generateDescriptionForSink(edge.to)
-                add(NewSummaryFact(VulnerabilityLocation(desc, edge.to, triggeredItem)))
+                val vulnerability = VulnerabilityLocation(desc, edge.to, triggeredItem)
+                logger.info { "Found sink: $vulnerability" }
+                add(NewSummaryFact(vulnerability))
                 verticesWithTraceGraphNeeded.add(edge.to)
             }
             true
@@ -179,7 +181,9 @@ abstract class TaintAnalyzer(
             // "config"-less behavior:
             if (edge.to.domainFact in sinks(edge.to.statement)) {
                 val desc = generateDescriptionForSink(edge.to)
-                add(NewSummaryFact(VulnerabilityLocation(desc, edge.to)))
+                val vulnerability = VulnerabilityLocation(desc, edge.to)
+                logger.info { "Found sink: $vulnerability" }
+                add(NewSummaryFact(vulnerability))
                 verticesWithTraceGraphNeeded.add(edge.to)
             }
         }

@@ -133,7 +133,8 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<VulnerabilityInstance> {
-        val sinks = launchAnalysis(listOf(method))
+        val vulnerabilities = launchAnalysis(listOf(method))
+        val sinks = vulnerabilities
             .filter { it.vulnerabilityDescription.ruleId == vulnerabilityType }
         // .map { it.traceGraph.sink.toString() }
 

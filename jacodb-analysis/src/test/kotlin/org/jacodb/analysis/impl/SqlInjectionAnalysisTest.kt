@@ -54,9 +54,10 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `test on specific Juliet's CWE 89`() {
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
-        // val className = "juliet.testcases.CWE89_SQL_Injection.s02.CWE89_SQL_Injection__File_executeQuery_02"
-        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_13"
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_02"
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_12"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_21"
         testSingleJulietClass(vulnerabilityType, className)
 
         // for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
