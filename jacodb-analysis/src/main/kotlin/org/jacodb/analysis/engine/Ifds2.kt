@@ -18,10 +18,15 @@
 
 package org.jacodb.analysis.engine
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
@@ -498,6 +503,8 @@ class Manager(
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
     private val runners: MutableMap<UnitType, Ifds> = ConcurrentHashMap()
 
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     fun newRunner(
         graph: JcApplicationGraph,
         unitResolver: UnitResolver,
@@ -510,25 +517,35 @@ class Manager(
         return runner
     }
 
-    suspend fun handleEvent(event: Event, runner: Ifds): Unit = coroutineScope {
-        when (event) {
-            is EdgeForOtherRunner -> {
-                val method = event.edge.method
-                val unit = unitResolver.resolve(method)
-                val otherRunner = runners[unit] ?: error("No runner for $unit")
-                otherRunner.submitNewEdge(event.edge)
-            }
+    fun handleEvent(event: Event, runner: Ifds) {
+        scope.launch {
+            when (event) {
+                is EdgeForOtherRunner -> {
+                    val method = event.edge.method
+                    val unit = unitResolver.resolve(method)
+                    val otherRunner = runners[unit] ?: error("No runner for $unit")
+                    otherRunner.submitNewEdge(event.edge)
+                }
 
-            is SubscriptionForSummaryEdges2 -> {
-                summaryEdgesStorage
-                    .getFacts(event.method)
-                    .map { it.edge }
-                    .map { Edge(it) }
-                    .collect(event.collector)
-            }
+                is SubscriptionForSummaryEdges2 -> {
+                    summaryEdgesStorage
+                        .getFacts(event.method)
+                        .map { it.edge }
+                        .map { Edge(it) }
+                        .collect(event.collector)
+                }
 
-            is NewSummaryEdge -> {
-                summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
+                is SubscriptionForSummaryEdges3 -> {
+                    summaryEdgesStorage
+                        .getFacts(event.method)
+                        .map { it.edge }
+                        .map { Edge(it) }
+                        .collect(event.handler)
+                }
+
+                is NewSummaryEdge -> {
+                    summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
+                }
             }
         }
     }
@@ -539,6 +556,11 @@ sealed interface Event
 data class SubscriptionForSummaryEdges2(
     val method: JcMethod,
     val collector: FlowCollector<Edge>,
+) : Event
+
+data class SubscriptionForSummaryEdges3(
+    val method: JcMethod,
+    val handler: (Edge) -> Unit,
 ) : Event
 
 data class NewSummaryEdge(
@@ -628,7 +650,7 @@ class Ifds(
         propagate(edge)
     }
 
-    private suspend fun propagate(edge: Edge): Boolean {
+    private fun propagate(edge: Edge): Boolean {
         // TODO: replace comment with 'require' string argument
         // Propagated edge must be in the same unit:
         require(unitResolver.resolve(edge.method) == unit)
@@ -636,7 +658,7 @@ class Ifds(
         if (pathEdges.add(edge)) {
             // Add edge to worklist:
             // FIXME: make 'propagate' suspend fun and use 'workList.send(edge)' here
-            workList.send(edge)
+            workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
 
             // Send edge to analyzer/manager:
             for (event in analyzer.handleNewEdge(edge)) {
@@ -652,22 +674,25 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
+    // TODO: remove
     private data class BackInfo(
         val startVertex: Vertex,
         val caller: JcInst,
         val returnSite: JcInst,
     )
 
+    // TODO: remove
     private val backInfoForCallee: MutableMap<Vertex, BackInfo> = mutableMapOf()
 
-    suspend fun handleSummaryEdge(edge: Edge) {
+    // TODO: remove
+    fun handleSummaryEdge(edge: Edge) {
         val info = backInfoForCallee[edge.from]
         if (info != null) {
             handleSummaryEdge(edge, info.startVertex, info.caller, info.returnSite)
         }
     }
 
-    private suspend fun handleSummaryEdge(
+    private fun handleSummaryEdge(
         edge: Edge,
         startVertex: Vertex,
         caller: JcInst,
@@ -685,13 +710,13 @@ class Ifds(
         }
     }
 
-    private suspend fun tabulationAlgorithm() {
+    private fun tabulationAlgorithm() = runBlocking {
         for (edge in workList) {
             handle(edge)
         }
     }
 
-    private suspend fun handle(currentEdge: Edge) {
+    private fun handle(currentEdge: Edge) {
         val (startVertex, currentVertex) = currentEdge
         val (current, currentFact) = currentVertex
         // TODO: replace with (current.callExpr != null)
@@ -726,8 +751,9 @@ class Ifds(
 
                                 if (callee.isExtern) {
                                     // Initialize analysis of callee:
-                                    // TODO: send Edge(calleeStartVertex, calleeStartVertex) loop-edge
-                                    // for (event in analyzer.)
+                                    for (event in analyzer.handleCrossUnitCall(currentVertex, calleeStartVertex)) {
+                                        manager.handleEvent(event, this@Ifds)
+                                    }
 
                                     // Subscribe on summary edges:
                                     val event = SubscriptionForSummaryEdges2(callee) {
@@ -735,7 +761,6 @@ class Ifds(
                                             handleSummaryEdge(it, startVertex, current, returnSite)
                                         }
                                     }
-                                    backInfoForCallee[calleeStartVertex] = BackInfo(startVertex, current, returnSite)
                                     manager.handleEvent(event, this@Ifds)
                                 } else {
                                     // Save info about the call for summary edges that will be found later:
@@ -752,17 +777,6 @@ class Ifds(
                                         val edge = Edge(calleeStartVertex, exitVertex)
                                         handleSummaryEdge(edge, startVertex, current, returnSite)
                                     }
-                                    // val exits = summaryEdges[calleeStartVertex].orEmpty()
-                                    // for ((exit, exitFact) in exits) {
-                                    //     val finalFacts = flowSpace
-                                    //         .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
-                                    //         .compute(exitFact)
-                                    //     for (returnSiteFact in finalFacts) {
-                                    //         val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                                    //         val newEdge = Edge(startVertex, returnSiteVertex)
-                                    //         propagate(newEdge)
-                                    //     }
-                                    // }
                                 }
                             }
                         }
