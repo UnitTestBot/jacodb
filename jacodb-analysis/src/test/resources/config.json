@@ -247,6 +247,26 @@
         "to": {
           "_": "This"
         }
+      },
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      },
+
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "This"
+        },
+        "to": {
+          "_": "Result"
+        }
       }
     ]
   },
