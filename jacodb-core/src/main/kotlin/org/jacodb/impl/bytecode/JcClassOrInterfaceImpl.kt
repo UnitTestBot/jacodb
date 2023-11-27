@@ -92,7 +92,7 @@ class JcClassOrInterfaceImpl(
 
     override val innerClasses: List<JcClassOrInterface>
         get() {
-            return info.innerClasses.map {
+            return info.innerClasses.filter { it != name }.map {
                 classpath.findClass(it)
             }
         }
