@@ -43,12 +43,12 @@ fun JcClassOrInterface.directTypeParameters(): List<JvmTypeParameterDeclaration>
  */
 fun JcClassOrInterface.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
     val direct = typeParameters.associateBy { it.symbol }
+    val fromMethod = outerMethod?.allVisibleTypeParameters().orEmpty()
     if (!isStatic) {
-        val fromOuter = outerClass?.allVisibleTypeParameters()
-        val fromMethod = outerMethod?.allVisibleTypeParameters()
-        return ((fromMethod ?: fromOuter).orEmpty() + direct).toPersistentMap()
+        val fromOuter = outerClass?.allVisibleTypeParameters().orEmpty()
+        return (direct + fromOuter + fromMethod).toPersistentMap()
     }
-    return direct
+    return (direct + fromMethod).toPersistentMap()
 }
 
 fun JcMethod.allVisibleTypeParameters(): Map<String, JvmTypeParameterDeclaration> {
