@@ -32,6 +32,8 @@ import org.jacodb.testing.*
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.structure.HiddenFieldSuperClass.HiddenFieldSuccClass
+import org.jacodb.testing.types.AAA
+import org.jacodb.testing.types.AAA.CCC
 import org.jacodb.testing.usages.Generics
 import org.jacodb.testing.usages.HelloWorldAnonymousClasses
 import org.jacodb.testing.usages.WithInner
@@ -599,6 +601,24 @@ abstract class DatabaseEnvTest {
     fun `hidden fields`() {
         val hiddenFieldSuccClass = cp.findClass<HiddenFieldSuccClass>()
         assertTrue(hiddenFieldSuccClass.toType().fields.size == hiddenFieldSuccClass.fields.size)
+    }
+
+    @Test
+    fun `static flag on classes`() {
+        val aaa = cp.findClass<AAA>()
+
+        val bbb = cp.findClass<AAA.BBB>()
+        val ccc = cp.findClass<CCC>()
+        assertFalse(bbb.isStatic)
+        assertTrue(ccc.isStatic)
+
+        assertTrue(ccc.innerClasses.isEmpty())
+        assertTrue(bbb.innerClasses.isEmpty())
+
+        val inners = aaa.innerClasses.toList()
+        assertEquals(2, inners.size)
+        assertTrue(inners.first { it.name.contains("CCC") }.isStatic)
+        assertFalse(inners.first { it.name.contains("BBB") }.isStatic)
     }
 
     private inline fun <reified T> findSubClasses(allHierarchy: Boolean = false): Sequence<JcClassOrInterface> {

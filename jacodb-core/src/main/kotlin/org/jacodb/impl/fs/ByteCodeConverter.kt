@@ -19,30 +19,16 @@ package org.jacodb.impl.fs
 import kotlinx.collections.immutable.toImmutableList
 import org.jacodb.api.ClassSource
 import org.jacodb.impl.storage.AnnotationValueKind
-import org.jacodb.impl.types.AnnotationInfo
-import org.jacodb.impl.types.AnnotationValue
-import org.jacodb.impl.types.AnnotationValueList
-import org.jacodb.impl.types.ClassInfo
-import org.jacodb.impl.types.ClassRef
-import org.jacodb.impl.types.EnumRef
-import org.jacodb.impl.types.FieldInfo
-import org.jacodb.impl.types.MethodInfo
-import org.jacodb.impl.types.OuterClassRef
-import org.jacodb.impl.types.ParameterInfo
-import org.jacodb.impl.types.PrimitiveValue
+import org.jacodb.impl.types.*
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
-import org.objectweb.asm.tree.TypeAnnotationNode
+import org.objectweb.asm.tree.*
 
 fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     name = Type.getObjectType(name).className,
     signature = signature,
-    access = access,
+    access = innerClasses?.firstOrNull { it.name == name }?.access ?: access,
 
     outerClass = outerClassRef(),
     innerClasses = innerClasses.map {
