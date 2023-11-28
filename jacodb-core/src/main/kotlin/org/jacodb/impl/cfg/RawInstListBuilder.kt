@@ -536,6 +536,7 @@ class RawInstListBuilder(
             while (current != tryCatchBlock.end) {
                 predecessors.getOrPut(tryCatchBlock.handler, ::mutableListOf).add(current)
                 current = current.next
+                    ?: error("Unexpected instruction")
             }
         }
     }
