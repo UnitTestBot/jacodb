@@ -94,7 +94,7 @@ private class BaseIfdsUnitRunner(
         pathEdgesPreds.computeIfAbsent(edge) { ConcurrentHashMap.newKeySet() }.add(pred)
 
         if (pathEdges.add(edge)) {
-            logger.debug { "Propagating $edge" }
+            // logger.debug { "Propagating $edge" }
             workList.send(edge)
             analyzer.handleNewEdge(edge).forEach {
                 manager.handleEvent(it, this)
@@ -378,9 +378,9 @@ private class BaseIfdsUnitRunner(
         } finally {
             logger.info { "Finishing ${this@BaseIfdsUnitRunner}" }
             logger.info { "Total ${pathEdges.size} path edges" }
-            for ((i, edge) in pathEdges.sortedBy { it.toString() }.withIndex()) {
-                logger.info { " - [${i + 1}/${pathEdges.size}] $edge" }
-            }
+            // for ((i, edge) in pathEdges.sortedBy { it.toString() }.withIndex()) {
+            //     logger.debug { " - [${i + 1}/${pathEdges.size}] $edge" }
+            // }
 
             // Post-process left-over events:
             withContext(NonCancellable) {
