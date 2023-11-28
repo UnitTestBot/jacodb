@@ -208,7 +208,7 @@ abstract class AbstractTaintForwardFunctions(
 
             if (!defaultBehavior) {
                 if (facts.size > 0) {
-                    println("Got ${facts.size} facts from config for $callee: $facts")
+                    logger.debug { "Got ${facts.size} facts from config for $callee: $facts" }
                 }
                 return@FlowFunctionInstance facts.map { it.toDomainFact() }
             } else {
