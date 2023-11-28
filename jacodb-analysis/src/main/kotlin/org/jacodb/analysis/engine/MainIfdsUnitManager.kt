@@ -76,8 +76,8 @@ class MainIfdsUnitManager(
         }
 
         foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
-        val dependencies = getAllCallees(method)
-        dependencies.forEach { addStart(it) }
+        // val dependencies = getAllCallees(method)
+        // dependencies.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
