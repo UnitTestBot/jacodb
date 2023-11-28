@@ -30,8 +30,6 @@ open class JcApplicationGraphImpl(
     override val classpath: JcClasspath,
     private val usages: SyncUsagesExtension,
 ) : JcApplicationGraph {
-    private val methods = mutableSetOf<JcMethod>()
-
     override fun predecessors(node: JcInst): Sequence<JcInst> {
         val graph = node.location.method.flowGraph()
         val predecessors = graph.predecessors(node)
@@ -48,13 +46,11 @@ open class JcApplicationGraphImpl(
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
         return node.callExpr?.method?.method?.let {
-            methods.add(it)
             sequenceOf(it)
         } ?: emptySequence()
     }
 
     override fun callers(method: JcMethod): Sequence<JcInst> {
-        methods.add(method)
         return usages.findUsages(method).flatMap {
             it.flowGraph().instructions.filter { inst ->
                 inst.callExpr?.method?.method == method
@@ -63,16 +59,14 @@ open class JcApplicationGraphImpl(
     }
 
     override fun entryPoints(method: JcMethod): Sequence<JcInst> {
-        methods.add(method)
         return method.flowGraph().entries.asSequence()
     }
 
     override fun exitPoints(method: JcMethod): Sequence<JcInst> {
-        methods.add(method)
         return method.flowGraph().exits.asSequence()
     }
 
     override fun methodOf(node: JcInst): JcMethod {
-        return node.location.method.also { methods.add(it) }
+        return node.location.method
     }
 }
