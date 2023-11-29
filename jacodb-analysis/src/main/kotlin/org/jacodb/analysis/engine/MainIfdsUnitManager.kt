@@ -219,10 +219,11 @@ class MainIfdsUnitManager(
 
             is NewSummaryFact -> {
                 when (val fact = event.fact) {
-                    is CrossUnitCallFact -> crossUnitCallsStorage.send(fact)
-                    is SummaryEdgeFact -> summaryEdgesStorage.send(fact)
-                    is TraceGraphFact -> tracesStorage.send(fact)
-                    is VulnerabilityLocation -> vulnerabilitiesStorage.send(fact)
+                    is CrossUnitCallFact -> crossUnitCallsStorage.add(fact)
+                    is SummaryEdgeFact -> summaryEdgesStorage.add(fact)
+                    is TraceGraphFact -> tracesStorage.add(fact)
+                    is VulnerabilityLocation -> vulnerabilitiesStorage.add(fact)
+                    else -> error("Unexpected $fact")
                 }
             }
 
@@ -232,7 +233,10 @@ class MainIfdsUnitManager(
 
             is SubscriptionForSummaryEdges -> {
                 eventChannel.send(Pair(event, runner))
-                summaryEdgesStorage.getFacts(event.method).map { it.edge }.collect(event.collector)
+                summaryEdgesStorage
+                    .getFacts(event.method)
+                    .map { it.edge }
+                    .collect(event.collector)
             }
         }
     }

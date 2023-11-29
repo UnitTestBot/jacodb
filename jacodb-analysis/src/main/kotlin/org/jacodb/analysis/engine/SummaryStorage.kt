@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap
  * A common interface for anything that should be remembered and used
  * after the analysis of some unit is completed.
  */
-sealed interface SummaryFact {
+interface SummaryFact {
     val method: JcMethod
 }
 
@@ -75,7 +75,7 @@ interface SummaryStorage<T : SummaryFact> {
     /**
      * Adds [fact] to summary of its method
      */
-    fun send(fact: T)
+    fun add(fact: T)
 
     /**
      * @return a flow with all facts summarized for the given [method].
@@ -96,10 +96,12 @@ interface SummaryStorage<T : SummaryFact> {
 }
 
 class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
+    // FIXME: currently, objects are duplicated in 'summaries' and 'outFlows'
+    // TODO: remove 'summaries' and keep only 'outFlows', since 'flow.replayCache == summaries'
     private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 
-    override fun send(fact: T) {
+    override fun add(fact: T) {
         val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
         if (isNew) {
             val flow = outFlows.computeIfAbsent(fact.method) {
