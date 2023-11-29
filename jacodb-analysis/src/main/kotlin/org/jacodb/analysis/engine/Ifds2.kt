@@ -839,7 +839,7 @@ class Ifds(
         } else {
             if (currentIsExit) {
                 // Propagate through the summary edge:
-                for (callerPathEdge in callSitesOf[startVertex].orEmpty()) {
+                for (@Suppress("Destructure") callerPathEdge in callSitesOf[startVertex].orEmpty()) {
                     val caller = callerPathEdge.to.statement
                     for (returnSite in graph.successors(caller)) {
                         val factsAtReturnSite = flowSpace
