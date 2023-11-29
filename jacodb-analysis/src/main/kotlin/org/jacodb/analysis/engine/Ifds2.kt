@@ -18,6 +18,7 @@
 
 package org.jacodb.analysis.engine
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,7 +38,6 @@ import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
-import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
@@ -59,9 +59,11 @@ import org.jacodb.taint.configuration.RemoveMark
 import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
-import java.util.concurrent.ConcurrentHashMap
+
+private val logger = KotlinLogging.logger {}
 
 interface Fact
 
@@ -101,17 +103,30 @@ data class Edge(
     val from: Vertex,
     val to: Vertex,
 ) {
-    // TODO: inline and remove
-    val method: JcMethod get() = from.method
-
     init {
         require(from.method == to.method)
     }
+
+    val method: JcMethod get() = from.method
 
     constructor(edge: IfdsEdge) : this(Vertex(edge.from), Vertex(edge.to))
 }
 
 fun Edge.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())
+
+data class SummaryEdge(
+    val edge: Edge,
+) : SummaryFact {
+    override val method: JcMethod get() = edge.method
+}
+
+data class Vulnerability(
+    val message: String,
+    val sink: Vertex,
+    val rule: TaintMethodSink? = null,
+) : SummaryFact {
+    override val method: JcMethod get() = sink.method
+}
 
 fun interface FlowFunction {
     fun compute(fact: Fact): Collection<Fact>
@@ -500,52 +515,94 @@ class Manager(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver,
 ) {
-    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdgeFact>()
-    private val runners: MutableMap<UnitType, Ifds> = ConcurrentHashMap()
-
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
+    private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
+    private val runnerForUnit: MutableMap<UnitType, Ifds> = mutableMapOf()
+
+    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
+    private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
+
     fun newRunner(
-        graph: JcApplicationGraph,
-        unitResolver: UnitResolver,
         unit: UnitType,
         analyzer: Analyzer2,
     ): Ifds {
-        check(unit !in runners) { "Runner for $unit already exists" }
+        check(unit !in runnerForUnit) { "Runner for $unit already exists" }
         val runner = Ifds(graph, analyzer, this@Manager, unitResolver, unit)
-        runners[unit] = runner
+        runnerForUnit[unit] = runner
         return runner
     }
 
-    fun handleEvent(event: Event, runner: Ifds) {
-        scope.launch {
-            when (event) {
-                is EdgeForOtherRunner -> {
-                    val method = event.edge.method
-                    val unit = unitResolver.resolve(method)
-                    val otherRunner = runners[unit] ?: error("No runner for $unit")
-                    otherRunner.submitNewEdge(event.edge)
-                }
+    fun addStart(method: JcMethod) {
+        logger.info { "Adding start method: $method" }
+        val unit = unitResolver.resolve(method)
+        methodsForUnit.getOrPut(unit) { mutableSetOf() }.add(method)
+        // TODO: val isNew = (...).add(); if (isNew) { deps.forEach { addStart(it) } }
+    }
 
-                is SubscriptionForSummaryEdges2 -> {
+    // @OptIn(DelicateCoroutinesApi::class)
+    // (newSingleThreadContext("Manager"))
+    fun analyze(startMethods: List<JcMethod>) {
+        for (method in startMethods) {
+            addStart(method)
+        }
+
+        val allUnits = methodsForUnit.keys.toList()
+        logger.info { "Starting analysis of ${methodsForUnit.values.sumOf { it.size }} methods in ${allUnits.size} units" }
+
+        for (unit in allUnits) {
+            // Initialize the analyzer:
+            val analyzer = TaintAnalyzer(graph)
+
+            // Initializer the runner:
+            val runner = newRunner(unit, analyzer)
+
+            // Store the runner:
+            runnerForUnit[unit] = runner
+
+            // Start the runner:
+            scope.launch {
+                val methods = methodsForUnit[unit]!!.toList()
+                runner.run(methods)
+            }
+        }
+    }
+
+    fun handleEvent(event: Event, runner: Ifds) {
+        when (event) {
+            is EdgeForOtherRunner -> {
+                val method = event.edge.method
+                val unit = unitResolver.resolve(method)
+                val otherRunner = runnerForUnit[unit] ?: error("No runner for $unit")
+                otherRunner.submitNewEdge(event.edge)
+            }
+
+            is SubscriptionForSummaryEdges2 -> {
+                // TODO: possible Job leak
+                scope.launch {
                     summaryEdgesStorage
                         .getFacts(event.method)
                         .map { it.edge }
-                        .map { Edge(it) }
                         .collect(event.collector)
                 }
+            }
 
-                is SubscriptionForSummaryEdges3 -> {
+            is SubscriptionForSummaryEdges3 -> {
+                // TODO: possible Job leak
+                scope.launch {
                     summaryEdgesStorage
                         .getFacts(event.method)
                         .map { it.edge }
-                        .map { Edge(it) }
                         .collect(event.handler)
                 }
+            }
 
-                is NewSummaryEdge -> {
-                    summaryEdgesStorage.send(SummaryEdgeFact(event.edge.toIfds()))
-                }
+            is NewSummaryEdge -> {
+                summaryEdgesStorage.add(SummaryEdge(event.edge))
+            }
+
+            is NewVulnerability -> {
+                vulnerabilitiesStorage.add(event.vulnerability)
             }
         }
     }
@@ -565,9 +622,7 @@ data class SubscriptionForSummaryEdges3(
 
 data class NewSummaryEdge(
     val edge: Edge,
-) : Event {
-    val method: JcMethod = edge.method
-}
+) : Event
 
 // TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
 //       the first instruction of the analyzed method together with a fact.
@@ -578,6 +633,10 @@ data class EdgeForOtherRunner(
         check(edge.from == edge.to) { "Edge for another runner must be a loop" }
     }
 }
+
+data class NewVulnerability(
+    val vulnerability: Vulnerability,
+) : Event
 
 interface Analyzer2 {
     val flowFunctions: FlowFunctionsSpace2
