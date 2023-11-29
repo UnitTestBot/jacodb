@@ -651,9 +651,9 @@ class Ifds(
     }
 
     private fun propagate(edge: Edge): Boolean {
-        // TODO: replace comment with 'require' string argument
-        // Propagated edge must be in the same unit:
-        require(unitResolver.resolve(edge.method) == unit)
+        require(unitResolver.resolve(edge.method) == unit) {
+            "Propagated edge must be in the same unit"
+        }
 
         if (pathEdges.add(edge)) {
             // Add edge to worklist:
