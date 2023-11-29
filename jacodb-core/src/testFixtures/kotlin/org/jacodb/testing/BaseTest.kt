@@ -80,9 +80,12 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     override var db = runBlocking {
         jacodb {
-            // persistent("D:\\work\\jacodb\\jcdb-index.db")
-            // persistent("${System.getProperty("user.home")}/index.db")
-            persistent("/tmp/index.db")
+            val ci = System.getenv("CI")
+            println("CI=$ci")
+            if (ci != "true") {
+                persistent("/tmp/index.db")
+            }
+
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             installFeatures(*dbFeatures.toTypedArray())
