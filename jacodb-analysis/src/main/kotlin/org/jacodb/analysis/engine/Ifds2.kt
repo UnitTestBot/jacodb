@@ -693,17 +693,21 @@ class Ifds(
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
+    private fun addStart(method: JcMethod) {
+        require(unitResolver.resolve(method) == unit)
+        for (start in graph.entryPoints(method)) {
+            val startFacts = flowSpace.obtainPossibleStartFacts(start)
+            for (startFact in startFacts) {
+                val vertex = Vertex(start, startFact)
+                val edge = Edge(vertex, vertex) // loop
+                propagate(edge)
+            }
+        }
+    }
+
     fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
-            require(unitResolver.resolve(method) == unit)
-            for (start in graph.entryPoints(method)) {
-                val startFacts = flowSpace.obtainPossibleStartFacts(start)
-                for (startFact in startFacts) {
-                    val vertex = Vertex(start, startFact)
-                    val edge = Edge(vertex, vertex) // loop
-                    propagate(edge)
-                }
-            }
+            addStart(method)
         }
 
         tabulationAlgorithm()
