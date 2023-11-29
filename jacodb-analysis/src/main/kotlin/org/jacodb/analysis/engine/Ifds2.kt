@@ -27,6 +27,7 @@ import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.BasicConditionEvaluator
@@ -550,7 +551,8 @@ class Manager(
         val allUnits = methodsForUnit.keys.toList()
         logger.info { "Starting analysis of ${methodsForUnit.values.sumOf { it.size }} methods in ${allUnits.size} units" }
 
-        for (unit in allUnits) {
+        // Spawn runners:
+        val allJobs = allUnits.map { unit ->
             // Initialize the analyzer:
             val analyzer = TaintAnalyzer(graph)
 
@@ -566,6 +568,12 @@ class Manager(
                 runner.run(methods)
             }
         }
+
+        // Await all runners:
+        runBlocking {
+            allJobs.joinAll()
+        }
+        logger.info { "All jobs completed" }
     }
 
     fun handleEvent(event: Event, runner: Ifds) {
