@@ -93,6 +93,9 @@ private class BaseIfdsUnitRunner(
 
         pathEdgesPreds.computeIfAbsent(edge) { ConcurrentHashMap.newKeySet() }.add(pred)
 
+        // Update edge's reason:
+        edge.reason = pred.predEdge
+
         if (pathEdges.add(edge)) {
             // logger.debug { "Propagating $edge" }
             workList.send(edge)

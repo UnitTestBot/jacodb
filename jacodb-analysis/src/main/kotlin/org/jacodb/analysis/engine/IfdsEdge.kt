@@ -21,10 +21,15 @@ import org.jacodb.api.JcMethod
 /**
  * Represents a directed (from [from] to [to]) edge between two ifds vertices
  */
-data class IfdsEdge(val from: IfdsVertex, val to: IfdsVertex) {
+data class IfdsEdge(
+    val from: IfdsVertex,
+    val to: IfdsVertex,
+) {
     init {
         require(from.method == to.method)
     }
+
+    var reason: IfdsEdge? = null
 
     val method: JcMethod
         get() = from.method
