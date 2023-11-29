@@ -626,7 +626,7 @@ class Ifds(
     private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
-    fun run(startMethods: List<JcMethod>): Unit = runBlocking {
+    fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
             require(unitResolver.resolve(method) == unit)
             for (start in graph.entryPoints(method)) {
