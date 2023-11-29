@@ -105,7 +105,7 @@ public class NpeExamples {
         SimpleClassWithField x = z.g;
         x.field = null;
     }
-    
+
     int npeOnLength() {
         String x = "abc";
         String y = "def";
