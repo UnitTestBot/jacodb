@@ -745,24 +745,6 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    // TODO: remove
-    private data class BackInfo(
-        val startVertex: Vertex,
-        val caller: JcInst,
-        val returnSite: JcInst,
-    )
-
-    // TODO: remove
-    private val backInfoForCallee: MutableMap<Vertex, BackInfo> = mutableMapOf()
-
-    // TODO: remove
-    fun handleSummaryEdge(edge: Edge) {
-        val info = backInfoForCallee[edge.from]
-        if (info != null) {
-            handleSummaryEdge(edge, info.startVertex, info.caller, info.returnSite)
-        }
-    }
-
     private fun handleSummaryEdge(
         edge: Edge,
         startVertex: Vertex,
