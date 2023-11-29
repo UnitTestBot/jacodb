@@ -713,7 +713,7 @@ class Ifds(
         workList.close()
     }
 
-    fun submitNewEdge(edge: Edge): Unit = runBlocking {
+    fun submitNewEdge(edge: Edge) {
         propagate(edge)
     }
 
