@@ -356,5 +356,92 @@
         }
       }
     ]
+  },
+  {
+    "_": "MethodSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "ResultSet"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "get.*"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Result"
+        },
+        "mark": {
+          "name": "UNTRUSTED"
+        }
+      }
+    ]
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "Connection"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "(create|prepare)Statement"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      }
+    ]
   }
 ]
