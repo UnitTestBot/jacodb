@@ -16,15 +16,7 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.ByteCodeIndexer
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.JcFeature
-import org.jacodb.api.JcSignal
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.*
 import org.jacodb.api.ext.JAVA_OBJECT
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
@@ -33,6 +25,7 @@ import org.jacodb.impl.storage.defaultBatchSize
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jacodb.impl.storage.withoutAutoCommit
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.objectweb.asm.Type
@@ -45,19 +38,21 @@ typealias InMemoryHierarchyCache = ConcurrentHashMap<Long, ConcurrentHashMap<Lon
 private val objectJvmName = Type.getInternalName(Any::class.java)
 
 class InMemoryHierarchyIndexer(
-    private val persistence: JcDatabasePersistence,
+    persistence: JcDatabasePersistence,
     private val location: RegisteredLocation,
     private val hierarchy: InMemoryHierarchyCache
 ) : ByteCodeIndexer {
 
+    private val interner = persistence.symbolInterner
+
     override fun index(classNode: ClassNode) {
-        val clazzSymbolId = persistence.findSymbolId(classNode.name.className) ?: return
+        val clazzSymbolId = interner.findOrNew(classNode.name.className)
         val superName = classNode.superName
         val superclasses = when {
             superName != null && superName != objectJvmName -> classNode.interfaces + superName
             else -> classNode.interfaces
         }
-        superclasses.mapNotNull { persistence.findSymbolId(it.className) }
+        superclasses.map { interner.findOrNew(it.className) }
             .forEach {
                 hierarchy.getOrPut(it) { ConcurrentHashMap() }
                     .getOrPut(location.id) { ConcurrentHashMap.newKeySet() }
@@ -66,6 +61,9 @@ class InMemoryHierarchyIndexer(
     }
 
     override fun flush(jooq: DSLContext) {
+        jooq.withoutAutoCommit { conn ->
+            interner.flush(conn)
+        }
     }
 }
 
