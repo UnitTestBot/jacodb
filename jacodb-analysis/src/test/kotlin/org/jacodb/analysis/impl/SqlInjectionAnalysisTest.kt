@@ -36,8 +36,7 @@ import java.util.stream.Stream
 class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
-        fun provideClassesForJuliet89(): Stream<Arguments> =
-            provideClassesForJuliet(89, specificBansCwe89)
+        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, specificBansCwe89)
 
         private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
         private val specificBansCwe89: List<String> = listOf(
@@ -54,10 +53,11 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `test on specific Juliet's CWE 89`() {
-        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
         // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_02"
         // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_12"
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_21"
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_21"
+
         testSingleJulietClass(vulnerabilityType, className)
 
         // for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
