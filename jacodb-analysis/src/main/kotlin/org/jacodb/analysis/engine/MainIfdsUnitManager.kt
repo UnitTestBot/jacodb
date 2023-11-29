@@ -145,7 +145,7 @@ class MainIfdsUnitManager(
 
         logger.info { "All jobs completed, gathering results..." }
 
-        val foundVulnerabilities = foundMethods.values.flatten().flatMap { method ->
+        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method->
             vulnerabilitiesStorage.getCurrentFacts(method)
         }
 
