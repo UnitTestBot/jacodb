@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
@@ -567,7 +568,9 @@ class Manager(
         }
 
         // Await all runners:
-        allJobs.joinAll()
+        withTimeout(10000L) {
+            allJobs.joinAll()
+        }
         logger.info { "All jobs completed" }
 
         TODO()
