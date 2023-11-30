@@ -87,6 +87,7 @@ abstract class BaseAnalysisTest : BaseTest() {
     override val cp: JcClasspath = runBlocking {
         val defaultConfigResource = this.javaClass.getResourceAsStream("/config.json")
         if (defaultConfigResource != null) {
+            logger.info { "Loading 'config.json'" }
             val configJson = defaultConfigResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
             db.classpath(allClasspath, listOf(configurationFeature) + BaseAnalysisTest.classpathFeatures)
@@ -116,23 +117,22 @@ abstract class BaseAnalysisTest : BaseTest() {
         println(className)
 
         val clazz = cp.findClass(className)
-        val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
-
-        val goodIssues = findSinks(goodMethod, vulnerabilityType)
-        logger.info { "goodIssues: ${goodIssues.size} total" }
-        for (issue in goodIssues) {
-            logger.debug { "  - $issue" }
-        }
+        val goodMethod = clazz.methods.single { it.name == "good" }
 
         val badIssues = findSinks(badMethod, vulnerabilityType)
         logger.info { "badIssues: ${badIssues.size} total" }
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
+        assertTrue(badIssues.isNotEmpty()) { "Must find some sinks in 'bad'" }
 
-        // assertTrue(goodIssues.isEmpty())
-        // assertTrue(badIssues.isNotEmpty())
+        val goodIssues = findSinks(goodMethod, vulnerabilityType)
+        logger.info { "goodIssues: ${goodIssues.size} total" }
+        for (issue in goodIssues) {
+            logger.debug { "  - $issue" }
+        }
+        assertTrue(goodIssues.isEmpty()) { "Must NOT find any sinks in 'good'" }
     }
 
     protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<VulnerabilityInstance> {
