@@ -78,9 +78,6 @@
       "_": "Or",
       "args": [
         {
-          "_": "ConstantTrue"
-        },
-        {
           "_": "ContainsMark",
           "position": {
             "_": "This"
@@ -371,8 +368,8 @@
         }
       },
       "functionName": {
-        "_": "NameIsEqualTo",
-        "name": "get.*"
+        "_": "NameMatches",
+        "pattern": "get.*"
       },
       "parametersMatchers": [
       ],
@@ -414,8 +411,8 @@
         }
       },
       "functionName": {
-        "_": "NameIsEqualTo",
-        "name": "(create|prepare)Statement"
+        "_": "NameMatches",
+        "pattern": "(create|prepare)Statement"
       },
       "parametersMatchers": [
       ],
