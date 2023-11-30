@@ -21,8 +21,11 @@ package org.jacodb.analysis.engine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.FlowCollector
@@ -519,22 +522,22 @@ class Manager(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
-    private val runnerForUnit: MutableMap<UnitType, Ifds> = mutableMapOf()
+    private val runnerForUnit: MutableMap<UnitType, IfdsRunner> = mutableMapOf()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
 
-    fun newRunner(
+    private fun newRunner(
         unit: UnitType,
         analyzer: Analyzer2,
-    ): Ifds {
+    ): IfdsRunner {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
-        val runner = Ifds(graph, analyzer, this@Manager, unitResolver, unit)
+        val runner = IfdsRunner(graph, analyzer, this@Manager, unitResolver, unit)
         runnerForUnit[unit] = runner
         return runner
     }
 
-    fun addStart(method: JcMethod) {
+    private fun addStart(method: JcMethod) {
         logger.info { "Adding start method: $method" }
         val unit = unitResolver.resolve(method)
         methodsForUnit.getOrPut(unit) { mutableSetOf() }.add(method)
@@ -576,7 +579,7 @@ class Manager(
         logger.info { "All jobs completed" }
     }
 
-    fun handleEvent(event: Event, runner: Ifds) {
+    fun handleEvent(event: Event) {
         when (event) {
             is EdgeForOtherRunner -> {
                 val method = event.edge.method
@@ -679,96 +682,34 @@ class TaintAnalyzer(
     }
 }
 
-class Ifds(
+// TODO: make inner class of Runner
+class IfdsWorker(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer2,
     private val manager: Manager,
     private val unitResolver: UnitResolver,
     private val unit: UnitType,
+    private val inputEdges: ReceiveChannel<Edge>,
+    private val outputEdges: SendChannel<Edge>,
+    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>>,
+    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>>,
 ) {
-    private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
+    private val flowSpace = analyzer.flowFunctions
 
-    private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
-    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
-    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
-    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
-
-    private fun addStart(method: JcMethod) {
-        require(unitResolver.resolve(method) == unit)
-        for (start in graph.entryPoints(method)) {
-            val startFacts = flowSpace.obtainPossibleStartFacts(start)
-            for (startFact in startFacts) {
-                val vertex = Vertex(start, startFact)
-                val edge = Edge(vertex, vertex) // loop
-                propagate(edge)
-            }
+    suspend fun run() {
+        for (edge in inputEdges) {
+            handle(edge)
         }
     }
 
-    fun run(startMethods: List<JcMethod>) {
-        for (method in startMethods) {
-            addStart(method)
-        }
-
-        tabulationAlgorithm()
-    }
-
-    fun stop() {
-        workList.close()
-    }
-
-    fun submitNewEdge(edge: Edge) {
-        propagate(edge)
-    }
-
-    private fun propagate(edge: Edge): Boolean {
-        require(unitResolver.resolve(edge.method) == unit) {
-            "Propagated edge must be in the same unit"
-        }
-
-        if (pathEdges.add(edge)) {
-            // Add edge to worklist:
-            // FIXME: make 'propagate' suspend fun and use 'workList.send(edge)' here
-            workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
-
-            // Send edge to analyzer/manager:
-            for (event in analyzer.handleNewEdge(edge)) {
-                manager.handleEvent(event, this@Ifds)
-            }
-
-            return true
-        }
-
-        return false
+    private fun propagate(edge: Edge) {
+        outputEdges.trySendBlocking(edge).onFailure { if (it != null) throw it }
     }
 
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    private fun handleSummaryEdge(
-        edge: Edge,
-        startVertex: Vertex,
-        caller: JcInst,
-        returnSite: JcInst,
-    ) {
-        // val calleeStartVertex = edge.from
-        val (exit, exitFact) = edge.to
-        val finalFacts = flowSpace
-            .obtainExitToReturnSiteFlowFunction(caller, returnSite, exit)
-            .compute(exitFact)
-        for (returnSiteFact in finalFacts) {
-            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-            val newEdge = Edge(startVertex, returnSiteVertex)
-            propagate(newEdge)
-        }
-    }
-
-    private fun tabulationAlgorithm() = runBlocking {
-        for (edge in workList) {
-            handle(edge)
-        }
-    }
-
+    // IFDS tabulation algorithm
     private fun handle(currentEdge: Edge) {
         val (startVertex, currentVertex) = currentEdge
         val (current, currentFact) = currentVertex
@@ -805,7 +746,7 @@ class Ifds(
                                 if (callee.isExtern) {
                                     // Initialize analysis of callee:
                                     for (event in analyzer.handleCrossUnitCall(currentVertex, calleeStartVertex)) {
-                                        manager.handleEvent(event, this@Ifds)
+                                        manager.handleEvent(event)
                                     }
 
                                     // Subscribe on summary edges:
@@ -814,15 +755,15 @@ class Ifds(
                                             handleSummaryEdge(it, startVertex, current, returnSite)
                                         }
                                     }
-                                    manager.handleEvent(event, this@Ifds)
+                                    manager.handleEvent(event)
                                 } else {
                                     // Save info about the call for summary edges that will be found later:
                                     callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
 
                                     // Initialize analysis of callee:
-                                    this@Ifds.run {
+                                    run {
                                         val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                        this@Ifds.propagate(newEdge)
+                                        propagate(newEdge)
                                     }
 
                                     // Handle already-found summary edges:
@@ -840,17 +781,10 @@ class Ifds(
             if (currentIsExit) {
                 // Propagate through the summary edge:
                 for (@Suppress("Destructure") callerPathEdge in callSitesOf[startVertex].orEmpty()) {
+                    val callerStartVertex = callerPathEdge.from
                     val caller = callerPathEdge.to.statement
                     for (returnSite in graph.successors(caller)) {
-                        val factsAtReturnSite = flowSpace
-                            .obtainExitToReturnSiteFlowFunction(caller, returnSite, current)
-                            .compute(currentFact)
-                        for (returnSiteFact in factsAtReturnSite) {
-                            val callerStartVertex = callerPathEdge.from
-                            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                            val newEdge = Edge(callerStartVertex, returnSiteVertex)
-                            propagate(newEdge)
-                        }
+                        handleSummaryEdge(currentEdge, callerStartVertex, caller, returnSite)
                     }
                 }
 
@@ -870,6 +804,98 @@ class Ifds(
                 }
             }
         }
+    }
+
+    private fun handleSummaryEdge(
+        edge: Edge,
+        startVertex: Vertex,
+        caller: JcInst,
+        returnSite: JcInst,
+    ) {
+        // val calleeStartVertex = edge.from
+        val (exit, exitFact) = edge.to
+        val finalFacts = flowSpace
+            .obtainExitToReturnSiteFlowFunction(caller, returnSite, exit)
+            .compute(exitFact)
+        for (returnSiteFact in finalFacts) {
+            val returnSiteVertex = Vertex(returnSite, returnSiteFact)
+            val newEdge = Edge(startVertex, returnSiteVertex)
+            propagate(newEdge)
+        }
+    }
+}
+
+class IfdsRunner(
+    private val graph: JcApplicationGraph,
+    private val analyzer: Analyzer2,
+    private val manager: Manager,
+    private val unitResolver: UnitResolver,
+    private val unit: UnitType,
+) {
+    private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
+
+    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
+    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
+    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
+
+    private val edgesForWorkers: Channel<Edge> = Channel(Channel.UNLIMITED)
+    private val edgesFromWorkers: Channel<Edge> = Channel(Channel.UNLIMITED)
+
+    // Call this before 'run'!
+    fun startIn(scope: CoroutineScope): Job = scope.launch {
+        // TODO: do we need to use 'edges.consumeEach {}' here?
+        for (edge in edgesFromWorkers) {
+            propagate(edge)
+        }
+    }
+
+    suspend fun run(startMethods: List<JcMethod>) {
+        for (method in startMethods) {
+            addStart(method)
+        }
+        val worker = IfdsWorker(
+            graph, analyzer, manager, unitResolver, unit,
+            edgesForWorkers, edgesFromWorkers, summaryEdges, callSitesOf
+        )
+        worker.run()
+    }
+
+    private fun propagate(edge: Edge): Boolean {
+        require(unitResolver.resolve(edge.method) == unit) {
+            "Propagated edge must be in the same unit"
+        }
+
+        if (pathEdges.add(edge)) {
+            // Add edge to worklist:
+            edgesForWorkers.trySendBlocking(edge).onFailure { if (it != null) throw it }
+
+            // Send edge to analyzer/manager:
+            for (event in analyzer.handleNewEdge(edge)) {
+                manager.handleEvent(event)
+            }
+
+            return true
+        }
+
+        return false
+    }
+
+    // TODO: should 'addStart' be public?
+    // TODO: should 'addStart' replace 'submitNewEdge'?
+    private fun addStart(method: JcMethod) {
+        require(unitResolver.resolve(method) == unit)
+        for (start in graph.entryPoints(method)) {
+            val startFacts = flowSpace.obtainPossibleStartFacts(start)
+            for (startFact in startFacts) {
+                val vertex = Vertex(start, startFact)
+                val edge = Edge(vertex, vertex) // loop
+                propagate(edge)
+            }
+        }
+    }
+
+    fun submitNewEdge(edge: Edge) {
+        propagate(edge)
     }
 }
 
