@@ -21,13 +21,9 @@ package org.jacodb.analysis.engine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.onFailure
-import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.joinAll
@@ -522,7 +518,7 @@ class Manager(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
-    private val runnerForUnit: MutableMap<UnitType, IfdsRunner> = mutableMapOf()
+    private val runnerForUnit: MutableMap<UnitType, Ifds> = mutableMapOf()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
@@ -530,9 +526,9 @@ class Manager(
     private fun newRunner(
         unit: UnitType,
         analyzer: Analyzer2,
-    ): IfdsRunner {
+    ): Ifds {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
-        val runner = IfdsRunner(graph, analyzer, this@Manager, unitResolver, unit)
+        val runner = Ifds(graph, analyzer, this@Manager, unitResolver, unit)
         runnerForUnit[unit] = runner
         return runner
     }
@@ -546,7 +542,7 @@ class Manager(
 
     // @OptIn(DelicateCoroutinesApi::class)
     // (newSingleThreadContext("Manager"))
-    fun analyze(startMethods: List<JcMethod>) {
+    fun analyze(startMethods: List<JcMethod>): List<VulnerabilityInstance> = runBlocking {
         for (method in startMethods) {
             addStart(method)
         }
@@ -554,15 +550,13 @@ class Manager(
         val allUnits = methodsForUnit.keys.toList()
         logger.info { "Starting analysis of ${methodsForUnit.values.sumOf { it.size }} methods in ${allUnits.size} units" }
 
-        // Spawn runners:
+        // Spawn runner jobs:
         val allJobs = allUnits.map { unit ->
             // Initialize the analyzer:
             val analyzer = TaintAnalyzer(graph)
 
-            // Initializer the runner:
+            // Create the runner:
             val runner = newRunner(unit, analyzer)
-
-            // Store the runner:
             runnerForUnit[unit] = runner
 
             // Start the runner:
@@ -573,13 +567,13 @@ class Manager(
         }
 
         // Await all runners:
-        runBlocking {
-            allJobs.joinAll()
-        }
+        allJobs.joinAll()
         logger.info { "All jobs completed" }
+
+        TODO()
     }
 
-    fun handleEvent(event: Event) {
+    suspend fun handleEvent(event: Event) {
         when (event) {
             is EdgeForOtherRunner -> {
                 val method = event.edge.method
@@ -589,23 +583,17 @@ class Manager(
             }
 
             is SubscriptionForSummaryEdges2 -> {
-                // TODO: possible Job leak
-                scope.launch {
-                    summaryEdgesStorage
-                        .getFacts(event.method)
-                        .map { it.edge }
-                        .collect(event.collector)
-                }
+                summaryEdgesStorage
+                    .getFacts(event.method)
+                    .map { it.edge }
+                    .collect(event.collector)
             }
 
             is SubscriptionForSummaryEdges3 -> {
-                // TODO: possible Job leak
-                scope.launch {
-                    summaryEdgesStorage
-                        .getFacts(event.method)
-                        .map { it.edge }
-                        .collect(event.handler)
-                }
+                summaryEdgesStorage
+                    .getFacts(event.method)
+                    .map { it.edge }
+                    .collect(event.handler)
             }
 
             is NewSummaryEdge -> {
@@ -682,35 +670,78 @@ class TaintAnalyzer(
     }
 }
 
-// TODO: make inner class of Runner
-class IfdsWorker(
+class Ifds(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer2,
     private val manager: Manager,
     private val unitResolver: UnitResolver,
     private val unit: UnitType,
-    private val inputEdges: ReceiveChannel<Edge>,
-    private val outputEdges: SendChannel<Edge>,
-    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>>,
-    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>>,
 ) {
-    private val flowSpace = analyzer.flowFunctions
+    private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
+    private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
+    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
+    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
+    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
-    suspend fun run() {
-        for (edge in inputEdges) {
-            handle(edge)
+    suspend fun run(startMethods: List<JcMethod>) {
+        for (method in startMethods) {
+            addStart(method)
+        }
+
+        tabulationAlgorithm()
+    }
+
+    // TODO: should 'addStart' be public?
+    // TODO: should 'addStart' replace 'submitNewEdge'?
+    private suspend fun addStart(method: JcMethod) {
+        require(unitResolver.resolve(method) == unit)
+        for (start in graph.entryPoints(method)) {
+            val startFacts = flowSpace.obtainPossibleStartFacts(start)
+            for (startFact in startFacts) {
+                val vertex = Vertex(start, startFact)
+                val edge = Edge(vertex, vertex) // loop
+                propagate(edge)
+            }
         }
     }
 
-    private fun propagate(edge: Edge) {
-        outputEdges.trySendBlocking(edge).onFailure { if (it != null) throw it }
+    suspend fun submitNewEdge(edge: Edge) {
+        propagate(edge)
+    }
+
+    private suspend fun propagate(edge: Edge): Boolean {
+        require(unitResolver.resolve(edge.method) == unit) {
+            "Propagated edge must be in the same unit"
+        }
+
+        if (pathEdges.add(edge)) {
+            // Add edge to worklist:
+            // workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
+            workList.send(edge)
+
+            // Send edge to analyzer/manager:
+            for (event in analyzer.handleNewEdge(edge)) {
+                manager.handleEvent(event)
+            }
+
+            return true
+        }
+
+        return false
+    }
+
+    private suspend fun tabulationAlgorithm() = coroutineScope {
+        for (edge in workList) {
+            launch {
+                handle(edge)
+            }
+        }
     }
 
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    // IFDS tabulation algorithm
-    private fun handle(currentEdge: Edge) {
+    private suspend fun handle(currentEdge: Edge) {
         val (startVertex, currentVertex) = currentEdge
         val (current, currentFact) = currentVertex
         // TODO: replace with (current.callExpr != null)
@@ -806,7 +837,7 @@ class IfdsWorker(
         }
     }
 
-    private fun handleSummaryEdge(
+    private suspend fun handleSummaryEdge(
         edge: Edge,
         startVertex: Vertex,
         caller: JcInst,
@@ -822,80 +853,6 @@ class IfdsWorker(
             val newEdge = Edge(startVertex, returnSiteVertex)
             propagate(newEdge)
         }
-    }
-}
-
-class IfdsRunner(
-    private val graph: JcApplicationGraph,
-    private val analyzer: Analyzer2,
-    private val manager: Manager,
-    private val unitResolver: UnitResolver,
-    private val unit: UnitType,
-) {
-    private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
-
-    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
-    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
-    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
-
-    private val edgesForWorkers: Channel<Edge> = Channel(Channel.UNLIMITED)
-    private val edgesFromWorkers: Channel<Edge> = Channel(Channel.UNLIMITED)
-
-    // Call this before 'run'!
-    fun startIn(scope: CoroutineScope): Job = scope.launch {
-        // TODO: do we need to use 'edges.consumeEach {}' here?
-        for (edge in edgesFromWorkers) {
-            propagate(edge)
-        }
-    }
-
-    suspend fun run(startMethods: List<JcMethod>) {
-        for (method in startMethods) {
-            addStart(method)
-        }
-        val worker = IfdsWorker(
-            graph, analyzer, manager, unitResolver, unit,
-            edgesForWorkers, edgesFromWorkers, summaryEdges, callSitesOf
-        )
-        worker.run()
-    }
-
-    private fun propagate(edge: Edge): Boolean {
-        require(unitResolver.resolve(edge.method) == unit) {
-            "Propagated edge must be in the same unit"
-        }
-
-        if (pathEdges.add(edge)) {
-            // Add edge to worklist:
-            edgesForWorkers.trySendBlocking(edge).onFailure { if (it != null) throw it }
-
-            // Send edge to analyzer/manager:
-            for (event in analyzer.handleNewEdge(edge)) {
-                manager.handleEvent(event)
-            }
-
-            return true
-        }
-
-        return false
-    }
-
-    // TODO: should 'addStart' be public?
-    // TODO: should 'addStart' replace 'submitNewEdge'?
-    private fun addStart(method: JcMethod) {
-        require(unitResolver.resolve(method) == unit)
-        for (start in graph.entryPoints(method)) {
-            val startFacts = flowSpace.obtainPossibleStartFacts(start)
-            for (startFact in startFacts) {
-                val vertex = Vertex(start, startFact)
-                val edge = Edge(vertex, vertex) // loop
-                propagate(edge)
-            }
-        }
-    }
-
-    fun submitNewEdge(edge: Edge) {
-        propagate(edge)
     }
 }
 
