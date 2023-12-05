@@ -97,7 +97,7 @@ private class BaseIfdsUnitRunner(
         edge.reason = pred.predEdge
 
         if (pathEdges.add(edge)) {
-            // logger.debug { "Propagating $edge" }
+            logger.debug { "Propagating $edge via ${edge.reason}" }
             workList.send(edge)
             analyzer.handleNewEdge(edge).forEach {
                 manager.handleEvent(it, this)
