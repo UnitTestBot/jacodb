@@ -412,7 +412,7 @@
       },
       "functionName": {
         "_": "NameMatches",
-        "pattern": "(create|prepare)Statement"
+        "pattern": "prepareStatement"
       },
       "parametersMatchers": [
       ],
