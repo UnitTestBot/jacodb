@@ -120,6 +120,11 @@ abstract class AbstractTaintForwardFunctions(
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
 
+        if (callee.name == "<init>") {
+            // FIXME: adhoc for constructors
+            return@FlowFunctionInstance listOf(fact)
+        }
+
         val config = cp.features
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
