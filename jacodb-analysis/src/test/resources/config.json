@@ -440,5 +440,48 @@
         }
       }
     ]
+  },
+  {
+    "_": "MethodSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.io"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "BufferedReader"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "readLine"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Result"
+        },
+        "mark": {
+          "name": "UNTRUSTED"
+        }
+      }
+    ]
   }
 ]
