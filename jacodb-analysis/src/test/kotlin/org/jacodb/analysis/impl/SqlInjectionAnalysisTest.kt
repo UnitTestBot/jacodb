@@ -54,7 +54,7 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     @Test
     fun `test on specific Juliet's CWE 89`() {
         // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__database_prepareStatement_01"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_executeBatch_01"
 
         testSingleJulietClass(vulnerabilityType, className)
 
