@@ -139,77 +139,77 @@ private class BaseIfdsUnitRunner(
             val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
 
             if (currentIsCall) {
+                // Propagating through the call-to-return-site edge (lines 17-19 in RHS'95).
+                //
+                //   START main :: (s, d1)
+                //    |
+                //    | (path edge)
+                //    |
+                //   CALL p :: (n, d2)
+                //    :
+                //    : (call-to-return-site edge)
+                //    :
+                //   RETURN FROM p :: (ret(n), d3)
+                //
+                // New path edge:
+                //   (s -> n) + (n -> ret(n)) ==> (s -> ret(n))
+                //
+                // Below:
+                //   startVertex == (s, d1)
+                //   currentVertex = (current, currentFact) == (n, d2)
+                //   returnSiteVertex = (returnSite, returnSiteFact) == (ret(n), d3)
+                //   newEdge == ((s,d1) -> (ret(n), d3))
+                //
                 for (returnSite in graph.successors(current)) {
-                    // Propagating through the call-to-return-site edge (lines 17-19 in RHS'95).
-                    //
-                    //   START main :: (s, d1)
-                    //    |
-                    //    | (path edge)
-                    //    |
-                    //   CALL p :: (n, d2)
-                    //    :
-                    //    : (call-to-return-site edge)
-                    //    :
-                    //   RETURN FROM p :: (ret(n), d3)
-                    //
-                    // New path edge:
-                    //   (s -> n) + (n -> ret(n)) ==> (s -> ret(n))
-                    //
-                    // Below:
-                    //   startVertex == (s, d1)
-                    //   currentVertex = (current, currentFact) == (n, d2)
-                    //   returnSiteVertex = (returnSite, returnSiteFact) == (ret(n), d3)
-                    //   newEdge == ((s,d1) -> (ret(n), d3))
-                    //
-                    run {
-                        val factsAtReturnSite = flowSpace
-                            .obtainCallToReturnFlowFunction(current, returnSite)
-                            .compute(currentFact)
-                        for (returnSiteFact in factsAtReturnSite) {
-                            val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
-                            val newEdge = IfdsEdge(startVertex, returnSiteVertex)
-                            val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.Sequent)
-                            propagate(newEdge, predecessor)
-                        }
+                    val factsAtReturnSite = flowSpace
+                        .obtainCallToReturnFlowFunction(current, returnSite)
+                        .compute(currentFact)
+                    for (returnSiteFact in factsAtReturnSite) {
+                        val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
+                        val newEdge = IfdsEdge(startVertex, returnSiteVertex)
+                        val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.Sequent)
+                        propagate(newEdge, predecessor)
                     }
+                }
 
-                    // Propagating through the call.
-                    //
-                    //   START main :: (s, d1)
-                    //    |
-                    //   CALL p :: (n, d2)
-                    //    : \
-                    //    :  \
-                    //    :  START p :: (s_p, d3)
-                    //    :   |
-                    //    :  EXIT p :: (e_p, d4)
-                    //    :  /
-                    //    : /
-                    //   RETURN FROM p :: (ret(n), d5)
-                    //
-                    // New path edge:
-                    //   (s -> n) + (n -> s_p) + (s_p ~> e_p) + (e_p -> ret(n)) ==> (s -> ret(n))
-                    //
-                    // Below:
-                    //   startVertex == (s, d1)
-                    //   currentVertex = (current, currentFact) == (n, d2)
-                    //   calleeStartVertex = (calleeStart, calleeStartFact) == (s_p, d3)
-                    //   exitVertex = (exit, exitFact) == (e_p, d4)
-                    //   returnSiteVertex = (returnSite, returnSiteFact) == (ret(n), d5)
-                    //   newEdge == ((s, d1) -> (ret(n), d5))
-                    //
-                    for (callee in currentCallees) {
-                        val factsAtCalleeStart = flowSpace
-                            .obtainCallToStartFlowFunction(current, callee)
-                            .compute(currentFact)
-                        for (calleeStart in graph.entryPoints(callee)) {
-                            for (calleeStartFact in factsAtCalleeStart) {
-                                val calleeStartVertex = IfdsVertex(calleeStart, calleeStartFact)
+                // Propagating through the call.
+                //
+                //   START main :: (s, d1)
+                //    |
+                //   CALL p :: (n, d2)
+                //    : \
+                //    :  \
+                //    :  START p :: (s_p, d3)
+                //    :   |
+                //    :  EXIT p :: (e_p, d4)
+                //    :  /
+                //    : /
+                //   RETURN FROM p :: (ret(n), d5)
+                //
+                // New path edge:
+                //   (s -> n) + (n -> s_p) + (s_p ~> e_p) + (e_p -> ret(n)) ==> (s -> ret(n))
+                //
+                // Below:
+                //   startVertex == (s, d1)
+                //   currentVertex = (current, currentFact) == (n, d2)
+                //   calleeStartVertex = (calleeStart, calleeStartFact) == (s_p, d3)
+                //   exitVertex = (exit, exitFact) == (e_p, d4)
+                //   returnSiteVertex = (returnSite, returnSiteFact) == (ret(n), d5)
+                //   newEdge == ((s, d1) -> (ret(n), d5))
+                //
+                for (callee in currentCallees) {
+                    val factsAtCalleeStart = flowSpace
+                        .obtainCallToStartFlowFunction(current, callee)
+                        .compute(currentFact)
+                    for (calleeStart in graph.entryPoints(callee)) {
+                        for (calleeStartFact in factsAtCalleeStart) {
+                            val calleeStartVertex = IfdsVertex(calleeStart, calleeStartFact)
 
-                                // Handle callee exit vertex:
-                                val handleExitVertex: suspend (IfdsVertex) -> Unit =
-                                    { (exit, exitFact) ->
-                                        val exitVertex = IfdsVertex(exit, exitFact)
+                            // Handle callee exit vertex:
+                            val handleExitVertex: suspend (IfdsVertex) -> Unit =
+                                { (exit, exitFact) ->
+                                    val exitVertex = IfdsVertex(exit, exitFact)
+                                    for (returnSite in graph.successors(current)) {
                                         val finalFacts = flowSpace
                                             .obtainExitToReturnSiteFlowFunction(current, returnSite, exit)
                                             .compute(exitFact)
@@ -224,40 +224,40 @@ private class BaseIfdsUnitRunner(
                                             propagate(newEdge, predecessor)
                                         }
                                     }
+                                }
 
-                                if (callee.isExtern) {
-                                    // Notify about the cross-unit call:
-                                    analyzer
-                                        .handleNewCrossUnitCall(CrossUnitCallFact(currentVertex, calleeStartVertex))
-                                        .forEach { event ->
-                                            manager.handleEvent(event, this@BaseIfdsUnitRunner)
-                                        }
-
-                                    // Wait (asynchronously, via Flow) for summary edges and handle them:
-                                    val summaries = flow {
-                                        val event = SubscriptionForSummaryEdges(callee, this@flow)
+                            if (callee.isExtern) {
+                                // Notify about the cross-unit call:
+                                analyzer
+                                    .handleNewCrossUnitCall(CrossUnitCallFact(currentVertex, calleeStartVertex))
+                                    .forEach { event ->
                                         manager.handleEvent(event, this@BaseIfdsUnitRunner)
                                     }
-                                    summaries
-                                        .filter { it.from == calleeStartVertex }
-                                        .map { it.to }
-                                        .onEach(handleExitVertex)
-                                        .launchIn(this)
-                                } else {
-                                    // Save info about the call for summary-facts that will be found later:
-                                    callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
 
-                                    // Initiate analysis for callee:
-                                    val newEdge = IfdsEdge(calleeStartVertex, calleeStartVertex)
-                                    val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.CallToStart)
-                                    propagate(newEdge, predecessor)
+                                // Wait (asynchronously, via Flow) for summary edges and handle them:
+                                val summaries = flow {
+                                    val event = SubscriptionForSummaryEdges(callee, this@flow)
+                                    manager.handleEvent(event, this@BaseIfdsUnitRunner)
+                                }
+                                summaries
+                                    .filter { it.from == calleeStartVertex }
+                                    .map { it.to }
+                                    .onEach(handleExitVertex)
+                                    .launchIn(this)
+                            } else {
+                                // Save info about the call for summary-facts that will be found later:
+                                callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
 
-                                    // Handle already-found summary edges:
-                                    // Note: `.toList()` is needed below to avoid ConcurrentModificationException
-                                    val exits = summaryEdges[calleeStartVertex].orEmpty().toList()
-                                    for (vertex in exits) {
-                                        handleExitVertex(vertex)
-                                    }
+                                // Initiate analysis for callee:
+                                val newEdge = IfdsEdge(calleeStartVertex, calleeStartVertex)
+                                val predecessor = PathEdgePredecessor(currentEdge, PredecessorKind.CallToStart)
+                                propagate(newEdge, predecessor)
+
+                                // Handle already-found summary edges:
+                                // Note: `.toList()` is needed below to avoid ConcurrentModificationException
+                                val exits = summaryEdges[calleeStartVertex].orEmpty().toList()
+                                for (vertex in exits) {
+                                    handleExitVertex(vertex)
                                 }
                             }
                         }
