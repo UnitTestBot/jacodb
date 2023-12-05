@@ -157,7 +157,7 @@ abstract class AbstractTaintForwardFunctions(
             return@FlowFunctionInstance facts.map { TaintAnalysisNode(it) } + ZEROFact
         }
 
-        if (fact !is TaintNode || fact.variable.isStatic) {
+        if (fact !is TaintNode) {
             return@FlowFunctionInstance emptyList()
         }
 
@@ -219,6 +219,10 @@ abstract class AbstractTaintForwardFunctions(
             } else {
                 // Fall back to the default behavior, as if there were no config at all.
             }
+        }
+
+        if (fact.variable.isStatic) {
+            return@FlowFunctionInstance emptyList()
         }
 
         for (actual in callExpr.args) {
