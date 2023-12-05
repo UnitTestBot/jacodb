@@ -61,7 +61,7 @@
       },
       "functionName": {
         "_": "NameMatches",
-        "pattern": "execute.*"
+        "pattern": "execute|executeBatch"
       },
       "parametersMatchers": [
       ],
@@ -99,6 +99,74 @@
           "_": "ContainsMark",
           "position": {
             "_": "This"
+          },
+          "mark": {
+            "name": "ENVIRONMENT"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "SQL Injection",
+    "cwe": [
+      89
+    ],
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": "Statement"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "executeQuery"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "Or",
+      "args": [
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "mark": {
+            "name": "UNTRUSTED"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "mark": {
+            "name": "INJECTION"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
           },
           "mark": {
             "name": "ENVIRONMENT"
