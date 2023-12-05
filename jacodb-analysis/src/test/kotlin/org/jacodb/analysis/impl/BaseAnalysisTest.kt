@@ -125,14 +125,14 @@ abstract class BaseAnalysisTest : BaseTest() {
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
-        assertTrue(badIssues.isNotEmpty()) { "Must find some sinks in 'bad'" }
+        assertTrue(badIssues.isNotEmpty()) { "Must find some sinks in 'bad' for $className" }
 
         val goodIssues = findSinks(goodMethod, vulnerabilityType)
         logger.info { "goodIssues: ${goodIssues.size} total" }
         for (issue in goodIssues) {
             logger.debug { "  - $issue" }
         }
-        assertTrue(goodIssues.isEmpty()) { "Must NOT find any sinks in 'good'" }
+        assertTrue(goodIssues.isEmpty()) { "Must NOT find any sinks in 'good' for $className" }
     }
 
     protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<VulnerabilityInstance> {
