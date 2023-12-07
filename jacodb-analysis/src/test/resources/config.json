@@ -56,12 +56,80 @@
         },
         "classNameMatcher": {
           "_": "NameMatches",
-          "pattern": "(Prepared)?Statement"
+          "pattern": "Statement"
         }
       },
       "functionName": {
         "_": "NameMatches",
-        "pattern": "execute|executeBatch"
+        "pattern": "execute|executeQuery|executeUpdate|executeLargeUpdate"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "Or",
+      "args": [
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "mark": {
+            "name": "UNTRUSTED"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "mark": {
+            "name": "INJECTION"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "mark": {
+            "name": "ENVIRONMENT"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "SQL Injection",
+    "cwe": [
+      89
+    ],
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": "Statement"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "executeBatch|executeLargeBatch"
       },
       "parametersMatchers": [
       ],
@@ -121,12 +189,12 @@
         },
         "classNameMatcher": {
           "_": "NameMatches",
-          "pattern": "Statement"
+          "pattern": "PreparedStatement"
         }
       },
       "functionName": {
         "_": "NameMatches",
-        "pattern": "executeQuery"
+        "pattern": "execute|executeQuery|executeUpdate|executeLargeUpdate"
       },
       "parametersMatchers": [
       ],
@@ -145,8 +213,7 @@
         {
           "_": "ContainsMark",
           "position": {
-            "_": "Argument",
-            "number": 0
+            "_": "This"
           },
           "mark": {
             "name": "UNTRUSTED"
@@ -155,8 +222,7 @@
         {
           "_": "ContainsMark",
           "position": {
-            "_": "Argument",
-            "number": 0
+            "_": "This"
           },
           "mark": {
             "name": "INJECTION"
@@ -165,8 +231,7 @@
         {
           "_": "ContainsMark",
           "position": {
-            "_": "Argument",
-            "number": 0
+            "_": "This"
           },
           "mark": {
             "name": "ENVIRONMENT"
