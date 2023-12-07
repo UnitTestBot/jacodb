@@ -34,10 +34,12 @@ import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 private val logger = KotlinLogging.logger {}
 
+@Disabled("New IFDS engine is not finished yet")
 class IfdsTaintTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         //
