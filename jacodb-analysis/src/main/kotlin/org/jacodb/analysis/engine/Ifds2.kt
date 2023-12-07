@@ -35,6 +35,7 @@ import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
+import org.jacodb.analysis.library.analyzers.NpeTaintNode
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
@@ -85,7 +86,14 @@ fun DomainFact.toFact(): Fact = when (this) {
 
 fun Fact.toDomainFact(): DomainFact = when (this) {
     ZeroFact -> ZEROFact
-    is Tainted -> TaintAnalysisNode(variable, nodeType = mark.name)
+
+    is Tainted -> {
+        when (mark.name) {
+            "NPE" -> NpeTaintNode(variable)
+            else -> TaintAnalysisNode(variable, nodeType = mark.name)
+        }
+    }
+
     else -> object : DomainFact {}
 }
 

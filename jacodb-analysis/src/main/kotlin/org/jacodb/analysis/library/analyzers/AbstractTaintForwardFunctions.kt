@@ -154,7 +154,7 @@ abstract class AbstractTaintForwardFunctions(
                 }
             }
             logger.debug { "call-to-return-site flow function for callee=$callee, fact=$fact returns ${facts.size} facts: $facts" }
-            return@FlowFunctionInstance facts.map { TaintAnalysisNode(it) } + ZEROFact
+            return@FlowFunctionInstance facts.map { it.toDomainFact() } + ZEROFact
         }
 
         if (fact !is TaintNode) {
