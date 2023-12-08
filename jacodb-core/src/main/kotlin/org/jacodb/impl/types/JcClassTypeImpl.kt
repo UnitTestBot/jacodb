@@ -63,7 +63,7 @@ class JcClassTypeImpl(
         JcClassTypeLookupImpl(this)
     )
 
-    override val jcClass: JcClassOrInterface get() = classpath.findClass(name)
+    override val jcClass: JcClassOrInterface by lazy { classpath.findClass(name) }
 
     override val access: Int
         get() = jcClass.access
