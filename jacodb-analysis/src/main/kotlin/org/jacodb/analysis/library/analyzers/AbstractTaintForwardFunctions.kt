@@ -96,7 +96,7 @@ abstract class AbstractTaintForwardFunctions(
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val formalParams = cp.getFormalParamsOf(callee)
-        buildList {
+        buildSet {
             // TODO: when dropFact=true, consider removing (note: once!) the fact afterwards
 
             formalParams.zip(actualParams).forEach { (formal, actual) ->
@@ -107,8 +107,12 @@ abstract class AbstractTaintForwardFunctions(
                 addAll(transmitDataFlow(callExpr.instance, callee.thisInstance, callStatement, fact, dropFact = true))
             }
 
-            if (fact == ZEROFact || (fact is TaintNode && fact.variable.isStatic)) {
+            if (fact is TaintNode && fact.variable.isStatic) {
                 add(fact)
+            }
+
+            if (fact == ZEROFact) {
+                addAll(obtainPossibleStartFacts(callStatement))
             }
         }
     }
@@ -138,7 +142,6 @@ abstract class AbstractTaintForwardFunctions(
             if (config != null) {
                 val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
                 val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-                // TODO: replace with buildSet?
                 for (item in config.filterIsInstance<TaintMethodSource>()) {
                     if (item.condition.accept(conditionEvaluator)) {
                         for (action in item.actionsAfter) {
@@ -184,6 +187,14 @@ abstract class AbstractTaintForwardFunctions(
                             }
 
                             is CopyAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveAllMarks -> {
                                 facts += actionEvaluator.evaluate(action, Tainted(fact))
                             }
 

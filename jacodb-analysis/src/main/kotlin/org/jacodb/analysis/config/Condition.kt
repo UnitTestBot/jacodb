@@ -102,7 +102,8 @@ class BasicConditionEvaluator(
     }
 
     override fun visit(condition: AnnotationType): Boolean {
-        TODO("Not implemented yet")
+        // TODO("Not implemented yet")
+        error("Unexpected condition: $condition")
     }
 
     override fun visit(condition: ConstantEq): Boolean {

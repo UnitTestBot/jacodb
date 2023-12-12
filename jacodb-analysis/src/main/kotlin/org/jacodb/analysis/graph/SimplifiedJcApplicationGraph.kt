@@ -128,7 +128,17 @@ internal class SimplifiedJcApplicationGraph(
     override fun callers(method: JcMethod): Sequence<JcInst> =
         visitedCallers[method].orEmpty().asSequence()
 
-    override fun entryPoints(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
+    override fun entryPoints(method: JcMethod): Sequence<JcInst> = try {
+        sequenceOf(getStartInst(method))
+    } catch (e: Throwable) {
+        emptySequence()
+    }
+
+    override fun exitPoints(method: JcMethod): Sequence<JcInst> = try {
+        impl.exitPoints(method)
+    } catch (e: Throwable) {
+        emptySequence()
+    }
 
     companion object
 }

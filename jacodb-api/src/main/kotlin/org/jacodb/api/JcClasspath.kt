@@ -66,13 +66,13 @@ interface JcClasspath : Closeable {
     fun typeOf(
         jcClass: JcClassOrInterface,
         nullability: Boolean? = null,
-        annotations: List<JcAnnotation> = listOf()
+        annotations: List<JcAnnotation> = listOf(),
     ): JcRefType
 
     fun arrayTypeOf(
         elementType: JcType,
         nullability: Boolean? = null,
-        annotations: List<JcAnnotation> = listOf()
+        annotations: List<JcAnnotation> = listOf(),
     ): JcArrayType
 
     fun toJcClass(source: ClassSource): JcClassOrInterface
@@ -86,7 +86,6 @@ interface JcClasspath : Closeable {
 
     fun isInstalled(feature: JcClasspathFeature): Boolean
 }
-
 
 interface JcClasspathTask {
 
@@ -103,7 +102,6 @@ interface JcClasspathTask {
     fun process(source: ClassSource, classpath: JcClasspath)
 
 }
-
 
 interface JcClassProcessingTask : JcClasspathTask {
 
@@ -204,10 +202,12 @@ interface JcMethodExtFeature : JcClasspathFeature {
         val method: JcMethod
         val flowGraph: JcGraph
     }
+
     interface JcInstListResult {
         val method: JcMethod
         val instList: JcInstList<JcInst>
     }
+
     interface JcRawInstListResult {
         val method: JcMethod
         val rawInstList: JcInstList<JcRawInst>

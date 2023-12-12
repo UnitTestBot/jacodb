@@ -97,7 +97,7 @@ private class BaseIfdsUnitRunner(
         edge.reason = pred.predEdge
 
         if (pathEdges.add(edge)) {
-            logger.debug { "Propagating $edge via ${edge.reason}" }
+            // logger.debug { "Propagating $edge in ${edge.method} via ${edge.reason}" }
             workList.send(edge)
             analyzer.handleNewEdge(edge).forEach {
                 manager.handleEvent(it, this)
@@ -201,8 +201,8 @@ private class BaseIfdsUnitRunner(
                     val factsAtCalleeStart = flowSpace
                         .obtainCallToStartFlowFunction(current, callee)
                         .compute(currentFact)
-                    for (calleeStart in graph.entryPoints(callee)) {
-                        for (calleeStartFact in factsAtCalleeStart) {
+                    for (calleeStartFact in factsAtCalleeStart) {
+                        for (calleeStart in graph.entryPoints(callee)) {
                             val calleeStartVertex = IfdsVertex(calleeStart, calleeStartFact)
 
                             // Handle callee exit vertex:

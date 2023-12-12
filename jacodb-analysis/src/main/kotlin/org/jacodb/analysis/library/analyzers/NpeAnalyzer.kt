@@ -81,7 +81,7 @@ class NpeAnalyzer(
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
             val message = "Dereference of possibly-null ${fact0.variable}"
             val desc = VulnerabilityDescription(SarifMessage(message), ruleId)
-            add(NewSummaryFact((VulnerabilityLocation(desc, edge.to))))
+            add(NewSummaryFact((VulnerabilityLocation(desc, edge.to, edge))))
             verticesWithTraceGraphNeeded.add(edge.to)
         }
 

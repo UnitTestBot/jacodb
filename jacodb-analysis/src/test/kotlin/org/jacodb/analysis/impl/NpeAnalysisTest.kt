@@ -199,6 +199,14 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     }
 
     @Test
+    fun `test on specific Juliet's CWE 476`() {
+        val className = "juliet.testcases.CWE476_NULL_Pointer_Dereference.CWE476_NULL_Pointer_Dereference__Integer_01"
+
+        testSingleJulietClass(vulnerabilityType, className)
+    }
+
+
+    @Test
     fun `analyse something`() {
         val testingMethod = cp.findClass<NpeExamples>().declaredMethods.single { it.name == "id" }
         val results = testingMethod.flowGraph()

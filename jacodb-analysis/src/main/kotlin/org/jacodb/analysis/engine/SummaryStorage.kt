@@ -38,6 +38,7 @@ interface SummaryFact {
 data class VulnerabilityLocation(
     val vulnerabilityDescription: VulnerabilityDescription,
     val sink: IfdsVertex,
+    val edge: IfdsEdge? = null,
     val rule: TaintMethodSink? = null,
 ) : SummaryFact {
     override val method: JcMethod = sink.method

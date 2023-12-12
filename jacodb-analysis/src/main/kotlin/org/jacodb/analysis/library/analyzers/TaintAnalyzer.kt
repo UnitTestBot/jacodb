@@ -16,8 +16,10 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.DomainFact
@@ -29,8 +31,8 @@ import org.jacodb.analysis.engine.NewSummaryFact
 import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.engine.toDomainFact
 import org.jacodb.analysis.logger
-import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
@@ -48,8 +50,16 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.locals
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.taint.configuration.AnyArgument
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.This
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->
@@ -169,7 +179,7 @@ abstract class TaintAnalyzer(
             }
             if (isSink) {
                 val desc = generateDescriptionForSink(edge.to)
-                val vulnerability = VulnerabilityLocation(desc, edge.to, triggeredItem)
+                val vulnerability = VulnerabilityLocation(desc, edge.to, edge, rule = triggeredItem)
                 logger.info { "Found sink: $vulnerability" }
                 add(NewSummaryFact(vulnerability))
                 verticesWithTraceGraphNeeded.add(edge.to)
@@ -181,7 +191,7 @@ abstract class TaintAnalyzer(
             // "config"-less behavior:
             if (edge.to.domainFact in sinks(edge.to.statement)) {
                 val desc = generateDescriptionForSink(edge.to)
-                val vulnerability = VulnerabilityLocation(desc, edge.to)
+                val vulnerability = VulnerabilityLocation(desc, edge.to, edge)
                 logger.info { "Found sink: $vulnerability" }
                 add(NewSummaryFact(vulnerability))
                 verticesWithTraceGraphNeeded.add(edge.to)
@@ -322,11 +332,63 @@ private class TaintForwardFunctions(
         add(ZEROFact)
 
         val method = startStatement.location.method
+        val config = cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+            ?.let { feature ->
+                logger.debug { "Extracting config for $method" }
+                feature.getConfigForMethod(method)
+            }
+        if (config != null) {
+            val conditionEvaluator = BasicConditionEvaluator { position ->
+                when (position) {
+                    This -> method.thisInstance
 
-        // Possibly null arguments
-        this += method.flowGraph().locals
-            .filterIsInstance<JcArgument>()
-            .map { TaintAnalysisNode(AccessPath.from(it), nodeType = "TAINT") }
+                    is Argument -> method.flowGraph().locals
+                        .filterIsInstance<JcArgument>()
+                        .singleOrNull { it.index == position.index }
+                        ?: error("Cannot resolve $position for $method")
+
+                    AnyArgument -> error("Unexpected $position")
+                    Result -> error("Unexpected $position")
+                    ResultAnyElement -> error("Unexpected $position")
+                }
+            }
+            val actionEvaluator = TaintActionEvaluator { position ->
+                when (position) {
+                    This -> method.thisInstance.toPathOrNull()
+                        ?: error("Cannot resolve $position for $method")
+
+                    is Argument -> {
+                        val p = method.parameters[position.index]
+                        val t = cp.findTypeOrNull(p.type)
+                        if (t != null) {
+                            JcArgument.of(p.index, p.name, t).toPathOrNull()
+                        } else {
+                            null
+                        }
+                            ?: error("Cannot resolve $position for $method")
+                    }
+
+                    AnyArgument -> error("Unexpected $position")
+                    Result -> error("Unexpected $position")
+                    ResultAnyElement -> error("Unexpected $position")
+                }
+            }
+            for (item in config.filterIsInstance<TaintEntryPointSource>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is AssignMark -> {
+                                add(actionEvaluator.evaluate(action).toDomainFact())
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
