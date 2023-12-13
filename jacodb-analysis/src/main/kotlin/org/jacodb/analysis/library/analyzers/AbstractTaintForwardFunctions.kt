@@ -31,10 +31,12 @@ import org.jacodb.analysis.engine.Tainted
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.engine.toDomainFact
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
@@ -127,6 +129,19 @@ abstract class AbstractTaintForwardFunctions(
         if (callee.isConstructor) {
             // FIXME: adhoc for constructors
             return@FlowFunctionInstance listOf(fact)
+        }
+
+        // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
+        if (fact is TaintNode && callExpr is JcDynamicCallExpr && callee.enclosingClass.name == "java.lang.invoke.StringConcatFactory" && callStatement is JcAssignInst) {
+            for (arg in callExpr.args) {
+                if (arg.toPath() == fact.variable) {
+                    return@FlowFunctionInstance setOf(
+                        fact,
+                        Tainted(fact).copy(variable = callStatement.lhv.toPath()).toDomainFact()
+                    )
+                }
+            }
+            return@FlowFunctionInstance setOf(fact)
         }
 
         val config = cp.features
