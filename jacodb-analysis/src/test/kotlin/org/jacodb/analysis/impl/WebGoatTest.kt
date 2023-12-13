@@ -18,10 +18,11 @@ package org.jacodb.analysis.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.engine.PackageUnitResolver
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
+import org.jacodb.analysis.sarif.SarifReport
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
@@ -100,8 +101,16 @@ private fun analyzeTaint(cp: JcClasspath, startMethods: List<JcMethod>) {
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
-    val result = runAnalysis(graph, PackageUnitResolver, newSqlInjectionRunnerFactory(), startMethods)
-    logger.info { "Found ${result.size} sinks" }
+    val vulnerabilities = runAnalysis(graph, MethodUnitResolver, newSqlInjectionRunnerFactory(), startMethods)
+    logger.info { "Found ${vulnerabilities.size} sinks" }
+    for (vulnerability in vulnerabilities) {
+        logger.info { "${vulnerability.location} in ${vulnerability.location.method}" }
+    }
+
+    val report = SarifReport.fromVulnerabilities(vulnerabilities)
+    File("report.sarif").outputStream().use { fileOutputStream ->
+        report.encodeToStream(fileOutputStream)
+    }
 }
 
 private fun JcClasspath.publicClasses(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> =

@@ -105,9 +105,9 @@ data class SarifResult(
 ) {
     companion object {
         fun fromVulnerabilityInstance(instance: VulnerabilityInstance, maxPathsCount: Int): SarifResult = SarifResult(
-            instance.vulnerabilityDescription.ruleId,
-            instance.vulnerabilityDescription.message,
-            instance.vulnerabilityDescription.level,
+            instance.location.vulnerabilityDescription.ruleId,
+            instance.location.vulnerabilityDescription.message,
+            instance.location.vulnerabilityDescription.level,
             listOf(SarifLocation.fromInst(instance.traceGraph.sink.statement)),
             instance.traceGraph.getAllTraces().take(maxPathsCount).map { SarifCodeFlow.fromTrace(it) }.toList()
         )
@@ -182,8 +182,10 @@ data class SarifReport(
 enum class SarifSeverityLevel {
     @SerialName("error")
     ERROR,
+
     @SerialName("warning")
     WARNING,
+
     @SerialName("note")
     NOTE
 }

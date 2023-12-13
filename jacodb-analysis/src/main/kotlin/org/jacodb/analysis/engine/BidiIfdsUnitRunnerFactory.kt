@@ -58,7 +58,7 @@ class BidiIfdsUnitRunnerFactory(
         startMethods: List<JcMethod>,
     ): IfdsUnitRunner = BidiIfdsUnitRunner(graph, manager, unitResolver, unit, startMethods)
 
-    private inner class BidiIfdsUnitRunner(
+    internal inner class BidiIfdsUnitRunner(
         graph: JcApplicationGraph,
         private val manager: IfdsUnitManager,
         private val unitResolver: UnitResolver,
@@ -118,8 +118,7 @@ class BidiIfdsUnitRunnerFactory(
                         if (!isParallel && event.isEmpty) {
                             runner.job?.cancel() ?: error("Runner job is not instantiated")
                         }
-                        val newEvent =
-                            QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
+                        val newEvent = QueueEmptinessChanged(backwardQueueIsEmpty && forwardQueueIsEmpty)
                         manager.handleEvent(newEvent, this@BidiIfdsUnitRunner)
                     }
 
@@ -128,10 +127,10 @@ class BidiIfdsUnitRunnerFactory(
             }
         }
 
-        private val backwardRunner: IfdsUnitRunner = backwardRunnerFactory
+        internal val backwardRunner: IfdsUnitRunner = backwardRunnerFactory
             .newRunner(graph.reversed, backwardManager, unitResolver, unit, startMethods)
 
-        private val forwardRunner: IfdsUnitRunner = forwardRunnerFactory
+        internal val forwardRunner: IfdsUnitRunner = forwardRunnerFactory
             .newRunner(graph, forwardManager, unitResolver, unit, startMethods)
 
         override suspend fun submitNewEdge(edge: IfdsEdge) {

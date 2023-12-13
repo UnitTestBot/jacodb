@@ -1,0 +1,179 @@
+[
+  {
+    "_": "EntryPointSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": ".*"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": false,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "AnnotationType",
+      "position": {
+        "_": "Argument",
+        "number": 0
+      },
+      "type": {
+        "_": "ClassMatcher",
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.springframework.web.bind.annotation"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "RequestParam"
+        }
+      }
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Argument",
+          "number": 0
+        },
+        "mark": {
+          "name": "XSS"
+        }
+      }
+    ]
+  },
+  {
+    "_": "EntryPointSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": ".*"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": false,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "AnnotationType",
+      "position": {
+        "_": "Argument",
+        "number": 1
+      },
+      "type": {
+        "_": "ClassMatcher",
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.springframework.web.bind.annotation"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "RequestParam"
+        }
+      }
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Argument",
+          "number": 1
+        },
+        "mark": {
+          "name": "XSS"
+        }
+      }
+    ]
+  },
+  {
+    "_": "EntryPointSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": ".*"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": false,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "AnnotationType",
+      "position": {
+        "_": "Argument",
+        "number": 2
+      },
+      "type": {
+        "_": "ClassMatcher",
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.springframework.web.bind.annotation"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "RequestParam"
+        }
+      }
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Argument",
+          "number": 2
+        },
+        "mark": {
+          "name": "XSS"
+        }
+      }
+    ]
+  }
+]

@@ -56,7 +56,7 @@ class BaseIfdsUnitRunnerFactory(
 /**
  * Encapsulates a launch of tabulation algorithm, described in RHS'95, for one unit.
  */
-private class BaseIfdsUnitRunner(
+internal class BaseIfdsUnitRunner(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer,
     private val manager: IfdsUnitManager,
@@ -65,7 +65,7 @@ private class BaseIfdsUnitRunner(
     private val startMethods: List<JcMethod>,
 ) : AbstractIfdsUnitRunner(unit) {
 
-    private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
+    internal val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
     private val summaryEdges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
     private val callSitesOf: MutableMap<IfdsVertex, MutableSet<IfdsEdge>> = mutableMapOf()
     private val pathEdgesPreds: MutableMap<IfdsEdge, MutableSet<PathEdgePredecessor>> = ConcurrentHashMap()
@@ -379,8 +379,8 @@ private class BaseIfdsUnitRunner(
             // Run the tabulation algorithm:
             runTabulationAlgorithm()
         } finally {
-            logger.info { "Finishing ${this@BaseIfdsUnitRunner}" }
-            logger.info { "Total ${pathEdges.size} path edges" }
+            logger.info { "Finishing ${this@BaseIfdsUnitRunner} for $unit" }
+            logger.info { "Total ${pathEdges.size} path edges for $unit" }
             // for ((i, edge) in pathEdges.sortedBy { it.toString() }.withIndex()) {
             //     logger.debug { " - [${i + 1}/${pathEdges.size}] $edge" }
             // }

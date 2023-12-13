@@ -16,9 +16,12 @@
 
 package org.jacodb.analysis.engine
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.map
@@ -32,6 +35,9 @@ import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * This manager launches and manages [IfdsUnitRunner]s for all units, reachable from [startMethods].
@@ -58,6 +64,9 @@ class MainIfdsUnitManager(
     private val queueEmptiness: MutableMap<UnitType, Boolean> = mutableMapOf()
     private val dependencies: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
     private val dependenciesRev: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
+
+    private val deleteJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
+    private val pathEdgesStorage: MutableMap<UnitType, Collection<IfdsEdge>> = ConcurrentHashMap()
 
     private fun getAllCallees(method: JcMethod): Set<JcMethod> {
         val result = mutableSetOf<JcMethod>()
@@ -135,6 +144,11 @@ class MainIfdsUnitManager(
                     foundMethods[unit]!!.toList()
                 )
                 aliveRunners[unit] = runner
+                pathEdgesStorage[unit] = when (runner) {
+                    is BaseIfdsUnitRunner -> runner.pathEdges
+                    is BidiIfdsUnitRunnerFactory.BidiIfdsUnitRunner -> (runner.forwardRunner as BaseIfdsUnitRunner).pathEdges
+                    else -> error("Bad runner: $runner")
+                }
                 runner.launchIn(this)
             }
 
@@ -145,7 +159,7 @@ class MainIfdsUnitManager(
 
         logger.info { "All jobs completed, gathering results..." }
 
-        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method->
+        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method ->
             vulnerabilitiesStorage.getCurrentFacts(method)
         }
 
@@ -159,7 +173,7 @@ class MainIfdsUnitManager(
         logger.info { "Restoring traces..." }
 
         foundVulnerabilities
-            .map { VulnerabilityInstance(it.vulnerabilityDescription, extendTraceGraph(it.sink.traceGraph), it.rule) }
+            .map { VulnerabilityInstance(it, extendTraceGraph(it.sink.traceGraph)) }
             .filter {
                 it.traceGraph.sources.any { source ->
                     graph.methodOf(source.statement) in startMethods || source.domainFact == ZEROFact
@@ -246,7 +260,7 @@ class MainIfdsUnitManager(
         Channel(capacity = Int.MAX_VALUE)
 
     // TODO: replace async dispatcher with a synchronous one
-    private suspend fun dispatchDependencies() {
+    private suspend fun dispatchDependencies() = coroutineScope {
         eventChannel.consumeEach { (event, runner) ->
             when (event) {
                 is SubscriptionForSummaryEdges -> {
@@ -261,18 +275,28 @@ class MainIfdsUnitManager(
                         return@consumeEach
                     }
                     queueEmptiness[runner.unit] = event.isEmpty
+                    deleteJobs[runner.unit]?.run {
+                        logger.debug { "Cancelling the stopping of the runner for ${runner.unit}" }
+                        cancel()
+                    }
                     if (event.isEmpty) {
-                        val toDelete = mutableListOf(runner.unit)
-                        while (toDelete.isNotEmpty()) {
-                            val current = toDelete.removeLast()
-                            if (current in aliveRunners &&
-                                dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
-                            ) {
-                                aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
-                                aliveRunners.remove(current)
-                                for (next in dependenciesRev[current].orEmpty()) {
-                                    if (queueEmptiness[next] == true) {
-                                        toDelete.add(next)
+                        deleteJobs[runner.unit] = launch {
+                            logger.debug { "Going to stop the runner for ${runner.unit} in 5 seconds..." }
+                            delay(5.seconds)
+                            logger.info { "Stopping the runner for ${runner.unit}..." }
+                            val toDelete = mutableListOf(runner.unit)
+                            while (toDelete.isNotEmpty()) {
+                                val current = toDelete.removeLast()
+                                if (current in aliveRunners &&
+                                    dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
+                                ) {
+                                    if (aliveRunners[current] == null) continue
+                                    aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
+                                    aliveRunners.remove(current)
+                                    for (next in dependenciesRev[current].orEmpty()) {
+                                        if (queueEmptiness[next] == true) {
+                                            toDelete.add(next)
+                                        }
                                     }
                                 }
                             }
