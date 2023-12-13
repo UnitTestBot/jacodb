@@ -24,9 +24,12 @@ import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzer
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
+import org.jacodb.api.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.analysis.SqlInjectionExamples
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -45,6 +48,14 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         )
     }
 
+    @Test
+    fun `simple SQL injection`() {
+        val methodName = "bad"
+        val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
+        val sinks = findSinks(method, vulnerabilityType)
+        assertTrue(sinks.isNotEmpty())
+    }
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet89")
     fun `test on Juliet's CWE 89`(className: String) {
@@ -53,14 +64,9 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `test on specific Juliet's CWE 89`() {
-        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_executeQuery_01"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
 
         testSingleJulietClass(vulnerabilityType, className)
-
-        // for (className in getJulietClasses(89, specificBansCwe89).take(10)) {
-        //     testSingleJulietClass(vulnerabilityType, className)
-        // }
     }
 
     override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
