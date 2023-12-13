@@ -59,6 +59,12 @@ abstract class AbstractTaintForwardFunctions(
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
+    protected val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+        cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+    }
+
     protected abstract fun transmitDataFlow(
         from: JcExpr,
         to: JcValue,
@@ -144,13 +150,10 @@ abstract class AbstractTaintForwardFunctions(
             return@FlowFunctionInstance setOf(fact)
         }
 
-        val config = cp.features
-            ?.singleOrNull { it is TaintConfigurationFeature }
-            ?.let { it as TaintConfigurationFeature }
-            ?.let { feature ->
-                logger.debug { "Extracting config for $callee" }
-                feature.getConfigForMethod(callee)
-            }
+        val config = taintConfigurationFeature?.let { feature ->
+            logger.debug { "Extracting config for $callee" }
+            feature.getConfigForMethod(callee)
+        }
 
         if (fact == ZEROFact) {
             val facts = mutableSetOf<Tainted>()

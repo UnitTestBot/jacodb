@@ -332,13 +332,10 @@ private class TaintForwardFunctions(
         add(ZEROFact)
 
         val method = startStatement.location.method
-        val config = cp.features
-            ?.singleOrNull { it is TaintConfigurationFeature }
-            ?.let { it as TaintConfigurationFeature }
-            ?.let { feature ->
-                logger.debug { "Extracting config for $method" }
-                feature.getConfigForMethod(method)
-            }
+        val config = taintConfigurationFeature?.let { feature ->
+            logger.debug { "Extracting config for $method" }
+            feature.getConfigForMethod(method)
+        }
         if (config != null) {
             val conditionEvaluator = BasicConditionEvaluator { position ->
                 when (position) {
