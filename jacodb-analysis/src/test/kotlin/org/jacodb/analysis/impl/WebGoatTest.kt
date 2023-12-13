@@ -77,8 +77,8 @@ private fun loadBenchCp(path: String, dependencies: List<Path>): BenchCp = runBl
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
-    val benchPath = "jacodb-analysis/extra/webgoat/classes"
-    val benchDeps = "jacodb-analysis/extra/webgoat/lib"
+    val benchPath = "jacodb-analysis/webgoat/classes"
+    val benchDeps = "jacodb-analysis/webgoat/lib"
     val dependencies = Path(benchDeps)
         .walk(PathWalkOption.INCLUDE_DIRECTORIES)
         .filter { it.extension == "jar" }
