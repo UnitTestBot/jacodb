@@ -65,8 +65,8 @@ class MainIfdsUnitManager(
     private val dependencies: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
     private val dependenciesRev: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
 
-    private val deleteJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
-    private val pathEdgesStorage: MutableMap<UnitType, Collection<IfdsEdge>> = ConcurrentHashMap()
+    // private val deleteJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
+    // private val pathEdgesStorage: MutableMap<UnitType, Collection<IfdsEdge>> = ConcurrentHashMap()
 
     private fun getAllCallees(method: JcMethod): Set<JcMethod> {
         val result = mutableSetOf<JcMethod>()
@@ -144,11 +144,11 @@ class MainIfdsUnitManager(
                     foundMethods[unit]!!.toList()
                 )
                 aliveRunners[unit] = runner
-                pathEdgesStorage[unit] = when (runner) {
-                    is BaseIfdsUnitRunner -> runner.pathEdges
-                    is BidiIfdsUnitRunnerFactory.BidiIfdsUnitRunner -> (runner.forwardRunner as BaseIfdsUnitRunner).pathEdges
-                    else -> error("Bad runner: $runner")
-                }
+                // pathEdgesStorage[unit] = when (runner) {
+                //     is BaseIfdsUnitRunner -> runner.pathEdges
+                //     is BidiIfdsUnitRunnerFactory.BidiIfdsUnitRunner -> (runner.forwardRunner as BaseIfdsUnitRunner).pathEdges
+                //     else -> error("Bad runner: $runner")
+                // }
                 runner.launchIn(this)
             }
 
@@ -275,14 +275,14 @@ class MainIfdsUnitManager(
                         return@consumeEach
                     }
                     queueEmptiness[runner.unit] = event.isEmpty
-                    deleteJobs[runner.unit]?.run {
-                        logger.debug { "Cancelling the stopping of the runner for ${runner.unit}" }
-                        cancel()
-                    }
+                    // deleteJobs[runner.unit]?.run {
+                    //     logger.debug { "Cancelling the stopping of the runner for ${runner.unit}" }
+                    //     cancel()
+                    // }
                     if (event.isEmpty) {
-                        deleteJobs[runner.unit] = launch {
-                            logger.debug { "Going to stop the runner for ${runner.unit} in 5 seconds..." }
-                            delay(5.seconds)
+                        // deleteJobs[runner.unit] = launch {
+                        //     logger.debug { "Going to stop the runner for ${runner.unit} in 5 seconds..." }
+                        //     delay(5.seconds)
                             logger.info { "Stopping the runner for ${runner.unit}..." }
                             val toDelete = mutableListOf(runner.unit)
                             while (toDelete.isNotEmpty()) {
@@ -300,7 +300,7 @@ class MainIfdsUnitManager(
                                     }
                                 }
                             }
-                        }
+                        // }
                     }
                 }
 
