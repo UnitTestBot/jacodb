@@ -47,22 +47,22 @@ import kotlin.io.path.walk
 private val logger = KotlinLogging.logger {}
 
 private fun loadWebGoatBench(): BenchCp {
-    val webGoatDir = Path("jacodb-analysis/webgoat")
-    return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "lib").apply {
+    val webGoatDir = Path(object {}.javaClass.getResource("/webgoat")!!.path)
+    return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "deps").apply {
         entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons") }
     }
 }
 
 private fun loadOwaspJavaBench(): BenchCp {
-    val owaspJavaPath = Path("/home/azuregos/dev/owasp")
-    return loadWebAppBenchCp(owaspJavaPath / "benchmark-classes", owaspJavaPath / "benchmark-deps").apply {
+    val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
+    return loadWebAppBenchCp(owaspJavaPath / "classes", owaspJavaPath / "deps").apply {
         entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode") }
     }
 }
 
 private fun loadShopizerBench(): BenchCp {
-    val shopizerPath = Path("D:\\data\\shopizer")
-    return loadWebAppBenchCp(shopizerPath / "shopizer-classes", shopizerPath / "shopizer-deps").apply {
+    val shopizerPath = Path(object {}.javaClass.getResource("/shopizer")!!.path)
+    return loadWebAppBenchCp(shopizerPath / "classes", shopizerPath / "deps").apply {
         entrypointFilter = { true }
     }
 }
@@ -90,22 +90,16 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp 
 
     val db = jacodb {
         useProcessJavaRuntime()
-
         installFeatures(InMemoryHierarchy, Usages)
-
         loadByteCode(cpFiles)
     }
-
     db.awaitBackgroundJobs()
 
     val defaultConfigResource = this.javaClass.getResourceAsStream("/defaultTaintConfig.json")!!
     val configJson = defaultConfigResource.bufferedReader().readText()
     val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
-
     val features = listOf(configurationFeature, UnknownClasses)
-
     val cp = db.classpath(cpFiles, features)
-
     val locations = cp.locations.filter { it.jarOrFolder in classes }
 
     BenchCp(cp, db, locations)
