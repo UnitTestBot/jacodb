@@ -1,0 +1,16 @@
+name: Telegram Pull Request Notifier
+
+on:
+  pull_request:
+    types: [opened, review_requested]
+
+jobs:
+  notification:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pull Request Telegram
+        uses: F2had/pr-telegram-action@v1.0.0
+        with:
+          bot_token: '${{ secrets.TELEGRAM_TOKEN }}'
+          chat_id: '${{ secrets.TELEGRAM_CHAT_ID }}'
