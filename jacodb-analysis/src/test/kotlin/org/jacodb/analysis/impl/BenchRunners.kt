@@ -46,31 +46,49 @@ import kotlin.io.path.walk
 
 private val logger = KotlinLogging.logger {}
 
-private fun loadWebGoatBench(): BenchCp {
-    val webGoatDir = Path(object {}.javaClass.getResource("/webgoat")!!.path)
-    return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "deps").apply {
-        entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons") }
+object WebGoatBenchRunner {
+    private fun loadWebGoatBench(): BenchCp {
+        val webGoatDir = Path(object {}.javaClass.getResource("/webgoat")!!.path)
+        return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "deps").apply {
+            entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons") }
+        }
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val bench = loadWebGoatBench()
+        bench.use { analyzeBench(it) }
     }
 }
 
-private fun loadOwaspJavaBench(): BenchCp {
-    val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
-    return loadWebAppBenchCp(owaspJavaPath / "classes", owaspJavaPath / "deps").apply {
-        entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode") }
+object OwaspBenchRunner {
+    private fun loadOwaspJavaBench(): BenchCp {
+        val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
+        return loadWebAppBenchCp(owaspJavaPath / "classes", owaspJavaPath / "deps").apply {
+            entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode") }
+        }
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val bench = loadOwaspJavaBench()
+        bench.use { analyzeBench(it) }
     }
 }
 
-private fun loadShopizerBench(): BenchCp {
-    val shopizerPath = Path(object {}.javaClass.getResource("/shopizer")!!.path)
-    return loadWebAppBenchCp(shopizerPath / "classes", shopizerPath / "deps").apply {
-        entrypointFilter = { true }
+object ShopizerBenchRunner {
+    private fun loadShopizerBench(): BenchCp {
+        val shopizerPath = Path(object {}.javaClass.getResource("/shopizer")!!.path)
+        return loadWebAppBenchCp(shopizerPath / "classes", shopizerPath / "deps").apply {
+            entrypointFilter = { true }
+        }
     }
-}
 
-fun main() {
-    // val benchCp = loadWebGoatBench()
-    val benchCp = loadOwaspJavaBench()
-    benchCp.use { analyzeBench(it) }
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val bench = loadShopizerBench()
+        bench.use { analyzeBench(it) }
+    }
 }
 
 private class BenchCp(
