@@ -128,8 +128,8 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
             version > currentAppVersion -> throw IllegalStateException("Can't start $currentAppVersion on $version database")
             version == currentAppVersion -> {}
             else -> persistence.write {
-                    refactorings.execute(it)
-                }
+                refactorings.execute(it)
+            }
         }
         persistence.write {
             it.deleteFrom(APPLICATIONMETADATA).execute()
@@ -337,7 +337,7 @@ private data class AnnotationItem(
     val parentId: Long?,
     val refId: Long,
     val refKind: RefKind,
-    val info: AnnotationInfo
+    val info: AnnotationInfo,
 )
 
 private data class AnnotationValueItem(
@@ -357,7 +357,7 @@ private data class AnnotationValueItem(
 private class AnnotationCollector(
     val annotationIdGen: AtomicLong,
     val annotationValueIdGen: AtomicLong,
-    val symbolInterner: JCDBSymbolsInterner
+    val symbolInterner: JCDBSymbolsInterner,
 ) {
     val collected = ArrayList<AnnotationItem>()
     val collectedValues = ArrayList<AnnotationValueItem>()
@@ -377,7 +377,6 @@ private class AnnotationCollector(
         }
         return id
     }
-
 
     fun collectValue(nameValue: Pair<String, AnnotationValue>, parent: AnnotationItem) {
         val (name, value) = nameValue
@@ -511,7 +510,7 @@ private class ClassCollector(private val classIdGen: AtomicLong) {
 private class MethodsCollector(
     private val methodIdGen: AtomicLong,
     private val annotationCollector: AnnotationCollector,
-    private val paramsCollector: MethodParamsCollector
+    private val paramsCollector: MethodParamsCollector,
 ) {
 
     val methods = ArrayList<Triple<Long, Long, MethodInfo>>()
