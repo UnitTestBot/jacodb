@@ -56,7 +56,6 @@ import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.ResultAnyElement
-import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.This
@@ -147,10 +146,8 @@ abstract class TaintAnalyzer(
             val callExpr = edge.to.statement.callExpr ?: return@run false
             val callee = callExpr.method.method
 
-            val config = graph.classpath.features
-                ?.singleOrNull { it is TaintConfigurationFeature }
-                ?.let { it as TaintConfigurationFeature }
-                ?.let { feature ->
+            val config = (flowFunctions as TaintForwardFunctions)
+                .taintConfigurationFeature?.let { feature ->
                     logger.debug { "Extracting config for $callee" }
                     feature.getConfigForMethod(callee)
                 } ?: return@run false

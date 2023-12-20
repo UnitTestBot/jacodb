@@ -59,7 +59,7 @@ abstract class AbstractTaintForwardFunctions(
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
-    protected val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         cp.features
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
