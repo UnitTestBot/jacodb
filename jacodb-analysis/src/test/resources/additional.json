@@ -494,7 +494,7 @@
           },
           "functionName": {
               "_": "NameMatches",
-              "pattern": "getParameter"
+              "pattern": "getParameter(Map)?"
           },
           "parametersMatchers": [
           ],
