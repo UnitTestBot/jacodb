@@ -434,7 +434,11 @@ class TaintConfigurationFeature private constructor(
             val args = mutableListOf<Condition>()
             while (queue.isNotEmpty()) {
                 val it = queue.removeFirst().accept(this)
-                if (it is And) {
+                if (it is ConstantTrue) {
+                    // skip
+                } else if (it is Not && it.arg is ConstantTrue) {
+                    return mkFalse()
+                } else if (it is And) {
                     queue += it.args
                 } else {
                     args += it
@@ -448,7 +452,11 @@ class TaintConfigurationFeature private constructor(
             val args = mutableListOf<Condition>()
             while (queue.isNotEmpty()) {
                 val it = queue.removeFirst().accept(this)
-                if (it is Or) {
+                if (it is ConstantTrue) {
+                    return mkTrue()
+                } else if (it is Not && it.arg is ConstantTrue) {
+                    // skip
+                } else if (it is Or) {
                     queue += it.args
                 } else {
                     args += it
