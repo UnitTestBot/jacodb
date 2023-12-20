@@ -250,6 +250,8 @@ abstract class AbstractTaintForwardFunctions(
             }
         }
 
+        // TODO: if (goingToAnalyze(callee)) {
+
         if (fact.variable.isStatic) {
             return@FlowFunctionInstance emptyList()
         }
@@ -267,6 +269,8 @@ abstract class AbstractTaintForwardFunctions(
                 return@FlowFunctionInstance emptyList() // Will be handled by summary edge
             }
         }
+
+        // }
 
         if (callStatement is JcAssignInst) {
             // Possibly tainted lhv:
