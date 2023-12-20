@@ -37,7 +37,6 @@ import org.jacodb.api.ext.int
 import org.jacodb.api.ext.long
 import org.jacodb.api.ext.short
 import org.jacodb.impl.cfg.util.isArray
-import org.jacodb.impl.features.classpaths.JcUnknownClass
 import java.nio.file.Path
 import kotlin.io.path.readText
 
@@ -92,11 +91,7 @@ class TaintConfigurationFeature private constructor(
 
     @Synchronized
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
-        if (method.enclosingClass is JcUnknownClass) {
-            emptyList()
-        } else {
-            resolveConfigForMethod(method)
-        }
+        resolveConfigForMethod(method)
 
     private var primitiveTypesSet: Set<JcPrimitiveType>? = null
 
