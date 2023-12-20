@@ -207,7 +207,7 @@ private fun analyzeTaint(cp: JcClasspath, startMethods: List<JcMethod>) {
         cp.newApplicationGraphForAnalysis()
     }
     val vulnerabilities = runAnalysis(graph, PackageUnitResolver, newSqlInjectionRunnerFactory(), startMethods)
-    logger.info { "Found ${vulnerabilities.size} sinks" }
+    logger.info { "Total found ${vulnerabilities.size} sinks" }
     for (vulnerability in vulnerabilities) {
         logger.info { "${vulnerability.location} in ${vulnerability.location.method}" }
     }
