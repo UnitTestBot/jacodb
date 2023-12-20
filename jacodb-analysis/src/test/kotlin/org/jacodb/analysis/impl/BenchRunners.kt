@@ -114,7 +114,31 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp 
     db.awaitBackgroundJobs()
 
     val defaultConfigResource = this.javaClass.getResourceAsStream("/defaultTaintConfig.json")!!
-    val configJson = defaultConfigResource.bufferedReader().readText()
+    var configJson = defaultConfigResource.bufferedReader().readText()
+    val additionalConfigResource = this.javaClass.getResourceAsStream("/additional.json")
+    if (additionalConfigResource != null) {
+        val additionalConfigJson = additionalConfigResource.bufferedReader().readText()
+        val configJsonLines = configJson.lines().toMutableList()
+        if (configJsonLines.last().isEmpty()) {
+            configJsonLines.removeLast()
+        }
+        check(configJsonLines.last() == "]")
+        val additionalConfigJsonLines = additionalConfigJson.lines().toMutableList()
+        if (additionalConfigJsonLines.last().isEmpty()) {
+            additionalConfigJsonLines.removeLast()
+        }
+        check(additionalConfigJsonLines.first() == "[")
+        check(additionalConfigJsonLines.last() == "]")
+        if (additionalConfigJsonLines.size > 2) {
+            configJsonLines.removeLast()
+            configJsonLines[configJsonLines.size - 1] = configJsonLines[configJsonLines.size - 1] + ","
+            for (line in additionalConfigJsonLines.subList(1, additionalConfigJsonLines.size - 1)) {
+                configJsonLines.add(line)
+            }
+            configJsonLines.add("]")
+        }
+        configJson = configJsonLines.joinToString("\n")
+    }
     val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
     val features = listOf(configurationFeature, UnknownClasses)
     val cp = db.classpath(cpFiles, features)
