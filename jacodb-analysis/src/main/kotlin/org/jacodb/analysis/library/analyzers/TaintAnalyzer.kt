@@ -155,6 +155,7 @@ abstract class TaintAnalyzer(
                     feature.getConfigForMethod(callee)
                 } ?: return@run false
 
+            // TODO: not always we want to skip sinks on ZeroFacts. Some rules might have ConstantTrue or just true (when evaluated with ZeroFact) condition.
             if (edge.to.domainFact !is TaintNode) {
                 return@run false
             }
