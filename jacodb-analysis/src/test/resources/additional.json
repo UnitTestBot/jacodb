@@ -16,16 +16,14 @@
         "_": "NameMatches",
         "pattern": ".*"
       },
-      "parametersMatchers": [
-      ],
+      "parametersMatchers": [],
       "returnTypeMatcher": {
         "_": "AnyTypeMatches"
       },
       "applyToOverrides": false,
       "functionLabel": null,
       "modifier": -1,
-      "exclude": [
-      ]
+      "exclude": []
     },
     "condition": {
       "_": "AnnotationType",
@@ -75,16 +73,14 @@
         "_": "NameMatches",
         "pattern": ".*"
       },
-      "parametersMatchers": [
-      ],
+      "parametersMatchers": [],
       "returnTypeMatcher": {
         "_": "AnyTypeMatches"
       },
       "applyToOverrides": false,
       "functionLabel": null,
       "modifier": -1,
-      "exclude": [
-      ]
+      "exclude": []
     },
     "condition": {
       "_": "AnnotationType",
@@ -134,16 +130,14 @@
         "_": "NameMatches",
         "pattern": ".*"
       },
-      "parametersMatchers": [
-      ],
+      "parametersMatchers": [],
       "returnTypeMatcher": {
         "_": "AnyTypeMatches"
       },
       "applyToOverrides": false,
       "functionLabel": null,
       "modifier": -1,
-      "exclude": [
-      ]
+      "exclude": []
     },
     "condition": {
       "_": "AnnotationType",
@@ -193,16 +187,14 @@
         "_": "NameIsEqualTo",
         "name": "decode"
       },
-      "parametersMatchers": [
-      ],
+      "parametersMatchers": [],
       "returnTypeMatcher": {
         "_": "AnyTypeMatches"
       },
       "applyToOverrides": true,
       "functionLabel": null,
       "modifier": -1,
-      "exclude": [
-      ]
+      "exclude": []
     },
     "condition": {
       "_": "ConstantTrue"
@@ -219,5 +211,272 @@
         }
       }
     ]
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "Connection"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "prepareCall"
+      },
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": []
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      }
+    ]
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "SQL Injection",
+    "cwe": [
+      89
+    ],
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.sql"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": "PreparedStatement"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "execute|executeQuery|executeUpdate|executeLargeUpdate"
+      },
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": []
+    },
+    "condition": {
+      "_": "Or",
+      "args": [
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "NETWORK"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "ARGS"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "LDAP"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "FORM"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "WEBSERVICE"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "PROPERTY"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "ENVIRONMENT"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "ICC"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "STREAM"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "FILE_SYSTEM"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "JSON"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "STDIN"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "DATABASE"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "CHANNEL"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "WEB"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "CONSOLE"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "XML"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "XSS"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "GUI_FORM"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "NAMING"
+          }
+        },
+        {
+          "_": "ContainsMark",
+          "position": {
+            "_": "This"
+          },
+          "mark": {
+            "name": "REGISTRY"
+          }
+        }
+      ]
+    }
   }
 ]
