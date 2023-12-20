@@ -35,6 +35,7 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
@@ -128,6 +129,7 @@ abstract class AbstractTaintForwardFunctions(
     final override fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
+        graph: JcApplicationGraph,
     ) = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
@@ -250,27 +252,35 @@ abstract class AbstractTaintForwardFunctions(
             }
         }
 
-        // TODO: if (goingToAnalyze(callee)) {
+        // Default behavior for "analyzable" method calls is to remove ("temporarily")
+        //  all the marks from the 'instance' and arguments, in order to allow them "pass through"
+        //  the callee (when it is going to be analyzed), i.e. through "call-to-start" and
+        //  "exit-to-return" flow functions.
+        // When we know that we are NOT going to analyze the callee, we do NOT need
+        //  to remove any marks from 'instance' and arguments.
+        // Currently, "analyzability" of the callee depends on the fact that the callee
+        //  is "accessible" through the JcApplicationGraph::callees().
+        if (callee in graph.callees(callStatement)) {
 
-        if (fact.variable.isStatic) {
-            return@FlowFunctionInstance emptyList()
-        }
-
-        for (actual in callExpr.args) {
-            // Possibly tainted actual parameter:
-            if (fact.variable.startsWith(actual.toPathOrNull())) {
-                return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+            if (fact.variable.isStatic) {
+                return@FlowFunctionInstance emptyList()
             }
-        }
 
-        if (callExpr is JcInstanceCallExpr) {
-            // Possibly tainted instance:
-            if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+            for (actual in callExpr.args) {
+                // Possibly tainted actual parameter:
+                if (fact.variable.startsWith(actual.toPathOrNull())) {
+                    return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+                }
             }
-        }
 
-        // }
+            if (callExpr is JcInstanceCallExpr) {
+                // Possibly tainted instance:
+                if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                    return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+                }
+            }
+
+        }
 
         if (callStatement is JcAssignInst) {
             // Possibly tainted lhv:

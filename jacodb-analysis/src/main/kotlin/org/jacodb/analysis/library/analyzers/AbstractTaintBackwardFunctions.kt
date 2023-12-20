@@ -107,6 +107,7 @@ abstract class AbstractTaintBackwardFunctions(
     override fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
+        graph: JcApplicationGraph,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         if (fact !is TaintNode) {
             return@FlowFunctionInstance if (fact == ZEROFact) {

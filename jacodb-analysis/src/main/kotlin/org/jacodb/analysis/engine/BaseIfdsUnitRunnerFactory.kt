@@ -162,7 +162,7 @@ internal class BaseIfdsUnitRunner(
                 //
                 for (returnSite in graph.successors(current)) {
                     val factsAtReturnSite = flowSpace
-                        .obtainCallToReturnFlowFunction(current, returnSite)
+                        .obtainCallToReturnFlowFunction(current, returnSite, graph)
                         .compute(currentFact)
                     for (returnSiteFact in factsAtReturnSite) {
                         val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)

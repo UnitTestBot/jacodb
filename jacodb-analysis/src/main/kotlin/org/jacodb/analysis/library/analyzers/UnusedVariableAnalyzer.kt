@@ -177,7 +177,7 @@ private class UnusedVariableForwardFunctions(
         emptyList()
     }
 
-    override fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst) =
+    override fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst, graph: JcApplicationGraph) =
         obtainSequentFlowFunction(callStatement, returnSite)
 
     override fun obtainExitToReturnSiteFlowFunction(

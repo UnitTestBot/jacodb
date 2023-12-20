@@ -63,6 +63,7 @@ interface FlowFunctionsSpace {
     fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
+        graph: JcApplicationGraph,
     ): FlowFunctionInstance
 
     fun obtainExitToReturnSiteFlowFunction(
