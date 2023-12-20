@@ -64,7 +64,7 @@ private val sqlSourceMatchers: List<String> = listOf(
 
 private val sqlSanitizeMatchers: List<String> = listOf(
     // "java\\.sql\\.Statement#set.*", // Remove
-    "java\\.sql\\.PreparedStatement#set.*" // TODO
+    // "java\\.sql\\.PreparedStatement#set.*" // TODO
 )
 
 private val sqlSinkMatchers: List<String> = listOf(

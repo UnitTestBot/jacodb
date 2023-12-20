@@ -77,8 +77,10 @@ object OwaspBenchRunner {
                     // true
 
                     // Specific method:
-                    // if (method.enclosingClass.simpleName == "BenchmarkTest00008") {
-                    if (method.enclosingClass.simpleName == "BenchmarkTest00018") {
+                    // val specificMethod = "BenchmarkTest00008"
+                    // val specificMethod = "BenchmarkTest00018"
+                    val specificMethod = "BenchmarkTest00024"
+                    if (method.enclosingClass.simpleName == specificMethod) {
                         true
                     } else {
                         false
