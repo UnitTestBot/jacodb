@@ -50,7 +50,13 @@ object WebGoatBenchRunner {
     private fun loadWebGoatBench(): BenchCp {
         val webGoatDir = Path(object {}.javaClass.getResource("/webgoat")!!.path)
         return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "deps").apply {
-            entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons") }
+            entrypointFilter = { method ->
+                if (method.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons")) {
+                    true
+                } else {
+                    false
+                }
+            }
         }
     }
 
@@ -65,7 +71,33 @@ object OwaspBenchRunner {
     private fun loadOwaspJavaBench(): BenchCp {
         val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
         return loadWebAppBenchCp(owaspJavaPath / "classes", owaspJavaPath / "deps").apply {
-            entrypointFilter = { it.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode") }
+            entrypointFilter = { method ->
+                if (method.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode")) {
+                    // All methods:
+                    // true
+
+                    // Specific method:
+                    // if (method.enclosingClass.simpleName == "BenchmarkTest00008") {
+                    if (method.enclosingClass.simpleName == "BenchmarkTest00018") {
+                        true
+                    } else {
+                        false
+                    }
+
+                    // Methods with specific annotation:
+                    // // println("Annotations of $method: ${method.enclosingClass.annotations.map{it.name}}")
+                    // method.enclosingClass.annotations.any { annotation ->
+                    //     if (annotation.name == "javax.servlet.annotation.WebServlet") {
+                    //         // println("$method has annotation ${annotation.name} with values ${annotation.values}")
+                    //         (annotation.values["value"]!! as List<String>)[0].startsWith("/sqli-")
+                    //     } else {
+                    //         false
+                    //     }
+                    // }
+                } else {
+                    false
+                }
+            }
         }
     }
 
