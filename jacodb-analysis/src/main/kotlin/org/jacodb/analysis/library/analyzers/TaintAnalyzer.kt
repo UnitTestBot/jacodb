@@ -314,16 +314,19 @@ private class TaintForwardFunctions(
         }
 
         // TODO: do no do this:
-        val factIsPassed = callExpr.values.any {
-            it.toPathOrNull().startsWith(fact.variable) || fact.variable.startsWith(it.toPathOrNull())
-        }
-        return if (factIsPassed && !sanitizes(callExpr, fact)) {
-            // Pass-through, but also (?) taint the 'instance'
-            listOf(fact) + fact.moveToOtherPath(instance.toPath())
-        } else {
-            // Pass-through
-            listOf(fact)
-        }
+        // val factIsPassed = callExpr.values.any {
+        //     it.toPathOrNull().startsWith(fact.variable) || fact.variable.startsWith(it.toPathOrNull())
+        // }
+        // return if (factIsPassed && !sanitizes(callExpr, fact)) {
+        //     // Pass-through, but also (?) taint the 'instance'
+        //     listOf(fact) + fact.moveToOtherPath(instance.toPath())
+        // } else {
+        //     // Pass-through
+        //     listOf(fact)
+        // }
+
+        // Pass-through
+        return listOf(fact)
     }
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): List<DomainFact> = buildList {
