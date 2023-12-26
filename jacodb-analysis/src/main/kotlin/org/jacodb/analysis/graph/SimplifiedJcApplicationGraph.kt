@@ -91,8 +91,6 @@ internal class SimplifiedJcApplicationGraph(
     private fun calleesUnmarked(node: JcInst): Sequence<JcMethod> {
         val callees = impl.callees(node).filterNot { callee ->
             bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
-                // && callee.name != "getenv"
-                // && !(callee.enclosingClass.name.startsWith("java.sql.ResultSet") && callee.name.startsWith("get"))
         }
 
         val callExpr = node.callExpr as? JcVirtualCallExpr ?: return callees

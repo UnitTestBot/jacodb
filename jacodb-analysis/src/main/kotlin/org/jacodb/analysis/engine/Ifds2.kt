@@ -267,11 +267,6 @@ class TaintForwardFlowFunctions(
                 when (position) {
                     This -> method.thisInstance
 
-                    // is Argument -> method.flowGraph().locals
-                    //     .filterIsInstance<JcArgument>()
-                    //     .singleOrNull { it.index == position.index }
-                    //     ?: error("Cannot resolve $position for $method")
-
                     is Argument -> run {
                         val p = method.parameters[position.index]
                         cp.findTypeOrNull(p.type)?.let { t ->
@@ -319,6 +314,7 @@ class TaintForwardFlowFunctions(
         }
     }
 
+    // TODO: impl
     private fun copyTaint(
         fact: Tainted,
         from: JcExpr,
@@ -327,6 +323,7 @@ class TaintForwardFlowFunctions(
         TODO()
     }
 
+    // TODO: impl
     private fun moveTaint(
         fact: Tainted,
         from: JcExpr,
@@ -354,12 +351,14 @@ class TaintForwardFlowFunctions(
             return listOf(fact, newTaint)
         }
 
+        // TODO: check
         // Some sub-path in 'to' is tainted with 'fact':
         if (fact.variable.startsWith(toPath)) {
             // Drop 'fact' taint:
             return emptyList()
         }
 
+        // TODO: check
         // 'to' is tainted (strictly) with 'fact':
         // Note: "non-strict" case is handled above.
         if (toPath.startsWith(fact.variable)) {
