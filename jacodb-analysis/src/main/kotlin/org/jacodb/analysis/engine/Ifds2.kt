@@ -42,28 +42,38 @@ import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.taint.configuration.AnyArgument
+import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
 import org.jacodb.taint.configuration.RemoveAllMarks
 import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.This
 
 private val logger = KotlinLogging.logger {}
 
@@ -125,6 +135,10 @@ data class Edge(
 
 fun Edge.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())
 
+/**
+ * Represents a path edge which starts in an entrypoint
+ * and ends in an exit-point of a method.
+ */
 data class SummaryEdge(
     val edge: Edge,
 ) : SummaryFact {
@@ -144,7 +158,11 @@ fun interface FlowFunction {
 }
 
 interface FlowFunctionsSpace2 {
-    fun obtainPossibleStartFacts(startStatement: JcInst): List<Fact>
+    /**
+     * Method for obtaining initial domain facts at the method entrypoint.
+     * Commonly, it is only `listOf(Zero)`.
+     */
+    fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact>
 
     /**
      * Sequent flow function.
@@ -224,36 +242,97 @@ interface FlowFunctionsSpace2 {
 @Suppress("PublicApiImplicitType")
 class TaintForwardFlowFunctions(
     private val cp: JcClasspath,
+    private val graph: JcApplicationGraph,
 ) : FlowFunctionsSpace2 {
-    // private fun generates(inst: JcInst): Collection<Tainted> {
-    //     if (inst.callExpr == null) return emptyList()
-    //     val conditionEvaluator = ConditionEvaluator(CallPositionResolverToJcValue(inst))
-    //     val actionEvaluator = TaintActionEvaluator(CallPositionResolverToAccessPath(inst))
-    //     val facts = mutableSetOf<Tainted>()
-    //     for (item in config.items.filterIsInstance<TaintMethodSource>()) {
-    //         if (item.condition.accept(conditionEvaluator)) {
-    //             for (action in item.actionsAfter) {
-    //                 when (action) {
-    //                     is AssignMark -> {
-    //                         facts += actionEvaluator.evaluate(action)
-    //                     }
-    //
-    //                     else -> error("$action is not supported for $item")
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return facts
-    // }
 
-    // private fun sanitizes(inst: JcInst, fact: Tainted): Boolean {
-    // ...
-    // }
+    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+        cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+    }
 
-    override fun obtainPossibleStartFacts(startStatement: JcInst): List<Fact> {
-        // FIXME
-        // TODO: handle TaintEntryPointSource
-        return listOf(Zero)
+    // TODO: consider Set<Fact> or Collection<Fact>
+    override fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact> = buildList {
+        // Zero (reachability) fact always present at entrypoint:
+        add(Zero)
+
+        // Extract initial facts from the config:
+        val config = taintConfigurationFeature?.let { feature ->
+            logger.debug { "Extracting config for $method" }
+            feature.getConfigForMethod(method)
+        }
+        if (config != null) {
+            // Note: both condition and action evaluator require a custom position resolver.
+            val conditionEvaluator = BasicConditionEvaluator { position ->
+                when (position) {
+                    This -> method.thisInstance
+
+                    // is Argument -> method.flowGraph().locals
+                    //     .filterIsInstance<JcArgument>()
+                    //     .singleOrNull { it.index == position.index }
+                    //     ?: error("Cannot resolve $position for $method")
+
+                    is Argument -> run {
+                        val p = method.parameters[position.index]
+                        cp.findTypeOrNull(p.type)?.let { t ->
+                            JcArgument.of(p.index, p.name, t)
+                        }
+                    } ?: error("Cannot resolve $position for $method")
+
+                    AnyArgument -> error("Unexpected $position")
+                    Result -> error("Unexpected $position")
+                    ResultAnyElement -> error("Unexpected $position")
+                }
+            }
+            val actionEvaluator = TaintActionEvaluator { position ->
+                when (position) {
+                    This -> method.thisInstance.toPathOrNull()
+                        ?: error("Cannot resolve $position for $method")
+
+                    is Argument -> run {
+                        val p = method.parameters[position.index]
+                        cp.findTypeOrNull(p.type)?.let { t ->
+                            JcArgument.of(p.index, p.name, t).toPathOrNull()
+                        }
+                    } ?: error("Cannot resolve $position for $method")
+
+                    AnyArgument -> error("Unexpected $position")
+                    Result -> error("Unexpected $position")
+                    ResultAnyElement -> error("Unexpected $position")
+                }
+            }
+
+            // Handle EntryPointSource config items:
+            for (item in config.filterIsInstance<TaintEntryPointSource>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is AssignMark -> {
+                                add(actionEvaluator.evaluate(action))
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun copyTaint(
+        fact: Tainted,
+        from: JcExpr,
+        to: JcValue,
+    ): List<Fact> {
+        TODO()
+    }
+
+    private fun moveTaint(
+        fact: Tainted,
+        from: JcExpr,
+        to: JcValue,
+    ): List<Fact> {
+        TODO()
     }
 
     // TODO: rename / refactor
@@ -292,7 +371,8 @@ class TaintForwardFlowFunctions(
         return listOf(fact)
     }
 
-    // TODO: rename / refactor
+    // TODO: rename (consider "propagate")
+    // TODO: refactor (consider adding 'transmitTaintSequent' / 'transmitTaintCall')
     private fun transmitTaintNormal(
         fact: Tainted,
         inst: JcInst,
@@ -300,8 +380,6 @@ class TaintForwardFlowFunctions(
         // Pass-through:
         return listOf(fact)
     }
-
-    // TODO: consider transmitTaintSequent / transmitTaintCall
 
     override fun obtainSequentFlowFunction(
         current: JcInst,
@@ -325,18 +403,33 @@ class TaintForwardFlowFunctions(
 
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
-        returnSite: JcInst, // unused?
+        returnSite: JcInst, // FIXME: unused?
     ) = FlowFunction { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
 
-        val config = cp.features
-            ?.singleOrNull { it is TaintConfigurationFeature }
-            ?.let { it as TaintConfigurationFeature }
-            ?.let { feature ->
-                logger.debug { "Extracting config for $callee" }
-                feature.getConfigForMethod(callee)
+        // FIXME: adhoc for constructors:
+        if (callee.isConstructor) {
+            return@FlowFunction listOf(fact)
+        }
+
+        // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
+        if (fact is Tainted && callExpr is JcDynamicCallExpr && callee.enclosingClass.name == "java.lang.invoke.StringConcatFactory" && callStatement is JcAssignInst) {
+            for (arg in callExpr.args) {
+                if (arg.toPath() == fact.variable) {
+                    return@FlowFunction setOf(
+                        fact,
+                        fact.copy(variable = callStatement.lhv.toPath())
+                    )
+                }
             }
+            return@FlowFunction setOf(fact)
+        }
+
+        val config = taintConfigurationFeature?.let { feature ->
+            logger.debug { "Extracting config for $callee" }
+            feature.getConfigForMethod(callee)
+        }
 
         // If 'fact' is ZeroFact, handle MethodSource. If there are no suitable MethodSource items, perform default.
         // For other facts (Tainted only?), handle PassThrough/Cleaner items.
@@ -351,14 +444,17 @@ class TaintForwardFlowFunctions(
         //  In such case, the call-to-return flow function should return empty list of facts,
         //  since they are going to be "handled by the summary edge".
 
-        // Handle MethodSource config items:
         if (fact == Zero) {
-            // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
             if (config != null) {
+                val facts: MutableSet<Fact> = mutableSetOf()
+
+                // Add Zero fact:
+                facts += Zero
+
                 val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
                 val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-                // TODO: replace with buildSet?
-                val facts = mutableSetOf<Tainted>()
+
+                // Handle MethodSource config items:
                 for (item in config.filterIsInstance<TaintMethodSource>()) {
                     if (item.condition.accept(conditionEvaluator)) {
                         for (action in item.actionsAfter) {
@@ -372,7 +468,8 @@ class TaintForwardFlowFunctions(
                         }
                     }
                 }
-                return@FlowFunction facts + Zero
+
+                return@FlowFunction facts
             } else {
                 return@FlowFunction listOf(Zero)
             }
@@ -384,53 +481,116 @@ class TaintForwardFlowFunctions(
             return@FlowFunction emptyList()
         }
 
-        if (config == null) {
-            return@FlowFunction emptyList()
-        }
+        // TODO: handle 'activation' (c.f. Boomerang) here
 
-        val conditionEvaluator = FactAwareConditionEvaluator(
-            fact,
-            CallPositionToJcValueResolver(callStatement)
-        )
-        val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
-        val facts = mutableSetOf<Tainted>()
+        // if (config == null) {
+        //     return@FlowFunction emptyList()
+        // }
 
-        for (item in config.filterIsInstance<TaintPassThrough>()) {
-            if (item.condition.accept(conditionEvaluator)) {
-                for (action in item.actionsAfter) {
-                    when (action) {
-                        is CopyMark -> {
-                            facts += actionEvaluator.evaluate(action, fact)
+        if (config != null) {
+            val facts = mutableSetOf<Tainted>()
+            val conditionEvaluator = FactAwareConditionEvaluator(fact, CallPositionToJcValueResolver(callStatement))
+            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+            var defaultBehavior = true
+
+            // Handle PassThrough config items:
+            for (item in config.filterIsInstance<TaintPassThrough>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is CopyMark -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            is CopyAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            else -> error("$action is not supported for $item")
                         }
-
-                        is CopyAllMarks -> {
-                            facts += actionEvaluator.evaluate(action, fact)
-                        }
-
-                        else -> error("$action is not supported for $item")
                     }
                 }
             }
-        }
-        for (item in config.filterIsInstance<TaintCleaner>()) {
-            if (item.condition.accept(conditionEvaluator)) {
-                for (action in item.actionsAfter) {
-                    when (action) {
-                        is RemoveMark -> {
-                            facts += actionEvaluator.evaluate(action, fact)
-                        }
 
-                        is RemoveAllMarks -> {
-                            facts += actionEvaluator.evaluate(action, fact)
-                        }
+            // Handle Cleaner config items:
+            for (item in config.filterIsInstance<TaintCleaner>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
 
-                        else -> error("$action is not supported for $item")
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, fact)
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
                     }
                 }
             }
+
+            if (!defaultBehavior) {
+                if (facts.size > 0) {
+                    logger.debug { "Got ${facts.size} facts from config for $callee: $facts" }
+                }
+                return@FlowFunction facts
+            } else {
+                // Fall back to the default behavior, as if there were no config at all.
+            }
         }
 
-        facts
+        // TODO: CONSIDER REFACTORING THIS
+        //   Default behavior for "analyzable" method calls is to remove ("temporarily")
+        //    all the marks from the 'instance' and arguments, in order to allow them "pass through"
+        //    the callee (when it is going to be analyzed), i.e. through "call-to-start" and
+        //    "exit-to-return" flow functions.
+        //   When we know that we are NOT going to analyze the callee, we do NOT need
+        //    to remove any marks from 'instance' and arguments.
+        //   Currently, "analyzability" of the callee depends on the fact that the callee
+        //    is "accessible" through the JcApplicationGraph::callees().
+        if (callee in graph.callees(callStatement)) {
+
+            if (fact.variable.isStatic) {
+                return@FlowFunction emptyList()
+            }
+
+            for (actual in callExpr.args) {
+                // Possibly tainted actual parameter:
+                if (fact.variable.startsWith(actual.toPathOrNull())) {
+                    return@FlowFunction emptyList() // Will be handled by summary edge
+                }
+            }
+
+            if (callExpr is JcInstanceCallExpr) {
+                // Possibly tainted instance:
+                if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                    return@FlowFunction emptyList() // Will be handled by summary edge
+                }
+            }
+
+        }
+
+        if (callStatement is JcAssignInst) {
+            // Possibly tainted lhv:
+            if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
+                return@FlowFunction emptyList() // Overridden by rhv
+            }
+        }
+
+        // The "most default" behaviour is encapsulated here:
+        transmitTaintNormal(fact, callStatement)
     }
 
     override fun obtainCallToStartFlowFunction(
@@ -438,7 +598,7 @@ class TaintForwardFlowFunctions(
         callee: JcMethod,
     ) = FlowFunction { fact ->
         if (fact == Zero) {
-            return@FlowFunction listOf(Zero) // TODO: + entry point config?
+            return@FlowFunction obtainPossibleStartFacts(callee)
         }
 
         if (fact !is Tainted) {
@@ -451,27 +611,20 @@ class TaintForwardFlowFunctions(
         val formalParams = cp.getFormalParamsOf(callee)
 
         buildSet {
-            // Transmit facts on arguments ('actual' to 'formal'):
+            // Transmit facts on arguments (from 'actual' to 'formal'):
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(fact, actual, formal))
+                addAll(transmitTaint(fact, from = actual, to = formal))
             }
 
-            // Transmit facts on instance ('instance' to 'this'):
+            // Transmit facts on instance (from 'instance' to 'this'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(fact, callExpr.instance, callee.thisInstance))
+                addAll(transmitTaint(fact, from = callExpr.instance, to = callee.thisInstance))
             }
 
-            // TODO: check
-            // Transmit facts on static value:
-            if (fact is Tainted && fact.variable.isStatic) {
+            // Transmit facts on static values:
+            if (fact.variable.isStatic) {
                 add(fact)
             }
-
-            // TODO: can't happen here, because we already handled ZeroFact at the beginning.
-            // // Transmit zero fact:
-            // if (fact == ZeroFact) {
-            //     add(fact)
-            // }
         }
     }
 
@@ -496,18 +649,19 @@ class TaintForwardFlowFunctions(
         val formalParams = cp.getFormalParamsOf(callee)
 
         buildSet {
-            // Transmit facts on arguments ('formal' back to 'actual'), if they are passed by-ref:
+            // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
+            // TODO: "if passed by-ref" part is not implemented here yet
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(fact, formal, actual))
+                addAll(transmitTaint(fact, from = formal, to = actual))
             }
 
-            // Transmit facts on instance ('this' to 'instance'):
+            // Transmit facts on instance (from 'this' to 'instance'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(fact, callee.thisInstance, callExpr.instance))
+                addAll(transmitTaint(fact, from = callee.thisInstance, to = callExpr.instance))
             }
 
-            // Transmit facts on static value:
-            if (fact is Tainted && fact.variable.isStatic) {
+            // Transmit facts on static values:
+            if (fact.variable.isStatic) {
                 add(fact)
             }
 
@@ -515,7 +669,7 @@ class TaintForwardFlowFunctions(
             if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
                 // Note: returnValue can be null here in some weird cases, e.g. in lambda.
                 exitStatement.returnValue?.let { returnValue ->
-                    addAll(transmitTaint(fact, returnValue, callStatement.lhv))
+                    addAll(transmitTaint(fact, from = returnValue, to = callStatement.lhv))
                 }
             }
         }
@@ -663,7 +817,7 @@ class TaintAnalyzer(
     private val graph: JcApplicationGraph,
 ) : Analyzer2 {
     override val flowFunctions: FlowFunctionsSpace2 by lazy {
-        TaintForwardFlowFunctions(graph.classpath)
+        TaintForwardFlowFunctions(graph.classpath, graph)
     }
 
     private fun isExitPoint(statement: JcInst): Boolean {
@@ -708,9 +862,9 @@ class Ifds(
     // TODO: should 'addStart' replace 'submitNewEdge'?
     private suspend fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
-        for (start in graph.entryPoints(method)) {
-            val startFacts = flowSpace.obtainPossibleStartFacts(start)
-            for (startFact in startFacts) {
+        val startFacts = flowSpace.obtainPossibleStartFacts(method)
+        for (startFact in startFacts) {
+            for (start in graph.entryPoints(method)) {
                 val vertex = Vertex(start, startFact)
                 val edge = Edge(vertex, vertex) // loop
                 propagate(edge)
@@ -762,6 +916,7 @@ class Ifds(
         val currentIsCall = currentCallees.isNotEmpty()
         // FIXME: [old] val currentIsExit = current in graph.exitPoints(graph.methodOf(current))
         val currentIsExit = current in graph.exitPoints(current.location.method)
+
         if (currentIsCall) {
             for (returnSite in graph.successors(current)) {
                 // Propagate through the call-to-return-site edge:
@@ -824,7 +979,7 @@ class Ifds(
         } else {
             if (currentIsExit) {
                 // Propagate through the summary edge:
-                for (@Suppress("Destructure") callerPathEdge in callSitesOf[startVertex].orEmpty()) {
+                for (callerPathEdge in callSitesOf[startVertex].orEmpty()) {
                     val callerStartVertex = callerPathEdge.from
                     val caller = callerPathEdge.to.statement
                     for (returnSite in graph.successors(caller)) {
@@ -836,7 +991,7 @@ class Ifds(
                 summaryEdges.getOrPut(startVertex) { mutableSetOf() }.add(currentVertex)
             }
 
-            // Simple propagation to the next instruction:
+            // Simple (sequential) propagation to the next instruction:
             for (next in graph.successors(current)) {
                 val factsAtNext = flowSpace
                     .obtainSequentFlowFunction(current/*, next*/)
