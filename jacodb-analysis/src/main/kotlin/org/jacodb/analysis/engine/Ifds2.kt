@@ -824,12 +824,71 @@ class TaintAnalyzer(
         return statement in graph.exitPoints(statement.location.method)
     }
 
+    private fun isSink(statement: JcInst, fact: Fact): Boolean {
+        // TODO
+        return false
+    }
+
     override fun handleNewEdge(edge: Edge): List<Event> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
         }
-        // TODO: check whether 'edge.to.statement' is sink. If it is a sink (due to config, or by some other reason),
-        //       return a new event with found vulnerability. Do not forget to include the config's rule for a sink.
+
+        val configOk = run {
+            val callExpr = edge.to.statement.callExpr ?: return@run false
+            val callee = callExpr.method.method
+
+            val config = (flowFunctions as TaintForwardFlowFunctions)
+                .taintConfigurationFeature?.let { feature ->
+                    logger.debug { "Extracting config for $callee" }
+                    feature.getConfigForMethod(callee)
+                } ?: return@run false
+
+            // TODO: not always we want to skip sinks on Zero facts.
+            //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
+            if (edge.to.fact !is Tainted) {
+                return@run false
+            }
+
+            // Determine whether 'edge.to' is a sink via config:
+            val conditionEvaluator = FactAwareConditionEvaluator(
+                edge.to.fact,
+                CallPositionToJcValueResolver(edge.to.statement),
+            )
+            var triggeredItem: TaintMethodSink? = null
+            for (item in config.filterIsInstance<TaintMethodSink>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    triggeredItem = item
+                    break
+                }
+                // FIXME: unconditionally let it be the sink.
+                // triggeredItem = item
+                // break
+            }
+            if (triggeredItem != null) {
+                // TODO: handle sink
+                logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
+                // val desc = generateDescriptionForSink(edge.to)
+                // val vulnerability = VulnerabilityLocation(desc, edge.to, edge, rule = triggeredItem)
+                // logger.info { "Found sink: $vulnerability in ${vulnerability.method}" }
+                // add(NewSummaryFact(vulnerability))
+                // verticesWithTraceGraphNeeded.add(edge.to)
+            }
+            true
+        }
+
+        if (!configOk) {
+            // "config"-less behavior:
+            if (isSink(edge.to.statement, edge.to.fact)) {
+                // TODO: handle sink
+                logger.info { "Found sink at ${edge.to} in ${edge.method}" }
+                // val desc = generateDescriptionForSink(edge.to)
+                // val vulnerability = VulnerabilityLocation(desc, edge.to, edge)
+                // logger.info { "Found sink: $vulnerability in ${vulnerability.method}" }
+                // add(NewSummaryFact(vulnerability))
+                // verticesWithTraceGraphNeeded.add(edge.to)
+            }
+        }
     }
 
     override fun handleCrossUnitCall(caller: Vertex, callee: Vertex): List<Event> = buildList {
