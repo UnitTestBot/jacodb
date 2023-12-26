@@ -69,7 +69,9 @@ private val logger = KotlinLogging.logger {}
 
 interface Fact
 
-object ZeroFact : Fact
+object Zero : Fact {
+    override fun toString(): String = "[ZERO]"
+}
 
 data class Tainted(
     val variable: AccessPath,
@@ -79,13 +81,13 @@ data class Tainted(
 }
 
 fun DomainFact.toFact(): Fact = when (this) {
-    ZEROFact -> ZeroFact
+    ZEROFact -> Zero
     is TaintNode -> Tainted(this)
     else -> object : Fact {}
 }
 
 fun Fact.toDomainFact(): DomainFact = when (this) {
-    ZeroFact -> ZEROFact
+    Zero -> ZEROFact
 
     is Tainted -> {
         when (mark.name) {
@@ -251,7 +253,7 @@ class TaintForwardFlowFunctions(
     override fun obtainPossibleStartFacts(startStatement: JcInst): List<Fact> {
         // FIXME
         // TODO: handle TaintEntryPointSource
-        return listOf(ZeroFact)
+        return listOf(Zero)
     }
 
     // TODO: rename / refactor
@@ -304,10 +306,10 @@ class TaintForwardFlowFunctions(
     override fun obtainSequentFlowFunction(
         current: JcInst,
     ) = FlowFunction { fact ->
-        if (fact == ZeroFact) {
+        if (fact == Zero) {
             // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
             //        and 'generates' is only applicable for calls.
-            return@FlowFunction listOf(ZeroFact) // + generates(current)
+            return@FlowFunction listOf(Zero) // + generates(current)
         }
 
         if (fact !is Tainted) {
@@ -350,7 +352,7 @@ class TaintForwardFlowFunctions(
         //  since they are going to be "handled by the summary edge".
 
         // Handle MethodSource config items:
-        if (fact == ZeroFact) {
+        if (fact == Zero) {
             // return@FlowFunction listOf(ZeroFact) + generates(callStatement)
             if (config != null) {
                 val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
@@ -370,9 +372,9 @@ class TaintForwardFlowFunctions(
                         }
                     }
                 }
-                return@FlowFunction facts + ZeroFact
+                return@FlowFunction facts + Zero
             } else {
-                return@FlowFunction listOf(ZeroFact)
+                return@FlowFunction listOf(Zero)
             }
         }
 
@@ -435,8 +437,8 @@ class TaintForwardFlowFunctions(
         callStatement: JcInst,
         callee: JcMethod,
     ) = FlowFunction { fact ->
-        if (fact == ZeroFact) {
-            return@FlowFunction listOf(ZeroFact) // TODO: + entry point config?
+        if (fact == Zero) {
+            return@FlowFunction listOf(Zero) // TODO: + entry point config?
         }
 
         if (fact !is Tainted) {
@@ -479,8 +481,8 @@ class TaintForwardFlowFunctions(
         exitStatement: JcInst,
     ) = FlowFunction { fact ->
         // TODO: do we even need to return non-empty list for zero fact here?
-        if (fact == ZeroFact) {
-            return@FlowFunction listOf(ZeroFact)
+        if (fact == Zero) {
+            return@FlowFunction listOf(Zero)
         }
 
         if (fact !is Tainted) {
