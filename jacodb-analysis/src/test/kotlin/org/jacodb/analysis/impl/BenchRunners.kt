@@ -19,6 +19,8 @@ package org.jacodb.analysis.impl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.PackageUnitResolver
+import org.jacodb.analysis.engine.SingletonUnitResolver
+import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
@@ -49,7 +51,11 @@ private val logger = KotlinLogging.logger {}
 object WebGoatBenchRunner {
     private fun loadWebGoatBench(): BenchCp {
         val webGoatDir = Path(object {}.javaClass.getResource("/webgoat")!!.path)
-        return loadWebAppBenchCp(webGoatDir / "classes", webGoatDir / "deps").apply {
+        return loadWebAppBenchCp(
+            classes = webGoatDir / "classes",
+            dependencies = webGoatDir / "deps",
+            unitResolver = PackageUnitResolver
+        ).apply {
             entrypointFilter = { method ->
                 if (method.enclosingClass.packageName.startsWith("org.owasp.webgoat.lessons")) {
                     true
@@ -70,16 +76,29 @@ object WebGoatBenchRunner {
 object OwaspBenchRunner {
     private fun loadOwaspJavaBench(): BenchCp {
         val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
-        return loadWebAppBenchCp(owaspJavaPath / "classes", owaspJavaPath / "deps").apply {
+        return loadWebAppBenchCp(
+            classes = owaspJavaPath / "classes",
+            dependencies = owaspJavaPath / "deps",
+            // unitResolver = PackageUnitResolver,
+            unitResolver = SingletonUnitResolver
+        ).apply {
             entrypointFilter = { method ->
                 if (method.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode")) {
                     // All methods:
                     // true
 
                     // Specific method:
-                    // val specificMethod = "BenchmarkTest00008"
-                    // val specificMethod = "BenchmarkTest00018"
-                    val specificMethod = "BenchmarkTest00024"
+                    val specificMethod = "BenchmarkTest00008" // ok
+                    // val specificMethod = "BenchmarkTest00018" // ok
+                    // val specificMethod = "BenchmarkTest00024" // ok
+                    // val specificMethod = "BenchmarkTest00025" // ok?
+                    // val specificMethod = "BenchmarkTest00026" // ok?
+                    // val specificMethod = "BenchmarkTest00027" // ok?
+                    // val specificMethod = "BenchmarkTest00032" // problems: isEmpty, String[], Map::get
+                    // val specificMethod = "BenchmarkTest00033" // problems: isEmpty, String[], Map::get
+                    // val specificMethod = "BenchmarkTest00034" // problems: isEmpty, String[], Map::get
+                    // val specificMethod = "BenchmarkTest00037" // 0 facts, problems: String[]
+                    // val specificMethod = "BenchmarkTest00043" // 0 facts
                     if (method.enclosingClass.simpleName == specificMethod) {
                         true
                     } else {
@@ -113,7 +132,11 @@ object OwaspBenchRunner {
 object ShopizerBenchRunner {
     private fun loadShopizerBench(): BenchCp {
         val shopizerPath = Path(object {}.javaClass.getResource("/shopizer")!!.path)
-        return loadWebAppBenchCp(shopizerPath / "classes", shopizerPath / "deps").apply {
+        return loadWebAppBenchCp(
+            classes = shopizerPath / "classes",
+            dependencies = shopizerPath / "deps",
+            unitResolver = PackageUnitResolver
+        ).apply {
             entrypointFilter = { true }
         }
     }
@@ -129,6 +152,7 @@ private class BenchCp(
     val cp: JcClasspath,
     val db: JcDatabase,
     val benchLocations: List<JcByteCodeLocation>,
+    val unitResolver: UnitResolver,
     var entrypointFilter: (JcMethod) -> Boolean = { true },
 ) : AutoCloseable {
     override fun close() {
@@ -137,7 +161,11 @@ private class BenchCp(
     }
 }
 
-private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp = runBlocking {
+private fun loadBenchCp(
+    classes: List<File>,
+    dependencies: List<File>,
+    unitResolver: UnitResolver,
+): BenchCp = runBlocking {
     val cpFiles = classes + dependencies
 
     val db = jacodb {
@@ -178,18 +206,23 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp 
     val cp = db.classpath(cpFiles, features)
     val locations = cp.locations.filter { it.jarOrFolder in classes }
 
-    BenchCp(cp, db, locations)
+    BenchCp(cp, db, locations, unitResolver)
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun loadWebAppBenchCp(classes: Path, dependencies: Path): BenchCp =
+private fun loadWebAppBenchCp(
+    classes: Path,
+    dependencies: Path,
+    unitResolver: UnitResolver,
+): BenchCp =
     loadBenchCp(
         classes = listOf(classes.toFile()),
         dependencies = dependencies
             .walk(PathWalkOption.INCLUDE_DIRECTORIES)
             .filter { it.extension == "jar" }
             .map { it.toFile() }
-            .toList()
+            .toList(),
+        unitResolver = unitResolver
     )
 
 private fun analyzeBench(benchmark: BenchCp) {
@@ -201,14 +234,18 @@ private fun analyzeBench(benchmark: BenchCp) {
     for (method in startMethods) {
         logger.info { method }
     }
-    analyzeTaint(benchmark.cp, startMethods)
+    analyzeTaint(benchmark.cp, benchmark.unitResolver, startMethods)
 }
 
-private fun analyzeTaint(cp: JcClasspath, startMethods: List<JcMethod>) {
+private fun analyzeTaint(
+    cp: JcClasspath,
+    unitResolver: UnitResolver,
+    startMethods: List<JcMethod>,
+) {
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
-    val vulnerabilities = runAnalysis(graph, PackageUnitResolver, newSqlInjectionRunnerFactory(), startMethods)
+    val vulnerabilities = runAnalysis(graph, unitResolver, newSqlInjectionRunnerFactory(), startMethods)
     logger.info { "Total found ${vulnerabilities.size} sinks" }
     for (vulnerability in vulnerabilities) {
         logger.info { "${vulnerability.location} in ${vulnerability.location.method}" }
