@@ -76,45 +76,48 @@ object WebGoatBenchRunner {
 object OwaspBenchRunner {
     private fun loadOwaspJavaBench(): BenchCp {
         val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
+        val runAll = true // make it 'false' to test on specific method(s) only
         return loadWebAppBenchCp(
             classes = owaspJavaPath / "classes",
             dependencies = owaspJavaPath / "deps",
-            // unitResolver = PackageUnitResolver,
-            unitResolver = SingletonUnitResolver
+            unitResolver = PackageUnitResolver,
+            // unitResolver = SingletonUnitResolver
         ).apply {
             entrypointFilter = { method ->
                 if (method.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode")) {
-                    // All methods:
-                    // true
-
-                    // Specific method:
-                    val specificMethod = "BenchmarkTest00008" // ok
-                    // val specificMethod = "BenchmarkTest00018" // ok
-                    // val specificMethod = "BenchmarkTest00024" // ok
-                    // val specificMethod = "BenchmarkTest00025" // ok?
-                    // val specificMethod = "BenchmarkTest00026" // ok?
-                    // val specificMethod = "BenchmarkTest00027" // ok?
-                    // val specificMethod = "BenchmarkTest00032" // problems: isEmpty, String[], Map::get
-                    // val specificMethod = "BenchmarkTest00033" // problems: isEmpty, String[], Map::get
-                    // val specificMethod = "BenchmarkTest00034" // problems: isEmpty, String[], Map::get
-                    // val specificMethod = "BenchmarkTest00037" // 0 facts, problems: String[]
-                    // val specificMethod = "BenchmarkTest00043" // 0 facts
-                    if (method.enclosingClass.simpleName == specificMethod) {
+                    if (runAll) {
+                        // All methods:
                         true
                     } else {
-                        false
-                    }
+                        // Specific method:
+                        val specificMethod = "BenchmarkTest00008" // ok
+                        // val specificMethod = "BenchmarkTest00018" // ok
+                        // val specificMethod = "BenchmarkTest00024" // ok
+                        // val specificMethod = "BenchmarkTest00025" // ok?
+                        // val specificMethod = "BenchmarkTest00026" // ok?
+                        // val specificMethod = "BenchmarkTest00027" // ok?
+                        // val specificMethod = "BenchmarkTest00032" // problems: isEmpty, String[], Map::get
+                        // val specificMethod = "BenchmarkTest00033" // problems: isEmpty, String[], Map::get
+                        // val specificMethod = "BenchmarkTest00034" // problems: isEmpty, String[], Map::get
+                        // val specificMethod = "BenchmarkTest00037" // 0 facts, problems: String[]
+                        // val specificMethod = "BenchmarkTest00043" // 0 facts
+                        if (method.enclosingClass.simpleName == specificMethod) {
+                            true
+                        } else {
+                            false
+                        }
 
-                    // Methods with specific annotation:
-                    // // println("Annotations of $method: ${method.enclosingClass.annotations.map{it.name}}")
-                    // method.enclosingClass.annotations.any { annotation ->
-                    //     if (annotation.name == "javax.servlet.annotation.WebServlet") {
-                    //         // println("$method has annotation ${annotation.name} with values ${annotation.values}")
-                    //         (annotation.values["value"]!! as List<String>)[0].startsWith("/sqli-")
-                    //     } else {
-                    //         false
-                    //     }
-                    // }
+                        // Methods with specific annotation:
+                        // // println("Annotations of $method: ${method.enclosingClass.annotations.map{it.name}}")
+                        // method.enclosingClass.annotations.any { annotation ->
+                        //     if (annotation.name == "javax.servlet.annotation.WebServlet") {
+                        //         // println("$method has annotation ${annotation.name} with values ${annotation.values}")
+                        //         (annotation.values["value"]!! as List<String>)[0].startsWith("/sqli-")
+                        //     } else {
+                        //         false
+                        //     }
+                        // }
+                    }
                 } else {
                     false
                 }
