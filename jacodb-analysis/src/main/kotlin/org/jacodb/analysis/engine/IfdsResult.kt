@@ -22,10 +22,12 @@ import org.jacodb.api.cfg.JcInst
  * Aggregates all facts and edges found by tabulation algorithm
  */
 class IfdsResult(
-    val pathEdges: List<IfdsEdge>,
+    pathEdgeList: List<IfdsEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
     val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>,
 ) {
+    private val pathEdges = pathEdgeList.groupBy { it.to }
+
     private inner class TraceGraphBuilder(private val sink: IfdsVertex) {
         private val sources: MutableSet<IfdsVertex> = mutableSetOf()
         private val edges: MutableMap<IfdsVertex, MutableSet<IfdsVertex>> = mutableMapOf()
@@ -100,7 +102,7 @@ class IfdsResult(
         }
 
         fun build(): TraceGraph {
-            val initEdges = pathEdges.filter { it.to == sink }
+            val initEdges = pathEdges[sink].orEmpty()
             initEdges.forEach {
                 dfs(it, it.to, false)
             }
