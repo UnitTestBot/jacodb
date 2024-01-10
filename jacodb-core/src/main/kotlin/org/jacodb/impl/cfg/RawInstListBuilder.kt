@@ -1248,9 +1248,9 @@ class RawInstListBuilder(
         val localTypes = allLocals
             .filter { local -> frameSet.all { local in it.locals } }
             .associateWith { ind ->
-                val types = frameSet.map { frame -> frame[ind]!!.typeName }
+                val types = frameSet.mapTo(hashSetOf()) { frame -> frame[ind]!!.typeName }
                 //If we have several variables types for one register we have to search right type in debug info otherwise we cannot guarantee anything
-                if (types.toSet().size != 1) {
+                if (types.size != 1) {
                     methodNode.localVariables
                         .firstOrNull { curLabel.isBetween(it.start, it.end) && it.index == ind }
                         ?.desc
