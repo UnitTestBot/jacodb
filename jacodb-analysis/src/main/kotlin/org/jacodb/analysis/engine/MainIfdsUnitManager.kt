@@ -18,7 +18,6 @@ package org.jacodb.analysis.engine
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
@@ -34,8 +33,8 @@ import org.jacodb.analysis.logger
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -163,6 +162,18 @@ class MainIfdsUnitManager(
             vulnerabilitiesStorage.getCurrentFacts(method)
         }
 
+        File("stats.csv").outputStream().bufferedWriter().use {
+            it.write("classname,cwe,method\n")
+
+            logger.info { "Total found ${foundVulnerabilities.size} sinks" }
+            for (vulnerability in foundVulnerabilities) {
+                logger.info { "$vulnerability in ${vulnerability.method}" }
+                for (cwe in vulnerability.rule!!.cwe) {
+                    it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
+                }
+            }
+        }
+
         foundMethods.values.flatten().forEach { method ->
             for (crossUnitCall in crossUnitCallsStorage.getCurrentFacts(method)) {
                 val calledMethod = graph.methodOf(crossUnitCall.calleeVertex.statement)
@@ -283,23 +294,23 @@ class MainIfdsUnitManager(
                         // deleteJobs[runner.unit] = launch {
                         //     logger.debug { "Going to stop the runner for ${runner.unit} in 5 seconds..." }
                         //     delay(5.seconds)
-                            logger.info { "Stopping the runner for ${runner.unit}..." }
-                            val toDelete = mutableListOf(runner.unit)
-                            while (toDelete.isNotEmpty()) {
-                                val current = toDelete.removeLast()
-                                if (current in aliveRunners &&
-                                    dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
-                                ) {
-                                    if (aliveRunners[current] == null) continue
-                                    aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
-                                    aliveRunners.remove(current)
-                                    for (next in dependenciesRev[current].orEmpty()) {
-                                        if (queueEmptiness[next] == true) {
-                                            toDelete.add(next)
-                                        }
+                        logger.info { "Stopping the runner for ${runner.unit}..." }
+                        val toDelete = mutableListOf(runner.unit)
+                        while (toDelete.isNotEmpty()) {
+                            val current = toDelete.removeLast()
+                            if (current in aliveRunners &&
+                                dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
+                            ) {
+                                if (aliveRunners[current] == null) continue
+                                aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
+                                aliveRunners.remove(current)
+                                for (next in dependenciesRev[current].orEmpty()) {
+                                    if (queueEmptiness[next] == true) {
+                                        toDelete.add(next)
                                     }
                                 }
                             }
+                        }
                         // }
                     }
                 }
