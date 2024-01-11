@@ -47,7 +47,7 @@ class JcGraphImpl(
     private val exceptionResolver = JcExceptionResolver(classpath)
 
     override val entry: JcInst get() = instructions.first()
-    override val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
+    override val exits: List<JcInst> by lazy { instructions.filterIsInstance<JcTerminatingInst>() }
 
     /**
      * returns a map of possible exceptions that may be thrown from this method
