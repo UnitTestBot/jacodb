@@ -380,7 +380,7 @@ internal class BaseIfdsUnitRunner(
             runTabulationAlgorithm()
         } finally {
             logger.info { "Finishing ${this@BaseIfdsUnitRunner} for $unit" }
-            logger.info { "Total ${pathEdges.size} path edges for $unit" }
+            logger.info { "Total ${pathEdges.size} path edges for $unit using $analyzer" }
             // for ((i, edge) in pathEdges.sortedBy { it.toString() }.withIndex()) {
             //     logger.debug { " - [${i + 1}/${pathEdges.size}] $edge" }
             // }
