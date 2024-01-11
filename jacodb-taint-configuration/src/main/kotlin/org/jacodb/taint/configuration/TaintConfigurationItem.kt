@@ -41,6 +41,7 @@ data class TaintFieldSource(
 
 data class TaintMethodSink(
     val method: JcMethod,
+    val cwe: List<Int>,
     val condition: Condition,
 ) : TaintConfigurationItem
 
