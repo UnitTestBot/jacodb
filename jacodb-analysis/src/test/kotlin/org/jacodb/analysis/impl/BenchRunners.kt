@@ -77,11 +77,12 @@ object OwaspBenchRunner {
     private fun loadOwaspJavaBench(): BenchCp {
         val owaspJavaPath = Path(object {}.javaClass.getResource("/owasp")!!.path)
         val runAll = true // make it 'false' to test on specific method(s) only
+
         return loadWebAppBenchCp(
             classes = owaspJavaPath / "classes",
             dependencies = owaspJavaPath / "deps",
             unitResolver = PackageUnitResolver,
-            // unitResolver = SingletonUnitResolver
+            // unitResolver = SingletonUnitResolver,
         ).apply {
             entrypointFilter = { method ->
                 if (method.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode")) {
@@ -90,24 +91,25 @@ object OwaspBenchRunner {
                         true
                     } else {
                         // Specific method:
-                        val specificMethod = "BenchmarkTest00008" // ok
-                        // val specificMethod = "BenchmarkTest00018" // ok
-                        // val specificMethod = "BenchmarkTest00024" // ok
-                        // val specificMethod = "BenchmarkTest00025" // ok?
-                        // val specificMethod = "BenchmarkTest00026" // ok?
-                        // val specificMethod = "BenchmarkTest00027" // ok?
-                        // val specificMethod = "BenchmarkTest00032" // problems: isEmpty, String[], Map::get
-                        // val specificMethod = "BenchmarkTest00033" // problems: isEmpty, String[], Map::get
-                        // val specificMethod = "BenchmarkTest00034" // problems: isEmpty, String[], Map::get
-                        // val specificMethod = "BenchmarkTest00037" // 0 facts, problems: String[]
-                        // val specificMethod = "BenchmarkTest00043" // 0 facts
+                        // val specificMethod = "BenchmarkTest00008"
+                        // val specificMethod = "BenchmarkTest00018"
+                        // val specificMethod = "BenchmarkTest00024"
+                        // val specificMethod = "BenchmarkTest00025"
+                        // val specificMethod = "BenchmarkTest00026"
+                        // val specificMethod = "BenchmarkTest00027"
+                        // val specificMethod = "BenchmarkTest00032"
+                        // val specificMethod = "BenchmarkTest00033"
+                        // val specificMethod = "BenchmarkTest00034"
+                        // val specificMethod = "BenchmarkTest00037"
+                        // val specificMethod = "BenchmarkTest00043"
+                        val specificMethod = "BenchmarkTest00105"
                         if (method.enclosingClass.simpleName == specificMethod) {
                             true
                         } else {
                             false
                         }
 
-                        // Methods with specific annotation:
+                        // // Methods with specific annotation:
                         // // println("Annotations of $method: ${method.enclosingClass.annotations.map{it.name}}")
                         // method.enclosingClass.annotations.any { annotation ->
                         //     if (annotation.name == "javax.servlet.annotation.WebServlet") {
@@ -128,7 +130,7 @@ object OwaspBenchRunner {
     @JvmStatic
     fun main(args: Array<String>) {
         val bench = loadOwaspJavaBench()
-        bench.use { analyzeBench(it) }
+        analyzeBench(bench)
     }
 }
 
@@ -156,6 +158,7 @@ private class BenchCp(
     val db: JcDatabase,
     val benchLocations: List<JcByteCodeLocation>,
     val unitResolver: UnitResolver,
+    var reportFileName: String? = null,
     var entrypointFilter: (JcMethod) -> Boolean = { true },
 ) : AutoCloseable {
     override fun close() {
@@ -175,6 +178,7 @@ private fun loadBenchCp(
         useProcessJavaRuntime()
         installFeatures(InMemoryHierarchy, Usages)
         loadByteCode(cpFiles)
+        persistent("/tmp/index.db")
     }
     db.awaitBackgroundJobs()
 
@@ -229,37 +233,33 @@ private fun loadWebAppBenchCp(
     )
 
 private fun analyzeBench(benchmark: BenchCp) {
+    logger.info { "Filtering start methods..." }
     val startMethods = benchmark.cp.publicClasses(benchmark.benchLocations)
         .flatMap { it.publicAndProtectedMethods() }
         .filter { benchmark.entrypointFilter(it) }
         .toList()
-    logger.info { "Start analysis" }
+    logger.info { "Start the analysis with ${startMethods.size} start methods:" }
     for (method in startMethods) {
         logger.info { method }
     }
-    analyzeTaint(benchmark.cp, benchmark.unitResolver, startMethods)
+    analyzeTaint(benchmark.cp, benchmark.unitResolver, startMethods, benchmark.reportFileName)
+    logger.info { "Done the analysis with ${startMethods.size} start methods" }
 }
 
 private fun analyzeTaint(
     cp: JcClasspath,
     unitResolver: UnitResolver,
     startMethods: List<JcMethod>,
+    reportFileName: String? = null,
 ) {
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
     val vulnerabilities = runAnalysis(graph, unitResolver, newSqlInjectionRunnerFactory(), startMethods)
-    logger.info { "Total found ${vulnerabilities.size} sinks" }
-    for (vulnerability in vulnerabilities) {
-        logger.info { "${vulnerability.location} in ${vulnerability.location.method}" }
-    }
-
     val report = SarifReport.fromVulnerabilities(vulnerabilities)
-    File("report.sarif").outputStream().use { fileOutputStream ->
+    File(reportFileName ?: "report.sarif").outputStream().use { fileOutputStream ->
         report.encodeToStream(fileOutputStream)
     }
-
-    logger.info { "ALL DONE" }
 }
 
 private fun JcClasspath.publicClasses(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> =
@@ -273,4 +273,6 @@ private fun JcClasspath.publicClasses(locations: List<JcByteCodeLocation>): Sequ
 private fun JcClassOrInterface.publicAndProtectedMethods(): Sequence<JcMethod> =
     declaredMethods.asSequence()
         .filter { it.instList.size > 0 }
+        // TODO: some sinks are NOT found when filtering out constructors here
+        // .filter { !it.isConstructor }
         .filter { it.isPublic || it.isProtected }
