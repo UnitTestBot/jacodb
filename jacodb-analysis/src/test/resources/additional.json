@@ -478,57 +478,5 @@
         }
       ]
     }
-  },
-  {
-      "_": "MethodSource",
-      "methodInfo": {
-          "cls": {
-              "packageMatcher": {
-                  "_": "NameIsEqualTo",
-                  "name": "javax.servlet.http"
-              },
-              "classNameMatcher": {
-                  "_": "NameIsEqualTo",
-                  "name": "HttpServletRequest"
-              }
-          },
-          "functionName": {
-              "_": "NameMatches",
-              "pattern": "getParameter(Map)?"
-          },
-          "parametersMatchers": [
-          ],
-          "returnTypeMatcher": {
-              "_": "AnyTypeMatches"
-          },
-          "applyToOverrides": true,
-          "functionLabel": null,
-          "modifier": -1,
-          "exclude": [
-          ]
-      },
-      "condition": {
-          "_": "ConstantTrue"
-      },
-      "actionsAfter": [
-          {
-              "_": "AssignMark",
-              "position": {
-                  "_": "Result"
-              },
-              "mark": {
-                  "name": "WEB"
-              }
-          },
-          {
-              "_": "AssignMark",
-              "position": {
-                  "_": "Result"
-              },
-              "mark": {
-                  "name": "XSS"
-              }
-          }
-      ]
   }
 ]
