@@ -42,9 +42,9 @@ internal class Simplifier {
             val oldSize = instructionList.instructions.size
             instructionList = instructionList.filterNot(InstructionFilter {
                 it is JcRawAssignInst
-                        && it.lhv is JcRawSimpleValue
-                        && it.rhv is JcRawValue
-                        && uses.getOrDefault(it.lhv, 0) == 0
+                    && it.lhv is JcRawSimpleValue
+                    && it.rhv is JcRawValue
+                    && uses.getOrDefault(it.lhv, 0) == 0
             })
         } while (instructionList.instructions.size != oldSize)
 
@@ -86,7 +86,6 @@ internal class Simplifier {
         return normalizeTypes(instructionList)
     }
 
-
     private fun computeUseCases(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawInst>> {
         val uses = hashMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
         for (inst in instList) {
@@ -105,6 +104,7 @@ internal class Simplifier {
                 }
 
                 is JcRawCatchInst -> {}
+
                 else -> {
                     inst.applyAndGet(SimplifierCollector()) { it.exprs }
                         .forEach {
@@ -170,7 +170,7 @@ internal class Simplifier {
 
     private fun computeReplacements(
         instList: JcInstListImpl<JcRawInst>,
-        uses: Map<JcRawSimpleValue, Set<JcRawInst>>
+        uses: Map<JcRawSimpleValue, Set<JcRawInst>>,
     ): Pair<Map<JcRawLocalVar, JcRawValue>, Set<JcRawInst>> {
         val replacements = mutableMapOf<JcRawLocalVar, JcRawValue>()
         val reservedValues = mutableSetOf<JcRawValue>()
@@ -189,8 +189,8 @@ internal class Simplifier {
                     val assignInstructionToReplacement = instList.firstOrNull { it is JcRawAssignInst && it.lhv == lhv }
                     val didNotAssignedBefore =
                         lhvUsage == null ||
-                                assignInstructionToReplacement == null ||
-                                !instList.isBefore(assignInstructionToReplacement, lhvUsage)
+                            assignInstructionToReplacement == null ||
+                            !instList.isBefore(assignInstructionToReplacement, lhvUsage)
                     if (lhvUsage == null || !instList.isBefore(lhvUsage, inst)) {
                         if (didNotAssignedBefore) {
                             replacements[rhv] = lhv
@@ -224,7 +224,7 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(
-        instList: JcInstListImpl<JcRawInst>
+        instList: JcInstListImpl<JcRawInst>,
     ): JcInstListImpl<JcRawInst> {
         val types = mutableMapOf<JcRawLocalVar, MutableSet<String>>()
         for (inst in instList) {
