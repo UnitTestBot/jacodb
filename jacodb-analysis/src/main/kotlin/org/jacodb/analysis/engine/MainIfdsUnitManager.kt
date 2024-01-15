@@ -162,12 +162,15 @@ class MainIfdsUnitManager(
             vulnerabilitiesStorage.getCurrentFacts(method)
         }
 
+        logger.info { "Total found ${foundVulnerabilities.size} sinks" }
+        for (vulnerability in foundVulnerabilities) {
+            logger.info { "$vulnerability in ${vulnerability.method}" }
+        }
+        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
+
         File("stats.csv").outputStream().bufferedWriter().use {
             it.write("classname,cwe,method\n")
-
-            logger.info { "Total found ${foundVulnerabilities.size} sinks" }
             for (vulnerability in foundVulnerabilities) {
-                logger.info { "$vulnerability in ${vulnerability.method}" }
                 for (cwe in vulnerability.rule!!.cwe) {
                     it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
                 }
