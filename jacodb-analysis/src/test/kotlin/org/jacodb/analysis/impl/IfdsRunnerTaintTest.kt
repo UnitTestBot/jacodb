@@ -93,10 +93,11 @@ class IfdsRunnerTaintTest : BaseTest() {
         testSingleJulietClass(className)
     }
 
+    @Disabled
     @Test
     fun `test on specific Juliet instance`() {
         //
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_21"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__console_readLine_executeUpdate_45"
         //
 
         testSingleJulietClass(className)
@@ -123,17 +124,17 @@ class IfdsRunnerTaintTest : BaseTest() {
         val badMethod = clazz.methods.single { it.name == "bad" }
         val goodMethod = clazz.methods.single { it.name == "good" }
 
-        logger.info { "Searching for sinks in BAD method..." }
+        logger.info { "Searching for sinks in BAD method: $badMethod" }
         val badIssues = findSinks(badMethod)
-        logger.info { "badIssues: ${badIssues.size} total" }
+        logger.info { "Total ${badIssues.size} issues in BAD method" }
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
         assertTrue(badIssues.isNotEmpty())
 
-        logger.info { "Searching for sinks in GOOD method..." }
+        logger.info { "Searching for sinks in GOOD method: $goodMethod" }
         val goodIssues = findSinks(goodMethod)
-        logger.info { "goodIssues: ${goodIssues.size} total" }
+        logger.info { "Total ${goodIssues.size} issues in GOOD method" }
         for (issue in goodIssues) {
             logger.debug { "  - $issue" }
         }
@@ -149,7 +150,8 @@ class IfdsRunnerTaintTest : BaseTest() {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        val manager = Manager(graph, SingletonUnitResolver)
+        val unitResolver = SingletonUnitResolver
+        val manager = Manager(graph, unitResolver)
         return manager.analyze(methods)
     }
 }

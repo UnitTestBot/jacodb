@@ -19,11 +19,12 @@
 package org.jacodb.analysis.engine
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,7 @@ import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
@@ -52,6 +54,7 @@ import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findTypeOrNull
@@ -72,6 +75,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.This
+import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
@@ -334,6 +338,143 @@ class TaintForwardFlowFunctions(
         TODO()
     }
 
+    private fun transmitTaintAssign(
+        fact: Tainted,
+        from: JcExpr,
+        to: JcValue,
+    ): Collection<Fact> {
+        val toPath = to.toPath()
+        val fromPath = from.toPathOrNull()
+
+        if (fromPath != null) {
+            if (fromPath == fact.variable) {
+                // Both 'from' and 'to' are tainted now:
+                val newTaint = fact.copy(variable = toPath)
+                return setOf(fact, newTaint)
+            } else {
+                val tail = fact.variable - fromPath
+                if (tail != null) {
+                    // Both 'from' and 'to' are tainted now:
+                    val newPath = toPath / tail
+                    val newTaint = fact.copy(variable = newPath)
+                    return setOf(fact, newTaint)
+                }
+            }
+        }
+
+        if (toPath == fact.variable) {
+            // 'to' was tainted, but it is now overridden by 'from':
+            return emptySet()
+        } else {
+            // Neither 'from' nor 'to' are tainted, simply pass-through:
+            return setOf(fact)
+        }
+    }
+
+    private fun transmitTaintReturn(
+        fact: Tainted,
+        from: JcValue,
+        to: JcValue,
+    ): Collection<Fact> {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        if (fromPath == fact.variable) {
+            // 'to' is tainted now:
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(newTaint)
+        } else {
+            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val newPath = toPath / tail
+            val newTaint = fact.copy(variable = newPath)
+            return setOf(newTaint)
+        }
+    }
+
+    private fun transmitTaintInstanceToThis(
+        fact: Tainted,
+        from: JcValue, // instance
+        to: JcThis, // this
+    ): Collection<Fact> {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        if (fromPath == fact.variable) {
+            // 'to' is tainted now:
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(newTaint)
+        } else {
+            // TODO: check
+            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val newPath = toPath / tail
+            val newTaint = fact.copy(variable = newPath)
+            return setOf(newTaint)
+        }
+    }
+
+    private fun transmitTaintThisToInstance(
+        fact: Tainted,
+        from: JcThis, // this
+        to: JcValue, // instance
+    ): Collection<Fact> {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        if (fromPath == fact.variable) {
+            // 'to' is tainted now:
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(newTaint)
+        } else {
+            // TODO: check
+            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val newPath = toPath / tail
+            val newTaint = fact.copy(variable = newPath)
+            return setOf(newTaint)
+        }
+    }
+
+    private fun transmitTaintArgumentActualToFormal(
+        fact: Tainted,
+        from: JcValue, // actual
+        to: JcArgument, // formal
+    ): Collection<Fact> {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        if (fromPath == fact.variable) {
+            // 'to' is tainted now:
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(newTaint)
+        } else {
+            // TODO: check
+            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val newPath = toPath / tail
+            val newTaint = fact.copy(variable = newPath)
+            return setOf(newTaint)
+        }
+    }
+
+    private fun transmitTaintArgumentFormalToActual(
+        fact: Tainted,
+        from: JcArgument, // formal
+        to: JcValue, // actual
+    ): Collection<Fact> {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        if (fromPath == fact.variable) {
+            // 'to' is tainted now:
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(newTaint)
+        } else {
+            // TODO: check
+            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val newPath = toPath / tail
+            val newTaint = fact.copy(variable = newPath)
+            return setOf(newTaint)
+        }
+    }
+
     // TODO: rename / refactor
     // TODO: consider splitting into transmitTaintAssign / transmitTaintArgument
     // TODO: consider: moveTaint/copyTaint
@@ -341,37 +482,73 @@ class TaintForwardFlowFunctions(
         fact: Tainted,
         from: JcExpr,
         to: JcValue,
-    ): List<Fact> {
-        val toPath = to.toPathOrNull() ?: return emptyList() // FIXME: check, add comment
+    ): Collection<Fact> {
         val fromPath = from.toPathOrNull()
+        val toPath = to.toPath()
 
-        if (fromPath != null) {
-            // 'from' is tainted with 'fact':
-            // TODO: replace with ==, in general case
-            if (fromPath.startsWith(fact.variable)) {
-                val newTaint = fact.copy(variable = toPath)
-                // Both 'from' and 'to' are now tainted:
-                return listOf(fact, newTaint)
-            }
+        if (fromPath != null && fromPath == fact.variable) {
+            // Both 'from' and 'to' are now tainted with 'fact':
+            val newTaint = fact.copy(variable = toPath)
+            return setOf(fact, newTaint)
         }
 
-        // // TODO: check
-        // // Some sub-path in 'to' is tainted with 'fact':
-        // if (fact.variable.startsWith(toPath)) {
-        //     // Drop 'fact' taint:
-        //     return emptyList()
+        if (toPath == fact.variable) {
+            // 'to' is tainted, but overridden by 'from':
+            return emptySet()
+        } else {
+            // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
+            return setOf(fact)
+        }
+
+        // if (fromPath != null) {
+        //     if (fromPath == fact.variable) {
+        //         // Both 'from' and 'to' are now tainted with 'fact':
+        //         val newTaint = fact.copy(variable = toPath)
+        //         return setOf(fact, newTaint)
+        //     } else {
+        //         if (toPath == fact.variable) {
+        //             // 'to' is tainted, but overridden by 'from':
+        //             return emptySet()
+        //         } else {
+        //             // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
+        //             return setOf(fact)
+        //         }
+        //     }
+        // } else {
+        //     if (toPath == fact.variable) {
+        //         // 'to' is tainted with 'fact', but overridden by 'from':
+        //         return emptySet()
+        //     } else {
+        //         // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
+        //         return setOf(fact)
+        //     }
         // }
 
-        // // TODO: check
-        // // 'to' is tainted (strictly) with 'fact':
-        // // Note: "non-strict" case is handled above.
-        // if (toPath.startsWith(fact.variable)) {
-        //     // No drop:
-        //     return listOf(fact)
-        // }
-
-        // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
-        return listOf(fact)
+        // // // 'from' is tainted with 'fact':
+        // // // TODO: replace with ==, in general case
+        // // if (fromPath.startsWith(fact.variable)) {
+        // //     val newTaint = fact.copy(variable = toPath)
+        // //     // Both 'from' and 'to' are now tainted:
+        // //     return listOf(fact, newTaint)
+        // // }
+        //
+        // // // TODO: check
+        // // // Some sub-path in 'to' is tainted with 'fact':
+        // // if (fact.variable.startsWith(toPath)) {
+        // //     // Drop 'fact' taint:
+        // //     return emptyList()
+        // // }
+        //
+        // // // TODO: check
+        // // // 'to' is tainted (strictly) with 'fact':
+        // // // Note: "non-strict" case is handled above.
+        // // if (toPath.startsWith(fact.variable)) {
+        // //     // No drop:
+        // //     return listOf(fact)
+        // // }
+        //
+        // // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
+        // return listOf(fact)
     }
 
     // TODO: rename (consider "propagate")
@@ -398,7 +575,7 @@ class TaintForwardFlowFunctions(
         }
 
         if (current is JcAssignInst) {
-            transmitTaint(fact, current.rhv, current.lhv)
+            transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
         } else {
             transmitTaintNormal(fact, current)
         }
@@ -616,12 +793,12 @@ class TaintForwardFlowFunctions(
         buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(fact, from = actual, to = formal))
+                addAll(transmitTaintArgumentActualToFormal(fact, from = actual, to = formal))
             }
 
             // Transmit facts on instance (from 'instance' to 'this'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(fact, from = callExpr.instance, to = callee.thisInstance))
+                addAll(transmitTaintInstanceToThis(fact, from = callExpr.instance, to = callee.thisInstance))
             }
 
             // Transmit facts on static values:
@@ -655,12 +832,12 @@ class TaintForwardFlowFunctions(
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             // TODO: "if passed by-ref" part is not implemented here yet
             for ((formal, actual) in formalParams.zip(actualParams)) {
-                addAll(transmitTaint(fact, from = formal, to = actual))
+                addAll(transmitTaintArgumentFormalToActual(fact, from = formal, to = actual))
             }
 
             // Transmit facts on instance (from 'this' to 'instance'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaint(fact, from = callee.thisInstance, to = callExpr.instance))
+                addAll(transmitTaintThisToInstance(fact, from = callee.thisInstance, to = callExpr.instance))
             }
 
             // Transmit facts on static values:
@@ -672,7 +849,7 @@ class TaintForwardFlowFunctions(
             if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
                 // Note: returnValue can be null here in some weird cases, e.g. in lambda.
                 exitStatement.returnValue?.let { returnValue ->
-                    addAll(transmitTaint(fact, from = returnValue, to = callStatement.lhv))
+                    addAll(transmitTaintReturn(fact, from = returnValue, to = callStatement.lhv))
                 }
             }
         }
@@ -708,7 +885,9 @@ class Manager(
         // TODO: val isNew = (...).add(); if (isNew) { deps.forEach { addStart(it) } }
     }
 
-    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(Dispatchers.Default) {
+    private val dispatcher = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+
+    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(dispatcher) {
         // Add start methods:
         for (method in startMethods) {
             addStart(method)
@@ -734,7 +913,7 @@ class Manager(
         }
 
         // Await all runners:
-        withTimeoutOrNull(10.seconds) {
+        withTimeoutOrNull(5.seconds) {
             allJobs.joinAll()
         } ?: run {
             allJobs.forEach { it.cancel() }
@@ -958,7 +1137,7 @@ class IfdsRunner(
         }
 
         if (pathEdges.add(edge)) {
-            val doPrintZero = true
+            val doPrintZero = false
             if (edge.from.statement.toString() == "noop") {
                 if (doPrintZero || edge.to.fact != Zero) {
                     logger.debug { "Propagating $edge in ${edge.method} via ${edge.reason}" }
@@ -966,7 +1145,6 @@ class IfdsRunner(
             }
 
             // Add edge to worklist:
-            // workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
             workList.send(edge)
 
             // Send edge to analyzer/manager:
@@ -980,11 +1158,10 @@ class IfdsRunner(
         return false
     }
 
-    private suspend fun tabulationAlgorithm() = coroutineScope {
-        for (edge in workList) {
-            launch {
-                tabulationAlgorithmStep(edge)
-            }
+    private suspend fun tabulationAlgorithm(): Unit = coroutineScope {
+        while (isActive) {
+            val edge = workList.tryReceive().getOrNull() ?: break
+            tabulationAlgorithmStep(edge)
         }
     }
 
