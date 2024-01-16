@@ -19,9 +19,9 @@ package org.jacodb.testing
 import com.google.common.cache.AbstractCache
 import com.google.common.collect.Iterators
 import kotlinx.coroutines.*
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findClassOrNull
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findClassOrNull
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.fs.BuildFolderLocation
 import org.jacodb.impl.jacodb
@@ -158,7 +158,7 @@ class DatabaseLifecycleTest {
         db.awaitBackgroundJobs()
         val cps = (1..10).map { db.classpath(listOf(guavaLibClone)) }
 
-        fun JcClasspath.accessMethod() {
+        fun JcProject.accessMethod() {
 
             val abstractCacheClass = findClass<AbstractCache<*, *>>()
 

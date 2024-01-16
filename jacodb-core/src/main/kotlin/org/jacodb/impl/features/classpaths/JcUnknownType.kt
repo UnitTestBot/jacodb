@@ -17,13 +17,26 @@
 package org.jacodb.impl.features.classpaths
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.objectType
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcTypeVariableDeclaration
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
 
 
-class JcUnknownType(override var classpath: JcClasspath, private val name: String, private val location: VirtualLocation) : JcClassType {
+class JcUnknownType(override var classpath: JcProject, private val name: String, private val location: VirtualLocation) :
+    JcClassType {
 
     override val lookup: JcLookup<JcTypedField, JcTypedMethod> = JcUnknownTypeLookup(this)
 

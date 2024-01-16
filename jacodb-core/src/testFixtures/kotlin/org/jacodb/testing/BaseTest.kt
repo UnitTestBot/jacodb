@@ -17,10 +17,10 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcFeature
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
 import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -36,7 +36,7 @@ annotation class LifecycleTest
 
 abstract class BaseTest {
 
-    protected open val cp: JcClasspath = runBlocking {
+    protected open val cp: JcProject = runBlocking {
         val withDB = this@BaseTest.javaClass.withDB
         withDB.db.classpath(allClasspath, withDB.classpathFeatures.toList())
     }

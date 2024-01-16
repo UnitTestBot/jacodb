@@ -23,15 +23,15 @@ import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.ext.cfg.callExpr
 
 abstract class AbstractTaintBackwardFunctions(
     protected val graph: JcApplicationGraph,

@@ -16,9 +16,8 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.MethodInfo
 

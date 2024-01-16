@@ -23,8 +23,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.VulnerabilityInstance
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
 import java.io.OutputStream
 import java.nio.file.Path
 import java.nio.file.Paths

@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.vfs
 
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS

@@ -18,9 +18,9 @@
 package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.packageName
 
 val MethodUnitResolver = UnitResolver { method -> method }
 val PackageUnitResolver = UnitResolver { method -> method.enclosingClass.packageName }

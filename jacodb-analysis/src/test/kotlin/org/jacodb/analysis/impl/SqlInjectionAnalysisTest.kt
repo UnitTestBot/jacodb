@@ -23,7 +23,7 @@ import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzer
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.api.JcMethod
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB

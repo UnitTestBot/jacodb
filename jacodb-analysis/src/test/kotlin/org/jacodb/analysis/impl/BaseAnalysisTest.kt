@@ -19,10 +19,10 @@ package org.jacodb.analysis.impl
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.BaseTest

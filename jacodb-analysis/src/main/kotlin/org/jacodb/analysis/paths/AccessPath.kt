@@ -16,8 +16,8 @@
 
 package org.jacodb.analysis.paths
 
-import org.jacodb.api.JcField
-import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.cfg.JcLocal
 
 /**
  * This class is used to represent an access path that is needed for problems

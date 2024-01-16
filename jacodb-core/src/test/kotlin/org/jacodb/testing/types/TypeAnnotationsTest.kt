@@ -17,10 +17,10 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcBoundedWildcard
-import org.jacodb.api.JcClassType
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcArrayType
+import org.jacodb.api.jvm.JcBoundedWildcard
+import org.jacodb.api.jvm.JcClassType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

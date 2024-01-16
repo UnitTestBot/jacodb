@@ -16,7 +16,7 @@
 
 package org.jacodb.taint.configuration
 
-import org.jacodb.api.JcMethod
+import org.jacodb.api.jvm.JcMethod
 
 sealed interface TaintConfigurationItem
 

@@ -16,9 +16,9 @@
 
 package org.jacodb.testing.cfg
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.cfg.util.JcLoop
 import org.jacodb.impl.cfg.util.loops
 import org.jacodb.testing.BaseTest

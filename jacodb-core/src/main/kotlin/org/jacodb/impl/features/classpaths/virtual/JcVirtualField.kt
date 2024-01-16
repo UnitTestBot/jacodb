@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcField
-import org.jacodb.api.TypeName
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcAnnotation
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.objectweb.asm.Opcodes
 

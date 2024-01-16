@@ -16,11 +16,11 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcValue
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBasicBlock
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.impl.cfg.JcBlockGraphImpl
 import java.util.*
 import kotlin.collections.ArrayDeque

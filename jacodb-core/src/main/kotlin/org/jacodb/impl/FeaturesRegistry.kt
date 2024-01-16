@@ -17,7 +17,12 @@
 package org.jacodb.impl
 
 import kotlinx.collections.immutable.toPersistentList
-import org.jacodb.api.*
+import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcSignal
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.fs.fullAsmNode
 import java.io.Closeable
 

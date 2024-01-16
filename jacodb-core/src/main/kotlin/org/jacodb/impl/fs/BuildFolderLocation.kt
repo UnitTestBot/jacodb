@@ -17,7 +17,7 @@
 package org.jacodb.impl.fs
 
 import mu.KLogging
-import org.jacodb.api.LocationType
+import org.jacodb.api.jvm.LocationType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths

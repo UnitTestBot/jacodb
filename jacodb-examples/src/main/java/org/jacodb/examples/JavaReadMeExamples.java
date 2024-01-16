@@ -16,8 +16,8 @@
 
 package org.jacodb.examples;
 
-import org.jacodb.api.*;
-import org.jacodb.api.ext.JcClasses;
+import org.jacodb.api.jvm.*;
+import org.jacodb.api.jvm.ext.JcClasses;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.objectweb.asm.tree.MethodNode;
@@ -30,7 +30,7 @@ import static java.util.Collections.singletonList;
 
 public class JavaReadMeExamples {
 
-    private static JcClasspath classpath = null;
+    private static JcProject classpath = null;
     private static JcDatabase db = null;
 
     private static File lib1 = new File("1");
@@ -105,10 +105,10 @@ public class JavaReadMeExamples {
                         .persistent("...")
         ).get();
 
-        JcClasspath cp = database.asyncClasspath(singletonList(buildDir)).get();
+        JcProject cp = database.asyncClasspath(singletonList(buildDir)).get();
         database.asyncRefresh().get(); // does not affect cp classes
 
-        JcClasspath cp1 = database.asyncClasspath(singletonList(buildDir)).get(); // will use new version of compiled results in buildDir
+        JcProject cp1 = database.asyncClasspath(singletonList(buildDir)).get(); // will use new version of compiled results in buildDir
     }
 
     public static void autoProcessing() throws Exception {
@@ -118,7 +118,7 @@ public class JavaReadMeExamples {
                         .persistent("...")
         ).get();
 
-        JcClasspath cp = database.asyncClasspath(singletonList(buildDir)).get(); // database will automatically process buildDir
+        JcProject cp = database.asyncClasspath(singletonList(buildDir)).get(); // database will automatically process buildDir
     }
 
     public static void threadSafe() throws Exception {
@@ -136,7 +136,7 @@ public class JavaReadMeExamples {
             // maybe created when lib2 or both are not loaded into database
             // but buildDir will be loaded anyway
             try {
-                JcClasspath cp = db.asyncClasspath(singletonList(buildDir)).get();
+                JcProject cp = db.asyncClasspath(singletonList(buildDir)).get();
             } catch (Exception e) {
                 // should never happen
             }

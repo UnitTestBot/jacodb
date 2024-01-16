@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JvmType
-import org.jacodb.api.Malformed
-import org.jacodb.api.Pure
-import org.jacodb.api.RecordComponentResolution
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.Malformed
+import org.jacodb.api.jvm.Pure
+import org.jacodb.api.jvm.RecordComponentResolution
 import org.objectweb.asm.signature.SignatureReader
 
 internal class RecordSignature : TypeRegistrant {

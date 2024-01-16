@@ -16,8 +16,8 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcType
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcType
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions.*

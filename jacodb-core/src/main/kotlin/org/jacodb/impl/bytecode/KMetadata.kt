@@ -24,10 +24,10 @@ import kotlinx.metadata.KmValueParameter
 import kotlinx.metadata.jvm.fieldSignature
 import kotlinx.metadata.jvm.signature
 import mu.KLogging
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.KotlinMetadataHolder
 

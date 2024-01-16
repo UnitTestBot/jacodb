@@ -17,9 +17,14 @@
 package org.jacodb.impl.types.substition
 
 import org.jacodb.api.*
+import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.typeParameters
+import org.jacodb.api.jvm.JcGenericsSubstitutionFeature
+import org.jacodb.api.jvm.JcSubstitutor
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 
 private fun List<JvmTypeParameterDeclaration>.substitute(
     parameters: List<JvmType>,

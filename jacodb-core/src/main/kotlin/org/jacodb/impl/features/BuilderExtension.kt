@@ -18,18 +18,18 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcBoundedWildcard
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcType
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.JcArrayType
+import org.jacodb.api.jvm.JcBoundedWildcard
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.toType
 
 
-class BuildersExtension(private val classpath: JcClasspath, private val hierarchyExtension: HierarchyExtension) {
+class BuildersExtension(private val classpath: JcProject, private val hierarchyExtension: HierarchyExtension) {
 
     fun findBuildMethods(jcClass: JcClassOrInterface, includeSubclasses: Boolean = false): Sequence<JcMethod> {
         val hierarchy = hierarchyExtension.findSubClasses(jcClass, true).toMutableSet().also {
@@ -62,7 +62,7 @@ class BuildersExtension(private val classpath: JcClasspath, private val hierarch
 }
 
 
-suspend fun JcClasspath.buildersExtension(): BuildersExtension {
+suspend fun JcProject.buildersExtension(): BuildersExtension {
     if (!db.isInstalled(Builders)) {
         throw IllegalStateException("This extension requires `Builders` feature to be installed")
     }

@@ -17,12 +17,11 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcDatabase
+import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.impl.JcSettings
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import org.jacodb.impl.storage.jooq.tables.references.*
 import org.jacodb.testing.allClasspath
 import org.openjdk.jmh.annotations.*
 import java.io.File

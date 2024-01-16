@@ -15,7 +15,7 @@
  */
 
 package org.jacodb.analysis.engine
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInst
 
 /**
  * Aggregates all facts and edges found by tabulation algorithm

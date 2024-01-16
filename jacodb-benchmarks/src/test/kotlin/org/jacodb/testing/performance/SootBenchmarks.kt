@@ -16,7 +16,7 @@
 
 package org.jacodb.testing.performance
 
-import org.jacodb.impl.JcClasspathImpl
+import org.jacodb.impl.JcProjectImpl
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
 import org.openjdk.jmh.annotations.*
@@ -110,7 +110,7 @@ class SootBenchmarks {
             set_whole_program(true)
         }
         Scene.v().loadNecessaryClasses()
-        val sootClass = Scene.v().getSootClass(JcClasspathImpl::class.java.name)
+        val sootClass = Scene.v().getSootClass(JcProjectImpl::class.java.name)
         if (!sootClass.isPhantom) {
             sootClass.setResolvingLevel(SootClass.BODIES)
             sootClass.methods.first().retrieveActiveBody() as JimpleBody

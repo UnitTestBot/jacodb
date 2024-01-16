@@ -27,8 +27,8 @@ import org.jacodb.analysis.library.analyzers.SqlInjectionBackwardAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
 
 //TODO: add docs here
 val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)

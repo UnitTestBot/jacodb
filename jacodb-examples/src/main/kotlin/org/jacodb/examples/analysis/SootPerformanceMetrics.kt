@@ -16,7 +16,7 @@
 
 package org.jacodb.examples.analysis
 
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.jvm.ext.jvmName
 import soot.G
 import soot.Scene
 import soot.SootClass

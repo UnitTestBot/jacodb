@@ -17,11 +17,15 @@
 package org.jacodb.impl.types
 
 import kotlinx.collections.immutable.toPersistentMap
-import org.jacodb.api.*
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.jacodb.impl.types.signature.TypeResolutionImpl
 import org.jacodb.impl.types.signature.TypeSignature
+import org.jacodb.api.jvm.JcAccessible
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcTypeVariableDeclaration
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 
 val JcClassOrInterface.typeParameters: List<JvmTypeParameterDeclaration>
     get() {

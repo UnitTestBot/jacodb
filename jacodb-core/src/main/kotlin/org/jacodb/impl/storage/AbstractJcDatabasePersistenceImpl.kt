@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.storage
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.FeaturesRegistry
 import org.jacodb.impl.JcInternalSignal
 import org.jacodb.impl.fs.JavaRuntime
@@ -112,7 +112,7 @@ abstract class AbstractJcDatabasePersistenceImpl(
         }
     }
 
-    override fun findClassSourceByName(cp: JcClasspath, fullName: String): ClassSource? {
+    override fun findClassSourceByName(cp: JcProject, fullName: String): ClassSource? {
         val symbolId = findSymbolId(fullName) ?: return null
         return cp.db.classSources(CLASSES.NAME.eq(symbolId).and(cp.clause), single = true).firstOrNull()
     }
@@ -121,12 +121,12 @@ abstract class AbstractJcDatabasePersistenceImpl(
         return db.classSources(CLASSES.LOCATION_ID.eq(location.id))
     }
 
-    override fun findClassSources(cp: JcClasspath, fullName: String): List<ClassSource> {
+    override fun findClassSources(cp: JcProject, fullName: String): List<ClassSource> {
         val symbolId = findSymbolId(fullName) ?: return emptyList()
         return cp.db.classSources(CLASSES.NAME.eq(symbolId).and(cp.clause))
     }
 
-    private val JcClasspath.clause: Condition
+    private val JcProject.clause: Condition
         get() {
             val ids = registeredLocations.map { it.id }
             return CLASSES.LOCATION_ID.`in`(ids)

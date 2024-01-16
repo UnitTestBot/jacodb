@@ -17,7 +17,14 @@
 package org.jacodb.impl
 
 import kotlinx.coroutines.*
-import org.jacodb.api.*
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
@@ -74,7 +81,7 @@ class JcDatabaseImpl(
         return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature) + orEmpty()
     }
 
-    override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
+    override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcProject {
         assertNotClosed()
         val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
         val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
@@ -82,8 +89,8 @@ class JcDatabaseImpl(
         return classpathOf(processed, features)
     }
 
-    override fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath {
-        return JcClasspathImpl(
+    override fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcProject {
+        return JcProjectImpl(
             locationsRegistry.newSnapshot(locations),
             this,
             features.appendBuiltInFeatures(),
@@ -91,9 +98,9 @@ class JcDatabaseImpl(
         )
     }
 
-    fun new(cp: JcClasspathImpl): JcClasspath {
+    fun new(cp: JcProjectImpl): JcProject {
         assertNotClosed()
-        return JcClasspathImpl(
+        return JcProjectImpl(
             locationsRegistry.newSnapshot(cp.registeredLocations),
             cp.db,
             cp.features,

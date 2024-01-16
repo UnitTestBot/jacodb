@@ -17,7 +17,10 @@
 package org.jacodb.impl.types.signature
 
 import mu.KLogging
-import org.jacodb.api.*
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.Malformed
+import org.jacodb.api.jvm.MethodResolution
+import org.jacodb.api.jvm.Pure
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.bytecode.kmFunction
 import org.jacodb.impl.bytecode.kmReturnType
@@ -25,6 +28,7 @@ import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
+import org.jacodb.api.jvm.JvmType
 import org.objectweb.asm.signature.SignatureVisitor
 
 val logger = object : KLogging() {}.logger

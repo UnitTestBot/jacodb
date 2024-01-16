@@ -16,14 +16,14 @@
 
 package org.jacodb.approximation
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.*
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.JcMethodExtFeature.*
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualFieldImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethodImpl
@@ -43,12 +43,12 @@ class JcEnrichedVirtualMethod(
     override val annotations: List<JcAnnotation>
 ) : JcVirtualMethodImpl(name, access, returnType, parameters, description) {
 
-    override val rawInstList: JcInstList<JcRawInst>
+    override val rawInstList: InstList<JcRawInst>
         get() = featuresChain.call<JcMethodExtFeature, JcRawInstListResult> {
             it.rawInstList(this)
         }!!.rawInstList
 
-    override val instList: JcInstList<JcInst>
+    override val instList: InstList<JcInst>
         get() = featuresChain.call<JcMethodExtFeature, JcInstListResult> {
             it.instList(this)
         }!!.instList

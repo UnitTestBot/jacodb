@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JvmType
-import org.jacodb.api.ext.isNotNullAnnotation
-import org.jacodb.api.ext.isNullableAnnotation
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.ext.isNotNullAnnotation
+import org.jacodb.api.jvm.ext.isNullableAnnotation
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.types.AnnotationInfo
 import org.objectweb.asm.TypePath
@@ -64,9 +64,9 @@ private data class AnnotationUpdateVisitorContext(val annotationInfo: Annotation
  * These cases can be distinguished by looking at [AnnotationUpdateVisitorContext.finished] property
  * after visiting ownertype.
  *
- * @param cp [JcClasspath] instance needed to instantiate [JcAnnotationImpl]
+ * @param cp [JcProject] instance needed to instantiate [JcAnnotationImpl]
  */
-private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
+private class JvmTypeAnnotationUpdateVisitor(private val cp: JcProject)
     : JvmTypeVisitor<AnnotationUpdateVisitorContext> {
     override fun visitUpperBound(
         type: JvmBoundWildcard.JvmUpperBoundWildcard,
@@ -204,7 +204,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
  * Adds all given type annotations to proper parts of type (which is given as receiver).
  * Also, for nullability annotations, changes the nullability of corresponding parts of type
  */
-internal fun JvmType.withTypeAnnotations(annotationInfos: List<AnnotationInfo>, cp: JcClasspath): JvmType {
+internal fun JvmType.withTypeAnnotations(annotationInfos: List<AnnotationInfo>, cp: JcProject): JvmType {
     val visitor = JvmTypeAnnotationUpdateVisitor(cp)
     return annotationInfos.fold(this) { type, annotationInfo ->
         visitor.visitType(type, AnnotationUpdateVisitorContext(annotationInfo))

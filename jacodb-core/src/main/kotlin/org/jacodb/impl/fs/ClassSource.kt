@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.fs
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.throwClassNotFound
 import org.jacodb.impl.vfs.PersistentByteCodeLocation
 
 class ClassSourceImpl(

@@ -16,19 +16,19 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
-import org.jacodb.api.JcMethodExtFeature.JcInstListResult
-import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
-import org.jacodb.api.JcParameter
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.JcMethodExtFeature.JcFlowGraphResult
+import org.jacodb.api.jvm.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.jvm.JcMethodExtFeature.JcRawInstListResult
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.MethodInfo
@@ -79,7 +79,7 @@ class JcMethodImpl(
         return enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
     }
 
-    override val rawInstList: JcInstList<JcRawInst>
+    override val rawInstList: InstList<JcRawInst>
         get() {
             return featuresChain.call<JcMethodExtFeature, JcRawInstListResult> { it.rawInstList(this) }!!.rawInstList
         }
@@ -89,7 +89,8 @@ class JcMethodImpl(
     }
 
 
-    override val instList: JcInstList<JcInst> get() {
+    override val instList: InstList<JcInst>
+        get() {
         return featuresChain.call<JcMethodExtFeature, JcInstListResult> { it.instList(this) }!!.instList
     }
 

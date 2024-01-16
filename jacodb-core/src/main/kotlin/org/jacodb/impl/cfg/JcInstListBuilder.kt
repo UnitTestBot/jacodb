@@ -16,17 +16,167 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.cfg.BsmHandle
+import org.jacodb.api.jvm.cfg.BsmMethodTypeArg
+import org.jacodb.api.jvm.cfg.JcRawAddExpr
+import org.jacodb.api.jvm.cfg.JcRawAndExpr
+import org.jacodb.api.jvm.cfg.JcRawArgument
+import org.jacodb.api.jvm.cfg.JcRawArrayAccess
+import org.jacodb.api.jvm.cfg.JcRawAssignInst
+import org.jacodb.api.jvm.cfg.JcRawBinaryExpr
+import org.jacodb.api.jvm.cfg.JcRawBool
+import org.jacodb.api.jvm.cfg.JcRawByte
+import org.jacodb.api.jvm.cfg.JcRawCallInst
+import org.jacodb.api.jvm.cfg.JcRawCastExpr
+import org.jacodb.api.jvm.cfg.JcRawCatchInst
+import org.jacodb.api.jvm.cfg.JcRawChar
+import org.jacodb.api.jvm.cfg.JcRawClassConstant
+import org.jacodb.api.jvm.cfg.JcRawCmpExpr
+import org.jacodb.api.jvm.cfg.JcRawCmpgExpr
+import org.jacodb.api.jvm.cfg.JcRawCmplExpr
+import org.jacodb.api.jvm.cfg.JcRawDivExpr
+import org.jacodb.api.jvm.cfg.JcRawDouble
+import org.jacodb.api.jvm.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawEqExpr
+import org.jacodb.api.jvm.cfg.JcRawExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawFieldRef
+import org.jacodb.api.jvm.cfg.JcRawFloat
+import org.jacodb.api.jvm.cfg.JcRawGeExpr
+import org.jacodb.api.jvm.cfg.JcRawGotoInst
+import org.jacodb.api.jvm.cfg.JcRawGtExpr
+import org.jacodb.api.jvm.cfg.JcRawIfInst
+import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.jvm.cfg.JcRawInt
+import org.jacodb.api.jvm.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.jvm.cfg.JcRawLabelInst
+import org.jacodb.api.jvm.cfg.JcRawLabelRef
+import org.jacodb.api.jvm.cfg.JcRawLeExpr
+import org.jacodb.api.jvm.cfg.JcRawLengthExpr
+import org.jacodb.api.jvm.cfg.JcRawLineNumberInst
+import org.jacodb.api.jvm.cfg.JcRawLocalVar
+import org.jacodb.api.jvm.cfg.JcRawLong
+import org.jacodb.api.jvm.cfg.JcRawLtExpr
+import org.jacodb.api.jvm.cfg.JcRawMethodConstant
+import org.jacodb.api.jvm.cfg.JcRawMethodType
+import org.jacodb.api.jvm.cfg.JcRawMulExpr
+import org.jacodb.api.jvm.cfg.JcRawNegExpr
+import org.jacodb.api.jvm.cfg.JcRawNeqExpr
+import org.jacodb.api.jvm.cfg.JcRawNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcRawNewExpr
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawOrExpr
+import org.jacodb.api.jvm.cfg.JcRawRemExpr
+import org.jacodb.api.jvm.cfg.JcRawReturnInst
+import org.jacodb.api.jvm.cfg.JcRawShlExpr
+import org.jacodb.api.jvm.cfg.JcRawShort
+import org.jacodb.api.jvm.cfg.JcRawShrExpr
+import org.jacodb.api.jvm.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcRawSubExpr
+import org.jacodb.api.jvm.cfg.JcRawSwitchInst
+import org.jacodb.api.jvm.cfg.JcRawThis
+import org.jacodb.api.jvm.cfg.JcRawThrowInst
+import org.jacodb.api.jvm.cfg.JcRawUshrExpr
+import org.jacodb.api.jvm.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.jvm.cfg.JcRawXorExpr
+import org.jacodb.api.jvm.ext.boolean
+import org.jacodb.api.jvm.ext.byte
+import org.jacodb.api.jvm.ext.char
+import org.jacodb.api.jvm.ext.double
+import org.jacodb.api.jvm.ext.float
+import org.jacodb.api.jvm.ext.int
+import org.jacodb.api.jvm.ext.long
+import org.jacodb.api.jvm.ext.short
 import org.jacodb.impl.cfg.util.UNINIT_THIS
 import org.jacodb.impl.cfg.util.lambdaMetaFactory
 import org.jacodb.impl.cfg.util.lambdaMetaFactoryMethodName
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.cfg.JcAddExpr
+import org.jacodb.api.jvm.cfg.JcAndExpr
+import org.jacodb.api.jvm.cfg.JcArgument
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBinaryExpr
+import org.jacodb.api.jvm.cfg.JcBool
+import org.jacodb.api.jvm.cfg.JcByte
+import org.jacodb.api.jvm.cfg.JcCallExpr
+import org.jacodb.api.jvm.cfg.JcCallInst
+import org.jacodb.api.jvm.cfg.JcCastExpr
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcChar
+import org.jacodb.api.jvm.cfg.JcClassConstant
+import org.jacodb.api.jvm.cfg.JcCmpExpr
+import org.jacodb.api.jvm.cfg.JcCmpgExpr
+import org.jacodb.api.jvm.cfg.JcCmplExpr
+import org.jacodb.api.jvm.cfg.JcConditionExpr
+import org.jacodb.api.jvm.cfg.JcDivExpr
+import org.jacodb.api.jvm.cfg.JcDouble
+import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcEqExpr
+import org.jacodb.api.jvm.cfg.JcExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcFieldRef
+import org.jacodb.api.jvm.cfg.JcFloat
+import org.jacodb.api.jvm.cfg.JcGeExpr
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcGtExpr
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcInstanceOfExpr
+import org.jacodb.api.jvm.cfg.JcInt
+import org.jacodb.api.jvm.cfg.JcLambdaExpr
+import org.jacodb.api.jvm.cfg.JcLeExpr
+import org.jacodb.api.jvm.cfg.JcLengthExpr
+import org.jacodb.api.jvm.cfg.JcLocalVar
+import org.jacodb.api.jvm.cfg.JcLong
+import org.jacodb.api.jvm.cfg.JcLtExpr
+import org.jacodb.api.jvm.cfg.JcMethodConstant
+import org.jacodb.api.jvm.cfg.JcMethodType
+import org.jacodb.api.jvm.cfg.JcMulExpr
+import org.jacodb.api.jvm.cfg.JcNegExpr
+import org.jacodb.api.jvm.cfg.JcNeqExpr
+import org.jacodb.api.jvm.cfg.JcNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcNewExpr
+import org.jacodb.api.jvm.cfg.JcNullConstant
+import org.jacodb.api.jvm.cfg.JcOrExpr
+import org.jacodb.api.jvm.cfg.JcRawExprVisitor
+import org.jacodb.api.jvm.cfg.JcRawInstVisitor
+import org.jacodb.api.jvm.cfg.JcRemExpr
+import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.cfg.JcShlExpr
+import org.jacodb.api.jvm.cfg.JcShort
+import org.jacodb.api.jvm.cfg.JcShrExpr
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcStringConstant
+import org.jacodb.api.jvm.cfg.JcSubExpr
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcThis
+import org.jacodb.api.jvm.cfg.JcThrowInst
+import org.jacodb.api.jvm.cfg.JcUshrExpr
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
+import org.jacodb.api.jvm.cfg.JcXorExpr
+import org.jacodb.api.jvm.ext.findTypeOrNull
+import org.jacodb.api.jvm.ext.objectType
+import org.jacodb.api.jvm.ext.toType
 
 /** This class stores state and is NOT THREAD SAFE. Use it carefully */
-class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>) : JcRawInstVisitor<JcInst?>, JcRawExprVisitor<JcExpr> {
+class JcInstListBuilder(val method: JcMethod, val instList: InstList<JcRawInst>) : JcRawInstVisitor<JcInst?>,
+    JcRawExprVisitor<JcExpr> {
 
-    val classpath: JcClasspath = method.enclosingClass.classpath
+    val classpath: JcProject = method.enclosingClass.classpath
 
     private val instMap = identityMap<JcRawInst, JcInst>()
     private var currentLineNumber = 0
@@ -46,8 +196,8 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
         index = 0
     }
 
-    fun buildInstList(): JcInstList<JcInst> {
-        return JcInstListImpl(instList.mapNotNull { convertRawInst(it) }).also {
+    fun buildInstList(): InstList<JcInst> {
+        return InstListImpl(instList.mapNotNull { convertRawInst(it) }).also {
             reset()
         }
     }

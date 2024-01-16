@@ -17,7 +17,7 @@
 package org.jacodb.testing.tree
 
 import kotlinx.collections.immutable.persistentListOf
-import org.jacodb.api.ClassSource
+import org.jacodb.api.jvm.ClassSource
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.vfs.ClassVfsItem
 import org.jacodb.impl.vfs.ClasspathVfs

@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JvmType
+import org.jacodb.api.jvm.JvmType
 import org.jacodb.impl.types.signature.JvmPrimitiveType.Companion.of
 import org.jacodb.impl.types.signature.TypeExtractor.IncompleteToken.InnerClass
 import org.jacodb.impl.types.signature.TypeExtractor.IncompleteToken.TopLevelType

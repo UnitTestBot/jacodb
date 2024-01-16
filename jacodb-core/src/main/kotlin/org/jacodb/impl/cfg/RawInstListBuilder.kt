@@ -17,40 +17,102 @@
 package org.jacodb.impl.cfg
 
 import kotlinx.collections.immutable.*
-import org.jacodb.api.JcMethod
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.*
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.jvm.cfg.BsmArg
+import org.jacodb.api.jvm.cfg.BsmDoubleArg
+import org.jacodb.api.jvm.cfg.BsmFloatArg
+import org.jacodb.api.jvm.cfg.BsmHandle
+import org.jacodb.api.jvm.cfg.BsmIntArg
+import org.jacodb.api.jvm.cfg.BsmLongArg
+import org.jacodb.api.jvm.cfg.BsmMethodTypeArg
+import org.jacodb.api.jvm.cfg.BsmStringArg
+import org.jacodb.api.jvm.cfg.BsmTypeArg
+import org.jacodb.api.jvm.cfg.JcRawAddExpr
+import org.jacodb.api.jvm.cfg.JcRawAndExpr
+import org.jacodb.api.jvm.cfg.JcRawArgument
+import org.jacodb.api.jvm.cfg.JcRawArrayAccess
+import org.jacodb.api.jvm.cfg.JcRawAssignInst
+import org.jacodb.api.jvm.cfg.JcRawCallExpr
+import org.jacodb.api.jvm.cfg.JcRawCallInst
+import org.jacodb.api.jvm.cfg.JcRawCastExpr
+import org.jacodb.api.jvm.cfg.JcRawCatchEntry
+import org.jacodb.api.jvm.cfg.JcRawCatchInst
+import org.jacodb.api.jvm.cfg.JcRawClassConstant
+import org.jacodb.api.jvm.cfg.JcRawCmpExpr
+import org.jacodb.api.jvm.cfg.JcRawCmpgExpr
+import org.jacodb.api.jvm.cfg.JcRawCmplExpr
+import org.jacodb.api.jvm.cfg.JcRawDivExpr
+import org.jacodb.api.jvm.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawEqExpr
+import org.jacodb.api.jvm.cfg.JcRawExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawFieldRef
+import org.jacodb.api.jvm.cfg.JcRawGeExpr
+import org.jacodb.api.jvm.cfg.JcRawGotoInst
+import org.jacodb.api.jvm.cfg.JcRawGtExpr
+import org.jacodb.api.jvm.cfg.JcRawIfInst
+import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.jvm.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.jvm.cfg.JcRawLabelInst
+import org.jacodb.api.jvm.cfg.JcRawLabelRef
+import org.jacodb.api.jvm.cfg.JcRawLeExpr
+import org.jacodb.api.jvm.cfg.JcRawLengthExpr
+import org.jacodb.api.jvm.cfg.JcRawLineNumberInst
+import org.jacodb.api.jvm.cfg.JcRawLocalVar
+import org.jacodb.api.jvm.cfg.JcRawLtExpr
+import org.jacodb.api.jvm.cfg.JcRawMethodConstant
+import org.jacodb.api.jvm.cfg.JcRawMethodType
+import org.jacodb.api.jvm.cfg.JcRawMulExpr
+import org.jacodb.api.jvm.cfg.JcRawNegExpr
+import org.jacodb.api.jvm.cfg.JcRawNeqExpr
+import org.jacodb.api.jvm.cfg.JcRawNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcRawNewExpr
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawOrExpr
+import org.jacodb.api.jvm.cfg.JcRawRemExpr
+import org.jacodb.api.jvm.cfg.JcRawReturnInst
+import org.jacodb.api.jvm.cfg.JcRawShlExpr
+import org.jacodb.api.jvm.cfg.JcRawShrExpr
+import org.jacodb.api.jvm.cfg.JcRawSimpleValue
+import org.jacodb.api.jvm.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcRawSubExpr
+import org.jacodb.api.jvm.cfg.JcRawSwitchInst
+import org.jacodb.api.jvm.cfg.JcRawThis
+import org.jacodb.api.jvm.cfg.JcRawThrowInst
+import org.jacodb.api.jvm.cfg.JcRawUshrExpr
+import org.jacodb.api.jvm.cfg.JcRawValue
+import org.jacodb.api.jvm.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.jvm.cfg.JcRawXorExpr
 import org.jacodb.impl.cfg.util.*
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.*
 import org.objectweb.asm.tree.*
-import org.objectweb.asm.util.Printer
-import org.objectweb.asm.util.Textifier
-import org.objectweb.asm.util.TraceMethodVisitor
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.util.*
 
 
 private fun Int.toPrimitiveType(): TypeName = when (this) {
-    Opcodes.T_CHAR -> PredefinedPrimitives.Char
-    Opcodes.T_BOOLEAN -> PredefinedPrimitives.Boolean
-    Opcodes.T_BYTE -> PredefinedPrimitives.Byte
-    Opcodes.T_DOUBLE -> PredefinedPrimitives.Double
-    Opcodes.T_FLOAT -> PredefinedPrimitives.Float
-    Opcodes.T_INT -> PredefinedPrimitives.Int
-    Opcodes.T_LONG -> PredefinedPrimitives.Long
-    Opcodes.T_SHORT -> PredefinedPrimitives.Short
+    Opcodes.T_CHAR -> PredefinedJcPrimitives.Char
+    Opcodes.T_BOOLEAN -> PredefinedJcPrimitives.Boolean
+    Opcodes.T_BYTE -> PredefinedJcPrimitives.Byte
+    Opcodes.T_DOUBLE -> PredefinedJcPrimitives.Double
+    Opcodes.T_FLOAT -> PredefinedJcPrimitives.Float
+    Opcodes.T_INT -> PredefinedJcPrimitives.Int
+    Opcodes.T_LONG -> PredefinedJcPrimitives.Long
+    Opcodes.T_SHORT -> PredefinedJcPrimitives.Short
     else -> error("Unknown primitive type opcode: $this")
 }.typeName()
 
 private fun parsePrimitiveType(opcode: Int) = when (opcode) {
     0 -> TOP
-    1 -> PredefinedPrimitives.Int.typeName()
-    2 -> PredefinedPrimitives.Float.typeName()
-    3 -> PredefinedPrimitives.Double.typeName()
-    4 -> PredefinedPrimitives.Long.typeName()
+    1 -> PredefinedJcPrimitives.Int.typeName()
+    2 -> PredefinedJcPrimitives.Float.typeName()
+    3 -> PredefinedJcPrimitives.Double.typeName()
+    4 -> PredefinedJcPrimitives.Long.typeName()
     5 -> NULL
     6 -> UNINIT_THIS
     else -> error("Unknown opcode in primitive type parsing: $opcode")
@@ -101,14 +163,14 @@ private fun List<*>?.parseStack(): SortedMap<Int, TypeName> {
 }
 
 private val primitiveWeights = mapOf(
-    PredefinedPrimitives.Boolean to 0,
-    PredefinedPrimitives.Byte to 1,
-    PredefinedPrimitives.Char to 1,
-    PredefinedPrimitives.Short to 2,
-    PredefinedPrimitives.Int to 3,
-    PredefinedPrimitives.Long to 4,
-    PredefinedPrimitives.Float to 5,
-    PredefinedPrimitives.Double to 6
+    PredefinedJcPrimitives.Boolean to 0,
+    PredefinedJcPrimitives.Byte to 1,
+    PredefinedJcPrimitives.Char to 1,
+    PredefinedJcPrimitives.Short to 2,
+    PredefinedJcPrimitives.Int to 3,
+    PredefinedJcPrimitives.Long to 4,
+    PredefinedJcPrimitives.Float to 5,
+    PredefinedJcPrimitives.Double to 6
 )
 
 private fun maxOfPrimitiveTypes(first: String, second: String): String {
@@ -128,15 +190,15 @@ private fun String.lessThen(anotherPrimitive: String): Boolean {
 
 private val Type.asTypeName: BsmArg
     get() = when (this.sort) {
-        Type.VOID -> BsmTypeArg(PredefinedPrimitives.Void.typeName())
-        Type.BOOLEAN -> BsmTypeArg(PredefinedPrimitives.Boolean.typeName())
-        Type.CHAR -> BsmTypeArg(PredefinedPrimitives.Char.typeName())
-        Type.BYTE -> BsmTypeArg(PredefinedPrimitives.Byte.typeName())
-        Type.SHORT -> BsmTypeArg(PredefinedPrimitives.Short.typeName())
-        Type.INT -> BsmTypeArg(PredefinedPrimitives.Int.typeName())
-        Type.FLOAT -> BsmTypeArg(PredefinedPrimitives.Float.typeName())
-        Type.LONG -> BsmTypeArg(PredefinedPrimitives.Long.typeName())
-        Type.DOUBLE -> BsmTypeArg(PredefinedPrimitives.Double.typeName())
+        Type.VOID -> BsmTypeArg(PredefinedJcPrimitives.Void.typeName())
+        Type.BOOLEAN -> BsmTypeArg(PredefinedJcPrimitives.Boolean.typeName())
+        Type.CHAR -> BsmTypeArg(PredefinedJcPrimitives.Char.typeName())
+        Type.BYTE -> BsmTypeArg(PredefinedJcPrimitives.Byte.typeName())
+        Type.SHORT -> BsmTypeArg(PredefinedJcPrimitives.Short.typeName())
+        Type.INT -> BsmTypeArg(PredefinedJcPrimitives.Int.typeName())
+        Type.FLOAT -> BsmTypeArg(PredefinedJcPrimitives.Float.typeName())
+        Type.LONG -> BsmTypeArg(PredefinedJcPrimitives.Long.typeName())
+        Type.DOUBLE -> BsmTypeArg(PredefinedJcPrimitives.Double.typeName())
         Type.ARRAY -> BsmTypeArg((elementType.asTypeName as BsmTypeArg).typeName.asArray())
         Type.OBJECT -> BsmTypeArg(className.typeName())
         Type.METHOD -> BsmMethodTypeArg(
@@ -222,14 +284,14 @@ class RawInstListBuilder(
     private var localCounter = 0
     private var argCounter = 0
 
-    fun build(): JcInstListImpl<JcRawInst> {
+    fun build(): InstListImpl<JcRawInst> {
         buildGraph()
 
         buildInstructions()
         buildRequiredAssignments()
         buildRequiredGotos()
 
-        val originalInstructionList = JcInstListImpl(methodNode.instructions.flatMap { instructionList(it) })
+        val originalInstructionList = InstListImpl(methodNode.instructions.flatMap { instructionList(it) })
 
         // after all the frame info resolution we can refine type info for some local variables,
         // so we replace all the old versions of the variables with the type refined ones
@@ -418,7 +480,7 @@ class RawInstListBuilder(
             val infoFromLocalVars = methodNode.localVariables.find { it.index == variable && insn.isBetween(it.start, it.end) }
             val isArg = variable < argCounter && infoFromLocalVars != null && infoFromLocalVars.start == methodNode.instructions.firstOrNull { it is LabelNode }
             if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive)
-                && it.typeName.typeName != PredefinedPrimitives.Null
+                && it.typeName.typeName != PredefinedJcPrimitives.Null
                 && !isArg
             ) {
                 null
@@ -445,7 +507,7 @@ class RawInstListBuilder(
         } else {
             //We have to get type if rhv expression is NULL
             val typeOfNewAssigment =
-                if (expr.typeName.typeName == PredefinedPrimitives.Null) {
+                if (expr.typeName.typeName == PredefinedJcPrimitives.Null) {
                     methodNode.localVariables
                         .find { it.index == variable && insn.isBetween(it.start, it.end) }
                         ?.desc?.typeName()
@@ -759,12 +821,12 @@ class RawInstListBuilder(
 
     private fun resolveType(left: TypeName, right: TypeName): TypeName {
         val leftName = left.typeName
-        val leftIsPrimitive = PredefinedPrimitives.matches(leftName)
+        val leftIsPrimitive = PredefinedJcPrimitives.matches(leftName)
         if (leftIsPrimitive) {
             val rightName = right.typeName
             val max = maxOfPrimitiveTypes(leftName, rightName)
             return when {
-                max.lessThen(PredefinedPrimitives.Int) -> TypeNameImpl(PredefinedPrimitives.Int)
+                max.lessThen(PredefinedJcPrimitives.Int) -> TypeNameImpl(PredefinedJcPrimitives.Int)
                 else -> TypeNameImpl(max)
             }
         }
@@ -775,11 +837,11 @@ class RawInstListBuilder(
         val operand = pop()
         val expr = when (val opcode = insn.opcode) {
             in Opcodes.INEG..Opcodes.DNEG -> {
-                val resolvedType = maxOfPrimitiveTypes(operand.typeName.typeName, PredefinedPrimitives.Int)
+                val resolvedType = maxOfPrimitiveTypes(operand.typeName.typeName, PredefinedJcPrimitives.Int)
                 JcRawNegExpr(TypeNameImpl(resolvedType), operand)
             }
 
-            Opcodes.ARRAYLENGTH -> JcRawLengthExpr(PredefinedPrimitives.Int.typeName(), operand)
+            Opcodes.ARRAYLENGTH -> JcRawLengthExpr(PredefinedJcPrimitives.Int.typeName(), operand)
             else -> error("Unknown unary opcode $opcode")
         }
         val assignment = nextRegister(expr.typeName)
@@ -790,13 +852,13 @@ class RawInstListBuilder(
     private fun buildCast(insn: InsnNode) {
         val operand = pop()
         val targetType = when (val opcode = insn.opcode) {
-            Opcodes.I2L, Opcodes.F2L, Opcodes.D2L -> PredefinedPrimitives.Long.typeName()
-            Opcodes.I2F, Opcodes.L2F, Opcodes.D2F -> PredefinedPrimitives.Float.typeName()
-            Opcodes.I2D, Opcodes.L2D, Opcodes.F2D -> PredefinedPrimitives.Double.typeName()
-            Opcodes.L2I, Opcodes.F2I, Opcodes.D2I -> PredefinedPrimitives.Int.typeName()
-            Opcodes.I2B -> PredefinedPrimitives.Byte.typeName()
-            Opcodes.I2C -> PredefinedPrimitives.Char.typeName()
-            Opcodes.I2S -> PredefinedPrimitives.Short.typeName()
+            Opcodes.I2L, Opcodes.F2L, Opcodes.D2L -> PredefinedJcPrimitives.Long.typeName()
+            Opcodes.I2F, Opcodes.L2F, Opcodes.D2F -> PredefinedJcPrimitives.Float.typeName()
+            Opcodes.I2D, Opcodes.L2D, Opcodes.F2D -> PredefinedJcPrimitives.Double.typeName()
+            Opcodes.L2I, Opcodes.F2I, Opcodes.D2I -> PredefinedJcPrimitives.Int.typeName()
+            Opcodes.I2B -> PredefinedJcPrimitives.Byte.typeName()
+            Opcodes.I2C -> PredefinedJcPrimitives.Char.typeName()
+            Opcodes.I2S -> PredefinedJcPrimitives.Short.typeName()
             else -> error("Unknown cast opcode $opcode")
         }
         val assignment = nextRegister(targetType)
@@ -808,12 +870,12 @@ class RawInstListBuilder(
         val rhv = pop()
         val lhv = pop()
         val expr = when (val opcode = insn.opcode) {
-            Opcodes.LCMP -> JcRawCmpExpr(PredefinedPrimitives.Int.typeName(), lhv, rhv)
-            Opcodes.FCMPL, Opcodes.DCMPL -> JcRawCmplExpr(PredefinedPrimitives.Int.typeName(), lhv, rhv)
-            Opcodes.FCMPG, Opcodes.DCMPG -> JcRawCmpgExpr(PredefinedPrimitives.Int.typeName(), lhv, rhv)
+            Opcodes.LCMP -> JcRawCmpExpr(PredefinedJcPrimitives.Int.typeName(), lhv, rhv)
+            Opcodes.FCMPL, Opcodes.DCMPL -> JcRawCmplExpr(PredefinedJcPrimitives.Int.typeName(), lhv, rhv)
+            Opcodes.FCMPG, Opcodes.DCMPG -> JcRawCmpgExpr(PredefinedJcPrimitives.Int.typeName(), lhv, rhv)
             else -> error("Unknown cmp opcode $opcode")
         }
-        val assignment = nextRegister(PredefinedPrimitives.Int.typeName())
+        val assignment = nextRegister(PredefinedJcPrimitives.Int.typeName())
         addInstruction(insn, JcRawAssignInst(method, assignment, expr))
         push(assignment)
     }
@@ -1202,7 +1264,7 @@ class RawInstListBuilder(
             else -> {
                 val falseTarget = (insnNode.next as? LabelNode)?.let { label(it) } ?: nextLabel()
                 val rhv = pop()
-                val boolTypeName = PredefinedPrimitives.Boolean.typeName()
+                val boolTypeName = PredefinedJcPrimitives.Boolean.typeName()
                 val expr = when (opcode) {
                     Opcodes.IFNULL -> JcRawEqExpr(boolTypeName, rhv, JcRawNull())
                     Opcodes.IFNONNULL -> JcRawNeqExpr(boolTypeName, rhv, JcRawNull())
@@ -1533,12 +1595,12 @@ class RawInstListBuilder(
             }
 
             Opcodes.INSTANCEOF -> {
-                val assignment = nextRegister(PredefinedPrimitives.Boolean.typeName())
+                val assignment = nextRegister(PredefinedJcPrimitives.Boolean.typeName())
                 addInstruction(
                     insnNode, JcRawAssignInst(
                         method,
                         assignment,
-                        JcRawInstanceOfExpr(PredefinedPrimitives.Boolean.typeName(), pop(), type)
+                        JcRawInstanceOfExpr(PredefinedJcPrimitives.Boolean.typeName(), pop(), type)
                     )
                 )
                 push(assignment)

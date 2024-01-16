@@ -16,15 +16,20 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.objectType
+import org.jacodb.api.jvm.JcAccessible
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypeVariableDeclaration
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.types.signature.*
 
-internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
+internal fun JcProject.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
     return when (jvmType) {
         is JvmPrimitiveType -> {
-            PredefinedPrimitives.of(jvmType.ref, this, jvmType.annotations)
+            org.jacodb.api.jvm.PredefinedJcPrimitives.of(jvmType.ref, this, jvmType.annotations)
                 ?: throw IllegalStateException("primitive type ${jvmType.ref} not found")
         }
 
@@ -82,7 +87,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
 
 class JcTypeVariableDeclarationImpl(
     override val symbol: String,
-    private val classpath: JcClasspath,
+    private val classpath: JcProject,
     private val jvmBounds: List<JvmType>,
     override val owner: JcAccessible
 ) : JcTypeVariableDeclaration {

@@ -16,9 +16,18 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.hasAnnotation
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcAccessible
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcLookupExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.ext.hasAnnotation
+import org.jacodb.api.jvm.ext.packageName
 
 abstract class JcAbstractLookup<Entry : JcAccessible, Result : JcAccessible>(protected var entry: Entry) {
 

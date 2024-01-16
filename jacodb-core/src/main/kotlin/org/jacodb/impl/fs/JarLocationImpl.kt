@@ -17,8 +17,8 @@
 package org.jacodb.impl.fs
 
 import mu.KLogging
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.LocationType
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.LocationType
 import java.io.File
 import java.util.jar.JarFile
 

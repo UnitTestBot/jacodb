@@ -20,7 +20,7 @@ import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 class SqlInjectionAnalyzer(
     graph: JcApplicationGraph,

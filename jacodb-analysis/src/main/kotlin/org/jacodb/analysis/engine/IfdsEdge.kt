@@ -16,17 +16,22 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.api.JcMethod
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
 
 /**
  * Represents a directed (from [u] to [v]) edge between two ifds vertices
  */
-data class IfdsEdge(val u: IfdsVertex, val v: IfdsVertex) {
+data class IfdsEdge<Method, Location, Statement>(
+    val u: IfdsVertex<Method, Location, Statement>,
+    val v: IfdsVertex<Method, Location, Statement>
+) where Location : CoreInstLocation<Method>,
+        Statement : CoreInst<Location, Method, *> {
     init {
         require(u.method == v.method)
     }
 
-    val method: JcMethod
+    val method: Method
         get() = u.method
 }
 
@@ -35,7 +40,7 @@ sealed interface PredecessorKind {
     object Unknown : PredecessorKind
     object Sequent : PredecessorKind
     object CallToStart : PredecessorKind
-    class ThroughSummary(val summaryEdge: IfdsEdge) : PredecessorKind
+    class ThroughSummary(val summaryEdge: IfdsEdge<*, *, *>) : PredecessorKind
 }
 
 /**
@@ -43,6 +48,6 @@ sealed interface PredecessorKind {
  * Used mainly to restore traces.
  */
 data class PathEdgePredecessor(
-    val predEdge: IfdsEdge,
+    val predEdge: IfdsEdge<*, *, *>,
     val kind: PredecessorKind
 )

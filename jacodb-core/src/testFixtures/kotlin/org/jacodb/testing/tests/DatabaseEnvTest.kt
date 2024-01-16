@@ -17,17 +17,35 @@
 package org.jacodb.testing.tests
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.ext.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.PredefinedJcPrimitives
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.enumValues
+import org.jacodb.api.jvm.ext.fields
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findClassOrNull
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.ext.findMethodOrNull
+import org.jacodb.api.jvm.ext.hasBody
+import org.jacodb.api.jvm.ext.humanReadableSignature
+import org.jacodb.api.jvm.ext.isEnum
+import org.jacodb.api.jvm.ext.isLocal
+import org.jacodb.api.jvm.ext.isMemberClass
+import org.jacodb.api.jvm.ext.isNullable
+import org.jacodb.api.jvm.ext.jcdbSignature
+import org.jacodb.api.jvm.ext.jvmSignature
+import org.jacodb.api.jvm.ext.methods
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.testing.*
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.structure.FieldsAndMethods
@@ -51,7 +69,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 abstract class DatabaseEnvTest {
 
-    abstract val cp: JcClasspath
+    abstract val cp: JcProject
     abstract val hierarchyExt: HierarchyExtension
 
     @AfterEach
@@ -396,8 +414,8 @@ abstract class DatabaseEnvTest {
                 virtualClass(fakeClassName) {
                     field(fakeFieldName)
                     method(fakeMethodName) {
-                        returnType(PredefinedPrimitives.Int)
-                        params(PredefinedPrimitives.Int)
+                        returnType(PredefinedJcPrimitives.Int)
+                        params(PredefinedJcPrimitives.Int)
                     }
                 }
             }))
@@ -427,8 +445,8 @@ abstract class DatabaseEnvTest {
             cp.db.classpath(allClasspath, listOf(VirtualClasses.builder {
                 virtualClass(fakeClassName) {
                     method(fakeMethodName) {
-                        returnType(PredefinedPrimitives.Int)
-                        params(PredefinedPrimitives.Int)
+                        returnType(PredefinedJcPrimitives.Int)
+                        params(PredefinedJcPrimitives.Int)
                     }
                 }
             }))
@@ -456,8 +474,8 @@ abstract class DatabaseEnvTest {
                 VirtualClasses.builder {
                     virtualClass(fakeClassName) {
                         method(fakeMethodName1) {
-                            returnType(PredefinedPrimitives.Int)
-                            params(PredefinedPrimitives.Int)
+                            returnType(PredefinedJcPrimitives.Int)
+                            params(PredefinedJcPrimitives.Int)
                         }
                     }
                 },
@@ -466,8 +484,8 @@ abstract class DatabaseEnvTest {
                         matcher { it.name == fakeClassName }
                         method { builder, _ ->
                             builder.name(fakeMethodName2)
-                            builder.returnType(PredefinedPrimitives.Int)
-                            builder.params(PredefinedPrimitives.Int)
+                            builder.returnType(PredefinedJcPrimitives.Int)
+                            builder.params(PredefinedJcPrimitives.Int)
                         }
                     }
                 }
@@ -499,12 +517,12 @@ abstract class DatabaseEnvTest {
                             matcher { it.name == "java.lang.String" }
                             field { builder, _ ->
                                 builder.name(fakeFieldName)
-                                builder.type(PredefinedPrimitives.Int)
+                                builder.type(PredefinedJcPrimitives.Int)
                             }
                             method { builder, _ ->
                                 builder.name(fakeMethodName)
-                                builder.returnType(PredefinedPrimitives.Int)
-                                builder.params(PredefinedPrimitives.Int)
+                                builder.returnType(PredefinedJcPrimitives.Int)
+                                builder.params(PredefinedJcPrimitives.Int)
                             }
                         }.build()
                 )
@@ -513,14 +531,14 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClass<String>()
         val field = clazz.findDeclaredFieldOrNull(fakeFieldName)
         assertTrue(field is JcVirtualField)
-        assertEquals(PredefinedPrimitives.Int, field!!.type.typeName)
+        assertEquals(PredefinedJcPrimitives.Int, field!!.type.typeName)
         assertNotNull(field.enclosingClass)
 
         val method = clazz.declaredMethods.first { it.name == fakeMethodName }
         assertTrue(method is JcVirtualMethod)
-        assertEquals(PredefinedPrimitives.Int, method.returnType.typeName)
+        assertEquals(PredefinedJcPrimitives.Int, method.returnType.typeName)
         assertEquals(1, method.parameters.size)
-        assertEquals(PredefinedPrimitives.Int, method.parameters.first().type.typeName)
+        assertEquals(PredefinedJcPrimitives.Int, method.parameters.first().type.typeName)
         assertNotNull(method.enclosingClass)
         method.parameters.forEach {
             assertNotNull(it.method)
@@ -531,7 +549,7 @@ abstract class DatabaseEnvTest {
     fun `override existed field and method`() {
         val fieldName = "byteArray"
         val methodName = "smth"
-        val byteArrayTypeName = PredefinedPrimitives.Byte + "[]"
+        val byteArrayTypeName = PredefinedJcPrimitives.Byte + "[]"
 
         val cp = runBlocking {
             cp.db.classpath(
@@ -542,7 +560,7 @@ abstract class DatabaseEnvTest {
                             matcher { it.name == Bar::class.java.name }
                             field { builder, _ ->
                                 builder.name(fieldName)
-                                builder.type(PredefinedPrimitives.Int)
+                                builder.type(PredefinedJcPrimitives.Int)
                             }
                             method { builder, _ ->
                                 builder.name(methodName)
@@ -560,7 +578,7 @@ abstract class DatabaseEnvTest {
         assertTrue(fields.size == 1)
 
         assertTrue(field is JcVirtualField)
-        assertEquals(PredefinedPrimitives.Int, field!!.type.typeName)
+        assertEquals(PredefinedJcPrimitives.Int, field!!.type.typeName)
         assertNotNull(field.enclosingClass)
 
         val method = clazz.declaredMethods.single { it.name == methodName }

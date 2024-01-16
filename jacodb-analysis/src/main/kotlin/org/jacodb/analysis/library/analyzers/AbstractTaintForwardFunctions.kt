@@ -22,18 +22,18 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.ext.cfg.callExpr
 
 abstract class AbstractTaintForwardFunctions(
-    protected val cp: JcClasspath
+    protected val cp: JcProject
 ) : FlowFunctionsSpace {
 
     abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>

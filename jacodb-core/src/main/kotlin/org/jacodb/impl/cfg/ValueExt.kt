@@ -18,25 +18,25 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcBool
-import org.jacodb.api.cfg.JcByte
-import org.jacodb.api.cfg.JcDouble
-import org.jacodb.api.cfg.JcFloat
-import org.jacodb.api.cfg.JcInt
-import org.jacodb.api.cfg.JcLong
-import org.jacodb.api.cfg.JcRawNullConstant
-import org.jacodb.api.cfg.JcRawStringConstant
-import org.jacodb.api.cfg.JcShort
-import org.jacodb.api.ext.boolean
-import org.jacodb.api.ext.byte
-import org.jacodb.api.ext.double
-import org.jacodb.api.ext.float
-import org.jacodb.api.ext.int
-import org.jacodb.api.ext.long
-import org.jacodb.api.ext.short
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.jvm.cfg.JcBool
+import org.jacodb.api.jvm.cfg.JcByte
+import org.jacodb.api.jvm.cfg.JcDouble
+import org.jacodb.api.jvm.cfg.JcFloat
+import org.jacodb.api.jvm.cfg.JcInt
+import org.jacodb.api.jvm.cfg.JcLong
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcShort
+import org.jacodb.api.jvm.ext.boolean
+import org.jacodb.api.jvm.ext.byte
+import org.jacodb.api.jvm.ext.double
+import org.jacodb.api.jvm.ext.float
+import org.jacodb.api.jvm.ext.int
+import org.jacodb.api.jvm.ext.long
+import org.jacodb.api.jvm.ext.short
 import org.jacodb.impl.cfg.util.NULL
 import org.jacodb.impl.cfg.util.STRING_CLASS
 import org.jacodb.impl.cfg.util.typeName
@@ -45,39 +45,43 @@ import org.jacodb.impl.cfg.util.typeName
 fun JcRawNull() = JcRawNullConstant(NULL)
 
 @JvmName("rawBool")
-fun JcRawBool(value: Boolean) = org.jacodb.api.cfg.JcRawBool(value, PredefinedPrimitives.Boolean.typeName())
+fun JcRawBool(value: Boolean) =
+    org.jacodb.api.jvm.cfg.JcRawBool(value, PredefinedJcPrimitives.Boolean.typeName())
 
 @JvmName("rawByte")
-fun JcRawByte(value: Byte) = org.jacodb.api.cfg.JcRawByte(value, PredefinedPrimitives.Byte.typeName())
+fun JcRawByte(value: Byte) = org.jacodb.api.jvm.cfg.JcRawByte(value, PredefinedJcPrimitives.Byte.typeName())
 
 @JvmName("rawShort")
-fun JcRawShort(value: Short) = org.jacodb.api.cfg.JcRawShort(value, PredefinedPrimitives.Short.typeName())
+fun JcRawShort(value: Short) =
+    org.jacodb.api.jvm.cfg.JcRawShort(value, PredefinedJcPrimitives.Short.typeName())
 
 @JvmName("rawChar")
-fun JcRawChar(value: Char) = org.jacodb.api.cfg.JcRawChar(value, PredefinedPrimitives.Char.typeName())
+fun JcRawChar(value: Char) = org.jacodb.api.jvm.cfg.JcRawChar(value, PredefinedJcPrimitives.Char.typeName())
 
 @JvmName("rawInt")
-fun JcRawInt(value: Int) = org.jacodb.api.cfg.JcRawInt(value, PredefinedPrimitives.Int.typeName())
+fun JcRawInt(value: Int) = org.jacodb.api.jvm.cfg.JcRawInt(value, PredefinedJcPrimitives.Int.typeName())
 
 @JvmName("rawLong")
-fun JcRawLong(value: Long) = org.jacodb.api.cfg.JcRawLong(value, PredefinedPrimitives.Long.typeName())
+fun JcRawLong(value: Long) = org.jacodb.api.jvm.cfg.JcRawLong(value, PredefinedJcPrimitives.Long.typeName())
 
 @JvmName("rawFloat")
-fun JcRawFloat(value: Float) = org.jacodb.api.cfg.JcRawFloat(value, PredefinedPrimitives.Float.typeName())
+fun JcRawFloat(value: Float) =
+    org.jacodb.api.jvm.cfg.JcRawFloat(value, PredefinedJcPrimitives.Float.typeName())
 
 @JvmName("rawDouble")
-fun JcRawDouble(value: Double) = org.jacodb.api.cfg.JcRawDouble(value, PredefinedPrimitives.Double.typeName())
+fun JcRawDouble(value: Double) =
+    org.jacodb.api.jvm.cfg.JcRawDouble(value, PredefinedJcPrimitives.Double.typeName())
 
 @JvmName("rawZero")
 fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
-    PredefinedPrimitives.Boolean -> JcRawBool(false)
-    PredefinedPrimitives.Byte -> JcRawByte(0)
-    PredefinedPrimitives.Char -> JcRawChar(0.toChar())
-    PredefinedPrimitives.Short -> JcRawShort(0)
-    PredefinedPrimitives.Int -> JcRawInt(0)
-    PredefinedPrimitives.Long -> JcRawLong(0)
-    PredefinedPrimitives.Float -> JcRawFloat(0.0f)
-    PredefinedPrimitives.Double -> JcRawDouble(0.0)
+    PredefinedJcPrimitives.Boolean -> JcRawBool(false)
+    PredefinedJcPrimitives.Byte -> JcRawByte(0)
+    PredefinedJcPrimitives.Char -> JcRawChar(0.toChar())
+    PredefinedJcPrimitives.Short -> JcRawShort(0)
+    PredefinedJcPrimitives.Int -> JcRawInt(0)
+    PredefinedJcPrimitives.Long -> JcRawLong(0)
+    PredefinedJcPrimitives.Float -> JcRawFloat(0.0f)
+    PredefinedJcPrimitives.Double -> JcRawDouble(0.0)
     else -> error("Unknown primitive type: $typeName")
 }
 
@@ -94,10 +98,10 @@ fun JcRawNumber(number: Number) = when (number) {
 fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())
 
 
-fun JcClasspath.int(value: Int): JcInt = JcInt(value, int)
-fun JcClasspath.byte(value: Byte): JcByte = JcByte(value, byte)
-fun JcClasspath.short(value: Short): JcShort = JcShort(value, short)
-fun JcClasspath.long(value: Long): JcLong = JcLong(value, long)
-fun JcClasspath.boolean(value: Boolean): JcBool = JcBool(value, boolean)
-fun JcClasspath.double(value: Double): JcDouble = JcDouble(value, double)
-fun JcClasspath.float(value: Float): JcFloat = JcFloat(value, float)
+fun JcProject.int(value: Int): JcInt = JcInt(value, int)
+fun JcProject.byte(value: Byte): JcByte = JcByte(value, byte)
+fun JcProject.short(value: Short): JcShort = JcShort(value, short)
+fun JcProject.long(value: Long): JcLong = JcLong(value, long)
+fun JcProject.boolean(value: Boolean): JcBool = JcBool(value, boolean)
+fun JcProject.double(value: Double): JcDouble = JcDouble(value, double)
+fun JcProject.float(value: Float): JcFloat = JcFloat(value, float)

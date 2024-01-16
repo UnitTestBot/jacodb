@@ -16,9 +16,9 @@
 
 package org.jacodb.testing.tree
 
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.LocationType
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.LocationType
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.storage.longHash
 import java.io.File
 

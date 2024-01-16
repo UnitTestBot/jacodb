@@ -33,20 +33,20 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcTerminatingInst
-import org.jacodb.api.cfg.values
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcLocal
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.values
+import org.jacodb.api.jvm.ext.cfg.callExpr
 
 
 class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
@@ -119,7 +119,7 @@ val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
 }
 
 private class UnusedVariableForwardFunctions(
-    val classpath: JcClasspath
+    val classpath: JcProject
 ) : FlowFunctionsSpace {
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {

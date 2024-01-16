@@ -34,10 +34,10 @@ import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb

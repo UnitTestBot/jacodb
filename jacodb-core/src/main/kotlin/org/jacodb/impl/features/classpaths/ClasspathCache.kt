@@ -19,21 +19,21 @@ package org.jacodb.impl.features.classpaths
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheStats
 import mu.KLogging
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathExtFeature
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedClassResult
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedTypeResult
-import org.jacodb.api.JcFeatureEvent
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
-import org.jacodb.api.JcMethodExtFeature.JcInstListResult
-import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcClasspathExtFeature
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedClassResult
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedTypeResult
+import org.jacodb.api.jvm.JcFeatureEvent
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.JcMethodExtFeature.JcFlowGraphResult
+import org.jacodb.api.jvm.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.jvm.JcMethodExtFeature.JcRawInstListResult
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.JcCacheSegmentSettings
 import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.ValueStoreType
@@ -57,20 +57,20 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
         .build<String, JcResolvedTypeResult>()
 
     private val rawInstCache = segmentBuilder(settings.rawInstLists)
-        .build<JcMethod, JcInstList<JcRawInst>>()
+        .build<JcMethod, InstList<JcRawInst>>()
 
     private val instCache = segmentBuilder(settings.instLists)
-        .build<JcMethod, JcInstList<JcInst>>()
+        .build<JcMethod, InstList<JcInst>>()
 
     private val cfgCache = segmentBuilder(settings.flowGraphs)
         .build<JcMethod, JcGraph>()
 
 
-    override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? {
+    override fun tryFindClass(classpath: JcProject, name: String): JcResolvedClassResult? {
         return classesCache.getIfPresent(name)
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? {
+    override fun tryFindType(classpath: JcProject, name: String): JcResolvedTypeResult? {
         return typesCache.getIfPresent(name)
     }
 

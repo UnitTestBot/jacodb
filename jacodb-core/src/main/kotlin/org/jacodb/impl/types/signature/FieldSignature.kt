@@ -17,12 +17,17 @@
 package org.jacodb.impl.types.signature
 
 import mu.KLogging
-import org.jacodb.api.*
+import org.jacodb.api.jvm.FieldResolution
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.Malformed
+import org.jacodb.api.jvm.Pure
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 import org.objectweb.asm.signature.SignatureReader
 
 internal class FieldSignature(private val field: JcField?) : TypeRegistrant {

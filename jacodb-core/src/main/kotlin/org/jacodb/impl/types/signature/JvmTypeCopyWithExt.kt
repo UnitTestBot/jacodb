@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JvmType
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JvmType
 
 private data class JvmTypeUpdate(val newNullability: Boolean?, val newAnnotations: List<JcAnnotation>)
 

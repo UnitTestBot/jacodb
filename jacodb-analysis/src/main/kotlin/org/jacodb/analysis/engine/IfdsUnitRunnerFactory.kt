@@ -20,8 +20,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 /**
  * Represents a runner and allows to manipulate it.
@@ -35,7 +38,9 @@ import org.jacodb.api.analysis.JcApplicationGraph
  * It is not recommended to implement this interface directly, instead,
  * [AbstractIfdsUnitRunner] should be extended.
  */
-interface IfdsUnitRunner<UnitType> {
+interface IfdsUnitRunner<UnitType, Method, Location, Statement>
+        where Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
     val unit: UnitType
     val job: Job?
 
@@ -45,7 +50,7 @@ interface IfdsUnitRunner<UnitType> {
      * Submits a new [IfdsEdge] to runner's queue. Should be called only after [launchIn].
      * Note that this method can be called from different threads.
      */
-    suspend fun submitNewEdge(edge: IfdsEdge)
+    suspend fun submitNewEdge(edge: IfdsEdge<>)
 }
 
 /**
@@ -74,7 +79,7 @@ abstract class AbstractIfdsUnitRunner<UnitType>(final override val unit: UnitTyp
 /**
  * Produces a runner for any given unit.
  */
-interface IfdsUnitRunnerFactory {
+interface IfdsUnitRunnerFactory<Method, Statement : CoreInst<*, Method, *>> {
     /**
      * Produces a runner for given [unit], using given [startMethods] as entry points.
      * All start methods should belong to the [unit].
@@ -87,10 +92,10 @@ interface IfdsUnitRunnerFactory {
      * @param unitResolver will be used to get units of methods observed during analysis.
      */
     fun <UnitType> newRunner(
-        graph: JcApplicationGraph,
+        graph: ApplicationGraph<Method, Statement>,
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
+        startMethods: List<Method>
     ) : IfdsUnitRunner<UnitType>
 }

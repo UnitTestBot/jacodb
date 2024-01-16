@@ -17,9 +17,9 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcBoundedWildcard
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.jvm.JcBoundedWildcard
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
 import org.jacodb.testing.types.WildcardBounds.DirectBound
 import org.jacodb.testing.types.WildcardBounds.DirectBoundString
 import org.jacodb.testing.types.WildcardBounds.WildcardLowerBound

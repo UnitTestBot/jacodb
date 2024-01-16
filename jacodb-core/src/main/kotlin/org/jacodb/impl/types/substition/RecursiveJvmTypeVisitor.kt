@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmLowerBoundWildcard
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmUpperBoundWildcard

@@ -16,16 +16,16 @@
 
 package org.jacodb.analysis.paths
 
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLengthExpr
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.cfg.values
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcCastExpr
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcFieldRef
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcLengthExpr
+import org.jacodb.api.jvm.cfg.JcLocal
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.values
 
 internal fun JcExpr.toPathOrNull(): AccessPath? {
     if (this is JcCastExpr) {

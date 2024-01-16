@@ -21,8 +21,21 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import org.jacodb.api.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcPrimitiveType
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.jvm.ext.allSuperHierarchySequence
+import org.jacodb.api.jvm.ext.boolean
+import org.jacodb.api.jvm.ext.byte
+import org.jacodb.api.jvm.ext.char
+import org.jacodb.api.jvm.ext.double
+import org.jacodb.api.jvm.ext.float
+import org.jacodb.api.jvm.ext.int
+import org.jacodb.api.jvm.ext.long
+import org.jacodb.api.jvm.ext.short
 import java.nio.file.Path
 import kotlin.io.path.readText
 
@@ -229,7 +242,7 @@ class TaintConfigurationFeature private constructor(
         when (position) {
             AnyArgument -> method.parameters.isNotEmpty()
             is Argument -> position.number in method.parameters.indices
-            Result -> method.returnType.typeName != PredefinedPrimitives.Void
+            Result -> method.returnType.typeName != PredefinedJcPrimitives.Void
             ThisArgument -> !method.isStatic
         }
 

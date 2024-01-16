@@ -17,12 +17,12 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.JcCacheSettings
-import org.jacodb.impl.JcClasspathImpl
+import org.jacodb.impl.JcProjectImpl
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
@@ -36,7 +36,6 @@ import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.Warmup
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -59,7 +58,7 @@ class JcInstructionsBenchmark {
     }
 
     private lateinit var db: JcDatabase
-    private lateinit var cp: JcClasspath
+    private lateinit var cp: JcProject
 
     @Setup(Level.Trial)
     fun setup() {
@@ -74,17 +73,17 @@ class JcInstructionsBenchmark {
 
     @Benchmark
     fun rawInstList() {
-        runFor<JcClasspathImpl> { it.rawInstList }
+        runFor<JcProjectImpl> { it.rawInstList }
     }
 
     @Benchmark
     fun instList() {
-        runFor<JcClasspathImpl> { it.instList }
+        runFor<JcProjectImpl> { it.instList }
     }
 
     @Benchmark
     fun flowGraph() {
-        runFor<JcClasspathImpl> { it.flowGraph() }
+        runFor<JcProjectImpl> { it.flowGraph() }
     }
 
     private inline fun <reified T> runFor(call: (JcMethod) -> Unit) {
@@ -104,7 +103,7 @@ fun main() {
     }
     repeat(3000) {
         println("$it consumes " + measureTime {
-            cp.findClass<JcClasspathImpl>().declaredMethods.forEach {
+            cp.findClass<JcProjectImpl>().declaredMethods.forEach {
                 it.flowGraph()
             }
         })

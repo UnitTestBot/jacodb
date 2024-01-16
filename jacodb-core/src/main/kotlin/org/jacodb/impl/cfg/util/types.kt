@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.cfg.util
 
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.ext.jcdbName
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.jvm.ext.jcdbName
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.types.TypeNameImpl
 
 internal val NULL = "null".typeName()
@@ -53,14 +53,14 @@ val TypeName.internalDesc: String
         else -> this.jvmClassName
     }
 
-val TypeName.isPrimitive get() = PredefinedPrimitives.matches(typeName)
+val TypeName.isPrimitive get() = PredefinedJcPrimitives.matches(typeName)
 val TypeName.isArray get() = typeName.endsWith("[]")
 val TypeName.isClass get() = !isPrimitive && !isArray
 
 internal val TypeName.isDWord
     get() = when (typeName) {
-        PredefinedPrimitives.Long -> true
-        PredefinedPrimitives.Double -> true
+        PredefinedJcPrimitives.Long -> true
+        PredefinedJcPrimitives.Double -> true
         else -> false
     }
 
@@ -84,5 +84,5 @@ internal fun TypeName.baseElementType(): TypeName {
     return current!!
 }
 
-val lambdaMetaFactory: TypeName  = LAMBDA_METAFACTORY_CLASS.typeName()
+val lambdaMetaFactory: TypeName = LAMBDA_METAFACTORY_CLASS.typeName()
 val lambdaMetaFactoryMethodName: String = "metafactory"

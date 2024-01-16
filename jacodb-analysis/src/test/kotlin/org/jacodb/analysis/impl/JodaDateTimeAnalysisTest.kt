@@ -26,7 +26,7 @@ import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.joda.time.DateTime

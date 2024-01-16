@@ -17,9 +17,9 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.types.Generics.LinkedImpl
 import org.jacodb.testing.types.Generics.SingleImpl
 import org.junit.jupiter.api.Assertions.assertEquals

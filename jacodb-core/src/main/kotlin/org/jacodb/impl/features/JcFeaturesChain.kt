@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcFeatureEvent
-import org.jacodb.api.JcLookupExtFeature
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcFeatureEvent
+import org.jacodb.api.jvm.JcLookupExtFeature
 
 class JcFeaturesChain(val features: List<JcClasspathFeature>) {
 

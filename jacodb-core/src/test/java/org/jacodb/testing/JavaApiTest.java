@@ -19,9 +19,9 @@ package org.jacodb.testing;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
-import org.jacodb.api.JcClassOrInterface;
-import org.jacodb.api.JcClasspath;
-import org.jacodb.api.JcDatabase;
+import org.jacodb.api.jvm.JcClassOrInterface;
+import org.jacodb.api.jvm.JcProject;
+import org.jacodb.api.jvm.JcDatabase;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class JavaApiTest {
     public void createClasspath() throws ExecutionException, InterruptedException, IOException {
         System.out.println("Creating database");
         JcDatabase instance = db.get();
-        try (JcClasspath classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
+        try (JcProject classpath = instance.asyncClasspath(Lists.newArrayList()).get()) {
             JcClassOrInterface clazz = classpath.findClassOrNull("java.lang.String");
             assertNotNull(clazz);
             assertNotNull(classpath.asyncRefreshed(false).get());

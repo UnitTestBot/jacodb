@@ -17,9 +17,18 @@
 package org.jacodb.impl.types
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.findTypeOrNull
-import org.jacodb.api.ext.isEnum
-import org.jacodb.api.ext.isNullable
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.MethodResolution
+import org.jacodb.api.jvm.throwClassNotFound
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcSubstitutor
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypeVariableDeclaration
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.JcTypedMethodParameter
+import org.jacodb.api.jvm.ext.findTypeOrNull
+import org.jacodb.api.jvm.ext.isEnum
+import org.jacodb.api.jvm.ext.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl

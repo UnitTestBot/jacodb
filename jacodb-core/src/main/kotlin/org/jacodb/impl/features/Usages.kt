@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.*
+import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcSignal
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.*
@@ -168,11 +173,11 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
         }
     }
 
-    override suspend fun query(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
+    override suspend fun query(classpath: JcProject, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
         return syncQuery(classpath, req)
     }
 
-    fun syncQuery(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
+    fun syncQuery(classpath: JcProject, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
         val locationIds = classpath.registeredLocations.map { it.id }
         val persistence = classpath.db.persistence
         val name = req.methodName ?: req.field

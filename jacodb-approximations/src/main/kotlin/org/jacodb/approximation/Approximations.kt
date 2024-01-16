@@ -16,22 +16,22 @@
 
 package org.jacodb.approximation
 
-import org.jacodb.api.ByteCodeIndexer
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcFeature
-import org.jacodb.api.JcField
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcSignal
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.JcClassExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcInstExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcSignal
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
-import org.jacodb.impl.cfg.JcInstListImpl
+import org.jacodb.impl.cfg.InstListImpl
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
@@ -59,7 +59,7 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName> = ConcurrentHashMap()
     private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName> = ConcurrentHashMap()
 
-    override suspend fun query(classpath: JcClasspath, req: Any?): Sequence<Any?> {
+    override suspend fun query(classpath: JcProject, req: Any?): Sequence<Any?> {
         // returns an empty sequence for now, all requests are made using
         // findApproximationOrNull and findOriginalByApproximation functions
         return emptySequence()
@@ -117,8 +117,8 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
         }
     }
 
-    override fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
-        return JcInstListImpl(list.map { it.accept(InstSubstitutorForApproximations) })
+    override fun transformRawInstList(method: JcMethod, list: InstList<JcRawInst>): InstList<JcRawInst> {
+        return InstListImpl(list.map { it.accept(InstSubstitutorForApproximations) })
     }
 
     /**

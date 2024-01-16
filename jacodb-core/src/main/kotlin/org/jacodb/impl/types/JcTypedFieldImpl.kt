@@ -17,11 +17,17 @@
 package org.jacodb.impl.types
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.isNullable
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.ext.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
 import org.jacodb.impl.types.signature.FieldSignature
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcSubstitutor
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.throwClassNotFound
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcTypedFieldImpl(

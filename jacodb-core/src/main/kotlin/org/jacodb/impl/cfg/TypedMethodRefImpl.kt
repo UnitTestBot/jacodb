@@ -17,19 +17,34 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.findType
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.MethodNotFoundException
+import org.jacodb.api.jvm.cfg.JcRawCallExpr
+import org.jacodb.api.jvm.cfg.JcRawInstanceExpr
+import org.jacodb.api.jvm.cfg.JcRawLocal
+import org.jacodb.api.jvm.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
+import org.jacodb.api.jvm.ext.findType
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInstLocation
+import org.jacodb.api.jvm.cfg.TypedMethodRef
+import org.jacodb.api.jvm.cfg.VirtualTypedMethodRef
 import org.objectweb.asm.Type
 
 abstract class MethodSignatureRef(
-        val type: JcClassType,
-        override val name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName,
+    val type: JcClassType,
+    override val name: String,
+    argTypes: List<TypeName>,
+    returnType: TypeName,
 ) : TypedMethodRef {
 
     protected val description: String = buildString {
@@ -83,13 +98,13 @@ abstract class MethodSignatureRef(
 }
 
 class TypedStaticMethodRefImpl(
-        type: JcClassType,
-        name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName
+    type: JcClassType,
+    name: String,
+    argTypes: List<TypeName>,
+    returnType: TypeName
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
-    constructor(classpath: JcClasspath, raw: JcRawStaticCallExpr) : this(
+    constructor(classpath: JcProject, raw: JcRawStaticCallExpr) : this(
             classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
@@ -102,13 +117,13 @@ class TypedStaticMethodRefImpl(
 }
 
 class TypedSpecialMethodRefImpl(
-        type: JcClassType,
-        name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName
+    type: JcClassType,
+    name: String,
+    argTypes: List<TypeName>,
+    returnType: TypeName
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
-    constructor(classpath: JcClasspath, raw: JcRawSpecialCallExpr) : this(
+    constructor(classpath: JcProject, raw: JcRawSpecialCallExpr) : this(
             classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
@@ -122,15 +137,15 @@ class TypedSpecialMethodRefImpl(
 }
 
 class VirtualMethodRefImpl(
-        type: JcClassType,
-        private val actualType: JcClassType,
-        name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName
+    type: JcClassType,
+    private val actualType: JcClassType,
+    name: String,
+    argTypes: List<TypeName>,
+    returnType: TypeName
 ) : MethodSignatureRef(type, name, argTypes, returnType), VirtualTypedMethodRef {
 
     companion object {
-        private fun JcRawCallExpr.resolvedType(classpath: JcClasspath): Pair<JcClassType, JcClassType> {
+        private fun JcRawCallExpr.resolvedType(classpath: JcProject): Pair<JcClassType, JcClassType> {
             val declared = classpath.findType(declaringClass.typeName) as JcClassType
             if (this is JcRawInstanceExpr) {
                 val instance = instance
@@ -144,7 +159,7 @@ class VirtualMethodRefImpl(
             return declared to declared
         }
 
-        fun of(classpath: JcClasspath, raw: JcRawCallExpr): VirtualMethodRefImpl {
+        fun of(classpath: JcProject, raw: JcRawCallExpr): VirtualMethodRefImpl {
             val (declared, actual) = raw.resolvedType(classpath)
             return VirtualMethodRefImpl(
                     declared,
@@ -176,13 +191,13 @@ class VirtualMethodRefImpl(
 
 
 class TypedMethodRefImpl(
-        type: JcClassType,
-        name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName
+    type: JcClassType,
+    name: String,
+    argTypes: List<TypeName>,
+    returnType: TypeName
 ) : MethodSignatureRef(type, name, argTypes, returnType) {
 
-    constructor(classpath: JcClasspath, raw: JcRawCallExpr) : this(
+    constructor(classpath: JcProject, raw: JcRawCallExpr) : this(
             classpath.findType(raw.declaringClass.typeName) as JcClassType,
             raw.methodName,
             raw.argumentTypes,
@@ -195,7 +210,7 @@ class TypedMethodRefImpl(
 
 }
 
-fun JcClasspath.methodRef(expr: JcRawCallExpr): TypedMethodRef {
+fun JcProject.methodRef(expr: JcRawCallExpr): TypedMethodRef {
     return when (expr) {
         is JcRawStaticCallExpr -> TypedStaticMethodRefImpl(this, expr)
         is JcRawSpecialCallExpr -> TypedSpecialMethodRefImpl(this, expr)
@@ -213,9 +228,9 @@ fun JcTypedMethod.methodRef(): TypedMethodRef {
 }
 
 class JcInstLocationImpl(
-        override val method: JcMethod,
-        override val index: Int,
-        override val lineNumber: Int
+    override val method: JcMethod,
+    override val index: Int,
+    override val lineNumber: Int
 ) : JcInstLocation {
 
     override fun toString(): String {

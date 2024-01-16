@@ -16,16 +16,16 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.jvm.JcInstExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.core.cfg.InstList
 import org.jacodb.impl.analysis.impl.StringConcatSimplifierTransformer
 
 object StringConcatSimplifier : JcInstExtFeature, JcMethodExtFeature {
 
-    override fun transformInstList(method: JcMethod, list: JcInstList<JcInst>): JcInstList<JcInst> {
+    override fun transformInstList(method: JcMethod, list: InstList<JcInst>): InstList<JcInst> {
         return StringConcatSimplifierTransformer(method.enclosingClass.classpath, list).transform()
     }
 

@@ -18,7 +18,7 @@ package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.paths.AccessPath
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInst
 
 /**
  * Abstract implementation for [DomainFact] that can be used for analysis where dataflow facts correlate with

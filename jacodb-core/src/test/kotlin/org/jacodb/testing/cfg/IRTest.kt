@@ -17,12 +17,11 @@
 package org.jacodb.testing.cfg
 
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.toType
-import org.jacodb.impl.JcClasspathImpl
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.toType
+import org.jacodb.impl.JcProjectImpl
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
@@ -34,6 +33,30 @@ import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.cfg.DefaultJcExprVisitor
+import org.jacodb.api.jvm.cfg.DefaultJcInstVisitor
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcCallExpr
+import org.jacodb.api.jvm.cfg.JcCallInst
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.JcThrowInst
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
 import org.jacodb.testing.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -284,7 +307,7 @@ class IRTest : BaseInstructionsTest() {
 
     @Test
     fun `get ir of self`() {
-        testClass(cp.findClass<JcClasspathImpl>())
+        testClass(cp.findClass<JcProjectImpl>())
         testClass(cp.findClass<JcClassOrInterfaceImpl>())
         testClass(cp.findClass<JcMethodImpl>())
         testClass(cp.findClass<RawInstListBuilder>())

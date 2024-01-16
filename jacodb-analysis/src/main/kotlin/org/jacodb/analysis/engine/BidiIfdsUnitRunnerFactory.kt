@@ -19,8 +19,8 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import org.jacodb.analysis.graph.reversed
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 /**
  * This factory produces composite runners. Each of them launches two runners (backward and forward)

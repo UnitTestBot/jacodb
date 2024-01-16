@@ -37,26 +37,26 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcConstant
-import org.jacodb.api.cfg.JcEqExpr
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcNeqExpr
-import org.jacodb.api.cfg.JcNewArrayExpr
-import org.jacodb.api.cfg.JcNewExpr
-import org.jacodb.api.cfg.JcNullConstant
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.cfg.locals
-import org.jacodb.api.cfg.values
-import org.jacodb.api.ext.fields
-import org.jacodb.api.ext.isNullable
+import org.jacodb.api.jvm.JcArrayType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcArgument
+import org.jacodb.api.jvm.cfg.JcCallExpr
+import org.jacodb.api.jvm.cfg.JcConstant
+import org.jacodb.api.jvm.cfg.JcEqExpr
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcNeqExpr
+import org.jacodb.api.jvm.cfg.JcNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcNewExpr
+import org.jacodb.api.jvm.cfg.JcNullConstant
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.locals
+import org.jacodb.api.jvm.cfg.values
+import org.jacodb.api.jvm.ext.fields
+import org.jacodb.api.jvm.ext.isNullable
 
 fun NpeAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
     NpeAnalyzer(graph, maxPathLength)
@@ -92,7 +92,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
 }
 
 private class NpeForwardFunctions(
-    cp: JcClasspath,
+    cp: JcProject,
     private val maxPathLength: Int
 ) : AbstractTaintForwardFunctions(cp) {
 

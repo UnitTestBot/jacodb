@@ -17,7 +17,7 @@
 package org.jacodb.impl.features
 
 import kotlinx.serialization.Serializable
-import org.jacodb.api.ClassSource
+import org.jacodb.api.jvm.ClassSource
 
 @Serializable
 data class UsageFeatureRequest(

@@ -29,8 +29,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jacodb.analysis.logger
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
 
 /**

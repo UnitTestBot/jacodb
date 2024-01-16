@@ -22,9 +22,9 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.VulnerabilityDescription
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
 
 fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,

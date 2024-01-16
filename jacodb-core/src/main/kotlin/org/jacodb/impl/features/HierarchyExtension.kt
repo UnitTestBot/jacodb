@@ -20,12 +20,12 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.JAVA_OBJECT
-import org.jacodb.api.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
 import org.jacodb.impl.storage.defaultBatchSize
@@ -39,7 +39,7 @@ import org.jooq.impl.DSL
 import java.util.concurrent.Future
 
 @Suppress("SqlResolve")
-class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
+class HierarchyExtensionImpl(private val cp: JcProject) : HierarchyExtension {
 
     companion object {
         private fun allHierarchyQuery(locationIds: String, sinceId: Long?) = """
@@ -118,7 +118,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     }
 
 
-    private fun JcClasspath.subClasses(
+    private fun JcProject.subClasses(
         name: String,
         allHierarchy: Boolean
     ): Sequence<PersistenceClassSource> {
@@ -150,14 +150,14 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     }
 }
 
-suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
+suspend fun JcProject.hierarchyExt(): HierarchyExtensionImpl {
     db.awaitBackgroundJobs()
     return HierarchyExtensionImpl(this)
 }
 
-fun JcClasspath.asyncHierarchy(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
+fun JcProject.asyncHierarchy(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
 
-private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(cp: JcClasspath, batchSize: Int): List<Pair<Long, PersistenceClassSource>>{
+private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(cp: JcProject, batchSize: Int): List<Pair<Long, PersistenceClassSource>>{
     return orderBy(CLASSES.ID)
         .limit(batchSize)
         .fetch()
@@ -178,7 +178,7 @@ private fun List<Long>.where(offset: Long?): Condition {
     }
 }
 
-internal fun JcClasspath.allClassesExceptObject(direct: Boolean): Sequence<PersistenceClassSource> {
+internal fun JcProject.allClassesExceptObject(direct: Boolean): Sequence<PersistenceClassSource> {
     val locationIds = registeredLocations.map { it.id }
     if (direct) {
         return BatchedSequence(defaultBatchSize) { offset, batchSize ->

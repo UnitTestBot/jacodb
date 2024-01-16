@@ -17,13 +17,20 @@
 package org.jacodb.impl.features.classpaths.virtual
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.objectClass
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.ext.objectClass
 import org.jacodb.impl.bytecode.JcClassLookupImpl
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.bytecode.joinFeatureFields
 import org.jacodb.impl.bytecode.joinFeatureMethods
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.VirtualLocation
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcProject
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
@@ -34,7 +41,7 @@ interface JcVirtualClass : JcClassOrInterface {
 
     override fun <T> extensionValue(key: String): T? = null
 
-    fun bind(classpath: JcClasspath, virtualLocation: VirtualLocation) {
+    fun bind(classpath: JcProject, virtualLocation: VirtualLocation) {
     }
 }
 
@@ -100,9 +107,9 @@ open class JcVirtualClassImpl(
     override val outerMethod: JcMethod?
         get() = null
 
-    override lateinit var classpath: JcClasspath
+    override lateinit var classpath: JcProject
 
-    override fun bind(classpath: JcClasspath, virtualLocation: VirtualLocation) {
+    override fun bind(classpath: JcProject, virtualLocation: VirtualLocation) {
         this.classpath = classpath
         this.virtualLocation = virtualLocation
     }

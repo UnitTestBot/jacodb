@@ -18,7 +18,7 @@ package org.jacodb.testing.performance
 
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcDatabase
+import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath

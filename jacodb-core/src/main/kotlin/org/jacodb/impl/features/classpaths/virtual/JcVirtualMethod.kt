@@ -16,18 +16,18 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.bytecode.JcDeclarationImpl
-import org.jacodb.impl.cfg.JcInstListImpl
+import org.jacodb.impl.cfg.InstListImpl
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
@@ -38,10 +38,10 @@ interface JcVirtualMethod : JcMethod {
 
     override fun asmNode() = MethodNode()
 
-    override val rawInstList: JcInstList<JcRawInst>
-        get() = JcInstListImpl(emptyList())
-    override val instList: JcInstList<JcInst>
-        get() = JcInstListImpl(emptyList())
+    override val rawInstList: InstList<JcRawInst>
+        get() = InstListImpl(emptyList())
+    override val instList: InstList<JcInst>
+        get() = InstListImpl(emptyList())
 
     override fun flowGraph(): JcGraph {
         return MethodInstructionsFeature.flowGraph(this).flowGraph

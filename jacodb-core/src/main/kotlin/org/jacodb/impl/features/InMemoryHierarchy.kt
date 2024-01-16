@@ -17,7 +17,16 @@
 package org.jacodb.impl.features
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcSignal
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.BatchedSequence
@@ -111,11 +120,11 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
         }
     }
 
-    override suspend fun query(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
+    override suspend fun query(classpath: JcProject, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         return syncQuery(classpath, req)
     }
 
-    fun syncQuery(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
+    fun syncQuery(classpath: JcProject, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         val persistence = classpath.db.persistence
         val locationIds = classpath.registeredLocations.map { it.id }
         if (req.name == JAVA_OBJECT) {
@@ -190,7 +199,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 
 }
 
-internal fun JcClasspath.findSubclassesInMemory(
+internal fun JcProject.findSubclassesInMemory(
     name: String,
     allHierarchy: Boolean,
     full: Boolean

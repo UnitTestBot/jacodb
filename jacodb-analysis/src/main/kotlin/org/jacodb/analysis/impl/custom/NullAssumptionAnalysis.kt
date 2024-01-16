@@ -16,21 +16,21 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.JcRefType
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcEnterMonitorInst
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.arrayRef
-import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.cfg.fieldRef
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcCallExpr
+import org.jacodb.api.jvm.cfg.JcCastExpr
+import org.jacodb.api.jvm.cfg.JcEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcFieldRef
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcLocal
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.ext.cfg.arrayRef
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.cfg.fieldRef
 
 
 class NullAnalysisMap : HashMap<JcValue, NullableState> {

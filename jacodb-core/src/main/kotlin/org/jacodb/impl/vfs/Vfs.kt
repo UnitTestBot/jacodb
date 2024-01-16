@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.vfs
 
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.RegisteredLocation
 
 abstract class AbstractVfsItem<T : AbstractVfsItem<T>>(open val name: String?, val parent: T?) {
 

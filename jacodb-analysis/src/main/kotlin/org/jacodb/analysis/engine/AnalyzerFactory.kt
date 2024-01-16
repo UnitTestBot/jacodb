@@ -16,9 +16,10 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 /**
  * Interface for flow functions -- mappings of kind DomainFact -> Collection of DomainFacts
@@ -43,16 +44,16 @@ object ZEROFact : DomainFact {
  * Implementations of the interface should provide all four kinds of flow functions mentioned in RHS95,
  * thus fully describing how the facts are propagated through the supergraph.
  */
-interface FlowFunctionsSpace {
+interface FlowFunctionsSpace<Statement : CoreInst<*, Method, *>, Method> {
     /**
      * @return facts that may hold when analysis is started from [startStatement]
      * (these are needed to initiate worklist in ifds analysis)
      */
-    fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact>
-    fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
-    fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
-    fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance
-    fun obtainExitToReturnSiteFlowFunction(callStatement: JcInst, returnSite: JcInst, exitStatement: JcInst): FlowFunctionInstance
+    fun obtainPossibleStartFacts(startStatement: Statement): Collection<DomainFact>
+    fun obtainSequentFlowFunction(current: Statement, next: Statement): FlowFunctionInstance
+    fun obtainCallToStartFlowFunction(callStatement: Statement, callee: Method): FlowFunctionInstance
+    fun obtainCallToReturnFlowFunction(callStatement: Statement, returnSite: Statement): FlowFunctionInstance
+    fun obtainExitToReturnSiteFlowFunction(callStatement: Statement, returnSite: Statement, exitStatement: Statement): FlowFunctionInstance
 }
 
 /**
@@ -65,8 +66,10 @@ interface FlowFunctionsSpace {
  * @property flowFunctions a [FlowFunctionsSpace] instance that describes how facts are generated and propagated
  * during run of tabulation algorithm.
  */
-interface Analyzer {
-    val flowFunctions: FlowFunctionsSpace
+interface Analyzer<Method, Location, Statement>
+        where Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
+    val flowFunctions: FlowFunctionsSpace<Statement, Method>
 
     /**
      * This method is called by [BaseIfdsUnitRunner] each time a new path edge is found.
@@ -74,14 +77,14 @@ interface Analyzer {
      * @return [AnalysisDependentEvent]s that are produced by this edge.
      * Usually these are [NewSummaryFact] events with [SummaryEdgeFact] or [VulnerabilityLocation] facts
      */
-    fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent>
+    fun handleNewEdge(edge: IfdsEdge<Method, Location, Statement>): List<AnalysisDependentEvent>
 
     /**
      * This method is called by [BaseIfdsUnitRunner] each time a new cross-unit called is observed.
      *
      * @return [AnalysisDependentEvent]s that are produced by this [fact].
      */
-    fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent>
+    fun handleNewCrossUnitCall(fact: CrossUnitCallFact<Method, Location, Statement>): List<AnalysisDependentEvent>
 
     /**
      * This method is called once by [BaseIfdsUnitRunner] when the propagation of facts is finished
@@ -94,11 +97,13 @@ interface Analyzer {
 }
 
 /**
- * A functional interface that allows to produce [Analyzer] by [JcApplicationGraph].
+ * A functional interface that allows to produce [Analyzer] by [ApplicationGraph].
  *
  * It simplifies instantiation of [IfdsUnitRunnerFactory]s because this way you don't have to pass graph and reversed
  * graph to analyzers' constructors directly, relying on runner to do it by itself.
  */
-fun interface AnalyzerFactory {
-    fun newAnalyzer(graph: JcApplicationGraph): Analyzer
+fun interface AnalyzerFactory<Method, Location, Statement>
+        where Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
+    fun newAnalyzer(graph: ApplicationGraph<Method, Statement>): Analyzer<Method, Location, Statement>
 }

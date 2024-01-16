@@ -16,9 +16,8 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findMethodOrNull
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl
@@ -26,12 +25,20 @@ import org.jacodb.impl.fs.fullAsmNode
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.types.ClassInfo
 import org.jacodb.impl.weakLazy
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcProject
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassOrInterfaceImpl(
-    override val classpath: JcClasspath,
+    override val classpath: JcProject,
     private val classSource: ClassSource,
     private val featuresChain: JcFeaturesChain,
 ) : JcClassOrInterface {

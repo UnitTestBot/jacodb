@@ -16,10 +16,87 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.*
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.cfg.BsmDoubleArg
+import org.jacodb.api.jvm.cfg.BsmFloatArg
+import org.jacodb.api.jvm.cfg.BsmHandle
+import org.jacodb.api.jvm.cfg.BsmIntArg
+import org.jacodb.api.jvm.cfg.BsmLongArg
+import org.jacodb.api.jvm.cfg.BsmMethodTypeArg
+import org.jacodb.api.jvm.cfg.BsmStringArg
+import org.jacodb.api.jvm.cfg.BsmTypeArg
+import org.jacodb.api.jvm.cfg.JcRawAddExpr
+import org.jacodb.api.jvm.cfg.JcRawAndExpr
+import org.jacodb.api.jvm.cfg.JcRawArgument
+import org.jacodb.api.jvm.cfg.JcRawArrayAccess
+import org.jacodb.api.jvm.cfg.JcRawAssignInst
+import org.jacodb.api.jvm.cfg.JcRawBool
+import org.jacodb.api.jvm.cfg.JcRawByte
+import org.jacodb.api.jvm.cfg.JcRawCallExpr
+import org.jacodb.api.jvm.cfg.JcRawCallInst
+import org.jacodb.api.jvm.cfg.JcRawCastExpr
+import org.jacodb.api.jvm.cfg.JcRawCatchInst
+import org.jacodb.api.jvm.cfg.JcRawChar
+import org.jacodb.api.jvm.cfg.JcRawClassConstant
+import org.jacodb.api.jvm.cfg.JcRawCmpExpr
+import org.jacodb.api.jvm.cfg.JcRawCmpgExpr
+import org.jacodb.api.jvm.cfg.JcRawCmplExpr
+import org.jacodb.api.jvm.cfg.JcRawComplexValue
+import org.jacodb.api.jvm.cfg.JcRawDivExpr
+import org.jacodb.api.jvm.cfg.JcRawDouble
+import org.jacodb.api.jvm.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawEqExpr
+import org.jacodb.api.jvm.cfg.JcRawExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawExpr
+import org.jacodb.api.jvm.cfg.JcRawExprVisitor
+import org.jacodb.api.jvm.cfg.JcRawFieldRef
+import org.jacodb.api.jvm.cfg.JcRawFloat
+import org.jacodb.api.jvm.cfg.JcRawGeExpr
+import org.jacodb.api.jvm.cfg.JcRawGotoInst
+import org.jacodb.api.jvm.cfg.JcRawGtExpr
+import org.jacodb.api.jvm.cfg.JcRawIfInst
+import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.JcRawInstVisitor
+import org.jacodb.api.jvm.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.jvm.cfg.JcRawInt
+import org.jacodb.api.jvm.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.jvm.cfg.JcRawLabelInst
+import org.jacodb.api.jvm.cfg.JcRawLabelRef
+import org.jacodb.api.jvm.cfg.JcRawLeExpr
+import org.jacodb.api.jvm.cfg.JcRawLengthExpr
+import org.jacodb.api.jvm.cfg.JcRawLineNumberInst
+import org.jacodb.api.jvm.cfg.JcRawLocalVar
+import org.jacodb.api.jvm.cfg.JcRawLong
+import org.jacodb.api.jvm.cfg.JcRawLtExpr
+import org.jacodb.api.jvm.cfg.JcRawMethodConstant
+import org.jacodb.api.jvm.cfg.JcRawMethodType
+import org.jacodb.api.jvm.cfg.JcRawMulExpr
+import org.jacodb.api.jvm.cfg.JcRawNegExpr
+import org.jacodb.api.jvm.cfg.JcRawNeqExpr
+import org.jacodb.api.jvm.cfg.JcRawNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcRawNewExpr
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawOrExpr
+import org.jacodb.api.jvm.cfg.JcRawRemExpr
+import org.jacodb.api.jvm.cfg.JcRawReturnInst
+import org.jacodb.api.jvm.cfg.JcRawShlExpr
+import org.jacodb.api.jvm.cfg.JcRawShort
+import org.jacodb.api.jvm.cfg.JcRawShrExpr
+import org.jacodb.api.jvm.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcRawSubExpr
+import org.jacodb.api.jvm.cfg.JcRawSwitchInst
+import org.jacodb.api.jvm.cfg.JcRawThis
+import org.jacodb.api.jvm.cfg.JcRawThrowInst
+import org.jacodb.api.jvm.cfg.JcRawUshrExpr
+import org.jacodb.api.jvm.cfg.JcRawValue
+import org.jacodb.api.jvm.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.jvm.cfg.JcRawXorExpr
 import org.jacodb.impl.cfg.util.*
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
@@ -27,45 +104,45 @@ import org.objectweb.asm.Opcodes.H_GETSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
-private val PredefinedPrimitives.smallIntegers get() = setOf(Boolean, Byte, Char, Short, Int)
+private val PredefinedJcPrimitives.smallIntegers get() = setOf(Boolean, Byte, Char, Short, Int)
 
 private val TypeName.shortInt
     get() = when (this.typeName) {
-        PredefinedPrimitives.Long -> 1
-        in PredefinedPrimitives.smallIntegers -> 0
-        PredefinedPrimitives.Float -> 2
-        PredefinedPrimitives.Double -> 3
+        PredefinedJcPrimitives.Long -> 1
+        in PredefinedJcPrimitives.smallIntegers -> 0
+        PredefinedJcPrimitives.Float -> 2
+        PredefinedJcPrimitives.Double -> 3
         else -> 4
     }
 private val TypeName.longInt
     get() = when (this.typeName) {
-        PredefinedPrimitives.Boolean -> 5
-        PredefinedPrimitives.Byte -> 5
-        PredefinedPrimitives.Short -> 7
-        PredefinedPrimitives.Char -> 6
-        PredefinedPrimitives.Int -> 0
-        PredefinedPrimitives.Long -> 1
-        PredefinedPrimitives.Float -> 2
-        PredefinedPrimitives.Double -> 3
+        PredefinedJcPrimitives.Boolean -> 5
+        PredefinedJcPrimitives.Byte -> 5
+        PredefinedJcPrimitives.Short -> 7
+        PredefinedJcPrimitives.Char -> 6
+        PredefinedJcPrimitives.Int -> 0
+        PredefinedJcPrimitives.Long -> 1
+        PredefinedJcPrimitives.Float -> 2
+        PredefinedJcPrimitives.Double -> 3
         else -> 4
     }
 
 private val TypeName.typeInt
     get() = when (typeName) {
-        PredefinedPrimitives.Char -> Opcodes.T_CHAR
-        PredefinedPrimitives.Boolean -> Opcodes.T_BOOLEAN
-        PredefinedPrimitives.Byte -> Opcodes.T_BYTE
-        PredefinedPrimitives.Double -> Opcodes.T_DOUBLE
-        PredefinedPrimitives.Float -> Opcodes.T_FLOAT
-        PredefinedPrimitives.Int -> Opcodes.T_INT
-        PredefinedPrimitives.Long -> Opcodes.T_LONG
-        PredefinedPrimitives.Short -> Opcodes.T_SHORT
+        PredefinedJcPrimitives.Char -> Opcodes.T_CHAR
+        PredefinedJcPrimitives.Boolean -> Opcodes.T_BOOLEAN
+        PredefinedJcPrimitives.Byte -> Opcodes.T_BYTE
+        PredefinedJcPrimitives.Double -> Opcodes.T_DOUBLE
+        PredefinedJcPrimitives.Float -> Opcodes.T_FLOAT
+        PredefinedJcPrimitives.Int -> Opcodes.T_INT
+        PredefinedJcPrimitives.Long -> Opcodes.T_LONG
+        PredefinedJcPrimitives.Short -> Opcodes.T_SHORT
         else -> error("$typeName is not primitive type")
     }
 
 class MethodNodeBuilder(
     val method: JcMethod,
-    val instList: JcInstList<JcRawInst>
+    val instList: InstList<JcRawInst>
 ) : JcRawInstVisitor<Unit>, JcRawExprVisitor<Unit> {
     private var localIndex = 0
     private var stackSize = 0
@@ -269,7 +346,7 @@ class MethodNodeBuilder(
         var shouldReverse = false
         val (zeroValue, zeroCmpOpcode, defaultOpcode) = when (cond) {
             is JcRawEqExpr -> when {
-                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(
+                cond.lhv.typeName == PredefinedJcPrimitives.Null.typeName() -> Triple(
                     JcRawNull(),
                     Opcodes.IFNULL,
                     Opcodes.IF_ACMPEQ
@@ -280,7 +357,7 @@ class MethodNodeBuilder(
             }
 
             is JcRawNeqExpr -> when {
-                cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(
+                cond.lhv.typeName == PredefinedJcPrimitives.Null.typeName() -> Triple(
                     JcRawNull(),
                     Opcodes.IFNONNULL,
                     Opcodes.IF_ACMPNE
@@ -376,7 +453,7 @@ class MethodNodeBuilder(
         expr.lhv.accept(this)
         expr.rhv.accept(this)
         val opcode = when (expr.lhv.typeName.typeName) {
-            PredefinedPrimitives.Float -> Opcodes.FCMPG
+            PredefinedJcPrimitives.Float -> Opcodes.FCMPG
             else -> Opcodes.DCMPG
         }
         currentInsnList.add(InsnNode(opcode))
@@ -387,7 +464,7 @@ class MethodNodeBuilder(
         expr.lhv.accept(this)
         expr.rhv.accept(this)
         val opcode = when (expr.lhv.typeName.typeName) {
-            PredefinedPrimitives.Float -> Opcodes.FCMPL
+            PredefinedJcPrimitives.Float -> Opcodes.FCMPL
             else -> Opcodes.DCMPL
         }
         currentInsnList.add(InsnNode(opcode))
@@ -510,35 +587,35 @@ class MethodNodeBuilder(
             when {
                 originalType.isPrimitive && targetType.isPrimitive -> {
                     val opcode = when (originalType.typeName) {
-                        PredefinedPrimitives.Long -> when (targetType.typeName) {
-                            PredefinedPrimitives.Int -> Opcodes.L2I
-                            PredefinedPrimitives.Float -> Opcodes.L2F
-                            PredefinedPrimitives.Double -> Opcodes.L2D
+                        PredefinedJcPrimitives.Long -> when (targetType.typeName) {
+                            PredefinedJcPrimitives.Int -> Opcodes.L2I
+                            PredefinedJcPrimitives.Float -> Opcodes.L2F
+                            PredefinedJcPrimitives.Double -> Opcodes.L2D
                             else -> error("Impossible cast from $originalType to $targetType")
                         }
 
-                        in PredefinedPrimitives.smallIntegers -> when (targetType.typeName) {
-                            PredefinedPrimitives.Long -> Opcodes.I2L
-                            PredefinedPrimitives.Float -> Opcodes.I2F
-                            PredefinedPrimitives.Double -> Opcodes.I2D
-                            PredefinedPrimitives.Byte -> Opcodes.I2B
-                            PredefinedPrimitives.Char -> Opcodes.I2C
-                            PredefinedPrimitives.Short -> Opcodes.I2S
-                            PredefinedPrimitives.Boolean -> Opcodes.NOP
+                        in PredefinedJcPrimitives.smallIntegers -> when (targetType.typeName) {
+                            PredefinedJcPrimitives.Long -> Opcodes.I2L
+                            PredefinedJcPrimitives.Float -> Opcodes.I2F
+                            PredefinedJcPrimitives.Double -> Opcodes.I2D
+                            PredefinedJcPrimitives.Byte -> Opcodes.I2B
+                            PredefinedJcPrimitives.Char -> Opcodes.I2C
+                            PredefinedJcPrimitives.Short -> Opcodes.I2S
+                            PredefinedJcPrimitives.Boolean -> Opcodes.NOP
                             else -> error("Impossible cast from $originalType to $targetType")
                         }
 
-                        PredefinedPrimitives.Float -> when (targetType.typeName) {
-                            PredefinedPrimitives.Int -> Opcodes.F2I
-                            PredefinedPrimitives.Long -> Opcodes.F2L
-                            PredefinedPrimitives.Double -> Opcodes.F2D
+                        PredefinedJcPrimitives.Float -> when (targetType.typeName) {
+                            PredefinedJcPrimitives.Int -> Opcodes.F2I
+                            PredefinedJcPrimitives.Long -> Opcodes.F2L
+                            PredefinedJcPrimitives.Double -> Opcodes.F2D
                             else -> error("Impossible cast from $originalType to $targetType")
                         }
 
-                        PredefinedPrimitives.Double -> when (targetType.typeName) {
-                            PredefinedPrimitives.Int -> Opcodes.D2I
-                            PredefinedPrimitives.Long -> Opcodes.D2L
-                            PredefinedPrimitives.Float -> Opcodes.D2F
+                        PredefinedJcPrimitives.Double -> when (targetType.typeName) {
+                            PredefinedJcPrimitives.Int -> Opcodes.D2I
+                            PredefinedJcPrimitives.Long -> Opcodes.D2L
+                            PredefinedJcPrimitives.Float -> Opcodes.D2F
                             else -> error("Impossible cast from $originalType to $targetType")
                         }
 
@@ -648,7 +725,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (expr.returnType != PredefinedPrimitives.Void.typeName())
+        if (expr.returnType != PredefinedJcPrimitives.Void.typeName())
             updateStackInfo(1)
     }
 
@@ -664,7 +741,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (expr.returnType != PredefinedPrimitives.Void.typeName())
+        if (expr.returnType != PredefinedJcPrimitives.Void.typeName())
             updateStackInfo(1)
     }
 
@@ -679,7 +756,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-expr.args.size)
-        if (expr.returnType != PredefinedPrimitives.Void.typeName())
+        if (expr.returnType != PredefinedJcPrimitives.Void.typeName())
             updateStackInfo(1)
     }
 
@@ -695,7 +772,7 @@ class MethodNodeBuilder(
             )
         )
         updateStackInfo(-(expr.args.size + 1))
-        if (expr.returnType != PredefinedPrimitives.Void.typeName())
+        if (expr.returnType != PredefinedJcPrimitives.Void.typeName())
             updateStackInfo(1)
     }
 

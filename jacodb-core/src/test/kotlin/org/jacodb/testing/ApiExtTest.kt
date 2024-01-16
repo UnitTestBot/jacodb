@@ -17,9 +17,14 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcType
-import org.jacodb.api.ext.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.ext.autoboxIfNeeded
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findTypeOrNull
+import org.jacodb.api.jvm.ext.isSubClassOf
+import org.jacodb.api.jvm.ext.short
+import org.jacodb.api.jvm.ext.unboxIfNeeded
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.hierarchies.Creature.*
 import org.junit.jupiter.api.Assertions.*

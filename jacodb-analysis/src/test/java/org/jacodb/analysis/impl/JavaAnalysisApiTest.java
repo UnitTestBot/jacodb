@@ -22,11 +22,11 @@ import org.jacodb.analysis.engine.UnitResolver;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.library.RunnersLibrary;
 import org.jacodb.analysis.library.UnitResolversLibrary;
-import org.jacodb.api.JcClassOrInterface;
-import org.jacodb.api.JcClasspath;
-import org.jacodb.api.JcDatabase;
-import org.jacodb.api.JcMethod;
-import org.jacodb.api.analysis.JcApplicationGraph;
+import org.jacodb.api.jvm.JcClassOrInterface;
+import org.jacodb.api.jvm.JcProject;
+import org.jacodb.api.jvm.JcDatabase;
+import org.jacodb.api.jvm.JcMethod;
+import org.jacodb.api.jvm.analysis.JcApplicationGraph;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.InMemoryHierarchy;
@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class JavaAnalysisApiTest {
-    private static JcClasspath classpath;
+    private static JcProject classpath;
 
     @BeforeAll
     public static void initClasspath() throws ExecutionException, InterruptedException {

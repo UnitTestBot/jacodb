@@ -18,11 +18,11 @@ package org.jacodb.testing
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.CONSTRUCTOR
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.usedFields
-import org.jacodb.api.ext.usedMethods
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.ext.CONSTRUCTOR
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.usedFields
+import org.jacodb.api.jvm.ext.usedMethods
 import org.jacodb.testing.usages.direct.DirectA
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -113,7 +113,7 @@ class DirectUsagesTest : BaseTest() {
         )
     }
 
-    private inline fun <reified T> JcClasspath.fieldsUsages(): List<Pair<String, List<Pair<String, List<String>>>>> {
+    private inline fun <reified T> JcProject.fieldsUsages(): List<Pair<String, List<Pair<String, List<String>>>>> {
         return runBlocking {
             val classId = findClass<T>()
 
@@ -130,7 +130,7 @@ class DirectUsagesTest : BaseTest() {
         }
     }
 
-    private inline fun <reified T> JcClasspath.methodsUsages(): List<Pair<String, List<String>>> {
+    private inline fun <reified T> JcProject.methodsUsages(): List<Pair<String, List<String>>> {
         return runBlocking {
             val jcClass = findClass<T>()
 

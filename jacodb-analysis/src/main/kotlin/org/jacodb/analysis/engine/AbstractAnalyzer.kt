@@ -16,7 +16,9 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -34,8 +36,12 @@ import java.util.concurrent.ConcurrentHashMap
  * Usually this should be set to true for forward analyzers (which are expected to tell anything they found),
  * but in backward analyzers this should be set to false
  */
-abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyzer {
-    protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
+abstract class AbstractAnalyzer<Method, Location, Statement>(
+    private val graph: ApplicationGraph<Method, Statement>
+) : Analyzer<Method, Location, Statement> where Location : CoreInstLocation<Method>,
+                   Statement : CoreInst<Location, Method, *> {
+    protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex<Method, Location, Statement>> =
+        ConcurrentHashMap.newKeySet()
 
     abstract val isMainAnalyzer: Boolean
 
@@ -44,7 +50,7 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
      * produces a [NewSummaryFact]  with this summary edge.
      * Otherwise, returns empty list.
      */
-    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> {
+    override fun handleNewEdge(edge: IfdsEdge<Method, Location, Statement>): List<AnalysisDependentEvent> {
         return if (isMainAnalyzer && edge.v.statement in graph.exitPoints(edge.method)) {
             listOf(NewSummaryFact(SummaryEdgeFact(edge)))
         } else {
@@ -56,7 +62,9 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
      * If [isMainAnalyzer] is set to true, produces a [NewSummaryFact] with given [fact]
      * and also produces [EdgeForOtherRunnerQuery]
      */
-    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent> {
+    override fun handleNewCrossUnitCall(
+        fact: CrossUnitCallFact<Method, Location, Statement>
+    ): List<AnalysisDependentEvent> {
         return if (isMainAnalyzer) {
             verticesWithTraceGraphNeeded.add(fact.callerVertex)
             listOf(NewSummaryFact(fact), EdgeForOtherRunnerQuery(IfdsEdge(fact.calleeVertex, fact.calleeVertex)))
@@ -74,7 +82,7 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
         }
 
         return traceGraphs.map {
-            NewSummaryFact(TraceGraphFact(it))
+            NewSummaryFact(TraceGraphFact<Method>(it))
         }
     }
 }

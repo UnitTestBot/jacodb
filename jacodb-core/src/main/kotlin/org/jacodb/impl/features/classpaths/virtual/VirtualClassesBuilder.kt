@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.core.TypeName
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
@@ -103,7 +103,7 @@ open class VirtualClassesBuilder {
 
         var access = Opcodes.ACC_PUBLIC
             private set
-        var returnType: TypeName = TypeNameImpl(PredefinedPrimitives.Void)
+        var returnType: TypeName = TypeNameImpl(PredefinedJcPrimitives.Void)
             private set
         var parameters: List<TypeName> = emptyList()
             private set

@@ -17,11 +17,11 @@
 @file:JvmName("BackwardApplicationGraphs")
 package org.jacodb.analysis.graph
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
 
 private class BackwardApplicationGraph<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>
@@ -50,7 +50,7 @@ val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
 
 private class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
     JcApplicationGraph, ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
-    override val classpath: JcClasspath
+    override val classpath: JcProject
         get() = forward.classpath
 }
 

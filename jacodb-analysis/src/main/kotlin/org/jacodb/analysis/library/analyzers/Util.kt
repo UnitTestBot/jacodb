@@ -19,16 +19,16 @@ package org.jacodb.analysis.library.analyzers
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcThis
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcArgument
+import org.jacodb.api.jvm.cfg.JcThis
+import org.jacodb.api.jvm.ext.toType
 
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
 
-fun JcClasspath.getFormalParamsOf(method: JcMethod): List<JcArgument> {
+fun JcProject.getFormalParamsOf(method: JcMethod): List<JcArgument> {
     return method.parameters.map {
         JcArgument.of(it.index, it.name, findTypeOrNull(it.type.typeName)!!)
     }

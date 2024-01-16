@@ -16,13 +16,13 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcBlockGraph
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.JcBasicBlock
+import org.jacodb.api.jvm.cfg.JcBlockGraph
+import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
 
 class JcBlockGraphImpl(
     override val jcGraph: JcGraph

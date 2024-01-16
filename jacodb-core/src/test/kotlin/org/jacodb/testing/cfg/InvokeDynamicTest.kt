@@ -16,7 +16,7 @@
 
 package org.jacodb.testing.cfg
 
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

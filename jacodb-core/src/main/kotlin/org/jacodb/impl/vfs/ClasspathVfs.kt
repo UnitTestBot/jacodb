@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.vfs
 
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.LocationsRegistrySnapshot
 
 /**

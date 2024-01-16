@@ -17,9 +17,22 @@
 package org.jacodb.impl.types
 
 import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.packageName
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcGenericsSubstitutionFeature
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcLookupExtFeature
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcSubstitutor
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.packageName
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.TypeDelegatingLookup
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.signature.JvmParameterizedType
@@ -30,7 +43,7 @@ import org.jacodb.impl.types.substition.SafeSubstitution
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClassTypeImpl(
-    override val classpath: JcClasspath,
+    override val classpath: JcProject,
     val name: String,
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutorImpl.empty,
@@ -39,7 +52,7 @@ class JcClassTypeImpl(
 ) : JcClassType {
 
     constructor(
-        classpath: JcClasspath,
+        classpath: JcProject,
         name: String,
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
@@ -259,7 +272,7 @@ class JcClassTypeImpl(
 
 }
 
-private fun JcClasspath.substitute(
+private fun JcProject.substitute(
     name: String,
     parameters: List<JvmType>,
     substitutor: JcSubstitutor?

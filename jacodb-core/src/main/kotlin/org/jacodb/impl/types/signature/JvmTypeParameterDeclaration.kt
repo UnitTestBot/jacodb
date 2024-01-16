@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcAccessible
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.JcAccessible
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 
 internal class JvmTypeParameterDeclarationImpl(
     override val symbol: String,

@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.cfg.util
 
-import org.jacodb.api.cfg.DefaultJcRawInstVisitor
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.DefaultJcRawInstVisitor
+import org.jacodb.api.jvm.cfg.JcRawInst
 
 class InstructionFilter(val predicate: (JcRawInst) -> Boolean) : DefaultJcRawInstVisitor<Boolean> {
     override val defaultInstHandler: (JcRawInst) -> Boolean

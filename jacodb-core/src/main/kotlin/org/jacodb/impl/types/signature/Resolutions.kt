@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.*
+import org.jacodb.api.jvm.FieldResolution
+import org.jacodb.api.jvm.MethodResolution
+import org.jacodb.api.jvm.RecordComponentResolution
+import org.jacodb.api.jvm.TypeResolution
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 
 internal class FieldResolutionImpl(val fieldType: JvmType) : FieldResolution
 

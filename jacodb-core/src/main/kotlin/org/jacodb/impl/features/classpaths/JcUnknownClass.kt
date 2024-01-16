@@ -16,8 +16,11 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.jcdbName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspathExtFeature
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualFieldImpl
@@ -27,9 +30,16 @@ import org.jacodb.impl.types.JcTypedFieldImpl
 import org.jacodb.impl.types.JcTypedMethodImpl
 import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookupExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.core.TypeName
 import org.objectweb.asm.Type
 
-class JcUnknownClass(override var classpath: JcClasspath, name: String) : JcVirtualClassImpl(
+class JcUnknownClass(override var classpath: JcProject, name: String) : JcVirtualClassImpl(
     name,
     initialFields = emptyList(),
     initialMethods = emptyList()
@@ -130,13 +140,13 @@ object UnknownClasses : JcClasspathExtFeature {
 
     private val location = VirtualLocation()
 
-    override fun tryFindClass(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedClassResult {
+    override fun tryFindClass(classpath: JcProject, name: String): JcClasspathExtFeature.JcResolvedClassResult {
         return JcResolvedClassResultImpl(name, JcUnknownClass(classpath, name).also {
             it.bind(classpath, location)
         })
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedTypeResult {
+    override fun tryFindType(classpath: JcProject, name: String): JcClasspathExtFeature.JcResolvedTypeResult {
         return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name, location))
     }
 }
@@ -179,4 +189,4 @@ object UnknownClassMethodsAndFields : JcLookupExtFeature {
 }
 
 
-val JcClasspath.isResolveAllToUnknown: Boolean get() = isInstalled(UnknownClasses)
+val JcProject.isResolveAllToUnknown: Boolean get() = isInstalled(UnknownClasses)

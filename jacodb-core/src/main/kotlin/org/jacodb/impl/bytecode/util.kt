@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.jvm.JcProject
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.JSRInlinerAdapter
@@ -37,7 +37,7 @@ val MethodNode.jsrInlined: MethodNode
         }
     }
 
-internal fun ClassNode.computeFrames(classpath: JcClasspath): ClassNode {
+internal fun ClassNode.computeFrames(classpath: JcProject): ClassNode {
     return toByteArray(classpath).toClassNode()
 }
 
@@ -52,7 +52,7 @@ internal fun ClassNode.inlineJsrs() {
     this.methods = methods.map { it.jsrInlined }
 }
 
-private fun ClassNode.toByteArray(classpath: JcClasspath): ByteArray {
+private fun ClassNode.toByteArray(classpath: JcProject): ByteArray {
     this.inlineJsrs()
     val cw = JcDatabaseClassWriter(classpath, ClassWriter.COMPUTE_FRAMES)
     this.accept(cw)

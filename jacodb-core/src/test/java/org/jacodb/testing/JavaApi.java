@@ -16,10 +16,10 @@
 
 package org.jacodb.testing;
 
-import org.jacodb.api.JcDatabase;
-import org.jacodb.api.cfg.JcArgument;
-import org.jacodb.api.cfg.JcExpr;
-import org.jacodb.api.cfg.TypedExprResolver;
+import org.jacodb.api.jvm.JcDatabase;
+import org.jacodb.api.jvm.cfg.JcArgument;
+import org.jacodb.api.jvm.cfg.JcExpr;
+import org.jacodb.api.jvm.cfg.TypedExprResolver;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcCacheSettings;
 import org.jacodb.impl.JcSettings;

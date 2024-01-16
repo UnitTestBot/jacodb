@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.vfs
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.RegisteredLocation
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 

@@ -16,16 +16,16 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.ext.findClass
 import org.objectweb.asm.ClassWriter
 
 
 /**
  * ASM class writer with jacodb specific resolution of common superclasses
  */
-class JcDatabaseClassWriter(val classpath: JcClasspath, flags: Int) : ClassWriter(flags) {
+class JcDatabaseClassWriter(val classpath: JcProject, flags: Int) : ClassWriter(flags) {
 
     /*
    * We need to overwrite this method here, as we are generating multiple classes that might reference each other. See

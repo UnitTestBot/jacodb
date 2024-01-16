@@ -25,8 +25,8 @@ import org.jacodb.analysis.engine.SummaryStorage
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 internal val logger = object : KLogging() {}.logger
 

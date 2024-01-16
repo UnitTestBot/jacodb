@@ -17,10 +17,15 @@
 package org.jacodb.impl.types.signature
 
 import org.jacodb.api.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.Malformed
+import org.jacodb.api.jvm.Pure
+import org.jacodb.api.jvm.TypeResolution
 import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
 import org.jacodb.impl.types.substition.fixDeclarationVisitor
+import org.jacodb.api.jvm.JvmType
 import org.objectweb.asm.signature.SignatureVisitor
 
 internal class TypeSignature(jcClass: JcClassOrInterface) :

@@ -16,15 +16,18 @@
 
 package org.jacodb.approximations
 
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
 import org.jacodb.approximation.*
 import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
 import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.approximations.target.KotlinClass
 import org.jacodb.impl.fs.JarLocation
+import org.jacodb.api.jvm.cfg.JcRawAssignInst
+import org.jacodb.api.jvm.cfg.JcRawCallInst
+import org.jacodb.api.jvm.cfg.JcRawFieldRef
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.guavaLib

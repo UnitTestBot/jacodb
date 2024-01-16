@@ -18,7 +18,7 @@ package org.jacodb.taint.configuration
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.jacodb.api.JcType
+import org.jacodb.api.jvm.JcType
 
 interface ConditionVisitor<R> {
     fun visit(condition: And): R

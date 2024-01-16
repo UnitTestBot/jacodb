@@ -21,7 +21,7 @@ import org.jacodb.analysis.library.PackageUnitResolver
 import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.api.JcMethod
+import org.jacodb.api.jvm.JcMethod
 
 /**
  * Sets a mapping from [JcMethod] to abstract domain [UnitType].
@@ -31,11 +31,11 @@ import org.jacodb.api.JcMethod
  *
  * To get more info about how it is used in analysis, see [runAnalysis].
  */
-fun interface UnitResolver<UnitType> {
-    fun resolve(method: JcMethod): UnitType
+fun interface UnitResolver<UnitType, Method> {
+    fun resolve(method: Method): UnitType
 
     companion object {
-        fun getByName(name: String): UnitResolver<*> {
+        fun <Method> getByName(name: String): UnitResolver<*, Method> {
             return when (name) {
                 "method"    -> MethodUnitResolver
                 "class"     -> getClassUnitResolver(false)

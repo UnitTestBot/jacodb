@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.cfg.JcBytecodeGraph
+import org.jacodb.api.jvm.cfg.JcBytecodeGraph
 
 interface FlowAnalysis<NODE, T> {
 

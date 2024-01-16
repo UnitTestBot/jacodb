@@ -17,8 +17,8 @@
 package org.jacodb.testing.persistence
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.HierarchyExtension
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.ext.HierarchyExtension
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.WithRestoredDB
@@ -31,7 +31,7 @@ class RestoredDBTest : DatabaseEnvTest() {
 
     companion object : WithRestoredDB()
 
-    override val cp: JcClasspath by lazy {
+    override val cp: JcProject by lazy {
         runBlocking {
             val withDB = this@RestoredDBTest.javaClass.withDB
             withDB.db.classpath(allClasspath)

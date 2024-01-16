@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.paths
 
-import org.jacodb.api.JcField
+import org.jacodb.api.jvm.JcField
 
 sealed interface Accessor
 

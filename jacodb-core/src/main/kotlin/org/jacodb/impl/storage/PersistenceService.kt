@@ -17,8 +17,8 @@
 package org.jacodb.impl.storage
 
 import mu.KLogging
-import org.jacodb.api.JCDBSymbolsInterner
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JCDBSymbolsInterner
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.storage.jooq.tables.references.*
 import org.jacodb.impl.types.*
 import org.jooq.DSLContext

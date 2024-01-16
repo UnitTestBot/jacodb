@@ -16,8 +16,8 @@
 
 package org.jacodb.taint.configuration
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.ext.packageName
 
 class ConfigurationTrie(
     configuration: List<SerializedTaintConfigurationItem>,

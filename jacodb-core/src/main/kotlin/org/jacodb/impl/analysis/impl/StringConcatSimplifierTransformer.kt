@@ -16,18 +16,34 @@
 
 package org.jacodb.impl.analysis.impl
 
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.autoboxIfNeeded
-import org.jacodb.api.ext.findTypeOrNull
-import org.jacodb.impl.cfg.JcInstListImpl
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.PredefinedJcPrimitives
+import org.jacodb.api.core.cfg.InstList
+import org.jacodb.api.jvm.ext.autoboxIfNeeded
+import org.jacodb.api.jvm.ext.findTypeOrNull
+import org.jacodb.impl.cfg.InstListImpl
 import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
+import org.jacodb.api.jvm.cfg.BsmStringArg
+import org.jacodb.api.jvm.cfg.DefaultJcInstVisitor
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcLocalVar
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcStringConstant
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
 import kotlin.collections.set
 
-class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) : DefaultJcInstVisitor<JcInst> {
+class StringConcatSimplifierTransformer(classpath: JcProject, private val list: InstList<JcInst>) :
+    DefaultJcInstVisitor<JcInst> {
 
     override val defaultInstHandler: (JcInst) -> JcInst
         get() = { it }
@@ -39,7 +55,7 @@ class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list
 
     private val stringType = classpath.findTypeOrNull<String>() as JcClassType
 
-    fun transform(): JcInstList<JcInst> {
+    fun transform(): InstList<JcInst> {
         var changed = false
         for (inst in list) {
             if (inst is JcAssignInst) {
@@ -90,12 +106,12 @@ class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list
          * remap all the old JcInstRef's to new ones
          */
         instructionIndices.putAll(instructions.indices.map { instructions[it] to it })
-        return JcInstListImpl(instructions.map { it.accept(this) })
+        return InstListImpl(instructions.map { it.accept(this) })
     }
 
     private fun stringify(inst: JcInst, value: JcValue, instList: MutableList<JcInst>): JcValue {
         return when {
-            PredefinedPrimitives.matches(value.type.typeName) -> {
+            PredefinedJcPrimitives.matches(value.type.typeName) -> {
                 val boxedType = value.type.autoboxIfNeeded() as JcClassType
                 val method = boxedType.methods.first {
                     it.name == "toString" && it.parameters.size == 1 && it.parameters.first().type == value.type

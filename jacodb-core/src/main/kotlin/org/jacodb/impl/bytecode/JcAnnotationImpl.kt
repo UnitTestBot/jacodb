@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.enumValues
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.ext.enumValues
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.AnnotationValue
 import org.jacodb.impl.types.AnnotationValueList
@@ -29,7 +29,7 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcAnnotationImpl(
     private val info: AnnotationInfo,
-    private val classpath: JcClasspath
+    private val classpath: JcProject
 ) : JcAnnotation {
 
     override val jcClass by lazy(PUBLICATION) {

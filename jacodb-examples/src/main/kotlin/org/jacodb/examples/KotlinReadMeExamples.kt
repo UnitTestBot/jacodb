@@ -17,10 +17,10 @@
 package org.jacodb.examples
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.ext.constructors
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.jacodb
 import java.io.File
 import kotlin.concurrent.thread

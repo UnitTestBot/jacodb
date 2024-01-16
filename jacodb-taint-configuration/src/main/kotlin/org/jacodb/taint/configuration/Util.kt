@@ -16,9 +16,9 @@
 
 package org.jacodb.taint.configuration
 
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.jvm.JcProject
 
-fun JcClasspath.taintConfigurationFeature(): TaintConfigurationFeature = features
+fun JcProject.taintConfigurationFeature(): TaintConfigurationFeature = features
     ?.singleOrNull { it is TaintConfigurationFeature } as? TaintConfigurationFeature
     ?: error("No taint configuration feature found")
 

@@ -24,9 +24,9 @@ import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.analyzers.NpeAnalyzer
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.constructors
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.analysis.NpeExamples
 import org.junit.jupiter.api.Assertions.*

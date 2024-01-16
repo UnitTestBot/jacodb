@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
-import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.PredefinedJcPrimitives
 
 /**
  * @property isNullable denotes the nullability of the type in terms of Kotlin type system.
@@ -170,15 +170,15 @@ internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation>
     companion object {
         fun of(descriptor: Char): JvmType {
             return when (descriptor) {
-                'V' -> JvmPrimitiveType(PredefinedPrimitives.Void)
-                'Z' -> JvmPrimitiveType(PredefinedPrimitives.Boolean)
-                'B' -> JvmPrimitiveType(PredefinedPrimitives.Byte)
-                'S' -> JvmPrimitiveType(PredefinedPrimitives.Short)
-                'C' -> JvmPrimitiveType(PredefinedPrimitives.Char)
-                'I' -> JvmPrimitiveType(PredefinedPrimitives.Int)
-                'J' -> JvmPrimitiveType(PredefinedPrimitives.Long)
-                'F' -> JvmPrimitiveType(PredefinedPrimitives.Float)
-                'D' -> JvmPrimitiveType(PredefinedPrimitives.Double)
+                'V' -> JvmPrimitiveType(PredefinedJcPrimitives.Void)
+                'Z' -> JvmPrimitiveType(PredefinedJcPrimitives.Boolean)
+                'B' -> JvmPrimitiveType(PredefinedJcPrimitives.Byte)
+                'S' -> JvmPrimitiveType(PredefinedJcPrimitives.Short)
+                'C' -> JvmPrimitiveType(PredefinedJcPrimitives.Char)
+                'I' -> JvmPrimitiveType(PredefinedJcPrimitives.Int)
+                'J' -> JvmPrimitiveType(PredefinedJcPrimitives.Long)
+                'F' -> JvmPrimitiveType(PredefinedJcPrimitives.Float)
+                'D' -> JvmPrimitiveType(PredefinedJcPrimitives.Double)
                 else -> throw IllegalArgumentException("Not a valid primitive type descriptor: $descriptor")
             }
         }

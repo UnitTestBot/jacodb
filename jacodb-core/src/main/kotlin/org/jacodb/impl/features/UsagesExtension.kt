@@ -20,19 +20,19 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.FieldUsageMode
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.api.ext.findDeclaredMethodOrNull
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.FieldUsageMode
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcProject
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.ext.packageName
 import org.objectweb.asm.Opcodes
 import java.util.concurrent.Future
 
-class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, private val cp: JcClasspath) {
+class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, private val cp: JcProject) {
 
     /**
      * find all methods that call this method
@@ -135,14 +135,14 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
 }
 
 
-suspend fun JcClasspath.usagesExt(): SyncUsagesExtension {
+suspend fun JcProject.usagesExt(): SyncUsagesExtension {
     if (!db.isInstalled(Usages)) {
         throw IllegalStateException("This extension requires `Usages` feature to be installed")
     }
     return SyncUsagesExtension(hierarchyExt(), this)
 }
 
-fun JcClasspath.asyncUsages(): Future<SyncUsagesExtension> = GlobalScope.future { usagesExt() }
+fun JcProject.asyncUsages(): Future<SyncUsagesExtension> = GlobalScope.future { usagesExt() }
 
-suspend fun JcClasspath.findUsages(method: JcMethod) = usagesExt().findUsages(method)
-suspend fun JcClasspath.findUsages(field: JcField, mode: FieldUsageMode) = usagesExt().findUsages(field, mode)
+suspend fun JcProject.findUsages(method: JcMethod) = usagesExt().findUsages(method)
+suspend fun JcProject.findUsages(field: JcField, mode: FieldUsageMode) = usagesExt().findUsages(field, mode)

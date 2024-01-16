@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.storage
 
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.LocationType
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.LocationType
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.*
 import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
@@ -224,7 +224,7 @@ class PersistentLocationRegistry(private val jcdb: JcDatabase, private val featu
         val record = BytecodelocationsRecord().also {
             it.path = path
             it.uniqueid = fileSystemId
-            it.runtime = type == LocationType.RUNTIME
+            it.runtime = type == org.jacodb.api.jvm.LocationType.RUNTIME
         }
         record.insert()
         return record

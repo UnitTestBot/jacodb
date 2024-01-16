@@ -21,7 +21,7 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.jvm.JcProject
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jooq.impl.DSL
@@ -32,7 +32,7 @@ import org.jooq.impl.DSL
  *
  * @return map with name and count of classes
  */
-suspend fun JcClasspath.duplicatedClasses(): Map<String, Int> {
+suspend fun JcProject.duplicatedClasses(): Map<String, Int> {
     db.awaitBackgroundJobs()
     return db.persistence.read {
         it.select(SYMBOLS.NAME, DSL.count(SYMBOLS.NAME)).from(CLASSES)
@@ -47,4 +47,4 @@ suspend fun JcClasspath.duplicatedClasses(): Map<String, Int> {
 
 }
 
-fun JcClasspath.asyncDuplicatedClasses() = GlobalScope.future { duplicatedClasses() }
+fun JcProject.asyncDuplicatedClasses() = GlobalScope.future { duplicatedClasses() }
