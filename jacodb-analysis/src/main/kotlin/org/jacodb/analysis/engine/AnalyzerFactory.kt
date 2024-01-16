@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.core.analysis.ApplicationGraph
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
-import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 /**
  * Interface for flow functions -- mappings of kind DomainFact -> Collection of DomainFacts
@@ -93,7 +92,7 @@ interface Analyzer<Method, Location, Statement>
      * @return [AnalysisDependentEvent]s that should be processed after the facts propagation was completed
      * (usually these are some [NewSummaryFact]s).
      */
-    fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent>
+    fun handleIfdsResult(ifdsResult: IfdsResult<Method, Location, Statement>): List<AnalysisDependentEvent>
 }
 
 /**

@@ -30,10 +30,11 @@ import org.jacodb.api.jvm.JcMethod
  * - managing lifecycles of the launched runners
  */
 interface IfdsUnitManager<UnitType, Method, Location, Statement>
-        where Statement : CoreInst<*, Method, *> {
+        where Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
     suspend fun handleEvent(
         event: IfdsUnitRunnerEvent,
-        runner: IfdsUnitRunner<UnitType, Method, *, Statement>
+        runner: IfdsUnitRunner<UnitType, Method, Location, Statement>
     )
 }
 
