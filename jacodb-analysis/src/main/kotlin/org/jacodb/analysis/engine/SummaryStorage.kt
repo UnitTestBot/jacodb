@@ -113,13 +113,15 @@ class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
     }
 
     override fun getFacts(method: JcMethod): SharedFlow<T> {
-        return outFlows.computeIfAbsent(method) {
-            val flow = MutableSharedFlow<T>(replay = Int.MAX_VALUE)
-            for (fact in summaries[method].orEmpty()) {
-                check(flow.tryEmit(fact))
-            }
-            flow
-        }
+        // TODO: check simplified code:
+        return outFlows[method] ?: MutableSharedFlow()
+        // return outFlows.computeIfAbsent(method) {
+        //     val flow = MutableSharedFlow<T>(replay = Int.MAX_VALUE)
+        //     for (fact in summaries[method].orEmpty()) {
+        //         check(flow.tryEmit(fact))
+        //     }
+        //     flow
+        // }
     }
 
     override fun getCurrentFacts(method: JcMethod): List<T> {
