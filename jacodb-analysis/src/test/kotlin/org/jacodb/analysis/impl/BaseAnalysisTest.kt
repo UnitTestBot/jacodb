@@ -85,9 +85,10 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     override val cp: JcClasspath = runBlocking {
-        val defaultConfigResource = this.javaClass.getResourceAsStream("/config.json")
+        val configPath = "config.json"
+        val defaultConfigResource = this.javaClass.getResourceAsStream("/$configPath")
         if (defaultConfigResource != null) {
-            logger.info { "Loading 'config.json'" }
+            logger.info { "Loading '$configPath'..." }
             val configJson = defaultConfigResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
             db.classpath(allClasspath, listOf(configurationFeature) + BaseAnalysisTest.classpathFeatures)

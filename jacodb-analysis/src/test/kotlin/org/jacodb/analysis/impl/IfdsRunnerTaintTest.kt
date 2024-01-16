@@ -20,8 +20,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.Manager
 import org.jacodb.analysis.engine.SingletonUnitResolver
-import org.jacodb.analysis.engine.VulnerabilityInstance
+import org.jacodb.analysis.engine.Vulnerability
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.impl.BaseAnalysisTest.Companion.provideClassesForJuliet
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
@@ -32,17 +33,27 @@ import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.jacodb.testing.analysis.SqlInjectionExamples
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
 private val logger = KotlinLogging.logger {}
 
-@Disabled("New IFDS engine is not finished yet")
-class IfdsTaintTest : BaseTest() {
+// @Disabled("New IFDS engine is not finished yet")
+class IfdsRunnerTaintTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
-        //
+        @JvmStatic
+        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, specificBansCwe89)
+
+        private val specificBansCwe89: List<String> = listOf(
+            // Not working yet (#156)
+            "s03", "s04"
+        )
     }
 
     override val cp: JcClasspath = runBlocking {
@@ -54,6 +65,20 @@ class IfdsTaintTest : BaseTest() {
         } else {
             super.cp
         }
+    }
+
+    @Test
+    fun `simple SQL injection`() {
+        val methodName = "bad"
+        val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
+        val sinks = findSinks(method)
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClassesForJuliet89")
+    fun `test on Juliet's CWE 89`(className: String) {
+        testSingleJulietClass(className)
     }
 
     @Test
@@ -71,55 +96,56 @@ class IfdsTaintTest : BaseTest() {
     @Test
     fun `test on specific Juliet instance`() {
         //
-        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_01"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_21"
         //
 
         testSingleJulietClass(className)
     }
 
-    private inline fun <reified T> testOneAnalysisOnOneMethod(
-        methodName: String,
-        expectedLocations: Collection<String>,
-    ) {
-        val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
-        val sinks = findSinks(method)
-
-        // TODO: think about better assertions here
-        assertEquals(expectedLocations.size, sinks.size)
-        expectedLocations.forEach { expected ->
-            assertTrue(sinks.map { it.traceGraph.sink.toString() }.any { it.contains(expected) })
-        }
-    }
+    // private inline fun <reified T> testOneAnalysisOnOneMethod(
+    //     methodName: String,
+    //     expectedLocations: Collection<String>,
+    // ) {
+    //     val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
+    //     val sinks = findSinks(method)
+    //
+    //     // TODO: think about better assertions here
+    //     assertEquals(expectedLocations.size, sinks.size)
+    //     expectedLocations.forEach { expected ->
+    //         assertTrue(sinks.map { it.traceGraph.sink.toString() }.any { it.contains(expected) })
+    //     }
+    // }
 
     private fun testSingleJulietClass(className: String) {
         println(className)
 
         val clazz = cp.findClass(className)
-        val goodMethod = clazz.methods.single { it.name == "good" }
         val badMethod = clazz.methods.single { it.name == "bad" }
+        val goodMethod = clazz.methods.single { it.name == "good" }
 
-        val goodIssues = findSinks(goodMethod)
-        logger.info { "goodIssues: ${goodIssues.size} total" }
-        for (issue in goodIssues) {
-            logger.debug { "  - $issue" }
-        }
-
+        logger.info { "Searching for sinks in BAD method..." }
         val badIssues = findSinks(badMethod)
         logger.info { "badIssues: ${badIssues.size} total" }
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
-
-        assertTrue(goodIssues.isEmpty())
         assertTrue(badIssues.isNotEmpty())
+
+        logger.info { "Searching for sinks in GOOD method..." }
+        val goodIssues = findSinks(goodMethod)
+        logger.info { "goodIssues: ${goodIssues.size} total" }
+        for (issue in goodIssues) {
+            logger.debug { "  - $issue" }
+        }
+        assertTrue(goodIssues.isEmpty())
     }
 
-    private fun findSinks(method: JcMethod): Set<VulnerabilityInstance> {
+    private fun findSinks(method: JcMethod): List<Vulnerability> {
         val vulnerabilities = launchAnalysis(listOf(method))
-        return vulnerabilities.toSet()
+        return vulnerabilities
     }
 
-    private fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+    private fun launchAnalysis(methods: List<JcMethod>): List<Vulnerability> {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }

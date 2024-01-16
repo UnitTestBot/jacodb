@@ -19,9 +19,7 @@
 package org.jacodb.analysis.engine
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
@@ -29,7 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
@@ -74,6 +72,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.This
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -128,6 +127,8 @@ data class Edge(
         require(from.method == to.method)
     }
 
+    var reason: Edge? = null
+
     val method: JcMethod get() = from.method
 
     constructor(edge: IfdsEdge) : this(Vertex(edge.from), Vertex(edge.to))
@@ -148,6 +149,7 @@ data class SummaryEdge(
 data class Vulnerability(
     val message: String,
     val sink: Vertex,
+    val edge: Edge? = null,
     val rule: TaintMethodSink? = null,
 ) : SummaryFact {
     override val method: JcMethod get() = sink.method
@@ -258,7 +260,7 @@ class TaintForwardFlowFunctions(
 
         // Extract initial facts from the config:
         val config = taintConfigurationFeature?.let { feature ->
-            logger.debug { "Extracting config for $method" }
+            // logger.debug { "Extracting config for $method" }
             feature.getConfigForMethod(method)
         }
         if (config != null) {
@@ -341,30 +343,32 @@ class TaintForwardFlowFunctions(
         to: JcValue,
     ): List<Fact> {
         val toPath = to.toPathOrNull() ?: return emptyList() // FIXME: check, add comment
-        val fromPath = from.toPathOrNull() ?: TODO() // TODO: how to handle it?
+        val fromPath = from.toPathOrNull()
 
-        // 'from' is tainted with 'fact':
-        // TODO: replace with ==, in general case
-        if (fromPath.startsWith(fact.variable)) {
-            val newTaint = fact.copy(variable = toPath)
-            // Both 'from' and 'to' are now tainted:
-            return listOf(fact, newTaint)
+        if (fromPath != null) {
+            // 'from' is tainted with 'fact':
+            // TODO: replace with ==, in general case
+            if (fromPath.startsWith(fact.variable)) {
+                val newTaint = fact.copy(variable = toPath)
+                // Both 'from' and 'to' are now tainted:
+                return listOf(fact, newTaint)
+            }
         }
 
-        // TODO: check
-        // Some sub-path in 'to' is tainted with 'fact':
-        if (fact.variable.startsWith(toPath)) {
-            // Drop 'fact' taint:
-            return emptyList()
-        }
+        // // TODO: check
+        // // Some sub-path in 'to' is tainted with 'fact':
+        // if (fact.variable.startsWith(toPath)) {
+        //     // Drop 'fact' taint:
+        //     return emptyList()
+        // }
 
-        // TODO: check
-        // 'to' is tainted (strictly) with 'fact':
-        // Note: "non-strict" case is handled above.
-        if (toPath.startsWith(fact.variable)) {
-            // No drop:
-            return listOf(fact)
-        }
+        // // TODO: check
+        // // 'to' is tainted (strictly) with 'fact':
+        // // Note: "non-strict" case is handled above.
+        // if (toPath.startsWith(fact.variable)) {
+        //     // No drop:
+        //     return listOf(fact)
+        // }
 
         // Neither 'from' nor 'to' is tainted with 'fact', simply pass-through:
         return listOf(fact)
@@ -426,7 +430,7 @@ class TaintForwardFlowFunctions(
         }
 
         val config = taintConfigurationFeature?.let { feature ->
-            logger.debug { "Extracting config for $callee" }
+            // logger.debug { "Extracting config for $callee" }
             feature.getConfigForMethod(callee)
         }
 
@@ -679,10 +683,10 @@ class Manager(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver,
 ) {
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
-    private val runnerForUnit: MutableMap<UnitType, Ifds> = mutableMapOf()
+    private val runnerForUnit: MutableMap<UnitType, IfdsRunner> = mutableMapOf()
+    // private val aliveRunners: MutableMap<UnitType, IfdsRunner> = ConcurrentHashMap()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
@@ -690,9 +694,9 @@ class Manager(
     private fun newRunner(
         unit: UnitType,
         analyzer: Analyzer2,
-    ): Ifds {
+    ): IfdsRunner {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
-        val runner = Ifds(graph, analyzer, this@Manager, unitResolver, unit)
+        val runner = IfdsRunner(graph, analyzer, this@Manager, unitResolver, unit)
         runnerForUnit[unit] = runner
         return runner
     }
@@ -704,13 +708,13 @@ class Manager(
         // TODO: val isNew = (...).add(); if (isNew) { deps.forEach { addStart(it) } }
     }
 
-    // @OptIn(DelicateCoroutinesApi::class)
-    // (newSingleThreadContext("Manager"))
-    fun analyze(startMethods: List<JcMethod>): List<VulnerabilityInstance> = runBlocking {
+    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(Dispatchers.Default) {
+        // Add start methods:
         for (method in startMethods) {
             addStart(method)
         }
 
+        // Determine all units:
         val allUnits = methodsForUnit.keys.toList()
         logger.info { "Starting analysis of ${methodsForUnit.values.sumOf { it.size }} methods in ${allUnits.size} units" }
 
@@ -721,22 +725,34 @@ class Manager(
 
             // Create the runner:
             val runner = newRunner(unit, analyzer)
-            runnerForUnit[unit] = runner
 
             // Start the runner:
-            scope.launch {
+            launch {
                 val methods = methodsForUnit[unit]!!.toList()
                 runner.run(methods)
             }
         }
 
         // Await all runners:
-        withTimeout(10000L) {
+        withTimeoutOrNull(10.seconds) {
+            allJobs.joinAll()
+        } ?: run {
+            allJobs.forEach { it.cancel() }
             allJobs.joinAll()
         }
-        logger.info { "All jobs completed" }
+        logger.info { "All ${allJobs.size} jobs completed" }
 
-        TODO()
+        // Extract found vulnerabilities (sinks):
+        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method ->
+            vulnerabilitiesStorage.getCurrentFacts(method)
+        }
+        logger.info { "Total found ${foundVulnerabilities.size} vulnerabilities" }
+        for (vulnerability in foundVulnerabilities) {
+            logger.info { "$vulnerability in ${vulnerability.method}" }
+        }
+        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
+
+        foundVulnerabilities
     }
 
     suspend fun handleEvent(event: Event) {
@@ -839,7 +855,7 @@ class TaintAnalyzer(
 
             val config = (flowFunctions as TaintForwardFlowFunctions)
                 .taintConfigurationFeature?.let { feature ->
-                    logger.debug { "Extracting config for $callee" }
+                    // logger.debug { "Extracting config for $callee" }
                     feature.getConfigForMethod(callee)
                 } ?: return@run false
 
@@ -865,12 +881,11 @@ class TaintAnalyzer(
                 // break
             }
             if (triggeredItem != null) {
-                // TODO: handle sink
-                logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
-                // val desc = generateDescriptionForSink(edge.to)
-                // val vulnerability = VulnerabilityLocation(desc, edge.to, edge, rule = triggeredItem)
-                // logger.info { "Found sink: $vulnerability in ${vulnerability.method}" }
-                // add(NewSummaryFact(vulnerability))
+                // logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
+                val message = "SINK" // TODO
+                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = triggeredItem)
+                logger.info { "Found $vulnerability in ${vulnerability.method}" }
+                add(NewVulnerability(vulnerability))
                 // verticesWithTraceGraphNeeded.add(edge.to)
             }
             true
@@ -879,12 +894,11 @@ class TaintAnalyzer(
         if (!configOk) {
             // "config"-less behavior:
             if (isSink(edge.to.statement, edge.to.fact)) {
-                // TODO: handle sink
-                logger.info { "Found sink at ${edge.to} in ${edge.method}" }
-                // val desc = generateDescriptionForSink(edge.to)
-                // val vulnerability = VulnerabilityLocation(desc, edge.to, edge)
-                // logger.info { "Found sink: $vulnerability in ${vulnerability.method}" }
-                // add(NewSummaryFact(vulnerability))
+                // logger.info { "Found sink at ${edge.to} in ${edge.method}" }
+                val message = "SINK" // TODO
+                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge)
+                logger.info { "Found $vulnerability in ${vulnerability.method}" }
+                add(NewVulnerability(vulnerability))
                 // verticesWithTraceGraphNeeded.add(edge.to)
             }
         }
@@ -895,7 +909,7 @@ class TaintAnalyzer(
     }
 }
 
-class Ifds(
+class IfdsRunner(
     private val graph: JcApplicationGraph,
     private val analyzer: Analyzer2,
     private val manager: Manager,
@@ -934,12 +948,23 @@ class Ifds(
         propagate(edge)
     }
 
-    private suspend fun propagate(edge: Edge): Boolean {
+    private suspend fun propagate(edge: Edge, reason: Edge? = null): Boolean {
         require(unitResolver.resolve(edge.method) == unit) {
             "Propagated edge must be in the same unit"
         }
 
+        if (reason != null) {
+            edge.reason = reason
+        }
+
         if (pathEdges.add(edge)) {
+            val doPrintZero = true
+            if (edge.from.statement.toString() == "noop") {
+                if (doPrintZero || edge.to.fact != Zero) {
+                    logger.debug { "Propagating $edge in ${edge.method} via ${edge.reason}" }
+                }
+            }
+
             // Add edge to worklist:
             // workList.trySendBlocking(edge).onFailure { if (it != null) throw it }
             workList.send(edge)
@@ -958,7 +983,7 @@ class Ifds(
     private suspend fun tabulationAlgorithm() = coroutineScope {
         for (edge in workList) {
             launch {
-                handle(edge)
+                tabulationAlgorithmStep(edge)
             }
         }
     }
@@ -966,7 +991,7 @@ class Ifds(
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    private suspend fun handle(currentEdge: Edge) {
+    private suspend fun tabulationAlgorithmStep(currentEdge: Edge) {
         val (startVertex, currentVertex) = currentEdge
         val (current, currentFact) = currentVertex
 
@@ -984,7 +1009,7 @@ class Ifds(
                 for (returnSiteFact in factsAtReturnSite) {
                     val returnSiteVertex = Vertex(returnSite, returnSiteFact)
                     val newEdge = Edge(startVertex, returnSiteVertex)
-                    propagate(newEdge)
+                    propagate(newEdge, reason = currentEdge)
                 }
             }
 
@@ -1023,7 +1048,7 @@ class Ifds(
                                 // Initialize analysis of callee:
                                 run {
                                     val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                    propagate(newEdge)
+                                    propagate(newEdge, reason = currentEdge)
                                 }
 
                                 // Handle already-found summary edges:
@@ -1057,7 +1082,7 @@ class Ifds(
                 for (nextFact in factsAtNext) {
                     val nextVertex = Vertex(next, nextFact)
                     val newEdge = Edge(startVertex, nextVertex)
-                    propagate(newEdge)
+                    propagate(newEdge, reason = currentEdge)
                 }
             }
         }
@@ -1077,7 +1102,7 @@ class Ifds(
             for (returnSiteFact in finalFacts) {
                 val returnSiteVertex = Vertex(returnSite, returnSiteFact)
                 val newEdge = Edge(startVertex, returnSiteVertex)
-                propagate(newEdge)
+                propagate(newEdge, reason = edge)
             }
         }
     }
