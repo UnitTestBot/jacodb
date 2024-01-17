@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
 import java.util.concurrent.ConcurrentHashMap
@@ -61,14 +62,18 @@ data class CrossUnitCallFact<Method, Location, Statement>(
     val callerVertex: IfdsVertex<Method, Location, Statement>,
     val calleeVertex: IfdsVertex<Method, Location, Statement>
 ) : SummaryFact<Method> where Location : CoreInstLocation<Method>,
-                      Statement : CoreInst<Location, Method, *> {
+                              Statement : CoreInst<Location, Method, *> {
     override val method: Method = callerVertex.method
 }
 
 /**
  * Wraps a [TraceGraph] that should be saved for some sink
  */
-data class TraceGraphFact<Method>(val graph: TraceGraph) : SummaryFact<Method> {
+data class TraceGraphFact<Method, Location, Statement>(val graph: TraceGraph<Method, Location, Statement>) :
+    SummaryFact<Method>
+        where Method : CoreMethod<Statement>,
+              Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
     override val method: Method = graph.sink.method
 }
 

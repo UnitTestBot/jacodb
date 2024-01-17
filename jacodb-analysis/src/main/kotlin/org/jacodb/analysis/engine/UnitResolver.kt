@@ -21,10 +21,9 @@ import org.jacodb.analysis.library.PackageUnitResolver
 import org.jacodb.analysis.library.SingletonUnitResolver
 import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.api.jvm.JcMethod
 
 /**
- * Sets a mapping from [JcMethod] to abstract domain [UnitType].
+ * Sets a mapping from a [Method] to abstract domain [UnitType].
  *
  * Therefore, it splits all methods into units, containing one or more method each
  * (unit is a set of methods with same value of [UnitType] returned by [resolve]).

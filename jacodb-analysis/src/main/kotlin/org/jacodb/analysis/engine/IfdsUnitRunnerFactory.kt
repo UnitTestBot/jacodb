@@ -23,8 +23,6 @@ import kotlinx.coroutines.launch
 import org.jacodb.api.core.analysis.ApplicationGraph
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
-import org.jacodb.api.jvm.JcMethod
-import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 /**
  * Represents a runner and allows to manipulate it.

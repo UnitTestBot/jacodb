@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.engine
 
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.analysis.ApplicationGraph
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
@@ -38,8 +39,10 @@ import java.util.concurrent.ConcurrentHashMap
  */
 abstract class AbstractAnalyzer<Method, Location, Statement>(
     private val graph: ApplicationGraph<Method, Statement>
-) : Analyzer<Method, Location, Statement> where Location : CoreInstLocation<Method>,
-                   Statement : CoreInst<Location, Method, *> {
+) : Analyzer<Method, Location, Statement>
+        where Method : CoreMethod<Statement>,
+              Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
     protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex<Method, Location, Statement>> =
         ConcurrentHashMap.newKeySet()
 
@@ -76,7 +79,7 @@ abstract class AbstractAnalyzer<Method, Location, Statement>(
     /**
      * Produces trace graphs for all vertices added to [verticesWithTraceGraphNeeded]
      */
-    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> {
+    override fun handleIfdsResult(ifdsResult: IfdsResult<Method, Location, Statement>): List<AnalysisDependentEvent> {
         val traceGraphs = verticesWithTraceGraphNeeded.map {
             ifdsResult.resolveTraceGraph(it)
         }

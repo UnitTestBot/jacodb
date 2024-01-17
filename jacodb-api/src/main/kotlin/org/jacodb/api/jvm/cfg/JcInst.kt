@@ -37,7 +37,7 @@ interface JcInstLocation : CoreInstLocation<JcMethod> {
     override val method: JcMethod
 }
 
-interface JcInst : CoreInst<JcInstLocation, JcExpr> {
+interface JcInst : CoreInst<JcInstLocation, JcMethod, JcExpr> {
     override val location: JcInstLocation
     override val operands: List<JcExpr>
 

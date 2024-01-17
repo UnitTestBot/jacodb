@@ -16,15 +16,25 @@
 
 package org.jacodb.api.jvm.cfg
 
+import org.jacodb.api.core.cfg.Graph
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcProject
+
+interface JcBytecodeGraph<NODE> : Graph<NODE> {
+
+    val entries: List<NODE>
+    val exits: List<NODE>
+
+    fun throwers(node: NODE): Set<NODE>
+    fun catchers(node: NODE): Set<NODE>
+}
 
 interface JcGraph : JcBytecodeGraph<JcInst> {
 
     val method: JcMethod
     val classpath: JcProject
-    val instructions: List<JcInst>
+    override val instructions: List<JcInst>
     val entry: JcInst
     override val exits: List<JcInst>
     override val entries: List<JcInst>

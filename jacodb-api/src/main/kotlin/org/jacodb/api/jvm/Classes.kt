@@ -16,6 +16,7 @@
 
 package org.jacodb.api.jvm
 
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.TypeName
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.core.cfg.InstList
@@ -85,7 +86,7 @@ interface JcAnnotation : JcSymbol {
 
 }
 
-interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
+interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CoreMethod<JcInst> {
 
     /** reference to class */
     val enclosingClass: JcClassOrInterface
@@ -100,7 +101,7 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
     val exceptions: List<TypeName>
 
     fun asmNode(): MethodNode
-    fun flowGraph(): JcGraph
+    override fun flowGraph(): JcGraph
 
     val rawInstList: InstList<JcRawInst>
     val instList: InstList<JcInst>

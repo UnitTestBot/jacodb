@@ -16,9 +16,9 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.jvm.cfg.JcBytecodeGraph
+import org.jacodb.api.core.cfg.Graph
 
-abstract class BackwardFlowAnalysis<NODE, T>(graph: JcBytecodeGraph<NODE>) : FlowAnalysisImpl<NODE, T>(graph) {
+abstract class BackwardFlowAnalysis<NODE, T>(graph: Graph<NODE>) : FlowAnalysisImpl<NODE, T>(graph) {
 
     override val isForward: Boolean = false
 

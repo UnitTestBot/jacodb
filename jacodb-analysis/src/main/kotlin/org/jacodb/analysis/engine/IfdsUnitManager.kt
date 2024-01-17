@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.flow.FlowCollector
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
-import org.jacodb.api.jvm.JcMethod
 
 /**
  * Implementations of this interface manage one or more runners and should be responsible for:

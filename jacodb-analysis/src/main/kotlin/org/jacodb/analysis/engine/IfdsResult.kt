@@ -15,18 +15,19 @@
  */
 
 package org.jacodb.analysis.engine
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
-import org.jacodb.api.jvm.cfg.JcInst
 
 /**
  * Aggregates all facts and edges found by tabulation algorithm
  */
 class IfdsResult<Method, Location, Statement>(
     val pathEdges: List<IfdsEdge<Method, Location, Statement>>,
-    val resultFacts: Map<JcInst, Set<DomainFact>>,
+    val resultFacts: Map<Statement, Set<DomainFact>>,
     val pathEdgesPreds: Map<IfdsEdge<Method, Location, Statement>, Set<PathEdgePredecessor<Method, Location, Statement>>>
-) where Location : CoreInstLocation<Method>,
+) where Method : CoreMethod<Statement>,
+        Location : CoreInstLocation<Method>,
         Statement : CoreInst<Location, Method, *> {
     private inner class TraceGraphBuilder(private val sink: IfdsVertex<Method, Location, Statement>) {
         private val sources: MutableSet<IfdsVertex<Method, Location, Statement>> = mutableSetOf()
@@ -107,7 +108,7 @@ class IfdsResult<Method, Location, Statement>(
             }
         }
 
-        fun build(): TraceGraph {
+        fun build(): TraceGraph<Method, Location, Statement> {
             val initEdges = pathEdges.filter { it.v == sink }
             initEdges.forEach {
                 dfs(it, it.v, false)
@@ -119,7 +120,7 @@ class IfdsResult<Method, Location, Statement>(
     /**
      * Builds a graph with traces to given [vertex].
      */
-    fun resolveTraceGraph(vertex: IfdsVertex<Method, Location, Statement>): TraceGraph {
-        return TraceGraphBuilder(vertex).build()
-    }
+    fun resolveTraceGraph(
+        vertex: IfdsVertex<Method, Location, Statement>
+    ): TraceGraph<Method, Location, Statement> = TraceGraphBuilder(vertex).build()
 }

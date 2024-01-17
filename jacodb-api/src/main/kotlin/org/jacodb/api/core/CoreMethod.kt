@@ -14,20 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.jvm.cfg
+package org.jacodb.api.core
 
-interface Graph<NODE> : Iterable<NODE> {
+import org.jacodb.api.core.cfg.Graph
+import org.jacodb.api.jvm.cfg.JcGraph
 
-    fun successors(node: NODE): Set<NODE>
-    fun predecessors(node: NODE): Set<NODE>
-}
-
-interface JcBytecodeGraph<NODE> : Graph<NODE> {
-
-    val entries: List<NODE>
-    val exits: List<NODE>
-
-    fun throwers(node: NODE): Set<NODE>
-    fun catchers(node: NODE): Set<NODE>
-
+interface CoreMethod<Statement> {
+    fun flowGraph(): Graph<Statement>
 }
