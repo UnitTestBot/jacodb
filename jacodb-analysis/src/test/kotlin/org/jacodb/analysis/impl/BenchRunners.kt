@@ -18,18 +18,17 @@ package org.jacodb.analysis.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.PackageUnitResolver
-import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.analysis.engine.runAnalysis2
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
-import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.JcMethod
+import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -69,7 +68,7 @@ object WebGoatBenchRunner {
     @JvmStatic
     fun main(args: Array<String>) {
         val bench = loadWebGoatBench()
-        bench.use { analyzeBench(it) }
+        bench.use { it.analyze() }
     }
 }
 
@@ -81,7 +80,8 @@ object OwaspBenchRunner {
         return loadWebAppBenchCp(
             classes = owaspJavaPath / "classes",
             dependencies = owaspJavaPath / "deps",
-            unitResolver = PackageUnitResolver,
+            // unitResolver = PackageUnitResolver,
+            unitResolver = ClassUnitResolver(true),
             // unitResolver = SingletonUnitResolver,
         ).apply {
             entrypointFilter = { method ->
@@ -130,7 +130,7 @@ object OwaspBenchRunner {
     @JvmStatic
     fun main(args: Array<String>) {
         val bench = loadOwaspJavaBench()
-        analyzeBench(bench)
+        bench.use { it.analyze() }
     }
 }
 
@@ -149,7 +149,7 @@ object ShopizerBenchRunner {
     @JvmStatic
     fun main(args: Array<String>) {
         val bench = loadShopizerBench()
-        bench.use { analyzeBench(it) }
+        bench.use { it.analyze() }
     }
 }
 
@@ -232,17 +232,26 @@ private fun loadWebAppBenchCp(
         unitResolver = unitResolver
     )
 
-private fun analyzeBench(benchmark: BenchCp) {
-    logger.info { "Filtering start methods..." }
-    val startMethods = benchmark.cp.publicClasses(benchmark.benchLocations)
-        .flatMap { it.publicAndProtectedMethods() }
-        .filter { benchmark.entrypointFilter(it) }
-        .toList()
+private fun BenchCp.analyze() {
+    val useSpecificClass = false
+    val startMethods = if (useSpecificClass) {
+        val className = "org.owasp.benchmark.testcode.BenchmarkTest00008"
+        logger.info { "Analyzing '$className'" }
+        val clazz = cp.findClass(className)
+        clazz.publicAndProtectedMethods().toList()
+    } else {
+        logger.info { "Filtering start methods..." }
+        cp.publicClasses(benchLocations)
+            .flatMap { it.publicAndProtectedMethods() }
+            .filter(entrypointFilter)
+            .toList()
+    }
+
     logger.info { "Start the analysis with ${startMethods.size} start methods:" }
     for (method in startMethods) {
         logger.info { method }
     }
-    analyzeTaint(benchmark.cp, benchmark.unitResolver, startMethods, benchmark.reportFileName)
+    analyzeTaint(cp, unitResolver, startMethods, reportFileName)
     logger.info { "Done the analysis with ${startMethods.size} start methods" }
 }
 
@@ -255,11 +264,12 @@ private fun analyzeTaint(
     val graph = runBlocking {
         cp.newApplicationGraphForAnalysis()
     }
-    val vulnerabilities = runAnalysis(graph, unitResolver, newSqlInjectionRunnerFactory(), startMethods)
-    val report = SarifReport.fromVulnerabilities(vulnerabilities)
-    File(reportFileName ?: "report.sarif").outputStream().use { fileOutputStream ->
-        report.encodeToStream(fileOutputStream)
-    }
+    runAnalysis2(graph, unitResolver, startMethods)
+    // val vulnerabilities = runAnalysis(graph, unitResolver, newSqlInjectionRunnerFactory(), startMethods)
+    // val report = SarifReport.fromVulnerabilities(vulnerabilities)
+    // File(reportFileName ?: "report.sarif").outputStream().use { fileOutputStream ->
+    //     report.encodeToStream(fileOutputStream)
+    // }
 }
 
 private fun JcClasspath.publicClasses(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> =

@@ -19,16 +19,23 @@
 package org.jacodb.analysis.engine
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.getOrElse
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
@@ -75,15 +82,18 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.This
-import java.util.concurrent.Executors
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger {}
 
 interface Fact
 
 object Zero : Fact {
-    override fun toString(): String = "[ZERO]"
+    override fun toString(): String = this.javaClass.simpleName
 }
 
 data class Tainted(
@@ -264,7 +274,7 @@ class TaintForwardFlowFunctions(
 
         // Extract initial facts from the config:
         val config = taintConfigurationFeature?.let { feature ->
-            // logger.debug { "Extracting config for $method" }
+            logger.trace { "Extracting config for $method" }
             feature.getConfigForMethod(method)
         }
         if (config != null) {
@@ -723,7 +733,7 @@ class TaintForwardFlowFunctions(
 
             if (!defaultBehavior) {
                 if (facts.size > 0) {
-                    logger.debug { "Got ${facts.size} facts from config for $callee: $facts" }
+                    logger.trace { "Got ${facts.size} facts from config for $callee: $facts" }
                 }
                 return@FlowFunction facts
             } else {
@@ -885,9 +895,10 @@ class Manager(
         // TODO: val isNew = (...).add(); if (isNew) { deps.forEach { addStart(it) } }
     }
 
-    private val dispatcher = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+    @OptIn(ExperimentalTime::class)
+    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(Dispatchers.Default) {
+        val timeStart = TimeSource.Monotonic.markNow()
 
-    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(dispatcher) {
         // Add start methods:
         for (method in startMethods) {
             addStart(method)
@@ -906,20 +917,46 @@ class Manager(
             val runner = newRunner(unit, analyzer)
 
             // Start the runner:
-            launch {
+            launch(start = CoroutineStart.LAZY) {
                 val methods = methodsForUnit[unit]!!.toList()
                 runner.run(methods)
             }
         }
 
-        // Await all runners:
-        withTimeoutOrNull(5.seconds) {
-            allJobs.joinAll()
-        } ?: run {
-            allJobs.forEach { it.cancel() }
-            allJobs.joinAll()
+        // Spawn progress job:
+        val progress = launch(Dispatchers.IO) {
+            logger.info { "Progress job started" }
+            while (isActive) {
+                delay(1.seconds)
+                logger.info { "Progress: total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
+                if (runnerForUnit.values.all { it.isChannelEmpty }) {
+                    delay(100)
+                    if (runnerForUnit.values.all { it.isChannelEmpty }) {
+                        logger.info { "All runners have empty channels, stopping them..." }
+                        allJobs.forEach { it.cancel() }
+                    }
+                }
+            }
+            logger.info { "Progress job finished" }
         }
-        logger.info { "All ${allJobs.size} jobs completed" }
+
+        // Start all runner jobs:
+        val timeStartJobs = TimeSource.Monotonic.markNow()
+        allJobs.forEach { it.start() }
+
+        // Await all runners:
+        // withTimeoutOrNull(5.seconds) {
+        allJobs.joinAll()
+        // } ?: run {
+        //     allJobs.forEach { it.cancel() }
+        //     allJobs.joinAll()
+        // }
+        progress.cancelAndJoin()
+        logger.info {
+            "All ${allJobs.size} jobs completed in %.1f s".format(
+                timeStartJobs.elapsedNow().toDouble(DurationUnit.SECONDS)
+            )
+        }
 
         // Extract found vulnerabilities (sinks):
         val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method ->
@@ -931,15 +968,34 @@ class Manager(
         }
         logger.info { "Total sinks: ${foundVulnerabilities.size}" }
 
+        logger.debug { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
+
+        val statsFileName = "stats.csv"
+        logger.debug { "Writing stats in '$statsFileName'..." }
+        File(statsFileName).outputStream().bufferedWriter().use {
+            it.write("classname,cwe,method\n")
+            for (vulnerability in foundVulnerabilities) {
+                for (cwe in vulnerability.rule!!.cwe) {
+                    it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
+                }
+            }
+        }
+
+        logger.info { "Analysis done in %.1f s".format(timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)) }
         foundVulnerabilities
     }
+
+    private val subscriptionsScope = CoroutineScope(Dispatchers.Default + Job())
 
     suspend fun handleEvent(event: Event) {
         when (event) {
             is EdgeForOtherRunner -> {
                 val method = event.edge.method
                 val unit = unitResolver.resolve(method)
-                val otherRunner = runnerForUnit[unit] ?: error("No runner for $unit")
+                val otherRunner = runnerForUnit[unit] ?: run {
+                    // logger.debug { "Ignoring event=$event for non-existing runner for unit=$unit" }
+                    return
+                }
                 otherRunner.submitNewEdge(event.edge)
             }
 
@@ -954,7 +1010,8 @@ class Manager(
                 summaryEdgesStorage
                     .getFacts(event.method)
                     .map { it.edge }
-                    .collect(event.handler)
+                    .onEach(event.handler)
+                    .launchIn(subscriptionsScope)
             }
 
             is NewSummaryEdge -> {
@@ -977,7 +1034,7 @@ data class SubscriptionForSummaryEdges2(
 
 data class SubscriptionForSummaryEdges3(
     val method: JcMethod,
-    val handler: (Edge) -> Unit,
+    val handler: suspend (Edge) -> Unit,
 ) : Event
 
 data class NewSummaryEdge(
@@ -1063,7 +1120,8 @@ class TaintAnalyzer(
                 // logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
                 val message = "SINK" // TODO
                 val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = triggeredItem)
-                logger.info { "Found $vulnerability in ${vulnerability.method}" }
+                // logger.info { "Found $vulnerability in ${vulnerability.method}" }
+                logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
                 add(NewVulnerability(vulnerability))
                 // verticesWithTraceGraphNeeded.add(edge.to)
             }
@@ -1089,17 +1147,20 @@ class TaintAnalyzer(
 }
 
 class IfdsRunner(
-    private val graph: JcApplicationGraph,
-    private val analyzer: Analyzer2,
-    private val manager: Manager,
-    private val unitResolver: UnitResolver,
-    private val unit: UnitType,
+    internal val graph: JcApplicationGraph,
+    internal val analyzer: Analyzer2,
+    internal val manager: Manager,
+    internal val unitResolver: UnitResolver,
+    internal val unit: UnitType,
 ) {
-    private val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
-    private val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
-    private val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
-    private val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
-    private val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
+    internal val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
+    internal val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
+    internal val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
+    internal val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
+    internal val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
+
+    @Volatile
+    internal var isChannelEmpty: Boolean = false
 
     suspend fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
@@ -1111,6 +1172,7 @@ class IfdsRunner(
 
     // TODO: should 'addStart' be public?
     // TODO: should 'addStart' replace 'submitNewEdge'?
+    // TODO: inline
     private suspend fun addStart(method: JcMethod) {
         require(unitResolver.resolve(method) == unit)
         val startFacts = flowSpace.obtainPossibleStartFacts(method)
@@ -1140,12 +1202,13 @@ class IfdsRunner(
             val doPrintZero = false
             if (edge.from.statement.toString() == "noop") {
                 if (doPrintZero || edge.to.fact != Zero) {
-                    logger.debug { "Propagating $edge in ${edge.method} via ${edge.reason}" }
+                    logger.trace { "Propagating edge=$edge in method=${edge.method} via reason=${edge.reason}" }
                 }
             }
 
             // Add edge to worklist:
             workList.send(edge)
+            isChannelEmpty = false
 
             // Send edge to analyzer/manager:
             for (event in analyzer.handleNewEdge(edge)) {
@@ -1158,9 +1221,14 @@ class IfdsRunner(
         return false
     }
 
-    private suspend fun tabulationAlgorithm(): Unit = coroutineScope {
+    private suspend fun tabulationAlgorithm() = coroutineScope {
         while (isActive) {
-            val edge = workList.tryReceive().getOrNull() ?: break
+            // val edge = workList.tryReceive().getOrNull() ?: break
+            val edge = workList.tryReceive().getOrElse {
+                isChannelEmpty = true
+                workList.receive()
+            }
+            isChannelEmpty = false
             tabulationAlgorithmStep(edge)
         }
     }
@@ -1210,13 +1278,14 @@ class IfdsRunner(
                                 }
 
                                 // Subscribe on summary edges:
-                                val event = SubscriptionForSummaryEdges2(callee) { edge ->
+                                val event = SubscriptionForSummaryEdges3(callee) { edge ->
                                     if (edge.from == calleeStartVertex) {
                                         handleSummaryEdge(edge, startVertex, current)
                                     } else {
                                         logger.debug { "Skipping unsuitable edge $edge" }
                                     }
                                 }
+                                // scope.launch {
                                 manager.handleEvent(event)
                             } else {
                                 // Save info about the call for summary edges that will be found later:
@@ -1283,6 +1352,15 @@ class IfdsRunner(
             }
         }
     }
+}
+
+fun runAnalysis2(
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver,
+    startMethods: List<JcMethod>,
+): List<Vulnerability> {
+    val manager = Manager(graph, unitResolver)
+    return manager.analyze(startMethods)
 }
 
 fun main() {
