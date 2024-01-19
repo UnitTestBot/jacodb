@@ -235,7 +235,7 @@ private fun loadWebAppBenchCp(
 private fun BenchCp.analyze() {
     val useSpecificClass = false
     val startMethods = if (useSpecificClass) {
-        val className = "org.owasp.benchmark.testcode.BenchmarkTest00008"
+        val className = "org.owasp.benchmark.testcode.BenchmarkTest00032"
         logger.info { "Analyzing '$className'" }
         val clazz = cp.findClass(className)
         clazz.publicAndProtectedMethods().toList()

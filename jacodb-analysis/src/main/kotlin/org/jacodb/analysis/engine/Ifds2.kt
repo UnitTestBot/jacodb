@@ -46,6 +46,7 @@ import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.AccessPath
+import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
@@ -94,6 +95,8 @@ interface Fact
 object Zero : Fact {
     override fun toString(): String = this.javaClass.simpleName
 }
+
+val ListOfZero = listOf(Zero)
 
 data class Tainted(
     val variable: AccessPath,
@@ -356,6 +359,15 @@ class TaintForwardFlowFunctions(
         val fromPath = from.toPathOrNull()
 
         if (fromPath != null) {
+            // Adhoc taint array:
+            if (fromPath.accesses.isNotEmpty() &&
+                fromPath.accesses.last() == ElementAccessor &&
+                fromPath.copy(accesses = fromPath.accesses.dropLast(1)) == fact.variable
+            ) {
+                val newTaint = fact.copy(variable = toPath)
+                return setOf(fact, newTaint)
+            }
+
             if (fromPath == fact.variable) {
                 // Both 'from' and 'to' are tainted now:
                 val newTaint = fact.copy(variable = toPath)
@@ -576,7 +588,7 @@ class TaintForwardFlowFunctions(
         if (fact == Zero) {
             // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
             //        and 'generates' is only applicable for calls.
-            return@FlowFunction listOf(Zero) // + generates(current)
+            return@FlowFunction ListOfZero // + generates(current)
         }
 
         if (fact !is Tainted) {
@@ -660,7 +672,7 @@ class TaintForwardFlowFunctions(
 
                 return@FlowFunction facts
             } else {
-                return@FlowFunction listOf(Zero)
+                return@FlowFunction ListOfZero
             }
         }
 
@@ -824,7 +836,7 @@ class TaintForwardFlowFunctions(
     ) = FlowFunction { fact ->
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == Zero) {
-            return@FlowFunction listOf(Zero)
+            return@FlowFunction ListOfZero
         }
 
         if (fact !is Tainted) {
