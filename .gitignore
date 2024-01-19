@@ -4,3 +4,6 @@ build/
 idea-community
 *.db
 *.sarif
+*.html
+*.jfr
+*.csv
