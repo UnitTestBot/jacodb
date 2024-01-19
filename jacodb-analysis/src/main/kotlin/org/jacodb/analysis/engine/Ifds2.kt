@@ -22,7 +22,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.getOrElse
@@ -985,8 +984,6 @@ class Manager(
         foundVulnerabilities
     }
 
-    private val subscriptionsScope = CoroutineScope(Dispatchers.Default + Job())
-
     suspend fun handleEvent(event: Event) {
         when (event) {
             is EdgeForOtherRunner -> {
@@ -1011,7 +1008,7 @@ class Manager(
                     .getFacts(event.method)
                     .map { it.edge }
                     .onEach(event.handler)
-                    .launchIn(subscriptionsScope)
+                    .launchIn(event.scope)
             }
 
             is NewSummaryEdge -> {
@@ -1027,23 +1024,24 @@ class Manager(
 
 sealed interface Event
 
-data class SubscriptionForSummaryEdges2(
+class SubscriptionForSummaryEdges2(
     val method: JcMethod,
     val collector: FlowCollector<Edge>,
 ) : Event
 
-data class SubscriptionForSummaryEdges3(
+class SubscriptionForSummaryEdges3(
     val method: JcMethod,
+    val scope: CoroutineScope,
     val handler: suspend (Edge) -> Unit,
 ) : Event
 
-data class NewSummaryEdge(
+class NewSummaryEdge(
     val edge: Edge,
 ) : Event
 
 // TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
 //       the first instruction of the analyzed method together with a fact.
-data class EdgeForOtherRunner(
+class EdgeForOtherRunner(
     val edge: Edge,
 ) : Event {
     init {
@@ -1051,7 +1049,7 @@ data class EdgeForOtherRunner(
     }
 }
 
-data class NewVulnerability(
+class NewVulnerability(
     val vulnerability: Vulnerability,
 ) : Event
 
@@ -1229,14 +1227,14 @@ class IfdsRunner(
                 workList.receive()
             }
             isChannelEmpty = false
-            tabulationAlgorithmStep(edge)
+            tabulationAlgorithmStep(edge, this)
         }
     }
 
     private val JcMethod.isExtern: Boolean
         get() = unitResolver.resolve(this) != unit
 
-    private suspend fun tabulationAlgorithmStep(currentEdge: Edge) {
+    private suspend fun tabulationAlgorithmStep(currentEdge: Edge, scope: CoroutineScope) {
         val (startVertex, currentVertex) = currentEdge
         val (current, currentFact) = currentVertex
 
@@ -1278,14 +1276,13 @@ class IfdsRunner(
                                 }
 
                                 // Subscribe on summary edges:
-                                val event = SubscriptionForSummaryEdges3(callee) { edge ->
+                                val event = SubscriptionForSummaryEdges3(callee, scope) { edge ->
                                     if (edge.from == calleeStartVertex) {
                                         handleSummaryEdge(edge, startVertex, current)
                                     } else {
                                         logger.debug { "Skipping unsuitable edge $edge" }
                                     }
                                 }
-                                // scope.launch {
                                 manager.handleEvent(event)
                             } else {
                                 // Save info about the call for summary edges that will be found later:
