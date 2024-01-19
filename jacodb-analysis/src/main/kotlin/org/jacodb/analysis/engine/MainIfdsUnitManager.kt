@@ -79,6 +79,7 @@ class MainIfdsUnitManager(
 
     private fun addStart(method: JcMethod) {
         val unit = unitResolver.resolve(method)
+        // TODO: remove this unnecessary if-condition (superseded by '.add()' below):
         if (method in foundMethods[unit].orEmpty()) {
             return
         }

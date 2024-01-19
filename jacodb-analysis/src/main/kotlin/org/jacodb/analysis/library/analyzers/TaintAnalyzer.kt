@@ -334,7 +334,7 @@ private class TaintForwardFunctions(
 
         val method = startStatement.location.method
         val config = taintConfigurationFeature?.let { feature ->
-            // logger.debug { "Extracting config for $method" }
+            logger.trace { "Extracting config for $method" }
             feature.getConfigForMethod(method)
         }
         if (config != null) {
