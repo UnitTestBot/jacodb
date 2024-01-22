@@ -77,8 +77,10 @@ class BidiIfdsUnitRunnerFactory(
                 when (event) {
                     is EdgeForOtherRunnerQuery -> {
                         if (unitResolver.resolve(event.edge.method) == unit) {
+                            // Submit new edge directly to the backward runner:
                             backwardRunner.submitNewEdge(event.edge)
                         } else {
+                            // Submit new edge via the manager:
                             manager.handleEvent(event, this@BidiIfdsUnitRunner)
                         }
                     }
