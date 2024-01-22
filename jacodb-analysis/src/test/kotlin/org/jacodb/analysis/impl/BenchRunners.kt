@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:OptIn(ExperimentalTime::class)
+
 package org.jacodb.analysis.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -44,6 +46,9 @@ import kotlin.io.path.PathWalkOption
 import kotlin.io.path.div
 import kotlin.io.path.extension
 import kotlin.io.path.walk
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource.Monotonic.markNow
 
 private val logger = KotlinLogging.logger {}
 
@@ -67,8 +72,10 @@ object WebGoatBenchRunner {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val timeStart = markNow()
         val bench = loadWebGoatBench()
         bench.use { it.analyze() }
+        logger.info { "All done in %.1fs".format(timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)) }
     }
 }
 
@@ -129,8 +136,10 @@ object OwaspBenchRunner {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val timeStart = markNow()
         val bench = loadOwaspJavaBench()
         bench.use { it.analyze() }
+        logger.info { "All done in %.1fs".format(timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)) }
     }
 }
 
@@ -148,8 +157,10 @@ object ShopizerBenchRunner {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val timeStart = markNow()
         val bench = loadShopizerBench()
         bench.use { it.analyze() }
+        logger.info { "All done in %.1fs".format(timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)) }
     }
 }
 
