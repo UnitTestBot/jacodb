@@ -51,9 +51,10 @@ open class JcApplicationGraphImpl(
 
     override fun callers(method: JcMethod): Sequence<JcInst> {
         return usages.findUsages(method).flatMap {
-            it.flowGraph().instructions.filter { inst ->
-                inst.callExpr?.method?.method == method
-            }.asSequence()
+            it.flowGraph().instructions.asSequence().filter { inst ->
+                val callExpr = inst.callExpr ?: return@filter false
+                callExpr.method.method == method
+            }
         }
     }
 
