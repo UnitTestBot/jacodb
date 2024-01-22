@@ -149,17 +149,17 @@ class JcGraphImpl(
     }
 }
 
-fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
+fun JcGraph.filter(visitor: JcInstVisitor<Boolean>): JcGraph =
     JcGraphImpl(method, instructions.filter { it.accept(visitor) })
 
-fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
+fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>): JcGraph =
     JcGraphImpl(method, instructions.filterNot { it.accept(visitor) })
 
-fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
+fun JcGraph.map(visitor: JcInstVisitor<JcInst>): JcGraph =
     JcGraphImpl(method, instructions.map { it.accept(visitor) })
 
-fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
+fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>): JcGraph =
     JcGraphImpl(method, instructions.mapNotNull { it.accept(visitor) })
 
-fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
+fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>): JcGraph =
     JcGraphImpl(method, instructions.flatMap { it.accept(visitor) })
