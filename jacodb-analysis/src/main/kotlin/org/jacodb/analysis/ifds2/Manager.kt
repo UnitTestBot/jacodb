@@ -116,10 +116,10 @@ class Manager(
         val stopper = launch(Dispatchers.IO) {
             logger.info { "Stopper job started" }
             stopRendezvous.receive()
-            delay(100)
-            if (runnerForUnit.values.any { !it.workList.isEmpty }) {
-                logger.warn { "NOT all runners have empty work list" }
-            }
+            // delay(100)
+            // if (runnerForUnit.values.any { !it.workList.isEmpty }) {
+            //     logger.warn { "NOT all runners have empty work list" }
+            // }
             logger.info { "Stopping all runners..." }
             allJobs.forEach { it.cancel() }
             logger.info { "Stopper job finished" }
