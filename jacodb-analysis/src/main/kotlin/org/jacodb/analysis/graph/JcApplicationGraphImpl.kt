@@ -45,9 +45,8 @@ open class JcApplicationGraphImpl(
     }
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
-        return node.callExpr?.method?.method?.let {
-            sequenceOf(it)
-        } ?: emptySequence()
+        val callExpr = node.callExpr ?: return emptySequence()
+        return sequenceOf(callExpr.method.method)
     }
 
     override fun callers(method: JcMethod): Sequence<JcInst> {
