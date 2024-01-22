@@ -150,7 +150,7 @@ interface FlowFunctionsSpace {
 }
 
 @Suppress("PublicApiImplicitType")
-class TaintForwardFlowFunctions(
+class ForwardFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
 ) : FlowFunctionsSpace {
@@ -520,7 +520,7 @@ class TaintForwardFlowFunctions(
         }
 
         val config = taintConfigurationFeature?.let { feature ->
-            // logger.debug { "Extracting config for $callee" }
+            logger.trace { "Extracting config for $callee" }
             feature.getConfigForMethod(callee)
         }
 

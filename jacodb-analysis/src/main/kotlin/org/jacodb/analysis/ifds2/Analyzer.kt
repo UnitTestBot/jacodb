@@ -23,6 +23,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = KotlinLogging.logger {}
@@ -39,9 +40,12 @@ interface Analyzer {
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
 ) : Analyzer {
-    override val flowFunctions: FlowFunctionsSpace by lazy {
-        TaintForwardFlowFunctions(graph.classpath, graph)
+    override val flowFunctions: ForwardFlowFunctions by lazy {
+        ForwardFlowFunctions(graph.classpath, graph)
     }
+
+    private val taintConfigurationFeature: TaintConfigurationFeature?
+        get() = flowFunctions.taintConfigurationFeature
 
     private fun isExitPoint(statement: JcInst): Boolean {
         return statement in graph.exitPoints(statement.location.method)
@@ -61,11 +65,10 @@ class TaintAnalyzer(
             val callExpr = edge.to.statement.callExpr ?: return@run false
             val callee = callExpr.method.method
 
-            val config = (flowFunctions as TaintForwardFlowFunctions)
-                .taintConfigurationFeature?.let { feature ->
-                    // logger.debug { "Extracting config for $callee" }
-                    feature.getConfigForMethod(callee)
-                } ?: return@run false
+            val config = taintConfigurationFeature?.let { feature ->
+                logger.trace { "Extracting config for $callee" }
+                feature.getConfigForMethod(callee)
+            } ?: return@run false
 
             // TODO: not always we want to skip sinks on Zero facts.
             //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
