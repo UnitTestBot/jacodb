@@ -287,7 +287,7 @@ class NpePrecalcBackwardFunctions(
             return emptyList()
         }
 
-        val factPath = (fact as? TaintNode)?.variable
+        val factPath = fact.variable
         val default = if (dropFact) emptyList() else listOf(fact)
         val toPath = to.toPathOrNull() ?: return default
         val fromPath = from.toPathOrNull() ?: return default
