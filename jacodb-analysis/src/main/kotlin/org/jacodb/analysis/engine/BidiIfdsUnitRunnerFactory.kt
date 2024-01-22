@@ -18,6 +18,7 @@ package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import org.jacodb.analysis.graph.BackwardJcApplicationGraph
 import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -130,7 +131,7 @@ class BidiIfdsUnitRunnerFactory(
         }
 
         internal val backwardRunner: IfdsUnitRunner = backwardRunnerFactory
-            .newRunner(graph.reversed, backwardManager, unitResolver, unit, startMethods)
+            .newRunner(BackwardJcApplicationGraph(graph), backwardManager, unitResolver, unit, startMethods)
 
         internal val forwardRunner: IfdsUnitRunner = forwardRunnerFactory
             .newRunner(graph, forwardManager, unitResolver, unit, startMethods)
