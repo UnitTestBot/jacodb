@@ -16,36 +16,16 @@
 
 @file:Suppress("LiftReturnOrAssignment")
 
-package org.jacodb.analysis.engine
+package org.jacodb.analysis.ifds2
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.getOrElse
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.library.analyzers.NpeTaintNode
-import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
-import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
@@ -77,105 +57,17 @@ import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintEntryPointSource
-import org.jacodb.taint.configuration.TaintMark
-import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.This
-import java.io.File
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger {}
-
-interface Fact
-
-object Zero : Fact {
-    override fun toString(): String = this.javaClass.simpleName
-}
-
-val ListOfZero = listOf(Zero)
-
-data class Tainted(
-    val variable: AccessPath,
-    val mark: TaintMark,
-) : Fact {
-    constructor(fact: TaintNode) : this(fact.variable, TaintMark(fact.nodeType))
-}
-
-fun DomainFact.toFact(): Fact = when (this) {
-    ZEROFact -> Zero
-    is TaintNode -> Tainted(this)
-    else -> object : Fact {}
-}
-
-fun Fact.toDomainFact(): DomainFact = when (this) {
-    Zero -> ZEROFact
-
-    is Tainted -> {
-        when (mark.name) {
-            "NPE" -> NpeTaintNode(variable)
-            else -> TaintAnalysisNode(variable, nodeType = mark.name)
-        }
-    }
-
-    else -> object : DomainFact {}
-}
-
-data class Vertex(
-    val statement: JcInst,
-    val fact: Fact,
-) {
-    val method: JcMethod get() = statement.location.method
-
-    constructor(vertex: IfdsVertex) : this(vertex.statement, vertex.domainFact.toFact())
-}
-
-fun Vertex.toIfds(): IfdsVertex = IfdsVertex(statement, fact.toDomainFact())
-
-data class Edge(
-    val from: Vertex,
-    val to: Vertex,
-) {
-    init {
-        require(from.method == to.method)
-    }
-
-    var reason: Edge? = null
-
-    val method: JcMethod get() = from.method
-
-    constructor(edge: IfdsEdge) : this(Vertex(edge.from), Vertex(edge.to))
-}
-
-fun Edge.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())
-
-/**
- * Represents a path edge which starts in an entrypoint
- * and ends in an exit-point of a method.
- */
-data class SummaryEdge(
-    val edge: Edge,
-) : SummaryFact {
-    override val method: JcMethod get() = edge.method
-}
-
-data class Vulnerability(
-    val message: String,
-    val sink: Vertex,
-    val edge: Edge? = null,
-    val rule: TaintMethodSink? = null,
-) : SummaryFact {
-    override val method: JcMethod get() = sink.method
-}
 
 fun interface FlowFunction {
     fun compute(fact: Fact): Collection<Fact>
 }
 
-interface FlowFunctionsSpace2 {
+interface FlowFunctionsSpace {
     /**
      * Method for obtaining initial domain facts at the method entrypoint.
      * Commonly, it is only `listOf(Zero)`.
@@ -261,7 +153,7 @@ interface FlowFunctionsSpace2 {
 class TaintForwardFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
-) : FlowFunctionsSpace2 {
+) : FlowFunctionsSpace {
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         cp.features
@@ -588,7 +480,7 @@ class TaintForwardFlowFunctions(
         if (fact == Zero) {
             // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
             //        and 'generates' is only applicable for calls.
-            return@FlowFunction ListOfZero // + generates(current)
+            return@FlowFunction listOf<Zero>(Zero) // + generates(current)
         }
 
         if (fact !is Tainted) {
@@ -672,7 +564,7 @@ class TaintForwardFlowFunctions(
 
                 return@FlowFunction facts
             } else {
-                return@FlowFunction ListOfZero
+                return@FlowFunction listOf<Zero>(Zero)
             }
         }
 
@@ -836,7 +728,7 @@ class TaintForwardFlowFunctions(
     ) = FlowFunction { fact ->
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == Zero) {
-            return@FlowFunction ListOfZero
+            return@FlowFunction listOf<Zero>(Zero)
         }
 
         if (fact !is Tainted) {
@@ -875,503 +767,4 @@ class TaintForwardFlowFunctions(
             }
         }
     }
-}
-
-class Manager(
-    private val graph: JcApplicationGraph,
-    private val unitResolver: UnitResolver,
-) {
-
-    private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
-    private val runnerForUnit: MutableMap<UnitType, IfdsRunner> = mutableMapOf()
-    // private val aliveRunners: MutableMap<UnitType, IfdsRunner> = ConcurrentHashMap()
-
-    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
-
-    private fun newRunner(
-        unit: UnitType,
-        analyzer: Analyzer2,
-    ): IfdsRunner {
-        check(unit !in runnerForUnit) { "Runner for $unit already exists" }
-        val runner = IfdsRunner(graph, analyzer, this@Manager, unitResolver, unit)
-        runnerForUnit[unit] = runner
-        return runner
-    }
-
-    private fun addStart(method: JcMethod) {
-        logger.info { "Adding start method: $method" }
-        val unit = unitResolver.resolve(method)
-        methodsForUnit.getOrPut(unit) { mutableSetOf() }.add(method)
-        // TODO: val isNew = (...).add(); if (isNew) { deps.forEach { addStart(it) } }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    fun analyze(startMethods: List<JcMethod>): List<Vulnerability> = runBlocking(Dispatchers.Default) {
-        val timeStart = TimeSource.Monotonic.markNow()
-
-        // Add start methods:
-        for (method in startMethods) {
-            addStart(method)
-        }
-
-        // Determine all units:
-        val allUnits = methodsForUnit.keys.toList()
-        logger.info { "Starting analysis of ${methodsForUnit.values.sumOf { it.size }} methods in ${allUnits.size} units" }
-
-        // Spawn runner jobs:
-        val allJobs = allUnits.map { unit ->
-            // Initialize the analyzer:
-            val analyzer = TaintAnalyzer(graph)
-
-            // Create the runner:
-            val runner = newRunner(unit, analyzer)
-
-            // Start the runner:
-            launch(start = CoroutineStart.LAZY) {
-                val methods = methodsForUnit[unit]!!.toList()
-                runner.run(methods)
-            }
-        }
-
-        // Spawn progress job:
-        val progress = launch(Dispatchers.IO) {
-            logger.info { "Progress job started" }
-            while (isActive) {
-                delay(1.seconds)
-                logger.info { "Progress: total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
-                if (runnerForUnit.values.all { it.isChannelEmpty }) {
-                    delay(100)
-                    if (runnerForUnit.values.all { it.isChannelEmpty }) {
-                        logger.info { "All runners have empty channels, stopping them..." }
-                        allJobs.forEach { it.cancel() }
-                    }
-                }
-            }
-            logger.info { "Progress job finished" }
-        }
-
-        // Start all runner jobs:
-        val timeStartJobs = TimeSource.Monotonic.markNow()
-        allJobs.forEach { it.start() }
-
-        // Await all runners:
-        // withTimeoutOrNull(5.seconds) {
-        allJobs.joinAll()
-        // } ?: run {
-        //     allJobs.forEach { it.cancel() }
-        //     allJobs.joinAll()
-        // }
-        progress.cancelAndJoin()
-        logger.info {
-            "All ${allJobs.size} jobs completed in %.1f s".format(
-                timeStartJobs.elapsedNow().toDouble(DurationUnit.SECONDS)
-            )
-        }
-
-        // Extract found vulnerabilities (sinks):
-        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method ->
-            vulnerabilitiesStorage.getCurrentFacts(method)
-        }
-        logger.info { "Total found ${foundVulnerabilities.size} vulnerabilities" }
-        for (vulnerability in foundVulnerabilities) {
-            logger.info { "$vulnerability in ${vulnerability.method}" }
-        }
-        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
-
-        logger.debug { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
-
-        val statsFileName = "stats.csv"
-        logger.debug { "Writing stats in '$statsFileName'..." }
-        File(statsFileName).outputStream().bufferedWriter().use {
-            it.write("classname,cwe,method\n")
-            for (vulnerability in foundVulnerabilities) {
-                for (cwe in vulnerability.rule!!.cwe) {
-                    it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
-                }
-            }
-        }
-
-        logger.info { "Analysis done in %.1f s".format(timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)) }
-        foundVulnerabilities
-    }
-
-    suspend fun handleEvent(event: Event) {
-        when (event) {
-            is EdgeForOtherRunner -> {
-                val method = event.edge.method
-                val unit = unitResolver.resolve(method)
-                val otherRunner = runnerForUnit[unit] ?: run {
-                    // logger.debug { "Ignoring event=$event for non-existing runner for unit=$unit" }
-                    return
-                }
-                otherRunner.submitNewEdge(event.edge)
-            }
-
-            is SubscriptionForSummaryEdges2 -> {
-                summaryEdgesStorage
-                    .getFacts(event.method)
-                    .map { it.edge }
-                    .collect(event.collector)
-            }
-
-            is SubscriptionForSummaryEdges3 -> {
-                summaryEdgesStorage
-                    .getFacts(event.method)
-                    .map { it.edge }
-                    .onEach(event.handler)
-                    .launchIn(event.scope)
-            }
-
-            is NewSummaryEdge -> {
-                summaryEdgesStorage.add(SummaryEdge(event.edge))
-            }
-
-            is NewVulnerability -> {
-                vulnerabilitiesStorage.add(event.vulnerability)
-            }
-        }
-    }
-}
-
-sealed interface Event
-
-class SubscriptionForSummaryEdges2(
-    val method: JcMethod,
-    val collector: FlowCollector<Edge>,
-) : Event
-
-class SubscriptionForSummaryEdges3(
-    val method: JcMethod,
-    val scope: CoroutineScope,
-    val handler: suspend (Edge) -> Unit,
-) : Event
-
-class NewSummaryEdge(
-    val edge: Edge,
-) : Event
-
-// TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
-//       the first instruction of the analyzed method together with a fact.
-class EdgeForOtherRunner(
-    val edge: Edge,
-) : Event {
-    init {
-        check(edge.from == edge.to) { "Edge for another runner must be a loop" }
-    }
-}
-
-class NewVulnerability(
-    val vulnerability: Vulnerability,
-) : Event
-
-interface Analyzer2 {
-    val flowFunctions: FlowFunctionsSpace2
-
-    fun isSkipped(method: JcMethod): Boolean = false
-
-    fun handleNewEdge(edge: Edge): List<Event>
-    fun handleCrossUnitCall(caller: Vertex, callee: Vertex): List<Event>
-}
-
-class TaintAnalyzer(
-    private val graph: JcApplicationGraph,
-) : Analyzer2 {
-    override val flowFunctions: FlowFunctionsSpace2 by lazy {
-        TaintForwardFlowFunctions(graph.classpath, graph)
-    }
-
-    private fun isExitPoint(statement: JcInst): Boolean {
-        return statement in graph.exitPoints(statement.location.method)
-    }
-
-    private fun isSink(statement: JcInst, fact: Fact): Boolean {
-        // TODO
-        return false
-    }
-
-    override fun handleNewEdge(edge: Edge): List<Event> = buildList {
-        if (isExitPoint(edge.to.statement)) {
-            add(NewSummaryEdge(edge))
-        }
-
-        val configOk = run {
-            val callExpr = edge.to.statement.callExpr ?: return@run false
-            val callee = callExpr.method.method
-
-            val config = (flowFunctions as TaintForwardFlowFunctions)
-                .taintConfigurationFeature?.let { feature ->
-                    // logger.debug { "Extracting config for $callee" }
-                    feature.getConfigForMethod(callee)
-                } ?: return@run false
-
-            // TODO: not always we want to skip sinks on Zero facts.
-            //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
-            if (edge.to.fact !is Tainted) {
-                return@run false
-            }
-
-            // Determine whether 'edge.to' is a sink via config:
-            val conditionEvaluator = FactAwareConditionEvaluator(
-                edge.to.fact,
-                CallPositionToJcValueResolver(edge.to.statement),
-            )
-            var triggeredItem: TaintMethodSink? = null
-            for (item in config.filterIsInstance<TaintMethodSink>()) {
-                if (item.condition.accept(conditionEvaluator)) {
-                    triggeredItem = item
-                    break
-                }
-                // FIXME: unconditionally let it be the sink.
-                // triggeredItem = item
-                // break
-            }
-            if (triggeredItem != null) {
-                // logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
-                val message = "SINK" // TODO
-                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = triggeredItem)
-                // logger.info { "Found $vulnerability in ${vulnerability.method}" }
-                logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
-                add(NewVulnerability(vulnerability))
-                // verticesWithTraceGraphNeeded.add(edge.to)
-            }
-            true
-        }
-
-        if (!configOk) {
-            // "config"-less behavior:
-            if (isSink(edge.to.statement, edge.to.fact)) {
-                // logger.info { "Found sink at ${edge.to} in ${edge.method}" }
-                val message = "SINK" // TODO
-                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge)
-                logger.info { "Found $vulnerability in ${vulnerability.method}" }
-                add(NewVulnerability(vulnerability))
-                // verticesWithTraceGraphNeeded.add(edge.to)
-            }
-        }
-    }
-
-    override fun handleCrossUnitCall(caller: Vertex, callee: Vertex): List<Event> = buildList {
-        add(EdgeForOtherRunner(Edge(callee, callee)))
-    }
-}
-
-class IfdsRunner(
-    internal val graph: JcApplicationGraph,
-    internal val analyzer: Analyzer2,
-    internal val manager: Manager,
-    internal val unitResolver: UnitResolver,
-    internal val unit: UnitType,
-) {
-    internal val flowSpace: FlowFunctionsSpace2 = analyzer.flowFunctions
-    internal val workList: Channel<Edge> = Channel(Channel.UNLIMITED)
-    internal val pathEdges: MutableSet<Edge> = mutableSetOf() // TODO: replace with concurrent set
-    internal val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
-    internal val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
-
-    @Volatile
-    internal var isChannelEmpty: Boolean = false
-
-    suspend fun run(startMethods: List<JcMethod>) {
-        for (method in startMethods) {
-            addStart(method)
-        }
-
-        tabulationAlgorithm()
-    }
-
-    // TODO: should 'addStart' be public?
-    // TODO: should 'addStart' replace 'submitNewEdge'?
-    // TODO: inline
-    private suspend fun addStart(method: JcMethod) {
-        require(unitResolver.resolve(method) == unit)
-        val startFacts = flowSpace.obtainPossibleStartFacts(method)
-        for (startFact in startFacts) {
-            for (start in graph.entryPoints(method)) {
-                val vertex = Vertex(start, startFact)
-                val edge = Edge(vertex, vertex) // loop
-                propagate(edge)
-            }
-        }
-    }
-
-    suspend fun submitNewEdge(edge: Edge) {
-        propagate(edge)
-    }
-
-    private suspend fun propagate(edge: Edge, reason: Edge? = null): Boolean {
-        require(unitResolver.resolve(edge.method) == unit) {
-            "Propagated edge must be in the same unit"
-        }
-
-        if (reason != null) {
-            edge.reason = reason
-        }
-
-        if (pathEdges.add(edge)) {
-            val doPrintZero = false
-            if (edge.from.statement.toString() == "noop") {
-                if (doPrintZero || edge.to.fact != Zero) {
-                    logger.trace { "Propagating edge=$edge in method=${edge.method} via reason=${edge.reason}" }
-                }
-            }
-
-            // Add edge to worklist:
-            workList.send(edge)
-            isChannelEmpty = false
-
-            // Send edge to analyzer/manager:
-            for (event in analyzer.handleNewEdge(edge)) {
-                manager.handleEvent(event)
-            }
-
-            return true
-        }
-
-        return false
-    }
-
-    private suspend fun tabulationAlgorithm() = coroutineScope {
-        while (isActive) {
-            // val edge = workList.tryReceive().getOrNull() ?: break
-            val edge = workList.tryReceive().getOrElse {
-                isChannelEmpty = true
-                workList.receive()
-            }
-            isChannelEmpty = false
-            tabulationAlgorithmStep(edge, this)
-        }
-    }
-
-    private val JcMethod.isExtern: Boolean
-        get() = unitResolver.resolve(this) != unit
-
-    private suspend fun tabulationAlgorithmStep(currentEdge: Edge, scope: CoroutineScope) {
-        val (startVertex, currentVertex) = currentEdge
-        val (current, currentFact) = currentVertex
-
-        val currentCallees = graph.callees(current).toList()
-        // val currentIsCall = currentCallees.isNotEmpty()
-        val currentIsCall = current.callExpr != null
-        val currentIsExit = current in graph.exitPoints(current.location.method)
-
-        if (currentIsCall) {
-            // Propagate through the call-to-return-site edge:
-            for (returnSite in graph.successors(current)) {
-                val factsAtReturnSite = flowSpace
-                    .obtainCallToReturnSiteFlowFunction(current, returnSite)
-                    .compute(currentFact)
-                for (returnSiteFact in factsAtReturnSite) {
-                    val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                    val newEdge = Edge(startVertex, returnSiteVertex)
-                    propagate(newEdge, reason = currentEdge)
-                }
-            }
-
-            // Propagate through the call:
-            for (callee in currentCallees) {
-                // TODO: check whether we need to analyze the callee (or it was skipped due to MethodSource)
-                if (analyzer.isSkipped(callee)) {
-                    logger.info { "Skipping method $callee" }
-                } else {
-                    val factsAtCalleeStart = flowSpace
-                        .obtainCallToStartFlowFunction(current, callee)
-                        .compute(currentFact)
-                    for (calleeStart in graph.entryPoints(callee)) {
-                        for (calleeStartFact in factsAtCalleeStart) {
-                            val calleeStartVertex = Vertex(calleeStart, calleeStartFact)
-
-                            if (callee.isExtern) {
-                                // Initialize analysis of callee:
-                                for (event in analyzer.handleCrossUnitCall(currentVertex, calleeStartVertex)) {
-                                    manager.handleEvent(event)
-                                }
-
-                                // Subscribe on summary edges:
-                                val event = SubscriptionForSummaryEdges3(callee, scope) { edge ->
-                                    if (edge.from == calleeStartVertex) {
-                                        handleSummaryEdge(edge, startVertex, current)
-                                    } else {
-                                        logger.debug { "Skipping unsuitable edge $edge" }
-                                    }
-                                }
-                                manager.handleEvent(event)
-                            } else {
-                                // Save info about the call for summary edges that will be found later:
-                                callSitesOf.getOrPut(calleeStartVertex) { mutableSetOf() }.add(currentEdge)
-
-                                // Initialize analysis of callee:
-                                run {
-                                    val newEdge = Edge(calleeStartVertex, calleeStartVertex) // loop
-                                    propagate(newEdge, reason = currentEdge)
-                                }
-
-                                // Handle already-found summary edges:
-                                for (exitVertex in summaryEdges[calleeStartVertex].orEmpty()) {
-                                    val edge = Edge(calleeStartVertex, exitVertex)
-                                    handleSummaryEdge(edge, startVertex, current)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            if (currentIsExit) {
-                // Propagate through the summary edge:
-                for (callerPathEdge in callSitesOf[startVertex].orEmpty()) {
-                    val callerStartVertex = callerPathEdge.from
-                    val caller = callerPathEdge.to.statement
-                    handleSummaryEdge(currentEdge, callerStartVertex, caller)
-                }
-
-                // Add new summary edge:
-                summaryEdges.getOrPut(startVertex) { mutableSetOf() }.add(currentVertex)
-            }
-
-            // Simple (sequential) propagation to the next instruction:
-            for (next in graph.successors(current)) {
-                val factsAtNext = flowSpace
-                    .obtainSequentFlowFunction(current/*, next*/)
-                    .compute(currentFact)
-                for (nextFact in factsAtNext) {
-                    val nextVertex = Vertex(next, nextFact)
-                    val newEdge = Edge(startVertex, nextVertex)
-                    propagate(newEdge, reason = currentEdge)
-                }
-            }
-        }
-    }
-
-    private suspend fun handleSummaryEdge(
-        edge: Edge,
-        startVertex: Vertex,
-        caller: JcInst,
-    ) {
-        for (returnSite in graph.successors(caller)) {
-            // val calleeStartVertex = edge.from
-            val (exit, exitFact) = edge.to
-            val finalFacts = flowSpace
-                .obtainExitToReturnSiteFlowFunction(caller, returnSite, exit)
-                .compute(exitFact)
-            for (returnSiteFact in finalFacts) {
-                val returnSiteVertex = Vertex(returnSite, returnSiteFact)
-                val newEdge = Edge(startVertex, returnSiteVertex)
-                propagate(newEdge, reason = edge)
-            }
-        }
-    }
-}
-
-fun runAnalysis2(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver,
-    startMethods: List<JcMethod>,
-): List<Vulnerability> {
-    val manager = Manager(graph, unitResolver)
-    return manager.analyze(startMethods)
-}
-
-fun main() {
-    //
 }

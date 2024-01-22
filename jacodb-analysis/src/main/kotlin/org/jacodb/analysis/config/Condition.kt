@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.engine.Tainted
+import org.jacodb.analysis.ifds2.Tainted
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.api.JcClassType

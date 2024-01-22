@@ -28,10 +28,10 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.NewSummaryFact
-import org.jacodb.analysis.engine.Tainted
+import org.jacodb.analysis.ifds2.Tainted
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.engine.toDomainFact
+import org.jacodb.analysis.ifds2.toDomainFact
 import org.jacodb.analysis.logger
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith

@@ -23,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.PackageUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.runAnalysis2
+import org.jacodb.analysis.ifds2.runAnalysis2
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface

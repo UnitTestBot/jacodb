@@ -17,7 +17,7 @@
 package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.Tainted
+import org.jacodb.analysis.ifds2.Tainted
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
