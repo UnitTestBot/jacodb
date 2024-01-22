@@ -480,7 +480,7 @@ class ForwardFlowFunctions(
         if (fact == Zero) {
             // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
             //        and 'generates' is only applicable for calls.
-            return@FlowFunction listOf<Zero>(Zero) // + generates(current)
+            return@FlowFunction listOf(Zero) // + generates(current)
         }
 
         if (fact !is Tainted) {
@@ -564,7 +564,7 @@ class ForwardFlowFunctions(
 
                 return@FlowFunction facts
             } else {
-                return@FlowFunction listOf<Zero>(Zero)
+                return@FlowFunction listOf(Zero)
             }
         }
 
@@ -728,7 +728,7 @@ class ForwardFlowFunctions(
     ) = FlowFunction { fact ->
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == Zero) {
-            return@FlowFunction listOf<Zero>(Zero)
+            return@FlowFunction listOf(Zero)
         }
 
         if (fact !is Tainted) {
