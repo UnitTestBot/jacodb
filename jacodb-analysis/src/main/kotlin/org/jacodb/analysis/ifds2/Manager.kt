@@ -20,6 +20,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -28,6 +29,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
@@ -48,10 +50,12 @@ class Manager(
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
     private val runnerForUnit: MutableMap<UnitType, Runner> = mutableMapOf()
-    // private val aliveRunners: MutableMap<UnitType, IfdsRunner> = ConcurrentHashMap()
+    private val queueIsEmpty: MutableMap<UnitType, Boolean> = mutableMapOf()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
     private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
+
+    private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
     private fun newRunner(
         unit: UnitType,
@@ -104,15 +108,17 @@ class Manager(
             while (isActive) {
                 delay(1.seconds)
                 logger.info { "Progress: total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
-                if (runnerForUnit.values.all { it.isChannelEmpty }) {
-                    delay(100)
-                    if (runnerForUnit.values.all { it.isChannelEmpty }) {
-                        logger.info { "All runners have empty channels, stopping them..." }
-                        allJobs.forEach { it.cancel() }
-                    }
-                }
             }
             logger.info { "Progress job finished" }
+        }
+
+        // Spawn stopper job:
+        val stopper = launch(Dispatchers.IO) {
+            logger.info { "Stopped job started" }
+            stopRendezvous.receive()
+            logger.info { "Stopping all runners..." }
+            allJobs.forEach { it.cancel() }
+            logger.info { "Stopped job finished" }
         }
 
         // Start all runner jobs:
@@ -127,6 +133,7 @@ class Manager(
         //     allJobs.joinAll()
         // }
         progress.cancelAndJoin()
+        stopper.cancelAndJoin()
         logger.info {
             "All ${allJobs.size} jobs completed in %.1f s".format(
                 timeStartJobs.elapsedNow().toDouble(DurationUnit.SECONDS)
@@ -193,6 +200,21 @@ class Manager(
 
             is NewVulnerability -> {
                 vulnerabilitiesStorage.add(event.vulnerability)
+            }
+
+            is QueueEmptinessChanged -> {
+                // val oldIsEmpty = queueIsEmpty[event.runner.unit]
+                // if (oldIsEmpty != null) {
+                //     check(event.isEmpty == !oldIsEmpty)
+                // }
+                queueIsEmpty[event.runner.unit] = event.isEmpty
+                if (event.isEmpty) {
+                    yield()
+                    // if (runnerForUnit.values.all { it.workList.isEmpty }) {
+                    if (runnerForUnit.keys.all { queueIsEmpty[it] == true }) {
+                        stopRendezvous.send(Unit)
+                    }
+                }
             }
         }
     }

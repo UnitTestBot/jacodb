@@ -22,24 +22,24 @@ import org.jacodb.api.JcMethod
 
 sealed interface Event
 
-class SubscriptionForSummaryEdges2(
+data class SubscriptionForSummaryEdges2(
     val method: JcMethod,
     val collector: FlowCollector<Edge>,
 ) : Event
 
-class SubscriptionForSummaryEdges3(
+data class SubscriptionForSummaryEdges3(
     val method: JcMethod,
     val scope: CoroutineScope,
     val handler: suspend (Edge) -> Unit,
 ) : Event
 
-class NewSummaryEdge(
+data class NewSummaryEdge(
     val edge: Edge,
 ) : Event
 
 // TODO: replace with 'BeginAnalysis(val statement: Vertex)', where 'statement' is
 //       the first instruction of the analyzed method together with a fact.
-class EdgeForOtherRunner(
+data class EdgeForOtherRunner(
     val edge: Edge,
 ) : Event {
     init {
@@ -47,6 +47,11 @@ class EdgeForOtherRunner(
     }
 }
 
-class NewVulnerability(
+data class NewVulnerability(
     val vulnerability: Vulnerability,
+) : Event
+
+data class QueueEmptinessChanged(
+    val runner: Runner,
+    val isEmpty: Boolean,
 ) : Event

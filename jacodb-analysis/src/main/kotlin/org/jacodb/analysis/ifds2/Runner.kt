@@ -45,9 +45,6 @@ class Runner(
     internal val summaryEdges: MutableMap<Vertex, MutableSet<Vertex>> = mutableMapOf()
     internal val callSitesOf: MutableMap<Vertex, MutableSet<Edge>> = mutableMapOf()
 
-    @Volatile
-    internal var isChannelEmpty: Boolean = false
-
     suspend fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
             addStart(method)
@@ -80,11 +77,12 @@ class Runner(
             "Propagated edge must be in the same unit"
         }
 
-        if (reason != null) {
-            edge.reason = reason
-        }
-
+        // Handle only NEW edges:
         if (pathEdges.add(edge)) {
+            if (reason != null) {
+                edge.reason = reason
+            }
+
             val doPrintZero = false
             if (edge.from.statement.toString() == "noop") {
                 if (doPrintZero || edge.to.fact != Zero) {
@@ -94,7 +92,6 @@ class Runner(
 
             // Add edge to worklist:
             workList.send(edge)
-            isChannelEmpty = false
 
             // Send edge to analyzer/manager:
             for (event in analyzer.handleNewEdge(edge)) {
@@ -109,13 +106,13 @@ class Runner(
 
     private suspend fun tabulationAlgorithm() = coroutineScope {
         while (isActive) {
-            // val edge = workList.tryReceive().getOrNull() ?: break
             val edge = workList.tryReceive().getOrElse {
-                isChannelEmpty = true
-                workList.receive()
+                manager.handleEvent(QueueEmptinessChanged(this@Runner, true))
+                val edge = workList.receive()
+                manager.handleEvent(QueueEmptinessChanged(this@Runner, false))
+                edge
             }
-            isChannelEmpty = false
-            tabulationAlgorithmStep(edge, this)
+            tabulationAlgorithmStep(edge, this@coroutineScope)
         }
     }
 
