@@ -20,10 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
@@ -141,13 +138,3 @@ internal class SimplifiedJcApplicationGraph(
     companion object
 }
 
-data class JcNoopInst(override val location: JcInstLocation) : JcInst {
-    override val operands: List<JcExpr>
-        get() = emptyList()
-
-    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-        return visitor.visitExternalJcInst(this)
-    }
-
-    override fun toString(): String = "noop"
-}
