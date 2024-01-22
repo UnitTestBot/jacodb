@@ -62,9 +62,7 @@ abstract class AbstractIfdsUnitRunner(
     protected abstract suspend fun run()
 
     private var _job: Job? = null
-
-    final override val job: Job? by ::_job
-    // TODO: final override val job: Job? get() = _job
+    final override val job: Job? get() = _job
 
     final override fun launchIn(scope: CoroutineScope): Job = scope.launch(start = CoroutineStart.LAZY) {
         run()
