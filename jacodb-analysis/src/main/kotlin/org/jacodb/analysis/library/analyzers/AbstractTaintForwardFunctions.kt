@@ -153,7 +153,7 @@ abstract class AbstractTaintForwardFunctions(
         }
 
         val config = taintConfigurationFeature?.let { feature ->
-            // logger.debug { "Extracting config for $callee" }
+            logger.trace { "Extracting config for $callee" }
             feature.getConfigForMethod(callee)
         }
 

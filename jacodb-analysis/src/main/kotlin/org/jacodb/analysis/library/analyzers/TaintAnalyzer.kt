@@ -148,7 +148,7 @@ abstract class TaintAnalyzer(
 
             val config = (flowFunctions as TaintForwardFunctions)
                 .taintConfigurationFeature?.let { feature ->
-                    // logger.debug { "Extracting config for $callee" }
+                    logger.trace { "Extracting config for $callee" }
                     feature.getConfigForMethod(callee)
                 } ?: return@run false
 
