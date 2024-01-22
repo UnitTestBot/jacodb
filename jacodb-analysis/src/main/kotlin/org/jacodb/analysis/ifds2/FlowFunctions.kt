@@ -36,6 +36,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
@@ -676,6 +677,7 @@ class ForwardFlowFunctions(
         }
 
         if (callStatement is JcAssignInst) {
+            check(callStatement.rhv is JcCallExpr)
             // Possibly tainted lhv:
             if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
                 return@FlowFunction emptyList() // Overridden by rhv
