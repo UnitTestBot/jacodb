@@ -26,11 +26,14 @@ import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.library.analyzers.getFormalParamsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
+import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
+import org.jacodb.analysis.paths.isDereferencedAt
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -38,14 +41,20 @@ import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcDynamicCallExpr
+import org.jacodb.api.cfg.JcEqExpr
 import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
+import org.jacodb.api.cfg.JcNeqExpr
+import org.jacodb.api.cfg.JcNewArrayExpr
+import org.jacodb.api.cfg.JcNullConstant
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.ext.isNullable
 import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
@@ -58,6 +67,7 @@ import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintEntryPointSource
+import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.This
@@ -88,6 +98,7 @@ interface FlowFunctionsSpace {
      */
     fun obtainSequentFlowFunction(
         current: JcInst,
+        next: JcInst,
     ): FlowFunction
 
     /**
@@ -166,6 +177,14 @@ class ForwardFlowFunctions(
     override fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact> = buildList {
         // Zero (reachability) fact always present at entrypoint:
         add(Zero)
+
+        // // Possibly null arguments:
+        // for (p in method.parameters.filter { it.isNullable != false }) {
+        //     val t = cp.findTypeOrNull(p.type)!!
+        //     val arg = JcArgument.of(p.index, p.name, t)
+        //     val path = AccessPath.from(arg)
+        //     add(Tainted(path, TaintMark.NULLNESS))
+        // }
 
         // Extract initial facts from the config:
         val config = taintConfigurationFeature?.let { feature ->
@@ -251,6 +270,18 @@ class ForwardFlowFunctions(
         val toPath = to.toPath()
         val fromPath = from.toPathOrNull()
 
+        // if (fact.mark == TaintMark.NULLNESS) {
+        //     // if (from is JcNewExpr ||
+        //     //     from is JcNewArrayExpr ||
+        //     //     from is JcConstant ||
+        //     //     (from is JcCallExpr && from.method.method.isNullable != true)
+        //     // ) {
+        //     if (fact.variable.startsWith(toPath)) {
+        //         // NULLNESS is overridden:
+        //         return emptySet()
+        //     }
+        // }
+
         if (fromPath != null) {
             // Adhoc taint array:
             if (fromPath.accesses.isNotEmpty() &&
@@ -276,12 +307,18 @@ class ForwardFlowFunctions(
             }
         }
 
-        if (toPath == fact.variable) {
-            // 'to' was tainted, but it is now overridden by 'from':
-            return emptySet()
-        } else {
-            // Neither 'from' nor 'to' are tainted, simply pass-through:
-            return setOf(fact)
+        return buildSet {
+            if (from is JcNullConstant) {
+                add(Tainted(toPath, TaintMark.NULLNESS))
+            }
+
+            if (fact.variable.startsWith(toPath)) {
+                // 'to' was (sub-)tainted, but it is now overridden by 'from':
+                return@buildSet
+            } else {
+                // Neither 'from' nor 'to' are tainted:
+                add(fact)
+            }
         }
     }
 
@@ -289,19 +326,23 @@ class ForwardFlowFunctions(
         fact: Tainted,
         from: JcValue,
         to: JcValue,
-    ): Collection<Fact> {
+    ): Collection<Fact> = buildSet {
         val fromPath = from.toPath()
         val toPath = to.toPath()
+
+        if (from is JcNullConstant) {
+            add(Tainted(toPath, TaintMark.NULLNESS))
+        }
 
         if (fromPath == fact.variable) {
             // 'to' is tainted now:
             val newTaint = fact.copy(variable = toPath)
-            return setOf(newTaint)
+            add(newTaint)
         } else {
-            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val tail = (fact.variable - fromPath) ?: return@buildSet
             val newPath = toPath / tail
             val newTaint = fact.copy(variable = newPath)
-            return setOf(newTaint)
+            add(newTaint)
         }
     }
 
@@ -309,20 +350,20 @@ class ForwardFlowFunctions(
         fact: Tainted,
         from: JcValue, // instance
         to: JcThis, // this
-    ): Collection<Fact> {
+    ): Collection<Fact> = buildSet {
         val fromPath = from.toPath()
         val toPath = to.toPath()
 
         if (fromPath == fact.variable) {
             // 'to' is tainted now:
             val newTaint = fact.copy(variable = toPath)
-            return setOf(newTaint)
+            add(newTaint)
         } else {
             // TODO: check
-            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val tail = (fact.variable - fromPath) ?: return@buildSet
             val newPath = toPath / tail
             val newTaint = fact.copy(variable = newPath)
-            return setOf(newTaint)
+            add(newTaint)
         }
     }
 
@@ -330,20 +371,20 @@ class ForwardFlowFunctions(
         fact: Tainted,
         from: JcThis, // this
         to: JcValue, // instance
-    ): Collection<Fact> {
+    ): Collection<Fact> = buildSet {
         val fromPath = from.toPath()
         val toPath = to.toPath()
 
         if (fromPath == fact.variable) {
             // 'to' is tainted now:
             val newTaint = fact.copy(variable = toPath)
-            return setOf(newTaint)
+            add(newTaint)
         } else {
             // TODO: check
-            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val tail = (fact.variable - fromPath) ?: return@buildSet
             val newPath = toPath / tail
             val newTaint = fact.copy(variable = newPath)
-            return setOf(newTaint)
+            add(newTaint)
         }
     }
 
@@ -351,20 +392,24 @@ class ForwardFlowFunctions(
         fact: Tainted,
         from: JcValue, // actual
         to: JcArgument, // formal
-    ): Collection<Fact> {
+    ): Collection<Fact> = buildSet {
         val fromPath = from.toPath()
         val toPath = to.toPath()
+
+        if (from is JcNullConstant) {
+            add(Tainted(toPath, TaintMark.NULLNESS))
+        }
 
         if (fromPath == fact.variable) {
             // 'to' is tainted now:
             val newTaint = fact.copy(variable = toPath)
-            return setOf(newTaint)
+            add(newTaint)
         } else {
             // TODO: check
-            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val tail = (fact.variable - fromPath) ?: return@buildSet
             val newPath = toPath / tail
             val newTaint = fact.copy(variable = newPath)
-            return setOf(newTaint)
+            add(newTaint)
         }
     }
 
@@ -372,20 +417,20 @@ class ForwardFlowFunctions(
         fact: Tainted,
         from: JcArgument, // formal
         to: JcValue, // actual
-    ): Collection<Fact> {
+    ): Collection<Fact> = buildSet {
         val fromPath = from.toPath()
         val toPath = to.toPath()
 
         if (fromPath == fact.variable) {
             // 'to' is tainted now:
             val newTaint = fact.copy(variable = toPath)
-            return setOf(newTaint)
+            add(newTaint)
         } else {
             // TODO: check
-            val tail = (fact.variable - fromPath) ?: return emptySet()
+            val tail = (fact.variable - fromPath) ?: return@buildSet
             val newPath = toPath / tail
             val newTaint = fact.copy(variable = newPath)
-            return setOf(newTaint)
+            add(newTaint)
         }
     }
 
@@ -475,13 +520,90 @@ class ForwardFlowFunctions(
         return listOf(fact)
     }
 
+    // private fun generates(inst: JcInst): Collection<Fact> = buildList {
+    //     if (inst is JcAssignInst) {
+    //         val toPath = inst.lhv.toPath()
+    //         val from = inst.rhv
+    //         if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
+    //             add(Tainted(toPath, TaintMark.NULLNESS))
+    //         } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
+    //             val accessors = List((from.type as JcArrayType).dimensions) { ElementAccessor(null) }
+    //             val path = toPath / accessors
+    //             add(Tainted(path, TaintMark.NULLNESS))
+    //         }
+    //     }
+    // }
+
+    private val JcIfInst.pathComparedWithNull: AccessPath?
+        get() {
+            val expr = condition
+            return if (expr.rhv is JcNullConstant) {
+                expr.lhv.toPathOrNull()
+            } else if (expr.lhv is JcNullConstant) {
+                expr.rhv.toPathOrNull()
+            } else {
+                null
+            }
+        }
+
     override fun obtainSequentFlowFunction(
         current: JcInst,
+        next: JcInst,
     ) = FlowFunction { fact ->
+        if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
+            if (fact.variable.isDereferencedAt(current)) {
+                return@FlowFunction emptyList()
+            }
+        }
+
+        if (current is JcIfInst) {
+            val nextIsTrueBranch = next.location.index == current.trueBranch.index
+            val pathComparedWithNull = current.pathComparedWithNull
+            if (fact == Zero) {
+                if (pathComparedWithNull != null) {
+                    if ((current.condition is JcEqExpr && nextIsTrueBranch) ||
+                        (current.condition is JcNeqExpr && !nextIsTrueBranch)
+                    ) {
+                        // This is a hack: instructions like `return null` in branch of next will be considered only if
+                        //  the fact holds (otherwise we could not get there)
+                        // Note the absense of 'Zero' here!
+                        return@FlowFunction listOf(Tainted(pathComparedWithNull, TaintMark.NULLNESS))
+                    }
+                }
+            } else if (fact is Tainted) {
+                if (fact.mark == TaintMark.NULLNESS) {
+                    val expr = current.condition
+                    if (pathComparedWithNull != fact.variable) {
+                        return@FlowFunction listOf(fact)
+                    }
+                    if ((expr is JcEqExpr && nextIsTrueBranch) || (expr is JcNeqExpr && !nextIsTrueBranch)) {
+                        // comparedPath is null in this branch
+                        return@FlowFunction listOf(Zero)
+                    } else {
+                        return@FlowFunction emptyList()
+                    }
+                }
+            }
+        }
+
         if (fact == Zero) {
-            // FIXME: calling 'generates' here is not correct, since sequent flow function are NOT for calls,
-            //        and 'generates' is only applicable for calls.
-            return@FlowFunction listOf(Zero) // + generates(current)
+            // return@FlowFunction listOf(Zero) // + generates(current)
+            return@FlowFunction buildSet {
+                add(Zero)
+
+                if (current is JcAssignInst) {
+                    val toPath = current.lhv.toPath()
+                    val from = current.rhv
+                    if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
+                        add(Tainted(toPath, TaintMark.NULLNESS))
+                    } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
+                        val size = (from.type as JcArrayType).dimensions
+                        val accessors = List(size) { ElementAccessor }
+                        val path = toPath / accessors
+                        add(Tainted(path, TaintMark.NULLNESS))
+                    }
+                }
+            }
         }
 
         if (fact !is Tainted) {
@@ -539,33 +661,41 @@ class ForwardFlowFunctions(
         //  since they are going to be "handled by the summary edge".
 
         if (fact == Zero) {
-            if (config != null) {
-                val facts: MutableSet<Fact> = mutableSetOf()
+            return@FlowFunction buildSet {
+                add(Zero)
 
-                // Add Zero fact:
-                facts += Zero
+                if (callStatement is JcAssignInst) {
+                    val toPath = callStatement.lhv.toPath()
+                    val from = callStatement.rhv
+                    if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
+                        add(Tainted(toPath, TaintMark.NULLNESS))
+                    } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
+                        val size = (from.type as JcArrayType).dimensions
+                        val accessors = List(size) { ElementAccessor }
+                        val path = toPath / accessors
+                        add(Tainted(path, TaintMark.NULLNESS))
+                    }
+                }
 
-                val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
-                val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                if (config != null) {
+                    val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+                    val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
 
-                // Handle MethodSource config items:
-                for (item in config.filterIsInstance<TaintMethodSource>()) {
-                    if (item.condition.accept(conditionEvaluator)) {
-                        for (action in item.actionsAfter) {
-                            when (action) {
-                                is AssignMark -> {
-                                    facts += actionEvaluator.evaluate(action)
+                    // Handle MethodSource config items:
+                    for (item in config.filterIsInstance<TaintMethodSource>()) {
+                        if (item.condition.accept(conditionEvaluator)) {
+                            for (action in item.actionsAfter) {
+                                when (action) {
+                                    is AssignMark -> {
+                                        add(actionEvaluator.evaluate(action))
+                                    }
+
+                                    else -> error("$action is not supported for $item")
                                 }
-
-                                else -> error("$action is not supported for $item")
                             }
                         }
                     }
                 }
-
-                return@FlowFunction facts
-            } else {
-                return@FlowFunction listOf(Zero)
             }
         }
 
@@ -730,7 +860,19 @@ class ForwardFlowFunctions(
     ) = FlowFunction { fact ->
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == Zero) {
-            return@FlowFunction listOf(Zero)
+            // return@FlowFunction listOf(Zero)
+            return@FlowFunction buildSet {
+                add(Zero)
+                if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
+                    // Note: returnValue can be null here in some weird cases, e.g. in lambda.
+                    exitStatement.returnValue?.let { returnValue ->
+                        if (returnValue is JcNullConstant) {
+                            val toPath = callStatement.lhv.toPath()
+                            add(Tainted(toPath, TaintMark.NULLNESS))
+                        }
+                    }
+                }
+            }
         }
 
         if (fact !is Tainted) {
@@ -770,3 +912,49 @@ class ForwardFlowFunctions(
         }
     }
 }
+
+// @Suppress("PublicApiImplicitType")
+// class BackwardFlowFunctions(
+//     private val cp: JcClasspath,
+//     private val graph: JcApplicationGraph,
+// ) : FlowFunctionsSpace {
+//
+//     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+//         cp.features
+//             ?.singleOrNull { it is TaintConfigurationFeature }
+//             ?.let { it as TaintConfigurationFeature }
+//     }
+//
+//     override fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact> {
+//         // TODO: check
+//         return listOf(Zero)
+//     }
+//
+//     override fun obtainSequentFlowFunction(
+//         current: JcInst
+//     ) = FlowFunction { fact ->
+//         TODO()
+//     }
+//
+//     override fun obtainCallToReturnSiteFlowFunction(
+//         callStatement: JcInst,
+//         returnSite: JcInst,
+//     ) = FlowFunction { fact ->
+//         TODO()
+//     }
+//
+//     override fun obtainCallToStartFlowFunction(
+//         callStatement: JcInst,
+//         callee: JcMethod,
+//     ) = FlowFunction { fact ->
+//         TODO()
+//     }
+//
+//     override fun obtainExitToReturnSiteFlowFunction(
+//         callStatement: JcInst,
+//         returnSite: JcInst,
+//         exitStatement: JcInst,
+//     ) = FlowFunction { fact ->
+//         TODO()
+//     }
+// }

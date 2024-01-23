@@ -19,11 +19,13 @@ package org.jacodb.analysis.ifds2
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.paths.isDereferencedAt
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = KotlinLogging.logger {}
@@ -59,6 +61,15 @@ class TaintAnalyzer(
     override fun handleNewEdge(edge: Edge): List<Event> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
+        }
+
+        if (edge.to.fact is Tainted && edge.to.fact.mark == TaintMark.NULLNESS) {
+            if (edge.to.fact.variable.isDereferencedAt(edge.to.statement)) {
+                val message = "NPE" // TODO
+                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge)
+                logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
+                add(NewVulnerability(vulnerability))
+            }
         }
 
         val configOk = run {

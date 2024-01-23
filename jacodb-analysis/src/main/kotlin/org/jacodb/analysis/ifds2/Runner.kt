@@ -86,7 +86,7 @@ class Runner(
             val doPrintZero = false
             if (edge.from.statement.toString() == "noop") {
                 if (doPrintZero || edge.to.fact != Zero) {
-                    logger.trace { "Propagating edge=$edge in method=${edge.method} via reason=${edge.reason}" }
+                    logger.debug { "Propagating edge=$edge in method=${edge.method} via reason=${edge.reason}" }
                 }
             }
 
@@ -205,7 +205,7 @@ class Runner(
             // Simple (sequential) propagation to the next instruction:
             for (next in graph.successors(current)) {
                 val factsAtNext = flowSpace
-                    .obtainSequentFlowFunction(current/*, next*/)
+                    .obtainSequentFlowFunction(current, next)
                     .compute(currentFact)
                 for (nextFact in factsAtNext) {
                     val nextVertex = Vertex(next, nextFact)

@@ -35,6 +35,7 @@ import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.taint.configuration.TaintMark
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -161,8 +162,15 @@ class Manager(
         File(statsFileName).outputStream().bufferedWriter().use {
             it.write("classname,cwe,method\n")
             for (vulnerability in foundVulnerabilities) {
-                for (cwe in vulnerability.rule!!.cwe) {
+                if (vulnerability.rule != null) {
+                    for (cwe in vulnerability.rule.cwe) {
+                        it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
+                    }
+                } else if (vulnerability.sink.fact is Tainted && vulnerability.sink.fact.mark == TaintMark.NULLNESS) {
+                    val cwe = 476
                     it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
+                } else {
+                    logger.warn { "Bad vulnerability without rule: $vulnerability" }
                 }
             }
         }
