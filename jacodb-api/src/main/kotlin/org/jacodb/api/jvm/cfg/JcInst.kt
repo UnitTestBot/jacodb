@@ -16,8 +16,16 @@
 
 package org.jacodb.api.jvm.cfg
 
+import org.jacodb.api.core.cfg.CoreExpr
+import org.jacodb.api.core.cfg.CoreExprVisitor
+import org.jacodb.api.core.cfg.CoreAssignInst
+import org.jacodb.api.core.cfg.CoreCallInst
+import org.jacodb.api.core.cfg.CoreGotoInst
+import org.jacodb.api.core.cfg.CoreIfInst
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
+import org.jacodb.api.core.cfg.CoreReturnInst
+import org.jacodb.api.core.cfg.CoreValue
 import org.jacodb.api.core.cfg.InstVisitor
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcType
@@ -74,9 +82,9 @@ data class JcInstRef(
 
 class JcAssignInst(
     location: JcInstLocation,
-    val lhv: JcValue,
-    val rhv: JcExpr
-) : AbstractJcInst(location) {
+    override val lhv: JcValue,
+    override val rhv: JcExpr
+) : AbstractJcInst(location), CoreAssignInst<JcInstLocation, JcMethod, JcValue, JcExpr, JcType> {
 
     override val operands: List<JcExpr>
         get() = listOf(lhv, rhv)
@@ -119,7 +127,7 @@ class JcExitMonitorInst(
 class JcCallInst(
     location: JcInstLocation,
     val callExpr: JcCallExpr
-) : AbstractJcInst(location) {
+) : AbstractJcInst(location), CoreCallInst<JcInstLocation, JcMethod, JcExpr> {
     override val operands: List<JcExpr>
         get() = listOf(callExpr)
 
@@ -135,7 +143,7 @@ interface JcTerminatingInst : JcInst
 class JcReturnInst(
     location: JcInstLocation,
     val returnValue: JcValue?
-) : AbstractJcInst(location), JcTerminatingInst {
+) : AbstractJcInst(location), JcTerminatingInst, CoreReturnInst<JcInstLocation, JcMethod, JcExpr> {
     override val operands: List<JcExpr>
         get() = listOfNotNull(returnValue)
 
@@ -183,7 +191,7 @@ interface JcBranchingInst : JcInst {
 class JcGotoInst(
     location: JcInstLocation,
     val target: JcInstRef
-) : AbstractJcInst(location), JcBranchingInst {
+) : AbstractJcInst(location), JcBranchingInst, CoreGotoInst<JcInstLocation, JcMethod, JcExpr> {
     override val operands: List<JcExpr>
         get() = emptyList()
 
@@ -202,7 +210,7 @@ class JcIfInst(
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
     val falseBranch: JcInstRef
-) : AbstractJcInst(location), JcBranchingInst {
+) : AbstractJcInst(location), JcBranchingInst, CoreIfInst<JcInstLocation, JcMethod, JcExpr> {
     override val operands: List<JcExpr>
         get() = listOf(condition)
 
@@ -235,11 +243,15 @@ class JcSwitchInst(
     }
 }
 
-interface JcExpr {
-    val type: JcType
-    val operands: List<JcValue>
+interface JcExpr : CoreExpr<JcType, JcValue> {
+    override val type: JcType
+    override val operands: List<JcValue>
 
-    fun <T> accept(visitor: JcExprVisitor<T>): T
+    fun <T> accept(visitor: JcExprVisitor<T>): T // TODO visitor for CoreExpr?
+
+    override fun <T> accept(visitor: CoreExprVisitor<T>): T {
+        TODO("Not yet implemented")
+    }
 }
 
 interface JcBinaryExpr : JcExpr {
@@ -792,7 +804,7 @@ data class JcSpecialCallExpr(
 }
 
 
-interface JcValue : JcExpr
+interface JcValue : JcExpr, CoreValue<JcValue, JcType>
 
 interface JcSimpleValue : JcValue {
 

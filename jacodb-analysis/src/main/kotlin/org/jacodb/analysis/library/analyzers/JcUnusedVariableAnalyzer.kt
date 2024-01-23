@@ -33,6 +33,7 @@ import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.core.analysis.ApplicationGraph
 import org.jacodb.api.jvm.JcProject
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
@@ -41,6 +42,7 @@ import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcBranchingInst
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcStaticCallExpr
@@ -49,8 +51,10 @@ import org.jacodb.api.jvm.cfg.values
 import org.jacodb.api.jvm.ext.cfg.callExpr
 
 
-class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
-    override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
+class JcUnusedVariableAnalyzer(
+    val graph: JcApplicationGraph
+) : AbstractAnalyzer<JcMethod, JcInstLocation, JcInst>(graph) {
+    override val flowFunctions: FlowFunctionsSpace<JcInst, JcMethod> = JcUnusedVariableForwardFunctions(graph.classpath)
 
     override val isMainAnalyzer: Boolean
         get() = true
@@ -89,11 +93,15 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
         return false
     }
 
-    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent> {
+    override fun handleNewCrossUnitCall(
+        fact: CrossUnitCallFact<JcMethod, JcInstLocation, JcInst>
+    ): List<AnalysisDependentEvent> {
         return emptyList()
     }
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = buildList {
+    override fun handleIfdsResult(
+        ifdsResult: IfdsResult<JcMethod, JcInstLocation, JcInst>
+    ): List<AnalysisDependentEvent> = buildList {
         val used: MutableMap<JcInst, Boolean> = mutableMapOf()
         ifdsResult.resultFacts.forEach { (inst, facts) ->
             facts.filterIsInstance<UnusedVariableNode>().forEach { fact ->
@@ -114,13 +122,13 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
     }
 }
 
-val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
-    UnusedVariableAnalyzer(graph)
+val JcUnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
+    JcUnusedVariableAnalyzer(graph as JcApplicationGraph)
 }
 
-private class UnusedVariableForwardFunctions(
+private class JcUnusedVariableForwardFunctions(
     val classpath: JcProject
-) : FlowFunctionsSpace {
+) : FlowFunctionsSpace<JcInst, JcMethod> {
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
         return listOf(ZEROFact)

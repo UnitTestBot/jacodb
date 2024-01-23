@@ -20,12 +20,15 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
 import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.getClassUnitResolver
-import org.jacodb.analysis.library.newNpeRunnerFactory
+import org.jacodb.analysis.library.getJcClassUnitResolver
+import org.jacodb.analysis.library.methodUnitResolver
+import org.jacodb.analysis.library.newJcNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
@@ -35,23 +38,26 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithGlobalDB()
 
-    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
+    private fun <UnitType> testOne(
+        unitResolver: UnitResolver<UnitType, JcMethod>,
+        ifdsUnitRunnerFactory: IfdsUnitRunnerFactory<JcMethod, JcInstLocation, JcInst>
+    ) {
         val clazz = cp.findClass<DateTime>()
         val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
 
         println("Vulnerabilities found: ${result.size}")
         println("Generated report:")
-        SarifReport.fromVulnerabilities(result).encodeToStream(System.out)
+        SarifReport.fromJcVulnerabilities(result).encodeToStream(System.out)
     }
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(getClassUnitResolver(false), UnusedVariableRunnerFactory)
+        testOne(getJcClassUnitResolver(false), UnusedVariableRunnerFactory)
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, newNpeRunnerFactory())
+        testOne(methodUnitResolver(), newJcNpeRunnerFactory())
     }
 
     private val graph = runBlocking {

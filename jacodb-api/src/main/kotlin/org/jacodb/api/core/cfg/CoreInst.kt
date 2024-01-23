@@ -16,8 +16,10 @@
 
 package org.jacodb.api.core.cfg
 
+import org.jacodb.api.core.CoreMethod
 
-interface CoreInst<InstLocation: CoreInstLocation<Method>, Method, Expr> { // TODO generalize
+
+interface CoreInst<InstLocation : CoreInstLocation<Method>, Method : CoreMethod<*>, Expr> { // TODO generalize
     val location: InstLocation
     val operands: List<Expr>
 
@@ -26,9 +28,32 @@ interface CoreInst<InstLocation: CoreInstLocation<Method>, Method, Expr> { // TO
     fun <T> accept(visitor: InstVisitor<T>): T
 }
 
-interface CoreInstLocation<Method> { // TODO generalize
+interface CoreInstLocation<Method : CoreMethod<*>> { // TODO generalize
     val method: Method
     val index: Int
     val lineNumber: Int
 }
 
+interface CoreAssignInst<InstLocation, Method, Value, Expr, Type> : CoreInst<InstLocation, Method, Expr>
+        where Value : CoreValue<Value, Type>,
+              InstLocation : CoreInstLocation<Method>,
+              Method : CoreMethod<*> {
+    val lhv: Value
+    val rhv: Expr
+}
+
+interface CoreCallInst<InstLocation, Method, Expr> : CoreInst<InstLocation, Method, Expr>
+        where InstLocation : CoreInstLocation<Method>,
+              Method : CoreMethod<*>
+
+interface CoreReturnInst<InstLocation, Method, Expr> : CoreInst<InstLocation, Method, Expr>
+        where InstLocation : CoreInstLocation<Method>,
+              Method : CoreMethod<*>
+
+interface CoreGotoInst<InstLocation, Method, Expr> : CoreInst<InstLocation, Method, Expr>
+        where InstLocation : CoreInstLocation<Method>,
+              Method : CoreMethod<*>
+
+interface CoreIfInst<InstLocation, Method, Expr> : CoreInst<InstLocation, Method, Expr>
+        where InstLocation : CoreInstLocation<Method>,
+              Method : CoreMethod<*>

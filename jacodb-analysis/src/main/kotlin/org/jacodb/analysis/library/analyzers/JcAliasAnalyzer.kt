@@ -22,27 +22,31 @@ import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.IfdsResult
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 
-fun AliasAnalyzerFactory(
+fun JcAliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
 ) = AnalyzerFactory { graph ->
-    AliasAnalyzer(graph, generates, sanitizes, sinks, maxPathLength)
+    JcAliasAnalyzer(graph as JcApplicationGraph, generates, sanitizes, sinks, maxPathLength)
 }
 
-private class AliasAnalyzer(
+private class JcAliasAnalyzer(
     graph: JcApplicationGraph,
     override val generates: (JcInst) -> List<DomainFact>,
     override val sanitizes: (JcExpr, TaintNode) -> Boolean,
     override val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : TaintAnalyzer(graph, maxPathLength) {
-    override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = TODO()
+) : TaintAnalyzer<JcMethod, JcInstLocation, JcInst>(graph, maxPathLength) {
+    override fun generateDescriptionForSink(sink: IfdsVertex<JcMethod, JcInstLocation, JcInst>): VulnerabilityDescription =
+        TODO()
 
-    override fun handleIfdsResult(ifdsResult: IfdsResult): List<AnalysisDependentEvent> = TODO()
+    override fun handleIfdsResult(ifdsResult: IfdsResult<JcMethod, JcInstLocation, JcInst>): List<AnalysisDependentEvent> =
+        TODO()
 }

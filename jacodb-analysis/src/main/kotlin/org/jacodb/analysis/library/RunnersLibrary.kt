@@ -15,38 +15,45 @@
  */
 
 @file:JvmName("RunnersLibrary")
+
 package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.BaseIfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.BidiIfdsUnitRunnerFactory
-import org.jacodb.analysis.library.analyzers.AliasAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.NpeAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.NpePrecalcBackwardAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.SqlInjectionBackwardAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.JcAliasAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.JcNpeAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.jcNpePrecalcBackwardAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.JcSqlInjectionAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.JcSqlInjectionBackwardAnalyzerFactory
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
 import org.jacodb.analysis.library.analyzers.TaintNode
-import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.JcUnusedVariableAnalyzerFactory
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 
 //TODO: add docs here
-val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
+val UnusedVariableRunnerFactory =
+    BaseIfdsUnitRunnerFactory<JcMethod, JcInstLocation, JcInst>(JcUnusedVariableAnalyzerFactory)
 
-fun newSqlInjectionRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
-    BaseIfdsUnitRunnerFactory(SqlInjectionAnalyzerFactory(maxPathLength)),
-    BaseIfdsUnitRunnerFactory(SqlInjectionBackwardAnalyzerFactory(maxPathLength)),
-)
+fun newJcSqlInjectionRunnerFactory(maxPathLength: Int = 5) =
+    BidiIfdsUnitRunnerFactory<JcMethod, JcInstLocation, JcInst>(
+        BaseIfdsUnitRunnerFactory(JcSqlInjectionAnalyzerFactory(maxPathLength)),
+        BaseIfdsUnitRunnerFactory(JcSqlInjectionBackwardAnalyzerFactory(maxPathLength)),
+    )
 
-fun newNpeRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
-    BaseIfdsUnitRunnerFactory(NpeAnalyzerFactory(maxPathLength)),
-    BaseIfdsUnitRunnerFactory(NpePrecalcBackwardAnalyzerFactory(maxPathLength)),
+fun newJcNpeRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory<JcMethod, JcInstLocation, JcInst>(
+    BaseIfdsUnitRunnerFactory(JcNpeAnalyzerFactory(maxPathLength)),
+    BaseIfdsUnitRunnerFactory(jcNpePrecalcBackwardAnalyzerFactory(maxPathLength)),
     isParallel = false
 )
 
-fun newAliasRunnerFactory(
+fun newJcAliasRunnerFactory(
     generates: (JcInst) -> List<TaintAnalysisNode>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int = 5
-) = BaseIfdsUnitRunnerFactory(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))
+) = BaseIfdsUnitRunnerFactory<JcMethod, JcInstLocation, JcInst>(
+    JcAliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength)
+)

@@ -32,7 +32,7 @@ import org.jacodb.api.jvm.ext.cfg.arrayRef
 import org.jacodb.api.jvm.ext.cfg.callExpr
 import org.jacodb.api.jvm.ext.cfg.fieldRef
 
-
+// TODO caelmbleidd Java specific analysis
 class NullAnalysisMap : HashMap<JcValue, NullableState> {
 
     constructor() : super()

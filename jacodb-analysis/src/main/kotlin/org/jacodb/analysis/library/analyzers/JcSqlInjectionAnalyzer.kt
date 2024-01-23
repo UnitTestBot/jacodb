@@ -20,12 +20,15 @@ import org.jacodb.analysis.engine.AnalyzerFactory
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 
-class SqlInjectionAnalyzer(
+class JcSqlInjectionAnalyzer(
     graph: JcApplicationGraph,
     maxPathLength: Int
-) : TaintAnalyzer(graph, maxPathLength) {
+) : TaintAnalyzer<JcMethod, JcInstLocation, JcInst>(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sanitizes = isSanitizeMethodToSanitizes(sqlSanitizeMatchers.asMethodMatchers)
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
@@ -37,10 +40,10 @@ class SqlInjectionAnalyzer(
         val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
     }
 
-    override fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription = vulnerabilityDescription
+    override fun generateDescriptionForSink(sink: IfdsVertex<JcMethod, JcInstLocation, JcInst>): VulnerabilityDescription = vulnerabilityDescription
 }
 
-class SqlInjectionBackwardAnalyzer(
+class JcSqlInjectionBackwardAnalyzer(
     graph: JcApplicationGraph,
     maxPathLength: Int
 ) : TaintBackwardAnalyzer(graph, maxPathLength) {
@@ -48,12 +51,12 @@ class SqlInjectionBackwardAnalyzer(
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
 }
 
-fun SqlInjectionAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    SqlInjectionAnalyzer(graph, maxPathLength)
+fun JcSqlInjectionAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    JcSqlInjectionAnalyzer(graph as JcApplicationGraph, maxPathLength)
 }
 
-fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    SqlInjectionBackwardAnalyzer(graph, maxPathLength)
+fun JcSqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    JcSqlInjectionBackwardAnalyzer(graph as JcApplicationGraph, maxPathLength)
 }
 
 private val sqlSourceMatchers = listOf(

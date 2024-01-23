@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.engine
 
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
 
@@ -25,7 +26,8 @@ import org.jacodb.api.core.cfg.CoreInstLocation
 data class IfdsEdge<Method, Location, Statement>(
     val u: IfdsVertex<Method, Location, Statement>,
     val v: IfdsVertex<Method, Location, Statement>
-) where Location : CoreInstLocation<Method>,
+) where Method : CoreMethod<Statement>,
+        Location : CoreInstLocation<Method>,
         Statement : CoreInst<Location, Method, *> {
     init {
         require(u.method == v.method)
@@ -42,7 +44,8 @@ sealed interface PredecessorKind {
     object CallToStart : PredecessorKind
     class ThroughSummary<Method, Location, Statement>(
         val summaryEdge: IfdsEdge<Method, Location, Statement>
-    ) : PredecessorKind where Location : CoreInstLocation<Method>,
+    ) : PredecessorKind where Method : CoreMethod<Statement>,
+                              Location : CoreInstLocation<Method>,
                               Statement : CoreInst<Location, Method, *>
 }
 
@@ -53,5 +56,6 @@ sealed interface PredecessorKind {
 data class PathEdgePredecessor<Method, Location, Statement>(
     val predEdge: IfdsEdge<Method, Location, Statement>,
     val kind: PredecessorKind
-) where Location : CoreInstLocation<Method>,
+) where Method : CoreMethod<Statement>,
+        Location : CoreInstLocation<Method>,
         Statement : CoreInst<Location, Method, *>

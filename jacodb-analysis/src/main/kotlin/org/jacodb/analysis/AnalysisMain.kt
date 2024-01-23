@@ -25,15 +25,22 @@ import org.jacodb.analysis.engine.SummaryStorage
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.core.CoreMethod
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
 
 internal val logger = object : KLogging() {}.logger
 
 typealias AnalysesOptions = Map<String, String>
 
+interface AnalysisConfig {
+    val analyses: Map<String, AnalysesOptions>
+}
+
 @Serializable
-data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
+data class JcAnalysisConfig(override val analyses: Map<String, AnalysesOptions>) : AnalysisConfig
 
 
 /**
@@ -63,12 +70,12 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
  * (like searching for reachable methods and splitting them into units) and postcalculations (like restoring traces), so
  * the actual running time of this method may be longer.
  */
-fun runAnalysis(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver<*>,
-    ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
-    methods: List<JcMethod>,
+fun <Method : CoreMethod<Statement>, Location : CoreInstLocation<Method>, Statement : CoreInst<Location, Method, *>> runAnalysis(
+    graph: ApplicationGraph<Method, Statement>,
+    unitResolver: UnitResolver<*, Method>,
+    ifdsUnitRunnerFactory: IfdsUnitRunnerFactory<Method, Location, Statement>,
+    methods: List<Method>,
     timeoutMillis: Long = Long.MAX_VALUE
-): List<VulnerabilityInstance> {
+): List<VulnerabilityInstance<Method, Location, Statement>> {
     return MainIfdsUnitManager(graph, unitResolver, ifdsUnitRunnerFactory, methods, timeoutMillis).analyze()
 }

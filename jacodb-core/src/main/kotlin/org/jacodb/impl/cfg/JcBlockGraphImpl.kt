@@ -40,6 +40,9 @@ class JcBlockGraphImpl(
 
     override val exits: List<JcBasicBlock> get() = filter { successors(it).isEmpty() }
 
+    override val instructions: List<JcBasicBlock>
+        get() = _basicBlocks.toList()
+
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
 

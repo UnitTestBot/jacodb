@@ -18,19 +18,23 @@
 package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.ext.packageName
 
-val MethodUnitResolver = UnitResolver { method -> method }
-val PackageUnitResolver = UnitResolver { method -> method.enclosingClass.packageName }
-val SingletonUnitResolver = UnitResolver { _ -> Unit }
+// TODO caelmbleidd add cache?????
+fun <Method> methodUnitResolver() = UnitResolver<Method, Method> { method -> method }
 
-fun getClassUnitResolver(includeNested: Boolean): UnitResolver<JcClassOrInterface> {
-    return ClassUnitResolver(includeNested)
+// TODO caelmbleidd extract java
+val JcPackageUnitResolver = UnitResolver<String, JcMethod> { method -> method.enclosingClass.packageName }
+val JcSingletonUnitResolver = UnitResolver<Unit, JcMethod> { _ -> Unit }
+
+fun getJcClassUnitResolver(includeNested: Boolean): UnitResolver<JcClassOrInterface, JcMethod> {
+    return JcClassUnitResolver(includeNested)
 }
 
-private class ClassUnitResolver(private val includeNested: Boolean): UnitResolver<JcClassOrInterface> {
+private class JcClassUnitResolver(private val includeNested: Boolean): UnitResolver<JcClassOrInterface, JcMethod> {
     override fun resolve(method: JcMethod): JcClassOrInterface {
         return if (includeNested) {
             generateSequence(method.enclosingClass) { it.outerClass }.last()

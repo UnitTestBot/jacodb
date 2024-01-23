@@ -16,9 +16,8 @@
 
 package org.jacodb.api.core
 
-import org.jacodb.api.core.cfg.Graph
-import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.core.cfg.ControlFlowGraph
 
 interface CoreMethod<Statement> {
-    fun flowGraph(): Graph<Statement>
+    fun flowGraph(): ControlFlowGraph<Statement>
 }

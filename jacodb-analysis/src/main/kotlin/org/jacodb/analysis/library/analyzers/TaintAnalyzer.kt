@@ -32,18 +32,25 @@ import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.api.core.CoreMethod
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcCallExpr
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.cfg.locals
 import org.jacodb.api.jvm.cfg.values
 import org.jacodb.api.jvm.ext.cfg.callExpr
+import javax.swing.plaf.nimbus.State
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->
@@ -86,25 +93,29 @@ internal val List<String>.asMethodMatchers: (JcMethod) -> Boolean
         any { it.toRegex().matches("${method.enclosingClass.name}#${method.name}") }
     }
 
-abstract class TaintAnalyzer(
-    graph: JcApplicationGraph,
+abstract class TaintAnalyzer<Method, Location, Statement>(
+    graph: ApplicationGraph<Method, Statement>,
     maxPathLength: Int
-) : AbstractAnalyzer(graph) {
+) : AbstractAnalyzer<Method, Location, Statement>(graph)
+        where Method : CoreMethod<Statement>,
+              Location : CoreInstLocation<Method>,
+              Statement : CoreInst<Location, Method, *> {
     abstract val generates: (JcInst) -> List<DomainFact>
     abstract val sanitizes: (JcExpr, TaintNode) -> Boolean
     abstract val sinks: (JcInst) -> List<TaintAnalysisNode>
 
-    override val flowFunctions: FlowFunctionsSpace by lazy {
-        TaintForwardFunctions(graph, maxPathLength, generates, sanitizes)
+    @Suppress("UNCHECKED_CAST")
+    override val flowFunctions: FlowFunctionsSpace<Statement, Method> by lazy {
+        TaintForwardFunctions(graph as JcApplicationGraph, maxPathLength, generates, sanitizes) as FlowFunctionsSpace<Statement, Method>
     }
 
     override val isMainAnalyzer: Boolean
         get() = true
 
-    protected abstract fun generateDescriptionForSink(sink: IfdsVertex): VulnerabilityDescription
+    protected abstract fun generateDescriptionForSink(sink: IfdsVertex<Method, Location, Statement>): VulnerabilityDescription
 
-    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
-        if (edge.v.domainFact in sinks(edge.v.statement)) {
+    override fun handleNewEdge(edge: IfdsEdge<Method, Location, Statement>): List<AnalysisDependentEvent> = buildList {
+        if (edge.v.domainFact in sinks(edge.v.statement as JcInst)) {
             val desc = generateDescriptionForSink(edge.v)
             add(NewSummaryFact(VulnerabilityLocation(desc, edge.v)))
             verticesWithTraceGraphNeeded.add(edge.v)
@@ -115,22 +126,23 @@ abstract class TaintAnalyzer(
 abstract class TaintBackwardAnalyzer(
     val graph: JcApplicationGraph,
     maxPathLength: Int
-) : AbstractAnalyzer(graph) {
+) : AbstractAnalyzer<JcMethod, JcInstLocation, JcInst>(graph) {
     abstract val generates: (JcInst) -> List<DomainFact>
     abstract val sinks: (JcInst) -> List<TaintAnalysisNode>
 
     override val isMainAnalyzer: Boolean
         get() = false
 
-    override val flowFunctions: FlowFunctionsSpace by lazy {
+    override val flowFunctions: FlowFunctionsSpace<JcInst, JcMethod> by lazy {
         TaintBackwardFunctions(graph, generates, sinks, maxPathLength)
     }
 
-    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
-        if (edge.v.statement in graph.exitPoints(edge.method)) {
-            add(EdgeForOtherRunnerQuery(IfdsEdge(edge.v, edge.v)))
+    override fun handleNewEdge(edge: IfdsEdge<JcMethod, JcInstLocation, JcInst>): List<AnalysisDependentEvent> =
+        buildList {
+            if (edge.v.statement in graph.exitPoints(edge.method)) {
+                add(EdgeForOtherRunnerQuery(IfdsEdge(edge.v, edge.v)))
+            }
         }
-    }
 }
 
 private class TaintForwardFunctions(
@@ -138,7 +150,7 @@ private class TaintForwardFunctions(
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
     private val sanitizes: (JcExpr, TaintNode) -> Boolean
-) : AbstractTaintForwardFunctions(graph.classpath) {
+) : AbstractTaintForwardFunctions<JcMethod, JcInstLocation, JcInst, JcValue, JcExpr, JcType>(graph.classpath) {
     override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         if (fact == ZEROFact) {
             return listOf(ZEROFact) + generates(atInst)
@@ -225,7 +237,7 @@ private class TaintBackwardFunctions(
     val generates: (JcInst) -> List<DomainFact>,
     val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
-) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
+) : AbstractTaintBackwardFunctions<JcMethod, JcInstLocation, JcInst, JcValue, JcExpr, JcType>(graph, maxPathLength) {
     override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         if (fact == ZEROFact) {
             return listOf(ZEROFact) + sinks(atInst)

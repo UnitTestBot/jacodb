@@ -39,7 +39,8 @@ sealed interface SummaryFact<Method> {
 data class VulnerabilityLocation<Method, Location, Statement>(
     val vulnerabilityDescription: VulnerabilityDescription,
     val sink: IfdsVertex<Method, Location, Statement>
-) : SummaryFact<Method> where Location : CoreInstLocation<Method>,
+) : SummaryFact<Method> where Method : CoreMethod<Statement>,
+                              Location : CoreInstLocation<Method>,
                               Statement : CoreInst<Location, Method, *> {
     override val method: Method = sink.method
 }
@@ -49,8 +50,9 @@ data class VulnerabilityLocation<Method, Location, Statement>(
  */
 data class SummaryEdgeFact<Method, Location, Statement>(
     val edge: IfdsEdge<Method, Location, Statement>
-) : SummaryFact<Method> where Location : CoreInstLocation<Method>,
-                      Statement : CoreInst<Location, Method, *> {
+) : SummaryFact<Method> where Method : CoreMethod<Statement>,
+                              Location : CoreInstLocation<Method>,
+                              Statement : CoreInst<Location, Method, *> {
     override val method: Method = edge.method
 }
 
@@ -61,7 +63,8 @@ data class SummaryEdgeFact<Method, Location, Statement>(
 data class CrossUnitCallFact<Method, Location, Statement>(
     val callerVertex: IfdsVertex<Method, Location, Statement>,
     val calleeVertex: IfdsVertex<Method, Location, Statement>
-) : SummaryFact<Method> where Location : CoreInstLocation<Method>,
+) : SummaryFact<Method> where Method : CoreMethod<Statement>,
+                              Location : CoreInstLocation<Method>,
                               Statement : CoreInst<Location, Method, *> {
     override val method: Method = callerVertex.method
 }

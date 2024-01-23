@@ -16,9 +16,9 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.core.cfg.Graph
+import org.jacodb.api.core.cfg.ControlFlowGraph
 
-abstract class AbstractFlowAnalysis<NODE, T>(override val graph: Graph<NODE>) : FlowAnalysis<NODE, T> {
+abstract class AbstractFlowAnalysis<NODE, T>(override val graph: ControlFlowGraph<NODE>) : FlowAnalysis<NODE, T> {
 
     override fun newEntryFlow(): T = newFlow()
 

@@ -16,7 +16,8 @@
 
 package org.jacodb.analysis.impl.custom
 
-import org.jacodb.api.jvm.cfg.JcBytecodeGraph
+import org.jacodb.api.core.cfg.ControlFlowGraph
+import org.jacodb.api.core.cfg.Graph
 import org.jacodb.api.jvm.cfg.JcGotoInst
 import java.util.*
 
@@ -37,10 +38,10 @@ enum class Flow {
 
 
 /**
- * Creates a new `Entry` graph based on a `JcGraph`. This includes pseudo topological order, local
+ * Creates a new `Entry` graph based on a `Graph`. This includes pseudo topological order, local
  * access for predecessors and successors, a graph entry-point, connected component marker.
  */
-private fun <NODE, T> JcBytecodeGraph<NODE>.newScope(
+private fun <NODE, T> ControlFlowGraph<NODE>.newScope(
     direction: FlowAnalysisDirection,
     entryFlow: T,
     isForward: Boolean
@@ -80,7 +81,7 @@ private fun <NODE, T> JcBytecodeGraph<NODE>.newScope(
                 visitedInst.add(temp)
 
                 // only add 'goto' statements
-                if (temp is JcGotoInst) {
+                if (temp is JcGotoInst) { // TODO caelmbleidd replace with abstract GOTO expr
                     instructions.add(temp)
                 }
                 for (next in successors(temp)) {
@@ -210,26 +211,26 @@ private fun <NODE, F> Deque<FlowEntry<NODE, F>>.pop(entry: FlowEntry<NODE, F>) {
 
 enum class FlowAnalysisDirection {
     BACKWARD {
-        override fun <NODE> entries(g: JcBytecodeGraph<NODE>): List<NODE> {
+        override fun <NODE> entries(g: ControlFlowGraph<NODE>): List<NODE> {
             return g.exits
         }
 
-        override fun <NODE> outOf(g: JcBytecodeGraph<NODE>, s: NODE): List<NODE> {
+        override fun <NODE> outOf(g: ControlFlowGraph<NODE>, s: NODE): List<NODE> {
             return g.predecessors(s).toList()
         }
     },
     FORWARD {
-        override fun <NODE> entries(g: JcBytecodeGraph<NODE>): List<NODE> {
+        override fun <NODE> entries(g: ControlFlowGraph<NODE>): List<NODE> {
             return g.entries
         }
 
-        override fun <NODE> outOf(g: JcBytecodeGraph<NODE>, s: NODE): List<NODE> {
+        override fun <NODE> outOf(g: ControlFlowGraph<NODE>, s: NODE): List<NODE> {
             return g.successors(s).toList()
         }
     };
 
-    abstract fun <NODE> entries(g: JcBytecodeGraph<NODE>): List<NODE>
-    abstract fun <NODE> outOf(g: JcBytecodeGraph<NODE>, s: NODE): List<NODE>
+    abstract fun <NODE> entries(g: ControlFlowGraph<NODE>): List<NODE>
+    abstract fun <NODE> outOf(g: ControlFlowGraph<NODE>, s: NODE): List<NODE>
 }
 
 abstract class FlowEntry<NODE, T>(pred: FlowEntry<NODE, T>?) {
@@ -255,7 +256,7 @@ class RootEntry<NODE, T> : FlowEntry<NODE, T>(null) {
 
 class LeafEntry<NODE, T>(override val data: NODE, pred: FlowEntry<NODE, T>?) : FlowEntry<NODE, T>(pred)
 
-abstract class FlowAnalysisImpl<NODE, T>(graph: JcBytecodeGraph<NODE>) : AbstractFlowAnalysis<NODE, T>(graph) {
+abstract class FlowAnalysisImpl<NODE, T>(graph: ControlFlowGraph<NODE>) : AbstractFlowAnalysis<NODE, T>(graph) {
 
     protected abstract fun flowThrough(instIn: T?, ins: NODE, instOut: T)
 

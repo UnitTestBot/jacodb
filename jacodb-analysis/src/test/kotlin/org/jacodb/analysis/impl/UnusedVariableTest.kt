@@ -19,19 +19,19 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.SingletonUnitResolver
+import org.jacodb.analysis.library.JcSingletonUnitResolver
 import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzer
+import org.jacodb.analysis.library.analyzers.JcUnusedVariableAnalyzer
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
 import java.util.stream.Stream
 
 class UnusedVariableTest : BaseAnalysisTest() {
@@ -51,7 +51,7 @@ class UnusedVariableTest : BaseAnalysisTest() {
             "_81"
         ))
 
-        private const val vulnerabilityType = UnusedVariableAnalyzer.ruleId
+        private const val vulnerabilityType = JcUnusedVariableAnalyzer.ruleId
     }
 
     @ParameterizedTest
@@ -60,10 +60,10 @@ class UnusedVariableTest : BaseAnalysisTest() {
         testSingleJulietClass(vulnerabilityType, className)
     }
 
-    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance<JcMethod, JcInstLocation, JcInst>> {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, SingletonUnitResolver, UnusedVariableRunnerFactory, methods)
+        return runAnalysis(graph, JcSingletonUnitResolver, UnusedVariableRunnerFactory, methods)
     }
 }

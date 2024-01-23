@@ -20,16 +20,17 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.analyzers.NpeAnalyzer
-import org.jacodb.analysis.library.newNpeRunnerFactory
+import org.jacodb.analysis.library.JcSingletonUnitResolver
+import org.jacodb.analysis.library.analyzers.JcNpeAnalyzer
+import org.jacodb.analysis.library.newJcNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.ext.constructors
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.analysis.NpeExamples
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -48,7 +49,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         fun provideClassesForJuliet690(): Stream<Arguments> =
             provideClassesForJuliet(690)
 
-        private const val vulnerabilityType = NpeAnalyzer.ruleId
+        private const val vulnerabilityType = JcNpeAnalyzer.ruleId
     }
 
     @Test
@@ -211,10 +212,10 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     private inline fun <reified T> testOneMethod(methodName: String, expectedLocations: Collection<String>) =
         testOneAnalysisOnOneMethod<T>(vulnerabilityType, methodName, expectedLocations)
 
-    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance<JcMethod, JcInstLocation, JcInst>> {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, SingletonUnitResolver, newNpeRunnerFactory(), methods)
+        return runAnalysis(graph, JcSingletonUnitResolver, newJcNpeRunnerFactory(), methods)
     }
 }

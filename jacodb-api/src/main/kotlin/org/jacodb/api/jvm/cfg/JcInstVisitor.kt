@@ -16,6 +16,7 @@
 
 package org.jacodb.api.jvm.cfg
 
+import org.jacodb.api.core.cfg.CoreExprVisitor
 import org.jacodb.api.core.cfg.InstVisitor
 
 interface JcInstVisitor<T> : InstVisitor<T> {
@@ -61,7 +62,7 @@ interface DefaultJcInstVisitor<T> : JcInstVisitor<T> {
     override fun visitExternalJcInst(inst: JcInst): T = defaultInstHandler(inst)
 }
 
-interface JcExprVisitor<T> {
+interface JcExprVisitor<T> : CoreExprVisitor<T> {
     fun visitJcAddExpr(expr: JcAddExpr): T
     fun visitJcAndExpr(expr: JcAndExpr): T
     fun visitJcCmpExpr(expr: JcCmpExpr): T

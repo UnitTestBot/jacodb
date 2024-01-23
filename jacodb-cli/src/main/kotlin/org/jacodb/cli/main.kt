@@ -25,19 +25,27 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
+import org.jacodb.analysis.JcAnalysisConfig
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
 import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.newNpeRunnerFactory
-import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
+import org.jacodb.analysis.library.methodUnitResolver
+import org.jacodb.analysis.library.newJcNpeRunnerFactory
+import org.jacodb.analysis.library.newJcSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.api.core.CoreMethod
+import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.core.cfg.CoreInst
+import org.jacodb.api.core.cfg.CoreInstLocation
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClassProcessingTask
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
@@ -50,22 +58,26 @@ class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, methods: List<JcMethod>): List<List<VulnerabilityInstance>> {
+// TODO caelmbleidd refactor
+fun launchJcAnalysesByConfig(
+    config: AnalysisConfig,
+    graph: JcApplicationGraph,
+    methods: List<JcMethod>
+): List<List<VulnerabilityInstance<JcMethod, JcInstLocation, JcInst>>> {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
-            UnitResolver.getByName(it)
-        } ?: MethodUnitResolver
+            UnitResolver.getJcResolverByName(it)
+        } ?: methodUnitResolver()
 
         val runner = when (analysis) {
-            "NPE" -> newNpeRunnerFactory()
+            "NPE" -> newJcNpeRunnerFactory()
             "Unused" -> UnusedVariableRunnerFactory
-            "SQL" -> newSqlInjectionRunnerFactory()
+            "SQL" -> newJcSqlInjectionRunnerFactory()
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 return@mapNotNull null
             }
         }
-
         logger.info { "Launching analysis $analysis" }
         runAnalysis(graph, unitResolver, runner, methods)
     }
@@ -119,7 +131,7 @@ fun main(args: Array<String>) {
     if (!configFile.isFile) {
         throw IllegalArgumentException("Can't find provided config file $configFilePath")
     }
-    val config = Json.decodeFromString<AnalysisConfig>(configFile.readText())
+    val config = Json.decodeFromString<JcAnalysisConfig>(configFile.readText())
 
     val classpathAsFiles = classpath.split(File.pathSeparatorChar).sorted().map { File(it) }
 
@@ -149,8 +161,8 @@ fun main(args: Array<String>) {
         cp.newApplicationGraphForAnalysis()
     }
 
-    val vulnerabilities = launchAnalysesByConfig(config, graph, startJcMethods).flatten()
-    val report = SarifReport.fromVulnerabilities(vulnerabilities)
+    val vulnerabilities = launchJcAnalysesByConfig(config, graph, startJcMethods).flatten()
+    val report = SarifReport.fromJcVulnerabilities(vulnerabilities)
 
     outputFile.outputStream().use { fileOutputStream ->
         report.encodeToStream(fileOutputStream)

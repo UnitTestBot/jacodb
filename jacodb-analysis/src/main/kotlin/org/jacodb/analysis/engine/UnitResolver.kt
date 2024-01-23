@@ -16,11 +16,12 @@
 
 package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.library.MethodUnitResolver
-import org.jacodb.analysis.library.PackageUnitResolver
-import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.getClassUnitResolver
+import org.jacodb.analysis.library.JcPackageUnitResolver
+import org.jacodb.analysis.library.JcSingletonUnitResolver
+import org.jacodb.analysis.library.getJcClassUnitResolver
+import org.jacodb.analysis.library.methodUnitResolver
 import org.jacodb.analysis.runAnalysis
+import org.jacodb.api.jvm.JcMethod
 
 /**
  * Sets a mapping from a [Method] to abstract domain [UnitType].
@@ -34,12 +35,12 @@ fun interface UnitResolver<UnitType, Method> {
     fun resolve(method: Method): UnitType
 
     companion object {
-        fun <Method> getByName(name: String): UnitResolver<*, Method> {
+        fun getJcResolverByName(name: String): UnitResolver<*, JcMethod> { // TODO can we use an asterisk here?
             return when (name) {
-                "method"    -> MethodUnitResolver
-                "class"     -> getClassUnitResolver(false)
-                "package"   -> PackageUnitResolver
-                "singleton" -> SingletonUnitResolver
+                "method"    -> methodUnitResolver()
+                "class"     -> getJcClassUnitResolver(false)
+                "package"   -> JcPackageUnitResolver
+                "singleton" -> JcSingletonUnitResolver
                 else        -> error("Unknown unit resolver $name")
             }
         }

@@ -16,12 +16,14 @@
 
 package org.jacodb.analysis.engine
 
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
 
 data class IfdsVertex<Method, Location, Statement>(
     val statement: Statement, val domainFact: DomainFact
-) where Location : CoreInstLocation<Method>,
+) where Method : CoreMethod<Statement>,
+        Location : CoreInstLocation<Method>,
         Statement : CoreInst<Location, Method, *> {
     val method: Method
         get() = statement.location.method

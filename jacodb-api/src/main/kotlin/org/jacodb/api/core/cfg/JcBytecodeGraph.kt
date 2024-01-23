@@ -16,11 +16,15 @@
 
 package org.jacodb.api.core.cfg
 
-import org.jacodb.api.jvm.cfg.JcInst
-
 interface Graph<NODE> : Iterable<NODE> {
     fun successors(node: NODE): Set<NODE>
     fun predecessors(node: NODE): Set<NODE>
+}
+
+// TODO Caelmbleidd rename it?
+interface ControlFlowGraph<NODE> : Graph<NODE> {
+    val entries: List<NODE>
+    val exits: List<NODE>
 
     val instructions: List<NODE>
 }

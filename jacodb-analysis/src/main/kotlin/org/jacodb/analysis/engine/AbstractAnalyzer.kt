@@ -85,7 +85,7 @@ abstract class AbstractAnalyzer<Method, Location, Statement>(
         }
 
         return traceGraphs.map {
-            NewSummaryFact(TraceGraphFact<Method>(it))
+            NewSummaryFact(TraceGraphFact(it))
         }
     }
 }

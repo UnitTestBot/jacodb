@@ -16,8 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.core.cfg.JcBytecodeGraph
-
 
 /**
  * Basic block represents a list of instructions that:

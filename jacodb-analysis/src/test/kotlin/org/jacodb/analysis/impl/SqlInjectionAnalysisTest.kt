@@ -19,11 +19,13 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.SingletonUnitResolver
-import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzer
-import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
+import org.jacodb.analysis.library.JcSingletonUnitResolver
+import org.jacodb.analysis.library.analyzers.JcSqlInjectionAnalyzer
+import org.jacodb.analysis.library.newJcSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -40,7 +42,7 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
             "s03", "s04"
         ))
 
-        private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
+        private val vulnerabilityType = JcSqlInjectionAnalyzer.vulnerabilityDescription.ruleId
     }
 
     @ParameterizedTest
@@ -49,10 +51,10 @@ class SqlInjectionAnalysisTest : BaseAnalysisTest() {
         testSingleJulietClass(vulnerabilityType, className)
     }
 
-    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance> {
+    override fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance<JcMethod, JcInstLocation, JcInst>> {
         val graph = runBlocking {
             cp.newApplicationGraphForAnalysis()
         }
-        return runAnalysis(graph, SingletonUnitResolver, newSqlInjectionRunnerFactory(), methods)
+        return runAnalysis(graph, JcSingletonUnitResolver, newJcSqlInjectionRunnerFactory(), methods)
     }
 }

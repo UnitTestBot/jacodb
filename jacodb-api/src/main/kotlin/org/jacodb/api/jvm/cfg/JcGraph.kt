@@ -16,16 +16,12 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.core.cfg.Graph
+import org.jacodb.api.core.cfg.ControlFlowGraph
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcProject
 
-interface JcBytecodeGraph<NODE> : Graph<NODE> {
-
-    val entries: List<NODE>
-    val exits: List<NODE>
-
+interface JcBytecodeGraph<NODE> : ControlFlowGraph<NODE> {
     fun throwers(node: NODE): Set<NODE>
     fun catchers(node: NODE): Set<NODE>
 }

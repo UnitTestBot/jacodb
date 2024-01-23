@@ -21,6 +21,8 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
@@ -75,7 +77,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         )
     }
 
-    protected abstract fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance>
+    protected abstract fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance<JcMethod, JcInstLocation, JcInst>>
 
     protected inline fun <reified T> testOneAnalysisOnOneMethod(
         vulnerabilityType: String,

@@ -40,6 +40,7 @@ import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.jvm.JcArrayType
 import org.jacodb.api.jvm.JcProject
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcCallExpr
@@ -48,6 +49,7 @@ import org.jacodb.api.jvm.cfg.JcEqExpr
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcIfInst
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
 import org.jacodb.api.jvm.cfg.JcNeqExpr
 import org.jacodb.api.jvm.cfg.JcNewArrayExpr
 import org.jacodb.api.jvm.cfg.JcNewExpr
@@ -58,12 +60,16 @@ import org.jacodb.api.jvm.cfg.values
 import org.jacodb.api.jvm.ext.fields
 import org.jacodb.api.jvm.ext.isNullable
 
-fun NpeAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    NpeAnalyzer(graph, maxPathLength)
+fun JcNpeAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    JcNpeAnalyzer(graph as JcApplicationGraph, maxPathLength)
 }
 
-class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnalyzer(graph) {
-    override val flowFunctions: FlowFunctionsSpace = NpeForwardFunctions(graph.classpath, maxPathLength)
+class JcNpeAnalyzer(
+    graph: JcApplicationGraph,
+    maxPathLength: Int
+) : AbstractAnalyzer<JcMethod, JcInstLocation, JcInst>(graph) {
+    override val flowFunctions: FlowFunctionsSpace<JcInst, JcMethod> =
+        NpeForwardFunctions(graph.classpath, maxPathLength)
 
     override val isMainAnalyzer: Boolean
         get() = true
@@ -72,7 +78,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
         const val ruleId: String = "npe-deref"
     }
 
-    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
+    override fun handleNewEdge(edge: IfdsEdge<JcMethod, JcInstLocation, JcInst>): List<AnalysisDependentEvent> = buildList {
         val (inst, fact0) = edge.v
 
         if (fact0 is NpeTaintNode && fact0.activation == null && fact0.variable.isDereferencedAt(inst)) {
@@ -85,7 +91,9 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
         addAll(super.handleNewEdge(edge))
     }
 
-    override fun handleNewCrossUnitCall(fact: CrossUnitCallFact): List<AnalysisDependentEvent> = buildList {
+    override fun handleNewCrossUnitCall(
+        fact: CrossUnitCallFact<JcMethod, JcInstLocation, JcInst>
+    ): List<AnalysisDependentEvent> = buildList {
         add(EdgeForOtherRunnerQuery(IfdsEdge(fact.calleeVertex, fact.calleeVertex)))
         addAll(super.handleNewCrossUnitCall(fact))
     }
@@ -94,7 +102,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
 private class NpeForwardFunctions(
     cp: JcProject,
     private val maxPathLength: Int
-) : AbstractTaintForwardFunctions(cp) {
+) : AbstractTaintForwardFunctions<JcMethod, JcInstLocation, JcInst, JcValue, JcExpr, JcType>(cp) {
 
     private val JcIfInst.pathComparedWithNull: AccessPath?
         get() {
@@ -228,25 +236,31 @@ private class NpeForwardFunctions(
     }
 }
 
-fun NpePrecalcBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
-    NpePrecalcBackwardAnalyzer(graph, maxPathLength)
+fun jcNpePrecalcBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { graph ->
+    JcNpePrecalcBackwardAnalyzer(graph as JcApplicationGraph, maxPathLength)
 }
 
-private class NpePrecalcBackwardAnalyzer(val graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnalyzer(graph) {
-    override val flowFunctions: FlowFunctionsSpace = NpePrecalcBackwardFunctions(graph, maxPathLength)
+private class JcNpePrecalcBackwardAnalyzer(
+    val graph: JcApplicationGraph,
+    maxPathLength: Int
+) : AbstractAnalyzer<JcMethod, JcInstLocation, JcInst>(graph) {
+    override val flowFunctions: FlowFunctionsSpace<JcInst, JcMethod> =
+        JcNpePrecalcBackwardFunctions(graph, maxPathLength)
 
     override val isMainAnalyzer: Boolean
         get() = false
 
-    override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> = buildList {
+    override fun handleNewEdge(edge: IfdsEdge<JcMethod, JcInstLocation, JcInst>): List<AnalysisDependentEvent> = buildList {
         if (edge.v.statement in graph.exitPoints(edge.method)) {
             add(EdgeForOtherRunnerQuery((IfdsEdge(edge.v, edge.v))))
         }
     }
 }
 
-class NpePrecalcBackwardFunctions(graph: JcApplicationGraph, maxPathLength: Int)
-    : AbstractTaintBackwardFunctions(graph, maxPathLength) {
+class JcNpePrecalcBackwardFunctions(
+    graph: JcApplicationGraph,
+    maxPathLength: Int
+) : AbstractTaintBackwardFunctions<JcMethod, JcInstLocation, JcInst, JcValue, JcExpr, JcType>(graph, maxPathLength) {
     override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
         val thisInstance = atInst.location.method.thisInstance.toPath()
         if (fact == ZEROFact) {

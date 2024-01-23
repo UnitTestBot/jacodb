@@ -19,6 +19,7 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import org.jacodb.analysis.graph.reversed
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.analysis.ApplicationGraph
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
@@ -50,7 +51,8 @@ class BidiIfdsUnitRunnerFactory<Method, Location, Statement>(
     private val backwardRunnerFactory: IfdsUnitRunnerFactory<Method, Location, Statement>,
     private val isParallel: Boolean = true
 ) : IfdsUnitRunnerFactory<Method, Location, Statement>
-        where Location : CoreInstLocation<Method>,
+        where Method : CoreMethod<Statement>,
+              Location : CoreInstLocation<Method>,
               Statement : CoreInst<Location, Method, *> {
 
     private inner class BidiIfdsUnitRunner<UnitType>(

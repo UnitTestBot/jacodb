@@ -14,15 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.impl.custom
+package org.jacodb.api.core.cfg
 
-import org.jacodb.api.core.cfg.ControlFlowGraph
+interface CoreExpr<Type, Value> {
+    val type: Type
+    val operands: List<Value>
 
-abstract class BackwardFlowAnalysis<NODE, T>(graph: ControlFlowGraph<NODE>) : FlowAnalysisImpl<NODE, T>(graph) {
-
-    override val isForward: Boolean = false
-
-    override fun run() {
-        runAnalysis(FlowAnalysisDirection.BACKWARD, outs, ins)
-    }
+    fun <T> accept(visitor: CoreExprVisitor<T>): T
 }
+
+interface CoreValue<Value : CoreValue<Value, Type>, Type> : CoreExpr<Type, Value>
+
+interface CoreExprVisitor<T>

@@ -17,6 +17,7 @@
 package org.jacodb.analysis.engine
 
 import kotlinx.coroutines.flow.FlowCollector
+import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
 
@@ -29,7 +30,8 @@ import org.jacodb.api.core.cfg.CoreInstLocation
  * - managing lifecycles of the launched runners
  */
 interface IfdsUnitManager<UnitType, Method, Location, Statement>
-        where Location : CoreInstLocation<Method>,
+        where Method : CoreMethod<Statement>,
+              Location : CoreInstLocation<Method>,
               Statement : CoreInst<Location, Method, *> {
     suspend fun handleEvent(
         event: IfdsUnitRunnerEvent,
@@ -51,7 +53,8 @@ data class QueueEmptinessChanged(val isEmpty: Boolean) : IfdsUnitRunnerEvent
 data class SubscriptionForSummaryEdges<Method, Location, Statement>(
     val method: Method,
     val collector: FlowCollector<IfdsEdge<Method, Location, Statement>>
-) : IfdsUnitRunnerEvent where Location : CoreInstLocation<Method>,
+) : IfdsUnitRunnerEvent where Method : CoreMethod<Statement>,
+                              Location : CoreInstLocation<Method>,
                               Statement : CoreInst<Location, Method, *>
 
 /**
@@ -63,5 +66,6 @@ sealed interface AnalysisDependentEvent : IfdsUnitRunnerEvent
 data class NewSummaryFact<Method>(val fact: SummaryFact<Method>) : AnalysisDependentEvent
 data class EdgeForOtherRunnerQuery<Method, Location, Statement>(
     val edge: IfdsEdge<Method, Location, Statement>
-) : AnalysisDependentEvent where Location : CoreInstLocation<Method>,
+) : AnalysisDependentEvent where Method : CoreMethod<Statement>,
+                                 Location : CoreInstLocation<Method>,
                                  Statement : CoreInst<Location, Method, *>
