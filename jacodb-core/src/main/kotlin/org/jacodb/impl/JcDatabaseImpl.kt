@@ -197,9 +197,8 @@ class JcDatabaseImpl(
         backgroundJobs.values.joinAll()
     }
 
-    override fun isInstalled(feature: JcFeature<*, *>): Boolean {
-        return featureRegistry.has(feature)
-    }
+    override val features: List<JcFeature<*, *>>
+        get() = featureRegistry.features
 
     suspend fun afterStart() {
         hooks.forEach { it.afterStart() }

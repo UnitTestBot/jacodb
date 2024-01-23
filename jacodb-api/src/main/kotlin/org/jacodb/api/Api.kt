@@ -132,7 +132,9 @@ interface JcDatabase : Closeable {
     suspend fun awaitBackgroundJobs()
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
 
-    fun isInstalled(feature: JcFeature<*, *>): Boolean
+    fun isInstalled(feature: JcFeature<*, *>): Boolean = features.contains(feature)
+
+    val features: List<JcFeature<*, *>>
 }
 
 

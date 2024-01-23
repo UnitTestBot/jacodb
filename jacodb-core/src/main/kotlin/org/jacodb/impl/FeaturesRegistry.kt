@@ -16,25 +16,19 @@
 
 package org.jacodb.impl
 
-import org.jacodb.api.ByteCodeIndexer
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcFeature
-import org.jacodb.api.JcSignal
-import org.jacodb.api.RegisteredLocation
+import kotlinx.collections.immutable.toPersistentList
+import org.jacodb.api.*
 import org.jacodb.impl.fs.fullAsmNode
 import java.io.Closeable
 
-class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable {
+class FeaturesRegistry(features: List<JcFeature<*, *>>) : Closeable {
+
+    val features = features.toPersistentList()
 
     private lateinit var jcdb: JcDatabase
 
     fun bind(jcdb: JcDatabase) {
         this.jcdb = jcdb
-    }
-
-    fun has(feature: JcFeature<*, *>): Boolean {
-        return features.contains(feature)
     }
 
     fun index(location: RegisteredLocation, classes: List<ClassSource>) {
@@ -56,10 +50,6 @@ class FeaturesRegistry(private val features: List<JcFeature<*, *>>) : Closeable 
 
     fun broadcast(signal: JcInternalSignal) {
         features.forEach { it.onSignal(signal.asJcSignal(jcdb)) }
-    }
-
-    fun forEach(action: (JcDatabase, JcFeature<*, *>) -> Unit) {
-        features.forEach { action(jcdb, it) }
     }
 
     override fun close() {
