@@ -5,7 +5,8 @@ plugins {
 
 dependencies {
     api(project(":jacodb-core"))
-    api(project(":jacodb-api"))
+    api(project(":jacodb-api-core"))
+    api(project(":jacodb-api-jvm"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)
@@ -13,7 +14,8 @@ dependencies {
     implementation(Libs.kotlinx_serialization_json)
 
     testImplementation(testFixtures(project(":jacodb-core")))
-    testImplementation(project(":jacodb-api"))
+    testImplementation(project(":jacodb-api-core"))
+    testImplementation(project(":jacodb-api-jvm"))
     testImplementation(files("src/test/resources/pointerbench.jar"))
     testImplementation(Libs.joda_time)
     testImplementation(Libs.juliet_support)

@@ -31,7 +31,7 @@ import java.util.concurrent.Future
  * Classpath **must be** closed when it's not needed anymore.
  * This will release references from database to possibly outdated libraries
  */
-interface JcProject : Project {
+interface JcProject : Project<JcType> {
 
     /** locations of this classpath */
     val db: JcDatabase

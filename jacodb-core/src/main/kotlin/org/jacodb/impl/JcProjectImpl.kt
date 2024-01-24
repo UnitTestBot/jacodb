@@ -17,7 +17,6 @@
 package org.jacodb.impl
 
 import kotlinx.coroutines.*
-import org.jacodb.api.*
 import org.jacodb.api.jvm.ClassSource
 import org.jacodb.api.jvm.JcAnnotation
 import org.jacodb.api.jvm.JcArrayType

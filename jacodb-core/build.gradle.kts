@@ -28,7 +28,8 @@ kotlin.sourceSets["main"].kotlin {
 }
 
 dependencies {
-    implementation(project(":jacodb-api"))
+    implementation(project(":jacodb-api-jvm"))
+    implementation(project(":jacodb-api-core"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.kotlinx_metadata_jvm)
@@ -43,7 +44,8 @@ dependencies {
     testImplementation(Libs.slf4j_simple)
     testImplementation(Libs.hikaricp)
 
-    testFixturesImplementation(project(":jacodb-api"))
+    testFixturesImplementation(project(":jacodb-api-jvm"))
+    testFixturesImplementation(project(":jacodb-api-core"))
     testFixturesImplementation(kotlin("reflect"))
     testFixturesImplementation(platform(Libs.junit_bom))
     testFixturesImplementation(Libs.junit_jupiter)
