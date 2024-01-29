@@ -114,7 +114,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         parametersInfo = List(params.size) { index ->
             ParameterInfo(
                 index = index,
-                name = parameters?.get(index)?.name,
+                name = argumentName(index),
                 access = parameters?.get(index)?.access ?: Opcodes.ACC_PUBLIC,
                 type = params[index],
                 annotations = visibleParameterAnnotations?.get(index)?.asAnnotationInfos(true).orEmpty()
@@ -122,6 +122,17 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
             )
         }
     )
+}
+
+private fun MethodNode.argumentName(argIndex :Int): String? {
+    localVariables?.let {
+        (argIndex + 1 - (access and Opcodes.ACC_STATIC).countOneBits()).run {
+            if (it.size > this) {
+                return ArrayList(it).sortedBy(LocalVariableNode::index)[this].name
+            }
+        }
+    }
+    return parameters?.get(argIndex)?.name
 }
 
 private fun FieldNode.asFieldInfo() = FieldInfo(
