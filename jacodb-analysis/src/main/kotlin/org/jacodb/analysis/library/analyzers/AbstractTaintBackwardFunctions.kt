@@ -59,6 +59,9 @@ abstract class AbstractTaintBackwardFunctions(
         callStatement: JcInst,
         callee: JcMethod
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
+        if (callStatement.lineNumber == 449) {
+            println("obtainCallToStartFlowFunction $callStatement $callee $fact")
+        }
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
         buildList {
@@ -85,8 +88,8 @@ abstract class AbstractTaintBackwardFunctions(
             callExpr.args.zip(formalParams).forEach { (actual, formal) ->
                 // FilterNot is needed for reasons described in comment for symmetric case in
                 //  AbstractTaintForwardFunctions.obtainExitToReturnSiteFlowFunction
-                addAll(transmitBackDataFlow(actual, formal, callStatement, fact, dropFact = true)
-                    .filterNot { it is TaintNode && !it.variable.isOnHeap })
+                addAll(transmitBackDataFlow(actual, formal, callStatement, fact, dropFact = true))
+//                    .filterNot { it is TaintNode && !it.variable.isOnHeap })
             }
         }
     }
@@ -95,6 +98,9 @@ abstract class AbstractTaintBackwardFunctions(
         callStatement: JcInst,
         returnSite: JcInst
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
+        if (callStatement.lineNumber == 449) {
+            println("obtainCallToReturnFlowFunction $callStatement $returnSite $fact")
+        }
         if (fact !is TaintNode) {
             return@FlowFunctionInstance if (fact == ZEROFact) {
                 listOf(fact)
@@ -142,6 +148,9 @@ abstract class AbstractTaintBackwardFunctions(
         returnSite: JcInst,
         exitStatement: JcInst
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
+        if (callStatement.lineNumber == 449) {
+            println("obtainExitToReturnSiteFlowFunction $callStatement $returnSite $exitStatement $fact")
+        }
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val callee = graph.methodOf(exitStatement)

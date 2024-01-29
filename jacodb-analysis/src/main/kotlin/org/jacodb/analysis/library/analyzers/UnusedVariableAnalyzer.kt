@@ -31,7 +31,6 @@ import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
-import org.jacodb.analysis.sarif.SarifMessage
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -49,7 +48,7 @@ import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
 
-class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
+class UnusedVariableAnalyzer(graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
 
     override val isMainAnalyzer: Boolean
@@ -57,7 +56,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
 
     companion object {
         const val ruleId: String = "unused-variable"
-        private val vulnerabilityMessage = SarifMessage("Assigned value is unused")
+        private val vulnerabilityMessage = "Assigned value is unused"
 
         val vulnerabilityDescription = VulnerabilityDescription(vulnerabilityMessage, ruleId)
     }

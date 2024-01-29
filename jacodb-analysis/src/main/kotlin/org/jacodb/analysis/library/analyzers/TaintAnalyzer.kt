@@ -113,7 +113,7 @@ abstract class TaintAnalyzer(
 }
 
 abstract class TaintBackwardAnalyzer(
-    val graph: JcApplicationGraph,
+    graph: JcApplicationGraph,
     maxPathLength: Int
 ) : AbstractAnalyzer(graph) {
     abstract val generates: (JcInst) -> List<DomainFact>
