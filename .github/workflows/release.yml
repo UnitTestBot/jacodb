@@ -11,7 +11,7 @@ on:
 
 jobs:
   publish:
-    if: ${{ github.actor == 'lehvolk' || github.actor == 'denis-fokin' || github.actor == 'bissquit' }}
+    if: ${{ github.actor == 'lehvolk' || github.actor == 'denis-fokin' || github.actor == 'bissquit' || github.actor == 'Vassiliy-Kudryashov' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
