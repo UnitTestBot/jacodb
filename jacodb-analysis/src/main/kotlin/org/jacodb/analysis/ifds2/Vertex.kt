@@ -36,6 +36,8 @@ data class Vertex<out Fact>(
             return Vertex(vertex.statement, vertex.domainFact.toFact())
         }
     }
+
+    override fun toString(): String = "$statement :: $fact"
 }
 
 fun Vertex<TaintFact>.toIfds(): IfdsVertex =

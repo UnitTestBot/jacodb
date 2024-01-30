@@ -37,6 +37,8 @@ data class Edge<out Fact>(
             return Edge(Vertex(edge.from), Vertex(edge.to))
         }
     }
+
+    override fun toString(): String = "${method.name}: $from --> $to"
 }
 
 fun Edge<TaintFact>.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())

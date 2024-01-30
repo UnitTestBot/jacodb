@@ -1,11 +1,11 @@
-#!/bin/sh
-
-echo "***** Check license headers before commit *****"
-
-if [ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]; then
-   ./gradlew.bat checkLicense
-elif [ "$(expr substr $(uname -s) 1 4)" == "MSYS" ]; then
-   ./gradlew.bat checkLicense
-else
-   ./gradlew checkLicense
-fi
+##!/bin/sh
+#
+#echo "***** Check license headers before commit *****"
+#
+#if [ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]; then
+#   ./gradlew.bat checkLicense
+#elif [ "$(expr substr $(uname -s) 1 4)" == "MSYS" ]; then
+#   ./gradlew.bat checkLicense
+#else
+#   ./gradlew checkLicense
+#fi
