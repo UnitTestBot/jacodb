@@ -14,8 +14,28 @@
  *  limitations under the License.
  */
 
-package org.jacodb
+package parser
 
-fun main() {
-    println("Hello World!")
+import org.jacodb.panda.dynamic.parser.IRParser
+import org.junit.jupiter.api.Test
+import kotlin.test.assertNotNull
+
+class ParserTest {
+    private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""
+    private val parser: IRParser = IRParser(sampleFilePath)
+
+    @Test
+    fun getProgramIR() {
+        val ir: IRParser.ProgramIR = parser.getProgramIR()
+        assertNotNull(ir)
+    }
+
+//    @Test
+//    fun createBasicBlocks() {
+//    }
+//
+//    @Test
+//    fun createControlFlowGraph() {
+//    }
+
 }
