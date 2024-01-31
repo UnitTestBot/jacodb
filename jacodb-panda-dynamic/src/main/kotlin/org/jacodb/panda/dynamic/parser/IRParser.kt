@@ -243,7 +243,7 @@ class IRParser(jsonPath: String) {
 
         when {
             opcode == "Parameter" -> {
-                val arg = PandaArgument(emptyList())
+                val arg = PandaArgument(op.id())
                 outputs.forEach { output ->
                     addInput(method, op.id(), output, arg)
                 }

@@ -106,15 +106,18 @@ class TODOExpr(
     override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
 }
 
-class PandaArgument(override val operands: List<PandaValue>) : PandaValue {
+class PandaArgument(val id: Int) : PandaValue {
 
     override val type: PandaType = PandaAnyType()
+
+    override val operands: List<PandaValue> = emptyList()
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
     }
 
-    override fun toString() = "PandaArgument(${operands.joinToString(separator = ", ")})"
+
+    override fun toString() = "arg $id"
 }
 
 interface PandaConstant : PandaValue
@@ -180,7 +183,7 @@ class PandaStringConstant : PandaConstant {
         return visitor.visitPandaStringConstant(this)
     }
 
-    override fun toString() = ""
+    override fun toString() = "PandaStringConstant"
 }
 
 class TODOConstant(val value: String?) : PandaConstant {
