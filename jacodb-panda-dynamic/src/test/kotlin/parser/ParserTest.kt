@@ -16,6 +16,7 @@
 
 package parser
 
+import org.jacodb.panda.dynamic.PandaBlockGraph
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -31,10 +32,13 @@ class ParserTest {
         assertNotNull(ir)
     }
 
-//    @Test
-//    fun createBasicBlocks() {
-//    }
-//
+    @Test
+    fun getBlockGraph() {
+        val ir: IRParser.ProgramIR = parser.getProgramIR()
+        val blockGraph = PandaBlockGraph(ir.classes.first().methods.first().idToBB.values.toList())
+        assertNotNull(blockGraph)
+    }
+
 //    @Test
 //    fun createControlFlowGraph() {
 //    }

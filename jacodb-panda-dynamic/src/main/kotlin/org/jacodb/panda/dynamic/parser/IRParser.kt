@@ -98,6 +98,12 @@ class IRParser(jsonPath: String) {
         @Transient
         private var method: ProgramMethod? = null
 
+        @Transient
+        var start: Int = -1
+
+        @Transient
+        var end: Int = -1
+
         fun setMethod(m: ProgramMethod) {
             method = m
         }
@@ -237,22 +243,25 @@ class IRParser(jsonPath: String) {
         }
     }
 
+    private var currentBasicBlock: ProgramBasicBlock? = null
+
     private fun mapOpcode(op: ProgramInst, method: ProgramMethod) = with(op) {
         val inputs = inputsViaOp(this)
-        val outputs = op.outputs()
+        val outputs = this.outputs()
+        val bb = this.currentBB()
 
         when {
             opcode == "Parameter" -> {
-                val arg = PandaArgument(op.id())
+                val arg = PandaArgument(this.id())
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, arg)
+                    addInput(method, this.id(), output, arg)
                 }
             }
 
             opcode == "Constant" -> {
                 val c = mapConstant(this)
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, c)
+                    addInput(method, this.id(), output, c)
                 }
             }
 
@@ -260,7 +269,7 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, PandaTypeofExpr(inputs[0] as PandaValue))
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -271,7 +280,7 @@ class IRParser(jsonPath: String) {
                     locationFromOp(this), lv, PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
                 )
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -282,7 +291,7 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -293,30 +302,40 @@ class IRParser(jsonPath: String) {
             opcode == "LoadString" -> {
                 val sc = PandaStringConstant()
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, sc)
+                    addInput(method, this.id(), output, sc)
                 }
             }
 
             opcode == "CastValueToAnyType" -> {
                 outputs.forEach { output ->
-                    inputs.forEach { input -> addInput(method, op.id(), output, input) }
+                    inputs.forEach { input -> addInput(method, this.id(), output, input) }
                 }
             }
 //            opcode == "Intrinsic.newobjrange" -> PandaNewExpr(inputs[0] as PandaValue)
-            else -> getInstType(op, method)
+            else -> getInstType(this, method)
+        }
+
+        bb.end = method.currentId - 1
+
+        if (currentBasicBlock == null) {
+            bb.start = if (method.currentId == 0) -1 else 0
+            currentBasicBlock = bb
+        } else if (bb.id != currentBasicBlock?.id) {
+            bb.start = method.currentId
+            currentBasicBlock = bb
         }
     }
 
     private fun getInstType(op: ProgramInst, method: ProgramMethod) = with(op) {
-        val operands = inputsViaOp(op).mapNotNull { it as? PandaValue }
-        val outputs = op.outputs()
+        val operands = inputsViaOp(this).mapNotNull { it as? PandaValue }
+        val outputs = this.outputs()
 
         when (opcode) {
             "Intrinsic.tryldglobalbyname" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -325,13 +344,13 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
 
             "Intrinsic.throw" -> {
-                val inst = TODOInst(opcode, locationFromOp(op), operands)
+                val inst = TODOInst(opcode, locationFromOp(this), operands)
                 method.insts.add(inst)
             }
 
@@ -339,17 +358,17 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
-                    addInput(method, op.id(), output, lv)
+                    addInput(method, this.id(), output, lv)
                 }
                 method.insts.add(assign)
             }
 
             "Intrinsic.return" -> {
-                val inst = TODOInst(opcode, locationFromOp(op), operands)
+                val inst = TODOInst(opcode, locationFromOp(this), operands)
                 method.insts.add(inst)
             }
             else -> {
-                println(opcode)
+                println("Unknown opcode: $opcode")
             }
         }
     }
