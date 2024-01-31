@@ -221,8 +221,8 @@ class IRParser(jsonPath: String) {
     }
 
     private fun mapBasicBlock(bb: ProgramBasicBlock): PandaBasicBlock {
-        val start = bb.insts.first().id()
-        val end = bb.insts.last().id()
+        val start = bb.start
+        val end = bb.end
         val successors = bb.successors.toSet()
         val predecessors = bb.predecessors.toSet()
 
@@ -299,6 +299,7 @@ class IRParser(jsonPath: String) {
             opcode.startsWith("IfImm") -> {
                 method.insts.add(mapIfInst(this, inputs))
             }
+
             opcode == "LoadString" -> {
                 val sc = PandaStringConstant()
                 outputs.forEach { output ->
@@ -311,7 +312,37 @@ class IRParser(jsonPath: String) {
                     inputs.forEach { input -> addInput(method, this.id(), output, input) }
                 }
             }
-//            opcode == "Intrinsic.newobjrange" -> PandaNewExpr(inputs[0] as PandaValue)
+
+            opcode == "Intrinsic.newobjrange" -> {
+                val newExpr = PandaNewExpr(inputs[0] as PandaValue, inputs.drop(1).map { it as PandaValue })
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, newExpr)
+                outputs.forEach { output ->
+                    addInput(method, this.id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.throw" -> {
+                val inst = PandaThrowInst(locationFromOp(this), inputs[0] as PandaValue)
+                method.insts.add(inst)
+            }
+
+            opcode == "Intrinsic.add2" -> {
+                val addExpr = PandaAddExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, addExpr)
+                outputs.forEach { output ->
+                    addInput(method, this.id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.return" -> {
+                val inst = PandaReturnInst(locationFromOp(this), inputs.getOrNull(0) as? PandaValue)
+                method.insts.add(inst)
+            }
+
             else -> getInstType(this, method)
         }
 
@@ -326,9 +357,10 @@ class IRParser(jsonPath: String) {
         }
     }
 
+
     private fun getInstType(op: ProgramInst, method: ProgramMethod) = with(op) {
-        val operands = inputsViaOp(this).mapNotNull { it as? PandaValue }
-        val outputs = this.outputs()
+        val operands = inputsViaOp(op).mapNotNull { it as? PandaValue }
+        val outputs = op.outputs()
 
         when (opcode) {
             "Intrinsic.tryldglobalbyname" -> {
@@ -339,34 +371,7 @@ class IRParser(jsonPath: String) {
                 }
                 method.insts.add(assign)
             }
-
-            "Intrinsic.newobjrange" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
-                outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
-                }
-                method.insts.add(assign)
-            }
-
-            "Intrinsic.throw" -> {
-                val inst = TODOInst(opcode, locationFromOp(this), operands)
-                method.insts.add(inst)
-            }
-
-            "Intrinsic.add2" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
-                outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
-                }
-                method.insts.add(assign)
-            }
-
-            "Intrinsic.return" -> {
-                val inst = TODOInst(opcode, locationFromOp(this), operands)
-                method.insts.add(inst)
-            }
+            "SaveState" -> {}
             else -> {
                 println("Unknown opcode: $opcode")
             }
