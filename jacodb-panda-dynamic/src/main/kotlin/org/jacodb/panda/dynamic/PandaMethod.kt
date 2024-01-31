@@ -30,4 +30,6 @@ class PandaMethod : CoreMethod<PandaInst> {
     override fun flowGraph(): ControlFlowGraph<PandaInst> {
         return PandaBlockGraph(blocks).graph()
     }
+
+    override fun toString() = "method"
 }

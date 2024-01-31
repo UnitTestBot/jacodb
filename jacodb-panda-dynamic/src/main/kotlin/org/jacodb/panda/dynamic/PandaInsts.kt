@@ -26,6 +26,8 @@ class PandaInstLocation(
     override val lineNumber: Int
 ) : CoreInstLocation<PandaMethod> {
     // TODO: expand like JcInstLocation
+
+    override fun toString() = "method.$index"
 }
 
 data class PandaInstRef(
@@ -175,6 +177,8 @@ class PandaStringConstant : PandaConstant {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStringConstant(this)
     }
+
+    override fun toString() = ""
 }
 
 class TODOConstant(val value: String?) : PandaConstant {
