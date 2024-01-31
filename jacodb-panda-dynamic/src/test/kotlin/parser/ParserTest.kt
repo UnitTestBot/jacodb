@@ -17,8 +17,8 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import kotlin.test.assertNotNull
 
 class ParserTest {
     private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""

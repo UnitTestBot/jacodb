@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic.parser
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.*
@@ -51,34 +52,34 @@ class IRParser(jsonPath: String) {
         val regs: Int = 0
     ) {
 
-        @kotlinx.serialization.Transient
+        @Transient
         val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
 
-        @kotlinx.serialization.Transient
+        @Transient
         val insts: MutableList<PandaInst> = mutableListOf()
 
         // ArkTS id -> Panda input
-        @kotlinx.serialization.Transient
+        @Transient
 
         // ArkTS id -> Panda input
         val idToInputs: MutableMap<Int, MutableList<PandaExpr>> = mutableMapOf()
 
-        @kotlinx.serialization.Transient
+        @Transient
         val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = mutableMapOf()
 
         // ArkTS bb id -> bb
-        @kotlinx.serialization.Transient
+        @Transient
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
-        @kotlinx.serialization.Transient
+        @Transient
         val pandaMethod: PandaMethod = PandaMethod()
 
         fun inputsViaOp(op: ProgramInst): List<PandaExpr> = idToInputs.getOrDefault(op.id(), emptyList())
 
-        @kotlinx.serialization.Transient
+        @Transient
         var currentLocalVarId = 0
 
-        @kotlinx.serialization.Transient
+        @Transient
         var currentId = 0
 
         init {
@@ -94,7 +95,7 @@ class IRParser(jsonPath: String) {
         val predecessors: List<Int> = emptyList()
     ) {
 
-        @kotlinx.serialization.Transient
+        @Transient
         private var method: ProgramMethod? = null
 
         fun setMethod(m: ProgramMethod) {
@@ -135,9 +136,9 @@ class IRParser(jsonPath: String) {
 
         fun id() = _id
 
-        fun inputs(): List<Int> = inputs?.map { it.trimId() } ?: emptyList()
+        fun inputs(): List<Int> = inputs.map { it.trimId() }
 
-        fun outputs(): List<Int> = users?.map { it.trimId() } ?: emptyList()
+        fun outputs(): List<Int> = users.map { it.trimId() }
     }
 
     @Serializable
@@ -162,12 +163,12 @@ class IRParser(jsonPath: String) {
         return programIR
     }
 
-    fun mapProgramIR(programIR: ProgramIR) {
+    private fun mapProgramIR(programIR: ProgramIR) {
 
         programIR.classes.forEach { clazz ->
             clazz.methods.forEach { method ->
                 method.basic_blocks.forEach { bb ->
-                    bb.insts?.forEach { inst ->
+                    bb.insts.forEach { inst ->
                         when {
                             // TODO: Удалишь -- плакать буду
                             //                            inst.opcode.startsWith("IfImm") -> {
@@ -191,9 +192,9 @@ class IRParser(jsonPath: String) {
         }
 
         val programInstructions = programIR.classes
-            .flatMap { it.methods ?: emptyList() }
-            .flatMap { it.basic_blocks ?: emptyList() }
-            .flatMap { it.insts ?: emptyList() }
+            .flatMap { it.methods }
+            .flatMap { it.basic_blocks }
+            .flatMap { it.insts }
 
         programInstructions.forEach { programInst ->
             val currentMethod: ProgramMethod = programInst.currentMethod()
@@ -203,7 +204,7 @@ class IRParser(jsonPath: String) {
         }
 
         val programMethods = programIR.classes
-            .flatMap { it.methods ?: emptyList() }
+            .flatMap { it.methods }
 
         programMethods.forEach { programMethod ->
             programMethod.pandaMethod.initBlocks(
@@ -214,17 +215,17 @@ class IRParser(jsonPath: String) {
     }
 
     private fun mapBasicBlock(bb: ProgramBasicBlock): PandaBasicBlock {
-        val start = bb.insts?.first()?.id()
-        val end = bb.insts?.last()?.id()
-        val successors = bb.successors?.toSet()
-        val predecessors = bb.predecessors?.toSet()
+        val start = bb.insts.first().id()
+        val end = bb.insts.last().id()
+        val successors = bb.successors.toSet()
+        val predecessors = bb.predecessors.toSet()
 
         return PandaBasicBlock(
             bb.id,
-            successors ?: emptySet(),
-            predecessors ?: emptySet(),
-            PandaInstRef(start ?: -1),
-            PandaInstRef(end ?: -1)
+            successors,
+            predecessors,
+            PandaInstRef(start),
+            PandaInstRef(end)
         )
     }
 
@@ -310,8 +311,8 @@ class IRParser(jsonPath: String) {
         val operands = inputsViaOp(op).mapNotNull { it as? PandaValue }
         val outputs = op.outputs()
 
-        when {
-            opcode == "Intrinsic.tryldglobalbyname" -> {
+        when (opcode) {
+            "Intrinsic.tryldglobalbyname" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
@@ -319,7 +320,8 @@ class IRParser(jsonPath: String) {
                 }
                 method.insts.add(assign)
             }
-            opcode == "Intrinsic.newobjrange" -> {
+
+            "Intrinsic.newobjrange" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
@@ -327,11 +329,13 @@ class IRParser(jsonPath: String) {
                 }
                 method.insts.add(assign)
             }
-            opcode == "Intrinsic.throw" -> {
+
+            "Intrinsic.throw" -> {
                 val inst = TODOInst(opcode, locationFromOp(op), operands)
                 method.insts.add(inst)
             }
-            opcode == "Intrinsic.add2" -> {
+
+            "Intrinsic.add2" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
                 outputs.forEach { output ->
@@ -339,7 +343,8 @@ class IRParser(jsonPath: String) {
                 }
                 method.insts.add(assign)
             }
-            opcode == "Intrinsic.return" -> {
+
+            "Intrinsic.return" -> {
                 val inst = TODOInst(opcode, locationFromOp(op), operands)
                 method.insts.add(inst)
             }
@@ -360,11 +365,11 @@ class IRParser(jsonPath: String) {
         }
 
         val trueBranch = lazy {
-            op.currentMethod().idToBB[op.getBasicBlock().successors!![0]]!!.start
+            op.currentMethod().idToBB[op.getBasicBlock().successors[0]]!!.start
         }
 
         val falseBranch = lazy {
-            op.currentMethod().idToBB[op.getBasicBlock().successors!![1]]!!.start
+            op.currentMethod().idToBB[op.getBasicBlock().successors[1]]!!.start
         }
 
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
@@ -395,18 +400,18 @@ class IRParser(jsonPath: String) {
         programIR.classes.forEach { programClass ->
             println("Class Name: ${programClass.name}")
 
-            programClass.methods?.forEach { programMethod ->
+            programClass.methods.forEach { programMethod ->
                 println("  Method Name: ${programMethod.name}")
-                programMethod.basic_blocks?.forEach { programBlock ->
+                programMethod.basic_blocks.forEach { programBlock ->
                     println("    Basic Block ID: ${programBlock.id}")
-                    programBlock.insts?.forEach { programInst ->
+                    programBlock.insts.forEach { programInst ->
                         println("      Inst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
                         println("        Type: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Visit: ${programInst.visit}")
                     }
                 }
             }
 
-            programClass.fields?.forEach { programField ->
+            programClass.fields.forEach { programField ->
                 println("  Field Name: ${programField.name}, Type: ${programField.type}")
             }
         }
@@ -415,9 +420,9 @@ class IRParser(jsonPath: String) {
     fun printSetOfProgramOpcodes(programIR: ProgramIR) {
         val opcodes = mutableSetOf<String>()
         programIR.classes.forEach { programClass ->
-            programClass.methods?.forEach { programMethod ->
-                programMethod.basic_blocks?.forEach { programBlock ->
-                    programBlock.insts?.forEach { programInst ->
+            programClass.methods.forEach { programMethod ->
+                programMethod.basic_blocks.forEach { programBlock ->
+                    programBlock.insts.forEach { programInst ->
                         opcodes.add(programInst.opcode)
                     }
                 }
