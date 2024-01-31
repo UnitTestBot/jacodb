@@ -675,7 +675,7 @@ class MethodNodeBuilder(
                 expr.declaringClass.jvmClassName,
                 expr.methodName,
                 expr.methodDesc,
-                expr.isInterface
+                expr.isInterfaceMethodCall
             )
         )
         updateStackInfo(-expr.args.size)
