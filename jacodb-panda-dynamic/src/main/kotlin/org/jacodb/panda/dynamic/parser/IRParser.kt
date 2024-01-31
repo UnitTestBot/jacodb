@@ -351,9 +351,10 @@ class IRParser(jsonPath: String) {
         val cmpOp = PandaCmpOp.valueOf(
             Regex("IfImm (.*) (.*)").find(op.opcode)!!.groups[1]?.value ?: throw IllegalStateException("No compare op")
         )
+        val immValue = mapImm(op.inputs.last())
         val condExpr: PandaConditionExpr = when (cmpOp) {
-            PandaCmpOp.NE -> PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
-            PandaCmpOp.EQ -> PandaEqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
+            PandaCmpOp.NE -> PandaNeqExpr(inputs[0] as PandaValue, immValue)
+            PandaCmpOp.EQ -> PandaEqExpr(inputs[0] as PandaValue, immValue)
         }
 
         val trueBranch = lazy {
@@ -375,11 +376,17 @@ class IRParser(jsonPath: String) {
             0
         )
     }
-
-
+    
+    private fun mapImm(imm: String): PandaConstant {
+        return when {
+            imm.startsWith("0x") -> PandaNumberConstant(Integer.decode(imm))
+            else -> TODOConstant(imm)
+        }
+    }
+            
     private fun mapConstant(op: ProgramInst): PandaConstant = when (op.type) {
         "i64" -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
-        else -> TODOConstant()
+        else -> TODOConstant(op.value)
     }
 
     fun printProgramInfo(programIR: ProgramIR) {

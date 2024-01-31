@@ -169,7 +169,7 @@ class PandaStringConstant : PandaConstant {
     }
 }
 
-class TODOConstant : PandaConstant {
+class TODOConstant(val value: String?) : PandaConstant {
     override val type: PandaType = PandaAnyType()
     override val operands: List<PandaValue> = emptyList()
 
