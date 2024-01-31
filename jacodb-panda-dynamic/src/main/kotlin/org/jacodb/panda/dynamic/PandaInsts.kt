@@ -81,6 +81,8 @@ class TODOInst(
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitTODOInst(this)
     }
+
+    override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
 }
 
 /**
@@ -98,6 +100,8 @@ class TODOExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitTODOExpr(this)
     }
+
+    override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
 }
 
 class PandaArgument(override val operands: List<PandaValue>) : PandaValue {
@@ -126,6 +130,8 @@ class PandaCmpExpr(
 
     override val type: PandaType = PandaBoolType()
     override val operands: List<PandaValue> = listOf(lhv, rhv)
+
+    override fun toString(): String = "$lhv $cmpOp $rhv"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCmpExpr(this)
@@ -178,6 +184,8 @@ class TODOConstant(val value: String?) : PandaConstant {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTODOConstant(this)
     }
+
+    override fun toString() = value?.let { "\"$it\"" } ?: "null"
 }
 
 class PandaNumberConstant(val value: Int) : PandaConstant {
@@ -189,6 +197,7 @@ class PandaNumberConstant(val value: Int) : PandaConstant {
         return visitor.visitPandaNumberConstant(this)
     }
 
+    override fun toString() = value.toString()
 }
 
 class PandaCastExpr(override val type: PandaType, operand: PandaValue) : PandaExpr {
@@ -211,6 +220,8 @@ class PandaNeqExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNeqExpr(this)
     }
+
+    override fun toString(): String = "$lhv != $rhv"
 }
 
 class PandaEqExpr(
@@ -224,6 +235,8 @@ class PandaEqExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaEqExpr(this)
     }
+
+    override fun toString(): String = "$lhv == $rhv"
 }
 
 class PandaNewExpr(
@@ -237,6 +250,8 @@ class PandaNewExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNewExpr(this)
     }
+
+    override fun toString() = "new $clazz(${params.joinToString(separator = ", ")})"
 }
 
 class PandaThrowInst(override val location: PandaInstLocation, val throwable: PandaValue) : PandaInst {
@@ -246,6 +261,8 @@ class PandaThrowInst(override val location: PandaInstLocation, val throwable: Pa
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaThrowInst(this)
     }
+
+    override fun toString(): String = "throw $throwable"
 }
 
 class PandaAddExpr(
@@ -316,6 +333,8 @@ class PandaTypeofExpr(override val value: PandaValue) : PandaUnaryExpr {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTypeofExpr(this)
     }
+
+    override fun toString() = "typeof $value"
 }
 
 class PandaLocalVar(val id: Int) : PandaValue {
