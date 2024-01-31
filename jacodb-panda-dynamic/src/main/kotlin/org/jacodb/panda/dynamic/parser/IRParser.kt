@@ -286,7 +286,9 @@ class IRParser(jsonPath: String) {
                 method.insts.add(assign)
             }
 
-            opcode.startsWith("IfImm") -> mapIfInst(this, inputs)
+            opcode.startsWith("IfImm") -> {
+                method.insts.add(mapIfInst(this, inputs))
+            }
             opcode == "LoadString" -> {
                 val sc = PandaStringConstant()
                 outputs.forEach { output ->
