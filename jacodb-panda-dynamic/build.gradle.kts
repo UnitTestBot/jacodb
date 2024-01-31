@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 group = "org.jacodb"
@@ -18,6 +19,7 @@ dependencies {
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.gson)
+    implementation(Libs.kotlinx_serialization_json)
 }
 
 tasks.test {

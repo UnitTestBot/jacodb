@@ -27,6 +27,7 @@ class ParserTest {
     @Test
     fun getProgramIR() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
+        parser.printProgramInfo(ir)
         assertNotNull(ir)
     }
 

@@ -16,85 +16,117 @@
 
 package org.jacodb.panda.dynamic.parser
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.*
 import java.io.File
 
 class IRParser(jsonPath: String) {
 
+    @Serializable
     data class ProgramIR(val classes: List<ProgramClass>)
 
+    @Serializable
     data class ProgramClass(
-        val is_interface: Boolean,
-        val methods: List<ProgramMethod>?,
+        val is_interface: Boolean = false,
+        val methods: List<ProgramMethod> = emptyList(),
         val name: String,
-        val simple_name: String?,
-        val super_class: String?,
-        val fields: List<ProgramField>?
+        val simple_name: String? = null,
+        val super_class: String? = null,
+        val fields: List<ProgramField> = emptyList()
     )
 
+    @Serializable
     data class ProgramMethod(
-        val basic_blocks: List<ProgramBasicBlock>?,
-        val is_class_initializer: Boolean,
-        val is_constructor: Boolean,
-        val is_native: Boolean,
-        val is_synchronized: Boolean,
+        val basic_blocks: List<ProgramBasicBlock> = emptyList(),
+        val is_class_initializer: Boolean = false,
+        val is_constructor: Boolean = false,
+        val is_native: Boolean = false,
+        val is_synchronized: Boolean = false,
         val name: String,
-        val return_type: String,
-        val signature: String
+        val return_type: String? = null,
+        val signature: String,
+        val args: Int = 0,
+        val regs: Int = 0
     ) {
 
+        @kotlinx.serialization.Transient
         val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
 
+        @kotlinx.serialization.Transient
         val insts: MutableList<PandaInst> = mutableListOf()
+
+        // ArkTS id -> Panda input
+        @kotlinx.serialization.Transient
 
         // ArkTS id -> Panda input
         val idToInputs: MutableMap<Int, MutableList<PandaExpr>> = mutableMapOf()
 
+        @kotlinx.serialization.Transient
         val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = mutableMapOf()
 
         // ArkTS bb id -> bb
+        @kotlinx.serialization.Transient
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
+        @kotlinx.serialization.Transient
         val pandaMethod: PandaMethod = PandaMethod()
 
         fun inputsViaOp(op: ProgramInst): List<PandaExpr> = idToInputs.getOrDefault(op.id(), emptyList())
 
+        @kotlinx.serialization.Transient
         var currentLocalVarId = 0
 
+        @kotlinx.serialization.Transient
         var currentId = 0
 
         init {
-            basic_blocks?.forEach { it.method = this }
+            basic_blocks.forEach { it.setMethod(this)}
         }
     }
 
+    @Serializable
     data class ProgramBasicBlock(
         val id: Int,
-        val insts: List<ProgramInst>?,
-        val successors: List<Int>?,
-        val predecessors: List<Int>?
+        val insts: List<ProgramInst> = emptyList(),
+        val successors: List<Int> = emptyList(),
+        val predecessors: List<Int> = emptyList()
     ) {
 
-        lateinit var method: ProgramMethod
+        @kotlinx.serialization.Transient
+        private var method: ProgramMethod? = null
+
+        fun setMethod(m: ProgramMethod) {
+            method = m
+        }
+
+        fun getMethod() = method ?: throw Exception("Method not set for basic block $id")
 
         init {
-            insts?.forEach { it.basicBlock = this }
+            insts.forEach { it.setBasicBlock(this) }
         }
     }
 
+    @Serializable
     data class ProgramInst(
         val id: String,
-        val inputs: List<String>?,
+        val inputs: List<String> = emptyList(),
         val opcode: String,
-        val type: String?,
-        val users: List<String>?,
-        val value: Any?,
-        val visit: String
+        val type: String? = null,
+        val users: List<String> = emptyList(),
+        val value: String? = null,
+        val visit: String? = null,
+        val bc: String? = null
     ) {
 
-        lateinit var basicBlock: ProgramBasicBlock
+        private var basicBlock: ProgramBasicBlock? = null
+
+        fun setBasicBlock(bb: ProgramBasicBlock) {
+            basicBlock = bb
+        }
+
+        fun getBasicBlock() = basicBlock ?: throw Exception("Basic block not set for inst $id")
 
         private fun String.trimId() = this.drop(1).toInt()
 
@@ -108,49 +140,47 @@ class IRParser(jsonPath: String) {
         fun outputs(): List<Int> = users?.map { it.trimId() } ?: emptyList()
     }
 
+    @Serializable
     data class ProgramField(
         val name: String,
         val type: String
     )
 
+    private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
+
+    private fun ProgramInst.currentBB() = this.getBasicBlock()
+
+    private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
+
     private val jsonFile: File = File(jsonPath)
 
     private val json = jsonFile.readText()
 
-    private fun ProgramInst.currentMethod() = this.basicBlock.method
-
-    private fun ProgramInst.currentBB() = this.basicBlock
-
-    private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
-
-
     fun getProgramIR(): ProgramIR {
-        val gson = Gson()
-        val programIRType = object : TypeToken<ProgramIR>() {}.type
-        val programIR: ProgramIR = gson.fromJson(json, programIRType)
-//        mapProgramIR(programIR)
+        val programIR: ProgramIR = Json.decodeFromString(json)
+        mapProgramIR(programIR)
         return programIR
     }
 
     fun mapProgramIR(programIR: ProgramIR) {
 
         programIR.classes.forEach { clazz ->
-            clazz.methods?.forEach { method ->
-                method.basic_blocks?.forEach { bb ->
+            clazz.methods.forEach { method ->
+                method.basic_blocks.forEach { bb ->
                     bb.insts?.forEach { inst ->
                         when {
                             // TODO: Удалишь -- плакать буду
-//                            inst.opcode.startsWith("IfImm") -> {
-//                                val successors = bb.successors ?: throw IllegalStateException("No bb succ after IfImm op")
-//                                val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
-//                                val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
-//                                listOfNotNull(
-//                                    trueBB.insts?.minBy { it.id() }?.id(),
-//                                    falseBB.insts?.minBy { it.id() }?.id()
-//                                ).forEach { output ->
-//                                    method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
-//                                }
-//                            }
+                            //                            inst.opcode.startsWith("IfImm") -> {
+                            //                                val successors = bb.successors ?: throw IllegalStateException("No bb succ after IfImm op")
+                            //                                val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
+                            //                                val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
+                            //                                listOfNotNull(
+                            //                                    trueBB.insts?.minBy { it.id() }?.id(),
+                            //                                    falseBB.insts?.minBy { it.id() }?.id()
+                            //                                ).forEach { output ->
+                            //                                    method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
+                            //                                }
+                            //                            }
                             else -> inst.outputs().forEach { output ->
                                 method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
                             }
@@ -246,9 +276,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode.startsWith("Compare") -> {
-                val cmpOp = PandaCmpOp.valueOf(
-                    Regex("Compare [.*] .*").find(opcode)!!.groups[1].toString()
-                )
+                val cmpOp = PandaCmpOp.valueOf(Regex("Compare (.*) (.*)").find(opcode)?.groups?.get(1)?.value ?: throw IllegalStateException("No compare op"))
                 val cmp = PandaCmpExpr(cmpOp, inputs[0] as PandaValue, inputs[1] as PandaValue)
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
@@ -272,8 +300,7 @@ class IRParser(jsonPath: String) {
                 }
             }
 //            opcode == "Intrinsic.newobjrange" -> PandaNewExpr(inputs[0] as PandaValue)
-            opcode == "SaveState" -> TODO()
-            else -> TODO()
+            else -> getInstType(op, method)
         }
     }
 
@@ -314,13 +341,15 @@ class IRParser(jsonPath: String) {
                 val inst = TODOInst(opcode, locationFromOp(op), operands)
                 method.insts.add(inst)
             }
-            else -> TODO()
+            else -> {
+                println(opcode)
+            }
         }
     }
 
     private fun mapIfInst(op: ProgramInst, inputs: List<Mappable>): PandaIfInst {
         val cmpOp = PandaCmpOp.valueOf(
-            Regex("IfImm [.*] .*").find(op.opcode)!!.groups[1].toString()
+            Regex("IfImm (.*) (.*)").find(op.opcode)!!.groups[1]?.value ?: throw IllegalStateException("No compare op")
         )
         val condExpr: PandaConditionExpr = when (cmpOp) {
             PandaCmpOp.NE -> PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
@@ -328,11 +357,11 @@ class IRParser(jsonPath: String) {
         }
 
         val trueBranch = lazy {
-            op.currentMethod().idToBB[op.basicBlock.successors!![0]]!!.start
+            op.currentMethod().idToBB[op.getBasicBlock().successors!![0]]!!.start
         }
 
         val falseBranch = lazy {
-            op.currentMethod().idToBB[op.basicBlock.successors!![1]]!!.start
+            op.currentMethod().idToBB[op.getBasicBlock().successors!![1]]!!.start
         }
 
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
@@ -349,7 +378,7 @@ class IRParser(jsonPath: String) {
 
 
     private fun mapConstant(op: ProgramInst): PandaConstant = when (op.type) {
-        "i64" -> PandaNumberConstant(op.value!!.toString().toInt(radix = 16))
+        "i64" -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
         else -> TODOConstant()
     }
 
