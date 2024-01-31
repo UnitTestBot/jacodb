@@ -59,7 +59,7 @@ class IRParser(jsonPath: String) {
 
         val pandaMethod: PandaMethod = PandaMethod()
 
-        fun inputsViaOp(op: ProgramInst): List<Mappable> = idToInputs.getOrDefault(op.id(), emptyList())
+        fun inputsViaOp(op: ProgramInst): List<PandaExpr> = idToInputs.getOrDefault(op.id(), emptyList())
 
         var currentLocalVarId = 0
 
@@ -266,7 +266,11 @@ class IRParser(jsonPath: String) {
                 }
             }
 
-            opcode == "CastValueToAnyType" -> TODO()
+            opcode == "CastValueToAnyType" -> {
+                outputs.forEach { output ->
+                    inputs.forEach { input -> addInput(method, op.id(), output, input) }
+                }
+            }
 //            opcode == "Intrinsic.newobjrange" -> PandaNewExpr(inputs[0] as PandaValue)
             opcode == "SaveState" -> TODO()
             else -> TODO()
