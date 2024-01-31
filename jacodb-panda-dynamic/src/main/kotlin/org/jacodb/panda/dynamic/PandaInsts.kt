@@ -154,6 +154,8 @@ class PandaIfInst(
 
     override val operands: List<PandaExpr> = listOf(condition)
 
+    override fun toString(): String = "if ($condition)"
+
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaIfInst(this)
     }
@@ -287,6 +289,8 @@ class PandaAssignInst(
 
     override val operands: List<PandaExpr> = listOf(lhv, rhv)
 
+    override fun toString(): String = "$lhv = $rhv"
+
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaAssignInst(this)
     }
@@ -318,6 +322,8 @@ class PandaLocalVar(val id: Int) : PandaValue {
 
     override val type: PandaType = PandaAnyType()
     override val operands: List<PandaValue> = emptyList()
+
+    override fun toString(): String = "%$id"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLocalVar(this)
