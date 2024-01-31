@@ -273,14 +273,43 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    private fun getInstType(op: ProgramInst): Mappable = with(op) {
+    private fun getInstType(op: ProgramInst, method: ProgramMethod) = with(op) {
         val operands = inputsViaOp(op).mapNotNull { it as? PandaValue }
-        return when (opcode) {
-            "Intrinsic.tryldglobalbyname" -> TODOExpr(opcode, operands)
-            "Intrinsic.newobjrange" -> TODOExpr(opcode, operands)
-            "Intrinsic.throw" -> TODOInst(opcode, locationFromOp(op), operands)
-            "Intrinsic.add2" -> TODOExpr(opcode, operands)
-            "Intrinsic.return" -> TODOExpr(opcode, operands)
+        val outputs = op.outputs()
+
+        when {
+            opcode == "Intrinsic.tryldglobalbyname" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
+                outputs.forEach { output ->
+                    addInput(method, op.id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+            opcode == "Intrinsic.newobjrange" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
+                outputs.forEach { output ->
+                    addInput(method, op.id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+            opcode == "Intrinsic.throw" -> {
+                val inst = TODOInst(opcode, locationFromOp(op), operands)
+                method.insts.add(inst)
+            }
+            opcode == "Intrinsic.add2" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
+                outputs.forEach { output ->
+                    addInput(method, op.id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+            opcode == "Intrinsic.return" -> {
+                val inst = TODOInst(opcode, locationFromOp(op), operands)
+                method.insts.add(inst)
+            }
             else -> TODO()
         }
     }
