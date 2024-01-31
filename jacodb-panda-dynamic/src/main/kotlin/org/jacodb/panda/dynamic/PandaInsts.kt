@@ -113,6 +113,8 @@ class PandaArgument(override val operands: List<PandaValue>) : PandaValue {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
     }
+
+    override fun toString() = "PandaArgument(${operands.joinToString(separator = ", ")})"
 }
 
 interface PandaConstant : PandaValue
@@ -211,6 +213,8 @@ class PandaCastExpr(override val type: PandaType, operand: PandaValue) : PandaEx
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCastExpr(this)
     }
+
+    override fun toString() = "($type) $operands"
 }
 
 class PandaNeqExpr(
@@ -280,6 +284,8 @@ class PandaAddExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaAddExpr(this)
     }
+
+    override fun toString(): String = "$lhv + $rhv"
 }
 
 class PandaVirtualCallExpr : PandaCallExpr {
@@ -300,6 +306,8 @@ class PandaReturnInst(
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaReturnInst(this)
     }
+
+    override fun toString(): String = "return ${operands.firstOrNull()}"
 }
 
 class PandaAssignInst(
@@ -327,6 +335,8 @@ class PandaCallInst(
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaCallInst(this)
     }
+
+    override fun toString(): String = callExpr.toString()
 }
 
 class PandaTypeofExpr(override val value: PandaValue) : PandaUnaryExpr {
