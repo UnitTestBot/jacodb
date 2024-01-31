@@ -32,7 +32,14 @@ class PandaInstLocation(
 
 data class PandaInstRef(
     val index: Int
-)
+) : Comparable<PandaInstRef> {
+
+    override fun compareTo(other: PandaInstRef): Int {
+        return this.index.compareTo(other.index)
+    }
+
+    override fun toString() = index.toString()
+}
 
 interface PandaInst : CoreInst<PandaInstLocation, PandaMethod, PandaExpr>, Mappable {
 
@@ -157,17 +164,17 @@ class PandaIfInst(
 ) : CoreIfInst<PandaInstLocation, PandaMethod, PandaExpr>, PandaInst, PandaBranchingInst {
 
     val trueBranch: PandaInstRef
-        get() = _trueBranch.value
+        get() = minOf(_trueBranch.value, _falseBranch.value)
 
     val falseBranch: PandaInstRef
-        get() = _falseBranch.value
+        get() = maxOf(_trueBranch.value, _falseBranch.value)
 
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
 
     override val operands: List<PandaExpr> = listOf(condition)
 
-    override fun toString(): String = "if ($condition)"
+    override fun toString(): String = "if ($condition) then $trueBranch else $falseBranch"
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaIfInst(this)
