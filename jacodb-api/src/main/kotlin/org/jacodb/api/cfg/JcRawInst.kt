@@ -762,6 +762,7 @@ data class JcRawStaticCallExpr(
     override val argumentTypes: List<TypeName>,
     override val returnType: TypeName,
     override val args: List<JcRawValue>,
+    val isInterface: Boolean = false,
 ) : JcRawCallExpr {
     override fun toString(): String =
         "$declaringClass.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"

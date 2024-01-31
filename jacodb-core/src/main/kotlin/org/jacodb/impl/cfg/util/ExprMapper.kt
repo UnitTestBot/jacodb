@@ -364,7 +364,7 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawStaticCallExpr(
-                expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newArgs
+                expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newArgs, expr.isInterface
             )
         }
     }
