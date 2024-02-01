@@ -28,8 +28,19 @@ class ParserTest {
     @Test
     fun getProgramIR() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
-        parser.printProgramInfo(ir)
-        assertNotNull(ir)
+        println("=========================")
+        println("Panda CFG:")
+        ir.classes[0].methods[0].insts.forEach {
+            println("${it.location}: $it")
+        }
+        println("=========================")
+        println("Panda basic blocks:")
+        ir.classes[0].methods[0].idToBB.values.toList().forEach {
+            println("${it.id}. [${it.start}..${it.end}]")
+        }
+        println("=========================")
+//        parser.printProgramInfo(ir)
+//        assertNotNull(ir)
     }
 
     @Test

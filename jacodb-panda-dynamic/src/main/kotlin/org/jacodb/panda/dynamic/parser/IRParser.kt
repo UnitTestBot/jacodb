@@ -403,7 +403,7 @@ class IRParser(jsonPath: String) {
             }
             "SaveState" -> {}
             else -> {
-                logger.warn { "Unknown opcode: $opcode" }
+//                logger.warn { "Unknown opcode: $opcode" }
             }
         }
     }
