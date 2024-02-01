@@ -20,8 +20,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import mu.KLogging
 import org.jacodb.panda.dynamic.*
 import java.io.File
+
+val logger = object : KLogging() {}.logger
 
 class IRParser(jsonPath: String) {
 
@@ -35,7 +38,6 @@ class IRParser(jsonPath: String) {
         val name: String,
         val simple_name: String? = null,
         val super_class: String? = null,
-        val fields: List<ProgramField> = emptyList()
     )
 
     @Serializable
@@ -60,8 +62,6 @@ class IRParser(jsonPath: String) {
 
         // ArkTS id -> Panda input
         @Transient
-
-        // ArkTS id -> Panda input
         val idToInputs: MutableMap<Int, MutableList<PandaExpr>> = mutableMapOf()
 
         @Transient
@@ -74,13 +74,13 @@ class IRParser(jsonPath: String) {
         @Transient
         val pandaMethod: PandaMethod = PandaMethod()
 
-        fun inputsViaOp(op: ProgramInst): List<PandaExpr> = idToInputs.getOrDefault(op.id(), emptyList())
-
         @Transient
         var currentLocalVarId = 0
 
         @Transient
         var currentId = 0
+
+        fun inputsViaOp(op: ProgramInst): List<PandaExpr> = idToInputs.getOrDefault(op.id(), emptyList())
 
         init {
             basic_blocks.forEach { it.setMethod(this)}
@@ -129,16 +129,16 @@ class IRParser(jsonPath: String) {
 
         private var basicBlock: ProgramBasicBlock? = null
 
+        private fun String.trimId() = this.drop(1).toInt()
+
+        private val _id: Int
+            get() = id.trimId()
+
         fun setBasicBlock(bb: ProgramBasicBlock) {
             basicBlock = bb
         }
 
         fun getBasicBlock() = basicBlock ?: throw Exception("Basic block not set for inst $id")
-
-        private fun String.trimId() = this.drop(1).toInt()
-
-        private val _id: Int
-            get() = id.trimId()
 
         fun id() = _id
 
@@ -146,18 +146,6 @@ class IRParser(jsonPath: String) {
 
         fun outputs(): List<Int> = users.map { it.trimId() }
     }
-
-    @Serializable
-    data class ProgramField(
-        val name: String,
-        val type: String
-    )
-
-    private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
-
-    private fun ProgramInst.currentBB() = this.getBasicBlock()
-
-    private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
 
     private val jsonFile: File = File(jsonPath)
 
@@ -169,25 +157,41 @@ class IRParser(jsonPath: String) {
         return programIR
     }
 
-    private fun mapProgramIR(programIR: ProgramIR) {
+    private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
 
+    private fun ProgramInst.currentBB() = this.getBasicBlock()
+
+    private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
+
+    private fun mapProgramIR(programIR: ProgramIR) {
+        mapIdToIRInputs(programIR)
+
+        mapInstructions(programIR)
+
+        mapMethods(programIR)
+    }
+
+    private fun mapIdToIRInputs(programIR: ProgramIR) {
         programIR.classes.forEach { clazz ->
             clazz.methods.forEach { method ->
                 method.basic_blocks.forEach { bb ->
                     bb.insts.forEach { inst ->
+                        // TODO(to delete?: map IfImm)
+                        /*
+                        inst.opcode.startsWith("IfImm") -> {
+                            val successors =
+                                bb.successors ?: throw IllegalStateException("No bb succ after IfImm op")
+                            val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
+                            val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
+                            listOfNotNull(
+                                trueBB.insts?.minBy { it.id() }?.id(),
+                                falseBB.insts?.minBy { it.id() }?.id()
+                            ).forEach { output ->
+                                method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
+                            }
+                        }
+                        */
                         when {
-                            // TODO: Удалишь -- плакать буду
-                            //                            inst.opcode.startsWith("IfImm") -> {
-                            //                                val successors = bb.successors ?: throw IllegalStateException("No bb succ after IfImm op")
-                            //                                val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
-                            //                                val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
-                            //                                listOfNotNull(
-                            //                                    trueBB.insts?.minBy { it.id() }?.id(),
-                            //                                    falseBB.insts?.minBy { it.id() }?.id()
-                            //                                ).forEach { output ->
-                            //                                    method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
-                            //                                }
-                            //                            }
                             else -> inst.outputs().forEach { output ->
                                 method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
                             }
@@ -196,19 +200,9 @@ class IRParser(jsonPath: String) {
                 }
             }
         }
+    }
 
-        val programInstructions = programIR.classes
-            .flatMap { it.methods }
-            .flatMap { it.basic_blocks }
-            .flatMap { it.insts }
-
-        programInstructions.forEach { programInst ->
-            val currentMethod: ProgramMethod = programInst.currentMethod()
-            mapOpcode(programInst, currentMethod)
-//            currentMethod.idToInputs[programInst.id()] = programInst.inputs()
-            currentMethod.idToBB[programInst.currentBB().id] = mapBasicBlock(programInst.currentBB())
-        }
-
+    private fun mapMethods(programIR: ProgramIR) {
         val programMethods = programIR.classes
             .flatMap { it.methods }
 
@@ -217,7 +211,19 @@ class IRParser(jsonPath: String) {
                 programMethod.idToBB.values.toList(),
             )
         }
+    }
 
+    private fun mapInstructions(programIR: ProgramIR) {
+        val programInstructions = programIR.classes
+            .flatMap { it.methods }
+            .flatMap { it.basic_blocks }
+            .flatMap { it.insts }
+
+        programInstructions.forEach { programInst ->
+            val currentMethod: ProgramMethod = programInst.currentMethod()
+            mapOpcode(programInst, currentMethod)
+            currentMethod.idToBB[programInst.currentBB().id] = mapBasicBlock(programInst.currentBB())
+        }
     }
 
     private fun mapBasicBlock(bb: ProgramBasicBlock): PandaBasicBlock {
@@ -267,7 +273,11 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.typeof" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, PandaTypeofExpr(inputs[0] as PandaValue))
+                val assign = PandaAssignInst(
+                    locationFromOp(this),
+                    lv,
+                    PandaTypeofExpr(inputs[0] as PandaValue)
+                )
                 outputs.forEach { output ->
                     addInput(method, this.id(), output, lv)
                 }
@@ -277,7 +287,9 @@ class IRParser(jsonPath: String) {
             opcode == "Intrinsic.noteq" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(
-                    locationFromOp(this), lv, PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
+                    locationFromOp(this),
+                    lv,
+                    PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
                 )
                 outputs.forEach { output ->
                     addInput(method, this.id(), output, lv)
@@ -286,7 +298,14 @@ class IRParser(jsonPath: String) {
             }
 
             opcode.startsWith("Compare") -> {
-                val cmpOp = PandaCmpOp.valueOf(Regex("Compare (.*) (.*)").find(opcode)?.groups?.get(1)?.value ?: throw IllegalStateException("No compare op"))
+                val cmpOp = PandaCmpOp.valueOf(
+                    Regex("Compare (.*) (.*)")
+                        .find(opcode)
+                        ?.groups
+                        ?.get(1)
+                        ?.value
+                        ?: throw IllegalStateException("No compare op")
+                )
                 val cmp = PandaCmpExpr(cmpOp, inputs[0] as PandaValue, inputs[1] as PandaValue)
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
@@ -346,13 +365,20 @@ class IRParser(jsonPath: String) {
             else -> getInstType(this, method)
         }
 
-        bb.end = method.currentId - 1
+        matchBasicBlockInstructionId(bb, method.currentId)
+    }
+
+    private fun matchBasicBlockInstructionId(
+        bb: ProgramBasicBlock,
+        currentId: Int
+    ) {
+        bb.end = currentId - 1
 
         if (currentBasicBlock == null) {
-            bb.start = if (method.currentId == 0) -1 else 0
+            bb.start = if (currentId == 0) -1 else 0
             currentBasicBlock = bb
         } else if (bb.id != currentBasicBlock?.id) {
-            bb.start = method.currentId
+            bb.start = currentId
             currentBasicBlock = bb
         }
     }
@@ -365,7 +391,11 @@ class IRParser(jsonPath: String) {
         when (opcode) {
             "Intrinsic.tryldglobalbyname" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, operands))
+                val assign = PandaAssignInst(
+                    locationFromOp(this),
+                    lv,
+                    TODOExpr(opcode, operands)
+                )
                 outputs.forEach { output ->
                     addInput(method, this.id(), output, lv)
                 }
@@ -373,14 +403,19 @@ class IRParser(jsonPath: String) {
             }
             "SaveState" -> {}
             else -> {
-                println("Unknown opcode: $opcode")
+                logger.warn { "Unknown opcode: $opcode" }
             }
         }
     }
 
     private fun mapIfInst(op: ProgramInst, inputs: List<Mappable>): PandaIfInst {
         val cmpOp = PandaCmpOp.valueOf(
-            Regex("IfImm (.*) (.*)").find(op.opcode)!!.groups[1]?.value ?: throw IllegalStateException("No compare op")
+            Regex("IfImm (.*) (.*)")
+                .find(op.opcode)
+                ?.groups
+                ?.get(1)
+                ?.value
+                ?: throw IllegalStateException("No IfImm op")
         )
         val immValue = mapImm(op.inputs.last())
         val condExpr: PandaConditionExpr = when (cmpOp) {
@@ -425,18 +460,14 @@ class IRParser(jsonPath: String) {
             println("Class Name: ${programClass.name}")
 
             programClass.methods.forEach { programMethod ->
-                println("  Method Name: ${programMethod.name}")
+                println("\tMethod Name: ${programMethod.name}")
                 programMethod.basic_blocks.forEach { programBlock ->
-                    println("    Basic Block ID: ${programBlock.id}")
+                    println("\t\tBasic Block ID: ${programBlock.id}")
                     programBlock.insts.forEach { programInst ->
-                        println("      Inst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
-                        println("        Type: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Visit: ${programInst.visit}")
+                        println("\t\t\tInst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
+                        println("\t\t\t\tType: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Visit: ${programInst.visit}")
                     }
                 }
-            }
-
-            programClass.fields.forEach { programField ->
-                println("  Field Name: ${programField.name}, Type: ${programField.type}")
             }
         }
     }
