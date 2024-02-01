@@ -266,7 +266,6 @@ class MethodNodeBuilder(
         val trueTarget = label(inst.trueBranch)
         val falseTarget = label(inst.falseBranch)
         val cond = inst.condition
-        var shouldReverse = false
         val (zeroValue, zeroCmpOpcode, defaultOpcode) = when (cond) {
             is JcRawEqExpr -> when {
                 cond.lhv.typeName == PredefinedPrimitives.Null.typeName() -> Triple(
@@ -675,7 +674,8 @@ class MethodNodeBuilder(
                 Opcodes.INVOKESTATIC,
                 expr.declaringClass.jvmClassName,
                 expr.methodName,
-                expr.methodDesc
+                expr.methodDesc,
+                expr.isInterfaceMethodCall
             )
         )
         updateStackInfo(-expr.args.size)

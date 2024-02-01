@@ -265,6 +265,15 @@ class InstructionsTest : BaseInstructionsTest() {
         assertEquals("defaultMethod", callDefaultMethod.method.method.name)
     }
 
+    @Test
+    fun `static interface method call`() {
+        val clazz = cp.findClass<StaticInterfaceMethodCall>()
+
+        val javaClazz = testAndLoadClass(clazz)
+        val method = javaClazz.methods.first { it.name == "callStaticInterfaceMethod" }
+        val res = method.invoke(null)
+        assertNull(res)
+    }
 
     @Test
     fun `condition in for should work`() {

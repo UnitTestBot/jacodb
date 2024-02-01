@@ -25,11 +25,6 @@ import org.jacodb.impl.cfg.util.*
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.*
 import org.objectweb.asm.tree.*
-import org.objectweb.asm.util.Printer
-import org.objectweb.asm.util.Textifier
-import org.objectweb.asm.util.TraceMethodVisitor
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.util.*
 
 
@@ -1400,7 +1395,8 @@ class RawInstListBuilder(
                                 lookupAssignment,
                                 JcRawStringConstant(cst.name, STRING_CLASS.typeName()),
                                 JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
-                            ) + exprs
+                            ) + exprs,
+                            methodHande.isInterface
                         )
                     }
                 }
@@ -1438,7 +1434,8 @@ class RawInstListBuilder(
                 methodName,
                 argTypes,
                 returnType,
-                args
+                args,
+                insnNode.itf
             )
 
             else -> {
@@ -1555,7 +1552,7 @@ class RawInstListBuilder(
                 variable,
                 pop(),
                 insnNode
-            )?.let { addInstruction(insnNode, it) }
+            ).let { addInstruction(insnNode, it) }
 
             in Opcodes.ILOAD..Opcodes.ALOAD -> {
                 push(local(variable))

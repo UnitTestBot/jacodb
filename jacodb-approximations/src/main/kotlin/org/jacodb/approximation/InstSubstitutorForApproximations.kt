@@ -365,7 +365,8 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
                 methodName,
                 argumentTypes.map { it.eliminateApproximation() },
                 returnType.eliminateApproximation(),
-                newArgs
+                newArgs,
+                isInterfaceMethodCall
             )
         }
     }
