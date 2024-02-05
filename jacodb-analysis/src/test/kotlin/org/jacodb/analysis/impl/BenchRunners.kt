@@ -14,17 +14,16 @@
  *  limitations under the License.
  */
 
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalTime::class)
 
 package org.jacodb.analysis.impl
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.PackageUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.ifds2.runAnalysis2
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.ifds2.taint.runAnalysis2
 import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClasspath
@@ -87,9 +86,7 @@ object OwaspBenchRunner {
         return loadWebAppBenchCp(
             classes = owaspJavaPath / "classes",
             dependencies = owaspJavaPath / "deps",
-            // unitResolver = PackageUnitResolver,
-            unitResolver = ClassUnitResolver(true),
-            // unitResolver = SingletonUnitResolver,
+            unitResolver = PackageUnitResolver
         ).apply {
             entrypointFilter = { method ->
                 if (method.enclosingClass.packageName.startsWith("org.owasp.benchmark.testcode")) {
@@ -98,7 +95,7 @@ object OwaspBenchRunner {
                         true
                     } else {
                         // Specific method:
-                        // val specificMethod = "BenchmarkTest00008"
+                        val specificMethod = "BenchmarkTest00008"
                         // val specificMethod = "BenchmarkTest00018"
                         // val specificMethod = "BenchmarkTest00024"
                         // val specificMethod = "BenchmarkTest00025"
@@ -109,7 +106,7 @@ object OwaspBenchRunner {
                         // val specificMethod = "BenchmarkTest00034"
                         // val specificMethod = "BenchmarkTest00037"
                         // val specificMethod = "BenchmarkTest00043"
-                        val specificMethod = "BenchmarkTest00105"
+                        // val specificMethod = "BenchmarkTest00105"
                         if (method.enclosingClass.simpleName == specificMethod) {
                             true
                         } else {
@@ -193,7 +190,9 @@ private fun loadBenchCp(
     }
     db.awaitBackgroundJobs()
 
-    val defaultConfigResource = this.javaClass.getResourceAsStream("/defaultTaintConfig.json")!!
+    // val taintConfigFileName = "defaultTaintConfig.json"
+    val taintConfigFileName = "config_big.json"
+    val defaultConfigResource = this.javaClass.getResourceAsStream("/$taintConfigFileName")!!
     var configJson = defaultConfigResource.bufferedReader().readText()
     val additionalConfigResource = this.javaClass.getResourceAsStream("/additional.json")
     if (additionalConfigResource != null) {
@@ -246,7 +245,7 @@ private fun loadWebAppBenchCp(
 private fun BenchCp.analyze() {
     val useSpecificClass = false
     val startMethods = if (useSpecificClass) {
-        val className = "org.owasp.benchmark.testcode.BenchmarkTest00032"
+        val className = "org.owasp.benchmark.testcode.BenchmarkTest01061"
         logger.info { "Analyzing '$className'" }
         val clazz = cp.findClass(className)
         clazz.publicAndProtectedMethods().toList()

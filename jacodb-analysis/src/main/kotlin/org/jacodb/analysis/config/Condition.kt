@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds2.Tainted
+import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.api.JcClassType
@@ -28,7 +28,6 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
-import org.jacodb.taint.configuration.ContainsMark
 import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
@@ -39,6 +38,7 @@ import org.jacodb.taint.configuration.ConstantLt
 import org.jacodb.taint.configuration.ConstantMatches
 import org.jacodb.taint.configuration.ConstantStringValue
 import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
 import org.jacodb.taint.configuration.IsConstant
 import org.jacodb.taint.configuration.IsType
 import org.jacodb.taint.configuration.Not
@@ -47,51 +47,31 @@ import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.SourceFunctionMatches
 import org.jacodb.taint.configuration.TypeMatches
 
-abstract class DefaultConditionVisitor<out R>(
-    private val defaultConditionHandler: (Condition) -> R,
-) : ConditionVisitor<R> {
-    final override fun visit(condition: Condition): R = defaultConditionHandler(condition)
+class BasicConditionEvaluator(
+    internal val positionResolver: PositionResolver<JcValue>,
+) : ConditionVisitor<Boolean> {
 
-    override fun visit(condition: And): R = defaultConditionHandler(condition)
-    override fun visit(condition: Or): R = defaultConditionHandler(condition)
-    override fun visit(condition: Not): R = defaultConditionHandler(condition)
-    override fun visit(condition: IsConstant): R = defaultConditionHandler(condition)
-    override fun visit(condition: IsType): R = defaultConditionHandler(condition)
-    override fun visit(condition: AnnotationType): R = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantEq): R = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantLt): R = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantGt): R = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantMatches): R = defaultConditionHandler(condition)
-    override fun visit(condition: SourceFunctionMatches): R = defaultConditionHandler(condition)
-    override fun visit(condition: ContainsMark): R = defaultConditionHandler(condition)
-    override fun visit(condition: ConstantTrue): R = defaultConditionHandler(condition)
-    override fun visit(condition: TypeMatches): R = defaultConditionHandler(condition)
-}
+    // Default condition handler:
+    override fun visit(condition: Condition): Boolean {
+        return false
+    }
 
-abstract class DefaultConditionEvaluator(
-    defaultConditionHandler: (Condition) -> Boolean = { false },
-) : DefaultConditionVisitor<Boolean>(defaultConditionHandler) {
-
-    final override fun visit(condition: And): Boolean {
+    override fun visit(condition: And): Boolean {
         return condition.args.all { it.accept(this) }
     }
 
-    final override fun visit(condition: Or): Boolean {
+    override fun visit(condition: Or): Boolean {
         return condition.args.any { it.accept(this) }
     }
 
-    final override fun visit(condition: Not): Boolean {
+    override fun visit(condition: Not): Boolean {
         return !condition.arg.accept(this)
     }
 
-    final override fun visit(condition: ConstantTrue): Boolean {
+    override fun visit(condition: ConstantTrue): Boolean {
         return true
     }
-}
 
-class BasicConditionEvaluator(
-    internal val positionResolver: PositionResolver<JcValue>,
-) : DefaultConditionEvaluator() {
     override fun visit(condition: IsConstant): Boolean {
         val value = positionResolver.resolve(condition.position)
         return value is JcConstant
@@ -130,6 +110,7 @@ class BasicConditionEvaluator(
         val value = positionResolver.resolve(condition.position)
         return when (val constant = condition.value) {
             is ConstantIntValue -> {
+                // TODO: use core stuff here
                 value is JcInt && value.value < constant.value
             }
 
@@ -141,6 +122,7 @@ class BasicConditionEvaluator(
         val value = positionResolver.resolve(condition.position)
         return when (val constant = condition.value) {
             is ConstantIntValue -> {
+                // TODO: use core stuff here
                 value is JcInt && value.value > constant.value
             }
 
@@ -182,7 +164,7 @@ class BasicConditionEvaluator(
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
     private val basicConditionEvaluator: BasicConditionEvaluator,
-) : DefaultConditionEvaluator() {
+) : ConditionVisitor<Boolean> {
 
     constructor(
         fact: Tainted,
@@ -200,41 +182,31 @@ class FactAwareConditionEvaluator(
         return false
     }
 
-    // Delegates
-
-    override fun visit(condition: IsConstant): Boolean {
-        return basicConditionEvaluator.visit(condition)
+    override fun visit(condition: And): Boolean {
+        return condition.args.all { it.accept(this) }
     }
 
-    override fun visit(condition: IsType): Boolean {
-        return basicConditionEvaluator.visit(condition)
+    override fun visit(condition: Or): Boolean {
+        return condition.args.any { it.accept(this) }
     }
 
-    override fun visit(condition: AnnotationType): Boolean {
-        return basicConditionEvaluator.visit(condition)
+    override fun visit(condition: Not): Boolean {
+        return !condition.arg.accept(this)
     }
 
-    override fun visit(condition: ConstantEq): Boolean {
-        return basicConditionEvaluator.visit(condition)
+    override fun visit(condition: ConstantTrue): Boolean {
+        return true
     }
 
-    override fun visit(condition: ConstantLt): Boolean {
-        return basicConditionEvaluator.visit(condition)
-    }
+    override fun visit(condition: IsConstant): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: IsType): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: AnnotationType): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: ConstantEq): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: ConstantLt): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: ConstantGt): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: ConstantMatches): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: SourceFunctionMatches): Boolean = basicConditionEvaluator.visit(condition)
+    override fun visit(condition: TypeMatches): Boolean = basicConditionEvaluator.visit(condition)
 
-    override fun visit(condition: ConstantGt): Boolean {
-        return basicConditionEvaluator.visit(condition)
-    }
-
-    override fun visit(condition: ConstantMatches): Boolean {
-        return basicConditionEvaluator.visit(condition)
-    }
-
-    override fun visit(condition: SourceFunctionMatches): Boolean {
-        return basicConditionEvaluator.visit(condition)
-    }
-
-    override fun visit(condition: TypeMatches): Boolean {
-        return basicConditionEvaluator.visit(condition)
-    }
+    override fun visit(condition: Condition): Boolean = basicConditionEvaluator.visit(condition)
 }

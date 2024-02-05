@@ -160,7 +160,7 @@ private class UnusedVariableForwardFunctions(
 
     override fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod) = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call expr is expected to be not-null")
-        val formalParams = classpath.getFormalParamsOf(callee)
+        val formalParams = classpath.getArgumentsOf(callee)
 
         if (fact == ZEROFact) {
             // We don't show unused parameters for virtual calls

@@ -41,14 +41,18 @@ data class VulnerabilityLocation(
     val edge: IfdsEdge? = null,
     val rule: TaintMethodSink? = null,
 ) : SummaryFact {
-    override val method: JcMethod = sink.method
+    override val method: JcMethod
+        get() = sink.method
 }
 
 /**
  * Denotes some start-to-end edge that should be saved for the method
  */
-data class SummaryEdgeFact(val edge: IfdsEdge) : SummaryFact {
-    override val method: JcMethod = edge.method
+data class SummaryEdgeFact(
+    val edge: IfdsEdge,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = edge.method
 }
 
 /**
@@ -59,20 +63,25 @@ data class CrossUnitCallFact(
     val callerVertex: IfdsVertex,
     val calleeVertex: IfdsVertex,
 ) : SummaryFact {
-    override val method: JcMethod = callerVertex.method
+    override val method: JcMethod
+        get() = callerVertex.method
 }
 
 /**
  * Wraps a [TraceGraph] that should be saved for some sink
  */
-data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
-    override val method: JcMethod = graph.sink.method
+data class TraceGraphFact(
+    val graph: TraceGraph,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = graph.sink.method
 }
 
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
 interface SummaryStorage<T : SummaryFact> {
+
     /**
      * Adds [fact] to summary of its method
      */
@@ -96,9 +105,9 @@ interface SummaryStorage<T : SummaryFact> {
     val knownMethods: List<JcMethod>
 }
 
-class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
-    // FIXME: currently, objects are duplicated in 'summaries' and 'outFlows'
-    // TODO: remove 'summaries' and keep only 'outFlows', since 'flow.replayCache == summaries'
+class SummaryStorageImpl<T> : SummaryStorage<T>
+    where T : SummaryFact {
+
     private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 
@@ -113,15 +122,7 @@ class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
     }
 
     override fun getFacts(method: JcMethod): SharedFlow<T> {
-        // TODO: check simplified code:
         return outFlows[method] ?: MutableSharedFlow()
-        // return outFlows.computeIfAbsent(method) {
-        //     val flow = MutableSharedFlow<T>(replay = Int.MAX_VALUE)
-        //     for (fact in summaries[method].orEmpty()) {
-        //         check(flow.tryEmit(fact))
-        //     }
-        //     flow
-        // }
     }
 
     override fun getCurrentFacts(method: JcMethod): List<T> {

@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api
+package org.jacodb.analysis.ifds2.taint
 
-interface Resolution
-interface MethodResolution : Resolution
-interface RecordComponentResolution : Resolution
-interface FieldResolution : Resolution
-interface TypeResolution : Resolution
+import org.jacodb.analysis.ifds2.Edge
+import org.jacodb.analysis.ifds2.IRunner
+import org.jacodb.analysis.ifds2.Vertex
 
-object Malformed : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
-object Pure : TypeResolution, FieldResolution, MethodResolution, RecordComponentResolution
+typealias TaintVertex = Vertex<TaintFact>
+typealias TaintEdge = Edge<TaintFact>
+typealias TaintRunner = IRunner<TaintFact>

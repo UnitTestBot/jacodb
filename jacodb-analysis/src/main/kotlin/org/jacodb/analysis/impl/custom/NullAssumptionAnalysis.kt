@@ -28,7 +28,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.arrayRef
+import org.jacodb.api.ext.cfg.arrayAccess
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.fieldRef
 
@@ -69,7 +69,7 @@ open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<JcInst,
 
         // if we have an array ref, set the info for this ref to TOP,
         // because we need to be conservative here
-        ins.arrayRef?.let {
+        ins.arrayAccess?.let {
             onArrayAccess(it, out)
         }
         // same for field refs, but also set the receiver object to non-null, if there is one

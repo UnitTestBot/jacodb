@@ -19,7 +19,6 @@
 package org.jacodb.analysis
 
 import kotlinx.serialization.Serializable
-import mu.KLogging
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.MainIfdsUnitManager
 import org.jacodb.analysis.engine.SummaryStorage
@@ -28,8 +27,6 @@ import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-
-internal val logger = object : KLogging() {}.logger
 
 typealias AnalysesOptions = Map<String, String>
 

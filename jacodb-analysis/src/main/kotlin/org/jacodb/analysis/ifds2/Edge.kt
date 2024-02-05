@@ -17,21 +17,47 @@
 package org.jacodb.analysis.ifds2
 
 import org.jacodb.analysis.engine.IfdsEdge
+import org.jacodb.analysis.ifds2.taint.TaintFact
 import org.jacodb.api.JcMethod
 
-data class Edge(
-    val from: Vertex,
-    val to: Vertex,
+data class Edge<out Fact>(
+    val from: Vertex<Fact>,
+    val to: Vertex<Fact>,
 ) {
     init {
         require(from.method == to.method)
     }
 
-    var reason: Edge? = null
+    val method: JcMethod
+        get() = from.method
 
-    val method: JcMethod get() = from.method
-
-    constructor(edge: IfdsEdge) : this(Vertex(edge.from), Vertex(edge.to))
+    companion object {
+        // constructor
+        operator fun invoke(edge: IfdsEdge): Edge<TaintFact> {
+            return Edge(Vertex(edge.from), Vertex(edge.to))
+        }
+    }
 }
 
-fun Edge.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())
+fun Edge<TaintFact>.toIfds(): IfdsEdge = IfdsEdge(from.toIfds(), to.toIfds())
+
+sealed class Reason {
+
+    object Initial : Reason()
+
+    object External : Reason()
+
+    data class Sequent<Fact>(
+        val edge: Edge<Fact>,
+    ) : Reason()
+
+    data class CallToStart<Fact>(
+        val edge: Edge<Fact>,
+    ) : Reason()
+
+    data class ThroughSummary<Fact>(
+        val edge: Edge<Fact>,
+        val summaryEdge: Edge<Fact>,
+    ) : Reason()
+
+}

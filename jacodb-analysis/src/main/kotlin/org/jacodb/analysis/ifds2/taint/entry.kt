@@ -14,10 +14,19 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.config
+@file:Suppress("LiftReturnOrAssignment")
 
-import org.jacodb.taint.configuration.TaintConfigurationItem
+package org.jacodb.analysis.ifds2.taint
 
-class TaintConfig(
-    val items: List<TaintConfigurationItem>,
-)
+import org.jacodb.analysis.engine.UnitResolver
+import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
+
+fun runAnalysis2(
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver,
+    startMethods: List<JcMethod>,
+): List<Vulnerability> {
+    val manager = TaintManager(graph, unitResolver)
+    return manager.analyze(startMethods)
+}

@@ -27,9 +27,9 @@ import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
-import org.jacodb.analysis.ifds2.Tainted
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.ifds2.toDomainFact
+import org.jacodb.analysis.ifds2.taint.Tainted
+import org.jacodb.analysis.ifds2.taint.toDomainFact
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
@@ -105,7 +105,7 @@ abstract class AbstractTaintForwardFunctions(
 
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
-        val formalParams = cp.getFormalParamsOf(callee)
+        val formalParams = cp.getArgumentsOf(callee)
         buildSet {
             // TODO: when dropFact=true, consider removing (note: once!) the fact afterwards
 
@@ -308,7 +308,7 @@ abstract class AbstractTaintForwardFunctions(
         } else {
             fact
         }
-        val formalParams = cp.getFormalParamsOf(callee)
+        val formalParams = cp.getArgumentsOf(callee)
 
         buildList {
             if (fact is TaintNode && fact.variable.isOnHeap) {

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds2
+package org.jacodb.analysis.ifds2.taint
 
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.ZEROFact
@@ -24,26 +24,26 @@ import org.jacodb.analysis.library.analyzers.TaintNode
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.taint.configuration.TaintMark
 
-interface Fact
+sealed interface TaintFact
 
-object Zero : Fact {
+object Zero : TaintFact {
     override fun toString(): String = this.javaClass.simpleName
 }
 
 data class Tainted(
     val variable: AccessPath,
     val mark: TaintMark,
-) : Fact {
+) : TaintFact {
     constructor(fact: TaintNode) : this(fact.variable, TaintMark(fact.nodeType))
 }
 
-fun DomainFact.toFact(): Fact = when (this) {
+fun DomainFact.toFact(): TaintFact = when (this) {
     ZEROFact -> Zero
     is TaintNode -> Tainted(this)
-    else -> object : Fact {}
+    else -> error("Go away") //  object : TaintFact {}
 }
 
-fun Fact.toDomainFact(): DomainFact = when (this) {
+fun TaintFact.toDomainFact(): DomainFact = when (this) {
     Zero -> ZEROFact
 
     is Tainted -> {
@@ -52,6 +52,4 @@ fun Fact.toDomainFact(): DomainFact = when (this) {
             else -> TaintAnalysisNode(variable, nodeType = mark.name)
         }
     }
-
-    else -> object : DomainFact {}
 }

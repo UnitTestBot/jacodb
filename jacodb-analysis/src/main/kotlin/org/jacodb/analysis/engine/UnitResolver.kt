@@ -42,7 +42,6 @@ object SingletonUnit : UnitType
  * To get more info about how it is used in analysis, see [runAnalysis].
  */
 fun interface UnitResolver {
-    // Alternative interface: '<out U : UnitType>'
 
     fun resolve(method: JcMethod): UnitType
 

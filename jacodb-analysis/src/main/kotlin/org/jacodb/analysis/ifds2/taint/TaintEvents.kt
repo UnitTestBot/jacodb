@@ -14,19 +14,23 @@
  *  limitations under the License.
  */
 
-@file:Suppress("LiftReturnOrAssignment")
+package org.jacodb.analysis.ifds2.taint
 
-package org.jacodb.analysis.ifds2
+sealed interface TaintEvent
 
-import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+data class NewSummaryEdge(
+    val edge: TaintEdge,
+) : TaintEvent
 
-fun runAnalysis2(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver,
-    startMethods: List<JcMethod>,
-): List<Vulnerability> {
-    val manager = Manager(graph, unitResolver)
-    return manager.analyze(startMethods)
+data class NewVulnerability(
+    val vulnerability: Vulnerability,
+) : TaintEvent
+
+data class EdgeForOtherRunner(
+    val edge: TaintEdge,
+) : TaintEvent {
+    init {
+        // TODO: remove this check
+        check(edge.from == edge.to) { "Edge for another runner must be a loop" }
+    }
 }

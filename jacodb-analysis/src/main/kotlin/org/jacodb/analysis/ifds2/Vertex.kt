@@ -17,16 +17,26 @@
 package org.jacodb.analysis.ifds2
 
 import org.jacodb.analysis.engine.IfdsVertex
+import org.jacodb.analysis.ifds2.taint.TaintFact
+import org.jacodb.analysis.ifds2.taint.toDomainFact
+import org.jacodb.analysis.ifds2.taint.toFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
-data class Vertex(
+data class Vertex<out Fact>(
     val statement: JcInst,
     val fact: Fact,
 ) {
-    val method: JcMethod get() = statement.location.method
+    val method: JcMethod
+        get() = statement.location.method
 
-    constructor(vertex: IfdsVertex) : this(vertex.statement, vertex.domainFact.toFact())
+    companion object {
+        // constructor
+        operator fun invoke(vertex: IfdsVertex): Vertex<TaintFact> {
+            return Vertex(vertex.statement, vertex.domainFact.toFact())
+        }
+    }
 }
 
-fun Vertex.toIfds(): IfdsVertex = IfdsVertex(statement, fact.toDomainFact())
+fun Vertex<TaintFact>.toIfds(): IfdsVertex =
+    IfdsVertex(statement, fact.toDomainFact())

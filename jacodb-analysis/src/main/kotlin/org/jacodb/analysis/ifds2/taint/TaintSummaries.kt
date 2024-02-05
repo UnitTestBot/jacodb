@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds2
+package org.jacodb.analysis.ifds2.taint
 
 import org.jacodb.analysis.engine.SummaryFact
 import org.jacodb.api.JcMethod
@@ -25,16 +25,18 @@ import org.jacodb.taint.configuration.TaintMethodSink
  * and ends in an exit-point of a method.
  */
 data class SummaryEdge(
-    val edge: Edge,
+    val edge: TaintEdge,
 ) : SummaryFact {
-    override val method: JcMethod get() = edge.method
+    override val method: JcMethod
+        get() = edge.method
 }
 
 data class Vulnerability(
     val message: String,
-    val sink: Vertex,
-    val edge: Edge? = null,
+    val sink: TaintVertex,
+    val edge: TaintEdge? = null,
     val rule: TaintMethodSink? = null,
 ) : SummaryFact {
-    override val method: JcMethod get() = sink.method
+    override val method: JcMethod
+        get() = sink.method
 }

@@ -17,7 +17,7 @@
 package org.jacodb.analysis.library.analyzers
 
 import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.ifds2.Tainted
+import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
 
@@ -95,7 +95,7 @@ class TaintAnalysisNode(
     override val nodeType: String, // = "Taint analysis"
 ) : TaintNode(variable, activation) {
 
-    constructor(fact: Tainted) : this(fact.variable, nodeType=fact.mark.name)
+    constructor(fact: Tainted) : this(fact.variable, nodeType = fact.mark.name)
 
     override fun updateActivation(newActivation: JcInst?): TaintAnalysisNode {
         return TaintAnalysisNode(variable, newActivation, nodeType)

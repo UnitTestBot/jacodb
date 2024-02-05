@@ -85,7 +85,7 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     override val cp: JcClasspath = runBlocking {
-        val configPath = "config.json"
+        val configPath = "config_small.json"
         val defaultConfigResource = this.javaClass.getResourceAsStream("/$configPath")
         if (defaultConfigResource != null) {
             logger.info { "Loading '$configPath'..." }

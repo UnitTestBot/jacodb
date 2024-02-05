@@ -20,8 +20,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.ifds2.Manager
-import org.jacodb.analysis.ifds2.Vulnerability
+import org.jacodb.analysis.ifds2.taint.TaintManager
+import org.jacodb.analysis.ifds2.taint.Vulnerability
 import org.jacodb.analysis.impl.BaseAnalysisTest.Companion.provideClassesForJuliet
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -35,7 +35,6 @@ import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.analysis.SqlInjectionExamples
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -56,7 +55,8 @@ class Ifds2SqlTest : BaseTest() {
     }
 
     override val cp: JcClasspath = runBlocking {
-        val defaultConfigResource = this.javaClass.getResourceAsStream("/config.json")
+        val taintConfigFileName = "config_small.json"
+        val defaultConfigResource = this.javaClass.getResourceAsStream("/$taintConfigFileName")
         if (defaultConfigResource != null) {
             val configJson = defaultConfigResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
@@ -92,13 +92,10 @@ class Ifds2SqlTest : BaseTest() {
         testSingleJulietClass(className)
     }
 
-    @Disabled
     @Test
     fun `test on specific Juliet instance`() {
-        //
-        val className =
-            "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__console_readLine_executeUpdate_45"
-        //
+        // val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_45"
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_execute_01"
 
         testSingleJulietClass(className)
     }
@@ -116,7 +113,7 @@ class Ifds2SqlTest : BaseTest() {
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
-        assertTrue(badIssues.isNotEmpty())
+        assertTrue(badIssues.isNotEmpty()) { "Must find some sinks in 'bad' for $className" }
 
         logger.info { "Searching for sinks in GOOD method: $goodMethod" }
         val goodIssues = findSinks(goodMethod)
@@ -124,7 +121,7 @@ class Ifds2SqlTest : BaseTest() {
         for (issue in goodIssues) {
             logger.debug { "  - $issue" }
         }
-        assertTrue(goodIssues.isEmpty())
+        assertTrue(goodIssues.isEmpty()) { "Must NOT find any sinks in 'good' for $className" }
     }
 
     private fun findSinks(method: JcMethod): List<Vulnerability> {
@@ -137,7 +134,7 @@ class Ifds2SqlTest : BaseTest() {
             cp.newApplicationGraphForAnalysis()
         }
         val unitResolver = SingletonUnitResolver
-        val manager = Manager(graph, unitResolver)
+        val manager = TaintManager(graph, unitResolver)
         return manager.analyze(methods)
     }
 }

@@ -21,8 +21,8 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.ifds2.Manager
-import org.jacodb.analysis.ifds2.Vulnerability
+import org.jacodb.analysis.ifds2.taint.TaintManager
+import org.jacodb.analysis.ifds2.taint.Vulnerability
 import org.jacodb.analysis.impl.BaseAnalysisTest.Companion.provideClassesForJuliet
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -60,11 +60,11 @@ class Ifds2NpeTest : BaseTest() {
     }
 
     override val cp: JcClasspath = runBlocking {
-        val defaultConfigResource = this.javaClass.getResourceAsStream("/config.json")
+        val defaultConfigResource = this.javaClass.getResourceAsStream("/config_small.json")
         if (defaultConfigResource != null) {
             val configJson = defaultConfigResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
-            db.classpath(allClasspath, listOf(configurationFeature) + Ifds2SqlTest.classpathFeatures)
+            db.classpath(allClasspath, listOf(configurationFeature) + classpathFeatures)
         } else {
             super.cp
         }
@@ -112,7 +112,7 @@ class Ifds2NpeTest : BaseTest() {
     fun `npe on virtual call when possible`() {
         testOneMethod<NpeExamples>(
             "possibleNPEOnVirtualCall",
-            listOf("%0 = arg\$0.length()")
+            listOf("%0 = arg$0.length()")
         )
     }
 
@@ -222,7 +222,8 @@ class Ifds2NpeTest : BaseTest() {
     fun `test on specific Juliet's testcase`() {
         // val className = "juliet.testcases.CWE476_NULL_Pointer_Dereference.CWE476_NULL_Pointer_Dereference__Integer_01"
         // val className = "juliet.testcases.CWE690_NULL_Deref_From_Return.CWE690_NULL_Deref_From_Return__Class_StringBuilder_01"
-        val className = "juliet.testcases.CWE690_NULL_Deref_From_Return.CWE690_NULL_Deref_From_Return__Properties_getProperty_equals_01"
+        val className =
+            "juliet.testcases.CWE690_NULL_Deref_From_Return.CWE690_NULL_Deref_From_Return__Properties_getProperty_equals_01"
 
         testSingleJulietClass(className)
     }
@@ -282,7 +283,7 @@ class Ifds2NpeTest : BaseTest() {
             cp.newApplicationGraphForAnalysis()
         }
         val unitResolver = SingletonUnitResolver
-        val manager = Manager(graph, unitResolver)
+        val manager = TaintManager(graph, unitResolver)
         return manager.analyze(methods)
     }
 }

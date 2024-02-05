@@ -16,7 +16,6 @@
 
 package org.jacodb.api.cfg
 
-
 /**
  * Basic block represents a list of instructions that:
  * - guaranteed to execute one after other during normal control flow

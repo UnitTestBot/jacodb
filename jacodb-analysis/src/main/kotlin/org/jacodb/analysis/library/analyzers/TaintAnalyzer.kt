@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.library.analyzers
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
@@ -28,11 +29,10 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.NewSummaryFact
-import org.jacodb.analysis.ifds2.Tainted
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
-import org.jacodb.analysis.ifds2.toDomainFact
-import org.jacodb.analysis.logger
+import org.jacodb.analysis.ifds2.taint.Tainted
+import org.jacodb.analysis.ifds2.taint.toDomainFact
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
@@ -59,6 +59,8 @@ import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.This
+
+private val logger = KotlinLogging.logger {}
 
 fun isSourceMethodToGenerates(isSourceMethod: (JcMethod) -> Boolean): (JcInst) -> List<TaintAnalysisNode> {
     return generates@{ inst: JcInst ->

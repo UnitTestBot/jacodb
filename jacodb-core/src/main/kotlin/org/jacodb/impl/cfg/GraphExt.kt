@@ -25,8 +25,6 @@ import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.DefaultJcExprVisitor
-import org.jacodb.api.cfg.DefaultJcInstVisitor
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBasicBlock
@@ -37,11 +35,13 @@ import org.jacodb.api.cfg.JcDivExpr
 import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExitMonitorInst
 import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcExprVisitor
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcGotoInst
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.api.cfg.JcLambdaExpr
 import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
@@ -220,19 +220,24 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
  * - all the declared checked exception types
  * - 'java.lang.Throwable' for any potential unchecked types
  */
-open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisitor<List<JcClassType>>,
-    DefaultJcInstVisitor<List<JcClassType>> {
+open class JcExceptionResolver(
+    val classpath: JcClasspath,
+) : JcExprVisitor.Default<List<JcClassType>>,
+    JcInstVisitor.Default<List<JcClassType>> {
+
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val errorType = classpath.findTypeOrNull<Error>() as JcClassType
     private val runtimeExceptionType = classpath.findTypeOrNull<RuntimeException>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
 
-    override val defaultExprHandler: (JcExpr) -> List<JcClassType>
-        get() = { emptyList() }
+    override fun defaultVisitJcExpr(expr: JcExpr): List<JcClassType> {
+        return emptyList()
+    }
 
-    override val defaultInstHandler: (JcInst) -> List<JcClassType>
-        get() = { emptyList() }
+    override fun defaultVisitJcInst(inst: JcInst): List<JcClassType> {
+        return emptyList()
+    }
 
     override fun visitJcAssignInst(inst: JcAssignInst): List<JcClassType> {
         return inst.lhv.accept(this) + inst.rhv.accept(this)

@@ -19,7 +19,6 @@ package org.jacodb.api
 import org.objectweb.asm.Opcodes
 import java.io.File
 
-
 /**
  * Immutable structure represented a file system location of bytecode such as `jar` or build folder.
  *
@@ -31,7 +30,7 @@ import java.io.File
  */
 interface JcByteCodeLocation {
     val jarOrFolder: File
-    val fileSystemId: String //id based on from file system
+    val fileSystemId: String // id based on from file system
 
     val type: LocationType
 
@@ -146,4 +145,3 @@ interface JcAccessible {
         }
 
 }
-

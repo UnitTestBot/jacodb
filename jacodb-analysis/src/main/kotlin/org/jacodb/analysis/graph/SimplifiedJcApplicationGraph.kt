@@ -30,14 +30,14 @@ import org.jacodb.impl.features.hierarchyExt
 /**
  * This is adopted specially for IFDS [JcApplicationGraph] that
  *  1. Ignores method calls matching [bannedPackagePrefixes] (i.e., treats them as simple instructions with no callees)
- *  2. In [callers] returns only callsites that were visited before
+ *  2. In [callers] returns only call sites that were visited before
  *  3. Adds a special [JcNoopInst] instruction to the beginning of each method
  *    (because backward analysis may want for method to start with neutral instruction)
  */
 internal class SimplifiedJcApplicationGraph(
-    private val impl: JcApplicationGraphImpl,
+    private val graph: JcApplicationGraph,
     private val bannedPackagePrefixes: List<String>,
-) : JcApplicationGraph by impl {
+) : JcApplicationGraph by graph {
     private val hierarchyExtension = runBlocking {
         classpath.hierarchyExt()
     }
@@ -59,34 +59,42 @@ internal class SimplifiedJcApplicationGraph(
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
-        val methodEntryLineNumber = method.flowGraph().entries.firstOrNull()?.lineNumber
-        return JcNoopInst(JcInstLocationImpl(method, -1, methodEntryLineNumber?.let { it - 1 } ?: -1))
+        val lineNumber = method.flowGraph().entries.firstOrNull()?.lineNumber?.let { it - 1 } ?: -1
+        return JcNoopInst(JcInstLocationImpl(method, -1, lineNumber))
     }
 
     override fun predecessors(node: JcInst): Sequence<JcInst> {
         val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            emptySequence()
-        } else {
-            if (node in impl.entryPoints(method)) {
+        return when (node) {
+            getStartInst(method) -> {
+                emptySequence()
+            }
+
+            in graph.entryPoints(method) -> {
                 sequenceOf(getStartInst(method))
-            } else {
-                impl.predecessors(node)
+            }
+
+            else -> {
+                graph.predecessors(node)
             }
         }
     }
 
     override fun successors(node: JcInst): Sequence<JcInst> {
         val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            impl.entryPoints(method)
-        } else {
-            impl.successors(node)
+        return when (node) {
+            getStartInst(method) -> {
+                graph.entryPoints(method)
+            }
+
+            else -> {
+                graph.successors(node)
+            }
         }
     }
 
     private fun calleesUnmarked(node: JcInst): Sequence<JcMethod> {
-        val callees = impl.callees(node).filterNot { callee ->
+        val callees = graph.callees(node).filterNot { callee ->
             bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
         }
 
@@ -130,11 +138,10 @@ internal class SimplifiedJcApplicationGraph(
     }
 
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = try {
-        impl.exitPoints(method)
+        graph.exitPoints(method)
     } catch (e: Throwable) {
         emptySequence()
     }
 
     companion object
 }
-

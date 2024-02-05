@@ -94,7 +94,7 @@ abstract class AbstractTaintBackwardFunctions(
                 addAll(transmitBackDataFlow(callExpr.instance, thisInstance, callStatement, fact, dropFact = true))
             }
 
-            val formalParams = graph.classpath.getFormalParamsOf(callee)
+            val formalParams = graph.classpath.getArgumentsOf(callee)
 
             callExpr.args.zip(formalParams).forEach { (actual, formal) ->
                 // FilterNot is needed for reasons described in comment for symmetric case in
@@ -160,7 +160,7 @@ abstract class AbstractTaintBackwardFunctions(
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
         val callee = graph.methodOf(exitStatement)
-        val formalParams = graph.classpath.getFormalParamsOf(callee)
+        val formalParams = graph.classpath.getArgumentsOf(callee)
 
         buildList {
             formalParams.zip(actualParams).forEach { (formal, actual) ->

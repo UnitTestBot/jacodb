@@ -38,7 +38,11 @@ interface HierarchyExtension {
      *
      * @return list with unique ClassId
      */
-    fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean, includeOwn: Boolean = false): Sequence<JcClassOrInterface>
+    fun findSubClasses(
+        jcClass: JcClassOrInterface,
+        allHierarchy: Boolean,
+        includeOwn: Boolean = false,
+    ): Sequence<JcClassOrInterface>
 
     /**
      * find overrides of current method

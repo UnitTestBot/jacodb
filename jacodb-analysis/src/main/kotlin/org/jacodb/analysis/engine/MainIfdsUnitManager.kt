@@ -29,7 +29,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jacodb.analysis.logger
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
