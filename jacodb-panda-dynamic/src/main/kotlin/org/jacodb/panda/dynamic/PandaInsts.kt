@@ -55,6 +55,8 @@ interface PandaInst : CoreInst<PandaInstLocation, PandaMethod, PandaExpr>, Mappa
     fun <T> accept(visitor: PandaInstVisitor<T>): T
 }
 
+interface PandaTerminatingInst : PandaInst
+
 interface PandaUnaryExpr : PandaExpr {
     val value: PandaValue
 }
@@ -272,7 +274,10 @@ class PandaNewExpr(
     override fun toString() = "new $clazz(${params.joinToString(separator = ", ")})"
 }
 
-class PandaThrowInst(override val location: PandaInstLocation, val throwable: PandaValue) : PandaInst {
+class PandaThrowInst(
+    override val location: PandaInstLocation,
+    val throwable: PandaValue
+) : PandaInst, PandaTerminatingInst {
 
     override val operands: List<PandaExpr> = listOf(throwable)
 
@@ -309,7 +314,7 @@ class PandaVirtualCallExpr : PandaCallExpr {
 class PandaReturnInst(
     override val location: PandaInstLocation,
     returnValue: PandaValue?
-) : PandaInst, CoreReturnInst<PandaInstLocation, PandaMethod, PandaExpr> {
+) : PandaInst, PandaTerminatingInst, CoreReturnInst<PandaInstLocation, PandaMethod, PandaExpr> {
 
     override val operands: List<PandaExpr> = listOfNotNull(returnValue)
 

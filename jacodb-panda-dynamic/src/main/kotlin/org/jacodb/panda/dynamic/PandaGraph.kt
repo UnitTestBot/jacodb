@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic
 
 import org.jacodb.api.jvm.cfg.JcBytecodeGraph
+import java.util.*
 
 data class PandaBasicBlock(
     val id: Int,
@@ -35,43 +36,78 @@ data class PandaBasicBlock(
     }
 }
 
-class PandaGraph : JcBytecodeGraph<PandaInst> {
+class PandaGraph(
+    override val instructions: List<PandaInst>,
+    val blockGraph: PandaBlockGraph
+) : JcBytecodeGraph<PandaInst> {
 
-    override fun successors(node: PandaInst): Set<PandaInst> {
-        TODO("Not yet implemented")
+    private val predecessorMap = hashMapOf<PandaInst, Set<PandaInst>>()
+    private val successorMap = hashMapOf<PandaInst, Set<PandaInst>>()
+
+    init {
+        for (inst in instructions) {
+            val successors = when(inst) {
+                is PandaTerminatingInst -> emptySet()
+                is PandaBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
+                else -> setOf(next(inst))
+            }
+            successorMap[inst] = successors
+
+            for (successor in successors) {
+                predecessorMap.add(successor, inst)
+            }
+        }
+
     }
 
-    override fun predecessors(node: PandaInst): Set<PandaInst> {
-        TODO("Not yet implemented")
+    fun next(inst: PandaInst): PandaInst = instructions[ref(inst).index + 1]
+
+    fun index(inst: PandaInst): Int {
+        if (instructions.contains(inst)) {
+            return inst.location.index
+        }
+        return -1
     }
 
-    override fun throwers(node: PandaInst): Set<PandaInst> {
-        TODO("Not yet implemented")
-    }
+    fun ref(inst: PandaInst): PandaInstRef = PandaInstRef(index(inst))
 
-    override fun catchers(node: PandaInst): Set<PandaInst> {
-        TODO("Not yet implemented")
-    }
+    val entry: PandaInst get() = instructions.first()
+
+    override fun successors(node: PandaInst): Set<PandaInst> = successorMap.getOrDefault(node, emptySet())
+
+    override fun predecessors(node: PandaInst): Set<PandaInst> = predecessorMap.getOrDefault(node, emptySet())
+
+    //TODO: throwers and catchers
+    override fun throwers(node: PandaInst): Set<PandaInst> = emptySet()
+
+    override fun catchers(node: PandaInst): Set<PandaInst> = emptySet()
 
     override val entries: List<PandaInst>
-        get() = TODO("Not yet implemented")
+        get() = if (instructions.isEmpty()) listOf() else listOf(entry)
     override val exits: List<PandaInst>
-        get() = TODO("Not yet implemented")
-    override val instructions: List<PandaInst>
-        get() = TODO("Not yet implemented")
+        get() = instructions.filterIsInstance<PandaTerminatingInst>()
 
-    override fun iterator(): Iterator<PandaInst> {
-        TODO("Not yet implemented")
+    override fun iterator(): Iterator<PandaInst> = instructions.iterator()
+
+    private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
+        val current = this[key]
+        if (current == null) {
+            this[key] = Collections.singleton(value)
+        } else {
+            this[key] = current + value
+        }
     }
 
 }
 
-class PandaBlockGraph(override val instructions: List<PandaBasicBlock>) : JcBytecodeGraph<PandaBasicBlock> {
+class PandaBlockGraph(
+    override val instructions: List<PandaBasicBlock>,
+    private val instList: List<PandaInst>
+) : JcBytecodeGraph<PandaBasicBlock> {
 
-    fun graph(): PandaGraph {
-        // TODO
-        return PandaGraph()
-    }
+    private val _graph = PandaGraph(instList, this)
+
+    val graph: PandaGraph get() = _graph
 
     override fun successors(node: PandaBasicBlock): Set<PandaBasicBlock> {
         return node.successors.map { instructions[it] }.toSet()
@@ -81,13 +117,10 @@ class PandaBlockGraph(override val instructions: List<PandaBasicBlock>) : JcByte
         return node.predecessors.map { instructions[it] }.toSet()
     }
 
-    override fun throwers(node: PandaBasicBlock): Set<PandaBasicBlock> {
-        TODO("Not yet implemented")
-    }
+    //TODO: throwers and catchers
+    override fun throwers(node: PandaBasicBlock): Set<PandaBasicBlock> = emptySet()
 
-    override fun catchers(node: PandaBasicBlock): Set<PandaBasicBlock> {
-        TODO("Not yet implemented")
-    }
+    override fun catchers(node: PandaBasicBlock): Set<PandaBasicBlock> = emptySet()
 
     override val entries: List<PandaBasicBlock>
         get() = listOf(instructions.first())

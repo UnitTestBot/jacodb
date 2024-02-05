@@ -72,7 +72,10 @@ class IRParser(jsonPath: String) {
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
         @Transient
-        val pandaMethod: PandaMethod = PandaMethod()
+        val pandaMethod: PandaMethod = PandaMethod(name, mapType(return_type))
+
+        @Transient
+        val parameters: MutableList<PandaParameterInfo> = mutableListOf()
 
         @Transient
         var currentLocalVarId = 0
@@ -131,8 +134,7 @@ class IRParser(jsonPath: String) {
 
         private fun String.trimId() = this.drop(1).toInt()
 
-        private val _id: Int
-            get() = id.trimId()
+        private val _id: Int = id.trimId()
 
         fun setBasicBlock(bb: ProgramBasicBlock) {
             basicBlock = bb
@@ -150,6 +152,21 @@ class IRParser(jsonPath: String) {
     private val jsonFile: File = File(jsonPath)
 
     private val json = jsonFile.readText()
+
+    companion object {
+
+        /**
+         * First 3 arguments in Panda IR are placeholders for "this", etc.
+         * Filter them out to include real parameters.
+         */
+        private const val argThreshold = 3
+
+        fun mapType(type: String?): PandaType = when (type) {
+            "i64" -> PandaNumberType()
+            "any" -> PandaAnyType()
+            else -> PandaAnyType()
+        }
+    }
 
     fun getProgramIR(): ProgramIR {
         val programIR: ProgramIR = Json.decodeFromString(json)
@@ -177,6 +194,7 @@ class IRParser(jsonPath: String) {
                 method.basic_blocks.forEach { bb ->
                     bb.insts.forEach { inst ->
                         // TODO(to delete?: map IfImm)
+                        // TODO(reply): no.
                         /*
                         inst.opcode.startsWith("IfImm") -> {
                             val successors =
@@ -210,6 +228,8 @@ class IRParser(jsonPath: String) {
             programMethod.pandaMethod.initBlocks(
                 programMethod.idToBB.values.toList(),
             )
+            programMethod.pandaMethod.initInstructions(programMethod.insts)
+            programMethod.pandaMethod.initParameters(programMethod.parameters)
         }
     }
 
@@ -253,21 +273,25 @@ class IRParser(jsonPath: String) {
 
     private fun mapOpcode(op: ProgramInst, method: ProgramMethod) = with(op) {
         val inputs = inputsViaOp(this)
-        val outputs = this.outputs()
-        val bb = this.currentBB()
+        val outputs = outputs()
+        val bb = currentBB()
 
         when {
             opcode == "Parameter" -> {
-                val arg = PandaArgument(this.id())
+                val arg = PandaArgument(id())
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, arg)
+                    addInput(method, id(), output, arg)
+                }
+                if (id() >= argThreshold) {
+                    val argInfo = PandaParameterInfo(id() - argThreshold, mapType(type))
+                    method.parameters.add(argInfo)
                 }
             }
 
             opcode == "Constant" -> {
                 val c = mapConstant(this)
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, c)
+                    addInput(method, id(), output, c)
                 }
             }
 
@@ -279,7 +303,7 @@ class IRParser(jsonPath: String) {
                     PandaTypeofExpr(inputs[0] as PandaValue)
                 )
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
+                    addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -292,7 +316,7 @@ class IRParser(jsonPath: String) {
                     PandaNeqExpr(inputs[0] as PandaValue, inputs[1] as PandaValue)
                 )
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
+                    addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -310,7 +334,7 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
+                    addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -322,13 +346,13 @@ class IRParser(jsonPath: String) {
             opcode == "LoadString" -> {
                 val sc = PandaStringConstant()
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, sc)
+                    addInput(method, id(), output, sc)
                 }
             }
 
             opcode == "CastValueToAnyType" -> {
                 outputs.forEach { output ->
-                    inputs.forEach { input -> addInput(method, this.id(), output, input) }
+                    inputs.forEach { input -> addInput(method, id(), output, input) }
                 }
             }
 
@@ -337,7 +361,7 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, newExpr)
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
+                    addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -352,7 +376,7 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, addExpr)
                 outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
+                    addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
             }
@@ -450,8 +474,8 @@ class IRParser(jsonPath: String) {
         }
     }
             
-    private fun mapConstant(op: ProgramInst): PandaConstant = when (op.type) {
-        "i64" -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
+    private fun mapConstant(op: ProgramInst): PandaConstant = when (mapType(op.type)) {
+        is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
         else -> TODOConstant(op.value)
     }
 

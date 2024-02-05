@@ -19,17 +19,42 @@ package org.jacodb.panda.dynamic
 import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.ControlFlowGraph
 
-class PandaMethod : CoreMethod<PandaInst> {
+class PandaMethod(
+    val name: String,
+    val returnType: PandaType
+) : CoreMethod<PandaInst> {
 
-    private lateinit var blocks: List<PandaBasicBlock>
+    private lateinit var _blocks: List<PandaBasicBlock>
+    private lateinit var _instructions: List<PandaInst>
+    private lateinit var _parameters: List<PandaParameterInfo>
+
+    val instructions: List<PandaInst> get() = _instructions
+    val parameters: List<PandaParameterInfo> get() = _parameters
 
     fun initBlocks(blocks: List<PandaBasicBlock>) {
-        this.blocks = blocks
+        this._blocks = blocks
+    }
+
+    fun initInstructions(instructions: List<PandaInst>) {
+        this._instructions = instructions
+    }
+
+    fun initParameters(parameters: List<PandaParameterInfo>) {
+        this._parameters = parameters
+    }
+
+    val signature: String  get() = parameters.joinToString(separator = ", ") {
+        "arg ${it.index}: ${it.type.typeName}"
     }
 
     override fun flowGraph(): ControlFlowGraph<PandaInst> {
-        return PandaBlockGraph(blocks).graph()
+        return PandaBlockGraph(_blocks, instructions).graph
     }
 
-    override fun toString() = "method"
+    override fun toString() = "function $name($signature): $returnType"
 }
+
+class PandaParameterInfo(
+    val index: Int,
+    val type: PandaType
+)

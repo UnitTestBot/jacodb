@@ -28,26 +28,19 @@ class ParserTest {
     @Test
     fun getProgramIR() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
-        println("=========================")
-        println("Panda CFG:")
-        ir.classes[0].methods[0].insts.forEach {
-            println("${it.location}: $it")
-        }
-        println("=========================")
-        println("Panda basic blocks:")
-        ir.classes[0].methods[0].idToBB.values.toList().forEach {
-            println("${it.id}. [${it.start}..${it.end}]")
-        }
-        println("=========================")
-//        parser.printProgramInfo(ir)
-//        assertNotNull(ir)
+        parser.printProgramInfo(ir)
+        assertNotNull(ir)
     }
 
     @Test
-    fun getBlockGraph() {
+    fun getPandaMethod() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
-        val blockGraph = PandaBlockGraph(ir.classes.first().methods.first().idToBB.values.toList())
-        assertNotNull(blockGraph)
+        val method = ir.classes[0].methods[0].pandaMethod
+        println(method)
+        println("Instructions:")
+        method.instructions.forEach {
+            println("${it.location}: $it")
+        }
     }
 
 //    @Test
