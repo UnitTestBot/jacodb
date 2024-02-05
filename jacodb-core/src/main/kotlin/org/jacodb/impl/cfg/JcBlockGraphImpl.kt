@@ -25,7 +25,7 @@ import org.jacodb.api.cfg.JcInstRef
 import org.jacodb.api.cfg.JcTerminatingInst
 
 class JcBlockGraphImpl(
-    override val jcGraph: JcGraph
+    override val jcGraph: JcGraph,
 ) : Iterable<JcBasicBlock>, JcBlockGraph {
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
@@ -65,8 +65,8 @@ class JcBlockGraphImpl(
             }
             when {
                 inst is JcBranchingInst
-                        || inst is JcTerminatingInst
-                        || jcGraph.predecessors(inst).size > 1 -> {
+                    || inst is JcTerminatingInst
+                    || jcGraph.predecessors(inst).size > 1 -> {
                     if (shouldBeAddedBefore) currentRefs += currentRef
                     createBlock()
                     if (!shouldBeAddedBefore) {

@@ -19,7 +19,6 @@ package org.jacodb.analysis.engine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import org.jacodb.analysis.graph.BackwardJcApplicationGraph
-import org.jacodb.analysis.graph.reversed
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 

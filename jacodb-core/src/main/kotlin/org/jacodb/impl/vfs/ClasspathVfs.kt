@@ -24,7 +24,7 @@ import org.jacodb.impl.LocationsRegistrySnapshot
  */
 class ClasspathVfs(
     private val globalClassVFS: GlobalClassesVfs,
-    locations: List<RegisteredLocation>
+    locations: List<RegisteredLocation>,
 ) {
 
     constructor(globalClassVFS: GlobalClassesVfs, locationsRegistrySnapshot: LocationsRegistrySnapshot) : this(

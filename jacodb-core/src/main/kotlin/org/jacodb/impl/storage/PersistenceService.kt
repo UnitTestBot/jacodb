@@ -19,8 +19,27 @@ package org.jacodb.impl.storage
 import mu.KLogging
 import org.jacodb.api.JCDBSymbolsInterner
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.impl.storage.jooq.tables.references.*
-import org.jacodb.impl.types.*
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
+import org.jacodb.impl.storage.jooq.tables.references.APPLICATIONMETADATA
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSINNERCLASSES
+import org.jacodb.impl.storage.jooq.tables.references.FIELDS
+import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.references.METHODS
+import org.jacodb.impl.storage.jooq.tables.references.OUTERCLASSES
+import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.types.AnnotationValue
+import org.jacodb.impl.types.AnnotationValueList
+import org.jacodb.impl.types.ClassInfo
+import org.jacodb.impl.types.ClassRef
+import org.jacodb.impl.types.EnumRef
+import org.jacodb.impl.types.FieldInfo
+import org.jacodb.impl.types.MethodInfo
+import org.jacodb.impl.types.ParameterInfo
+import org.jacodb.impl.types.PrimitiveValue
 import org.jooq.DSLContext
 import org.jooq.TableField
 import java.io.Closeable
@@ -307,7 +326,7 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
         }
     }
 
-    fun findSymbolId(symbol: String): Long? {
+    fun findSymbolId(symbol: String): Long {
         return persistence.symbolInterner.findOrNew(symbol)
     }
 

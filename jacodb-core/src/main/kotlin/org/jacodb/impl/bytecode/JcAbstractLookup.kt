@@ -16,7 +16,16 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAccessible
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcField
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcLookupExtFeature
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.TypeName
 import org.jacodb.api.ext.hasAnnotation
 import org.jacodb.api.ext.packageName
 
@@ -60,12 +69,11 @@ abstract class JcAbstractLookup<Entry : JcAccessible, Result : JcAccessible>(pro
             return predicate(result)
         }
         return (result.isPublic || result.isProtected ||
-                (result.isPackagePrivate && currentPackageName == enterPointPackageName)) && predicate(result)
+            (result.isPackagePrivate && currentPackageName == enterPointPackageName)) && predicate(result)
 
     }
 
 }
-
 
 internal interface PolymorphicSignatureSupport {
     fun List<JcMethod>.indexOf(name: String): Int {
@@ -92,10 +100,9 @@ internal interface PolymorphicSignatureSupport {
     }
 }
 
-
 abstract class DelegatingLookup<Field : JcAccessible, Method : JcAccessible>(
     private val ext: List<JcLookupExtFeature>,
-    private val delegate: JcLookup<Field, Method>
+    private val delegate: JcLookup<Field, Method>,
 ) : JcLookup<Field, Method> {
 
     abstract fun lookupOf(feature: JcLookupExtFeature): JcLookup<Field, Method>
@@ -136,14 +143,14 @@ abstract class DelegatingLookup<Field : JcAccessible, Method : JcAccessible>(
 
 class ClassDelegatingLookup(
     private val clazz: JcClassOrInterface, ext: List<JcLookupExtFeature>,
-    delegate: JcLookup<JcField, JcMethod>
+    delegate: JcLookup<JcField, JcMethod>,
 ) : DelegatingLookup<JcField, JcMethod>(ext, delegate) {
     override fun lookupOf(feature: JcLookupExtFeature): JcLookup<JcField, JcMethod> = feature.lookup(clazz)
 }
 
 class TypeDelegatingLookup(
     private val type: JcClassType, ext: List<JcLookupExtFeature>,
-    delegate: JcLookup<JcTypedField, JcTypedMethod>
+    delegate: JcLookup<JcTypedField, JcTypedMethod>,
 ) : DelegatingLookup<JcTypedField, JcTypedMethod>(ext, delegate) {
     override fun lookupOf(feature: JcLookupExtFeature): JcLookup<JcTypedField, JcTypedMethod> = feature.lookup(type)
 }

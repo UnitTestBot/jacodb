@@ -18,16 +18,20 @@ package org.jacodb.impl.types.substition
 
 import org.jacodb.api.JvmType
 import org.jacodb.api.JvmTypeParameterDeclaration
-import org.jacodb.impl.types.signature.*
+import org.jacodb.impl.types.signature.JvmArrayType
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmLowerBoundWildcard
 import org.jacodb.impl.types.signature.JvmBoundWildcard.JvmUpperBoundWildcard
+import org.jacodb.impl.types.signature.JvmClassRefType
+import org.jacodb.impl.types.signature.JvmParameterizedType
+import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
+import org.jacodb.impl.types.signature.JvmTypeVariable
+import org.jacodb.impl.types.signature.JvmTypeVisitor
 
 internal class VisitorContext(private val processed: HashSet<Any> = HashSet()) {
 
     fun makeProcessed(type: Any): Boolean {
         return processed.add(type)
     }
-
 
     fun isProcessed(type: Any): Boolean {
         return processed.contains(type)
@@ -79,12 +83,17 @@ internal interface RecursiveJvmTypeVisitor : JvmTypeVisitor<VisitorContext> {
     }
 
     override fun visitParameterizedType(type: JvmParameterizedType, context: VisitorContext): JvmType {
-        return JvmParameterizedType(type.name, type.parameterTypes.map { visitType(it, context) }, type.isNullable, type.annotations)
+        return JvmParameterizedType(
+            type.name,
+            type.parameterTypes.map { visitType(it, context) },
+            type.isNullable,
+            type.annotations
+        )
     }
 
     fun visitDeclaration(
         declaration: JvmTypeParameterDeclaration,
-        context: VisitorContext = VisitorContext()
+        context: VisitorContext = VisitorContext(),
     ): JvmTypeParameterDeclaration {
         if (context.isProcessed(declaration)) {
             return declaration
@@ -97,7 +106,6 @@ internal interface RecursiveJvmTypeVisitor : JvmTypeVisitor<VisitorContext> {
         )
     }
 }
-
 
 internal val Map<String, JvmTypeParameterDeclaration>.fixDeclarationVisitor: RecursiveJvmTypeVisitor
     get() {

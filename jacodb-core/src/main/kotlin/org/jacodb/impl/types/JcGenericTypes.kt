@@ -78,12 +78,11 @@ class JcBoundedWildcardImpl(
     }
 }
 
-
 class JcTypeVariableImpl(
     override val classpath: JcClasspath,
     private val declaration: JcTypeVariableDeclaration,
     override val nullable: Boolean?,
-    override val annotations: List<JcAnnotation> = listOf()
+    override val annotations: List<JcAnnotation> = listOf(),
 ) : JcTypeVariable {
 
     override val typeName: String

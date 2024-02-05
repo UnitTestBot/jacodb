@@ -66,11 +66,11 @@ private data class AnnotationUpdateVisitorContext(val annotationInfo: Annotation
  *
  * @param cp [JcClasspath] instance needed to instantiate [JcAnnotationImpl]
  */
-private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
-    : JvmTypeVisitor<AnnotationUpdateVisitorContext> {
+private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath) :
+    JvmTypeVisitor<AnnotationUpdateVisitorContext> {
     override fun visitUpperBound(
         type: JvmBoundWildcard.JvmUpperBoundWildcard,
-        context: AnnotationUpdateVisitorContext
+        context: AnnotationUpdateVisitorContext,
     ): JvmType {
         val stepType = context.stepType ?: return applyAnnotation(type, context)
 
@@ -85,7 +85,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
 
     override fun visitLowerBound(
         type: JvmBoundWildcard.JvmLowerBoundWildcard,
-        context: AnnotationUpdateVisitorContext
+        context: AnnotationUpdateVisitorContext,
     ): JvmType {
         val stepType = context.stepType ?: return applyAnnotation(type, context)
 
@@ -126,7 +126,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
 
     override fun visitNested(
         type: JvmParameterizedType.JvmNestedType,
-        context: AnnotationUpdateVisitorContext
+        context: AnnotationUpdateVisitorContext,
     ): JvmType {
         val newOwnerType = visitType(type.ownerType, context)
 
@@ -158,6 +158,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
                     type.annotations
                 )
             }
+
             else -> unexpectedStepType(stepType, "JvmNested")
         }
     }
@@ -174,6 +175,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
                 newParameterTypes[index] = visitType(newParameterTypes[index], context)
                 JvmParameterizedType(type.name, newParameterTypes, type.isNullable, type.annotations)
             }
+
             else -> unexpectedStepType(stepType, "JvmParametrizedType")
         }
     }
@@ -185,7 +187,7 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
 
         return when {
             annotation.isNotNullAnnotation -> type.copyWith(false, type.annotations.plus(annotation))
-            annotation.isNullableAnnotation-> type.copyWith(true, type.annotations.plus(annotation))
+            annotation.isNullableAnnotation -> type.copyWith(true, type.annotations.plus(annotation))
             else -> type.copyWith(type.isNullable, type.annotations.plus(annotation))
         }
     }
@@ -198,7 +200,6 @@ private class JvmTypeAnnotationUpdateVisitor(private val cp: JcClasspath)
         return type
     }
 }
-
 
 /**
  * Adds all given type annotations to proper parts of type (which is given as receiver).

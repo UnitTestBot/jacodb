@@ -24,11 +24,10 @@ import org.jacodb.impl.cfg.graphs.findDominators
 import java.util.*
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
-
 class JcLoop(
     val graph: JcGraph,
     val head: JcInst,
-    val instructions: List<JcInst>
+    val instructions: List<JcInst>,
 ) {
     val exits: Collection<JcInst> by lazy(PUBLICATION) {
         val result = hashSetOf<JcInst>()
@@ -61,7 +60,6 @@ class JcLoop(
         result = 31 * result + instructions.hashCode()
         return result
     }
-
 
 }
 
@@ -100,7 +98,6 @@ private fun JcGraph.newLoop(head: JcInst, loopStatements: MutableList<JcInst>): 
     return JcLoop(this, head = head, instructions = loopStatements)
 }
 
-
 private fun JcGraph.loopBodyOf(header: JcInst, inst: JcInst): MutableList<JcInst> {
     val loopBody = arrayListOf(header)
     val stack = ArrayDeque<JcInst>().also {
@@ -121,4 +118,3 @@ private fun JcGraph.loopBodyOf(header: JcInst, inst: JcInst): MutableList<JcInst
 private fun MutableList<JcInst>.union(another: List<JcInst>): MutableList<JcInst> = apply {
     addAll(another.filter { !contains(it) })
 }
-

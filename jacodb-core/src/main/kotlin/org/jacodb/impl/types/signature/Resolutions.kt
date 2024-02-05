@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.*
+import org.jacodb.api.FieldResolution
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.MethodResolution
+import org.jacodb.api.RecordComponentResolution
+import org.jacodb.api.TypeResolution
 
 internal class FieldResolutionImpl(val fieldType: JvmType) : FieldResolution
 
@@ -26,12 +31,11 @@ internal class MethodResolutionImpl(
     val returnType: JvmType,
     val parameterTypes: List<JvmType>,
     val exceptionTypes: List<JvmRefType>,
-    val typeVariables: List<JvmTypeParameterDeclaration>
+    val typeVariables: List<JvmTypeParameterDeclaration>,
 ) : MethodResolution
 
 internal class TypeResolutionImpl(
     val superClass: JvmType,
     val interfaceType: List<JvmType>,
-    val typeVariables: List<JvmTypeParameterDeclaration>
+    val typeVariables: List<JvmTypeParameterDeclaration>,
 ) : TypeResolution
-

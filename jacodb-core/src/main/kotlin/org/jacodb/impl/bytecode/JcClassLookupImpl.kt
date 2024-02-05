@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAccessible
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcField
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcMethod
+import org.jacodb.api.TypeName
 import org.jacodb.api.ext.packageName
 
 class JcClassLookupImpl(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {
@@ -38,12 +43,12 @@ class JcClassLookupImpl(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMet
     }
 
 }
+
 internal abstract class JcClassLookup<Result : JcAccessible>(clazz: JcClassOrInterface) :
     JcAbstractLookup<JcClassOrInterface, Result>(clazz) {
 
     override val JcClassOrInterface.resolvePackage: String
         get() = packageName
-
 
     internal open class JcMethodLookup(
         clazz: JcClassOrInterface,
@@ -102,6 +107,5 @@ internal abstract class JcClassLookup<Result : JcAccessible>(clazz: JcClassOrInt
             get() = { it.name == name }
 
     }
-
 
 }

@@ -16,7 +16,14 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassExtFeature
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcField
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findMethodOrNull
 import org.jacodb.impl.features.JcFeaturesChain
@@ -156,7 +163,7 @@ class JcClassOrInterfaceImpl(
 
 fun List<JcField>.joinFeatureFields(
     jcClassOrInterface: JcClassOrInterface,
-    featuresChain: JcFeaturesChain
+    featuresChain: JcFeaturesChain,
 ): List<JcField> {
     val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
     if (hasClassFeatures) {
@@ -175,7 +182,7 @@ fun List<JcField>.joinFeatureFields(
 
 fun List<JcMethod>.joinFeatureMethods(
     jcClassOrInterface: JcClassOrInterface,
-    featuresChain: JcFeaturesChain
+    featuresChain: JcFeaturesChain,
 ): List<JcMethod> {
     val hasClassFeatures = featuresChain.features.any { it is JcClassExtFeature }
     if (hasClassFeatures) {

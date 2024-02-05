@@ -35,7 +35,6 @@ import kotlinx.coroutines.yield
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
-import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged

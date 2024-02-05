@@ -16,10 +16,22 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAccessible
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcRefType
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypeVariableDeclaration
+import org.jacodb.api.JvmType
+import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.objectType
-import org.jacodb.impl.types.signature.*
+import org.jacodb.impl.types.signature.JvmArrayType
+import org.jacodb.impl.types.signature.JvmBoundWildcard
+import org.jacodb.impl.types.signature.JvmClassRefType
+import org.jacodb.impl.types.signature.JvmParameterizedType
+import org.jacodb.impl.types.signature.JvmPrimitiveType
+import org.jacodb.impl.types.signature.JvmTypeVariable
+import org.jacodb.impl.types.signature.JvmUnboundWildcard
 
 internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
     return when (jvmType) {
@@ -34,13 +46,13 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
             val params = parameters ?: jvmType.parameterTypes
             when {
                 params.isNotEmpty() -> JcClassTypeImpl(
-                        this,
-                        jvmType.name,
-                        null,
-                        params,
-                        nullable = jvmType.isNullable,
-                        jvmType.annotations
-                    )
+                    this,
+                    jvmType.name,
+                    null,
+                    params,
+                    nullable = jvmType.isNullable,
+                    jvmType.annotations
+                )
                 // raw types
                 else -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
             }
@@ -62,7 +74,12 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
         is JvmTypeVariable -> {
             val declaration = jvmType.declaration
             if (declaration != null) {
-                JcTypeVariableImpl(this, declaration.asJcDeclaration(declaration.owner), jvmType.isNullable, jvmType.annotations)
+                JcTypeVariableImpl(
+                    this,
+                    declaration.asJcDeclaration(declaration.owner),
+                    jvmType.isNullable,
+                    jvmType.annotations
+                )
             } else {
                 objectType
             }
@@ -76,6 +93,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
         is JvmBoundWildcard.JvmLowerBoundWildcard -> JcBoundedWildcardImpl(
             upperBounds = emptyList(), lowerBounds = listOf(typeOf(jvmType.bound) as JcRefType)
         )
+
         else -> throw IllegalStateException("Unsupported type")
     }
 }
@@ -84,7 +102,7 @@ class JcTypeVariableDeclarationImpl(
     override val symbol: String,
     private val classpath: JcClasspath,
     private val jvmBounds: List<JvmType>,
-    override val owner: JcAccessible
+    override val owner: JcAccessible,
 ) : JcTypeVariableDeclaration {
     override val bounds: List<JcRefType> get() = jvmBounds.map { classpath.typeOf(it) as JcRefType }
 }

@@ -16,8 +16,13 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcField
+import org.jacodb.api.JcRefType
+import org.jacodb.api.JcSubstitutor
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypedField
 import org.jacodb.api.ext.isNullable
+import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
@@ -27,7 +32,7 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class JcTypedFieldImpl(
     override val enclosingType: JcRefType,
     override val field: JcField,
-    private val substitutor: JcSubstitutor
+    private val substitutor: JcSubstitutor,
 ) : JcTypedField {
 
     override val access: Int
@@ -46,13 +51,13 @@ class JcTypedFieldImpl(
         val type = resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))
         } ?: classpath.findTypeOrNull(field.type.typeName)?.copyWithAnnotations(
-            (field as? JcFieldImpl)?.typeAnnotationInfos?.map { JcAnnotationImpl(it, field.enclosingClass.classpath) } ?: listOf()
+            (field as? JcFieldImpl)?.typeAnnotationInfos?.map { JcAnnotationImpl(it, field.enclosingClass.classpath) }
+                ?: listOf()
         ) ?: typeName.throwClassNotFound()
 
         field.isNullable?.let {
             (type as? JcRefType)?.copyWithNullability(it)
         } ?: type
     }
-
 
 }

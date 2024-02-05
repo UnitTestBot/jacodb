@@ -16,7 +16,17 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathExtFeature
+import org.jacodb.api.JcField
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcLookupExtFeature
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.TypeName
 import org.jacodb.api.ext.jcdbName
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
@@ -42,7 +52,7 @@ class JcUnknownMethod(
     name: String,
     description: String,
     returnType: TypeName,
-    params: List<TypeName>
+    params: List<TypeName>,
 ) : JcVirtualMethodImpl(
     name,
     returnType = returnType,
@@ -177,6 +187,5 @@ object UnknownClassMethodsAndFields : JcLookupExtFeature {
         return JcUnknownTypeLookup(type)
     }
 }
-
 
 val JcClasspath.isResolveAllToUnknown: Boolean get() = isInstalled(UnknownClasses)

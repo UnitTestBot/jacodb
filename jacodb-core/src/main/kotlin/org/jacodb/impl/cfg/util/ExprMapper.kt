@@ -385,7 +385,6 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         }
     }
 
-
     override fun visitJcRawThis(value: JcRawThis) = exprHandler(value) { value }
     override fun visitJcRawArgument(value: JcRawArgument) = exprHandler(value) { value }
     override fun visitJcRawLocalVar(value: JcRawLocalVar) = exprHandler(value) { value }

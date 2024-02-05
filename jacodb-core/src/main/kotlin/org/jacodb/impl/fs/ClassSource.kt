@@ -25,12 +25,12 @@ import org.jacodb.impl.vfs.PersistentByteCodeLocation
 class ClassSourceImpl(
     override val location: RegisteredLocation,
     override val className: String,
-    override val byteCode: ByteArray
+    override val byteCode: ByteArray,
 ) : ClassSource
 
 class LazyClassSourceImpl(
     override val location: RegisteredLocation,
-    override val className: String
+    override val className: String,
 ) : ClassSource {
 
     override val byteCode by lazy {
@@ -43,7 +43,7 @@ class PersistenceClassSource(
     override val className: String,
     val classId: Long,
     val locationId: Long,
-    private val cachedByteCode: ByteArray? = null
+    private val cachedByteCode: ByteArray? = null,
 ) : ClassSource {
 
     private constructor(persistenceClassSource: PersistenceClassSource, byteCode: ByteArray) : this(

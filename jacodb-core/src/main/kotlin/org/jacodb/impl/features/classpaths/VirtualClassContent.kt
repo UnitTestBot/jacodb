@@ -77,7 +77,7 @@ class VirtualClassContent(private val builders: List<VirtualClassContentBuilder>
 
 }
 
-class VirtualClassContentsBuilder() {
+class VirtualClassContentsBuilder {
     internal val builders = ArrayList<VirtualClassContentBuilder>()
 
     fun content(builder: VirtualClassContentBuilder.() -> Unit) = apply {
@@ -87,11 +87,9 @@ class VirtualClassContentsBuilder() {
         }
     }
 
-
     fun build() = VirtualClassContent(builders)
 
 }
-
 
 class VirtualClassContentBuilder {
     internal var matcher: (JcClassOrInterface) -> Boolean = { false }

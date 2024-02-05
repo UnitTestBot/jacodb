@@ -27,7 +27,7 @@ open class GlobalClassesVfs : Closeable {
 
     private fun PackageVfsItem.findClassOrNew(
         simpleClassName: String,
-        source: ClassSource
+        source: ClassSource,
     ): ClassVfsItem {
         val nameIndex = classes.getOrPut(simpleClassName) {
             ConcurrentHashMap<Long, ClassVfsItem>()

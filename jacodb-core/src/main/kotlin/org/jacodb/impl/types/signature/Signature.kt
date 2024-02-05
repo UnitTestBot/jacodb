@@ -26,7 +26,7 @@ import org.objectweb.asm.signature.SignatureVisitor
 
 internal abstract class Signature<T : Resolution>(
     val owner: JcAccessible,
-    private val kmTypeParameters: List<KmTypeParameter>?
+    private val kmTypeParameters: List<KmTypeParameter>?,
 ) :
     TypeRegistrant.RejectingSignatureVisitor(), TypeRegistrant {
 

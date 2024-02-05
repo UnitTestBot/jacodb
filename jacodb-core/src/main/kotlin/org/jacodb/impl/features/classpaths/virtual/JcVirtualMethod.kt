@@ -50,7 +50,7 @@ interface JcVirtualMethod : JcMethod {
 
 open class JcVirtualParameter(
     override val index: Int,
-    override val type: TypeName
+    override val type: TypeName,
 ) : JcParameter {
 
     override val declaration: JcDeclaration
@@ -78,7 +78,7 @@ open class JcVirtualMethodImpl(
     override val access: Int = Opcodes.ACC_PUBLIC,
     override val returnType: TypeName,
     override val parameters: List<JcVirtualParameter>,
-    override val description: String
+    override val description: String,
 ) : JcVirtualMethod {
 
     init {

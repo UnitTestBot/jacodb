@@ -18,13 +18,12 @@ package org.jacodb.impl.bytecode
 
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.types.MethodInfo
 
 fun JcClassOrInterface.toJcMethod(
     methodInfo: MethodInfo,
-    featuresChain: JcFeaturesChain
+    featuresChain: JcFeaturesChain,
 ): JcMethod {
     return JcMethodImpl(methodInfo, featuresChain, this)
 }

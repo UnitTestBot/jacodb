@@ -20,7 +20,13 @@ import org.jacodb.api.JcByteCodeLocation
 import org.jacodb.api.JcDatabase
 import org.jacodb.api.LocationType
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.impl.*
+import org.jacodb.impl.CleanupResult
+import org.jacodb.impl.FeaturesRegistry
+import org.jacodb.impl.JcInternalSignal
+import org.jacodb.impl.LocationsRegistry
+import org.jacodb.impl.LocationsRegistrySnapshot
+import org.jacodb.impl.RefreshResult
+import org.jacodb.impl.RegistrationResult
 import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jacodb.impl.vfs.PersistentByteCodeLocation

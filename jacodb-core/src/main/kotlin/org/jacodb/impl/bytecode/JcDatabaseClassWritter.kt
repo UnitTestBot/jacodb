@@ -21,7 +21,6 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.findClass
 import org.objectweb.asm.ClassWriter
 
-
 /**
  * ASM class writer with jacodb specific resolution of common superclasses
  */

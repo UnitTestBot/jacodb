@@ -19,11 +19,25 @@ package org.jacodb.impl.fs
 import kotlinx.collections.immutable.toImmutableList
 import org.jacodb.api.ClassSource
 import org.jacodb.impl.storage.AnnotationValueKind
-import org.jacodb.impl.types.*
+import org.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.types.AnnotationValue
+import org.jacodb.impl.types.AnnotationValueList
+import org.jacodb.impl.types.ClassInfo
+import org.jacodb.impl.types.ClassRef
+import org.jacodb.impl.types.EnumRef
+import org.jacodb.impl.types.FieldInfo
+import org.jacodb.impl.types.MethodInfo
+import org.jacodb.impl.types.OuterClassRef
+import org.jacodb.impl.types.ParameterInfo
+import org.jacodb.impl.types.PrimitiveValue
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.TypeAnnotationNode
 
 fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     name = Type.getObjectType(name).className,
@@ -41,7 +55,7 @@ fun ClassNode.asClassInfo(bytecode: ByteArray) = ClassInfo(
     methods = methods.map { it.asMethodInfo() }.toImmutableList(),
     fields = fields.map { it.asFieldInfo() }.toImmutableList(),
     annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
-            + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
+        + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
     bytecode = bytecode
 )
 
@@ -109,7 +123,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
         desc = desc,
         access = access,
         annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
-                + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
+            + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
         exceptions = exceptions.map { it.className },
         parametersInfo = List(params.size) { index ->
             ParameterInfo(
@@ -118,7 +132,7 @@ private fun MethodNode.asMethodInfo(): MethodInfo {
                 access = parameters?.get(index)?.access ?: Opcodes.ACC_PUBLIC,
                 type = params[index],
                 annotations = visibleParameterAnnotations?.get(index)?.asAnnotationInfos(true).orEmpty()
-                        + invisibleParameterAnnotations?.get(index)?.asAnnotationInfos(false).orEmpty()
+                    + invisibleParameterAnnotations?.get(index)?.asAnnotationInfos(false).orEmpty()
             )
         }
     )
@@ -130,9 +144,8 @@ private fun FieldNode.asFieldInfo() = FieldInfo(
     access = access,
     type = Type.getObjectType(desc).className,
     annotations = visibleAnnotations.asAnnotationInfos(true) + invisibleAnnotations.asAnnotationInfos(false)
-            + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
+        + visibleTypeAnnotations.asTypeAnnotationInfos(true) + invisibleTypeAnnotations.asTypeAnnotationInfos(false),
 )
-
 
 val ClassSource.info: ClassInfo
     get() {
@@ -144,7 +157,7 @@ val ClassSource.fullAsmNode: ClassNode
         return newClassNode(ClassReader.EXPAND_FRAMES)
     }
 
-//fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
+// fun ClassSource.fullAsmNodeWithFrames(classpath: JcClasspath): ClassNode {
 //    var classNode = fullAsmNode
 //    classNode = when {
 //        classNode.hasFrameInfo -> classNode

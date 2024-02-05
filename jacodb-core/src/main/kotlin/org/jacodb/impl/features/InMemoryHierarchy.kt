@@ -16,7 +16,15 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.*
+import org.jacodb.api.ByteCodeIndexer
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcDatabasePersistence
+import org.jacodb.api.JcFeature
+import org.jacodb.api.JcSignal
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.ext.JAVA_OBJECT
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
@@ -40,7 +48,7 @@ private val objectJvmName = Type.getInternalName(Any::class.java)
 class InMemoryHierarchyIndexer(
     persistence: JcDatabasePersistence,
     private val location: RegisteredLocation,
-    private val hierarchy: InMemoryHierarchyCache
+    private val hierarchy: InMemoryHierarchyCache,
 ) : ByteCodeIndexer {
 
     private val interner = persistence.symbolInterner
@@ -103,6 +111,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
             is JcSignal.Drop -> {
                 hierarchies[signal.jcdb]?.clear()
             }
+
             is JcSignal.Closed -> {
                 hierarchies.remove(signal.jcdb)
             }
@@ -127,7 +136,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
             symbolId: Long,
             locationIds: Set<Long>,
             transitive: Boolean,
-            result: HashSet<Long>
+            result: HashSet<Long>,
         ) {
             val subclasses = hierarchy[symbolId]?.entries?.flatMap {
                 when {
@@ -193,7 +202,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 internal fun JcClasspath.findSubclassesInMemory(
     name: String,
     allHierarchy: Boolean,
-    full: Boolean
+    full: Boolean,
 ): Sequence<JcClassOrInterface> {
     return InMemoryHierarchy.syncQuery(this, InMemoryHierarchyReq(name, allHierarchy, full)).map {
         toJcClass(it)

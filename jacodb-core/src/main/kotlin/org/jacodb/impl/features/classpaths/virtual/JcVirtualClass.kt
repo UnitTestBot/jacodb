@@ -16,7 +16,13 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDeclaration
+import org.jacodb.api.JcField
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.objectClass
 import org.jacodb.impl.bytecode.JcClassLookupImpl
 import org.jacodb.impl.bytecode.JcDeclarationImpl
@@ -42,7 +48,7 @@ open class JcVirtualClassImpl(
     override val name: String,
     override val access: Int = Opcodes.ACC_PUBLIC,
     private val initialFields: List<JcVirtualField>,
-    private val initialMethods: List<JcVirtualMethod>
+    private val initialMethods: List<JcVirtualMethod>,
 ) : JcVirtualClass {
 
     private val featuresChain get() = JcFeaturesChain(classpath.features.orEmpty())

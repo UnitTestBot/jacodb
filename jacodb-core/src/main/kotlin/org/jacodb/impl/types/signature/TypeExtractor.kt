@@ -84,10 +84,9 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
 
         fun toToken(): AbstractJvmType?
 
-        abstract class AbstractBase() : IncompleteToken {
+        abstract class AbstractBase : IncompleteToken {
 
             protected val parameters = ArrayList<JvmType>()
-
 
             override fun appendDirectBound(): SignatureVisitor {
                 return TypeExtractor(DirectBound())
@@ -127,7 +126,11 @@ internal class TypeExtractor(private val typeRegistrant: TypeRegistrant) :
         class TopLevelType(private val internalName: String) : AbstractBase() {
 
             override fun toToken(): AbstractJvmType {
-                return if (isParameterized) JvmParameterizedType(name, parameters, null, listOf()) else JvmClassRefType(name, null, listOf())
+                return if (isParameterized) JvmParameterizedType(name, parameters, null, listOf()) else JvmClassRefType(
+                    name,
+                    null,
+                    listOf()
+                )
             }
 
             override val isParameterized: Boolean

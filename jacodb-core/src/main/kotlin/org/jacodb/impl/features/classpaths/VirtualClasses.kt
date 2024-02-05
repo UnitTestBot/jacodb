@@ -27,7 +27,7 @@ import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 
 open class VirtualClasses(
     val classes: List<JcVirtualClass>,
-    private val virtualLocation: VirtualLocation = VirtualLocation()
+    private val virtualLocation: VirtualLocation = VirtualLocation(),
 ) : JcClasspathExtFeature {
 
     companion object {

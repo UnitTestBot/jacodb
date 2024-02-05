@@ -23,9 +23,8 @@ import org.jacodb.api.JvmTypeParameterDeclaration
 internal class JvmTypeParameterDeclarationImpl(
     override val symbol: String,
     override val owner: JcAccessible,
-    override val bounds: List<JvmType>? = null
+    override val bounds: List<JvmType>? = null,
 ) : JvmTypeParameterDeclaration {
-
 
     override fun toString(): String {
         return "$symbol : ${bounds?.joinToString { it.displayName }}"

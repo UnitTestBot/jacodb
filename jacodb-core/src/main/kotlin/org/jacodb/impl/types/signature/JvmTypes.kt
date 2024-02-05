@@ -30,8 +30,9 @@ import org.jacodb.api.PredefinedPrimitives
  */
 // todo: replace annotations with pure String list
 sealed class AbstractJvmType(
-    override val isNullable: Boolean?, 
-    override val annotations: List<JcAnnotation>): JvmType {
+    override val isNullable: Boolean?,
+    override val annotations: List<JcAnnotation>,
+) : JvmType {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -49,14 +50,13 @@ sealed class AbstractJvmType(
         return result
     }
 
-
 }
 
-internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>)
-    : AbstractJvmType(isNullable, annotations)
+internal sealed class JvmRefType(isNullable: Boolean?, annotations: List<JcAnnotation>) :
+    AbstractJvmType(isNullable, annotations)
 
-internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
-    : JvmRefType(isNullable, annotations) {
+internal class JvmArrayType(val elementType: JvmType, isNullable: Boolean? = null, annotations: List<JcAnnotation>) :
+    JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = elementType.displayName + "[]"
@@ -67,7 +67,7 @@ internal class JvmParameterizedType(
     val name: String,
     val parameterTypes: List<JvmType>,
     isNullable: Boolean? = null,
-    annotations: List<JcAnnotation>
+    annotations: List<JcAnnotation>,
 ) : JvmRefType(isNullable, annotations) {
 
     override val displayName: String
@@ -78,7 +78,7 @@ internal class JvmParameterizedType(
         val parameterTypes: List<JvmType>,
         val ownerType: JvmType,
         isNullable: Boolean? = null,
-        annotations: List<JcAnnotation>
+        annotations: List<JcAnnotation>,
     ) : JvmRefType(isNullable, annotations) {
 
         override val displayName: String
@@ -88,8 +88,8 @@ internal class JvmParameterizedType(
 
 }
 
-internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
-    : JvmRefType(isNullable, annotations) {
+internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>) :
+    JvmRefType(isNullable, annotations) {
 
     override val displayName: String
         get() = name
@@ -105,13 +105,17 @@ internal class JvmClassRefType(val name: String, isNullable: Boolean? = null, an
  *  This is important to properly handle nullability during substitutions. Not that kt T and java @NotNull T still have
  *  differences -- see comment for `JcSubstitutorImpl.relaxNullabilityAfterSubstitution` for more details
  */
-internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>)
-    : JvmRefType(isNullable, annotations) {
+internal class JvmTypeVariable(val symbol: String, isNullable: Boolean? = null, annotations: List<JcAnnotation>) :
+    JvmRefType(isNullable, annotations) {
 
-    constructor(declaration: JvmTypeParameterDeclaration, isNullable: Boolean? = null, annotations: List<JcAnnotation>) : this(
+    constructor(
+        declaration: JvmTypeParameterDeclaration,
+        isNullable: Boolean? = null,
+        annotations: List<JcAnnotation>,
+    ) : this(
         declaration.symbol,
-        isNullable
-    , annotations) {
+        isNullable, annotations
+    ) {
         this.declaration = declaration
     }
 
@@ -164,8 +168,8 @@ internal object JvmUnboundWildcard : JvmWildcard() {
         get() = "*"
 }
 
-internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf())
-    : JvmRefType(isNullable = false, annotations) {
+internal class JvmPrimitiveType(val ref: String, annotations: List<JcAnnotation> = listOf()) :
+    JvmRefType(isNullable = false, annotations) {
 
     companion object {
         fun of(descriptor: Char): JvmType {

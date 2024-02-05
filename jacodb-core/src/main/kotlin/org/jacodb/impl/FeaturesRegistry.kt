@@ -17,7 +17,12 @@
 package org.jacodb.impl
 
 import kotlinx.collections.immutable.toPersistentList
-import org.jacodb.api.*
+import org.jacodb.api.ByteCodeIndexer
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcFeature
+import org.jacodb.api.JcSignal
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.fs.fullAsmNode
 import java.io.Closeable
 
@@ -39,7 +44,7 @@ class FeaturesRegistry(features: List<JcFeature<*, *>>) : Closeable {
 
     private fun <REQ, RES> JcFeature<RES, REQ>.index(
         location: RegisteredLocation,
-        classes: List<ClassSource>
+        classes: List<ClassSource>,
     ) {
         val indexer = newIndexer(jcdb, location)
         classes.forEach { index(it, indexer) }

@@ -93,7 +93,6 @@ fun JcRawNumber(number: Number) = when (number) {
 @JvmName("rawString")
 fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())
 
-
 fun JcClasspath.int(value: Int): JcInt = JcInt(value, int)
 fun JcClasspath.byte(value: Byte): JcByte = JcByte(value, byte)
 fun JcClasspath.short(value: Short): JcShort = JcShort(value, short)

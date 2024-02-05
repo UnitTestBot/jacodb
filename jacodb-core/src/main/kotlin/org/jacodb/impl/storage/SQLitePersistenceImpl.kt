@@ -35,7 +35,7 @@ class SQLitePersistenceImpl(
     javaRuntime: JavaRuntime,
     featuresRegistry: FeaturesRegistry,
     location: String? = null,
-    clearOnStart: Boolean
+    clearOnStart: Boolean,
 ) : AbstractJcDatabasePersistenceImpl(javaRuntime, featuresRegistry, clearOnStart) {
 
     private var connection: Connection? = null

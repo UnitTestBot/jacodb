@@ -205,7 +205,6 @@ class NpeAnalysisTest : BaseAnalysisTest() {
         testSingleJulietClass(vulnerabilityType, className)
     }
 
-
     @Test
     fun `analyse something`() {
         val testingMethod = cp.findClass<NpeExamples>().declaredMethods.single { it.name == "id" }

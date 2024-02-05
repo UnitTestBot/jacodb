@@ -17,7 +17,12 @@
 package org.jacodb.impl.types.signature
 
 import mu.KLogging
-import org.jacodb.api.*
+import org.jacodb.api.FieldResolution
+import org.jacodb.api.JcField
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.Malformed
+import org.jacodb.api.Pure
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.bytecode.kmType
 import org.jacodb.impl.types.allVisibleTypeParameters
@@ -52,7 +57,7 @@ internal class FieldSignature(private val field: JcField?) : TypeRegistrant {
         fun of(
             signature: String?,
             declarations: Map<String, JvmTypeParameterDeclaration>,
-            field: JcField?
+            field: JcField?,
         ): FieldResolution {
             signature ?: return Pure
             val signatureReader = SignatureReader(signature)
