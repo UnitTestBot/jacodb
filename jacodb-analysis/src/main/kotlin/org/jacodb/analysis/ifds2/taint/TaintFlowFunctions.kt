@@ -148,7 +148,7 @@ class ForwardTaintFlowFunctions(
         fact: Tainted,
         from: JcExpr,
         to: JcValue,
-    ): Collection<TaintFact> {
+    ): Collection<Tainted> {
         val toPath = to.toPath()
         val fromPath = from.toPathOrNull()
 
@@ -198,90 +198,10 @@ class ForwardTaintFlowFunctions(
         }
     }
 
-    private fun transmitTaintReturn(
-        fact: Tainted,
-        from: JcValue,
-        to: JcValue,
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        // if (from is JcNullConstant) {
-        //     add(Tainted(toPath, TaintMark.NULLNESS))
-        // }
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintInstanceToThis(
-        fact: Tainted,
-        from: JcValue, // instance
-        to: JcThis, // this
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintThisToInstance(
-        fact: Tainted,
-        from: JcThis, // this
-        to: JcValue, // instance
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintArgumentActualToFormal(
-        fact: Tainted,
-        from: JcValue, // actual
-        to: JcValue, // formal
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        // if (from is JcNullConstant) {
-        //     add(Tainted(toPath, TaintMark.NULLNESS))
-        // }
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintArgumentFormalToActual(
-        fact: Tainted,
-        from: JcValue, // formal
-        to: JcValue, // actual
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    // TODO: rename (consider "propagate")
-    // TODO: refactor (consider adding 'transmitTaintSequent' / 'transmitTaintCall')
     private fun transmitTaintNormal(
         fact: Tainted,
         inst: JcInst,
-    ): List<TaintFact> {
+    ): List<Tainted> {
         // Pass-through:
         return listOf(fact)
     }
@@ -379,6 +299,50 @@ class ForwardTaintFlowFunctions(
             transmitTaintNormal(fact, current)
         }
     }
+
+    private fun transmitTaint(
+        fact: Tainted,
+        from: JcValue,
+        to: JcValue,
+    ): Collection<Tainted> = buildSet {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        val tail = (fact.variable - fromPath) ?: return@buildSet
+        val newPath = toPath / tail
+        val newTaint = fact.copy(variable = newPath)
+        add(newTaint)
+    }
+
+    private fun transmitTaintArgumentActualToFormal(
+        fact: Tainted,
+        from: JcValue, // actual
+        to: JcValue, // formal
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintArgumentFormalToActual(
+        fact: Tainted,
+        from: JcValue, // formal
+        to: JcValue, // actual
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintInstanceToThis(
+        fact: Tainted,
+        from: JcValue, // instance
+        to: JcThis, // this
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintThisToInstance(
+        fact: Tainted,
+        from: JcThis, // this
+        to: JcValue, // instance
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintReturn(
+        fact: Tainted,
+        from: JcValue,
+        to: JcValue,
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
 
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
@@ -720,76 +684,6 @@ class BackwardTaintFlowFunctions(
         return setOf(fact)
     }
 
-    private fun transmitTaintReturn(
-        fact: Tainted,
-        from: JcValue,
-        to: JcValue,
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintInstanceToThis(
-        fact: Tainted,
-        from: JcValue, // instance
-        to: JcThis, // this
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintThisToInstance(
-        fact: Tainted,
-        from: JcThis, // this
-        to: JcValue, // instance
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintArgumentActualToFormal(
-        fact: Tainted,
-        from: JcValue, // actual
-        to: JcValue, // formal
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
-    private fun transmitTaintArgumentFormalToActual(
-        fact: Tainted,
-        from: JcValue, // formal
-        to: JcValue, // actual
-    ): Collection<TaintFact> = buildSet {
-        val fromPath = from.toPath()
-        val toPath = to.toPath()
-
-        val tail = (fact.variable - fromPath) ?: return@buildSet
-        val newPath = toPath / tail
-        val newTaint = fact.copy(variable = newPath)
-        add(newTaint)
-    }
-
     private fun transmitTaintBackwardNormal(
         fact: Tainted,
         inst: JcInst,
@@ -813,6 +707,50 @@ class BackwardTaintFlowFunctions(
             transmitTaintBackwardNormal(fact, current)
         }
     }
+
+    private fun transmitTaint(
+        fact: Tainted,
+        from: JcValue,
+        to: JcValue,
+    ): Collection<Tainted> = buildSet {
+        val fromPath = from.toPath()
+        val toPath = to.toPath()
+
+        val tail = (fact.variable - fromPath) ?: return@buildSet
+        val newPath = toPath / tail
+        val newTaint = fact.copy(variable = newPath)
+        add(newTaint)
+    }
+
+    private fun transmitTaintArgumentActualToFormal(
+        fact: Tainted,
+        from: JcValue, // actual
+        to: JcValue, // formal
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintArgumentFormalToActual(
+        fact: Tainted,
+        from: JcValue, // formal
+        to: JcValue, // actual
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintInstanceToThis(
+        fact: Tainted,
+        from: JcValue, // instance
+        to: JcThis, // this
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintThisToInstance(
+        fact: Tainted,
+        from: JcThis, // this
+        to: JcValue, // instance
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
+
+    private fun transmitTaintReturn(
+        fact: Tainted,
+        from: JcValue,
+        to: JcValue,
+    ): Collection<Tainted> = transmitTaint(fact, from, to)
 
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
