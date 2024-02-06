@@ -23,7 +23,7 @@ class CliTest {
     @Test
     fun `test basic analysis cli api`() {
         val args = listOf(
-            "-a", CliTest::class.java.getResource("/config_small.json")?.file ?: error("Can't find file with config"),
+            "-a", CliTest::class.java.getResource("/config.json")?.file ?: error("Can't find file with config"),
             "-s", NpeExamples::class.java.name
         )
         AnalysisMain().run(args)
