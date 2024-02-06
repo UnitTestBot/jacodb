@@ -98,7 +98,7 @@ internal class BaseIfdsUnitRunner(
 
         if (pathEdges.add(edge)) {
             if (edge.from.statement.toString() == "noop" && edge.to.domainFact != ZEROFact) {
-                logger.debug { "Propagating $edge in ${edge.method} via ${edge.reason}" }
+                logger.trace { "Propagating $edge in ${edge.method} via ${edge.reason}" }
             }
             workList.send(edge)
             analyzer.handleNewEdge(edge).forEach {

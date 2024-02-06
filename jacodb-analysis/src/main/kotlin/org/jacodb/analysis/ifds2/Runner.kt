@@ -120,7 +120,7 @@ class Runner<Fact, Event>(
             val doPrintZero = false
             if (!doPrintOnlyForward || edge.from.statement.toString() == "noop") {
                 if (doPrintZero || edge.to.fact != Zero) {
-                    logger.debug { "Propagating edge=$edge in method=${edge.method} via reason=${reason}" }
+                    logger.trace { "Propagating edge=$edge in method=${edge.method} via reason=${reason}" }
                 }
             }
 
