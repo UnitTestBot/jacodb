@@ -35,6 +35,7 @@ import kotlinx.coroutines.yield
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
+import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
@@ -71,34 +72,37 @@ class TaintManager(
     ): TaintRunner {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
-        val analyzer = TaintAnalyzer(graph)
-        val runner = Runner(graph, analyzer, this@TaintManager, unitResolver, unit)
+        val runner = if (Globals.BIDI_RUNNER) {
+            BidiRunner(
+                manager = this@TaintManager,
+                unitResolver = unitResolver,
+                unit = unit,
+                { manager ->
+                    val analyzer = TaintAnalyzer(graph)
+                    Runner(
+                        graph = graph,
+                        analyzer = analyzer,
+                        manager = manager,
+                        unitResolver = unitResolver,
+                        unit = unit
+                    )
+                },
+                { manager ->
+                    val analyzer = BackwardTaintAnalyzer(graph)
+                    Runner(
+                        graph = graph.reversed,
+                        analyzer = analyzer,
+                        manager = manager,
+                        unitResolver = unitResolver,
+                        unit = unit
+                    )
+                }
+            )
+        } else {
+            val analyzer = TaintAnalyzer(graph)
+            Runner(graph, analyzer, this@TaintManager, unitResolver, unit)
+        }
 
-        // val runner = BidiRunner(
-        //     manager = this@TaintManager,
-        //     unitResolver = unitResolver,
-        //     unit = unit,
-        //     { manager ->
-        //         val analyzer = TaintAnalyzer(graph)
-        //         Runner(
-        //             graph = graph,
-        //             analyzer = analyzer,
-        //             manager = manager,
-        //             unitResolver = unitResolver,
-        //             unit = unit
-        //         )
-        //     },
-        //     { manager ->
-        //         val analyzer = BackwardTaintAnalyzer(graph)
-        //         Runner(
-        //             graph = graph.reversed,
-        //             analyzer = analyzer,
-        //             manager = manager,
-        //             unitResolver = unitResolver,
-        //             unit = unit
-        //         )
-        //     }
-        // )
         runnerForUnit[unit] = runner
         return runner
     }

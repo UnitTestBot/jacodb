@@ -33,10 +33,6 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = KotlinLogging.logger {}
 
-internal object Globals {
-    internal var TAINTED_LOOP_BOUND_SINK = false
-}
-
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
 ) : Analyzer<TaintFact, TaintEvent> {
