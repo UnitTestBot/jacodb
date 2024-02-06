@@ -29,7 +29,6 @@ import org.jacodb.impl.cfg.util.InstructionFilter
  * the frames merging)
  */
 internal class Simplifier {
-
     fun simplify(jcClasspath: JcClasspath, instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
         // clear the assignments that are repeated inside single basic block
         var instructionList = cleanRepeatedAssignments(instList)
@@ -42,9 +41,9 @@ internal class Simplifier {
             val oldSize = instructionList.instructions.size
             instructionList = instructionList.filterNot(InstructionFilter {
                 it is JcRawAssignInst
-                        && it.lhv is JcRawSimpleValue
-                        && it.rhv is JcRawValue
-                        && uses.getOrDefault(it.lhv, 0) == 0
+                    && it.lhv is JcRawSimpleValue
+                    && it.rhv is JcRawValue
+                    && uses.getOrDefault(it.lhv, 0) == 0
             })
         } while (instructionList.instructions.size != oldSize)
 
@@ -53,11 +52,33 @@ internal class Simplifier {
             // (e.g. `a = b` and `b = a`) and not used anywhere else; also need to run several times
             // because of potential dependencies between such variables
             val assignmentsMap = computeAssignments(instructionList)
-            val replacements = assignmentsMap
-                .filter { (assignmentsMap[it.value.first()]?.let { it.size == 1 } ?: true) }
-                .filterValues { it.first() is JcRawLocalVar && it.drop(1).all { it !is JcRawLocalVar } }
-                .map { it.key to it.value.first() }
-                .toMap()
+            val replacements = buildMap {
+                for ((to, froms) in assignmentsMap) {
+                    if (froms.drop(1).any { it is JcRawLocalVar }) {
+                        continue
+                    }
+                    val firstFrom = (froms.first() as? JcRawLocalVar) ?: continue
+                    val fromAssignments = assignmentsMap[firstFrom]
+                    if (fromAssignments != null && fromAssignments.size != 1) {
+                        continue
+                    }
+                    put(to, firstFrom)
+                }
+            }
+
+            val extendedReplacements = buildMap<JcRawExpr, _> {
+                for ((to, from) in replacements) {
+                    if (!to.name.startsWith(LOCAL_VAR_START_CHARACTER)) {
+                        val actual = to.copy(typeName = from.typeName)
+                        // to keep original names ---------^
+                        put(to, actual)
+                        put(from, actual)
+                    } else {
+                        put(to, from)
+                    }
+                }
+            }
+
             instructionList = instructionList
                 .filterNot(InstructionFilter {
                     if (it !is JcRawAssignInst) return@InstructionFilter false
@@ -65,7 +86,7 @@ internal class Simplifier {
                     val rhv = it.rhv as? JcRawSimpleValue ?: return@InstructionFilter false
                     replacements[lhv] == rhv && replacements[rhv] == lhv
                 })
-                .map(ExprMapper(replacements.toMap()))
+                .map(ExprMapper(extendedReplacements))
                 .filterNot(InstructionFilter {
                     it is JcRawAssignInst && it.rhv == it.lhv
                 })
@@ -178,19 +199,22 @@ internal class Simplifier {
 
         for (inst in instList) {
             if (inst is JcRawAssignInst) {
+                val lhv = inst.lhv
                 val rhv = inst.rhv
-                if (inst.lhv is JcRawSimpleValue
+                if (lhv is JcRawSimpleValue
                     && rhv is JcRawLocalVar
-                    && uses.getOrDefault(inst.rhv, emptySet()).let { it.size == 1 && it.firstOrNull() == inst }
+                    && uses.getOrDefault(rhv, emptySet()).let { it.size == 1 && it.firstOrNull() == inst }
                     && rhv !in reservedValues
                 ) {
-                    val lhv = inst.lhv
                     val lhvUsage = uses.getOrDefault(lhv, emptySet()).firstOrNull()
                     val assignInstructionToReplacement = instList.firstOrNull { it is JcRawAssignInst && it.lhv == lhv }
+                    val assignInstructionToRhv = instList.firstOrNull { it is JcRawAssignInst && it.lhv == rhv}
                     val didNotAssignedBefore =
                         lhvUsage == null ||
-                                assignInstructionToReplacement == null ||
-                                !instList.isBefore(assignInstructionToReplacement, lhvUsage)
+                            assignInstructionToReplacement == null ||
+                            !instList.isBefore(assignInstructionToReplacement, lhvUsage) ||
+                            assignInstructionToRhv == null ||
+                            instList.areSequential(assignInstructionToRhv, inst)
                     if (lhvUsage == null || !instList.isBefore(lhvUsage, inst)) {
                         if (didNotAssignedBefore) {
                             replacements[rhv] = lhv
@@ -209,8 +233,12 @@ internal class Simplifier {
         return indexOf(one) < indexOf(another)
     }
 
-    private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawExpr>> {
-        val assignments = mutableMapOf<JcRawSimpleValue, MutableSet<JcRawExpr>>()
+    private fun JcInstListImpl<JcRawInst>.areSequential(one: JcRawInst, another: JcRawInst): Boolean {
+        return indexOf(one) + 1 == indexOf(another)
+    }
+
+    private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawLocalVar, Set<JcRawExpr>> {
+        val assignments = mutableMapOf<JcRawLocalVar, MutableSet<JcRawExpr>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst) {
                 val lhv = inst.lhv
@@ -237,7 +265,7 @@ internal class Simplifier {
         }
         val replacement = types.filterValues { it.size > 1 }
             .mapValues {
-                JcRawLocalVar(it.key.name, it.key.typeName)
+                JcRawLocalVar(it.key.index, it.key.name, it.key.typeName)
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }

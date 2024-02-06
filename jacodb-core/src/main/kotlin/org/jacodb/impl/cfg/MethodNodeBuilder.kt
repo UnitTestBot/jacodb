@@ -17,6 +17,7 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.*
@@ -26,6 +27,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.H_GETSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import java.util.ArrayList
 
 private val PredefinedPrimitives.smallIntegers get() = setOf(Boolean, Byte, Char, Short, Int)
 
@@ -116,12 +118,26 @@ class MethodNodeBuilder(
     }
 
     private fun initializeFrame(method: JcMethod) {
+        var staticInc = 0
         if (!method.isStatic) {
             val thisRef = JcRawThis(method.enclosingClass.name.typeName())
             locals[thisRef] = localIndex++
+            staticInc = 1
         }
+
+        val variables = method.asmNode().localVariables.orEmpty().sortedBy(LocalVariableNode::index)
+
+        fun getName(parameter: JcParameter): String? {
+            val idx = parameter.index + staticInc
+            return if (idx < variables.size) {
+                variables[idx].name
+            } else {
+                parameter.name
+            }
+        }
+
         for (parameter in method.parameters) {
-            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
+            val argument = JcRawArgument.of(parameter.index, getName(parameter), parameter.type)
             locals[argument] = localIndex
             if (argument.typeName.isDWord) localIndex += 2
             else localIndex++

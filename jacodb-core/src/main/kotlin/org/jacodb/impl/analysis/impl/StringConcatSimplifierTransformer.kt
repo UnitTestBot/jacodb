@@ -27,7 +27,8 @@ import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
-class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) : DefaultJcInstVisitor<JcInst> {
+class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) :
+    DefaultJcInstVisitor<JcInst> {
 
     override val defaultInstHandler: (JcInst) -> JcInst
         get() = { it }
@@ -38,6 +39,10 @@ class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list
     private val instructionIndices = mutableMapOf<JcInst, Int>()
 
     private val stringType = classpath.findTypeOrNull<String>() as JcClassType
+
+    private var localCounter = list
+        .flatMap { it.values.filterIsInstance<JcLocalVar>() }
+        .maxOfOrNull { it.index }?.plus(1) ?: 0
 
     fun transform(): JcInstList<JcInst> {
         var changed = false
@@ -101,7 +106,7 @@ class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list
                     it.name == "toString" && it.parameters.size == 1 && it.parameters.first().type == value.type
                 }
                 val toStringExpr = JcStaticCallExpr(method.methodRef(), listOf(value))
-                val assignment = JcLocalVar("${value}String", stringType)
+                val assignment = JcLocalVar(localCounter++, "${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }
@@ -114,7 +119,7 @@ class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list
                 }
                 val methodRef = VirtualMethodRefImpl.of(boxedType, method)
                 val toStringExpr = JcVirtualCallExpr(methodRef, value, emptyList())
-                val assignment = JcLocalVar("${value}String", stringType)
+                val assignment = JcLocalVar(localCounter++, "${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }

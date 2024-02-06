@@ -45,6 +45,9 @@ class JcSettings {
 
     var persistentClearOnStart: Boolean? = null
 
+    var keepLocalVariableNames: Boolean = false
+        private set
+
     /** jar files which should be loaded right after database is created */
     var predefinedDirOrJars: List<File> = persistentListOf()
         private set
@@ -99,6 +102,10 @@ class JcSettings {
 
     fun loadByteCode(files: List<File>) = apply {
         predefinedDirOrJars = (predefinedDirOrJars + files).toPersistentList()
+    }
+
+    fun keepLocalVariableNames() {
+        keepLocalVariableNames = true
     }
 
     /**

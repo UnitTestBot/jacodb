@@ -46,7 +46,6 @@ open class JcInstListImpl<INST>(
             else -> "  $it"
         }
     }
-
 }
 
 class JcMutableInstListImpl<INST>(instructions: List<INST>) : JcInstListImpl<INST>(instructions),

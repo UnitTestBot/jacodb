@@ -27,8 +27,8 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.impl.bytecode.JcDeclarationImpl
+import org.jacodb.impl.cfg.JcGraphImpl
 import org.jacodb.impl.cfg.JcInstListImpl
-import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 
@@ -43,9 +43,7 @@ interface JcVirtualMethod : JcMethod {
     override val instList: JcInstList<JcInst>
         get() = JcInstListImpl(emptyList())
 
-    override fun flowGraph(): JcGraph {
-        return MethodInstructionsFeature.flowGraph(this).flowGraph
-    }
+    override fun flowGraph(): JcGraph = JcGraphImpl(this, instList.instructions)
 }
 
 open class JcVirtualParameter(
