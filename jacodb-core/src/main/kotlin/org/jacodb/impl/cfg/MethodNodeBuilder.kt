@@ -879,10 +879,16 @@ class MethodNodeBuilder(
 
     override fun visitJcRawFloat(value: JcRawFloat) {
         currentInsnList.add(
-            when (value.value) {
-                0.0F -> InsnNode(Opcodes.FCONST_0)
-                1.0F -> InsnNode(Opcodes.FCONST_1)
-                2.0F -> InsnNode(Opcodes.FCONST_2)
+            // Note: The case to Any forces Float to box, which is necessary here
+            // since 0.0 == -0.0`, but `Box(0.0) != Box(-0.0)`.
+            // The latter is preferred here because we only want to
+            // "push constant 0.0f onto the stack" (`fconst_0` instruction)
+            // when `value.value` is exactly "zero" (0.0), NOT "negative zero" (-0.0).
+            @Suppress("USELESS_CAST")
+            when (value.value as Any) {
+                0.0f -> InsnNode(Opcodes.FCONST_0)
+                1.0f -> InsnNode(Opcodes.FCONST_1)
+                2.0f -> InsnNode(Opcodes.FCONST_2)
                 else -> LdcInsnNode(value.value)
             }
         )
@@ -891,7 +897,13 @@ class MethodNodeBuilder(
 
     override fun visitJcRawDouble(value: JcRawDouble) {
         currentInsnList.add(
-            when (value.value) {
+            // Note: The case to Any forces Double to box, which is necessary here
+            // since 0.0 == -0.0`, but `Box(0.0) != Box(-0.0)`.
+            // The latter is preferred here because we only want to
+            // "push constant 0.0d onto the stack" (`dconst_0` instruction)
+            // when `value.value` is exactly "zero" (0.0), NOT "negative zero" (-0.0).
+            @Suppress("USELESS_CAST")
+            when (value.value as Any) {
                 0.0 -> InsnNode(Opcodes.DCONST_0)
                 1.0 -> InsnNode(Opcodes.DCONST_1)
                 else -> LdcInsnNode(value.value)
