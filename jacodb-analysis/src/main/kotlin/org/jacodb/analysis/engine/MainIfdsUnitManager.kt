@@ -29,6 +29,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jacodb.analysis.library.analyzers.NpeTaintNode
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -168,11 +169,36 @@ class MainIfdsUnitManager(
         }
         logger.info { "Total sinks: ${foundVulnerabilities.size}" }
 
-        File("stats.csv").outputStream().bufferedWriter().use {
-            it.write("classname,cwe,method\n")
+        val statsFileName = "stats.csv"
+        logger.debug { "Writing stats in '$statsFileName'..." }
+        File(statsFileName).outputStream().bufferedWriter().use { writer ->
+            val sep = ";"
+            writer.write(listOf("classname", "cwe", "method", "sink", "fact").joinToString(sep) + "\n")
             for (vulnerability in foundVulnerabilities) {
-                for (cwe in vulnerability.rule!!.cwe) {
-                    it.write("${vulnerability.method.enclosingClass.simpleName},$cwe,${vulnerability.method.name}\n")
+                val m = vulnerability.method
+                if (vulnerability.rule != null) {
+                    for (cwe in vulnerability.rule.cwe) {
+                        writer.write(
+                            listOf(
+                                m.enclosingClass.simpleName,
+                                cwe,
+                                m.name,
+                                vulnerability.sink.statement,
+                                vulnerability.sink.domainFact
+                            ).joinToString(sep) { "\"$it\"" } + "\n")
+                    }
+                } else if (vulnerability.sink.domainFact is NpeTaintNode) {
+                    val cwe = 476
+                    writer.write(
+                        listOf(
+                            m.enclosingClass.simpleName,
+                            cwe,
+                            m.name,
+                            vulnerability.sink.statement,
+                            vulnerability.sink.domainFact
+                        ).joinToString(sep) { "\"$it\"" } + "\n")
+                } else {
+                    logger.warn { "Bad vulnerability without rule: $vulnerability" }
                 }
             }
         }
