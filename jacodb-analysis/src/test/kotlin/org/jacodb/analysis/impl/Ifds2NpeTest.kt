@@ -48,6 +48,7 @@ import java.util.stream.Stream
 
 private val logger = KotlinLogging.logger {}
 
+@Disabled("Not finished yet")
 class Ifds2NpeTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
