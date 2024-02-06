@@ -61,7 +61,6 @@ val Class<*>.withDB: JcDatabaseHolder
     }
 
 interface JcDatabaseHolder {
-
     val classpathFeatures: List<JcClasspathFeature>
     val db: JcDatabase
     fun cleanup()
@@ -80,11 +79,16 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     override var db = runBlocking {
         jacodb {
-            val ci = System.getenv("CI")
-            println("CI=$ci")
-            if (ci != "true") {
-                persistent("/tmp/index.db")
+            val persistentLocation = System.getenv("JACODB_PERSISTENT")
+            if (persistentLocation != null) {
+                persistent(persistentLocation)
             }
+
+            // val ci = System.getenv("CI")
+            // println("CI=$ci")
+            // if (ci != "true") {
+            //     persistent("/tmp/index.db")
+            // }
 
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
