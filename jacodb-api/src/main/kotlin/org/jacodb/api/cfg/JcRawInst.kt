@@ -845,6 +845,9 @@ data class JcRawArgument(val index: Int, override val name: String, override val
     }
 }
 
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
 data class JcRawLocalVar(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
     override fun toString(): String = name
 
