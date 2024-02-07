@@ -16,14 +16,16 @@
 
 package org.jacodb.panda.staticvm
 
+import org.jacodb.api.core.cfg.Graph
+
 data class SimpleDirectedGraph<T>(
     val nodes: MutableSet<T> = mutableSetOf(),
-    private val predecessorsMap: MutableMap<T, MutableList<T>> = mutableMapOf(),
-    private val successorsMap: MutableMap<T, MutableList<T>> = mutableMapOf()
-) {
-    fun predecessors(t: T): List<T> = predecessorsMap.getOrDefault(t, emptyList())
+    private val predecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
+    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
+) : Graph<T> {
+    override fun predecessors(node: T): Set<T> = predecessorsMap.getOrDefault(node, emptySet())
 
-    fun successors(t: T): List<T> = successorsMap.getOrDefault(t, emptyList())
+    override fun successors(node: T): Set<T> = successorsMap.getOrDefault(node, emptySet())
 
     fun withNode(node: T): SimpleDirectedGraph<T> {
         nodes.add(node)
@@ -33,16 +35,19 @@ data class SimpleDirectedGraph<T>(
     fun withEdge(from: T, to: T): SimpleDirectedGraph<T> {
         nodes.add(from)
         nodes.add(to)
-        predecessorsMap.getOrPut(to, ::mutableListOf).add(from)
-        successorsMap.getOrPut(from, ::mutableListOf).add(to)
+        predecessorsMap.getOrPut(to, ::mutableSetOf).add(from)
+        successorsMap.getOrPut(from, ::mutableSetOf).add(to)
         return this
     }
 
+    private fun <K> Collection<K>.intersectMutable(other: Collection<K>) =
+        toSet().intersect(other.toSet()).toMutableSet()
+
     fun induced(subset: Collection<T>) = SimpleDirectedGraph(
-        nodes.intersect(subset.toSet()).toMutableSet(),
-        predecessorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersect(value.toSet()).toMutableList() else null }
+        nodes.intersectMutable(subset),
+        predecessorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersectMutable(value) else null }
             .toMap().toMutableMap(),
-        successorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersect(value.toSet()).toMutableList() else null }
+        successorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersectMutable(value) else null }
             .toMap().toMutableMap()
     )
     fun weaklyConnectedComponents(): List<SimpleDirectedGraph<T>> = components(nodes) {
@@ -70,16 +75,18 @@ data class SimpleDirectedGraph<T>(
             lhs.successorsMap.plus(rhs.successorsMap).toMutableMap()
         )
     }
+
+    override fun iterator(): Iterator<T> = nodes.asIterable().iterator()
 }
 
-fun <T> search(start: T, successors: (T) -> List<T>, visitor: (T) -> Unit): List<T> {
+fun <T> search(start: T, successors: (T) -> List<T>, visitor: (T) -> Unit): Set<T> {
     val visited = hashSetOf<T>()
     fun dfs(node: T) = node.takeIf(visited::add)?.also(visitor)?.let { successors(it).forEach(::dfs) }
     dfs(start)
-    return visited.toList()
+    return visited
 }
 
-fun <T> components(starts: Iterable<T>, successors: (T) -> List<T>): List<List<T>> {
+fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<Set<T>> {
     val visited = hashSetOf<T>()
     return starts.mapNotNull { start ->
         if (start !in visited) search(start, { successors(it).filter { it !in visited } }, visited::add)
@@ -87,11 +94,11 @@ fun <T> components(starts: Iterable<T>, successors: (T) -> List<T>): List<List<T
     }
 }
 
-fun <T> reachable(starts: Iterable<T>, successors: (T) -> List<T>): List<T> {
-    val visited = hashSetOf<T>()
-    starts.forEach { start ->
-        if (start !in visited)
-            visited.addAll(search(start, { successors(it).filter { it !in visited } }, {}))
+fun <T, A> Iterable<T>.applyFold(initial: A, operation: A.(T) -> Unit) = fold(initial) { acc, elem ->
+    acc.apply { operation(elem) } }
+
+fun <T> reachable(starts: Iterable<T>, successors: (T) -> Collection<T>): Set<T> =
+    starts.applyFold(hashSetOf()) { start ->
+        if (!contains(start))
+            addAll(search(start, { successors(it).filterNot(this::contains) }, {}))
     }
-    return visited.toList()
-}

@@ -131,7 +131,7 @@ class PandaInstListBuilder(
         }
     }
 
-    fun build() = buildImpl().let { instList }
+    fun build() = buildImpl().let { PandaInstList(instList) }
 
     private fun newLocal(name: String, type: PandaType) = PandaLocalVar(name, type).also { locals[it.name] = it }
 

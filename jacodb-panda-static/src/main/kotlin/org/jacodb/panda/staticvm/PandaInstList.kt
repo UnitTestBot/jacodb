@@ -31,9 +31,41 @@ data class PandaInstList(override val instructions: List<PandaInst>) : InstList<
 
     override fun getOrNull(index: Int): PandaInst? = instructions.getOrNull(index)
 
-    override fun toMutableList(): MutableInstList<PandaInst> {
-        TODO("Not yet implemented")
-    }
+    override fun toMutableList(): MutableInstList<PandaInst> = PandaMutableInstList(instructions.toMutableList())
 
     override fun iterator(): Iterator<PandaInst> = instructions.iterator()
+}
+
+data class PandaMutableInstList(override val instructions: MutableList<PandaInst>) : MutableInstList<PandaInst> {
+    override fun insertBefore(inst: PandaInst, vararg newInstructions: PandaInst) =
+        insertBefore(inst, newInstructions.toList())
+
+    override fun insertBefore(inst: PandaInst, newInstructions: Collection<PandaInst>): Unit =
+        instructions.run { addAll(indexOf(inst), newInstructions) }
+
+    override fun insertAfter(inst: PandaInst, vararg newInstructions: PandaInst) =
+        insertAfter(inst, newInstructions.toList())
+
+    override fun insertAfter(inst: PandaInst, newInstructions: Collection<PandaInst>): Unit =
+        instructions.run { addAll(indexOf(inst) + 1, newInstructions) }
+
+    override fun remove(inst: PandaInst): Boolean = instructions.remove(inst)
+
+    override fun removeAll(inst: Collection<PandaInst>): Boolean = instructions.removeAll(inst)
+
+    override val size: Int
+        get() = instructions.size
+    override val indices: IntRange
+        get() = instructions.indices
+    override val lastIndex: Int
+        get() = instructions.lastIndex
+
+    override fun get(index: Int): PandaInst = instructions[index]
+
+    override fun getOrNull(index: Int): PandaInst? = instructions.getOrNull(index)
+
+    override fun toMutableList(): MutableInstList<PandaInst> = this
+
+    override fun iterator(): Iterator<PandaInst> = instructions.iterator()
+
 }
