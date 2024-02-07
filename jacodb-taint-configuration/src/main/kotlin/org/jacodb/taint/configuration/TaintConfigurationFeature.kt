@@ -219,6 +219,7 @@ class TaintConfigurationFeature private constructor(
 
             is SerializedTaintMethodSink -> TaintMethodSink(
                 method,
+                ruleNote,
                 cwe,
                 condition.resolve(method)
             )
