@@ -20,7 +20,7 @@ import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.ControlFlowGraph
 import org.jacodb.api.jvm.cfg.JcInst
 
-data class PandaField(
+class PandaField(
     val project: PandaProject,
     val declaringClassType: PandaClassName,
     val type: PandaTypeName,
@@ -57,7 +57,7 @@ data class PandaField(
     }
 }
 
-data class PandaMethod(
+class PandaMethod(
     val project: PandaProject,
     val declaringClassType: PandaClassName,
     val returnType: PandaTypeName,
@@ -65,11 +65,10 @@ data class PandaMethod(
     val name: String,
     val body: SimpleDirectedGraph<PandaBasicBlockInfo>?,
     val access: AccessFlags
-) : CoreMethod<JcInst> {
+) : CoreMethod<PandaInst> {
+    private val flowGraphValue by lazy { PandaControlFlowGraph.of(this) }
 
-    override fun flowGraph(): ControlFlowGraph<JcInst> {
-        TODO("Not yet implemented")
-    }
+    override fun flowGraph(): ControlFlowGraph<PandaInst> = flowGraphValue
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -103,7 +102,7 @@ data class PandaMethod(
         get() = TODO("Not yet implemented")
 }
 
-data class PandaClass(
+class PandaClass(
     val project: PandaProject,
     val declaredFields: List<PandaField>,
     val declaredMethods: List<PandaMethod>,

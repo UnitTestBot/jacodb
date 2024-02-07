@@ -17,8 +17,12 @@
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.jupiter.api.Test
 import kotlinx.serialization.json.decodeFromStream
+import org.jacodb.analysis.library.JcSingletonUnitResolver
+import org.jacodb.analysis.library.UnusedVariableRunnerFactory
+import org.jacodb.panda.staticvm.PandaApplicationGraph
 import org.jacodb.panda.staticvm.PandaInstListBuilder
 import org.jacodb.panda.staticvm.PandaProgramInfo
+import org.jacodb.analysis.runAnalysis
 import java.io.FileInputStream
 
 
@@ -35,6 +39,7 @@ internal class IrDeserializationTest {
         val methodNode = project.methods.find { it.name == methodName }
         val builder = PandaInstListBuilder(methodNode!!)
         val insts = builder.build()
-        print(insts)
+
+        val applicationGraph = PandaApplicationGraph(project)
     }
 }
