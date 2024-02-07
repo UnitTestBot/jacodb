@@ -198,23 +198,38 @@ class TaintManager(
             .flatMap { method ->
                 vulnerabilitiesStorage.getCurrentFacts(method)
             }
-        logger.info { "Total found ${foundVulnerabilities.size} vulnerabilities" }
+        logger.debug { "Total found ${foundVulnerabilities.size} vulnerabilities" }
         for (vulnerability in foundVulnerabilities) {
-            logger.info { "$vulnerability in ${vulnerability.method}" }
+            logger.debug { "$vulnerability in ${vulnerability.method}" }
         }
         logger.info { "Total sinks: ${foundVulnerabilities.size}" }
 
-        logger.debug { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
+        logger.info { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
 
-        val statsFileName = "stats.csv"
-        logger.debug { "Writing stats in '$statsFileName'..." }
-        File(statsFileName).outputStream().bufferedWriter().use { writer ->
-            val sep = ";"
-            writer.write(listOf("classname", "cwe", "method", "sink", "fact").joinToString(sep) + "\n")
-            for (vulnerability in foundVulnerabilities) {
-                val m = vulnerability.method
-                if (vulnerability.rule != null) {
-                    for (cwe in vulnerability.rule.cwe) {
+        if (logger.isDebugEnabled()) {
+            val statsFileName = "stats.csv"
+            logger.debug { "Writing stats in '$statsFileName'..." }
+            File(statsFileName).outputStream().bufferedWriter().use { writer ->
+                val sep = ";"
+                writer.write(listOf("classname", "cwe", "method", "sink", "fact").joinToString(sep) + "\n")
+                for (vulnerability in foundVulnerabilities) {
+                    val m = vulnerability.method
+                    if (vulnerability.rule != null) {
+                        for (cwe in vulnerability.rule.cwe) {
+                            writer.write(
+                                listOf(
+                                    m.enclosingClass.simpleName,
+                                    cwe,
+                                    m.name,
+                                    vulnerability.sink.statement,
+                                    vulnerability.sink.fact
+                                ).joinToString(sep) { "\"$it\"" } + "\n")
+                        }
+                    } else if (
+                        vulnerability.sink.fact is Tainted
+                        && vulnerability.sink.fact.mark == TaintMark.NULLNESS
+                    ) {
+                        val cwe = 476
                         writer.write(
                             listOf(
                                 m.enclosingClass.simpleName,
@@ -223,22 +238,9 @@ class TaintManager(
                                 vulnerability.sink.statement,
                                 vulnerability.sink.fact
                             ).joinToString(sep) { "\"$it\"" } + "\n")
+                    } else {
+                        logger.warn { "Bad vulnerability without rule: $vulnerability" }
                     }
-                } else if (
-                    vulnerability.sink.fact is Tainted
-                    && vulnerability.sink.fact.mark == TaintMark.NULLNESS
-                ) {
-                    val cwe = 476
-                    writer.write(
-                        listOf(
-                            m.enclosingClass.simpleName,
-                            cwe,
-                            m.name,
-                            vulnerability.sink.statement,
-                            vulnerability.sink.fact
-                        ).joinToString(sep) { "\"$it\"" } + "\n")
-                } else {
-                    logger.warn { "Bad vulnerability without rule: $vulnerability" }
                 }
             }
         }
