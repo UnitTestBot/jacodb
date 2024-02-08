@@ -60,7 +60,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `analyze simple NPE`() {
-        testOneMethod<NpeExamples>("npeOnLength", listOf("%3 = %0.length()"))
+        testOneMethod<NpeExamples>("npeOnLength", listOf("%3 = x.length()"))
     }
 
     @Test
@@ -72,7 +72,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     fun `analyze NPE after fun with two exits`() {
         testOneMethod<NpeExamples>(
             "npeAfterTwoExits",
-            listOf("%4 = %0.length()", "%5 = %1.length()")
+            listOf("%4 = x.length()", "%5 = y.length()")
         )
     }
 
@@ -85,7 +85,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     fun `consecutive NPEs handled properly`() {
         testOneMethod<NpeExamples>(
             "consecutiveNPEs",
-            listOf("%2 = arg$0.length()", "%4 = arg$0.length()")
+            listOf("a = x.length()", "c = x.length()")
         )
     }
 
@@ -93,7 +93,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
     fun `npe on virtual call when possible`() {
         testOneMethod<NpeExamples>(
             "possibleNPEOnVirtualCall",
-            listOf("%0 = arg\$0.length()")
+            listOf("%0 = x.length()")
         )
     }
 
@@ -107,7 +107,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `basic test for NPE on fields`() {
-        testOneMethod<NpeExamples>("simpleNPEOnField", listOf("%8 = %6.length()"))
+        testOneMethod<NpeExamples>("simpleNPEOnField", listOf("len2 = second.length()"))
     }
 
     @Disabled("Flowdroid architecture not supported for async ifds yet")
@@ -152,7 +152,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `NPE on uninitialized array element dereferencing`() {
-        testOneMethod<NpeExamples>("simpleArrayNPE", listOf("%5 = %4.length()"))
+        testOneMethod<NpeExamples>("simpleArrayNPE", listOf("b = %4.length()"))
     }
 
     @Test
@@ -174,7 +174,7 @@ class NpeAnalysisTest : BaseAnalysisTest() {
 
     @Test
     fun `dereferencing field of null object`() {
-        testOneMethod<NpeExamples>("npeOnFieldDeref", listOf("%1 = %0.field"))
+        testOneMethod<NpeExamples>("npeOnFieldDeref", listOf("s = a.field"))
     }
 
     @Test

@@ -69,9 +69,9 @@ class JcDatabaseImpl(
 
     private fun List<JcClasspathFeature>?.appendBuiltInFeatures(): List<JcClasspathFeature> {
         if (this != null && any { it is ClasspathCache }) {
-            return this + listOf(KotlinMetadata, MethodInstructionsFeature)
+            return this + listOf(KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames))
         }
-        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature) + orEmpty()
+        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames)) + orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {

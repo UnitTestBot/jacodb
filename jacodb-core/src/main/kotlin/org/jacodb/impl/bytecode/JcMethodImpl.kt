@@ -70,7 +70,7 @@ class JcMethodImpl(
     internal fun parameterTypeAnnotationInfos(parameterIndex: Int): List<AnnotationInfo> =
         methodInfo.annotations.filter {
             it.typeRef != null && TypeReference(it.typeRef).sort == TypeReference.METHOD_FORMAL_PARAMETER
-                    && TypeReference(it.typeRef).formalParameterIndex == parameterIndex
+                && TypeReference(it.typeRef).formalParameterIndex == parameterIndex
         }
 
     override val description get() = methodInfo.desc

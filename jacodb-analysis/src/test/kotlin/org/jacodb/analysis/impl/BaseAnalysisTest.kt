@@ -88,7 +88,9 @@ abstract class BaseAnalysisTest : BaseTest() {
         // TODO: think about better assertions here
         assertEquals(expectedLocations.size, sinks.size)
         expectedLocations.forEach { expected ->
-            assertTrue(sinks.any { it.contains(expected) })
+            assertTrue(sinks.any { it.contains(expected) }) {
+                "$expected unmatched in:\n${sinks.joinToString("\n")}"
+            }
         }
     }
 

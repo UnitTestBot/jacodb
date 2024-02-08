@@ -85,6 +85,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
             // persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
+            keepLocalVariableNames()
             installFeatures(*dbFeatures.toTypedArray())
         }.also {
             it.awaitBackgroundJobs()
@@ -134,6 +135,7 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
+                keepLocalVariableNames()
                 installFeatures(*dbFeatures.toTypedArray())
             }.also {
                 it.awaitBackgroundJobs()
