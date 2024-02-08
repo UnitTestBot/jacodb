@@ -32,7 +32,9 @@ import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcFlowGraphResul
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
 
-object MethodInstructionsFeature : JcMethodExtFeature {
+class MethodInstructionsFeature(
+    private val keepLocalVariableNames: Boolean
+) : JcMethodExtFeature {
 
     private val JcMethod.methodFeatures
         get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
@@ -50,7 +52,7 @@ object MethodInstructionsFeature : JcMethodExtFeature {
     }
 
     override fun rawInstList(method: JcMethod): JcMethodExtFeature.JcRawInstListResult {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode()).build()
+        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode(), keepLocalVariableNames).build()
         return JcRawInstListResultImpl(method, method.methodFeatures.fold(list) { value, feature ->
             feature.transformRawInstList(method, value)
         })

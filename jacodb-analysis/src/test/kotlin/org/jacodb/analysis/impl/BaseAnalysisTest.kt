@@ -110,7 +110,10 @@ abstract class BaseAnalysisTest : BaseTest() {
         // TODO: think about better assertions here
         assertEquals(expectedLocations.size, sinks.size)
         expectedLocations.forEach { expected ->
-            assertTrue(sinks.map { it.traceGraph.sink.toString() }.any { it.contains(expected) })
+            val sinksRepresentations = sinks.map { it.traceGraph.sink.toString() }
+            assertTrue(sinksRepresentations.any { it.contains(expected) }) {
+                "$expected unmatched in:\n${sinksRepresentations.joinToString("\n")}"
+            }
         }
     }
 

@@ -17,6 +17,7 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.BsmDoubleArg
@@ -118,6 +119,7 @@ import org.objectweb.asm.tree.JumpInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.LookupSwitchInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
@@ -217,12 +219,26 @@ class MethodNodeBuilder(
     }
 
     private fun initializeFrame(method: JcMethod) {
+        var staticInc = 0
         if (!method.isStatic) {
             val thisRef = JcRawThis(method.enclosingClass.name.typeName())
             locals[thisRef] = localIndex++
+            staticInc = 1
         }
+
+        val variables = method.asmNode().localVariables.orEmpty().sortedBy(LocalVariableNode::index)
+
+        fun getName(parameter: JcParameter): String? {
+            val idx = parameter.index + staticInc
+            return if (idx < variables.size) {
+                variables[idx].name
+            } else {
+                parameter.name
+            }
+        }
+
         for (parameter in method.parameters) {
-            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
+            val argument = JcRawArgument.of(parameter.index, getName(parameter), parameter.type)
             locals[argument] = localIndex
             if (argument.typeName.isDWord) localIndex += 2
             else localIndex++

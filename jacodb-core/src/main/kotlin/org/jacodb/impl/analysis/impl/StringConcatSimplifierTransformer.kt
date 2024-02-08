@@ -35,6 +35,7 @@ import org.jacodb.api.cfg.JcStringConstant
 import org.jacodb.api.cfg.JcSwitchInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.cfg.JcVirtualCallExpr
+import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.autoboxIfNeeded
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcInstListImpl
@@ -57,6 +58,10 @@ class StringConcatSimplifierTransformer(
     private val instructionIndices: MutableMap<JcInst, Int> = mutableMapOf()
 
     private val stringType = classpath.findTypeOrNull<String>() as JcClassType
+
+    private var localCounter = list
+        .flatMap { it.values.filterIsInstance<JcLocalVar>() }
+        .maxOfOrNull { it.index }?.plus(1) ?: 0
 
     fun transform(): JcInstList<JcInst> {
         var changed = false
@@ -120,7 +125,7 @@ class StringConcatSimplifierTransformer(
                     it.name == "toString" && it.parameters.size == 1 && it.parameters.first().type == value.type
                 }
                 val toStringExpr = JcStaticCallExpr(method.methodRef(), listOf(value))
-                val assignment = JcLocalVar("${value}String", stringType)
+                val assignment = JcLocalVar(localCounter++, "${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }
@@ -133,7 +138,7 @@ class StringConcatSimplifierTransformer(
                 }
                 val methodRef = VirtualMethodRefImpl.of(boxedType, method)
                 val toStringExpr = JcVirtualCallExpr(methodRef, value, emptyList())
-                val assignment = JcLocalVar("${value}String", stringType)
+                val assignment = JcLocalVar(localCounter++, "${value}String", stringType)
                 instList += JcAssignInst(inst.location, assignment, toStringExpr)
                 assignment
             }

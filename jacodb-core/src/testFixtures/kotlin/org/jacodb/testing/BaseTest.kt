@@ -92,6 +92,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
+            keepLocalVariableNames()
             installFeatures(*dbFeatures.toTypedArray())
         }.also {
             it.awaitBackgroundJobs()
@@ -139,6 +140,7 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
                 persistent(jdbcLocation)
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
+                keepLocalVariableNames()
                 installFeatures(*dbFeatures.toTypedArray())
             }.also {
                 it.awaitBackgroundJobs()

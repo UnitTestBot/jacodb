@@ -821,12 +821,14 @@ interface JcLocal : JcSimpleValue {
     val name: String
 }
 
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
 data class JcArgument(
     val index: Int,
     override val name: String,
     override val type: JcType,
 ) : JcLocal {
-
     companion object {
         @JvmStatic
         fun of(index: Int, name: String?, type: JcType): JcArgument {
@@ -839,16 +841,55 @@ data class JcArgument(
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcArgument(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcArgument
+
+        if (index != other.index) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
 data class JcLocalVar(
-    override val name: String,
+    val index: Int,override val name: String,
     override val type: JcType,
 ) : JcLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcLocalVar(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcLocalVar
+
+        if (index != other.index) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + type.hashCode()
+        return result
     }
 }
 

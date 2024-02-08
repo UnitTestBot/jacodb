@@ -20,6 +20,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.BsmArg
@@ -122,6 +123,7 @@ import org.objectweb.asm.tree.JumpInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.LookupSwitchInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
@@ -131,6 +133,8 @@ import org.objectweb.asm.tree.TryCatchBlockNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 import java.util.*
+
+const val LOCAL_VAR_START_CHARACTER = '%'
 
 private fun Int.toPrimitiveType(): TypeName = when (this) {
     Opcodes.T_CHAR -> PredefinedPrimitives.Char
@@ -300,6 +304,7 @@ internal fun <K, V> Map<out K, V>.toIdentityMap(): Map<K, V> = toMap()
 class RawInstListBuilder(
     val method: JcMethod,
     private val methodNode: MethodNode,
+    private val keepLocalVariableNames: Boolean,
 ) {
     private val frames = identityMap<AbstractInsnNode, Frame>()
     private val labels = identityMap<LabelNode, JcRawLabelInst>()
@@ -612,7 +617,7 @@ class RawInstListBuilder(
     }
 
     private fun nextRegister(typeName: TypeName): JcRawValue {
-        return JcRawLocalVar("%${localCounter++}", typeName)
+        return JcRawLocalVar(localCounter, "$LOCAL_VAR_START_CHARACTER${localCounter++}", typeName)
     }
 
     private fun nextRegisterDeclaredVariable(typeName: TypeName, variable: Int, insn: AbstractInsnNode): JcRawValue {
@@ -620,15 +625,17 @@ class RawInstListBuilder(
             .filterIsInstance<LabelNode>()
             .firstOrNull()
 
-        val declaredTypeName = methodNode.localVariables
+        val lvNode = methodNode.localVariables
             .singleOrNull { it.index == variable && it.start == nextLabel }
-            ?.desc
-            ?.typeName()
+
+        val declaredTypeName = lvNode?.desc?.typeName()
+        val idx = localCounter++
+        val lvName = lvNode?.name?.takeIf { keepLocalVariableNames } ?: "$LOCAL_VAR_START_CHARACTER$idx"
 
         return if (declaredTypeName != null && !declaredTypeName.isPrimitive && !typeName.isArray) {
-            JcRawLocalVar("%${localCounter++}", declaredTypeName)
+            JcRawLocalVar(idx, lvName, declaredTypeName)
         } else {
-            JcRawLocalVar("%${localCounter++}", typeName)
+            JcRawLocalVar(idx, lvName, typeName)
         }
     }
 
@@ -678,15 +685,27 @@ class RawInstListBuilder(
         var localsRealSize = 0
 
         argCounter = 0
+        var staticInc = 0
         if (!method.isStatic) {
             locals = locals.add(argCounter, thisRef())
             localsRealSize = argCounter + 1
 
             argCounter++
+            staticInc = 1
+        }
+        val variables = methodNode.localVariables.orEmpty().sortedBy(LocalVariableNode::index)
+
+        fun getName(parameter: JcParameter): String? {
+            val idx = parameter.index + staticInc
+            return if (idx < variables.size) {
+                variables[idx].name
+            } else {
+                parameter.name
+            }
         }
 
         for (parameter in method.parameters) {
-            val argument = JcRawArgument.of(parameter.index, parameter.name, parameter.type)
+            val argument = JcRawArgument.of(parameter.index, getName(parameter), parameter.type)
 
             locals = locals.add(argCounter, argument)
             localsRealSize = argCounter + 1
@@ -1069,7 +1088,7 @@ class RawInstListBuilder(
                             val value = frame.findLocal(variable) ?: continue
 
                             if (value is JcRawLocalVar && value.typeName != type && type !in blackListForTypeRefinement) {
-                                result[variable] = JcRawLocalVar(value.name, type).also { newLocal ->
+                                result[variable] = JcRawLocalVar(value.index, value.name, type).also { newLocal ->
                                     localTypeRefinement[value] = newLocal
                                 }
                             } else {
@@ -1184,15 +1203,15 @@ class RawInstListBuilder(
                 }
 
                 else -> frame.stack.withIndex().filter { it.index in this.indices }.map {
+                    val value = it.value
                     when {
-                        it.value is JcRawLocalVar && it.value.typeName != this[it.index] && this[it.index] !in blackListForTypeRefinement -> JcRawLocalVar(
-                            (it.value as JcRawLocalVar).name,
-                            this[it.index]
+                        value is JcRawLocalVar && value.typeName != this[it.index] && this[it.index] !in blackListForTypeRefinement -> JcRawLocalVar(
+                            value.index, value.name, this[it.index]
                         ).also { newLocal ->
-                            localTypeRefinement[it.value as JcRawLocalVar] = newLocal
+                            localTypeRefinement[value] = newLocal
                         }
 
-                        else -> it.value
+                        else -> value
                     }
                 }
             }
@@ -1609,7 +1628,8 @@ class RawInstListBuilder(
                                 lookupAssignment,
                                 JcRawStringConstant(cst.name, STRING_CLASS.typeName()),
                                 JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
-                            ) + exprs
+                            ) + exprs,
+                            methodHande.isInterface
                         )
                     }
                 }
@@ -1647,7 +1667,8 @@ class RawInstListBuilder(
                 methodName,
                 argTypes,
                 returnType,
-                args
+                args,
+                insnNode.itf
             )
 
             else -> {

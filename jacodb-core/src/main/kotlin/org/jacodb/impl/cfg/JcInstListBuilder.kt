@@ -230,7 +230,7 @@ class JcInstListBuilder(
             inst.lhv.let { unprocessedLhv ->
                 if (unprocessedLhv is JcRawLocalVar && unprocessedLhv.typeName == UNINIT_THIS) {
                     convertedLocalVars.getOrPut(unprocessedLhv) {
-                        JcRawLocalVar(unprocessedLhv.name, inst.rhv.typeName)
+                        JcRawLocalVar(unprocessedLhv.index, unprocessedLhv.name, inst.rhv.typeName)
                     }
                 } else {
                     unprocessedLhv
@@ -494,8 +494,8 @@ class JcInstListBuilder(
 
     override fun visitJcRawLocalVar(value: JcRawLocalVar): JcExpr =
         convertedLocalVars[value]?.let { replacementForLocalVar ->
-            JcLocalVar(replacementForLocalVar.name, replacementForLocalVar.typeName.asType())
-        } ?: JcLocalVar(value.name, value.typeName.asType())
+            JcLocalVar(replacementForLocalVar.index, replacementForLocalVar.name, replacementForLocalVar.typeName.asType())
+        } ?: JcLocalVar(value.index, value.name, value.typeName.asType())
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcExpr {
         val type = value.declaringClass.asType() as JcClassType

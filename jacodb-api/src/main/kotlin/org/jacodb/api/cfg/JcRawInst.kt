@@ -834,6 +834,9 @@ data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
     }
 }
 
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
 data class JcRawArgument(
     val index: Int,
     override val name: String,
@@ -851,16 +854,55 @@ data class JcRawArgument(
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawArgument(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcRawArgument
+
+        if (index != other.index) return false
+        if (typeName != other.typeName) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + typeName.hashCode()
+        return result
+    }
 }
 
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
 data class JcRawLocalVar(
-    override val name: String,
+    val index: Int,override val name: String,
     override val typeName: TypeName,
 ) : JcRawLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawLocalVar(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcRawLocalVar
+
+        if (index != other.index) return false
+        if (typeName != other.typeName) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + typeName.hashCode()
+        return result
     }
 }
 
