@@ -16,7 +16,14 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.*
+import org.jacodb.api.ByteCodeIndexer
+import org.jacodb.api.ClassSource
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcDatabasePersistence
+import org.jacodb.api.JcFeature
+import org.jacodb.api.JcSignal
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.api.ext.jvmPrimitiveNames
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
@@ -43,7 +50,7 @@ private val Int.isStatic get() = this and Opcodes.ACC_STATIC != 0
 private data class BuilderMethod(
     val callerClass: String,
     val methodOffset: Int,
-    val priority: Int
+    val priority: Int,
 )
 
 class BuildersIndexer(val persistence: JcDatabasePersistence, private val location: RegisteredLocation) :
@@ -80,7 +87,6 @@ class BuildersIndexer(val persistence: JcDatabasePersistence, private val locati
         }
     }
 
-
     override fun flush(jooq: DSLContext) {
         jooq.withoutAutoCommit { conn ->
             conn.runBatch(BUILDERS) {
@@ -106,7 +112,7 @@ class BuildersIndexer(val persistence: JcDatabasePersistence, private val locati
 data class BuildersResponse(
     val methodOffset: Int,
     val priority: Int,
-    val source: ClassSource
+    val source: ClassSource,
 )
 
 object Builders : JcFeature<Set<String>, BuildersResponse> {
@@ -191,7 +197,6 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
                     .where(
                         BUILDERS.CLASS_NAME.`in`(req).and(BUILDERS.LOCATION_ID.`in`(locationIds))
 
-
                     )
                     .limit(100)
                     .fetch()
@@ -215,6 +220,5 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
 
     override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) =
         BuildersIndexer(jcdb.persistence, location)
-
 
 }

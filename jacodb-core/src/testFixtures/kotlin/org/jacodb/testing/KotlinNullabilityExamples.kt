@@ -29,7 +29,7 @@ class KotlinNullabilityExamples {
     fun simpleGenerics(
         matrixOfNotNull: SomeContainer<SomeContainer<Int>>,
         matrixOfNullable: SomeContainer<SomeContainer<Int?>>,
-        containerOfNotNullContainers: SomeContainer<SomeContainer<Int>?>
+        containerOfNotNullContainers: SomeContainer<SomeContainer<Int>?>,
     ) = Unit
 
     fun SomeContainer<SomeContainer<Int?>?>.extensionFunction() = Unit
@@ -37,7 +37,7 @@ class KotlinNullabilityExamples {
     fun genericsWithProjection(
         covariant: SomeContainer<out String?>,
         contravariant: SomeContainer<in String>,
-        star: SomeContainer<*>
+        star: SomeContainer<*>,
     ) = Unit
 
     fun javaArrays(nullable: IntArray?, notNull: Array<SomeContainer<Int>>) = Unit

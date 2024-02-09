@@ -39,7 +39,7 @@ import org.objectweb.asm.tree.MethodNode
 class JcMethodImpl(
     private val methodInfo: MethodInfo,
     private val featuresChain: JcFeaturesChain,
-    override val enclosingClass: JcClassOrInterface
+    override val enclosingClass: JcClassOrInterface,
 ) : JcMethod {
 
     override val name: String get() = methodInfo.name
@@ -88,10 +88,10 @@ class JcMethodImpl(
         return featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> { it.flowGraph(this) }!!.flowGraph
     }
 
-
-    override val instList: JcInstList<JcInst> get() {
-        return featuresChain.call<JcMethodExtFeature, JcInstListResult> { it.instList(this) }!!.instList
-    }
+    override val instList: JcInstList<JcInst>
+        get() {
+            return featuresChain.call<JcMethodExtFeature, JcInstListResult> { it.instList(this) }!!.instList
+        }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is JcMethodImpl) {

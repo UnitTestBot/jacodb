@@ -16,14 +16,18 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.api.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcGenericsSubstitutionFeature
+import org.jacodb.api.JcSubstitutor
+import org.jacodb.api.JvmType
+import org.jacodb.api.JvmTypeParameterDeclaration
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.typeParameters
 
 private fun List<JvmTypeParameterDeclaration>.substitute(
     parameters: List<JvmType>,
-    outer: JcSubstitutor?
+    outer: JcSubstitutor?,
 ): JcSubstitutor {
     val substitution = mapIndexed { index, declaration ->
         declaration to parameters[index]
@@ -31,13 +35,12 @@ private fun List<JvmTypeParameterDeclaration>.substitute(
     return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
 }
 
-
 object SafeSubstitution : JcGenericsSubstitutionFeature {
 
     override fun substitute(
         clazz: JcClassOrInterface,
         parameters: List<JvmType>,
-        outer: JcSubstitutor?
+        outer: JcSubstitutor?,
     ): JcSubstitutor {
         val params = clazz.typeParameters
         require(params.size == parameters.size) {
@@ -54,7 +57,7 @@ object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
     override fun substitute(
         clazz: JcClassOrInterface,
         parameters: List<JvmType>,
-        outer: JcSubstitutor?
+        outer: JcSubstitutor?,
     ): JcSubstitutor {
         val params = clazz.typeParameters
         if (params.size == parameters.size) {
@@ -64,4 +67,3 @@ object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
         return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
     }
 }
-

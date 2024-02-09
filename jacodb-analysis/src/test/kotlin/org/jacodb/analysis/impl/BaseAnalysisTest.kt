@@ -37,15 +37,19 @@ import kotlin.streams.asStream
 abstract class BaseAnalysisTest : BaseTest() {
     companion object : WithGlobalDB(UnknownClasses) {
         @JvmStatic
-        fun provideClassesForJuliet(cweNum: Int, cweSpecificBans: List<String> = emptyList()): Stream<Arguments> = runBlocking {
-            val cp = db.classpath(allClasspath)
-            val hierarchyExt = cp.hierarchyExt()
-            val baseClass = cp.findClass<AbstractTestCase>()
-            val classes = hierarchyExt.findSubClasses(baseClass, false)
-            classes.toArguments("CWE${cweNum}_", cweSpecificBans)
-        }
+        fun provideClassesForJuliet(cweNum: Int, cweSpecificBans: List<String> = emptyList()): Stream<Arguments> =
+            runBlocking {
+                val cp = db.classpath(allClasspath)
+                val hierarchyExt = cp.hierarchyExt()
+                val baseClass = cp.findClass<AbstractTestCase>()
+                val classes = hierarchyExt.findSubClasses(baseClass, false)
+                classes.toArguments("CWE${cweNum}_", cweSpecificBans)
+            }
 
-        private fun Sequence<JcClassOrInterface>.toArguments(cwe: String, cweSpecificBans: List<String>): Stream<Arguments> = this
+        private fun Sequence<JcClassOrInterface>.toArguments(
+            cwe: String,
+            cweSpecificBans: List<String>,
+        ): Stream<Arguments> = this
             .map { it.name }
             .filter { it.contains(cwe) }
             .filterNot { className -> (commonJulietBans + cweSpecificBans).any { className.contains(it) } }

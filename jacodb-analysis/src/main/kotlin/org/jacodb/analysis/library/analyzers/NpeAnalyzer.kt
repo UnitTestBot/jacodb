@@ -93,7 +93,7 @@ class NpeAnalyzer(graph: JcApplicationGraph, maxPathLength: Int) : AbstractAnaly
 
 private class NpeForwardFunctions(
     cp: JcClasspath,
-    private val maxPathLength: Int
+    private val maxPathLength: Int,
 ) : AbstractTaintForwardFunctions(cp) {
 
     private val JcIfInst.pathComparedWithNull: AccessPath?
@@ -108,7 +108,13 @@ private class NpeForwardFunctions(
             }
         }
 
-    override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+    override fun transmitDataFlow(
+        from: JcExpr,
+        to: JcValue,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact> {
         val default = if (dropFact && fact != ZEROFact) emptyList() else listOf(fact)
         val toPath = to.toPathOrNull()?.limit(maxPathLength) ?: return default
 
@@ -116,7 +122,8 @@ private class NpeForwardFunctions(
             return if (from is JcNullConstant || (from is JcCallExpr && from.method.method.treatAsNullable)) {
                 listOf(ZEROFact, NpeTaintNode(toPath)) // taint is generated here
             } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
-                val arrayElemPath = AccessPath.fromOther(toPath, List((from.type as JcArrayType).dimensions) { ElementAccessor })
+                val arrayElemPath =
+                    AccessPath.fromOther(toPath, List((from.type as JcArrayType).dimensions) { ElementAccessor })
                 listOf(ZEROFact, NpeTaintNode(arrayElemPath.limit(maxPathLength)))
             } else {
                 listOf(ZEROFact)
@@ -245,9 +252,15 @@ private class NpePrecalcBackwardAnalyzer(val graph: JcApplicationGraph, maxPathL
     }
 }
 
-class NpePrecalcBackwardFunctions(graph: JcApplicationGraph, maxPathLength: Int)
-    : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+class NpePrecalcBackwardFunctions(graph: JcApplicationGraph, maxPathLength: Int) :
+    AbstractTaintBackwardFunctions(graph, maxPathLength) {
+    override fun transmitBackDataFlow(
+        from: JcValue,
+        to: JcExpr,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact> {
         val thisInstance = atInst.location.method.thisInstance.toPath()
         if (fact == ZEROFact) {
             val derefs = atInst.values

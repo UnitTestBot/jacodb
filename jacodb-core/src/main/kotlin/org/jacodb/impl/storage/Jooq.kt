@@ -49,13 +49,12 @@ inline fun DSLContext.withoutAutoCommit(crossinline action: (Connection) -> Unit
     }
 }
 
-
 fun <ELEMENT, RECORD : Record> Connection.insertElements(
     table: Table<RECORD>,
     elements: Iterable<ELEMENT>,
     autoIncrementId: Boolean = false,
     onConflict: String = "",
-    map: PreparedStatement.(ELEMENT) -> Unit
+    map: PreparedStatement.(ELEMENT) -> Unit,
 ) {
     if (!elements.iterator().hasNext()) {
         return

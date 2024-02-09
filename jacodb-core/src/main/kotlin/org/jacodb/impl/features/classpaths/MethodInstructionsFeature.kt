@@ -33,12 +33,11 @@ import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResult
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
 
 class MethodInstructionsFeature(
-    private val keepLocalVariableNames: Boolean
+    private val keepLocalVariableNames: Boolean,
 ) : JcMethodExtFeature {
 
     private val JcMethod.methodFeatures
         get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
-
 
     override fun flowGraph(method: JcMethod): JcMethodExtFeature.JcFlowGraphResult {
         return JcFlowGraphResultImpl(method, JcGraphImpl(method, method.instList.instructions))

@@ -41,7 +41,7 @@ interface VfsVisitor {
 
 class RemoveLocationsVisitor(
     private val locations: List<RegisteredLocation>,
-    private val ignoredPackages: List<String> = emptyList()
+    private val ignoredPackages: List<String> = emptyList(),
 ) : VfsVisitor {
 
     override fun visitPackage(packageItem: PackageVfsItem) {

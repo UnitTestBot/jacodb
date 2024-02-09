@@ -98,10 +98,9 @@ open class DominatorsTree<NODE>(private val dominators: GraphDominators<NODE>) :
 
 }
 
-
 class DominatorNode<NODE>(
     var target: NODE,
-    var parent: DominatorNode<NODE>? = null
+    var parent: DominatorNode<NODE>? = null,
 ) {
     internal var childrens: MutableList<DominatorNode<NODE>> = ArrayList()
 
@@ -118,7 +117,6 @@ class DominatorNode<NODE>(
     val isTail: Boolean get() = childrens.isEmpty()
 
 }
-
 
 /** Dominance frontier using Cytron's algorithm */
 class CytronDominanceFrontier<NODE>(val tree: DominatorsTree<NODE>) {

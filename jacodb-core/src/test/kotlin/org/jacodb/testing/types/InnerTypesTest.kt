@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.Closeable
 
-
 class InnerTypesTest : BaseTypesTest() {
 
     @Test
@@ -50,7 +49,8 @@ class InnerTypesTest : BaseTypesTest() {
             "org.jacodb.testing.types.InnerClasses<W>.InnerState",
             "org.jacodb.testing.types.InnerClasses<W>$2",
             "org.jacodb.testing.types.InnerClasses<W>$1"
-        ), inners.map { it.typeName }.sortedDescending())
+        ), inners.map { it.typeName }.sortedDescending()
+        )
     }
 
     @Test

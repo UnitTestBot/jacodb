@@ -19,7 +19,6 @@ package org.jacodb.taint.configuration
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 sealed interface SerializedTaintConfigurationItem {
     val methodInfo: FunctionMatcher
@@ -56,7 +55,7 @@ data class SerializedTaintMethodSink(
     val ruleNote: String,
     val cwe: List<Int>,
     override val methodInfo: FunctionMatcher,
-    val condition: Condition
+    val condition: Condition,
 ) : SerializedTaintConfigurationItem
 
 @Serializable

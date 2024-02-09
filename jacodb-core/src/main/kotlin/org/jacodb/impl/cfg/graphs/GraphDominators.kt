@@ -24,7 +24,6 @@ import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
 import java.util.*
 
-
 /**
  * Calculate dominators for basic blocks.
  *

@@ -35,10 +35,12 @@ import java.util.stream.Stream
 class SqlInjectionAnalysisTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
-        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(89, listOf(
-            // Not working yet (#156)
-            "s03", "s04"
-        ))
+        fun provideClassesForJuliet89(): Stream<Arguments> = provideClassesForJuliet(
+            89, listOf(
+                // Not working yet (#156)
+                "s03", "s04"
+            )
+        )
 
         private val vulnerabilityType = SqlInjectionAnalyzer.vulnerabilityDescription.ruleId
     }

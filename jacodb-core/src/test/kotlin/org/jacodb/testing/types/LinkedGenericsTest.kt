@@ -87,7 +87,6 @@ class LinkedGenericsTest : BaseTypesTest() {
         }
     }
 
-
     @Test
     fun `generics applied for fields of super types`() {
         runBlocking {

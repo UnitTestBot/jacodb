@@ -36,9 +36,9 @@ public class MultiplyTests {
         BigDecimal[][] expectedResults = {
                 {new BigDecimal("121932631112635269"),
                 },
-                { new BigDecimal("1219326319027587258"),
+                {new BigDecimal("1219326319027587258"),
                 },
-                { new BigDecimal("12193263197189452827"),
+                {new BigDecimal("12193263197189452827"),
                 }
         };
 

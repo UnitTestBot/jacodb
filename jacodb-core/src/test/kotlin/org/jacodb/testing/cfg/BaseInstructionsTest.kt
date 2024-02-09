@@ -54,8 +54,11 @@ abstract class BaseInstructionsTest : BaseTest() {
         Assertions.assertEquals("OK", res)
     }
 
-
-    protected fun testClass(klass: JcClassOrInterface, validateLineNumbers: Boolean = true, muteGraphChecker: Boolean = false) {
+    protected fun testClass(
+        klass: JcClassOrInterface,
+        validateLineNumbers: Boolean = true,
+        muteGraphChecker: Boolean = false,
+    ) {
         testAndLoadClass(klass, false, validateLineNumbers, muteGraphChecker)
     }
 
@@ -67,7 +70,7 @@ abstract class BaseInstructionsTest : BaseTest() {
         klass: JcClassOrInterface,
         loadClass: Boolean,
         validateLineNumbers: Boolean,
-        muteGraphChecker: Boolean = false
+        muteGraphChecker: Boolean = false,
     ): Class<*>? {
         try {
             val classNode = klass.asmNode()

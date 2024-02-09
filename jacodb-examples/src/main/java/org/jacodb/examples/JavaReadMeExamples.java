@@ -16,7 +16,11 @@
 
 package org.jacodb.examples;
 
-import org.jacodb.api.*;
+import org.jacodb.api.JcClassOrInterface;
+import org.jacodb.api.JcClassType;
+import org.jacodb.api.JcClasspath;
+import org.jacodb.api.JcDatabase;
+import org.jacodb.api.JcType;
 import org.jacodb.api.ext.JcClasses;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;

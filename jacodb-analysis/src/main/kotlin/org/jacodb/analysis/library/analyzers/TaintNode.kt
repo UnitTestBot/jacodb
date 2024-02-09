@@ -27,7 +27,7 @@ import org.jacodb.api.cfg.JcInst
  * @property activation is the activation point, as described in ARF14. Null value means that activation point was
  * passed (so, for analyses that do not use backward runner to taint aliases, [activation] will always be null).
  */
-abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = null): DomainFact {
+abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = null) : DomainFact {
     protected abstract val nodeType: String
 
     abstract fun updateActivation(newActivation: JcInst?): TaintNode
@@ -60,7 +60,7 @@ abstract class TaintNode(val variable: AccessPath, val activation: JcInst? = nul
     }
 }
 
-class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+class NpeTaintNode(variable: AccessPath, activation: JcInst? = null) : TaintNode(variable, activation) {
     override val nodeType: String
         get() = "NPE"
 
@@ -73,9 +73,9 @@ class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
     }
 }
 
-data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst): DomainFact
+data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst) : DomainFact
 
-class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null): TaintNode(variable, activation) {
+class TaintAnalysisNode(variable: AccessPath, activation: JcInst? = null) : TaintNode(variable, activation) {
     override val nodeType: String
         get() = "Taint analysis"
 

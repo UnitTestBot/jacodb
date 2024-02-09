@@ -18,7 +18,9 @@ package org.jacodb.testing
 
 import org.jacodb.impl.fs.JarFacade
 import org.jacodb.impl.fs.parseRuntimeVersion
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledOnJre
 import org.junit.jupiter.api.condition.JRE

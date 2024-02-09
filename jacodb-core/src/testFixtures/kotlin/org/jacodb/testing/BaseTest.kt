@@ -33,7 +33,6 @@ import kotlin.reflect.full.companionObjectInstance
 @Tag("lifecycle")
 annotation class LifecycleTest
 
-
 abstract class BaseTest {
 
     protected open val cp: JcClasspath = runBlocking {
@@ -60,7 +59,6 @@ val Class<*>.withDB: JcDatabaseHolder
         }
         return s.withDB
     }
-
 
 interface JcDatabaseHolder {
 
@@ -92,7 +90,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
         }
     }
 
-    override  fun cleanup() {
+    override fun cleanup() {
         db.close()
     }
 }
@@ -101,7 +99,7 @@ val globalDb by lazy {
     WithDB(Usages, Builders, InMemoryHierarchy).db
 }
 
-open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDatabaseHolder {
+open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatabaseHolder {
 
     init {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
@@ -114,8 +112,6 @@ open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDataba
     override fun cleanup() {
     }
 }
-
-
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 

@@ -37,11 +37,11 @@ fun interface UnitResolver<UnitType> {
     companion object {
         fun getByName(name: String): UnitResolver<*> {
             return when (name) {
-                "method"    -> MethodUnitResolver
-                "class"     -> getClassUnitResolver(false)
-                "package"   -> PackageUnitResolver
+                "method" -> MethodUnitResolver
+                "class" -> getClassUnitResolver(false)
+                "package" -> PackageUnitResolver
                 "singleton" -> SingletonUnitResolver
-                else        -> error("Unknown unit resolver $name")
+                else -> error("Unknown unit resolver $name")
             }
         }
     }

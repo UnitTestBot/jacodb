@@ -23,6 +23,7 @@ public class NpeExamples {
 
     static class SimpleClassWithField {
         public String field;
+
         SimpleClassWithField(String value) {
             this.field = value;
         }
@@ -37,6 +38,7 @@ public class NpeExamples {
 
     static class ContainerOfSimpleClass {
         public SimpleClassWithField g;
+
         ContainerOfSimpleClass(SimpleClassWithField inner) {
             this.g = inner;
         }
@@ -44,6 +46,7 @@ public class NpeExamples {
 
     interface SomeI {
         int functionThatCanThrowNPEOnNull(String x);
+
         int functionThatCanNotThrowNPEOnNull(String x);
     }
 
@@ -51,6 +54,7 @@ public class NpeExamples {
         public int functionThatCanThrowNPEOnNull(String x) {
             return 0;
         }
+
         public int functionThatCanNotThrowNPEOnNull(String x) {
             return 0;
         }
@@ -60,6 +64,7 @@ public class NpeExamples {
         public int functionThatCanThrowNPEOnNull(String x) {
             return x.length();
         }
+
         public int functionThatCanNotThrowNPEOnNull(String x) {
             return 0;
         }
@@ -67,14 +72,21 @@ public class NpeExamples {
 
     static class RecursiveClass {
         RecursiveClass rec = null;
+
         RecursiveClass(RecursiveClass other) {
             rec = other;
         }
-        RecursiveClass() {rec = null;};
+
+        RecursiveClass() {
+            rec = null;
+        }
+
+        ;
     }
 
     static class ClassWithArrayField {
         String[] arr;
+
         ClassWithArrayField(String[] values) {
             values = arr;
         }
@@ -105,7 +117,7 @@ public class NpeExamples {
         SimpleClassWithField x = z.g;
         x.field = null;
     }
-    
+
     int npeOnLength() {
         String x = "abc";
         String y = "def";

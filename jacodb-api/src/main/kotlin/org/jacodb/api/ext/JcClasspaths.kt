@@ -42,7 +42,6 @@ fun JcClasspath.findTypeOrNull(typeName: TypeName): JcType? {
     return findTypeOrNull(typeName.typeName)
 }
 
-
 /**
  * find class. Tf there are none then throws `NoClassInClasspathException`
  * @throws NoClassInClasspathException

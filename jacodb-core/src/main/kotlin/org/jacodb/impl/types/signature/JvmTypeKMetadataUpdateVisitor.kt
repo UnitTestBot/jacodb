@@ -69,7 +69,7 @@ internal object JvmTypeKMetadataUpdateVisitor : JvmTypeVisitor<KmType> {
 
     fun visitDeclaration(
         declaration: JvmTypeParameterDeclaration,
-        context: KmTypeParameter
+        context: KmTypeParameter,
     ): JvmTypeParameterDeclaration {
         val newBounds = declaration.bounds?.zip(context.upperBounds) { bound, kmType ->
             visitType(bound, kmType)

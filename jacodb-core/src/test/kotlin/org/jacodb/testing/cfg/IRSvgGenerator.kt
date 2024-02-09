@@ -61,7 +61,6 @@ class IRSvgGenerator(private val folder: File) : Closeable {
         }
     }
 
-
     override fun close() {
         cp.close()
         db.close()

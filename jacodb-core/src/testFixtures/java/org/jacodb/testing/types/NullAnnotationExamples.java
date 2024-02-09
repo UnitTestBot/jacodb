@@ -38,7 +38,8 @@ public class NullAnnotationExamples {
         public @Nullable E nullable;
         public E undefined;
 
-        public class Inner {}
+        public class Inner {
+        }
     }
 
     String nullableMethod(@Nullable String explicitlyNullableParam, @NotNull String notNullParam, List<@NotNull String> notNullContainer) {
@@ -57,7 +58,7 @@ public class NullAnnotationExamples {
         return null;
     }
 
-    public @NotNull SomeContainer<String> @Nullable[] array() {
+    public @NotNull SomeContainer<String> @Nullable [] array() {
         return null;
     }
 

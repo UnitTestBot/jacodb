@@ -20,7 +20,7 @@ import java.util.List;
 
 public class Interfaces {
 
-    public static interface Interface {
+    public interface Interface {
 
     }
 
@@ -29,7 +29,6 @@ public class Interfaces {
 
     public static class Impl2 extends Impl1 {
     }
-
 
 
     public Interface build1() {

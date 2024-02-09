@@ -107,7 +107,6 @@ internal class Simplifier {
         return normalizeTypes(instructionList)
     }
 
-
     private fun computeUseCases(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawInst>> {
         val uses = hashMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
         for (inst in instList) {
@@ -191,7 +190,7 @@ internal class Simplifier {
 
     private fun computeReplacements(
         instList: JcInstListImpl<JcRawInst>,
-        uses: Map<JcRawSimpleValue, Set<JcRawInst>>
+        uses: Map<JcRawSimpleValue, Set<JcRawInst>>,
     ): Pair<Map<JcRawLocalVar, JcRawValue>, Set<JcRawInst>> {
         val replacements = mutableMapOf<JcRawLocalVar, JcRawValue>()
         val reservedValues = mutableSetOf<JcRawValue>()
@@ -208,7 +207,7 @@ internal class Simplifier {
                 ) {
                     val lhvUsage = uses.getOrDefault(lhv, emptySet()).firstOrNull()
                     val assignInstructionToReplacement = instList.firstOrNull { it is JcRawAssignInst && it.lhv == lhv }
-                    val assignInstructionToRhv = instList.firstOrNull { it is JcRawAssignInst && it.lhv == rhv}
+                    val assignInstructionToRhv = instList.firstOrNull { it is JcRawAssignInst && it.lhv == rhv }
                     val didNotAssignedBefore =
                         lhvUsage == null ||
                             assignInstructionToReplacement == null ||
@@ -252,7 +251,7 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(
-        instList: JcInstListImpl<JcRawInst>
+        instList: JcInstListImpl<JcRawInst>,
     ): JcInstListImpl<JcRawInst> {
         val types = mutableMapOf<JcRawLocalVar, MutableSet<String>>()
         for (inst in instList) {

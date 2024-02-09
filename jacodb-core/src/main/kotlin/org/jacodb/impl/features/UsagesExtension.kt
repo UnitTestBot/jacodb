@@ -80,7 +80,7 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
     private fun maybeHierarchy(
         enclosingClass: JcClassOrInterface,
         private: Boolean,
-        matcher: (JcClassOrInterface) -> Boolean
+        matcher: (JcClassOrInterface) -> Boolean,
     ): Set<JcClassOrInterface> {
         return when {
             private -> hashSetOf(enclosingClass)
@@ -89,12 +89,11 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
         }
     }
 
-
     private fun findMatches(
         hierarchy: Set<JcClassOrInterface>,
         method: JcMethod? = null,
         field: JcField? = null,
-        opcodes: Collection<Int>
+        opcodes: Collection<Int>,
     ): Sequence<JcMethod> {
         return Usages.syncQuery(
             cp, UsageFeatureRequest(
@@ -133,7 +132,6 @@ class SyncUsagesExtension(private val hierarchyExtension: HierarchyExtension, pr
         return false
     }
 }
-
 
 suspend fun JcClasspath.usagesExt(): SyncUsagesExtension {
     if (!db.isInstalled(Usages)) {

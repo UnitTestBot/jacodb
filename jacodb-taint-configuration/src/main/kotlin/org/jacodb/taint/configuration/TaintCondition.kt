@@ -71,7 +71,7 @@ data class IsConstant(val position: Position) : Condition {
 @SerialName("IsType")
 data class IsType(
     @SerialName("position") val position: Position,
-    @SerialName("type") val typeMatcher: TypeMatcher
+    @SerialName("type") val typeMatcher: TypeMatcher,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -80,7 +80,7 @@ data class IsType(
 @SerialName("AnnotationType")
 data class AnnotationType(
     @SerialName("position") val position: Position,
-    @SerialName("type") val typeMatcher: TypeMatcher
+    @SerialName("type") val typeMatcher: TypeMatcher,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -89,7 +89,7 @@ data class AnnotationType(
 @SerialName("ConstantEq")
 data class ConstantEq(
     @SerialName("position") val position: Position,
-    @SerialName("constant") val value: ConstantValue
+    @SerialName("constant") val value: ConstantValue,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -98,7 +98,7 @@ data class ConstantEq(
 @SerialName("ConstantLt")
 data class ConstantLt(
     @SerialName("position") val position: Position,
-    @SerialName("constant") val value: ConstantValue
+    @SerialName("constant") val value: ConstantValue,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -107,7 +107,7 @@ data class ConstantLt(
 @SerialName("ConstantGt")
 data class ConstantGt(
     @SerialName("position") val position: Position,
-    @SerialName("constant") val value: ConstantValue
+    @SerialName("constant") val value: ConstantValue,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -116,7 +116,7 @@ data class ConstantGt(
 @SerialName("ConstantMatches")
 data class ConstantMatches(
     @SerialName("position") val position: Position,
-    @SerialName("pattern") val pattern: String
+    @SerialName("pattern") val pattern: String,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -125,7 +125,7 @@ data class ConstantMatches(
 @SerialName("SourceFunctionMatches")
 data class SourceFunctionMatches(
     @SerialName("position") val position: Position,
-    @SerialName("sourceFunction") val functionMatcher: FunctionMatcher
+    @SerialName("sourceFunction") val functionMatcher: FunctionMatcher,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -135,7 +135,7 @@ data class SourceFunctionMatches(
 @SerialName("ContainsMark")
 data class CallParameterContainsMark(
     @SerialName("position") val position: Position,
-    @SerialName("mark") val mark: TaintMark
+    @SerialName("mark") val mark: TaintMark,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -190,7 +190,7 @@ sealed interface TypeMatcher
 @SerialName("ClassMatcher")
 data class ClassMatcher(
     @SerialName("packageMatcher") val pkg: NameMatcher,
-    @SerialName("classNameMatcher") val classNameMatcher: NameMatcher
+    @SerialName("classNameMatcher") val classNameMatcher: NameMatcher,
 ) : TypeMatcher
 
 @Serializable
@@ -211,7 +211,7 @@ data class FunctionMatcher(
     val applyToOverrides: Boolean,
     val functionLabel: String?,
     val modifier: Int,
-    val exclude: List<FunctionMatcher>
+    val exclude: List<FunctionMatcher>,
 )
 
 @Serializable

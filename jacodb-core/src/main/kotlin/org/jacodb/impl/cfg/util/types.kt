@@ -38,7 +38,6 @@ internal val UNINIT_THIS = "UNINIT_THIS".typeName()
 internal val TypeName.jvmTypeName get() = typeName.jvmName()
 internal val TypeName.jvmClassName get() = jvmTypeName.removePrefix("L").removeSuffix(";")
 
-
 val TypeName.internalDesc: String
     get() = when {
         isPrimitive -> jvmTypeName
@@ -84,5 +83,5 @@ internal fun TypeName.baseElementType(): TypeName {
     return current!!
 }
 
-val lambdaMetaFactory: TypeName  = LAMBDA_METAFACTORY_CLASS.typeName()
+val lambdaMetaFactory: TypeName = LAMBDA_METAFACTORY_CLASS.typeName()
 val lambdaMetaFactoryMethodName: String = "metafactory"

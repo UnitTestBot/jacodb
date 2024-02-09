@@ -31,7 +31,6 @@ class FullObjectsSet(type: JcType) : JcPointsToSet {
     override val isEmpty: Boolean
         get() = possibleTypes.isEmpty()
 
-
     override fun intersects(other: JcPointsToSet) = false
 
     override val possibleStrings: Set<String>? = null

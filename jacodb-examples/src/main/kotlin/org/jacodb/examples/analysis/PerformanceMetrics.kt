@@ -33,7 +33,6 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
-
 data class User(val login: String)
 
 annotation class HighPerformance
@@ -78,7 +77,6 @@ private val Stmt.lineNumber: String
     get() {
         return tags.filterIsInstance<LineNumberTag>().firstOrNull()?.lineNumber?.toString() ?: "unknown"
     }
-
 
 interface MaybePath
 
@@ -146,7 +144,7 @@ class HighPerformanceChecker : JcClassProcessingTask {
 
     private fun JcMethod.isSlowCallPath(
         cache: ConcurrentHashMap<JcMethod, MaybePath>,
-        processingMethods: Set<JcMethod> = hashSetOf(this)
+        processingMethods: Set<JcMethod> = hashSetOf(this),
     ): MaybePath {
         return cache.getOrPut(this) {
             isSlowCallPath(processingMethods)

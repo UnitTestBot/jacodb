@@ -25,7 +25,7 @@ import org.jacodb.api.JcType
 class JcArrayTypeImpl(
     override val elementType: JcType,
     override val nullable: Boolean? = null,
-    override val annotations: List<JcAnnotation> = listOf()
+    override val annotations: List<JcAnnotation> = listOf(),
 ) : JcArrayType {
 
     override val typeName = elementType.typeName + "[]"

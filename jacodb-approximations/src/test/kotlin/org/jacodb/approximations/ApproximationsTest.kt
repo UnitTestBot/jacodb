@@ -17,18 +17,29 @@
 package org.jacodb.approximations
 
 import org.jacodb.api.JavaVersion
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcRawAssignInst
+import org.jacodb.api.cfg.JcRawCallInst
+import org.jacodb.api.cfg.JcRawFieldRef
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.approximation.*
+import org.jacodb.approximation.Approximations
 import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
 import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
+import org.jacodb.approximation.JcEnrichedVirtualField
+import org.jacodb.approximation.JcEnrichedVirtualMethod
+import org.jacodb.approximation.toApproximationName
+import org.jacodb.approximation.toOriginalName
 import org.jacodb.approximations.target.KotlinClass
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.guavaLib
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 

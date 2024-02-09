@@ -48,7 +48,7 @@ interface JcPointsToAnalysis<Context> {
 
 }
 
-//TODO check api for consistency
+// TODO check api for consistency
 interface JcPointsToSet {
 
     val isEmpty: Boolean

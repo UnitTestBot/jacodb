@@ -19,8 +19,27 @@ package org.jacodb.impl.storage
 import mu.KLogging
 import org.jacodb.api.JCDBSymbolsInterner
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.impl.storage.jooq.tables.references.*
-import org.jacodb.impl.types.*
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
+import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
+import org.jacodb.impl.storage.jooq.tables.references.APPLICATIONMETADATA
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
+import org.jacodb.impl.storage.jooq.tables.references.CLASSINNERCLASSES
+import org.jacodb.impl.storage.jooq.tables.references.FIELDS
+import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.references.METHODS
+import org.jacodb.impl.storage.jooq.tables.references.OUTERCLASSES
+import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jacodb.impl.types.AnnotationInfo
+import org.jacodb.impl.types.AnnotationValue
+import org.jacodb.impl.types.AnnotationValueList
+import org.jacodb.impl.types.ClassInfo
+import org.jacodb.impl.types.ClassRef
+import org.jacodb.impl.types.EnumRef
+import org.jacodb.impl.types.FieldInfo
+import org.jacodb.impl.types.MethodInfo
+import org.jacodb.impl.types.ParameterInfo
+import org.jacodb.impl.types.PrimitiveValue
 import org.jooq.DSLContext
 import org.jooq.TableField
 import java.io.Closeable
@@ -128,8 +147,8 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
             version > currentAppVersion -> throw IllegalStateException("Can't start $currentAppVersion on $version database")
             version == currentAppVersion -> {}
             else -> persistence.write {
-                    refactorings.execute(it)
-                }
+                refactorings.execute(it)
+            }
         }
         persistence.write {
             it.deleteFrom(APPLICATIONMETADATA).execute()
@@ -307,7 +326,7 @@ class PersistenceService(private val persistence: AbstractJcDatabasePersistenceI
         }
     }
 
-    fun findSymbolId(symbol: String): Long? {
+    fun findSymbolId(symbol: String): Long {
         return persistence.symbolInterner.findOrNew(symbol)
     }
 
@@ -337,7 +356,7 @@ private data class AnnotationItem(
     val parentId: Long?,
     val refId: Long,
     val refKind: RefKind,
-    val info: AnnotationInfo
+    val info: AnnotationInfo,
 )
 
 private data class AnnotationValueItem(
@@ -357,7 +376,7 @@ private data class AnnotationValueItem(
 private class AnnotationCollector(
     val annotationIdGen: AtomicLong,
     val annotationValueIdGen: AtomicLong,
-    val symbolInterner: JCDBSymbolsInterner
+    val symbolInterner: JCDBSymbolsInterner,
 ) {
     val collected = ArrayList<AnnotationItem>()
     val collectedValues = ArrayList<AnnotationValueItem>()
@@ -377,7 +396,6 @@ private class AnnotationCollector(
         }
         return id
     }
-
 
     fun collectValue(nameValue: Pair<String, AnnotationValue>, parent: AnnotationItem) {
         val (name, value) = nameValue
@@ -511,7 +529,7 @@ private class ClassCollector(private val classIdGen: AtomicLong) {
 private class MethodsCollector(
     private val methodIdGen: AtomicLong,
     private val annotationCollector: AnnotationCollector,
-    private val paramsCollector: MethodParamsCollector
+    private val paramsCollector: MethodParamsCollector,
 ) {
 
     val methods = ArrayList<Triple<Long, Long, MethodInfo>>()

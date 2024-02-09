@@ -25,7 +25,6 @@ import org.jacodb.api.JcMethod
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 
-
 val JcClassOrInterface.isLocalOrAnonymous: Boolean
     get() {
         return outerMethod != null
@@ -70,7 +69,6 @@ fun JcClassOrInterface.findDeclaredMethodOrNull(name: String, desc: String? = nu
     }
 }
 
-
 /**
  * find method by name and description
  */
@@ -84,7 +82,6 @@ fun JcClassOrInterface.findMethodOrNull(name: String, desc: String): JcMethod? {
 fun JcClassOrInterface.findMethodOrNull(methodNode: MethodNode): JcMethod? =
     findMethodOrNull(methodNode.name, methodNode.desc)
 
-
 /**
  * @return null if ClassId is not enum and enum value names otherwise
  */
@@ -95,7 +92,6 @@ val JcClassOrInterface.enumValues: List<JcField>?
         }
         return null
     }
-
 
 val JcClassOrInterface.methods: List<JcMethod>
     get() {
@@ -110,7 +106,7 @@ val JcClassOrInterface.fields: List<JcField>
 private fun JcClassOrInterface.methods(
     allMethods: Boolean,
     fromSuperTypes: Boolean,
-    packageName: String
+    packageName: String,
 ): List<JcMethod> {
     val classPackageName = this.packageName
     val methodSet = if (allMethods) {
@@ -137,7 +133,7 @@ private fun JcClassOrInterface.methods(
 private fun JcClassOrInterface.fields(
     allFields: Boolean,
     fromSuperTypes: Boolean,
-    packageName: String
+    packageName: String,
 ): List<JcField> {
     val classPackageName = this.packageName
     val fieldSet = if (allFields) {
@@ -160,7 +156,6 @@ val JcClassOrInterface.constructors: List<JcMethod>
     get() {
         return declaredMethods.filter { it.isConstructor }
     }
-
 
 val JcClassOrInterface.allSuperHierarchy: Set<JcClassOrInterface>
     get() {
@@ -210,7 +205,6 @@ val JcClassOrInterface.isKotlin: Boolean
         return annotations.any { it.matches("kotlin.Metadata") }
     }
 
-
 private val JcClassOrInterface.simpleBinaryName: String?
     get() {
         // top level class
@@ -222,7 +216,6 @@ private val JcClassOrInterface.simpleBinaryName: String?
             throw InternalError("Malformed class name", ex)
         }
     }
-
 
 // call with SAFE. comparator works only on methods from one hierarchy
 internal object UnsafeHierarchyFieldComparator : Comparator<JcField> {

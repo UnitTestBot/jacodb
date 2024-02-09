@@ -35,7 +35,6 @@ interface JcInstVisitor<T> {
 interface DefaultJcInstVisitor<T> : JcInstVisitor<T> {
     val defaultInstHandler: (JcInst) -> T
 
-
     override fun visitJcAssignInst(inst: JcAssignInst): T = defaultInstHandler(inst)
 
     override fun visitJcEnterMonitorInst(inst: JcEnterMonitorInst): T = defaultInstHandler(inst)
@@ -115,7 +114,6 @@ interface JcExprVisitor<T> {
     fun visitExternalJcExpr(expr: JcExpr): T
 }
 
-
 @JvmDefaultWithoutCompatibility
 interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
     val defaultExprHandler: (JcExpr) -> T
@@ -181,7 +179,6 @@ interface DefaultJcExprVisitor<T> : JcExprVisitor<T> {
     override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): T = defaultExprHandler(expr)
 
     override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): T = defaultExprHandler(expr)
-
 
     override fun visitJcThis(value: JcThis): T = defaultExprHandler(value)
 

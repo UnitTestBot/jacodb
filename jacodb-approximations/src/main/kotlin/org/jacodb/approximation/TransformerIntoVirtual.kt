@@ -25,7 +25,7 @@ import org.jacodb.impl.features.JcFeaturesChain
 object TransformerIntoVirtual {
     fun JcClasspath.transformMethodIntoVirtual(
         to: JcClassOrInterface,
-        method: JcMethod
+        method: JcMethod,
     ): JcEnrichedVirtualMethod = with(method) {
         val parameters = parameters.map { param ->
             // TODO process annotations somehow to eliminate approximations
@@ -53,7 +53,7 @@ object TransformerIntoVirtual {
 
     fun transformIntoVirtualField(
         to: JcClassOrInterface,
-        field: JcField
+        field: JcField,
     ): JcEnrichedVirtualField = with(field) {
         (EnrichedVirtualFieldBuilder()
             .name(name)

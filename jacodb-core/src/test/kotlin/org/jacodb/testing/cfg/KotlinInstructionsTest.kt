@@ -18,7 +18,7 @@ package org.jacodb.testing.cfg
 
 import org.junit.jupiter.api.Test
 
-class KotlinInstructionsTest: BaseInstructionsTest() {
+class KotlinInstructionsTest : BaseInstructionsTest() {
 
     @Test
     fun `simple test`() = runTest(SimpleTest::class.java.name)
@@ -44,7 +44,7 @@ class KotlinInstructionsTest: BaseInstructionsTest() {
 //    @Test
 //    fun `kotlin overloading test`() = runKotlinTest(Overloading::class.java.name)
 
-    //We have to mute graph checker because of empty catch-es in try/catch blocks
+    // We have to mute graph checker because of empty catch-es in try/catch blocks
     @Test
     fun `kotlin try catch finally`() = runTest(TryCatchFinally::class.java.name, muteGraphChecker = true)
 

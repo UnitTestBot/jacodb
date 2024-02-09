@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("AnalysisMain")
+
 package org.jacodb.analysis
 
 import kotlinx.serialization.Serializable
@@ -34,7 +35,6 @@ typealias AnalysesOptions = Map<String, String>
 
 @Serializable
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
-
 
 /**
  * This is the entry point for every analysis.
@@ -68,7 +68,7 @@ fun runAnalysis(
     unitResolver: UnitResolver<*>,
     ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     methods: List<JcMethod>,
-    timeoutMillis: Long = Long.MAX_VALUE
+    timeoutMillis: Long = Long.MAX_VALUE,
 ): List<VulnerabilityInstance> {
     return MainIfdsUnitManager(graph, unitResolver, ifdsUnitRunnerFactory, methods, timeoutMillis).analyze()
 }

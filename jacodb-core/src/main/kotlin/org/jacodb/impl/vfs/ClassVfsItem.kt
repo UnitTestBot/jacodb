@@ -21,7 +21,7 @@ import org.jacodb.api.ClassSource
 class ClassVfsItem(
     override val name: String,
     packageNode: PackageVfsItem,
-    internal val source: ClassSource
+    internal val source: ClassSource,
 ) : AbstractVfsItem<PackageVfsItem>(name, packageNode) {
 
     val location get() = source.location

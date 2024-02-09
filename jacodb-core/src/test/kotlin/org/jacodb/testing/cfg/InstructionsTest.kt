@@ -23,7 +23,17 @@ import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.JcArgument
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcFieldRef
+import org.jacodb.api.cfg.JcGeExpr
+import org.jacodb.api.cfg.JcGtExpr
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInt
+import org.jacodb.api.cfg.JcLocalVar
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.boolean
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.cfg.locals
@@ -38,7 +48,10 @@ import org.jacodb.testing.cfg.RealMethodResolution.VirtualImpl
 import org.jacodb.testing.hierarchies.Inheritance
 import org.jacodb.testing.primitives.Primitives
 import org.jacodb.testing.structure.FieldsAndMethods
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.EnabledOnJre
@@ -48,7 +61,6 @@ import org.objectweb.asm.util.TraceMethodVisitor
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.activation.DataHandler
-
 
 class InstructionsTest : BaseInstructionsTest() {
 
@@ -75,7 +87,6 @@ class InstructionsTest : BaseInstructionsTest() {
         val usedArgumentNames = usedArgumentExprs.map { (it as JcArgument).name }
         assertEquals(listOf("i", "j", "b", "d"), usedArgumentNames)
     }
-
 
     @Test
     fun `cmp insts`() {
@@ -244,7 +255,6 @@ class InstructionsTest : BaseInstructionsTest() {
 
         assertEquals(parent, fieldInt.enclosingType.jcClass)
         assertEquals(cp.int, fieldInt.fieldType)
-
 
         // public boolean field
         val methodWithPublicFieldBoolean = child.declaredMethods.first { it.name == "accessBooleanField" }

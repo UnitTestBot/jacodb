@@ -16,17 +16,17 @@
 
 package org.jacodb.impl.bytecode
 
-import org.objectweb.asm.TypeReference
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcField
 import org.jacodb.impl.types.AnnotationInfo
 import org.jacodb.impl.types.FieldInfo
 import org.jacodb.impl.types.TypeNameImpl
+import org.objectweb.asm.TypeReference
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcFieldImpl(
     override val enclosingClass: JcClassOrInterface,
-    private val info: FieldInfo
+    private val info: FieldInfo,
 ) : JcField {
 
     override val name: String

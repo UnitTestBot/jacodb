@@ -32,7 +32,7 @@ class Iinc2 {
     }
 
     fun box(): String {
-        if (A(10.toByte()).c(20.toShort()) != 30.toByte().toChar()) return "plus failed"
+        if (A(10.toByte()).c(20.toShort()) != 30.toByte().toInt().toChar()) return "plus failed"
 
         var x = 20.toByte()
         var y = 20.toByte()

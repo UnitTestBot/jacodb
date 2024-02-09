@@ -167,7 +167,7 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
     private fun <T : JcRawBinaryExpr> binaryHandler(
         expr: T,
-        constructor: (TypeName, JcRawValue, JcRawValue) -> T
+        constructor: (TypeName, JcRawValue, JcRawValue) -> T,
     ): T {
         val newLhv = expr.lhv.accept(this) as JcRawValue
         val newRhv = expr.rhv.accept(this) as JcRawValue

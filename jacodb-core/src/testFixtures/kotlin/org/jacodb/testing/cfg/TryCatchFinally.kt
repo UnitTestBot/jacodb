@@ -38,16 +38,16 @@ class TryCatchFinally {
 
 class TryCatchFinally2 {
     fun test1(): String {
-        var s = "";
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 throw Exception()
             } catch (x: Exception) {
-                s += "Catch";
+                s += "Catch"
                 throw x
             } finally {
-                s += "Finally";
+                s += "Finally"
             }
         } catch (x: Exception) {
             return s
@@ -55,20 +55,19 @@ class TryCatchFinally2 {
     }
 
     fun test2(): String {
-        var s = "";
+        var s = ""
 
         try {
-            s += "Try";
+            s += "Try"
             throw Exception()
         } catch (x: Exception) {
-            s += "Catch";
+            s += "Catch"
         } finally {
-            s += "Finally";
+            s += "Finally"
         }
 
         return s
     }
-
 
     fun box(): String {
         if (test1() != "TryCatchFinally") return "fail1: ${test1()}"
@@ -90,10 +89,10 @@ class TryCatchFinally3 {
     }
 
     fun test1WithFinally(): String {
-        var s = "";
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
             } finally {
                 s += "Finally"
@@ -104,12 +103,11 @@ class TryCatchFinally3 {
         return s + "Failed"
     }
 
-
     fun test2WithFinally(): String {
-        var s = "";
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
                 return s
             } finally {
@@ -128,7 +126,7 @@ class TryCatchFinally3 {
     }
 }
 
-class TryCatchFinally4{
+class TryCatchFinally4 {
     fun unsupportedEx() {
         if (true) throw UnsupportedOperationException()
     }
@@ -137,73 +135,73 @@ class TryCatchFinally4{
         if (true) throw RuntimeException()
     }
 
-    fun test1() : String {
-        var s = "";
+    fun test1(): String {
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
-            } catch (x : UnsupportedOperationException) {
-                s += "Catch";
+            } catch (x: UnsupportedOperationException) {
+                s += "Catch"
                 runtimeEx()
             } catch (e: RuntimeException) {
                 s += "WrongCatch"
             }
-        } catch (x : RuntimeException) {
+        } catch (x: RuntimeException) {
             return s
         }
         return s + "Failed"
     }
 
-    fun test1WithFinally() : String {
-        var s = "";
+    fun test1WithFinally(): String {
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
-            } catch (x : UnsupportedOperationException) {
-                s += "Catch";
+            } catch (x: UnsupportedOperationException) {
+                s += "Catch"
                 runtimeEx()
             } catch (e: RuntimeException) {
                 s += "WrongCatch"
             } finally {
                 s += "Finally"
             }
-        } catch (x : RuntimeException) {
+        } catch (x: RuntimeException) {
             return s
         }
         return s + "Failed"
     }
 
-    fun test2() : String {
-        var s = "";
+    fun test2(): String {
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
                 return s
-            } catch (x : UnsupportedOperationException) {
-                s += "Catch";
+            } catch (x: UnsupportedOperationException) {
+                s += "Catch"
                 runtimeEx()
                 return s
             } catch (e: RuntimeException) {
                 s += "WrongCatch"
             }
-        } catch (x : RuntimeException) {
+        } catch (x: RuntimeException) {
             return s
         }
         return s + "Failed"
     }
 
-    fun test2WithFinally() : String {
-        var s = "";
+    fun test2WithFinally(): String {
+        var s = ""
         try {
             try {
-                s += "Try";
+                s += "Try"
                 unsupportedEx()
                 return s
-            } catch (x : UnsupportedOperationException) {
-                s += "Catch";
+            } catch (x: UnsupportedOperationException) {
+                s += "Catch"
                 runtimeEx()
                 return s
             } catch (e: RuntimeException) {
@@ -211,15 +209,13 @@ class TryCatchFinally4{
             } finally {
                 s += "Finally"
             }
-        } catch (x : RuntimeException) {
+        } catch (x: RuntimeException) {
             return s
         }
         return s + "Failed"
     }
 
-
-
-    fun box() : String {
+    fun box(): String {
         if (test1() != "TryCatch") return "fail1: ${test1()}"
         if (test1WithFinally() != "TryCatchFinally") return "fail2: ${test1WithFinally()}"
 

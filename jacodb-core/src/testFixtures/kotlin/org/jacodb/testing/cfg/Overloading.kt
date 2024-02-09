@@ -33,13 +33,16 @@ class Overloading {
     annotation class Foo(val a: FloatArray = [], val b: Array<String> = [], val c: Array<KClass<*>> = [])
 
     @Foo(a = [1f, 2f, 1 / 0f])
-    fun test1() {}
+    fun test1() {
+    }
 
     @Foo(b = ["Hello", ", ", "Kot" + "lin"])
-    fun test2() {}
+    fun test2() {
+    }
 
     @Foo(c = [Int::class, Array<Short>::class, Foo::class])
-    fun test3() {}
+    fun test3() {
+    }
 
     fun box(): String {
         test<Foo>(::test1) {

@@ -24,7 +24,6 @@ import org.jacodb.testing.types.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-
 class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
 
     @Test

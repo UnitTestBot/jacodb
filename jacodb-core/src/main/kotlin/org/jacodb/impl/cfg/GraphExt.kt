@@ -24,8 +24,6 @@ import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.cfg.DefaultJcExprVisitor
 import org.jacodb.api.cfg.DefaultJcInstVisitor
@@ -44,12 +42,10 @@ import org.jacodb.api.cfg.JcGotoInst
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
 import org.jacodb.api.cfg.JcLambdaExpr
 import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.JcNewArrayExpr
 import org.jacodb.api.cfg.JcNewExpr
-import org.jacodb.api.cfg.JcRawInst
 import org.jacodb.api.cfg.JcRemExpr
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
@@ -141,7 +137,6 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: 
     Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
 }
-
 
 fun JcBlockGraph.view(dotCmd: String, viewerCmd: String) {
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd)}"))

@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("RunnersLibrary")
+
 package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.BaseIfdsUnitRunnerFactory
@@ -30,7 +31,7 @@ import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 
-//TODO: add docs here
+// TODO: add docs here
 val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
 
 fun newSqlInjectionRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
@@ -48,5 +49,5 @@ fun newAliasRunnerFactory(
     generates: (JcInst) -> List<TaintAnalysisNode>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
-    maxPathLength: Int = 5
+    maxPathLength: Int = 5,
 ) = BaseIfdsUnitRunnerFactory(AliasAnalyzerFactory(generates, sanitizes, sinks, maxPathLength))

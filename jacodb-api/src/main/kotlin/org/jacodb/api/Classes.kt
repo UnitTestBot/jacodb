@@ -69,7 +69,6 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
             return access and Opcodes.ACC_INTERFACE != 0
         }
 
-
 }
 
 interface JcAnnotation : JcSymbol {
@@ -151,4 +150,3 @@ interface JcParameter : JcAnnotated, JcAccessible {
 interface TypeName {
     val typeName: String
 }
-

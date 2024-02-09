@@ -132,7 +132,7 @@ internal data class SplitRegex(val matchedParts: List<String>, val unmatchedPart
 
 private inline fun ClassMatcher.extractAlternativesToIfRequired(
     classMatcherModifier: (ClassMatcher, NameMatcher) -> ClassMatcher,
-    namePatternMatcher: NamePatternMatcher
+    namePatternMatcher: NamePatternMatcher,
 ): List<ClassMatcher> {
     val alternatives = namePatternMatcher.pattern.extractAlternatives()
 
@@ -142,7 +142,6 @@ private inline fun ClassMatcher.extractAlternativesToIfRequired(
 
     return alternativeMatchers.map { classMatcherModifier(this, it) }
 }
-
 
 fun String.extractAlternatives(): Set<String> {
     val queue = mutableListOf(this)
@@ -222,7 +221,6 @@ fun String.splitOnQuestionMark(): Set<String> {
 
     return result
 }
-
 
 private fun String.removeRedundantParentheses(): String {
     val openParentheses = mutableListOf<Pair<Int, Boolean>>()

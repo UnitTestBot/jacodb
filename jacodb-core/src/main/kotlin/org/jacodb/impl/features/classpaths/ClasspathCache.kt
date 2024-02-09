@@ -42,7 +42,6 @@ import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResult
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
 import java.text.NumberFormat
 
-
 /**
  * any class cache should extend this class
  */
@@ -65,7 +64,6 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     private val cfgCache = segmentBuilder(settings.flowGraphs)
         .build<JcMethod, JcGraph>()
 
-
     override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? {
         return classesCache.getIfPresent(name)
     }
@@ -77,9 +75,11 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     override fun flowGraph(method: JcMethod) = cfgCache.getIfPresent(method)?.let {
         JcFlowGraphResultImpl(method, it)
     }
+
     override fun instList(method: JcMethod) = instCache.getIfPresent(method)?.let {
         JcInstListResultImpl(method, it)
     }
+
     override fun rawInstList(method: JcMethod) = rawInstCache.getIfPresent(method)?.let {
         JcRawInstListResultImpl(method, it)
     }
@@ -102,7 +102,7 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
     }
 
     protected fun segmentBuilder(settings: JcCacheSegmentSettings)
-            : CacheBuilder<Any, Any> {
+        : CacheBuilder<Any, Any> {
         val maxSize = settings.maxSize
         val expiration = settings.expiration
 

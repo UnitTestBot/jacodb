@@ -91,6 +91,6 @@ interface IfdsUnitRunnerFactory {
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
-    ) : IfdsUnitRunner<UnitType>
+        startMethods: List<JcMethod>,
+    ): IfdsUnitRunner<UnitType>
 }

@@ -2,7 +2,6 @@
 
 import org.gradle.plugin.use.PluginDependenciesSpec
 
-
 object Versions {
     const val asm = "9.5"
     const val dokka = "1.7.20"
@@ -282,19 +281,19 @@ object Plugins {
     abstract class ProjectPlugin(val version: String, val id: String)
 
     // https://github.com/Kotlin/dokka
-    object Dokka: ProjectPlugin(
+    object Dokka : ProjectPlugin(
         version = Versions.dokka,
         id = "org.jetbrains.dokka"
     )
 
     // https://github.com/michel-kraemer/gradle-download-task
-    object GradleDownload: ProjectPlugin(
+    object GradleDownload : ProjectPlugin(
         version = Versions.gradle_download,
         id = "de.undercouch.download"
     )
 
     // https://github.com/ben-manes/gradle-versions-plugin
-    object GradleVersions: ProjectPlugin(
+    object GradleVersions : ProjectPlugin(
         version = Versions.gradle_versions,
         id = "com.github.ben-manes.versions"
     )

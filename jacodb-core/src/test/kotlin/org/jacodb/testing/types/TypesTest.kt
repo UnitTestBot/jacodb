@@ -27,7 +27,9 @@ import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.InputStream
 
@@ -49,7 +51,6 @@ class TypesTest : BaseTypesTest() {
             assertEquals("intArray", name)
             assertEquals("int[]", fieldType.typeName)
         }
-
 
         val methods = primitiveAndArrays.declaredMethods.filterNot { it.method.isConstructor }
         with(methods.first()) {
@@ -161,7 +162,6 @@ class TypesTest : BaseTypesTest() {
     private fun rawList(): JcClassType {
         return JcClassTypeImpl(cp, listClass, null, JcSubstitutorImpl.empty, false, emptyList())
     }
-
 
     private val JcClassType.iterator get() = findMethodOrNull { it.name == "iterator" && it.parameters.isEmpty() }
 

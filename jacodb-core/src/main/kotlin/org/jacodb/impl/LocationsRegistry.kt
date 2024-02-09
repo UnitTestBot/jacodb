@@ -48,7 +48,7 @@ class CleanupResult(val outdated: List<RegisteredLocation>)
 
 open class LocationsRegistrySnapshot(
     private val registry: LocationsRegistry,
-    val locations: List<RegisteredLocation>
+    val locations: List<RegisteredLocation>,
 ) : Closeable {
 
     val ids = locations.map { it.id }.toHashSet()

@@ -22,9 +22,19 @@ import org.jacodb.impl.JcSettings
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import org.jacodb.impl.storage.jooq.tables.references.*
 import org.jacodb.testing.allClasspath
-import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Level
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.Setup
+import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.TearDown
+import org.openjdk.jmh.annotations.Warmup
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -56,7 +66,6 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
         db.close()
     }
 }
-
 
 @State(Scope.Benchmark)
 @Fork(1, jvmArgs = ["-Xmx12288m"])

@@ -37,7 +37,6 @@ interface JcFeature<REQ, RES> {
 
 }
 
-
 sealed class JcSignal(val jcdb: JcDatabase) {
 
     /** can be used for creating persistence scheme */
@@ -60,7 +59,6 @@ sealed class JcSignal(val jcdb: JcDatabase) {
     class Closed(jcdb: JcDatabase) : JcSignal(jcdb)
 
 }
-
 
 suspend fun <REQ, RES> JcClasspath.query(feature: JcFeature<REQ, RES>, req: REQ): Sequence<RES> {
     return feature.query(this, req)

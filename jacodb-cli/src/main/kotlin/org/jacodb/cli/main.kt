@@ -50,7 +50,11 @@ class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, methods: List<JcMethod>): List<List<VulnerabilityInstance>> {
+fun launchAnalysesByConfig(
+    config: AnalysisConfig,
+    graph: JcApplicationGraph,
+    methods: List<JcMethod>,
+): List<List<VulnerabilityInstance>> {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)
@@ -70,7 +74,6 @@ fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, me
         runAnalysis(graph, unitResolver, runner, methods)
     }
 }
-
 
 fun main(args: Array<String>) {
     val parser = ArgParser("taint-analysis")

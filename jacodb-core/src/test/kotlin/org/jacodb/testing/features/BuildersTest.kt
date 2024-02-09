@@ -26,7 +26,9 @@ import org.jacodb.testing.builders.Hierarchy.HierarchyInterface
 import org.jacodb.testing.builders.Interfaces.Interface
 import org.jacodb.testing.builders.Simple
 import org.jooq.DSLContext
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnJre
 import org.junit.jupiter.api.condition.JRE

@@ -29,7 +29,7 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcAnnotationImpl(
     private val info: AnnotationInfo,
-    private val classpath: JcClasspath
+    private val classpath: JcClasspath,
 ) : JcAnnotation {
 
     override val jcClass by lazy(PUBLICATION) {

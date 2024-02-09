@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("ApplicationGraphFactory")
+
 package org.jacodb.analysis.graph
 
 import kotlinx.coroutines.GlobalScope
@@ -37,7 +38,7 @@ suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: Li
 }
 
 fun JcClasspath.asyncNewApplicationGraphForAnalysis(
-    bannedPackagePrefixes: List<String>? = null
+    bannedPackagePrefixes: List<String>? = null,
 ): CompletableFuture<JcApplicationGraph> {
     return GlobalScope.future {
         newApplicationGraphForAnalysis(bannedPackagePrefixes)

@@ -59,7 +59,9 @@ class IgnoreSubstitutionProblemsTest : BaseTest() {
         runBlocking {
             cp.db.load(target.toFile())
         }
-        return runBlocking { db.classpath(listOf(target.toFile()), listOf(IgnoreSubstitutionProblems)).findClass("GenericsApiConsumer") }
+        return runBlocking {
+            db.classpath(listOf(target.toFile()), listOf(IgnoreSubstitutionProblems)).findClass("GenericsApiConsumer")
+        }
     }
 
     private fun JcClassOrInterface.tweakClass(action: ClassNode.() -> Unit = {}) {

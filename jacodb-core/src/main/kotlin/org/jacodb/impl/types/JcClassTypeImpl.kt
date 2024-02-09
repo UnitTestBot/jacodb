@@ -16,7 +16,19 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAnnotation
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcGenericsSubstitutionFeature
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcLookupExtFeature
+import org.jacodb.api.JcRefType
+import org.jacodb.api.JcSubstitutor
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.JvmType
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.packageName
 import org.jacodb.api.ext.toType
@@ -35,7 +47,7 @@ class JcClassTypeImpl(
     override val outerType: JcClassTypeImpl? = null,
     private val substitutor: JcSubstitutor = JcSubstitutorImpl.empty,
     override val nullable: Boolean?,
-    override val annotations: List<JcAnnotation>
+    override val annotations: List<JcAnnotation>,
 ) : JcClassType {
 
     constructor(
@@ -44,7 +56,7 @@ class JcClassTypeImpl(
         outerType: JcClassTypeImpl? = null,
         parameters: List<JvmType>,
         nullable: Boolean?,
-        annotations: List<JcAnnotation>
+        annotations: List<JcAnnotation>,
     ) : this(
         classpath,
         name,
@@ -103,7 +115,6 @@ class JcClassTypeImpl(
             }
         }
 
-
     override val superType: JcClassType?
         get() {
             val superClass = jcClass.superClass ?: return null
@@ -133,8 +144,8 @@ class JcClassTypeImpl(
                 val outerClass = it.outerClass
 
                 val innerParameters = (
-                        outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
-                        )?.values?.toList().orEmpty()
+                    outerMethod?.allVisibleTypeParameters() ?: outerClass?.allVisibleTypeParameters()
+                    )?.values?.toList().orEmpty()
                 val innerSubstitutor = when {
                     it.isStatic -> JcSubstitutorImpl.empty.newScope(innerParameters)
                     else -> substitutor.newScope(innerParameters)
@@ -150,7 +161,7 @@ class JcClassTypeImpl(
 
     override val methods: List<JcTypedMethod>
         get() {
-            //let's calculate visible methods from super types
+            // let's calculate visible methods from super types
             return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
         }
 
@@ -189,7 +200,7 @@ class JcClassTypeImpl(
     private fun typedMethods(
         allMethods: Boolean,
         fromSuperTypes: Boolean,
-        packageName: String
+        packageName: String,
     ): List<JcTypedMethod> {
         val classPackageName = jcClass.packageName
         val methodSet = if (allMethods) {
@@ -245,7 +256,6 @@ class JcClassTypeImpl(
         return result.toList()
     }
 
-
     private fun superSubstitutor(superClass: JcClassOrInterface, superType: JvmType): JcSubstitutor {
         val superParameters = superClass.directTypeParameters()
         val substitutions = (superType as? JvmParameterizedType)?.parameterTypes
@@ -262,9 +272,10 @@ class JcClassTypeImpl(
 private fun JcClasspath.substitute(
     name: String,
     parameters: List<JvmType>,
-    substitutor: JcSubstitutor?
+    substitutor: JcSubstitutor?,
 ): JcSubstitutor {
-    val genericsSubstitutor = features?.firstNotNullOfOrNull { it as? JcGenericsSubstitutionFeature } ?: SafeSubstitution
+    val genericsSubstitutor =
+        features?.firstNotNullOfOrNull { it as? JcGenericsSubstitutionFeature } ?: SafeSubstitution
     return genericsSubstitutor.substitute(findClass(name), parameters, substitutor)
 }
 

@@ -29,7 +29,6 @@ val lib1 = File("1")
 val lib2 = File("2")
 val buildDir = File("3")
 
-
 suspend fun findNormalDistribution(): Any {
     val commonsMath32 = File("commons-math3-3.2.jar")
     val commonsMath36 = File("commons-math3-3.6.1.jar")
@@ -101,7 +100,6 @@ suspend fun autoLoad() {
 
     val cp = database.classpath(listOf(buildDir)) // database will automatically process buildDir
 }
-
 
 suspend fun threadSafe() {
     val db = jacodb {

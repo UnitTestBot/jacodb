@@ -30,7 +30,7 @@ sealed interface JcRawInst {
 class JcRawAssignInst(
     override val owner: JcMethod,
     val lhv: JcRawValue,
-    val rhv: JcRawExpr
+    val rhv: JcRawExpr,
 ) : JcRawInst {
 
     override val operands: List<JcRawExpr>
@@ -45,7 +45,7 @@ class JcRawAssignInst(
 
 class JcRawEnterMonitorInst(
     override val owner: JcMethod,
-    val monitor: JcRawSimpleValue
+    val monitor: JcRawSimpleValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
@@ -59,7 +59,7 @@ class JcRawEnterMonitorInst(
 
 class JcRawExitMonitorInst(
     override val owner: JcMethod,
-    val monitor: JcRawSimpleValue
+    val monitor: JcRawSimpleValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
@@ -73,7 +73,7 @@ class JcRawExitMonitorInst(
 
 class JcRawCallInst(
     override val owner: JcMethod,
-    val callExpr: JcRawCallExpr
+    val callExpr: JcRawCallExpr,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(callExpr)
@@ -101,10 +101,9 @@ class JcRawLineNumberInst(override val owner: JcMethod, val lineNumber: Int, val
     }
 }
 
-
 class JcRawLabelInst(
     override val owner: JcMethod,
-    val name: String
+    val name: String,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
@@ -120,7 +119,7 @@ class JcRawLabelInst(
 
 class JcRawReturnInst(
     override val owner: JcMethod,
-    val returnValue: JcRawValue?
+    val returnValue: JcRawValue?,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOfNotNull(returnValue)
@@ -134,7 +133,7 @@ class JcRawReturnInst(
 
 class JcRawThrowInst(
     override val owner: JcMethod,
-    val throwable: JcRawValue
+    val throwable: JcRawValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
@@ -149,7 +148,7 @@ class JcRawThrowInst(
 data class JcRawCatchEntry(
     val acceptedThrowable: TypeName,
     val startInclusive: JcRawLabelRef,
-    val endExclusive: JcRawLabelRef
+    val endExclusive: JcRawLabelRef,
 )
 
 class JcRawCatchInst(
@@ -174,7 +173,7 @@ sealed interface JcRawBranchingInst : JcRawInst {
 
 class JcRawGotoInst(
     override val owner: JcMethod,
-    val target: JcRawLabelRef
+    val target: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
@@ -193,7 +192,7 @@ data class JcRawIfInst(
     override val owner: JcMethod,
     val condition: JcRawConditionExpr,
     val trueBranch: JcRawLabelRef,
-    val falseBranch: JcRawLabelRef
+    val falseBranch: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(condition)
@@ -212,7 +211,7 @@ data class JcRawSwitchInst(
     override val owner: JcMethod,
     val key: JcRawValue,
     val branches: Map<JcRawValue, JcRawLabelRef>,
-    val default: JcRawLabelRef
+    val default: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(key) + branches.keys
@@ -246,7 +245,7 @@ interface JcRawBinaryExpr : JcRawExpr {
 data class JcRawAddExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -261,7 +260,7 @@ data class JcRawAddExpr(
 data class JcRawAndExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -276,7 +275,7 @@ data class JcRawAndExpr(
 data class JcRawCmpExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -291,7 +290,7 @@ data class JcRawCmpExpr(
 data class JcRawCmpgExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -306,7 +305,7 @@ data class JcRawCmpgExpr(
 data class JcRawCmplExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -321,7 +320,7 @@ data class JcRawCmplExpr(
 data class JcRawDivExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -336,7 +335,7 @@ data class JcRawDivExpr(
 data class JcRawMulExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -353,7 +352,7 @@ sealed interface JcRawConditionExpr : JcRawBinaryExpr
 data class JcRawEqExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -368,7 +367,7 @@ data class JcRawEqExpr(
 data class JcRawNeqExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -383,7 +382,7 @@ data class JcRawNeqExpr(
 data class JcRawGeExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -398,7 +397,7 @@ data class JcRawGeExpr(
 data class JcRawGtExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -413,7 +412,7 @@ data class JcRawGtExpr(
 data class JcRawLeExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -428,7 +427,7 @@ data class JcRawLeExpr(
 data class JcRawLtExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -443,7 +442,7 @@ data class JcRawLtExpr(
 data class JcRawOrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -458,7 +457,7 @@ data class JcRawOrExpr(
 data class JcRawRemExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -473,7 +472,7 @@ data class JcRawRemExpr(
 data class JcRawShlExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -488,7 +487,7 @@ data class JcRawShlExpr(
 data class JcRawShrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -503,7 +502,7 @@ data class JcRawShrExpr(
 data class JcRawSubExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -518,7 +517,7 @@ data class JcRawSubExpr(
 data class JcRawUshrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -533,7 +532,7 @@ data class JcRawUshrExpr(
 data class JcRawXorExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -547,7 +546,7 @@ data class JcRawXorExpr(
 
 data class JcRawLengthExpr(
     override val typeName: TypeName,
-    val array: JcRawValue
+    val array: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(array)
@@ -561,7 +560,7 @@ data class JcRawLengthExpr(
 
 data class JcRawNegExpr(
     override val typeName: TypeName,
-    val operand: JcRawValue
+    val operand: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
@@ -575,7 +574,7 @@ data class JcRawNegExpr(
 
 data class JcRawCastExpr(
     override val typeName: TypeName,
-    val operand: JcRawValue
+    val operand: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
@@ -588,7 +587,7 @@ data class JcRawCastExpr(
 }
 
 data class JcRawNewExpr(
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = emptyList()
@@ -602,7 +601,7 @@ data class JcRawNewExpr(
 
 data class JcRawNewArrayExpr(
     override val typeName: TypeName,
-    val dimensions: List<JcRawValue>
+    val dimensions: List<JcRawValue>,
 ) : JcRawExpr {
     constructor(typeName: TypeName, length: JcRawValue) : this(typeName, listOf(length))
 
@@ -614,7 +613,7 @@ data class JcRawNewArrayExpr(
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
     }
-    
+
     companion object {
         private val regexToProcessDimensions = Regex("\\[(.*?)]")
 
@@ -630,7 +629,7 @@ data class JcRawNewArrayExpr(
 data class JcRawInstanceOfExpr(
     override val typeName: TypeName,
     val operand: JcRawValue,
-    val targetType: TypeName
+    val targetType: TypeName,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
@@ -655,7 +654,7 @@ sealed interface JcRawCallExpr : JcRawExpr {
         get() = args
 }
 
-sealed interface JcRawInstanceExpr: JcRawCallExpr {
+sealed interface JcRawInstanceExpr : JcRawCallExpr {
     val instance: JcRawValue
 }
 
@@ -704,7 +703,7 @@ data class JcRawDynamicCallExpr(
     val callSiteMethodName: String,
     val callSiteArgTypes: List<TypeName>,
     val callSiteReturnType: TypeName,
-    val callSiteArgs: List<JcRawValue>
+    val callSiteArgs: List<JcRawValue>,
 ) : JcRawCallExpr {
     override val declaringClass get() = bsm.declaringClass
     override val methodName get() = bsm.name
@@ -788,7 +787,6 @@ data class JcRawSpecialCallExpr(
     }
 }
 
-
 sealed interface JcRawValue : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = emptyList()
@@ -818,7 +816,6 @@ data class JcRawArgument(val index: Int, override val name: String, override val
             return JcRawArgument(index, name ?: "arg$$index", typeName)
         }
     }
-
 
     override fun toString(): String = name
 
@@ -880,7 +877,7 @@ data class JcRawFieldRef(
     val instance: JcRawValue?,
     val declaringClass: TypeName,
     val fieldName: String,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawComplexValue {
     constructor(declaringClass: TypeName, fieldName: String, typeName: TypeName) : this(
         null,
@@ -899,7 +896,7 @@ data class JcRawFieldRef(
 data class JcRawArrayAccess(
     val array: JcRawValue,
     val index: JcRawValue,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawComplexValue {
     override fun toString(): String = "$array[$index]"
 
@@ -1003,7 +1000,7 @@ data class JcRawMethodConstant(
     val name: String,
     val argumentTypes: List<TypeName>,
     val returnType: TypeName,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawConstant {
     override fun toString(): String =
         "$declaringClass.$name${argumentTypes.joinToString(prefix = "(", postfix = ")")}:$returnType"
@@ -1016,7 +1013,7 @@ data class JcRawMethodConstant(
 data class JcRawMethodType(
     val argumentTypes: List<TypeName>,
     val returnType: TypeName,
-    private val methodType: TypeName
+    private val methodType: TypeName,
 ) : JcRawConstant {
     override val typeName: TypeName = methodType
 
@@ -1029,7 +1026,7 @@ data class JcRawMethodType(
 }
 
 //
-//fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
+// fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
 //    val idx: Int = instructions.indexOf(inst)
 //    assert(idx != -1)
 //

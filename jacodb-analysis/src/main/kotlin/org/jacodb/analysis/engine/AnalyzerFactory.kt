@@ -52,7 +52,11 @@ interface FlowFunctionsSpace {
     fun obtainSequentFlowFunction(current: JcInst, next: JcInst): FlowFunctionInstance
     fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod): FlowFunctionInstance
     fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst): FlowFunctionInstance
-    fun obtainExitToReturnSiteFlowFunction(callStatement: JcInst, returnSite: JcInst, exitStatement: JcInst): FlowFunctionInstance
+    fun obtainExitToReturnSiteFlowFunction(
+        callStatement: JcInst,
+        returnSite: JcInst,
+        exitStatement: JcInst,
+    ): FlowFunctionInstance
 }
 
 /**

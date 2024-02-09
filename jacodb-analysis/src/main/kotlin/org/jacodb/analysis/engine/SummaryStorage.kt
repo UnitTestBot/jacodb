@@ -34,7 +34,8 @@ sealed interface SummaryFact {
 /**
  * [SummaryFact] that denotes a possible vulnerability at [sink]
  */
-data class VulnerabilityLocation(val vulnerabilityDescription: VulnerabilityDescription, val sink: IfdsVertex) : SummaryFact {
+data class VulnerabilityLocation(val vulnerabilityDescription: VulnerabilityDescription, val sink: IfdsVertex) :
+    SummaryFact {
     override val method: JcMethod = sink.method
 }
 
@@ -63,7 +64,7 @@ data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
-interface SummaryStorage<T: SummaryFact> {
+interface SummaryStorage<T : SummaryFact> {
     /**
      * Adds [fact] to summary of its method
      */
@@ -87,7 +88,7 @@ interface SummaryStorage<T: SummaryFact> {
     val knownMethods: List<JcMethod>
 }
 
-class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
+class SummaryStorageImpl<T : SummaryFact> : SummaryStorage<T> {
     private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 

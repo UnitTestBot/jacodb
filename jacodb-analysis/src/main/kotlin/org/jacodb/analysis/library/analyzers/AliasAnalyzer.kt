@@ -30,7 +30,7 @@ fun AliasAnalyzerFactory(
     generates: (JcInst) -> List<DomainFact>,
     sanitizes: (JcExpr, TaintNode) -> Boolean,
     sinks: (JcInst) -> List<TaintAnalysisNode>,
-    maxPathLength: Int = 5
+    maxPathLength: Int = 5,
 ) = AnalyzerFactory { graph ->
     AliasAnalyzer(graph, generates, sanitizes, sinks, maxPathLength)
 }

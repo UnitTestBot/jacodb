@@ -18,7 +18,11 @@ package org.jacodb.testing
 
 import com.google.common.cache.AbstractCache
 import com.google.common.collect.Iterators
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findClassOrNull
@@ -29,7 +33,10 @@ import org.jacodb.impl.storage.PersistentLocationRegistry
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -48,7 +55,6 @@ class DatabaseLifecycleTest {
 
     private val testDirClone: File get() = File(tempFolder, "test")
     private val guavaLibClone: File get() = File(tempFolder, guavaLib.name)
-
 
     @BeforeEach
     fun cloneClasspath() {

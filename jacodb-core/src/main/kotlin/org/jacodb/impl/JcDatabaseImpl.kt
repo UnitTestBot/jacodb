@@ -16,12 +16,34 @@
 
 package org.jacodb.impl
 
-import kotlinx.coroutines.*
-import org.jacodb.api.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jacodb.api.JavaVersion
+import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcDatabasePersistence
+import org.jacodb.api.JcFeature
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
-import org.jacodb.impl.fs.*
+import org.jacodb.impl.fs.JavaRuntime
+import org.jacodb.impl.fs.asByteCodeLocation
+import org.jacodb.impl.fs.filterExisted
+import org.jacodb.impl.fs.lazySources
+import org.jacodb.impl.fs.sources
 import org.jacodb.impl.storage.PersistentLocationRegistry
 import org.jacodb.impl.vfs.GlobalClassesVfs
 import org.jacodb.impl.vfs.RemoveLocationsVisitor
@@ -34,7 +56,7 @@ class JcDatabaseImpl(
     internal val javaRuntime: JavaRuntime,
     override val persistence: JcDatabasePersistence,
     val featureRegistry: FeaturesRegistry,
-    private val settings: JcSettings
+    private val settings: JcSettings,
 ) : JcDatabase {
 
     private val classesVfs = GlobalClassesVfs()
@@ -71,7 +93,11 @@ class JcDatabaseImpl(
         if (this != null && any { it is ClasspathCache }) {
             return this + listOf(KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames))
         }
-        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames)) + orEmpty()
+        return listOf(
+            ClasspathCache(settings.cacheSettings),
+            KotlinMetadata,
+            MethodInstructionsFeature(settings.keepLocalVariableNames)
+        ) + orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {

@@ -25,7 +25,9 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.features.duplicatedClasses
 import org.jacodb.impl.features.hierarchyExt
-import org.jacodb.testing.structure.EnumExamples.*
+import org.jacodb.testing.structure.EnumExamples.EnumWithField
+import org.jacodb.testing.structure.EnumExamples.EnumWithStaticInstance
+import org.jacodb.testing.structure.EnumExamples.SimpleEnum
 import org.jacodb.testing.tests.DatabaseEnvTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -76,4 +78,3 @@ class ClassesTest : DatabaseEnvTest() {
         assertEquals(listOf("C1", "C2"), enumType.enumValues!!.map { it.name })
     }
 }
-

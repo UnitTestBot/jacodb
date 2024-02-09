@@ -17,19 +17,7 @@
 package org.jacodb.impl.types
 
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.serialDescriptor
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
-import kotlinx.serialization.serializer
 import org.jacodb.api.TypeName
 import org.jacodb.api.ext.jcdbName
 import org.jacodb.impl.storage.AnnotationValueKind
@@ -53,13 +41,13 @@ class ClassInfo(
     val innerClasses: List<String>,
     val interfaces: List<String>,
     val annotations: List<AnnotationInfo>,
-    val bytecode: ByteArray
+    val bytecode: ByteArray,
 )
 
 @Serializable
 class OuterClassRef(
     val className: String,
-    val name: String?
+    val name: String?,
 )
 
 @Serializable
@@ -83,7 +71,7 @@ class FieldInfo(
     val signature: String?,
     val access: Int,
     val type: String,
-    val annotations: List<AnnotationInfo>
+    val annotations: List<AnnotationInfo>,
 )
 
 @Serializable
@@ -101,7 +89,7 @@ class ParameterInfo(
     val index: Int,
     val access: Int,
     val name: String?,
-    val annotations: List<AnnotationInfo>
+    val annotations: List<AnnotationInfo>,
 )
 
 @Serializable

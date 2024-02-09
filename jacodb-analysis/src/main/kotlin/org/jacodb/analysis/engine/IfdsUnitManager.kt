@@ -31,7 +31,6 @@ interface IfdsUnitManager<UnitType> {
     suspend fun handleEvent(event: IfdsUnitRunnerEvent, runner: IfdsUnitRunner<UnitType>)
 }
 
-
 // TODO: provide visitor for this interface
 sealed interface IfdsUnitRunnerEvent
 
@@ -42,7 +41,8 @@ data class QueueEmptinessChanged(val isEmpty: Boolean) : IfdsUnitRunnerEvent
  * @property collector the [FlowCollector] to which queried summary edges should be sent to,
  * somewhat similar to a callback
  */
-data class SubscriptionForSummaryEdges(val method: JcMethod, val collector: FlowCollector<IfdsEdge>) : IfdsUnitRunnerEvent
+data class SubscriptionForSummaryEdges(val method: JcMethod, val collector: FlowCollector<IfdsEdge>) :
+    IfdsUnitRunnerEvent
 
 /**
  * A common interface for all events that are allowed to be produced by [Analyzer]

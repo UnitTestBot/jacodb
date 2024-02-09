@@ -88,7 +88,7 @@ class LoopsTest : BaseTest() {
         }
     }
 
-    //Disabled on JAVA_8 because of different bytecode and different lineNumbers for loops
+    // Disabled on JAVA_8 because of different bytecode and different lineNumbers for loops
     @Test
     @DisabledOnJre(JRE.JAVA_8)
     fun `combined loops`() {
@@ -120,7 +120,6 @@ class LoopsTest : BaseTest() {
         get() {
             return this.flowGraph().loops.toList().sortedBy { it.head.lineNumber }
         }
-
 
     private fun JcLoop.assertSources(start: Int, end: Int) {
         val sourceLineNumbers = instructions.map { it.lineNumber }

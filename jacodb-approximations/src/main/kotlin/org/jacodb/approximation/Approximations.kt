@@ -67,7 +67,7 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
 
     override fun newIndexer(
         jcdb: JcDatabase,
-        location: RegisteredLocation
+        location: RegisteredLocation,
     ): ByteCodeIndexer = ApproximationIndexer(originalToApproximation, approximationToOriginal)
 
     override fun onSignal(signal: JcSignal) {
@@ -93,7 +93,6 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
             }
         }
     }
-
 
     /**
      * Returns a list of [JcEnrichedVirtualField] if there is an approximation for [clazz] and null otherwise.
@@ -125,20 +124,20 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
      * Returns a name of the approximation class for [className] if it exists and null otherwise.
      */
     fun findApproximationByOriginOrNull(
-        className: OriginalClassName
+        className: OriginalClassName,
     ): String? = originalToApproximation[className]?.className
 
     /**
      * Returns a name of the target class for [className] approximation if it exists and null otherwise.
      */
     fun findOriginalByApproximationOrNull(
-        className: ApproximationClassName
+        className: ApproximationClassName,
     ): String? = approximationToOriginal[className]?.className
 }
 
 private class ApproximationIndexer(
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName>,
-    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName>
+    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName>,
 ) : ByteCodeIndexer {
     override fun index(classNode: ClassNode) {
         val annotations = classNode.visibleAnnotations ?: return
@@ -157,15 +156,15 @@ private class ApproximationIndexer(
         // Ensure that each approximation has one and only one
         require(originalClassName !in originalToApproximation) {
             "An error occurred during approximations indexing: you tried to add `$approximationClassName` " +
-                    "as an approximation for `$originalClassName`, but the target class is already " +
-                    "associated with approximation `${originalToApproximation[originalClassName]}`. " +
-                    "Only bijection between classes is allowed."
+                "as an approximation for `$originalClassName`, but the target class is already " +
+                "associated with approximation `${originalToApproximation[originalClassName]}`. " +
+                "Only bijection between classes is allowed."
         }
         require(approximationClassName !in approximationToOriginal) {
             "An error occurred during approximations indexing: you tried to add `$approximationClassName` " +
-                    "as an approximation for `$originalClassName`, but this approximation is already used for " +
-                    "`${approximationToOriginal[approximationClassName]}`. " +
-                    "Only bijection between classes is allowed."
+                "as an approximation for `$originalClassName`, but this approximation is already used for " +
+                "`${approximationToOriginal[approximationClassName]}`. " +
+                "Only bijection between classes is allowed."
         }
 
         originalToApproximation[originalClassName] = approximationClassName

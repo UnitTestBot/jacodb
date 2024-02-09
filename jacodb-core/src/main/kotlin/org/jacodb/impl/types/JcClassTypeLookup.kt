@@ -16,7 +16,12 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcAccessible
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcLookup
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.TypeName
 import org.jacodb.api.ext.packageName
 import org.jacodb.impl.bytecode.JcAbstractLookup
 import org.jacodb.impl.bytecode.PolymorphicSignatureSupport
@@ -40,13 +45,11 @@ class JcClassTypeLookupImpl(val type: JcClassType) : JcLookup<JcTypedField, JcTy
     }
 }
 
-
 abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
     JcAbstractLookup<JcClassType, Result>(clazz) {
 
     override val JcClassType.resolvePackage: String
         get() = jcClass.packageName
-
 
     internal open class JcTypedMethodLookup(
         type: JcClassType,
@@ -66,7 +69,6 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
             return super.lookupElement(en) ?: en.declaredMethods.find(name)
         }
     }
-
 
     internal class JcStaticTypedMethodLookup(
         type: JcClassType,
@@ -105,8 +107,6 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
         override val predicate: (JcTypedField) -> Boolean
             get() = { it.name == name }
 
-
     }
 
 }
-

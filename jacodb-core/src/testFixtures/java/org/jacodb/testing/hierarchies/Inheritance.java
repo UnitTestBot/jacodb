@@ -22,7 +22,7 @@ public class Inheritance {
 
     public static Object test(String[] args) throws Exception {
         new Statement(new Private(), "run", null).execute();
-        new Statement(new PrivateGeneric(), "run", new Object[] {"generic"}).execute();
+        new Statement(new PrivateGeneric(), "run", new Object[]{"generic"}).execute();
         return null;
     }
 

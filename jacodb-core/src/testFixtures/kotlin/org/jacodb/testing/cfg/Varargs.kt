@@ -18,9 +18,7 @@ package org.jacodb.testing.cfg
 
 import org.junit.jupiter.api.Assertions.assertEquals
 
-
 class Varargs {
-
 
     fun <T> foo(vararg a: T) = a.size
 
@@ -34,7 +32,7 @@ class Varargs {
 
     fun box(): String {
         var i = 0
-        val a: Array<String> = bar() { i++; i.toString() }
+        val a: Array<String> = bar { i++; i.toString() }
         assertEquals("345", a.joinToString(""))
         return "OK"
     }

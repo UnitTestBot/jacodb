@@ -49,7 +49,6 @@ class JcGraphImpl(
     override val entry: JcInst get() = instructions.first()
     override val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
 
-
     /**
      * returns a map of possible exceptions that may be thrown from this method
      * for each instruction of in the graph in determines possible thrown exceptions using
@@ -140,7 +139,6 @@ class JcGraphImpl(
 
     override fun iterator(): Iterator<JcInst> = instructions.iterator()
 
-
     private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
         val current = this[key]
         if (current == null) {
@@ -150,7 +148,6 @@ class JcGraphImpl(
         }
     }
 }
-
 
 fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
     JcGraphImpl(method, instructions.filter { it.accept(visitor) })

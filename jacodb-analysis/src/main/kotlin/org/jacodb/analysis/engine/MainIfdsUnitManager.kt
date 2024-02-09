@@ -43,7 +43,7 @@ class MainIfdsUnitManager<UnitType>(
     private val unitResolver: UnitResolver<UnitType>,
     private val ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     private val startMethods: List<JcMethod>,
-    private val timeoutMillis: Long
+    private val timeoutMillis: Long,
 ) : IfdsUnitManager<UnitType> {
 
     private val foundMethods: MutableMap<UnitType, MutableSet<JcMethod>> = mutableMapOf()
@@ -163,7 +163,7 @@ class MainIfdsUnitManager<UnitType>(
     private val TraceGraph.methods: List<JcMethod>
         get() {
             return (edges.keys.map { graph.methodOf(it.statement) } +
-                    listOf(graph.methodOf(sink.statement))).distinct()
+                listOf(graph.methodOf(sink.statement))).distinct()
         }
 
     /**
@@ -206,6 +206,7 @@ class MainIfdsUnitManager<UnitType>(
                     otherRunner.submitNewEdge(event.edge)
                 }
             }
+
             is NewSummaryFact -> {
                 when (val fact = event.fact) {
                     is CrossUnitCallFact -> crossUnitCallsStorage.send(fact)
@@ -214,9 +215,11 @@ class MainIfdsUnitManager<UnitType>(
                     is VulnerabilityLocation -> vulnerabilitiesStorage.send(fact)
                 }
             }
+
             is QueueEmptinessChanged -> {
                 eventChannel.send(Pair(event, runner))
             }
+
             is SubscriptionForSummaryEdges -> {
                 eventChannel.send(Pair(event, runner))
                 summaryEdgesStorage.getFacts(event.method).map {
@@ -238,6 +241,7 @@ class MainIfdsUnitManager<UnitType>(
                 dependenciesRev.getOrPut(unitResolver.resolve(event.method)) { mutableSetOf() }
                     .add(runner.unit)
             }
+
             is QueueEmptinessChanged -> {
                 if (runner.unit !in aliveRunners) {
                     return@consumeEach
@@ -261,6 +265,7 @@ class MainIfdsUnitManager<UnitType>(
                     }
                 }
             }
+
             else -> error("Unexpected event for dependencies dispatcher")
         }
     }

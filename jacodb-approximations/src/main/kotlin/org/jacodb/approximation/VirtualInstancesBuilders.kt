@@ -23,7 +23,7 @@ import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 import org.objectweb.asm.tree.MethodNode
 
 class EnrichedVirtualMethodBuilder(
-    name: String = "_enriched_virtual_"
+    name: String = "_enriched_virtual_",
 ) : VirtualClassesBuilder.VirtualMethodBuilder(name) {
     private var exceptions: List<TypeName> = emptyList()
     private var featuresChain: JcFeaturesChain = JcFeaturesChain(emptyList())
@@ -68,7 +68,7 @@ class EnrichedVirtualMethodBuilder(
 }
 
 class EnrichedVirtualFieldBuilder(
-    name: String = "_enriched_virtual_"
+    name: String = "_enriched_virtual_",
 ) : VirtualClassesBuilder.VirtualFieldBuilder(name) {
     private var annotations: List<JcAnnotation> = emptyList()
 

@@ -42,7 +42,7 @@ val defaultBatchSize: Int get() = System.getProperty("org.jacodb.impl.storage.de
 abstract class AbstractJcDatabasePersistenceImpl(
     private val javaRuntime: JavaRuntime,
     private val featuresRegistry: FeaturesRegistry,
-    private val clearOnStart: Boolean
+    private val clearOnStart: Boolean,
 ) : JcDatabasePersistence, Closeable {
 
     companion object {

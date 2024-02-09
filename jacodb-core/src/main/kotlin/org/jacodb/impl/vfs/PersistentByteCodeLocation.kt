@@ -31,7 +31,7 @@ class PersistentByteCodeLocation(
     private val runtimeVersion: JavaVersion,
     override val id: Long,
     private val cachedRecord: BytecodelocationsRecord? = null,
-    private val cachedLocation: JcByteCodeLocation? = null
+    private val cachedLocation: JcByteCodeLocation? = null,
 ) : RegisteredLocation {
 
     constructor(db: JcDatabase, record: BytecodelocationsRecord, location: JcByteCodeLocation? = null) : this(
@@ -93,4 +93,3 @@ class PersistentByteCodeLocation(
         }
     }
 }
-

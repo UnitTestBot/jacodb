@@ -16,19 +16,31 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.*
+import org.jacodb.api.ByteCodeIndexer
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcDatabase
+import org.jacodb.api.JcFeature
+import org.jacodb.api.JcSignal
+import org.jacodb.api.RegisteredLocation
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
-import org.jacodb.impl.storage.*
+import org.jacodb.impl.storage.BatchedSequence
+import org.jacodb.impl.storage.defaultBatchSize
+import org.jacodb.impl.storage.eqOrNull
+import org.jacodb.impl.storage.executeQueries
 import org.jacodb.impl.storage.jooq.tables.references.CALLS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jacodb.impl.storage.longHash
+import org.jacodb.impl.storage.runBatch
+import org.jacodb.impl.storage.setNullableLong
+import org.jacodb.impl.storage.sqlScript
+import org.jacodb.impl.storage.withoutAutoCommit
 import org.jooq.DSLContext
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
-
 
 private class MethodMap(size: Int) {
 
@@ -131,7 +143,6 @@ class UsagesIndexer(private val location: RegisteredLocation) :
         }
     }
 }
-
 
 object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
 

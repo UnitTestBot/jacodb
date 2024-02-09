@@ -30,6 +30,7 @@ class JavaVersionTest {
     fun `java version should be proper for 11 java`() {
         assertEquals(11, JavaRuntime(JcSettings().useProcessJavaRuntime().jre).version.majorVersion)
     }
+
     @Test
     @EnabledOnJre(JRE.JAVA_8)
     fun `java version should be proper for 8 java`() {

@@ -364,7 +364,12 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
         when (expr.args) {
             newArgs -> expr
             else -> JcRawStaticCallExpr(
-                expr.declaringClass, expr.methodName, expr.argumentTypes, expr.returnType, newArgs, expr.isInterfaceMethodCall
+                expr.declaringClass,
+                expr.methodName,
+                expr.argumentTypes,
+                expr.returnType,
+                newArgs,
+                expr.isInterfaceMethodCall
             )
         }
     }
@@ -384,7 +389,6 @@ class ExprMapper(val mapping: Map<JcRawExpr, JcRawExpr>) : JcRawInstVisitor<JcRa
             )
         }
     }
-
 
     override fun visitJcRawThis(value: JcRawThis) = exprHandler(value) { value }
     override fun visitJcRawArgument(value: JcRawArgument) = exprHandler(value) { value }

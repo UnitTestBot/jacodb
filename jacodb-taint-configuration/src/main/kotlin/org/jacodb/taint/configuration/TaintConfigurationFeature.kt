@@ -21,15 +21,27 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import org.jacodb.api.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcPrimitiveType
+import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.TypeName
+import org.jacodb.api.ext.allSuperHierarchySequence
+import org.jacodb.api.ext.boolean
+import org.jacodb.api.ext.byte
+import org.jacodb.api.ext.char
+import org.jacodb.api.ext.double
+import org.jacodb.api.ext.float
+import org.jacodb.api.ext.int
+import org.jacodb.api.ext.long
+import org.jacodb.api.ext.short
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-
 class TaintConfigurationFeature private constructor(
     jsonConfig: String,
-    additionalSerializersModule: SerializersModule?
+    additionalSerializersModule: SerializersModule?,
 ) : JcClasspathFeature {
     private val rulesByClass: MutableMap<JcClassOrInterface, List<SerializedTaintConfigurationItem>> = hashMapOf()
     private val rulesForMethod: MutableMap<JcMethod, List<TaintConfigurationItem>> = hashMapOf()
@@ -83,7 +95,6 @@ class TaintConfigurationFeature private constructor(
         }
         return primitiveTypesSet!!
     }
-
 
     private fun resolveConfigForMethod(method: JcMethod): List<TaintConfigurationItem> {
         val taintConfigurationItems = rulesForMethod[method]
@@ -179,7 +190,6 @@ class TaintConfigurationFeature private constructor(
         }
     }
 
-
     private fun TypeMatcher.matches(typeName: TypeName): Boolean = matches(typeName.typeName)
 
     private fun TypeMatcher.matches(typeName: String): Boolean =
@@ -214,7 +224,6 @@ class TaintConfigurationFeature private constructor(
 
     private fun Condition.resolve(method: JcMethod): Condition = accept(ConditionSpecializer(method))
     private fun List<Action>.resolve(method: JcMethod): List<Action> = flatMap { it.accept(ActionSpecializer(method)) }
-
 
     private fun specializePosition(method: JcMethod, position: Position): List<Position> {
         if (!inBounds(method, position)) return emptyList()
@@ -368,12 +377,12 @@ class TaintConfigurationFeature private constructor(
     companion object {
         fun fromPath(
             configPath: Path,
-            serializersModule: SerializersModule? = null
+            serializersModule: SerializersModule? = null,
         ) = TaintConfigurationFeature(configPath.readText(), serializersModule)
 
         fun fromJson(
             jsonConfig: String,
-            serializersModule: SerializersModule? = null
+            serializersModule: SerializersModule? = null,
         ) = TaintConfigurationFeature(jsonConfig, serializersModule)
 
         val defaultSerializationModule: SerializersModule

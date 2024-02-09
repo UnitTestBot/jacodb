@@ -33,10 +33,16 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
 abstract class AbstractTaintForwardFunctions(
-    protected val cp: JcClasspath
+    protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
-    abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
+    abstract fun transmitDataFlow(
+        from: JcExpr,
+        to: JcValue,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact>
 
     abstract fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact>
 
@@ -52,7 +58,7 @@ abstract class AbstractTaintForwardFunctions(
 
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
-        callee: JcMethod
+        callee: JcMethod,
     ) = FlowFunctionInstance { fact ->
         if (fact is TaintNode && fact.activation == callStatement) {
             return@FlowFunctionInstance emptyList()
@@ -78,7 +84,7 @@ abstract class AbstractTaintForwardFunctions(
 
     override fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
-        returnSite: JcInst
+        returnSite: JcInst,
     ) = FlowFunctionInstance { fact ->
         if (fact == ZEROFact) {
             return@FlowFunctionInstance listOf(fact)
@@ -117,7 +123,7 @@ abstract class AbstractTaintForwardFunctions(
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst
+        exitStatement: JcInst,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
@@ -143,7 +149,15 @@ abstract class AbstractTaintForwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitDataFlow(callee.thisInstance, callExpr.instance, exitStatement, updatedFact, dropFact = true))
+                addAll(
+                    transmitDataFlow(
+                        callee.thisInstance,
+                        callExpr.instance,
+                        exitStatement,
+                        updatedFact,
+                        dropFact = true
+                    )
+                )
             }
 
             if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {

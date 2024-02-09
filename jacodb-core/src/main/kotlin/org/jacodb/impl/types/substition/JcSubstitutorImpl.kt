@@ -27,10 +27,9 @@ import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
 import org.jacodb.impl.types.signature.JvmTypeVariable
 import org.jacodb.impl.types.signature.copyWith
 
-
 class JcSubstitutorImpl(
     // map declaration -> actual type or type variable
-    override val substitutions: PersistentMap<JvmTypeParameterDeclaration, JvmType> = persistentMapOf()
+    override val substitutions: PersistentMap<JvmTypeParameterDeclaration, JvmType> = persistentMapOf(),
 ) : JcSubstitutor {
 
     companion object {
@@ -93,7 +92,7 @@ class JcSubstitutorImpl(
 
     private fun substitute(
         declaration: JvmTypeParameterDeclaration,
-        ignoredSymbols: Set<String>
+        ignoredSymbols: Set<String>,
     ): JvmTypeParameterDeclaration {
         val visitor = object : RecursiveJvmTypeVisitor {
 
@@ -165,6 +164,5 @@ class JcSubstitutorImpl(
     override fun hashCode(): Int {
         return substitutions.hashCode()
     }
-
 
 }

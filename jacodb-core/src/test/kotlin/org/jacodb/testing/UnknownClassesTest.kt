@@ -77,7 +77,7 @@ class UnknownClassesTest : BaseTest() {
         }
     }
 
-    private fun JcMethod.assertCfg(){
+    private fun JcMethod.assertCfg() {
         val cfg = flowGraph()
         cfg.instructions.forEach {
             it.callExpr?.let {

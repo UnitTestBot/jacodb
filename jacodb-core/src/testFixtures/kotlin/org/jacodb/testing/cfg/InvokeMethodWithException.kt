@@ -20,17 +20,16 @@ class InvokeMethodWithException {
 
     class A {
         fun lol(a: Int): Int {
-            return 888/a
+            return 888 / a
         }
     }
 
-    fun box():String {
+    fun box(): String {
         val method = A::class.java.getMethod("lol", Int::class.java)
         var failed = false
         try {
             method.invoke(null, 0)
-        }
-        catch(e: Exception) {
+        } catch (e: Exception) {
             failed = true
         }
 

@@ -42,7 +42,13 @@ abstract class AbstractTaintBackwardFunctions(
         return listOf(ZEROFact)
     }
 
-    abstract fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
+    abstract fun transmitBackDataFlow(
+        from: JcValue,
+        to: JcExpr,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact>
 
     abstract fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact>
 
@@ -57,7 +63,7 @@ abstract class AbstractTaintBackwardFunctions(
 
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
-        callee: JcMethod
+        callee: JcMethod,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
@@ -93,7 +99,7 @@ abstract class AbstractTaintBackwardFunctions(
 
     override fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
-        returnSite: JcInst
+        returnSite: JcInst,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         if (fact !is TaintNode) {
             return@FlowFunctionInstance if (fact == ZEROFact) {
@@ -140,7 +146,7 @@ abstract class AbstractTaintBackwardFunctions(
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst
+        exitStatement: JcInst,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
@@ -153,7 +159,15 @@ abstract class AbstractTaintBackwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitBackDataFlow(callee.thisInstance, callExpr.instance, exitStatement, fact, dropFact = true))
+                addAll(
+                    transmitBackDataFlow(
+                        callee.thisInstance,
+                        callExpr.instance,
+                        exitStatement,
+                        fact,
+                        dropFact = true
+                    )
+                )
             }
 
             if (fact is TaintNode && fact.variable.isStatic) {

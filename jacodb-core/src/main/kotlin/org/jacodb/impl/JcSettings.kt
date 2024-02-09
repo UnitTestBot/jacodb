@@ -81,7 +81,7 @@ class JcSettings {
     fun persistent(
         location: String,
         clearOnStart: Boolean = false,
-        type: JcPersistenceType = PredefinedPersistenceType.SQLITE
+        type: JcPersistenceType = PredefinedPersistenceType.SQLITE,
     ) = apply {
         persistentLocation = location
         persistentClearOnStart = clearOnStart
@@ -166,7 +166,7 @@ interface JcPersistenceType {
     fun newPersistence(
         runtime: JavaRuntime,
         featuresRegistry: FeaturesRegistry,
-        settings: JcSettings
+        settings: JcSettings,
     ): JcDatabasePersistence
 }
 
@@ -175,7 +175,7 @@ enum class PredefinedPersistenceType : JcPersistenceType {
         override fun newPersistence(
             runtime: JavaRuntime,
             featuresRegistry: FeaturesRegistry,
-            settings: JcSettings
+            settings: JcSettings,
         ): JcDatabasePersistence {
             return SQLitePersistenceImpl(
                 javaRuntime = runtime,
@@ -192,11 +192,10 @@ class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "ja
 data class JcCacheSegmentSettings(
     val valueStoreType: ValueStoreType = ValueStoreType.STRONG,
     val maxSize: Long = 10_000,
-    val expiration: Duration = Duration.ofMinutes(1)
+    val expiration: Duration = Duration.ofMinutes(1),
 )
 
 enum class ValueStoreType { WEAK, SOFT, STRONG }
-
 
 class JcCacheSettings {
     var classes: JcCacheSegmentSettings = JcCacheSegmentSettings()

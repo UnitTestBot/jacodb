@@ -26,7 +26,7 @@ import org.jacodb.impl.types.TypeNameImpl
 
 class JcParameterImpl(
     override val method: JcMethod,
-    private val info: ParameterInfo
+    private val info: ParameterInfo,
 ) : JcParameter {
 
     override val access: Int

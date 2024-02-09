@@ -41,6 +41,7 @@ public class JavaTasks {
             time.set(j + 1, currentList);
         }
     }
+
     static public void sortTimes(String inputName, String outputName) throws IOException {
         List<List<String>> timeAM = new ArrayList<>();
         List<List<String>> timePM = new ArrayList<>();
@@ -207,8 +208,7 @@ public class JavaTasks {
             for (int j = 1; j <= second.length(); j++) {
                 if (first.charAt(i - 1) != second.charAt(j - 1)) {
                     twoDimArray[i][j] = 0;
-                }
-                else {
+                } else {
                     twoDimArray[i][j] = twoDimArray[i - 1][j - 1] + 1;
                     if (twoDimArray[i][j] > maxReps) {
                         maxReps = twoDimArray[i][j];
@@ -244,4 +244,3 @@ public class JavaTasks {
         return numberPrimes;
     }
 }
-

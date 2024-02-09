@@ -43,7 +43,7 @@ class BaseIfdsUnitRunnerFactory(private val analyzerFactory: AnalyzerFactory) : 
         manager: IfdsUnitManager<UnitType>,
         unitResolver: UnitResolver<UnitType>,
         unit: UnitType,
-        startMethods: List<JcMethod>
+        startMethods: List<JcMethod>,
     ): IfdsUnitRunner<UnitType> {
         val analyzer = analyzerFactory.newAnalyzer(graph)
         return BaseIfdsUnitRunner(graph, analyzer, manager, unitResolver, unit, startMethods)
@@ -59,7 +59,7 @@ private class BaseIfdsUnitRunner<UnitType>(
     private val manager: IfdsUnitManager<UnitType>,
     private val unitResolver: UnitResolver<UnitType>,
     unit: UnitType,
-    private val startMethods: List<JcMethod>
+    private val startMethods: List<JcMethod>,
 ) : AbstractIfdsUnitRunner<UnitType>(unit) {
 
     private val pathEdges: MutableSet<IfdsEdge> = ConcurrentHashMap.newKeySet()
@@ -146,9 +146,13 @@ private class BaseIfdsUnitRunner<UnitType>(
                                         .obtainExitToReturnSiteFlowFunction(curVertex, returnSite, eStatement)
                                         .compute(eFact)
                                     for (finalFact in finalFacts) {
-                                        val summaryEdge = IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
+                                        val summaryEdge =
+                                            IfdsEdge(IfdsVertex(sPoint, sFact), IfdsVertex(eStatement, eFact))
                                         val newEdge = IfdsEdge(u, IfdsVertex(returnSite, finalFact))
-                                        propagate(newEdge, PathEdgePredecessor(curEdge, PredecessorKind.ThroughSummary(summaryEdge)))
+                                        propagate(
+                                            newEdge,
+                                            PathEdgePredecessor(curEdge, PredecessorKind.ThroughSummary(summaryEdge))
+                                        )
                                     }
                                 }
 
@@ -195,10 +199,17 @@ private class BaseIfdsUnitRunner<UnitType>(
                     for (callerEdge in callSitesOf[u].orEmpty()) {
                         val callerStatement = callerEdge.v.statement
                         for (returnSite in graph.successors(callerStatement)) {
-                            for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(callerStatement, returnSite, curVertex).compute(curFact)) {
+                            for (returnSiteFact in flowSpace.obtainExitToReturnSiteFlowFunction(
+                                callerStatement,
+                                returnSite,
+                                curVertex
+                            ).compute(curFact)) {
                                 val returnSiteVertex = IfdsVertex(returnSite, returnSiteFact)
                                 val newEdge = IfdsEdge(callerEdge.u, returnSiteVertex)
-                                propagate(newEdge, PathEdgePredecessor(callerEdge, PredecessorKind.ThroughSummary(curEdge)))
+                                propagate(
+                                    newEdge,
+                                    PathEdgePredecessor(callerEdge, PredecessorKind.ThroughSummary(curEdge))
+                                )
                             }
                         }
                     }

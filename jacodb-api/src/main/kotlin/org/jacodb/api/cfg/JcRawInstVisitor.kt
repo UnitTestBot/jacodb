@@ -35,7 +35,6 @@ interface JcRawInstVisitor<T> {
 interface DefaultJcRawInstVisitor<T> : JcRawInstVisitor<T> {
     val defaultInstHandler: (JcRawInst) -> T
 
-
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): T = defaultInstHandler(inst)
 
     override fun visitJcRawEnterMonitorInst(inst: JcRawEnterMonitorInst): T = defaultInstHandler(inst)
@@ -118,7 +117,6 @@ interface JcRawExprVisitor<T> {
 @JvmDefaultWithoutCompatibility
 interface DefaultJcRawExprVisitor<T> : JcRawExprVisitor<T> {
     val defaultExprHandler: (JcRawExpr) -> T
-
 
     override fun visitJcRawAddExpr(expr: JcRawAddExpr): T = defaultExprHandler(expr)
 

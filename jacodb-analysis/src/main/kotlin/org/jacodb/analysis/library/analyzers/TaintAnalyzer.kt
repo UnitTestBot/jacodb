@@ -88,7 +88,7 @@ internal val List<String>.asMethodMatchers: (JcMethod) -> Boolean
 
 abstract class TaintAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int
+    maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
     abstract val generates: (JcInst) -> List<DomainFact>
     abstract val sanitizes: (JcExpr, TaintNode) -> Boolean
@@ -114,7 +114,7 @@ abstract class TaintAnalyzer(
 
 abstract class TaintBackwardAnalyzer(
     val graph: JcApplicationGraph,
-    maxPathLength: Int
+    maxPathLength: Int,
 ) : AbstractAnalyzer(graph) {
     abstract val generates: (JcInst) -> List<DomainFact>
     abstract val sinks: (JcInst) -> List<TaintAnalysisNode>
@@ -137,9 +137,15 @@ private class TaintForwardFunctions(
     graph: JcApplicationGraph,
     private val maxPathLength: Int,
     private val generates: (JcInst) -> List<DomainFact>,
-    private val sanitizes: (JcExpr, TaintNode) -> Boolean
+    private val sanitizes: (JcExpr, TaintNode) -> Boolean,
 ) : AbstractTaintForwardFunctions(graph.classpath) {
-    override fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+    override fun transmitDataFlow(
+        from: JcExpr,
+        to: JcValue,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact> {
         if (fact == ZEROFact) {
             return listOf(ZEROFact) + generates(atInst)
         }
@@ -148,7 +154,11 @@ private class TaintForwardFunctions(
             return emptyList()
         }
 
-        val default = if (dropFact || (sanitizes(from, fact) && fact.variable == (from as? JcInstanceCallExpr)?.instance?.toPath())) {
+        val default = if (dropFact || (sanitizes(
+                from,
+                fact
+            ) && fact.variable == (from as? JcInstanceCallExpr)?.instance?.toPath())
+        ) {
             emptyList()
         } else {
             listOf(fact)
@@ -168,7 +178,9 @@ private class TaintForwardFunctions(
             }
         }
 
-        if (from.values.any { it.toPathOrNull().startsWith(fact.variable) || fact.variable.startsWith(it.toPathOrNull()) }) {
+        if (from.values.any {
+                it.toPathOrNull().startsWith(fact.variable) || fact.variable.startsWith(it.toPathOrNull())
+            }) {
             val instanceOrNull = (from as? JcInstanceCallExpr)?.instance
             if (instanceOrNull != null && !sanitizes(from, fact)) {
                 val instancePath = instanceOrNull.toPathOrNull()
@@ -219,14 +231,19 @@ private class TaintForwardFunctions(
     }
 }
 
-
 private class TaintBackwardFunctions(
     graph: JcApplicationGraph,
     val generates: (JcInst) -> List<DomainFact>,
     val sinks: (JcInst) -> List<TaintAnalysisNode>,
     maxPathLength: Int,
 ) : AbstractTaintBackwardFunctions(graph, maxPathLength) {
-    override fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact> {
+    override fun transmitBackDataFlow(
+        from: JcValue,
+        to: JcExpr,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact> {
         if (fact == ZEROFact) {
             return listOf(ZEROFact) + sinks(atInst)
         }

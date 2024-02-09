@@ -16,9 +16,31 @@
 
 package org.jacodb.testing.cfg
 
-
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
+import org.jacodb.api.JavaVersion
+import org.jacodb.api.JcClassType
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.TypeName
+import org.jacodb.api.cfg.DefaultJcExprVisitor
+import org.jacodb.api.cfg.DefaultJcInstVisitor
+import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcCallExpr
+import org.jacodb.api.cfg.JcCallInst
+import org.jacodb.api.cfg.JcCatchInst
+import org.jacodb.api.cfg.JcEnterMonitorInst
+import org.jacodb.api.cfg.JcExitMonitorInst
+import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcGotoInst
+import org.jacodb.api.cfg.JcGraph
+import org.jacodb.api.cfg.JcIfInst
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.cfg.JcReturnInst
+import org.jacodb.api.cfg.JcSpecialCallExpr
+import org.jacodb.api.cfg.JcSwitchInst
+import org.jacodb.api.cfg.JcTerminatingInst
+import org.jacodb.api.cfg.JcThrowInst
+import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.toType
@@ -34,15 +56,21 @@ import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
-import org.jacodb.testing.*
+import org.jacodb.testing.WithDB
+import org.jacodb.testing.asmLib
+import org.jacodb.testing.guavaLib
+import org.jacodb.testing.kotlinStdLib
+import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.File
 
 class OverridesResolver(
-    private val hierarchyExtension: HierarchyExtension
+    private val hierarchyExtension: HierarchyExtension,
 ) : DefaultJcInstVisitor<Sequence<JcTypedMethod>>, DefaultJcExprVisitor<Sequence<JcTypedMethod>> {
     override val defaultInstHandler: (JcInst) -> Sequence<JcTypedMethod>
         get() = { emptySequence() }
@@ -53,8 +81,8 @@ class OverridesResolver(
         return methods.firstOrNull { typedMethod ->
             val jcMethod = typedMethod.method
             jcMethod.name == name &&
-                    jcMethod.returnType.typeName == returnType.typeName &&
-                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+                jcMethod.returnType.typeName == returnType.typeName &&
+                jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
         } ?: error("Could not find a method with correct signature")
     }
 
@@ -295,7 +323,6 @@ class IRTest : BaseInstructionsTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
@@ -315,7 +342,6 @@ class IRTest : BaseInstructionsTest() {
     fun `get ir of kotlin stdlib`() {
         runAlongLib(kotlinStdLib, false)
     }
-
 
     @AfterEach
     fun printStats() {

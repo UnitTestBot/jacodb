@@ -50,7 +50,6 @@ interface JavaVersion {
     val majorVersion: Int
 }
 
-
 /**
  * Compilation database
  *
@@ -136,7 +135,6 @@ interface JcDatabase : Closeable {
 
     val features: List<JcFeature<*, *>>
 }
-
 
 interface JcDatabasePersistence : Closeable {
 

@@ -16,10 +16,18 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcRefType
+import org.jacodb.api.JcSubstitutor
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypeVariableDeclaration
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.JcTypedMethodParameter
+import org.jacodb.api.MethodResolution
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.api.ext.isEnum
 import org.jacodb.api.ext.isNullable
+import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
@@ -33,12 +41,12 @@ import org.objectweb.asm.tree.LocalVariableNode
 class JcTypedMethodImpl(
     override val enclosingType: JcRefType,
     override val method: JcMethod,
-    private val parentSubstitutor: JcSubstitutor
+    private val parentSubstitutor: JcSubstitutor,
 ) : JcTypedMethod {
 
     private class TypedMethodInfo(
         val substitutor: JcSubstitutor,
-        private val resolution: MethodResolution
+        private val resolution: MethodResolution,
     ) {
         val impl: MethodResolutionImpl? get() = resolution as? MethodResolutionImpl
     }
@@ -157,6 +165,5 @@ class JcTypedMethodImpl(
         result = 31 * result + method.hashCode()
         return result
     }
-
 
 }

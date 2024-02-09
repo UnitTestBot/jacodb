@@ -16,7 +16,6 @@
 
 package org.jacodb.testing
 
-
 interface SuperDuper {
     fun say() {}
 }

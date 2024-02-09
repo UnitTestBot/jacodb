@@ -52,8 +52,10 @@ object PredefinedPrimitives {
 /**
  * Predefined primitive types
  */
-class PredefinedPrimitive(override val classpath: JcClasspath, override val typeName: String,
-                          override val annotations: List<JcAnnotation> = listOf()) : JcPrimitiveType {
+class PredefinedPrimitive(
+    override val classpath: JcClasspath, override val typeName: String,
+    override val annotations: List<JcAnnotation> = listOf(),
+) : JcPrimitiveType {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -53,5 +53,6 @@ public class Generics {
 
     }
 
-    static class SingleImpl extends SingleBase<String> {}
+    static class SingleImpl extends SingleBase<String> {
+    }
 }

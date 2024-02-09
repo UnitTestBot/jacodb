@@ -21,7 +21,11 @@ import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import org.jacodb.impl.storage.jooq.tables.references.*
+import org.jacodb.impl.storage.jooq.tables.references.CALLS
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.FIELDS
+import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.references.METHODS
 import org.jacodb.testing.allClasspath
 
 fun main() {

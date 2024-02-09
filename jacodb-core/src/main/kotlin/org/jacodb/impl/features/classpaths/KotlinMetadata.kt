@@ -92,5 +92,4 @@ class KotlinMetadataHolder(meta: KotlinClassMetadata) {
     val kmTypeParameters: List<KmTypeParameter>? =
         (meta as? KotlinClassMetadata.Class)?.toKmClass()?.typeParameters
 
-
 }

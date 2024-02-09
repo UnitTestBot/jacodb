@@ -34,7 +34,13 @@ fun JcClasspath.getFormalParamsOf(method: JcMethod): List<JcArgument> {
     }
 }
 
-fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dropFact: Boolean, maxPathLength: Int): List<TaintNode> {
+fun normalFactFlow(
+    fact: TaintNode,
+    fromPath: AccessPath,
+    toPath: AccessPath,
+    dropFact: Boolean,
+    maxPathLength: Int,
+): List<TaintNode> {
     val factPath = fact.variable
     val default = if (dropFact) emptyList() else listOf(fact)
 

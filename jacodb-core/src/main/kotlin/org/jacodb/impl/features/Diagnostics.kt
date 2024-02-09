@@ -18,14 +18,12 @@
 
 package org.jacodb.impl.features
 
-
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import org.jacodb.api.JcClasspath
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jooq.impl.DSL
-
 
 /**
  * finds out duplicates classes
@@ -41,7 +39,7 @@ suspend fun JcClasspath.duplicatedClasses(): Map<String, Int> {
             .groupBy(SYMBOLS.NAME)
             .having(DSL.count(SYMBOLS.NAME).greaterThan(1))
             .fetch()
-            .map { (name, count) -> name!! to count!!}
+            .map { (name, count) -> name!! to count!! }
             .toMap()
     }
 

@@ -25,11 +25,10 @@ data class UsageFeatureRequest(
     val description: String?,
     val field: String?,
     val opcodes: Collection<Int>,
-    val className: Set<String>
+    val className: Set<String>,
 ) : java.io.Serializable
 
 class UsageFeatureResponse(
     val source: ClassSource,
-    val offsets: ShortArray
+    val offsets: ShortArray,
 )
-

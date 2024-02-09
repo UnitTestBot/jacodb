@@ -28,7 +28,6 @@ import org.jacodb.api.JcType
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.toType
 
-
 class BuildersExtension(private val classpath: JcClasspath, private val hierarchyExtension: HierarchyExtension) {
 
     fun findBuildMethods(jcClass: JcClassOrInterface, includeSubclasses: Boolean = false): Sequence<JcMethod> {
@@ -60,7 +59,6 @@ class BuildersExtension(private val classpath: JcClasspath, private val hierarch
         }
     }
 }
-
 
 suspend fun JcClasspath.buildersExtension(): BuildersExtension {
     if (!db.isInstalled(Builders)) {

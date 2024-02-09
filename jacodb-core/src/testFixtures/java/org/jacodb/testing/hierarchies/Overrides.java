@@ -23,9 +23,9 @@ public class Overrides {
 
     public interface Iface<T> {
 
-        public T runMain(T in);
+        T runMain(T in);
 
-        default public T runMain(Closeable in) {
+        default T runMain(Closeable in) {
             return null;
         }
     }

@@ -88,7 +88,7 @@ class SootHighPerformanceChecker {
 
     private fun SootMethod.isSlowCallPath(
         cache: ConcurrentHashMap<SootMethod, MaybePath>,
-        processingMethods: Set<SootMethod> = hashSetOf(this)
+        processingMethods: Set<SootMethod> = hashSetOf(this),
     ): MaybePath {
         return cache.getOrPut(this) {
             isSlowCallPath(processingMethods)
@@ -118,7 +118,7 @@ class SootHighPerformanceChecker {
 }
 
 fun main() {
-    println("Soot tooks: "  + measureTimeMillis {
+    println("Soot tooks: " + measureTimeMillis {
         initSoot(allClasspath)
         val checker = SootHighPerformanceChecker()
         Scene.v().applicationClasses

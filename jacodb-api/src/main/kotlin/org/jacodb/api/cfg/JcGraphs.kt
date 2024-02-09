@@ -22,7 +22,6 @@ abstract class TypedExprResolver<T : JcExpr> : AbstractFullExprSetCollector() {
     val result = hashSetOf<T>()
 }
 
-
 class LocalResolver : TypedExprResolver<JcLocal>() {
 
     override fun ifMatches(expr: JcExpr) {

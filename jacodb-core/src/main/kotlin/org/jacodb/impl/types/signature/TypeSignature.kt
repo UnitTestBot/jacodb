@@ -16,7 +16,11 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JvmType
+import org.jacodb.api.Malformed
+import org.jacodb.api.Pure
+import org.jacodb.api.TypeResolution
 import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor
@@ -56,7 +60,6 @@ internal class TypeSignature(jcClass: JcClassOrInterface) :
         }
     }
 
-
     companion object {
 
         private fun TypeResolutionImpl.apply(visitor: RecursiveJvmTypeVisitor) = TypeResolutionImpl(
@@ -64,7 +67,6 @@ internal class TypeSignature(jcClass: JcClassOrInterface) :
             interfaceType.map { visitor.visitType(it) },
             typeVariables.map { visitor.visitDeclaration(it) }
         )
-
 
         fun of(jcClass: JcClassOrInterface): TypeResolution {
             val signature = jcClass.signature ?: return Pure

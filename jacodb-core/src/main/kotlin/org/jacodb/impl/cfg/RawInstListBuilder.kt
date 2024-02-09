@@ -16,16 +16,123 @@
 
 package org.jacodb.impl.cfg
 
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentMap
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.*
-import org.jacodb.impl.cfg.util.*
+import org.jacodb.api.cfg.BsmArg
+import org.jacodb.api.cfg.BsmDoubleArg
+import org.jacodb.api.cfg.BsmFloatArg
+import org.jacodb.api.cfg.BsmHandle
+import org.jacodb.api.cfg.BsmIntArg
+import org.jacodb.api.cfg.BsmLongArg
+import org.jacodb.api.cfg.BsmMethodTypeArg
+import org.jacodb.api.cfg.BsmStringArg
+import org.jacodb.api.cfg.BsmTypeArg
+import org.jacodb.api.cfg.JcRawAddExpr
+import org.jacodb.api.cfg.JcRawAndExpr
+import org.jacodb.api.cfg.JcRawArgument
+import org.jacodb.api.cfg.JcRawArrayAccess
+import org.jacodb.api.cfg.JcRawAssignInst
+import org.jacodb.api.cfg.JcRawCallExpr
+import org.jacodb.api.cfg.JcRawCallInst
+import org.jacodb.api.cfg.JcRawCastExpr
+import org.jacodb.api.cfg.JcRawCatchEntry
+import org.jacodb.api.cfg.JcRawCatchInst
+import org.jacodb.api.cfg.JcRawClassConstant
+import org.jacodb.api.cfg.JcRawCmpExpr
+import org.jacodb.api.cfg.JcRawCmpgExpr
+import org.jacodb.api.cfg.JcRawCmplExpr
+import org.jacodb.api.cfg.JcRawDivExpr
+import org.jacodb.api.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.cfg.JcRawEqExpr
+import org.jacodb.api.cfg.JcRawExitMonitorInst
+import org.jacodb.api.cfg.JcRawFieldRef
+import org.jacodb.api.cfg.JcRawGeExpr
+import org.jacodb.api.cfg.JcRawGotoInst
+import org.jacodb.api.cfg.JcRawGtExpr
+import org.jacodb.api.cfg.JcRawIfInst
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.cfg.JcRawLabelInst
+import org.jacodb.api.cfg.JcRawLabelRef
+import org.jacodb.api.cfg.JcRawLeExpr
+import org.jacodb.api.cfg.JcRawLengthExpr
+import org.jacodb.api.cfg.JcRawLineNumberInst
+import org.jacodb.api.cfg.JcRawLocalVar
+import org.jacodb.api.cfg.JcRawLtExpr
+import org.jacodb.api.cfg.JcRawMethodConstant
+import org.jacodb.api.cfg.JcRawMethodType
+import org.jacodb.api.cfg.JcRawMulExpr
+import org.jacodb.api.cfg.JcRawNegExpr
+import org.jacodb.api.cfg.JcRawNeqExpr
+import org.jacodb.api.cfg.JcRawNewArrayExpr
+import org.jacodb.api.cfg.JcRawNewExpr
+import org.jacodb.api.cfg.JcRawNullConstant
+import org.jacodb.api.cfg.JcRawOrExpr
+import org.jacodb.api.cfg.JcRawRemExpr
+import org.jacodb.api.cfg.JcRawReturnInst
+import org.jacodb.api.cfg.JcRawShlExpr
+import org.jacodb.api.cfg.JcRawShrExpr
+import org.jacodb.api.cfg.JcRawSimpleValue
+import org.jacodb.api.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.cfg.JcRawStaticCallExpr
+import org.jacodb.api.cfg.JcRawStringConstant
+import org.jacodb.api.cfg.JcRawSubExpr
+import org.jacodb.api.cfg.JcRawSwitchInst
+import org.jacodb.api.cfg.JcRawThis
+import org.jacodb.api.cfg.JcRawThrowInst
+import org.jacodb.api.cfg.JcRawUshrExpr
+import org.jacodb.api.cfg.JcRawValue
+import org.jacodb.api.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.cfg.JcRawXorExpr
+import org.jacodb.impl.cfg.util.CLASS_CLASS
+import org.jacodb.impl.cfg.util.ExprMapper
+import org.jacodb.impl.cfg.util.METHOD_HANDLES_CLASS
+import org.jacodb.impl.cfg.util.METHOD_HANDLES_LOOKUP_CLASS
+import org.jacodb.impl.cfg.util.METHOD_HANDLE_CLASS
+import org.jacodb.impl.cfg.util.METHOD_TYPE_CLASS
+import org.jacodb.impl.cfg.util.NULL
+import org.jacodb.impl.cfg.util.OBJECT_CLASS
+import org.jacodb.impl.cfg.util.STRING_CLASS
+import org.jacodb.impl.cfg.util.THROWABLE_CLASS
+import org.jacodb.impl.cfg.util.TOP
+import org.jacodb.impl.cfg.util.UNINIT_THIS
+import org.jacodb.impl.cfg.util.asArray
+import org.jacodb.impl.cfg.util.elementType
+import org.jacodb.impl.cfg.util.isArray
+import org.jacodb.impl.cfg.util.isDWord
+import org.jacodb.impl.cfg.util.isPrimitive
+import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.*
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.FrameNode
+import org.objectweb.asm.tree.IincInsnNode
+import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.LocalVariableNode
+import org.objectweb.asm.tree.LookupSwitchInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
+import org.objectweb.asm.tree.TableSwitchInsnNode
+import org.objectweb.asm.tree.TryCatchBlockNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 import java.util.*
 
 const val LOCAL_VAR_START_CHARACTER = '%'
@@ -195,7 +302,6 @@ internal fun <K, V> identityMap(): MutableMap<K, V> = IdentityHashMap()
 
 internal fun <K, V> Map<out K, V>.toIdentityMap(): Map<K, V> = toMap()
 
-
 class RawInstListBuilder(
     val method: JcMethod,
     private val methodNode: MethodNode,
@@ -336,7 +442,7 @@ class RawInstListBuilder(
      */
     private data class FrameState(
         val locals: SortedMap<Int, TypeName>,
-        val stack: SortedMap<Int, TypeName>
+        val stack: SortedMap<Int, TypeName>,
     ) {
         companion object {
             fun parseNew(insn: FrameNode): FrameState {
@@ -379,7 +485,7 @@ class RawInstListBuilder(
      */
     private data class Frame(
         val locals: PersistentMap<Int, JcRawValue>,
-        val stack: PersistentList<JcRawValue>
+        val stack: PersistentList<JcRawValue>,
     ) {
         fun put(variable: Int, value: JcRawValue): Frame = copy(locals = locals.put(variable, value), stack = stack)
         operator fun get(variable: Int) = locals[variable]
@@ -410,7 +516,7 @@ class RawInstListBuilder(
         variable: Int,
         expr: JcRawValue,
         insn: AbstractInsnNode,
-        override: Boolean = false
+        override: Boolean = false,
     ): JcRawAssignInst {
         val oldVar = currentFrame.locals[variable]?.let {
             val infoFromLocalVars =
@@ -443,7 +549,7 @@ class RawInstListBuilder(
                 JcRawAssignInst(method, assignment, expr)
             }
         } else {
-            //We have to get type if rhv expression is NULL
+            // We have to get type if rhv expression is NULL
             val typeOfNewAssigment =
                 if (expr.typeName.typeName == PredefinedPrimitives.Null) {
                     methodNode.localVariables
@@ -905,7 +1011,7 @@ class RawInstListBuilder(
      */
     private fun SortedMap<Int, TypeName>.copyLocals(
         predFrames: Map<AbstractInsnNode, Frame?>,
-        curLabel: LabelNode
+        curLabel: LabelNode,
     ): Map<Int, JcRawValue> =
         when {
             // should not happen usually, but sometimes there are some "handing" blocks in the bytecode that are
@@ -939,6 +1045,7 @@ class RawInstListBuilder(
                                 ).also { newLocal ->
                                     localTypeRefinement[value] = newLocal
                                 }
+
                             else -> value
                         }
                     }
@@ -969,8 +1076,8 @@ class RawInstListBuilder(
                     else -> {
                         val assignment = nextRegister(type)
                         for ((node, frame) in predFrames) {
-                            //TODO! Make anything with that (we should take into account subtyping)
-                            //assigment.isSubtypeOf(frame[variable]!!.typeName)
+                            // TODO! Make anything with that (we should take into account subtyping)
+                            // assigment.isSubtypeOf(frame[variable]!!.typeName)
                             if (frame != null) {
                                 if (node.isBranchingInst) {
                                     addInstruction(node, JcRawAssignInst(method, assignment, frame[variable]!!), 0)
@@ -1000,7 +1107,6 @@ class RawInstListBuilder(
         // not connected to any other part of the code
         predFrames.isEmpty() -> this.values.map { nextRegister(it) }
 
-
         // simple case --- current block has only one predecessor, we can simply copy all the local variables from
         // predecessor to new frame; however we sometimes can refine the information about types of local variables
         // from the frame descriptor. In that case we create a new local variable with correct type and remember to
@@ -1028,6 +1134,7 @@ class RawInstListBuilder(
                             ).also { newLocal ->
                                 localTypeRefinement[value] = newLocal
                             }
+
                         else -> value
                     }
                 }
@@ -1100,7 +1207,6 @@ class RawInstListBuilder(
                 )
             }
 
-
             val catchInst = JcRawCatchInst(
                 method,
                 throwable,
@@ -1132,7 +1238,7 @@ class RawInstListBuilder(
         val incrementedVariable = when {
             nextInst != null && nextInst.isBranchingInst -> local
             nextInst != null && nextInst is VarInsnNode && nextInst.`var` == variable -> local
-            //Workaround for if (x++) if x is function argument
+            // Workaround for if (x++) if x is function argument
             prevInst != null && local is JcRawArgument && prevInst is VarInsnNode && prevInst.`var` == variable -> nextRegister(
                 local.typeName
             )
@@ -1270,7 +1376,7 @@ class RawInstListBuilder(
             .filter { local -> frameSet.all { local in it.locals } }
             .associateWith { ind ->
                 val types = frameSet.map { frame -> frame[ind]!!.typeName }
-                //If we have several variables types for one register we have to search right type in debug info otherwise we cannot guarantee anything
+                // If we have several variables types for one register we have to search right type in debug info otherwise we cannot guarantee anything
                 if (types.toSet().size != 1) {
                     methodNode.localVariables
                         .firstOrNull { curLabel.isBetween(it.start, it.end) && it.index == ind }

@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("UnitResolversLibrary")
+
 package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.UnitResolver
@@ -24,13 +25,13 @@ import org.jacodb.api.ext.packageName
 
 val MethodUnitResolver = UnitResolver { method -> method }
 val PackageUnitResolver = UnitResolver { method -> method.enclosingClass.packageName }
-val SingletonUnitResolver = UnitResolver { _ -> Unit }
+val SingletonUnitResolver = UnitResolver { _ -> }
 
 fun getClassUnitResolver(includeNested: Boolean): UnitResolver<JcClassOrInterface> {
     return ClassUnitResolver(includeNested)
 }
 
-private class ClassUnitResolver(private val includeNested: Boolean): UnitResolver<JcClassOrInterface> {
+private class ClassUnitResolver(private val includeNested: Boolean) : UnitResolver<JcClassOrInterface> {
     override fun resolve(method: JcMethod): JcClassOrInterface {
         return if (includeNested) {
             generateSequence(method.enclosingClass) { it.outerClass }.last()

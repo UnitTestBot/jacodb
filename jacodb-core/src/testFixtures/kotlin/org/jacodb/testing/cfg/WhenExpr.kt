@@ -18,13 +18,13 @@ package org.jacodb.testing.cfg
 
 class WhenExpr {
 
-    val nx: Any? = 0
+    val nx: Any = 0
     val nn: Any? = null
     val x: Int = 0
     val y: Int = 1
 
     fun box(): String {
-        val ax: Any? = 0
+        val ax: Any = 0
         val an: Any? = null
         val bx: Int = 0
         val by: Int = 1

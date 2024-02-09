@@ -18,7 +18,9 @@ package org.jacodb.approximation
 
 import org.jacodb.api.JcAnnotation
 import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.*
+import org.jacodb.api.JcMethodExtFeature.JcFlowGraphResult
+import org.jacodb.api.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.JcMethodExtFeature.JcRawInstListResult
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.JcGraph
 import org.jacodb.api.cfg.JcInst
@@ -40,7 +42,7 @@ class JcEnrichedVirtualMethod(
     private val featuresChain: JcFeaturesChain,
     override val exceptions: List<TypeName>,
     private val asmNode: MethodNode,
-    override val annotations: List<JcAnnotation>
+    override val annotations: List<JcAnnotation>,
 ) : JcVirtualMethodImpl(name, access, returnType, parameters, description) {
 
     override val rawInstList: JcInstList<JcRawInst>
@@ -84,14 +86,14 @@ class JcEnrichedVirtualParameter(
     type: TypeName,
     override val name: String?,
     override val annotations: List<JcAnnotation>,
-    override val access: Int
+    override val access: Int,
 ) : JcVirtualParameter(index, type)
 
 class JcEnrichedVirtualField(
     name: String,
     access: Int,
     type: TypeName,
-    override val annotations: List<JcAnnotation>
+    override val annotations: List<JcAnnotation>,
 ) : JcVirtualFieldImpl(name, access, type) {
     override val signature: String?
         get() = null

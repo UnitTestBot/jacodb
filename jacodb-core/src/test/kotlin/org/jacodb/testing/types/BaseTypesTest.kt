@@ -20,7 +20,9 @@ import org.jacodb.api.JcClassType
 import org.jacodb.api.JcType
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 abstract class BaseTypesTest : BaseTest() {
 
@@ -46,7 +48,6 @@ abstract class BaseTypesTest : BaseTest() {
         )
         return this as JcClassType
     }
-
 
     protected inline fun <reified T> Any.assertIs(): T {
         return assertInstanceOf(T::class.java, this)

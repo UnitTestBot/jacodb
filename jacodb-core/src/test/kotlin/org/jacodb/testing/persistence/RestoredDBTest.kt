@@ -40,6 +40,4 @@ class RestoredDBTest : DatabaseEnvTest() {
 
     override val hierarchyExt: HierarchyExtension by lazy { runBlocking { cp.hierarchyExt() } }
 
-
 }
-

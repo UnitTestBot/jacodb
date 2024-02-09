@@ -20,7 +20,12 @@ import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.SortedSet;
+import java.util.Stack;
 
 public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> implements SortedSet<T> {
 
@@ -54,12 +59,10 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         int comparison = value.compareTo(start.value);
         if (comparison == 0) {
             return start;
-        }
-        else if (comparison < 0) {
+        } else if (comparison < 0) {
             if (start.left == null) return start;
             return find(start.left, value);
-        }
-        else {
+        } else {
             if (start.right == null) return start;
             return find(start.right, value);
         }
@@ -68,8 +71,7 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
     private Node<T> minimumValue(Node<T> root) {
         if (root.left == null) {
             return new Node<>(root.value);
-        }
-        else {
+        } else {
             return minimumValue(root.left);
         }
     }
@@ -92,12 +94,10 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         Node<T> newNode = new Node<>(t);
         if (closest == null) {
             root = newNode;
-        }
-        else if (comparison < 0) {
+        } else if (comparison < 0) {
             assert closest.left == null;
             closest.left = newNode;
-        }
-        else {
+        } else {
             assert closest.right == null;
             closest.right = newNode;
         }
@@ -121,29 +121,24 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         int difference = value.compareTo(root.value);
         if (difference < 0) {
             root.left = removeAt(root.left, value);
-        }
-        else if (difference > 0) {
+        } else if (difference > 0) {
             root.right = removeAt(root.right, value);
-        }
-        else {
+        } else {
             if (!deletionResult) {
                 size--;
                 deletionResult = true;
             }
             if (root.left == null && root.right == null) {
                 root = null;
-            }
-            else if (root.left != null && root.right != null) {
+            } else if (root.left != null && root.right != null) {
                 Node<T> rootLeft = root.left;
                 Node<T> rootRight = root.right;
                 root = minimumValue(root.right);
                 root.left = rootLeft;
                 root.right = removeAt(rootRight, root.value);
-            }
-            else if (root.left != null) {
+            } else if (root.left != null) {
                 root = root.left;
-            }
-            else {
+            } else {
                 root = root.right;
             }
         }

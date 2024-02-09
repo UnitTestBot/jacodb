@@ -73,7 +73,7 @@ public class Incrementation {
     public static String iincCustomWhile() {
         int x = 0;
 
-        while(x++ < 5) {
+        while (x++ < 5) {
         }
 
         return x != 6 ? "Fail: " + x : "OK";

@@ -37,7 +37,6 @@ val JcField.isTransient: Boolean
         return access and Opcodes.ACC_TRANSIENT != 0
     }
 
-
 val JcField.isEnum: Boolean
     get() {
         return access and Opcodes.ACC_ENUM != 0

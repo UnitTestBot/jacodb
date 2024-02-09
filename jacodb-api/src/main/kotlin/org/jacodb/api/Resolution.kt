@@ -16,7 +16,6 @@
 
 package org.jacodb.api
 
-
 interface Resolution
 interface MethodResolution : Resolution
 interface RecordComponentResolution : Resolution

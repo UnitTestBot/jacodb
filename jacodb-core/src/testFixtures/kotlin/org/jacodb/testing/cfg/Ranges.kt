@@ -67,7 +67,6 @@ class Ranges {
         return "OK"
     }
 
-
 }
 
 class Ranges2 {
@@ -109,7 +108,6 @@ class Ranges2 {
         if (res == "d") return "OK"
         return "fail $res"
     }
-
 
     fun box(): String {
         (0..9 step 2).map {

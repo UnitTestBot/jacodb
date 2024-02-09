@@ -26,7 +26,6 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
-
 const val CONSTRUCTOR = "<init>"
 
 /**
@@ -60,7 +59,6 @@ val JcMethod.hasBody: Boolean
         return !isNative && !isAbstract && asmNode().instructions.first != null
     }
 
-
 val JcMethod.usedMethods: List<JcMethod>
     get() {
         val cp = enclosingClass.classpath
@@ -84,7 +82,7 @@ val JcMethod.usedMethods: List<JcMethod>
 
 class FieldUsagesResult(
     val reads: List<JcField>,
-    val writes: List<JcField>
+    val writes: List<JcField>,
 )
 
 /**

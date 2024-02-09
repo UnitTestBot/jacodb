@@ -30,7 +30,7 @@ public class SimpleAlias1 {
 
     public static void main(String[] args) {
         Benchmark.alloc(1);
-        A a = (A) Benchmark.taint(); //new A();
+        A a = (A) Benchmark.taint(); // new A();
         A b = new A(); // Added to avoid cfg optimizations
         Benchmark.use(b);
         b = a;
@@ -70,7 +70,7 @@ class Benchmark {
 
     public static void use(Object o) {
         o.hashCode();
-        //A method to be used to avoid the compiler to prune the Object
+        // A method to be used to avoid the compiler to prune the Object
     }
 
     public static Object taint() {

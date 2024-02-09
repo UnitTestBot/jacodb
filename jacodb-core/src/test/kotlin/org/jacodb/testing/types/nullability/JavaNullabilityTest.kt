@@ -23,7 +23,6 @@ import org.jacodb.testing.types.NullAnnotationExamples
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-
 class JavaNullabilityTest : BaseTypesTest() {
 
     @Test

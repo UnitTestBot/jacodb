@@ -15,6 +15,7 @@
  */
 
 package org.jacodb.analysis.engine
+
 import org.jacodb.api.cfg.JcInst
 
 /**
@@ -23,7 +24,7 @@ import org.jacodb.api.cfg.JcInst
 class IfdsResult(
     val pathEdges: List<IfdsEdge>,
     val resultFacts: Map<JcInst, Set<DomainFact>>,
-    val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>
+    val pathEdgesPreds: Map<IfdsEdge, Set<PathEdgePredecessor>>,
 ) {
     private inner class TraceGraphBuilder(private val sink: IfdsVertex) {
         private val sources: MutableSet<IfdsVertex> = mutableSetOf()
@@ -63,6 +64,7 @@ class IfdsResult(
                             dfs(pred.predEdge, pred.predEdge.v, false)
                         }
                     }
+
                     is PredecessorKind.Sequent -> {
                         if (pred.predEdge.v.domainFact == v.domainFact) {
                             dfs(pred.predEdge, lastVertex, stopAtMethodStart)
@@ -71,6 +73,7 @@ class IfdsResult(
                             dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart)
                         }
                     }
+
                     is PredecessorKind.ThroughSummary -> {
                         val summaryEdge = pred.kind.summaryEdge
                         addEdge(summaryEdge.v, lastVertex) // Return to next vertex
@@ -78,6 +81,7 @@ class IfdsResult(
                         dfs(summaryEdge, summaryEdge.v, true) // Expand summary edge
                         dfs(pred.predEdge, pred.predEdge.v, stopAtMethodStart) // Continue normal analysis
                     }
+
                     is PredecessorKind.Unknown -> {
                         addEdge(pred.predEdge.v, lastVertex)
                         if (pred.predEdge.u != pred.predEdge.v) {
@@ -86,6 +90,7 @@ class IfdsResult(
                             dfs(IfdsEdge(pred.predEdge.u, pred.predEdge.u), pred.predEdge.v, stopAtMethodStart)
                         }
                     }
+
                     is PredecessorKind.NoPredecessor -> {
                         sources.add(v)
                         addEdge(pred.predEdge.v, lastVertex)

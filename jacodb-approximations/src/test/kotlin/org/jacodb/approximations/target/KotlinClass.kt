@@ -24,10 +24,10 @@ class KotlinClass {
 
     fun replaceBehaviour(value: Int): Int {
         if (value == fieldToReplace) {
-            return -1;
+            return -1
         }
 
-        return -2;
+        return -2
     }
 
     fun methodWithoutApproximation(): Int = 42

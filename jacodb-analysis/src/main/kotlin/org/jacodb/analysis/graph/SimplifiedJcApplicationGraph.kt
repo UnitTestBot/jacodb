@@ -101,8 +101,8 @@ internal class SimplifiedJcApplicationGraph(
                 val allOverrides = getOverrides(callee)
                     .filter {
                         it.enclosingClass isSubClassOf instanceClass ||
-                                // TODO: use only down-most override here
-                                instanceClass isSubClassOf it.enclosingClass
+                            // TODO: use only down-most override here
+                            instanceClass isSubClassOf it.enclosingClass
                     }
 
                 // TODO: maybe filter inaccessible methods here?
@@ -123,16 +123,15 @@ internal class SimplifiedJcApplicationGraph(
      * In IFDS we don't need all method callers, we need only method callers which we visited earlier.
      */
     // TODO: Think if this optimization is really needed
-    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
+    override fun callers(method: JcMethod): Sequence<JcInst> =
+        visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
 
     override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
 
-    companion object {
-    }
+    companion object
 }
 
-
-data class JcNoopInst(override val location: JcInstLocation): JcInst {
+data class JcNoopInst(override val location: JcInstLocation) : JcInst {
     override val operands: List<JcExpr>
         get() = emptyList()
 

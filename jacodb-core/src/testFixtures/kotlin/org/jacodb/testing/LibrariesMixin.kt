@@ -62,7 +62,6 @@ val allJars: List<File>
         return classpath.filter { it.endsWith(".jar") }.map { File(it) }
     }
 
-
 private val classpath: List<String>
     get() {
         val classpath = System.getProperty("java.class.path")
@@ -70,7 +69,6 @@ private val classpath: List<String>
             .filter { !it.contains("sootup") }
             .toList()
     }
-
 
 inline fun skipAssertionsOn(jre: JRE, assertions: () -> Unit) {
     val currentVersion = JRE.currentVersion()

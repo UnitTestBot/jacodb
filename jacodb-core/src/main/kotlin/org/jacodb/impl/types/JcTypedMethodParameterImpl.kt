@@ -16,8 +16,15 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
+import org.jacodb.api.JcParameter
+import org.jacodb.api.JcRefType
+import org.jacodb.api.JcSubstitutor
+import org.jacodb.api.JcType
+import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.JcTypedMethodParameter
+import org.jacodb.api.JvmType
 import org.jacodb.api.ext.isNullable
+import org.jacodb.api.throwClassNotFound
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 
@@ -25,7 +32,7 @@ class JcTypedMethodParameterImpl(
     override val enclosingMethod: JcTypedMethod,
     private val parameter: JcParameter,
     private val jvmType: JvmType?,
-    private val substitutor: JcSubstitutor
+    private val substitutor: JcSubstitutor,
 ) : JcTypedMethodParameter {
 
     val classpath = enclosingMethod.method.enclosingClass.classpath
@@ -37,7 +44,8 @@ class JcTypedMethodParameterImpl(
                 classpath.typeOf(substitutor.substitute(jvmType))
             } ?: classpath.findTypeOrNull(typeName)
                 ?.copyWithAnnotations(
-                    (enclosingMethod.method as? JcMethodImpl)?.parameterTypeAnnotationInfos(parameter.index)?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
+                    (enclosingMethod.method as? JcMethodImpl)?.parameterTypeAnnotationInfos(parameter.index)
+                        ?.map { JcAnnotationImpl(it, classpath) } ?: listOf()
                 ) ?: typeName.throwClassNotFound()
 
             return parameter.isNullable?.let {

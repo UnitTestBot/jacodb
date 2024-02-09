@@ -70,7 +70,11 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
 
     }
 
-    override fun findSubClasses(name: String, allHierarchy: Boolean, includeOwn: Boolean): Sequence<JcClassOrInterface> {
+    override fun findSubClasses(
+        name: String,
+        allHierarchy: Boolean,
+        includeOwn: Boolean,
+    ): Sequence<JcClassOrInterface> {
         val jcClass = cp.findClassOrNull(name) ?: return emptySequence()
         return when {
             jcClass.isFinal -> emptySequence()
@@ -79,11 +83,18 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         }.appendOwn(jcClass, includeOwn)
     }
 
-    private fun Sequence<JcClassOrInterface>.appendOwn(root: JcClassOrInterface, includeOwn: Boolean): Sequence<JcClassOrInterface> {
-        return if(includeOwn) sequenceOf(root) + this else this
+    private fun Sequence<JcClassOrInterface>.appendOwn(
+        root: JcClassOrInterface,
+        includeOwn: Boolean,
+    ): Sequence<JcClassOrInterface> {
+        return if (includeOwn) sequenceOf(root) + this else this
     }
 
-    override fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean, includeOwn: Boolean): Sequence<JcClassOrInterface> {
+    override fun findSubClasses(
+        jcClass: JcClassOrInterface,
+        allHierarchy: Boolean,
+        includeOwn: Boolean,
+    ): Sequence<JcClassOrInterface> {
         if (jcClass.isFinal) {
             return emptySequence<JcClassOrInterface>().appendOwn(jcClass, includeOwn)
         }
@@ -107,7 +118,7 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
     private fun explicitSubClasses(
         jcClass: JcClassOrInterface,
         allHierarchy: Boolean,
-        full: Boolean
+        full: Boolean,
     ): Sequence<JcClassOrInterface> {
         if (cp.db.isInstalled(InMemoryHierarchy)) {
             return cp.findSubclassesInMemory(jcClass.name, allHierarchy, full)
@@ -117,10 +128,9 @@ class HierarchyExtensionImpl(private val cp: JcClasspath) : HierarchyExtension {
         return cp.subClasses(name, allHierarchy).map { cp.toJcClass(it) }
     }
 
-
     private fun JcClasspath.subClasses(
         name: String,
-        allHierarchy: Boolean
+        allHierarchy: Boolean,
     ): Sequence<PersistenceClassSource> {
         val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
         if (name == JAVA_OBJECT) {
@@ -157,7 +167,10 @@ suspend fun JcClasspath.hierarchyExt(): HierarchyExtensionImpl {
 
 fun JcClasspath.asyncHierarchy(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
 
-private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(cp: JcClasspath, batchSize: Int): List<Pair<Long, PersistenceClassSource>>{
+private fun SelectConditionStep<Record3<Long?, String?, Long?>>.batchingProcess(
+    cp: JcClasspath,
+    batchSize: Int,
+): List<Pair<Long, PersistenceClassSource>> {
     return orderBy(CLASSES.ID)
         .limit(batchSize)
         .fetch()
@@ -189,25 +202,30 @@ internal fun JcClasspath.allClassesExceptObject(direct: Boolean): Sequence<Persi
                     .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
                     .where(
                         whereCondition
-                            .and(DSL.notExists(
-                                jooq.select(CLASSHIERARCHIES.ID).from(CLASSHIERARCHIES)
-                                .where(CLASSHIERARCHIES.CLASS_ID.eq(CLASSES.ID).and(CLASSHIERARCHIES.IS_CLASS_REF.eq(true)))
-                            ))
+                            .and(
+                                DSL.notExists(
+                                    jooq.select(CLASSHIERARCHIES.ID).from(CLASSHIERARCHIES)
+                                        .where(
+                                            CLASSHIERARCHIES.CLASS_ID.eq(CLASSES.ID)
+                                                .and(CLASSHIERARCHIES.IS_CLASS_REF.eq(true))
+                                        )
+                                )
+                            )
                             .and(SYMBOLS.NAME.notEqual(JAVA_OBJECT))
                     )
-                    .batchingProcess(this, batchSize)
-                }
-            }
-        }
-        return BatchedSequence(defaultBatchSize) { offset, batchSize ->
-            db.persistence.read { jooq ->
-                val whereCondition = locationIds.where(offset)
-
-                jooq.select(CLASSES.ID, SYMBOLS.NAME, CLASSES.LOCATION_ID)
-                    .from(CLASSES)
-                    .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                    .where(whereCondition.and(SYMBOLS.NAME.notEqual(JAVA_OBJECT)))
                     .batchingProcess(this, batchSize)
             }
         }
     }
+    return BatchedSequence(defaultBatchSize) { offset, batchSize ->
+        db.persistence.read { jooq ->
+            val whereCondition = locationIds.where(offset)
+
+            jooq.select(CLASSES.ID, SYMBOLS.NAME, CLASSES.LOCATION_ID)
+                .from(CLASSES)
+                .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
+                .where(whereCondition.and(SYMBOLS.NAME.notEqual(JAVA_OBJECT)))
+                .batchingProcess(this, batchSize)
+        }
+    }
+}

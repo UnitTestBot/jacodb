@@ -25,7 +25,7 @@ import java.util.jar.JarFile
 open class JarLocation(
     file: File,
     private val isRuntime: Boolean,
-    private val runtimeVersion: JavaVersion
+    private val runtimeVersion: JavaVersion,
 ) : AbstractByteCodeLocation(file) {
 
     companion object : KLogging()
