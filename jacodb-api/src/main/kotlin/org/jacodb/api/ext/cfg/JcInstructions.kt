@@ -18,14 +18,14 @@
 
 package org.jacodb.api.ext.cfg
 
-import org.jacodb.api.cfg.DefaultJcExprVisitor
-import org.jacodb.api.cfg.DefaultJcInstVisitor
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcCallExpr
 import org.jacodb.api.cfg.JcExpr
+import org.jacodb.api.cfg.JcExprVisitor
 import org.jacodb.api.cfg.JcFieldRef
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.api.cfg.JcLocal
 import org.jacodb.api.cfg.JcRawExpr
 import org.jacodb.api.cfg.JcRawExprVisitor
@@ -49,7 +49,6 @@ fun <T> JcInstList<JcRawInst>.collect(visitor: JcRawInstVisitor<T>): Collection<
     return instructions.map { it.accept(visitor) }
 }
 
-
 fun <R, E, T : JcRawInstVisitor<E>> JcRawInst.applyAndGet(visitor: T, getter: (T) -> R): R {
     this.accept(visitor)
     return getter(visitor)
@@ -60,72 +59,65 @@ fun <R, E, T : JcRawExprVisitor<E>> JcRawExpr.applyAndGet(visitor: T, getter: (T
     return getter(visitor)
 }
 
+object FieldRefVisitor :
+    JcExprVisitor.Default<JcFieldRef?>,
+    JcInstVisitor.Default<JcFieldRef?> {
 
-object FieldRefVisitor : DefaultJcExprVisitor<JcFieldRef?>, DefaultJcInstVisitor<JcFieldRef?> {
+    override fun defaultVisitJcExpr(expr: JcExpr): JcFieldRef? {
+        return expr.operands.filterIsInstance<JcFieldRef>().firstOrNull()
+    }
 
-    override val defaultExprHandler: (JcExpr) -> JcFieldRef?
-        get() = { null }
-
-    override val defaultInstHandler: (JcInst) -> JcFieldRef?
-        get() = {
-            it.operands.map { it.accept(this) }.firstOrNull { it != null }
-        }
+    override fun defaultVisitJcInst(inst: JcInst): JcFieldRef? {
+        return inst.operands.map { it.accept(this) }.firstOrNull { it != null }
+    }
 
     override fun visitJcFieldRef(value: JcFieldRef): JcFieldRef {
         return value
     }
 }
 
-object ArrayAccessVisitor : DefaultJcExprVisitor<JcArrayAccess?>, DefaultJcInstVisitor<JcArrayAccess?> {
+object ArrayAccessVisitor :
+    JcExprVisitor.Default<JcArrayAccess?>,
+    JcInstVisitor.Default<JcArrayAccess?> {
 
-    override val defaultExprHandler: (JcExpr) -> JcArrayAccess?
-        get() = {
-            it.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
-        }
+    override fun defaultVisitJcExpr(expr: JcExpr): JcArrayAccess? {
+        return expr.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
+    }
 
-    override val defaultInstHandler: (JcInst) -> JcArrayAccess?
-        get() = {
-            it.operands.map { it.accept(this) }.firstOrNull { it != null }
-        }
+    override fun defaultVisitJcInst(inst: JcInst): JcArrayAccess? {
+        return inst.operands.map { it.accept(this) }.firstOrNull { it != null }
+    }
 
+    override fun visitJcArrayAccess(value: JcArrayAccess): JcArrayAccess {
+        return value
+    }
 }
 
-object CallExprVisitor : DefaultJcInstVisitor<JcCallExpr?> {
-
-    override val defaultInstHandler: (JcInst) -> JcCallExpr?
-        get() = {
-            it.operands.filterIsInstance<JcCallExpr>().firstOrNull()
-        }
-
+object CallExprVisitor : JcInstVisitor.Default<JcCallExpr?> {
+    override fun defaultVisitJcInst(inst: JcInst): JcCallExpr? {
+        return inst.operands.filterIsInstance<JcCallExpr>().firstOrNull()
+    }
 }
 
 val JcInst.fieldRef: JcFieldRef?
-    get() {
-        return accept(FieldRefVisitor)
-    }
+    get() = accept(FieldRefVisitor)
 
-val JcInst.arrayRef: JcArrayAccess?
-    get() {
-        return accept(ArrayAccessVisitor)
-    }
+val JcInst.arrayAccess: JcArrayAccess?
+    get() = accept(ArrayAccessVisitor)
 
 val JcInst.callExpr: JcCallExpr?
-    get() {
-        return accept(CallExprVisitor)
-    }
+    get() = accept(CallExprVisitor)
 
 val JcInstList<JcInst>.locals: Set<JcLocal>
     get() {
-        val resolver = LocalResolver().also {res ->
-            forEach { it.accept(res) }
-        }
+        val resolver = LocalResolver()
+        forEach { it.accept(resolver) }
         return resolver.result
     }
 
 val JcInstList<JcInst>.values: Set<JcValue>
     get() {
-        val resolver = ValueResolver().also {res ->
-            forEach { it.accept(res) }
-        }
+        val resolver = ValueResolver()
+        forEach { it.accept(resolver) }
         return resolver.result
     }

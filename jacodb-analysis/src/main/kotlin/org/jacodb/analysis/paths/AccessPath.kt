@@ -17,35 +17,25 @@
 package org.jacodb.analysis.paths
 
 import org.jacodb.api.JcField
-import org.jacodb.api.cfg.JcLocal
+import org.jacodb.api.JcTypedField
+import org.jacodb.api.cfg.JcSimpleValue
 
 /**
  * This class is used to represent an access path that is needed for problems
  * where dataflow facts could be correlated with variables/values (such as NPE, uninitialized variable, etc.)
  */
-data class AccessPath private constructor(val value: JcLocal?, val accesses: List<Accessor>) {
-    companion object {
-
-        fun fromLocal(value: JcLocal) = AccessPath(value, listOf())
-
-        fun fromStaticField(field: JcField): AccessPath {
-            if (!field.isStatic) {
-                throw IllegalArgumentException("Expected static field")
-            }
-
-            return AccessPath(null, listOf(FieldAccessor(field)))
-        }
-
-        fun fromOther(other: AccessPath, accesses: List<Accessor>): AccessPath {
-            if (accesses.any { it is FieldAccessor && it.field.isStatic }) {
-                throw IllegalArgumentException("Unexpected static field")
-            }
-
-            return AccessPath(other.value, other.accesses.plus(accesses))
+data class AccessPath private constructor(
+    val value: JcSimpleValue?, // null for static field
+    val accesses: List<Accessor>,
+) {
+    init {
+        if (value == null) {
+            require(accesses.isNotEmpty())
+            val a = accesses[0]
+            require(a is FieldAccessor)
+            require(a.field.isStatic)
         }
     }
-
-    fun limit(n: Int) = AccessPath(value, accesses.take(n))
 
     val isOnHeap: Boolean
         get() = accesses.isNotEmpty()
@@ -53,11 +43,41 @@ data class AccessPath private constructor(val value: JcLocal?, val accesses: Lis
     val isStatic: Boolean
         get() = value == null
 
-    override fun toString(): String {
-        var str = value.toString()
+    fun limit(n: Int): AccessPath = AccessPath(value, accesses.take(n))
+
+    operator fun div(accesses: List<Accessor>): AccessPath {
         for (accessor in accesses) {
-            str += ".$accessor"
+            if (accessor is FieldAccessor && accessor.field.isStatic) {
+                throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+            }
         }
-        return str
+
+        return AccessPath(value, this.accesses + accesses)
+    }
+
+    operator fun div(accessor: Accessor): AccessPath {
+        if (accessor is FieldAccessor && accessor.field.isStatic) {
+            throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+        }
+
+        return AccessPath(value, this.accesses + accessor)
+    }
+
+    override fun toString(): String {
+        return value.toString() + accesses.joinToString("") { it.toSuffix() }
+    }
+
+    companion object {
+        fun from(value: JcSimpleValue): AccessPath = AccessPath(value, emptyList())
+
+        fun fromStaticField(field: JcField): AccessPath {
+            require(field.isStatic) { "Expected static field" }
+            return AccessPath(null, listOf(FieldAccessor(field)))
+        }
+
+        fun fromStaticField(field: JcTypedField): AccessPath {
+            require(field.isStatic) { "Expected static field" }
+            return AccessPath(null, listOf(FieldAccessor(field.field)))
+        }
     }
 }

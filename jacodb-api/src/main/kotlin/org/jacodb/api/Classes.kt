@@ -68,19 +68,15 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
         get() {
             return access and Opcodes.ACC_INTERFACE != 0
         }
-
-
 }
 
 interface JcAnnotation : JcSymbol {
-
     val visible: Boolean
     val jcClass: JcClassOrInterface?
 
     val values: Map<String, Any?>
 
     fun matches(className: String): Boolean
-
 }
 
 interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
@@ -135,7 +131,6 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible {
 }
 
 interface JcField : JcAnnotatedSymbol, JcAccessible {
-
     val enclosingClass: JcClassOrInterface
     val type: TypeName
     val signature: String?

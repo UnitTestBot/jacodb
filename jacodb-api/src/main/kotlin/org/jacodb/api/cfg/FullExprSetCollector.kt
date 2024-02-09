@@ -16,15 +16,16 @@
 
 package org.jacodb.api.cfg
 
-abstract class AbstractFullRawExprSetCollector : JcRawExprVisitor<Unit>, DefaultJcRawInstVisitor<Unit> {
+abstract class AbstractFullRawExprSetCollector :
+    JcRawExprVisitor<Any>,
+    JcRawInstVisitor.Default<Any> {
 
-    override val defaultInstHandler: (JcRawInst) -> Unit
-        get() = {
-            it.operands.forEach {
-                ifMatches(it)
-                it.accept(this)
-            }
+    override fun defaultVisitJcRawInst(inst: JcRawInst) {
+        inst.operands.forEach {
+            ifMatches(it)
+            it.accept(this)
         }
+    }
 
     private fun visitBinaryExpr(expr: JcRawBinaryExpr) {
         ifMatches(expr)
@@ -131,15 +132,16 @@ abstract class AbstractFullRawExprSetCollector : JcRawExprVisitor<Unit>, Default
     abstract fun ifMatches(expr: JcRawExpr)
 }
 
-abstract class AbstractFullExprSetCollector : JcExprVisitor<Any>, DefaultJcInstVisitor<Any> {
+abstract class AbstractFullExprSetCollector :
+    JcExprVisitor.Default<Any>,
+    JcInstVisitor.Default<Any> {
 
-    override val defaultInstHandler: (JcInst) -> Any
-        get() = {
-            it.operands.forEach {
-                ifMatches(it)
-                it.accept(this)
-            }
+    override fun defaultVisitJcInst(inst: JcInst) {
+        inst.operands.forEach {
+            ifMatches(it)
+            it.accept(this)
         }
+    }
 
     private fun visitBinaryExpr(expr: JcBinaryExpr) {
         ifMatches(expr)
@@ -155,115 +157,104 @@ abstract class AbstractFullExprSetCollector : JcExprVisitor<Any>, DefaultJcInstV
         expr.args.forEach { it.accept(this) }
     }
 
-    override fun visitJcAddExpr(expr: JcAddExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcAndExpr(expr: JcAndExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcCmpExpr(expr: JcCmpExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcCmpgExpr(expr: JcCmpgExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcCmplExpr(expr: JcCmplExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcDivExpr(expr: JcDivExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcMulExpr(expr: JcMulExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcEqExpr(expr: JcEqExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcNeqExpr(expr: JcNeqExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcGeExpr(expr: JcGeExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcGtExpr(expr: JcGtExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcLeExpr(expr: JcLeExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcLtExpr(expr: JcLtExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcOrExpr(expr: JcOrExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcRemExpr(expr: JcRemExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcShlExpr(expr: JcShlExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcShrExpr(expr: JcShrExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcSubExpr(expr: JcSubExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcUshrExpr(expr: JcUshrExpr): Any = visitBinaryExpr(expr)
-    override fun visitJcXorExpr(expr: JcXorExpr): Any = visitBinaryExpr(expr)
+    override fun visitJcAddExpr(expr: JcAddExpr) = visitBinaryExpr(expr)
+    override fun visitJcAndExpr(expr: JcAndExpr) = visitBinaryExpr(expr)
+    override fun visitJcCmpExpr(expr: JcCmpExpr) = visitBinaryExpr(expr)
+    override fun visitJcCmpgExpr(expr: JcCmpgExpr) = visitBinaryExpr(expr)
+    override fun visitJcCmplExpr(expr: JcCmplExpr) = visitBinaryExpr(expr)
+    override fun visitJcDivExpr(expr: JcDivExpr) = visitBinaryExpr(expr)
+    override fun visitJcMulExpr(expr: JcMulExpr) = visitBinaryExpr(expr)
+    override fun visitJcEqExpr(expr: JcEqExpr) = visitBinaryExpr(expr)
+    override fun visitJcNeqExpr(expr: JcNeqExpr) = visitBinaryExpr(expr)
+    override fun visitJcGeExpr(expr: JcGeExpr) = visitBinaryExpr(expr)
+    override fun visitJcGtExpr(expr: JcGtExpr) = visitBinaryExpr(expr)
+    override fun visitJcLeExpr(expr: JcLeExpr) = visitBinaryExpr(expr)
+    override fun visitJcLtExpr(expr: JcLtExpr) = visitBinaryExpr(expr)
+    override fun visitJcOrExpr(expr: JcOrExpr) = visitBinaryExpr(expr)
+    override fun visitJcRemExpr(expr: JcRemExpr) = visitBinaryExpr(expr)
+    override fun visitJcShlExpr(expr: JcShlExpr) = visitBinaryExpr(expr)
+    override fun visitJcShrExpr(expr: JcShrExpr) = visitBinaryExpr(expr)
+    override fun visitJcSubExpr(expr: JcSubExpr) = visitBinaryExpr(expr)
+    override fun visitJcUshrExpr(expr: JcUshrExpr) = visitBinaryExpr(expr)
+    override fun visitJcXorExpr(expr: JcXorExpr) = visitBinaryExpr(expr)
 
-    override fun visitJcLambdaExpr(expr: JcLambdaExpr): Any {
+    override fun visitJcLambdaExpr(expr: JcLambdaExpr) {
         ifMatches(expr)
         expr.args.forEach { it.accept(this) }
-        return Unit
     }
 
-    override fun visitJcLengthExpr(expr: JcLengthExpr): Any {
+    override fun visitJcLengthExpr(expr: JcLengthExpr) {
         ifMatches(expr)
         expr.array.accept(this)
-        return Unit
     }
 
-    override fun visitJcNegExpr(expr: JcNegExpr): Any {
+    override fun visitJcNegExpr(expr: JcNegExpr) {
         ifMatches(expr)
         expr.operand.accept(this)
-        return Unit
     }
 
-    override fun visitJcCastExpr(expr: JcCastExpr): Any {
+    override fun visitJcCastExpr(expr: JcCastExpr) {
         ifMatches(expr)
         expr.operand.accept(this)
-        return Unit
     }
 
-    override fun visitJcNewExpr(expr: JcNewExpr): Any {
+    override fun visitJcNewExpr(expr: JcNewExpr) {
         ifMatches(expr)
-        return Unit
     }
 
-    override fun visitJcNewArrayExpr(expr: JcNewArrayExpr): Any {
+    override fun visitJcNewArrayExpr(expr: JcNewArrayExpr) {
         ifMatches(expr)
         expr.dimensions.forEach { it.accept(this) }
-        return Unit
     }
 
-    override fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr): Any {
+    override fun visitJcInstanceOfExpr(expr: JcInstanceOfExpr) {
         ifMatches(expr)
         expr.operand.accept(this)
-        return Unit
     }
 
-    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr): Any {
+    override fun visitJcDynamicCallExpr(expr: JcDynamicCallExpr) {
         ifMatches(expr)
         expr.args.forEach { it.accept(this) }
-        return Unit
     }
 
-    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Any = visitCallExpr(expr)
-    override fun visitJcStaticCallExpr(expr: JcStaticCallExpr): Any = visitCallExpr(expr)
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Any = visitCallExpr(expr)
-    override fun visitJcThis(value: JcThis): Any = ifMatches(value)
-    override fun visitJcArgument(value: JcArgument): Any = ifMatches(value)
-    override fun visitJcLocalVar(value: JcLocalVar): Any = ifMatches(value)
+    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr) = visitCallExpr(expr)
+    override fun visitJcStaticCallExpr(expr: JcStaticCallExpr) = visitCallExpr(expr)
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr) = visitCallExpr(expr)
+    override fun visitJcThis(value: JcThis) = ifMatches(value)
+    override fun visitJcArgument(value: JcArgument) = ifMatches(value)
+    override fun visitJcLocalVar(value: JcLocalVar) = ifMatches(value)
 
-    override fun visitJcFieldRef(value: JcFieldRef): Any {
+    override fun visitJcFieldRef(value: JcFieldRef) {
         ifMatches(value)
         value.instance?.accept(this)
-        return Unit
     }
 
-    override fun visitJcArrayAccess(value: JcArrayAccess): Any {
+    override fun visitJcArrayAccess(value: JcArrayAccess) {
         ifMatches(value)
         value.array.accept(this)
         value.index.accept(this)
-        return Unit
     }
 
-    override fun visitJcPhiExpr(expr: JcPhiExpr): Any {
+    override fun visitJcPhiExpr(expr: JcPhiExpr) {
         ifMatches(expr)
         expr.args.forEach { it.accept(this) }
         expr.values.forEach { it.accept(this) }
-        return Unit
     }
 
-    override fun visitExternalJcExpr(expr: JcExpr): Any = ifMatches(expr)
-    override fun visitJcBool(value: JcBool): Any = ifMatches(value)
-    override fun visitJcByte(value: JcByte): Any = ifMatches(value)
-    override fun visitJcChar(value: JcChar): Any = ifMatches(value)
-    override fun visitJcShort(value: JcShort): Any = ifMatches(value)
-    override fun visitJcInt(value: JcInt): Any = ifMatches(value)
-    override fun visitJcLong(value: JcLong): Any = ifMatches(value)
-    override fun visitJcFloat(value: JcFloat): Any = ifMatches(value)
-    override fun visitJcDouble(value: JcDouble): Any = ifMatches(value)
-    override fun visitJcNullConstant(value: JcNullConstant): Any = ifMatches(value)
-    override fun visitJcStringConstant(value: JcStringConstant): Any = ifMatches(value)
-    override fun visitJcClassConstant(value: JcClassConstant): Any = ifMatches(value)
-    override fun visitJcMethodConstant(value: JcMethodConstant): Any = ifMatches(value)
-    override fun visitJcMethodType(value: JcMethodType): Any = ifMatches(value)
+    override fun defaultVisitJcExpr(expr: JcExpr) = ifMatches(expr)
+    override fun visitJcBool(value: JcBool) = ifMatches(value)
+    override fun visitJcByte(value: JcByte) = ifMatches(value)
+    override fun visitJcChar(value: JcChar) = ifMatches(value)
+    override fun visitJcShort(value: JcShort) = ifMatches(value)
+    override fun visitJcInt(value: JcInt) = ifMatches(value)
+    override fun visitJcLong(value: JcLong) = ifMatches(value)
+    override fun visitJcFloat(value: JcFloat) = ifMatches(value)
+    override fun visitJcDouble(value: JcDouble) = ifMatches(value)
+    override fun visitJcNullConstant(value: JcNullConstant) = ifMatches(value)
+    override fun visitJcStringConstant(value: JcStringConstant) = ifMatches(value)
+    override fun visitJcClassConstant(value: JcClassConstant) = ifMatches(value)
+    override fun visitJcMethodConstant(value: JcMethodConstant) = ifMatches(value)
+    override fun visitJcMethodType(value: JcMethodType) = ifMatches(value)
 
     abstract fun ifMatches(expr: JcExpr)
 }

@@ -15,10 +15,10 @@
  */
 
 @file:JvmName("AnalysisMain")
+
 package org.jacodb.analysis
 
 import kotlinx.serialization.Serializable
-import mu.KLogging
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.MainIfdsUnitManager
 import org.jacodb.analysis.engine.SummaryStorage
@@ -28,13 +28,10 @@ import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 
-internal val logger = object : KLogging() {}.logger
-
 typealias AnalysesOptions = Map<String, String>
 
 @Serializable
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
-
 
 /**
  * This is the entry point for every analysis.
@@ -65,10 +62,10 @@ data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
  */
 fun runAnalysis(
     graph: JcApplicationGraph,
-    unitResolver: UnitResolver<*>,
+    unitResolver: UnitResolver,
     ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
     methods: List<JcMethod>,
-    timeoutMillis: Long = Long.MAX_VALUE
+    timeoutMillis: Long = Long.MAX_VALUE,
 ): List<VulnerabilityInstance> {
     return MainIfdsUnitManager(graph, unitResolver, ifdsUnitRunnerFactory, methods, timeoutMillis).analyze()
 }

@@ -35,7 +35,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
  * It is not recommended to implement this interface directly, instead,
  * [AbstractIfdsUnitRunner] should be extended.
  */
-interface IfdsUnitRunner<UnitType> {
+interface IfdsUnitRunner {
     val unit: UnitType
     val job: Job?
 
@@ -53,15 +53,16 @@ interface IfdsUnitRunner<UnitType> {
  * Inheritors should only implement [submitNewEdge] and a suspendable [run] method.
  * The latter is the main method of runner, that should do all its work.
  */
-abstract class AbstractIfdsUnitRunner<UnitType>(final override val unit: UnitType) : IfdsUnitRunner<UnitType> {
+abstract class AbstractIfdsUnitRunner(
+    final override val unit: UnitType,
+) : IfdsUnitRunner {
     /**
      * The main method of the runner, which will be called by [launchIn]
      */
     protected abstract suspend fun run()
 
     private var _job: Job? = null
-
-    final override val job: Job? by ::_job
+    final override val job: Job? get() = _job
 
     final override fun launchIn(scope: CoroutineScope): Job = scope.launch(start = CoroutineStart.LAZY) {
         run()
@@ -86,11 +87,11 @@ interface IfdsUnitRunnerFactory {
      *
      * @param unitResolver will be used to get units of methods observed during analysis.
      */
-    fun <UnitType> newRunner(
+    fun newRunner(
         graph: JcApplicationGraph,
-        manager: IfdsUnitManager<UnitType>,
-        unitResolver: UnitResolver<UnitType>,
+        manager: IfdsUnitManager,
+        unitResolver: UnitResolver,
         unit: UnitType,
-        startMethods: List<JcMethod>
-    ) : IfdsUnitRunner<UnitType>
+        startMethods: List<JcMethod>,
+    ): IfdsUnitRunner
 }

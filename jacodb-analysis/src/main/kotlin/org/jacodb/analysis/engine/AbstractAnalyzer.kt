@@ -34,7 +34,9 @@ import java.util.concurrent.ConcurrentHashMap
  * Usually this should be set to true for forward analyzers (which are expected to tell anything they found),
  * but in backward analyzers this should be set to false
  */
-abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyzer {
+abstract class AbstractAnalyzer(
+    protected val graph: JcApplicationGraph,
+) : Analyzer {
     protected val verticesWithTraceGraphNeeded: MutableSet<IfdsVertex> = ConcurrentHashMap.newKeySet()
 
     abstract val isMainAnalyzer: Boolean
@@ -45,7 +47,7 @@ abstract class AbstractAnalyzer(private val graph: JcApplicationGraph) : Analyze
      * Otherwise, returns empty list.
      */
     override fun handleNewEdge(edge: IfdsEdge): List<AnalysisDependentEvent> {
-        return if (isMainAnalyzer && edge.v.statement in graph.exitPoints(edge.method)) {
+        return if (isMainAnalyzer && edge.to.statement in graph.exitPoints(edge.method)) {
             listOf(NewSummaryFact(SummaryEdgeFact(edge)))
         } else {
             emptyList()

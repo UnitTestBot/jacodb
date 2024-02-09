@@ -48,8 +48,7 @@ import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
-
-class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
+class UnusedVariableAnalyzer(graph: JcApplicationGraph) : AbstractAnalyzer(graph) {
     override val flowFunctions: FlowFunctionsSpace = UnusedVariableForwardFunctions(graph.classpath)
 
     override val isMainAnalyzer: Boolean
@@ -78,7 +77,7 @@ class UnusedVariableAnalyzer(val graph: JcApplicationGraph) : AbstractAnalyzer(g
             return isUsedAt(callExpr)
         }
         if (inst is JcAssignInst) {
-            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
+            if (inst.lhv is JcArrayAccess && isUsedAt(inst.lhv as JcArrayAccess)) {
                 return true
             }
             return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
@@ -119,7 +118,7 @@ val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
 }
 
 private class UnusedVariableForwardFunctions(
-    val classpath: JcClasspath
+    val classpath: JcClasspath,
 ) : FlowFunctionsSpace {
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
@@ -153,21 +152,22 @@ private class UnusedVariableForwardFunctions(
         }
 
         if (fromPath == fact.variable) {
-            return@FlowFunctionInstance default.plus(UnusedVariableNode(toPath, fact.initStatement))
+            return@FlowFunctionInstance default + UnusedVariableNode(toPath, fact.initStatement)
         }
+
         default
     }
 
     override fun obtainCallToStartFlowFunction(callStatement: JcInst, callee: JcMethod) = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call expr is expected to be not-null")
-        val formalParams = classpath.getFormalParamsOf(callee)
+        val formalParams = classpath.getArgumentsOf(callee)
 
         if (fact == ZEROFact) {
             // We don't show unused parameters for virtual calls
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
                 return@FlowFunctionInstance listOf(ZEROFact)
             }
-            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) }.plus(ZEROFact)
+            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) } + ZEROFact
         }
 
         if (fact !is UnusedVariableNode) {
@@ -177,13 +177,13 @@ private class UnusedVariableForwardFunctions(
         emptyList()
     }
 
-    override fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst) =
+    override fun obtainCallToReturnFlowFunction(callStatement: JcInst, returnSite: JcInst, graph: JcApplicationGraph) =
         obtainSequentFlowFunction(callStatement, returnSite)
 
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst
+        exitStatement: JcInst,
     ) = FlowFunctionInstance { fact ->
         if (fact == ZEROFact) {
             listOf(ZEROFact)

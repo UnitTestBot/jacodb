@@ -24,7 +24,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 
 class SqlInjectionAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int
+    maxPathLength: Int,
 ) : TaintAnalyzer(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sanitizes = isSanitizeMethodToSanitizes(sqlSanitizeMatchers.asMethodMatchers)
@@ -42,7 +42,7 @@ class SqlInjectionAnalyzer(
 
 class SqlInjectionBackwardAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int
+    maxPathLength: Int,
 ) : TaintBackwardAnalyzer(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)
@@ -56,18 +56,18 @@ fun SqlInjectionBackwardAnalyzerFactory(maxPathLength: Int) = AnalyzerFactory { 
     SqlInjectionBackwardAnalyzer(graph, maxPathLength)
 }
 
-private val sqlSourceMatchers = listOf(
-    "java\\.io.+",
-    "java\\.lang\\.System\\#getenv",
-    "java\\.sql\\.ResultSet#get.+"
+private val sqlSourceMatchers: List<String> = listOf(
+    "java\\.io.+", // TODO
+    // "java\\.lang\\.System\\#getenv", // in config
+    // "java\\.sql\\.ResultSet#get.+" // in config
 )
 
-private val sqlSanitizeMatchers = listOf(
-    "java\\.sql\\.Statement#set.*",
-    "java\\.sql\\.PreparedStatement#set.*"
+private val sqlSanitizeMatchers: List<String> = listOf(
+    // "java\\.sql\\.Statement#set.*", // Remove
+    // "java\\.sql\\.PreparedStatement#set.*" // TODO
 )
 
-private val sqlSinkMatchers = listOf(
-    "java\\.sql\\.Statement#execute.*",
-    "java\\.sql\\.PreparedStatement#execute.*",
+private val sqlSinkMatchers: List<String> = listOf(
+    // "java\\.sql\\.Statement#execute.*", // in config
+    // "java\\.sql\\.PreparedStatement#execute.*", // in config
 )

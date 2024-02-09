@@ -17,12 +17,12 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
+import org.jacodb.analysis.engine.MethodUnitResolver
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
 import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.analysis.sarif.SarifReport
@@ -35,7 +35,10 @@ import org.junit.jupiter.api.Test
 class JodaDateTimeAnalysisTest : BaseTest() {
     companion object : WithGlobalDB()
 
-    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
+    private fun testOne(
+        unitResolver: UnitResolver,
+        ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
+    ) {
         val clazz = cp.findClass<DateTime>()
         val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
 
@@ -46,7 +49,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test Unused variable analysis`() {
-        testOne(getClassUnitResolver(false), UnusedVariableRunnerFactory)
+        testOne(ClassUnitResolver(false), UnusedVariableRunnerFactory)
     }
 
     @Test

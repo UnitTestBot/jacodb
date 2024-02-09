@@ -21,53 +21,71 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.api.JcMethod
+import org.jacodb.taint.configuration.TaintMethodSink
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A common interface for anything that should be remembered and used
  * after the analysis of some unit is completed.
  */
-sealed interface SummaryFact {
+interface SummaryFact {
     val method: JcMethod
 }
 
 /**
  * [SummaryFact] that denotes a possible vulnerability at [sink]
  */
-data class VulnerabilityLocation(val vulnerabilityDescription: VulnerabilityDescription, val sink: IfdsVertex) : SummaryFact {
-    override val method: JcMethod = sink.method
+data class VulnerabilityLocation(
+    val vulnerabilityDescription: VulnerabilityDescription,
+    val sink: IfdsVertex,
+    val edge: IfdsEdge? = null,
+    val rule: TaintMethodSink? = null,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = sink.method
 }
 
 /**
  * Denotes some start-to-end edge that should be saved for the method
  */
-data class SummaryEdgeFact(val edge: IfdsEdge) : SummaryFact {
-    override val method: JcMethod = edge.method
+data class SummaryEdgeFact(
+    val edge: IfdsEdge,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = edge.method
 }
 
 /**
  * Saves info about cross-unit call.
  * This info could later be used to restore full [TraceGraph]s
  */
-data class CrossUnitCallFact(val callerVertex: IfdsVertex, val calleeVertex: IfdsVertex) : SummaryFact {
-    override val method: JcMethod = callerVertex.method
+data class CrossUnitCallFact(
+    val callerVertex: IfdsVertex,
+    val calleeVertex: IfdsVertex,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = callerVertex.method
 }
 
 /**
  * Wraps a [TraceGraph] that should be saved for some sink
  */
-data class TraceGraphFact(val graph: TraceGraph) : SummaryFact {
-    override val method: JcMethod = graph.sink.method
+data class TraceGraphFact(
+    val graph: TraceGraph,
+) : SummaryFact {
+    override val method: JcMethod
+        get() = graph.sink.method
 }
 
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
-interface SummaryStorage<T: SummaryFact> {
+interface SummaryStorage<T : SummaryFact> {
+
     /**
      * Adds [fact] to summary of its method
      */
-    fun send(fact: T)
+    fun add(fact: T)
 
     /**
      * @return a flow with all facts summarized for the given [method].
@@ -87,25 +105,24 @@ interface SummaryStorage<T: SummaryFact> {
     val knownMethods: List<JcMethod>
 }
 
-class SummaryStorageImpl<T: SummaryFact> : SummaryStorage<T> {
+class SummaryStorageImpl<T> : SummaryStorage<T>
+    where T : SummaryFact {
+
     private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
     private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
 
-    override fun send(fact: T) {
-        if (summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)) {
-            val outFlow = outFlows.computeIfAbsent(fact.method) { MutableSharedFlow(replay = Int.MAX_VALUE) }
-            require(outFlow.tryEmit(fact))
+    override fun add(fact: T) {
+        val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
+        if (isNew) {
+            val flow = outFlows.computeIfAbsent(fact.method) {
+                MutableSharedFlow(replay = Int.MAX_VALUE)
+            }
+            check(flow.tryEmit(fact))
         }
     }
 
     override fun getFacts(method: JcMethod): SharedFlow<T> {
-        return outFlows.computeIfAbsent(method) {
-            MutableSharedFlow<T>(replay = Int.MAX_VALUE).also { flow ->
-                summaries[method].orEmpty().forEach { fact ->
-                    require(flow.tryEmit(fact))
-                }
-            }
-        }
+        return outFlows[method] ?: MutableSharedFlow()
     }
 
     override fun getCurrentFacts(method: JcMethod): List<T> {

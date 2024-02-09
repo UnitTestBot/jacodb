@@ -19,9 +19,9 @@ package org.jacodb.analysis.impl;
 import org.jacodb.analysis.AnalysisMain;
 import org.jacodb.analysis.engine.IfdsUnitRunnerFactory;
 import org.jacodb.analysis.engine.UnitResolver;
+import org.jacodb.analysis.engine.UnitResolverKt;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.library.RunnersLibrary;
-import org.jacodb.analysis.library.UnitResolversLibrary;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
@@ -56,9 +56,9 @@ public class JavaAnalysisApiTest {
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
         JcApplicationGraph applicationGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, null)
+                .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
-        UnitResolver<?> resolver = UnitResolversLibrary.getMethodUnitResolver();
+        UnitResolver resolver = UnitResolverKt.getMethodUnitResolver();
         IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunnerFactory();
 
         AnalysisMain.runAnalysis(
@@ -76,7 +76,7 @@ public class JavaAnalysisApiTest {
         bannedPackages.add("my.package.that.wont.be.analyzed");
 
         JcApplicationGraph customGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, bannedPackages)
+                .newApplicationGraphForAnalysisAsync(classpath, bannedPackages)
                 .get();
         Assertions.assertNotNull(customGraph);
     }

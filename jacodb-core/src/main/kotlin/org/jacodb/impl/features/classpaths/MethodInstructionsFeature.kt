@@ -39,7 +39,7 @@ class MethodInstructionsFeature(
     private val JcMethod.methodFeatures
         get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
 
-
+    @Synchronized
     override fun flowGraph(method: JcMethod): JcMethodExtFeature.JcFlowGraphResult {
         return JcFlowGraphResultImpl(method, JcGraphImpl(method, method.instList.instructions))
     }

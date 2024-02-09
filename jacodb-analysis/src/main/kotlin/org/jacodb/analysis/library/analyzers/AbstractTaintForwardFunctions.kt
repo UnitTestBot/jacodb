@@ -14,45 +14,90 @@
  *  limitations under the License.
  */
 
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jacodb.analysis.library.analyzers
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jacodb.analysis.config.BasicConditionEvaluator
+import org.jacodb.analysis.config.CallPositionToAccessPathResolver
+import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.ifds2.taint.Tainted
+import org.jacodb.analysis.ifds2.taint.toDomainFact
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
+import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.CopyMark
+import org.jacodb.taint.configuration.RemoveAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
 
+private val logger = KotlinLogging.logger {}
+
+@Suppress("PublicApiImplicitType")
 abstract class AbstractTaintForwardFunctions(
-    protected val cp: JcClasspath
+    protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {
 
-    abstract fun transmitDataFlow(from: JcExpr, to: JcValue, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
+    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+        cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
+    }
 
-    abstract fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact>
+    protected abstract fun transmitDataFlow(
+        from: JcExpr,
+        to: JcValue,
+        atInst: JcInst,
+        fact: DomainFact,
+        dropFact: Boolean,
+    ): List<DomainFact>
 
-    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = FlowFunctionInstance { fact ->
+    protected abstract fun transmitDataFlowAtNormalInst(
+        inst: JcInst,
+        nextInst: JcInst,
+        fact: DomainFact,
+    ): List<DomainFact>
+
+    final override fun obtainSequentFlowFunction(
+        current: JcInst,
+        next: JcInst,
+    ) = FlowFunctionInstance { fact ->
         if (fact is TaintNode && fact.activation == current) {
             listOf(fact.activatedCopy)
         } else if (current is JcAssignInst) {
-            transmitDataFlow(current.rhv, current.lhv, current, fact, dropFact = false)
+            // Note: 'next' is ignored
+            transmitDataFlow(current.rhv, current.lhv, current, fact, false)
         } else {
             transmitDataFlowAtNormalInst(current, next, fact)
         }
     }
 
-    override fun obtainCallToStartFlowFunction(
+    final override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
-        callee: JcMethod
+        callee: JcMethod,
     ) = FlowFunctionInstance { fact ->
         if (fact is TaintNode && fact.activation == callStatement) {
             return@FlowFunctionInstance emptyList()
@@ -60,8 +105,10 @@ abstract class AbstractTaintForwardFunctions(
 
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
-        val formalParams = cp.getFormalParamsOf(callee)
-        buildList {
+        val formalParams = cp.getArgumentsOf(callee)
+        buildSet {
+            // TODO: when dropFact=true, consider removing (note: once!) the fact afterwards
+
             formalParams.zip(actualParams).forEach { (formal, actual) ->
                 addAll(transmitDataFlow(actual, formal, callStatement, fact, dropFact = true))
             }
@@ -70,21 +117,71 @@ abstract class AbstractTaintForwardFunctions(
                 addAll(transmitDataFlow(callExpr.instance, callee.thisInstance, callStatement, fact, dropFact = true))
             }
 
-            if (fact == ZEROFact || (fact is TaintNode && fact.variable.isStatic)) {
+            if (fact is TaintNode && fact.variable.isStatic) {
                 add(fact)
+            }
+
+            if (fact == ZEROFact) {
+                addAll(obtainPossibleStartFacts(callStatement))
             }
         }
     }
 
-    override fun obtainCallToReturnFlowFunction(
+    final override fun obtainCallToReturnFlowFunction(
         callStatement: JcInst,
-        returnSite: JcInst
+        returnSite: JcInst,
+        graph: JcApplicationGraph,
     ) = FlowFunctionInstance { fact ->
-        if (fact == ZEROFact) {
+        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
+        val callee = callExpr.method.method
+
+        // FIXME: adhoc for constructors:
+        if (callee.isConstructor) {
             return@FlowFunctionInstance listOf(fact)
         }
 
-        if (fact !is TaintNode || fact.variable.isStatic) {
+        // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
+        if (fact is TaintNode && callExpr is JcDynamicCallExpr && callee.enclosingClass.name == "java.lang.invoke.StringConcatFactory" && callStatement is JcAssignInst) {
+            for (arg in callExpr.args) {
+                if (arg.toPath() == fact.variable) {
+                    return@FlowFunctionInstance setOf(
+                        fact,
+                        Tainted(fact).copy(variable = callStatement.lhv.toPath()).toDomainFact()
+                    )
+                }
+            }
+            return@FlowFunctionInstance setOf(fact)
+        }
+
+        val config = taintConfigurationFeature?.let { feature ->
+            logger.trace { "Extracting config for $callee" }
+            feature.getConfigForMethod(callee)
+        }
+
+        if (fact == ZEROFact) {
+            val facts = mutableSetOf<Tainted>()
+            if (config != null) {
+                val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
+                val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                for (item in config.filterIsInstance<TaintMethodSource>()) {
+                    if (item.condition.accept(conditionEvaluator)) {
+                        for (action in item.actionsAfter) {
+                            when (action) {
+                                is AssignMark -> {
+                                    facts += actionEvaluator.evaluate(action)
+                                }
+
+                                else -> error("$action is not supported for $item")
+                            }
+                        }
+                    }
+                }
+            }
+            logger.debug { "call-to-return-site flow function for callee=$callee, fact=$fact returns ${facts.size} facts: $facts" }
+            return@FlowFunctionInstance facts.map { it.toDomainFact() } + ZEROFact
+        }
+
+        if (fact !is TaintNode) {
             return@FlowFunctionInstance emptyList()
         }
 
@@ -92,32 +189,115 @@ abstract class AbstractTaintForwardFunctions(
             return@FlowFunctionInstance listOf(fact.activatedCopy)
         }
 
-        val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
-        val actualParams = callExpr.args
+        if (config != null) {
+            val conditionEvaluator = FactAwareConditionEvaluator(
+                Tainted(fact),
+                CallPositionToJcValueResolver(callStatement)
+            )
+            val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+            val facts = mutableSetOf<Tainted>()
+            var defaultBehavior = true
 
-        actualParams.mapNotNull { it.toPathOrNull() }.forEach {
-            if (fact.variable.startsWith(it)) {
-                return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+            for (item in config.filterIsInstance<TaintPassThrough>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is CopyMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is CopyAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+            for (item in config.filterIsInstance<TaintCleaner>()) {
+                if (item.condition.accept(conditionEvaluator)) {
+                    defaultBehavior = false
+                    for (action in item.actionsAfter) {
+                        when (action) {
+                            is RemoveMark -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            is RemoveAllMarks -> {
+                                facts += actionEvaluator.evaluate(action, Tainted(fact))
+                            }
+
+                            else -> error("$action is not supported for $item")
+                        }
+                    }
+                }
+            }
+
+            if (!defaultBehavior) {
+                if (facts.size > 0) {
+                    logger.trace { "Got ${facts.size} facts from config for $callee: $facts" }
+                }
+                return@FlowFunctionInstance facts.map { it.toDomainFact() }
+            } else {
+                // Fall back to the default behavior, as if there were no config at all.
             }
         }
 
-        if (callExpr is JcInstanceCallExpr) {
-            if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+        // Default behavior for "analyzable" method calls is to remove ("temporarily")
+        //  all the marks from the 'instance' and arguments, in order to allow them "pass through"
+        //  the callee (when it is going to be analyzed), i.e. through "call-to-start" and
+        //  "exit-to-return" flow functions.
+        // When we know that we are NOT going to analyze the callee, we do NOT need
+        //  to remove any marks from 'instance' and arguments.
+        // Currently, "analyzability" of the callee depends on the fact that the callee
+        //  is "accessible" through the JcApplicationGraph::callees().
+        if (callee in graph.callees(callStatement)) {
+
+            if (fact.variable.isStatic) {
+                return@FlowFunctionInstance emptyList()
+            }
+
+            for (actual in callExpr.args) {
+                // Possibly tainted actual parameter:
+                if (fact.variable.startsWith(actual.toPathOrNull())) {
+                    return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+                }
+            }
+
+            if (callExpr is JcInstanceCallExpr) {
+                // Possibly tainted instance:
+                if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                    return@FlowFunctionInstance emptyList() // Will be handled by summary edge
+                }
+            }
+
+        }
+
+        if (callStatement is JcAssignInst) {
+            // Possibly tainted lhv:
+            if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
+                return@FlowFunctionInstance emptyList() // Overridden by rhv
             }
         }
 
-        if (callStatement is JcAssignInst && fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
-            return@FlowFunctionInstance emptyList()
-        }
-
+        // TODO: do we even need to call this here???
         transmitDataFlowAtNormalInst(callStatement, returnSite, fact)
     }
 
-    override fun obtainExitToReturnSiteFlowFunction(
+    final override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst
+        exitStatement: JcInst,
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
@@ -128,11 +308,11 @@ abstract class AbstractTaintForwardFunctions(
         } else {
             fact
         }
-        val formalParams = cp.getFormalParamsOf(callee)
+        val formalParams = cp.getArgumentsOf(callee)
 
         buildList {
             if (fact is TaintNode && fact.variable.isOnHeap) {
-                // If there is some method A.f(formal: T) that is called like A.f(actual) then
+                // If there is some method A::f(formal: T) that is called like a.f(actual) then
                 //  1. For all g^k, k >= 1, we should propagate back from formal.g^k to actual.g^k (as they are on heap)
                 //  2. We shouldn't propagate from formal to actual (as formal is local)
                 //  Second case is why we need check for isOnHeap
@@ -143,7 +323,15 @@ abstract class AbstractTaintForwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitDataFlow(callee.thisInstance, callExpr.instance, exitStatement, updatedFact, dropFact = true))
+                addAll(
+                    transmitDataFlow(
+                        callee.thisInstance,
+                        callExpr.instance,
+                        exitStatement,
+                        updatedFact,
+                        dropFact = true
+                    )
+                )
             }
 
             if (callStatement is JcAssignInst && exitStatement is JcReturnInst) {

@@ -21,6 +21,7 @@ import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.JcParameter
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.ext.toType
@@ -28,13 +29,22 @@ import org.jacodb.api.ext.toType
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
 
-fun JcClasspath.getFormalParamsOf(method: JcMethod): List<JcArgument> {
-    return method.parameters.map {
-        JcArgument.of(it.index, it.name, findTypeOrNull(it.type.typeName)!!)
-    }
+fun JcClasspath.getArgument(param: JcParameter): JcArgument? {
+    val t = findTypeOrNull(param.type.typeName) ?: return null
+    return JcArgument.of(param.index, param.name, t)
 }
 
-fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dropFact: Boolean, maxPathLength: Int): List<TaintNode> {
+fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
+    return method.parameters.map { getArgument(it)!! }
+}
+
+fun normalFactFlow(
+    fact: TaintNode,
+    fromPath: AccessPath,
+    toPath: AccessPath,
+    dropFact: Boolean,
+    maxPathLength: Int,
+): List<TaintNode> {
     val factPath = fact.variable
     val default = if (dropFact) emptyList() else listOf(fact)
 
@@ -42,8 +52,9 @@ fun normalFactFlow(fact: TaintNode, fromPath: AccessPath, toPath: AccessPath, dr
     //  #AnalysisTest.`dereferencing copy of value saved before null assignment produce no npe`
     val diff = factPath.minus(fromPath)
     if (diff != null && (fact.activation == null || fromPath != factPath)) {
+        val newPath = (toPath / diff).limit(maxPathLength)
         return default
-            .plus(fact.moveToOtherPath(AccessPath.fromOther(toPath, diff).limit(maxPathLength)))
+            .plus(fact.moveToOtherPath(newPath))
             .distinct()
     }
 

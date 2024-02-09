@@ -33,7 +33,6 @@ import kotlin.reflect.full.companionObjectInstance
 @Tag("lifecycle")
 annotation class LifecycleTest
 
-
 abstract class BaseTest {
 
     protected open val cp: JcClasspath = runBlocking {
@@ -61,9 +60,7 @@ val Class<*>.withDB: JcDatabaseHolder
         return s.withDB
     }
 
-
 interface JcDatabaseHolder {
-
     val classpathFeatures: List<JcClasspathFeature>
     val db: JcDatabase
     fun cleanup()
@@ -82,7 +79,17 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     override var db = runBlocking {
         jacodb {
-            // persistent("D:\\work\\jacodb\\jcdb-index.db")
+            val persistentLocation = System.getenv("JACODB_PERSISTENT")
+            if (persistentLocation != null) {
+                persistent(persistentLocation)
+            }
+
+            // val ci = System.getenv("CI")
+            // println("CI=$ci")
+            // if (ci != "true") {
+            //     persistent("/tmp/index.db")
+            // }
+
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             keepLocalVariableNames()
@@ -92,7 +99,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
         }
     }
 
-    override  fun cleanup() {
+    override fun cleanup() {
         db.close()
     }
 }
@@ -101,7 +108,7 @@ val globalDb by lazy {
     WithDB(Usages, Builders, InMemoryHierarchy).db
 }
 
-open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDatabaseHolder {
+open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatabaseHolder {
 
     init {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
@@ -114,8 +121,6 @@ open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDataba
     override fun cleanup() {
     }
 }
-
-
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 

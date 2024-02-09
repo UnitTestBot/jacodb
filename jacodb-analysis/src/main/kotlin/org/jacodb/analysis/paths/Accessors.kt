@@ -17,17 +17,44 @@
 package org.jacodb.analysis.paths
 
 import org.jacodb.api.JcField
+import org.jacodb.api.cfg.JcValue
 
-sealed interface Accessor
+sealed interface Accessor {
+    fun toSuffix(): String
+}
 
-data class FieldAccessor(val field: JcField) : Accessor {
+data class FieldAccessor(
+    val field: JcField,
+) : Accessor {
+    override fun toSuffix(): String {
+        return ".${field.name}"
+    }
+
     override fun toString(): String {
         return field.name
     }
 }
 
+// data class ElementAccessor(
+//     val index: JcValue?, // null if "any"
+// ) : Accessor {
+//     override fun toSuffix(): String {
+//         return if (index == null) "[*]" else "[$index]"
+//     }
+//
+//     override fun toString(): String {
+//         return "[$index]"
+//     }
+// }
+
 object ElementAccessor : Accessor {
+    override fun toSuffix(): String {
+        return "[*]"
+    }
+
     override fun toString(): String {
         return "*"
     }
 }
+
+fun ElementAccessor(index: JcValue?) = ElementAccessor

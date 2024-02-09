@@ -47,8 +47,7 @@ class JcGraphImpl(
     private val exceptionResolver = JcExceptionResolver(classpath)
 
     override val entry: JcInst get() = instructions.first()
-    override val exits: List<JcInst> get() = instructions.filterIsInstance<JcTerminatingInst>()
-
+    override val exits: List<JcInst> by lazy { instructions.filterIsInstance<JcTerminatingInst>() }
 
     /**
      * returns a map of possible exceptions that may be thrown from this method
@@ -106,15 +105,15 @@ class JcGraphImpl(
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    override fun successors(node: JcInst): Set<JcInst> = successorMap.getOrDefault(node, emptySet())
-    override fun predecessors(node: JcInst): Set<JcInst> = predecessorMap.getOrDefault(node, emptySet())
+    override fun successors(node: JcInst): Set<JcInst> = successorMap[node] ?: emptySet()
+    override fun predecessors(node: JcInst): Set<JcInst> = predecessorMap[node] ?: emptySet()
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      * `throwers` returns an empty set for every instruction except `JcCatchInst`
      */
-    override fun throwers(node: JcInst): Set<JcInst> = throwPredecessors.getOrDefault(node, emptySet())
-    override fun catchers(node: JcInst): Set<JcCatchInst> = throwSuccessors.getOrDefault(node, emptySet())
+    override fun throwers(node: JcInst): Set<JcInst> = throwPredecessors[node] ?: emptySet()
+    override fun catchers(node: JcInst): Set<JcCatchInst> = throwSuccessors[node] ?: emptySet()
 
     override fun previous(inst: JcInstRef): JcInst = previous(inst(inst))
     override fun next(inst: JcInstRef): JcInst = next(inst(inst))
@@ -140,7 +139,6 @@ class JcGraphImpl(
 
     override fun iterator(): Iterator<JcInst> = instructions.iterator()
 
-
     private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
         val current = this[key]
         if (current == null) {
@@ -151,18 +149,17 @@ class JcGraphImpl(
     }
 }
 
-
-fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
+fun JcGraph.filter(visitor: JcInstVisitor<Boolean>): JcGraph =
     JcGraphImpl(method, instructions.filter { it.accept(visitor) })
 
-fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
+fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>): JcGraph =
     JcGraphImpl(method, instructions.filterNot { it.accept(visitor) })
 
-fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
+fun JcGraph.map(visitor: JcInstVisitor<JcInst>): JcGraph =
     JcGraphImpl(method, instructions.map { it.accept(visitor) })
 
-fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
+fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>): JcGraph =
     JcGraphImpl(method, instructions.mapNotNull { it.accept(visitor) })
 
-fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
+fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>): JcGraph =
     JcGraphImpl(method, instructions.flatMap { it.accept(visitor) })

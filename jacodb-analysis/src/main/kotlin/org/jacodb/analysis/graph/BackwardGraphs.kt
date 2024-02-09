@@ -15,6 +15,7 @@
  */
 
 @file:JvmName("BackwardApplicationGraphs")
+
 package org.jacodb.analysis.graph
 
 import org.jacodb.api.JcClasspath
@@ -24,19 +25,21 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
 private class BackwardApplicationGraph<Method, Statement>(
-    val forward: ApplicationGraph<Method, Statement>
+    val forward: ApplicationGraph<Method, Statement>,
 ) : ApplicationGraph<Method, Statement> {
-    override fun predecessors(node: Statement) = forward.successors(node)
 
+    init {
+        require(forward !is BackwardApplicationGraph)
+    }
+
+    override fun predecessors(node: Statement) = forward.successors(node)
     override fun successors(node: Statement) = forward.predecessors(node)
 
     override fun callees(node: Statement) = forward.callees(node)
-
     override fun callers(method: Method) = forward.callers(method)
 
-    override fun entryPoint(method: Method) = forward.exitPoints(method)
-
-    override fun exitPoints(method: Method) = forward.entryPoint(method)
+    override fun entryPoints(method: Method) = forward.exitPoints(method)
+    override fun exitPoints(method: Method) = forward.entryPoints(method)
 
     override fun methodOf(node: Statement) = forward.methodOf(node)
 }
@@ -48,8 +51,14 @@ val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
         BackwardApplicationGraph(this)
     }
 
-private class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
-    JcApplicationGraph, ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
+internal class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
+    JcApplicationGraph,
+    ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
+
+    init {
+        require(forward !is BackwardJcApplicationGraph)
+    }
+
     override val classpath: JcClasspath
         get() = forward.classpath
 }

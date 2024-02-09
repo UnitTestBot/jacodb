@@ -21,7 +21,6 @@ import org.jacodb.api.TypeName
 
 sealed interface JcRawInst {
     val owner: JcMethod
-
     val operands: List<JcRawExpr>
 
     fun <T> accept(visitor: JcRawInstVisitor<T>): T
@@ -30,9 +29,8 @@ sealed interface JcRawInst {
 class JcRawAssignInst(
     override val owner: JcMethod,
     val lhv: JcRawValue,
-    val rhv: JcRawExpr
+    val rhv: JcRawExpr,
 ) : JcRawInst {
-
     override val operands: List<JcRawExpr>
         get() = listOf(lhv, rhv)
 
@@ -45,7 +43,7 @@ class JcRawAssignInst(
 
 class JcRawEnterMonitorInst(
     override val owner: JcMethod,
-    val monitor: JcRawSimpleValue
+    val monitor: JcRawSimpleValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
@@ -59,7 +57,7 @@ class JcRawEnterMonitorInst(
 
 class JcRawExitMonitorInst(
     override val owner: JcMethod,
-    val monitor: JcRawSimpleValue
+    val monitor: JcRawSimpleValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(monitor)
@@ -73,7 +71,7 @@ class JcRawExitMonitorInst(
 
 class JcRawCallInst(
     override val owner: JcMethod,
-    val callExpr: JcRawCallExpr
+    val callExpr: JcRawCallExpr,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(callExpr)
@@ -89,8 +87,11 @@ data class JcRawLabelRef(val name: String) {
     override fun toString() = name
 }
 
-class JcRawLineNumberInst(override val owner: JcMethod, val lineNumber: Int, val start: JcRawLabelRef) : JcRawInst {
-
+class JcRawLineNumberInst(
+    override val owner: JcMethod,
+    val lineNumber: Int,
+    val start: JcRawLabelRef,
+) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
 
@@ -101,10 +102,9 @@ class JcRawLineNumberInst(override val owner: JcMethod, val lineNumber: Int, val
     }
 }
 
-
 class JcRawLabelInst(
     override val owner: JcMethod,
-    val name: String
+    val name: String,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
@@ -120,12 +120,13 @@ class JcRawLabelInst(
 
 class JcRawReturnInst(
     override val owner: JcMethod,
-    val returnValue: JcRawValue?
+    val returnValue: JcRawValue?,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOfNotNull(returnValue)
 
-    override fun toString(): String = "return" + (returnValue?.let { " $it" } ?: "")
+    override fun toString(): String =
+        "return" + (returnValue?.let { " $it" } ?: "")
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawReturnInst(this)
@@ -134,7 +135,7 @@ class JcRawReturnInst(
 
 class JcRawThrowInst(
     override val owner: JcMethod,
-    val throwable: JcRawValue
+    val throwable: JcRawValue,
 ) : JcRawInst {
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
@@ -149,7 +150,7 @@ class JcRawThrowInst(
 data class JcRawCatchEntry(
     val acceptedThrowable: TypeName,
     val startInclusive: JcRawLabelRef,
-    val endExclusive: JcRawLabelRef
+    val endExclusive: JcRawLabelRef,
 )
 
 class JcRawCatchInst(
@@ -161,7 +162,8 @@ class JcRawCatchInst(
     override val operands: List<JcRawExpr>
         get() = listOf(throwable)
 
-    override fun toString(): String = "catch ($throwable: ${throwable.typeName})"
+    override fun toString(): String =
+        "catch ($throwable: ${throwable.typeName})"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawCatchInst(this)
@@ -174,7 +176,7 @@ sealed interface JcRawBranchingInst : JcRawInst {
 
 class JcRawGotoInst(
     override val owner: JcMethod,
-    val target: JcRawLabelRef
+    val target: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = emptyList()
@@ -193,7 +195,7 @@ data class JcRawIfInst(
     override val owner: JcMethod,
     val condition: JcRawConditionExpr,
     val trueBranch: JcRawLabelRef,
-    val falseBranch: JcRawLabelRef
+    val falseBranch: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(condition)
@@ -201,7 +203,8 @@ data class JcRawIfInst(
     override val successors: List<JcRawLabelRef>
         get() = listOf(trueBranch, falseBranch)
 
-    override fun toString(): String = "if ($condition) goto $trueBranch else $falseBranch"
+    override fun toString(): String =
+        "if ($condition) goto $trueBranch else $falseBranch"
 
     override fun <T> accept(visitor: JcRawInstVisitor<T>): T {
         return visitor.visitJcRawIfInst(this)
@@ -212,7 +215,7 @@ data class JcRawSwitchInst(
     override val owner: JcMethod,
     val key: JcRawValue,
     val branches: Map<JcRawValue, JcRawLabelRef>,
-    val default: JcRawLabelRef
+    val default: JcRawLabelRef,
 ) : JcRawBranchingInst {
     override val operands: List<JcRawExpr>
         get() = listOf(key) + branches.keys
@@ -222,7 +225,9 @@ data class JcRawSwitchInst(
 
     override fun toString(): String = buildString {
         append("switch ($key) { ")
-        branches.forEach { (option, label) -> append("$option -> $label") }
+        for ((option, label) in branches) {
+            append("$option -> $label")
+        }
         append("else -> ${default.name} }")
     }
 
@@ -246,7 +251,7 @@ interface JcRawBinaryExpr : JcRawExpr {
 data class JcRawAddExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -261,7 +266,7 @@ data class JcRawAddExpr(
 data class JcRawAndExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -276,7 +281,7 @@ data class JcRawAndExpr(
 data class JcRawCmpExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -291,7 +296,7 @@ data class JcRawCmpExpr(
 data class JcRawCmpgExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -306,7 +311,7 @@ data class JcRawCmpgExpr(
 data class JcRawCmplExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -321,7 +326,7 @@ data class JcRawCmplExpr(
 data class JcRawDivExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -336,7 +341,7 @@ data class JcRawDivExpr(
 data class JcRawMulExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -353,7 +358,7 @@ sealed interface JcRawConditionExpr : JcRawBinaryExpr
 data class JcRawEqExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -368,7 +373,7 @@ data class JcRawEqExpr(
 data class JcRawNeqExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -383,7 +388,7 @@ data class JcRawNeqExpr(
 data class JcRawGeExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -398,7 +403,7 @@ data class JcRawGeExpr(
 data class JcRawGtExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -413,7 +418,7 @@ data class JcRawGtExpr(
 data class JcRawLeExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -428,7 +433,7 @@ data class JcRawLeExpr(
 data class JcRawLtExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawConditionExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -443,7 +448,7 @@ data class JcRawLtExpr(
 data class JcRawOrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -458,7 +463,7 @@ data class JcRawOrExpr(
 data class JcRawRemExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -473,7 +478,7 @@ data class JcRawRemExpr(
 data class JcRawShlExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -488,7 +493,7 @@ data class JcRawShlExpr(
 data class JcRawShrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -503,7 +508,7 @@ data class JcRawShrExpr(
 data class JcRawSubExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -518,7 +523,7 @@ data class JcRawSubExpr(
 data class JcRawUshrExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -533,7 +538,7 @@ data class JcRawUshrExpr(
 data class JcRawXorExpr(
     override val typeName: TypeName,
     override val lhv: JcRawValue,
-    override val rhv: JcRawValue
+    override val rhv: JcRawValue,
 ) : JcRawBinaryExpr {
     override val operands: List<JcRawValue>
         get() = listOf(lhv, rhv)
@@ -547,7 +552,7 @@ data class JcRawXorExpr(
 
 data class JcRawLengthExpr(
     override val typeName: TypeName,
-    val array: JcRawValue
+    val array: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(array)
@@ -561,7 +566,7 @@ data class JcRawLengthExpr(
 
 data class JcRawNegExpr(
     override val typeName: TypeName,
-    val operand: JcRawValue
+    val operand: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
@@ -575,7 +580,7 @@ data class JcRawNegExpr(
 
 data class JcRawCastExpr(
     override val typeName: TypeName,
-    val operand: JcRawValue
+    val operand: JcRawValue,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
@@ -588,7 +593,7 @@ data class JcRawCastExpr(
 }
 
 data class JcRawNewExpr(
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = emptyList()
@@ -602,19 +607,21 @@ data class JcRawNewExpr(
 
 data class JcRawNewArrayExpr(
     override val typeName: TypeName,
-    val dimensions: List<JcRawValue>
+    val dimensions: List<JcRawValue>,
 ) : JcRawExpr {
-    constructor(typeName: TypeName, length: JcRawValue) : this(typeName, listOf(length))
+    constructor(typeName: TypeName, length: JcRawValue) :
+        this(typeName, listOf(length))
 
     override val operands: List<JcRawValue>
         get() = dimensions
 
-    override fun toString(): String = "new ${arrayTypeToStringWithDimensions(typeName, dimensions)}"
+    override fun toString(): String =
+        "new ${arrayTypeToStringWithDimensions(typeName, dimensions)}"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
     }
-    
+
     companion object {
         private val regexToProcessDimensions = Regex("\\[(.*?)]")
 
@@ -630,12 +637,13 @@ data class JcRawNewArrayExpr(
 data class JcRawInstanceOfExpr(
     override val typeName: TypeName,
     val operand: JcRawValue,
-    val targetType: TypeName
+    val targetType: TypeName,
 ) : JcRawExpr {
     override val operands: List<JcRawValue>
         get() = listOf(operand)
 
-    override fun toString(): String = "$operand instanceof ${targetType.typeName}"
+    override fun toString(): String =
+        "$operand instanceof ${targetType.typeName}"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawInstanceOfExpr(this)
@@ -649,13 +657,14 @@ sealed interface JcRawCallExpr : JcRawExpr {
     val returnType: TypeName
     val args: List<JcRawValue>
 
-    override val typeName get() = returnType
+    override val typeName: TypeName
+        get() = returnType
 
     override val operands: List<JcRawValue>
         get() = args
 }
 
-sealed interface JcRawInstanceExpr: JcRawCallExpr {
+sealed interface JcRawInstanceExpr : JcRawCallExpr {
     val instance: JcRawValue
 }
 
@@ -685,8 +694,12 @@ data class BsmTypeArg(val typeName: TypeName) : BsmArg {
     override fun toString(): String = typeName.typeName
 }
 
-data class BsmMethodTypeArg(val argumentTypes: List<TypeName>, val returnType: TypeName) : BsmArg {
-    override fun toString(): String = "(${argumentTypes.joinToString { it.typeName }}:${returnType.typeName})"
+data class BsmMethodTypeArg(
+    val argumentTypes: List<TypeName>,
+    val returnType: TypeName,
+) : BsmArg {
+    override fun toString(): String =
+        "(${argumentTypes.joinToString { it.typeName }}:${returnType.typeName})"
 }
 
 data class BsmHandle(
@@ -704,14 +717,20 @@ data class JcRawDynamicCallExpr(
     val callSiteMethodName: String,
     val callSiteArgTypes: List<TypeName>,
     val callSiteReturnType: TypeName,
-    val callSiteArgs: List<JcRawValue>
+    val callSiteArgs: List<JcRawValue>,
 ) : JcRawCallExpr {
-    override val declaringClass get() = bsm.declaringClass
-    override val methodName get() = bsm.name
-    override val argumentTypes get() = bsm.argTypes
-    override val returnType get() = bsm.returnType
-    override val typeName get() = returnType
-    override val args get() = callSiteArgs
+    override val declaringClass: TypeName
+        get() = bsm.declaringClass
+    override val methodName: String
+        get() = bsm.name
+    override val argumentTypes: List<TypeName>
+        get() = bsm.argTypes
+    override val returnType: TypeName
+        get() = bsm.returnType
+    override val typeName: TypeName
+        get() = returnType
+    override val args: List<JcRawValue>
+        get() = callSiteArgs
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawDynamicCallExpr(this)
@@ -730,7 +749,9 @@ data class JcRawVirtualCallExpr(
         get() = listOf(instance) + args
 
     override fun toString(): String =
-        "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.$methodName${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawVirtualCallExpr(this)
@@ -749,7 +770,9 @@ data class JcRawInterfaceCallExpr(
         get() = listOf(instance) + args
 
     override fun toString(): String =
-        "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.$methodName${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawInterfaceCallExpr(this)
@@ -765,7 +788,9 @@ data class JcRawStaticCallExpr(
     val isInterfaceMethodCall: Boolean = false,
 ) : JcRawCallExpr {
     override fun toString(): String =
-        "$declaringClass.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$declaringClass.$methodName${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawStaticCallExpr(this)
@@ -781,13 +806,14 @@ data class JcRawSpecialCallExpr(
     override val args: List<JcRawValue>,
 ) : JcRawInstanceExpr {
     override fun toString(): String =
-        "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
+        "$instance.$methodName${
+            args.joinToString(prefix = "(", postfix = ")", separator = ", ")
+        }"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawSpecialCallExpr(this)
     }
 }
-
 
 sealed interface JcRawValue : JcRawExpr {
     override val operands: List<JcRawValue>
@@ -811,14 +837,17 @@ data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
-data class JcRawArgument(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
+data class JcRawArgument(
+    val index: Int,
+    override val name: String,
+    override val typeName: TypeName,
+) : JcRawLocal {
     companion object {
         @JvmStatic
         fun of(index: Int, name: String?, typeName: TypeName): JcRawArgument {
             return JcRawArgument(index, name ?: "arg$$index", typeName)
         }
     }
-
 
     override fun toString(): String = name
 
@@ -848,7 +877,10 @@ data class JcRawArgument(val index: Int, override val name: String, override val
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
-data class JcRawLocalVar(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
+data class JcRawLocalVar(
+    val index: Int,override val name: String,
+    override val typeName: TypeName,
+) : JcRawLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -880,14 +912,10 @@ data class JcRawFieldRef(
     val instance: JcRawValue?,
     val declaringClass: TypeName,
     val fieldName: String,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawComplexValue {
-    constructor(declaringClass: TypeName, fieldName: String, typeName: TypeName) : this(
-        null,
-        declaringClass,
-        fieldName,
-        typeName
-    )
+    constructor(declaringClass: TypeName, fieldName: String, typeName: TypeName) :
+        this(null, declaringClass, fieldName, typeName)
 
     override fun toString(): String = "${instance ?: declaringClass}.$fieldName"
 
@@ -899,7 +927,7 @@ data class JcRawFieldRef(
 data class JcRawArrayAccess(
     val array: JcRawValue,
     val index: JcRawValue,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawComplexValue {
     override fun toString(): String = "$array[$index]"
 
@@ -910,7 +938,10 @@ data class JcRawArrayAccess(
 
 sealed interface JcRawConstant : JcRawSimpleValue
 
-data class JcRawBool(val value: Boolean, override val typeName: TypeName) : JcRawConstant {
+data class JcRawBool(
+    val value: Boolean,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -918,7 +949,10 @@ data class JcRawBool(val value: Boolean, override val typeName: TypeName) : JcRa
     }
 }
 
-data class JcRawByte(val value: Byte, override val typeName: TypeName) : JcRawConstant {
+data class JcRawByte(
+    val value: Byte,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -926,7 +960,10 @@ data class JcRawByte(val value: Byte, override val typeName: TypeName) : JcRawCo
     }
 }
 
-data class JcRawChar(val value: Char, override val typeName: TypeName) : JcRawConstant {
+data class JcRawChar(
+    val value: Char,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -934,7 +971,10 @@ data class JcRawChar(val value: Char, override val typeName: TypeName) : JcRawCo
     }
 }
 
-data class JcRawShort(val value: Short, override val typeName: TypeName) : JcRawConstant {
+data class JcRawShort(
+    val value: Short,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -942,7 +982,10 @@ data class JcRawShort(val value: Short, override val typeName: TypeName) : JcRaw
     }
 }
 
-data class JcRawInt(val value: Int, override val typeName: TypeName) : JcRawConstant {
+data class JcRawInt(
+    val value: Int,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -950,7 +993,10 @@ data class JcRawInt(val value: Int, override val typeName: TypeName) : JcRawCons
     }
 }
 
-data class JcRawLong(val value: Long, override val typeName: TypeName) : JcRawConstant {
+data class JcRawLong(
+    val value: Long,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -958,7 +1004,10 @@ data class JcRawLong(val value: Long, override val typeName: TypeName) : JcRawCo
     }
 }
 
-data class JcRawFloat(val value: Float, override val typeName: TypeName) : JcRawConstant {
+data class JcRawFloat(
+    val value: Float,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -966,7 +1015,10 @@ data class JcRawFloat(val value: Float, override val typeName: TypeName) : JcRaw
     }
 }
 
-data class JcRawDouble(val value: Double, override val typeName: TypeName) : JcRawConstant {
+data class JcRawDouble(
+    val value: Double,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -982,7 +1034,10 @@ data class JcRawNullConstant(override val typeName: TypeName) : JcRawConstant {
     }
 }
 
-data class JcRawStringConstant(val value: String, override val typeName: TypeName) : JcRawConstant {
+data class JcRawStringConstant(
+    val value: String,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "\"$value\""
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -990,7 +1045,10 @@ data class JcRawStringConstant(val value: String, override val typeName: TypeNam
     }
 }
 
-data class JcRawClassConstant(val className: TypeName, override val typeName: TypeName) : JcRawConstant {
+data class JcRawClassConstant(
+    val className: TypeName,
+    override val typeName: TypeName,
+) : JcRawConstant {
     override fun toString(): String = "$className.class"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -1003,10 +1061,12 @@ data class JcRawMethodConstant(
     val name: String,
     val argumentTypes: List<TypeName>,
     val returnType: TypeName,
-    override val typeName: TypeName
+    override val typeName: TypeName,
 ) : JcRawConstant {
     override fun toString(): String =
-        "$declaringClass.$name${argumentTypes.joinToString(prefix = "(", postfix = ")")}:$returnType"
+        "$declaringClass.$name${
+            argumentTypes.joinToString(prefix = "(", postfix = ")")
+        }:$returnType"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawMethodConstant(this)
@@ -1016,9 +1076,10 @@ data class JcRawMethodConstant(
 data class JcRawMethodType(
     val argumentTypes: List<TypeName>,
     val returnType: TypeName,
-    private val methodType: TypeName
+    private val methodType: TypeName,
 ) : JcRawConstant {
-    override val typeName: TypeName = methodType
+    override val typeName: TypeName
+        get() = methodType
 
     override fun toString(): String =
         "${argumentTypes.joinToString(prefix = "(", postfix = ")")}:$returnType"
@@ -1028,18 +1089,17 @@ data class JcRawMethodType(
     }
 }
 
+// fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
+//     val idx: Int = instructions.indexOf(inst)
+//     assert(idx != -1)
 //
-//fun JcRawInstList.lineNumberOf(inst: JcRawInst): Int? {
-//    val idx: Int = instructions.indexOf(inst)
-//    assert(idx != -1)
-//
-//    // Get index of labels and insnNode within method
-//    val insnIt: ListIterator<AbstractInsnNode> = insnList.iterator(idx)
-//    while (insnIt.hasPrevious()) {
-//        val node: AbstractInsnNode = insnIt.previous()
-//        if (node is LineNumberNode) {
-//            return node as LineNumberNode
-//        }
-//    }
-//    return null
-//}
+//     // Get index of labels and insnNode within method
+//     val insnIt: ListIterator<AbstractInsnNode> = insnList.iterator(idx)
+//     while (insnIt.hasPrevious()) {
+//         val node: AbstractInsnNode = insnIt.previous()
+//         if (node is LineNumberNode) {
+//             return node as LineNumberNode
+//         }
+//     }
+//     return null
+// }
