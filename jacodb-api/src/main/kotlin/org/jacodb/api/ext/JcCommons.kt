@@ -18,15 +18,9 @@
 
 package org.jacodb.api.ext
 
-import org.jacodb.api.JcAnnotated
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.*
 import java.io.Serializable
+import java.lang.Cloneable
 
 fun String.jvmName(): String {
     return when {
@@ -74,6 +68,7 @@ fun String.jcdbName(): String {
     }
 }
 
+
 val JcClasspath.objectType: JcClassType
     get() = findTypeOrNull<Any>() as? JcClassType ?: throwClassNotFound<Any>()
 
@@ -85,6 +80,7 @@ val JcClasspath.cloneableClass: JcClassOrInterface
 
 val JcClasspath.serializableClass: JcClassOrInterface
     get() = findClass<Serializable>()
+
 
 // call with SAFE. comparator works only on methods from one hierarchy
 internal object UnsafeHierarchyMethodComparator : Comparator<JcMethod> {

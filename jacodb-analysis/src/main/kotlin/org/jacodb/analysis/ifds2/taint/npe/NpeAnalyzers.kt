@@ -109,7 +109,7 @@ class NpeAnalyzer(
             }
             if (triggeredItem != null) {
                 // logger.info { "Found sink at ${edge.to} in ${edge.method} on $triggeredItem" }
-                val message = "SINK" // TODO
+                val message = triggeredItem.ruleNote
                 val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = triggeredItem)
                 // logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
                 add(NewVulnerability(vulnerability))

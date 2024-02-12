@@ -19,15 +19,18 @@
 package org.jacodb.api.cfg
 
 abstract class TypedExprResolver<T : JcExpr> : AbstractFullExprSetCollector() {
-    val result: MutableSet<T> = hashSetOf()
+    val result = hashSetOf<T>()
 }
 
+
 class LocalResolver : TypedExprResolver<JcLocal>() {
+
     override fun ifMatches(expr: JcExpr) {
         if (expr is JcLocal) {
             result.add(expr)
         }
     }
+
 }
 
 class ValueResolver : TypedExprResolver<JcValue>() {

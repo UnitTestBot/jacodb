@@ -52,10 +52,10 @@ class StringConcatSimplifierTransformer(
         return inst
     }
 
-    private val instructionReplacements: MutableMap<JcInst, JcInst> = mutableMapOf()
-    private val instructions: MutableList<JcInst> = mutableListOf()
-    private val catchReplacements: MutableMap<JcInst, MutableList<JcInst>> = mutableMapOf()
-    private val instructionIndices: MutableMap<JcInst, Int> = mutableMapOf()
+    private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
+    private val instructions = mutableListOf<JcInst>()
+    private val catchReplacements = mutableMapOf<JcInst, MutableList<JcInst>>()
+    private val instructionIndices = mutableMapOf<JcInst, Int>()
 
     private val stringType = classpath.findTypeOrNull<String>() as JcClassType
 

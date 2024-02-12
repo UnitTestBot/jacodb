@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("PublicApiImplicitType")
-
 package org.jacodb.taint.configuration
 
 import kotlinx.serialization.SerialName

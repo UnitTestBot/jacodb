@@ -28,12 +28,6 @@ import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
 import org.jacodb.api.TypeNotFoundException
 import org.jacodb.api.throwClassNotFound
-import java.lang.Boolean
-import java.lang.Byte
-import java.lang.Double
-import java.lang.Float
-import java.lang.Long
-import java.lang.Short
 
 val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstructor }
 
@@ -73,14 +67,14 @@ fun JcType.unboxIfNeeded(): JcType {
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 fun JcType.autoboxIfNeeded(): JcType {
     return when (this) {
-        classpath.boolean -> classpath.findTypeOrNull<Boolean>() ?: throwClassNotFound<Boolean>()
-        classpath.byte -> classpath.findTypeOrNull<Byte>() ?: throwClassNotFound<Byte>()
+        classpath.boolean -> classpath.findTypeOrNull<java.lang.Boolean>() ?: throwClassNotFound<Boolean>()
+        classpath.byte -> classpath.findTypeOrNull<java.lang.Byte>() ?: throwClassNotFound<Byte>()
         classpath.char -> classpath.findTypeOrNull<Character>() ?: throwClassNotFound<Character>()
-        classpath.short -> classpath.findTypeOrNull<Short>() ?: throwClassNotFound<Short>()
+        classpath.short -> classpath.findTypeOrNull<java.lang.Short>() ?: throwClassNotFound<Short>()
         classpath.int -> classpath.findTypeOrNull<Integer>() ?: throwClassNotFound<Integer>()
-        classpath.long -> classpath.findTypeOrNull<Long>() ?: throwClassNotFound<Long>()
-        classpath.float -> classpath.findTypeOrNull<Float>() ?: throwClassNotFound<Float>()
-        classpath.double -> classpath.findTypeOrNull<Double>() ?: throwClassNotFound<Double>()
+        classpath.long -> classpath.findTypeOrNull<java.lang.Long>() ?: throwClassNotFound<Long>()
+        classpath.float -> classpath.findTypeOrNull<java.lang.Float>() ?: throwClassNotFound<Float>()
+        classpath.double -> classpath.findTypeOrNull<java.lang.Double>() ?: throwClassNotFound<Double>()
         else -> this
     }
 }
@@ -164,6 +158,7 @@ fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
     }
 }
 
+
 /**
  * find field by name
  *
@@ -194,14 +189,13 @@ fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): 
     return methods.firstOrNull(predicate)
 }
 
-val JcTypedMethod.humanReadableSignature: String
-    get() {
-        val params = parameters.joinToString(",") { it.type.typeName }
-        val generics = typeParameters.takeIf { it.isNotEmpty() }?.let {
-            it.joinToString(prefix = "<", separator = ",", postfix = ">") { it.symbol }
-        } ?: ""
-        return "${enclosingType.typeName}#$generics$name($params):${returnType.typeName}"
-    }
+val JcTypedMethod.humanReadableSignature: String get() {
+    val params = parameters.joinToString(",") { it.type.typeName }
+    val generics = typeParameters.takeIf { it.isNotEmpty() }?.let{
+        it.joinToString(prefix = "<", separator = ",", postfix = ">") { it.symbol }
+    } ?: ""
+    return "${enclosingType.typeName}#$generics$name($params):${returnType.typeName}"
+}
 
 fun JcClasspath.findType(name: String): JcType {
     return findTypeOrNull(name) ?: throw TypeNotFoundException(name)

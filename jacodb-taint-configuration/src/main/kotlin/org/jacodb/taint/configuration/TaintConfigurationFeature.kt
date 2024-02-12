@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("PublicApiImplicitType")
-
 package org.jacodb.taint.configuration
 
 import kotlinx.serialization.decodeFromString
@@ -112,6 +110,7 @@ class TaintConfigurationFeature private constructor(
         return primitiveTypesSet!!
     }
 
+
     private fun resolveConfigForMethod(method: JcMethod): List<TaintConfigurationItem> {
         val taintConfigurationItems = rulesForMethod[method]
         if (taintConfigurationItems != null) {
@@ -119,9 +118,13 @@ class TaintConfigurationFeature private constructor(
         }
 
         val classRules = getClassRules(method.enclosingClass)
+
         val destination = mutableListOf<TaintConfigurationItem>()
+
         classRules.mapNotNullTo(destination) {
+
             val functionMatcher = it.methodInfo
+
             if (!functionMatcher.matches(method)) return@mapNotNullTo null
             it.resolveForMethod(method)
         }
@@ -327,7 +330,7 @@ class TaintConfigurationFeature private constructor(
             val typeMatcher = condition.typeMatcher
 
             if (typeMatcher is AnyTypeMatcher) {
-                return mkTrue()
+                return mkOr(position.map { ConstantTrue })
             }
 
             if (typeMatcher is PrimitiveNameMatcher) {

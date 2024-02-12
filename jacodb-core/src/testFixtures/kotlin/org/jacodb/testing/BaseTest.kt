@@ -33,6 +33,7 @@ import kotlin.reflect.full.companionObjectInstance
 @Tag("lifecycle")
 annotation class LifecycleTest
 
+
 abstract class BaseTest {
 
     protected open val cp: JcClasspath = runBlocking {
@@ -60,7 +61,9 @@ val Class<*>.withDB: JcDatabaseHolder
         return s.withDB
     }
 
+
 interface JcDatabaseHolder {
+
     val classpathFeatures: List<JcClasspathFeature>
     val db: JcDatabase
     fun cleanup()
@@ -79,17 +82,6 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     override var db = runBlocking {
         jacodb {
-            val persistentLocation = System.getenv("JACODB_PERSISTENT")
-            if (persistentLocation != null) {
-                persistent(persistentLocation)
-            }
-
-            // val ci = System.getenv("CI")
-            // println("CI=$ci")
-            // if (ci != "true") {
-            //     persistent("/tmp/index.db")
-            // }
-
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             keepLocalVariableNames()
@@ -121,6 +113,8 @@ open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatab
     override fun cleanup() {
     }
 }
+
+
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 
