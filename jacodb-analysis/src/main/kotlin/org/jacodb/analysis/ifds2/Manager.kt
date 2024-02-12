@@ -27,7 +27,7 @@ interface Manager<out Fact, in Event> {
     fun subscribeOnSummaryEdges(
         method: JcMethod,
         scope: CoroutineScope,
-        handler: suspend (Edge<Fact>) -> Unit,
+        handler: (Edge<Fact>) -> Unit,
     )
 }
 
