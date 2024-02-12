@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.ifds2.taint.npe
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers

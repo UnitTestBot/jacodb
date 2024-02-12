@@ -18,7 +18,7 @@
 
 package org.jacodb.analysis.impl
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.PackageUnitResolver
 import org.jacodb.analysis.engine.SingletonUnit

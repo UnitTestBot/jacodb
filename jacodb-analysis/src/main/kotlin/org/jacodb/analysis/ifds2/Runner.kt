@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.ifds2
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.getOrElse

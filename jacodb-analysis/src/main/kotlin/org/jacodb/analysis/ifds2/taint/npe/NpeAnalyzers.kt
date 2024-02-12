@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.ifds2.taint.npe
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds2.Analyzer

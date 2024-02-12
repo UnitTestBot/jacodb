@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.impl
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.engine.VulnerabilityInstance
