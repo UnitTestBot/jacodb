@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.engine
 
-import mu.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -29,11 +28,10 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jacodb.analysis.library.analyzers.NpeTaintNode
+import mu.KotlinLogging
 import org.jacodb.analysis.runAnalysis
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 private val logger = KotlinLogging.logger {}
@@ -64,19 +62,6 @@ class MainIfdsUnitManager(
     private val dependencies: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
     private val dependenciesRev: MutableMap<UnitType, MutableSet<UnitType>> = mutableMapOf()
 
-    // private val deleteJobs: MutableMap<UnitType, Job> = ConcurrentHashMap()
-    // private val pathEdgesStorage: MutableMap<UnitType, Collection<IfdsEdge>> = ConcurrentHashMap()
-
-    private fun getAllCallees(method: JcMethod): Set<JcMethod> {
-        val result = mutableSetOf<JcMethod>()
-        for (inst in method.flowGraph().instructions) {
-            graph.callees(inst).forEach {
-                result.add(it)
-            }
-        }
-        return result
-    }
-
     private fun addStart(method: JcMethod) {
         val unit = unitResolver.resolve(method)
         // TODO: remove this unnecessary if-condition (superseded by '.add()' below):
@@ -85,8 +70,6 @@ class MainIfdsUnitManager(
         }
 
         foundMethods.getOrPut(unit) { mutableSetOf() }.add(method)
-        // val dependencies = getAllCallees(method)
-        // dependencies.forEach { addStart(it) }
     }
 
     private val IfdsVertex.traceGraph: TraceGraph
@@ -110,13 +93,6 @@ class MainIfdsUnitManager(
 
             val allUnits = foundMethods.keys.toList()
             logger.info { "Starting analysis. Number of found units: ${allUnits.size}" }
-            for ((i, entry) in foundMethods.entries.withIndex()) {
-                val (unit, methods) = entry
-                logger.info { "Unit [${i + 1}/${foundMethods.size}] :: $unit :: total ${methods.size} methods" }
-                for ((j, method) in methods.withIndex()) {
-                    logger.info { "- Method [${j + 1}/${methods.size}] $method" }
-                }
-            }
 
             val progressLoggerJob = launch {
                 while (isActive) {
@@ -144,11 +120,6 @@ class MainIfdsUnitManager(
                     foundMethods[unit]!!.toList()
                 )
                 aliveRunners[unit] = runner
-                // pathEdgesStorage[unit] = when (runner) {
-                //     is BaseIfdsUnitRunner -> runner.pathEdges
-                //     is BidiIfdsUnitRunnerFactory.BidiIfdsUnitRunner -> (runner.forwardRunner as BaseIfdsUnitRunner).pathEdges
-                //     else -> error("Bad runner: $runner")
-                // }
                 runner.launchIn(this)
             }
 
@@ -161,48 +132,6 @@ class MainIfdsUnitManager(
 
         val foundVulnerabilities = vulnerabilitiesStorage.knownMethods.flatMap { method ->
             vulnerabilitiesStorage.getCurrentFacts(method)
-        }
-
-        logger.debug { "Total found ${foundVulnerabilities.size} sinks" }
-        for (vulnerability in foundVulnerabilities) {
-            logger.debug { "$vulnerability in ${vulnerability.method}" }
-        }
-        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
-
-        if (logger.isDebugEnabled()) {
-            val statsFileName = "stats.csv"
-            logger.debug { "Writing stats in '$statsFileName'..." }
-            File(statsFileName).outputStream().bufferedWriter().use { writer ->
-                val sep = ";"
-                writer.write(listOf("classname", "cwe", "method", "sink", "fact").joinToString(sep) + "\n")
-                for (vulnerability in foundVulnerabilities) {
-                    val m = vulnerability.method
-                    if (vulnerability.rule != null) {
-                        for (cwe in vulnerability.rule.cwe) {
-                            writer.write(
-                                listOf(
-                                    m.enclosingClass.simpleName,
-                                    cwe,
-                                    m.name,
-                                    vulnerability.sink.statement,
-                                    vulnerability.sink.domainFact
-                                ).joinToString(sep) { "\"$it\"" } + "\n")
-                        }
-                    } else if (vulnerability.sink.domainFact is NpeTaintNode) {
-                        val cwe = 476
-                        writer.write(
-                            listOf(
-                                m.enclosingClass.simpleName,
-                                cwe,
-                                m.name,
-                                vulnerability.sink.statement,
-                                vulnerability.sink.domainFact
-                            ).joinToString(sep) { "\"$it\"" } + "\n")
-                    } else {
-                        logger.warn { "Bad vulnerability without rule: $vulnerability" }
-                    }
-                }
-            }
         }
 
         foundMethods.values.flatten().forEach { method ->
@@ -317,14 +246,7 @@ class MainIfdsUnitManager(
                         return@consumeEach
                     }
                     queueEmptiness[runner.unit] = event.isEmpty
-                    // deleteJobs[runner.unit]?.run {
-                    //     logger.debug { "Cancelling the stopping of the runner for ${runner.unit}" }
-                    //     cancel()
-                    // }
                     if (event.isEmpty) {
-                        // deleteJobs[runner.unit] = launch {
-                        //     logger.debug { "Going to stop the runner for ${runner.unit} in 5 seconds..." }
-                        //     delay(5.seconds)
                         logger.info { "Stopping the runner for ${runner.unit}..." }
                         val toDelete = mutableListOf(runner.unit)
                         while (toDelete.isNotEmpty()) {
@@ -332,8 +254,9 @@ class MainIfdsUnitManager(
                             if (current in aliveRunners &&
                                 dependencies[runner.unit].orEmpty().all { queueEmptiness[it] != false }
                             ) {
-                                if (aliveRunners[current] == null) continue
-                                aliveRunners[current]!!.job?.cancel() ?: error("Runner's job is not instantiated")
+                                val runner = aliveRunners[current]
+                                if (runner == null) continue
+                                runner.job?.cancel() ?: error("Runner's job is not instantiated")
                                 aliveRunners.remove(current)
                                 for (next in dependenciesRev[current].orEmpty()) {
                                     if (queueEmptiness[next] == true) {
@@ -342,7 +265,6 @@ class MainIfdsUnitManager(
                                 }
                             }
                         }
-                        // }
                     }
                 }
 
