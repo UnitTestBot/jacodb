@@ -797,9 +797,7 @@ data class JcSpecialCallExpr(
     }
 }
 
-interface JcValue : JcExpr {
-    override fun <T> accept(visitor: JcExprVisitor<T>): T
-}
+interface JcValue : JcExpr
 
 interface JcSimpleValue : JcValue {
     override val operands: List<JcValue>
