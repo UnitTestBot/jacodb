@@ -17,7 +17,19 @@
 package org.jacodb.impl.cfg
 
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.cfg.*
+import org.jacodb.api.cfg.AbstractFullRawExprSetCollector
+import org.jacodb.api.cfg.JcInstList
+import org.jacodb.api.cfg.JcRawAssignInst
+import org.jacodb.api.cfg.JcRawCatchInst
+import org.jacodb.api.cfg.JcRawComplexValue
+import org.jacodb.api.cfg.JcRawConstant
+import org.jacodb.api.cfg.JcRawExpr
+import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.cfg.JcRawLabelInst
+import org.jacodb.api.cfg.JcRawLocalVar
+import org.jacodb.api.cfg.JcRawNullConstant
+import org.jacodb.api.cfg.JcRawSimpleValue
+import org.jacodb.api.cfg.JcRawValue
 import org.jacodb.api.ext.cfg.applyAndGet
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.cfg.util.InstructionFilter
@@ -29,7 +41,7 @@ import org.jacodb.impl.cfg.util.InstructionFilter
  * the frames merging)
  */
 internal class Simplifier {
-    fun simplify(jcClasspath: JcClasspath, instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
+    fun simplify(jcClasspath: JcClasspath, instList: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
         // clear the assignments that are repeated inside single basic block
         var instructionList = cleanRepeatedAssignments(instList)
 
@@ -107,8 +119,7 @@ internal class Simplifier {
         return normalizeTypes(instructionList)
     }
 
-
-    private fun computeUseCases(instList: JcInstListImpl<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawInst>> {
+    private fun computeUseCases(instList: JcInstList<JcRawInst>): Map<JcRawSimpleValue, Set<JcRawInst>> {
         val uses = hashMapOf<JcRawSimpleValue, MutableSet<JcRawInst>>()
         for (inst in instList) {
             when (inst) {
@@ -126,6 +137,7 @@ internal class Simplifier {
                 }
 
                 is JcRawCatchInst -> {}
+
                 else -> {
                     inst.applyAndGet(SimplifierCollector()) { it.exprs }
                         .forEach {
@@ -137,7 +149,7 @@ internal class Simplifier {
         return uses
     }
 
-    private fun cleanRepeatedAssignments(instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
+    private fun cleanRepeatedAssignments(instList: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
         val instructions = mutableListOf<JcRawInst>()
         val equalities = hashMapOf<JcRawSimpleValue, JcRawSimpleValue>()
         for (inst in instList) {
@@ -173,7 +185,7 @@ internal class Simplifier {
         return JcInstListImpl(instructions)
     }
 
-    private fun cleanSelfAssignments(instList: JcInstListImpl<JcRawInst>): JcInstListImpl<JcRawInst> {
+    private fun cleanSelfAssignments(instList: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
         val instructions = mutableListOf<JcRawInst>()
         for (inst in instList) {
             when (inst) {
@@ -190,8 +202,8 @@ internal class Simplifier {
     }
 
     private fun computeReplacements(
-        instList: JcInstListImpl<JcRawInst>,
-        uses: Map<JcRawSimpleValue, Set<JcRawInst>>
+        instList: JcInstList<JcRawInst>,
+        uses: Map<JcRawSimpleValue, Set<JcRawInst>>,
     ): Pair<Map<JcRawLocalVar, JcRawValue>, Set<JcRawInst>> {
         val replacements = mutableMapOf<JcRawLocalVar, JcRawValue>()
         val reservedValues = mutableSetOf<JcRawValue>()
@@ -229,15 +241,15 @@ internal class Simplifier {
         return replacements to replacedInsts
     }
 
-    private fun JcInstListImpl<JcRawInst>.isBefore(one: JcRawInst, another: JcRawInst): Boolean {
+    private fun JcInstList<JcRawInst>.isBefore(one: JcRawInst, another: JcRawInst): Boolean {
         return indexOf(one) < indexOf(another)
     }
 
-    private fun JcInstListImpl<JcRawInst>.areSequential(one: JcRawInst, another: JcRawInst): Boolean {
+    private fun JcInstList<JcRawInst>.areSequential(one: JcRawInst, another: JcRawInst): Boolean {
         return indexOf(one) + 1 == indexOf(another)
     }
 
-    private fun computeAssignments(instList: JcInstListImpl<JcRawInst>): Map<JcRawLocalVar, Set<JcRawExpr>> {
+    private fun computeAssignments(instList: JcInstList<JcRawInst>): Map<JcRawLocalVar, Set<JcRawExpr>> {
         val assignments = mutableMapOf<JcRawLocalVar, MutableSet<JcRawExpr>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst) {
@@ -252,8 +264,8 @@ internal class Simplifier {
     }
 
     private fun normalizeTypes(
-        instList: JcInstListImpl<JcRawInst>
-    ): JcInstListImpl<JcRawInst> {
+        instList: JcInstList<JcRawInst>,
+    ): JcInstList<JcRawInst> {
         val types = mutableMapOf<JcRawLocalVar, MutableSet<String>>()
         for (inst in instList) {
             if (inst is JcRawAssignInst && inst.lhv is JcRawLocalVar && inst.rhv !is JcRawNullConstant) {
