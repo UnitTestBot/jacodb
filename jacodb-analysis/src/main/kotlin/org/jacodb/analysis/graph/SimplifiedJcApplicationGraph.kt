@@ -134,14 +134,16 @@ internal class SimplifiedJcApplicationGraph(
     override fun entryPoints(method: JcMethod): Sequence<JcInst> = try {
         sequenceOf(getStartInst(method))
     } catch (e: Throwable) {
+        // we couldn't find instructions list
+        // TODO: maybe fix flowGraph()
         emptySequence()
     }
 
     override fun exitPoints(method: JcMethod): Sequence<JcInst> = try {
         graph.exitPoints(method)
     } catch (e: Throwable) {
+        // we couldn't find instructions list
+        // TODO: maybe fix flowGraph()
         emptySequence()
     }
-
-    companion object
 }
