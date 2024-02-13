@@ -25,11 +25,10 @@ class ByteCodeParser(
 ) {
 
     fun parse() {
-        Header.parse(0, buffer).printHeader()
+        Header.parse(0, byteCodeBuffer).printHeader()
     }
 
     private lateinit var parsedFile: ABC
-    val buffer: ByteBuffer = byteCodeBuffer
 
     data class ABC(
         val header: Header,
@@ -39,7 +38,7 @@ class ByteCodeParser(
         val field: List<Field>,
         val methodStringLiteralRegionIndex: MethodStringLiteralRegionIndex,
         val stringData: List<StringData>,
-        val method: List<Method>,
+        val methods: List<Method>,
         val methodIndexData: List<MethodIndexData>,
         val taggedValue: List<TaggedValue>
     ) {
@@ -305,6 +304,7 @@ class ByteCodeParser(
         val utf16Length: Byte,
         val data: String
     ) {
+
         companion object {
 
             fun parse(offset: Int): StringData {
@@ -323,17 +323,23 @@ class ByteCodeParser(
         val methodData: MethodData,
         val end: Byte
     ) {
+
+        private lateinit var _name: String
+        val name: String get() = _name
+
         companion object {
 
-            fun parse(offset: Int): Method {
-                return Method()
+            fun parse(offset: Int, buffer: ByteBuffer): Method {
+                return Method().apply {
+                    this._name = buffer.jumpTo(nameOff) { it.getString() }
+                }
             }
         }
 
         constructor() : this(0, 0, 0, 0, MethodData(), 0)
     }
 
-    data class MethodData(
+     data class MethodData(
         val flag: Byte,
         val codeOff: Int,
         val number1: Byte,
@@ -344,7 +350,7 @@ class ByteCodeParser(
         val number6: Int
     ) {
 
-        private lateinit var code: Code
+        lateinit var code: Code
 
         companion object {
 
@@ -403,10 +409,12 @@ class ByteCodeParser(
         constructor() : this(0, 0)
     }
 
-//    fun getMethodCodeByName(methodName: String): Code {
-//        parsedFile.method.find { m -> byteBuffer.parseString(m.nameOff) == methodName }.
-//    }
-//
+    fun getMethodCodeByName(methodName: String): Code {
+        return parsedFile.methods.find { m ->
+            m.name == methodName
+        }?.methodData?.code ?: throw IllegalStateException("no code")
+    }
+
 
     companion object {
         fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
@@ -485,6 +493,12 @@ class ByteCodeParser(
                 getInt(),
                 getInt()
             )
+        }
+
+        fun <T> ByteBuffer.jumpTo(offset: Int, action: (ByteBuffer) -> T): T {
+            val prevPos = this.position()
+            this.position(offset)
+            return action(this).also { this@jumpTo.position(prevPos) }
         }
 
     }
