@@ -18,9 +18,8 @@ package org.jacodb.panda.dynamic.parser
 
 class ByteCodeParser(val filePath: String) {
 
-    interface Parsable {
-        fun parse()
-    }
+    private val parsedFile: ABC
+    private val byteBuffer: ByteArray
 
     data class ABC(
         val header: Header,
@@ -33,19 +32,14 @@ class ByteCodeParser(val filePath: String) {
         val method: List<Method>,
         val methodIndexData: List<MethodIndexData>,
         val taggedValue: List<TaggedValue>
-    ) : Parsable {
-        override fun parse() {
-            header.parse()
-            classIndex.parse()
-            indexSection.parse()
-            foreignField.forEach { it.parse() }
-            field.forEach { it.parse() }
-            methodStringLiteralRegionIndex.parse()
-            stringData.forEach { it.parse() }
-            method.forEach { it.parse() }
-            methodIndexData.forEach { it.parse() }
-            taggedValue.forEach { it.parse() }
+    ) {
+        companion object {
+
+            fun parse(): ABC {
+                return ABC()
+            }
         }
+
     }
 
     data class Header(
@@ -63,25 +57,34 @@ class ByteCodeParser(val filePath: String) {
         val literalArrayIdxOff: Int,
         val numIndexRegions: Int,
         val indexSectionOff: Int
-    ) : Parsable {
-        override fun parse() {
-            println("Header: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): Header {
+                return Header()
+            }
         }
     }
 
     data class ClassIndex(
         val offsets: List<Int>
-    ) : Parsable {
-        override fun parse() {
-            println("ClassIndex: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): ClassIndex {
+                return ClassIndex()
+            }
         }
     }
 
     data class IndexSection(
         val indexHeader: IndexHeader
-    ) : Parsable {
-        override fun parse() {
-            indexHeader.parse()
+    ) {
+        companion object {
+
+            fun parse(offset: Int): IndexSection {
+                return IndexSection()
+            }
         }
     }
 
@@ -96,44 +99,62 @@ class ByteCodeParser(val filePath: String) {
         val fieldIdxOff: Int,
         val protoIdxSize: Int,
         val protoIdxOff: Int
-    ) : Parsable {
+    ) {
+
         private lateinit var classRegionIndex: ClassRegionIndex
-        override fun parse() {
-            println("IndexHeader: $this")
+
+        companion object {
+
+            fun parse(offset: Int): IndexHeader {
+                return IndexHeader()
+            }
         }
     }
 
 
     data class ClassRegionIndex(
         val fieldType: List<FieldType>
-    ) : Parsable {
-        override fun parse() {
-            println("ClassRegionIndex: $this")
+    ) {
+
+        companion object {
+
+            fun parse(offset: Int): ClassRegionIndex {
+                return ClassRegionIndex()
+            }
         }
     }
 
     data class FieldType(
         val type: Int,
-    ) : Parsable {
-        override fun parse() {
-            println("FieldType: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): FieldType {
+                return FieldType()
+            }
         }
     }
 
     data class ProtoRegionIndex(
         val proto: List<Proto>
-    ) : Parsable {
-        override fun parse() {
-            println("ProtoRegionIndex: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): ProtoRegionIndex {
+                return ProtoRegionIndex()
+            }
         }
     }
 
     data class Proto(
         val shorty: Int,
         val referenceType: Int
-    ) : Parsable {
-        override fun parse() {
-            println("Proto: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): Proto {
+                return Proto()
+            }
         }
     }
 
@@ -141,9 +162,12 @@ class ByteCodeParser(val filePath: String) {
         val classIdx: Short,
         val typeIdx: Short,
         val nameOff: Int
-    ) : Parsable {
-        override fun parse() {
-            println("ForeignField: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): ForeignField {
+                return ForeignField()
+            }
         }
     }
 
@@ -153,36 +177,48 @@ class ByteCodeParser(val filePath: String) {
         val nameOff: Int,
         val accessFlags: Byte,
         val fieldData: FieldData
-    ) : Parsable {
-        override fun parse() {
-            println("Field: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): Field {
+                return Field()
+            }
         }
     }
 
     data class FieldData(
         val tagValue: Byte,
         val data: Byte
-    ) : Parsable {
-        override fun parse() {
-            println("FieldData: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): FieldData {
+                return FieldData()
+            }
         }
     }
 
     data class MethodStringLiteralRegionIndex(
         val string: List<Int>,
         val method: List<Int>
-    ) : Parsable {
-        override fun parse() {
-            println("MethodStringLiteralRegionIndex: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): MethodStringLiteralRegionIndex {
+                return MethodStringLiteralRegionIndex()
+            }
         }
     }
 
     data class StringData(
         val utf16Length: Byte,
         val data: String
-    ) : Parsable {
-        override fun parse() {
-            println("StringData: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): StringData {
+                return StringData()
+            }
         }
     }
 
@@ -193,25 +229,33 @@ class ByteCodeParser(val filePath: String) {
         val accessFlag: Short,
         val methodData: MethodData,
         val end: Byte
-    ) : Parsable {
-        override fun parse() {
-            println("Method: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): Method {
+                return Method()
+            }
         }
     }
 
     data class MethodData(
         val flag: Byte,
-        val code: Code?,
+        val codeOff: Int,
         val number1: Byte,
         val number2: Byte,
         val number3: Byte,
         val number4: Int,
         val number5: Byte,
         val number6: Int
-    ) : Parsable {
-        override fun parse() {
-            println("MethodData: $this")
-            code?.parse()
+    ) {
+
+        private lateinit var code: Code
+
+        companion object {
+
+            fun parse(offset: Int): MethodData {
+                return MethodData()
+            }
         }
     }
 
@@ -221,9 +265,12 @@ class ByteCodeParser(val filePath: String) {
         val codeSize: Byte,
         val triesSize: Byte,
         val insts: String
-    ) : Parsable {
-        override fun parse() {
-            println("Code: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): Code {
+                return Code()
+            }
         }
     }
 
@@ -231,19 +278,33 @@ class ByteCodeParser(val filePath: String) {
         val headerIdx: Short,
         val functionKind: Byte,
         val accessFlags: Byte
-    ) : Parsable {
-        override fun parse() {
-            println("MethodIndexData: $this")
+    )  {
+        companion object {
+
+            fun parse(offset: Int): MethodIndexData {
+                return MethodIndexData()
+            }
         }
     }
 
     data class TaggedValue(
         val tagValue: Byte,
         val data: Short
-    ) : Parsable {
-        override fun parse() {
-            println("TaggedValue: $this")
+    ) {
+        companion object {
+
+            fun parse(offset: Int): TaggedValue {
+                return TaggedValue()
+            }
         }
+    }
+
+    fun getMethodCodeByName(methodName: String): Code {
+        parsedFile.method.find { m -> byteBuffer.parseString(m.nameOff) == methodName }.
+    }
+
+    private fun ByteArray.parseString(offset: Int): String {
+
     }
 
 }
