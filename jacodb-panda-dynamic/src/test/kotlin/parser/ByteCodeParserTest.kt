@@ -17,6 +17,7 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -30,6 +31,43 @@ class ByteCodeParserTest {
     @Test
     fun parseAndPrintHeader() {
         val parser = ByteCodeParser(buffer)
-        parser.parse()
+        val header = parser.parseHeader()
+        println(header)
+    }
+
+    @Test
+    fun validateHeader() {
+        val expectedMagic = listOf(80, 65, 78, 68, 65, 0, 0, 0).map { it.toByte() }
+        val expectedChecksum = listOf(58, -122, -34, -35).map { it.toByte() }
+        val expectedVersion = listOf(11, 0, 1, 0).map { it.toByte() }
+        val expectedFileSize = 832
+        val expectedForeignOff = 180
+        val expectedForeignSize = 21
+        val expectedNumClasses = 4
+        val expectedClassIdxOff = 60
+        val expectedNumberOfLineNumberPrograms = 3
+        val expectedLineNumberProgramIndexOffset = 820
+        val expectedNumLiteralArrays = 0
+        val expectedLiteralArrayIdxOff = 76
+        val expectedNumIndexRegions = 1
+        val expectedIndexSectionOff = 76
+
+        val parser = ByteCodeParser(buffer)
+        val actualHeader = parser.parseHeader()
+
+        assertEquals(expectedMagic, actualHeader.magic)
+        assertEquals(expectedChecksum, actualHeader.checksum)
+        assertEquals(expectedVersion, actualHeader.version)
+        assertEquals(expectedFileSize, actualHeader.fileSize)
+        assertEquals(expectedForeignOff, actualHeader.foreignOff)
+        assertEquals(expectedForeignSize, actualHeader.foreignSize)
+        assertEquals(expectedNumClasses, actualHeader.numClasses)
+        assertEquals(expectedClassIdxOff, actualHeader.classIdxOff)
+        assertEquals(expectedNumberOfLineNumberPrograms, actualHeader.numberOfLineNumberPrograms)
+        assertEquals(expectedLineNumberProgramIndexOffset, actualHeader.lineNumberProgramIndexOffset)
+        assertEquals(expectedNumLiteralArrays, actualHeader.numLiteralArrays)
+        assertEquals(expectedLiteralArrayIdxOff, actualHeader.literalArrayIdxOff)
+        assertEquals(expectedNumIndexRegions, actualHeader.numIndexRegions)
+        assertEquals(expectedIndexSectionOff, actualHeader.indexSectionOff)
     }
 }

@@ -21,12 +21,10 @@ import java.nio.charset.Charset
 import kotlin.experimental.and
 
 class ByteCodeParser(
-    val byteCodeBuffer: ByteBuffer
+    private val byteCodeBuffer: ByteBuffer
 ) {
 
-    fun parse() {
-        Header.parse(0, byteCodeBuffer).printHeader()
-    }
+    fun parseHeader(): Header = Header.parse(0, byteCodeBuffer)
 
     private lateinit var parsedFile: ABC
 
@@ -80,24 +78,24 @@ class ByteCodeParser(
         val numIndexRegions: Int,
         val indexSectionOff: Int
     ) {
-
-        fun printHeader() {
-            println("Magic: ${magic.joinToString("") { it.toString() }}")
-            println("Checksum: ${checksum.joinToString("") { it.toString() }}")
-            println("Version: ${version.joinToString("") { it.toString() }}")
-            println("File Size: $fileSize")
-            println("Foreign Off: $foreignOff")
-            println("Foreign Size: $foreignSize")
-            println("Number of Classes: $numClasses")
-            println("Class Index Off: $classIdxOff")
-            println("Number of Line Number Programs: $numberOfLineNumberPrograms")
-            println("Line Number Program Index Offset: $lineNumberProgramIndexOffset")
-            println("Number of Literal Arrays: $numLiteralArrays")
-            println("Literal Array Index Off: $literalArrayIdxOff")
-            println("Number of Index Regions: $numIndexRegions")
-            println("Index Section Off: $indexSectionOff")
+        override fun toString(): String {
+            return "Header(\n" +
+                    "    magic                   = $magic,\n" +
+                    "    checksum                = $checksum,\n" +
+                    "    version                 = $version,\n" +
+                    "    fileSize                = $fileSize,\n" +
+                    "    foreignOff              = $foreignOff,\n" +
+                    "    foreignSize             = $foreignSize,\n" +
+                    "    numClasses              = $numClasses,\n" +
+                    "    classIdxOff             = $classIdxOff,\n" +
+                    "    numberOfLineNumberPrograms = $numberOfLineNumberPrograms,\n" +
+                    "    lineNumberProgramIndexOffset = $lineNumberProgramIndexOffset,\n" +
+                    "    numLiteralArrays        = $numLiteralArrays,\n" +
+                    "    literalArrayIdxOff      = $literalArrayIdxOff,\n" +
+                    "    numIndexRegions         = $numIndexRegions,\n" +
+                    "    indexSectionOff         = $indexSectionOff\n" +
+                    ")"
         }
-
         companion object {
 
             fun parse(offset: Int, buffer: ByteBuffer): Header {
@@ -471,6 +469,9 @@ class ByteCodeParser(
 
         fun ByteBuffer.getString(): String =
             getBytes(getULEB128().toInt() shr 1).toString(Charset.forName("UTF-8")).also { get() }
+
+        fun ByteBuffer.getString(size: Int): String =
+            getBytes(size).toString(Charset.forName("UTF-8")).also { get() }
 
         fun ByteBuffer.getShortyGroup(): List<Byte> = getShort().let { bytes ->
             listOf(0, 4, 8, 12).map { bytes.toInt().shr(it).toByte() and 0x0f.b }.dropLastWhile { it == 0.b }
