@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic
+package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.ControlFlowGraph

@@ -21,7 +21,7 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import org.jacodb.panda.dynamic.*
+import org.jacodb.panda.dynamic.api.*
 import java.io.File
 
 val logger = object : KLogging() {}.logger

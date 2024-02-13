@@ -16,7 +16,6 @@
 
 package parser
 
-import org.jacodb.panda.dynamic.PandaBlockGraph
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
