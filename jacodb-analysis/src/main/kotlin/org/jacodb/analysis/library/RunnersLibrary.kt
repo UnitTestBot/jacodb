@@ -19,19 +19,21 @@ package org.jacodb.analysis.library
 
 import org.jacodb.analysis.engine.BaseIfdsUnitRunnerFactory
 import org.jacodb.analysis.engine.BidiIfdsUnitRunnerFactory
-import org.jacodb.analysis.library.analyzers.AliasAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.NpeAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.NpePrecalcBackwardAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.SqlInjectionAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.SqlInjectionBackwardAnalyzerFactory
-import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.library.analyzers.TaintNode
-import org.jacodb.analysis.library.analyzers.UnusedVariableAnalyzerFactory
+import org.jacodb.analysis.library.analyzers.*
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
+import kotlin.math.max
 
 //TODO: add docs here
 val UnusedVariableRunnerFactory = BaseIfdsUnitRunnerFactory(UnusedVariableAnalyzerFactory)
+
+
+fun newSliceTaintRunnerFactory(sinks: Set<JcInst>, maxPathLength: Int = 5) = BaseIfdsUnitRunnerFactory(
+    SliceTaintAnalyzerFactory(sinks, maxPathLength))
+
+fun newCrashSliceRunnerFactory(sinks: List<JcInst>, maxPathLength: Int = 5) = BaseIfdsUnitRunnerFactory(
+    CrashSliceAnalyzerFactory(sinks, maxPathLength))
+
 
 fun newSqlInjectionRunnerFactory(maxPathLength: Int = 5) = BidiIfdsUnitRunnerFactory(
     BaseIfdsUnitRunnerFactory(SqlInjectionAnalyzerFactory(maxPathLength)),

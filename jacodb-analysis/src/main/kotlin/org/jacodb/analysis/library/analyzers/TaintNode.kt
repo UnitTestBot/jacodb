@@ -19,6 +19,7 @@ package org.jacodb.analysis.library.analyzers
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.cfg.JcReturnInst
 
 /**
  * Abstract implementation for [DomainFact] that can be used for analysis where dataflow facts correlate with
@@ -72,6 +73,56 @@ class NpeTaintNode(variable: AccessPath, activation: JcInst? = null): TaintNode(
         return NpeTaintNode(newPath, activation)
     }
 }
+
+/**
+ * Implementation for [DomainFact] that is used for slicing analyses to indicate the importance
+ * of a variable's value and dataflow dependencies.
+ *
+ * @property isFromReturn is the [JcReturnInst] instruction that is the primary source of the dataflow dependency
+ * described by this [DomainFact] (early exit before some important instructions).
+ * Null value means that the primary source of the dataflow dependency is one of the sink instructions.
+ */
+class SliceDataFlowNode(variable: AccessPath, activation: JcInst? = null, val isFromReturn: JcInst? = null): TaintNode(variable, activation) {
+    override val nodeType: String
+        get() = "Slicing"
+
+    override fun updateActivation(newActivation: JcInst?): SliceDataFlowNode {
+        return SliceDataFlowNode(variable, newActivation, isFromReturn)
+    }
+
+    override fun moveToOtherPath(newPath: AccessPath): TaintNode {
+        return SliceDataFlowNode(newPath, activation, isFromReturn)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
+
+        other as SliceDataFlowNode
+
+        if (isFromReturn != other.isFromReturn) return false
+        if (nodeType != other.nodeType) return false
+        if (variable != other.variable) return false
+
+        return true
+    }
+
+}
+
+/**
+ * Implementation for [DomainFact] that is used for slicing analyses to indicate the importance
+ * of some instructions and control-flow dependencies.
+ *
+ * @property inst is the [JcInst] instruction that is activation point for this fact. The control-flow
+ * fact just passed on using flow functions until this instruction is reached.
+ * Null value means that the control-flow fact is active.
+ *
+ * @property isFromReturn is the [JcReturnInst] instruction that is the primary source of the control-flow dependency
+ * described by this [DomainFact] (early exit before some important instructions).
+ * Null value means that the primary source of the dataflow dependency is one of the sink instructions.
+ */
+data class SliceControlFlowNode(val inst: JcInst? = null, val isFromReturn: JcInst? = null): DomainFact
 
 data class UnusedVariableNode(val variable: AccessPath, val initStatement: JcInst): DomainFact
 

@@ -23,6 +23,7 @@ import kotlinx.cli.required
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import mu.KLogging
 import org.jacodb.analysis.AnalysisConfig
 import org.jacodb.analysis.engine.UnitResolver
@@ -33,7 +34,7 @@ import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
@@ -150,9 +151,14 @@ fun main(args: Array<String>) {
     }
 
     val vulnerabilities = launchAnalysesByConfig(config, graph, startJcMethods).flatten()
-    val report = SarifReport.fromVulnerabilities(vulnerabilities)
+    val report = sarifReportFromVulnerabilities(vulnerabilities)
+
+    val json = Json {
+        prettyPrint = true
+        encodeDefaults = false
+    }
 
     outputFile.outputStream().use { fileOutputStream ->
-        report.encodeToStream(fileOutputStream)
+        json.encodeToStream(report, fileOutputStream)
     }
 }

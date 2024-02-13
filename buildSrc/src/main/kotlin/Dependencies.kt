@@ -30,6 +30,7 @@ object Versions {
     const val kotlinx_serialization = "1.4.1"
     const val licenser = "0.6.1"
     const val mockito = "4.8.0"
+    const val sarif4k = "0.4.0"
     const val shadow = "8.1.1"
     const val slf4j = "1.7.36"
     const val soot_utbot_fork = "4.4.0-FORK-2"
@@ -260,6 +261,12 @@ object Libs {
         group = "org.ow2.asm",
         name = "asm-util",
         version = Versions.asm
+    )
+    // https://github.com/detekt/sarif4k
+    val sarif4k = dep(
+        group = "io.github.detekt.sarif4k",
+        name = "sarif4k",
+        version = Versions.sarif4k
     )
 
     // https://github.com/UnitTestBot/juliet-java-test-suite

@@ -25,7 +25,7 @@ import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.analysis.library.getClassUnitResolver
 import org.jacodb.analysis.library.newNpeRunnerFactory
 import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.api.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
@@ -41,7 +41,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
         println("Vulnerabilities found: ${result.size}")
         println("Generated report:")
-        SarifReport.fromVulnerabilities(result).encodeToStream(System.out)
+        sarifReportFromVulnerabilities(result)//.encodeToStream(System.out)
     }
 
     @Test
