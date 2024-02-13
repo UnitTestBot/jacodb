@@ -16,10 +16,20 @@
 
 package org.jacodb.panda.dynamic.parser
 
-class ByteCodeParser(val filePath: String) {
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+import kotlin.experimental.and
 
-    private val parsedFile: ABC
-    private val byteBuffer: ByteArray
+class ByteCodeParser(
+    val byteCodeBuffer: ByteBuffer
+) {
+
+    fun parse() {
+        Header.parse(0, buffer).printHeader()
+    }
+
+    private lateinit var parsedFile: ABC
+    val buffer: ByteBuffer = byteCodeBuffer
 
     data class ABC(
         val header: Header,
@@ -35,8 +45,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(): ABC {
-                return ABC()
+            fun parse(): ABC? {
+                return null
             }
         }
 
@@ -58,10 +68,28 @@ class ByteCodeParser(val filePath: String) {
         val numIndexRegions: Int,
         val indexSectionOff: Int
     ) {
+
+        fun printHeader() {
+            println("Magic: ${magic.joinToString("") { it.toString() }}")
+            println("Checksum: ${checksum.joinToString("") { it.toString() }}")
+            println("Version: ${version.joinToString("") { it.toString() }}")
+            println("File Size: $fileSize")
+            println("Foreign Off: $foreignOff")
+            println("Foreign Size: $foreignSize")
+            println("Number of Classes: $numClasses")
+            println("Class Index Off: $classIdxOff")
+            println("Number of Line Number Programs: $numberOfLineNumberPrograms")
+            println("Line Number Program Index Offset: $lineNumberProgramIndexOffset")
+            println("Number of Literal Arrays: $numLiteralArrays")
+            println("Literal Array Index Off: $literalArrayIdxOff")
+            println("Number of Index Regions: $numIndexRegions")
+            println("Index Section Off: $indexSectionOff")
+        }
+
         companion object {
 
-            fun parse(offset: Int): Header {
-                return Header()
+            fun parse(offset: Int, buffer: ByteBuffer): Header {
+                return readHeader(buffer)
             }
         }
     }
@@ -71,8 +99,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): ClassIndex {
-                return ClassIndex()
+            fun parse(offset: Int): ClassIndex? {
+                return null
             }
         }
     }
@@ -82,8 +110,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): IndexSection {
-                return IndexSection()
+            fun parse(offset: Int): IndexSection? {
+                return null
             }
         }
     }
@@ -105,8 +133,8 @@ class ByteCodeParser(val filePath: String) {
 
         companion object {
 
-            fun parse(offset: Int): IndexHeader {
-                return IndexHeader()
+            fun parse(offset: Int): IndexHeader? {
+                return null
             }
         }
     }
@@ -118,8 +146,8 @@ class ByteCodeParser(val filePath: String) {
 
         companion object {
 
-            fun parse(offset: Int): ClassRegionIndex {
-                return ClassRegionIndex()
+            fun parse(offset: Int): ClassRegionIndex? {
+                return null
             }
         }
     }
@@ -129,8 +157,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): FieldType {
-                return FieldType()
+            fun parse(offset: Int): FieldType? {
+                return null
             }
         }
     }
@@ -140,8 +168,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): ProtoRegionIndex {
-                return ProtoRegionIndex()
+            fun parse(offset: Int): ProtoRegionIndex? {
+                return null
             }
         }
     }
@@ -152,8 +180,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): Proto {
-                return Proto()
+            fun parse(offset: Int): Proto? {
+                return null
             }
         }
     }
@@ -165,8 +193,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): ForeignField {
-                return ForeignField()
+            fun parse(offset: Int): ForeignField? {
+                return null
             }
         }
     }
@@ -180,8 +208,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): Field {
-                return Field()
+            fun parse(offset: Int): Field? {
+                return null
             }
         }
     }
@@ -192,8 +220,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): FieldData {
-                return FieldData()
+            fun parse(offset: Int): FieldData? {
+                return null
             }
         }
     }
@@ -204,8 +232,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): MethodStringLiteralRegionIndex {
-                return MethodStringLiteralRegionIndex()
+            fun parse(offset: Int): MethodStringLiteralRegionIndex? {
+                return null
             }
         }
     }
@@ -216,8 +244,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): StringData {
-                return StringData()
+            fun parse(offset: Int): StringData? {
+                return null
             }
         }
     }
@@ -232,8 +260,8 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): Method {
-                return Method()
+            fun parse(offset: Int): Method? {
+                return null
             }
         }
     }
@@ -253,8 +281,8 @@ class ByteCodeParser(val filePath: String) {
 
         companion object {
 
-            fun parse(offset: Int): MethodData {
-                return MethodData()
+            fun parse(offset: Int): MethodData? {
+                return null
             }
         }
     }
@@ -264,12 +292,13 @@ class ByteCodeParser(val filePath: String) {
         val numArgs: Byte,
         val codeSize: Byte,
         val triesSize: Byte,
-        val insts: String
+        val insts: String,
+        val tryBlocks: List<Int>
     ) {
         companion object {
 
-            fun parse(offset: Int): Code {
-                return Code()
+            fun parse(offset: Int): Code? {
+                return null
             }
         }
     }
@@ -281,8 +310,8 @@ class ByteCodeParser(val filePath: String) {
     )  {
         companion object {
 
-            fun parse(offset: Int): MethodIndexData {
-                return MethodIndexData()
+            fun parse(offset: Int): MethodIndexData? {
+                return null
             }
         }
     }
@@ -293,17 +322,95 @@ class ByteCodeParser(val filePath: String) {
     ) {
         companion object {
 
-            fun parse(offset: Int): TaggedValue {
-                return TaggedValue()
+            fun parse(offset: Int): TaggedValue? {
+                return null
             }
         }
     }
 
-    fun getMethodCodeByName(methodName: String): Code {
-        parsedFile.method.find { m -> byteBuffer.parseString(m.nameOff) == methodName }.
-    }
+//    fun getMethodCodeByName(methodName: String): Code {
+//        parsedFile.method.find { m -> byteBuffer.parseString(m.nameOff) == methodName }.
+//    }
+//
 
-    private fun ByteArray.parseString(offset: Int): String {
+    companion object {
+        fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
+
+        fun ByteBuffer.getBytesByOffset(offset: Int, size: Int) = ByteArray(size).also { position(offset); get(it) }
+
+        fun ByteBuffer.getBytesList(size: Int) = List(size) { get() }
+
+        fun ByteBuffer.getShorts(size: Int) = ShortArray(size).also { for (i in 0 until size) it[i] = short }
+
+        fun ByteBuffer.getInts(size: Int) = IntArray(size).also { for (i in 0 until size) it[i] = int }
+
+        fun ByteBuffer.getByte() = get()
+
+        val Int.b: Byte
+            get() = toByte()
+
+        val Int.ub: UByte
+            get() = toUByte()
+
+        fun ByteBuffer.getULEB128(): ULong {
+            var result = 0UL
+            var shift = 0
+            while (true) {
+                val byte = get().toUByte()
+                result = result.or((byte and 0x7f.ub).toULong() shl shift)
+                if (byte and 0x80.ub == 0.ub)
+                    break
+                shift += 7
+            }
+            return result
+        }
+
+        fun ByteBuffer.getSLEB128(): Long {
+            var result = 0L
+            var shift = 0
+            var signBits = -1L
+
+            while (true) {
+                val byte = get()
+                result = result.or((byte and 0x7f).toLong() shl shift)
+                signBits = signBits shl 7
+                if (byte and 0x80.b == 0.b)
+                    break
+                shift += 7
+            }
+
+            if ((signBits shr 1) and result != 0L) {
+                result = result or signBits
+            }
+
+            return result
+        }
+
+        fun ByteBuffer.getString(): String =
+            getBytes(getULEB128().toInt() shr 1).toString(Charset.forName("UTF-8")).also { get() }
+
+        fun ByteBuffer.getShortyGroup(): List<Byte> = getShort().let { bytes ->
+            listOf(0, 4, 8, 12).map { bytes.toInt().shr(it).toByte() and 0x0f.b }.dropLastWhile { it == 0.b }
+        }
+
+        fun readHeader(buffer: ByteBuffer) = buffer.run {
+            Header(
+                getBytesList(8),
+                getBytesList(4),
+                getBytesList(4),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt(),
+                getInt()
+            )
+        }
 
     }
 
