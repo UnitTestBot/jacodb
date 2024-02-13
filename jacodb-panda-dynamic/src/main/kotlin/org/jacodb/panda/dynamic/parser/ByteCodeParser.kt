@@ -45,10 +45,23 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(): ABC? {
-                return null
+            fun parse(): ABC {
+                return ABC()
             }
         }
+
+        constructor() : this(
+            Header(),
+            ClassIndex(),
+            IndexSection(),
+            emptyList(),
+            emptyList(),
+            MethodStringLiteralRegionIndex(),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
 
     }
 
@@ -92,6 +105,23 @@ class ByteCodeParser(
                 return readHeader(buffer)
             }
         }
+
+        constructor() : this(
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        )
     }
 
     data class ClassIndex(
@@ -99,10 +129,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): ClassIndex? {
-                return null
+            fun parse(offset: Int): ClassIndex {
+                return ClassIndex()
             }
         }
+
+        constructor() : this(emptyList())
     }
 
     data class IndexSection(
@@ -110,10 +142,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): IndexSection? {
-                return null
+            fun parse(offset: Int): IndexSection {
+                return IndexSection()
             }
         }
+
+        constructor() : this(IndexHeader())
     }
 
     data class IndexHeader(
@@ -133,10 +167,23 @@ class ByteCodeParser(
 
         companion object {
 
-            fun parse(offset: Int): IndexHeader? {
-                return null
+            fun parse(offset: Int): IndexHeader {
+                return IndexHeader()
             }
         }
+
+        constructor() : this(
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
     }
 
 
@@ -146,10 +193,12 @@ class ByteCodeParser(
 
         companion object {
 
-            fun parse(offset: Int): ClassRegionIndex? {
-                return null
+            fun parse(offset: Int): ClassRegionIndex {
+                return ClassRegionIndex()
             }
         }
+
+        constructor() : this(emptyList())
     }
 
     data class FieldType(
@@ -157,10 +206,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): FieldType? {
-                return null
+            fun parse(offset: Int): FieldType {
+                return FieldType()
             }
         }
+
+        constructor() : this(0)
     }
 
     data class ProtoRegionIndex(
@@ -168,10 +219,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): ProtoRegionIndex? {
-                return null
+            fun parse(offset: Int): ProtoRegionIndex {
+                return ProtoRegionIndex()
             }
         }
+
+        constructor() : this(emptyList())
     }
 
     data class Proto(
@@ -180,10 +233,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): Proto? {
-                return null
+            fun parse(offset: Int): Proto {
+                return Proto()
             }
         }
+
+        constructor() : this(0, 0)
     }
 
     data class ForeignField(
@@ -193,10 +248,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): ForeignField? {
-                return null
+            fun parse(offset: Int): ForeignField {
+                return ForeignField()
             }
         }
+
+        constructor() : this(0, 0, 0)
     }
 
     data class Field(
@@ -208,10 +265,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): Field? {
-                return null
+            fun parse(offset: Int): Field {
+                return Field()
             }
         }
+
+        constructor() : this(0, 0,  0, 0, FieldData())
     }
 
     data class FieldData(
@@ -220,10 +279,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): FieldData? {
-                return null
+            fun parse(offset: Int): FieldData {
+                return FieldData()
             }
         }
+
+        constructor() : this(0, 0)
     }
 
     data class MethodStringLiteralRegionIndex(
@@ -232,10 +293,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): MethodStringLiteralRegionIndex? {
-                return null
+            fun parse(offset: Int): MethodStringLiteralRegionIndex {
+                return MethodStringLiteralRegionIndex()
             }
         }
+
+        constructor() : this(emptyList(), emptyList())
     }
 
     data class StringData(
@@ -244,10 +307,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): StringData? {
-                return null
+            fun parse(offset: Int): StringData {
+                return StringData()
             }
         }
+
+        constructor() : this(0, "")
     }
 
     data class Method(
@@ -260,10 +325,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): Method? {
-                return null
+            fun parse(offset: Int): Method {
+                return Method()
             }
         }
+
+        constructor() : this(0, 0, 0, 0, MethodData(), 0)
     }
 
     data class MethodData(
@@ -281,10 +348,12 @@ class ByteCodeParser(
 
         companion object {
 
-            fun parse(offset: Int): MethodData? {
-                return null
+            fun parse(offset: Int): MethodData {
+                return MethodData()
             }
         }
+
+        constructor() : this(0, 0, 0, 0, 0, 0, 0, 0)
     }
 
     data class Code(
@@ -297,10 +366,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): Code? {
-                return null
+            fun parse(offset: Int): Code {
+                return Code()
             }
         }
+
+        constructor() : this(0, 0, 0, 0, "", emptyList())
     }
 
     data class MethodIndexData(
@@ -310,10 +381,12 @@ class ByteCodeParser(
     )  {
         companion object {
 
-            fun parse(offset: Int): MethodIndexData? {
-                return null
+            fun parse(offset: Int): MethodIndexData {
+                return MethodIndexData()
             }
         }
+
+        constructor() : this(0, 0, 0)
     }
 
     data class TaggedValue(
@@ -322,10 +395,12 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): TaggedValue? {
-                return null
+            fun parse(offset: Int): TaggedValue {
+                return TaggedValue()
             }
         }
+
+        constructor() : this(0, 0)
     }
 
 //    fun getMethodCodeByName(methodName: String): Code {
