@@ -29,6 +29,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import mu.KotlinLogging
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
@@ -58,7 +59,7 @@ class TaintManager(
 ) : Manager<TaintFact, TaintEvent> {
 
     private val methodsForUnit = hashMapOf<UnitType, HashSet<JcMethod>>()
-    private val runnerForUnit= hashMapOf<UnitType, TaintRunner>()
+    private val runnerForUnit = hashMapOf<UnitType, TaintRunner>()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
@@ -247,15 +248,16 @@ class TaintManager(
         }
     }
 
-    override fun handleControlEvent(event: ControlEvent) {
+    override suspend fun handleControlEvent(event: ControlEvent) {
         when (event) {
             is QueueEmptinessChanged -> {
                 logger.trace { "Runner ${event.runner.unit} is empty: ${event.isEmpty}" }
                 queueIsEmpty[event.runner.unit] = event.isEmpty
                 if (event.isEmpty) {
+                    yield()
                     if (runnerForUnit.keys.all { queueIsEmpty[it] == true }) {
                         logger.debug { "All runners are empty" }
-                        stopRendezvous.trySend(Unit).getOrNull()
+                        stopRendezvous.send(Unit)
                     }
                 }
             }
