@@ -16,12 +16,12 @@
 
 package org.jacodb.analysis.ifds2
 
-import mu.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.getOrElse
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import mu.KotlinLogging
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
 import org.jacodb.analysis.ifds2.taint.BidiRunner
@@ -52,27 +52,20 @@ val Runner<*>.pathEdges: Set<Edge<*>>
         else -> error("Cannot extract pathEdges for $this")
     }
 
-// TODO: make all fields private again
 class RunnerImpl<Fact, Event>(
-    internal val graph: JcApplicationGraph,
-    internal val analyzer: Analyzer<Fact, Event>,
-    internal val manager: Manager<Fact, Event>,
-    internal val unitResolver: UnitResolver,
+    private val graph: JcApplicationGraph,
+    private val analyzer: Analyzer<Fact, Event>,
+    private val manager: Manager<Fact, Event>,
+    private val unitResolver: UnitResolver,
     override val unit: UnitType,
 ) : Runner<Fact> {
 
-    internal val flowSpace: FlowFunctions<Fact> =
-        analyzer.flowFunctions
-    internal val workList: Channel<Edge<Fact>> =
-        Channel(Channel.UNLIMITED)
-    internal val pathEdges: MutableSet<Edge<Fact>> =
-        ConcurrentHashMap.newKeySet()
-    internal val reasons: MutableMap<Edge<Fact>, MutableSet<Reason>> =
-        ConcurrentHashMap()
-    internal val summaryEdges: MutableMap<Vertex<Fact>, MutableSet<Vertex<Fact>>> =
-        hashMapOf()
-    internal val callerPathEdgeOf: MutableMap<Vertex<Fact>, MutableSet<Edge<Fact>>> =
-        hashMapOf()
+    private val flowSpace: FlowFunctions<Fact> = analyzer.flowFunctions
+    private val workList: Channel<Edge<Fact>> = Channel(Channel.UNLIMITED)
+    private val pathEdges = ConcurrentHashMap.newKeySet<Edge<Fact>>()
+    private val reasons = ConcurrentHashMap<Edge<Fact>, MutableSet<Reason>>()
+    private val summaryEdges = hashMapOf<Vertex<Fact>, HashSet<Vertex<Fact>>>()
+    private val callerPathEdgeOf = hashMapOf<Vertex<Fact>, HashSet<Edge<Fact>>>()
 
     private val Edge<Fact>.reasons: List<Reason>
         get() = this@RunnerImpl.reasons[this]!!.toList()
