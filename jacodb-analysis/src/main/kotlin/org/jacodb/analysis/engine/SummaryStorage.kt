@@ -108,11 +108,11 @@ interface SummaryStorage<T : SummaryFact> {
 class SummaryStorageImpl<T> : SummaryStorage<T>
     where T : SummaryFact {
 
-    private val summaries: MutableMap<JcMethod, MutableSet<T>> = ConcurrentHashMap()
-    private val outFlows: MutableMap<JcMethod, MutableSharedFlow<T>> = ConcurrentHashMap()
+    private val summaries = ConcurrentHashMap<JcMethod, MutableSet<T>>()
+    private val outFlows = ConcurrentHashMap<JcMethod, MutableSharedFlow<T>>()
 
     private fun getFlow(method: JcMethod): MutableSharedFlow<T> {
-        return outFlows.getOrPut(method) {
+        return outFlows.computeIfAbsent(method) {
             MutableSharedFlow(replay = Int.MAX_VALUE)
         }
     }
