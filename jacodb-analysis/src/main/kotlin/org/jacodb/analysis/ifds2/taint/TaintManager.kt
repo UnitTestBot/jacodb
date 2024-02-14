@@ -29,6 +29,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import mu.KotlinLogging
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
@@ -218,7 +219,7 @@ class TaintManager(
 
         logger.info { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
 
-        if (logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled) {
             val statsFileName = "stats.csv"
             logger.debug { "Writing stats in '$statsFileName'..." }
             File(statsFileName).outputStream().bufferedWriter().use { writer ->
