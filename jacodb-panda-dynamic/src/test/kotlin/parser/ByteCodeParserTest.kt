@@ -31,18 +31,29 @@ class ByteCodeParserTest {
     @Test
     fun parseAndPrintHeader() {
         val parser = ByteCodeParser(buffer)
-        val header = parser.parseHeader()
+        val header = parser.parseABC().header
         println(header)
     }
 
     @Test
     fun parseAndPrintClassIndex() {
         val parser = ByteCodeParser(buffer)
-        val header = parser.parseHeader()
+        val header = parser.parseABC().header
         val classIndex = header.classIndex
         println(classIndex)
     }
 
+    @Test
+    fun parseAndPrintMethods() {
+        val parser = ByteCodeParser(buffer)
+        val abc = parser.parseABC()
+        val methods = abc.methods
+        methods.forEach {
+            println(it)
+        }
+    }
+
+    // TODO: Convert int values to hex
     @Test
     fun validateHeader() {
         val expectedMagic = listOf(80, 65, 78, 68, 65, 0, 0, 0).map { it.toByte() }
@@ -61,7 +72,7 @@ class ByteCodeParserTest {
         val expectedIndexSectionOff = 76
 
         val parser = ByteCodeParser(buffer)
-        val actualHeader = parser.parseHeader()
+        val actualHeader = parser.parseABC().header
 
         assertEquals(expectedMagic, actualHeader.magic)
         assertEquals(expectedChecksum, actualHeader.checksum)

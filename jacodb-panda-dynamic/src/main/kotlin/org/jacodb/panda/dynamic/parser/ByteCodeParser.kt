@@ -24,7 +24,7 @@ class ByteCodeParser(
     private val byteCodeBuffer: ByteBuffer
 ) {
 
-    fun parseHeader(): Header = Header.parse(0, byteCodeBuffer)
+    fun parseABC(): ABC = ABC.parse(byteCodeBuffer)
 
     private lateinit var parsedFile: ABC
 
@@ -41,7 +41,7 @@ class ByteCodeParser(
         companion object {
 
             fun parse(buffer: ByteBuffer): ABC {
-                val header = readHeader(buffer)
+                val header = Header.parse(0, buffer)
                 val methodStringLiteralIndex = header.indexSection.indexHeader.methodStringLiteralIndex
                 return ABC(
                     header,
@@ -353,6 +353,16 @@ class ByteCodeParser(
 
         private lateinit var _name: String
         val name: String get() = _name
+
+        override fun toString(): String {
+            return "Method(\n" +
+                    "    classIdx = $classIdx,\n" +
+                    "    protoIdx = $protoIdx,\n" +
+                    "    nameOff = $nameOff,\n" +
+                    "    accessFlag = $accessFlag,\n" +
+                    "    methodData = $methodData\n" +
+                    ")"
+        }
 
         companion object {
 
