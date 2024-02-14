@@ -21,8 +21,6 @@ import org.jacodb.api.JcMethod
 interface Analyzer<Fact, out Event> {
     val flowFunctions: FlowFunctions<Fact>
 
-    fun isSkipped(method: JcMethod): Boolean = false
-
     fun handleNewEdge(
         edge: Edge<Fact>,
     ): List<Event>
