@@ -50,7 +50,7 @@ class ByteCodeParser(
                     emptyList(),
                     emptyList(),
                     methodStringLiteralIndex,
-                    methodStringLiteralIndex.methods.map { readMethod(it, buffer) },
+                    methodStringLiteralIndex.methods.map { Method.parse(it, buffer) },
                     emptyList()
                 )
              }
@@ -367,7 +367,7 @@ class ByteCodeParser(
         companion object {
 
             fun parse(offset: Int, buffer: ByteBuffer): Method {
-                return Method().apply {
+                return readMethod(offset, buffer).apply {
                     this._name = buffer.jumpTo(nameOff) { it.getString() }
                 }
             }
