@@ -70,9 +70,6 @@ class UniRunner<Fact, Event>(
     private val queueIsEmpty = QueueEmptinessChanged(runner = this, isEmpty = true)
     private val queueIsNotEmpty = QueueEmptinessChanged(runner = this, isEmpty = false)
 
-    private val Edge<Fact>.reasons: List<Reason>
-        get() = this@UniRunner.reasons[this]!!.toList()
-
     override suspend fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
             addStart(method)
