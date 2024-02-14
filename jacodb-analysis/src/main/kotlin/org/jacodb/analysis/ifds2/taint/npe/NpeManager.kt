@@ -278,3 +278,12 @@ class NpeManager(
             .launchIn(scope)
     }
 }
+
+fun runNpeAnalysis(
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver,
+    startMethods: List<JcMethod>,
+): List<Vulnerability> {
+    val manager = NpeManager(graph, unitResolver)
+    return manager.analyze(startMethods)
+}
