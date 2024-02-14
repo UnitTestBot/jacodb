@@ -53,8 +53,6 @@ class TaintAnalyzer(
         return false
     }
 
-    private val loopsCache: MutableMap<JcMethod, List<JcInst>> = hashMapOf()
-
     override fun handleNewEdge(
         edge: TaintEdge,
     ): List<TaintEvent> = buildList {
