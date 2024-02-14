@@ -24,7 +24,7 @@ import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Edge
-import org.jacodb.analysis.ifds2.IRunner
+import org.jacodb.analysis.ifds2.Runner
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
 import org.jacodb.api.JcMethod
@@ -35,7 +35,7 @@ class BidiRunner(
     override val unit: UnitType,
     newForwardRunner: (Manager<TaintFact, TaintEvent>) -> TaintRunner,
     newBackwardRunner: (Manager<TaintFact, TaintEvent>) -> TaintRunner,
-) : IRunner<TaintFact> {
+) : Runner<TaintFact> {
 
     @Volatile
     private var forwardQueueIsEmpty: Boolean = false

@@ -37,7 +37,7 @@ private val logger = KotlinLogging.logger {}
 typealias Method = JcMethod
 typealias Statement = JcInst
 
-interface IRunner<Fact> {
+interface Runner<Fact> {
     val unit: UnitType
 
     suspend fun run(startMethods: List<Method>)
@@ -45,21 +45,21 @@ interface IRunner<Fact> {
 }
 
 @Suppress("RecursivePropertyAccessor")
-val IRunner<*>.pathEdges: Set<Edge<*>>
+val Runner<*>.pathEdges: Set<Edge<*>>
     get() = when (this) {
-        is Runner<*, *> -> pathEdges
+        is RunnerImpl<*, *> -> pathEdges
         is BidiRunner -> forwardRunner.pathEdges + backwardRunner.pathEdges
         else -> error("Cannot extract pathEdges for $this")
     }
 
 // TODO: make all fields private again
-class Runner<Fact, Event>(
+class RunnerImpl<Fact, Event>(
     internal val graph: JcApplicationGraph,
     internal val analyzer: Analyzer<Fact, Event>,
     internal val manager: Manager<Fact, Event>,
     internal val unitResolver: UnitResolver,
     override val unit: UnitType,
-) : IRunner<Fact> {
+) : Runner<Fact> {
 
     internal val flowSpace: FlowFunctions<Fact> =
         analyzer.flowFunctions
@@ -75,7 +75,7 @@ class Runner<Fact, Event>(
         hashMapOf()
 
     private val Edge<Fact>.reasons: List<Reason>
-        get() = this@Runner.reasons[this]!!.toList()
+        get() = this@RunnerImpl.reasons[this]!!.toList()
 
     override suspend fun run(startMethods: List<JcMethod>) {
         for (method in startMethods) {
@@ -133,7 +133,7 @@ class Runner<Fact, Event>(
 
             // Add edge to worklist:
             if (workList.isEmpty) {
-                manager.handleControlEvent(QueueEmptinessChanged(this@Runner, false))
+                manager.handleControlEvent(QueueEmptinessChanged(this@RunnerImpl, false))
             }
             workList.trySend(edge).getOrThrow()
 
@@ -146,7 +146,7 @@ class Runner<Fact, Event>(
     private suspend fun tabulationAlgorithm() = coroutineScope {
         while (isActive) {
             val edge = workList.tryReceive().getOrElse {
-                manager.handleControlEvent(QueueEmptinessChanged(this@Runner, true))
+                manager.handleControlEvent(QueueEmptinessChanged(this@RunnerImpl, true))
                 val edge = workList.receive()
                 edge
             }

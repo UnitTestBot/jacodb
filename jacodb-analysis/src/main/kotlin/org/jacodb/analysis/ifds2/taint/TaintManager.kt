@@ -38,7 +38,7 @@ import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
-import org.jacodb.analysis.ifds2.Runner
+import org.jacodb.analysis.ifds2.RunnerImpl
 import org.jacodb.analysis.ifds2.pathEdges
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -79,7 +79,7 @@ class TaintManager(
                 unit = unit,
                 { manager ->
                     val analyzer = TaintAnalyzer(graph)
-                    Runner(
+                    RunnerImpl(
                         graph = graph,
                         analyzer = analyzer,
                         manager = manager,
@@ -89,7 +89,7 @@ class TaintManager(
                 },
                 { manager ->
                     val analyzer = BackwardTaintAnalyzer(graph)
-                    Runner(
+                    RunnerImpl(
                         graph = graph.reversed,
                         analyzer = analyzer,
                         manager = manager,
@@ -100,7 +100,7 @@ class TaintManager(
             )
         } else {
             val analyzer = TaintAnalyzer(graph)
-            Runner(graph, analyzer, this@TaintManager, unitResolver, unit)
+            RunnerImpl(graph, analyzer, this@TaintManager, unitResolver, unit)
         }
 
         runnerForUnit[unit] = runner
