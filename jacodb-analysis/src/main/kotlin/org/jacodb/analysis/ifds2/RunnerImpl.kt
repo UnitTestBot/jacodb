@@ -67,6 +67,9 @@ class RunnerImpl<Fact, Event>(
     private val summaryEdges = hashMapOf<Vertex<Fact>, HashSet<Vertex<Fact>>>()
     private val callerPathEdgeOf = hashMapOf<Vertex<Fact>, HashSet<Edge<Fact>>>()
 
+    private val queueIsEmpty = QueueEmptinessChanged(runner = this, isEmpty = true)
+    private val queueIsNotEmpty = QueueEmptinessChanged(runner = this, isEmpty = false)
+
     private val Edge<Fact>.reasons: List<Reason>
         get() = this@RunnerImpl.reasons[this]!!.toList()
 
@@ -126,7 +129,7 @@ class RunnerImpl<Fact, Event>(
 
             // Add edge to worklist:
             if (workList.isEmpty) {
-                manager.handleControlEvent(QueueEmptinessChanged(this@RunnerImpl, false))
+                manager.handleControlEvent(queueIsNotEmpty)
             }
             workList.trySend(edge).getOrThrow()
 
@@ -139,7 +142,7 @@ class RunnerImpl<Fact, Event>(
     private suspend fun tabulationAlgorithm() = coroutineScope {
         while (isActive) {
             val edge = workList.tryReceive().getOrElse {
-                manager.handleControlEvent(QueueEmptinessChanged(this@RunnerImpl, true))
+                manager.handleControlEvent(queueIsEmpty)
                 val edge = workList.receive()
                 edge
             }
