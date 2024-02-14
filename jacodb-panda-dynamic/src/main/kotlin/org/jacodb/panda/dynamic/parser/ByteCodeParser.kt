@@ -78,28 +78,39 @@ class ByteCodeParser(
         val numIndexRegions: Int,
         val indexSectionOff: Int
     ) {
+
+        private lateinit var _classIndex: ClassIndex
+        val classIndex: ClassIndex get() = _classIndex
+
+        private lateinit var _indexSection: IndexSection
+        val indexSection: IndexSection get() = _indexSection
+
         override fun toString(): String {
             return "Header(\n" +
-                    "    magic                   = $magic,\n" +
-                    "    checksum                = $checksum,\n" +
-                    "    version                 = $version,\n" +
-                    "    fileSize                = $fileSize,\n" +
-                    "    foreignOff              = $foreignOff,\n" +
-                    "    foreignSize             = $foreignSize,\n" +
-                    "    numClasses              = $numClasses,\n" +
-                    "    classIdxOff             = $classIdxOff,\n" +
-                    "    numberOfLineNumberPrograms = $numberOfLineNumberPrograms,\n" +
+                    "    magic                        = $magic,\n" +
+                    "    checksum                     = $checksum,\n" +
+                    "    version                      = $version,\n" +
+                    "    fileSize                     = $fileSize,\n" +
+                    "    foreignOff                   = $foreignOff,\n" +
+                    "    foreignSize                  = $foreignSize,\n" +
+                    "    numClasses                   = $numClasses,\n" +
+                    "    classIdxOff                  = $classIdxOff,\n" +
+                    "    numberOfLineNumberPrograms   = $numberOfLineNumberPrograms,\n" +
                     "    lineNumberProgramIndexOffset = $lineNumberProgramIndexOffset,\n" +
-                    "    numLiteralArrays        = $numLiteralArrays,\n" +
-                    "    literalArrayIdxOff      = $literalArrayIdxOff,\n" +
-                    "    numIndexRegions         = $numIndexRegions,\n" +
-                    "    indexSectionOff         = $indexSectionOff\n" +
+                    "    numLiteralArrays             = $numLiteralArrays,\n" +
+                    "    literalArrayIdxOff           = $literalArrayIdxOff,\n" +
+                    "    numIndexRegions              = $numIndexRegions,\n" +
+                    "    indexSectionOff              = $indexSectionOff\n" +
                     ")"
         }
+
         companion object {
 
             fun parse(offset: Int, buffer: ByteBuffer): Header {
-                return readHeader(buffer)
+                return readHeader(buffer).apply {
+                    this._classIndex = ClassIndex.parse(numClasses, classIdxOff, buffer)
+                    this._indexSection = IndexSection.parse(indexSectionOff, buffer)
+                }
             }
         }
 
@@ -126,12 +137,14 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): ClassIndex {
-                return ClassIndex()
+            fun parse(size: Int, offset: Int, buffer: ByteBuffer): ClassIndex {
+                return readClassIndex(size, offset, buffer)
             }
         }
 
         constructor() : this(emptyList())
+
+        override fun toString() = "ClassIndex(${offsets.joinToString(separator = ", ") { "0x" + it.toString(16) }})"
     }
 
     data class IndexSection(
@@ -139,8 +152,8 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): IndexSection {
-                return IndexSection()
+            fun parse(offset: Int, buffer: ByteBuffer): IndexSection {
+                return readIndexSection(offset, buffer)
             }
         }
 
@@ -160,12 +173,15 @@ class ByteCodeParser(
         val protoIdxOff: Int
     ) {
 
-        private lateinit var classRegionIndex: ClassRegionIndex
+        private lateinit var _classRegionIndex: ClassRegionIndex
+        val classRegionIndex: ClassRegionIndex get() = _classRegionIndex
 
         companion object {
 
-            fun parse(offset: Int): IndexHeader {
-                return IndexHeader()
+            fun parse(offset: Int, buffer: ByteBuffer): IndexHeader {
+                return readIndexHeader(offset, buffer).apply {
+                    _classRegionIndex = ClassRegionIndex.parse(classIdxSize, classIdxOff, buffer)
+                }
             }
         }
 
@@ -190,8 +206,8 @@ class ByteCodeParser(
 
         companion object {
 
-            fun parse(offset: Int): ClassRegionIndex {
-                return ClassRegionIndex()
+            fun parse(size: Int, offset: Int, buffer: ByteBuffer): ClassRegionIndex {
+                return readClassRegionIndex(size, offset, buffer)
             }
         }
 
@@ -203,8 +219,8 @@ class ByteCodeParser(
     ) {
         companion object {
 
-            fun parse(offset: Int): FieldType {
-                return FieldType()
+            fun parse(buffer: ByteBuffer): FieldType {
+                return readFieldType(buffer)
             }
         }
 
@@ -414,6 +430,7 @@ class ByteCodeParser(
     }
 
 
+
     companion object {
         fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
 
@@ -494,6 +511,35 @@ class ByteCodeParser(
                 getInt(),
                 getInt()
             )
+        }
+
+        fun readClassIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+            ClassIndex(it.getInts(size).toList())
+        }
+
+        fun readIndexSection(offset: Int, buffer: ByteBuffer) = IndexSection(IndexHeader.parse(offset, buffer))
+
+        fun readIndexHeader(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+            IndexHeader(
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt(),
+                it.getInt()
+            )
+        }
+
+        fun readClassRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+            ClassRegionIndex(List(size) { FieldType.parse(buffer) })
+        }
+
+        fun readFieldType(buffer: ByteBuffer) = buffer.run {
+            FieldType(getInt())
         }
 
         fun <T> ByteBuffer.jumpTo(offset: Int, action: (ByteBuffer) -> T): T {

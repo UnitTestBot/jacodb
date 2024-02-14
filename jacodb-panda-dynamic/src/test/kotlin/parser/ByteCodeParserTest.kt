@@ -36,6 +36,14 @@ class ByteCodeParserTest {
     }
 
     @Test
+    fun parseAndPrintClassIndex() {
+        val parser = ByteCodeParser(buffer)
+        val header = parser.parseHeader()
+        val classIndex = header.classIndex
+        println(classIndex)
+    }
+
+    @Test
     fun validateHeader() {
         val expectedMagic = listOf(80, 65, 78, 68, 65, 0, 0, 0).map { it.toByte() }
         val expectedChecksum = listOf(58, -122, -34, -35).map { it.toByte() }
