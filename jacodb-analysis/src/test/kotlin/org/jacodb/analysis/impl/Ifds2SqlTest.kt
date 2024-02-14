@@ -16,8 +16,8 @@
 
 package org.jacodb.analysis.impl
 
-import mu.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds2.taint.Vulnerability
@@ -101,7 +101,7 @@ class Ifds2SqlTest : BaseTest() {
     }
 
     private fun testSingleJulietClass(className: String) {
-        println(className)
+        logger.info { className }
 
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
