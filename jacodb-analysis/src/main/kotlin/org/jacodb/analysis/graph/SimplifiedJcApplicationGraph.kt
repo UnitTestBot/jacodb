@@ -46,16 +46,6 @@ internal class SimplifiedJcApplicationGraph(
 
     private val cache: MutableMap<JcMethod, List<JcMethod>> = mutableMapOf()
 
-    private fun getOverrides(method: JcMethod): List<JcMethod> {
-        return if (cache.containsKey(method)) {
-            cache[method]!!
-        } else {
-            val res = hierarchyExtension.findOverrides(method).toList()
-            cache[method] = res
-            res
-        }
-    }
-
     // For backward analysis we may want for method to start with "neutral" operation =>
     //  we add noop to the beginning of every method
     private fun getStartInst(method: JcMethod): JcNoopInst {
@@ -90,6 +80,16 @@ internal class SimplifiedJcApplicationGraph(
             else -> {
                 graph.successors(node)
             }
+        }
+    }
+
+    private fun getOverrides(method: JcMethod): List<JcMethod> {
+        return if (cache.containsKey(method)) {
+            cache[method]!!
+        } else {
+            val res = hierarchyExtension.findOverrides(method).toList()
+            cache[method] = res
+            res
         }
     }
 
