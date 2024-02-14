@@ -315,3 +315,12 @@ class TaintManager(
             .launchIn(scope)
     }
 }
+
+fun runTaintAnalysis(
+    graph: JcApplicationGraph,
+    unitResolver: UnitResolver,
+    startMethods: List<JcMethod>,
+): List<Vulnerability> {
+    val manager = TaintManager(graph, unitResolver)
+    return manager.analyze(startMethods)
+}
