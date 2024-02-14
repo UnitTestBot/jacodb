@@ -138,27 +138,3 @@ fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
 
     return inst.operands.any { isDereferencedAt(it) }
 }
-
-internal fun JcValue.isTaintedWith(fact: JcValue): Boolean {
-    if (this == fact) {
-        return true
-    }
-
-    return when (this) {
-        is JcFieldRef -> {
-            if (this.instance != null) {
-                this.instance!!.isTaintedWith(fact)
-            } else {
-                // static field
-                // TODO: ?
-                false
-            }
-        }
-
-        is JcArrayAccess -> {
-            this.array.isTaintedWith(fact)
-        }
-
-        else -> false
-    }
-}
