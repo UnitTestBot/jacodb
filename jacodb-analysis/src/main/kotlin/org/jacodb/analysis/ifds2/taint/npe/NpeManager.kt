@@ -154,6 +154,7 @@ class NpeManager(
         withTimeoutOrNull(timeout) {
             allJobs.joinAll()
         } ?: run {
+            logger.info { "Timeout!" }
             allJobs.forEach { it.cancel() }
             allJobs.joinAll()
         }
