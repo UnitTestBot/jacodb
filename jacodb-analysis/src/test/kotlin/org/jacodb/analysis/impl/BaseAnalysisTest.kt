@@ -16,9 +16,9 @@
 
 package org.jacodb.analysis.impl
 
-import mu.KotlinLogging
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import org.jacodb.analysis.engine.VulnerabilityInstance
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -118,7 +118,7 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     protected fun testSingleJulietClass(vulnerabilityType: String, className: String) {
-        println(className)
+        logger.info { className }
 
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
