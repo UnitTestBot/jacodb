@@ -33,7 +33,6 @@ import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
 
-@Suppress("PublicApiImplicitType")
 abstract class AbstractTaintBackwardFunctions(
     protected val graph: JcApplicationGraph,
     protected val maxPathLength: Int,

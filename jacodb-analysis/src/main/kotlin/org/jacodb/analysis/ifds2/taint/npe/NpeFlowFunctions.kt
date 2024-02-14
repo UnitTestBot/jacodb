@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("LiftReturnOrAssignment")
-
 package org.jacodb.analysis.ifds2.taint.npe
 
 import mu.KotlinLogging
@@ -80,7 +78,6 @@ import org.jacodb.taint.configuration.This
 
 private val logger = KotlinLogging.logger {}
 
-@Suppress("PublicApiImplicitType")
 class ForwardNpeFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,

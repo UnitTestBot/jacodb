@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("LiftReturnOrAssignment")
-
 package org.jacodb.analysis.library.analyzers
 
 import mu.KotlinLogging
@@ -56,7 +54,6 @@ import org.jacodb.taint.configuration.TaintPassThrough
 
 private val logger = KotlinLogging.logger {}
 
-@Suppress("PublicApiImplicitType")
 abstract class AbstractTaintForwardFunctions(
     protected val cp: JcClasspath,
 ) : FlowFunctionsSpace {

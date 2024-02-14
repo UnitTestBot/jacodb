@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("LiftReturnOrAssignment")
-
 package org.jacodb.analysis.ifds2
 
 import org.jacodb.api.JcMethod
