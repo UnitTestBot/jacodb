@@ -16,13 +16,13 @@
 
 package org.jacodb.analysis.impl
 
-import mu.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds2.taint.Vulnerability
-import org.jacodb.analysis.ifds2.taint.npe.runNpeAnalysis
+import org.jacodb.analysis.ifds2.taint.npe.NpeManager
 import org.jacodb.analysis.impl.BaseAnalysisTest.Companion.provideClassesForJuliet
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -45,6 +45,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
 import java.util.stream.Stream
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -289,6 +290,7 @@ class Ifds2NpeTest : BaseTest() {
             cp.newApplicationGraphForAnalysis()
         }
         val unitResolver = SingletonUnitResolver
-        return runNpeAnalysis(graph, unitResolver, methods)
+        val manager = NpeManager(graph, unitResolver)
+        return manager.analyze(methods, timeout = 30.seconds)
     }
 }
