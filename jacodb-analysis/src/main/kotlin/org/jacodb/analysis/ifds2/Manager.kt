@@ -22,7 +22,7 @@ import org.jacodb.api.JcMethod
 interface Manager<out Fact, in Event> {
     fun handleEvent(event: Event)
 
-    suspend fun handleControlEvent(event: ControlEvent)
+    fun handleControlEvent(event: ControlEvent)
 
     fun subscribeOnSummaryEdges(
         method: JcMethod,

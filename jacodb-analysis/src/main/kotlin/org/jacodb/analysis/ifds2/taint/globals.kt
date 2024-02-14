@@ -17,6 +17,6 @@
 package org.jacodb.analysis.ifds2.taint
 
 internal object Globals {
-    var BIDI_RUNNER = true
+    var BIDI_RUNNER = false
     var TAINTED_LOOP_BOUND_SINK = false
 }
