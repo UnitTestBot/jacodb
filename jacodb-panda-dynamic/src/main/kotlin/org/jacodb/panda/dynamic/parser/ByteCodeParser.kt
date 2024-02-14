@@ -24,11 +24,26 @@ class ByteCodeParser(
     private val byteCodeBuffer: ByteBuffer
 ) {
 
-    fun parseABC(): ABC = ABC.parse(byteCodeBuffer)
+    fun parseABC(): ABC {
+        val header = readHeader(byteCodeBuffer)
+        val methodStringLiteralIndex = header.indexSection.indexHeader.methodStringLiteralIndex
+        return ABC(
+            header,
+            header.classIndex,
+            header.indexSection,
+            emptyList(),
+            emptyList(),
+            methodStringLiteralIndex,
+            methodStringLiteralIndex.methods.map { readMethod(it, byteCodeBuffer) },
+            emptyList()
+        )
+    }
 
     private lateinit var parsedFile: ABC
+    private var currentProtoIdxSize = 0
+    private var currentClassIdxSize = 0
 
-    data class ABC(
+    inner class ABC(
         val header: Header,
         val classIndex: ClassIndex,
         val indexSection: IndexSection,
@@ -38,23 +53,6 @@ class ByteCodeParser(
         val methods: List<Method>,
         val methodIndexData: List<MethodIndexData>,
     ) {
-        companion object {
-
-            fun parse(buffer: ByteBuffer): ABC {
-                val header = Header.parse(0, buffer)
-                val methodStringLiteralIndex = header.indexSection.indexHeader.methodStringLiteralIndex
-                return ABC(
-                    header,
-                    header.classIndex,
-                    header.indexSection,
-                    emptyList(),
-                    emptyList(),
-                    methodStringLiteralIndex,
-                    methodStringLiteralIndex.methods.map { Method.parse(it, buffer) },
-                    emptyList()
-                )
-             }
-        }
 
         constructor() : this(
             Header(),
@@ -69,7 +67,7 @@ class ByteCodeParser(
 
     }
 
-    data class Header(
+    inner class Header(
         val magic: List<Byte>,
         val checksum: List<Byte>,
         val version: List<Byte>,
@@ -86,12 +84,9 @@ class ByteCodeParser(
         val indexSectionOff: Int
     ) {
 
-        private lateinit var _classIndex: ClassIndex
-        val classIndex: ClassIndex get() = _classIndex
+        val classIndex: ClassIndex = readClassIndex(numClasses, classIdxOff, byteCodeBuffer)
 
-        private lateinit var _indexSection: IndexSection
-        val indexSection: IndexSection get() = _indexSection
-
+        val indexSection: IndexSection = readIndexSection(indexSectionOff, byteCodeBuffer)
 
         override fun toString(): String {
             return "Header(\n" +
@@ -112,16 +107,6 @@ class ByteCodeParser(
                     ")"
         }
 
-        companion object {
-
-            fun parse(offset: Int, buffer: ByteBuffer): Header {
-                return readHeader(buffer).apply {
-                    this._classIndex = ClassIndex.parse(numClasses, classIdxOff, buffer)
-                    this._indexSection = IndexSection.parse(indexSectionOff, buffer)
-                }
-            }
-        }
-
         constructor() : this(
             emptyList(),
             emptyList(),
@@ -140,35 +125,23 @@ class ByteCodeParser(
         )
     }
 
-    data class ClassIndex(
+    inner class ClassIndex(
         val offsets: List<Int>
     ) {
-        companion object {
-
-            fun parse(size: Int, offset: Int, buffer: ByteBuffer): ClassIndex {
-                return readClassIndex(size, offset, buffer)
-            }
-        }
 
         constructor() : this(emptyList())
 
         override fun toString() = "ClassIndex(${offsets.joinToString(separator = ", ") { "0x" + it.toString(16) }})"
     }
 
-    data class IndexSection(
+    inner class IndexSection(
         val indexHeader: IndexHeader
     ) {
-        companion object {
-
-            fun parse(offset: Int, buffer: ByteBuffer): IndexSection {
-                return readIndexSection(offset, buffer)
-            }
-        }
 
         constructor() : this(IndexHeader())
     }
 
-    data class IndexHeader(
+    inner class IndexHeader(
         val startOff: Int,
         val endOff: Int,
         val classIdxSize: Int,
@@ -181,23 +154,16 @@ class ByteCodeParser(
         val protoIdxOff: Int
     ) {
 
-        private lateinit var _classRegionIndex: ClassRegionIndex
-        val classRegionIndex: ClassRegionIndex get() = _classRegionIndex
-
-        private lateinit var _methodStringLiteralIndex: MethodStringLiteralRegionIndex
-        val methodStringLiteralIndex: MethodStringLiteralRegionIndex get() = _methodStringLiteralIndex
-
-        companion object {
-
-            fun parse(offset: Int, buffer: ByteBuffer): IndexHeader {
-                return readIndexHeader(offset, buffer).apply {
-                    _classRegionIndex = ClassRegionIndex.parse(classIdxSize, classIdxOff, buffer)
-                    _methodStringLiteralIndex = MethodStringLiteralRegionIndex.parse(
-                        methodStringLiteralIdxSize, methodStringLiteralIdxOff, buffer
-                    )
-                }
-            }
+        init {
+            currentClassIdxSize = classIdxSize
+            currentProtoIdxSize = protoIdxSize
         }
+
+        val classRegionIndex: ClassRegionIndex = readClassRegionIndex(classIdxSize, classIdxOff, byteCodeBuffer)
+
+        val methodStringLiteralIndex: MethodStringLiteralRegionIndex  = readMethodStringLiteralRegionIndex(
+            methodStringLiteralIdxSize, methodStringLiteralIdxOff, byteCodeBuffer
+        )
 
         constructor() : this(
             0,
@@ -214,136 +180,80 @@ class ByteCodeParser(
     }
 
 
-    data class ClassRegionIndex(
+    inner class ClassRegionIndex(
         val fieldType: List<FieldType>
     ) {
-
-        companion object {
-
-            fun parse(size: Int, offset: Int, buffer: ByteBuffer): ClassRegionIndex {
-                return readClassRegionIndex(size, offset, buffer)
-            }
-        }
 
         constructor() : this(emptyList())
     }
 
-    data class FieldType(
+    inner class FieldType(
         val type: Int,
     ) {
-        companion object {
-
-            fun parse(buffer: ByteBuffer): FieldType {
-                return readFieldType(buffer)
-            }
-        }
 
         constructor() : this(0)
     }
 
-    data class ProtoRegionIndex(
+    inner class ProtoRegionIndex(
         val proto: List<Proto>
     ) {
-        companion object {
-
-            fun parse(offset: Int): ProtoRegionIndex {
-                return ProtoRegionIndex()
-            }
-        }
 
         constructor() : this(emptyList())
     }
 
-    data class Proto(
+    inner class Proto(
         val shorty: Int,
         val referenceType: Int
     ) {
-        companion object {
-
-            fun parse(offset: Int): Proto {
-                return Proto()
-            }
-        }
 
         constructor() : this(0, 0)
     }
 
-    data class ForeignField(
+    inner class ForeignField(
         val classIdx: Short,
         val typeIdx: Short,
         val nameOff: Int
     ) {
-        companion object {
-
-            fun parse(offset: Int): ForeignField {
-                return ForeignField()
-            }
-        }
 
         constructor() : this(0, 0, 0)
     }
 
-    data class Field(
+    inner class Field(
         val classIdx: Short,
         val typeIdx: Short,
         val nameOff: Int,
         val accessFlags: Byte,
         val fieldData: FieldData
     ) {
-        companion object {
-
-            fun parse(offset: Int): Field {
-                return Field()
-            }
-        }
 
         constructor() : this(0, 0,  0, 0, FieldData())
     }
 
-    data class FieldData(
+    inner class FieldData(
         val tagValue: Byte,
         val data: Byte
     ) {
-        companion object {
-
-            fun parse(offset: Int): FieldData {
-                return FieldData()
-            }
-        }
 
         constructor() : this(0, 0)
     }
 
-    data class MethodStringLiteralRegionIndex(
+    inner class MethodStringLiteralRegionIndex(
         val strings: List<Int>,
         val methods: List<Int>
     ) {
-        companion object {
-
-            fun parse(size: Int, offset: Int, buffer: ByteBuffer): MethodStringLiteralRegionIndex {
-                return readMethodStringLiteralRegionIndex(size, offset, buffer)
-            }
-        }
 
         constructor() : this(emptyList(), emptyList())
     }
 
-    data class StringData(
+    inner class StringData(
         val utf16Length: Byte,
         val data: String
     ) {
 
-        companion object {
-
-            fun parse(offset: Int): StringData {
-                return StringData()
-            }
-        }
-
         constructor() : this(0, "")
     }
 
-    data class Method(
+    inner class Method(
         val classIdx: Short,
         val protoIdx: Short,
         val nameOff: Int,
@@ -351,8 +261,7 @@ class ByteCodeParser(
         val methodData: MethodData,
     ) {
 
-        private lateinit var _name: String
-        val name: String get() = _name
+        val name: String = byteCodeBuffer.jumpTo(nameOff) { it.getString() }
 
         override fun toString(): String {
             return "Method(\n" +
@@ -364,47 +273,24 @@ class ByteCodeParser(
                     ")"
         }
 
-        companion object {
-
-            fun parse(offset: Int, buffer: ByteBuffer): Method {
-                return readMethod(offset, buffer).apply {
-                    this._name = buffer.jumpTo(nameOff) { it.getString() }
-                }
-            }
-        }
-
         constructor() : this(0, 0, 0, 0, MethodData())
     }
 
-     data class MethodData(
+     inner class MethodData(
         val tags: List<MethodTag>
-    ) {
+     ) {
 
         lateinit var code: Code
-
-        companion object {
-
-            fun parse(buffer: ByteBuffer): MethodData {
-                return readMethodData(buffer)
-            }
-        }
 
         constructor() : this(emptyList())
     }
 
-    data class MethodTag(
+    inner class MethodTag(
         val tag: Byte,
         val payload: List<Byte>
-    ) {
+    )
 
-        companion object {
-            fun parse(buffer: ByteBuffer): MethodTag {
-                return readMethodTag(buffer)
-            }
-        }
-    }
-
-    data class Code(
+    inner class Code(
         val numVregs: Byte,
         val numArgs: Byte,
         val codeSize: Byte,
@@ -412,41 +298,23 @@ class ByteCodeParser(
         val insts: String,
         val tryBlocks: List<Int>
     ) {
-        companion object {
-
-            fun parse(offset: Int): Code {
-                return Code()
-            }
-        }
 
         constructor() : this(0, 0, 0, 0, "", emptyList())
     }
 
-    data class MethodIndexData(
+    inner class MethodIndexData(
         val headerIdx: Short,
         val functionKind: Byte,
         val accessFlags: Byte
     )  {
-        companion object {
-
-            fun parse(offset: Int): MethodIndexData {
-                return MethodIndexData()
-            }
-        }
 
         constructor() : this(0, 0, 0)
     }
 
-    data class TaggedValue(
+    inner class TaggedValue(
         val tagValue: Byte,
         val data: Short
     ) {
-        companion object {
-
-            fun parse(offset: Int): TaggedValue {
-                return TaggedValue()
-            }
-        }
 
         constructor() : this(0, 0)
     }
@@ -457,7 +325,113 @@ class ByteCodeParser(
         }?.methodData?.code ?: throw IllegalStateException("no code")
     }
 
+    fun readHeader(buffer: ByteBuffer) = buffer.run {
+        Header(
+            getBytesList(8),
+            getBytesList(4),
+            getBytesList(4),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt(),
+            getInt()
+        )
+    }
 
+    fun readClassIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+        ClassIndex(it.getInts(size).toList())
+    }
+
+    fun readIndexSection(offset: Int, buffer: ByteBuffer) = IndexSection(readIndexHeader(offset, buffer))
+
+    fun readIndexHeader(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+        IndexHeader(
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt(),
+            it.getInt()
+        )
+    }
+
+    fun readClassRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
+        ClassRegionIndex(List(size) { readFieldType(bb) })
+    }
+
+    fun readFieldType(buffer: ByteBuffer) = buffer.run {
+        FieldType(getInt())
+    }
+
+    fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
+        val stringList = mutableListOf<Int>()
+        val methodList = mutableListOf<Int>()
+
+        repeat(size) {
+            val off = bb.getInt()
+            tryReadMethod(off, bb)?.let { methodList.add(off) } ?: stringList.add(off)
+        }
+
+        MethodStringLiteralRegionIndex(stringList, methodList)
+    }
+
+    private fun tryReadMethod(offset: Int, buffer: ByteBuffer): Method? = buffer.jumpTo(offset) {
+        try {
+            readMethod(offset, buffer)
+        } catch (e: IllegalStateException) {
+            null
+        }
+    }
+
+    fun readMethod(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+        val classIdx = it.getShort()
+        val protoIdx = it.getShort()
+        if (classIdx >= currentClassIdxSize || protoIdx >= currentProtoIdxSize)
+            throw IllegalStateException("index overflow")
+
+        Method(
+            classIdx,
+            protoIdx,
+            it.getInt(),
+            it.getShort(),
+            readMethodData(it),
+        )
+    }
+
+    fun readMethodTag(buffer: ByteBuffer) = buffer.run {
+        val tag = getByte()
+        // https://wiki.huawei.com/domains/1048/wiki/8/WIKI202305071123597?title=MethodTag
+        val payloadSize = when (tag.toInt()) {
+            0 -> 0
+            1 -> 4
+            2 -> 1
+            5 -> 4
+            6 -> 4
+            else -> throw IllegalStateException("Wrong tag")
+        }
+        val payload = getBytes(payloadSize)
+        MethodTag(tag, payload.toList())
+    }
+
+    fun readMethodData(buffer: ByteBuffer) = buffer.run {
+        var methodTag = readMethodTag(this)
+        val tags = mutableListOf(methodTag)
+        while (methodTag.tag.toInt() != 0) {
+            methodTag = readMethodTag(this)
+            tags.add(methodTag)
+        }
+        MethodData(tags)
+    }
 
     companion object {
         fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
@@ -522,108 +496,7 @@ class ByteCodeParser(
             listOf(0, 4, 8, 12).map { bytes.toInt().shr(it).toByte() and 0x0f.b }.dropLastWhile { it == 0.b }
         }
 
-        fun readHeader(buffer: ByteBuffer) = buffer.run {
-            Header(
-                getBytesList(8),
-                getBytesList(4),
-                getBytesList(4),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt(),
-                getInt()
-            )
-        }
 
-        fun readClassIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
-            ClassIndex(it.getInts(size).toList())
-        }
-
-        fun readIndexSection(offset: Int, buffer: ByteBuffer) = IndexSection(IndexHeader.parse(offset, buffer))
-
-        fun readIndexHeader(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
-            IndexHeader(
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt(),
-                it.getInt()
-            )
-        }
-
-        fun readClassRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
-            ClassRegionIndex(List(size) { FieldType.parse(buffer) })
-        }
-
-        fun readFieldType(buffer: ByteBuffer) = buffer.run {
-            FieldType(getInt())
-        }
-
-        fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
-            val stringList = mutableListOf<Int>()
-            val methodList = mutableListOf<Int>()
-
-            repeat(size) {
-                val off = bb.getInt()
-                tryReadMethod(off, bb)?.let { methodList.add(off) } ?: stringList.add(off)
-            }
-
-            MethodStringLiteralRegionIndex(stringList, methodList)
-        }
-
-        private fun tryReadMethod(offset: Int, buffer: ByteBuffer): Method? = buffer.run {
-            try {
-                readMethod(offset, buffer)
-            } catch (e: IllegalStateException) {
-                null
-            }
-        }
-
-        fun readMethod(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
-            Method(
-                it.getShort(),
-                it.getShort(),
-                it.getInt(),
-                it.getShort(),
-                MethodData.parse(it),
-            )
-        }
-
-        fun readMethodTag(buffer: ByteBuffer) = buffer.run {
-            val tag = getByte()
-            // https://wiki.huawei.com/domains/1048/wiki/8/WIKI202305071123597?title=MethodTag
-            val payloadSize = when (tag.toInt()) {
-                0 -> 0
-                1 -> 4
-                2 -> 1
-                5 -> 4
-                6 -> 4
-                else -> throw IllegalStateException("Wrong tag")
-            }
-            val payload = getBytes(payloadSize)
-            MethodTag(tag, payload.toList())
-        }
-
-        fun readMethodData(buffer: ByteBuffer) = buffer.run {
-            var methodTag = MethodTag.parse(this)
-            val tags = mutableListOf(methodTag)
-            while (methodTag.tag.toInt() != 0) {
-                methodTag = MethodTag.parse(this)
-                tags.add(methodTag)
-            }
-            MethodData(tags)
-        }
 
         fun <T> ByteBuffer.jumpTo(offset: Int, action: (ByteBuffer) -> T): T {
             val prevPos = this.position()
