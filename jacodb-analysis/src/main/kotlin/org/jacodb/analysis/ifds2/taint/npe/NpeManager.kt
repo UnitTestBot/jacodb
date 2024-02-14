@@ -53,6 +53,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.taint.configuration.TaintMark
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
@@ -96,6 +97,7 @@ class NpeManager(
     @OptIn(ExperimentalTime::class)
     fun analyze(
         startMethods: List<JcMethod>,
+        timeout: Duration = 3600.seconds,
     ): List<Vulnerability> = runBlocking(Dispatchers.Default) {
         val timeStart = TimeSource.Monotonic.markNow()
 
@@ -158,7 +160,7 @@ class NpeManager(
         allJobs.forEach { it.start() }
 
         // Await all runners:
-        withTimeoutOrNull(3600.seconds) {
+        withTimeoutOrNull(timeout) {
             allJobs.joinAll()
         } ?: run {
             allJobs.forEach { it.cancel() }
@@ -177,51 +179,13 @@ class NpeManager(
             .flatMap { method ->
                 vulnerabilitiesStorage.getCurrentFacts(method)
             }
-        logger.debug { "Total found ${foundVulnerabilities.size} vulnerabilities" }
-        for (vulnerability in foundVulnerabilities) {
-            logger.debug { "$vulnerability in ${vulnerability.method}" }
-        }
-        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
-
-        logger.info { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
-
-        if (logger.isDebugEnabled()) {
-            val statsFileName = "stats.csv"
-            logger.debug { "Writing stats in '$statsFileName'..." }
-            File(statsFileName).outputStream().bufferedWriter().use { writer ->
-                val sep = ";"
-                writer.write(listOf("classname", "cwe", "method", "sink", "fact").joinToString(sep) + "\n")
-                for (vulnerability in foundVulnerabilities) {
-                    val m = vulnerability.method
-                    if (vulnerability.rule != null) {
-                        for (cwe in vulnerability.rule.cwe) {
-                            writer.write(
-                                listOf(
-                                    m.enclosingClass.simpleName,
-                                    cwe,
-                                    m.name,
-                                    vulnerability.sink.statement,
-                                    vulnerability.sink.fact
-                                ).joinToString(sep) { "\"$it\"" } + "\n")
-                        }
-                    } else if (
-                        vulnerability.sink.fact is Tainted
-                        && vulnerability.sink.fact.mark == TaintMark.NULLNESS
-                    ) {
-                        val cwe = 476
-                        writer.write(
-                            listOf(
-                                m.enclosingClass.simpleName,
-                                cwe,
-                                m.name,
-                                vulnerability.sink.statement,
-                                vulnerability.sink.fact
-                            ).joinToString(sep) { "\"$it\"" } + "\n")
-                    } else {
-                        logger.warn { "Bad vulnerability without rule: $vulnerability" }
-                    }
-                }
+        if (logger.isDebugEnabled) {
+            logger.debug { "Total found ${foundVulnerabilities.size} vulnerabilities" }
+            for (vulnerability in foundVulnerabilities) {
+                logger.debug { "$vulnerability in ${vulnerability.method}" }
             }
+            logger.debug { "Total sinks: ${foundVulnerabilities.size}" }
+            logger.debug { "Total propagated ${runnerForUnit.values.sumOf { it.pathEdges.size }} path edges" }
         }
 
         logger.info {
