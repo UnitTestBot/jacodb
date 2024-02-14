@@ -46,12 +46,9 @@ import org.jacodb.analysis.ifds2.taint.TaintEdge
 import org.jacodb.analysis.ifds2.taint.TaintEvent
 import org.jacodb.analysis.ifds2.taint.TaintFact
 import org.jacodb.analysis.ifds2.taint.TaintRunner
-import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.ifds2.taint.Vulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.taint.configuration.TaintMark
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
