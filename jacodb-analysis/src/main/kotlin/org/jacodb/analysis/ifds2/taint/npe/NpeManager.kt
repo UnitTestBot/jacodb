@@ -36,7 +36,7 @@ import org.jacodb.analysis.engine.UnitType
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
-import org.jacodb.analysis.ifds2.RunnerImpl
+import org.jacodb.analysis.ifds2.UniRunner
 import org.jacodb.analysis.ifds2.pathEdges
 import org.jacodb.analysis.ifds2.taint.EdgeForOtherRunner
 import org.jacodb.analysis.ifds2.taint.NewSummaryEdge
@@ -80,7 +80,7 @@ class NpeManager(
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         val analyzer = NpeAnalyzer(graph)
-        val runner = RunnerImpl(graph, analyzer, this@NpeManager, unitResolver, unit)
+        val runner = UniRunner(graph, analyzer, this@NpeManager, unitResolver, unit)
 
         runnerForUnit[unit] = runner
         return runner

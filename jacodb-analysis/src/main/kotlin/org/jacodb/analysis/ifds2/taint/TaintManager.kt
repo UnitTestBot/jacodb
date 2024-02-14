@@ -38,12 +38,10 @@ import org.jacodb.analysis.graph.reversed
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
-import org.jacodb.analysis.ifds2.RunnerImpl
+import org.jacodb.analysis.ifds2.UniRunner
 import org.jacodb.analysis.ifds2.pathEdges
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.taint.configuration.TaintMark
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -80,7 +78,7 @@ class TaintManager(
                 unit = unit,
                 { manager ->
                     val analyzer = TaintAnalyzer(graph)
-                    RunnerImpl(
+                    UniRunner(
                         graph = graph,
                         analyzer = analyzer,
                         manager = manager,
@@ -90,7 +88,7 @@ class TaintManager(
                 },
                 { manager ->
                     val analyzer = BackwardTaintAnalyzer(graph)
-                    RunnerImpl(
+                    UniRunner(
                         graph = graph.reversed,
                         analyzer = analyzer,
                         manager = manager,
@@ -101,7 +99,7 @@ class TaintManager(
             )
         } else {
             val analyzer = TaintAnalyzer(graph)
-            RunnerImpl(graph, analyzer, this@TaintManager, unitResolver, unit)
+            UniRunner(graph, analyzer, this@TaintManager, unitResolver, unit)
         }
 
         runnerForUnit[unit] = runner
