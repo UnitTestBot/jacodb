@@ -92,8 +92,16 @@ open class TypeHierarchy protected constructor(
 
     private fun node(name: PandaTypeName) = nodes.find { it.arkName == name }
 
-    fun findOrNull(name: PandaTypeName) = node(name)
+    private fun runWithValue(name: PandaTypeName, typeSelector: TypeHierarchy.(PandaTypeName) -> PandaType?): PandaType? =
+        if (name.typeName.endsWith("[]"))
+            runWithValue(name.typeName.removeSuffix("[]").pandaTypeName, typeSelector)?.let {
+                PandaArrayTypeNode(project, it)
+            }
+        else typeSelector(this, name)
+
+    fun findOrNull(name: PandaTypeName) = runWithValue(name) { node(name)
         ?: PrimitiveTypeHierarchy.types.find { it.vmType == name }?.let { PandaPrimitiveType(project, it.vmType) }
+    }
 
     fun find(name: PandaTypeName) = findOrNull(name)
         ?: throw AssertionError("Unknown type $name")

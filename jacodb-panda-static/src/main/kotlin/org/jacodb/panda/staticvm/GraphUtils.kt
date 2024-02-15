@@ -54,7 +54,7 @@ data class SimpleDirectedGraph<T>(
         predecessors(it) + successors(it)
     }.map(::induced)
 
-    fun topsort(): List<T> {
+    fun rpo(): List<T> {
         val visited = hashSetOf<T>()
         val order = mutableListOf<T>()
         val onStack = hashSetOf<T>()

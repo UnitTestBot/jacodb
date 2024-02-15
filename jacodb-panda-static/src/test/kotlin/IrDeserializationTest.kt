@@ -26,6 +26,7 @@ import java.io.FileInputStream
 internal class IrDeserializationTest {
     private val json = PandaProgramInfo.json
     private val sampleFilePath = javaClass.getResource("sample.json")?.path ?: ""
+    private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path ?: ""
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
@@ -39,6 +40,15 @@ internal class IrDeserializationTest {
         val insts = builder.build()
         print(insts)
 
+        val applicationGraph = PandaApplicationGraph(project)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun stdlibTest() {
+        val input = FileInputStream(stdlibFilePath)
+        val program = json.decodeFromStream<PandaProgramInfo>(input)
+        val project = program.toProject()
         val applicationGraph = PandaApplicationGraph(project)
     }
 }

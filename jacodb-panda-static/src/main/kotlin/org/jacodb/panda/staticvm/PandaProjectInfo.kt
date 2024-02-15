@@ -37,7 +37,7 @@ data class PandaProgramInfo(
         }
 
         project.typeHierarchy.apply {
-            classesGraph.topsort().mapNotNull { nameToClass[it] }.forEach { cls ->
+            classesGraph.rpo().mapNotNull { nameToClass[it] }.forEach { cls ->
                 if (AccessFlags(cls.accessFlags).isInterface) {
                     addInterface(
                         PandaClassName(cls.name),
@@ -167,6 +167,28 @@ sealed interface PandaInstInfo {
 }
 
 @Serializable
+sealed interface PandaInstWithResultInfo : PandaInstInfo
+
+@Serializable
+sealed interface PandaInstWithTypedResultInfo : PandaInstWithResultInfo {
+    fun getResultType(project: PandaProject): PandaType
+}
+
+@Serializable
+sealed interface PandaCallerInstInfo : PandaInstWithTypedResultInfo {
+    val method: String
+
+    override fun getResultType(project: PandaProject): PandaType =
+        project.methods.find { it.name == method }?.let { project.typeHierarchy.find(it.returnType) }
+            ?: throw AssertionError("Not found return type for $method")
+}
+
+@Serializable
+sealed interface PandaInstWithResolvedResultInfo : PandaInstWithResultInfo {
+    fun getResultType(project: PandaProject, inputTypes: List<PandaType>): PandaType
+}
+
+@Serializable
 @SerialName("Constant")
 data class PandaConstantInstInfo(
     override val id: String,
@@ -175,7 +197,9 @@ data class PandaConstantInstInfo(
     override val opcode: String,
     override val type: String,
     val value: ULong
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType = project.typeHierarchy.find(type.pandaTypeName)
+}
 
 @Serializable
 @SerialName("SafePoint")
@@ -206,7 +230,22 @@ data class PandaNewObjectInstInfo(
     override val opcode: String,
     override val type: String,
     val objectClass: String,
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType = project.typeHierarchy.find(objectClass.pandaClassName)
+}
+
+@Serializable
+@SerialName("NewArray")
+data class PandaNewArrayInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+    val arrayType: String,
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType = project.typeHierarchy.find(arrayType.pandaTypeName)
+}
 
 @Serializable
 @SerialName("CallStatic")
@@ -216,8 +255,8 @@ data class PandaCallStaticInstInfo(
     override val users: List<String> = emptyList(),
     override val opcode: String,
     override val type: String,
-    val method: String
-) : PandaInstInfo
+    override val method: String
+) : PandaCallerInstInfo
 
 @Serializable
 @SerialName("NullCheck")
@@ -227,7 +266,10 @@ data class PandaNullCheckInstInfo(
     override val users: List<String> = emptyList(),
     override val opcode: String,
     override val type: String,
-) : PandaInstInfo
+) : PandaInstWithResolvedResultInfo {
+    override fun getResultType(project: PandaProject, inputTypes: List<PandaType>): PandaType =
+        inputTypes.first()
+}
 
 @Serializable
 @SerialName("ZeroCheck")
@@ -247,7 +289,9 @@ data class PandaLoadStringInstInfo(
     override val users: List<String> = emptyList(),
     override val opcode: String,
     override val type: String,
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType = project.stringType
+}
 
 @Serializable
 @SerialName("CallVirtual")
@@ -257,8 +301,8 @@ data class PandaCallVirtualInstInfo(
     override val users: List<String> = emptyList(),
     override val opcode: String,
     override val type: String,
-    val method: String
-) : PandaInstInfo
+    override val method: String
+) : PandaCallerInstInfo
 
 @Serializable
 @SerialName("LoadAndInitClass")
@@ -312,7 +356,12 @@ data class PandaLoadStaticInstInfo(
     override val type: String,
     val enclosingClass: String,
     val field: String,
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType =
+        project.findClassOrNull(enclosingClass)?.fields?.find { it.name == field }?.type?.let {
+            project.typeHierarchy.findOrNull(it)
+        } ?: throw AssertionError("not found field $field in class $enclosingClass")
+}
 
 @Serializable
 @SerialName("Return")
@@ -333,7 +382,9 @@ data class PandaParameterInstInfo(
     override val opcode: String,
     override val type: String,
     val index: Int
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType = project.stringType
+}
 
 @Serializable
 @SerialName("LoadObject")
@@ -345,7 +396,12 @@ data class PandaLoadObjectInstInfo(
     override val type: String,
     val enclosingClass: String,
     val field: String,
-) : PandaInstInfo
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType =
+        project.findClassOrNull(enclosingClass)?.fields?.find { it.name == field }?.type?.let {
+            project.typeHierarchy.findOrNull(it)
+        } ?: throw AssertionError("not found field $field in class $enclosingClass")
+}
 
 @Serializable
 @SerialName("StoreObject")
@@ -369,6 +425,30 @@ data class PandaStoreStaticInstInfo(
     override val type: String,
     val enclosingClass: String,
     val field: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("LoadArray")
+data class PandaLoadArrayInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstWithTypedResultInfo {
+    override fun getResultType(project: PandaProject): PandaType {
+        TODO("Not yet implemented")
+    }
+}
+
+@Serializable
+@SerialName("StoreArray")
+data class PandaStoreArrayInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
 ) : PandaInstInfo
 
 sealed interface PandaCastInstInfo : PandaInstInfo {
@@ -491,6 +571,86 @@ data class PandaDivInstInfo(
 ) : PandaInstInfo
 
 @Serializable
+@SerialName("Mod")
+data class PandaModInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("And")
+data class PandaAndInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Or")
+data class PandaOrInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Xor")
+data class PandaXorInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Shl")
+data class PandaShlInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Shr")
+data class PandaShrInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("AShl")
+data class PandaAshlInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("AShr")
+data class PandaAshrInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
 @SerialName("Cmp")
 data class PandaCmpInstInfo(
     override val id: String,
@@ -501,3 +661,123 @@ data class PandaCmpInstInfo(
     override val operator: String,
     override val operandsType: String,
 ) : PandaComparisonInstInfo
+
+@Serializable
+@SerialName("Throw")
+data class PandaThrowInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("NegativeCheck")
+data class PandaNegativeCheckInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("SaveStateDeoptimize")
+data class PandaSaveStateDeoptimiveInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Neg")
+data class PandaNegInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Not")
+data class PandaNotInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("LenArray")
+data class PandaLenArrayInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("BoundsCheck")
+data class PandaBoundsCheckInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("NullPtr")
+data class PandaNullPtrInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("LoadUndefined")
+data class PandaLoadUndefinedInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("RefTypeCheck")
+data class PandaRefTypeCheckInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("Try")
+data class PandaTryInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
+
+@Serializable
+@SerialName("CatchPhi")
+data class PandaCatchPhiInstInfo(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val opcode: String,
+    override val type: String,
+) : PandaInstInfo
