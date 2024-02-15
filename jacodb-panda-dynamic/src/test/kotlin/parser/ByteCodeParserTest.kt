@@ -53,23 +53,22 @@ class ByteCodeParserTest {
         }
     }
 
-    // TODO: Convert int values to hex
     @Test
     fun validateHeader() {
-        val expectedMagic = listOf(80, 65, 78, 68, 65, 0, 0, 0).map { it.toByte() }
-        val expectedChecksum = listOf(58, -122, -34, -35).map { it.toByte() }
-        val expectedVersion = listOf(11, 0, 1, 0).map { it.toByte() }
-        val expectedFileSize = 832
-        val expectedForeignOff = 180
-        val expectedForeignSize = 21
-        val expectedNumClasses = 4
-        val expectedClassIdxOff = 60
-        val expectedNumberOfLineNumberPrograms = 3
-        val expectedLineNumberProgramIndexOffset = 820
-        val expectedNumLiteralArrays = 0
-        val expectedLiteralArrayIdxOff = 76
-        val expectedNumIndexRegions = 1
-        val expectedIndexSectionOff = 76
+        val expectedMagic = listOf(0x50, 0x41, 0x4E, 0x44, 0x41, 0x00, 0x00, 0x00).map { it.toByte() }
+        val expectedChecksum = listOf(0x3A, 0x86, 0xDE, 0xDD).map { it.toByte() }
+        val expectedVersion = listOf(0x0B, 0x00, 0x01, 0x00).map { it.toByte() }
+        val expectedFileSize = 0x0340
+        val expectedForeignOff = 0xB4
+        val expectedForeignSize = 0x15
+        val expectedNumClasses = 0x04
+        val expectedClassIdxOff = 0x3C
+        val expectedNumberOfLineNumberPrograms = 0x03
+        val expectedLineNumberProgramIndexOffset = 0x0334
+        val expectedNumLiteralArrays = 0x00
+        val expectedLiteralArrayIdxOff = 0x4C
+        val expectedNumIndexRegions = 0x01
+        val expectedIndexSectionOff = 0x4C
 
         val parser = ByteCodeParser(buffer)
         val actualHeader = parser.parseABC().header
@@ -88,5 +87,71 @@ class ByteCodeParserTest {
         assertEquals(expectedLiteralArrayIdxOff, actualHeader.literalArrayIdxOff)
         assertEquals(expectedNumIndexRegions, actualHeader.numIndexRegions)
         assertEquals(expectedIndexSectionOff, actualHeader.indexSectionOff)
+    }
+
+    @Test
+    fun validateMethods() {
+        val parser = ByteCodeParser(buffer)
+        val actualMethods = parser.parseABC().methods
+
+        // Validate the first method
+        val method1 = actualMethods[0]
+        assertEquals(0x3, method1.classIdx)
+        assertEquals(0x0, method1.protoIdx)
+        assertEquals(0xEE, method1.nameOff)
+        assertEquals(0x288, method1.accessFlag)
+
+        val method1Tags = method1.methodData.tags
+        assertEquals(5, method1Tags.size)
+
+        val method1Tag1 = method1Tags[0]
+        assertEquals(0x1, method1Tag1.tag)
+        assertEquals(listOf<Byte>(0x2B, 0x2, 0x0, 0x0), method1Tag1.payload)
+
+        val method1Tag2 = method1Tags[1]
+        assertEquals(0x2, method1Tag2.tag)
+        assertEquals(listOf<Byte>(0x0), method1Tag2.payload)
+
+        val method1Tag3 = method1Tags[2]
+        assertEquals(0x5, method1Tag3.tag)
+        assertEquals(listOf<Byte>(0xFC.toByte(), 0x2, 0x0, 0x0), method1Tag3.payload)
+
+        val method1Tag4 = method1Tags[3]
+        assertEquals(0x6, method1Tag4.tag)
+        assertEquals(listOf<Byte>(0x4, 0x2, 0x0, 0x0), method1Tag4.payload)
+
+        val method1Tag5 = method1Tags[4]
+        assertEquals(0x0, method1Tag5.tag)
+        assertEquals(emptyList<Byte>(), method1Tag5.payload)
+
+        // Validate the second method
+        val method2 = actualMethods[1]
+        assertEquals(0x3, method2.classIdx)
+        assertEquals(0x1, method2.protoIdx)
+        assertEquals(0x101, method2.nameOff)
+        assertEquals(0x288, method2.accessFlag)
+
+        val method2Tags = method2.methodData.tags
+        assertEquals(5, method2Tags.size)
+
+        val method2Tag1 = method2Tags[0]
+        assertEquals(0x1, method2Tag1.tag)
+        assertEquals(listOf<Byte>(0x7A, 0x2, 0x0, 0x0), method2Tag1.payload)
+
+        val method2Tag2 = method2Tags[1]
+        assertEquals(0x2, method2Tag2.tag)
+        assertEquals(listOf<Byte>(0x0), method2Tag2.payload)
+
+        val method2Tag3 = method2Tags[2]
+        assertEquals(0x5, method2Tag3.tag)
+        assertEquals(listOf<Byte>(0x27, 0x3, 0x0, 0x0), method2Tag3.payload)
+
+        val method2Tag4 = method2Tags[3]
+        assertEquals(0x6, method2Tag4.tag)
+        assertEquals(listOf<Byte>(0x1E, 0x2, 0x0, 0x0), method2Tag4.payload)
+
+        val method2Tag5 = method2Tags[4]
+        assertEquals(0x0, method2Tag5.tag)
+        assertEquals(emptyList<Byte>(), method2Tag5.payload)
     }
 }

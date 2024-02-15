@@ -279,6 +279,11 @@ class ByteCodeParser(
      inner class MethodData(
         val tags: List<MethodTag>
      ) {
+         override fun toString(): String {
+             return "MethodData(\n" +
+                     tags.joinToString(separator = "") { it.toString() } +
+                     ")"
+         }
 
         lateinit var code: Code
 
@@ -288,7 +293,14 @@ class ByteCodeParser(
     inner class MethodTag(
         val tag: Byte,
         val payload: List<Byte>
-    )
+    ) {
+        override fun toString(): String {
+            return "\t\tMethodTag(\n" +
+                    "\t\t\ttag     = $tag,\n" +
+                    "\t\t\tpayload = $payload\n" +
+                    "\t\t)\n"
+        }
+    }
 
     inner class Code(
         val numVregs: Byte,
