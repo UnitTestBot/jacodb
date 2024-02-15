@@ -290,6 +290,10 @@ class ByteCodeParser(
         constructor() : this(emptyList())
     }
 
+    sealed interface TaggedValueName
+
+    sealed interface MethodTagName
+
     inner class MethodTag(
         val tag: Byte,
         val payload: List<Byte>
@@ -315,12 +319,14 @@ class ByteCodeParser(
     }
 
     inner class Instruction(
+        val nextInst : Instruction?,
+        val prevInst : Instruction?,
         val offset: Int,
         val opcode: Byte,
         val operands: List<Byte>
     ) {
 
-        constructor() : this(0, 0, emptyList())
+        constructor() : this(null, null,0, 0, emptyList())
     }
 
     inner class MethodIndexData(
