@@ -19,7 +19,7 @@ package org.jacodb.panda.staticvm
 import org.jacodb.api.core.cfg.InstList
 import org.jacodb.api.core.cfg.MutableInstList
 
-data class PandaInstList(override val instructions: List<PandaInst>) : InstList<PandaInst> {
+class PandaInstList(override val instructions: List<PandaInst>) : InstList<PandaInst> {
     override val size: Int
         get() = instructions.size
     override val indices: IntRange
@@ -34,6 +34,11 @@ data class PandaInstList(override val instructions: List<PandaInst>) : InstList<
     override fun toMutableList(): MutableInstList<PandaInst> = PandaMutableInstList(instructions.toMutableList())
 
     override fun iterator(): Iterator<PandaInst> = instructions.iterator()
+
+    override fun toString(): String = instructions.joinToString(
+        separator = "\n",
+        transform = { "${it.location.index}: $it" }
+    )
 }
 
 data class PandaMutableInstList(override val instructions: MutableList<PandaInst>) : MutableInstList<PandaInst> {

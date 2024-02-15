@@ -61,6 +61,8 @@ class PandaAssignInst(
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = listOf(rhv)
+
+    override fun toString(): String = "$lhv = $rhv"
 }
 
 sealed interface PandaBranchingInst : PandaInst {
@@ -77,6 +79,8 @@ class PandaIfInst(
         get() = listOf(condition)
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
+
+    override fun toString() = "if ($condition) goto ${trueBranch.index} else goto ${falseBranch.index}"
 }
 
 class PandaGotoInst(
@@ -88,6 +92,8 @@ class PandaGotoInst(
 
     override val operands: List<PandaExpr>
         get() = emptyList()
+
+    override fun toString() = "goto ${target.index}"
 }
 
 sealed interface PandaTerminatingInst : PandaInst
@@ -98,5 +104,6 @@ class PandaReturnInst(
 ) : PandaTerminatingInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
-}
 
+    override fun toString() = "return " + (value ?: "")
+}

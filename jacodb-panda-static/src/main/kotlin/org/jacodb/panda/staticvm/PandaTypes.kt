@@ -42,10 +42,16 @@ enum class PandaVMType(
     DOUBLE("f64"),
     REF("ref"),
     ANY("any");
+
+    override fun toString(): String = typeName
 }
 
-data class PandaArrayName(override val typeName: String) : PandaTypeName
-data class PandaClassName(override val typeName: String) : PandaTypeName
+data class PandaArrayName(override val typeName: String) : PandaTypeName {
+    override fun toString(): String = "$typeName[]"
+}
+data class PandaClassName(override val typeName: String) : PandaTypeName {
+    override fun toString(): String = typeName
+}
 
 val String.pandaClassName: PandaClassName
     get() = PandaClassName(this)
@@ -66,6 +72,8 @@ data class PandaPrimitiveType(
 ) : PandaType {
     override val typeName: String
         get() = arkName.typeName
+
+    override fun toString() = typeName
 }
 
 data class PandaArrayTypeNode(
@@ -79,6 +87,8 @@ data class PandaArrayTypeNode(
             is PandaArrayTypeNode -> elementType.dimensions
             else -> 0
         }
+
+    override fun toString() = typeName
 }
 
 sealed interface PandaObjectTypeNode : PandaType {
@@ -106,6 +116,8 @@ data class PandaInterfaceNode(
         get() = null
     override val directSuperTypes: List<PandaObjectTypeNode>
         get() = directSuperInterfaces
+
+    override fun toString() = typeName
 }
 
 data class PandaClassNode(
@@ -118,6 +130,8 @@ data class PandaClassNode(
         get() = directSuperClass
     override val directSuperTypes: List<PandaObjectTypeNode>
         get() = listOfNotNull(directSuperClass).plus(directSuperInterfaces)
+
+    override fun toString() = typeName
 }
 
 data class ArkPrimitiveTypeNode(
