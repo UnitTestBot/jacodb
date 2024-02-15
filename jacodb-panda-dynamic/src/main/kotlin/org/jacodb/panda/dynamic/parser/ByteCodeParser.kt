@@ -429,7 +429,7 @@ class ByteCodeParser(
             2 -> 1
             5 -> 4
             6 -> 4
-            else -> throw IllegalStateException("Wrong tag")
+            else -> throw IllegalStateException("Unknown tag: $tag")
         }
         val payload = getBytes(payloadSize)
         MethodTag(tag, payload.toList())
