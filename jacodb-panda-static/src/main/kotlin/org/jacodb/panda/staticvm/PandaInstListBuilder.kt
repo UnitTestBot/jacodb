@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.staticvm
 
-import org.jacodb.api.core.CoreType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.reflect.KFunction3
@@ -34,7 +33,7 @@ class PandaInstListBuilder(
 
     val beginOfBlock = mutableMapOf<Int, Int>()
     var instsPlaced = 0
-    val irInstructions = methodBody.topsort().flatMap {
+    val irInstructions = methodBody.rpo().flatMap {
         beginOfBlock[it.id] = instsPlaced
         instsPlaced += it.insts.size
         it.insts
@@ -67,6 +66,10 @@ class PandaInstListBuilder(
             it is PandaIfImmInstInfo || it is PandaReturnInstInfo || it is PandaReturnVoidInstInfo
         } ?: false
 
+    private fun buildLocalVars() {
+
+    }
+
     private fun buildImpl() {
         if (irInstructions.isEmpty())
             return
@@ -88,6 +91,14 @@ class PandaInstListBuilder(
                 is PandaSubInstInfo -> buildBinary(it, ::PandaSubExpr)
                 is PandaMulInstInfo -> buildBinary(it, ::PandaMulExpr)
                 is PandaDivInstInfo -> buildBinary(it, ::PandaDivExpr)
+                is PandaModInstInfo -> buildBinary(it, ::PandaModExpr)
+                is PandaAndInstInfo -> buildBinary(it, ::PandaAndExpr)
+                is PandaOrInstInfo -> buildBinary(it, ::PandaOrExpr)
+                is PandaXorInstInfo -> buildBinary(it, ::PandaXorExpr)
+                is PandaShlInstInfo -> buildBinary(it, ::PandaShlExpr)
+                is PandaShrInstInfo -> buildBinary(it, ::PandaShrExpr)
+                is PandaAshlInstInfo -> buildBinary(it, ::PandaAshlExpr)
+                is PandaAshrInstInfo -> buildBinary(it, ::PandaAshrExpr)
                 is PandaCallStaticInstInfo -> buildCallStatic(it)
                 is PandaCallVirtualInstInfo -> buildCallVirtual(it)
                 is PandaCastInstInfo -> buildCast(it)
@@ -120,6 +131,21 @@ class PandaInstListBuilder(
                 is PandaLoadClassInstInfo -> {}
                 is PandaZeroCheckInstInfo -> buildZeroCheckInst(it)
                 is PandaIsInstanceInstInfo -> buildIsInstance(it)
+                is PandaThrowInstInfo -> {}
+                is PandaNegativeCheckInstInfo -> {}
+                is PandaNewArrayInstInfo -> buildNewArrayInst(it)
+                is PandaSaveStateDeoptimiveInstInfo -> {}
+                is PandaNegInstInfo -> buildNegInst(it)
+                is PandaNotInstInfo -> buildNotInst(it)
+                is PandaLenArrayInstInfo -> buildLenArray(it)
+                is PandaBoundsCheckInstInfo -> {}
+                is PandaLoadArrayInstInfo -> buildLoadArrayInst(it)
+                is PandaStoreArrayInstInfo -> buildStoreArrayInst(it)
+                is PandaNullPtrInstInfo -> buildNullPtrInst(it)
+                is PandaRefTypeCheckInstInfo -> {}
+                is PandaLoadUndefinedInstInfo -> {}
+                is PandaTryInstInfo -> {}
+                is PandaCatchPhiInstInfo -> buildCatchPhiInst(it)
             }
 
             if (blockStartingAt.contains(index + 1)) {
@@ -342,5 +368,50 @@ class PandaInstListBuilder(
             upperBounds = emptyList()
         ))
         addAssignInst(result, PandaPhiExpr(result.type, inputs))
+    }
+
+    private fun buildCatchPhiInst(inst: PandaCatchPhiInstInfo) {
+        val inputs = inst.inputs.map(this::getLocal)
+        val result = newLocal(inst.id, project.typeHierarchy.typeInBounds(
+            lowerBounds = inputs.map { it.type.arkName },
+            upperBounds = emptyList()
+        ))
+        addAssignInst(result, PandaPhiExpr(result.type, inputs))
+    }
+
+    private fun buildNewArrayInst(inst: PandaNewArrayInstInfo) {
+        val result = newLocal(inst.id, project.typeHierarchy.find(inst.arrayType.pandaTypeName))
+        val length = getLocal(inst.inputs.first())
+        addAssignInst(result, PandaNewArrayExpr(result.type, length))
+    }
+
+    private fun buildNegInst(inst: PandaNegInstInfo) {
+        addAssignInst(result(inst), PandaNegExpr(getType(inst.type), getLocal(inst.inputs.first())))
+    }
+
+    private fun buildNotInst(inst: PandaNotInstInfo) {
+        addAssignInst(result(inst), PandaNotExpr(getType(inst.type), getLocal(inst.inputs.first())))
+    }
+
+    private fun buildLenArray(inst: PandaLenArrayInstInfo) {
+        addAssignInst(result(inst), PandaLenArrayExpr(project.int, getLocal(inst.inputs.first())))
+    }
+
+    private fun buildLoadArrayInst(inst: PandaLoadArrayInstInfo) {
+        val (array, index) = inst.inputs.map(this::getLocal)
+        val elementType = if (array.type is PandaArrayTypeNode) array.type.elementType
+        else throw AssertionError("array type is ${array.type}, expected array type")
+        addAssignInst(newLocal(inst.id, elementType), PandaArrayRef(array, index, elementType))
+    }
+
+    private fun buildStoreArrayInst(inst: PandaStoreArrayInstInfo) {
+        val (array, index, value) = inst.inputs.map(this::getLocal)
+        val elementType = if (array.type is PandaArrayTypeNode) array.type.elementType
+            else throw AssertionError("array type is ${array.type}, expected array type")
+        addAssignInst(PandaArrayRef(array, index, elementType), value)
+    }
+
+    private fun buildNullPtrInst(inst: PandaNullPtrInstInfo) {
+        addAssignInst(newLocal(inst.id, project.nullType), PandaNullPtr(project.nullType))
     }
 }
