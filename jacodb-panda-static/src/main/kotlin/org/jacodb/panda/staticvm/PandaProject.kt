@@ -76,6 +76,9 @@ class PandaProject(
     val objectType: PandaClassNode
         get() = findTypeOrNull("std.core.object") as? PandaClassNode
             ?: throw AssertionError("Object type not found")
+    val stringType: PandaClassNode
+        get() = findTypeOrNull("std.core.String") as? PandaClassNode
+            ?: throw AssertionError("String type not found")
     val serializableClass: PandaObjectTypeNode
         get() = TODO()
     val cloneableClass: PandaObjectTypeNode

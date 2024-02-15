@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.staticvm
 
+import org.jacodb.api.core.CoreType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.reflect.KFunction3
@@ -27,7 +28,7 @@ class PandaInstListBuilder(
     val methods = project.classes.flatMap { it.declaredMethods }.associateBy { it.name }
     
     val methodBody = method.body
-        ?: throw IllegalArgumentException("Cannot build InstListt for method without body")
+        ?: throw IllegalArgumentException("Cannot build InstList for method without body")
 
     val blocks = methodBody.nodes.associateBy { it.id }
 
@@ -84,11 +85,14 @@ class PandaInstListBuilder(
 
             when(it) {
                 is PandaAddInstInfo -> buildBinary(it, ::PandaAddExpr)
+                is PandaSubInstInfo -> buildBinary(it, ::PandaSubExpr)
+                is PandaMulInstInfo -> buildBinary(it, ::PandaMulExpr)
+                is PandaDivInstInfo -> buildBinary(it, ::PandaDivExpr)
                 is PandaCallStaticInstInfo -> buildCallStatic(it)
                 is PandaCallVirtualInstInfo -> buildCallVirtual(it)
                 is PandaCastInstInfo -> buildCast(it)
                 is PandaConstantInstInfo -> buildConstant(it)
-                is PandaLoadAndInitClassInstInfo -> buildLoadAndInitClassInst(it)
+                is PandaLoadAndInitClassInstInfo -> {} // buildLoadAndInitClassInst(it)
                 is PandaLoadObjectInstInfo -> buildLoadObjectInst(it)
                 is PandaLoadStaticInstInfo -> buildLoadStaticInst(it)
                 is PandaNewObjectInstInfo -> buildNewObjectInst(it)
@@ -98,6 +102,7 @@ class PandaInstListBuilder(
                 is PandaReturnVoidInstInfo -> buildReturnVoidInst()
                 is PandaSafePointInstInfo -> {}
                 is PandaSaveStateInstInfo -> {}
+                is PandaLoadStringInstInfo -> buildLoadStringInst(it)
                 is PandaStoreObjectInstInfo -> buildStoreObjectInst(it)
                 is PandaStoreStaticInstInfo -> buildStoreStaticInst(it)
                 is PandaIfImmInstInfo -> buildIfImmInst(it,
@@ -109,7 +114,12 @@ class PandaInstListBuilder(
                             "Begin point of block ${currentBlock.successors.component2()} is not set")
                 )
                 is PandaCompareInstInfo -> buildCompareInst(it)
+                is PandaCmpInstInfo -> buildBinary(it, ::PandaCmpExpr)
                 is PandaPhiInstInfo -> buildPhiInst(it)
+                is PandaInitClassInstInfo -> {}
+                is PandaLoadClassInstInfo -> {}
+                is PandaZeroCheckInstInfo -> buildZeroCheckInst(it)
+                is PandaIsInstanceInstInfo -> buildIsInstance(it)
             }
 
             if (blockStartingAt.contains(index + 1)) {
@@ -177,14 +187,21 @@ class PandaInstListBuilder(
     }
 
     private fun buildCast(inst: PandaCastInstInfo) {
-        val result = result(inst)
+        val result = newLocal(inst.id, getType(inst.candidateType))
         addAssignInst(result, PandaCastExpr(result.type, getLocal(inst.inputs.single())))
     }
 
+    private fun buildIsInstance(inst: PandaIsInstanceInstInfo) {
+        val result = result(inst)
+        addAssignInst(result, PandaIsInstanceExpr(
+            project.boolean, getLocal(inst.inputs.first()), getType(inst.candidateType)))
+    }
+
     private inline fun <reified T> convert(value: ULong, getter: ByteBuffer.() -> T) = ByteBuffer
-        .allocate(8)
+        .allocate(16)
         .order(ByteOrder.LITTLE_ENDIAN)
         .putLong(value.toLong())
+        .rewind()
         .let(getter)
 
     private fun getConstant(value: ULong, type: PandaTypeName) = when(type) {
@@ -213,12 +230,17 @@ class PandaInstListBuilder(
         addAssignInst(result, getConstant(inst.value, inst.type.pandaTypeName))
     }
 
-    private fun buildLoadAndInitClassInst(inst: PandaLoadAndInitClassInstInfo) {
-        val result = result(inst)
+    private fun buildLoadStringInst(inst: PandaLoadStringInstInfo) {
+        val result = newLocal(inst.id, project.stringType)
+        addAssignInst(result, PandaString("", project.stringType))
+    }
+
+    /*private fun buildLoadAndInitClassInst(inst: PandaLoadAndInitClassInstInfo) {
+        val result = newLocal(inst.id, project.void)
         val method = getMethod(inst.method)
         val args = inst.inputs.take(method.args.size).map(this::getLocal)
         addAssignInst(result, PandaStaticCallExpr(method, args))
-    }
+    }*/
 
     private fun buildLoadObjectInst(inst: PandaLoadObjectInstInfo) {
         val field = getField(inst.enclosingClass, inst.field)
@@ -234,6 +256,12 @@ class PandaInstListBuilder(
     }
 
     private fun buildNullCheckInst(inst: PandaNullCheckInstInfo) {
+        val obj = getLocal(inst.inputs.first())
+        val result = newLocal(inst.id, getType(obj.type.typeName))
+        addAssignInst(result, obj)
+    }
+
+    private fun buildZeroCheckInst(inst: PandaZeroCheckInstInfo) {
         val obj = getLocal(inst.inputs.first())
         val result = newLocal(inst.id, getType(obj.type.typeName))
         addAssignInst(result, obj)
@@ -282,7 +310,7 @@ class PandaInstListBuilder(
         else -> throw AssertionError("Unknown operator: $operator")
     }
 
-    private fun buildCompareInst(inst: PandaCompareInstInfo) {
+    private fun buildCompareInst(inst: PandaComparisonInstInfo) {
         val conditionExpr = getConditionType(inst.operator).invoke(
             getType(inst.type),
             getLocal(inst.inputs.component1()),

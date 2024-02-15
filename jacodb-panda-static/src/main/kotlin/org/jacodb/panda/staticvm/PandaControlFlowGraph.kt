@@ -25,6 +25,21 @@ class PandaControlFlowGraph private constructor(
     private val graph: SimpleDirectedGraph<PandaInst>
 ) : ControlFlowGraph<PandaInst>, Graph<PandaInst> by graph {
     companion object {
+        fun empty() = object : ControlFlowGraph<PandaInst> {
+            override fun successors(node: PandaInst): Set<PandaInst> = emptySet()
+
+            override fun predecessors(node: PandaInst): Set<PandaInst> = emptySet()
+
+            override val entries: List<PandaInst>
+                get() = emptyList()
+            override val exits: List<PandaInst>
+                get() = emptyList()
+            override val instructions: List<PandaInst>
+                get() = emptyList()
+
+            override fun iterator(): Iterator<PandaInst> = emptyList<PandaInst>().iterator()
+        }
+
         fun of(method: PandaMethod): PandaControlFlowGraph {
             val instList = PandaInstListBuilder(method).build()
             val graph = instList.flatMapIndexed { index, inst ->

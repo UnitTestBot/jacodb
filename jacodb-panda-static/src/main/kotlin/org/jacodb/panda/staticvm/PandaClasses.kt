@@ -66,7 +66,10 @@ class PandaMethod(
     val body: SimpleDirectedGraph<PandaBasicBlockInfo>?,
     val access: AccessFlags
 ) : CoreMethod<PandaInst> {
-    private val flowGraphValue by lazy { PandaControlFlowGraph.of(this) }
+    private val flowGraphValue by lazy {
+        if (body == null) PandaControlFlowGraph.empty()
+        else PandaControlFlowGraph.of(this) 
+    }
 
     override fun flowGraph(): ControlFlowGraph<PandaInst> = flowGraphValue
 

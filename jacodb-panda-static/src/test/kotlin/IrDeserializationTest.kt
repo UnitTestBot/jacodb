@@ -17,28 +17,27 @@
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.jupiter.api.Test
 import kotlinx.serialization.json.decodeFromStream
-import org.jacodb.analysis.library.JcSingletonUnitResolver
-import org.jacodb.analysis.library.UnusedVariableRunnerFactory
 import org.jacodb.panda.staticvm.PandaApplicationGraph
 import org.jacodb.panda.staticvm.PandaInstListBuilder
 import org.jacodb.panda.staticvm.PandaProgramInfo
-import org.jacodb.analysis.runAnalysis
 import java.io.FileInputStream
 
 
 internal class IrDeserializationTest {
     private val json = PandaProgramInfo.json
+    private val sampleFilePath = javaClass.getResource("sample.json")?.path ?: ""
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun deserializationTest() {
-        val input = FileInputStream("src/test/resources/samples/sample2.json")
+        val input = FileInputStream(sampleFilePath)
         val program = json.decodeFromStream<PandaProgramInfo>(input)
         val project = program.toProject()
-        val methodName = "Test.<ctor>:i32;f32;void;"
+        val methodName = "A.greet:i32;std.core.void;"
         val methodNode = project.methods.find { it.name == methodName }
         val builder = PandaInstListBuilder(methodNode!!)
         val insts = builder.build()
+        print(insts)
 
         val applicationGraph = PandaApplicationGraph(project)
     }
