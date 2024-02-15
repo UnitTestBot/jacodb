@@ -99,7 +99,6 @@ class AliasAnalysisTest : BaseTest() {
         testPointerBench("pointerbench.basic.$className", must, notMay)
     }
 
-
     @ParameterizedTest
     @MethodSource("provideForPointerBenchGeneralJava")
     fun testGeneralJava(className: String, must: List<String>, notMay: List<String>) {

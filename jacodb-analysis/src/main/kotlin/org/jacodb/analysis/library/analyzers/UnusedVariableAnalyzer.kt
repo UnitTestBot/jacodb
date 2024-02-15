@@ -77,7 +77,7 @@ class UnusedVariableAnalyzer(graph: JcApplicationGraph) : AbstractAnalyzer(graph
             return isUsedAt(callExpr)
         }
         if (inst is JcAssignInst) {
-            if (inst.lhv is JcArrayAccess && isUsedAt(inst.lhv as JcArrayAccess)) {
+            if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
                 return true
             }
             return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
@@ -118,7 +118,7 @@ val UnusedVariableAnalyzerFactory = AnalyzerFactory { graph ->
 }
 
 private class UnusedVariableForwardFunctions(
-    val classpath: JcClasspath,
+    val classpath: JcClasspath
 ) : FlowFunctionsSpace {
 
     override fun obtainPossibleStartFacts(startStatement: JcInst): Collection<DomainFact> {
@@ -152,9 +152,8 @@ private class UnusedVariableForwardFunctions(
         }
 
         if (fromPath == fact.variable) {
-            return@FlowFunctionInstance default + UnusedVariableNode(toPath, fact.initStatement)
+            return@FlowFunctionInstance default.plus(UnusedVariableNode(toPath, fact.initStatement))
         }
-
         default
     }
 
@@ -167,7 +166,7 @@ private class UnusedVariableForwardFunctions(
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
                 return@FlowFunctionInstance listOf(ZEROFact)
             }
-            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) } + ZEROFact
+            return@FlowFunctionInstance formalParams.map { UnusedVariableNode(it.toPath(), callStatement) }.plus(ZEROFact)
         }
 
         if (fact !is UnusedVariableNode) {

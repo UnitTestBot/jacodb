@@ -19,10 +19,7 @@ package org.jacodb.analysis.engine
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
-data class IfdsVertex(
-    val statement: JcInst,
-    val domainFact: DomainFact,
-) {
+data class IfdsVertex(val statement: JcInst, val domainFact: DomainFact) {
     val method: JcMethod
         get() = statement.location.method
 }

@@ -102,7 +102,7 @@ object CallExprVisitor : JcInstVisitor.Default<JcCallExpr?> {
 val JcInst.fieldRef: JcFieldRef?
     get() = accept(FieldRefVisitor)
 
-val JcInst.arrayAccess: JcArrayAccess?
+val JcInst.arrayRef: JcArrayAccess?
     get() = accept(ArrayAccessVisitor)
 
 val JcInst.callExpr: JcCallExpr?

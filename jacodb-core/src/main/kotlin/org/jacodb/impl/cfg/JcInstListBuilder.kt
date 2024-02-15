@@ -328,7 +328,7 @@ class JcInstListBuilder(
 
     private fun convertBinary(
         expr: JcRawBinaryExpr,
-        handler: (JcType, JcValue, JcValue) -> JcBinaryExpr,
+        handler: (JcType, JcValue, JcValue) -> JcBinaryExpr
     ): JcBinaryExpr {
         val type = expr.typeName.asType()
         val lhv = expr.lhv.accept(this) as JcValue
@@ -405,14 +405,10 @@ class JcInstListBuilder(
     override fun visitJcRawCastExpr(expr: JcRawCastExpr): JcExpr =
         JcCastExpr(expr.typeName.asType(), expr.operand.accept(this) as JcValue)
 
-    override fun visitJcRawNewExpr(expr: JcRawNewExpr): JcExpr =
-        JcNewExpr(expr.typeName.asType())
+    override fun visitJcRawNewExpr(expr: JcRawNewExpr): JcExpr = JcNewExpr(expr.typeName.asType())
 
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr): JcExpr =
-        JcNewArrayExpr(
-            expr.typeName.asType(),
-            expr.dimensions.map { it.accept(this) as JcValue }
-        )
+        JcNewArrayExpr(expr.typeName.asType(), expr.dimensions.map { it.accept(this) as JcValue })
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcExpr =
         JcInstanceOfExpr(classpath.boolean, expr.operand.accept(this) as JcValue, expr.targetType.asType())

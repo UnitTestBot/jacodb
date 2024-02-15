@@ -42,24 +42,11 @@ abstract class AbstractTaintBackwardFunctions(
         return listOf(ZEROFact)
     }
 
-    abstract fun transmitBackDataFlow(
-        from: JcValue,
-        to: JcExpr,
-        atInst: JcInst,
-        fact: DomainFact,
-        dropFact: Boolean,
-    ): List<DomainFact>
+    abstract fun transmitBackDataFlow(from: JcValue, to: JcExpr, atInst: JcInst, fact: DomainFact, dropFact: Boolean): List<DomainFact>
 
-    abstract fun transmitDataFlowAtNormalInst(
-        inst: JcInst,
-        nextInst: JcInst,
-        fact: DomainFact,
-    ): List<DomainFact>
+    abstract fun transmitDataFlowAtNormalInst(inst: JcInst, nextInst: JcInst, fact: DomainFact): List<DomainFact>
 
-    override fun obtainSequentFlowFunction(
-        current: JcInst,
-        next: JcInst,
-    ) = FlowFunctionInstance { fact ->
+    override fun obtainSequentFlowFunction(current: JcInst, next: JcInst) = FlowFunctionInstance { fact ->
         // fact.activation != current needed here to jump over assignment where the fact appeared
         if (current is JcAssignInst && (fact !is TaintNode || fact.activation != current)) {
             transmitBackDataFlow(current.lhv, current.rhv, current, fact, dropFact = false)
@@ -70,7 +57,7 @@ abstract class AbstractTaintBackwardFunctions(
 
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
-        callee: JcMethod,
+        callee: JcMethod
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
 
@@ -154,7 +141,7 @@ abstract class AbstractTaintBackwardFunctions(
     override fun obtainExitToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst,
-        exitStatement: JcInst,
+        exitStatement: JcInst
     ): FlowFunctionInstance = FlowFunctionInstance { fact ->
         val callExpr = callStatement.callExpr ?: error("Call statement should have non-null callExpr")
         val actualParams = callExpr.args
@@ -167,15 +154,7 @@ abstract class AbstractTaintBackwardFunctions(
             }
 
             if (callExpr is JcInstanceCallExpr) {
-                addAll(
-                    transmitBackDataFlow(
-                        callee.thisInstance,
-                        callExpr.instance,
-                        exitStatement,
-                        fact,
-                        dropFact = true
-                    )
-                )
+                addAll(transmitBackDataFlow(callee.thisInstance, callExpr.instance, exitStatement, fact, dropFact = true))
             }
 
             if (fact is TaintNode && fact.variable.isStatic) {

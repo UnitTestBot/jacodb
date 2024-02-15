@@ -24,7 +24,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 
 class SqlInjectionAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int,
+    maxPathLength: Int
 ) : TaintAnalyzer(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sanitizes = isSanitizeMethodToSanitizes(sqlSanitizeMatchers.asMethodMatchers)
@@ -42,7 +42,7 @@ class SqlInjectionAnalyzer(
 
 class SqlInjectionBackwardAnalyzer(
     graph: JcApplicationGraph,
-    maxPathLength: Int,
+    maxPathLength: Int
 ) : TaintBackwardAnalyzer(graph, maxPathLength) {
     override val generates = isSourceMethodToGenerates(sqlSourceMatchers.asMethodMatchers)
     override val sinks = isSinkMethodToSinks(sqlSinkMatchers.asMethodMatchers)

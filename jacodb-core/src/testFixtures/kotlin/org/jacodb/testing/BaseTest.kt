@@ -91,7 +91,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
         }
     }
 
-    override fun cleanup() {
+    override  fun cleanup() {
         db.close()
     }
 }
@@ -100,7 +100,7 @@ val globalDb by lazy {
     WithDB(Usages, Builders, InMemoryHierarchy).db
 }
 
-open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatabaseHolder {
+open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDatabaseHolder {
 
     init {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
