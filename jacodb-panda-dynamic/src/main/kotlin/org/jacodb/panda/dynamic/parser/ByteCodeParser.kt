@@ -307,11 +307,20 @@ class ByteCodeParser(
         val numArgs: Byte,
         val codeSize: Byte,
         val triesSize: Byte,
-        val insts: String,
+        val insts: List<Instruction>,
         val tryBlocks: List<Int>
     ) {
 
-        constructor() : this(0, 0, 0, 0, "", emptyList())
+        constructor() : this(0, 0, 0, 0, emptyList(), emptyList())
+    }
+
+    inner class Instruction(
+        val offset: Int,
+        val opcode: Byte,
+        val operands: List<Byte>
+    ) {
+
+        constructor() : this(0, 0, emptyList())
     }
 
     inner class MethodIndexData(
