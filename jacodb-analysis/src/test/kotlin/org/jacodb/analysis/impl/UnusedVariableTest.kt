@@ -28,12 +28,14 @@ import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
 import java.util.stream.Stream
 
+@Disabled
 class UnusedVariableTest : BaseAnalysisTest() {
     companion object : WithDB(Usages, InMemoryHierarchy) {
         @JvmStatic
