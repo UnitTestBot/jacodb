@@ -16,12 +16,12 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.paths.AccessPath
-import org.jacodb.analysis.paths.ElementAccessor
-import org.jacodb.analysis.paths.Maybe
-import org.jacodb.analysis.paths.fmap
-import org.jacodb.analysis.paths.toMaybe
-import org.jacodb.analysis.paths.toPathOrNull
+import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.ElementAccessor
+import org.jacodb.analysis.ifds.Maybe
+import org.jacodb.analysis.ifds.fmap
+import org.jacodb.analysis.ifds.toMaybe
+import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr

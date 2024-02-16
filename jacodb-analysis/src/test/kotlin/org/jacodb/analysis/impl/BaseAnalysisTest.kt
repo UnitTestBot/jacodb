@@ -18,10 +18,11 @@ package org.jacodb.analysis.impl
 
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
-import org.jacodb.analysis.engine.VulnerabilityInstance
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
+import org.jacodb.analysis.taint.Vulnerability
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
@@ -30,16 +31,17 @@ import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.provider.Arguments
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-private val logger = KotlinLogging.logger {}
+private val logger = mu.KotlinLogging.logger {}
 
 abstract class BaseAnalysisTest : BaseTest() {
+
     companion object : WithGlobalDB(UnknownClasses) {
+
         fun getJulietClasses(
             cweNum: Int,
             cweSpecificBans: List<String> = emptyList(),
@@ -85,66 +87,46 @@ abstract class BaseAnalysisTest : BaseTest() {
     }
 
     override val cp: JcClasspath = runBlocking {
-        val configPath = "config_small.json"
-        val defaultConfigResource = this.javaClass.getResourceAsStream("/$configPath")
-        if (defaultConfigResource != null) {
-            logger.info { "Loading '$configPath'..." }
-            val configJson = defaultConfigResource.bufferedReader().readText()
+        val configFileName = "config_small.json"
+        val configResource = this.javaClass.getResourceAsStream("/$configFileName")
+        if (configResource != null) {
+            val configJson = configResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
-            db.classpath(allClasspath, listOf(configurationFeature) + BaseAnalysisTest.classpathFeatures)
+            db.classpath(allClasspath, listOf(configurationFeature) + classpathFeatures)
         } else {
             super.cp
         }
     }
 
-    protected abstract fun launchAnalysis(methods: List<JcMethod>): List<VulnerabilityInstance>
-
-    protected inline fun <reified T> testOneAnalysisOnOneMethod(
-        vulnerabilityType: String,
-        methodName: String,
-        expectedLocations: Collection<String>,
-    ) {
-        val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
-        val sinks = findSinks(method, vulnerabilityType)
-
-        // TODO: think about better assertions here
-        assertEquals(expectedLocations.size, sinks.size)
-        expectedLocations.forEach { expected ->
-            val sinksRepresentations = sinks.map { it.traceGraph.sink.toString() }
-            assertTrue(sinksRepresentations.any { it.contains(expected) }) {
-                "$expected unmatched in:\n${sinksRepresentations.joinToString("\n")}"
-            }
+    protected val graph: JcApplicationGraph by lazy {
+        runBlocking {
+            cp.newApplicationGraphForAnalysis()
         }
     }
 
-    protected fun testSingleJulietClass(vulnerabilityType: String, className: String) {
+    protected abstract fun findSinks(method: JcMethod): List<Vulnerability>
+
+    protected fun testSingleJulietClass(className: String) {
         logger.info { className }
 
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
         val goodMethod = clazz.methods.single { it.name == "good" }
 
-        val badIssues = findSinks(badMethod, vulnerabilityType)
-        logger.info { "badIssues: ${badIssues.size} total" }
+        logger.info { "Searching for sinks in BAD method: $badMethod" }
+        val badIssues = findSinks(badMethod)
+        logger.info { "Total ${badIssues.size} issues in BAD method" }
         for (issue in badIssues) {
             logger.debug { "  - $issue" }
         }
         assertTrue(badIssues.isNotEmpty()) { "Must find some sinks in 'bad' for $className" }
 
-        val goodIssues = findSinks(goodMethod, vulnerabilityType)
-        logger.info { "goodIssues: ${goodIssues.size} total" }
+        logger.info { "Searching for sinks in GOOD method: $goodMethod" }
+        val goodIssues = findSinks(goodMethod)
+        logger.info { "Total ${goodIssues.size} issues in GOOD method" }
         for (issue in goodIssues) {
             logger.debug { "  - $issue" }
         }
         assertTrue(goodIssues.isEmpty()) { "Must NOT find any sinks in 'good' for $className" }
-    }
-
-    protected fun findSinks(method: JcMethod, vulnerabilityType: String): Set<VulnerabilityInstance> {
-        val vulnerabilities = launchAnalysis(listOf(method))
-        val sinks = vulnerabilities
-            .filter { it.location.vulnerabilityDescription.ruleId == vulnerabilityType }
-        // .map { it.traceGraph.sink.toString() }
-
-        return sinks.toSet()
     }
 }

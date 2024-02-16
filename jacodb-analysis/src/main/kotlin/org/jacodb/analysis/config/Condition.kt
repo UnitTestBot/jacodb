@@ -16,11 +16,11 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds2.taint.Tainted
-import org.jacodb.analysis.paths.Maybe
-import org.jacodb.analysis.paths.onSome
-import org.jacodb.analysis.paths.startsWith
-import org.jacodb.analysis.paths.toPath
+import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.ifds.Maybe
+import org.jacodb.analysis.ifds.onSome
+import org.jacodb.analysis.util.startsWith
+import org.jacodb.analysis.ifds.toPath
 import org.jacodb.api.cfg.JcBool
 import org.jacodb.api.cfg.JcConstant
 import org.jacodb.api.cfg.JcInt

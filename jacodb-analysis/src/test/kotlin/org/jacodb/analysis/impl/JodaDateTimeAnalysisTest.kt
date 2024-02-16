@@ -17,47 +17,34 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.engine.ClassUnitResolver
-import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
-import org.jacodb.analysis.engine.MethodUnitResolver
-import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.newNpeRunnerFactory
-import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = mu.KotlinLogging.logger {}
 
 class JodaDateTimeAnalysisTest : BaseTest() {
+
     companion object : WithGlobalDB()
 
-    private fun testOne(
-        unitResolver: UnitResolver,
-        ifdsUnitRunnerFactory: IfdsUnitRunnerFactory,
-    ) {
-        val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
-
-        println("Vulnerabilities found: ${result.size}")
-        println("Generated report:")
-        SarifReport.fromVulnerabilities(result).encodeToStream(System.out)
-    }
-
-    @Test
-    fun `test Unused variable analysis`() {
-        testOne(ClassUnitResolver(false), UnusedVariableRunnerFactory)
-    }
-
-    @Test
-    fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, newNpeRunnerFactory())
-    }
-
-    private val graph = runBlocking {
+    private val graph: JcApplicationGraph = runBlocking {
         cp.newApplicationGraphForAnalysis()
+    }
+
+    @Test
+    fun `test taint analysis`() {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = TaintManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 }

@@ -19,13 +19,13 @@ package org.jacodb.analysis.impl
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.ifds2.FlowFunctions
-import org.jacodb.analysis.ifds2.taint.ForwardTaintFlowFunctions
-import org.jacodb.analysis.ifds2.taint.TaintFact
-import org.jacodb.analysis.ifds2.taint.Tainted
-import org.jacodb.analysis.ifds2.taint.Zero
-import org.jacodb.analysis.library.analyzers.getArgument
-import org.jacodb.analysis.paths.toPath
+import org.jacodb.analysis.ifds.FlowFunctions
+import org.jacodb.analysis.util.getArgument
+import org.jacodb.analysis.ifds.toPath
+import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
+import org.jacodb.analysis.taint.TaintFact
+import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.taint.Zero
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -56,9 +56,10 @@ class TaintFlowFunctionsTest : BaseTest() {
     companion object : WithDB(Usages, InMemoryHierarchy)
 
     override val cp: JcClasspath = runBlocking {
-        val defaultConfigResource = this.javaClass.getResourceAsStream("/config_test.json")
-        if (defaultConfigResource != null) {
-            val configJson = defaultConfigResource.bufferedReader().readText()
+        val configFileName = "config_test.json"
+        val configResource = this.javaClass.getResourceAsStream("/$configFileName")
+        if (configResource != null) {
+            val configJson = configResource.bufferedReader().readText()
             val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
             db.classpath(allClasspath, listOf(configurationFeature) + classpathFeatures)
         } else {
@@ -66,13 +67,13 @@ class TaintFlowFunctionsTest : BaseTest() {
         }
     }
 
-    private val stringType = cp.findTypeOrNull<String>() as JcClassType
-
     private val graph: JcApplicationGraph = mockk {
         every { callees(any()) } answers {
             sequenceOf(arg<JcInst>(0).callExpr!!.method.method)
         }
     }
+
+    private val stringType = cp.findTypeOrNull<String>() as JcClassType
 
     private val testMethod = mockk<JcMethod> {
         every { name } returns "test"
@@ -122,7 +123,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     fun `test call flow function assign mark`() {
         // "x := test(...)", where 'test' is a source, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
-        val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr>() {
+        val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
             every { method } returns mockk {
                 every { method } returns testMethod
             }
@@ -138,7 +139,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     fun `test call flow function remove mark`() {
         // "test(x)", where 'x' is tainted, should result in 'x' NOT to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
-        val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr>() {
+        val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
             every { method } returns mockk {
                 every { method } returns testMethod
             }
@@ -156,7 +157,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         // "y := test(x)" should result in 'y' to be tainted only when 'x' is tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
-        val callStatement = JcAssignInst(location = mockk(), lhv = y, rhv = mockk<JcCallExpr>() {
+        val callStatement = JcAssignInst(location = mockk(), lhv = y, rhv = mockk<JcCallExpr> {
             every { method } returns mockk {
                 every { method } returns testMethod
             }
@@ -178,15 +179,15 @@ class TaintFlowFunctionsTest : BaseTest() {
     fun `test call to start flow function`() {
         // "test(x)", where 'x' is tainted, should result in 'x' (formal argument of 'test') to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
-        val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr>() {
+        val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
             every { method } returns mockk {
                 every { method } returns testMethod
             }
             every { args } returns listOf(x)
         })
         val flowSpace: FlowFunctions<TaintFact> = ForwardTaintFlowFunctions(cp, graph)
-        val f = flowSpace.obtainCallToStartFlowFunction(callStatement, calleeStart = mockk() {
-            every { location } returns mockk() {
+        val f = flowSpace.obtainCallToStartFlowFunction(callStatement, calleeStart = mockk {
+            every { location } returns mockk {
                 every { method } returns testMethod
             }
         })
@@ -205,7 +206,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     fun `test exit flow function`() {
         // "x := test()" + "return y", where 'y' is tainted, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
-        val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr>() {
+        val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
             every { method } returns mockk {
                 every { method } returns testMethod
             }
