@@ -18,6 +18,7 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import org.jacodb.analysis.engine.ClassUnitResolver
 import org.jacodb.analysis.engine.SingletonUnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds2.taint.TaintManager
@@ -34,6 +35,7 @@ import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.analysis.SqlInjectionExamples
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -99,6 +101,24 @@ class Ifds2SqlTest : BaseTest() {
         val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_execute_01"
 
         testSingleJulietClass(className)
+    }
+
+    @Test
+    fun `test bidirectional runner and other stuff`() {
+        val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_51a"
+        val clazz = cp.findClass(className)
+        val badMethod = clazz.methods.single { it.name == "bad" }
+        val graph = runBlocking {
+            cp.newApplicationGraphForAnalysis()
+        }
+        val unitResolver = ClassUnitResolver(true)
+        val manager = TaintManager(graph, unitResolver, useBidiRunner = true)
+        val sinks = manager.analyze(listOf(badMethod), timeout = 30.seconds)
+        assertTrue(sinks.isNotEmpty())
+        val aggregates = manager.getAggregates()
+        logger.debug { "Aggregates: $aggregates" }
+        val graphs = aggregates.mapValues { it.value.buildTraceGraph(sinks.first().sink) }
+        assertTrue(graphs.isNotEmpty())
     }
 
     private fun testSingleJulietClass(className: String) {
