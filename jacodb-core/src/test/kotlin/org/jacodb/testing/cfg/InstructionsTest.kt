@@ -339,6 +339,11 @@ class InstructionsTest : BaseInstructionsTest() {
         runTest(ArgAssignmentExample::class.java.name)
     }
 
+    @Test
+    fun `two ternary operators`() {
+        runTest(TwoTernaryOperators::class.java.name)
+    }
+
 }
 
 fun JcMethod.dumpInstructions(): String {
