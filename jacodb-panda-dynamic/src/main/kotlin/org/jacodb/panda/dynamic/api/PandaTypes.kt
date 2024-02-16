@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.core.CoreType
 
-interface PandaType : CoreType
+sealed interface PandaType : CoreType
 
 class PandaAnyType : PandaType {
 
@@ -43,4 +43,8 @@ class PandaVoidType : PandaType {
 class PandaNumberType : PandaType {
 
     override val typeName: String = "number"
+}
+
+class PandaUndefinedType : PandaType {
+    override val typeName: String = "undefined_t"
 }

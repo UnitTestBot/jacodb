@@ -57,27 +57,6 @@ interface PandaInst : CoreInst<PandaInstLocation, PandaMethod, PandaExpr>, Mappa
 
 interface PandaTerminatingInst : PandaInst
 
-interface PandaUnaryExpr : PandaExpr {
-    val value: PandaValue
-}
-
-interface PandaBinaryExpr : PandaExpr {
-    val lhv: PandaValue
-    val rhv: PandaValue
-}
-
-interface PandaCallExpr : PandaExpr {
-
-    // TODO: WIP version
-
-    override val type get() = PandaAnyType()
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-}
-
-interface PandaConditionExpr : PandaBinaryExpr
-
 /**
 Mock Inst for WIP purposes.
 
@@ -94,64 +73,6 @@ class TODOInst(
     }
 
     override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
-}
-
-/**
-Mock Expr for WIP purposes.
-
-Maps all unknown Panda IR instructions to this.
- */
-class TODOExpr(
-    val opcode: String,
-    override val operands: List<PandaValue>
-) : PandaExpr {
-
-    override val type: PandaType = PandaAnyType()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitTODOExpr(this)
-    }
-
-    override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
-}
-
-class PandaArgument(val id: Int) : PandaValue {
-
-    override val type: PandaType = PandaAnyType()
-
-    override val operands: List<PandaValue> = emptyList()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaArgument(this)
-    }
-
-
-    override fun toString() = "arg $id"
-}
-
-interface PandaConstant : PandaValue
-
-enum class PandaCmpOp(val str: String) {
-    EQ("EQ"),
-    NE("NE")
-
-    // TODO: expand
-}
-
-class PandaCmpExpr(
-    val cmpOp: PandaCmpOp,
-    override val lhv: PandaValue,
-    override val rhv: PandaValue
-) : PandaBinaryExpr {
-
-    override val type: PandaType = PandaBoolType()
-    override val operands: List<PandaValue> = listOf(lhv, rhv)
-
-    override fun toString(): String = "$lhv $cmpOp $rhv"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaCmpExpr(this)
-    }
 }
 
 interface PandaBranchingInst : PandaInst {
@@ -181,134 +102,6 @@ class PandaIfInst(
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaIfInst(this)
     }
-}
-
-class PandaStringConstant : PandaConstant {
-    // TODO: Think
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = emptyList()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaStringConstant(this)
-    }
-
-    override fun toString() = "PandaStringConstant"
-}
-
-class TODOConstant(val value: String?) : PandaConstant {
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = emptyList()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaTODOConstant(this)
-    }
-
-    override fun toString() = value?.let { "\"$it\"" } ?: "null"
-}
-
-class PandaNumberConstant(val value: Int) : PandaConstant {
-
-    override val type: PandaType = PandaNumberType()
-    override val operands: List<PandaValue> = emptyList()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaNumberConstant(this)
-    }
-
-    override fun toString() = value.toString()
-}
-
-class PandaCastExpr(override val type: PandaType, operand: PandaValue) : PandaExpr {
-
-    override val operands: List<PandaValue> = listOf(operand)
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaCastExpr(this)
-    }
-
-    override fun toString() = "($type) $operands"
-}
-
-class PandaNeqExpr(
-    override val lhv: PandaValue,
-    override val rhv: PandaValue
-) : PandaConditionExpr {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = listOf(lhv, rhv)
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaNeqExpr(this)
-    }
-
-    override fun toString(): String = "$lhv != $rhv"
-}
-
-class PandaEqExpr(
-    override val lhv: PandaValue,
-    override val rhv: PandaValue
-) : PandaConditionExpr {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = listOf(lhv, rhv)
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaEqExpr(this)
-    }
-
-    override fun toString(): String = "$lhv == $rhv"
-}
-
-class PandaNewExpr(
-    val clazz: PandaValue,
-    val params: List<PandaValue>
-) : PandaExpr {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = listOf(clazz, *params.toTypedArray())
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaNewExpr(this)
-    }
-
-    override fun toString() = "new $clazz(${params.joinToString(separator = ", ")})"
-}
-
-class PandaThrowInst(
-    override val location: PandaInstLocation,
-    val throwable: PandaValue
-) : PandaInst, PandaTerminatingInst {
-
-    override val operands: List<PandaExpr> = listOf(throwable)
-
-    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        return visitor.visitPandaThrowInst(this)
-    }
-
-    override fun toString(): String = "throw $throwable"
-}
-
-class PandaAddExpr(
-    override val lhv: PandaValue,
-    override val rhv: PandaValue
-) : PandaBinaryExpr {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = listOf(lhv, rhv)
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaAddExpr(this)
-    }
-
-    override fun toString(): String = "$lhv + $rhv"
-}
-
-class PandaVirtualCallExpr : PandaCallExpr {
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaVirtualCallExpr(this)
-    }
-
 }
 
 class PandaReturnInst(
@@ -352,28 +145,4 @@ class PandaCallInst(
     }
 
     override fun toString(): String = callExpr.toString()
-}
-
-class PandaTypeofExpr(override val value: PandaValue) : PandaUnaryExpr {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = listOf(value)
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaTypeofExpr(this)
-    }
-
-    override fun toString() = "typeof $value"
-}
-
-class PandaLocalVar(val id: Int) : PandaValue {
-
-    override val type: PandaType = PandaAnyType()
-    override val operands: List<PandaValue> = emptyList()
-
-    override fun toString(): String = "%$id"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaLocalVar(this)
-    }
 }
