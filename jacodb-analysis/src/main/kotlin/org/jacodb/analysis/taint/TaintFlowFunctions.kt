@@ -118,15 +118,10 @@ class ForwardTaintFlowFunctions(
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
                         val result = when (action) {
-                            is AssignMark -> {
-                                actionEvaluator.evaluate(action)
-                            }
-
+                            is AssignMark -> actionEvaluator.evaluate(action)
                             else -> error("$action is not supported for $item")
                         }
-                        result.onSome {
-                            addAll(it)
-                        }
+                        result.onSome { addAll(it) }
                     }
                 }
             }
@@ -281,9 +276,7 @@ class ForwardTaintFlowFunctions(
                                     is AssignMark -> actionEvaluator.evaluate(action)
                                     else -> error("$action is not supported for $item")
                                 }
-                                result.onSome {
-                                    addAll(it)
-                                }
+                                result.onSome { addAll(it) }
                             }
                         }
                     }
@@ -591,11 +584,6 @@ class BackwardTaintFlowFunctions(
             ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
 
-        // // FIXME: adhoc for constructors:
-        // if (callee.isConstructor) {
-        //     return@FlowFunction listOf(fact)
-        // }
-
         if (callee in graph.callees(callStatement)) {
 
             if (fact.variable.isStatic) {
@@ -665,7 +653,13 @@ class BackwardTaintFlowFunctions(
             if (calleeStart is JcReturnInst && callStatement is JcAssignInst) {
                 // Note: returnValue can be null here in some weird cases, e.g. in lambda.
                 calleeStart.returnValue?.let { returnValue ->
-                    addAll(transmitTaintReturn(fact, from = callStatement.lhv, to = returnValue))
+                    addAll(
+                        transmitTaintReturn(
+                            fact = fact,
+                            from = callStatement.lhv,
+                            to = returnValue
+                        )
+                    )
                 }
             }
         }
@@ -691,13 +685,25 @@ class BackwardTaintFlowFunctions(
                 val actualParams = callExpr.args
                 val formalParams = project.getArgumentsOf(callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
-                    addAll(transmitTaintArgumentFormalToActual(fact, from = formal, to = actual))
+                    addAll(
+                        transmitTaintArgumentFormalToActual(
+                            fact = fact,
+                            from = formal,
+                            to = actual
+                        )
+                    )
                 }
             }
 
             // Transmit facts on instance (from 'this' to 'instance'):
             if (callExpr is JcInstanceCallExpr) {
-                addAll(transmitTaintThisToInstance(fact, from = callee.thisInstance, to = callExpr.instance))
+                addAll(
+                    transmitTaintThisToInstance(
+                        fact = fact,
+                        from = callee.thisInstance,
+                        to = callExpr.instance
+                    )
+                )
             }
 
             // Transmit facts on static values:
