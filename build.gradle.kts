@@ -114,6 +114,8 @@ allprojects {
             classDirectories.setFrom(files(classDirectories.files.map {
                 fileTree(it) {
                     excludes.add("org/jacodb/impl/storage/jooq/**")
+                    excludes.add("org/jacodb/examples/**")
+                    excludes.add("org/jacodb/testing/**")
                 }
             }))
             reports {
