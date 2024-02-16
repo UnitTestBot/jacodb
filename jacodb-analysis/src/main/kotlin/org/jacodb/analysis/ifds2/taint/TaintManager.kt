@@ -29,7 +29,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
 import mu.KotlinLogging
 import org.jacodb.analysis.engine.SummaryStorageImpl
 import org.jacodb.analysis.engine.UnitResolver
