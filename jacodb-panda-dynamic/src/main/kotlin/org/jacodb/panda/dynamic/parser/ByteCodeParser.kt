@@ -16,10 +16,8 @@
 
 package org.jacodb.panda.dynamic.parser
 
-import kotlinx.serialization.descriptors.PrimitiveKind
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
-import java.util.LinkedList
 import kotlin.experimental.and
 
 class ByteCodeParser(
@@ -261,10 +259,16 @@ class ByteCodeParser(
         val protoIdx: Short,
         val nameOff: Int,
         val accessFlag: Short,
-        val methodData: MethodData,
+        val methodData: List<MethodTag>,
     ) {
 
         val name: String = byteCodeBuffer.jumpTo(nameOff) { it.getString() }
+
+        val code: Code? = methodData.find { tag ->
+            tag is MethodTag.Code
+        }?.let {
+            readCode((it as MethodTag.Code).offset, byteCodeBuffer)
+        }
 
         override fun toString(): String {
             return "Method(\n" +
@@ -273,52 +277,34 @@ class ByteCodeParser(
                     "    nameOff = $nameOff,\n" +
                     "    accessFlag = $accessFlag,\n" +
                     "    methodData = $methodData\n" +
+                    "    code = ${code}\n" +
                     ")"
         }
 
-        constructor() : this(0, 0, 0, 0, MethodData())
+        constructor() : this(0, 0, 0, 0, emptyList())
     }
 
-     inner class MethodData(
-        val tags: List<MethodTag>
-     ) {
-         override fun toString(): String {
-             return "MethodData(\n" +
-                     tags.joinToString(separator = "") { it.toString() } +
-                     ")"
-         }
+    sealed interface TaggedValue
 
-        lateinit var code: Code
+    sealed interface MethodTag : TaggedValue {
+        object Nothing : MethodTag
+        data class Code(val offset: Int) : MethodTag
+        data class SourceLang(val data: Byte) : MethodTag
+        data class DebugInfo(val offset: Int) : MethodTag
+        data class Annotation(val offset: Int) : MethodTag
 
-        constructor() : this(emptyList())
-    }
-
-    sealed interface TaggedValueName
-
-    sealed interface MethodTagName
-
-    inner class MethodTag(
-        val tag: Byte,
-        val payload: List<Byte>
-    ) {
-        override fun toString(): String {
-            return "\t\tMethodTag(\n" +
-                    "\t\t\ttag     = $tag,\n" +
-                    "\t\t\tpayload = $payload\n" +
-                    "\t\t)\n"
-        }
     }
 
     inner class Code(
-        val numVregs: Byte,
-        val numArgs: Byte,
-        val codeSize: Byte,
-        val triesSize: Byte,
+        val numVregs: ULong,
+        val numArgs: ULong,
+        val codeSize: ULong,
+        val triesSize: ULong,
         val insts: Instruction,
         val tryBlocks: List<Int>
     ) {
 
-        constructor() : this(0, 0, 0, 0, Instruction(), emptyList())
+        constructor() : this(0.ul, 0.ul, 0.ul, 0.ul, Instruction(), emptyList())
 
         fun getInstByOffset(offset: Int): Instruction {
             if (offset in insts.offset..(insts.offset + insts.operands.size)) return insts
@@ -340,17 +326,19 @@ class ByteCodeParser(
             2. ldglobalvar
          */
         fun getAccValueByOffset(offset: Int): List<Byte> {
-            val lastAccSet = findPrevious(offset) { PandaBytecode.from(it.opcode).isAccSet() } ?: return emptyList()
+            val lastAccSet = findPrevious(offset) {
+                PandaBytecode.getBytecode(it.opcode).isAccSet()
+            } ?: return emptyList()
 
             return resolve(lastAccSet)
         }
 
-        fun resolve(inst: Instruction): List<Byte> {
-            when (PandaBytecode.from(inst.opcode)) {
+        private fun resolve(inst: Instruction): List<Byte> {
+            when (PandaBytecode.getBytecode(inst.opcode)) {
                 PandaBytecode.LDA -> {
                     val vReg = inst.operands.first()
                     val lastRegSet = findPrevious(inst.offset - 1) {
-                        PandaBytecode.from(it.opcode).isRegSet() && it.operands.first() == vReg
+                        PandaBytecode.getBytecode(it.opcode).isRegSet() && it.operands.first() == vReg
                     } ?: throw IllegalStateException("can't resolve acc value for register")
 
                     return resolve(lastRegSet)
@@ -369,7 +357,7 @@ class ByteCodeParser(
                 }
 
                 else -> {
-                    throw IllegalStateException("opcode ${PandaBytecode.from(inst.opcode).name} not implemented")
+                    throw IllegalStateException("opcode ${PandaBytecode.getBytecode(inst.opcode).name} not implemented")
                 }
             }
         }
@@ -386,7 +374,7 @@ class ByteCodeParser(
             return null
         }
 
-        fun findPrevious(startOffset: Int, filter: (Instruction) -> Boolean): Instruction? {
+        private fun findPrevious(startOffset: Int, filter: (Instruction) -> Boolean): Instruction? {
             val currentInst = getInstByOffset(startOffset)
             if (filter(currentInst)) return currentInst
 
@@ -401,17 +389,45 @@ class ByteCodeParser(
         fun iterator(): ListIterator<Instruction> {
             return InstructionIterator(insts)
         }
+
+        override fun toString(): String {
+            var out = "Code(\n" +
+                    "    numVregs  = $numVregs,\n" +
+                    "    numArgs   = $numArgs,\n" +
+                    "    codeSize  = $codeSize,\n" +
+                    "    triesSize = $triesSize,\n"
+            if (codeSize > 0.ul) {
+                val iter = iterator()
+                out += insts
+                while (iter.hasNext()) {
+                    out += iter.next()
+                }
+            }
+            if (triesSize > 0.ul) {
+                // TODO Implement
+            }
+            return "$out\n)"
+        }
     }
 
     inner class Instruction(
-        val nextInst : Instruction?,
-        val prevInst : Instruction?,
+        var nextInst: Instruction?,
+        var prevInst: Instruction?,
         val offset: Int,
-        val opcode: Byte,
-        val operands: List<Byte>
+        val opcode: UByte,
+        val operands: List<Byte>,
+        private val prefix: PandaBytecodePrefix? = null
     ) {
 
-        constructor() : this(null, null,0, 0, emptyList())
+        override fun toString(): String {
+            return "Instruction(\n" +
+                    "    offset   = $offset,\n" +
+                    "    opcode   = ${PandaBytecode.getBytecode(opcode, prefix)},\n" +
+                    "    operands = ${operands.map { "0x${it.toUByte().toString(radix = 16)}" }},\n" +
+                    ")\n"
+        }
+
+        constructor() : this(null, null, 0, 0.ub, emptyList())
     }
 
     class InstructionIterator(start: Instruction) : ListIterator<Instruction> {
@@ -458,21 +474,13 @@ class ByteCodeParser(
         constructor() : this(0, 0, 0)
     }
 
-    inner class TaggedValue(
-        val tagValue: Byte,
-        val data: Short
-    ) {
-
-        constructor() : this(0, 0)
-    }
-
     fun getMethodCodeByName(methodName: String): Code {
         return parsedFile.methods.find { m ->
             m.name == methodName
-        }?.methodData?.code ?: throw IllegalStateException("no code")
+        }?.code ?: throw IllegalStateException("No code for methodName: $methodName")
     }
 
-    fun readHeader(buffer: ByteBuffer) = buffer.run {
+    private fun readHeader(buffer: ByteBuffer) = buffer.run {
         Header(
             getBytesList(8),
             getBytesList(4),
@@ -491,13 +499,13 @@ class ByteCodeParser(
         )
     }
 
-    fun readClassIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+    private fun readClassIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
         ClassIndex(it.getInts(size).toList())
     }
 
-    fun readIndexSection(offset: Int, buffer: ByteBuffer) = IndexSection(readIndexHeader(offset, buffer))
+    private fun readIndexSection(offset: Int, buffer: ByteBuffer) = IndexSection(readIndexHeader(offset, buffer))
 
-    fun readIndexHeader(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+    private fun readIndexHeader(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
         IndexHeader(
             it.getInt(),
             it.getInt(),
@@ -512,15 +520,16 @@ class ByteCodeParser(
         )
     }
 
-    fun readClassRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
+    private fun readClassRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
         ClassRegionIndex(List(size) { readFieldType(bb) })
     }
 
-    fun readFieldType(buffer: ByteBuffer) = buffer.run {
+    private fun readFieldType(buffer: ByteBuffer) = buffer.run {
         FieldType(getInt())
     }
 
-    fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
+    private fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) =
+        buffer.jumpTo(offset) { bb ->
         val stringList = mutableListOf<Int>()
         val methodList = mutableListOf<Int>()
         val all = mutableListOf<Int>()
@@ -537,17 +546,18 @@ class ByteCodeParser(
     private fun tryReadMethod(offset: Int, buffer: ByteBuffer): Method? = buffer.jumpTo(offset) {
         try {
             readMethod(offset, buffer)
-        } catch (e: IllegalStateException) {
+        } catch (e: Exception) {
             null
+        } catch (e: IllegalStateException) {
+            throw e
         }
     }
 
-    fun readMethod(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+    private fun readMethod(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
         val classIdx = it.getShort()
         val protoIdx = it.getShort()
         if (classIdx >= currentClassIdxSize || protoIdx >= currentProtoIdxSize)
-            throw IllegalStateException("index overflow")
-
+            throw Exception("Index overflow")
         Method(
             classIdx,
             protoIdx,
@@ -557,49 +567,108 @@ class ByteCodeParser(
         )
     }
 
-    fun readMethodTag(buffer: ByteBuffer) = buffer.run {
-        val tag = getByte()
+    private fun readMethodTag(buffer: ByteBuffer) = buffer.run {
         // https://wiki.huawei.com/domains/1048/wiki/8/WIKI202305071123597?title=MethodTag
-        val payloadSize = when (tag.toInt()) {
-            0 -> 0
-            1 -> 4
-            2 -> 1
-            5 -> 4
-            6 -> 4
-            else -> throw IllegalStateException("Unknown tag: $tag")
+        when (val tag = get()) {
+            0x0.b -> MethodTag.Nothing
+            0x1.b -> MethodTag.Code(getInt())
+            0x2.b -> MethodTag.SourceLang(get())
+            0x5.b -> MethodTag.DebugInfo(getInt())
+            0x6.b -> MethodTag.Annotation(getInt())
+            else -> throw IllegalStateException("Unknown method tag: $tag on offset ${buffer.position()}")
         }
-        val payload = getBytes(payloadSize)
-        MethodTag(tag, payload.toList())
     }
 
-    fun readMethodData(buffer: ByteBuffer) = buffer.run {
+    private fun readMethodData(buffer: ByteBuffer) = buffer.run {
         var methodTag = readMethodTag(this)
         val tags = mutableListOf(methodTag)
-        while (methodTag.tag.toInt() != 0) {
+        while (methodTag != MethodTag.Nothing) {
             methodTag = readMethodTag(this)
             tags.add(methodTag)
         }
-        MethodData(tags)
+        tags
+    }
+
+    fun readCode(offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) {
+        val numVregs = it.getULEB128()
+        val numArgs = it.getULEB128()
+        val codeSize = it.getULEB128()
+        val triesSize = it.getULEB128()
+        Code(
+            numVregs,
+            numArgs,
+            codeSize,
+            triesSize,
+            readInstructions(buffer, endOfCodeOff = codeSize + buffer.position().ul),
+            readTryBlocks(buffer, triesSize)
+        )
+    }
+
+    private fun readInstructions(buffer: ByteBuffer, endOfCodeOff: ULong): Instruction {
+        var lastInst: Instruction? = null
+        while (buffer.position().ul < endOfCodeOff) {
+            val inst = readInstruction(buffer)
+            lastInst?.nextInst = inst
+            inst.prevInst = lastInst
+            lastInst = inst
+        }
+        while (lastInst?.prevInst != null) {
+            lastInst = lastInst.prevInst
+        }
+        return lastInst ?: throw IllegalStateException("No instructions found")
+    }
+
+    private fun readInstruction(buffer: ByteBuffer) = buffer.run {
+        val offset = position()
+        var prefix: PandaBytecodePrefix? = null
+        var opcode: UByte = get().toUByte()
+        val operands = mutableListOf<Byte>()
+        var operandsCount = PandaBytecode.getBytecodeOrNull(opcode)?.operands
+        if (operandsCount == null) {
+            prefix = PandaBytecodePrefix.from(opcode)
+                ?: throw IllegalStateException("Unknown opcode or prefix: $opcode on offset $offset")
+            opcode = get().toUByte()
+            operandsCount = PandaBytecode.getBytecode(opcode, prefix).operands
+        }
+        repeat(operandsCount) {
+            operands.add(get())
+        }
+        Instruction(null, null, offset, opcode, operands, prefix)
+    }
+
+
+    private fun readTryBlocks(buffer: ByteBuffer, triesSize: ULong): List<Int> {
+        val tryBlocks = mutableListOf<Int>()
+//        TODO: Implement
+//        buffer.position(offset)
+//        while (buffer.position() < buffer.limit()) {
+//            tryBlocks.add(buffer.getInt())
+//        }
+        return tryBlocks
     }
 
     companion object {
-        fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
+        private fun ByteBuffer.getBytes(size: Int) = ByteArray(size).also { get(it) }
 
-        fun ByteBuffer.getBytesByOffset(offset: Int, size: Int) = ByteArray(size).also { position(offset); get(it) }
+        private fun ByteBuffer.getBytesByOffset(offset: Int, size: Int) =
+            ByteArray(size).also { position(offset); get(it) }
 
-        fun ByteBuffer.getBytesList(size: Int) = List(size) { get() }
+        private fun ByteBuffer.getBytesList(size: Int) = List(size) { get() }
 
-        fun ByteBuffer.getShorts(size: Int) = ShortArray(size).also { for (i in 0 until size) it[i] = short }
+        private fun ByteBuffer.getShorts(size: Int) = ShortArray(size).also { for (i in 0 until size) it[i] = short }
 
-        fun ByteBuffer.getInts(size: Int) = IntArray(size).also { for (i in 0 until size) it[i] = int }
+        private fun ByteBuffer.getInts(size: Int) = IntArray(size).also { for (i in 0 until size) it[i] = int }
 
-        fun ByteBuffer.getByte() = get()
+        private fun ByteBuffer.getByte() = get()
 
         val Int.b: Byte
             get() = toByte()
 
         val Int.ub: UByte
             get() = toUByte()
+
+        val Int.ul: ULong
+            get() = toULong()
 
         fun ByteBuffer.getULEB128(): ULong {
             var result = 0UL
@@ -651,33 +720,7 @@ class ByteCodeParser(
             return action(this).also { this@jumpTo.position(prevPos) }
         }
 
-        fun List<Byte>.toByteBuffer() = ByteBuffer.wrap(this.toByteArray())
-
+        fun List<Byte>.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this.toByteArray())
     }
-
-}
-
-enum class PandaBytecode(val opcode: Byte) {
-    LDA(96),
-    LDGLOBALVAR(65),
-    STA(97);
-
-    companion object {
-
-        private val accSetList: List<PandaBytecode> get() = listOf(
-            LDA, LDGLOBALVAR
-        )
-
-        private val regSetList: List<PandaBytecode> get() = listOf(
-            STA
-        )
-
-        fun from(findValue: Byte): PandaBytecode = PandaBytecode.values().first { it.opcode == findValue }
-
-    }
-
-    fun isAccSet() = accSetList.contains(this)
-
-    fun isRegSet() = regSetList.contains(this)
 
 }

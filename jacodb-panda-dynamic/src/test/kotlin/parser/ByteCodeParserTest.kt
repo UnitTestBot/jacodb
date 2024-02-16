@@ -17,6 +17,7 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
+import org.jacodb.panda.dynamic.parser.ByteCodeParser.MethodTag
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
@@ -93,65 +94,56 @@ class ByteCodeParserTest {
     fun validateMethods() {
         val parser = ByteCodeParser(buffer)
         val actualMethods = parser.parseABC().methods
+        assertEquals(2, actualMethods.size)
 
         // Validate the first method
         val method1 = actualMethods[0]
-        assertEquals(0x3, method1.classIdx)
-        assertEquals(0x0, method1.protoIdx)
+        assertEquals(0x3.toShort(), method1.classIdx)
+        assertEquals(0x0.toShort(), method1.protoIdx)
         assertEquals(0xEE, method1.nameOff)
         assertEquals(0x288, method1.accessFlag)
 
-        val method1Tags = method1.methodData.tags
+        val method1Tags = method1.methodData
         assertEquals(5, method1Tags.size)
 
         val method1Tag1 = method1Tags[0]
-        assertEquals(0x1, method1Tag1.tag)
-        assertEquals(listOf<Byte>(0x2B, 0x2, 0x0, 0x0), method1Tag1.payload)
+        assertEquals(MethodTag.Code(0x22B), method1Tag1)
 
         val method1Tag2 = method1Tags[1]
-        assertEquals(0x2, method1Tag2.tag)
-        assertEquals(listOf<Byte>(0x0), method1Tag2.payload)
+        assertEquals(MethodTag.SourceLang(0x0), method1Tag2)
 
         val method1Tag3 = method1Tags[2]
-        assertEquals(0x5, method1Tag3.tag)
-        assertEquals(listOf<Byte>(0xFC.toByte(), 0x2, 0x0, 0x0), method1Tag3.payload)
+        assertEquals(MethodTag.DebugInfo(0x2FC), method1Tag3)
 
         val method1Tag4 = method1Tags[3]
-        assertEquals(0x6, method1Tag4.tag)
-        assertEquals(listOf<Byte>(0x4, 0x2, 0x0, 0x0), method1Tag4.payload)
+        assertEquals(MethodTag.Annotation(0x204), method1Tag4)
 
         val method1Tag5 = method1Tags[4]
-        assertEquals(0x0, method1Tag5.tag)
-        assertEquals(emptyList<Byte>(), method1Tag5.payload)
+        assertEquals(MethodTag.Nothing, method1Tag5)
 
         // Validate the second method
         val method2 = actualMethods[1]
-        assertEquals(0x3, method2.classIdx)
-        assertEquals(0x1, method2.protoIdx)
+        assertEquals(0x3.toShort(), method2.classIdx)
+        assertEquals(0x1.toShort(), method2.protoIdx)
         assertEquals(0x101, method2.nameOff)
         assertEquals(0x288, method2.accessFlag)
 
-        val method2Tags = method2.methodData.tags
+        val method2Tags = method2.methodData
         assertEquals(5, method2Tags.size)
 
         val method2Tag1 = method2Tags[0]
-        assertEquals(0x1, method2Tag1.tag)
-        assertEquals(listOf<Byte>(0x7A, 0x2, 0x0, 0x0), method2Tag1.payload)
+        assertEquals(MethodTag.Code(0x27A), method2Tag1)
 
         val method2Tag2 = method2Tags[1]
-        assertEquals(0x2, method2Tag2.tag)
-        assertEquals(listOf<Byte>(0x0), method2Tag2.payload)
+        assertEquals(MethodTag.SourceLang(0x0), method2Tag2)
 
         val method2Tag3 = method2Tags[2]
-        assertEquals(0x5, method2Tag3.tag)
-        assertEquals(listOf<Byte>(0x27, 0x3, 0x0, 0x0), method2Tag3.payload)
+        assertEquals(MethodTag.DebugInfo(0x327), method2Tag3)
 
         val method2Tag4 = method2Tags[3]
-        assertEquals(0x6, method2Tag4.tag)
-        assertEquals(listOf<Byte>(0x1E, 0x2, 0x0, 0x0), method2Tag4.payload)
+        assertEquals(MethodTag.Annotation(0x21E), method2Tag4)
 
         val method2Tag5 = method2Tags[4]
-        assertEquals(0x0, method2Tag5.tag)
-        assertEquals(emptyList<Byte>(), method2Tag5.payload)
+        assertEquals(MethodTag.Nothing, method2Tag5)
     }
 }
