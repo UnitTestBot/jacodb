@@ -16,8 +16,6 @@
 
 package org.jacodb.analysis.ifds2
 
-import org.jacodb.analysis.engine.IfdsEdge
-import org.jacodb.analysis.ifds2.taint.TaintFact
 import org.jacodb.api.JcMethod
 
 data class Edge<out Fact>(
@@ -30,13 +28,6 @@ data class Edge<out Fact>(
 
     val method: JcMethod
         get() = from.method
-
-    companion object {
-        // constructor
-        operator fun invoke(edge: IfdsEdge): Edge<TaintFact> {
-            return Edge(Vertex(edge.from), Vertex(edge.to))
-        }
-    }
 }
 
 sealed class Reason {
