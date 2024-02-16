@@ -16,8 +16,10 @@
 
 package org.jacodb.panda.dynamic.parser
 
+import kotlinx.serialization.descriptors.PrimitiveKind
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
+import java.util.LinkedList
 import kotlin.experimental.and
 
 class ByteCodeParser(
@@ -239,10 +241,11 @@ class ByteCodeParser(
 
     inner class MethodStringLiteralRegionIndex(
         val strings: List<Int>,
-        val methods: List<Int>
+        val methods: List<Int>,
+        val all: List<Int>
     ) {
 
-        constructor() : this(emptyList(), emptyList())
+        constructor() : this(emptyList(), emptyList(), emptyList())
     }
 
     inner class StringData(
@@ -311,11 +314,93 @@ class ByteCodeParser(
         val numArgs: Byte,
         val codeSize: Byte,
         val triesSize: Byte,
-        val insts: List<Instruction>,
+        val insts: Instruction,
         val tryBlocks: List<Int>
     ) {
 
-        constructor() : this(0, 0, 0, 0, emptyList(), emptyList())
+        constructor() : this(0, 0, 0, 0, Instruction(), emptyList())
+
+        fun getInstByOffset(offset: Int): Instruction {
+            if (offset in insts.offset..(insts.offset + insts.operands.size)) return insts
+            val instIterator = iterator()
+            while (instIterator.hasNext()) {
+                val next = instIterator.next()
+                if (offset in next.offset..(next.offset + next.operands.size)) return next
+            }
+
+            throw IllegalArgumentException("no such bc offset")
+        }
+
+
+        /*
+            CURRENTLY ON SUPPORTS RESOLVE FOR callarg BYTECODES
+
+            Instructions that set acc:
+            1. lda
+            2. ldglobalvar
+         */
+        fun getAccValueByOffset(offset: Int): List<Byte> {
+            val lastAccSet = findPrevious(offset) { PandaBytecode.from(it.opcode).isAccSet() } ?: return emptyList()
+
+            return resolve(lastAccSet)
+        }
+
+        fun resolve(inst: Instruction): List<Byte> {
+            when (PandaBytecode.from(inst.opcode)) {
+                PandaBytecode.LDA -> {
+                    val vReg = inst.operands.first()
+                    val lastRegSet = findPrevious(inst.offset - 1) {
+                        PandaBytecode.from(it.opcode).isRegSet() && it.operands.first() == vReg
+                    } ?: throw IllegalStateException("can't resolve acc value for register")
+
+                    return resolve(lastRegSet)
+                }
+
+                PandaBytecode.LDGLOBALVAR -> {
+                    val stringId = inst.operands.drop(2).toByteBuffer().getInt()
+                    val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
+                    val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
+
+                    return name
+                }
+
+                PandaBytecode.STA -> {
+                    return getAccValueByOffset(inst.offset)
+                }
+
+                else -> {
+                    throw IllegalStateException("opcode ${PandaBytecode.from(inst.opcode).name} not implemented")
+                }
+            }
+        }
+
+        fun findNext(startOffset: Int, filter: (Instruction) -> Boolean): Instruction? {
+            val currentInst = getInstByOffset(startOffset)
+            if (filter(currentInst)) return currentInst
+
+            val iterator = iterator()
+            while(iterator.hasNext()) {
+                if (filter(iterator.next())) return currentInst
+            }
+
+            return null
+        }
+
+        fun findPrevious(startOffset: Int, filter: (Instruction) -> Boolean): Instruction? {
+            val currentInst = getInstByOffset(startOffset)
+            if (filter(currentInst)) return currentInst
+
+            val iterator = iterator()
+            while(iterator.hasPrevious()) {
+                if (filter(iterator.previous())) return currentInst
+            }
+
+            return null
+        }
+
+        fun iterator(): ListIterator<Instruction> {
+            return InstructionIterator(insts)
+        }
     }
 
     inner class Instruction(
@@ -327,6 +412,41 @@ class ByteCodeParser(
     ) {
 
         constructor() : this(null, null,0, 0, emptyList())
+    }
+
+    class InstructionIterator(start: Instruction) : ListIterator<Instruction> {
+
+        private var currentInst = start
+        private var index = 0
+
+        override fun hasNext(): Boolean {
+            return currentInst.nextInst != null
+        }
+
+        override fun hasPrevious(): Boolean {
+            return currentInst.prevInst != null
+        }
+
+        override fun next(): Instruction {
+            currentInst = currentInst.nextInst!!
+            index++
+            return currentInst
+        }
+
+        override fun nextIndex(): Int {
+            return if (hasNext()) index + 1 else index
+        }
+
+        override fun previous(): Instruction {
+            currentInst = currentInst.prevInst!!
+            index--
+            return currentInst
+        }
+
+        override fun previousIndex(): Int {
+            return if (hasPrevious()) index - 1 else index
+        }
+
     }
 
     inner class MethodIndexData(
@@ -403,13 +523,15 @@ class ByteCodeParser(
     fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) = buffer.jumpTo(offset) { bb ->
         val stringList = mutableListOf<Int>()
         val methodList = mutableListOf<Int>()
+        val all = mutableListOf<Int>()
 
         repeat(size) {
             val off = bb.getInt()
+            all.add(off)
             tryReadMethod(off, bb)?.let { methodList.add(off) } ?: stringList.add(off)
         }
 
-        MethodStringLiteralRegionIndex(stringList, methodList)
+        MethodStringLiteralRegionIndex(stringList, methodList, all)
     }
 
     private fun tryReadMethod(offset: Int, buffer: ByteBuffer): Method? = buffer.jumpTo(offset) {
@@ -523,14 +645,39 @@ class ByteCodeParser(
             listOf(0, 4, 8, 12).map { bytes.toInt().shr(it).toByte() and 0x0f.b }.dropLastWhile { it == 0.b }
         }
 
-
-
         fun <T> ByteBuffer.jumpTo(offset: Int, action: (ByteBuffer) -> T): T {
             val prevPos = this.position()
             this.position(offset)
             return action(this).also { this@jumpTo.position(prevPos) }
         }
 
+        fun List<Byte>.toByteBuffer() = ByteBuffer.wrap(this.toByteArray())
+
     }
+
+}
+
+enum class PandaBytecode(val opcode: Byte) {
+    LDA(96),
+    LDGLOBALVAR(65),
+    STA(97);
+
+    companion object {
+
+        private val accSetList: List<PandaBytecode> get() = listOf(
+            LDA, LDGLOBALVAR
+        )
+
+        private val regSetList: List<PandaBytecode> get() = listOf(
+            STA
+        )
+
+        fun from(findValue: Byte): PandaBytecode = PandaBytecode.values().first { it.opcode == findValue }
+
+    }
+
+    fun isAccSet() = accSetList.contains(this)
+
+    fun isRegSet() = regSetList.contains(this)
 
 }

@@ -31,8 +31,8 @@ class ByteCodeParserTest {
     @Test
     fun parseAndPrintHeader() {
         val parser = ByteCodeParser(buffer)
-        val header = parser.parseABC().header
-        println(header)
+        val abc = parser.parseABC()
+        println(abc.header)
     }
 
     @Test
