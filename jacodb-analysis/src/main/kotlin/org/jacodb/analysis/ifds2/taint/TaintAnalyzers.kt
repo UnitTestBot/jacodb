@@ -21,13 +21,9 @@ import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds2.Analyzer
 import org.jacodb.analysis.ifds2.Edge
-import org.jacodb.analysis.paths.toPath
-import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcIfInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.impl.cfg.util.loops
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
 
@@ -78,22 +74,14 @@ class TaintAnalyzer(
                 edge.to.fact,
                 CallPositionToJcValueResolver(edge.to.statement),
             )
-            var triggeredItem: TaintMethodSink? = null
             for (item in config.filterIsInstance<TaintMethodSink>()) {
-                defaultBehavior = false
                 if (item.condition.accept(conditionEvaluator)) {
-                    triggeredItem = item
-                    break
+                    defaultBehavior = false
+                    val message = item.ruleNote
+                    val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = item)
+                    logger.debug { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
+                    add(NewVulnerability(vulnerability))
                 }
-                // FIXME: unconditionally let it be the sink.
-                // triggeredItem = item
-                // break
-            }
-            if (triggeredItem != null) {
-                val message = triggeredItem.ruleNote
-                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = triggeredItem)
-                logger.debug { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
-                add(NewVulnerability(vulnerability))
             }
         }
 
