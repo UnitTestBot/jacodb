@@ -18,6 +18,9 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.paths.AccessPath
 import org.jacodb.analysis.paths.ElementAccessor
+import org.jacodb.analysis.paths.Maybe
+import org.jacodb.analysis.paths.fmap
+import org.jacodb.analysis.paths.toMaybe
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
@@ -34,56 +37,31 @@ import org.jacodb.taint.configuration.This
 
 class CallPositionToAccessPathResolver(
     private val callStatement: JcInst,
-) : PositionResolver<AccessPath> {
+) : PositionResolver<Maybe<AccessPath>> {
     private val callExpr = callStatement.callExpr
         ?: error("Call statement should have non-null callExpr")
 
-    override fun resolve(position: Position): AccessPath = when (position) {
-        AnyArgument -> error("Unexpected $position")
-
-        is Argument -> callExpr.args[position.index].toPathOrNull()
-            ?: error("Cannot resolve $position for $callStatement")
-
-        This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull()
-            ?: error("Cannot resolve $position for $callStatement")
-
-        Result -> if (callStatement is JcAssignInst) {
-            callStatement.lhv.toPathOrNull()
-        } else {
-            callExpr.toPathOrNull()
-        } ?: error("Cannot resolve $position for $callStatement")
-
-        ResultAnyElement -> {
-            val path = if (callStatement is JcAssignInst) {
-                callStatement.lhv.toPathOrNull()
-            } else {
-                callExpr.toPathOrNull()
-            } ?: error("Cannot resolve $position for $callStatement")
-            path / ElementAccessor(null)
-        }
+    override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
+        AnyArgument -> Maybe.none()
+        is Argument -> callExpr.args[position.index].toPathOrNull().toMaybe()
+        This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull().toMaybe()
+        Result -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
+        ResultAnyElement -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
+            .fmap { it / ElementAccessor(null) }
     }
 }
 
 class CallPositionToJcValueResolver(
     private val callStatement: JcInst,
-) : PositionResolver<JcValue> {
+) : PositionResolver<Maybe<JcValue>> {
     private val callExpr = callStatement.callExpr
         ?: error("Call statement should have non-null callExpr")
 
-    override fun resolve(position: Position): JcValue = when (position) {
-        AnyArgument -> error("Unexpected $position")
-
-        is Argument -> callExpr.args[position.index]
-
-        This -> (callExpr as? JcInstanceCallExpr)?.instance
-            ?: error("Cannot resolve $position for $callStatement")
-
-        Result -> if (callStatement is JcAssignInst) {
-            callStatement.lhv
-        } else {
-            error("Cannot resolve $position for $callStatement")
-        }
-
-        ResultAnyElement -> error("Cannot resolve $position for $callStatement")
+    override fun resolve(position: Position): Maybe<JcValue> = when (position) {
+        AnyArgument -> Maybe.none()
+        is Argument -> Maybe.some(callExpr.args[position.index])
+        This -> (callExpr as? JcInstanceCallExpr)?.instance.toMaybe()
+        Result -> (callStatement as? JcAssignInst)?.lhv.toMaybe()
+        ResultAnyElement -> Maybe.none()
     }
 }

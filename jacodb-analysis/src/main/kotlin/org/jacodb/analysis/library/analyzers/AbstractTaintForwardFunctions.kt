@@ -28,6 +28,7 @@ import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.ifds2.taint.toDomainFact
+import org.jacodb.analysis.paths.onSome
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
@@ -160,12 +161,15 @@ abstract class AbstractTaintForwardFunctions(
                 for (item in config.filterIsInstance<TaintMethodSource>()) {
                     if (item.condition.accept(conditionEvaluator)) {
                         for (action in item.actionsAfter) {
-                            when (action) {
+                            val result = when (action) {
                                 is AssignMark -> {
-                                    facts += actionEvaluator.evaluate(action)
+                                    actionEvaluator.evaluate(action)
                                 }
 
                                 else -> error("$action is not supported for $item")
+                            }
+                            result.onSome {
+                                facts += it
                             }
                         }
                     }
@@ -194,44 +198,32 @@ abstract class AbstractTaintForwardFunctions(
 
             for (item in config.filterIsInstance<TaintPassThrough>()) {
                 if (item.condition.accept(conditionEvaluator)) {
-                    defaultBehavior = false
                     for (action in item.actionsAfter) {
-                        when (action) {
-                            is CopyMark -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
-                            is CopyAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
-                            is RemoveMark -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
-                            is RemoveAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
+                        val result = when (action) {
+                            is CopyMark -> actionEvaluator.evaluate(action, Tainted(fact))
+                            is CopyAllMarks -> actionEvaluator.evaluate(action, Tainted(fact))
+                            is RemoveMark -> actionEvaluator.evaluate(action, Tainted(fact))
+                            is RemoveAllMarks -> actionEvaluator.evaluate(action, Tainted(fact))
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            facts += it
+                            defaultBehavior = false
                         }
                     }
                 }
             }
             for (item in config.filterIsInstance<TaintCleaner>()) {
                 if (item.condition.accept(conditionEvaluator)) {
-                    defaultBehavior = false
                     for (action in item.actionsAfter) {
-                        when (action) {
-                            is RemoveMark -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
-                            is RemoveAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, Tainted(fact))
-                            }
-
+                        val result = when (action) {
+                            is RemoveMark -> actionEvaluator.evaluate(action, Tainted(fact))
+                            is RemoveAllMarks -> actionEvaluator.evaluate(action, Tainted(fact))
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            facts += it
+                            defaultBehavior = false
                         }
                     }
                 }

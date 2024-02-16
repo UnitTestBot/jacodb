@@ -25,7 +25,6 @@ import org.jacodb.analysis.engine.AbstractAnalyzer
 import org.jacodb.analysis.engine.AnalysisDependentEvent
 import org.jacodb.analysis.engine.DomainFact
 import org.jacodb.analysis.engine.EdgeForOtherRunnerQuery
-import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.IfdsEdge
 import org.jacodb.analysis.engine.IfdsVertex
 import org.jacodb.analysis.engine.NewSummaryFact
@@ -33,8 +32,11 @@ import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.ifds2.taint.toDomainFact
+import org.jacodb.analysis.paths.Maybe
 import org.jacodb.analysis.paths.minus
+import org.jacodb.analysis.paths.onSome
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toMaybe
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.analysis.sarif.VulnerabilityDescription
@@ -315,12 +317,12 @@ class TaintForwardFunctions(
         if (config != null) {
             val conditionEvaluator = BasicConditionEvaluator { position ->
                 when (position) {
-                    This -> method.thisInstance
+                    This -> Maybe.some(method.thisInstance)
 
                     is Argument -> method.flowGraph().locals
                         .filterIsInstance<JcArgument>()
                         .singleOrNull { it.index == position.index }
-                        ?: error("Cannot resolve $position for $method")
+                        .toMaybe()
 
                     AnyArgument -> error("Unexpected $position")
                     Result -> error("Unexpected $position")
@@ -329,18 +331,13 @@ class TaintForwardFunctions(
             }
             val actionEvaluator = TaintActionEvaluator { position ->
                 when (position) {
-                    This -> method.thisInstance.toPathOrNull()
-                        ?: error("Cannot resolve $position for $method")
+                    This -> method.thisInstance.toPathOrNull().toMaybe()
 
                     is Argument -> {
                         val p = method.parameters[position.index]
-                        val t = cp.findTypeOrNull(p.type)
-                        if (t != null) {
-                            JcArgument.of(p.index, p.name, t).toPathOrNull()
-                        } else {
-                            null
-                        }
-                            ?: error("Cannot resolve $position for $method")
+                        cp.findTypeOrNull(p.type)
+                            ?.let { t -> JcArgument.of(p.index, p.name, t).toPathOrNull() }
+                            .toMaybe()
                     }
 
                     AnyArgument -> error("Unexpected $position")
@@ -351,12 +348,12 @@ class TaintForwardFunctions(
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
-                        when (action) {
-                            is AssignMark -> {
-                                add(actionEvaluator.evaluate(action).toDomainFact())
-                            }
-
+                        val result = when (action) {
+                            is AssignMark -> actionEvaluator.evaluate(action)
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            addAll(it.map { fact -> fact.toDomainFact() })
                         }
                     }
                 }

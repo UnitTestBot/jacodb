@@ -18,60 +18,53 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.ifds2.taint.Tainted
 import org.jacodb.analysis.paths.AccessPath
-import org.jacodb.taint.configuration.Action
+import org.jacodb.analysis.paths.Maybe
+import org.jacodb.analysis.paths.fmap
+import org.jacodb.analysis.paths.map
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
 import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.RemoveAllMarks
 import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.TaintActionVisitor
 
 class TaintActionEvaluator(
-    internal val positionResolver: PositionResolver<AccessPath>,
+    private val positionResolver: PositionResolver<Maybe<AccessPath>>,
 ) {
-    fun evaluate(action: CopyAllMarks, fact: Tainted): Collection<Tainted> {
-        val from = positionResolver.resolve(action.from)
-        if (from == fact.variable) {
-            val to = positionResolver.resolve(action.to)
-            return setOf(fact, fact.copy(variable = to))
-        }
-        return setOf(fact) // TODO: empty of singleton?
-        // return emptySet()
-    }
-
-    fun evaluate(action: CopyMark, fact: Tainted): Collection<Tainted> {
-        if (fact.mark == action.mark) {
-            val from = positionResolver.resolve(action.from)
-            if (from == fact.variable) {
-                val to = positionResolver.resolve(action.to)
-                return setOf(fact, fact.copy(variable = to))
+    fun evaluate(action: CopyAllMarks, fact: Tainted): Maybe<Collection<Tainted>> =
+        positionResolver.resolve(action.from).map { from ->
+            if (from != fact.variable) return@map Maybe.none()
+            positionResolver.resolve(action.to).fmap { to ->
+                setOf(fact, fact.copy(variable = to))
             }
         }
-        return setOf(fact) // TODO: empty or singleton?
-        // return emptySet()
-    }
 
-    fun evaluate(action: AssignMark): Tainted {
-        val variable = positionResolver.resolve(action.position)
-        return Tainted(variable, action.mark)
-    }
-
-    fun evaluate(action: RemoveAllMarks, fact: Tainted): Collection<Tainted> {
-        val variable = positionResolver.resolve(action.position)
-        if (variable == fact.variable) {
-            return emptySet()
-        }
-        return setOf(fact)
-    }
-
-    fun evaluate(action: RemoveMark, fact: Tainted): Collection<Tainted> {
-        if (fact.mark == action.mark) {
-            val variable = positionResolver.resolve(action.position)
-            if (variable == fact.variable) {
-                return emptySet()
+    fun evaluate(action: CopyMark, fact: Tainted): Maybe<Collection<Tainted>> {
+        if (fact.mark != action.mark) return Maybe.none()
+        return positionResolver.resolve(action.from).map { from ->
+            if (from != fact.variable) return@map Maybe.none()
+            positionResolver.resolve(action.to).fmap { to ->
+                setOf(fact, fact.copy(variable = to))
             }
         }
-        return setOf(fact)
+    }
+
+    fun evaluate(action: AssignMark): Maybe<Collection<Tainted>> =
+        positionResolver.resolve(action.position).fmap { variable ->
+            setOf(Tainted(variable, action.mark))
+        }
+
+    fun evaluate(action: RemoveAllMarks, fact: Tainted): Maybe<Collection<Tainted>> =
+        positionResolver.resolve(action.position).map { variable ->
+            if (variable != fact.variable) return@map Maybe.none()
+            Maybe.some(emptySet())
+        }
+
+    fun evaluate(action: RemoveMark, fact: Tainted): Maybe<Collection<Tainted>> {
+        if (fact.mark != action.mark) return Maybe.none()
+        return positionResolver.resolve(action.position).map { variable ->
+            if (variable != fact.variable) return@map Maybe.none()
+            Maybe.some(emptySet())
+        }
     }
 }

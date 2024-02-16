@@ -28,8 +28,11 @@ import org.jacodb.analysis.library.analyzers.getArgument
 import org.jacodb.analysis.library.analyzers.getArgumentsOf
 import org.jacodb.analysis.library.analyzers.thisInstance
 import org.jacodb.analysis.paths.ElementAccessor
+import org.jacodb.analysis.paths.Maybe
 import org.jacodb.analysis.paths.minus
+import org.jacodb.analysis.paths.onSome
 import org.jacodb.analysis.paths.startsWith
+import org.jacodb.analysis.paths.toMaybe
 import org.jacodb.analysis.paths.toPath
 import org.jacodb.analysis.paths.toPathOrNull
 import org.jacodb.api.JcClasspath
@@ -85,12 +88,12 @@ class ForwardTaintFlowFunctions(
             // Note: both condition and action evaluator require a custom position resolver.
             val conditionEvaluator = BasicConditionEvaluator { position ->
                 when (position) {
-                    This -> method.thisInstance
+                    This -> Maybe.some(method.thisInstance)
 
-                    is Argument -> run {
+                    is Argument -> {
                         val p = method.parameters[position.index]
-                        cp.getArgument(p)
-                    } ?: error("Cannot resolve $position for $method")
+                        cp.getArgument(p).toMaybe()
+                    }
 
                     AnyArgument -> error("Unexpected $position")
                     Result -> error("Unexpected $position")
@@ -99,13 +102,12 @@ class ForwardTaintFlowFunctions(
             }
             val actionEvaluator = TaintActionEvaluator { position ->
                 when (position) {
-                    This -> method.thisInstance.toPathOrNull()
-                        ?: error("Cannot resolve $position for $method")
+                    This -> method.thisInstance.toPathOrNull().toMaybe()
 
-                    is Argument -> run {
+                    is Argument -> {
                         val p = method.parameters[position.index]
-                        cp.getArgument(p)?.toPathOrNull()
-                    } ?: error("Cannot resolve $position for $method")
+                        cp.getArgument(p)?.toPathOrNull().toMaybe()
+                    }
 
                     AnyArgument -> error("Unexpected $position")
                     Result -> error("Unexpected $position")
@@ -117,12 +119,15 @@ class ForwardTaintFlowFunctions(
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
-                        when (action) {
+                        val result = when (action) {
                             is AssignMark -> {
-                                add(actionEvaluator.evaluate(action))
+                                actionEvaluator.evaluate(action)
                             }
 
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            addAll(it)
                         }
                     }
                 }
@@ -274,12 +279,12 @@ class ForwardTaintFlowFunctions(
                     for (item in config.filterIsInstance<TaintMethodSource>()) {
                         if (item.condition.accept(conditionEvaluator)) {
                             for (action in item.actionsAfter) {
-                                when (action) {
-                                    is AssignMark -> {
-                                        add(actionEvaluator.evaluate(action))
-                                    }
-
+                                val result = when (action) {
+                                    is AssignMark -> actionEvaluator.evaluate(action)
                                     else -> error("$action is not supported for $item")
+                                }
+                                result.onSome {
+                                    addAll(it)
                                 }
                             }
                         }
@@ -299,25 +304,16 @@ class ForwardTaintFlowFunctions(
             for (item in config.filterIsInstance<TaintPassThrough>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
-                        defaultBehavior = false
-                        when (action) {
-                            is CopyMark -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is CopyAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is RemoveMark -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is RemoveAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
+                        val result = when (action) {
+                            is CopyMark -> actionEvaluator.evaluate(action, fact)
+                            is CopyAllMarks -> actionEvaluator.evaluate(action, fact)
+                            is RemoveMark -> actionEvaluator.evaluate(action, fact)
+                            is RemoveAllMarks -> actionEvaluator.evaluate(action, fact)
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            facts += it
+                            defaultBehavior = false
                         }
                     }
                 }
@@ -327,17 +323,14 @@ class ForwardTaintFlowFunctions(
             for (item in config.filterIsInstance<TaintCleaner>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     for (action in item.actionsAfter) {
-                        defaultBehavior = false
-                        when (action) {
-                            is RemoveMark -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
-                            is RemoveAllMarks -> {
-                                facts += actionEvaluator.evaluate(action, fact)
-                            }
-
+                        val result = when (action) {
+                            is RemoveMark -> actionEvaluator.evaluate(action, fact)
+                            is RemoveAllMarks -> actionEvaluator.evaluate(action, fact)
                             else -> error("$action is not supported for $item")
+                        }
+                        result.onSome {
+                            facts += it
+                            defaultBehavior = false
                         }
                     }
                 }
