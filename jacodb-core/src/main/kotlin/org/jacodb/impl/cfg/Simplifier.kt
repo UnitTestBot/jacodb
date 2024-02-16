@@ -66,7 +66,7 @@ internal class Simplifier {
             val assignmentsMap = computeAssignments(instructionList)
             val replacements = buildMap {
                 for ((to, froms) in assignmentsMap) {
-                    if (froms.drop(1).any { it is JcRawLocalVar }) {
+                    if (froms.size > 1) {
                         continue
                     }
                     val firstFrom = (froms.first() as? JcRawLocalVar) ?: continue
