@@ -57,8 +57,8 @@ class TaintManager(
     private val useBidiRunner: Boolean = false,
 ) : Manager<TaintFact, TaintEvent> {
 
-    private val methodsForUnit = hashMapOf<UnitType, HashSet<JcMethod>>()
-    private val runnerForUnit = hashMapOf<UnitType, TaintRunner>()
+    private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
+    private val runnerForUnit: MutableMap<UnitType, TaintRunner> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
     private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
@@ -249,7 +249,6 @@ class TaintManager(
     override fun handleControlEvent(event: ControlEvent) {
         when (event) {
             is QueueEmptinessChanged -> {
-                logger.trace { "Runner ${event.runner.unit} is empty: ${event.isEmpty}" }
                 queueIsEmpty[event.runner.unit] = event.isEmpty
                 if (event.isEmpty) {
                     if (runnerForUnit.keys.all { queueIsEmpty[it] == true }) {
