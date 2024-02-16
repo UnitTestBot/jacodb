@@ -35,6 +35,7 @@ import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
 import org.jacodb.analysis.engine.UnknownUnit
 import org.jacodb.analysis.graph.reversed
+import org.jacodb.analysis.ifds2.Aggregate
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Manager
 import org.jacodb.analysis.ifds2.QueueEmptinessChanged
@@ -272,6 +273,10 @@ class TaintManager(
             .getFacts(method)
             .onEach { handler(it.edge) }
             .launchIn(scope)
+    }
+
+    fun getAggregates() : Map<UnitType, Aggregate<TaintFact>> {
+        return runnerForUnit.mapValues { it.value.getAggregate() }
     }
 }
 

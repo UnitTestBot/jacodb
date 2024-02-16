@@ -22,6 +22,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.engine.UnitType
+import org.jacodb.analysis.ifds2.Aggregate
 import org.jacodb.analysis.ifds2.ControlEvent
 import org.jacodb.analysis.ifds2.Edge
 import org.jacodb.analysis.ifds2.Manager
@@ -135,5 +136,9 @@ class BidiRunner(
 
         backwardRunnerJob.join()
         forwardRunnerJob.join()
+    }
+
+    override fun getAggregate(): Aggregate<TaintFact> {
+        return forwardRunner.getAggregate()
     }
 }
