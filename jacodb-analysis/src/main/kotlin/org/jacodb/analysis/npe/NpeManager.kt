@@ -124,30 +124,21 @@ class NpeManager(
 
         // Spawn progress job:
         val progress = launch(Dispatchers.IO) {
-            logger.info { "Progress job started" }
             while (isActive) {
                 delay(1.seconds)
                 logger.info {
-                    "Progress: total propagated ${
+                    "Progress: propagated ${
                         runnerForUnit.values.sumOf { it.getGetPathEdges().size }
                     } path edges"
                 }
-            }
-            logger.info { "Progress job finished" }
-            logger.info {
-                "Progress: total propagated ${
-                    runnerForUnit.values.sumOf { it.getGetPathEdges().size }
-                } path edges"
             }
         }
 
         // Spawn stopper job:
         val stopper = launch(Dispatchers.IO) {
-            logger.info { "Stopper job started" }
             stopRendezvous.receive()
             logger.info { "Stopping all runners..." }
             allJobs.forEach { it.cancel() }
-            logger.info { "Stopper job finished" }
         }
 
         // Start all runner jobs:
@@ -180,10 +171,13 @@ class NpeManager(
             for (vulnerability in foundVulnerabilities) {
                 logger.debug { "$vulnerability in ${vulnerability.method}" }
             }
-            logger.debug { "Total sinks: ${foundVulnerabilities.size}" }
-            logger.debug { "Total propagated ${runnerForUnit.values.sumOf { it.getGetPathEdges().size }} path edges" }
         }
-
+        logger.info { "Total sinks: ${foundVulnerabilities.size}" }
+        logger.info {
+            "Total propagated ${
+                runnerForUnit.values.sumOf { it.getGetPathEdges().size }
+            } path edges"
+        }
         logger.info {
             "Analysis done in %.1f s".format(
                 timeStart.elapsedNow().toDouble(DurationUnit.SECONDS)
