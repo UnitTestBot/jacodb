@@ -48,7 +48,6 @@ dependencies {
     testFixturesImplementation(platform(Libs.junit_bom))
     testFixturesImplementation(Libs.junit_jupiter)
     testFixturesImplementation(Libs.guava)
-    testFixturesImplementation(Libs.mockito_core)
     testFixturesImplementation(Libs.jetbrains_annotations)
     testFixturesImplementation(Libs.kotlinx_coroutines_core)
 }
