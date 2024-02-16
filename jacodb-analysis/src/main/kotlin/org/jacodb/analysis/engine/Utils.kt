@@ -14,25 +14,21 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds2.taint
+package org.jacodb.analysis.engine
 
-import org.jacodb.analysis.engine.DomainFact
-import org.jacodb.analysis.engine.ZEROFact
+import org.jacodb.analysis.ifds2.taint.TaintFact
+import org.jacodb.analysis.ifds2.taint.Tainted
+import org.jacodb.analysis.ifds2.taint.Zero
 import org.jacodb.analysis.library.analyzers.NpeTaintNode
 import org.jacodb.analysis.library.analyzers.TaintAnalysisNode
-import org.jacodb.analysis.library.analyzers.TaintNode
-import org.jacodb.analysis.paths.AccessPath
-import org.jacodb.taint.configuration.TaintMark
 
-sealed interface TaintFact
+fun TaintFact.toDomainFact(): DomainFact = when (this) {
+    Zero -> ZEROFact
 
-object Zero : TaintFact {
-    override fun toString(): String = this.javaClass.simpleName
-}
-
-data class Tainted(
-    val variable: AccessPath,
-    val mark: TaintMark,
-) : TaintFact {
-    constructor(fact: TaintNode) : this(fact.variable, TaintMark(fact.nodeType))
+    is Tainted -> {
+        when (mark.name) {
+            "NPE" -> NpeTaintNode(variable)
+            else -> TaintAnalysisNode(variable, nodeType = mark.name)
+        }
+    }
 }

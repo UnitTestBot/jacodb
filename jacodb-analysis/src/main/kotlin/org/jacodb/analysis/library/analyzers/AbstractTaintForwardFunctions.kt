@@ -27,7 +27,7 @@ import org.jacodb.analysis.engine.FlowFunctionInstance
 import org.jacodb.analysis.engine.FlowFunctionsSpace
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.ifds2.taint.Tainted
-import org.jacodb.analysis.ifds2.taint.toDomainFact
+import org.jacodb.analysis.engine.toDomainFact
 import org.jacodb.analysis.paths.onSome
 import org.jacodb.analysis.paths.startsWith
 import org.jacodb.analysis.paths.toPath

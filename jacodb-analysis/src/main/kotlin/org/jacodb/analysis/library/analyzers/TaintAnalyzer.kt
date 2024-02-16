@@ -31,7 +31,7 @@ import org.jacodb.analysis.engine.NewSummaryFact
 import org.jacodb.analysis.engine.VulnerabilityLocation
 import org.jacodb.analysis.engine.ZEROFact
 import org.jacodb.analysis.ifds2.taint.Tainted
-import org.jacodb.analysis.ifds2.taint.toDomainFact
+import org.jacodb.analysis.engine.toDomainFact
 import org.jacodb.analysis.paths.Maybe
 import org.jacodb.analysis.paths.minus
 import org.jacodb.analysis.paths.onSome
