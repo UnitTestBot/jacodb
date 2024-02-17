@@ -53,8 +53,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
             provideClassesForJuliet(690)
     }
 
-    override fun findSinks(method: JcMethod): List<Vulnerability> {
-        val methods = listOf(method)
+    override fun findSinks(methods: List<JcMethod>): List<Vulnerability> {
         val unitResolver = SingletonUnitResolver
         val manager = NpeManager(graph, unitResolver)
         return manager.analyze(methods, timeout = 30.seconds)
@@ -236,7 +235,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
         expectedLocations: Collection<String>,
     ) {
         val method = cp.findClass<T>().declaredMethods.single { it.name == methodName }
-        val sinks = findSinks(method)
+        val sinks = findSinks(listOf(method))
 
         // TODO: think about better assertions here
         Assertions.assertEquals(expectedLocations.size, sinks.size)

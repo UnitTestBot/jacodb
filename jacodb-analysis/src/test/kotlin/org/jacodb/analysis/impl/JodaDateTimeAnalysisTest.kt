@@ -16,13 +16,11 @@
 
 package org.jacodb.analysis.impl
 
-import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
-import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
@@ -30,21 +28,22 @@ import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
-class JodaDateTimeAnalysisTest : BaseTest() {
+class JodaDateTimeAnalysisTest : BaseAnalysisTest() {
 
     companion object : WithGlobalDB()
-
-    private val graph: JcApplicationGraph = runBlocking {
-        cp.newApplicationGraphForAnalysis()
-    }
 
     @Test
     fun `test taint analysis`() {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
+        val sinks = findSinks(methods)
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
+    }
+
+    override fun findSinks(methods: List<JcMethod>): List<Vulnerability> {
         val unitResolver = SingletonUnitResolver
         val manager = TaintManager(graph, unitResolver)
         val sinks = manager.analyze(methods, timeout = 60.seconds)
-        logger.info { "Vulnerabilities found: ${sinks.size}" }
+        return sinks
     }
 }

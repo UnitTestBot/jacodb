@@ -49,8 +49,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         )
     }
 
-    override fun findSinks(method: JcMethod): List<Vulnerability> {
-        val methods = listOf(method)
+    override fun findSinks(methods: List<JcMethod>): List<Vulnerability> {
         val unitResolver = SingletonUnitResolver
         val manager = TaintManager(graph, unitResolver)
         return manager.analyze(methods, timeout = 30.seconds)
@@ -60,7 +59,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
     fun `simple SQL injection`() {
         val methodName = "bad"
         val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
-        val sinks = findSinks(method)
+        val sinks = findSinks(listOf(method))
         assertTrue(sinks.isNotEmpty())
     }
 
