@@ -89,7 +89,7 @@ val JcArrayType.deepestElementType: JcType
         return type
     }
 
-fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
+fun JcType.isAssignable(declaration: JcType): Boolean {
     val nullType = classpath.nullType
     if (this == declaration) {
         return true
@@ -183,7 +183,7 @@ fun JcClassType.findMethodOrNull(name: String, desc: String): JcTypedMethod? {
  *
  * This method doesn't support [org.jacodb.impl.features.classpaths.UnknownClasses] feature.
  */
-fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): JcTypedMethod? {
+fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> Boolean): JcTypedMethod? {
     // let's find method based on strict hierarchy
     // if method is not found then it's defined in interfaces
     return methods.firstOrNull(predicate)
