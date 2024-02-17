@@ -28,7 +28,9 @@ sealed interface Position
 
 @Serializable
 @SerialName("AnyArgument")
-object AnyArgument : Position
+object AnyArgument : Position {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("Argument")
