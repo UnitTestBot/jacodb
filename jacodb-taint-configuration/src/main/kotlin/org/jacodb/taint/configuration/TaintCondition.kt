@@ -24,9 +24,10 @@ import kotlinx.serialization.modules.subclass
 import org.jacodb.api.JcType
 
 interface ConditionVisitor<out R> {
+    fun visit(condition: ConstantTrue): R
+    fun visit(condition: Not): R
     fun visit(condition: And): R
     fun visit(condition: Or): R
-    fun visit(condition: Not): R
     fun visit(condition: IsConstant): R
     fun visit(condition: IsType): R
     fun visit(condition: AnnotationType): R
@@ -36,7 +37,6 @@ interface ConditionVisitor<out R> {
     fun visit(condition: ConstantMatches): R
     fun visit(condition: SourceFunctionMatches): R
     fun visit(condition: ContainsMark): R
-    fun visit(condition: ConstantTrue): R
     fun visit(condition: TypeMatches): R
 
     // external type
@@ -49,9 +49,10 @@ interface Condition {
 
 val conditionModule = SerializersModule {
     polymorphic(Condition::class) {
+        subclass(ConstantTrue::class)
+        subclass(Not::class)
         subclass(And::class)
         subclass(Or::class)
-        subclass(Not::class)
         subclass(IsConstant::class)
         subclass(IsType::class)
         subclass(AnnotationType::class)
@@ -61,9 +62,24 @@ val conditionModule = SerializersModule {
         subclass(ConstantMatches::class)
         subclass(SourceFunctionMatches::class)
         subclass(ContainsMark::class)
-        subclass(ConstantTrue::class)
         subclass(TypeMatches::class)
     }
+}
+
+@Serializable
+@SerialName("ConstantTrue")
+object ConstantTrue : Condition {
+    override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
+
+    override fun toString(): String = javaClass.simpleName
+}
+
+@Serializable
+@SerialName("Not")
+data class Not(
+    @SerialName("condition") val arg: Condition,
+) : Condition {
+    override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
 @Serializable
@@ -78,14 +94,6 @@ data class And(
 @SerialName("Or")
 data class Or(
     @SerialName("args") val args: List<Condition>,
-) : Condition {
-    override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
-}
-
-@Serializable
-@SerialName("Not")
-data class Not(
-    @SerialName("condition") val arg: Condition,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
@@ -168,14 +176,6 @@ data class ContainsMark(
     @SerialName("mark") val mark: TaintMark,
 ) : Condition {
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
-}
-
-@Serializable
-@SerialName("ConstantTrue")
-object ConstantTrue : Condition {
-    override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
-
-    override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
