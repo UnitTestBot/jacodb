@@ -89,9 +89,13 @@ data class AccessPath internal constructor(
 }
 
 fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
-    is JcSimpleValue -> AccessPath.from(this)
-
+    is JcValue -> toPathOrNull()
     is JcCastExpr -> operand.toPathOrNull()
+    else -> null
+}
+
+fun JcValue.toPathOrNull(): AccessPath? = when (this) {
+    is JcSimpleValue -> AccessPath.from(this)
 
     is JcArrayAccess -> {
         array.toPathOrNull()?.let {

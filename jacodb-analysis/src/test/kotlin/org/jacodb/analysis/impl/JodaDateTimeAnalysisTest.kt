@@ -16,34 +16,65 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.analysis.unused.UnusedVariableManager
+import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
+import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
+import org.jacodb.testing.allClasspath
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
-class JodaDateTimeAnalysisTest : BaseAnalysisTest() {
+class JodaDateTimeAnalysisTest : BaseTest() {
 
     companion object : WithGlobalDB()
+    
+    override val cp: JcClasspath = runBlocking {
+        val configFileName = "config_small.json"
+        val configResource = this.javaClass.getResourceAsStream("/$configFileName")
+        if (configResource != null) {
+            val configJson = configResource.bufferedReader().readText()
+            val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
+            db.classpath(allClasspath, listOf(configurationFeature) + classpathFeatures)
+        } else {
+            super.cp
+        }
+    }
+
+    private val graph: JcApplicationGraph by lazy {
+        runBlocking {
+            cp.newApplicationGraphForAnalysis()
+        }
+    }
 
     @Test
     fun `test taint analysis`() {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        val sinks = findSinks(methods)
-        logger.info { "Vulnerabilities found: ${sinks.size}" }
-    }
-
-    override fun findSinks(methods: List<JcMethod>): List<Vulnerability> {
         val unitResolver = SingletonUnitResolver
         val manager = TaintManager(graph, unitResolver)
         val sinks = manager.analyze(methods, timeout = 60.seconds)
-        return sinks
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
+    }
+
+    @Test
+    fun `test unused variables analysis`() {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = UnusedVariableManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Unused variables found: ${sinks.size}" }
     }
 }
