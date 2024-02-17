@@ -19,7 +19,11 @@ package org.jacodb.analysis.impl
 import io.mockk.every
 import io.mockk.mockk
 import org.jacodb.analysis.config.BasicConditionEvaluator
+import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.toMaybe
+import org.jacodb.analysis.ifds.toPath
+import org.jacodb.analysis.taint.Tainted
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcType
@@ -29,6 +33,7 @@ import org.jacodb.api.cfg.JcBool
 import org.jacodb.api.cfg.JcInt
 import org.jacodb.api.cfg.JcStringConstant
 import org.jacodb.api.cfg.JcThis
+import org.jacodb.api.cfg.JcValue
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.Argument
@@ -49,6 +54,7 @@ import org.jacodb.taint.configuration.Not
 import org.jacodb.taint.configuration.Or
 import org.jacodb.taint.configuration.Position
 import org.jacodb.taint.configuration.SourceFunctionMatches
+import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.This
 import org.jacodb.taint.configuration.TypeMatches
 import org.junit.jupiter.api.Test
@@ -56,7 +62,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class BasicConditionEvaluatorTest {
+class ConditionEvaluatorTest {
 
     private val cp = mockk<JcClasspath>()
 
@@ -78,7 +84,7 @@ class BasicConditionEvaluatorTest {
     private val thisPos: Position = This
     private val thisValue = JcThis(type = mockk())
 
-    private val evaluator: ConditionVisitor<Boolean> = BasicConditionEvaluator { position ->
+    private val positionResolver: (position: Position) -> Maybe<JcValue> = { position ->
         when (position) {
             intArg -> intValue
             boolArg -> boolValue
@@ -87,6 +93,7 @@ class BasicConditionEvaluatorTest {
             else -> null
         }.toMaybe()
     }
+    private val evaluator: ConditionVisitor<Boolean> = BasicConditionEvaluator(positionResolver)
 
     @Test
     fun `True is true`() {
@@ -322,5 +329,16 @@ class BasicConditionEvaluatorTest {
     fun `external Condition is false`() {
         val condition: Condition = mockk()
         assertFalse(evaluator.visit(condition))
+    }
+
+    @Test
+    fun `FactAwareConditionEvaluator supports ContainsMark`() {
+        val fact = Tainted(intValue.toPath(), TaintMark("FOO"))
+        val factAwareEvaluator = FactAwareConditionEvaluator(fact, positionResolver)
+        assertTrue(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("FOO"))))
+        assertFalse(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("BAR"))))
+        assertFalse(factAwareEvaluator.visit(ContainsMark(stringArg, TaintMark("FOO"))))
+        assertFalse(factAwareEvaluator.visit(ContainsMark(stringArg, TaintMark("BAR"))))
+        assertFalse(factAwareEvaluator.visit(ContainsMark(position = mockk(), TaintMark("FOO"))))
     }
 }
