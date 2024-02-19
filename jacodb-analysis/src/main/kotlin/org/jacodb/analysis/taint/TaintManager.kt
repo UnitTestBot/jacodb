@@ -41,7 +41,7 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.analysis.util.getGetPathEdges
+import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import java.util.concurrent.ConcurrentHashMap
@@ -176,7 +176,7 @@ open class TaintManager(
                 delay(1.seconds)
                 logger.info {
                     "Progress: propagated ${
-                        runnerForUnit.values.sumOf { it.getGetPathEdges().size }
+                        runnerForUnit.values.sumOf { it.getPathEdges().size }
                     } path edges"
                 }
             }
@@ -223,7 +223,7 @@ open class TaintManager(
         logger.info { "Total sinks: ${foundVulnerabilities.size}" }
         logger.info {
             "Total propagated ${
-                runnerForUnit.values.sumOf { it.getGetPathEdges().size }
+                runnerForUnit.values.sumOf { it.getPathEdges().size }
             } path edges"
         }
         logger.info {
