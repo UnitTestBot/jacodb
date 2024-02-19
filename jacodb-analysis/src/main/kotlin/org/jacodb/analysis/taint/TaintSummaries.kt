@@ -16,27 +16,16 @@
 
 package org.jacodb.analysis.taint
 
-import org.jacodb.analysis.ifds.Summary
-import org.jacodb.api.JcMethod
+import org.jacodb.analysis.ifds.SummaryEdge
+import org.jacodb.analysis.ifds.Vulnerability
 import org.jacodb.taint.configuration.TaintMethodSink
 
-/**
- * Represents a path edge which starts in an entrypoint
- * and ends in an exit-point of a method.
- */
-data class SummaryEdge(
-    val edge: TaintEdge,
-) : Summary {
-    override val method: JcMethod
-        get() = edge.method
-}
+data class TaintSummaryEdge(
+    override val edge: TaintEdge,
+) : SummaryEdge<TaintDomainFact>
 
-data class Vulnerability(
-    val message: String,
-    val sink: TaintVertex,
-    val edge: TaintEdge? = null,
+data class TaintVulnerability(
+    override val message: String,
+    override val sink: TaintVertex,
     val rule: TaintMethodSink? = null,
-) : Summary {
-    override val method: JcMethod
-        get() = sink.method
-}
+) : Vulnerability<TaintDomainFact>

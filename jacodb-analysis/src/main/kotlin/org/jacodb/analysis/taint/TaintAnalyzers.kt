@@ -31,7 +31,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, TaintEvent> {
 
     override val flowFunctions: ForwardTaintFlowFunctions by lazy {
         ForwardTaintFlowFunctions(graph.classpath, graph)
@@ -71,7 +71,7 @@ class TaintAnalyzer(
             for (item in config.filterIsInstance<TaintMethodSink>()) {
                 if (item.condition.accept(conditionEvaluator)) {
                     val message = item.ruleNote
-                    val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = item)
+                    val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
                     logger.debug { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
                     add(NewVulnerability(vulnerability))
                 }
@@ -89,7 +89,7 @@ class TaintAnalyzer(
 
 class BackwardTaintAnalyzer(
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, TaintEvent> {
 
     override val flowFunctions: BackwardTaintFlowFunctions by lazy {
         BackwardTaintFlowFunctions(graph.classpath, graph)

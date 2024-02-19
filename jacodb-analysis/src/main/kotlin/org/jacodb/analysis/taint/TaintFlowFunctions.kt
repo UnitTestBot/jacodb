@@ -66,7 +66,7 @@ private val logger = mu.KotlinLogging.logger {}
 class ForwardTaintFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
-) : FlowFunctions<TaintFact> {
+) : FlowFunctions<TaintDomainFact> {
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         cp.features
@@ -76,9 +76,9 @@ class ForwardTaintFlowFunctions(
 
     override fun obtainPossibleStartFacts(
         method: JcMethod,
-    ): Collection<TaintFact> = buildSet {
+    ): Collection<TaintDomainFact> = buildSet {
         // Zero (reachability) fact always present at entrypoint:
-        add(Zero)
+        add(TaintZeroFact)
 
         // Extract initial facts from the config:
         val config = taintConfigurationFeature?.getConfigForMethod(method)
@@ -176,9 +176,9 @@ class ForwardTaintFlowFunctions(
     override fun obtainSequentFlowFunction(
         current: JcInst,
         next: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
-        if (fact is Zero) {
-            return@FlowFunction listOf(Zero)
+    ) = FlowFunction<TaintDomainFact> { fact ->
+        if (fact is TaintZeroFact) {
+            return@FlowFunction listOf(TaintZeroFact)
         }
         check(fact is Tainted)
 
@@ -236,7 +236,7 @@ class ForwardTaintFlowFunctions(
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst, // FIXME: unused?
-    ) = FlowFunction<TaintFact> { fact ->
+    ) = FlowFunction<TaintDomainFact> { fact ->
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
@@ -260,9 +260,9 @@ class ForwardTaintFlowFunctions(
 
         val config = taintConfigurationFeature?.getConfigForMethod(callee)
 
-        if (fact == Zero) {
+        if (fact == TaintZeroFact) {
             return@FlowFunction buildSet {
-                add(Zero)
+                add(TaintZeroFact)
 
                 if (config != null) {
                     val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
@@ -387,10 +387,10 @@ class ForwardTaintFlowFunctions(
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
+    ) = FlowFunction<TaintDomainFact> { fact ->
         val callee = calleeStart.location.method
 
-        if (fact == Zero) {
+        if (fact == TaintZeroFact) {
             return@FlowFunction obtainPossibleStartFacts(callee)
         }
         check(fact is Tainted)
@@ -422,9 +422,9 @@ class ForwardTaintFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst, // unused
         exitStatement: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
-        if (fact == Zero) {
-            return@FlowFunction listOf(Zero)
+    ) = FlowFunction<TaintDomainFact> { fact ->
+        if (fact == TaintZeroFact) {
+            return@FlowFunction listOf(TaintZeroFact)
         }
         check(fact is Tainted)
 
@@ -466,19 +466,19 @@ class ForwardTaintFlowFunctions(
 class BackwardTaintFlowFunctions(
     private val project: JcClasspath,
     private val graph: JcApplicationGraph,
-) : FlowFunctions<TaintFact> {
+) : FlowFunctions<TaintDomainFact> {
 
     override fun obtainPossibleStartFacts(
         method: JcMethod,
-    ): Collection<TaintFact> {
-        return listOf(Zero)
+    ): Collection<TaintDomainFact> {
+        return listOf(TaintZeroFact)
     }
 
     private fun transmitTaintBackwardAssign(
         fact: Tainted,
         from: JcValue,
         to: JcExpr,
-    ): Collection<TaintFact> {
+    ): Collection<TaintDomainFact> {
         val fromPath = from.toPath()
         val toPath = to.toPathOrNull()
 
@@ -504,7 +504,7 @@ class BackwardTaintFlowFunctions(
     private fun transmitTaintBackwardNormal(
         fact: Tainted,
         inst: JcInst,
-    ): List<TaintFact> {
+    ): List<TaintDomainFact> {
         // Pass-through:
         return listOf(fact)
     }
@@ -512,9 +512,9 @@ class BackwardTaintFlowFunctions(
     override fun obtainSequentFlowFunction(
         current: JcInst,
         next: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
-        if (fact is Zero) {
-            return@FlowFunction listOf(Zero)
+    ) = FlowFunction<TaintDomainFact> { fact ->
+        if (fact is TaintZeroFact) {
+            return@FlowFunction listOf(TaintZeroFact)
         }
         check(fact is Tainted)
 
@@ -572,11 +572,11 @@ class BackwardTaintFlowFunctions(
     override fun obtainCallToReturnSiteFlowFunction(
         callStatement: JcInst,
         returnSite: JcInst, // FIXME: unused?
-    ) = FlowFunction<TaintFact> { fact ->
+    ) = FlowFunction<TaintDomainFact> { fact ->
         // TODO: pass-through on invokedynamic-based String concatenation
 
-        if (fact == Zero) {
-            return@FlowFunction listOf(Zero)
+        if (fact == TaintZeroFact) {
+            return@FlowFunction listOf(TaintZeroFact)
         }
         check(fact is Tainted)
 
@@ -620,10 +620,10 @@ class BackwardTaintFlowFunctions(
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
+    ) = FlowFunction<TaintDomainFact> { fact ->
         val callee = calleeStart.location.method
 
-        if (fact == Zero) {
+        if (fact == TaintZeroFact) {
             return@FlowFunction obtainPossibleStartFacts(callee)
         }
         check(fact is Tainted)
@@ -669,9 +669,9 @@ class BackwardTaintFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-    ) = FlowFunction<TaintFact> { fact ->
-        if (fact == Zero) {
-            return@FlowFunction listOf(Zero)
+    ) = FlowFunction<TaintDomainFact> { fact ->
+        if (fact == TaintZeroFact) {
+            return@FlowFunction listOf(TaintZeroFact)
         }
         check(fact is Tainted)
 

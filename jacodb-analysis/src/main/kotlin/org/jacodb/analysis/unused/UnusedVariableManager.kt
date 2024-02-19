@@ -29,7 +29,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jacodb.analysis.ifds.Aggregate
 import org.jacodb.analysis.ifds.ControlEvent
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Manager
@@ -40,9 +39,11 @@ import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
+import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.util.getGetPathEdges
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -55,20 +56,20 @@ private val logger = mu.KotlinLogging.logger {}
 class UnusedVariableManager(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver,
-) : Manager<Fact, Event> {
+) : Manager<UnusedVariableDomainFact, Event> {
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
-    private val runnerForUnit: MutableMap<UnitType, Runner<Fact>> = hashMapOf()
+    private val runnerForUnit: MutableMap<UnitType, Runner<UnusedVariableDomainFact>> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
-    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
+    private val summaryEdgesStorage = SummaryStorageImpl<UnusedVariableSummaryEdge>()
+    private val vulnerabilitiesStorage = SummaryStorageImpl<UnusedVariableVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
     private fun newRunner(
         unit: UnitType,
-    ): Runner<Fact> {
+    ): Runner<UnusedVariableDomainFact> {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         logger.debug { "Creating a new runner for $unit" }
@@ -78,7 +79,8 @@ class UnusedVariableManager(
             analyzer = analyzer,
             manager = this@UnusedVariableManager,
             unitResolver = unitResolver,
-            unit = unit
+            unit = unit,
+            zeroFact = UnusedVariableZeroFact
         )
 
         runnerForUnit[unit] = runner
@@ -109,7 +111,7 @@ class UnusedVariableManager(
     fun analyze(
         startMethods: List<JcMethod>,
         timeout: Duration = 3600.seconds,
-    ): List<Vulnerability> = runBlocking {
+    ): List<UnusedVariableVulnerability> = runBlocking {
         val timeStart = TimeSource.Monotonic.markNow()
 
         // Add start methods:
@@ -177,10 +179,31 @@ class UnusedVariableManager(
         }
 
         // Extract found vulnerabilities (sinks):
-        val foundVulnerabilities = vulnerabilitiesStorage.knownMethods
-            .flatMap { method ->
-                vulnerabilitiesStorage.getCurrentFacts(method)
+        val foundVulnerabilities = allUnits.flatMap { unit ->
+            val runner = runnerForUnit[unit] ?: error("No runner for $unit")
+            val result = runner.getIfdsResult()
+            val allFacts = result.facts
+
+            val used = hashMapOf<JcInst, Boolean>()
+            for ((inst, facts) in allFacts) {
+                for (fact in facts) {
+                    if (fact is UnusedVariable) {
+                        used.putIfAbsent(fact.initStatement, false)
+                        if (fact.variable.isUsedAt(inst)) {
+                            used[fact.initStatement] = true
+                        }
+                    }
+
+                }
             }
+            used.filterValues { !it }.keys.map {
+                UnusedVariableVulnerability(
+                    message = "Assigned value is unused",
+                    sink = Vertex(it, UnusedVariableZeroFact)
+                )
+            }
+        }
+
         if (logger.isDebugEnabled) {
             logger.debug { "Total found ${foundVulnerabilities.size} vulnerabilities" }
             for (vulnerability in foundVulnerabilities) {
@@ -204,7 +227,7 @@ class UnusedVariableManager(
     override fun handleEvent(event: Event) {
         when (event) {
             is NewSummaryEdge -> {
-                summaryEdgesStorage.add(SummaryEdge(event.edge))
+                summaryEdgesStorage.add(UnusedVariableSummaryEdge(event.edge))
             }
 
             is NewVulnerability -> {
@@ -230,16 +253,12 @@ class UnusedVariableManager(
     override fun subscribeOnSummaryEdges(
         method: JcMethod,
         scope: CoroutineScope,
-        handler: (Edge<Fact>) -> Unit,
+        handler: (Edge<UnusedVariableDomainFact>) -> Unit,
     ) {
         summaryEdgesStorage
             .getFacts(method)
             .onEach { handler(it.edge) }
             .launchIn(scope)
-    }
-
-    fun getAggregates(): Map<UnitType, Aggregate<Fact>> {
-        return runnerForUnit.mapValues { it.value.getAggregate() }
     }
 }
 
@@ -247,7 +266,7 @@ fun runUnusedVariableAnalysis(
     graph: JcApplicationGraph,
     unitResolver: UnitResolver,
     startMethods: List<JcMethod>,
-): List<Vulnerability> {
+): List<UnusedVariableVulnerability> {
     val manager = UnusedVariableManager(graph, unitResolver)
     return manager.analyze(startMethods)
 }

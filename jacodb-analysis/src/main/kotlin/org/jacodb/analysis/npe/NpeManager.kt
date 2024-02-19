@@ -39,12 +39,13 @@ import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.taint.EdgeForOtherRunner
 import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
-import org.jacodb.analysis.taint.SummaryEdge
+import org.jacodb.analysis.taint.TaintSummaryEdge
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
-import org.jacodb.analysis.taint.TaintFact
+import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintRunner
-import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.util.getGetPathEdges
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -60,14 +61,14 @@ private val logger = mu.KotlinLogging.logger {}
 class NpeManager(
     private val graph: JcApplicationGraph,
     private val unitResolver: UnitResolver,
-) : Manager<TaintFact, TaintEvent> {
+) : Manager<TaintDomainFact, TaintEvent> {
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
     private val runnerForUnit: MutableMap<UnitType, TaintRunner> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
-    private val summaryEdgesStorage = SummaryStorageImpl<SummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<Vulnerability>()
+    private val summaryEdgesStorage = SummaryStorageImpl<TaintSummaryEdge>()
+    private val vulnerabilitiesStorage = SummaryStorageImpl<TaintVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
@@ -77,7 +78,14 @@ class NpeManager(
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         val analyzer = NpeAnalyzer(graph)
-        val runner = UniRunner(graph, analyzer, this@NpeManager, unitResolver, unit)
+        val runner = UniRunner(
+            graph = graph,
+            analyzer = analyzer,
+            manager = this@NpeManager,
+            unitResolver = unitResolver,
+            unit = unit,
+            zeroFact = TaintZeroFact
+        )
 
         runnerForUnit[unit] = runner
         return runner
@@ -94,7 +102,7 @@ class NpeManager(
     fun analyze(
         startMethods: List<JcMethod>,
         timeout: Duration = 3600.seconds,
-    ): List<Vulnerability> = runBlocking(Dispatchers.Default) {
+    ): List<TaintVulnerability> = runBlocking(Dispatchers.Default) {
         val timeStart = TimeSource.Monotonic.markNow()
 
         // Add start methods:
@@ -189,7 +197,7 @@ class NpeManager(
     override fun handleEvent(event: TaintEvent) {
         when (event) {
             is NewSummaryEdge -> {
-                summaryEdgesStorage.add(SummaryEdge(event.edge))
+                summaryEdgesStorage.add(TaintSummaryEdge(event.edge))
             }
 
             is NewVulnerability -> {
@@ -238,7 +246,7 @@ fun runNpeAnalysis(
     graph: JcApplicationGraph,
     unitResolver: UnitResolver,
     startMethods: List<JcMethod>,
-): List<Vulnerability> {
+): List<TaintVulnerability> {
     val manager = NpeManager(graph, unitResolver)
     return manager.analyze(startMethods)
 }

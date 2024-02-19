@@ -25,10 +25,10 @@ import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
-import org.jacodb.analysis.taint.TaintFact
+import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintVertex
 import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -40,7 +40,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 class NpeAnalyzer(
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, TaintEvent> {
 
     override val flowFunctions: ForwardNpeFlowFunctions by lazy {
         ForwardNpeFlowFunctions(graph.classpath, graph)
@@ -63,7 +63,7 @@ class NpeAnalyzer(
         if (edge.to.fact is Tainted && edge.to.fact.mark == TaintMark.NULLNESS) {
             if (edge.to.fact.variable.isDereferencedAt(edge.to.statement)) {
                 val message = "NPE" // TODO
-                val vulnerability = Vulnerability(message, sink = edge.to, edge = edge)
+                val vulnerability = TaintVulnerability(message, sink = edge.to)
                 logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
                 add(NewVulnerability(vulnerability))
             }
@@ -90,7 +90,7 @@ class NpeAnalyzer(
                 if (item.condition.accept(conditionEvaluator)) {
                     logger.trace { "Found sink at ${edge.to} in ${edge.method} on $item" }
                     val message = item.ruleNote
-                    val vulnerability = Vulnerability(message, sink = edge.to, edge = edge, rule = item)
+                    val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
                     add(NewVulnerability(vulnerability))
                 }
             }

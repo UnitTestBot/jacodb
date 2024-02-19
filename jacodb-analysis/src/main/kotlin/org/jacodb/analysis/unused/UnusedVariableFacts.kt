@@ -16,14 +16,16 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.Edge
+import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.api.cfg.JcInst
 
-sealed interface Event
+sealed interface UnusedVariableDomainFact
 
-data class NewSummaryEdge(
-    val edge: Edge<Fact>,
-) : Event
+object UnusedVariableZeroFact : UnusedVariableDomainFact {
+    override fun toString(): String = "Zero"
+}
 
-data class NewVulnerability(
-    val vulnerability: Vulnerability,
-) : Event
+data class UnusedVariable(
+    val variable: AccessPath,
+    val initStatement: JcInst,
+) : UnusedVariableDomainFact

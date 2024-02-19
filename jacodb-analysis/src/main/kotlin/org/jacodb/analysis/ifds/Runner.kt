@@ -22,7 +22,7 @@ import kotlinx.coroutines.channels.getOrElse
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import org.jacodb.analysis.graph.JcNoopInst
-import org.jacodb.analysis.taint.Zero
+import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
@@ -36,7 +36,7 @@ interface Runner<Fact> {
 
     suspend fun run(startMethods: List<JcMethod>)
     fun submitNewEdge(edge: Edge<Fact>, reason: Reason<Fact>)
-    fun getAggregate(): Aggregate<Fact>
+    fun getIfdsResult(): IfdsResult<Fact>
 }
 
 class UniRunner<Fact, Event>(
@@ -45,6 +45,7 @@ class UniRunner<Fact, Event>(
     private val manager: Manager<Fact, Event>,
     private val unitResolver: UnitResolver,
     override val unit: UnitType,
+    private val zeroFact: Fact?,
 ) : Runner<Fact> {
 
     private val flowSpace: FlowFunctions<Fact> = analyzer.flowFunctions
@@ -97,7 +98,7 @@ class UniRunner<Fact, Event>(
             val doPrintOnlyForward = true
             val doPrintZero = false
             if (!doPrintOnlyForward || edge.from.statement is JcNoopInst) {
-                if (doPrintZero || edge.to.fact != Zero) {
+                if (doPrintZero || edge.to.fact != TaintZeroFact) {
                     logger.trace { "Propagating edge=$edge in method=${edge.method.name} with reason=${reason}" }
                 }
             }
@@ -249,8 +250,8 @@ class UniRunner<Fact, Event>(
         return resultFacts
     }
 
-    override fun getAggregate(): Aggregate<Fact> {
+    override fun getIfdsResult(): IfdsResult<Fact> {
         val facts = getFinalFacts()
-        return Aggregate(pathEdges, facts, reasons)
+        return IfdsResult(pathEdges, facts, reasons, zeroFact)
     }
 }

@@ -19,8 +19,9 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
@@ -195,9 +196,9 @@ class IfdsNpeTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
-    private fun findSinks(method: JcMethod): List<Vulnerability> {
+    private fun findSinks(method: JcMethod): List<TaintVulnerability> {
         val unitResolver = SingletonUnitResolver
-        val manager = TaintManager(graph, unitResolver)
+        val manager = NpeManager(graph, unitResolver)
         return manager.analyze(listOf(method), timeout = 30.seconds)
     }
 

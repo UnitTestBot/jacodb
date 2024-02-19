@@ -20,6 +20,6 @@ import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.Vertex
 
-typealias TaintVertex = Vertex<TaintFact>
-typealias TaintEdge = Edge<TaintFact>
-typealias TaintRunner = Runner<TaintFact>
+typealias TaintVertex = Vertex<TaintDomainFact>
+typealias TaintEdge = Edge<TaintDomainFact>
+typealias TaintRunner = Runner<TaintDomainFact>

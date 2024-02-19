@@ -32,30 +32,30 @@ import org.jacodb.api.ext.cfg.callExpr
 
 class UnusedVariableFlowFunctions(
     private val graph: JcApplicationGraph,
-) : FlowFunctions<Fact> {
+) : FlowFunctions<UnusedVariableDomainFact> {
     private val cp: JcClasspath
         get() = graph.classpath
 
     override fun obtainPossibleStartFacts(
         method: JcMethod,
-    ): Collection<Fact> {
-        return setOf(Zero)
+    ): Collection<UnusedVariableDomainFact> {
+        return setOf(UnusedVariableZeroFact)
     }
 
     override fun obtainSequentFlowFunction(
         current: JcInst,
         next: JcInst,
-    ) = FlowFunction<Fact> { fact ->
+    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
         if (current !is JcAssignInst) {
             return@FlowFunction setOf(fact)
         }
 
-        if (fact == Zero) {
+        if (fact == UnusedVariableZeroFact) {
             val toPath = current.lhv.toPath()
             if (!toPath.isOnHeap) {
-                return@FlowFunction setOf(Zero, UnusedVariable(toPath, current))
+                return@FlowFunction setOf(UnusedVariableZeroFact, UnusedVariable(toPath, current))
             } else {
-                return@FlowFunction setOf(Zero)
+                return@FlowFunction setOf(UnusedVariableZeroFact)
             }
         }
         check(fact is UnusedVariable)
@@ -84,16 +84,16 @@ class UnusedVariableFlowFunctions(
     override fun obtainCallToStartFlowFunction(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ) = FlowFunction<Fact> { fact ->
+    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
-        if (fact == Zero) {
+        if (fact == UnusedVariableZeroFact) {
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
-                return@FlowFunction setOf(Zero)
+                return@FlowFunction setOf(UnusedVariableZeroFact)
             }
             return@FlowFunction buildSet {
-                add(Zero)
+                add(UnusedVariableZeroFact)
                 val callee = calleeStart.location.method
                 val formalParams = cp.getArgumentsOf(callee)
                 for (formal in formalParams) {
@@ -110,9 +110,9 @@ class UnusedVariableFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-    ) = FlowFunction<Fact> { fact ->
-        if (fact == Zero) {
-            setOf(Zero)
+    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
+        if (fact == UnusedVariableZeroFact) {
+            setOf(UnusedVariableZeroFact)
         } else {
             emptySet()
         }

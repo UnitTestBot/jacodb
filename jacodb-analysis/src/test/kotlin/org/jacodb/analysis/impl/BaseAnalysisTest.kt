@@ -19,7 +19,7 @@ package org.jacodb.analysis.impl
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.taint.Vulnerability
+import org.jacodb.analysis.ifds.Vulnerability
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -104,7 +104,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         }
     }
 
-    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability>) {
+    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability<*>>) {
         logger.info { className }
 
         val clazz = cp.findClass(className)

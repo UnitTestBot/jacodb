@@ -24,7 +24,7 @@ import org.jacodb.api.cfg.JcInst
 
 class UnusedVariableAnalyzer(
     private val graph: JcApplicationGraph,
-) : Analyzer<Fact, Event> {
+) : Analyzer<UnusedVariableDomainFact, Event> {
 
     override val flowFunctions: UnusedVariableFlowFunctions by lazy {
         UnusedVariableFlowFunctions(graph)
@@ -34,13 +34,13 @@ class UnusedVariableAnalyzer(
         return statement in graph.exitPoints(statement.location.method)
     }
 
-    override fun handleNewEdge(edge: Edge<Fact>): List<Event> = buildList {
+    override fun handleNewEdge(edge: Edge<UnusedVariableDomainFact>): List<Event> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
         }
     }
 
-    override fun handleCrossUnitCall(caller: Vertex<Fact>, callee: Vertex<Fact>): List<Event> {
+    override fun handleCrossUnitCall(caller: Vertex<UnusedVariableDomainFact>, callee: Vertex<UnusedVariableDomainFact>): List<Event> {
         return emptyList()
     }
 }

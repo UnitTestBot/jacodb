@@ -20,10 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.analysis.taint.Vulnerability
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.taint.configuration.TaintConfigurationFeature

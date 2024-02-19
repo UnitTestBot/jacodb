@@ -19,13 +19,13 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.taint.configuration.TaintMark
 
-sealed interface TaintFact
+sealed interface TaintDomainFact
 
-object Zero : TaintFact {
-    override fun toString(): String = javaClass.simpleName
+object TaintZeroFact : TaintDomainFact {
+    override fun toString(): String = "Zero"
 }
 
 data class Tainted(
     val variable: AccessPath,
     val mark: TaintMark,
-) : TaintFact
+) : TaintDomainFact

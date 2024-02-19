@@ -17,22 +17,13 @@
 package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.Summary
-import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.api.JcMethod
 
-data class SummaryEdge(
-    val edge: Edge<Fact>,
-) : Summary {
-    override val method: JcMethod
-        get() = edge.method
-}
+sealed interface Event
 
-data class Vulnerability(
-    val message: String,
-    val sink: Vertex<Fact>,
-    val edge: Edge<Fact>? = null,
-) : Summary {
-    override val method: JcMethod
-        get() = sink.method
-}
+data class NewSummaryEdge(
+    val edge: Edge<UnusedVariableDomainFact>,
+) : Event
+
+data class NewVulnerability(
+    val vulnerability: UnusedVariableVulnerability,
+) : Event
