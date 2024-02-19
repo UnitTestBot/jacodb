@@ -203,7 +203,7 @@ class NpeManager(
                     logger.trace { "Ignoring event=$event for non-existing runner for unit=$unit" }
                     return
                 }
-                otherRunner.submitNewEdge(event.edge)
+                otherRunner.submitNewEdge(event.edge, event.reason)
             }
         }
     }

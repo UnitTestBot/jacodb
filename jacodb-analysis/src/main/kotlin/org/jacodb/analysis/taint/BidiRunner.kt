@@ -25,6 +25,7 @@ import org.jacodb.analysis.ifds.ControlEvent
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Manager
 import org.jacodb.analysis.ifds.QueueEmptinessChanged
+import org.jacodb.analysis.ifds.Reason
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.api.JcMethod
@@ -50,7 +51,7 @@ class BidiRunner(
                     is EdgeForOtherRunner -> {
                         if (unitResolver.resolve(event.edge.method) == unit) {
                             // Submit new edge directly to the backward runner:
-                            backwardRunner.submitNewEdge(event.edge)
+                            backwardRunner.submitNewEdge(event.edge, event.reason)
                         } else {
                             // Submit new edge via the manager:
                             manager.handleEvent(event)
@@ -87,7 +88,7 @@ class BidiRunner(
                     is EdgeForOtherRunner -> {
                         check(unitResolver.resolve(event.edge.method) == unit)
                         // Submit new edge directly to the forward runner:
-                        forwardRunner.submitNewEdge(event.edge)
+                        forwardRunner.submitNewEdge(event.edge, event.reason)
                     }
 
                     else -> manager.handleEvent(event)
@@ -122,8 +123,8 @@ class BidiRunner(
         check(backwardRunner.unit == unit)
     }
 
-    override fun submitNewEdge(edge: Edge<TaintFact>) {
-        forwardRunner.submitNewEdge(edge)
+    override fun submitNewEdge(edge: Edge<TaintFact>, reason: Reason<TaintFact>) {
+        forwardRunner.submitNewEdge(edge, reason)
     }
 
     override suspend fun run(startMethods: List<JcMethod>) = coroutineScope {

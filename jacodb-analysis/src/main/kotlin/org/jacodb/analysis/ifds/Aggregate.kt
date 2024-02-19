@@ -25,7 +25,7 @@ import org.jacodb.api.cfg.JcInst
 class Aggregate<Fact>(
     pathEdges: Collection<Edge<Fact>>,
     val facts: Map<JcInst, Set<Fact>>,
-    val reasons: Map<Edge<Fact>, Set<Reason>>,
+    val reasons: Map<Edge<Fact>, Set<Reason<Fact>>>,
 ) {
     private val pathEdgesBySink: Map<Vertex<Fact>, Collection<Edge<Fact>>> =
         pathEdges.groupByTo(HashMap()) { it.to }
@@ -33,6 +33,7 @@ class Aggregate<Fact>(
     fun buildTraceGraph(sink: Vertex<Fact>): TraceGraph<Fact> {
         val sources: MutableSet<Vertex<Fact>> = hashSetOf()
         val edges: MutableMap<Vertex<Fact>, MutableSet<Vertex<Fact>>> = hashMapOf()
+        val unresolvedCrossUnitCalls: MutableMap<Vertex<Fact>, MutableSet<Vertex<Fact>>> = hashMapOf()
         val visited: MutableSet<Pair<Edge<Fact>, Vertex<Fact>>> = hashSetOf()
 
         fun addEdge(
@@ -69,9 +70,7 @@ class Aggregate<Fact>(
 
             for (reason in reasons[edge].orEmpty()) {
                 when (reason) {
-                    is Reason.Sequent<*> -> {
-                        @Suppress("UNCHECKED_CAST")
-                        reason as Reason.Sequent<Fact>
+                    is Reason.Sequent<Fact> -> {
                         val predEdge = reason.edge
                         if (predEdge.to.fact == vertex.fact) {
                             dfs(predEdge, lastVertex, stopAtMethodStart)
@@ -81,9 +80,7 @@ class Aggregate<Fact>(
                         }
                     }
 
-                    is Reason.CallToStart<*> -> {
-                        @Suppress("UNCHECKED_CAST")
-                        reason as Reason.CallToStart<Fact>
+                    is Reason.CallToStart<Fact> -> {
                         val predEdge = reason.edge
                         if (!stopAtMethodStart) {
                             addEdge(predEdge.to, lastVertex)
@@ -91,9 +88,7 @@ class Aggregate<Fact>(
                         }
                     }
 
-                    is Reason.ThroughSummary<*> -> {
-                        @Suppress("UNCHECKED_CAST")
-                        reason as Reason.ThroughSummary<Fact>
+                    is Reason.ThroughSummary<Fact> -> {
                         val predEdge = reason.edge
                         val summaryEdge = reason.summaryEdge
                         addEdge(summaryEdge.to, lastVertex) // Return to next vertex
@@ -102,14 +97,13 @@ class Aggregate<Fact>(
                         dfs(predEdge, predEdge.to, stopAtMethodStart) // Continue normal analysis
                     }
 
-                    is Reason.External -> {
-                        // TODO: check
+                    is Reason.CrossUnitCall<Fact> -> {
                         addEdge(edge.to, lastVertex)
-                        if (edge.from != edge.to) {
-                            // TODO: ideally, we should analyze the place from which the edge was given to ifds,
-                            //  for now we just go to method start
-                            dfs(Edge(edge.from, edge.from), edge.to, stopAtMethodStart)
-                        }
+                        unresolvedCrossUnitCalls.getOrPut(reason.caller) { hashSetOf() }.add(edge.to)
+                    }
+
+                    is Reason.External -> {
+                        TODO("External reason is not supported yet")
                     }
 
                     is Reason.Initial -> {
@@ -123,6 +117,6 @@ class Aggregate<Fact>(
         for (edge in pathEdgesBySink[sink].orEmpty()) {
             dfs(edge, edge.to, false)
         }
-        return TraceGraph(sink, sources, edges)
+        return TraceGraph(sink, sources, edges, unresolvedCrossUnitCalls)
     }
 }

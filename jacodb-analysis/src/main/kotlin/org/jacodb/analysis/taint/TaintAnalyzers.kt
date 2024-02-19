@@ -20,6 +20,7 @@ import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
+import org.jacodb.analysis.ifds.Reason
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -82,7 +83,7 @@ class TaintAnalyzer(
         caller: TaintVertex,
         callee: TaintVertex,
     ): List<TaintEvent> = buildList {
-        add(EdgeForOtherRunner(TaintEdge(callee, callee)))
+        add(EdgeForOtherRunner(TaintEdge(callee, callee), Reason.CrossUnitCall(caller)))
     }
 }
 
@@ -102,7 +103,7 @@ class BackwardTaintAnalyzer(
         edge: TaintEdge,
     ): List<TaintEvent> = buildList {
         if (isExitPoint(edge.to.statement)) {
-            add(EdgeForOtherRunner(Edge(edge.to, edge.to)))
+            add(EdgeForOtherRunner(Edge(edge.to, edge.to), reason = Reason.External))
         }
     }
 

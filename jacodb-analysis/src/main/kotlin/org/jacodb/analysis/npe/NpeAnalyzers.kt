@@ -19,6 +19,7 @@ package org.jacodb.analysis.npe
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
+import org.jacodb.analysis.ifds.Reason
 import org.jacodb.analysis.taint.EdgeForOtherRunner
 import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
@@ -100,6 +101,6 @@ class NpeAnalyzer(
         caller: TaintVertex,
         callee: TaintVertex,
     ): List<TaintEvent> = buildList {
-        add(EdgeForOtherRunner(TaintEdge(callee, callee)))
+        add(EdgeForOtherRunner(TaintEdge(callee, callee), Reason.CrossUnitCall(caller)))
     }
 }

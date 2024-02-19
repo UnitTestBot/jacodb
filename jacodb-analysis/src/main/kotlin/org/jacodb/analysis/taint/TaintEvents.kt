@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.taint
 
+import org.jacodb.analysis.ifds.Reason
+
 sealed interface TaintEvent
 
 data class NewSummaryEdge(
@@ -28,6 +30,7 @@ data class NewVulnerability(
 
 data class EdgeForOtherRunner(
     val edge: TaintEdge,
+    val reason: Reason<TaintFact>
 ) : TaintEvent {
     init {
         // TODO: remove this check
