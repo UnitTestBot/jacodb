@@ -26,13 +26,31 @@ class PandaProject(
         return null
     }
 
+    fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
+
+    fun findMethodOrNull(name: String, currentClassName: String): PandaMethod? =
+        findClassOrNull(currentClassName)?.methods?.find {
+            it.name == name
+        }
+
     override fun close() {}
+
+    companion object {
+
+        fun empty(): PandaProject = PandaProject(emptyList())
+    }
 
 }
 
 class PandaClass(
+    val name: String,
     val methods: List<PandaMethod>
 ) {
 
-    private var _project
+    private var _project: PandaProject = PandaProject.empty()
+    val project: PandaProject get() = _project
+
+    fun setProject(value: PandaProject) {
+        _project = value
+    }
 }
