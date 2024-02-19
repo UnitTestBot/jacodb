@@ -99,7 +99,7 @@ fun JcValue.toPathOrNull(): AccessPath? = when (this) {
 
     is JcArrayAccess -> {
         array.toPathOrNull()?.let {
-            it / ElementAccessor(index)
+            it / ElementAccessor
         }
     }
 

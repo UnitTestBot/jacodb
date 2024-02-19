@@ -44,5 +44,3 @@ object ElementAccessor : Accessor {
         return "*"
     }
 }
-
-fun ElementAccessor(index: JcValue?) = ElementAccessor

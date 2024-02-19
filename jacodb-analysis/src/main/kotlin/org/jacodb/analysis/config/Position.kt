@@ -47,7 +47,7 @@ class CallPositionToAccessPathResolver(
         This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull().toMaybe()
         Result -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
         ResultAnyElement -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
-            .fmap { it / ElementAccessor(null) }
+            .fmap { it / ElementAccessor }
     }
 }
 

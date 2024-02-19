@@ -234,7 +234,7 @@ class ForwardNpeFlowFunctions(
             if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
                 add(Tainted(toPath, TaintMark.NULLNESS))
             } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
-                val accessors = List((from.type as JcArrayType).dimensions) { ElementAccessor(null) }
+                val accessors = List((from.type as JcArrayType).dimensions) { ElementAccessor }
                 val path = toPath / accessors
                 add(Tainted(path, TaintMark.NULLNESS))
             }
