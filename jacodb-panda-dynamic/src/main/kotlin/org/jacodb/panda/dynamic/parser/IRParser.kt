@@ -185,7 +185,7 @@ class IRParser(jsonPath: String) {
 
     fun getProgramIR(): ProgramIR {
         val programIR: ProgramIR = Json.decodeFromString(json)
-        mapProgramIR(programIR)
+        val pandaProject = mapProgramIR(programIR)
         return programIR
     }
 
