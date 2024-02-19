@@ -59,7 +59,7 @@ open class TaintManager(
     private val useBidiRunner: Boolean = false,
 ) : Manager<TaintDomainFact, TaintEvent> {
 
-    private val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
+    protected val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
     protected val runnerForUnit: MutableMap<UnitType, TaintRunner> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
@@ -126,7 +126,7 @@ open class TaintManager(
         return result
     }
 
-    private fun addStart(method: JcMethod) {
+    protected open fun addStart(method: JcMethod) {
         logger.info { "Adding start method: $method" }
         val unit = unitResolver.resolve(method)
         if (unit == UnknownUnit) return

@@ -19,10 +19,14 @@ package org.jacodb.analysis.npe
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
+import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintRunner
 import org.jacodb.analysis.taint.TaintZeroFact
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+
+private val logger = mu.KotlinLogging.logger {}
 
 class NpeManager(
     graph: JcApplicationGraph,
@@ -46,5 +50,13 @@ class NpeManager(
 
         runnerForUnit[unit] = runner
         return runner
+    }
+
+    override fun addStart(method: JcMethod) {
+        logger.info { "Adding start method: $method" }
+        val unit = unitResolver.resolve(method)
+        if (unit == UnknownUnit) return
+        methodsForUnit.getOrPut(unit) { hashSetOf() }.add(method)
+        // Note: DO NOT add deps here!
     }
 }
