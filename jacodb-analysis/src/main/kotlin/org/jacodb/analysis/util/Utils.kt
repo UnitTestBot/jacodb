@@ -20,7 +20,7 @@ import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
-import org.jacodb.analysis.taint.BidiRunner
+import org.jacodb.analysis.taint.TaintBidiRunner
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
@@ -42,7 +42,7 @@ fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
 
 fun Runner<*>.getGetPathEdges(): Set<Edge<*>> = when (this) {
     is UniRunner<*, *> -> pathEdges
-    is BidiRunner -> forwardRunner.getGetPathEdges() + backwardRunner.getGetPathEdges()
+    is TaintBidiRunner -> forwardRunner.getGetPathEdges() + backwardRunner.getGetPathEdges()
     else -> error("Cannot extract pathEdges for $this")
 }
 

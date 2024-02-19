@@ -16,9 +16,13 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacodb.analysis.ifds.ClassUnitResolver
 import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.toSarif
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -45,6 +49,10 @@ class IfdsSqlTest : BaseAnalysisTest() {
             // Not working yet (#156)
             "s03", "s04"
         )
+    }
+
+    private val myJson = Json {
+        prettyPrint = true
     }
 
     @Test
@@ -95,5 +103,8 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val graph = manager.vulnerabilityTraceGraph(sink)
         val trace = graph.getAllTraces().first()
         assertTrue(trace.isNotEmpty())
+        val sarif = sarifReportFromVulnerabilities(listOf(sink.toSarif(graph)))
+        val sarifJson = myJson.encodeToString(sarif)
+        logger.info { "SARIF:\n$sarifJson" }
     }
 }

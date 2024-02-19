@@ -14,18 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.sarif
+package org.jacodb.analysis.taint
 
-import io.github.detekt.sarif4k.Level
 import org.jacodb.analysis.ifds.TraceGraph
+import org.jacodb.analysis.sarif.VulnerabilityDescription
+import org.jacodb.analysis.sarif.VulnerabilityInstance
 
-data class VulnerabilityInstance<Fact>(
-    val traceGraph: TraceGraph<Fact>,
-    val description: VulnerabilityDescription,
-)
-
-data class VulnerabilityDescription(
-    val ruleId: String?,
-    val message: String?,
-    val level: Level = Level.Warning,
-)
+fun TaintVulnerability.toSarif(
+    graph: TraceGraph<TaintDomainFact>,
+): VulnerabilityInstance<TaintDomainFact> {
+    return VulnerabilityInstance(
+        graph,
+        VulnerabilityDescription(
+            ruleId = null,
+            message = rule?.ruleNote
+        )
+    )
+}

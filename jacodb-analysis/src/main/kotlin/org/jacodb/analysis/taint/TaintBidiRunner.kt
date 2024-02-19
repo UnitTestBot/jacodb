@@ -30,7 +30,7 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.api.JcMethod
 
-class BidiRunner(
+class TaintBidiRunner(
     val manager: TaintManager,
     val unitResolver: UnitResolver,
     override val unit: UnitType,

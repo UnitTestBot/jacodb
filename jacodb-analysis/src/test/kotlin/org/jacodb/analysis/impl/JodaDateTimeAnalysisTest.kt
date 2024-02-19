@@ -19,6 +19,7 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.api.JcClasspath
@@ -37,7 +38,7 @@ private val logger = mu.KotlinLogging.logger {}
 class JodaDateTimeAnalysisTest : BaseTest() {
 
     companion object : WithGlobalDB()
-    
+
     override val cp: JcClasspath = runBlocking {
         val configFileName = "config_small.json"
         val configResource = this.javaClass.getResourceAsStream("/$configFileName")
@@ -62,6 +63,16 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         val methods = clazz.declaredMethods
         val unitResolver = SingletonUnitResolver
         val manager = TaintManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
+    }
+
+    @Test
+    fun `test NPE analysis`() {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = NpeManager(graph, unitResolver)
         val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
