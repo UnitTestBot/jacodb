@@ -622,7 +622,7 @@ class IRParser(jsonPath: String) {
                     println("\t\tBasic Block ID: ${programBlock.id}")
                     programBlock.insts.forEach { programInst ->
                         println("\t\t\tInst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
-                        println("\t\t\t\tType: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Visit: ${programInst.visit}")
+                        println("\t\t\t\tType: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Inputs: ${programInst.inputs}")
                     }
                 }
             }
