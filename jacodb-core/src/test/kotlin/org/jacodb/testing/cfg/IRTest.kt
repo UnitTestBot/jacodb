@@ -16,30 +16,9 @@
 
 package org.jacodb.testing.cfg
 
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCallExpr
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcEnterMonitorInst
-import org.jacodb.api.cfg.JcExitMonitorInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcExprVisitor
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcReturnInst
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcTerminatingInst
-import org.jacodb.api.cfg.JcThrowInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
+
+import org.jacodb.api.*
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.toType
@@ -55,42 +34,27 @@ import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
-import org.jacodb.testing.WithDB
-import org.jacodb.testing.asmLib
-import org.jacodb.testing.guavaLib
-import org.jacodb.testing.kotlinStdLib
-import org.jacodb.testing.kotlinxCoroutines
+import org.jacodb.testing.*
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.File
 
 class OverridesResolver(
-    private val hierarchyExtension: HierarchyExtension,
-) : JcExprVisitor.Default<Sequence<JcTypedMethod>>,
-    JcInstVisitor.Default<Sequence<JcTypedMethod>> {
+    private val hierarchyExtension: HierarchyExtension
+) : DefaultJcInstVisitor<Sequence<JcTypedMethod>>, DefaultJcExprVisitor<Sequence<JcTypedMethod>> {
+    override val defaultInstHandler: (JcInst) -> Sequence<JcTypedMethod>
+        get() = { emptySequence() }
+    override val defaultExprHandler: (JcExpr) -> Sequence<JcTypedMethod>
+        get() = { emptySequence() }
 
-    override fun defaultVisitJcExpr(expr: JcExpr): Sequence<JcTypedMethod> {
-        return emptySequence()
-    }
-
-    override fun defaultVisitJcInst(inst: JcInst): Sequence<JcTypedMethod> {
-        return emptySequence()
-    }
-
-    private fun JcClassType.getMethod(
-        name: String,
-        argTypes: List<TypeName>,
-        returnType: TypeName,
-    ): JcTypedMethod {
+    private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
         return methods.firstOrNull { typedMethod ->
             val jcMethod = typedMethod.method
-            jcMethod.name == name
-                && jcMethod.returnType.typeName == returnType.typeName
-                && jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+            jcMethod.name == name &&
+                    jcMethod.returnType.typeName == returnType.typeName &&
+                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
         } ?: error("Could not find a method with correct signature")
     }
 
@@ -99,14 +63,6 @@ class OverridesResolver(
             val klass = enclosingClass.toType()
             return klass.getMethod(name, parameters.map { it.type }, returnType)
         }
-
-    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Sequence<JcTypedMethod> {
-        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
-    }
-
-    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Sequence<JcTypedMethod> {
-        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
-    }
 
     override fun visitJcAssignInst(inst: JcAssignInst): Sequence<JcTypedMethod> {
         if (inst.rhv is JcCallExpr) return inst.rhv.accept(this)
@@ -117,20 +73,26 @@ class OverridesResolver(
         return inst.callExpr.accept(this)
     }
 
+    override fun visitJcVirtualCallExpr(expr: JcVirtualCallExpr): Sequence<JcTypedMethod> {
+        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
+    }
+
+    override fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): Sequence<JcTypedMethod> {
+        return hierarchyExtension.findOverrides(expr.method.method).map { it.typedMethod }
+    }
+
 }
 
-class JcGraphChecker(
-    val method: JcMethod,
-    val jcGraph: JcGraph,
-) : JcInstVisitor<Unit> {
-
+class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor<Unit> {
     fun check() {
         try {
             jcGraph.entry
         } catch (e: Exception) {
             println(
                 "Fail on method ${method.enclosingClass.simpleName}#${method.name}(${
-                    method.parameters.joinToString(",") { it.type.typeName }
+                    method.parameters.joinToString(
+                        ","
+                    ) { it.type.typeName }
                 })"
             )
             throw e
@@ -165,10 +127,6 @@ class JcGraphChecker(
                 assertTrue(blockGraph.successors(block).isNotEmpty())
             }
         }
-    }
-
-    override fun visitExternalJcInst(inst: JcInst) {
-        // Do nothing
     }
 
     override fun visitJcAssignInst(inst: JcAssignInst) {
@@ -288,6 +246,8 @@ class JcGraphChecker(
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
+    override fun visitExternalJcInst(inst: JcInst) {
+    }
 }
 
 class IRTest : BaseInstructionsTest() {
@@ -335,6 +295,7 @@ class IRTest : BaseInstructionsTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
+
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
@@ -354,6 +315,7 @@ class IRTest : BaseInstructionsTest() {
     fun `get ir of kotlin stdlib`() {
         runAlongLib(kotlinStdLib, false)
     }
+
 
     @AfterEach
     fun printStats() {

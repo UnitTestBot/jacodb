@@ -139,6 +139,7 @@ class JcGraphImpl(
 
     override fun iterator(): Iterator<JcInst> = instructions.iterator()
 
+
     private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {
         val current = this[key]
         if (current == null) {
@@ -149,17 +150,18 @@ class JcGraphImpl(
     }
 }
 
-fun JcGraph.filter(visitor: JcInstVisitor<Boolean>): JcGraph =
+
+fun JcGraph.filter(visitor: JcInstVisitor<Boolean>) =
     JcGraphImpl(method, instructions.filter { it.accept(visitor) })
 
-fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>): JcGraph =
+fun JcGraph.filterNot(visitor: JcInstVisitor<Boolean>) =
     JcGraphImpl(method, instructions.filterNot { it.accept(visitor) })
 
-fun JcGraph.map(visitor: JcInstVisitor<JcInst>): JcGraph =
+fun JcGraph.map(visitor: JcInstVisitor<JcInst>) =
     JcGraphImpl(method, instructions.map { it.accept(visitor) })
 
-fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>): JcGraph =
+fun JcGraph.mapNotNull(visitor: JcInstVisitor<JcInst?>) =
     JcGraphImpl(method, instructions.mapNotNull { it.accept(visitor) })
 
-fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>): JcGraph =
+fun JcGraph.flatMap(visitor: JcInstVisitor<Collection<JcInst>>) =
     JcGraphImpl(method, instructions.flatMap { it.accept(visitor) })

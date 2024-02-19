@@ -82,6 +82,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
 
     override var db = runBlocking {
         jacodb {
+            // persistent("D:\\work\\jacodb\\jcdb-index.db")
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             keepLocalVariableNames()

@@ -307,8 +307,6 @@ class TaintConfigurationFeature private constructor(
 
         override fun visit(action: RemoveMark): List<Action> =
             specializePosition(method, action.position).map { action.copy(position = it) }
-
-        override fun visit(action: Action): List<Action> = error("Unexpected action $action")
     }
 
     private inner class ConditionSpecializer(val method: JcMethod) : ConditionVisitor<Condition> {
@@ -428,8 +426,6 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantTrue): Condition = condition
 
         override fun visit(condition: TypeMatches): Condition = error("Must not occur here")
-
-        override fun visit(condition: Condition): Condition = condition
     }
 
     private val conditionSimplifier = object : ConditionVisitor<Condition> {
@@ -490,8 +486,6 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ContainsMark): Condition = condition
         override fun visit(condition: ConstantTrue): Condition = condition
         override fun visit(condition: TypeMatches): Condition = condition
-
-        override fun visit(condition: Condition): Condition = condition
     }
 
     companion object {

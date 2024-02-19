@@ -18,16 +18,14 @@
 
 package org.jacodb.api.ext
 
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypedField
-import org.jacodb.api.JcTypedMethod
-import org.jacodb.api.TypeNotFoundException
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.*
+import java.lang.Boolean
+import java.lang.Byte
+import java.lang.Double
+import java.lang.Float
+import java.lang.Long
+import java.lang.Short
+
 
 val JcClassType.constructors get() = declaredMethods.filter { it.method.isConstructor }
 
@@ -89,7 +87,7 @@ val JcArrayType.deepestElementType: JcType
         return type
     }
 
-fun JcType.isAssignable(declaration: JcType): Boolean {
+fun JcType.isAssignable(declaration: JcType): kotlin.Boolean {
     val nullType = classpath.nullType
     if (this == declaration) {
         return true
@@ -183,7 +181,7 @@ fun JcClassType.findMethodOrNull(name: String, desc: String): JcTypedMethod? {
  *
  * This method doesn't support [org.jacodb.impl.features.classpaths.UnknownClasses] feature.
  */
-fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> Boolean): JcTypedMethod? {
+fun JcClassType.findMethodOrNull(predicate: (JcTypedMethod) -> kotlin.Boolean): JcTypedMethod? {
     // let's find method based on strict hierarchy
     // if method is not found then it's defined in interfaces
     return methods.firstOrNull(predicate)

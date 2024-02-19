@@ -17,28 +17,29 @@
 package org.jacodb.testing;
 
 import org.jacodb.api.JcDatabase;
+import org.jacodb.api.cfg.JcArgument;
+import org.jacodb.api.cfg.JcExpr;
+import org.jacodb.api.cfg.TypedExprResolver;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcCacheSettings;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.Usages;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 public class JavaApi {
+    private static class ArgumentResolver extends TypedExprResolver<JcArgument> {
 
-    // FIXME: does not compile because of some kinda compiler bug
-    //        (see https://youtrack.jetbrains.com/issue/KT-15964)
-    // private static class ArgumentResolver extends TypedExprResolver<JcArgument> {
-    //
-    //     @Override
-    //     public void ifMatches(JcExpr jcExpr) {
-    //         if (jcExpr instanceof JcArgument) {
-    //             getResult().add((JcArgument) jcExpr);
-    //         }
-    //     }
-    //
-    // }
+        @Override
+        public void ifMatches(@NotNull JcExpr jcExpr) {
+            if (jcExpr instanceof JcArgument) {
+                getResult().add((JcArgument) jcExpr);
+            }
+        }
+
+    }
 
     public static void cacheSettings() {
         new JcCacheSettings().types(10, Duration.of(1, ChronoUnit.MINUTES));

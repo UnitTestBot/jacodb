@@ -19,23 +19,7 @@ package org.jacodb.impl.analysis.impl
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.BsmStringArg
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcDynamicCallExpr
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcLocalVar
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcStringConstant
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.cfg.values
+import org.jacodb.api.cfg.*
 import org.jacodb.api.ext.autoboxIfNeeded
 import org.jacodb.api.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcInstListImpl
@@ -43,14 +27,11 @@ import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
-class StringConcatSimplifierTransformer(
-    classpath: JcClasspath,
-    private val list: JcInstList<JcInst>,
-) : JcInstVisitor.Default<JcInst> {
+class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) :
+    DefaultJcInstVisitor<JcInst> {
 
-    override fun defaultVisitJcInst(inst: JcInst): JcInst {
-        return inst
-    }
+    override val defaultInstHandler: (JcInst) -> JcInst
+        get() = { it }
 
     private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
     private val instructions = mutableListOf<JcInst>()
@@ -146,11 +127,11 @@ class StringConcatSimplifierTransformer(
     }
 
     private fun indexOf(instRef: JcInstRef) = JcInstRef(
-        instructionIndices[instructionReplacements.getOrDefault(list[instRef.index], list[instRef.index])] ?: -1
+        instructionIndices[instructionReplacements.getOrDefault(list.get(instRef.index), list.get(instRef.index))] ?: -1
     )
 
     private fun indicesOf(instRef: JcInstRef): List<JcInstRef> {
-        val index = list[instRef.index]
+        val index = list.get(instRef.index)
         return catchReplacements.getOrDefault(index, listOf(index)).map {
             JcInstRef(instructions.indexOf(it))
 

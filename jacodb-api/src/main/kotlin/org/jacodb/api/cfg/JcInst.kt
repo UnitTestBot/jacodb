@@ -17,7 +17,6 @@
 package org.jacodb.api.cfg
 
 import org.jacodb.api.JcMethod
-import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcType
 import org.jacodb.api.JcTypedField
 import org.jacodb.api.JcTypedMethod
@@ -943,7 +942,7 @@ interface JcNumericConstant : JcConstant {
 }
 
 
-data class JcBool(val value: Boolean, override val type: JcPrimitiveType) : JcConstant {
+data class JcBool(val value: Boolean, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -951,7 +950,7 @@ data class JcBool(val value: Boolean, override val type: JcPrimitiveType) : JcCo
     }
 }
 
-data class JcByte(override val value: Byte, override val type: JcPrimitiveType) : JcNumericConstant {
+data class JcByte(override val value: Byte, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -991,7 +990,7 @@ data class JcByte(override val value: Byte, override val type: JcPrimitiveType) 
     }
 }
 
-data class JcChar(val value: Char, override val type: JcPrimitiveType) : JcConstant {
+data class JcChar(val value: Char, override val type: JcType) : JcConstant {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -999,7 +998,7 @@ data class JcChar(val value: Char, override val type: JcPrimitiveType) : JcConst
     }
 }
 
-data class JcShort(override val value: Short, override val type: JcPrimitiveType) : JcNumericConstant {
+data class JcShort(override val value: Short, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1039,7 +1038,7 @@ data class JcShort(override val value: Short, override val type: JcPrimitiveType
     }
 }
 
-data class JcInt(override val value: Int, override val type: JcPrimitiveType) : JcNumericConstant {
+data class JcInt(override val value: Int, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1079,10 +1078,7 @@ data class JcInt(override val value: Int, override val type: JcPrimitiveType) : 
     }
 }
 
-data class JcLong(
-    override val value: Long,
-    override val type: JcPrimitiveType,
-) : JcNumericConstant {
+data class JcLong(override val value: Long, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1122,10 +1118,7 @@ data class JcLong(
     }
 }
 
-data class JcFloat(
-    override val value: Float,
-    override val type: JcPrimitiveType,
-) : JcNumericConstant {
+data class JcFloat(override val value: Float, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {
@@ -1165,10 +1158,7 @@ data class JcFloat(
     }
 }
 
-data class JcDouble(
-    override val value: Double,
-    override val type: JcPrimitiveType,
-) : JcNumericConstant {
+data class JcDouble(override val value: Double, override val type: JcType) : JcNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: JcNumericConstant): JcNumericConstant {

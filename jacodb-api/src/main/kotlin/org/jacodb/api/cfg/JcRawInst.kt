@@ -614,7 +614,7 @@ data class JcRawNewArrayExpr(
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
     }
-
+    
     companion object {
         private val regexToProcessDimensions = Regex("\\[(.*?)]")
 
