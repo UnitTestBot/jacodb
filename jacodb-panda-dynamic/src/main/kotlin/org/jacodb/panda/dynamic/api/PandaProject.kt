@@ -22,6 +22,15 @@ class PandaProject(
     val classes: List<PandaClass>
 ) : Project<PandaType> {
 
+    init {
+        classes.forEach { clazz ->
+            clazz.methods.forEach { method ->
+                method.setProject(this)
+            }
+            clazz.setProject(this)
+        }
+    }
+
     override fun findTypeOrNull(name: String): PandaType? {
         return null
     }

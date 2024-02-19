@@ -21,15 +21,16 @@ import org.jacodb.api.core.cfg.ControlFlowGraph
 
 class PandaMethod(
     val name: String,
-    val className: String,
     val returnType: PandaType
 ) : CoreMethod<PandaInst> {
 
     private lateinit var _blocks: List<PandaBasicBlock>
     private lateinit var _instructions: List<PandaInst>
     private lateinit var _parameters: List<PandaParameterInfo>
+    private lateinit var _className: String
     private var _project: PandaProject = PandaProject.empty()
 
+    val className: String get() = _className
     val project: PandaProject get() = _project
     val instructions: List<PandaInst> get() = _instructions
     val parameters: List<PandaParameterInfo> get() = _parameters
@@ -48,6 +49,10 @@ class PandaMethod(
 
     fun initParameters(parameters: List<PandaParameterInfo>) {
         this._parameters = parameters
+    }
+
+    fun initClassName(className: String) {
+        this._className = className
     }
 
     val signature: String  get() = parameters.joinToString(separator = ", ") {

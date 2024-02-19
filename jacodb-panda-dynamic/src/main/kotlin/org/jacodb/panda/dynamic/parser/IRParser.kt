@@ -38,7 +38,13 @@ class IRParser(jsonPath: String) {
         val name: String,
         val simple_name: String? = null,
         val super_class: String? = null,
-    )
+    ) {
+        init {
+            methods.forEach {
+                it.setClass(this)
+            }
+        }
+    }
 
     @Serializable
     data class ProgramMethod(
@@ -53,6 +59,9 @@ class IRParser(jsonPath: String) {
         val args: Int = 0,
         val regs: Int = 0
     ) {
+
+        @Transient
+        private var clazz: ProgramClass? = null
 
         @Transient
         val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
@@ -82,6 +91,12 @@ class IRParser(jsonPath: String) {
 
         @Transient
         var currentId = 0
+
+        fun setClass(c: ProgramClass) {
+            clazz = c
+        }
+
+        fun getClass() = clazz ?: throw Exception("Class not set for method $name")
 
         fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs.getOrDefault(op.id(), emptyList())
 
@@ -174,18 +189,24 @@ class IRParser(jsonPath: String) {
         return programIR
     }
 
+    fun getProject(): PandaProject {
+        val programIR: ProgramIR = Json.decodeFromString(json)
+        return mapProgramIR(programIR)
+    }
+
     private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
 
     private fun ProgramInst.currentBB() = this.getBasicBlock()
 
     private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
 
-    private fun mapProgramIR(programIR: ProgramIR) {
+    private fun mapProgramIR(programIR: ProgramIR): PandaProject {
         mapIdToIRInputs(programIR)
 
         mapInstructions(programIR)
 
-        mapMethods(programIR)
+        val classes = mapMethods(programIR)
+        return PandaProject(classes)
     }
 
     private fun mapIdToIRInputs(programIR: ProgramIR) {
@@ -220,17 +241,22 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    private fun mapMethods(programIR: ProgramIR) {
-        val programMethods = programIR.classes
-            .flatMap { it.methods }
+    private fun mapMethods(programIR: ProgramIR): List<PandaClass> {
+        val classes = buildList {
+            programIR.classes.forEach { clazz ->
+                val pandaMethods = clazz.methods.onEach { method ->
+                    method.pandaMethod.initBlocks(
+                        method.idToBB.values.toList(),
+                    )
+                    method.pandaMethod.initInstructions(method.insts)
+                    method.pandaMethod.initParameters(method.parameters)
+                }.map { it.pandaMethod }
 
-        programMethods.forEach { programMethod ->
-            programMethod.pandaMethod.initBlocks(
-                programMethod.idToBB.values.toList(),
-            )
-            programMethod.pandaMethod.initInstructions(programMethod.insts)
-            programMethod.pandaMethod.initParameters(programMethod.parameters)
+                this.add(PandaClass(clazz.name, pandaMethods))
+            }
         }
+
+        return classes
     }
 
     private fun mapInstructions(programIR: ProgramIR) {
