@@ -74,12 +74,13 @@ interface PandaBinaryExpr : PandaExpr {
 
 interface PandaCallExpr : PandaExpr {
 
-    // TODO: WIP version
+    val method: PandaMethod
+    val args: List<PandaValue>
 
-    override val type get() = PandaAnyType()
+    override val type get() = method.returnType
 
     override val operands: List<PandaValue>
-        get() = emptyList()
+        get() = args
 }
 
 interface PandaConditionExpr : PandaBinaryExpr
@@ -327,7 +328,12 @@ class PandaAddExpr(
     override fun toString(): String = "$lhv + $rhv"
 }
 
-class PandaVirtualCallExpr : PandaCallExpr {
+class PandaVirtualCallExpr(
+    private val lazyMethod: Lazy<PandaMethod>,
+    override val args: List<PandaValue>
+) : PandaCallExpr {
+
+    override val method: PandaMethod get() = lazyMethod.value
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaVirtualCallExpr(this)

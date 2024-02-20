@@ -135,7 +135,7 @@ class PandaAssignInst(
 
 class PandaCallInst(
     override val location: PandaInstLocation,
-    val callExpr: PandaExpr
+    val callExpr: PandaCallExpr
 ) : PandaInst, CoreCallInst<PandaInstLocation, PandaMethod, PandaExpr> {
 
     override val operands: List<PandaExpr> = listOf(callExpr)

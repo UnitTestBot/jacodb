@@ -16,13 +16,22 @@
 
 package parser
 
+import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import java.io.FileInputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class IRParserTest {
+    private val bcFilePath = javaClass.getResource("/samples/ProgramByteCode.abc")?.path ?: ""
+    private val bytes = FileInputStream(bcFilePath).readBytes()
+    private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+    private val bcParser = ByteCodeParser(buffer)
+
     private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""
-    private val parser: IRParser = IRParser(sampleFilePath)
+    private val parser: IRParser = IRParser(sampleFilePath, bcParser)
 
     @Test
     fun getProgramIR() {

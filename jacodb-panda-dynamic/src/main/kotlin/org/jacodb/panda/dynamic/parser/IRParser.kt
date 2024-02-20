@@ -27,7 +27,7 @@ import java.io.File
 
 val logger = object : KLogging() {}.logger
 
-class IRParser(jsonPath: String) {
+class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
     @Serializable
     data class ProgramIR(val classes: List<ProgramClass>)
@@ -515,6 +515,28 @@ class IRParser(jsonPath: String) {
                     addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.callargs2" -> {
+                val callExpr = PandaVirtualCallExpr(
+                    lazy {
+                        method.pandaMethod
+                    }, listOf(inputs[0], inputs[1])
+                )
+                if (outputs.isEmpty()) {
+                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+                } else {
+                    val lv = PandaLocalVar(method.currentLocalVarId++)
+                    val assign = PandaAssignInst(
+                        locationFromOp(this),
+                        lv,
+                        callExpr
+                    )
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, lv)
+                    }
+                    method.insts.add(assign)
+                }
             }
 
             else -> getInstType(this, method)
