@@ -41,13 +41,17 @@ class IRParserTest {
     }
 
     @Test
-    fun getPandaMethod() {
+    fun getPandaMethods() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
-        val method = ir.classes[0].methods[0].pandaMethod
-        println(method)
-        println("Instructions:")
-        method.instructions.forEach {
-            println("${it.location}: $it")
+        ir.classes.forEach { cls ->
+            cls.methods.forEach { method ->
+                val pandaMethod = method.pandaMethod
+                println("\n$pandaMethod")
+                println("Instructions:")
+                pandaMethod.instructions.forEach {pandaInst ->
+                    println("${pandaInst.location}: $pandaInst")
+                }
+            }
         }
     }
 
