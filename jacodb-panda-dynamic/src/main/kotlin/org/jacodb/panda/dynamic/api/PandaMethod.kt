@@ -24,10 +24,10 @@ class PandaMethod(
     val returnType: PandaType
 ) : CoreMethod<PandaInst> {
 
-    private lateinit var _blocks: List<PandaBasicBlock>
-    private lateinit var _instructions: List<PandaInst>
-    private lateinit var _parameters: List<PandaParameterInfo>
-    private lateinit var _className: String
+    private var _blocks: List<PandaBasicBlock> = emptyList()
+    private var _instructions: List<PandaInst> = emptyList()
+    private var _parameters: List<PandaParameterInfo> = emptyList()
+    private var _className: String = ""
     private var _project: PandaProject = PandaProject.empty()
 
     val className: String get() = _className

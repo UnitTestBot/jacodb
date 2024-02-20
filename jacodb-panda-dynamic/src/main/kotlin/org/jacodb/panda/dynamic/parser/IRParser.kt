@@ -29,6 +29,8 @@ val logger = object : KLogging() {}.logger
 
 class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
+    private val connector = IrBcConnector(bcParser)
+
     @Serializable
     data class ProgramIR(val classes: List<ProgramClass>)
 
@@ -520,7 +522,9 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             opcode == "Intrinsic.callargs2" -> {
                 val callExpr = PandaVirtualCallExpr(
                     lazy {
-                        method.pandaMethod
+                        val callFuncName = connector.getCallArgFuncName(method.name, bc!!)
+                        method.pandaMethod.project.findMethodOrNull(callFuncName, method.getClass().name)
+                            ?: PandaMethod(callFuncName, PandaAnyType())
                     }, listOf(inputs[0], inputs[1])
                 )
                 if (outputs.isEmpty()) {
