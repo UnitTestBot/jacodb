@@ -161,7 +161,7 @@ class ByteCodeParser(
 
         val classRegionIndex: ClassRegionIndex = readClassRegionIndex(classIdxSize, classIdxOff, byteCodeBuffer)
 
-        val methodStringLiteralIndex: MethodStringLiteralRegionIndex  = readMethodStringLiteralRegionIndex(
+        val methodStringLiteralIndex: MethodStringLiteralRegionIndex = readMethodStringLiteralRegionIndex(
             methodStringLiteralIdxSize, methodStringLiteralIdxOff, byteCodeBuffer
         )
 
@@ -226,7 +226,7 @@ class ByteCodeParser(
         val fieldData: FieldData
     ) {
 
-        constructor() : this(0, 0,  0, 0, FieldData())
+        constructor() : this(0, 0, 0, 0, FieldData())
     }
 
     inner class FieldData(
@@ -367,7 +367,7 @@ class ByteCodeParser(
             if (filter(currentInst)) return currentInst
 
             val iterator = iterator()
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 if (filter(iterator.next())) return currentInst
             }
 
@@ -379,7 +379,7 @@ class ByteCodeParser(
             if (filter(currentInst)) return currentInst
 
             val iterator = iterator()
-            while(iterator.hasPrevious()) {
+            while (iterator.hasPrevious()) {
                 if (filter(iterator.previous())) return currentInst
             }
 
@@ -469,7 +469,7 @@ class ByteCodeParser(
         val headerIdx: Short,
         val functionKind: Byte,
         val accessFlags: Byte
-    )  {
+    ) {
 
         constructor() : this(0, 0, 0)
     }
@@ -530,18 +530,18 @@ class ByteCodeParser(
 
     private fun readMethodStringLiteralRegionIndex(size: Int, offset: Int, buffer: ByteBuffer) =
         buffer.jumpTo(offset) { bb ->
-        val stringList = mutableListOf<Int>()
-        val methodList = mutableListOf<Int>()
-        val all = mutableListOf<Int>()
+            val stringList = mutableListOf<Int>()
+            val methodList = mutableListOf<Int>()
+            val all = mutableListOf<Int>()
 
-        repeat(size) {
-            val off = bb.getInt()
-            all.add(off)
-            tryReadMethod(off, bb)?.let { methodList.add(off) } ?: stringList.add(off)
+            repeat(size) {
+                val off = bb.getInt()
+                all.add(off)
+                tryReadMethod(off, bb)?.let { methodList.add(off) } ?: stringList.add(off)
+            }
+
+            MethodStringLiteralRegionIndex(stringList, methodList, all)
         }
-
-        MethodStringLiteralRegionIndex(stringList, methodList, all)
-    }
 
     private fun tryReadMethod(offset: Int, buffer: ByteBuffer): Method? = buffer.jumpTo(offset) {
         try {

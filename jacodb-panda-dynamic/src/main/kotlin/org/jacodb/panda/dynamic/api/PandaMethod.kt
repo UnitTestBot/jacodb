@@ -55,9 +55,10 @@ class PandaMethod(
         this._className = className
     }
 
-    val signature: String  get() = parameters.joinToString(separator = ", ") {
-        "arg ${it.index}: ${it.type.typeName}"
-    }
+    val signature: String
+        get() = parameters.joinToString(separator = ", ") {
+            "arg ${it.index}: ${it.type.typeName}"
+        }
 
     override fun flowGraph(): ControlFlowGraph<PandaInst> {
         return PandaBlockGraph(_blocks, instructions).graph

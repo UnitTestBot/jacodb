@@ -20,7 +20,7 @@ import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
-class ParserTest {
+class IRParserTest {
     private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""
     private val parser: IRParser = IRParser(sampleFilePath)
 
@@ -40,6 +40,22 @@ class ParserTest {
         method.instructions.forEach {
             println("${it.location}: $it")
         }
+    }
+
+    @Test
+    fun getSetOfProgramOpcodes() {
+        val ir: IRParser.ProgramIR = parser.getProgramIR()
+        val opcodes = mutableSetOf<String>()
+        ir.classes.forEach { programClass ->
+            programClass.methods.forEach { programMethod ->
+                programMethod.basicBlocks.forEach { programBlock ->
+                    programBlock.insts.forEach { programInst ->
+                        opcodes.add(programInst.opcode)
+                    }
+                }
+            }
+        }
+        println(opcodes.sorted().joinToString(separator = "\n"))
     }
 
 //    @Test

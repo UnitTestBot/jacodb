@@ -46,7 +46,7 @@ class PandaGraph(
 
     init {
         for (inst in instructions) {
-            val successors = when(inst) {
+            val successors = when (inst) {
                 is PandaTerminatingInst -> emptySet()
                 is PandaBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
                 else -> setOf(next(inst))

@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.parser
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
@@ -33,11 +34,14 @@ class IRParser(jsonPath: String) {
 
     @Serializable
     data class ProgramClass(
-        val is_interface: Boolean = false,
+        @SerialName("is_interface")
+        val isInterface: Boolean = false,
         val methods: List<ProgramMethod> = emptyList(),
         val name: String,
-        val simple_name: String? = null,
-        val super_class: String? = null,
+        @SerialName("simple_name")
+        val simpleName: String? = null,
+        @SerialName("super_class")
+        val superClass: String? = null,
     ) {
         init {
             methods.forEach {
@@ -48,13 +52,19 @@ class IRParser(jsonPath: String) {
 
     @Serializable
     data class ProgramMethod(
-        val basic_blocks: List<ProgramBasicBlock> = emptyList(),
-        val is_class_initializer: Boolean = false,
-        val is_constructor: Boolean = false,
-        val is_native: Boolean = false,
-        val is_synchronized: Boolean = false,
+        @SerialName("basic_blocks")
+        val basicBlocks: List<ProgramBasicBlock> = emptyList(),
+        @SerialName("is_class_initializer")
+        val isClassInitializer: Boolean = false,
+        @SerialName("is_constructor")
+        val isConstructor: Boolean = false,
+        @SerialName("is_native")
+        val isNative: Boolean = false,
+        @SerialName("is_synchronized")
+        val isSynchronized: Boolean = false,
         val name: String,
-        val return_type: String? = null,
+        @SerialName("return_type")
+        val returnType: String? = null,
         val signature: String,
         val args: Int = 0,
         val regs: Int = 0
@@ -81,7 +91,7 @@ class IRParser(jsonPath: String) {
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
         @Transient
-        val pandaMethod: PandaMethod = PandaMethod(name, mapType(return_type))
+        val pandaMethod: PandaMethod = PandaMethod(name, mapType(returnType))
 
         @Transient
         val parameters: MutableList<PandaParameterInfo> = mutableListOf()
@@ -101,7 +111,7 @@ class IRParser(jsonPath: String) {
         fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs.getOrDefault(op.id(), emptyList())
 
         init {
-            basic_blocks.forEach { it.setMethod(this)}
+            basicBlocks.forEach { it.setMethod(this) }
         }
     }
 
@@ -212,7 +222,7 @@ class IRParser(jsonPath: String) {
     private fun mapIdToIRInputs(programIR: ProgramIR) {
         programIR.classes.forEach { clazz ->
             clazz.methods.forEach { method ->
-                method.basic_blocks.forEach { bb ->
+                method.basicBlocks.forEach { bb ->
                     bb.insts.forEach { inst ->
                         // TODO(to delete?: map IfImm)
                         // TODO(reply): no.
@@ -262,7 +272,7 @@ class IRParser(jsonPath: String) {
     private fun mapInstructions(programIR: ProgramIR) {
         val programInstructions = programIR.classes
             .flatMap { it.methods }
-            .flatMap { it.basic_blocks }
+            .flatMap { it.basicBlocks }
             .flatMap { it.insts }
 
         programInstructions.forEach { programInst ->
@@ -546,6 +556,7 @@ class IRParser(jsonPath: String) {
                 }
                 method.insts.add(assign)
             }
+
             "SaveState" -> {}
             else -> {
 //                logger.warn { "Unknown opcode: $opcode" }
@@ -557,10 +568,10 @@ class IRParser(jsonPath: String) {
         val ifImmMatch = Regex("IfImm (.*) (.*)").find(op.opcode)
         val ifMatch = Regex("If (.*)").find(op.opcode)
         val cmpOp = (
-            ifImmMatch?.groups?.get(1)
-            ?: ifMatch?.groups?.get(1)
-            ?: throw IllegalStateException("No compare operator")
-        ).value.let(PandaCmpOp::valueOf)
+                ifImmMatch?.groups?.get(1)
+                    ?: ifMatch?.groups?.get(1)
+                    ?: throw IllegalStateException("No compare operator")
+                ).value.let(PandaCmpOp::valueOf)
 
         /*val cmpOp = PandaCmpOp.valueOf(
             Regex("IfImm (.*) (.*)")
@@ -599,14 +610,14 @@ class IRParser(jsonPath: String) {
             0
         )
     }
-    
+
     private fun mapImm(imm: String): PandaConstant {
         return when {
             imm.startsWith("0x") -> PandaNumberConstant(Integer.decode(imm))
             else -> TODOConstant(imm)
         }
     }
-            
+
     private fun mapConstant(op: ProgramInst): PandaConstant = when (mapType(op.type)) {
         is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
         else -> TODOConstant(op.value)
@@ -618,7 +629,7 @@ class IRParser(jsonPath: String) {
 
             programClass.methods.forEach { programMethod ->
                 println("\tMethod Name: ${programMethod.name}")
-                programMethod.basic_blocks.forEach { programBlock ->
+                programMethod.basicBlocks.forEach { programBlock ->
                     println("\t\tBasic Block ID: ${programBlock.id}")
                     programBlock.insts.forEach { programInst ->
                         println("\t\t\tInst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
@@ -628,19 +639,4 @@ class IRParser(jsonPath: String) {
             }
         }
     }
-
-    fun printSetOfProgramOpcodes(programIR: ProgramIR) {
-        val opcodes = mutableSetOf<String>()
-        programIR.classes.forEach { programClass ->
-            programClass.methods.forEach { programMethod ->
-                programMethod.basic_blocks.forEach { programBlock ->
-                    programBlock.insts.forEach { programInst ->
-                        opcodes.add(programInst.opcode)
-                    }
-                }
-            }
-        }
-        println(opcodes)
-    }
-
 }
