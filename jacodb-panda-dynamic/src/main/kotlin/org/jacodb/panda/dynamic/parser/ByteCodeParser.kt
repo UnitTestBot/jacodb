@@ -333,6 +333,10 @@ class ByteCodeParser(
             return resolve(lastAccSet)
         }
 
+        fun getResolvedValue(offset: Int): List<Byte> {
+            return resolve(getInstByOffset(offset))
+        }
+
         private fun resolve(inst: Instruction): List<Byte> {
             when (PandaBytecode.getBytecode(inst.opcode)) {
                 PandaBytecode.LDA -> {
@@ -346,6 +350,22 @@ class ByteCodeParser(
 
                 PandaBytecode.LDGLOBALVAR -> {
                     val stringId = inst.operands.drop(2).toByteBuffer().getInt()
+                    val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
+                    val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
+
+                    return name
+                }
+
+                PandaBytecode.TRYLDGLOBALBYNAME_IMM_8_ID_16 -> {
+                    val stringId = inst.operands.drop(1).toByteBuffer().getInt()
+                    val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
+                    val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
+
+                    return name
+                }
+
+                PandaBytecode.LDOBJBYNAME_IMM_8_ID_16 -> {
+                    val stringId = inst.operands.drop(1).toByteBuffer().getInt()
                     val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
                     val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
 

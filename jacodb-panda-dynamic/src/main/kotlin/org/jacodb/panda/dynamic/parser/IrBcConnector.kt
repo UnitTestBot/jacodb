@@ -20,10 +20,18 @@ class IrBcConnector(
     private val bcParser: ByteCodeParser
 ) {
 
+    private fun mapOffset(numArgs: ULong, bc: String): Int {
+        val initOffset = numArgs.toInt() * 2
+        return Integer.decode(bc) - initOffset
+    }
+
+    fun getLdName(currentFuncName: String, bc: String): String {
+        val code = bcParser.getMethodCodeByName(currentFuncName)
+        return code.getResolvedValue(mapOffset(code.numArgs, bc)).toString()
+    }
+
     fun getCallArgFuncName(currentFuncName: String, bc: String): String {
         val code = bcParser.getMethodCodeByName(currentFuncName)
-        val initOffset = code.numArgs.toInt() * 2
-        val intBc = Integer.decode(bc)
-        return code.getAccValueByOffset(intBc - initOffset).toString()
+        return code.getAccValueByOffset(mapOffset(code.numArgs, bc)).toString()
     }
 }
