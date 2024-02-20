@@ -122,8 +122,7 @@ class PandaCmpExpr(
     }
 }
 
-class PandaStringConstant : PandaConstant {
-    // TODO: Think
+class PandaStringConstant(val value: String) : PandaConstant {
     override val type: PandaType = PandaAnyType()
     override val operands: List<PandaValue> = emptyList()
 
@@ -131,7 +130,7 @@ class PandaStringConstant : PandaConstant {
         return visitor.visitPandaStringConstant(this)
     }
 
-    override fun toString() = "PandaStringConstant"
+    override fun toString() = "\"$value\""
 }
 
 class TODOConstant(val value: String?) : PandaConstant {

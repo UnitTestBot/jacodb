@@ -27,7 +27,7 @@ class ByteCodeParser(
     fun parseABC(): ABC {
         val header = readHeader(byteCodeBuffer)
         val methodStringLiteralIndex = header.indexSection.indexHeader.methodStringLiteralIndex
-        return ABC(
+        parsedFile = ABC(
             header,
             header.classIndex,
             header.indexSection,
@@ -37,6 +37,7 @@ class ByteCodeParser(
             methodStringLiteralIndex.methods.map { readMethod(it, byteCodeBuffer) },
             emptyList()
         )
+        return parsedFile
     }
 
     private lateinit var parsedFile: ABC

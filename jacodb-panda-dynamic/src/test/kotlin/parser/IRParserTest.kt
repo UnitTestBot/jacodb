@@ -33,6 +33,10 @@ class IRParserTest {
     private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""
     private val parser: IRParser = IRParser(sampleFilePath, bcParser)
 
+    init {
+        bcParser.parseABC()
+    }
+
     @Test
     fun getProgramIR() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()

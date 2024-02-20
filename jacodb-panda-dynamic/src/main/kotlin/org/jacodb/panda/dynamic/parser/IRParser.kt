@@ -404,7 +404,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "LoadString" -> {
-                val sc = PandaStringConstant()
+                val sc = PandaStringConstant("")
                 outputs.forEach { output ->
                     addInput(method, id(), output, sc)
                 }
@@ -543,11 +543,18 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 }
             }
 
+            opcode == "Intrinsic.tryldglobalbyname" -> {
+                val name = connector.getLdName(method.name, bc!!)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, PandaStringConstant(name))
+                }
+            }
+
             opcode == "Intrinsic.ldobjbyname" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val name = connector.getLdName(method.name, bc!!)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, PandaStringConstant(name))
+                }
             }
 
             opcode == "Intrinsic.ldglobalvar" -> {
@@ -605,18 +612,6 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         val outputs = op.outputs()
 
         when (opcode) {
-            "Intrinsic.tryldglobalbyname" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(
-                    locationFromOp(this),
-                    lv,
-                    TODOExpr(opcode, operands)
-                )
-                outputs.forEach { output ->
-                    addInput(method, this.id(), output, lv)
-                }
-                method.insts.add(assign)
-            }
             // Unuseful
             "SaveState" -> {}
             "Intrinsic.definefunc" -> {}
