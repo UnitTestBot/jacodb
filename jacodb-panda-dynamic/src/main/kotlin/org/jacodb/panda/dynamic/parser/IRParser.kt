@@ -558,10 +558,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.ldglobalvar" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val name = connector.getLdName(method.name, bc!!)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, PandaStringConstant(name))
+                }
             }
 
             opcode == "Intrinsic.callthis1" -> {
