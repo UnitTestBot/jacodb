@@ -543,6 +543,27 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 }
             }
 
+            opcode == "Intrinsic.ldobjbyname" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
+                outputs.forEach { output -> addInput(method, id(), output, lv) }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.ldglobalvar" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
+                outputs.forEach { output -> addInput(method, id(), output, lv) }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.callthis1" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
+                outputs.forEach { output -> addInput(method, id(), output, lv) }
+                method.insts.add(assign)
+            }
+
             else -> getInstType(this, method)
         }
 
@@ -585,7 +606,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
             "SaveState" -> {}
             else -> {
-//                logger.warn { "Unknown opcode: $opcode" }
+                logger.warn { "Unknown opcode: $opcode" }
             }
         }
     }
