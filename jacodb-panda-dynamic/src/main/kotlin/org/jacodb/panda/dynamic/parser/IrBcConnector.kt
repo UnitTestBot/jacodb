@@ -29,11 +29,11 @@ class IrBcConnector(
 
     fun getLdName(currentFuncName: String, bc: String): String {
         val code = bcParser.getMethodCodeByName(currentFuncName)
-        return code.getResolvedValue(mapOffset(code.numArgs, bc)).toByteArray().toString()
+        return code.getResolvedValue(mapOffset(code.numArgs, bc)).toByteArray().toString(Charsets.UTF_8)
     }
 
     fun getCallArgFuncName(currentFuncName: String, bc: String): String {
         val code = bcParser.getMethodCodeByName(currentFuncName)
-        return code.getAccValueByOffset(mapOffset(code.numArgs, bc)).toByteArray().toString()
+        return code.getAccValueByOffset(mapOffset(code.numArgs, bc)).toByteArray().toString(Charsets.UTF_8)
     }
 }
