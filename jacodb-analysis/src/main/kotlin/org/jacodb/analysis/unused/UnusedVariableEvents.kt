@@ -23,7 +23,3 @@ sealed interface Event
 data class NewSummaryEdge(
     val edge: Edge<UnusedVariableDomainFact>,
 ) : Event
-
-data class NewVulnerability(
-    val vulnerability: UnusedVariableVulnerability,
-) : Event

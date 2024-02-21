@@ -229,10 +229,6 @@ class UnusedVariableManager(
             is NewSummaryEdge -> {
                 summaryEdgesStorage.add(UnusedVariableSummaryEdge(event.edge))
             }
-
-            is NewVulnerability -> {
-                vulnerabilitiesStorage.add(event.vulnerability)
-            }
         }
     }
 
