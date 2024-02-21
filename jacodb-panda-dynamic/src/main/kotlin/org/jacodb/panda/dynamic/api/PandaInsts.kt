@@ -106,7 +106,7 @@ class PandaIfInst(
 
 class PandaReturnInst(
     override val location: PandaInstLocation,
-    returnValue: PandaValue?
+    val returnValue: PandaValue?
 ) : PandaInst, PandaTerminatingInst, CoreReturnInst<PandaInstLocation, PandaMethod, PandaExpr> {
 
     override val operands: List<PandaExpr> = listOfNotNull(returnValue)
@@ -115,7 +115,7 @@ class PandaReturnInst(
         return visitor.visitPandaReturnInst(this)
     }
 
-    override fun toString(): String = "return ${operands.firstOrNull()}"
+    override fun toString(): String = "return" + (returnValue?.toString() ?: "")
 }
 
 class PandaAssignInst(

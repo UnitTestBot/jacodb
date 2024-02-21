@@ -27,10 +27,10 @@ class PandaMethod(
     private var _blocks: List<PandaBasicBlock> = emptyList()
     private var _instructions: List<PandaInst> = emptyList()
     private var _parameters: List<PandaParameterInfo> = emptyList()
-    private var _className: String = ""
+    private var _className: String? = null
     private var _project: PandaProject = PandaProject.empty()
 
-    val className: String get() = _className
+    val className: String? get() = _className
     val project: PandaProject get() = _project
     val instructions: List<PandaInst> get() = _instructions
     val parameters: List<PandaParameterInfo> get() = _parameters

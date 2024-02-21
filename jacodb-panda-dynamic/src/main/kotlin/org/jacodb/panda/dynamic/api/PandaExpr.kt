@@ -165,6 +165,8 @@ object PandaUndefinedConstant : PandaConstant {
     override val operands: List<PandaValue>
         get() = emptyList()
 
+    override fun toString(): String = "undefined"
+
 }
 
 class PandaCastExpr(override val type: PandaType, operand: PandaValue) : PandaExpr {
@@ -336,6 +338,11 @@ class PandaVirtualCallExpr(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaVirtualCallExpr(this)
+    }
+
+    override fun toString(): String = buildString {
+        if (method.className != null) append(method.className + ".")
+        append(method.name + "(${args.joinToString(separator = ", ") { it.toString() }})")
     }
 
 }
