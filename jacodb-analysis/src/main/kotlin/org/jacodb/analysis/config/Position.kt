@@ -22,6 +22,10 @@ import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.util.getArgument
+import org.jacodb.analysis.util.thisInstance
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
@@ -63,5 +67,41 @@ class CallPositionToJcValueResolver(
         This -> (callExpr as? JcInstanceCallExpr)?.instance.toMaybe()
         Result -> (callStatement as? JcAssignInst)?.lhv.toMaybe()
         ResultAnyElement -> Maybe.none()
+    }
+}
+
+class EntryPointPositionToJcValueResolver(
+    val cp: JcClasspath,
+    val method: JcMethod,
+) : PositionResolver<Maybe<JcValue>> {
+    override fun resolve(position: Position): Maybe<JcValue> {
+        return when (position) {
+            This -> Maybe.some(method.thisInstance)
+
+            is Argument -> {
+                val p = method.parameters[position.index]
+                cp.getArgument(p).toMaybe()
+            }
+
+            AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
+        }
+    }
+}
+
+class EntryPointPositionToAccessPathResolver(
+    val cp: JcClasspath,
+    val method: JcMethod,
+) : PositionResolver<Maybe<AccessPath>> {
+    override fun resolve(position: Position): Maybe<AccessPath> {
+        return when (position) {
+            This -> method.thisInstance.toPathOrNull().toMaybe()
+
+            is Argument -> {
+                val p = method.parameters[position.index]
+                cp.getArgument(p)?.toPathOrNull().toMaybe()
+            }
+
+            AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
+        }
     }
 }

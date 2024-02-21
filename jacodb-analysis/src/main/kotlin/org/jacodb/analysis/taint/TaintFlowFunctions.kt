@@ -19,17 +19,16 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.EntryPointPositionToAccessPathResolver
+import org.jacodb.analysis.config.EntryPointPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
-import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.onSome
-import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.analysis.util.thisInstance
@@ -45,21 +44,16 @@ import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.taint.configuration.AnyArgument
-import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
 import org.jacodb.taint.configuration.RemoveAllMarks
 import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.Result
-import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
-import org.jacodb.taint.configuration.This
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -83,35 +77,8 @@ class ForwardTaintFlowFunctions(
         // Extract initial facts from the config:
         val config = taintConfigurationFeature?.getConfigForMethod(method)
         if (config != null) {
-            // Note: both condition and action evaluator require a custom position resolver.
-            val conditionEvaluator = BasicConditionEvaluator { position ->
-                when (position) {
-                    This -> Maybe.some(method.thisInstance)
-
-                    is Argument -> {
-                        val p = method.parameters[position.index]
-                        cp.getArgument(p).toMaybe()
-                    }
-
-                    AnyArgument -> error("Unexpected $position")
-                    Result -> error("Unexpected $position")
-                    ResultAnyElement -> error("Unexpected $position")
-                }
-            }
-            val actionEvaluator = TaintActionEvaluator { position ->
-                when (position) {
-                    This -> method.thisInstance.toPathOrNull().toMaybe()
-
-                    is Argument -> {
-                        val p = method.parameters[position.index]
-                        cp.getArgument(p)?.toPathOrNull().toMaybe()
-                    }
-
-                    AnyArgument -> error("Unexpected $position")
-                    Result -> error("Unexpected $position")
-                    ResultAnyElement -> error("Unexpected $position")
-                }
-            }
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToJcValueResolver(cp, method))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(cp, method))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
