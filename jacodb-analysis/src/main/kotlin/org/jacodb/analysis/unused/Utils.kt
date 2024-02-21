@@ -30,7 +30,7 @@ import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
 
 internal fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
-    return this in expr.values.map { it.toPathOrNull() }
+    return expr.values.any { it.toPathOrNull() == this }
 }
 
 internal fun AccessPath.isUsedAt(inst: JcInst): Boolean {
