@@ -19,9 +19,9 @@ package org.jacodb.panda.dynamic.api
 import org.jacodb.api.core.CoreMethod
 import org.jacodb.api.core.cfg.ControlFlowGraph
 
-class PandaMethod(
-    val name: String,
-    val returnType: PandaType
+open class PandaMethod(
+    open val name: String,
+    open val returnType: PandaType
 ) : CoreMethod<PandaInst> {
 
     private var _blocks: List<PandaBasicBlock> = emptyList()
@@ -65,6 +65,13 @@ class PandaMethod(
     }
 
     override fun toString() = "function $name($signature): $returnType"
+}
+
+class PandaStdMethod(
+    override val name: String,
+    override val returnType: PandaType
+) : PandaMethod(name, returnType) {
+
 }
 
 class PandaParameterInfo(

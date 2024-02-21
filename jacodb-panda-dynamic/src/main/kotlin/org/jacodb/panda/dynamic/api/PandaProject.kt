@@ -22,6 +22,8 @@ class PandaProject(
     val classes: List<PandaClass>
 ) : Project<PandaType> {
 
+    private val std = PandaStdLib
+
     init {
         classes.forEach { clazz ->
             clazz.methods.forEach { method ->
@@ -33,6 +35,29 @@ class PandaProject(
 
     override fun findTypeOrNull(name: String): PandaType? {
         return null
+    }
+
+    fun getGlobalClass(): PandaClass {
+        return findClassOrNull("L_GLOBAL")
+            ?: throw IllegalStateException("no global class")
+    }
+
+//    fun findObject(name: String, currentClassName: String): PandaField {
+//        findClassOrNull(currentClassName)?.let { clazz ->
+//            return clazz.fields.find { it.name == name } ?: findObject(name, clazz.superClassName)
+//        }
+//
+//        throw IllegalStateException("couldn't find object $name starting from class $currentClassName")
+//    }
+
+    fun findInstanceMethodInStd(instanceName: String, methodName: String): PandaStdMethod {
+        std.fields.find { it.name == instanceName }?.let { obj ->
+            return (obj.methods.find { it.name == methodName }
+                ?: throw IllegalStateException("no method $methodName for $instanceName"))
+                .also {
+                    it.setProject(this)
+                }
+        } ?: throw IllegalStateException("no std field $instanceName")
     }
 
     fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
@@ -53,7 +78,8 @@ class PandaProject(
 
 class PandaClass(
     val name: String,
-    val methods: List<PandaMethod>
+    val superClassName: String,
+    val methods: List<PandaMethod>,
 ) {
 
     private var _project: PandaProject = PandaProject.empty()
@@ -62,4 +88,20 @@ class PandaClass(
     fun setProject(value: PandaProject) {
         _project = value
     }
+}
+
+class PandaObject(
+    val name: String,
+    val methods: List<PandaStdMethod>
+)
+
+object PandaStdLib {
+
+    val fields = listOf(
+        PandaObject(
+            "console",
+            listOf(PandaStdMethod("log", PandaAnyType()))
+        )
+    )
+
 }

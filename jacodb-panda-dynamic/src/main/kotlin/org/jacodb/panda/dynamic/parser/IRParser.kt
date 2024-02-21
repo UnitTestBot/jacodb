@@ -262,9 +262,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     )
                     method.pandaMethod.initInstructions(method.insts)
                     method.pandaMethod.initParameters(method.parameters)
+                    method.pandaMethod.initClassName(clazz.name)
                 }.map { it.pandaMethod }
 
-                this.add(PandaClass(clazz.name, pandaMethods))
+                this.add(PandaClass(clazz.name, clazz.superClass!!, pandaMethods))
             }
         }
 
@@ -565,10 +566,30 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callthis1" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val callExpr = PandaVirtualCallExpr(
+                    lazy {
+                        method.pandaMethod.project.findInstanceMethodInStd(
+                            (inputs[0] as PandaStringConstant).value,
+                            (inputs[1] as PandaStringConstant).value
+                        )
+                    },
+                    listOf(inputs[2]),
+                    instance = inputs[0]
+                )
+                if (outputs.isEmpty()) {
+                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+                } else {
+                    val lv = PandaLocalVar(method.currentLocalVarId++)
+                    val assign = PandaAssignInst(
+                        locationFromOp(this),
+                        lv,
+                        callExpr
+                    )
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, lv)
+                    }
+                    method.insts.add(assign)
+                }
             }
 
             opcode == "Intrinsic.stglobalvar" -> {

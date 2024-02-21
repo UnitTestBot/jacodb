@@ -331,7 +331,8 @@ class PandaAddExpr(
 
 class PandaVirtualCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
-    override val args: List<PandaValue>
+    override val args: List<PandaValue>,
+    val instance: PandaValue? = null
 ) : PandaCallExpr {
 
     override val method: PandaMethod get() = lazyMethod.value
@@ -341,7 +342,7 @@ class PandaVirtualCallExpr(
     }
 
     override fun toString(): String = buildString {
-        if (method.className != null) append(method.className + ".")
+        if (instance != null) append("$instance.")
         append(method.name + "(${args.joinToString(separator = ", ") { it.toString() }})")
     }
 

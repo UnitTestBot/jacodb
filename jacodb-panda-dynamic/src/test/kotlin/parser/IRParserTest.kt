@@ -38,6 +38,12 @@ class IRParserTest {
     }
 
     @Test
+    fun getProject() {
+        val project = parser.getProject()
+        assertNotNull(project)
+    }
+
+    @Test
     fun getProgramIR() {
         val ir: IRParser.ProgramIR = parser.getProgramIR()
         parser.printProgramInfo(ir)
