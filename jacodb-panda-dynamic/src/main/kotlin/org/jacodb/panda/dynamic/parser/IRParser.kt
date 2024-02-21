@@ -522,10 +522,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             opcode == "Intrinsic.callargs2" -> {
                 val callExpr = PandaVirtualCallExpr(
                     lazy {
-                        val callFuncName = connector.getCallArgFuncName(method.name, bc!!)
+                        val callFuncName = (inputs[0] as PandaStringConstant).value
                         method.pandaMethod.project.findMethodOrNull(callFuncName, method.getClass().name)
                             ?: PandaMethod(callFuncName, PandaAnyType())
-                    }, listOf(inputs[0], inputs[1])
+                    }, listOf(inputs[1], inputs[2])
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
