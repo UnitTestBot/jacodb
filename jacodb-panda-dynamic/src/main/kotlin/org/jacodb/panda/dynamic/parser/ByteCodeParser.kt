@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic.parser
 
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.charset.Charset
 import kotlin.experimental.and
 
@@ -375,6 +376,10 @@ class ByteCodeParser(
 
                 PandaBytecode.STA -> {
                     return getAccValueByOffset(inst.offset)
+                }
+
+                PandaBytecode.LDAI -> {
+                    return getAccValueByOffset(inst.offset - 1)
                 }
 
                 else -> {
@@ -742,7 +747,7 @@ class ByteCodeParser(
             return action(this).also { this@jumpTo.position(prevPos) }
         }
 
-        fun List<Byte>.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this.toByteArray())
+        fun List<Byte>.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this.toByteArray()).order(ByteOrder.LITTLE_ENDIAN)
     }
 
 }
