@@ -133,11 +133,11 @@ class ForwardNpeFlowFunctions(
         val fromPath = from.toPathOrNull()
 
         if (fact.mark == TaintMark.NULLNESS) {
-            // if (from is JcNewExpr ||
-            //     from is JcNewArrayExpr ||
-            //     from is JcConstant ||
-            //     (from is JcCallExpr && from.method.method.isNullable != true)
-            // ) {
+            // TODO: consider
+            //  if (from is JcNewExpr
+            //      || from is JcNewArrayExpr
+            //      || from is JcConstant
+            //      || (from is JcCallExpr && from.method.method.isNullable != true))
             if (fact.variable.startsWith(toPath)) {
                 // NULLNESS is overridden:
                 return emptySet()
