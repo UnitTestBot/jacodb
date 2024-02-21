@@ -350,7 +350,7 @@ class ByteCodeParser(
                 }
 
                 PandaBytecode.LDGLOBALVAR -> {
-                    val stringId = inst.operands.drop(2).toByteBuffer().getInt()
+                    val stringId = inst.operands.drop(2).toByteBuffer().getShort().toInt()
                     val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
                     val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
 
@@ -358,7 +358,7 @@ class ByteCodeParser(
                 }
 
                 PandaBytecode.TRYLDGLOBALBYNAME_IMM_8_ID_16 -> {
-                    val stringId = inst.operands.drop(1).toByteBuffer().getInt()
+                    val stringId = inst.operands.drop(1).toByteBuffer().getShort().toInt()
                     val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
                     val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
 
@@ -366,7 +366,7 @@ class ByteCodeParser(
                 }
 
                 PandaBytecode.LDOBJBYNAME_IMM_8_ID_16 -> {
-                    val stringId = inst.operands.drop(1).toByteBuffer().getInt()
+                    val stringId = inst.operands.drop(1).toByteBuffer().getShort().toInt()
                     val methodNameOffset = parsedFile.methodStringLiteralRegionIndex.all[stringId]
                     val name = byteCodeBuffer.jumpTo(methodNameOffset) { it.getString() }.map { it.code.toByte() }
 
@@ -627,8 +627,9 @@ class ByteCodeParser(
 
     private fun readInstructions(buffer: ByteBuffer, endOfCodeOff: ULong): Instruction {
         var lastInst: Instruction? = null
+        val startOffset = buffer.position()
         while (buffer.position().ul < endOfCodeOff) {
-            val inst = readInstruction(buffer)
+            val inst = readInstruction(buffer, startOffset)
             lastInst?.nextInst = inst
             inst.prevInst = lastInst
             lastInst = inst
@@ -639,8 +640,8 @@ class ByteCodeParser(
         return lastInst ?: throw IllegalStateException("No instructions found")
     }
 
-    private fun readInstruction(buffer: ByteBuffer) = buffer.run {
-        val offset = position()
+    private fun readInstruction(buffer: ByteBuffer, startOffset: Int) = buffer.run {
+        val offset = position() - startOffset
         var prefix: PandaBytecodePrefix? = null
         var opcode: UByte = get().toUByte()
         val operands = mutableListOf<Byte>()

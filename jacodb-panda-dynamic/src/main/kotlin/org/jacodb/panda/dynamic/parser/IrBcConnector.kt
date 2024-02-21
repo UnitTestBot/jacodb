@@ -16,6 +16,8 @@
 
 package org.jacodb.panda.dynamic.parser
 
+import org.jacodb.panda.dynamic.parser.ByteCodeParser.Companion.toByteBuffer
+
 class IrBcConnector(
     private val bcParser: ByteCodeParser
 ) {
@@ -27,11 +29,11 @@ class IrBcConnector(
 
     fun getLdName(currentFuncName: String, bc: String): String {
         val code = bcParser.getMethodCodeByName(currentFuncName)
-        return code.getResolvedValue(mapOffset(code.numArgs, bc)).toString()
+        return code.getResolvedValue(mapOffset(code.numArgs, bc)).toByteArray().toString()
     }
 
     fun getCallArgFuncName(currentFuncName: String, bc: String): String {
         val code = bcParser.getMethodCodeByName(currentFuncName)
-        return code.getAccValueByOffset(mapOffset(code.numArgs, bc)).toString()
+        return code.getAccValueByOffset(mapOffset(code.numArgs, bc)).toByteArray().toString()
     }
 }
