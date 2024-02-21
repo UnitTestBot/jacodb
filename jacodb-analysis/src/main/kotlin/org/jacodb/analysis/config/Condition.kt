@@ -16,11 +16,12 @@
 
 package org.jacodb.analysis.config
 
+import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.cfg.JcBool
 import org.jacodb.api.cfg.JcConstant
 import org.jacodb.api.cfg.JcInt
@@ -29,7 +30,6 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isAssignable
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
-import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantEq
@@ -164,8 +164,22 @@ class FactAwareConditionEvaluator(
         if (fact.mark != condition.mark) return false
         positionResolver.resolve(condition.position).onSome { value ->
             val variable = value.toPath()
-            return variable.startsWith(fact.variable)
+
+            // FIXME: Adhoc for arrays
+            val variableWithoutStars = variable.removeTrailingElementAccessors()
+            val factWithoutStars = fact.variable.removeTrailingElementAccessors()
+            if (variableWithoutStars == factWithoutStars) return true
+
+            return variable == fact.variable
         }
         return false
+    }
+
+    private fun AccessPath.removeTrailingElementAccessors(): AccessPath {
+        val accesses = accesses.toMutableList()
+        while (accesses.lastOrNull() is ElementAccessor) {
+            accesses.removeLast()
+        }
+        return AccessPath(value, accesses)
     }
 }
