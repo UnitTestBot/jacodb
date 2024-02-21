@@ -257,12 +257,3 @@ class UnusedVariableManager(
             .launchIn(scope)
     }
 }
-
-fun runUnusedVariableAnalysis(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver,
-    startMethods: List<JcMethod>,
-): List<UnusedVariableVulnerability> {
-    val manager = UnusedVariableManager(graph, unitResolver)
-    return manager.analyze(startMethods)
-}

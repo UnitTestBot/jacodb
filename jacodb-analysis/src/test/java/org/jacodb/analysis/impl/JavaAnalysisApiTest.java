@@ -16,10 +16,11 @@
 
 package org.jacodb.analysis.impl;
 
+import kotlin.time.DurationUnit;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.ifds.UnitResolver;
 import org.jacodb.analysis.ifds.UnitResolverKt;
-import org.jacodb.analysis.taint.TaintManagerKt;
+import org.jacodb.analysis.taint.TaintManager;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
@@ -37,6 +38,9 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static kotlin.time.DurationKt.toDuration;
+
 
 public class JavaAnalysisApiTest {
     private static JcClasspath classpath;
@@ -57,7 +61,8 @@ public class JavaAnalysisApiTest {
                 .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
         UnitResolver unitResolver = UnitResolverKt.getMethodUnitResolver();
-        TaintManagerKt.runTaintAnalysis(applicationGraph, unitResolver, methodsToAnalyze);
+        TaintManager manager = new TaintManager(applicationGraph, unitResolver, false);
+        manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
     }
 
     @Test

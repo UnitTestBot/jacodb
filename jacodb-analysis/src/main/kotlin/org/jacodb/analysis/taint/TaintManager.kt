@@ -316,12 +316,3 @@ open class TaintManager(
         return runner.getIfdsResult()
     }
 }
-
-fun runTaintAnalysis(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver,
-    startMethods: List<JcMethod>,
-): List<TaintVulnerability> {
-    val manager = TaintManager(graph, unitResolver)
-    return manager.analyze(startMethods)
-}
