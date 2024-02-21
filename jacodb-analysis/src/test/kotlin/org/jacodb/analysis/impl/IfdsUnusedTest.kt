@@ -16,9 +16,7 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.analysis.ifds.ClassUnitResolver
 import org.jacodb.analysis.ifds.SingletonUnitResolver
-import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
@@ -32,8 +30,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.time.Duration.Companion.seconds
-
-private val logger = mu.KotlinLogging.logger {}
 
 class IfdsUnusedTest : BaseAnalysisTest() {
 
@@ -71,7 +67,8 @@ class IfdsUnusedTest : BaseAnalysisTest() {
 
     @Test
     fun `test on specific Juliet instance`() {
-        val className = "juliet.testcases.CWE563_Unused_Variable.CWE563_Unused_Variable__unused_init_variable_StringBuilder_01"
+        val className =
+            "juliet.testcases.CWE563_Unused_Variable.CWE563_Unused_Variable__unused_init_variable_StringBuilder_01"
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
         val unitResolver = SingletonUnitResolver
