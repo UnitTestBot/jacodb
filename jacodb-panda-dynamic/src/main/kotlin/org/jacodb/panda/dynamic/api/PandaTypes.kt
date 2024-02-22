@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.CommonRefType
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
@@ -36,8 +35,6 @@ object PandaBoolType : PandaType {
 
 object PandaRefType : PandaType, CommonRefType {
     override val typeName: String = "ref"
-    override val jcClass: CommonClass
-        get() = TODO("Not yet implemented")
 }
 
 object PandaVoidType : PandaType {

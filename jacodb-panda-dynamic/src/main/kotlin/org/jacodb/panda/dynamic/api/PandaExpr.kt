@@ -19,12 +19,10 @@ package org.jacodb.panda.dynamic.api
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.common.ext.name
 
 interface PandaExpr : CommonExpr, Mappable {
     override val type: PandaType
     override val operands: List<PandaValue>
-        get() = TODO("Not yet implemented")
 
     fun <T> accept(visitor: PandaExprVisitor<T>): T
 
@@ -36,8 +34,11 @@ interface PandaExpr : CommonExpr, Mappable {
 interface PandaValue : PandaExpr, CommonValue
 
 class PandaLocalVar(val id: Int) : PandaValue {
-    override val type: PandaType = PandaAnyType
-    override val operands: List<PandaValue> = emptyList()
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
 
     override fun toString(): String = "%$id"
 
@@ -47,15 +48,16 @@ class PandaLocalVar(val id: Int) : PandaValue {
 }
 
 /**
-Mock Expr for WIP purposes.
-
-Maps all unknown Panda IR instructions to this.
+ * Mocks PandaExpr for WIP purposes.
+ *
+ * Map all unknown Panda IR instructions to this.
  */
 class TODOExpr(
     val opcode: String,
     override val operands: List<PandaValue>,
 ) : PandaExpr {
-    override val type: PandaType = PandaAnyType
+    override val type: PandaType
+        get() = PandaAnyType
 
     override fun toString(): String = "$opcode(${operands.joinToString(separator = ", ")})"
 
@@ -93,11 +95,11 @@ class PandaArgument(val id: Int) : PandaValue {
     override val operands: List<PandaValue>
         get() = emptyList()
 
+    override fun toString() = "arg $id"
+
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
     }
-
-    override fun toString() = "arg $id"
 }
 
 interface PandaConstant : PandaValue
@@ -128,6 +130,7 @@ class PandaCmpExpr(
 class PandaStringConstant(val value: String) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
+
     override val operands: List<PandaValue>
         get() = emptyList()
 
@@ -367,42 +370,48 @@ class PandaVirtualCallExpr(
     override val args: List<PandaValue>,
     val instance: PandaValue? = null,
 ) : PandaCallExpr {
-
     override val method: PandaTypedMethod
         get() = TODO("lazyMethod.value")
 
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaVirtualCallExpr(this)
-    }
-
     override fun toString(): String = buildString {
         if (instance != null) append("$instance.")
-        append(method.name + "(${args.joinToString(separator = ", ") { it.toString() }})")
+        append(method.name)
+        append("(${args.joinToString(separator = ", ") { it.toString() }})")
+    }
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaVirtualCallExpr(this)
     }
 }
 
 class PandaTypeofExpr(
     override val value: PandaValue,
 ) : PandaUnaryExpr {
-    override val type: PandaType = PandaAnyType
-    override val operands: List<PandaValue> = listOf(value)
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf(value)
+
+    override fun toString() = "typeof $value"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTypeofExpr(this)
     }
-
-    override fun toString() = "typeof $value"
 }
 
 class PandaToNumericExpr(
     override val value: PandaValue,
 ) : PandaUnaryExpr {
-    override val type: PandaType = PandaNumberType
-    override val operands: List<PandaValue> = listOf(value)
+    override val type: PandaType
+        get() = PandaNumberType
+
+    override val operands: List<PandaValue>
+        get() = listOf(value)
+
+    override fun toString() = "typeof $value"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaToNumericExpr(this)
     }
-
-    override fun toString() = "typeof $value"
 }

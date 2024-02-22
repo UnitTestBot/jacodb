@@ -28,3 +28,6 @@ interface PandaTypedMethodParameter : CommonTypedMethodParameter {
     override val type: PandaType
     override val enclosingMethod: PandaTypedMethod
 }
+
+// TODO: PandaTypedMethodImpl
+// TODO: PandaTypedMethodParameterImpl

@@ -47,12 +47,8 @@ data class PandaInstRef(
 }
 
 interface PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
-
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
-
-    val lineNumber: Int
-        get() = location.lineNumber
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         TODO("Not yet implemented")
@@ -64,9 +60,9 @@ interface PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
 interface PandaTerminatingInst : PandaInst
 
 /**
- *Mock Inst for WIP purposes.
+ * Mocks PandaInst for WIP purposes.
  *
- *Maps all unknown Panda IR instructions to this.
+ * Map all unknown Panda IR instructions to this.
  */
 class TODOInst(
     val opcode: String,
@@ -101,7 +97,8 @@ class PandaIfInst(
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
 
-    override val operands: List<PandaExpr> = listOf(condition)
+    override val operands: List<PandaExpr>
+        get() = listOf(condition)
 
     override fun toString(): String = "if ($condition) then $trueBranch else $falseBranch"
 
@@ -115,11 +112,12 @@ class PandaReturnInst(
     override val returnValue: PandaValue?,
 ) : PandaTerminatingInst, CommonReturnInst<PandaMethod, PandaInst> {
 
-    override val operands: List<PandaExpr> = listOfNotNull(returnValue)
+    override val operands: List<PandaExpr>
+        get() = listOfNotNull(returnValue)
 
     override fun toString(): String = buildString {
         append("return")
-        if (returnValue !=null ){
+        if (returnValue != null) {
             append(" ")
             append(returnValue)
         }
@@ -134,9 +132,10 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr,
-) : PandaInst, CommonAssignInst< PandaMethod, PandaInst> {
+) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
 
-    override val operands: List<PandaExpr> = listOf(lhv, rhv)
+    override val operands: List<PandaExpr>
+        get() = listOf(lhv, rhv)
 
     override fun toString(): String = "$lhv = $rhv"
 
@@ -148,9 +147,10 @@ class PandaAssignInst(
 class PandaCallInst(
     override val location: PandaInstLocation,
     val callExpr: PandaCallExpr,
-) : PandaInst, CommonCallInst< PandaMethod, PandaInst> {
+) : PandaInst, CommonCallInst<PandaMethod, PandaInst> {
 
-    override val operands: List<PandaExpr> = listOf(callExpr)
+    override val operands: List<PandaExpr>
+        get() = listOf(callExpr)
 
     override fun toString(): String = callExpr.toString()
 
