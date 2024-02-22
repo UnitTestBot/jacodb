@@ -16,10 +16,9 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.cfg.CoreInst
-import org.jacodb.api.core.cfg.CoreInstLocation
-import org.jacodb.api.core.cfg.InstVisitor
+import org.jacodb.api.core.cfg.*
 import org.jacodb.panda.staticvm.classpath.MethodNode
+import org.jacodb.panda.staticvm.classpath.TypeNode
 
 class PandaInstLocation(
     override val method: MethodNode,
@@ -79,9 +78,9 @@ class PandaParameterInst(
 
 class PandaAssignInst(
     override val location: PandaInstLocation,
-    val lhv: PandaValue,
-    val rhv: PandaExpr
-) : PandaInst {
+    override val lhv: PandaValue,
+    override val rhv: PandaExpr
+) : PandaInst, CoreAssignInst<PandaInstLocation, MethodNode, PandaValue, PandaExpr, TypeNode> {
     override val operands: List<PandaExpr>
         get() = listOf(rhv)
 
@@ -97,7 +96,7 @@ class PandaIfInst(
     val condition: PandaConditionExpr,
     val trueBranch: PandaInstRef,
     val falseBranch: PandaInstRef
-) : PandaBranchingInst {
+) : PandaBranchingInst, CoreIfInst<PandaInstLocation, MethodNode, PandaExpr> {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
     override val successors: List<PandaInstRef>
@@ -109,7 +108,7 @@ class PandaIfInst(
 class PandaGotoInst(
     override val location: PandaInstLocation,
     val target: PandaInstRef
-) : PandaBranchingInst {
+) : PandaBranchingInst, CoreGotoInst<PandaInstLocation, MethodNode, PandaExpr> {
     override val successors: List<PandaInstRef>
         get() = listOf(target)
 
@@ -124,7 +123,7 @@ sealed interface PandaTerminatingInst : PandaInst
 class PandaReturnInst(
     override val location: PandaInstLocation,
     val value: PandaValue?
-) : PandaTerminatingInst {
+) : PandaTerminatingInst, CoreReturnInst<PandaInstLocation, MethodNode, PandaExpr> {
     override val operands: List<PandaExpr>
         get() = emptyList()
 

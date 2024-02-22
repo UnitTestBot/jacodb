@@ -18,6 +18,7 @@ package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.core.cfg.CoreExpr
 import org.jacodb.api.core.cfg.CoreExprVisitor
+import org.jacodb.api.core.cfg.CoreValue
 import org.jacodb.panda.staticvm.classpath.*
 
 sealed interface PandaExpr : CoreExpr<TypeNode, PandaValue> {
@@ -26,7 +27,7 @@ sealed interface PandaExpr : CoreExpr<TypeNode, PandaValue> {
     }
 }
 
-sealed interface PandaValue : PandaExpr {
+sealed interface PandaValue : PandaExpr, CoreValue<PandaValue, TypeNode> {
     override val operands: List<PandaValue> get() = emptyList()
 }
 
