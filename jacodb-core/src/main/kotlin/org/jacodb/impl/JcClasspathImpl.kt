@@ -17,10 +17,10 @@
 package org.jacodb.impl
 
 import kotlinx.coroutines.*
-import org.jacodb.api.*
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedClassResult
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedTypeResult
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedClassResult
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedTypeResult
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.features.JcFeatureEventImpl
 import org.jacodb.impl.features.JcFeaturesChain
@@ -67,11 +67,11 @@ class JcClasspathImpl(
         }?.clazz
     }
 
-    override fun typeOf(
+    override fun classTypeOf(
         jcClass: JcClassOrInterface,
         nullability: Boolean?,
         annotations: List<JcAnnotation>
-    ): JcRefType {
+    ): JcClassType {
         return JcClassTypeImpl(
             this,
             jcClass.name,
@@ -162,7 +162,7 @@ class JcClasspathImpl(
             return when (val clazz = findClassOrNull(name)) {
                 null -> JcResolvedTypeResultImpl(name, null)
                 is JcUnknownClass -> null // delegating to UnknownClass feature
-                else -> JcResolvedTypeResultImpl(name, typeOf(clazz))
+                else -> JcResolvedTypeResultImpl(name, classTypeOf(clazz))
             }
         }
 
@@ -182,5 +182,3 @@ class JcClasspathImpl(
     }
 
 }
-
-

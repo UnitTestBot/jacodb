@@ -16,8 +16,8 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.Closeable
@@ -33,10 +33,10 @@ class InnerTypesTest : BaseTypesTest() {
         val methodLinked = inners.first { it.typeName == "org.jacodb.testing.types.InnerClasses<W>\$1" }
         with(methodLinked.fields) {
             with(first { it.name == "stateT" }) {
-                assertEquals("T", (fieldType as JcTypeVariable).symbol)
+                assertEquals("T", (type as JcTypeVariable).symbol)
             }
             with(first { it.name == "stateW" }) {
-                assertEquals("W", fieldType.typeName)
+                assertEquals("W", type.typeName)
             }
         }
     }
@@ -62,7 +62,7 @@ class InnerTypesTest : BaseTypesTest() {
             assertEquals(2, fields.size)
 
             with(fields.first { it.name == "stateW" }) {
-                with(fieldType.assertIs<JcTypeVariable>()) {
+                with(type.assertIs<JcTypeVariable>()) {
                     assertEquals("W", symbol)
                 }
             }
@@ -80,13 +80,13 @@ class InnerTypesTest : BaseTypesTest() {
 
             with(fields.first { it.name == "stateT" }) {
                 assertEquals("stateT", name)
-                with(fieldType.assertIs<JcTypeVariable>()) {
+                with(type.assertIs<JcTypeVariable>()) {
                     assertEquals("T", symbol)
                 }
             }
             with(fields.first { it.name == "stateW" }) {
                 assertEquals("stateW", name)
-                with(fieldType.assertIs<JcTypeVariable>()) {
+                with(type.assertIs<JcTypeVariable>()) {
                     assertEquals("W", symbol)
                 }
             }
@@ -97,7 +97,7 @@ class InnerTypesTest : BaseTypesTest() {
     @Test
     fun `parameterized inner type with parent type parameterization`() {
         with(field("stateString")) {
-            fields.first { it.name == "stateW" }.fieldType.assertClassType<String>()
+            fields.first { it.name == "stateW" }.type.assertClassType<String>()
         }
 
     }
@@ -120,7 +120,7 @@ class InnerTypesTest : BaseTypesTest() {
 
         with(field("stateClosable")) {
             with(fields.first { it.name == "stateW" }) {
-                fieldType.assertClassType<Closeable>()
+                type.assertClassType<Closeable>()
             }
             with(methods.first { it.name == "method" }) {
                 with(returnType.assertIs<JcTypeVariable>()) {
@@ -135,7 +135,7 @@ class InnerTypesTest : BaseTypesTest() {
     private fun field(fieldName: String): JcClassType {
         return findType<InnerClasses<*>>().fields.first {
             it.name == fieldName
-        }.fieldType.assertIsClass()
+        }.type.assertIsClass()
     }
 
 }

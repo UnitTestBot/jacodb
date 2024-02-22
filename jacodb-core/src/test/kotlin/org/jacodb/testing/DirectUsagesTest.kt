@@ -18,11 +18,11 @@ package org.jacodb.testing
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.CONSTRUCTOR
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.usedFields
-import org.jacodb.api.ext.usedMethods
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.ext.CONSTRUCTOR
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.usedFields
+import org.jacodb.api.jvm.ext.usedMethods
 import org.jacodb.testing.usages.direct.DirectA
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals

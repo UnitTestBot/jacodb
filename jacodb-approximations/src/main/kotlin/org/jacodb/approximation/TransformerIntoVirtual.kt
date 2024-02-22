@@ -16,10 +16,10 @@
 
 package org.jacodb.approximation
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.impl.features.JcFeaturesChain
 
 object TransformerIntoVirtual {

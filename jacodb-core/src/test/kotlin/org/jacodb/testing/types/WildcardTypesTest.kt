@@ -17,9 +17,9 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcBoundedWildcard
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
+import org.jacodb.api.jvm.JcBoundedWildcard
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
 import org.jacodb.testing.types.WildcardBounds.DirectBound
 import org.jacodb.testing.types.WildcardBounds.DirectBoundString
 import org.jacodb.testing.types.WildcardBounds.WildcardLowerBound
@@ -37,7 +37,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<DirectBound<*>>()
             with(bounded.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<T>", typeName)
                 }
             }
@@ -50,7 +50,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<DirectBoundString>()
             with(bounded.superType!!.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<java.lang.String>", typeName)
                 }
             }
@@ -63,7 +63,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<WildcardUpperBound<*>>()
             with(bounded.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? extends T>", typeName)
                     with(typeArguments.first().assertIs<JcBoundedWildcard>()) {
                         upperBounds.first().assertIs<JcTypeVariable>()
@@ -79,7 +79,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<WildcardUpperBoundString>()
             with(bounded.superType!!.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? extends java.lang.String>", typeName)
                     with(typeArguments.first().assertIs<JcBoundedWildcard>()) {
                         upperBounds.first().assertClassType<String>()
@@ -95,7 +95,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<WildcardLowerBound<*>>()
             with(bounded.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? super T>", typeName)
                     with(typeArguments.first().assertIs<JcBoundedWildcard>()) {
                         lowerBounds.first().assertIs<JcTypeVariable>()
@@ -111,7 +111,7 @@ class WildcardTypesTest : BaseTypesTest() {
             val bounded = findType<WildcardLowerBoundString>()
             with(bounded.superType!!.fields.first()) {
                 assertEquals("field", name)
-                with(fieldType.assertIs<JcClassType>()) {
+                with(type.assertIs<JcClassType>()) {
                     assertEquals("java.util.List<? super java.lang.String>", typeName)
                     with(typeArguments.first().assertIs<JcBoundedWildcard>()) {
                         lowerBounds.first().assertClassType<String>()

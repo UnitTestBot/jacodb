@@ -21,7 +21,7 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jooq.impl.DSL

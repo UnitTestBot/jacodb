@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import org.jacodb.api.JcType
+import org.jacodb.api.jvm.JcType
 
 interface ConditionVisitor<out R> {
     fun visit(condition: ConstantTrue): R

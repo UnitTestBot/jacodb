@@ -17,7 +17,7 @@
 package org.jacodb.testing.types.nullability
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
+import org.jacodb.api.jvm.JcClassType
 import org.jacodb.testing.KotlinNullabilityExamples
 import org.jacodb.testing.types.BaseTypesTest
 import org.jacodb.testing.types.NullAnnotationExamples
@@ -32,10 +32,10 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
         val clazz = findType<NullAnnotationExamples>()
         val containerOfUndefined = clazz.declaredFields.single { it.name == "ktContainerOfUndefined" }
 
-        val containerOfUndefinedFieldsNullability = (containerOfUndefined.fieldType as JcClassType)
+        val containerOfUndefinedFieldsNullability = (containerOfUndefined.type as JcClassType)
             .fields
             .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
+            .map { it.type.nullabilityTree }
 
         // E -> String
         val expectedNullability = listOf(
@@ -64,10 +64,10 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
         val clazz = findType<NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNotNull" }
 
-        val containerOfNotNullFields = (containerOfNotNull.fieldType as JcClassType)
+        val containerOfNotNullFields = (containerOfNotNull.type as JcClassType)
             .fields
             .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
+            .map { it.type.nullabilityTree }
 
         // E -> @NotNull String
         val expectedNullability = listOf(
@@ -96,10 +96,10 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
         val clazz = findType<NullAnnotationExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "ktContainerOfNullable" }
 
-        val containerOfNotNullFields = (containerOfNotNull.fieldType as JcClassType)
+        val containerOfNotNullFields = (containerOfNotNull.type as JcClassType)
             .fields
             .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
+            .map { it.type.nullabilityTree }
 
         // E -> @Nullable String
         val expectedNullability = listOf(
@@ -128,10 +128,10 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNullable = clazz.declaredFields.single { it.name == "javaContainerOfNullable" }
 
-        val containerOfNullableFields = (containerOfNullable.fieldType as JcClassType)
+        val containerOfNullableFields = (containerOfNullable.type as JcClassType)
             .fields
             .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
+            .map { it.type.nullabilityTree }
 
         // E -> String?
         val expectedNullability = listOf(
@@ -162,10 +162,10 @@ class KotlinJavaInteropNullabilityTest : BaseTypesTest() {
         val clazz = findType<KotlinNullabilityExamples>()
         val containerOfNotNull = clazz.declaredFields.single { it.name == "javaContainerOfNotNull" }
 
-        val containerOfNotNullFields = (containerOfNotNull.fieldType as JcClassType)
+        val containerOfNotNullFields = (containerOfNotNull.type as JcClassType)
             .fields
             .sortedBy { it.name }
-            .map { it.fieldType.nullabilityTree }
+            .map { it.type.nullabilityTree }
 
         // E -> String
         val expectedNullability = listOf(

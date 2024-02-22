@@ -17,7 +17,7 @@
 package org.jacodb.impl
 
 import kotlinx.coroutines.*
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature

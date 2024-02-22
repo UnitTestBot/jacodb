@@ -17,11 +17,11 @@
 package org.jacodb.taint.configuration
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.constructors
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
-import org.jacodb.api.ext.objectType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
+import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.classpaths.VirtualLocation
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl

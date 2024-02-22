@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":jacodb-api"))
+    implementation(project(":jacodb-api-jvm"))
     implementation(project(":jacodb-core"))
     implementation(testFixtures(project(":jacodb-core")))
 

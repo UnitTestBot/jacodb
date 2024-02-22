@@ -17,10 +17,10 @@
 package org.jacodb.examples
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.ext.constructors
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.jacodb
 import java.io.File
 import kotlin.concurrent.thread
@@ -76,7 +76,7 @@ suspend fun typesSubstitution() {
     }
     val classpath = db.classpath(listOf(File("all-classpath")))
     val b = classpath.findClass<B>().toType()
-    println(b.fields.first { it.name == "x" }.fieldType == classpath.findClass<String>().toType()) // will print `true`
+    println(b.fields.first { it.name == "x" }.type == classpath.findClass<String>().toType()) // will print `true`
 }
 
 suspend fun refresh() {

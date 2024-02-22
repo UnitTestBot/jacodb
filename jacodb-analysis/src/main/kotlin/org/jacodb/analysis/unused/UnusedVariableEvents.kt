@@ -17,9 +17,15 @@
 package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.Edge
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 
-sealed interface Event
+sealed interface UnusedVariableEvent<Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>
 
-data class NewSummaryEdge(
-    val edge: Edge<UnusedVariableDomainFact>,
-) : Event
+data class NewSummaryEdge<Method, Statement>(
+    val edge: Edge<UnusedVariableDomainFact, Method, Statement>,
+) : UnusedVariableEvent<Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>

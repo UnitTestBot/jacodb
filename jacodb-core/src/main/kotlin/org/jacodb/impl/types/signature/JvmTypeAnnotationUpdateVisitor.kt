@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JvmType
-import org.jacodb.api.ext.isNotNullAnnotation
-import org.jacodb.api.ext.isNullableAnnotation
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.ext.isNotNullAnnotation
+import org.jacodb.api.jvm.ext.isNullableAnnotation
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.types.AnnotationInfo
 import org.objectweb.asm.TypePath

@@ -17,13 +17,13 @@
 package org.jacodb.analysis.graph
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.isSubClassOf
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.isSubClassOf
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
 import org.jacodb.impl.cfg.JcInstLocationImpl
 import org.jacodb.impl.features.hierarchyExt
 
@@ -39,7 +39,7 @@ internal class SimplifiedJcApplicationGraph(
     private val bannedPackagePrefixes: List<String>,
 ) : JcApplicationGraph by graph {
     private val hierarchyExtension = runBlocking {
-        classpath.hierarchyExt()
+        project.hierarchyExt()
     }
 
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()

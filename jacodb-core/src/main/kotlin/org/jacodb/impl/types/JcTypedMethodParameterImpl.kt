@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.isNullable
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 

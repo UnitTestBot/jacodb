@@ -16,10 +16,10 @@
 
 package org.jacodb.approximations
 
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
 import org.jacodb.approximation.*
 import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
 import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
@@ -166,7 +166,7 @@ class ApproximationsTest : BaseTest() {
             val rhv = inst.rhv
             if (rhv is JcFieldRef) {
                 types += rhv.type.typeName
-                types += rhv.field.fieldType.typeName
+                types += rhv.field.type.typeName
                 types += rhv.field.enclosingType.typeName
             }
         }

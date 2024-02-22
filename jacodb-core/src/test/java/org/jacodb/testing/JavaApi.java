@@ -16,10 +16,10 @@
 
 package org.jacodb.testing;
 
-import org.jacodb.api.JcDatabase;
-import org.jacodb.api.cfg.JcArgument;
-import org.jacodb.api.cfg.JcExpr;
-import org.jacodb.api.cfg.TypedExprResolver;
+import org.jacodb.api.jvm.JcDatabase;
+import org.jacodb.api.jvm.cfg.JcArgument;
+import org.jacodb.api.jvm.cfg.JcExpr;
+import org.jacodb.api.jvm.cfg.TypedExprResolver;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcCacheSettings;
 import org.jacodb.impl.JcSettings;
@@ -30,16 +30,16 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 public class JavaApi {
-    private static class ArgumentResolver extends TypedExprResolver<JcArgument> {
-
-        @Override
-        public void ifMatches(@NotNull JcExpr jcExpr) {
-            if (jcExpr instanceof JcArgument) {
-                getResult().add((JcArgument) jcExpr);
-            }
-        }
-
-    }
+    // private static class ArgumentResolver extends TypedExprResolver<JcArgument> {
+    //
+    //     @Override
+    //     public void ifMatches(@NotNull JcExpr jcExpr) {
+    //         if (jcExpr instanceof JcArgument) {
+    //             getResult().add((JcArgument) jcExpr);
+    //         }
+    //     }
+    //
+    // }
 
     public static void cacheSettings() {
         new JcCacheSettings().types(10, Duration.of(1, ChronoUnit.MINUTES));

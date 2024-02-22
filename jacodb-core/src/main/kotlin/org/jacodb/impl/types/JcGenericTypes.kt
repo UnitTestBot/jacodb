@@ -16,16 +16,16 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcBoundedWildcard
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
-import org.jacodb.api.JcTypeVariable
-import org.jacodb.api.JcTypeVariableDeclaration
-import org.jacodb.api.JcUnboundWildcard
-import org.jacodb.api.ext.objectClass
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcBoundedWildcard
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.JcTypeVariable
+import org.jacodb.api.jvm.JcTypeVariableDeclaration
+import org.jacodb.api.jvm.JcUnboundWildcard
+import org.jacodb.api.jvm.ext.objectClass
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcUnboundWildcardImpl(override val classpath: JcClasspath) :

@@ -17,7 +17,7 @@
 package org.jacodb.impl.fs
 
 import kotlinx.collections.immutable.toImmutableList
-import org.jacodb.api.ClassSource
+import org.jacodb.api.jvm.ClassSource
 import org.jacodb.impl.storage.AnnotationValueKind
 import org.jacodb.impl.types.*
 import org.objectweb.asm.ClassReader

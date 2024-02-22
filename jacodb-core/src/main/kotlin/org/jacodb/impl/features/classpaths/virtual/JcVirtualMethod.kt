@@ -16,16 +16,16 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.cfg.JcGraphImpl
 import org.jacodb.impl.cfg.JcInstListImpl
@@ -48,7 +48,7 @@ interface JcVirtualMethod : JcMethod {
 
 open class JcVirtualParameter(
     override val index: Int,
-    override val type: TypeName
+    override val type: TypeName,
 ) : JcParameter {
 
     override val declaration: JcDeclaration
@@ -76,7 +76,7 @@ open class JcVirtualMethodImpl(
     override val access: Int = Opcodes.ACC_PUBLIC,
     override val returnType: TypeName,
     override val parameters: List<JcVirtualParameter>,
-    override val description: String
+    override val description: String,
 ) : JcVirtualMethod {
 
     init {

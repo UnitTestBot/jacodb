@@ -17,11 +17,11 @@
 package org.jacodb.testing.cfg
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.NoClassInClasspathException
-import org.jacodb.api.cfg.applyAndGet
-import org.jacodb.api.ext.isKotlin
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.NoClassInClasspathException
+import org.jacodb.api.jvm.cfg.applyAndGet
+import org.jacodb.api.jvm.ext.isKotlin
+import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.features.hierarchyExt

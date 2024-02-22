@@ -16,14 +16,14 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.JcField
+import org.jacodb.api.common.CommonClassField
 
 sealed interface Accessor {
     fun toSuffix(): String
 }
 
 data class FieldAccessor(
-    val field: JcField,
+    val field: CommonClassField,
 ) : Accessor {
     override fun toSuffix(): String = ".${field.name}"
     override fun toString(): String = field.name

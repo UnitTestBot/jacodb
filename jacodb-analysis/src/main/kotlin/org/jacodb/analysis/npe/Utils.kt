@@ -16,16 +16,40 @@
 
 package org.jacodb.analysis.npe
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.JcAccessPath
+import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.analysis.util.startsWith
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLengthExpr
-import org.jacodb.api.cfg.values
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcLengthExpr
+import org.jacodb.api.jvm.cfg.values
 
-fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
+internal fun CommonAccessPath?.isDereferencedAt(expr: CommonExpr): Boolean {
+    if (this == null) {
+        return false
+    }
+    if (this is JcAccessPath && expr is JcExpr) {
+        return isDereferencedAt(expr)
+    }
+    error("Cannot check whether path $this is dereferenced at expr: $expr")
+}
+
+internal fun CommonAccessPath?.isDereferencedAt(inst: CommonInst<*, *>): Boolean {
+    if (this == null) {
+        return false
+    }
+    if (this is JcAccessPath && inst is JcInst) {
+        return isDereferencedAt(inst)
+    }
+    error("Cannot check whether path $this is dereferenced at inst: $inst")
+}
+
+internal fun JcAccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
     if (this == null) {
         return false
     }
@@ -51,7 +75,7 @@ fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
         }
 }
 
-fun AccessPath?.isDereferencedAt(inst: JcInst): Boolean {
+internal fun JcAccessPath?.isDereferencedAt(inst: JcInst): Boolean {
     if (this == null) return false
     return inst.operands.any { isDereferencedAt(it) }
 }

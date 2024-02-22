@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.findType
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.findType
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.cfg.util.typeName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy

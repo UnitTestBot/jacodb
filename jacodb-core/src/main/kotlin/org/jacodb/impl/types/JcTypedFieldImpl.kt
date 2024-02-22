@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.isNullable
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcFieldImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl
@@ -39,9 +39,7 @@ class JcTypedFieldImpl(
         resolution?.fieldType
     }
 
-    override val name: String get() = this.field.name
-
-    override val fieldType: JcType by lazy {
+    override val type: JcType by lazy {
         val typeName = field.type.typeName
         val type = resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))

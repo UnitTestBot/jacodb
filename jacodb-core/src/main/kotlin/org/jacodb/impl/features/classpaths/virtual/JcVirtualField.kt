@@ -16,17 +16,16 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcField
-import org.jacodb.api.TypeName
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.TypeName
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.objectweb.asm.Opcodes
 
 interface JcVirtualField : JcField {
     fun bind(clazz: JcClassOrInterface)
-
 }
 
 open class JcVirtualFieldImpl(
@@ -34,6 +33,7 @@ open class JcVirtualFieldImpl(
     override val access: Int = Opcodes.ACC_PUBLIC,
     override val type: TypeName,
 ) : JcVirtualField {
+
     override val declaration: JcDeclaration
         get() = JcDeclarationImpl.of(enclosingClass.declaration.location, this)
 

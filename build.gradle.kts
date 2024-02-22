@@ -156,7 +156,8 @@ val repoUrl: String? = project.properties["repoUrl"] as? String
 if (!repoUrl.isNullOrEmpty()) {
     configure(
         listOf(
-            project(":jacodb-api"),
+            project(":jacodb-api-common"),
+            project(":jacodb-api-jvm"),
             project(":jacodb-core"),
             project(":jacodb-analysis"),
             project(":jacodb-approximations"),

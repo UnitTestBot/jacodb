@@ -16,14 +16,14 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcPrimitiveType
-import org.jacodb.api.JcTypeVariable
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findMethodOrNull
-import org.jacodb.api.ext.humanReadableSignature
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.JcArrayType
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcPrimitiveType
+import org.jacodb.api.jvm.JcTypeVariable
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findMethodOrNull
+import org.jacodb.api.jvm.ext.humanReadableSignature
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
@@ -40,14 +40,14 @@ class TypesTest : BaseTypesTest() {
         assertEquals(2, fields.size)
 
         with(fields.first()) {
-            assertTrue(fieldType is JcPrimitiveType)
+            assertTrue(type is JcPrimitiveType)
             assertEquals("value", name)
-            assertEquals("int", fieldType.typeName)
+            assertEquals("int", type.typeName)
         }
         with(fields.get(1)) {
-            assertTrue(fieldType is JcArrayType)
+            assertTrue(type is JcArrayType)
             assertEquals("intArray", name)
-            assertEquals("int[]", fieldType.typeName)
+            assertEquals("int[]", type.typeName)
         }
 
 

@@ -16,29 +16,35 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcBlockGraph
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.JcBasicBlock
+import org.jacodb.api.jvm.cfg.JcBlockGraph
+import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
 
 class JcBlockGraphImpl(
-    override val jcGraph: JcGraph
+    override val jcGraph: JcGraph,
 ) : Iterable<JcBasicBlock>, JcBlockGraph {
+
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val successorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val catchersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
-    override val entry: JcBasicBlock get() = first()
+    override val entry: JcBasicBlock
+        get() = first()
 
     override val entries: List<JcBasicBlock>
         get() = listOf(entry)
 
-    override val exits: List<JcBasicBlock> get() = filter { successors(it).isEmpty() }
+    override val exits: List<JcBasicBlock>
+        get() = filter { successors(it).isEmpty() }
+
+    override val instructions: List<JcBasicBlock>
+        get() = _basicBlocks.toList()
 
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
@@ -65,8 +71,8 @@ class JcBlockGraphImpl(
             }
             when {
                 inst is JcBranchingInst
-                        || inst is JcTerminatingInst
-                        || jcGraph.predecessors(inst).size > 1 -> {
+                    || inst is JcTerminatingInst
+                    || jcGraph.predecessors(inst).size > 1 -> {
                     if (shouldBeAddedBefore) currentRefs += currentRef
                     createBlock()
                     if (!shouldBeAddedBefore) {

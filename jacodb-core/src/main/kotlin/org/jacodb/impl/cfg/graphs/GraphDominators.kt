@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.cfg.graphs
 
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcBlockGraph
-import org.jacodb.api.cfg.JcBytecodeGraph
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcBasicBlock
+import org.jacodb.api.jvm.cfg.JcBlockGraph
+import org.jacodb.api.jvm.cfg.JcBytecodeGraph
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
 import java.util.*
 
 

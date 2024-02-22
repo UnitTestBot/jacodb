@@ -21,15 +21,17 @@ package org.jacodb.analysis.graph
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.impl.features.usagesExt
 import java.util.concurrent.CompletableFuture
 
 /**
  * Creates an instance of [SimplifiedJcApplicationGraph], see its docs for more info.
  */
-suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
+suspend fun JcClasspath.newApplicationGraphForAnalysis(
+    bannedPackagePrefixes: List<String>? = null,
+): JcApplicationGraph {
     val mainGraph = JcApplicationGraphImpl(this, usagesExt())
     return if (bannedPackagePrefixes != null) {
         SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)

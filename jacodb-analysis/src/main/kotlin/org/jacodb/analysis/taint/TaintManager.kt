@@ -42,8 +42,9 @@ import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.util.getPathEdges
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonInst
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -53,24 +54,26 @@ import kotlin.time.TimeSource
 
 private val logger = mu.KotlinLogging.logger {}
 
-open class TaintManager(
-    protected val graph: JcApplicationGraph,
-    protected val unitResolver: UnitResolver,
+open class TaintManager<Method, Statement>(
+    protected val graph: ApplicationGraph<Method, Statement>,
+    protected val unitResolver: UnitResolver<Method>,
     private val useBidiRunner: Boolean = false,
-) : Manager<TaintDomainFact, TaintEvent> {
+) : Manager<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    protected val methodsForUnit: MutableMap<UnitType, MutableSet<JcMethod>> = hashMapOf()
-    protected val runnerForUnit: MutableMap<UnitType, TaintRunner> = hashMapOf()
+    protected val methodsForUnit: MutableMap<UnitType, MutableSet<Method>> = hashMapOf()
+    protected val runnerForUnit: MutableMap<UnitType, TaintRunner<Method, Statement>> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
-    private val summaryEdgesStorage = SummaryStorageImpl<TaintSummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<TaintVulnerability>()
+    private val summaryEdgesStorage = SummaryStorageImpl<TaintSummaryEdge<Method, Statement>, Method, Statement>()
+    private val vulnerabilitiesStorage = SummaryStorageImpl<TaintVulnerability<Method, Statement>, Method, Statement>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
     protected open fun newRunner(
         unit: UnitType,
-    ): TaintRunner {
+    ): TaintRunner<Method, Statement> {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         logger.debug { "Creating a new runner for $unit" }
@@ -118,15 +121,15 @@ open class TaintManager(
         return runner
     }
 
-    private fun getAllCallees(method: JcMethod): Set<JcMethod> {
-        val result: MutableSet<JcMethod> = hashSetOf()
+    private fun getAllCallees(method: Method): Set<Method> {
+        val result: MutableSet<Method> = hashSetOf()
         for (inst in method.flowGraph().instructions) {
             result += graph.callees(inst)
         }
         return result
     }
 
-    protected open fun addStart(method: JcMethod) {
+    protected open fun addStart(method: Method) {
         logger.info { "Adding start method: $method" }
         val unit = unitResolver.resolve(method)
         if (unit == UnknownUnit) return
@@ -141,9 +144,9 @@ open class TaintManager(
     @JvmName("analyze") // needed for Java interop because of inline class (Duration)
     @OptIn(ExperimentalTime::class)
     fun analyze(
-        startMethods: List<JcMethod>,
+        startMethods: List<Method>,
         timeout: Duration = 3600.seconds,
-    ): List<TaintVulnerability> = runBlocking(Dispatchers.Default) {
+    ): List<TaintVulnerability<Method, Statement>> = runBlocking(Dispatchers.Default) {
         val timeStart = TimeSource.Monotonic.markNow()
 
         // Add start methods:
@@ -235,7 +238,7 @@ open class TaintManager(
         foundVulnerabilities
     }
 
-    override fun handleEvent(event: TaintEvent) {
+    override fun handleEvent(event: TaintEvent<Method, Statement>) {
         when (event) {
             is NewSummaryEdge -> {
                 summaryEdgesStorage.add(TaintSummaryEdge(event.edge))
@@ -273,9 +276,9 @@ open class TaintManager(
     }
 
     override fun subscribeOnSummaryEdges(
-        method: JcMethod,
+        method: Method,
         scope: CoroutineScope,
-        handler: (TaintEdge) -> Unit,
+        handler: (TaintEdge<Method, Statement>) -> Unit,
     ) {
         summaryEdgesStorage
             .getFacts(method)
@@ -283,17 +286,20 @@ open class TaintManager(
             .launchIn(scope)
     }
 
-    fun vulnerabilityTraceGraph(vulnerability: TaintVulnerability): TraceGraph<TaintDomainFact> {
+    fun vulnerabilityTraceGraph(
+        vulnerability: TaintVulnerability<Method, Statement>,
+    ): TraceGraph<TaintDomainFact, Method, Statement> {
         val result = getIfdsResultForMethod(vulnerability.method)
         val initialGraph = result.buildTraceGraph(vulnerability.sink)
         val resultGraph = initialGraph.copy(unresolvedCrossUnitCalls = emptyMap())
 
-        val resolvedCrossUnitEdges = hashSetOf<Pair<Vertex<TaintDomainFact>, Vertex<TaintDomainFact>>>()
+        val resolvedCrossUnitEdges =
+            hashSetOf<Pair<Vertex<TaintDomainFact, Method, Statement>, Vertex<TaintDomainFact, Method, Statement>>>()
         val unresolvedCrossUnitCalls = initialGraph.unresolvedCrossUnitCalls.entries.toMutableList()
         while (unresolvedCrossUnitCalls.isNotEmpty()) {
             val (caller, callees) = unresolvedCrossUnitCalls.removeLast()
 
-            val unresolvedCallees = hashSetOf<Vertex<TaintDomainFact>>()
+            val unresolvedCallees = hashSetOf<Vertex<TaintDomainFact, Method, Statement>>()
             for (callee in callees) {
                 if (resolvedCrossUnitEdges.add(caller to callee)) {
                     unresolvedCallees.add(callee)
@@ -311,7 +317,7 @@ open class TaintManager(
         return resultGraph
     }
 
-    private fun getIfdsResultForMethod(method: JcMethod): IfdsResult<TaintDomainFact> {
+    private fun getIfdsResultForMethod(method: Method): IfdsResult<TaintDomainFact, Method, Statement> {
         val unit = unitResolver.resolve(method)
         val runner = runnerForUnit[unit] ?: error("No runner for $unit")
         return runner.getIfdsResult()

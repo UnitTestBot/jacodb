@@ -17,10 +17,10 @@
 package org.jacodb.testing.cfg
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.cfg.toFile
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath

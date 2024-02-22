@@ -17,10 +17,10 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
-import org.jacodb.api.JcTypedField
-import org.jacodb.api.JcTypedMethod
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
 import org.jacodb.testing.types.MultipleParametrization.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -37,13 +37,13 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test1 = findType<SuperTest1<*, *, *>>()
             with(test1.field(SuperTest1<*, *, *>::stateT)) {
-                assertEquals("T", (fieldType as JcTypeVariable).symbol)
+                assertEquals("T", (type as JcTypeVariable).symbol)
             }
             with(test1.field(SuperTest1<*, *, *>::stateW)) {
-                assertEquals("W", (fieldType as JcTypeVariable).symbol)
+                assertEquals("W", (type as JcTypeVariable).symbol)
             }
             with(test1.field(SuperTest1<*, *, *>::stateZ)) {
-                assertEquals("Z", (fieldType as JcTypeVariable).symbol)
+                assertEquals("Z", (type as JcTypeVariable).symbol)
             }
         }
     }
@@ -53,14 +53,14 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test2 = findType<SuperTest2<*, *>>()
             with(test2.field(SuperTest1<*, *, *>::stateT)) {
-                fieldType.assertClassType<String>()
+                type.assertClassType<String>()
             }
             with(test2.field(SuperTest1<*, *, *>::stateW)) {
-                val variable = fieldType as JcTypeVariable
+                val variable = type as JcTypeVariable
                 assertEquals("W", variable.symbol)
             }
             with(test2.field(SuperTest1<*, *, *>::stateZ)) {
-                assertEquals("Z", (fieldType as JcTypeVariable).symbol)
+                assertEquals("Z", (type as JcTypeVariable).symbol)
             }
         }
     }
@@ -70,14 +70,14 @@ class MultiParametersTest : BaseTypesTest() {
         runBlocking {
             val test2 = findType<SuperTest3>()
             with(test2.field(SuperTest1<*, *, *>::stateT)) {
-                fieldType.assertClassType<String>()
+                type.assertClassType<String>()
             }
             with(test2.field(SuperTest1<*, *, *>::stateW)) {
-                val variable = fieldType
+                val variable = type
                 assertEquals(finalW, variable.typeName)
             }
             with(test2.field(SuperTest1<*, *, *>::stateZ)) {
-                val variable = fieldType
+                val variable = type
                 assertEquals(finalZ, variable.typeName)
             }
         }

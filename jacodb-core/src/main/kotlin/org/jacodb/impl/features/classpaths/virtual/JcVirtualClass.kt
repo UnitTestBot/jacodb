@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.objectClass
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.objectClass
 import org.jacodb.impl.bytecode.JcClassLookupImpl
 import org.jacodb.impl.bytecode.JcDeclarationImpl
 import org.jacodb.impl.bytecode.joinFeatureFields

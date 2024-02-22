@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.*
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.cfg.*
 import org.jacodb.impl.cfg.util.*
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes

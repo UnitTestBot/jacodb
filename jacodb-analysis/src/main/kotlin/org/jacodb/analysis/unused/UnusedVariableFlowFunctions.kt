@@ -18,35 +18,39 @@ package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
+import org.jacodb.analysis.ifds.isOnHeap
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.analysis.util.getArgumentsOf
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.ext.callExpr
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
 
-class UnusedVariableFlowFunctions(
-    private val graph: JcApplicationGraph,
-) : FlowFunctions<UnusedVariableDomainFact> {
-    private val cp: JcClasspath
-        get() = graph.classpath
+class UnusedVariableFlowFunctions<Method, Statement>(
+    private val graph: ApplicationGraph<Method, Statement>,
+) : FlowFunctions<UnusedVariableDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
+
+    private val cp: Project
+        get() = graph.project
 
     override fun obtainPossibleStartFacts(
-        method: JcMethod,
+        method: Method,
     ): Collection<UnusedVariableDomainFact> {
         return setOf(UnusedVariableZeroFact)
     }
 
     override fun obtainSequentFlowFunction(
-        current: JcInst,
-        next: JcInst,
+        current: Statement,
+        next: Statement,
     ) = FlowFunction<UnusedVariableDomainFact> { fact ->
-        if (current !is JcAssignInst) {
+        if (current !is CommonAssignInst<*, *>) {
             return@FlowFunction setOf(fact)
         }
 
@@ -77,18 +81,19 @@ class UnusedVariableFlowFunctions(
     }
 
     override fun obtainCallToReturnSiteFlowFunction(
-        callStatement: JcInst,
-        returnSite: JcInst,
+        callStatement: Statement,
+        returnSite: Statement,
     ) = obtainSequentFlowFunction(callStatement, returnSite)
 
     override fun obtainCallToStartFlowFunction(
-        callStatement: JcInst,
-        calleeStart: JcInst,
+        callStatement: Statement,
+        calleeStart: Statement,
     ) = FlowFunction<UnusedVariableDomainFact> { fact ->
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
         if (fact == UnusedVariableZeroFact) {
+            // FIXME: use common?
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
                 return@FlowFunction setOf(UnusedVariableZeroFact)
             }
@@ -107,9 +112,9 @@ class UnusedVariableFlowFunctions(
     }
 
     override fun obtainExitToReturnSiteFlowFunction(
-        callStatement: JcInst,
-        returnSite: JcInst,
-        exitStatement: JcInst,
+        callStatement: Statement,
+        returnSite: Statement,
+        exitStatement: Statement,
     ) = FlowFunction<UnusedVariableDomainFact> { fact ->
         if (fact == UnusedVariableZeroFact) {
             setOf(UnusedVariableZeroFact)

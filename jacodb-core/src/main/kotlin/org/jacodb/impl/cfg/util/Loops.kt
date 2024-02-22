@@ -18,8 +18,8 @@
 
 package org.jacodb.impl.cfg.util
 
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.impl.cfg.graphs.findDominators
 import java.util.*
 import kotlin.LazyThreadSafetyMode.PUBLICATION
@@ -121,4 +121,3 @@ private fun JcGraph.loopBodyOf(header: JcInst, inst: JcInst): MutableList<JcInst
 private fun MutableList<JcInst>.union(another: List<JcInst>): MutableList<JcInst> = apply {
     addAll(another.filter { !contains(it) })
 }
-

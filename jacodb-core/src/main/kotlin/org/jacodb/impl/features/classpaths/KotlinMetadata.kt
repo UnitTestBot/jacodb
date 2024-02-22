@@ -23,9 +23,9 @@ import kotlinx.metadata.KmProperty
 import kotlinx.metadata.KmTypeParameter
 import kotlinx.metadata.jvm.KotlinClassHeader
 import kotlinx.metadata.jvm.KotlinClassMetadata
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.ext.annotation
+import org.jacodb.api.jvm.JcClassExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.ext.annotation
 import org.jacodb.impl.bytecode.logger
 
 object KotlinMetadata : JcClassExtFeature {

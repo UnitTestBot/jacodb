@@ -18,14 +18,20 @@ package org.jacodb.analysis.taint
 
 import org.jacodb.analysis.ifds.SummaryEdge
 import org.jacodb.analysis.ifds.Vulnerability
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.taint.configuration.TaintMethodSink
 
-data class TaintSummaryEdge(
-    override val edge: TaintEdge,
-) : SummaryEdge<TaintDomainFact>
+data class TaintSummaryEdge<Method, Statement>(
+    override val edge: TaintEdge<Method, Statement>,
+) : SummaryEdge<TaintDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>
 
-data class TaintVulnerability(
+data class TaintVulnerability<Method, Statement>(
     override val message: String,
-    override val sink: TaintVertex,
+    override val sink: TaintVertex<Method, Statement>,
     val rule: TaintMethodSink? = null,
-) : Vulnerability<TaintDomainFact>
+) : Vulnerability<TaintDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>

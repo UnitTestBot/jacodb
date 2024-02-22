@@ -16,8 +16,8 @@
 
 package org.jacodb.examples;
 
-import org.jacodb.api.*;
-import org.jacodb.api.ext.JcClasses;
+import org.jacodb.api.jvm.*;
+import org.jacodb.api.jvm.ext.JcClasses;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.objectweb.asm.tree.MethodNode;
@@ -91,7 +91,7 @@ public class JavaReadMeExamples {
         JcType xType = b.getFields()
                 .stream()
                 .filter(it -> "x".equals(it.getName()))
-                .findFirst().get().getFieldType();
+                .findFirst().get().getType();
         JcClassType stringType = (JcClassType) classpath.findTypeOrNull("java.lang.String");
         System.out.println(xType.equals(stringType)); // will print `true`
     }

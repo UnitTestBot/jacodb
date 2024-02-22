@@ -16,10 +16,10 @@
 
 package org.jacodb.testing
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.cfg.fieldRef
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.cfg.fieldRef
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.jacodb.impl.features.classpaths.UnknownClassMethodsAndFields
 import org.jacodb.impl.features.classpaths.UnknownClasses

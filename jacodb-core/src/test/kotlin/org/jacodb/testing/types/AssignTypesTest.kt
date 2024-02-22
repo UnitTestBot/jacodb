@@ -16,9 +16,9 @@
 
 package org.jacodb.testing.types
 
-import org.jacodb.api.ext.isAssignable
-import org.jacodb.api.ext.objectType
-import org.jacodb.api.throwClassNotFound
+import org.jacodb.api.jvm.ext.isAssignable
+import org.jacodb.api.jvm.ext.objectType
+import org.jacodb.api.jvm.throwClassNotFound
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

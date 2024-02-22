@@ -23,8 +23,8 @@ import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.toSarif
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB

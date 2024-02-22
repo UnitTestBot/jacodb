@@ -16,19 +16,19 @@
 
 package org.jacodb.approximation
 
-import org.jacodb.api.ByteCodeIndexer
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcFeature
-import org.jacodb.api.JcField
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcSignal
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.JcClassExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcInstExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcSignal
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.impl.cfg.JcInstListImpl

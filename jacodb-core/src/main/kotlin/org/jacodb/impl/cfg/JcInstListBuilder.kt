@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.*
 import org.jacodb.impl.cfg.util.UNINIT_THIS
 import org.jacodb.impl.cfg.util.lambdaMetaFactory
 import org.jacodb.impl.cfg.util.lambdaMetaFactoryMethodName

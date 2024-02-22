@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.fs
 
-import org.jacodb.api.JavaVersion
+import org.jacodb.api.jvm.JavaVersion
 
 private class JavaVersionImpl(override val majorVersion: Int) : JavaVersion
 

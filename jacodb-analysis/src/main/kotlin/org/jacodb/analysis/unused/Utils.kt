@@ -16,24 +16,41 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.JcAccessPath
 import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcTerminatingInst
-import org.jacodb.api.cfg.values
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcLocal
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.values
+import org.jacodb.api.jvm.ext.cfg.callExpr
 
-internal fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
+internal fun CommonAccessPath.isUsedAt(expr: CommonExpr): Boolean {
+    if (this is JcAccessPath && expr is JcExpr) {
+        return isUsedAt(expr)
+    }
+    error("Cannot determine whether path $this is used at expr: $expr")
+}
+
+internal fun CommonAccessPath.isUsedAt(inst: CommonInst<*, *>): Boolean {
+    if (this is JcAccessPath && inst is JcInst) {
+        return isUsedAt(inst)
+    }
+    error("Cannot determine whether path $this is used at inst: $inst")
+}
+
+internal fun JcAccessPath.isUsedAt(expr: JcExpr): Boolean {
     return expr.values.any { it.toPathOrNull() == this }
 }
 
-internal fun AccessPath.isUsedAt(inst: JcInst): Boolean {
+internal fun JcAccessPath.isUsedAt(inst: JcInst): Boolean {
     val callExpr = inst.callExpr
 
     if (callExpr != null) {

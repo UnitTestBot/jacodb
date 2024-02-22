@@ -18,8 +18,8 @@ package org.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 import org.jacodb.impl.bytecode.isNullable
 
 /**

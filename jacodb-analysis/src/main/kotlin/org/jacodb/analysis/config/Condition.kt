@@ -16,18 +16,18 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
-import org.jacodb.api.cfg.JcBool
-import org.jacodb.api.cfg.JcConstant
-import org.jacodb.api.cfg.JcInt
-import org.jacodb.api.cfg.JcStringConstant
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.isAssignable
+import org.jacodb.analysis.util.removeTrailingElementAccessors
+import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.cfg.JcBool
+import org.jacodb.api.jvm.cfg.JcConstant
+import org.jacodb.api.jvm.cfg.JcInt
+import org.jacodb.api.jvm.cfg.JcStringConstant
+import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor
@@ -48,8 +48,10 @@ import org.jacodb.taint.configuration.PositionResolver
 import org.jacodb.taint.configuration.SourceFunctionMatches
 import org.jacodb.taint.configuration.TypeMatches
 
+// TODO: replace 'JcInt' with 'CommonInt', etc
+
 open class BasicConditionEvaluator(
-    internal val positionResolver: PositionResolver<Maybe<JcValue>>,
+    internal val positionResolver: PositionResolver<Maybe<CommonValue>>,
 ) : ConditionVisitor<Boolean> {
 
     override fun visit(condition: ConstantTrue): Boolean {
@@ -149,7 +151,10 @@ open class BasicConditionEvaluator(
 
     override fun visit(condition: TypeMatches): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            return value.type.isAssignable(condition.type)
+            return when (val valueType = value.type) {
+                is JcType -> valueType.isAssignable(condition.type)
+                else -> error("Cannot evaluate $condition for $valueType")
+            }
         }
         return false
     }
@@ -157,7 +162,7 @@ open class BasicConditionEvaluator(
 
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
-    positionResolver: PositionResolver<Maybe<JcValue>>,
+    positionResolver: PositionResolver<Maybe<CommonValue>>,
 ) : BasicConditionEvaluator(positionResolver) {
 
     override fun visit(condition: ContainsMark): Boolean {
@@ -173,13 +178,5 @@ class FactAwareConditionEvaluator(
             return variable == fact.variable
         }
         return false
-    }
-
-    private fun AccessPath.removeTrailingElementAccessors(): AccessPath {
-        val accesses = accesses.toMutableList()
-        while (accesses.lastOrNull() is ElementAccessor) {
-            accesses.removeLast()
-        }
-        return AccessPath(value, accesses)
     }
 }

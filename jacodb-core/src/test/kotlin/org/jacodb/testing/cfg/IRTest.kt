@@ -16,12 +16,40 @@
 
 package org.jacodb.testing.cfg
 
-
-import org.jacodb.api.*
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.toType
+import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonCallInst
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonGotoInst
+import org.jacodb.api.common.cfg.CommonIfInst
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonReturnInst
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcCallExpr
+import org.jacodb.api.jvm.cfg.JcCallInst
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcExprVisitor
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.cfg.JcThrowInst
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.JcClasspathImpl
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
@@ -34,27 +62,46 @@ import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
-import org.jacodb.testing.*
+import org.jacodb.testing.WithDB
+import org.jacodb.testing.asmLib
+import org.jacodb.testing.guavaLib
+import org.jacodb.testing.kotlinStdLib
+import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.File
 
 class OverridesResolver(
-    private val hierarchyExtension: HierarchyExtension
-) : DefaultJcInstVisitor<Sequence<JcTypedMethod>>, DefaultJcExprVisitor<Sequence<JcTypedMethod>> {
-    override val defaultInstHandler: (JcInst) -> Sequence<JcTypedMethod>
-        get() = { emptySequence() }
-    override val defaultExprHandler: (JcExpr) -> Sequence<JcTypedMethod>
-        get() = { emptySequence() }
+    private val hierarchyExtension: HierarchyExtension,
+) : JcExprVisitor.Default<Sequence<JcTypedMethod>>,
+    JcInstVisitor.Default<Sequence<JcTypedMethod>> {
+
+    override fun defaultVisitCommonExpr(expr: CommonExpr): Sequence<JcTypedMethod> {
+        TODO("Not yet implemented")
+    }
+
+    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): Sequence<JcTypedMethod> {
+        TODO("Not yet implemented")
+    }
+
+    override fun defaultVisitJcExpr(expr: JcExpr): Sequence<JcTypedMethod> {
+        return emptySequence()
+    }
+
+    override fun defaultVisitJcInst(inst: JcInst): Sequence<JcTypedMethod> {
+        return emptySequence()
+    }
 
     private fun JcClassType.getMethod(name: String, argTypes: List<TypeName>, returnType: TypeName): JcTypedMethod {
         return methods.firstOrNull { typedMethod ->
             val jcMethod = typedMethod.method
             jcMethod.name == name &&
-                    jcMethod.returnType.typeName == returnType.typeName &&
-                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+                jcMethod.returnType.typeName == returnType.typeName &&
+                jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
         } ?: error("Could not find a method with correct signature")
     }
 
@@ -83,7 +130,11 @@ class OverridesResolver(
 
 }
 
-class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor<Unit> {
+class JcGraphChecker(
+    val method: JcMethod,
+    val jcGraph: JcGraph,
+) : JcInstVisitor<Unit> {
+
     fun check() {
         try {
             jcGraph.entry
@@ -127,6 +178,10 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
                 assertTrue(blockGraph.successors(block).isNotEmpty())
             }
         }
+    }
+
+    override fun visitExternalJcInst(inst: JcInst) {
+        // Do nothing
     }
 
     override fun visitJcAssignInst(inst: JcAssignInst) {
@@ -246,7 +301,28 @@ class JcGraphChecker(val method: JcMethod, val jcGraph: JcGraph) : JcInstVisitor
         assertTrue(jcGraph.throwers(inst).isEmpty())
     }
 
-    override fun visitExternalJcInst(inst: JcInst) {
+    override fun visitExternalCommonInst(inst: CommonInst<*, *>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitCommonAssignInst(inst: CommonAssignInst<*, *>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitCommonCallInst(inst: CommonCallInst<*, *>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitCommonReturnInst(inst: CommonReturnInst<*, *>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitCommonGotoInst(inst: CommonGotoInst<*, *>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitCommonIfInst(inst: CommonIfInst<*, *>) {
+        TODO("Not yet implemented")
     }
 }
 
@@ -295,7 +371,6 @@ class IRTest : BaseInstructionsTest() {
         testClass(cp.findClass<JcBlockGraphImpl>())
     }
 
-
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
@@ -315,7 +390,6 @@ class IRTest : BaseInstructionsTest() {
     fun `get ir of kotlin stdlib`() {
         runAlongLib(kotlinStdLib, false)
     }
-
 
     @AfterEach
     fun printStats() {

@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.CommonAccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
@@ -24,13 +24,13 @@ import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.thisInstance
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcValue
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonInstanceCallExpr
+import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.api.common.ext.callExpr
 import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.Position
@@ -40,41 +40,41 @@ import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.This
 
 class CallPositionToAccessPathResolver(
-    private val callStatement: JcInst,
-) : PositionResolver<Maybe<AccessPath>> {
+    private val callStatement: CommonInst<*, *>,
+) : PositionResolver<Maybe<CommonAccessPath>> {
     private val callExpr = callStatement.callExpr
         ?: error("Call statement should have non-null callExpr")
 
-    override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
+    override fun resolve(position: Position): Maybe<CommonAccessPath> = when (position) {
         AnyArgument -> Maybe.none()
         is Argument -> callExpr.args[position.index].toPathOrNull().toMaybe()
-        This -> (callExpr as? JcInstanceCallExpr)?.instance?.toPathOrNull().toMaybe()
-        Result -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
-        ResultAnyElement -> (callStatement as? JcAssignInst)?.lhv?.toPathOrNull().toMaybe()
-            .fmap { it / ElementAccessor }
+        This -> (callExpr as? CommonInstanceCallExpr)?.instance?.toPathOrNull().toMaybe()
+        Result -> (callStatement as? CommonAssignInst)?.lhv?.toPathOrNull().toMaybe()
+        ResultAnyElement -> (callStatement as? CommonAssignInst)?.lhv?.toPathOrNull().toMaybe()
+            .fmap { it + ElementAccessor }
     }
 }
 
-class CallPositionToJcValueResolver(
-    private val callStatement: JcInst,
-) : PositionResolver<Maybe<JcValue>> {
+class CallPositionToValueResolver(
+    private val callStatement: CommonInst<*, *>,
+) : PositionResolver<Maybe<CommonValue>> {
     private val callExpr = callStatement.callExpr
         ?: error("Call statement should have non-null callExpr")
 
-    override fun resolve(position: Position): Maybe<JcValue> = when (position) {
+    override fun resolve(position: Position): Maybe<CommonValue> = when (position) {
         AnyArgument -> Maybe.none()
         is Argument -> Maybe.some(callExpr.args[position.index])
-        This -> (callExpr as? JcInstanceCallExpr)?.instance.toMaybe()
-        Result -> (callStatement as? JcAssignInst)?.lhv.toMaybe()
+        This -> (callExpr as? CommonInstanceCallExpr)?.instance.toMaybe()
+        Result -> (callStatement as? CommonAssignInst)?.lhv.toMaybe()
         ResultAnyElement -> Maybe.none()
     }
 }
 
-class EntryPointPositionToJcValueResolver(
-    val cp: JcClasspath,
-    val method: JcMethod,
-) : PositionResolver<Maybe<JcValue>> {
-    override fun resolve(position: Position): Maybe<JcValue> = when (position) {
+class EntryPointPositionToValueResolver(
+    val cp: Project,
+    val method: CommonMethod<*, *>,
+) : PositionResolver<Maybe<CommonValue>> {
+    override fun resolve(position: Position): Maybe<CommonValue> = when (position) {
         This -> Maybe.some(method.thisInstance)
 
         is Argument -> {
@@ -87,10 +87,10 @@ class EntryPointPositionToJcValueResolver(
 }
 
 class EntryPointPositionToAccessPathResolver(
-    val cp: JcClasspath,
-    val method: JcMethod,
-) : PositionResolver<Maybe<AccessPath>> {
-    override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
+    val cp: Project,
+    val method: CommonMethod<*, *>,
+) : PositionResolver<Maybe<CommonAccessPath>> {
+    override fun resolve(position: Position): Maybe<CommonAccessPath> = when (position) {
         This -> method.thisInstance.toPathOrNull().toMaybe()
 
         is Argument -> {

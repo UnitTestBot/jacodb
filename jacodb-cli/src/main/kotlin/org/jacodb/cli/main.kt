@@ -36,10 +36,11 @@ import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.toSarif
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.analysis.unused.toSarif
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
@@ -62,7 +63,7 @@ fun launchAnalysesByConfig(
     config: AnalysisConfig,
     graph: JcApplicationGraph,
     methods: List<JcMethod>,
-): List<List<VulnerabilityInstance<*>>> {
+): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)

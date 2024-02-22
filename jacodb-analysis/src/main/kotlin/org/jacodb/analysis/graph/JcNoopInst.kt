@@ -16,10 +16,10 @@
 
 package org.jacodb.analysis.graph
 
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstLocation
+import org.jacodb.api.jvm.cfg.JcInstVisitor
 
 data class JcNoopInst(override val location: JcInstLocation) : JcInst {
     override val operands: List<JcExpr>

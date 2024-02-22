@@ -17,11 +17,11 @@
 package org.jacodb.testing.tests
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.ext.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.ext.*
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses

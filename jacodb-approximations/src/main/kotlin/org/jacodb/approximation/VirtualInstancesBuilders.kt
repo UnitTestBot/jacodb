@@ -16,8 +16,8 @@
 
 package org.jacodb.approximation
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.TypeName
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.TypeName
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 import org.objectweb.asm.tree.MethodNode

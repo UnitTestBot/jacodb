@@ -19,40 +19,49 @@ package org.jacodb.analysis.ifds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import org.jacodb.api.JcMethod
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A common interface for anything that should be remembered
  * and used after the analysis of some unit is completed.
  */
-interface Summary {
-    val method: JcMethod
+interface Summary<out Method : CommonMethod<Method, *>> {
+    val method: Method
 }
 
-interface SummaryEdge<out Fact> : Summary {
-    val edge: Edge<Fact>
+interface SummaryEdge<out Fact, out Method, out Statement> : Summary<Method>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    override val method: JcMethod
+    val edge: Edge<Fact, Method, Statement>
+
+    override val method: Method
         get() = edge.method
 }
 
-interface Vulnerability<out Fact> : Summary {
+interface Vulnerability<out Fact, out Method, out Statement> : Summary<Method>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
     val message: String
-    val sink: Vertex<Fact>
+    val sink: Vertex<Fact, Method, Statement>
 
-    override val method: JcMethod
+    override val method: Method
         get() = sink.method
 }
 
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
-interface SummaryStorage<T : Summary> {
+interface SummaryStorage<T : Summary<Method>, out Method, out Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
+
     /**
      * A list of all methods for which summaries are not empty.
      */
-    val knownMethods: List<JcMethod>
+    val knownMethods: List<Method>
 
     /**
      * Adds [fact] to summary of its method.
@@ -64,22 +73,25 @@ interface SummaryStorage<T : Summary> {
      * Already received facts, along with the facts that will be sent to this storage later,
      * will be emitted to the returned flow.
      */
-    fun getFacts(method: JcMethod): Flow<T>
+    fun getFacts(method: @UnsafeVariance Method): Flow<T>
 
     /**
      * @return a list will all facts summarized for the given [method] so far.
      */
-    fun getCurrentFacts(method: JcMethod): List<T>
+    fun getCurrentFacts(method: @UnsafeVariance Method): List<T>
 }
 
-class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
-    private val summaries = ConcurrentHashMap<JcMethod, MutableSet<T>>()
-    private val outFlows = ConcurrentHashMap<JcMethod, MutableSharedFlow<T>>()
+class SummaryStorageImpl<T : Summary<Method>, out Method, out Statement> : SummaryStorage<T, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    override val knownMethods: List<JcMethod>
+    private val summaries = ConcurrentHashMap<Method, MutableSet<T>>()
+    private val outFlows = ConcurrentHashMap<Method, MutableSharedFlow<T>>()
+
+    override val knownMethods: List<Method>
         get() = summaries.keys.toList()
 
-    private fun getFlow(method: JcMethod): MutableSharedFlow<T> {
+    private fun getFlow(method: Method): MutableSharedFlow<T> {
         return outFlows.computeIfAbsent(method) {
             MutableSharedFlow(replay = Int.MAX_VALUE)
         }
@@ -93,11 +105,11 @@ class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
         }
     }
 
-    override fun getFacts(method: JcMethod): SharedFlow<T> {
+    override fun getFacts(method: @UnsafeVariance Method): SharedFlow<T> {
         return getFlow(method)
     }
 
-    override fun getCurrentFacts(method: JcMethod): List<T> {
+    override fun getCurrentFacts(method: @UnsafeVariance Method): List<T> {
         return getFacts(method).replayCache
     }
 }

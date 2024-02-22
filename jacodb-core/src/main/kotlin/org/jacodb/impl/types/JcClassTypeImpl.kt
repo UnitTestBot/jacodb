@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.packageName
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.packageName
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.TypeDelegatingLookup
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.signature.JvmParameterizedType

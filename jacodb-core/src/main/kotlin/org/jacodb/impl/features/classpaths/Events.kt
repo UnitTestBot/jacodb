@@ -16,16 +16,16 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedClassResult
-import org.jacodb.api.JcClasspathExtFeature.JcResolvedTypeResult
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcType
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedClassResult
+import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedTypeResult
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.JcType
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 
 sealed class AbstractJcResolvedResult(val name: String) {
 

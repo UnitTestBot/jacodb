@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.objectType
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes

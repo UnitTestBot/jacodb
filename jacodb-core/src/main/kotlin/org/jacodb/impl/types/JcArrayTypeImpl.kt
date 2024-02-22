@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcArrayType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcRefType
-import org.jacodb.api.JcType
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcArrayType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcRefType
+import org.jacodb.api.jvm.JcType
 
 class JcArrayTypeImpl(
     override val elementType: JcType,

@@ -16,22 +16,30 @@
 
 package org.jacodb.impl.analysis.impl
 
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.autoboxIfNeeded
-import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.autoboxIfNeeded
+import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.cfg.VirtualMethodRefImpl
 import org.jacodb.impl.cfg.methodRef
 import kotlin.collections.set
 
-class StringConcatSimplifierTransformer(classpath: JcClasspath, private val list: JcInstList<JcInst>) :
-    DefaultJcInstVisitor<JcInst> {
+class StringConcatSimplifierTransformer(
+    classpath: JcClasspath,
+    private val list: JcInstList<JcInst>,
+) : JcInstVisitor.Default<JcInst> {
 
-    override val defaultInstHandler: (JcInst) -> JcInst
-        get() = { it }
+    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): JcInst {
+        TODO("Not yet implemented")
+    }
+
+    override fun defaultVisitJcInst(inst: JcInst): JcInst {
+        return inst
+    }
 
     private val instructionReplacements = mutableMapOf<JcInst, JcInst>()
     private val instructions = mutableListOf<JcInst>()

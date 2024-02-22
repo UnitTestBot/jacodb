@@ -19,18 +19,18 @@ package org.jacodb.testing.cfg
 import com.sun.mail.imap.IMAPMessage
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcMethod
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.*
-import org.jacodb.api.ext.boolean
-import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.cfg.locals
-import org.jacodb.api.ext.cfg.values
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.humanReadableSignature
-import org.jacodb.api.ext.int
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.ext.boolean
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.cfg.locals
+import org.jacodb.api.jvm.ext.cfg.values
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.humanReadableSignature
+import org.jacodb.api.jvm.ext.int
 import org.jacodb.testing.Common
 import org.jacodb.testing.Common.CommonClass
 import org.jacodb.testing.cfg.RealMethodResolution.Virtual
@@ -243,7 +243,7 @@ class InstructionsTest : BaseInstructionsTest() {
         val fieldInt = (assignInstInt.rhv as JcFieldRef).field
 
         assertEquals(parent, fieldInt.enclosingType.jcClass)
-        assertEquals(cp.int, fieldInt.fieldType)
+        assertEquals(cp.int, fieldInt.type)
 
 
         // public boolean field
@@ -254,7 +254,7 @@ class InstructionsTest : BaseInstructionsTest() {
         val fieldBoolean = (assignInstBoolean.rhv as JcFieldRef).field
 
         assertEquals(child, fieldBoolean.enclosingType.jcClass)
-        assertEquals(cp.boolean, fieldBoolean.fieldType)
+        assertEquals(cp.boolean, fieldBoolean.type)
     }
 
     @Test

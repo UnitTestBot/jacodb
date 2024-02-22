@@ -19,15 +19,18 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.ifds.TraceGraph
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.analysis.sarif.VulnerabilityInstance
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 
-fun TaintVulnerability.toSarif(
-    graph: TraceGraph<TaintDomainFact>,
-): VulnerabilityInstance<TaintDomainFact> {
-    return VulnerabilityInstance(
+fun <Method, Statement> TaintVulnerability<Method, Statement>.toSarif(
+    graph: TraceGraph<TaintDomainFact, Method, Statement>,
+): VulnerabilityInstance<TaintDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> =
+    VulnerabilityInstance(
         graph,
         VulnerabilityDescription(
             ruleId = null,
             message = rule?.ruleNote
         )
     )
-}

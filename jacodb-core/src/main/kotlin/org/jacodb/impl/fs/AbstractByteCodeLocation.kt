@@ -17,7 +17,7 @@
 package org.jacodb.impl.fs
 
 import com.google.common.hash.Hashing
-import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.jvm.JcByteCodeLocation
 import java.io.File
 import java.nio.charset.StandardCharsets
 

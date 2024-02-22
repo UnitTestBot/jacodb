@@ -19,9 +19,9 @@ package org.jacodb.testing;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
-import org.jacodb.api.JcClassOrInterface;
-import org.jacodb.api.JcClasspath;
-import org.jacodb.api.JcDatabase;
+import org.jacodb.api.jvm.JcClassOrInterface;
+import org.jacodb.api.jvm.JcClasspath;
+import org.jacodb.api.jvm.JcDatabase;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.typeParameters
@@ -64,4 +64,3 @@ object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
         return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
     }
 }
-

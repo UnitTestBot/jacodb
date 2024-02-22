@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcClasspath
+import org.jacodb.api.jvm.JcClasspath
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.JSRInlinerAdapter

@@ -16,18 +16,18 @@
 
 package org.jacodb.analysis.graph
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.impl.features.SyncUsagesExtension
 
 /**
  * Possible we will need JcRawInst instead of JcInst
  */
 open class JcApplicationGraphImpl(
-    override val classpath: JcClasspath,
+    override val project: JcClasspath,
     private val usages: SyncUsagesExtension,
 ) : JcApplicationGraph {
     override fun predecessors(node: JcInst): Sequence<JcInst> {

@@ -16,24 +16,29 @@
 
 package org.jacodb.analysis.ifds
 
-data class TraceGraph<Fact>(
-    val sink: Vertex<Fact>,
-    val sources: MutableSet<Vertex<Fact>>,
-    val edges: MutableMap<Vertex<Fact>, MutableSet<Vertex<Fact>>>,
-    val unresolvedCrossUnitCalls: Map<Vertex<Fact>, Set<Vertex<Fact>>>,
-) {
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
+
+data class TraceGraph<Fact, Method, Statement>(
+    val sink: Vertex<Fact, Method, Statement>,
+    val sources: MutableSet<Vertex<Fact, Method, Statement>>,
+    val edges: MutableMap<Vertex<Fact, Method, Statement>, MutableSet<Vertex<Fact, Method, Statement>>>,
+    val unresolvedCrossUnitCalls: Map<Vertex<Fact, Method, Statement>, Set<Vertex<Fact, Method, Statement>>>,
+) where Method : CommonMethod<Method, Statement>,
+        Statement : CommonInst<Method, Statement> {
+
     /**
      * Returns all traces from [sources] to [sink].
      */
-    fun getAllTraces(): Sequence<List<Vertex<Fact>>> = sequence {
+    fun getAllTraces(): Sequence<List<Vertex<Fact, Method, Statement>>> = sequence {
         for (v in sources) {
             yieldAll(getAllTraces(mutableListOf(v)))
         }
     }
 
     private fun getAllTraces(
-        trace: MutableList<Vertex<Fact>>,
-    ): Sequence<List<Vertex<Fact>>> = sequence {
+        trace: MutableList<Vertex<Fact, Method, Statement>>,
+    ): Sequence<List<Vertex<Fact, Method, Statement>>> = sequence {
         val v = trace.last()
         if (v == sink) {
             yield(trace.toList()) // copy list
@@ -52,8 +57,8 @@ data class TraceGraph<Fact>(
      * Merges [upGraph] into this graph.
      */
     fun mergeWithUpGraph(
-        upGraph: TraceGraph<Fact>,
-        entryPoints: Set<Vertex<Fact>>,
+        upGraph: TraceGraph<Fact, Method, Statement>,
+        entryPoints: Set<Vertex<Fact, Method, Statement>>,
     ) {
         sources.addAll(upGraph.sources)
 

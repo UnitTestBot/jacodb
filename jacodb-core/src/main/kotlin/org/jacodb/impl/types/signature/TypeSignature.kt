@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.bytecode.kMetadata
 import org.jacodb.impl.types.allVisibleTypeParameters
 import org.jacodb.impl.types.substition.RecursiveJvmTypeVisitor

@@ -17,8 +17,8 @@
 package org.jacodb.impl.fs
 
 import mu.KLogging
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcByteCodeLocation
 import java.io.File
 
 val logger = object : KLogging() {}.logger

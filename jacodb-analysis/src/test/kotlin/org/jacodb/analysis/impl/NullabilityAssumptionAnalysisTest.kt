@@ -17,12 +17,12 @@
 package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.impl.custom.NullAssumptionAnalysis
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcInstanceCallExpr
-import org.jacodb.api.cfg.JcLocal
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
+import org.jacodb.api.jvm.cfg.JcLocal
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.cfg.NullAssumptionAnalysisExample

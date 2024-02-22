@@ -17,10 +17,10 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.fs.asClassInfo
 import org.jacodb.impl.types.ParameterInfo
 import org.junit.jupiter.api.Assertions

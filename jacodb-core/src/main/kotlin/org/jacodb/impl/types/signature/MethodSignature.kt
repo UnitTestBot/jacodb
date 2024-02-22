@@ -17,7 +17,7 @@
 package org.jacodb.impl.types.signature
 
 import mu.KLogging
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.bytecode.kmFunction
 import org.jacodb.impl.bytecode.kmReturnType

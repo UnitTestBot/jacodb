@@ -17,17 +17,17 @@
 package org.jacodb.impl.cfg
 
 import kotlinx.collections.immutable.toPersistentSet
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcBranchingInst
-import org.jacodb.api.cfg.JcCatchInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstRef
-import org.jacodb.api.cfg.JcInstVisitor
-import org.jacodb.api.cfg.JcTerminatingInst
-import org.jacodb.api.ext.isSubClassOf
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcTerminatingInst
+import org.jacodb.api.jvm.ext.isSubClassOf
 import java.util.Collections.singleton
 
 class JcGraphImpl(

@@ -17,7 +17,7 @@
 package org.jacodb.impl
 
 import kotlinx.collections.immutable.toPersistentList
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.fs.fullAsmNode
 import java.io.Closeable
 

@@ -20,11 +20,12 @@ import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.Vulnerability
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
@@ -104,7 +105,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         }
     }
 
-    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability<*>>) {
+    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability<*, JcMethod, JcInst>>) {
         logger.info { className }
 
         val clazz = cp.findClass(className)

@@ -20,12 +20,18 @@ import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.SummaryEdge
 import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.ifds.Vulnerability
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 
-data class UnusedVariableSummaryEdge(
-    override val edge: Edge<UnusedVariableDomainFact>,
-) : SummaryEdge<UnusedVariableDomainFact>
+data class UnusedVariableSummaryEdge<Method, Statement>(
+    override val edge: Edge<UnusedVariableDomainFact, Method, Statement>,
+) : SummaryEdge<UnusedVariableDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>
 
-data class UnusedVariableVulnerability(
+data class UnusedVariableVulnerability<Method, Statement>(
     override val message: String,
-    override val sink: Vertex<UnusedVariableDomainFact>,
-) : Vulnerability<UnusedVariableDomainFact>
+    override val sink: Vertex<UnusedVariableDomainFact, Method, Statement>,
+) : Vulnerability<UnusedVariableDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>

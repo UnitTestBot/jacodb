@@ -17,10 +17,10 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathFeature
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcFeature
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcFeature
 import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages

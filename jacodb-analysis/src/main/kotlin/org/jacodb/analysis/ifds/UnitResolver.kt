@@ -14,11 +14,13 @@
  *  limitations under the License.
  */
 
+@file:Suppress("FunctionName")
+
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.packageName
 
 interface UnitType
 
@@ -40,26 +42,27 @@ data class PackageUnit(val packageName: String) : UnitType {
     }
 }
 
-object UnknownUnit : UnitType {
-    override fun toString(): String = javaClass.simpleName
-}
-
 object SingletonUnit : UnitType {
     override fun toString(): String = javaClass.simpleName
 }
 
+object UnknownUnit : UnitType {
+    override fun toString(): String = javaClass.simpleName
+}
+
 /**
- * Sets a mapping from [JcMethod] to abstract domain [UnitType].
+ * Sets a mapping from a [Method] to abstract domain [UnitType].
  *
  * Therefore, it splits all methods into units, containing one or more method each
  * (unit is a set of methods with same value of [UnitType] returned by [resolve]).
+ *
+ * To get more info about how it is used in analysis, see [runAnalysis].
  */
-fun interface UnitResolver {
-
-    fun resolve(method: JcMethod): UnitType
+fun interface UnitResolver<Method> {
+    fun resolve(method: Method): UnitType
 
     companion object {
-        fun getByName(name: String): UnitResolver = when (name) {
+        fun getByName(name: String): UnitResolver<JcMethod> = when (name) {
             "method" -> MethodUnitResolver
             "class" -> ClassUnitResolver(false)
             "package" -> PackageUnitResolver
@@ -69,24 +72,32 @@ fun interface UnitResolver {
     }
 }
 
-val MethodUnitResolver = UnitResolver { method ->
+fun interface JcUnitResolver : UnitResolver<JcMethod>
+
+val MethodUnitResolver = JcUnitResolver { method ->
     MethodUnit(method)
 }
 
-@Suppress("FunctionName")
-fun ClassUnitResolver(includeNested: Boolean) = UnitResolver { method ->
-    val clazz = if (includeNested) {
-        generateSequence(method.enclosingClass) { it.outerClass }.last()
-    } else {
-        method.enclosingClass
-    }
+private val ClassUnitResolverWithNested = JcUnitResolver { method ->
+    val clazz = generateSequence(method.enclosingClass) { it.outerClass }.last()
+    ClassUnit(clazz)
+}
+private val ClassUnitResolverWithoutNested = JcUnitResolver { method ->
+    val clazz = method.enclosingClass
     ClassUnit(clazz)
 }
 
-val PackageUnitResolver = UnitResolver { method ->
+fun ClassUnitResolver(includeNested: Boolean) =
+    if (includeNested) {
+        ClassUnitResolverWithNested
+    } else {
+        ClassUnitResolverWithoutNested
+    }
+
+val PackageUnitResolver = JcUnitResolver { method ->
     PackageUnit(method.enclosingClass.packageName)
 }
 
-val SingletonUnitResolver = UnitResolver { _ ->
+val SingletonUnitResolver = JcUnitResolver {
     SingletonUnit
 }

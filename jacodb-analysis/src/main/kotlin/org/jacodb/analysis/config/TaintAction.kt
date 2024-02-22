@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.CommonAccessPath
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.map
@@ -29,7 +29,7 @@ import org.jacodb.taint.configuration.RemoveAllMarks
 import org.jacodb.taint.configuration.RemoveMark
 
 class TaintActionEvaluator(
-    private val positionResolver: PositionResolver<Maybe<AccessPath>>,
+    private val positionResolver: PositionResolver<Maybe<CommonAccessPath>>,
 ) {
     fun evaluate(action: CopyAllMarks, fact: Tainted): Maybe<Collection<Tainted>> =
         positionResolver.resolve(action.from).map { from ->

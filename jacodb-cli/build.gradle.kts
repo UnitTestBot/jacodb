@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
+    api(project(":jacodb-api-jvm"))
     api(project(":jacodb-core"))
     api(project(":jacodb-analysis"))
-    api(project(":jacodb-api"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.kotlinx_cli)

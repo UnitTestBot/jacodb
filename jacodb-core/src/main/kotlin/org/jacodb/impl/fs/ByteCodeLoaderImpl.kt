@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.fs
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.RegisteredLocation
 
 val RegisteredLocation.sources: List<ClassSource>
     get() {

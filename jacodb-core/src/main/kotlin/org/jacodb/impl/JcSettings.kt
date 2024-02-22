@@ -18,10 +18,10 @@ package org.jacodb.impl
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-import org.jacodb.api.Hook
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.JcFeature
+import org.jacodb.api.jvm.Hook
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.JcFeature
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.storage.SQLitePersistenceImpl
 import java.io.File

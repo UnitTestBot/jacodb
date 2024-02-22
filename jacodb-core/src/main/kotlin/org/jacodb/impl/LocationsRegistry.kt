@@ -16,8 +16,8 @@
 
 package org.jacodb.impl
 
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.RegisteredLocation
 import java.io.Closeable
 
 interface LocationsRegistry : Closeable {

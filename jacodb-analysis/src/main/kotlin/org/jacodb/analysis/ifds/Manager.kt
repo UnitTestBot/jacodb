@@ -17,23 +17,28 @@
 package org.jacodb.analysis.ifds
 
 import kotlinx.coroutines.CoroutineScope
-import org.jacodb.api.JcMethod
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.jvm.JcMethod
 
-interface Manager<out Fact, in Event> {
+interface Manager<out Fact, in Event, out Method, out Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
+
     fun handleEvent(event: Event)
 
     fun handleControlEvent(event: ControlEvent)
 
     fun subscribeOnSummaryEdges(
-        method: JcMethod,
+        method: @UnsafeVariance Method,
         scope: CoroutineScope,
-        handler: (Edge<Fact>) -> Unit,
+        handler: (Edge<Fact, Method, Statement>) -> Unit,
     )
 }
 
 sealed interface ControlEvent
 
 data class QueueEmptinessChanged(
-    val runner: Runner<*>,
+    val runner: Runner<*, *, *>,
     val isEmpty: Boolean,
 ) : ControlEvent

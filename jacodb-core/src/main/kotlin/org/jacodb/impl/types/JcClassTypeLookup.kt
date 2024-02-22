@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.bytecode.JcAbstractLookup
 import org.jacodb.impl.bytecode.PolymorphicSignatureSupport
 
@@ -109,4 +109,3 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
     }
 
 }
-

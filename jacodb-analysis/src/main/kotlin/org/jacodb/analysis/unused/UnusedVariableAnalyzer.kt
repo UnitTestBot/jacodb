@@ -19,28 +19,36 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonInst
 
-class UnusedVariableAnalyzer(
-    private val graph: JcApplicationGraph,
-) : Analyzer<UnusedVariableDomainFact, Event> {
+class UnusedVariableAnalyzer<Method, Statement>(
+    private val graph: ApplicationGraph<Method, Statement>,
+) : Analyzer<UnusedVariableDomainFact, UnusedVariableEvent<Method, Statement>, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    override val flowFunctions: UnusedVariableFlowFunctions by lazy {
+    override val flowFunctions: UnusedVariableFlowFunctions<Method, Statement> by lazy {
         UnusedVariableFlowFunctions(graph)
     }
 
-    private fun isExitPoint(statement: JcInst): Boolean {
+    private fun isExitPoint(statement: Statement): Boolean {
         return statement in graph.exitPoints(statement.location.method)
     }
 
-    override fun handleNewEdge(edge: Edge<UnusedVariableDomainFact>): List<Event> = buildList {
+    override fun handleNewEdge(
+        edge: Edge<UnusedVariableDomainFact, Method, Statement>,
+    ): List<UnusedVariableEvent<Method, Statement>> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
         }
     }
 
-    override fun handleCrossUnitCall(caller: Vertex<UnusedVariableDomainFact>, callee: Vertex<UnusedVariableDomainFact>): List<Event> {
+    override fun handleCrossUnitCall(
+        caller: Vertex<UnusedVariableDomainFact, Method, Statement>,
+        callee: Vertex<UnusedVariableDomainFact, Method, Statement>,
+    ): List<UnusedVariableEvent<Method, Statement>> {
         return emptyList()
     }
 }

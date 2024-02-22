@@ -18,8 +18,8 @@ package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.unused.UnusedVariableManager
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.methods
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB

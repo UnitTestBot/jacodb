@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.types.signature
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
-import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.PredefinedPrimitives
 
 /**
  * @property isNullable denotes the nullability of the type in terms of Kotlin type system.

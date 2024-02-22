@@ -17,9 +17,9 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcTypeVariable
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcTypeVariable
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.types.Generics.LinkedImpl
 import org.jacodb.testing.types.Generics.SingleImpl
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -70,16 +70,16 @@ class LinkedGenericsTest : BaseTypesTest() {
 
             with(fields.first { it.name == "state" }) {
                 assertEquals("state", name)
-                fieldType.assertClassType<String>()
+                type.assertClassType<String>()
             }
             with(fields.first { it.name == "stateW" }) {
                 assertEquals(
                     "java.util.List<java.lang.String>",
-                    (fieldType as JcTypeVariable).bounds.first().typeName
+                    (type as JcTypeVariable).bounds.first().typeName
                 )
             }
             with(fields.first { it.name == "stateListW" }) {
-                val resolvedType = fieldType.assertIsClass()
+                val resolvedType = type.assertIsClass()
                 assertEquals(cp.findClass<List<*>>(), resolvedType.jcClass)
                 val shouldBeW = (resolvedType.typeArguments.first() as JcTypeVariable)
                 assertEquals("java.util.List<java.lang.String>", shouldBeW.bounds.first().typeName)
@@ -98,11 +98,11 @@ class LinkedGenericsTest : BaseTypesTest() {
 
                 with(fields.first()) {
                     assertEquals("state", name)
-                    fieldType.assertClassType<String>()
+                    type.assertClassType<String>()
                 }
                 with(fields.get(1)) {
                     assertEquals("stateList", name)
-                    with(fieldType.assertIsClass()) {
+                    with(type.assertIsClass()) {
                         assertEquals("java.util.ArrayList<java.lang.String>", typeName)
                     }
                 }

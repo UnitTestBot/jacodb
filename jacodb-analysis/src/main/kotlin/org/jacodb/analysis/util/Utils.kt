@@ -16,17 +16,69 @@
 
 package org.jacodb.analysis.util
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.ifds.CommonAccessPath
 import org.jacodb.analysis.ifds.Edge
+import org.jacodb.analysis.ifds.ElementAccessor
+import org.jacodb.analysis.ifds.JcAccessPath
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.cfg.JcArgument
-import org.jacodb.api.cfg.JcThis
-import org.jacodb.api.ext.toType
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonThis
+import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.cfg.JcArgument
+import org.jacodb.api.jvm.cfg.JcThis
+import org.jacodb.api.jvm.ext.toType
+
+// TODO: rewrite
+internal val CommonMethod<*, *>.isConstructor: Boolean
+    get() = when (this) {
+        is JcMethod -> isConstructor
+        else -> error("Cannot determine whether method is constructor: $this")
+    }
+
+val CommonMethod<*, *>.thisInstance: CommonThis
+    get() = when (this) {
+        is JcMethod -> thisInstance
+        else -> error("Cannot get 'this' for method: $this")
+    }
+
+fun Project.getArgument(param: CommonMethodParameter): CommonArgument? {
+    return when {
+        this is JcClasspath && param is JcParameter -> getArgument(param)
+        else -> error("Cannot get argument from parameter: $param")
+    }
+}
+
+fun Project.getArgumentsOf(method: CommonMethod<*, *>): List<CommonArgument> {
+    return when {
+        this is JcClasspath && method is JcMethod -> getArgumentsOf(method)
+        else -> error("Cannot get arguments of method: $method")
+    }
+}
+
+fun CommonAccessPath?.startsWith(other: CommonAccessPath?): Boolean {
+    if (this == null || other == null) {
+        return false
+    }
+    if (this is JcAccessPath && other is JcAccessPath) {
+        return startsWith(other)
+    }
+    error("Cannot determine whether the path $this starts with other path: $other")
+}
+
+internal fun CommonAccessPath.removeTrailingElementAccessors(): CommonAccessPath = when (this) {
+    is JcAccessPath -> removeTrailingElementAccessors()
+    else -> error("Cannot remove trailing element accessors for path: $this")
+}
 
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
@@ -40,13 +92,7 @@ fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
     return method.parameters.map { getArgument(it)!! }
 }
 
-internal fun Runner<*>.getPathEdges(): Set<Edge<*>> = when (this) {
-    is UniRunner<*, *> -> pathEdges
-    is TaintBidiRunner -> forwardRunner.getPathEdges() + backwardRunner.getPathEdges()
-    else -> error("Cannot extract pathEdges for $this")
-}
-
-fun AccessPath?.startsWith(other: AccessPath?): Boolean {
+fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
     if (this == null || other == null) {
         return false
     }
@@ -55,3 +101,61 @@ fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     }
     return this.accesses.take(other.accesses.size) == other.accesses
 }
+
+internal fun JcAccessPath.removeTrailingElementAccessors(): JcAccessPath {
+    val accesses = accesses.toMutableList()
+    while (accesses.lastOrNull() is ElementAccessor) {
+        accesses.removeLast()
+    }
+    return JcAccessPath(value, accesses)
+}
+
+internal fun Runner<*, *, *>.getPathEdges(): Set<Edge<*, *, *>> = when (this) {
+    is UniRunner<*, *, *, *> -> pathEdges
+    is TaintBidiRunner<*, *> -> forwardRunner.getPathEdges() + backwardRunner.getPathEdges()
+    else -> error("Cannot extract pathEdges for $this")
+}
+
+abstract class AbstractFullCommonExprSetCollector :
+    CommonExpr.Visitor.Default<Any>,
+    CommonInst.Visitor.Default<Any> {
+
+    abstract fun ifMatches(expr: CommonExpr)
+
+    override fun defaultVisitCommonExpr(expr: CommonExpr) {
+        ifMatches(expr)
+        expr.operands.forEach { it.accept(this) }
+    }
+
+    override fun defaultVisitCommonInst(inst: CommonInst<*, *>) {
+        inst.operands.forEach { it.accept(this) }
+    }
+}
+
+abstract class TypedCommonExprResolver<T : CommonExpr> : AbstractFullCommonExprSetCollector() {
+    val result: MutableSet<T> = hashSetOf()
+}
+
+class CommonValueResolver : TypedCommonExprResolver<CommonValue>() {
+    override fun ifMatches(expr: CommonExpr) {
+        if (expr is CommonValue) {
+            result.add(expr)
+        }
+    }
+}
+
+// TODO: consider renaming to "values"
+val CommonExpr.coreValues: Set<CommonValue>
+    get() {
+        val resolver = CommonValueResolver()
+        accept(resolver)
+        return resolver.result
+    }
+
+// TODO: consider renaming to "values"
+val CommonInst<*, *>.coreValues: Set<CommonValue>
+    get() {
+        val resolver = CommonValueResolver()
+        accept(resolver)
+        return resolver.result
+    }

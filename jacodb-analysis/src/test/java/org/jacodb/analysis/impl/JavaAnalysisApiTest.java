@@ -21,11 +21,12 @@ import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.ifds.UnitResolver;
 import org.jacodb.analysis.ifds.UnitResolverKt;
 import org.jacodb.analysis.taint.TaintManager;
-import org.jacodb.api.JcClassOrInterface;
-import org.jacodb.api.JcClasspath;
-import org.jacodb.api.JcDatabase;
-import org.jacodb.api.JcMethod;
-import org.jacodb.api.analysis.JcApplicationGraph;
+import org.jacodb.api.jvm.JcClassOrInterface;
+import org.jacodb.api.jvm.JcClasspath;
+import org.jacodb.api.jvm.JcDatabase;
+import org.jacodb.api.jvm.JcMethod;
+import org.jacodb.api.jvm.analysis.JcApplicationGraph;
+import org.jacodb.api.jvm.cfg.JcInst;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.InMemoryHierarchy;
@@ -60,8 +61,8 @@ public class JavaAnalysisApiTest {
         JcApplicationGraph applicationGraph = ApplicationGraphFactory
                 .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
-        UnitResolver unitResolver = UnitResolverKt.getMethodUnitResolver();
-        TaintManager manager = new TaintManager(applicationGraph, unitResolver, false);
+        UnitResolver<JcMethod> unitResolver = UnitResolverKt.getMethodUnitResolver();
+        TaintManager<JcMethod, JcInst> manager = new TaintManager<>(applicationGraph, unitResolver, false);
         manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
     }
 

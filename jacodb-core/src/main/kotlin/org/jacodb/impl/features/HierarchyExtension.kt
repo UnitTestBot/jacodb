@@ -20,12 +20,12 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.JAVA_OBJECT
-import org.jacodb.api.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence
 import org.jacodb.impl.storage.defaultBatchSize

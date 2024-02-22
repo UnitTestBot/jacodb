@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcClasspathExtFeature
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcClasspathExtFeature
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder

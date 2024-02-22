@@ -19,10 +19,14 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.TraceGraph
 import org.jacodb.analysis.sarif.VulnerabilityDescription
 import org.jacodb.analysis.sarif.VulnerabilityInstance
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 
-fun UnusedVariableVulnerability.toSarif(): VulnerabilityInstance<UnusedVariableDomainFact> {
-    return VulnerabilityInstance(
-        TraceGraph(sink, mutableSetOf(sink), mutableMapOf(), emptyMap()),
+fun <Method, Statement> UnusedVariableVulnerability<Method, Statement>.toSarif():
+    VulnerabilityInstance<UnusedVariableDomainFact, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> =
+    VulnerabilityInstance(
+        TraceGraph<UnusedVariableDomainFact, Method, Statement>(sink, mutableSetOf(sink), mutableMapOf(), emptyMap()),
         VulnerabilityDescription(ruleId = null, message = message)
     )
-}

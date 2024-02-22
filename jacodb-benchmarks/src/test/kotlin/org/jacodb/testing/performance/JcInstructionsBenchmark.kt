@@ -17,10 +17,10 @@
 package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.JcClasspathImpl
 import org.jacodb.impl.features.classpaths.ClasspathCache

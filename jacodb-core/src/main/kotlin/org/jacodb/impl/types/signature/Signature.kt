@@ -17,10 +17,10 @@
 package org.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmTypeParameter
-import org.jacodb.api.JcAccessible
-import org.jacodb.api.JvmType
-import org.jacodb.api.JvmTypeParameterDeclaration
-import org.jacodb.api.Resolution
+import org.jacodb.api.jvm.JcAccessible
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
+import org.jacodb.api.jvm.Resolution
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 

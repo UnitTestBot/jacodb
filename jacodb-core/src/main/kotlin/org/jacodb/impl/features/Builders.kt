@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.features
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.jvmPrimitiveNames
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.jvmPrimitiveNames
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.executeQueries

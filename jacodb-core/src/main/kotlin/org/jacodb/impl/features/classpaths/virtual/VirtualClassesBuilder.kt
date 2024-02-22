@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.features.classpaths.virtual
 
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes

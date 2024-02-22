@@ -22,41 +22,39 @@ import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.impl.Util
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.cfg.DefaultJcExprVisitor
-import org.jacodb.api.cfg.DefaultJcInstVisitor
-import org.jacodb.api.cfg.JcArrayAccess
-import org.jacodb.api.cfg.JcAssignInst
-import org.jacodb.api.cfg.JcBasicBlock
-import org.jacodb.api.cfg.JcBlockGraph
-import org.jacodb.api.cfg.JcCallInst
-import org.jacodb.api.cfg.JcCastExpr
-import org.jacodb.api.cfg.JcDivExpr
-import org.jacodb.api.cfg.JcDynamicCallExpr
-import org.jacodb.api.cfg.JcExitMonitorInst
-import org.jacodb.api.cfg.JcExpr
-import org.jacodb.api.cfg.JcFieldRef
-import org.jacodb.api.cfg.JcGotoInst
-import org.jacodb.api.cfg.JcGraph
-import org.jacodb.api.cfg.JcIfInst
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcLambdaExpr
-import org.jacodb.api.cfg.JcLengthExpr
-import org.jacodb.api.cfg.JcNewArrayExpr
-import org.jacodb.api.cfg.JcNewExpr
-import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.cfg.JcRemExpr
-import org.jacodb.api.cfg.JcSpecialCallExpr
-import org.jacodb.api.cfg.JcStaticCallExpr
-import org.jacodb.api.cfg.JcSwitchInst
-import org.jacodb.api.cfg.JcThrowInst
-import org.jacodb.api.cfg.JcVirtualCallExpr
-import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBasicBlock
+import org.jacodb.api.jvm.cfg.JcBlockGraph
+import org.jacodb.api.jvm.cfg.JcCallInst
+import org.jacodb.api.jvm.cfg.JcCastExpr
+import org.jacodb.api.jvm.cfg.JcDivExpr
+import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcExprVisitor
+import org.jacodb.api.jvm.cfg.JcFieldRef
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcGraph
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcLambdaExpr
+import org.jacodb.api.jvm.cfg.JcLengthExpr
+import org.jacodb.api.jvm.cfg.JcNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcNewExpr
+import org.jacodb.api.jvm.cfg.JcRemExpr
+import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcThrowInst
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
+import org.jacodb.api.jvm.ext.findTypeOrNull
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -142,7 +140,6 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: 
     return resultingFile
 }
 
-
 fun JcBlockGraph.view(dotCmd: String, viewerCmd: String) {
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd)}"))
 }
@@ -225,19 +222,32 @@ fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
  * - all the declared checked exception types
  * - 'java.lang.Throwable' for any potential unchecked types
  */
-open class JcExceptionResolver(val classpath: JcClasspath) : DefaultJcExprVisitor<List<JcClassType>>,
-    DefaultJcInstVisitor<List<JcClassType>> {
+open class JcExceptionResolver(
+    val classpath: JcClasspath,
+) : JcExprVisitor.Default<List<JcClassType>>,
+    JcInstVisitor.Default<List<JcClassType>> {
+
     private val throwableType = classpath.findTypeOrNull<Throwable>() as JcClassType
     private val errorType = classpath.findTypeOrNull<Error>() as JcClassType
     private val runtimeExceptionType = classpath.findTypeOrNull<RuntimeException>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
 
-    override val defaultExprHandler: (JcExpr) -> List<JcClassType>
-        get() = { emptyList() }
+    override fun defaultVisitCommonExpr(expr: CommonExpr): List<JcClassType> {
+        TODO("Not yet implemented")
+    }
 
-    override val defaultInstHandler: (JcInst) -> List<JcClassType>
-        get() = { emptyList() }
+    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): List<JcClassType> {
+        TODO("Not yet implemented")
+    }
+
+    override fun defaultVisitJcExpr(expr: JcExpr): List<JcClassType> {
+        return emptyList()
+    }
+
+    override fun defaultVisitJcInst(inst: JcInst): List<JcClassType> {
+        return emptyList()
+    }
 
     override fun visitJcAssignInst(inst: JcAssignInst): List<JcClassType> {
         return inst.lhv.accept(this) + inst.rhv.accept(this)

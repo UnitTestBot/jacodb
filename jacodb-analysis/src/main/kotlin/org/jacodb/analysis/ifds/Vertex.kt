@@ -16,13 +16,15 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.JcMethod
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 
-data class Vertex<out Fact>(
-    val statement: JcInst,
+data class Vertex<out Fact, out Method, out Statement>(
+    val statement: Statement,
     val fact: Fact,
-) {
-    val method: JcMethod
+) where Method : CommonMethod<Method, Statement>,
+        Statement : CommonInst<Method, Statement> {
+
+    val method: Method
         get() = statement.location.method
 }

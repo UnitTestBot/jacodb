@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.jcdbName
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualFieldImpl

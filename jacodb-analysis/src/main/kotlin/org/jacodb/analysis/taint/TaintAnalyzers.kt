@@ -16,37 +16,41 @@
 
 package org.jacodb.analysis.taint
 
-import org.jacodb.analysis.config.CallPositionToJcValueResolver
+import org.jacodb.analysis.config.CallPositionToValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.ext.callExpr
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
-class TaintAnalyzer(
-    private val graph: JcApplicationGraph,
-) : Analyzer<TaintDomainFact, TaintEvent> {
+class TaintAnalyzer<Method, Statement>(
+    private val graph: ApplicationGraph<Method, Statement>,
+) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    override val flowFunctions: ForwardTaintFlowFunctions by lazy {
-        ForwardTaintFlowFunctions(graph.classpath, graph)
+    override val flowFunctions: ForwardTaintFlowFunctions<Method, Statement> by lazy {
+        ForwardTaintFlowFunctions(graph)
     }
 
     private val taintConfigurationFeature: TaintConfigurationFeature?
         get() = flowFunctions.taintConfigurationFeature
 
-    private fun isExitPoint(statement: JcInst): Boolean {
+    private fun isExitPoint(statement: Statement): Boolean {
         return statement in graph.exitPoints(statement.location.method)
     }
 
     override fun handleNewEdge(
-        edge: TaintEdge,
-    ): List<TaintEvent> = buildList {
+        edge: TaintEdge<Method, Statement>,
+    ): List<TaintEvent<Method, Statement>> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
         }
@@ -55,7 +59,14 @@ class TaintAnalyzer(
             val callExpr = edge.to.statement.callExpr ?: return@run
             val callee = callExpr.method.method
 
-            val config = taintConfigurationFeature?.getConfigForMethod(callee) ?: return@run
+            val config = taintConfigurationFeature?.let { feature ->
+                if (callee is JcMethod) {
+                    logger.trace { "Extracting config for $callee" }
+                    feature.getConfigForMethod(callee)
+                } else {
+                    error("Cannot extract config for $callee")
+                }
+            } ?: return@run
 
             // TODO: not always we want to skip sinks on Zero facts.
             //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
@@ -66,7 +77,7 @@ class TaintAnalyzer(
             // Determine whether 'edge.to' is a sink via config:
             val conditionEvaluator = FactAwareConditionEvaluator(
                 edge.to.fact,
-                CallPositionToJcValueResolver(edge.to.statement),
+                CallPositionToValueResolver(edge.to.statement),
             )
             for (item in config.filterIsInstance<TaintMethodSink>()) {
                 if (item.condition.accept(conditionEvaluator)) {
@@ -80,37 +91,39 @@ class TaintAnalyzer(
     }
 
     override fun handleCrossUnitCall(
-        caller: TaintVertex,
-        callee: TaintVertex,
-    ): List<TaintEvent> = buildList {
+        caller: TaintVertex<Method, Statement>,
+        callee: TaintVertex<Method, Statement>,
+    ): List<TaintEvent<Method, Statement>> = buildList {
         add(EdgeForOtherRunner(TaintEdge(callee, callee), Reason.CrossUnitCall(caller)))
     }
 }
 
-class BackwardTaintAnalyzer(
-    private val graph: JcApplicationGraph,
-) : Analyzer<TaintDomainFact, TaintEvent> {
+class BackwardTaintAnalyzer<Method, Statement>(
+    private val graph: ApplicationGraph<Method, Statement>,
+) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-    override val flowFunctions: BackwardTaintFlowFunctions by lazy {
-        BackwardTaintFlowFunctions(graph.classpath, graph)
+    override val flowFunctions: BackwardTaintFlowFunctions<Method, Statement> by lazy {
+        BackwardTaintFlowFunctions(graph)
     }
 
-    private fun isExitPoint(statement: JcInst): Boolean {
+    private fun isExitPoint(statement: Statement): Boolean {
         return statement in graph.exitPoints(statement.location.method)
     }
 
     override fun handleNewEdge(
-        edge: TaintEdge,
-    ): List<TaintEvent> = buildList {
+        edge: TaintEdge<Method, Statement>,
+    ): List<TaintEvent<Method, Statement>> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(EdgeForOtherRunner(Edge(edge.to, edge.to), reason = Reason.External))
         }
     }
 
     override fun handleCrossUnitCall(
-        caller: TaintVertex,
-        callee: TaintVertex,
-    ): List<TaintEvent> {
+        caller: TaintVertex<Method, Statement>,
+        callee: TaintVertex<Method, Statement>,
+    ): List<TaintEvent<Method, Statement>> {
         return emptyList()
     }
 }

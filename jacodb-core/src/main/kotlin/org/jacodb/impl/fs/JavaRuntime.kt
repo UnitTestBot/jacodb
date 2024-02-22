@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.fs
 
-import org.jacodb.api.JavaVersion
-import org.jacodb.api.JcByteCodeLocation
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcByteCodeLocation
 import java.io.File
 import java.nio.file.Paths
 

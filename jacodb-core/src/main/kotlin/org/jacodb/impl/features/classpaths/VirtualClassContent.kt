@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.JcClassExtFeature
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcField
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
+import org.jacodb.api.jvm.JcClassExtFeature
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcInstExtFeature
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.impl.features.classpaths.virtual.VirtualClassesBuilder
 
 class VirtualClassContent(private val builders: List<VirtualClassContentBuilder>) : JcClassExtFeature,

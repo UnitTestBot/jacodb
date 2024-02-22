@@ -17,11 +17,11 @@
 package org.jacodb.testing.types
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.ext.cfg.fieldRef
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.packageName
-import org.jacodb.api.ext.toType
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.ext.cfg.fieldRef
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.packageName
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.types.substition.IgnoreSubstitutionProblems
 import org.jacodb.testing.BaseTest
@@ -48,7 +48,7 @@ class IgnoreSubstitutionProblemsTest : BaseTest() {
             it.typeParameters
             it.returnType
             it.method.instList.forEach {
-                it.fieldRef?.field?.fieldType
+                it.fieldRef?.field?.type
             }
         }
     }

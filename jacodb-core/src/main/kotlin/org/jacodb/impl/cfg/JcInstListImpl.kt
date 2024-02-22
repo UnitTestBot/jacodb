@@ -16,14 +16,14 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcMutableInstList
-import org.jacodb.api.cfg.JcRawInst
-import org.jacodb.api.cfg.JcRawInstVisitor
-import org.jacodb.api.cfg.JcRawLabelInst
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcMutableInstList
+import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.JcRawInstVisitor
+import org.jacodb.api.jvm.cfg.JcRawLabelInst
 
 open class JcInstListImpl<INST>(
-    instructions: List<INST>
+    instructions: List<INST>,
 ) : Iterable<INST>, JcInstList<INST> {
     protected val _instructions = instructions.toMutableList()
 
@@ -48,7 +48,9 @@ open class JcInstListImpl<INST>(
     }
 }
 
-class JcMutableInstListImpl<INST>(instructions: List<INST>) : JcInstListImpl<INST>(instructions),
+class JcMutableInstListImpl<INST>(
+    instructions: List<INST>,
+) : JcInstListImpl<INST>(instructions),
     JcMutableInstList<INST> {
 
     override fun insertBefore(inst: INST, vararg newInstructions: INST) = insertBefore(inst, newInstructions.toList())
@@ -73,7 +75,6 @@ class JcMutableInstListImpl<INST>(instructions: List<INST>) : JcInstListImpl<INS
         return _instructions.removeAll(inst)
     }
 }
-
 
 fun JcInstList<JcRawInst>.filter(visitor: JcRawInstVisitor<Boolean>) =
     JcInstListImpl(instructions.filter { it.accept(visitor) })

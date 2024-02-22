@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.vfs
 
-import org.jacodb.api.ClassSource
+import org.jacodb.api.jvm.ClassSource
 
 class ClassVfsItem(
     override val name: String,

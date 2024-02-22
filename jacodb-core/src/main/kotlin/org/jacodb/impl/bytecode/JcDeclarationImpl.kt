@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.RegisteredLocation
 
 class JcDeclarationImpl(override val location: RegisteredLocation, override val relativePath: String) : JcDeclaration {
 

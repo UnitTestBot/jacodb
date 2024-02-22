@@ -18,25 +18,33 @@
 
 package org.jacodb.impl.cfg
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.cfg.JcBool
-import org.jacodb.api.cfg.JcByte
-import org.jacodb.api.cfg.JcDouble
-import org.jacodb.api.cfg.JcFloat
-import org.jacodb.api.cfg.JcInt
-import org.jacodb.api.cfg.JcLong
-import org.jacodb.api.cfg.JcRawNullConstant
-import org.jacodb.api.cfg.JcRawStringConstant
-import org.jacodb.api.cfg.JcShort
-import org.jacodb.api.ext.boolean
-import org.jacodb.api.ext.byte
-import org.jacodb.api.ext.double
-import org.jacodb.api.ext.float
-import org.jacodb.api.ext.int
-import org.jacodb.api.ext.long
-import org.jacodb.api.ext.short
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.cfg.JcBool
+import org.jacodb.api.jvm.cfg.JcByte
+import org.jacodb.api.jvm.cfg.JcDouble
+import org.jacodb.api.jvm.cfg.JcFloat
+import org.jacodb.api.jvm.cfg.JcInt
+import org.jacodb.api.jvm.cfg.JcLong
+import org.jacodb.api.jvm.cfg.JcRawBool
+import org.jacodb.api.jvm.cfg.JcRawByte
+import org.jacodb.api.jvm.cfg.JcRawChar
+import org.jacodb.api.jvm.cfg.JcRawDouble
+import org.jacodb.api.jvm.cfg.JcRawFloat
+import org.jacodb.api.jvm.cfg.JcRawInt
+import org.jacodb.api.jvm.cfg.JcRawLong
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawShort
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcShort
+import org.jacodb.api.jvm.ext.boolean
+import org.jacodb.api.jvm.ext.byte
+import org.jacodb.api.jvm.ext.double
+import org.jacodb.api.jvm.ext.float
+import org.jacodb.api.jvm.ext.int
+import org.jacodb.api.jvm.ext.long
+import org.jacodb.api.jvm.ext.short
 import org.jacodb.impl.cfg.util.NULL
 import org.jacodb.impl.cfg.util.STRING_CLASS
 import org.jacodb.impl.cfg.util.typeName
@@ -45,28 +53,36 @@ import org.jacodb.impl.cfg.util.typeName
 fun JcRawNull() = JcRawNullConstant(NULL)
 
 @JvmName("rawBool")
-fun JcRawBool(value: Boolean) = org.jacodb.api.cfg.JcRawBool(value, PredefinedPrimitives.Boolean.typeName())
+fun JcRawBool(value: Boolean) =
+    JcRawBool(value, PredefinedPrimitives.Boolean.typeName())
 
 @JvmName("rawByte")
-fun JcRawByte(value: Byte) = org.jacodb.api.cfg.JcRawByte(value, PredefinedPrimitives.Byte.typeName())
+fun JcRawByte(value: Byte) =
+    JcRawByte(value, PredefinedPrimitives.Byte.typeName())
 
 @JvmName("rawShort")
-fun JcRawShort(value: Short) = org.jacodb.api.cfg.JcRawShort(value, PredefinedPrimitives.Short.typeName())
+fun JcRawShort(value: Short) =
+    JcRawShort(value, PredefinedPrimitives.Short.typeName())
 
 @JvmName("rawChar")
-fun JcRawChar(value: Char) = org.jacodb.api.cfg.JcRawChar(value, PredefinedPrimitives.Char.typeName())
+fun JcRawChar(value: Char) =
+    JcRawChar(value, PredefinedPrimitives.Char.typeName())
 
 @JvmName("rawInt")
-fun JcRawInt(value: Int) = org.jacodb.api.cfg.JcRawInt(value, PredefinedPrimitives.Int.typeName())
+fun JcRawInt(value: Int) =
+    JcRawInt(value, PredefinedPrimitives.Int.typeName())
 
 @JvmName("rawLong")
-fun JcRawLong(value: Long) = org.jacodb.api.cfg.JcRawLong(value, PredefinedPrimitives.Long.typeName())
+fun JcRawLong(value: Long) =
+    JcRawLong(value, PredefinedPrimitives.Long.typeName())
 
 @JvmName("rawFloat")
-fun JcRawFloat(value: Float) = org.jacodb.api.cfg.JcRawFloat(value, PredefinedPrimitives.Float.typeName())
+fun JcRawFloat(value: Float) =
+    JcRawFloat(value, PredefinedPrimitives.Float.typeName())
 
 @JvmName("rawDouble")
-fun JcRawDouble(value: Double) = org.jacodb.api.cfg.JcRawDouble(value, PredefinedPrimitives.Double.typeName())
+fun JcRawDouble(value: Double) =
+    JcRawDouble(value, PredefinedPrimitives.Double.typeName())
 
 @JvmName("rawZero")
 fun JcRawZero(typeName: TypeName) = when (typeName.typeName) {
@@ -91,8 +107,8 @@ fun JcRawNumber(number: Number) = when (number) {
 }
 
 @JvmName("rawString")
-fun JcRawString(value: String) = JcRawStringConstant(value, STRING_CLASS.typeName())
-
+fun JcRawString(value: String) =
+    JcRawStringConstant(value, STRING_CLASS.typeName())
 
 fun JcClasspath.int(value: Int): JcInt = JcInt(value, int)
 fun JcClasspath.byte(value: Byte): JcByte = JcByte(value, byte)

@@ -17,8 +17,8 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.impl.features.hierarchyExt
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions

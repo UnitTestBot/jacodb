@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findMethodOrNull
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findMethodOrNull
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.fs.ClassSourceImpl
 import org.jacodb.impl.fs.LazyClassSourceImpl

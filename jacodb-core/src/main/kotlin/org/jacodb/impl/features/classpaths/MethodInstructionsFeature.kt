@@ -16,14 +16,14 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.JcFeatureEvent
-import org.jacodb.api.JcInstExtFeature
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcMethodExtFeature
-import org.jacodb.api.JcMethodExtFeature.JcInstListResult
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstList
-import org.jacodb.api.cfg.JcRawInst
+import org.jacodb.api.jvm.JcFeatureEvent
+import org.jacodb.api.jvm.JcInstExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcMethodExtFeature
+import org.jacodb.api.jvm.JcMethodExtFeature.JcInstListResult
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.impl.cfg.JcGraphImpl
 import org.jacodb.impl.cfg.JcInstListBuilder
 import org.jacodb.impl.cfg.RawInstListBuilder

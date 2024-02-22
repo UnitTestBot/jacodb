@@ -20,15 +20,15 @@ package org.jacodb.impl.features
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.FieldUsageMode
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.findDeclaredFieldOrNull
-import org.jacodb.api.ext.findDeclaredMethodOrNull
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.FieldUsageMode
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.ext.packageName
 import org.objectweb.asm.Opcodes
 import java.util.concurrent.Future
 

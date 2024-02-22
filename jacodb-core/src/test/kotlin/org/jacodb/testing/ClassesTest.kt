@@ -17,12 +17,12 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.ext.HierarchyExtension
-import org.jacodb.api.ext.enumValues
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.findTypeOrNull
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.enumValues
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.impl.features.duplicatedClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.structure.EnumExamples.*
@@ -76,4 +76,3 @@ class ClassesTest : DatabaseEnvTest() {
         assertEquals(listOf("C1", "C2"), enumType.enumValues!!.map { it.name })
     }
 }
-

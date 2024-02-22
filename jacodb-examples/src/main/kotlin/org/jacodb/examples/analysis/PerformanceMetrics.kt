@@ -17,13 +17,13 @@
 package org.jacodb.examples.analysis
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcClassProcessingTask
-import org.jacodb.api.JcMethod
-import org.jacodb.api.RegisteredLocation
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.ext.cfg.callExpr
-import org.jacodb.api.ext.hasAnnotation
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassProcessingTask
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.hasAnnotation
 import org.jacodb.impl.fs.BuildFolderLocation
 import org.jacodb.impl.jacodb
 import soot.SootMethod

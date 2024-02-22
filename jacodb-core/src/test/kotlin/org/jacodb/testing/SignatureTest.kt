@@ -17,11 +17,11 @@
 package org.jacodb.testing
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.JcClassOrInterface
-import org.jacodb.api.JcField
-import org.jacodb.api.JcMethod
-import org.jacodb.api.Pure
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.Pure
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.types.signature.*
 import org.jacodb.impl.types.typeParameters
 import org.jacodb.testing.usages.Generics
@@ -151,4 +151,3 @@ class SignatureTest : BaseTest() {
             this
         )
 }
-

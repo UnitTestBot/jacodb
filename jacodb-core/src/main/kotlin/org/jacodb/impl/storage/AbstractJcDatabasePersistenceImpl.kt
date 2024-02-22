@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.storage
 
-import org.jacodb.api.ClassSource
-import org.jacodb.api.JcByteCodeLocation
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcDatabase
-import org.jacodb.api.JcDatabasePersistence
-import org.jacodb.api.RegisteredLocation
+import org.jacodb.api.jvm.ClassSource
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.FeaturesRegistry
 import org.jacodb.impl.JcInternalSignal
 import org.jacodb.impl.fs.JavaRuntime
@@ -34,7 +34,6 @@ import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jacodb.impl.vfs.PersistentByteCodeLocation
 import org.jooq.Condition
 import org.jooq.DSLContext
-import java.io.Closeable
 import java.io.File
 
 val defaultBatchSize: Int get() = System.getProperty("org.jacodb.impl.storage.defaultBatchSize", "100").toInt()
@@ -42,8 +41,8 @@ val defaultBatchSize: Int get() = System.getProperty("org.jacodb.impl.storage.de
 abstract class AbstractJcDatabasePersistenceImpl(
     private val javaRuntime: JavaRuntime,
     private val featuresRegistry: FeaturesRegistry,
-    private val clearOnStart: Boolean
-) : JcDatabasePersistence, Closeable {
+    private val clearOnStart: Boolean,
+) : JcDatabasePersistence {
 
     companion object {
         private const val cachesPrefix = "org.utbot.jacodb.persistence.caches"

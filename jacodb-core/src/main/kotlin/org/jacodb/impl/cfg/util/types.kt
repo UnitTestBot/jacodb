@@ -16,10 +16,10 @@
 
 package org.jacodb.impl.cfg.util
 
-import org.jacodb.api.PredefinedPrimitives
-import org.jacodb.api.TypeName
-import org.jacodb.api.ext.jcdbName
-import org.jacodb.api.ext.jvmName
+import org.jacodb.api.jvm.PredefinedPrimitives
+import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.ext.jcdbName
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.types.TypeNameImpl
 
 internal val NULL = "null".typeName()

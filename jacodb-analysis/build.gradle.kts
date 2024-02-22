@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
+    api(project(":jacodb-api-jvm"))
     api(project(":jacodb-core"))
-    api(project(":jacodb-api"))
     api(project(":jacodb-taint-configuration"))
 
     implementation(Libs.kotlin_logging)
@@ -14,8 +14,8 @@ dependencies {
     implementation(Libs.kotlinx_serialization_json)
     api(Libs.sarif4k)
 
+    testImplementation(project(":jacodb-api-jvm"))
     testImplementation(testFixtures(project(":jacodb-core")))
-    testImplementation(project(":jacodb-api"))
     testImplementation(kotlin("test"))
     testImplementation(Libs.mockk)
 

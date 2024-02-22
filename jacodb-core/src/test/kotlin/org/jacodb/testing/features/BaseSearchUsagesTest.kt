@@ -17,9 +17,9 @@
 package org.jacodb.testing.features
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.FieldUsageMode
-import org.jacodb.api.ext.CONSTRUCTOR
-import org.jacodb.api.ext.findClass
+import org.jacodb.api.jvm.FieldUsageMode
+import org.jacodb.api.jvm.ext.CONSTRUCTOR
+import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB

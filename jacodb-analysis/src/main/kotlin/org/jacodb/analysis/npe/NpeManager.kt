@@ -23,19 +23,22 @@ import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintRunner
 import org.jacodb.analysis.taint.TaintZeroFact
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonInst
 
 private val logger = mu.KotlinLogging.logger {}
 
-class NpeManager(
-    graph: JcApplicationGraph,
-    unitResolver: UnitResolver,
-) : TaintManager(graph, unitResolver, useBidiRunner = false) {
+class NpeManager<Method, Statement>(
+    graph: ApplicationGraph<Method, Statement>,
+    unitResolver: UnitResolver<Method>,
+) : TaintManager<Method, Statement>(graph, unitResolver, useBidiRunner = false)
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
     override fun newRunner(
         unit: UnitType,
-    ): TaintRunner {
+    ): TaintRunner<Method, Statement> {
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         val analyzer = NpeAnalyzer(graph)
@@ -52,7 +55,7 @@ class NpeManager(
         return runner
     }
 
-    override fun addStart(method: JcMethod) {
+    override fun addStart(method: Method) {
         logger.info { "Adding start method: $method" }
         val unit = unitResolver.resolve(method)
         if (unit == UnknownUnit) return

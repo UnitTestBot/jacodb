@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.JcAnnotation
-import org.jacodb.api.JcDeclaration
-import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
-import org.jacodb.api.TypeName
+import org.jacodb.api.jvm.JcAnnotation
+import org.jacodb.api.jvm.JcDeclaration
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcParameter
+import org.jacodb.api.jvm.TypeName
 import org.jacodb.impl.types.ParameterInfo
 import org.jacodb.impl.types.TypeNameImpl
 

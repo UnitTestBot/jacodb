@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.bytecode
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.packageName
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.packageName
 
 class JcClassLookupImpl(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {
 

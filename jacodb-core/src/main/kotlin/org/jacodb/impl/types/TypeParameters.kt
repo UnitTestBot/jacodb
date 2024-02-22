@@ -17,7 +17,7 @@
 package org.jacodb.impl.types
 
 import kotlinx.collections.immutable.toPersistentMap
-import org.jacodb.api.*
+import org.jacodb.api.jvm.*
 import org.jacodb.impl.types.signature.MethodResolutionImpl
 import org.jacodb.impl.types.signature.MethodSignature
 import org.jacodb.impl.types.signature.TypeResolutionImpl

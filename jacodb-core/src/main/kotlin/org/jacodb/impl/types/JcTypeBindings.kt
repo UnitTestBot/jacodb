@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.types
 
-import org.jacodb.api.*
-import org.jacodb.api.ext.findClass
-import org.jacodb.api.ext.objectType
+import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.types.signature.*
 
 internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = null): JcType {
@@ -28,7 +28,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                 ?: throw IllegalStateException("primitive type ${jvmType.ref} not found")
         }
 
-        is JvmClassRefType -> typeOf(findClass(jvmType.name), jvmType.isNullable, jvmType.annotations)
+        is JvmClassRefType -> classTypeOf(findClass(jvmType.name), jvmType.isNullable, jvmType.annotations)
         is JvmArrayType -> arrayTypeOf(typeOf(jvmType.elementType), jvmType.isNullable, jvmType.annotations)
         is JvmParameterizedType -> {
             val params = parameters ?: jvmType.parameterTypes
@@ -42,7 +42,7 @@ internal fun JcClasspath.typeOf(jvmType: JvmType, parameters: List<JvmType>? = n
                         jvmType.annotations
                     )
                 // raw types
-                else -> typeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
+                else -> classTypeOf(findClass(jvmType.name)).copyWithNullability(jvmType.isNullable)
             }
         }
 

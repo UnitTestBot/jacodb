@@ -18,19 +18,19 @@
 
 package org.jacodb.analysis.graph
 
-import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.ApplicationGraph
-import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
+import org.jacodb.api.jvm.cfg.JcInst
 
-private class BackwardApplicationGraph<Method, Statement>(
+private class BackwardApplicationGraphImpl<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>,
 ) : ApplicationGraph<Method, Statement> {
 
-    init {
-        require(forward !is BackwardApplicationGraph)
-    }
+    override val project: Project
+        get() = forward.project
 
     override fun predecessors(node: Statement) = forward.successors(node)
     override fun successors(node: Statement) = forward.predecessors(node)
@@ -44,28 +44,26 @@ private class BackwardApplicationGraph<Method, Statement>(
     override fun methodOf(node: Statement) = forward.methodOf(node)
 }
 
-val <Method, Statement> ApplicationGraph<Method, Statement>.reversed
-    get() = if (this is BackwardApplicationGraph) {
-        this.forward
-    } else {
-        BackwardApplicationGraph(this)
+@Suppress("UNCHECKED_CAST")
+val <Method, Statement> ApplicationGraph<Method, Statement>.reversed: ApplicationGraph<Method, Statement>
+    get() = when (this) {
+        is JcApplicationGraph -> this.reversed as ApplicationGraph<Method, Statement>
+        is BackwardApplicationGraphImpl -> this.forward
+        else -> BackwardApplicationGraphImpl(this)
     }
 
-internal class BackwardJcApplicationGraph(val forward: JcApplicationGraph) :
-    JcApplicationGraph,
-    ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraph(forward) {
+private class BackwardJcApplicationGraphImpl(
+    val forward: JcApplicationGraph,
+) : JcApplicationGraph,
+    ApplicationGraph<JcMethod, JcInst> by BackwardApplicationGraphImpl(forward) {
 
-    init {
-        require(forward !is BackwardJcApplicationGraph)
-    }
-
-    override val classpath: JcClasspath
-        get() = forward.classpath
+    override val project: JcClasspath
+        get() = forward.project
 }
 
 val JcApplicationGraph.reversed: JcApplicationGraph
-    get() = if (this is BackwardJcApplicationGraph) {
+    get() = if (this is BackwardJcApplicationGraphImpl) {
         this.forward
     } else {
-        BackwardJcApplicationGraph(this)
+        BackwardJcApplicationGraphImpl(this)
     }
