@@ -14,16 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.staticvm
+package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.core.cfg.CoreInst
 import org.jacodb.api.core.cfg.CoreInstLocation
 import org.jacodb.api.core.cfg.InstVisitor
+import org.jacodb.panda.staticvm.classpath.MethodNode
 
 class PandaInstLocation(
-    override val method: PandaMethod,
+    override val method: MethodNode,
     override val index: Int
-) : CoreInstLocation<PandaMethod> {
+) : CoreInstLocation<MethodNode> {
     // TODO: expand like JcInstLocation
 
     override fun toString() = "method.$index"
@@ -43,7 +44,7 @@ class PandaInstRef(
     override fun toString() = index.toString()
 }
 
-sealed interface PandaInst : CoreInst<PandaInstLocation, PandaMethod, PandaExpr> {
+sealed interface PandaInst : CoreInst<PandaInstLocation, MethodNode, PandaExpr> {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
     override val lineNumber: Int
@@ -52,6 +53,28 @@ sealed interface PandaInst : CoreInst<PandaInstLocation, PandaMethod, PandaExpr>
     override fun <T> accept(visitor: InstVisitor<T>): T {
         TODO("Not yet implemented")
     }
+}
+
+
+// TODO: придумать, как убрать этот костыль (нужно корректно обрабатывать ссылки на пустой basicBlock)
+class PandaDoNothingInst(
+    override val location: PandaInstLocation
+) : PandaInst {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun toString() = "NOP"
+}
+
+class PandaParameterInst(
+    override val location: PandaInstLocation,
+    val lhv: PandaValue,
+    val index: Int
+) : PandaInst {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun toString() = "$lhv = arg$index"
 }
 
 class PandaAssignInst(

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.staticvm
+package org.jacodb.panda.staticvm.utils
 
 import org.jacodb.api.core.cfg.Graph
 
@@ -54,20 +54,6 @@ data class SimpleDirectedGraph<T>(
         predecessors(it) + successors(it)
     }.map(::induced)
 
-    fun rpo(): List<T> {
-        val visited = hashSetOf<T>()
-        val order = mutableListOf<T>()
-        val onStack = hashSetOf<T>()
-
-        fun dfs(node: T) = node.takeIf(visited::add)?.also(onStack::add)?.let {
-            successors(it).forEach(::dfs)
-            order.add(node)
-        }
-
-        nodes.forEach { if (it !in visited) dfs(it) }
-        return order.reversed()
-    }
-
     companion object {
         fun <T> union(lhs: SimpleDirectedGraph<T>, rhs: SimpleDirectedGraph<T>) = SimpleDirectedGraph(
             lhs.nodes.plus(rhs.nodes).toMutableSet(),
@@ -94,11 +80,73 @@ fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<
     }
 }
 
-fun <T, A> Iterable<T>.applyFold(initial: A, operation: A.(T) -> Unit) = fold(initial) { acc, elem ->
-    acc.apply { operation(elem) } }
+/**
+ * Applies [operation] to [initial] object with all arguments from [Iterable] consecutively
+ * */
+fun <T, A> Iterable<T>.applyFold(initial: A, operation: A.(T) -> Unit) =
+    fold(initial) { acc, elem -> acc.apply { operation(elem) } }
 
 fun <T> reachable(starts: Iterable<T>, successors: (T) -> Collection<T>): Set<T> =
     starts.applyFold(hashSetOf()) { start ->
         if (!contains(start))
             addAll(search(start, { successors(it).filterNot(this::contains) }, {}))
     }
+
+fun <T> Graph<T>.rpo(): List<T> {
+    val visited = hashSetOf<T>()
+    val order = mutableListOf<T>()
+    val onStack = hashSetOf<T>()
+
+    fun dfs(node: T) = node.takeIf(visited::add)?.also(onStack::add)?.let {
+        successors(it).forEach(::dfs)
+        onStack.remove(it)
+        order.add(it)
+    }
+
+    val nodes = iterator().asSequence().toSet()
+    nodes.forEach { if (it !in visited) dfs(it) }
+    return order.reversed()
+}
+fun <T> Graph<T>.inTopsortOrder(): List<T>? {
+    val visited = hashSetOf<T>()
+    val order = mutableListOf<T>()
+    val stack = hashSetOf<T>()
+    var foundCycle = false
+
+    fun dfs(node: T) {
+        stack.add(node)
+        visited.add(node)
+        successors(node).forEach {
+            if (it in stack)
+                foundCycle = true
+            if (it !in visited)
+                dfs(it)
+        }
+        stack.remove(node)
+        order.add(node)
+    }
+
+    val nodes = iterator().asSequence().toHashSet()
+    nodes.forEach { if (it !in visited) dfs(it) }
+    return if (foundCycle) null else order.reversed().filter { it in nodes }
+}
+
+fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
+    val components = components(rpo(), this::predecessors)
+    val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) {nodes ->
+        nodes.forEach { put(it, nodes) }
+    }
+    return OneDirectionGraph(components) { nodes ->
+        nodes.flatMap(this::successors).map(colorMap::get).requireNoNulls()
+            .filterNot { it == nodes }.toSet()
+    }
+}
+
+fun <K, V> Map<K, V?>.removeNulls(): Map<K, V> = entries.filterIsInstance<Map.Entry<K, V>>().associate { (k, v) -> k to v }
+
+fun <T, V> Graph<T>.runDP(transition: (T, Map<T, V>) -> V): Map<T, V> {
+    val tsOrder = requireNotNull(inTopsortOrder()) { "Cannot run DP because of cycle found" }
+    return tsOrder.reversed().applyFold(hashMapOf()) {v ->
+        put(v, transition.invoke(v, successors(v).associateWith(this::get).removeNulls()))
+    }
+}

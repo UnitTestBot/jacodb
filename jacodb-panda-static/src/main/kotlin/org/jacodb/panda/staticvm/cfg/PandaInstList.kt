@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.staticvm
+package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.core.cfg.InstList
 import org.jacodb.api.core.cfg.MutableInstList

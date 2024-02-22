@@ -17,38 +17,51 @@
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.jupiter.api.Test
 import kotlinx.serialization.json.decodeFromStream
-import org.jacodb.panda.staticvm.PandaApplicationGraph
-import org.jacodb.panda.staticvm.PandaInstListBuilder
-import org.jacodb.panda.staticvm.PandaProgramInfo
+import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
+import org.jacodb.panda.staticvm.classpath.PandaClasspath
+import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import java.io.FileInputStream
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 
 internal class IrDeserializationTest {
-    private val json = PandaProgramInfo.json
-    private val sampleFilePath = javaClass.getResource("sample.json")?.path ?: ""
-    private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path ?: ""
+    private val json = PandaProgramIr.json
+    private val sampleFilePath = javaClass.getResource("sample.json")?.path!!
+    private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path!!
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun deserializationTest() {
         val input = FileInputStream(sampleFilePath)
-        val program = json.decodeFromStream<PandaProgramInfo>(input)
-        val project = program.toProject()
-        val methodName = "A.greet:i32;std.core.void;"
-        val methodNode = project.methods.find { it.name == methodName }
-        val builder = PandaInstListBuilder(methodNode!!)
-        val insts = builder.build()
-        print(insts)
-
+        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val project = PandaClasspath.fromProgramInfo(program)
         val applicationGraph = PandaApplicationGraph(project)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
+    @Test
+    fun pandaStdLibTest() {
+        val input = FileInputStream(stdlibFilePath)
+
+        val (program, deserializationDuration) = measureTimedValue {
+            json.decodeFromStream<PandaProgramIr>(input)
+        }
+        val (project, linkageDuration) = measureTimedValue {
+            PandaClasspath.fromProgramInfo(program)
+        }
+
+        println("deserialization: $deserializationDuration, linkage: $linkageDuration")
+        println("total: ${deserializationDuration + linkageDuration}")
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun stdlibTest() {
-        val input = FileInputStream(stdlibFilePath)
-        val program = json.decodeFromStream<PandaProgramInfo>(input)
-        val project = program.toProject()
-        val applicationGraph = PandaApplicationGraph(project)
+    fun pandaClasspathFlowGraphTest() {
+        val input = FileInputStream(sampleFilePath)
+        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val project = PandaClasspath.fromProgramInfo(program)
+        val method = project.findMethod("A.greet:i32;std.core.void;")
+        val flowGraph = method.flowGraph()
     }
 }
