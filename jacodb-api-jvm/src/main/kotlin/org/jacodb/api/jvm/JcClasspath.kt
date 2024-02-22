@@ -65,11 +65,6 @@ interface JcClasspath : Closeable, Project {
      */
     override fun findTypeOrNull(name: String): JcType?
 
-    override fun typeOf(clazz: CommonClass): JcClassType {
-        check(clazz is JcClassOrInterface)
-        return classTypeOf(clazz)
-    }
-
     fun classTypeOf(
         jcClass: JcClassOrInterface,
         nullability: Boolean? = null,

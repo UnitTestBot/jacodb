@@ -32,9 +32,7 @@ interface CommonTypeName {
     val typeName: String
 }
 
-interface CommonRefType : CommonType {
-    val jcClass: CommonClass
-}
+interface CommonRefType : CommonType
 
 interface CommonArrayType : CommonType {
     val elementType: CommonType

@@ -25,6 +25,9 @@ interface CommonInst<out Method, out Statement>
     val location: CommonInstLocation<Method, Statement> // Self-type would be nice to have here...
     val operands: List<CommonExpr>
 
+    val lineNumber: Int
+        get() = location.lineNumber
+
     interface Visitor<out T> {
         fun visitExternalCommonInst(inst: CommonInst<*, *>): T
 

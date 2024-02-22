@@ -55,9 +55,6 @@ interface JcInst : CommonInst<JcMethod, JcInst> {
     override val location: JcInstLocation
     override val operands: List<JcExpr>
 
-    val lineNumber: Int
-        get() = location.lineNumber
-
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
 

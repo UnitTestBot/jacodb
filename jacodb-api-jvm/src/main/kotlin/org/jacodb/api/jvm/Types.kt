@@ -34,7 +34,6 @@ interface JcTypedField : JcAccessible, CommonTypedField {
 }
 
 interface JcTypedMethod : JcAccessible, CommonTypedMethod<JcMethod, JcInst> {
-    val name: String
     override val returnType: JcType
 
     val typeParameters: List<JcTypeVariableDeclaration>
@@ -58,9 +57,6 @@ interface JcTypedMethodParameter : CommonTypedMethodParameter {
 
 interface JcType : CommonType {
     val classpath: JcClasspath
-    override val typeName: String
-
-    override val nullable: Boolean?
     val annotations: List<JcAnnotation>
 
     fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType
@@ -72,8 +68,7 @@ interface JcPrimitiveType : JcType {
 }
 
 interface JcRefType : JcType, CommonRefType {
-
-    override val jcClass: JcClassOrInterface
+    val jcClass: JcClassOrInterface
 
     fun copyWithNullability(nullability: Boolean?): JcRefType
 }

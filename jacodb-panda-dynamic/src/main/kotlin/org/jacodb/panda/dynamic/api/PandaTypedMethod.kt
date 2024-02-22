@@ -14,8 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.common
+package org.jacodb.panda.dynamic.api
 
-interface Project : AutoCloseable {
-    fun findTypeOrNull(name: String): CommonType?
+import org.jacodb.api.common.CommonTypedMethod
+import org.jacodb.api.common.CommonTypedMethodParameter
+
+interface PandaTypedMethod : CommonTypedMethod<PandaMethod, PandaInst> {
+    override val returnType: PandaType
+    override val parameters: List<PandaTypedMethodParameter>
+}
+
+interface PandaTypedMethodParameter : CommonTypedMethodParameter {
+    override val type: PandaType
+    override val enclosingMethod: PandaTypedMethod
 }
