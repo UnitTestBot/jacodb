@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.staticvm
+package org.jacodb.panda.staticvm.classpath
 
 data class AccessFlags(val flags: Int) {
     val isPublic: Boolean

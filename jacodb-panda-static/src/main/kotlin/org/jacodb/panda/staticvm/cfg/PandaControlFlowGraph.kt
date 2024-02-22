@@ -14,13 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.staticvm
+package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.core.cfg.ControlFlowGraph
 import org.jacodb.api.core.cfg.Graph
+import org.jacodb.panda.staticvm.classpath.MethodNode
+import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
+import org.jacodb.panda.staticvm.utils.SimpleDirectedGraph
+import org.jacodb.panda.staticvm.utils.applyFold
 
 class PandaControlFlowGraph private constructor(
-    val method: PandaMethod,
+    val method: MethodNode,
     val instList: PandaInstList,
     private val graph: SimpleDirectedGraph<PandaInst>
 ) : ControlFlowGraph<PandaInst>, Graph<PandaInst> by graph {
@@ -40,13 +44,13 @@ class PandaControlFlowGraph private constructor(
             override fun iterator(): Iterator<PandaInst> = emptyList<PandaInst>().iterator()
         }
 
-        fun of(method: PandaMethod): PandaControlFlowGraph {
-            val instList = PandaInstListBuilder(method).build()
+        fun of(method: MethodNode, blocks: List<PandaBasicBlockIr>): PandaControlFlowGraph {
+            val instList = InstListBuilder(method, blocks).build()
             val graph = instList.flatMapIndexed { index, inst ->
                 when (inst) {
                     is PandaBranchingInst -> inst.successors.map { instList[it.index] }
                     is PandaTerminatingInst -> emptyList()
-                    else -> listOf(instList[index + 1])
+                    else -> listOfNotNull(instList.getOrNull(index + 1))
                 }.map { inst to it }
             }.applyFold(SimpleDirectedGraph<PandaInst>()) { (from, to) -> withEdge(from, to) }
 
@@ -57,8 +61,8 @@ class PandaControlFlowGraph private constructor(
     override val entries: List<PandaInst> = listOfNotNull(instList.firstOrNull())
 
     override val exits: List<PandaInst> = setOfNotNull(instList.lastOrNull())
-            .plus(instList.filterIsInstance<PandaTerminatingInst>())
-            .toList()
+        .plus(instList.filterIsInstance<PandaTerminatingInst>())
+        .toList()
 
     override val instructions: List<PandaInst> = instList.instructions
 
