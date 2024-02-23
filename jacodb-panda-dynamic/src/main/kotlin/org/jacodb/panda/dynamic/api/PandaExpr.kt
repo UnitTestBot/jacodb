@@ -76,11 +76,14 @@ interface PandaBinaryExpr : PandaExpr {
 }
 
 interface PandaCallExpr : PandaExpr, CommonCallExpr {
-    override val method: PandaTypedMethod
+    val method: PandaMethod
+    override val callee: PandaMethod
+        get() = method
+
     override val args: List<PandaValue>
 
     override val type: PandaType
-        get() = method.returnType
+        get() = method.type
 
     override val operands: List<PandaValue>
         get() = args
@@ -370,8 +373,8 @@ class PandaVirtualCallExpr(
     override val args: List<PandaValue>,
     val instance: PandaValue? = null,
 ) : PandaCallExpr {
-    override val method: PandaTypedMethod
-        get() = TODO("lazyMethod.value")
+    override val method: PandaMethod
+        get() = lazyMethod.value
 
     override fun toString(): String = buildString {
         if (instance != null) append("$instance.")

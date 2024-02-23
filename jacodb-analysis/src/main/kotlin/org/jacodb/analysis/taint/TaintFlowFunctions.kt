@@ -229,7 +229,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
     ) = FlowFunction<TaintDomainFact> { fact ->
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
-        val callee = callExpr.method.method
+        val callee = callExpr.callee
 
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted
@@ -583,7 +583,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
 
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
-        val callee = callExpr.method.method
+        val callee = callExpr.callee
 
         if (callee in graph.callees(callStatement)) {
 

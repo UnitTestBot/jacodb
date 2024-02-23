@@ -72,7 +72,6 @@ class PandaGraph(
     override fun iterator(): Iterator<PandaInst> = instructions.iterator()
 }
 
-
 data class PandaBasicBlock(
     val id: Int,
     val successors: Set<Int>,

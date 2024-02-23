@@ -131,7 +131,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
         @Transient
-        val pandaMethod: PandaMethod = PandaMethod(name, TODO(), mapType(returnType))
+        val pandaMethod: PandaMethod = PandaMethod(name, mapType(returnType))
 
         @Transient
         val parameters: MutableList<PandaParameterInfo> = mutableListOf()
@@ -302,7 +302,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                         method.pandaMethod.className = clazz.name
                     }.map { it.pandaMethod }
 
-                this.add(PandaClass(clazz.name, clazz.superClass!!, pandaMethods))
+                add(PandaClass(clazz.name, clazz.superClass!!, pandaMethods))
             }
         }
 
@@ -562,7 +562,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     lazy {
                         val callFuncName = (inputs[2] as PandaStringConstant).value
                         method.pandaMethod.project.findMethodOrNull(callFuncName, method.getClass().name)
-                            ?: PandaMethod(callFuncName, TODO(), PandaAnyType)
+                            ?: PandaMethod(callFuncName, PandaAnyType)
                     }, listOf(inputs[0], inputs[1])
                 )
                 if (outputs.isEmpty()) {

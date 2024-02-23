@@ -16,15 +16,17 @@
 
 package org.jacodb.panda.dynamic.api
 
+import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 
 open class PandaMethod(
     override val name: String,
-    override val enclosingClass: PandaClass,
-    override val returnType: PandaTypeName,
+    // override val enclosingClass: PandaClass,
+    val type: PandaType,
 ) : CommonMethod<PandaMethod, PandaInst> {
 
+    // TODO: consider 'lateinit var'
     var project: PandaProject = PandaProject.empty()
         internal set
     var blocks: List<PandaBasicBlock> = emptyList()
@@ -35,6 +37,12 @@ open class PandaMethod(
         internal set
     var className: String? = null
         internal set
+
+    override val enclosingClass: CommonClass
+        get() = TODO("Not yet implemented")
+
+    override val returnType: PandaTypeName
+        get() = PandaTypeName(type.typeName)
 
     override val parameters: List<PandaMethodParameter>
         get() = parameterInfos.map { TODO() }
@@ -54,9 +62,9 @@ open class PandaMethod(
 
 class PandaStdMethod(
     name: String,
-    enclosingClass: PandaClass,
+    // enclosingClass: PandaClass,
     returnType: PandaType,
-) : PandaMethod(name, enclosingClass, returnType)
+) : PandaMethod(name, returnType)
 
 class PandaParameterInfo(
     val index: Int,

@@ -22,7 +22,7 @@ import java.nio.charset.Charset
 import kotlin.experimental.and
 
 class ByteCodeParser(
-    private val byteCodeBuffer: ByteBuffer
+    private val byteCodeBuffer: ByteBuffer,
 ) {
 
     fun parseABC(): ABC {
@@ -83,7 +83,7 @@ class ByteCodeParser(
         val numLiteralArrays: Int,
         val literalArrayIdxOff: Int,
         val numIndexRegions: Int,
-        val indexSectionOff: Int
+        val indexSectionOff: Int,
     ) {
 
         val classIndex: ClassIndex = readClassIndex(numClasses, classIdxOff, byteCodeBuffer)
@@ -92,21 +92,21 @@ class ByteCodeParser(
 
         override fun toString(): String {
             return "Header(\n" +
-                    "    magic                        = $magic,\n" +
-                    "    checksum                     = $checksum,\n" +
-                    "    version                      = $version,\n" +
-                    "    fileSize                     = $fileSize,\n" +
-                    "    foreignOff                   = $foreignOff,\n" +
-                    "    foreignSize                  = $foreignSize,\n" +
-                    "    numClasses                   = $numClasses,\n" +
-                    "    classIdxOff                  = $classIdxOff,\n" +
-                    "    numberOfLineNumberPrograms   = $numberOfLineNumberPrograms,\n" +
-                    "    lineNumberProgramIndexOffset = $lineNumberProgramIndexOffset,\n" +
-                    "    numLiteralArrays             = $numLiteralArrays,\n" +
-                    "    literalArrayIdxOff           = $literalArrayIdxOff,\n" +
-                    "    numIndexRegions              = $numIndexRegions,\n" +
-                    "    indexSectionOff              = $indexSectionOff\n" +
-                    ")"
+                "    magic                        = $magic,\n" +
+                "    checksum                     = $checksum,\n" +
+                "    version                      = $version,\n" +
+                "    fileSize                     = $fileSize,\n" +
+                "    foreignOff                   = $foreignOff,\n" +
+                "    foreignSize                  = $foreignSize,\n" +
+                "    numClasses                   = $numClasses,\n" +
+                "    classIdxOff                  = $classIdxOff,\n" +
+                "    numberOfLineNumberPrograms   = $numberOfLineNumberPrograms,\n" +
+                "    lineNumberProgramIndexOffset = $lineNumberProgramIndexOffset,\n" +
+                "    numLiteralArrays             = $numLiteralArrays,\n" +
+                "    literalArrayIdxOff           = $literalArrayIdxOff,\n" +
+                "    numIndexRegions              = $numIndexRegions,\n" +
+                "    indexSectionOff              = $indexSectionOff\n" +
+                ")"
         }
 
         constructor() : this(
@@ -128,7 +128,7 @@ class ByteCodeParser(
     }
 
     inner class ClassIndex(
-        val offsets: List<Int>
+        val offsets: List<Int>,
     ) {
 
         constructor() : this(emptyList())
@@ -137,7 +137,7 @@ class ByteCodeParser(
     }
 
     inner class IndexSection(
-        val indexHeader: IndexHeader
+        val indexHeader: IndexHeader,
     ) {
 
         constructor() : this(IndexHeader())
@@ -153,7 +153,7 @@ class ByteCodeParser(
         val fieldIdxSize: Int,
         val fieldIdxOff: Int,
         val protoIdxSize: Int,
-        val protoIdxOff: Int
+        val protoIdxOff: Int,
     ) {
 
         init {
@@ -181,9 +181,8 @@ class ByteCodeParser(
         )
     }
 
-
     inner class ClassRegionIndex(
-        val fieldType: List<FieldType>
+        val fieldType: List<FieldType>,
     ) {
 
         constructor() : this(emptyList())
@@ -197,7 +196,7 @@ class ByteCodeParser(
     }
 
     inner class ProtoRegionIndex(
-        val proto: List<Proto>
+        val proto: List<Proto>,
     ) {
 
         constructor() : this(emptyList())
@@ -205,7 +204,7 @@ class ByteCodeParser(
 
     inner class Proto(
         val shorty: Int,
-        val referenceType: Int
+        val referenceType: Int,
     ) {
 
         constructor() : this(0, 0)
@@ -214,7 +213,7 @@ class ByteCodeParser(
     inner class ForeignField(
         val classIdx: Short,
         val typeIdx: Short,
-        val nameOff: Int
+        val nameOff: Int,
     ) {
 
         constructor() : this(0, 0, 0)
@@ -225,7 +224,7 @@ class ByteCodeParser(
         val typeIdx: Short,
         val nameOff: Int,
         val accessFlags: Byte,
-        val fieldData: FieldData
+        val fieldData: FieldData,
     ) {
 
         constructor() : this(0, 0, 0, 0, FieldData())
@@ -233,7 +232,7 @@ class ByteCodeParser(
 
     inner class FieldData(
         val tagValue: Byte,
-        val data: Byte
+        val data: Byte,
     ) {
 
         constructor() : this(0, 0)
@@ -242,7 +241,7 @@ class ByteCodeParser(
     inner class MethodStringLiteralRegionIndex(
         val strings: List<Int>,
         val methods: List<Int>,
-        val all: List<Int>
+        val all: List<Int>,
     ) {
 
         constructor() : this(emptyList(), emptyList(), emptyList())
@@ -250,7 +249,7 @@ class ByteCodeParser(
 
     inner class StringData(
         val utf16Length: Byte,
-        val data: String
+        val data: String,
     ) {
 
         constructor() : this(0, "")
@@ -274,13 +273,13 @@ class ByteCodeParser(
 
         override fun toString(): String {
             return "Method(\n" +
-                    "    classIdx = $classIdx,\n" +
-                    "    protoIdx = $protoIdx,\n" +
-                    "    nameOff = $nameOff,\n" +
-                    "    accessFlag = $accessFlag,\n" +
-                    "    methodData = $methodData\n" +
-                    "    code = ${code}\n" +
-                    ")"
+                "    classIdx = $classIdx,\n" +
+                "    protoIdx = $protoIdx,\n" +
+                "    nameOff = $nameOff,\n" +
+                "    accessFlag = $accessFlag,\n" +
+                "    methodData = $methodData\n" +
+                "    code = ${code}\n" +
+                ")"
         }
 
         constructor() : this(0, 0, 0, 0, emptyList())
@@ -303,7 +302,7 @@ class ByteCodeParser(
         val codeSize: ULong,
         val triesSize: ULong,
         val insts: Instruction,
-        val tryBlocks: List<Int>
+        val tryBlocks: List<Int>,
     ) {
 
         constructor() : this(0.ul, 0.ul, 0.ul, 0.ul, Instruction(), emptyList())
@@ -318,7 +317,6 @@ class ByteCodeParser(
 
             throw IllegalArgumentException("no such bc offset")
         }
-
 
         /*
             CURRENTLY ON SUPPORTS RESOLVE FOR callarg BYTECODES
@@ -418,10 +416,10 @@ class ByteCodeParser(
 
         override fun toString(): String {
             var out = "Code(\n" +
-                    "    numVregs  = $numVregs,\n" +
-                    "    numArgs   = $numArgs,\n" +
-                    "    codeSize  = $codeSize,\n" +
-                    "    triesSize = $triesSize,\n"
+                "    numVregs  = $numVregs,\n" +
+                "    numArgs   = $numArgs,\n" +
+                "    codeSize  = $codeSize,\n" +
+                "    triesSize = $triesSize,\n"
             if (codeSize > 0.ul) {
                 val iter = iterator()
                 out += insts
@@ -442,15 +440,15 @@ class ByteCodeParser(
         val offset: Int,
         val opcode: UByte,
         val operands: List<Byte>,
-        private val prefix: PandaBytecodePrefix? = null
+        private val prefix: PandaBytecodePrefix? = null,
     ) {
 
         override fun toString(): String {
             return "Instruction(\n" +
-                    "    offset   = $offset,\n" +
-                    "    opcode   = ${PandaBytecode.getBytecode(opcode, prefix)},\n" +
-                    "    operands = ${operands.map { "0x${it.toUByte().toString(radix = 16)}" }},\n" +
-                    ")\n"
+                "    offset   = $offset,\n" +
+                "    opcode   = ${PandaBytecode.getBytecode(opcode, prefix)},\n" +
+                "    operands = ${operands.map { "0x${it.toUByte().toString(radix = 16)}" }},\n" +
+                ")\n"
         }
 
         constructor() : this(null, null, 0, 0.ub, emptyList())
@@ -494,7 +492,7 @@ class ByteCodeParser(
     inner class MethodIndexData(
         val headerIdx: Short,
         val functionKind: Byte,
-        val accessFlags: Byte
+        val accessFlags: Byte,
     ) {
 
         constructor() : this(0, 0, 0)
@@ -662,7 +660,6 @@ class ByteCodeParser(
         }
         Instruction(null, null, offset, opcode, operands, prefix)
     }
-
 
     private fun readTryBlocks(buffer: ByteBuffer, triesSize: ULong): List<Int> {
         val tryBlocks = mutableListOf<Int>()

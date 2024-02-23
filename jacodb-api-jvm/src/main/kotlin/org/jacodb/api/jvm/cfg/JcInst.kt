@@ -16,6 +16,7 @@
 
 package org.jacodb.api.jvm.cfg
 
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonAssignInst
@@ -652,8 +653,11 @@ data class JcInstanceOfExpr(
 }
 
 interface JcCallExpr : JcExpr, CommonCallExpr {
-    override val method: JcTypedMethod
+    val method: JcTypedMethod
     override val args: List<JcValue>
+
+    override val callee: JcMethod
+        get() = method.method
 
     override val type: JcType
         get() = method.returnType

@@ -94,7 +94,7 @@ object PandaStdLib {
     val fields = listOf(
         PandaObject(
             "console",
-            listOf(PandaStdMethod("log", TODO(), PandaAnyType))
+            listOf(PandaStdMethod("log", PandaAnyType))
         )
     )
 }

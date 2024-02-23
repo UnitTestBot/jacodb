@@ -16,8 +16,8 @@
 
 package org.jacodb.api.common.cfg
 
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonType
-import org.jacodb.api.common.CommonTypedMethod
 
 interface CommonExpr {
     val type: CommonType
@@ -48,11 +48,12 @@ interface CommonExpr {
 }
 
 interface CommonCallExpr : CommonExpr {
-    val method: CommonTypedMethod<*, *>
+    // val method: CommonTypedMethod<*, *>
+    val callee: CommonMethod<*, *>
     val args: List<CommonValue>
 
-    override val type: CommonType
-        get() = method.returnType
+    // override val type: CommonType
+    //     get() = method.returnType
 
     override val operands: List<CommonValue>
         get() = args

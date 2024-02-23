@@ -84,7 +84,11 @@ enum class PandaBytecode(val opcode: UByte, val operands: Int = 0, val prefix: P
 
         private val accSetList: List<PandaBytecode>
             get() = listOf(
-                LDA, LDGLOBALVAR, TRYLDGLOBALBYNAME_IMM_8_ID_16, TRYLDGLOBALBYNAME_IMM_16_ID_16, LDOBJBYNAME_IMM_8_ID_16,
+                LDA,
+                LDGLOBALVAR,
+                TRYLDGLOBALBYNAME_IMM_8_ID_16,
+                TRYLDGLOBALBYNAME_IMM_16_ID_16,
+                LDOBJBYNAME_IMM_8_ID_16,
                 LDOBJBYNAME_IMM_16_ID_16
             )
 
@@ -99,7 +103,6 @@ enum class PandaBytecode(val opcode: UByte, val operands: Int = 0, val prefix: P
                 .first {
                     (it.opcode == findValue) && (it.prefix == prefix)
                 }
-
 
         fun getBytecodeOrNull(findValue: UByte, prefix: PandaBytecodePrefix? = null): PandaBytecode? =
             PandaBytecode
