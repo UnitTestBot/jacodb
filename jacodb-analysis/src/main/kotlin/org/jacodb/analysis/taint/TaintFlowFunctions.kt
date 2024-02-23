@@ -35,6 +35,7 @@ import org.jacodb.analysis.util.thisInstance
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcDynamicCallExpr
 import org.jacodb.api.cfg.JcExpr
@@ -122,8 +123,11 @@ class ForwardTaintFlowFunctions(
             }
         }
 
-
         if (fact.variable.startsWith(toPath)) {
+            // FIXME: pass-through tainted arrays
+            if (to is JcArrayAccess) {
+                return setOf(fact)
+            }
             // 'to' was (sub-)tainted, but it is now overridden by 'from':
             return emptySet()
         } else {
