@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.api
 
+import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.ControlFlowGraph
 
 interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
@@ -114,4 +115,48 @@ class PandaBlockGraph(
     override fun catchers(node: PandaBasicBlock): Set<PandaBasicBlock> = emptySet()
 
     override fun iterator(): Iterator<PandaBasicBlock> = instructions.iterator()
+}
+
+interface PandaApplicationGraph : ApplicationGraph<PandaMethod, PandaInst> {
+    override val project: PandaProject
+}
+
+class PandaApplicationGraphImpl(
+    override val project: PandaProject,
+) : PandaApplicationGraph {
+
+    override fun predecessors(node: PandaInst): Sequence<PandaInst> {
+        val graph = node.location.method.flowGraph()
+        val predecessors = graph.predecessors(node)
+        val throwers = graph.throwers(node)
+        return predecessors.asSequence() + throwers.asSequence()
+    }
+
+    override fun successors(node: PandaInst): Sequence<PandaInst> {
+        val graph = node.location.method.flowGraph()
+        val successors = graph.successors(node)
+        val catchers = graph.catchers(node)
+        return successors.asSequence() + catchers.asSequence()
+    }
+
+    override fun callees(node: PandaInst): Sequence<PandaMethod> {
+        val callExpr = node.callExpr ?: return emptySequence()
+        return sequenceOf(callExpr.callee)
+    }
+
+    override fun callers(method: PandaMethod): Sequence<PandaInst> {
+        TODO("Not yet implemented")
+    }
+
+    override fun entryPoints(method: PandaMethod): Sequence<PandaInst> {
+        return method.flowGraph().entries.asSequence()
+    }
+
+    override fun exitPoints(method: PandaMethod): Sequence<PandaInst> {
+        return method.flowGraph().exits.asSequence()
+    }
+
+    override fun methodOf(node: PandaInst): PandaMethod {
+        return node.location.method
+    }
 }

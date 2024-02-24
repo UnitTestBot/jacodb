@@ -50,10 +50,6 @@ interface PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
 
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        TODO("Not yet implemented")
-    }
-
     fun <T> accept(visitor: PandaInstVisitor<T>): T
 }
 
@@ -158,3 +154,26 @@ class PandaCallInst(
         return visitor.visitPandaCallInst(this)
     }
 }
+
+object CallExprVisitor :
+    PandaInstVisitor<PandaCallExpr?>,
+    CommonInst.Visitor.Default<PandaCallExpr?> {
+
+    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): PandaCallExpr? {
+        TODO("Not yet implemented")
+    }
+
+    fun defaultVisitPandaInst(inst: PandaInst): PandaCallExpr? {
+        return inst.operands.filterIsInstance<PandaCallExpr>().firstOrNull()
+    }
+
+    override fun visitTODOInst(inst: TODOInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaThrowInst(inst: PandaThrowInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaReturnInst(inst: PandaReturnInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaAssignInst(inst: PandaAssignInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaCallInst(inst: PandaCallInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaIfInst(inst: PandaIfInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+}
+
+val PandaInst.callExpr: PandaCallExpr?
+    get() = accept(CallExprVisitor)

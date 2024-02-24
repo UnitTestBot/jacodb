@@ -47,9 +47,8 @@ open class PandaMethod(
     override val parameters: List<PandaMethodParameter>
         get() = parameterInfos.map { TODO() }
 
-    private val blockGraph = PandaBlockGraph(blocks, instructions)
     override fun flowGraph(): PandaGraph {
-        return blockGraph.graph
+        return PandaBlockGraph(blocks, instructions).graph
     }
 
     private val signature: String
