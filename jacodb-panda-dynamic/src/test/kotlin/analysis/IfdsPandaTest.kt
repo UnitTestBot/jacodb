@@ -69,9 +69,8 @@ class IfdsPandaTest : BaseTest() {
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val manager = TaintManager(graph, unitResolver) { method ->
-            var hasConfig = false
             val rules = buildList {
-                if (method.name == "source") {
+                if (method.name == "add") {
                     add(
                         TaintMethodSource(
                             method = mockk<JcMethod>(),
@@ -81,9 +80,8 @@ class IfdsPandaTest : BaseTest() {
                             ),
                         )
                     )
-                    hasConfig = true
                 }
-                if (method.name == "sink") {
+                if (method.name == "log") {
                     add(
                         TaintMethodSink(
                             method = mockk<JcMethod>(),
@@ -92,10 +90,9 @@ class IfdsPandaTest : BaseTest() {
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )
                     )
-                    hasConfig = true
                 }
             }
-            if (hasConfig) rules else null
+            rules.ifEmpty { null }
         }
         val sinks = manager.analyze(methods)
         logger.info { "Sinks: $sinks" }

@@ -13,6 +13,7 @@ dependencies {
     implementation(Libs.kotlinx_coroutines_core)
     implementation(Libs.kotlinx_serialization_json)
     api(Libs.sarif4k)
+    api(project(":jacodb-panda-dynamic"))
 
     testImplementation(project(":jacodb-api-jvm"))
     testImplementation(testFixtures(project(":jacodb-core")))

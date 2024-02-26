@@ -20,6 +20,7 @@ import org.jacodb.analysis.ifds.CommonAccessPath
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.JcAccessPath
+import org.jacodb.analysis.ifds.PandaAccessPath
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
@@ -37,17 +38,20 @@ import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.ext.toType
+import org.jacodb.panda.dynamic.api.PandaMethod
 
 // TODO: rewrite
 internal val CommonMethod<*, *>.isConstructor: Boolean
     get() = when (this) {
         is JcMethod -> isConstructor
+        is PandaMethod -> false // TODO
         else -> error("Cannot determine whether method is constructor: $this")
     }
 
 val CommonMethod<*, *>.thisInstance: CommonThis
     get() = when (this) {
         is JcMethod -> thisInstance
+        is PandaMethod -> TODO()
         else -> error("Cannot get 'this' for method: $this")
     }
 
@@ -72,11 +76,15 @@ fun CommonAccessPath?.startsWith(other: CommonAccessPath?): Boolean {
     if (this is JcAccessPath && other is JcAccessPath) {
         return startsWith(other)
     }
+    if (this is PandaAccessPath && other is PandaAccessPath) {
+        return startsWith(other)
+    }
     error("Cannot determine whether the path $this starts with other path: $other")
 }
 
 internal fun CommonAccessPath.removeTrailingElementAccessors(): CommonAccessPath = when (this) {
     is JcAccessPath -> removeTrailingElementAccessors()
+    is PandaAccessPath -> removeTrailingElementAccessors()
     else -> error("Cannot remove trailing element accessors for path: $this")
 }
 
@@ -102,12 +110,30 @@ fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
     return this.accesses.take(other.accesses.size) == other.accesses
 }
 
+fun PandaAccessPath?.startsWith(other: PandaAccessPath?): Boolean {
+    if (this == null || other == null) {
+        return false
+    }
+    if (this.value != other.value) {
+        return false
+    }
+    return this.accesses.take(other.accesses.size) == other.accesses
+}
+
 internal fun JcAccessPath.removeTrailingElementAccessors(): JcAccessPath {
     val accesses = accesses.toMutableList()
     while (accesses.lastOrNull() is ElementAccessor) {
         accesses.removeLast()
     }
     return JcAccessPath(value, accesses)
+}
+
+internal fun PandaAccessPath.removeTrailingElementAccessors(): PandaAccessPath {
+    val accesses = accesses.toMutableList()
+    while (accesses.lastOrNull() is ElementAccessor) {
+        accesses.removeLast()
+    }
+    return PandaAccessPath(value, accesses)
 }
 
 internal fun Runner<*, *, *>.getPathEdges(): Set<Edge<*, *, *>> = when (this) {
