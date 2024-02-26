@@ -643,11 +643,24 @@ data class JcRawInstanceOfExpr(
 }
 
 sealed interface JcRawCallExpr : JcRawExpr {
+    @Deprecated(
+        "This property contains the name of the class via which the method is referenced, "
+                + "the method is declared in either directly that class or one of its superclasses. "
+                + "This property is deprecated in favor of a better named `referencedClass` property."
+    )
     val declaringClass: TypeName
     val methodName: String
     val argumentTypes: List<TypeName>
     val returnType: TypeName
     val args: List<JcRawValue>
+
+    /**
+     * Name of the class via which the method is referenced.
+     *
+     * Referenced class may be a subclass of a class that actually declares the method,
+     * since static members can be accessed via subclasses.
+     */
+    val referencedClass get() = declaringClass
 
     override val typeName get() = returnType
 
@@ -878,6 +891,11 @@ sealed interface JcRawComplexValue : JcRawValue
 
 data class JcRawFieldRef(
     val instance: JcRawValue?,
+    @Deprecated(
+        "This property contains the name of the class via which the field is referenced, "
+                + "the field is declared in either directly that class or one of its superclasses. "
+                + "This property is deprecated in favor of a better named `referencedClass` property."
+    )
     val declaringClass: TypeName,
     val fieldName: String,
     override val typeName: TypeName
@@ -888,6 +906,14 @@ data class JcRawFieldRef(
         fieldName,
         typeName
     )
+
+    /**
+     * Name of the class via which the field is referenced.
+     *
+     * Referenced class may be a subclass of a class that actually declares the field,
+     * since static members can be accessed via subclasses.
+     */
+    val referencedClass: TypeName get() = declaringClass
 
     override fun toString(): String = "${instance ?: declaringClass}.$fieldName"
 
