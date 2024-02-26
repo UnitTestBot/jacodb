@@ -62,7 +62,7 @@ public class JavaAnalysisApiTest {
                 .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
         UnitResolver<JcMethod> unitResolver = UnitResolverKt.getMethodUnitResolver();
-        TaintManager<JcMethod, JcInst> manager = new TaintManager<>(applicationGraph, unitResolver, false);
+        TaintManager<JcMethod, JcInst> manager = new TaintManager<>(applicationGraph, unitResolver, false, null);
         manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
     }
 
