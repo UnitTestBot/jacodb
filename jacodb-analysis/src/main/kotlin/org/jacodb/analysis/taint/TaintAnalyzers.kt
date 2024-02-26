@@ -25,24 +25,26 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.ext.callExpr
-import org.jacodb.api.jvm.JcMethod
 import org.jacodb.taint.configuration.TaintConfigurationFeature
+import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
 class TaintAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val getConfigForMethod: (ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>?)? = null,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     override val flowFunctions: ForwardTaintFlowFunctions<Method, Statement> by lazy {
-        ForwardTaintFlowFunctions(graph)
+        if (getConfigForMethod != null) {
+            ForwardTaintFlowFunctions(graph, getConfigForMethod)
+        } else {
+            ForwardTaintFlowFunctions(graph)
+        }
     }
-
-    private val taintConfigurationFeature: TaintConfigurationFeature?
-        get() = flowFunctions.taintConfigurationFeature
 
     private fun isExitPoint(statement: Statement): Boolean {
         return statement in graph.exitPoints(statement.location.method)
@@ -57,16 +59,11 @@ class TaintAnalyzer<Method, Statement>(
 
         run {
             val callExpr = edge.to.statement.callExpr ?: return@run
-            val callee = callExpr.callee
 
-            val config = taintConfigurationFeature?.let { feature ->
-                if (callee is JcMethod) {
-                    logger.trace { "Extracting config for $callee" }
-                    feature.getConfigForMethod(callee)
-                } else {
-                    error("Cannot extract config for $callee")
-                }
-            } ?: return@run
+            @Suppress("UNCHECKED_CAST")
+            val callee = callExpr.callee as Method
+
+            val config = with(flowFunctions) { getConfigForMethod(callee) } ?: return@run
 
             // TODO: not always we want to skip sinks on Zero facts.
             //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.

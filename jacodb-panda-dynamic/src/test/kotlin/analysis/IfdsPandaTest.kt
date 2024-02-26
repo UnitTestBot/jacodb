@@ -16,13 +16,23 @@
 
 package analysis
 
+import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
 import java.io.FileInputStream
@@ -58,7 +68,35 @@ class IfdsPandaTest : BaseTest() {
         }
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
-        val manager = TaintManager(graph, unitResolver)
+        val manager = TaintManager(graph, unitResolver) { method ->
+            var hasConfig = false
+            val rules = buildList {
+                if (method.name == "source") {
+                    add(
+                        TaintMethodSource(
+                            method = mockk<JcMethod>(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("TAINT"), position = Result),
+                            ),
+                        )
+                    )
+                    hasConfig = true
+                }
+                if (method.name == "sink") {
+                    add(
+                        TaintMethodSink(
+                            method = mockk<JcMethod>(),
+                            ruleNote = "CUSTOM SINK", // FIXME
+                            cwe = listOf(), // FIXME
+                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                        )
+                    )
+                    hasConfig = true
+                }
+            }
+            if (hasConfig) rules else null
+        }
         val sinks = manager.analyze(methods)
         logger.info { "Sinks: $sinks" }
     }
