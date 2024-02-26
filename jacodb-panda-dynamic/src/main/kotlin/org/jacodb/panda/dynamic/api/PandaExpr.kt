@@ -312,8 +312,7 @@ class PandaStrictEqExpr(
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
-    // TODO: why '>=' ?
-    override fun toString(): String = "$lhv >= $rhv"
+    override fun toString(): String = "$lhv === $rhv"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStrictEqExpr(this)

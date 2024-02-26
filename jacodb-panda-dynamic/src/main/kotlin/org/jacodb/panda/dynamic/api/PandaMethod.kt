@@ -30,13 +30,21 @@ open class PandaMethod(
     var project: PandaProject = PandaProject.empty()
         internal set
     var blocks: List<PandaBasicBlock> = emptyList()
-        internal set
+        internal set(value) {
+            field = value
+            flowGraph = null
+        }
     var instructions: List<PandaInst> = emptyList()
-        internal set
+        internal set(value) {
+            field = value
+            flowGraph = null
+        }
     var parameterInfos: List<PandaParameterInfo> = emptyList()
         internal set
     var className: String? = null
         internal set
+
+    private var flowGraph: PandaGraph? = null
 
     override val enclosingClass: CommonClass
         get() = TODO("Not yet implemented")
@@ -45,10 +53,18 @@ open class PandaMethod(
         get() = PandaTypeName(type.typeName)
 
     override val parameters: List<PandaMethodParameter>
-        get() = parameterInfos.map { TODO() }
+        get() = parameterInfos.map { PandaMethodParameter(
+            PandaTypeName(it.type.typeName),
+            "arg ${it.index}",
+            it.index,
+            this
+        ) }
 
     override fun flowGraph(): PandaGraph {
-        return PandaBlockGraph(blocks, instructions).graph
+        if (flowGraph == null) {
+            flowGraph = PandaBlockGraph(blocks, instructions).graph
+        }
+        return flowGraph!!
     }
 
     private val signature: String
