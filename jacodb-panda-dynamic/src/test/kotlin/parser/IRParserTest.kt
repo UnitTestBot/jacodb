@@ -25,12 +25,12 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class IRParserTest {
-    private val bcFilePath = javaClass.getResource("/samples/ProgramByteCode.abc")?.path ?: ""
+    private val bcFilePath = javaClass.getResource("/samples/Program1.abc")?.path ?: ""
     private val bytes = FileInputStream(bcFilePath).readBytes()
     private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
     private val bcParser = ByteCodeParser(buffer)
 
-    private val sampleFilePath = javaClass.getResource("/samples/ProgramIR.json")?.path ?: ""
+    private val sampleFilePath = javaClass.getResource("/samples/Program1.json")?.path ?: ""
     private val parser: IRParser = IRParser(sampleFilePath, bcParser)
 
     init {
@@ -80,9 +80,4 @@ class IRParserTest {
         }
         println(opcodes.sorted().joinToString(separator = "\n"))
     }
-
-//    @Test
-//    fun createControlFlowGraph() {
-//    }
-
 }

@@ -25,7 +25,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class ByteCodeParserTest {
-    private val sampleFilePath = javaClass.getResource("/samples/ProgramByteCode.abc")?.path ?: ""
+    private val sampleFilePath = javaClass.getResource("/samples/Program1.abc")?.path ?: ""
     private val bytes = FileInputStream(sampleFilePath).readBytes()
     private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
 

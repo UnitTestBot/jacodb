@@ -67,7 +67,6 @@
                   "users": [
                     "v5"
                   ],
-                  "type": "any",
                   "bc": "0x0000000c"
                 },
                 {
@@ -170,7 +169,6 @@
                 },
                 {
                   "id": "v14",
-                  "type": "any",
                   "opcode": "Intrinsic.tryldglobalbyname",
                   "inputs": [
                     "v15"
@@ -178,6 +176,7 @@
                   "users": [
                     "v19"
                   ],
+                  "type": "any",
                   "bc": "0x00000019"
                 },
                 {
@@ -190,28 +189,28 @@
                 },
                 {
                   "id": "v17",
-                  "type": "ref",
                   "opcode": "LoadString",
-                  "value": "213",
                   "inputs": [
                     "v16"
                   ],
                   "users": [
                     "v18"
                   ],
+                  "value": "213",
+                  "type": "ref",
                   "bc": "0x0000001f"
                 },
                 {
                   "id": "v18",
-                  "type": "any",
                   "opcode": "CastValueToAnyType",
-                  "value": "UNDEFINED_TYPE",
                   "inputs": [
                     "v17"
                   ],
                   "users": [
                     "v19"
                   ],
+                  "value": "UNDEFINED_TYPE",
+                  "type": "any",
                   "bc": "0x0000001f"
                 },
                 {
@@ -224,7 +223,6 @@
                 },
                 {
                   "id": "v19",
-                  "type": "any",
                   "opcode": "Intrinsic.newobjrange",
                   "inputs": [
                     "v14",
@@ -234,6 +232,7 @@
                   "users": [
                     "v21"
                   ],
+                  "type": "any",
                   "bc": "0x00000024"
                 },
                 {
@@ -246,12 +245,12 @@
                 },
                 {
                   "id": "v21",
-                  "type": "void",
                   "opcode": "Intrinsic.throw",
                   "inputs": [
                     "v19",
                     "v22"
                   ],
+                  "type": "void",
                   "bc": "0x00000028"
                 }
               ],
@@ -275,7 +274,6 @@
                 },
                 {
                   "id": "v23",
-                  "type": "any",
                   "opcode": "Intrinsic.add2",
                   "inputs": [
                     "v3",
@@ -285,6 +283,7 @@
                   "users": [
                     "v25"
                   ],
+                  "type": "any",
                   "bc": "0x00000030"
                 },
                 {
@@ -297,12 +296,12 @@
                 },
                 {
                   "id": "v25",
-                  "type": "void",
                   "opcode": "Intrinsic.return",
                   "inputs": [
                     "v23",
                     "v26"
                   ],
+                  "type": "void",
                   "bc": "0x00000033"
                 }
               ],
@@ -465,6 +464,7 @@
                   "users": [
                     "v13"
                   ],
+                  "type": "any",
                   "bc": "0x0000002b"
                 },
                 {
@@ -484,6 +484,7 @@
                     "v5",
                     "v14"
                   ],
+                  "type": "any",
                   "bc": "0x00000033"
                 },
                 {
@@ -500,6 +501,7 @@
                   "inputs": [
                     "v16"
                   ],
+                  "type": "any",
                   "bc": "0x00000037"
                 },
                 {
@@ -516,6 +518,7 @@
                   "inputs": [
                     "v18"
                   ],
+                  "type": "void",
                   "bc": "0x00000038"
                 }
               ],
