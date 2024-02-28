@@ -35,6 +35,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaStrictEqExpr(expr: PandaStrictEqExpr): T
     fun visitPandaNewExpr(expr: PandaNewExpr): T
     fun visitPandaAddExpr(expr: PandaAddExpr): T
+    fun visitPandaStaticCallExpr(expr: PandaStaticCallExpr): T
     fun visitPandaVirtualCallExpr(expr: PandaVirtualCallExpr): T
     fun visitPandaNumberConstant(expr: PandaNumberConstant): T
     fun visitPandaTODOConstant(expr: TODOConstant): T

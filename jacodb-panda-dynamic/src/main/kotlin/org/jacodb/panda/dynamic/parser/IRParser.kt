@@ -51,6 +51,7 @@ import org.jacodb.panda.dynamic.api.PandaNumberType
 import org.jacodb.panda.dynamic.api.PandaParameterInfo
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
+import org.jacodb.panda.dynamic.api.PandaStaticCallExpr
 import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
 import org.jacodb.panda.dynamic.api.PandaStringConstant
 import org.jacodb.panda.dynamic.api.PandaThrowInst
@@ -558,12 +559,13 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callargs2" -> {
-                val callExpr = PandaVirtualCallExpr(
-                    lazy {
+                val callExpr = PandaStaticCallExpr(
+                    lazyMethod = lazy {
                         val callFuncName = (inputs[2] as PandaStringConstant).value
                         method.pandaMethod.project.findMethodOrNull(callFuncName, method.getClass().name)
                             ?: PandaMethod(callFuncName, PandaAnyType)
-                    }, listOf(inputs[0], inputs[1])
+                    },
+                    args = listOf(inputs[0], inputs[1])
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
@@ -604,13 +606,13 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
             opcode == "Intrinsic.callthis1" -> {
                 val callExpr = PandaVirtualCallExpr(
-                    lazy {
+                    lazyMethod = lazy {
                         method.pandaMethod.project.findInstanceMethodInStd(
                             (inputs[0] as PandaStringConstant).value,
                             (inputs[1] as PandaStringConstant).value
                         )
                     },
-                    listOf(inputs[2]),
+                    args = listOf(inputs[2]),
                     instance = inputs[0]
                 )
                 if (outputs.isEmpty()) {

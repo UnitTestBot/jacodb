@@ -18,6 +18,7 @@ package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 
@@ -101,6 +102,13 @@ interface PandaCallExpr : PandaExpr, CommonCallExpr {
 
     override val operands: List<PandaValue>
         get() = args
+}
+
+interface PandaInstanceCallExpr : PandaCallExpr, CommonInstanceCallExpr {
+    override val instance: PandaValue
+
+    override val operands: List<PandaValue>
+        get() = listOf(instance) + args
 }
 
 interface PandaConditionExpr : PandaBinaryExpr
@@ -381,19 +389,29 @@ class PandaAddExpr(
     }
 }
 
-class PandaVirtualCallExpr(
+class PandaStaticCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
-    val instance: PandaValue? = null,
 ) : PandaCallExpr {
     override val method: PandaMethod
         get() = lazyMethod.value
 
-    override fun toString(): String = buildString {
-        if (instance != null) append("$instance.")
-        append(method.name)
-        append("(${args.joinToString(separator = ", ") { it.toString() }})")
+    override fun toString(): String = "${method.name}(${args.joinToString(", ")})"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaStaticCallExpr(this)
     }
+}
+
+class PandaVirtualCallExpr(
+    private val lazyMethod: Lazy<PandaMethod>,
+    override val args: List<PandaValue>,
+    override val instance: PandaValue,
+) : PandaInstanceCallExpr {
+    override val method: PandaMethod
+        get() = lazyMethod.value
+
+    override fun toString(): String = "$instance.${method.name}(${args.joinToString(", ")})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaVirtualCallExpr(this)
