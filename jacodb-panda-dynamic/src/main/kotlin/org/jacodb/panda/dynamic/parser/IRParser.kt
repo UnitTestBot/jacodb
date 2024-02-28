@@ -197,7 +197,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
         private var basicBlock: ProgramBasicBlock? = null
 
-        private fun String.trimId() = this.drop(1).toInt()
+        private fun String.trimId(): Int = this.drop(1).toInt()
 
         private val _id: Int = id.trimId()
 
