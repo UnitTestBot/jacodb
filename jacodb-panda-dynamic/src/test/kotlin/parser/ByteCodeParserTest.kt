@@ -23,39 +23,30 @@ import org.junit.jupiter.api.Test
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.test.assertNotNull
+
+private val logger = mu.KotlinLogging.logger {}
 
 class ByteCodeParserTest {
-    private val sampleFilePath = javaClass.getResource("/samples/Program1.abc")?.path ?: ""
-    private val bytes = FileInputStream(sampleFilePath).readBytes()
-    private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-
-    @Test
-    fun parseAndPrintHeader() {
-        val parser = ByteCodeParser(buffer)
-        val abc = parser.parseABC()
-        println(abc.header)
+    private fun loadBuffer(fileName: String): ByteBuffer {
+        val filePath = javaClass.getResource(fileName)?.path ?: ""
+        val bytes = FileInputStream(filePath).readBytes()
+        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
     }
-
     @Test
-    fun parseAndPrintClassIndex() {
-        val parser = ByteCodeParser(buffer)
-        val header = parser.parseABC().header
-        val classIndex = header.classIndex
-        println(classIndex)
-    }
-
-    @Test
-    fun parseAndPrintMethods() {
-        val parser = ByteCodeParser(buffer)
-        val abc = parser.parseABC()
-        val methods = abc.methods
-        methods.forEach {
-            println(it)
+    fun `parse bytecode`() {
+        val fileName = "/samples/Program2.abc"
+        val abc = ByteCodeParser(loadBuffer(fileName)).parseABC()
+        logger.info { "Header:\n ${abc.header}" }
+        abc.methods.forEach {
+            logger.info { "Method \'${it.name}\':\n $it" }
         }
+        assertNotNull(abc)
     }
 
     @Test
-    fun validateHeader() {
+    fun `validate header from Program1`() {
+        val buffer = loadBuffer("/samples/Program1.abc")
         val expectedMagic = listOf(0x50, 0x41, 0x4E, 0x44, 0x41, 0x00, 0x00, 0x00).map { it.toByte() }
         val expectedChecksum = listOf(0x60, 0x7A, 0x49, 0x42).map { it.toByte() }
         val expectedVersion = listOf(0x0B, 0x00, 0x01, 0x00).map { it.toByte() }
@@ -91,7 +82,8 @@ class ByteCodeParserTest {
     }
 
     @Test
-    fun validateMethods() {
+    fun `validate methods from Program1`() {
+        val buffer = loadBuffer("/samples/Program1.abc")
         val parser = ByteCodeParser(buffer)
         val actualMethods = parser.parseABC().methods
         assertEquals(2, actualMethods.size)
