@@ -33,6 +33,7 @@ class ByteCodeParserTest {
         val bytes = FileInputStream(filePath).readBytes()
         return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
     }
+
     @Test
     fun `parse bytecode`() {
         val fileName = "/samples/Program2.abc"
