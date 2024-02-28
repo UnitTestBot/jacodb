@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 
@@ -51,12 +50,14 @@ open class PandaMethod(
         get() = PandaTypeName(type.typeName)
 
     override val parameters: List<PandaMethodParameter>
-        get() = parameterInfos.map { PandaMethodParameter(
-            PandaTypeName(it.type.typeName),
-            "arg ${it.index}",
-            it.index,
-            this
-        ) }
+        get() = parameterInfos.map {
+            PandaMethodParameter(
+                PandaTypeName(it.type.typeName),
+                "arg ${it.index}",
+                it.index,
+                this
+            )
+        }
 
     override fun flowGraph(): PandaGraph {
         if (flowGraph == null) {
