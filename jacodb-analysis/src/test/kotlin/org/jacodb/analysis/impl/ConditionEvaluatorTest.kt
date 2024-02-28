@@ -22,7 +22,6 @@ import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.toMaybe
-import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
@@ -326,9 +325,9 @@ class ConditionEvaluatorTest {
     }
 
     @Test
-    fun `FactAwareConditionEvaluator supports ContainsMark`() {
+    fun `FactAwareConditionEvaluator supports ContainsMark`() = with(JcTraits) {
         val fact = Tainted(intValue.toPath(), TaintMark("FOO"))
-        val factAwareEvaluator = FactAwareConditionEvaluator(fact, JcTraits, positionResolver)
+        val factAwareEvaluator = FactAwareConditionEvaluator(fact, positionResolver)
         assertTrue(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("FOO"))))
         assertFalse(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("BAR"))))
         assertFalse(factAwareEvaluator.visit(ContainsMark(stringArg, TaintMark("FOO"))))

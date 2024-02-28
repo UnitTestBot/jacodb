@@ -17,99 +17,171 @@
 package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.ifds.ElementAccessor
+import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcExpr
+import org.jacodb.api.jvm.cfg.JcFieldRef
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcSimpleValue
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.toType
+import org.jacodb.panda.dynamic.api.PandaArrayAccess
+import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaClassType
 import org.jacodb.panda.dynamic.api.PandaExpr
+import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaThis
 import org.jacodb.panda.dynamic.api.PandaValue
 
 /**
  * Extensions for analysis.
  */
-abstract class Traits<out Method, out Statement>
+interface Traits<out Method, out Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
-    abstract fun thisInstance(method: @UnsafeVariance Method): CommonThis
-    abstract fun isConstructor(method: @UnsafeVariance Method): Boolean
+    val @UnsafeVariance Method.thisInstance: CommonThis
+    val @UnsafeVariance Method.isConstructor: Boolean
 
-    abstract fun toPathOrNull(expr: CommonExpr): AccessPath?
-    abstract fun toPath(value: CommonValue): AccessPath
+    fun CommonExpr.toPathOrNull(): AccessPath?
+    fun CommonValue.toPathOrNull(): AccessPath?
+    fun CommonValue.toPath(): AccessPath
 
-    val scope: Scope = Scope()
-
-    inner class Scope {
-        val @UnsafeVariance Method.thisInstance: CommonThis
-            get() = thisInstance(this)
-
-        val @UnsafeVariance Method.isConstructor: Boolean
-            get() = isConstructor(this)
-
-        fun CommonExpr.toPathOrNull(): AccessPath? = toPathOrNull(this)
-
-        fun CommonValue.toPath(): AccessPath = toPath(this)
-    }
 }
 
 // JVM
-object JcTraits : Traits<JcMethod, JcInst>() {
-    override fun thisInstance(method: JcMethod): JcThis {
-        return JcThis(method.enclosingClass.toType())
+object JcTraits : Traits<JcMethod, JcInst> {
+
+    override val JcMethod.thisInstance: JcThis
+        get() = JcThis(enclosingClass.toType())
+
+    @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+    override val JcMethod.isConstructor: Boolean
+        get() = isConstructor
+
+    override fun CommonExpr.toPathOrNull(): AccessPath? {
+        check(this is JcExpr)
+        return toPathOrNull()
     }
 
-    override fun isConstructor(method: JcMethod): Boolean {
-        return method.isConstructor
+    fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
+        is JcValue -> toPathOrNull()
+        is JcCastExpr -> operand.toPathOrNull()
+        else -> null
     }
 
-    override fun toPathOrNull(expr: CommonExpr): AccessPath? {
-        check(expr is JcExpr)
-        return expr.toPathOrNull()
+    override fun CommonValue.toPathOrNull(): AccessPath? {
+        check(this is JcValue)
+        return toPathOrNull()
     }
 
-    override fun toPath(value: CommonValue): AccessPath {
-        check(value is JcValue)
-        return value.toPath()
+    fun JcValue.toPathOrNull(): AccessPath? = when (this) {
+        is JcSimpleValue -> AccessPath(this, emptyList())
+
+        is JcArrayAccess -> {
+            array.toPathOrNull()?.let {
+                it + ElementAccessor
+            }
+        }
+
+        is JcFieldRef -> {
+            val instance = instance
+            if (instance == null) {
+                require(field.isStatic) { "Expected static field" }
+                AccessPath(null, listOf(FieldAccessor(field.field)))
+            } else {
+                instance.toPathOrNull()?.let {
+                    it + FieldAccessor(field.field)
+                }
+            }
+        }
+
+        else -> null
+    }
+
+    override fun CommonValue.toPath(): AccessPath {
+        check(this is JcValue)
+        return toPath()
+    }
+
+    fun JcValue.toPath(): AccessPath {
+        return toPathOrNull() ?: error("Unable to build access path for value $this")
     }
 }
 
 // Panda
-object PandaTraits : Traits<PandaMethod, PandaInst>() {
-    override fun thisInstance(method: PandaMethod): CommonThis {
-        return PandaThis(method.enclosingClass.toType())
-    }
+object PandaTraits : Traits<PandaMethod, PandaInst> {
 
-    override fun isConstructor(method: PandaMethod): Boolean {
+    override val PandaMethod.thisInstance: PandaThis
+        get() = PandaThis(enclosingClass.toType())
+
+    override val PandaMethod.isConstructor: Boolean
         // TODO
-        return false
-    }
+        get() = false
 
     private fun PandaClass.toType(): PandaClassType {
         TODO()
         // return project.classTypeOf(this)
     }
 
-    override fun toPathOrNull(expr: CommonExpr): AccessPath? {
-        check(expr is PandaExpr)
-        return expr.toPathOrNull()
+    override fun CommonExpr.toPathOrNull(): AccessPath? {
+        check(this is PandaExpr)
+        return toPathOrNull()
     }
 
-    override fun toPath(value: CommonValue): AccessPath {
-        check(value is PandaValue)
-        return value.toPath()
+    fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
+        is PandaValue -> toPathOrNull()
+        is PandaCastExpr -> operand.toPathOrNull()
+        else -> null
+    }
+
+    override fun CommonValue.toPathOrNull(): AccessPath? {
+        check(this is PandaValue)
+        return toPathOrNull()
+    }
+
+    fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
+        is PandaSimpleValue -> AccessPath(this, emptyList())
+
+        is PandaArrayAccess -> {
+            array.toPathOrNull()?.let {
+                it + ElementAccessor
+            }
+        }
+
+        is PandaFieldRef -> {
+            val instance = instance
+            if (instance == null) {
+                AccessPath(null, listOf(FieldAccessor(classField)))
+            } else {
+                instance.toPathOrNull()?.let {
+                    it + FieldAccessor(classField)
+                }
+            }
+        }
+
+        else -> null
+    }
+
+    override fun CommonValue.toPath(): AccessPath {
+        check(this is PandaValue)
+        return toPath()
+    }
+
+    fun PandaValue.toPath(): AccessPath {
+        return toPathOrNull() ?: error("Unable to build access path for value $this")
     }
 }

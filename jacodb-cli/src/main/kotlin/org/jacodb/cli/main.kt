@@ -64,7 +64,7 @@ fun launchAnalysesByConfig(
     config: AnalysisConfig,
     graph: JcApplicationGraph,
     methods: List<JcMethod>,
-): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> {
+): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> = with(JcTraits) {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)
@@ -72,17 +72,17 @@ fun launchAnalysesByConfig(
 
         when (analysis) {
             "NPE" -> {
-                val manager = NpeManager(graph, JcTraits, unitResolver)
+                val manager = NpeManager(graph, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
             }
 
             "Unused" -> {
-                val manager = UnusedVariableManager(graph, JcTraits, unitResolver)
+                val manager = UnusedVariableManager(graph, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif() }
             }
 
             "SQL" -> {
-                val manager = TaintManager(graph, JcTraits, unitResolver)
+                val manager = TaintManager(graph, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
             }
 

@@ -19,7 +19,6 @@ package org.jacodb.analysis.impl
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
@@ -97,8 +96,8 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test obtain start facts`() {
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+    fun `test obtain start facts`() = with(JcTraits) {
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val facts = flowSpace.obtainPossibleStartFacts(testMethod).toList()
         val arg0 = cp.getArgument(testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("EXAMPLE"))
@@ -106,12 +105,12 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test sequential flow function assign mark`() {
+    fun `test sequential flow function assign mark`() = with(JcTraits) {
         // "x := y", where 'y' is tainted, should result in both 'x' and 'y' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
         val inst = JcAssignInst(location = mockk(), lhv = x, rhv = y)
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainSequentFlowFunction(inst, next = mockk())
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
@@ -120,13 +119,13 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function assign mark`() {
+    fun `test call flow function assign mark`() = with(JcTraits) {
         // "x := test(...)", where 'test' is a source, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
             every { callee } returns testMethod
         })
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("EXAMPLE"))
         val facts = f.compute(TaintZeroFact).toList()
@@ -134,14 +133,14 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function remove mark`() {
+    fun `test call flow function remove mark`() = with(JcTraits) {
         // "test(x)", where 'x' is tainted, should result in 'x' NOT to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
             every { callee } returns testMethod
             every { args } returns listOf(x)
         })
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("REMOVE"))
         val facts = f.compute(xTaint).toList()
@@ -149,7 +148,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function copy mark`() {
+    fun `test call flow function copy mark`() = with(JcTraits) {
         // "y := test(x)" should result in 'y' to be tainted only when 'x' is tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
@@ -157,7 +156,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             every { callee } returns testMethod
             every { args } returns listOf(x)
         })
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("COPY"))
         val yTaint = Tainted(y.toPath(), TaintMark("COPY"))
@@ -170,14 +169,14 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call to start flow function`() {
+    fun `test call to start flow function`() = with(JcTraits) {
         // "test(x)", where 'x' is tainted, should result in 'x' (formal argument of 'test') to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
             every { callee } returns testMethod
             every { args } returns listOf(x)
         })
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainCallToStartFlowFunction(callStatement, calleeStart = mockk {
             every { location } returns mockk {
                 every { method } returns testMethod
@@ -195,7 +194,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test exit flow function`() {
+    fun `test exit flow function`() = with(JcTraits) {
         // "x := test()" + "return y", where 'y' is tainted, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
@@ -205,7 +204,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         val exitStatement = JcReturnInst(location = mockk {
             every { method } returns testMethod
         }, returnValue = y)
-        val flowSpace = ForwardTaintFlowFunctions(graph, JcTraits)
+        val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainExitToReturnSiteFlowFunction(callStatement, returnSite = mockk(), exitStatement)
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))

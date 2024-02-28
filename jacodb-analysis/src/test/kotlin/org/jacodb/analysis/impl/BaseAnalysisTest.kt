@@ -105,7 +105,10 @@ abstract class BaseAnalysisTest : BaseTest() {
         }
     }
 
-    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability<*, JcMethod, JcInst>>) {
+    protected fun testSingleJulietClass(
+        className: String,
+        findSinks: (JcMethod) -> List<Vulnerability<*, JcMethod, JcInst>>,
+    ) {
         logger.info { className }
 
         val clazz = cp.findClass(className)

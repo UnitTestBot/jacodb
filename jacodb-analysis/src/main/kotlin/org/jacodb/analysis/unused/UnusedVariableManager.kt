@@ -54,9 +54,9 @@ import kotlin.time.TimeSource
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class UnusedVariableManager<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
     private val unitResolver: UnitResolver<Method>,
 ) : Manager<UnusedVariableDomainFact, UnusedVariableEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
@@ -79,7 +79,7 @@ class UnusedVariableManager<Method, Statement>(
         check(unit !in runnerForUnit) { "Runner for $unit already exists" }
 
         logger.debug { "Creating a new runner for $unit" }
-        val analyzer = UnusedVariableAnalyzer(graph, traits)
+        val analyzer = UnusedVariableAnalyzer(graph)
         val runner = UniRunner(
             graph = graph,
             analyzer = analyzer,
@@ -197,7 +197,7 @@ class UnusedVariableManager<Method, Statement>(
                     if (fact is UnusedVariable) {
                         @Suppress("UNCHECKED_CAST")
                         used.putIfAbsent(fact.initStatement as Statement, false)
-                        if (fact.variable.isUsedAt(inst, traits)) {
+                        if (fact.variable.isUsedAt(inst)) {
                             used[fact.initStatement] = true
                         }
                     }

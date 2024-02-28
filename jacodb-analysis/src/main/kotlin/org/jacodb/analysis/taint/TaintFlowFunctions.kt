@@ -23,7 +23,6 @@ import org.jacodb.analysis.config.EntryPointPositionToAccessPathResolver
 import org.jacodb.analysis.config.EntryPointPositionToValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
@@ -63,9 +62,9 @@ import org.jacodb.taint.configuration.TaintPassThrough
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class ForwardTaintFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
     val getConfigForMethod: ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>? = { method ->
         taintConfigurationFeature?.let { feature ->
             if (method is JcMethod) {
@@ -83,9 +82,9 @@ class ForwardTaintFlowFunctions<Method, Statement>(
     private val cp: Project
         get() = graph.project
 
-    // TODO: inline
-    private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
-    private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
+    // // TODO: inline
+    // private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
+    // private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         val cp = cp
@@ -107,8 +106,8 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         // Extract initial facts from the config:
         val config = getConfigForMethod(method)
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp, traits))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp, traits))
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
@@ -268,7 +267,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                         CallPositionToValueResolver(callStatement)
                     )
                     val actionEvaluator = TaintActionEvaluator(
-                        CallPositionToAccessPathResolver(callStatement, traits)
+                        CallPositionToAccessPathResolver(callStatement)
                     )
 
                     // Handle MethodSource config items:
@@ -291,10 +290,10 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         if (config != null) {
             val facts = mutableSetOf<Tainted>()
             val conditionEvaluator = FactAwareConditionEvaluator(
-                fact, traits, CallPositionToValueResolver(callStatement)
+                fact, CallPositionToValueResolver(callStatement)
             )
             val actionEvaluator = TaintActionEvaluator(
-                CallPositionToAccessPathResolver(callStatement, traits)
+                CallPositionToAccessPathResolver(callStatement)
             )
             var defaultBehavior = true
 
@@ -345,7 +344,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         }
 
         // FIXME: adhoc for constructors:
-        if (traits.isConstructor(callee)) {
+        if (callee.isConstructor) {
             return@FlowFunction listOf(fact)
         }
 
@@ -419,7 +418,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                     transmitTaintInstanceToThis(
                         fact = fact,
                         from = callExpr.instance,
-                        to = traits.thisInstance(callee)
+                        to = callee.thisInstance
                     )
                 )
             }
@@ -466,7 +465,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                 addAll(
                     transmitTaintThisToInstance(
                         fact = fact,
-                        from = traits.thisInstance(callee),
+                        from = callee.thisInstance,
                         to = callExpr.instance
                     )
                 )
@@ -488,19 +487,15 @@ class ForwardTaintFlowFunctions<Method, Statement>(
     }
 }
 
+context(Traits<Method, Statement>)
 class BackwardTaintFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     private val cp: Project
         get() = graph.project
-
-    // TODO: inline
-    private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
-    private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
 
     override fun obtainPossibleStartFacts(
         method: Method,
@@ -513,7 +508,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
         from: CommonValue,
         to: CommonExpr,
     ): Collection<TaintDomainFact> {
-        val fromPath = traits.toPath(from)
+        val fromPath = from.toPath()
         val toPath = to.toPathOrNull()
 
         if (toPath != null) {
@@ -679,7 +674,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
                     transmitTaintInstanceToThis(
                         fact = fact,
                         from = callExpr.instance,
-                        to = traits.thisInstance(callee)
+                        to = callee.thisInstance
                     )
                 )
             }
@@ -740,7 +735,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
                 addAll(
                     transmitTaintThisToInstance(
                         fact = fact,
-                        from = traits.thisInstance(callee),
+                        from = callee.thisInstance,
                         to = callExpr.instance
                     )
                 )

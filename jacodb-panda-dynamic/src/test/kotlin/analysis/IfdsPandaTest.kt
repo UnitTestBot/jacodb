@@ -78,7 +78,7 @@ class IfdsPandaTest : BaseTest() {
     }
 
     @Test
-    fun `test Program1`() {
+    fun `test Program1`() = with(PandaTraits) {
         val project = loadProjectForProgram("Program1")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
@@ -107,7 +107,6 @@ class IfdsPandaTest : BaseTest() {
             }
         val manager = TaintManager(
             graph = graph,
-            traits = PandaTraits,
             unitResolver = unitResolver,
             getConfigForMethod = getConfigForMethod,
         )
@@ -124,7 +123,7 @@ class IfdsPandaTest : BaseTest() {
 
     @Disabled("Requires IR update")
     @Test
-    fun `test Program2`() {
+    fun `test Program2`() = with(PandaTraits) {
         val project = loadProjectForProgram("Program2")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
@@ -171,7 +170,6 @@ class IfdsPandaTest : BaseTest() {
             }
         val manager = TaintManager(
             graph = graph,
-            traits = PandaTraits,
             unitResolver = unitResolver,
             getConfigForMethod = getConfigForMethod,
         )

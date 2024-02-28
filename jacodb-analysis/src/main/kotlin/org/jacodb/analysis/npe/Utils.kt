@@ -18,19 +18,17 @@ package org.jacodb.analysis.npe
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.minus
-import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.analysis.util.values
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
 import org.jacodb.api.jvm.cfg.JcLengthExpr
 
-internal fun AccessPath?.isDereferencedAt(
-    expr: CommonExpr,
-    traits: Traits<*, *>,
-): Boolean {
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+internal fun AccessPath?.isDereferencedAt(expr: CommonExpr): Boolean {
     if (this == null) {
         return false
     }
@@ -50,16 +48,14 @@ internal fun AccessPath?.isDereferencedAt(
     }
 
     return expr.values
-        .mapNotNull { traits.toPathOrNull(it) }
+        .mapNotNull { it.toPathOrNull() }
         .any {
             (it - this)?.isNotEmpty() == true
         }
 }
 
-internal fun AccessPath?.isDereferencedAt(
-    inst: CommonInst<*, *>,
-    traits: Traits<*, *>,
-): Boolean {
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+internal fun AccessPath?.isDereferencedAt(inst: CommonInst<*, *>): Boolean {
     if (this == null) return false
-    return inst.operands.any { isDereferencedAt(it, traits) }
+    return inst.operands.any { isDereferencedAt(it) }
 }

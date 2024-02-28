@@ -31,9 +31,9 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class TaintAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
     private val getConfigForMethod: (ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>?)? = null,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
@@ -41,9 +41,9 @@ class TaintAnalyzer<Method, Statement>(
 
     override val flowFunctions: ForwardTaintFlowFunctions<Method, Statement> by lazy {
         if (getConfigForMethod != null) {
-            ForwardTaintFlowFunctions(graph, traits, getConfigForMethod)
+            ForwardTaintFlowFunctions(graph, getConfigForMethod)
         } else {
-            ForwardTaintFlowFunctions(graph, traits)
+            ForwardTaintFlowFunctions(graph)
         }
     }
 
@@ -75,7 +75,6 @@ class TaintAnalyzer<Method, Statement>(
             // Determine whether 'edge.to' is a sink via config:
             val conditionEvaluator = FactAwareConditionEvaluator(
                 edge.to.fact,
-                traits,
                 CallPositionToValueResolver(edge.to.statement),
             )
             for (item in config.filterIsInstance<TaintMethodSink>()) {
@@ -97,15 +96,15 @@ class TaintAnalyzer<Method, Statement>(
     }
 }
 
+context(Traits<Method, Statement>)
 class BackwardTaintAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     override val flowFunctions: BackwardTaintFlowFunctions<Method, Statement> by lazy {
-        BackwardTaintFlowFunctions(graph, traits)
+        BackwardTaintFlowFunctions(graph)
     }
 
     private fun isExitPoint(statement: Statement): Boolean {

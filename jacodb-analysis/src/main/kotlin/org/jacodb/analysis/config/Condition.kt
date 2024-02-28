@@ -21,6 +21,8 @@ import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.removeTrailingElementAccessors
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.cfg.JcBool
@@ -160,16 +162,16 @@ open class BasicConditionEvaluator(
     }
 }
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
-    private val traits: Traits<*, *>,
     positionResolver: PositionResolver<Maybe<CommonValue>>,
 ) : BasicConditionEvaluator(positionResolver) {
 
     override fun visit(condition: ContainsMark): Boolean {
         if (fact.mark != condition.mark) return false
         positionResolver.resolve(condition.position).onSome { value ->
-            val variable = traits.toPath(value)
+            val variable = value.toPath()
 
             // FIXME: Adhoc for arrays
             val variableWithoutStars = variable.removeTrailingElementAccessors()

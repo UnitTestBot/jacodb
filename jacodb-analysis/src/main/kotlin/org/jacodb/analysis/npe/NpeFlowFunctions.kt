@@ -41,7 +41,6 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
-import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
@@ -77,21 +76,15 @@ import org.jacodb.taint.configuration.TaintPassThrough
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class ForwardNpeFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-    private val traits: Traits<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     private val cp: Project
         get() = graph.project
-
-    // TODO: inline
-    private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
-    private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
-    private fun AccessPath?.isDereferencedAt(expr: CommonExpr): Boolean = isDereferencedAt(expr, traits)
-    private fun AccessPath?.isDereferencedAt(inst: CommonInst<*, *>): Boolean = isDereferencedAt(inst, traits)
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         val cp = cp
@@ -137,8 +130,8 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             }
         }
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp, traits))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp, traits))
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
@@ -415,7 +408,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
                         CallPositionToValueResolver(callStatement)
                     )
                     val actionEvaluator = TaintActionEvaluator(
-                        CallPositionToAccessPathResolver(callStatement, traits)
+                        CallPositionToAccessPathResolver(callStatement)
                     )
 
                     // Handle MethodSource config items:
@@ -444,10 +437,10 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             } else {
                 val facts = mutableSetOf<Tainted>()
                 val conditionEvaluator = FactAwareConditionEvaluator(
-                    fact, traits, CallPositionToValueResolver(callStatement)
+                    fact, CallPositionToValueResolver(callStatement)
                 )
                 val actionEvaluator = TaintActionEvaluator(
-                    CallPositionToAccessPathResolver(callStatement, traits)
+                    CallPositionToAccessPathResolver(callStatement)
                 )
                 var defaultBehavior = true
 
@@ -499,7 +492,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         }
 
         // FIXME: adhoc for constructors:
-        if (traits.isConstructor(callee)) {
+        if (callee.isConstructor) {
             return@FlowFunction listOf(fact)
         }
 
@@ -581,7 +574,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
                         fact = fact,
                         at = callStatement,
                         from = callExpr.instance,
-                        to = traits.thisInstance(callee)
+                        to = callee.thisInstance
                     )
                 )
             }
@@ -643,7 +636,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
                     transmitTaintThisToInstance(
                         fact = fact,
                         at = callStatement,
-                        from = traits.thisInstance(callee),
+                        from = callee.thisInstance,
                         to = callExpr.instance
                     )
                 )
