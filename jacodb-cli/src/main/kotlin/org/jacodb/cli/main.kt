@@ -77,7 +77,7 @@ fun launchAnalysesByConfig(
             }
 
             "Unused" -> {
-                val manager = UnusedVariableManager(graph, unitResolver)
+                val manager = UnusedVariableManager(graph, JcTraits, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif() }
             }
 

@@ -16,9 +16,7 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.cfg.JcArrayAccess
 import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcExpr
@@ -28,114 +26,153 @@ import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
 import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaExpr
-import org.jacodb.panda.dynamic.api.PandaField
 import org.jacodb.panda.dynamic.api.PandaFieldRef
-import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaValue
 
-interface CommonAccessPath {
-    val value: CommonValue?
-    val accesses: List<Accessor>
+data class AccessPath internal constructor(
+    val value: CommonValue?,
+    val accesses: List<Accessor>,
+) {
+    fun limit(n: Int): AccessPath = AccessPath(value, accesses.take(n))
 
-    fun limit(n: Int): CommonAccessPath
+    operator fun plus(accesses: List<Accessor>): AccessPath {
+        // for (accessor in accesses) {
+        //     if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
+        //         throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+        //     }
+        // }
 
-    operator fun plus(accesses: List<Accessor>): CommonAccessPath
-    operator fun plus(accessor: Accessor): CommonAccessPath
-}
-
-val CommonAccessPath.isOnHeap: Boolean
-    get() = accesses.isNotEmpty()
-
-val CommonAccessPath.isStatic: Boolean
-    get() = value == null
-
-operator fun CommonAccessPath.minus(other: CommonAccessPath): List<Accessor>? {
-    if (value != other.value) return null
-    if (accesses.take(other.accesses.size) != other.accesses) return null
-    return accesses.drop(other.accesses.size)
-}
-
-fun CommonExpr.toPathOrNull(): CommonAccessPath? = when (this) {
-    is JcExpr -> toPathOrNull()
-    is PandaExpr -> toPathOrNull()
-    is CommonValue -> toPathOrNull()
-    else -> error("Cannot")
-}
-
-fun CommonValue.toPathOrNull(): CommonAccessPath? = when (this) {
-    is JcValue -> toPathOrNull()
-    is PandaValue -> toPathOrNull()
-    else -> error("Cannot")
-}
-
-fun CommonValue.toPath(): CommonAccessPath = when (this) {
-    is JcValue -> toPath()
-    is PandaValue -> toPath()
-    else -> error("Cannot")
-}
-
-/**
- * This class is used to represent an access path that is needed for problems
- * where dataflow facts could be correlated with variables/values
- * (such as NPE, uninitialized variable, etc.)
- */
-data class JcAccessPath internal constructor(
-    override val value: JcSimpleValue?, // null for static field
-    override val accesses: List<Accessor>,
-) : CommonAccessPath {
-    init {
-        if (value == null) {
-            require(accesses.isNotEmpty())
-            val a = accesses[0]
-            require(a is FieldAccessor)
-            require(a.field is JcField)
-            require(a.field.isStatic)
-        }
+        return AccessPath(value, this.accesses + accesses)
     }
 
-    override fun limit(n: Int): JcAccessPath = JcAccessPath(value, accesses.take(n))
+    operator fun plus(accessor: Accessor): AccessPath {
+        // if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
+        //     throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+        // }
 
-    override operator fun plus(accesses: List<Accessor>): JcAccessPath {
-        for (accessor in accesses) {
-            if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
-                throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
-            }
-        }
-
-        return JcAccessPath(value, this.accesses + accesses)
-    }
-
-    override operator fun plus(accessor: Accessor): JcAccessPath {
-        if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
-            throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
-        }
-
-        return JcAccessPath(value, this.accesses + accessor)
+        return AccessPath(value, this.accesses + accessor)
     }
 
     override fun toString(): String {
         return value.toString() + accesses.joinToString("") { it.toSuffix() }
     }
-
-    companion object {
-        fun from(value: JcSimpleValue): JcAccessPath = JcAccessPath(value, emptyList())
-
-        fun from(field: JcField): JcAccessPath {
-            require(field.isStatic) { "Expected static field" }
-            return JcAccessPath(null, listOf(FieldAccessor(field)))
-        }
-    }
 }
 
-fun JcExpr.toPathOrNull(): JcAccessPath? = when (this) {
+val AccessPath.isOnHeap: Boolean
+    get() = accesses.isNotEmpty()
+
+val AccessPath.isStatic: Boolean
+    get() = value == null
+
+operator fun AccessPath.minus(other: AccessPath): List<Accessor>? {
+    if (value != other.value) return null
+    if (accesses.take(other.accesses.size) != other.accesses) return null
+    return accesses.drop(other.accesses.size)
+}
+
+// interface CommonAccessPath {
+//     val value: CommonValue?
+//     val accesses: List<Accessor>
+//
+//     fun limit(n: Int): CommonAccessPath
+//
+//     operator fun plus(accesses: List<Accessor>): CommonAccessPath
+//     operator fun plus(accessor: Accessor): CommonAccessPath
+// }
+//
+// val CommonAccessPath.isOnHeap: Boolean
+//     get() = accesses.isNotEmpty()
+//
+// val CommonAccessPath.isStatic: Boolean
+//     get() = value == null
+//
+// operator fun CommonAccessPath.minus(other: CommonAccessPath): List<Accessor>? {
+//     if (value != other.value) return null
+//     if (accesses.take(other.accesses.size) != other.accesses) return null
+//     return accesses.drop(other.accesses.size)
+// }
+//
+// fun CommonExpr.toPathOrNull(): CommonAccessPath? = when (this) {
+//     // is JcExpr -> toPathOrNull()
+//     is PandaExpr -> toPathOrNull()
+//     is CommonValue -> toPathOrNull()
+//     else -> error("Cannot")
+// }
+//
+// fun CommonValue.toPathOrNull(): CommonAccessPath? = when (this) {
+//     // is JcValue -> toPathOrNull()
+//     is PandaValue -> toPathOrNull()
+//     else -> error("Cannot")
+// }
+//
+// fun CommonValue.toPath(): CommonAccessPath = when (this) {
+//     // is JcValue -> toPath()
+//     is PandaValue -> toPath()
+//     else -> error("Cannot")
+// }
+//
+// /**
+//  * This class is used to represent an access path that is needed for problems
+//  * where dataflow facts could be correlated with variables/values
+//  * (such as NPE, uninitialized variable, etc.)
+//  */
+// data class JcAccessPath internal constructor(
+//     override val value: JcSimpleValue?, // null for static field
+//     override val accesses: List<Accessor>,
+// ) : CommonAccessPath {
+//     init {
+//         if (value == null) {
+//             require(accesses.isNotEmpty())
+//             val a = accesses[0]
+//             require(a is FieldAccessor)
+//             require(a.field is JcField)
+//             require(a.field.isStatic)
+//         }
+//     }
+//
+//     override fun limit(n: Int): JcAccessPath = JcAccessPath(value, accesses.take(n))
+//
+//     override operator fun plus(accesses: List<Accessor>): JcAccessPath {
+//         for (accessor in accesses) {
+//             if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
+//                 throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+//             }
+//         }
+//
+//         return JcAccessPath(value, this.accesses + accesses)
+//     }
+//
+//     override operator fun plus(accessor: Accessor): JcAccessPath {
+//         if (accessor is FieldAccessor && (accessor.field as JcField).isStatic) {
+//             throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+//         }
+//
+//         return JcAccessPath(value, this.accesses + accessor)
+//     }
+//
+//     override fun toString(): String {
+//         return value.toString() + accesses.joinToString("") { it.toSuffix() }
+//     }
+//
+//     companion object {
+//         fun from(value: JcSimpleValue): JcAccessPath = JcAccessPath(value, emptyList())
+//
+//         fun from(field: JcField): JcAccessPath {
+//             require(field.isStatic) { "Expected static field" }
+//             return JcAccessPath(null, listOf(FieldAccessor(field)))
+//         }
+//     }
+// }
+
+fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
     is JcValue -> toPathOrNull()
     is JcCastExpr -> operand.toPathOrNull()
     else -> null
 }
 
-fun JcValue.toPathOrNull(): JcAccessPath? = when (this) {
-    is JcSimpleValue -> JcAccessPath.from(this)
+fun JcValue.toPathOrNull(): AccessPath? = when (this) {
+    is JcSimpleValue -> AccessPath(this, emptyList())
 
     is JcArrayAccess -> {
         array.toPathOrNull()?.let {
@@ -146,7 +183,8 @@ fun JcValue.toPathOrNull(): JcAccessPath? = when (this) {
     is JcFieldRef -> {
         val instance = instance
         if (instance == null) {
-            JcAccessPath.from(field.field)
+            require(field.isStatic) { "Expected static field" }
+            AccessPath(null, listOf(FieldAccessor(field.field)))
         } else {
             instance.toPathOrNull()?.let {
                 it + FieldAccessor(field.field)
@@ -157,67 +195,67 @@ fun JcValue.toPathOrNull(): JcAccessPath? = when (this) {
     else -> null
 }
 
-fun JcValue.toPath(): JcAccessPath {
+fun JcValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-data class PandaAccessPath(
-    override val value: PandaSimpleValue?, // null for static field
-    override val accesses: List<Accessor>,
-) : CommonAccessPath {
+// data class PandaAccessPath(
+//     override val value: PandaSimpleValue?, // null for static field
+//     override val accesses: List<Accessor>,
+// ) : CommonAccessPath {
+//
+//     init {
+//         if (value == null) {
+//             require(accesses.isNotEmpty())
+//             val a = accesses[0]
+//             require(a is FieldAccessor)
+//             require(a.field is JcField)
+//             require(a.field.isStatic)
+//         }
+//     }
+//
+//     override fun limit(n: Int): PandaAccessPath = PandaAccessPath(value, accesses.take(n))
+//
+//     override operator fun plus(accesses: List<Accessor>): PandaAccessPath {
+//         // for (accessor in accesses) {
+//         //     if (accessor is FieldAccessor && (accessor.field as PandaField).isStatic) {
+//         //         throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+//         //     }
+//         // }
+//
+//         return PandaAccessPath(value, this.accesses + accesses)
+//     }
+//
+//     override operator fun plus(accessor: Accessor): PandaAccessPath {
+//         // if (accessor is FieldAccessor && (accessor.field as PandaField).isStatic) {
+//         //     throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
+//         // }
+//
+//         return PandaAccessPath(value, this.accesses + accessor)
+//     }
+//
+//     override fun toString(): String {
+//         return value.toString() + accesses.joinToString("") { it.toSuffix() }
+//     }
+//
+//     companion object {
+//         fun from(value: PandaLocalVar): PandaAccessPath = PandaAccessPath(value, emptyList())
+//
+//         fun from(field: PandaField): PandaAccessPath {
+//             // require(field.isStatic) { "Expected static field" }
+//             return PandaAccessPath(null, listOf(FieldAccessor(field)))
+//         }
+//     }
+// }
 
-    init {
-        if (value == null) {
-            require(accesses.isNotEmpty())
-            val a = accesses[0]
-            require(a is FieldAccessor)
-            require(a.field is JcField)
-            require(a.field.isStatic)
-        }
-    }
-
-    override fun limit(n: Int): PandaAccessPath = PandaAccessPath(value, accesses.take(n))
-
-    override operator fun plus(accesses: List<Accessor>): PandaAccessPath {
-        // for (accessor in accesses) {
-        //     if (accessor is FieldAccessor && (accessor.field as PandaField).isStatic) {
-        //         throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
-        //     }
-        // }
-
-        return PandaAccessPath(value, this.accesses + accesses)
-    }
-
-    override operator fun plus(accessor: Accessor): PandaAccessPath {
-        // if (accessor is FieldAccessor && (accessor.field as PandaField).isStatic) {
-        //     throw IllegalArgumentException("Unexpected static field: ${accessor.field}")
-        // }
-
-        return PandaAccessPath(value, this.accesses + accessor)
-    }
-
-    override fun toString(): String {
-        return value.toString() + accesses.joinToString("") { it.toSuffix() }
-    }
-
-    companion object {
-        fun from(value: PandaLocalVar): PandaAccessPath = PandaAccessPath(value, emptyList())
-
-        fun from(field: PandaField): PandaAccessPath {
-            // require(field.isStatic) { "Expected static field" }
-            return PandaAccessPath(null, listOf(FieldAccessor(field)))
-        }
-    }
-}
-
-fun PandaExpr.toPathOrNull(): PandaAccessPath? = when (this) {
+fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
     is PandaValue -> toPathOrNull()
     is PandaCastExpr -> operand.toPathOrNull()
     else -> null
 }
 
-fun PandaValue.toPathOrNull(): PandaAccessPath? = when (this) {
-    is PandaLocalVar -> PandaAccessPath.from(this)
+fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
+    is PandaSimpleValue -> AccessPath(this, emptyList())
 
     is PandaArrayAccess -> {
         array.toPathOrNull()?.let {
@@ -228,7 +266,7 @@ fun PandaValue.toPathOrNull(): PandaAccessPath? = when (this) {
     is PandaFieldRef -> {
         val instance = instance
         if (instance == null) {
-            PandaAccessPath.from(classField)
+            AccessPath(null, listOf(FieldAccessor(classField)))
         } else {
             instance.toPathOrNull()?.let {
                 it + FieldAccessor(classField)
@@ -239,6 +277,6 @@ fun PandaValue.toPathOrNull(): PandaAccessPath? = when (this) {
     else -> null
 }
 
-fun PandaValue.toPath(): PandaAccessPath {
+fun PandaValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }

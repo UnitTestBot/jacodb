@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.api.common.cfg.CommonInst
 
 sealed interface UnusedVariableDomainFact
@@ -26,6 +26,6 @@ object UnusedVariableZeroFact : UnusedVariableDomainFact {
 }
 
 data class UnusedVariable(
-    val variable: CommonAccessPath,
+    val variable: AccessPath,
     val initStatement: CommonInst<*, *>,
 ) : UnusedVariableDomainFact

@@ -24,6 +24,7 @@ import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcPrimitiveType
 import org.jacodb.api.jvm.JcType
@@ -37,7 +38,6 @@ import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantEq
@@ -328,7 +328,7 @@ class ConditionEvaluatorTest {
     @Test
     fun `FactAwareConditionEvaluator supports ContainsMark`() {
         val fact = Tainted(intValue.toPath(), TaintMark("FOO"))
-        val factAwareEvaluator = FactAwareConditionEvaluator(fact, positionResolver)
+        val factAwareEvaluator = FactAwareConditionEvaluator(fact, JcTraits, positionResolver)
         assertTrue(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("FOO"))))
         assertFalse(factAwareEvaluator.visit(ContainsMark(intArg, TaintMark("BAR"))))
         assertFalse(factAwareEvaluator.visit(ContainsMark(stringArg, TaintMark("FOO"))))

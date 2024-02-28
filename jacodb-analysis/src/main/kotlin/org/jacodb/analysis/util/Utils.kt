@@ -16,11 +16,9 @@
 
 package org.jacodb.analysis.util
 
-import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.JcAccessPath
-import org.jacodb.analysis.ifds.PandaAccessPath
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
@@ -52,25 +50,6 @@ fun Project.getArgumentsOf(method: CommonMethod<*, *>): List<CommonArgument> {
     }
 }
 
-fun CommonAccessPath?.startsWith(other: CommonAccessPath?): Boolean {
-    if (this == null || other == null) {
-        return false
-    }
-    if (this is JcAccessPath && other is JcAccessPath) {
-        return startsWith(other)
-    }
-    if (this is PandaAccessPath && other is PandaAccessPath) {
-        return startsWith(other)
-    }
-    error("Cannot determine whether the path $this starts with other path: $other")
-}
-
-internal fun CommonAccessPath.removeTrailingElementAccessors(): CommonAccessPath = when (this) {
-    is JcAccessPath -> removeTrailingElementAccessors()
-    is PandaAccessPath -> removeTrailingElementAccessors()
-    else -> error("Cannot remove trailing element accessors for path: $this")
-}
-
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
 
@@ -83,7 +62,7 @@ fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
     return method.parameters.map { getArgument(it)!! }
 }
 
-fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
+fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     if (this == null || other == null) {
         return false
     }
@@ -93,30 +72,12 @@ fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
     return this.accesses.take(other.accesses.size) == other.accesses
 }
 
-fun PandaAccessPath?.startsWith(other: PandaAccessPath?): Boolean {
-    if (this == null || other == null) {
-        return false
+internal fun AccessPath.removeTrailingElementAccessors(): AccessPath {
+    var index = accesses.size
+    while (index > 0 && accesses[index - 1] is ElementAccessor) {
+        index--
     }
-    if (this.value != other.value) {
-        return false
-    }
-    return this.accesses.take(other.accesses.size) == other.accesses
-}
-
-internal fun JcAccessPath.removeTrailingElementAccessors(): JcAccessPath {
-    val accesses = accesses.toMutableList()
-    while (accesses.lastOrNull() is ElementAccessor) {
-        accesses.removeLast()
-    }
-    return JcAccessPath(value, accesses)
-}
-
-internal fun PandaAccessPath.removeTrailingElementAccessors(): PandaAccessPath {
-    val accesses = accesses.toMutableList()
-    while (accesses.lastOrNull() is ElementAccessor) {
-        accesses.removeLast()
-    }
-    return PandaAccessPath(value, accesses)
+    return AccessPath(value, accesses.subList(0, index))
 }
 
 internal fun Runner<*, *, *>.getPathEdges(): Set<Edge<*, *, *>> = when (this) {
@@ -153,16 +114,14 @@ class CommonValueResolver : TypedCommonExprResolver<CommonValue>() {
     }
 }
 
-// TODO: consider renaming to "values"
-val CommonExpr.coreValues: Set<CommonValue>
+val CommonExpr.values: Set<CommonValue>
     get() {
         val resolver = CommonValueResolver()
         accept(resolver)
         return resolver.result
     }
 
-// TODO: consider renaming to "values"
-val CommonInst<*, *>.coreValues: Set<CommonValue>
+val CommonInst<*, *>.values: Set<CommonValue>
     get() {
         val resolver = CommonValueResolver()
         accept(resolver)

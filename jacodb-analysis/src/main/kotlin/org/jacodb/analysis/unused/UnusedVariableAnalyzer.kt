@@ -19,18 +19,20 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Vertex
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 
 class UnusedVariableAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val traits: Traits<Method, Statement>,
 ) : Analyzer<UnusedVariableDomainFact, UnusedVariableEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     override val flowFunctions: UnusedVariableFlowFunctions<Method, Statement> by lazy {
-        UnusedVariableFlowFunctions(graph)
+        UnusedVariableFlowFunctions(graph,traits)
     }
 
     private fun isExitPoint(statement: Statement): Boolean {
