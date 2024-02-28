@@ -49,7 +49,6 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.junit.jupiter.api.Disabled
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -63,7 +62,7 @@ class IfdsPandaTest : BaseTest() {
     companion object : WithDB()
 
     private fun loadProjectForProgram(programName: String): PandaProject {
-        val bcFilePath = javaClass.getResource("/samples/${programName}.abc")?.path ?: ""
+        val bcFilePath = javaClass.getResource(programName)?.path ?: ""
         val bytes = FileInputStream(bcFilePath).readBytes()
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
         val bcParser = ByteCodeParser(buffer)
@@ -78,8 +77,8 @@ class IfdsPandaTest : BaseTest() {
     }
 
     @Test
-    fun `test Program1`() = with(PandaTraits) {
-        val project = loadProjectForProgram("Program1")
+    fun `test taint analysis on Program1`() = with(PandaTraits) {
+        val project = loadProjectForProgram("/samples/Program1.abc")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -121,10 +120,9 @@ class IfdsPandaTest : BaseTest() {
         assertTrue(sinks.isNotEmpty())
     }
 
-    @Disabled("Requires IR update")
     @Test
-    fun `test Program2`() = with(PandaTraits) {
-        val project = loadProjectForProgram("Program2")
+    fun `test taint analysis on Program2`() = with(PandaTraits) {
+        val project = loadProjectForProgram("/samples/Program2.abc")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
