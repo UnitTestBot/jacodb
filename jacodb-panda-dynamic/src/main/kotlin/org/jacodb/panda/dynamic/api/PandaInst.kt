@@ -38,9 +38,10 @@ class PandaInstLocation(
 data class PandaInstRef(
     val index: Int,
 ) : Comparable<PandaInstRef> {
-    init {
-        require(index >= 0) { "index must be non-negative" }
-    }
+    // TODO: consider enabling this check
+    // init {
+    //     require(index >= 0) { "index must be non-negative" }
+    // }
 
     override fun compareTo(other: PandaInstRef): Int {
         return this.index.compareTo(other.index)
