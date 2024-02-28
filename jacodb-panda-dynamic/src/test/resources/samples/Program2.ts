@@ -1,30 +1,30 @@
 class Sample2 {
-
-    goodSource() {
-        return 10
-    }
-
-    badSource() {
+    source(): string {
         return null
     }
 
-    passThrough(data) {
-        let smth = data + 5
+    pass(data) {
+        return data
+    }
+
+    validate(data) {
+        if (data == null) return "OK"
+        return data
     }
 
     sink(data) {
         if (data == null) throw Error("Error!")
     }
 
-    good() {
-        let data = this.goodSource()
-        this.passThrough(data)
+    bad() {
+        let data = this.source()
+        data = this.pass(data)
         this.sink(data)
     }
 
-    bad() {
-        let data = this.badSource()
-        this.passThrough(data)
+    good() {
+        let data = this.source()
+        data = this.validate(data)
         this.sink(data)
     }
 }
