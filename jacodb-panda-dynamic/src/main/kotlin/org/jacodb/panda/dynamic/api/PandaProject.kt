@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.Project
 
 class PandaProject(
@@ -70,19 +69,6 @@ class PandaProject(
     companion object {
         fun empty(): PandaProject = PandaProject(emptyList())
     }
-
-}
-
-class PandaClass(
-    override val name: String,
-    val superClassName: String,
-    val methods: List<PandaMethod>,
-) : CommonClass {
-    override var project: PandaProject = PandaProject.empty()
-        internal set
-
-    override val simpleName: String
-        get() = name
 }
 
 class PandaObject(

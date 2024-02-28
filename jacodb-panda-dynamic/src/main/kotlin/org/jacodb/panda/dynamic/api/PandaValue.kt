@@ -130,7 +130,7 @@ interface PandaComplexValue : PandaValue
 
 data class PandaFieldRef(
     override val instance: PandaValue?, // null for static fields
-    override val classField: CommonClassField,
+    override val classField: PandaField,
     override val type: PandaType,
 ) : PandaComplexValue, CommonFieldRef {
     override val operands: List<PandaValue>

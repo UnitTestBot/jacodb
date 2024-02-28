@@ -25,8 +25,11 @@ import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcFieldRef
 import org.jacodb.api.jvm.cfg.JcSimpleValue
 import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.panda.dynamic.api.PandaArrayAccess
 import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaExpr
+import org.jacodb.panda.dynamic.api.PandaField
+import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaValue
@@ -200,10 +203,10 @@ data class PandaAccessPath(
     companion object {
         fun from(value: PandaLocalVar): PandaAccessPath = PandaAccessPath(value, emptyList())
 
-        // fun from(field: PandaField): PandaAccessPath {
-        //     require(field.isStatic) { "Expected static field" }
-        //     return JcAccessPath(null, listOf(FieldAccessor(field)))
-        // }
+        fun from(field: PandaField): PandaAccessPath {
+            // require(field.isStatic) { "Expected static field" }
+            return PandaAccessPath(null, listOf(FieldAccessor(field)))
+        }
     }
 }
 
@@ -216,22 +219,22 @@ fun PandaExpr.toPathOrNull(): PandaAccessPath? = when (this) {
 fun PandaValue.toPathOrNull(): PandaAccessPath? = when (this) {
     is PandaLocalVar -> PandaAccessPath.from(this)
 
-    // is PandaArrayAccess -> {
-    //     array.toPathOrNull()?.let {
-    //         it + ElementAccessor
-    //     }
-    // }
+    is PandaArrayAccess -> {
+        array.toPathOrNull()?.let {
+            it + ElementAccessor
+        }
+    }
 
-    // is PandaFieldRef -> {
-    //     val instance = instance
-    //     if (instance == null) {
-    //         JcAccessPath.from(field.field)
-    //     } else {
-    //         instance.toPathOrNull()?.let {
-    //             it + FieldAccessor(field.field)
-    //         }
-    //     }
-    // }
+    is PandaFieldRef -> {
+        val instance = instance
+        if (instance == null) {
+            PandaAccessPath.from(classField)
+        } else {
+            instance.toPathOrNull()?.let {
+                it + FieldAccessor(classField)
+            }
+        }
+    }
 
     else -> null
 }
