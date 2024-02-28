@@ -148,7 +148,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
         fun getClass() = clazz ?: error("Class not set for method $name")
 
-        fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs.getOrDefault(op.id(), emptyList())
+        fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs[op.id()].orEmpty()
 
         init {
             basicBlocks.forEach { it.setMethod(this) }
@@ -338,7 +338,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     }
 
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
-        method.idToIRInputs.getOrDefault(outputId, mutableListOf()).forEachIndexed { index, programInst ->
+        method.idToIRInputs[outputId].orEmpty().forEachIndexed { index, programInst ->
             if (inputId == programInst.id()) {
                 method.idToInputs.getOrPut(outputId) { mutableListOf() }.add(index, input)
             }
