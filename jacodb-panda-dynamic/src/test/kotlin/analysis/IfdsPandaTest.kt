@@ -49,6 +49,7 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.junit.jupiter.api.Disabled
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -121,6 +122,7 @@ class IfdsPandaTest : BaseTest() {
         assertTrue(sinks.isNotEmpty())
     }
 
+    @Disabled("Requires IR update")
     @Test
     fun `test Program2`() {
         val project = loadProjectForProgram("Program2")
