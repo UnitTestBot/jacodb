@@ -28,6 +28,7 @@ import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaLocalVar
+import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaValue
 
 interface CommonAccessPath {
@@ -158,7 +159,7 @@ fun JcValue.toPath(): JcAccessPath {
 }
 
 data class PandaAccessPath(
-    override val value: PandaLocalVar?, // null for static field
+    override val value: PandaSimpleValue?, // null for static field
     override val accesses: List<Accessor>,
 ) : CommonAccessPath {
 

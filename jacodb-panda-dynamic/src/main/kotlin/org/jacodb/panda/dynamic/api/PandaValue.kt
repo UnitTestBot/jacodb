@@ -21,14 +21,21 @@ import org.jacodb.api.common.cfg.CommonValue
 
 interface PandaValue : PandaExpr, CommonValue
 
-class PandaLocalVar(val id: Int) : PandaValue {
-    override val type: PandaType
-        get() = PandaAnyType
-
+interface PandaSimpleValue : PandaValue {
     override val operands: List<PandaValue>
         get() = emptyList()
+}
 
-    override fun toString(): String = "%$id"
+interface PandaLocal : PandaSimpleValue {
+    // TODO: val name: String
+}
+
+class PandaLocalVar(
+    val index: Int,
+    override val type: PandaType = PandaAnyType, // TODO: remove default value
+) : PandaLocal {
+
+    override fun toString(): String = "%$index"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLocalVar(this)
@@ -37,9 +44,7 @@ class PandaLocalVar(val id: Int) : PandaValue {
 
 class PandaThis(
     override val type: PandaType,
-) : PandaValue, CommonThis {
-    override val operands: List<PandaValue>
-        get() = emptyList()
+) : PandaLocal, CommonThis {
 
     override fun toString(): String = "this"
 
@@ -48,12 +53,9 @@ class PandaThis(
     }
 }
 
-class PandaArgument(val id: Int) : PandaValue {
+class PandaArgument(val id: Int) : PandaSimpleValue {
     override val type: PandaType
         get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
 
     override fun toString() = "arg $id"
 
@@ -62,14 +64,11 @@ class PandaArgument(val id: Int) : PandaValue {
     }
 }
 
-interface PandaConstant : PandaValue
+interface PandaConstant : PandaSimpleValue
 
 class TODOConstant(val value: String?) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
 
     override fun toString() = value?.let { "\"$it\"" } ?: "null"
 
@@ -82,9 +81,6 @@ class PandaNumberConstant(val value: Int) : PandaConstant {
     override val type: PandaType
         get() = PandaNumberType
 
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
     override fun toString() = value.toString()
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
@@ -96,9 +92,6 @@ class PandaStringConstant(val value: String) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
 
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
     override fun toString() = "\"$value\""
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
@@ -109,9 +102,6 @@ class PandaStringConstant(val value: String) : PandaConstant {
 object PandaUndefinedConstant : PandaConstant {
     override val type: PandaType
         get() = PandaUndefinedType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
 
     override fun toString(): String = "undefined"
 
