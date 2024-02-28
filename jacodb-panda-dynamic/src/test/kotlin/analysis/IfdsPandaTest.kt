@@ -61,8 +61,8 @@ class IfdsPandaTest : BaseTest() {
 
     companion object : WithDB()
 
-    private fun loadProjectForProgram(programName: String): PandaProject {
-        val bcFilePath = javaClass.getResource(programName)?.path ?: ""
+    private fun loadProjectForSample(programName: String): PandaProject {
+        val bcFilePath = javaClass.getResource("/samples/${programName}.abc")?.path ?: ""
         val bytes = FileInputStream(bcFilePath).readBytes()
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
         val bcParser = ByteCodeParser(buffer)
@@ -78,7 +78,7 @@ class IfdsPandaTest : BaseTest() {
 
     @Test
     fun `test taint analysis on Program1`() = with(PandaTraits) {
-        val project = loadProjectForProgram("/samples/Program1.abc")
+        val project = loadProjectForSample("Program1")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -122,7 +122,7 @@ class IfdsPandaTest : BaseTest() {
 
     @Test
     fun `test taint analysis on Program2`() = with(PandaTraits) {
-        val project = loadProjectForProgram("/samples/Program2.abc")
+        val project = loadProjectForSample("Program2")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
