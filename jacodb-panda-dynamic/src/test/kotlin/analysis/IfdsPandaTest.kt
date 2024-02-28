@@ -22,10 +22,17 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaTraits
+import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaInstLocation
+import org.jacodb.panda.dynamic.api.PandaInstRef
 import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaProject
+import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.jacodb.taint.configuration.Argument
@@ -178,6 +185,50 @@ class IfdsPandaTest : BaseTest() {
         val badSinks = manager.analyze(listOf(badMethod))
         logger.info { "Sinks in bad(): $badSinks" }
         assertTrue(badSinks.isNotEmpty())
+    }
+
+    @Test
+    fun `manually create PandaProject`() {
+        val project = PandaProject(
+            classes = listOf(
+                PandaClass(
+                    name = "Sample",
+                    superClassName = "std.core.Object",
+                    methods = listOf(
+                        PandaMethod(name = "source", type = PandaAnyType).also {
+                            it.blocks = listOf(
+                                PandaBasicBlock(
+                                    id = 0,
+                                    successors = setOf(1),
+                                    predecessors = emptySet(),
+                                    start = PandaInstRef(0),
+                                    end = PandaInstRef(1)
+                                ),
+                                PandaBasicBlock(
+                                    id = 1,
+                                    successors = setOf(),
+                                    predecessors = setOf(0),
+                                    start = PandaInstRef(0),
+                                    end = PandaInstRef(1)
+                                )
+                            )
+                            it.instructions = listOf(
+                                PandaReturnInst(
+                                    location = PandaInstLocation(method = it, index = 0, lineNumber = 3),
+                                    returnValue = PandaNullConstant(PandaAnyType)
+                                )
+                            )
+                            it.className = "Sample"
+                        }
+                    )
+                )
+            )
+        )
+        logger.info { "project = $project" }
+        logger.info { "classes = ${project.classes}" }
+        assertTrue(project.classes.isNotEmpty())
+        logger.info { "methods = ${project.classes.flatMap { it.methods }}" }
+        assertTrue(project.classes.flatMap { it.methods }.isNotEmpty())
     }
 
 }
