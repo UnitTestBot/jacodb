@@ -541,6 +541,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.returnundefined" -> {
+                // TODO: consider 'returnValue = PandaUndefinedConstant'
                 val inst = PandaReturnInst(locationFromOp(this), null)
                 method.insts.add(inst)
             }
