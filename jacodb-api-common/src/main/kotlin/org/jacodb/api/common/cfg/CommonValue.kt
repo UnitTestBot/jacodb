@@ -16,7 +16,7 @@
 
 package org.jacodb.api.common.cfg
 
-import org.jacodb.api.common.CommonTypedField
+import org.jacodb.api.common.CommonClassField
 
 interface CommonValue : CommonExpr {
     interface Visitor<out T> {
@@ -44,7 +44,7 @@ interface CommonArgument : CommonValue {
 
 interface CommonFieldRef : CommonValue {
     val instance: CommonValue?
-    val field: CommonTypedField
+    val classField: CommonClassField
 }
 
 interface CommonArrayAccess : CommonValue {

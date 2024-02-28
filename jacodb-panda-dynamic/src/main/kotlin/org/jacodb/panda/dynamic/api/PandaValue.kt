@@ -16,6 +16,9 @@
 
 package org.jacodb.panda.dynamic.api
 
+import org.jacodb.api.common.CommonClassField
+import org.jacodb.api.common.cfg.CommonArrayAccess
+import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 
@@ -120,5 +123,37 @@ class PandaNullConstant(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNullConstant(this)
+    }
+}
+
+interface PandaComplexValue : PandaValue
+
+data class PandaFieldRef(
+    override val instance: PandaValue?, // null for static fields
+    override val classField: CommonClassField,
+    override val type: PandaType,
+) : PandaComplexValue, CommonFieldRef {
+    override val operands: List<PandaValue>
+        get() = listOfNotNull(instance)
+
+    override fun toString(): String = "${instance ?: classField.enclosingClass.simpleName}.${classField.name}"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaFieldRef(this)
+    }
+}
+
+data class PandaArrayAccess(
+    override val array: PandaValue,
+    override val index: PandaValue,
+    override val type: PandaType,
+) : PandaComplexValue, CommonArrayAccess {
+    override val operands: List<PandaValue>
+        get() = listOf(array, index)
+
+    override fun toString(): String = "$array[$index]"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaArrayAccess(this)
     }
 }

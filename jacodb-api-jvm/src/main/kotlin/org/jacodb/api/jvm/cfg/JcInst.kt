@@ -16,6 +16,7 @@
 
 package org.jacodb.api.jvm.cfg
 
+import org.jacodb.api.common.CommonClassField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
@@ -900,7 +901,7 @@ interface JcComplexValue : JcValue
 
 data class JcFieldRef(
     override val instance: JcValue?,
-    override val field: JcTypedField,
+    val field: JcTypedField,
 ) : JcComplexValue, CommonFieldRef {
 
     override val type: JcType
@@ -908,6 +909,9 @@ data class JcFieldRef(
 
     override val operands: List<JcValue>
         get() = instance?.let { listOf(it) }.orEmpty()
+
+    override val classField: CommonClassField
+        get() = this.field.field
 
     override fun toString(): String = "${instance ?: field.enclosingType.typeName}.${field.name}"
 
