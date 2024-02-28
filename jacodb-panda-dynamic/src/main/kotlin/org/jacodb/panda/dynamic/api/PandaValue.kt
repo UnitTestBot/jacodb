@@ -126,9 +126,9 @@ class PandaNullConstant(
     override val operands: List<PandaValue>
         get() = emptyList()
 
+    override fun toString(): String = "null"
+
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNullConstant(this)
     }
-
-    override fun toString(): String = "null"
 }
