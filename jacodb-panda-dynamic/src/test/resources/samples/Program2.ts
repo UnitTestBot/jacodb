@@ -1,30 +1,28 @@
-class Sample2 {
-    source(): string {
-        return null
-    }
+function source() {
+    return null
+}
 
-    pass(data) {
-        return data
-    }
+function pass(data) {
+    return data
+}
 
-    validate(data) {
-        if (data == null) return "OK"
-        return data
-    }
+function validate(data) {
+    if (data == null) return "OK"
+    return data
+}
 
-    sink(data) {
-        if (data == null) throw Error("Error!")
-    }
+function sink(data) {
+    if (data == null) throw Error("Error!")
+}
 
-    bad() {
-        let data = this.source()
-        data = this.pass(data)
-        this.sink(data)
-    }
+function bad() {
+    let data = source()
+    data = pass(data)
+    sink(data)
+}
 
-    good() {
-        let data = this.source()
-        data = this.validate(data)
-        this.sink(data)
-    }
+function good() {
+    let data = source()
+    data = validate(data)
+    sink(data)
 }
