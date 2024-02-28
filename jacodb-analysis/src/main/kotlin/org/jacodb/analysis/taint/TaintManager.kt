@@ -41,6 +41,7 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
@@ -57,6 +58,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 open class TaintManager<Method, Statement>(
     protected val graph: ApplicationGraph<Method, Statement>,
+    protected val traits: Traits<Method, Statement>,
     protected val unitResolver: UnitResolver<Method>,
     private val useBidiRunner: Boolean = false,
     private val getConfigForMethod: (ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>?)? = null,
@@ -85,7 +87,7 @@ open class TaintManager<Method, Statement>(
                 unitResolver = unitResolver,
                 unit = unit,
                 { manager ->
-                    val analyzer = TaintAnalyzer(graph, getConfigForMethod)
+                    val analyzer = TaintAnalyzer(graph, traits, getConfigForMethod)
                     UniRunner(
                         graph = graph,
                         analyzer = analyzer,
@@ -96,7 +98,7 @@ open class TaintManager<Method, Statement>(
                     )
                 },
                 { manager ->
-                    val analyzer = BackwardTaintAnalyzer(graph)
+                    val analyzer = BackwardTaintAnalyzer(graph, traits)
                     UniRunner(
                         graph = graph.reversed,
                         analyzer = analyzer,
@@ -108,7 +110,7 @@ open class TaintManager<Method, Statement>(
                 }
             )
         } else {
-            val analyzer = TaintAnalyzer(graph, getConfigForMethod)
+            val analyzer = TaintAnalyzer(graph, traits, getConfigForMethod)
             UniRunner(
                 graph = graph,
                 analyzer = analyzer,

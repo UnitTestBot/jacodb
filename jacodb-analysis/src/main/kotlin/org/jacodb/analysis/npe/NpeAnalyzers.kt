@@ -29,6 +29,7 @@ import org.jacodb.analysis.taint.TaintEvent
 import org.jacodb.analysis.taint.TaintVertex
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
@@ -42,12 +43,13 @@ private val logger = mu.KotlinLogging.logger {}
 
 class NpeAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
-) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
+    private val traits: Traits<Method, Statement>,
+    ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     override val flowFunctions: ForwardNpeFlowFunctions<Method, Statement> by lazy {
-        ForwardNpeFlowFunctions(graph)
+        ForwardNpeFlowFunctions(graph,traits)
     }
 
     private val taintConfigurationFeature: TaintConfigurationFeature?

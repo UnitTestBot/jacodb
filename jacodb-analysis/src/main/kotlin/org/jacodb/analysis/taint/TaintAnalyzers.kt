@@ -21,11 +21,11 @@ import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.ext.callExpr
-import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
 
@@ -33,6 +33,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 class TaintAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val traits: Traits<Method, Statement>,
     private val getConfigForMethod: (ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>?)? = null,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
@@ -40,9 +41,9 @@ class TaintAnalyzer<Method, Statement>(
 
     override val flowFunctions: ForwardTaintFlowFunctions<Method, Statement> by lazy {
         if (getConfigForMethod != null) {
-            ForwardTaintFlowFunctions(graph, getConfigForMethod)
+            ForwardTaintFlowFunctions(graph, traits, getConfigForMethod)
         } else {
-            ForwardTaintFlowFunctions(graph)
+            ForwardTaintFlowFunctions(graph, traits)
         }
     }
 
@@ -97,12 +98,13 @@ class TaintAnalyzer<Method, Statement>(
 
 class BackwardTaintAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val traits: Traits<Method, Statement>,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
     override val flowFunctions: BackwardTaintFlowFunctions<Method, Statement> by lazy {
-        BackwardTaintFlowFunctions(graph)
+        BackwardTaintFlowFunctions(graph, traits)
     }
 
     private fun isExitPoint(statement: Statement): Boolean {

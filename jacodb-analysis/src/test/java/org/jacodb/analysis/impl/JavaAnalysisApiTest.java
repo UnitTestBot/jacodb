@@ -21,6 +21,7 @@ import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.ifds.UnitResolver;
 import org.jacodb.analysis.ifds.UnitResolverKt;
 import org.jacodb.analysis.taint.TaintManager;
+import org.jacodb.analysis.util.JcTraits;
 import org.jacodb.api.jvm.JcClassOrInterface;
 import org.jacodb.api.jvm.JcClasspath;
 import org.jacodb.api.jvm.JcDatabase;
@@ -62,7 +63,7 @@ public class JavaAnalysisApiTest {
                 .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
         UnitResolver<JcMethod> unitResolver = UnitResolverKt.getMethodUnitResolver();
-        TaintManager<JcMethod, JcInst> manager = new TaintManager<>(applicationGraph, unitResolver, false, null);
+        TaintManager<JcMethod, JcInst> manager = new TaintManager<>(applicationGraph, JcTraits.INSTANCE, unitResolver, false, null);
         manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
     }
 

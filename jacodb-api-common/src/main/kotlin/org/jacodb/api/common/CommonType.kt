@@ -34,7 +34,7 @@ interface CommonTypeName {
 
 interface CommonRefType : CommonType
 
-interface CommonArrayType : CommonType {
+interface CommonArrayType : CommonRefType {
     val elementType: CommonType
     val dimensions: Int
 }

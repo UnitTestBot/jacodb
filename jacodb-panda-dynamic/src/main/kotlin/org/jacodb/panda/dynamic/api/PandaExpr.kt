@@ -18,6 +18,7 @@ package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 
 interface PandaExpr : CommonExpr, Mappable {
@@ -44,6 +45,19 @@ class PandaLocalVar(val id: Int) : PandaValue {
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLocalVar(this)
+    }
+}
+
+class PandaThis(
+    override val type: PandaType,
+) : PandaValue, CommonThis {
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = "this"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaThis(this)
     }
 }
 

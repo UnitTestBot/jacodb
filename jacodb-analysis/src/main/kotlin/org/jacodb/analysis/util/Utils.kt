@@ -30,7 +30,6 @@ import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
@@ -38,22 +37,6 @@ import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.ext.toType
-import org.jacodb.panda.dynamic.api.PandaMethod
-
-// TODO: rewrite
-internal val CommonMethod<*, *>.isConstructor: Boolean
-    get() = when (this) {
-        is JcMethod -> isConstructor
-        is PandaMethod -> false // TODO
-        else -> error("Cannot determine whether method is constructor: $this")
-    }
-
-val CommonMethod<*, *>.thisInstance: CommonThis
-    get() = when (this) {
-        is JcMethod -> thisInstance
-        is PandaMethod -> TODO()
-        else -> error("Cannot get 'this' for method: $this")
-    }
 
 fun Project.getArgument(param: CommonMethodParameter): CommonArgument? {
     return when {

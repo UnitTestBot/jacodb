@@ -16,6 +16,8 @@
 
 package org.jacodb.panda.dynamic.api
 
+import org.jacodb.api.common.CommonArrayType
+import org.jacodb.api.common.CommonClassType
 import org.jacodb.api.common.CommonRefType
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
@@ -26,27 +28,55 @@ sealed interface PandaType : CommonType {
 }
 
 object PandaAnyType : PandaType {
-    override val typeName: String = "any"
-}
-
-object PandaBoolType : PandaType {
-    override val typeName: String = "bool"
-}
-
-object PandaRefType : PandaType, CommonRefType {
-    override val typeName: String = "ref"
+    override val typeName: String
+        get() = "any"
 }
 
 object PandaVoidType : PandaType {
-    override val typeName: String = "void"
-}
-
-object PandaNumberType : PandaType {
-    override val typeName: String = "number"
+    override val typeName: String
+        get() = "void"
 }
 
 object PandaUndefinedType : PandaType {
-    override val typeName: String = "undefined_t"
+    override val typeName: String
+        get() = "undefined_t"
+}
+
+interface PandaRefType : PandaType, CommonRefType
+
+interface PandaArrayType : PandaRefType, CommonArrayType {
+    override val elementType: PandaType
+}
+
+class PandaArrayTypeImpl(
+    override val elementType: PandaType,
+) : PandaArrayType {
+    override val typeName: String
+        get() = elementType.typeName + "[]"
+
+    override val dimensions: Int
+        get() = when (elementType) {
+            is PandaArrayType -> elementType.dimensions + 1
+            else -> 1
+        }
+}
+
+interface PandaClassType : PandaRefType, CommonClassType
+
+class PandaClassTypeImpl(
+    override val typeName: String,
+) : PandaClassType
+
+interface PandaPrimitiveType : PandaType
+
+object PandaBoolType : PandaPrimitiveType {
+    override val typeName: String
+        get() = "bool"
+}
+
+object PandaNumberType : PandaPrimitiveType {
+    override val typeName: String
+        get() = "number"
 }
 
 // ------------------------------------------------------

@@ -23,6 +23,7 @@ import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.toSarif
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -61,7 +62,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
         val methods = listOf(method)
         val unitResolver = SingletonUnitResolver
-        val manager = TaintManager(graph, unitResolver)
+        val manager = TaintManager(graph, JcTraits, unitResolver)
         val sinks = manager.analyze(methods, timeout = 30.seconds)
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
@@ -75,7 +76,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
     fun `test on Juliet's CWE 89`(className: String) {
         testSingleJulietClass(className) { method ->
             val unitResolver = SingletonUnitResolver
-            val manager = TaintManager(graph, unitResolver)
+            val manager = TaintManager(graph, JcTraits, unitResolver)
             manager.analyze(listOf(method), timeout = 30.seconds)
         }
     }
@@ -85,7 +86,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_execute_01"
         testSingleJulietClass(className) { method ->
             val unitResolver = SingletonUnitResolver
-            val manager = TaintManager(graph, unitResolver)
+            val manager = TaintManager(graph, JcTraits, unitResolver)
             manager.analyze(listOf(method), timeout = 30.seconds)
         }
     }
@@ -96,7 +97,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
         val unitResolver = ClassUnitResolver(true)
-        val manager = TaintManager(graph, unitResolver, useBidiRunner = true)
+        val manager = TaintManager(graph, JcTraits, unitResolver, useBidiRunner = true)
         val sinks = manager.analyze(listOf(badMethod), timeout = 30.seconds)
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()

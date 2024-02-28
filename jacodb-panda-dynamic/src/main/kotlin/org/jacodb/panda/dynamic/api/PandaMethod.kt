@@ -26,9 +26,7 @@ open class PandaMethod(
     val type: PandaType,
 ) : CommonMethod<PandaMethod, PandaInst> {
 
-    // TODO: consider 'lateinit var'
-    var project: PandaProject = PandaProject.empty()
-        internal set
+    lateinit var project: PandaProject
     var blocks: List<PandaBasicBlock> = emptyList()
         internal set(value) {
             field = value
@@ -46,7 +44,7 @@ open class PandaMethod(
 
     private var flowGraph: PandaGraph? = null
 
-    override val enclosingClass: CommonClass
+    override val enclosingClass: PandaClass
         get() = TODO("Not yet implemented")
 
     override val returnType: PandaTypeName

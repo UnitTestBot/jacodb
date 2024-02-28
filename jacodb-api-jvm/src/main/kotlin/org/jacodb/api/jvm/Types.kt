@@ -78,8 +78,6 @@ interface JcArrayType : JcRefType, CommonArrayType {
 
     override val jcClass: JcClassOrInterface
         get() = classpath.objectClass
-
-    override val dimensions: Int
 }
 
 interface JcClassType : JcRefType, JcAccessible, CommonClassType {

@@ -32,10 +32,9 @@ import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getArgumentsOf
-import org.jacodb.analysis.util.isConstructor
 import org.jacodb.analysis.util.startsWith
-import org.jacodb.analysis.util.thisInstance
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
 import org.jacodb.api.common.analysis.ApplicationGraph
@@ -67,6 +66,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 class ForwardTaintFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val traits: Traits<Method, Statement>,
     val getConfigForMethod: ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>? = { method ->
         taintConfigurationFeature?.let { feature ->
             if (method is JcMethod) {
@@ -104,8 +104,8 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         // Extract initial facts from the config:
         val config = getConfigForMethod(method)
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(cp, method))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(cp, method))
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp, traits))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp, traits))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
@@ -334,7 +334,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         }
 
         // FIXME: adhoc for constructors:
-        if (callee.isConstructor) {
+        if (traits.isConstructor(callee)) {
             return@FlowFunction listOf(fact)
         }
 
@@ -404,7 +404,13 @@ class ForwardTaintFlowFunctions<Method, Statement>(
 
             // Transmit facts on instance (from 'instance' to 'this'):
             if (callExpr is CommonInstanceCallExpr) {
-                addAll(transmitTaintInstanceToThis(fact, from = callExpr.instance, to = callee.thisInstance))
+                addAll(
+                    transmitTaintInstanceToThis(
+                        fact = fact,
+                        from = callExpr.instance,
+                        to = traits.thisInstance(callee)
+                    )
+                )
             }
 
             // Transmit facts on static values:
@@ -434,13 +440,25 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                 val actualParams = callExpr.args
                 val formalParams = cp.getArgumentsOf(callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
-                    addAll(transmitTaintArgumentFormalToActual(fact, from = formal, to = actual))
+                    addAll(
+                        transmitTaintArgumentFormalToActual(
+                            fact = fact,
+                            from = formal,
+                            to = actual
+                        )
+                    )
                 }
             }
 
             // Transmit facts on instance (from 'this' to 'instance'):
             if (callExpr is CommonInstanceCallExpr) {
-                addAll(transmitTaintThisToInstance(fact, from = callee.thisInstance, to = callExpr.instance))
+                addAll(
+                    transmitTaintThisToInstance(
+                        fact = fact,
+                        from = traits.thisInstance(callee),
+                        to = callExpr.instance
+                    )
+                )
             }
 
             // Transmit facts on static values:
@@ -461,6 +479,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
 
 class BackwardTaintFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
+    private val traits: Traits<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
@@ -641,7 +660,13 @@ class BackwardTaintFlowFunctions<Method, Statement>(
 
             // Transmit facts on instance (from 'instance' to 'this'):
             if (callExpr is CommonInstanceCallExpr) {
-                addAll(transmitTaintInstanceToThis(fact, from = callExpr.instance, to = callee.thisInstance))
+                addAll(
+                    transmitTaintInstanceToThis(
+                        fact = fact,
+                        from = callExpr.instance,
+                        to = traits.thisInstance(callee)
+                    )
+                )
             }
 
             // Transmit facts on static values:
@@ -700,7 +725,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
                 addAll(
                     transmitTaintThisToInstance(
                         fact = fact,
-                        from = callee.thisInstance,
+                        from = traits.thisInstance(callee),
                         to = callExpr.instance
                     )
                 )

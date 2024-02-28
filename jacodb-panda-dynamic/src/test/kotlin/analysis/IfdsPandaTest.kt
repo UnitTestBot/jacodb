@@ -21,6 +21,7 @@ import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.util.PandaTraits
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
@@ -71,11 +72,6 @@ class IfdsPandaTest : BaseTest() {
     @Test
     fun `test Program1`() {
         val project = loadProjectForProgram("Program1")
-        val methods = project.classes.flatMap { it.methods }
-        logger.info { "Methods: ${methods.size}" }
-        for (method in methods) {
-            logger.info { "  ${method.name}" }
-        }
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -101,7 +97,18 @@ class IfdsPandaTest : BaseTest() {
                 }
                 rules.ifEmpty { null }
             }
-        val manager = TaintManager(graph, unitResolver, getConfigForMethod = getConfigForMethod)
+        val manager = TaintManager(
+            graph = graph,
+            traits = PandaTraits,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+
+        val methods = project.classes.flatMap { it.methods }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
         val sinks = manager.analyze(methods)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
@@ -153,7 +160,12 @@ class IfdsPandaTest : BaseTest() {
                 }
                 rules.ifEmpty { null }
             }
-        val manager = TaintManager(graph, unitResolver, getConfigForMethod = getConfigForMethod)
+        val manager = TaintManager(
+            graph = graph,
+            traits = PandaTraits,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
 
         val goodMethod = project.classes.flatMap { it.methods }.single { it.name == "good" }
         logger.info { "good() method: $goodMethod" }

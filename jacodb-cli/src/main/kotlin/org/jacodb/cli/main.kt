@@ -36,6 +36,7 @@ import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.toSarif
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.analysis.unused.toSarif
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClassProcessingTask
 import org.jacodb.api.jvm.JcMethod
@@ -71,7 +72,7 @@ fun launchAnalysesByConfig(
 
         when (analysis) {
             "NPE" -> {
-                val manager = NpeManager(graph, unitResolver)
+                val manager = NpeManager(graph, JcTraits, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
             }
 
@@ -81,7 +82,7 @@ fun launchAnalysesByConfig(
             }
 
             "SQL" -> {
-                val manager = TaintManager(graph, unitResolver)
+                val manager = TaintManager(graph, JcTraits, unitResolver)
                 manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
             }
 
