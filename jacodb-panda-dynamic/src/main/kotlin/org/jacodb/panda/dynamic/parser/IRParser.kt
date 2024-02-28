@@ -176,7 +176,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             method = m
         }
 
-        fun getMethod() = method ?: throw Exception("Method not set for basic block $id")
+        fun getMethod(): ProgramMethod = method ?: error("Method not set for basic block $id")
 
         init {
             insts.forEach { it.setBasicBlock(this) }
@@ -205,7 +205,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             basicBlock = bb
         }
 
-        fun getBasicBlock() = basicBlock ?: throw Exception("Basic block not set for inst $id")
+        fun getBasicBlock(): ProgramBasicBlock = basicBlock ?: error("Basic block not set for inst $id")
 
         fun id(): Int = _id
 
@@ -269,7 +269,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                         /*
                         inst.opcode.startsWith("IfImm") -> {
                             val successors =
-                                bb.successors ?: throw IllegalStateException("No bb succ after IfImm op")
+                                bb.successors ?: error("No bb succ after IfImm op")
                             val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
                             val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
                             listOfNotNull(
@@ -426,7 +426,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                         ?.groups
                         ?.get(1)
                         ?.value
-                        ?: throw IllegalStateException("No compare op")
+                        ?: error("No compare op")
                 )
                 val cmp = PandaCmpExpr(cmpOp, inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
@@ -682,7 +682,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         val cmpOp = (
             ifImmMatch?.groups?.get(1)
                 ?: ifMatch?.groups?.get(1)
-                ?: throw IllegalStateException("No compare operator")
+                ?: error("No compare operator")
             ).value.let(PandaCmpOp::valueOf)
 
         /*val cmpOp = PandaCmpOp.valueOf(
@@ -691,7 +691,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 ?.groups
                 ?.get(1)
                 ?.value
-                ?: throw IllegalStateException("No IfImm op")
+                ?: error("No IfImm op")
         )*/
         val immValue = mapImm(op.inputs.last())
         val condExpr: PandaConditionExpr = when (cmpOp) {
