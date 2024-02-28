@@ -33,35 +33,6 @@ interface PandaExpr : CommonExpr, Mappable {
     }
 }
 
-interface PandaValue : PandaExpr, CommonValue
-
-class PandaLocalVar(val id: Int) : PandaValue {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString(): String = "%$id"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaLocalVar(this)
-    }
-}
-
-class PandaThis(
-    override val type: PandaType,
-) : PandaValue, CommonThis {
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString(): String = "this"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaThis(this)
-    }
-}
-
 /**
  * Mocks PandaExpr for WIP purposes.
  *
@@ -113,22 +84,6 @@ interface PandaInstanceCallExpr : PandaCallExpr, CommonInstanceCallExpr {
 
 interface PandaConditionExpr : PandaBinaryExpr
 
-class PandaArgument(val id: Int) : PandaValue {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString() = "arg $id"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaArgument(this)
-    }
-}
-
-interface PandaConstant : PandaValue
-
 enum class PandaCmpOp {
     EQ, NE, LT, LE, GT, GE
     // TODO: expand
@@ -149,62 +104,6 @@ class PandaCmpExpr(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCmpExpr(this)
-    }
-}
-
-class PandaStringConstant(val value: String) : PandaConstant {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString() = "\"$value\""
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaStringConstant(this)
-    }
-}
-
-class TODOConstant(val value: String?) : PandaConstant {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString() = value?.let { "\"$it\"" } ?: "null"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaTODOConstant(this)
-    }
-}
-
-class PandaNumberConstant(val value: Int) : PandaConstant {
-    override val type: PandaType
-        get() = PandaNumberType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString() = value.toString()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaNumberConstant(this)
-    }
-}
-
-object PandaUndefinedConstant : PandaConstant {
-    override val type: PandaType
-        get() = PandaUndefinedType
-
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun toString(): String = "undefined"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaUndefinedConstant(this)
     }
 }
 
@@ -448,4 +347,120 @@ class PandaToNumericExpr(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaToNumericExpr(this)
     }
+}
+
+// ----------------------------------------------
+
+interface PandaValue : PandaExpr, CommonValue
+
+class PandaLocalVar(val id: Int) : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = "%$id"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaLocalVar(this)
+    }
+}
+
+class PandaThis(
+    override val type: PandaType,
+) : PandaValue, CommonThis {
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = "this"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaThis(this)
+    }
+}
+
+class PandaArgument(val id: Int) : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString() = "arg $id"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaArgument(this)
+    }
+}
+
+interface PandaConstant : PandaValue
+
+class TODOConstant(val value: String?) : PandaConstant {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString() = value?.let { "\"$it\"" } ?: "null"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaTODOConstant(this)
+    }
+}
+
+class PandaNumberConstant(val value: Int) : PandaConstant {
+    override val type: PandaType
+        get() = PandaNumberType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString() = value.toString()
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaNumberConstant(this)
+    }
+}
+
+class PandaStringConstant(val value: String) : PandaConstant {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString() = "\"$value\""
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaStringConstant(this)
+    }
+}
+
+object PandaUndefinedConstant : PandaConstant {
+    override val type: PandaType
+        get() = PandaUndefinedType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = "undefined"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaUndefinedConstant(this)
+    }
+}
+
+class PandaNullConstant(
+    override val type: PandaType,
+) : PandaConstant {
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaNullConstant(this)
+    }
+
+    override fun toString(): String = "null"
 }
