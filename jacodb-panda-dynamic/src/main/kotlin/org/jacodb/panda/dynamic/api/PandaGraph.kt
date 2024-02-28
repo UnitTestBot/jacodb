@@ -81,11 +81,11 @@ data class PandaBasicBlock(
     val end: PandaInstRef,
 ) {
     operator fun contains(inst: PandaInst): Boolean {
-        return inst.location.index <= end.index && inst.location.index >= start.index
+        return inst.location.index in start.index..end.index
     }
 
     operator fun contains(inst: PandaInstRef): Boolean {
-        return inst.index <= end.index && inst.index >= start.index
+        return inst.index in start.index..end.index
     }
 }
 
