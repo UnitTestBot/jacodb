@@ -24,7 +24,7 @@ class PandaClass(
     val superClassName: String,
     val methods: List<PandaMethod>,
 ) : CommonClass {
-    override var project: PandaProject = PandaProject.empty()
+    override lateinit var project: PandaProject
         internal set
 
     override val simpleName: String
