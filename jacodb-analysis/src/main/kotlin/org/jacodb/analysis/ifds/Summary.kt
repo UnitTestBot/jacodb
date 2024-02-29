@@ -101,3 +101,33 @@ class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
         return getFacts(method).replayCache
     }
 }
+
+class SummaryStorageWithProducers<T : Summary>(
+    private val useConcurrentProducer: Boolean = false,
+) {
+    private val summaries = ConcurrentHashMap<JcMethod, MutableSet<T>>()
+    private val producers = ConcurrentHashMap<JcMethod, Producer<T>>()
+
+    private fun getProducer(method: JcMethod): Producer<T> {
+        return producers.computeIfAbsent(method) {
+            if (useConcurrentProducer) {
+                ConcurrentProducer()
+            } else {
+                SyncProducer()
+            }
+        }
+    }
+
+    fun add(fact: T) {
+        val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
+        if (isNew) {
+            val producer = getProducer(fact.method)
+            producer.produce(fact)
+        }
+    }
+
+    fun subscribe(method: JcMethod, handler: (T) -> Unit) {
+        val producer = getProducer(method)
+        producer.subscribe(handler)
+    }
+}
