@@ -50,9 +50,6 @@ fun Project.getArgumentsOf(method: CommonMethod<*, *>): List<CommonArgument> {
     }
 }
 
-val JcMethod.thisInstance: JcThis
-    get() = JcThis(enclosingClass.toType())
-
 fun JcClasspath.getArgument(param: JcParameter): JcArgument? {
     val t = findTypeOrNull(param.type.typeName) ?: return null
     return JcArgument.of(param.index, param.name, t)
