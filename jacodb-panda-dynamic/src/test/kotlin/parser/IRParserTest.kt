@@ -16,68 +16,71 @@
 
 package parser
 
+import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+private val logger = mu.KotlinLogging.logger {}
+
 class IRParserTest {
-    private val bcFilePath = javaClass.getResource("/samples/Program1.abc")?.path ?: ""
-    private val bytes = FileInputStream(bcFilePath).readBytes()
-    private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-    private val bcParser = ByteCodeParser(buffer)
+    private lateinit var irParser: IRParser
+    private lateinit var pandaProject: PandaProject
+    private lateinit var programIR: IRParser.ProgramIR
 
-    private val sampleFilePath = javaClass.getResource("/samples/Program1.json")?.path ?: ""
-    private val parser: IRParser = IRParser(sampleFilePath, bcParser)
+    @BeforeEach
+    fun setup() {
+        irParser = loadIR()
+        pandaProject = irParser.getProject()
+        programIR = irParser.getProgramIR()
+    }
 
-    init {
-        bcParser.parseABC()
+    private fun loadIR(fileName: String = "/samples/Program1"): IRParser {
+        val bcParser = javaClass.getResource("$fileName.abc")?.path?.let { FileInputStream(it).readBytes() }
+            ?.let { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
+            ?.let { ByteCodeParser(it) }
+            ?.also { it.parseABC() }
+        val sampleFilePath = javaClass.getResource("$fileName.json")?.path ?: ""
+        return IRParser(sampleFilePath, bcParser!!)
     }
 
     @Test
     fun getProject() {
-        val project = parser.getProject()
-        assertNotNull(project)
+        assertNotNull(pandaProject)
     }
 
     @Test
     fun getProgramIR() {
-        val ir: IRParser.ProgramIR = parser.getProgramIR()
-        parser.printProgramInfo(ir)
-        assertNotNull(ir)
+        val classes = programIR.classes
+        logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
+        logger.info { "Methods name: ${classes.flatMap { it.methods }.joinToString(separator = ", ") { it.name }}" }
+        assertNotNull(programIR)
     }
 
     @Test
     fun getPandaMethods() {
-        val ir: IRParser.ProgramIR = parser.getProgramIR()
-        ir.classes.forEach { cls ->
+        programIR.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 val pandaMethod = method.pandaMethod
-                println("\n$pandaMethod")
-                println("Instructions:")
-                pandaMethod.instructions.forEach {pandaInst ->
-                    println("${pandaInst.location}: $pandaInst")
-                }
+                assertNotNull(pandaMethod.name)
+                assertNotNull(pandaMethod.instructions)
+                logger.info { "Panda methods \'${pandaMethod.name}\' has ${pandaMethod.instructions.size} instructions" }
             }
         }
     }
 
     @Test
     fun getSetOfProgramOpcodes() {
-        val ir: IRParser.ProgramIR = parser.getProgramIR()
-        val opcodes = mutableSetOf<String>()
-        ir.classes.forEach { programClass ->
-            programClass.methods.forEach { programMethod ->
-                programMethod.basicBlocks.forEach { programBlock ->
-                    programBlock.insts.forEach { programInst ->
-                        opcodes.add(programInst.opcode)
-                    }
-                }
-            }
-        }
-        println(opcodes.sorted().joinToString(separator = "\n"))
+        val opcodes = programIR.classes.asSequence().flatMap { it.methods }
+            .flatMap { it.basicBlocks }
+            .flatMap { it.insts }
+            .map { it.opcode }
+            .toSortedSet()
+        assertNotNull(opcodes)
     }
 }

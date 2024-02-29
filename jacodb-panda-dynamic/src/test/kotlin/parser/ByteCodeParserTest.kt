@@ -38,10 +38,8 @@ class ByteCodeParserTest {
     fun `parse bytecode`() {
         val fileName = "/samples/Program2.abc"
         val abc = ByteCodeParser(loadBuffer(fileName)).parseABC()
-        logger.info { "Header:\n ${abc.header}" }
-        abc.methods.forEach {
-            logger.info { "Method \'${it.name}\':\n $it" }
-        }
+        logger.info { "Bytecode version: ${abc.header.version.joinToString(".")}" }
+        logger.info { "Fount methods names: ${abc.methods.map { it.name }}" }
         assertNotNull(abc)
     }
 

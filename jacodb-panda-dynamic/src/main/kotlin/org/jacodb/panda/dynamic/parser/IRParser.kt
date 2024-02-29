@@ -71,7 +71,11 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     private val connector = IrBcConnector(bcParser)
 
     @Serializable
-    data class ProgramIR(val classes: List<ProgramClass>)
+    data class ProgramIR(val classes: List<ProgramClass>) {
+        override fun toString(): String {
+            return classes.joinToString("\n")
+        }
+    }
 
     @Serializable
     data class ProgramClass(
@@ -88,6 +92,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             methods.forEach {
                 it.setClass(this)
             }
+        }
+
+        override fun toString(): String {
+            return "Class: $name\nMethods:\n${methods.joinToString("\n")}"
         }
     }
 
@@ -154,6 +162,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         init {
             basicBlocks.forEach { it.setMethod(this) }
         }
+
+        override fun toString(): String {
+            return "Method: $name\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
+        }
     }
 
     @Serializable
@@ -173,15 +185,21 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         @Transient
         var end: Int = -1
 
+        init {
+            insts.forEach { it.setBasicBlock(this) }
+        }
+
+        override fun toString(): String {
+            return insts.takeIf { it.isNotEmpty() }?.let {
+                "Basic block: $id\nInstructions:\n${it.joinToString("\n")}"
+            } ?: "Basic block: $id\nNo instructions"
+        }
+
         fun setMethod(m: ProgramMethod) {
             method = m
         }
 
         fun getMethod(): ProgramMethod = method ?: error("Method not set for basic block $id")
-
-        init {
-            insts.forEach { it.setBasicBlock(this) }
-        }
     }
 
     @Serializable
@@ -201,6 +219,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         private fun String.trimId(): Int = this.drop(1).toInt()
 
         private val _id: Int = id.trimId()
+
+        override fun toString(): String {
+            return "\tInst: $id\n\t\tOpcode: $opcode\n\t\tInputs: $inputs\n\t\tOutputs: $users\n\t\tBC: $bc"
+        }
 
         fun setBasicBlock(bb: ProgramBasicBlock) {
             basicBlock = bb
@@ -736,22 +758,5 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     private fun mapConstant(op: ProgramInst): PandaConstant = when (mapType(op.type)) {
         is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
         else -> TODOConstant(op.value)
-    }
-
-    fun printProgramInfo(programIR: ProgramIR) {
-        programIR.classes.forEach { programClass ->
-            println("Class Name: ${programClass.name}")
-
-            programClass.methods.forEach { programMethod ->
-                println("\tMethod Name: ${programMethod.name}")
-                programMethod.basicBlocks.forEach { programBlock ->
-                    println("\t\tBasic Block ID: ${programBlock.id}")
-                    programBlock.insts.forEach { programInst ->
-                        println("\t\t\tInst ID: ${programInst.id()}, Opcode: ${programInst.opcode}")
-                        println("\t\t\t\tType: ${programInst.type}, Users: ${programInst.users}, Value: ${programInst.value}, Inputs: ${programInst.inputs}")
-                    }
-                }
-            }
-        }
     }
 }
