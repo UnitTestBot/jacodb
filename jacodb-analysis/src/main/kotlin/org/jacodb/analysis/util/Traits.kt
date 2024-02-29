@@ -77,15 +77,20 @@ object JcTraits : Traits<JcMethod, JcInst> {
         return toPathOrNull()
     }
 
+    override fun CommonValue.toPathOrNull(): AccessPath? {
+        check(this is JcValue)
+        return toPathOrNull()
+    }
+
+    override fun CommonValue.toPath(): AccessPath {
+        check(this is JcValue)
+        return toPath()
+    }
+
     fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
         is JcValue -> toPathOrNull()
         is JcCastExpr -> operand.toPathOrNull()
         else -> null
-    }
-
-    override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is JcValue)
-        return toPathOrNull()
     }
 
     fun JcValue.toPathOrNull(): AccessPath? = when (this) {
@@ -110,11 +115,6 @@ object JcTraits : Traits<JcMethod, JcInst> {
         }
 
         else -> null
-    }
-
-    override fun CommonValue.toPath(): AccessPath {
-        check(this is JcValue)
-        return toPath()
     }
 
     fun JcValue.toPath(): AccessPath {
@@ -142,15 +142,20 @@ object PandaTraits : Traits<PandaMethod, PandaInst> {
         return toPathOrNull()
     }
 
+    override fun CommonValue.toPathOrNull(): AccessPath? {
+        check(this is PandaValue)
+        return toPathOrNull()
+    }
+
+    override fun CommonValue.toPath(): AccessPath {
+        check(this is PandaValue)
+        return toPath()
+    }
+
     fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
         is PandaValue -> toPathOrNull()
         is PandaCastExpr -> operand.toPathOrNull()
         else -> null
-    }
-
-    override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is PandaValue)
-        return toPathOrNull()
     }
 
     fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
@@ -174,11 +179,6 @@ object PandaTraits : Traits<PandaMethod, PandaInst> {
         }
 
         else -> null
-    }
-
-    override fun CommonValue.toPath(): AccessPath {
-        check(this is PandaValue)
-        return toPath()
     }
 
     fun PandaValue.toPath(): AccessPath {
