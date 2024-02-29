@@ -21,31 +21,32 @@ import org.jacodb.api.JcMethod
 sealed interface TaintConfigurationItem
 
 data class TaintEntryPointSource(
-    val methodInfo: JcMethod,
+    val method: JcMethod,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintMethodSource(
-    val methodInfo: JcMethod,
+    val method: JcMethod,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintMethodSink(
+    val method: JcMethod,
+    val ruleNote: String,
+    val cwe: List<Int>,
     val condition: Condition,
-    val methodInfo: JcMethod,
 ) : TaintConfigurationItem
 
 data class TaintPassThrough(
-    val methodInfo: JcMethod,
+    val method: JcMethod,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintCleaner(
-    val methodInfo: JcMethod,
+    val method: JcMethod,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
-

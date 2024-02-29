@@ -16,12 +16,11 @@
 
 package org.jacodb.analysis.impl;
 
-import org.jacodb.analysis.AnalysisMain;
-import org.jacodb.analysis.engine.IfdsUnitRunnerFactory;
-import org.jacodb.analysis.engine.UnitResolver;
+import kotlin.time.DurationUnit;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
-import org.jacodb.analysis.library.RunnersLibrary;
-import org.jacodb.analysis.library.UnitResolversLibrary;
+import org.jacodb.analysis.ifds.UnitResolver;
+import org.jacodb.analysis.ifds.UnitResolverKt;
+import org.jacodb.analysis.taint.TaintManager;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
@@ -40,6 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static kotlin.time.DurationKt.toDuration;
+
+
 public class JavaAnalysisApiTest {
     private static JcClasspath classpath;
 
@@ -56,18 +58,11 @@ public class JavaAnalysisApiTest {
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
         JcApplicationGraph applicationGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, null)
+                .newApplicationGraphForAnalysisAsync(classpath, null)
                 .get();
-        UnitResolver<?> resolver = UnitResolversLibrary.getMethodUnitResolver();
-        IfdsUnitRunnerFactory runner = RunnersLibrary.getUnusedVariableRunnerFactory();
-
-        AnalysisMain.runAnalysis(
-                applicationGraph,
-                resolver,
-                runner,
-                methodsToAnalyze,
-                Integer.MAX_VALUE
-        );
+        UnitResolver unitResolver = UnitResolverKt.getMethodUnitResolver();
+        TaintManager manager = new TaintManager(applicationGraph, unitResolver, false);
+        manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
     }
 
     @Test
@@ -76,7 +71,7 @@ public class JavaAnalysisApiTest {
         bannedPackages.add("my.package.that.wont.be.analyzed");
 
         JcApplicationGraph customGraph = ApplicationGraphFactory
-                .asyncNewApplicationGraphForAnalysis(classpath, bannedPackages)
+                .newApplicationGraphForAnalysisAsync(classpath, bannedPackages)
                 .get();
         Assertions.assertNotNull(customGraph);
     }

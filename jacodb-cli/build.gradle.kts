@@ -1,3 +1,7 @@
+plugins {
+    kotlin("plugin.serialization")
+}
+
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-analysis"))

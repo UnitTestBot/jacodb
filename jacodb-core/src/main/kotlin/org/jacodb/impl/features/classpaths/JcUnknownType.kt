@@ -59,30 +59,36 @@ class JcUnknownType(override var classpath: JcClasspath, private val name: Strin
 
 open class JcUnknownClassLookup(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {
 
-    override fun specialMethod(name: String, description: String): JcMethod = method(name, description)
-    override fun staticMethod(name: String, description: String): JcMethod = method(name, description)
+    override fun specialMethod(name: String, description: String): JcMethod =
+        JcUnknownMethod.method(clazz, name, access = Opcodes.ACC_PUBLIC, description)
+
+    override fun staticMethod(name: String, description: String): JcMethod =
+        JcUnknownMethod.method(clazz, name, access = Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, description)
 
     override fun field(name: String, typeName: TypeName?): JcField {
         return JcUnknownField(clazz, name, typeName ?: TypeNameImpl(OBJECT_CLASS))
     }
 
     override fun method(name: String, description: String): JcMethod {
-        return JcUnknownMethod.method(clazz, name, description)
+        return JcUnknownMethod.method(clazz, name, access = Opcodes.ACC_PUBLIC, description)
     }
 
 }
 
 open class JcUnknownTypeLookup(val type: JcClassType) : JcLookup<JcTypedField, JcTypedMethod> {
 
-    override fun specialMethod(name: String, description: String): JcTypedMethod = method(name, description)
-    override fun staticMethod(name: String, description: String): JcTypedMethod = method(name, description)
+    override fun specialMethod(name: String, description: String): JcTypedMethod =
+        JcUnknownMethod.typedMethod(type, name, access = Opcodes.ACC_PUBLIC, description)
+
+    override fun staticMethod(name: String, description: String): JcTypedMethod =
+        JcUnknownMethod.typedMethod(type, name, access = Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, description)
 
     override fun field(name: String, typeName: TypeName?): JcTypedField {
         return JcUnknownField.typedField(type, name, typeName ?: TypeNameImpl(OBJECT_CLASS))
     }
 
     override fun method(name: String, description: String): JcTypedMethod {
-        return JcUnknownMethod.typedMethod(type, name, description)
+        return JcUnknownMethod.typedMethod(type, name, access = Opcodes.ACC_PUBLIC, description)
     }
 
 }

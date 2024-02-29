@@ -40,28 +40,30 @@ class JcUnknownClass(override var classpath: JcClasspath, name: String) : JcVirt
 class JcUnknownMethod(
     enclosingClass: JcClassOrInterface,
     name: String,
+    access: Int,
     description: String,
     returnType: TypeName,
     params: List<TypeName>
 ) : JcVirtualMethodImpl(
     name,
+    access,
     returnType = returnType,
     parameters = params.mapIndexed { index, typeName -> JcVirtualParameter(index, typeName) },
     description = description
 ) {
 
     companion object {
-        fun method(type: JcClassOrInterface, name: String, description: String): JcMethod {
+        fun method(type: JcClassOrInterface, name: String, access: Int, description: String): JcMethod {
             val methodType = Type.getMethodType(description)
             val returnType = TypeNameImpl(methodType.returnType.className.jcdbName())
             val paramsType = methodType.argumentTypes.map { TypeNameImpl(it.className.jcdbName()) }
-            return JcUnknownMethod(type, name, description, returnType, paramsType)
+            return JcUnknownMethod(type, name, access, description, returnType, paramsType)
         }
 
-        fun typedMethod(type: JcClassType, name: String, description: String): JcTypedMethod {
+        fun typedMethod(type: JcClassType, name: String, access: Int, description: String): JcTypedMethod {
             return JcTypedMethodImpl(
                 type,
-                method(type.jcClass, name, description),
+                method(type.jcClass, name, access, description),
                 JcSubstitutorImpl.empty
             )
         }

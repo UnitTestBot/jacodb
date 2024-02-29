@@ -58,7 +58,7 @@ class JcMutableInstListImpl<INST>(instructions: List<INST>) : JcInstListImpl<INS
         _instructions.addAll(index, newInstructions)
     }
 
-    override fun insertAfter(inst: INST, vararg newInstructions: INST) = insertBefore(inst, newInstructions.toList())
+    override fun insertAfter(inst: INST, vararg newInstructions: INST) = insertAfter(inst, newInstructions.toList())
     override fun insertAfter(inst: INST, newInstructions: Collection<INST>) {
         val index = _instructions.indexOf(inst)
         assert(index >= 0)

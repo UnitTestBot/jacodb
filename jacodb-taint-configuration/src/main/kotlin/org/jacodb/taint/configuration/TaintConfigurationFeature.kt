@@ -19,29 +19,38 @@ package org.jacodb.taint.configuration
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
-import org.jacodb.api.*
-import org.jacodb.api.ext.*
+import org.jacodb.api.JcClassOrInterface
+import org.jacodb.api.JcClasspathFeature
+import org.jacodb.api.JcMethod
+import org.jacodb.api.JcPrimitiveType
+import org.jacodb.api.PredefinedPrimitives
+import org.jacodb.api.TypeName
+import org.jacodb.api.ext.allSuperHierarchySequence
+import org.jacodb.api.ext.boolean
+import org.jacodb.api.ext.byte
+import org.jacodb.api.ext.char
+import org.jacodb.api.ext.double
+import org.jacodb.api.ext.float
+import org.jacodb.api.ext.int
+import org.jacodb.api.ext.long
+import org.jacodb.api.ext.short
+import org.jacodb.impl.cfg.util.isArray
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-
 class TaintConfigurationFeature private constructor(
     jsonConfig: String,
-    additionalSerializersModule: SerializersModule?
+    additionalSerializersModule: SerializersModule?,
 ) : JcClasspathFeature {
     private val rulesByClass: MutableMap<JcClassOrInterface, List<SerializedTaintConfigurationItem>> = hashMapOf()
     private val rulesForMethod: MutableMap<JcMethod, List<TaintConfigurationItem>> = hashMapOf()
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
 
     private val configurationTrie: ConfigurationTrie by lazy {
-        val serializers = additionalSerializersModule?.let {
-            SerializersModule {
-                include(defaultSerializationModule)
-                include(it)
-            }
-        } ?: defaultSerializationModule
+        val serializers = SerializersModule {
+            include(defaultSerializationModule)
+            additionalSerializersModule?.let { include(it) }
+        }
 
         val json = Json {
             classDiscriminator = CLASS_DISCRIMINATOR
@@ -49,19 +58,36 @@ class TaintConfigurationFeature private constructor(
             prettyPrint = true
         }
 
-        val configuration = json.decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig).map {
-            when (it) {
-                is SerializedTaintCleaner -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintEntryPointSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintMethodSink -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintMethodSource -> it.copy(condition = it.condition.accept(ConditionSimplifier))
-                is SerializedTaintPassThrough -> it.copy(condition = it.condition.accept(ConditionSimplifier))
+        val configuration = json
+            .decodeFromString<List<SerializedTaintConfigurationItem>>(jsonConfig)
+            .map {
+                when (it) {
+                    is SerializedTaintEntryPointSource -> it.copy(
+                        condition = it.condition.accept(conditionSimplifier)
+                    )
+
+                    is SerializedTaintMethodSource -> it.copy(
+                        condition = it.condition.accept(conditionSimplifier)
+                    )
+
+                    is SerializedTaintMethodSink -> it.copy(
+                        condition = it.condition.accept(conditionSimplifier)
+                    )
+
+                    is SerializedTaintPassThrough -> it.copy(
+                        condition = it.condition.accept(conditionSimplifier)
+                    )
+
+                    is SerializedTaintCleaner -> it.copy(
+                        condition = it.condition.accept(conditionSimplifier)
+                    )
+                }
             }
-        }
 
         ConfigurationTrie(configuration, ::matches)
     }
 
+    @Synchronized
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
         resolveConfigForMethod(method)
 
@@ -84,7 +110,6 @@ class TaintConfigurationFeature private constructor(
         return primitiveTypesSet!!
     }
 
-
     private fun resolveConfigForMethod(method: JcMethod): List<TaintConfigurationItem> {
         val taintConfigurationItems = rulesForMethod[method]
         if (taintConfigurationItems != null) {
@@ -100,7 +125,6 @@ class TaintConfigurationFeature private constructor(
             val functionMatcher = it.methodInfo
 
             if (!functionMatcher.matches(method)) return@mapNotNullTo null
-
             it.resolveForMethod(method)
         }
 
@@ -113,14 +137,13 @@ class TaintConfigurationFeature private constructor(
                 rules.mapNotNullTo(destination) {
                     val methodInfo = it.methodInfo
                     if (!methodInfo.applyToOverrides || !methodInfo.matches(method)) return@mapNotNullTo null
-
                     it.resolveForMethod(method)
                 }
             }
 
-        rulesForMethod[method] = destination.distinct()
-
-        return rulesForMethod.getValue(method)
+        val rules = destination.distinct()
+        rulesForMethod[method] = rules
+        return rules
     }
 
     private fun getClassRules(clazz: JcClassOrInterface) = rulesByClass.getOrPut(clazz) {
@@ -131,18 +154,15 @@ class TaintConfigurationFeature private constructor(
         val functionNameMatcher = functionName
         val functionName = if (method.isConstructor) "init^" else method.name
         val functionNameMatches = matches(functionNameMatcher, functionName)
-
         if (!functionNameMatches) return false
 
         val parameterMatches = parametersMatchers.all {
             val parameter = method.parameters.getOrNull(it.index) ?: return@all false
             it.typeMatcher.matches(parameter.type)
         }
-
         if (!parameterMatches) return false
 
         val returnTypeMatches = returnTypeMatcher.matches(method.returnType)
-
         if (!returnTypeMatches) return false
 
         // TODO add function's label processing
@@ -152,7 +172,6 @@ class TaintConfigurationFeature private constructor(
         }
 
         val isExcluded = exclude.any { it.matches(method) }
-
         return !isExcluded
     }
 
@@ -163,9 +182,7 @@ class TaintConfigurationFeature private constructor(
 
     private fun ClassMatcher.matches(pkgName: String, className: String): Boolean {
         val packageMatches = matches(pkg, pkgName)
-
         if (!packageMatches) return false
-
         return matches(classNameMatcher, className)
     }
 
@@ -179,7 +196,6 @@ class TaintConfigurationFeature private constructor(
         }
     }
 
-
     private fun TypeMatcher.matches(typeName: TypeName): Boolean = matches(typeName.typeName)
 
     private fun TypeMatcher.matches(typeName: String): Boolean =
@@ -191,18 +207,23 @@ class TaintConfigurationFeature private constructor(
 
     private fun SerializedTaintConfigurationItem.resolveForMethod(method: JcMethod): TaintConfigurationItem =
         when (this) {
-            is SerializedTaintCleaner -> TaintCleaner(method, condition.resolve(method), actionsAfter.resolve(method))
             is SerializedTaintEntryPointSource -> TaintEntryPointSource(
                 method,
                 condition.resolve(method),
                 actionsAfter.resolve(method)
             )
 
-            is SerializedTaintMethodSink -> TaintMethodSink(condition.resolve(method), method)
             is SerializedTaintMethodSource -> TaintMethodSource(
                 method,
                 condition.resolve(method),
                 actionsAfter.resolve(method)
+            )
+
+            is SerializedTaintMethodSink -> TaintMethodSink(
+                method,
+                ruleNote,
+                cwe,
+                condition.resolve(method)
             )
 
             is SerializedTaintPassThrough -> TaintPassThrough(
@@ -210,38 +231,58 @@ class TaintConfigurationFeature private constructor(
                 condition.resolve(method),
                 actionsAfter.resolve(method)
             )
+
+            is SerializedTaintCleaner -> TaintCleaner(
+                method,
+                condition.resolve(method),
+                actionsAfter.resolve(method)
+            )
         }
 
-    private fun Condition.resolve(method: JcMethod): Condition = accept(ConditionSpecializer(method))
-    private fun List<Action>.resolve(method: JcMethod): List<Action> = flatMap { it.accept(ActionSpecializer(method)) }
+    private fun Condition.resolve(method: JcMethod): Condition = this
+        .accept(ConditionSpecializer(method))
+        .accept(conditionSimplifier)
 
+    private fun List<Action>.resolve(method: JcMethod): List<Action> =
+        flatMap { it.accept(ActionSpecializer(method)) }
 
-    private fun specializePosition(method: JcMethod, position: Position): List<Position> {
-        if (!inBounds(method, position)) return emptyList()
-        if (position !is AnyArgument) return listOf(position)
-        return method.parameters.indices.map { Argument(it) }.filter { inBounds(method, it) }
+    private fun specializePosition(method: JcMethod, position: Position): List<Position> = when {
+        !inBounds(method, position) -> emptyList()
+        position !is AnyArgument -> listOf(position)
+        else -> method.parameters.indices.map { Argument(it) }.filter { inBounds(method, it) }
     }
 
-    private fun mkOr(conditions: List<Condition>) = if (conditions.size == 1) conditions.single() else Or(conditions)
-    private fun mkAnd(conditions: List<Condition>) = if (conditions.size == 1) conditions.single() else And(conditions)
+    private fun mkTrue(): Condition = ConstantTrue
+    private fun mkFalse(): Condition = Not(ConstantTrue)
+
+    private fun mkOr(conditions: List<Condition>) = when (conditions.size) {
+        0 -> mkFalse()
+        1 -> conditions.single()
+        else -> Or(conditions)
+    }
+
+    private fun mkAnd(conditions: List<Condition>) = when (conditions.size) {
+        0 -> mkTrue()
+        1 -> conditions.single()
+        else -> And(conditions)
+    }
 
     private fun inBounds(method: JcMethod, position: Position): Boolean =
         when (position) {
             AnyArgument -> method.parameters.isNotEmpty()
-            is Argument -> position.number in method.parameters.indices
+            is Argument -> position.index in method.parameters.indices
+            This -> !method.isStatic
             Result -> method.returnType.typeName != PredefinedPrimitives.Void
-            ThisArgument -> !method.isStatic
+            ResultAnyElement -> method.returnType.isArray
         }
 
     private inner class ActionSpecializer(val method: JcMethod) : TaintActionVisitor<List<Action>> {
         override fun visit(action: CopyAllMarks): List<Action> {
             val from = specializePosition(method, action.from)
             val to = specializePosition(method, action.to)
-
             return from.flatMap { fst ->
                 to.mapNotNull { snd ->
                     if (fst == snd) return@mapNotNull null
-
                     CopyAllMarks(fst, snd)
                 }
             }
@@ -250,11 +291,9 @@ class TaintConfigurationFeature private constructor(
         override fun visit(action: CopyMark): List<Action> {
             val from = specializePosition(method, action.from)
             val to = specializePosition(method, action.to)
-
             return from.flatMap { fst ->
                 to.mapNotNull { snd ->
                     if (fst == snd) return@mapNotNull null
-
                     action.copy(from = fst, to = snd)
                 }
             }
@@ -271,19 +310,22 @@ class TaintConfigurationFeature private constructor(
     }
 
     private inner class ConditionSpecializer(val method: JcMethod) : ConditionVisitor<Condition> {
-        override fun visit(condition: And): Condition = mkAnd(condition.args.map { it.accept(this) })
+        override fun visit(condition: And): Condition =
+            mkAnd(condition.args.map { it.accept(this) })
 
-        override fun visit(condition: Or): Condition = mkOr(condition.args.map { it.accept(this) })
+        override fun visit(condition: Or): Condition =
+            mkOr(condition.args.map { it.accept(this) })
 
-        override fun visit(condition: Not): Condition = Not(condition.condition.accept(this))
+        override fun visit(condition: Not): Condition =
+            Not(condition.arg.accept(this))
 
         override fun visit(condition: IsConstant): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
 
         override fun visit(condition: IsType): Condition {
             val position = specializePosition(method, condition.position)
-
             val typeMatcher = condition.typeMatcher
+
             if (typeMatcher is AnyTypeMatcher) {
                 return mkOr(position.map { ConstantTrue })
             }
@@ -341,7 +383,28 @@ class TaintConfigurationFeature private constructor(
             return mkOr(disjuncts)
         }
 
-        override fun visit(condition: AnnotationType): Condition = ConstantTrue // TODO("Not yet implemented")
+        override fun visit(condition: AnnotationType): Condition {
+            val positions = specializePosition(method, condition.position)
+            return if (positions.any { methodAnnotationMatches(it, condition.typeMatcher) }) {
+                mkTrue()
+            } else {
+                mkFalse()
+            }
+        }
+
+        private fun methodAnnotationMatches(position: Position, matcher: TypeMatcher): Boolean {
+            when (position) {
+                is Argument -> {
+                    val annotations = method.parameters.getOrNull(position.index)?.annotations
+                    return annotations?.any { matcher.matches(it.name) } ?: false
+                }
+
+                Result -> TODO("What does it mean?")
+                This -> TODO("What does it mean?")
+                AnyArgument -> error("Must not occur here")
+                ResultAnyElement -> error("Must not occur here")
+            }
+        }
 
         override fun visit(condition: ConstantEq): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
@@ -357,7 +420,7 @@ class TaintConfigurationFeature private constructor(
 
         override fun visit(condition: SourceFunctionMatches): Condition = ConstantTrue // TODO Not implemented yet
 
-        override fun visit(condition: CallParameterContainsMark): Condition =
+        override fun visit(condition: ContainsMark): Condition =
             mkOr(specializePosition(method, condition.position).map { condition.copy(position = it) })
 
         override fun visit(condition: ConstantTrue): Condition = condition
@@ -365,101 +428,82 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: TypeMatches): Condition = error("Must not occur here")
     }
 
-    companion object {
-        fun fromPath(
-            configPath: Path,
-            serializersModule: SerializersModule? = null
-        ) = TaintConfigurationFeature(configPath.readText(), serializersModule)
-
-        fun fromJson(
-            jsonConfig: String,
-            serializersModule: SerializersModule? = null
-        ) = TaintConfigurationFeature(jsonConfig, serializersModule)
-
-        val defaultSerializationModule: SerializersModule
-            get() = SerializersModule {
-                polymorphic(Condition::class) {
-                    subclass(And::class)
-                    subclass(Or::class)
-                    subclass(Not::class)
-                    subclass(IsConstant::class)
-                    subclass(IsType::class)
-                    subclass(AnnotationType::class)
-                    subclass(ConstantEq::class)
-                    subclass(ConstantLt::class)
-                    subclass(ConstantGt::class)
-                    subclass(ConstantMatches::class)
-                    subclass(SourceFunctionMatches::class)
-                    subclass(CallParameterContainsMark::class)
-                    subclass(ConstantTrue::class)
-                    subclass(TypeMatches::class)
-                }
-
-                polymorphic(Action::class) {
-                    subclass(CopyAllMarks::class)
-                    subclass(AssignMark::class)
-                    subclass(RemoveAllMarks::class)
-                    subclass(RemoveMark::class)
-                    subclass(CopyMark::class)
+    private val conditionSimplifier = object : ConditionVisitor<Condition> {
+        override fun visit(condition: And): Condition {
+            val queue = ArrayDeque(condition.args)
+            val args = mutableListOf<Condition>()
+            while (queue.isNotEmpty()) {
+                val it = queue.removeFirst().accept(this)
+                if (it is ConstantTrue) {
+                    // skip
+                } else if (it is Not && it.arg is ConstantTrue) {
+                    return mkFalse()
+                } else if (it is And) {
+                    queue += it.args
+                } else {
+                    args += it
                 }
             }
+            return mkAnd(args)
+        }
+
+        override fun visit(condition: Or): Condition {
+            val queue = ArrayDeque(condition.args)
+            val args = mutableListOf<Condition>()
+            while (queue.isNotEmpty()) {
+                val it = queue.removeFirst().accept(this)
+                if (it is ConstantTrue) {
+                    return mkTrue()
+                } else if (it is Not && it.arg is ConstantTrue) {
+                    // skip
+                } else if (it is Or) {
+                    queue += it.args
+                } else {
+                    args += it
+                }
+            }
+            return mkOr(args)
+        }
+
+        override fun visit(condition: Not): Condition {
+            val arg = condition.arg.accept(this)
+            return if (arg is Not) {
+                // Eliminate double negation:
+                arg.arg
+            } else {
+                Not(arg)
+            }
+        }
+
+        override fun visit(condition: IsConstant): Condition = condition
+        override fun visit(condition: IsType): Condition = condition
+        override fun visit(condition: AnnotationType): Condition = condition
+        override fun visit(condition: ConstantEq): Condition = condition
+        override fun visit(condition: ConstantLt): Condition = condition
+        override fun visit(condition: ConstantGt): Condition = condition
+        override fun visit(condition: ConstantMatches): Condition = condition
+        override fun visit(condition: SourceFunctionMatches): Condition = condition
+        override fun visit(condition: ContainsMark): Condition = condition
+        override fun visit(condition: ConstantTrue): Condition = condition
+        override fun visit(condition: TypeMatches): Condition = condition
+    }
+
+    companion object {
+        fun fromJson(
+            jsonConfig: String,
+            serializersModule: SerializersModule? = null,
+        ) = TaintConfigurationFeature(jsonConfig, serializersModule)
+
+        fun fromPath(
+            configPath: Path,
+            serializersModule: SerializersModule? = null,
+        ) = fromJson(configPath.readText(), serializersModule)
+
+        val defaultSerializationModule = SerializersModule {
+            include(conditionModule)
+            include(actionModule)
+        }
 
         private const val CLASS_DISCRIMINATOR = "_"
     }
-}
-
-private object ConditionSimplifier : ConditionVisitor<Condition> {
-    override fun visit(condition: And): Condition {
-        val unprocessed = condition.args.toMutableList()
-        val conjuncts = mutableListOf<Condition>()
-        while (unprocessed.isNotEmpty()) {
-            val it = unprocessed.removeLast()
-            if (it is And) {
-                unprocessed.addAll(it.args)
-                continue
-            }
-            conjuncts += it.accept(this)
-        }
-
-        return conjuncts.singleOrNull() ?: And(conjuncts.asReversed())
-    }
-
-    override fun visit(condition: Or): Condition {
-        val unprocessed = condition.args.toMutableList()
-        val conjuncts = mutableListOf<Condition>()
-        while (unprocessed.isNotEmpty()) {
-            val it = unprocessed.removeLast()
-            if (it is Or) {
-                unprocessed.addAll(it.args)
-                continue
-            }
-            conjuncts += it.accept(this)
-        }
-
-        return conjuncts.singleOrNull() ?: Or(conjuncts.asReversed())
-    }
-
-    override fun visit(condition: Not): Condition = Not(condition.condition.accept(this))
-
-    override fun visit(condition: IsConstant): Condition = condition
-
-    override fun visit(condition: IsType): Condition = condition
-
-    override fun visit(condition: AnnotationType): Condition = condition
-
-    override fun visit(condition: ConstantEq): Condition = condition
-
-    override fun visit(condition: ConstantLt): Condition = condition
-
-    override fun visit(condition: ConstantGt): Condition = condition
-
-    override fun visit(condition: ConstantMatches): Condition = condition
-
-    override fun visit(condition: SourceFunctionMatches): Condition = condition
-
-    override fun visit(condition: CallParameterContainsMark): Condition = condition
-
-    override fun visit(condition: ConstantTrue): Condition = condition
-
-    override fun visit(condition: TypeMatches): Condition = condition
 }

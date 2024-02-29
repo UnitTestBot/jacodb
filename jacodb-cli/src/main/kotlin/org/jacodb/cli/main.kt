@@ -21,19 +21,21 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.required
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import mu.KLogging
-import org.jacodb.analysis.AnalysisConfig
-import org.jacodb.analysis.engine.UnitResolver
-import org.jacodb.analysis.engine.VulnerabilityInstance
+import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
-import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.newNpeRunnerFactory
-import org.jacodb.analysis.library.newSqlInjectionRunnerFactory
-import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.ifds.UnitResolver
+import org.jacodb.analysis.npe.NpeManager
+import org.jacodb.analysis.sarif.VulnerabilityInstance
+import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
+import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.toSarif
+import org.jacodb.analysis.unused.UnusedVariableManager
+import org.jacodb.analysis.unused.toSarif
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
@@ -43,35 +45,54 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
-private val logger = object : KLogging() {}.logger
+private val logger = mu.KotlinLogging.logger {}
 
 class AnalysisMain {
     fun run(args: List<String>) = main(args.toTypedArray())
 }
 
-fun launchAnalysesByConfig(config: AnalysisConfig, graph: JcApplicationGraph, methods: List<JcMethod>): List<List<VulnerabilityInstance>> {
+typealias AnalysesOptions = Map<String, String>
+
+@Serializable
+data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
+
+fun launchAnalysesByConfig(
+    config: AnalysisConfig,
+    graph: JcApplicationGraph,
+    methods: List<JcMethod>,
+): List<List<VulnerabilityInstance<*>>> {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)
-        } ?: MethodUnitResolver
+        } ?: SingletonUnitResolver
 
-        val runner = when (analysis) {
-            "NPE" -> newNpeRunnerFactory()
-            "Unused" -> UnusedVariableRunnerFactory
-            "SQL" -> newSqlInjectionRunnerFactory()
+        when (analysis) {
+            "NPE" -> {
+                val manager = NpeManager(graph, unitResolver)
+                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
+            }
+
+            "Unused" -> {
+                val manager = UnusedVariableManager(graph, unitResolver)
+                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif() }
+            }
+
+            "SQL" -> {
+                val manager = TaintManager(graph, unitResolver)
+                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
+            }
+
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
                 return@mapNotNull null
             }
         }
-
-        logger.info { "Launching analysis $analysis" }
-        runAnalysis(graph, unitResolver, runner, methods)
     }
 }
 
-
+@OptIn(ExperimentalSerializationApi::class)
 fun main(args: Array<String>) {
     val parser = ArgParser("taint-analysis")
     val configFilePath by parser.option(
@@ -150,9 +171,12 @@ fun main(args: Array<String>) {
     }
 
     val vulnerabilities = launchAnalysesByConfig(config, graph, startJcMethods).flatten()
-    val report = SarifReport.fromVulnerabilities(vulnerabilities)
+    val report = sarifReportFromVulnerabilities(vulnerabilities)
+    val prettyJson = Json {
+        prettyPrint = true
+    }
 
     outputFile.outputStream().use { fileOutputStream ->
-        report.encodeToStream(fileOutputStream)
+        prettyJson.encodeToStream(report, fileOutputStream)
     }
 }

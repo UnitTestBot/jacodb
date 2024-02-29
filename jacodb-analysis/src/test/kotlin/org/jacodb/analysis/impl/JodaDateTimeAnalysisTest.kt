@@ -17,44 +17,73 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.engine.IfdsUnitRunnerFactory
-import org.jacodb.analysis.engine.UnitResolver
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.library.MethodUnitResolver
-import org.jacodb.analysis.library.UnusedVariableRunnerFactory
-import org.jacodb.analysis.library.getClassUnitResolver
-import org.jacodb.analysis.library.newNpeRunnerFactory
-import org.jacodb.analysis.runAnalysis
-import org.jacodb.analysis.sarif.SarifReport
+import org.jacodb.analysis.ifds.SingletonUnitResolver
+import org.jacodb.analysis.npe.NpeManager
+import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.unused.UnusedVariableManager
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
+import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
+import org.jacodb.testing.allClasspath
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = mu.KotlinLogging.logger {}
 
 class JodaDateTimeAnalysisTest : BaseTest() {
+
     companion object : WithGlobalDB()
 
-    private fun <UnitType> testOne(unitResolver: UnitResolver<UnitType>, ifdsUnitRunnerFactory: IfdsUnitRunnerFactory) {
-        val clazz = cp.findClass<DateTime>()
-        val result = runAnalysis(graph, unitResolver, ifdsUnitRunnerFactory, clazz.declaredMethods, 60000L)
+    override val cp: JcClasspath = runBlocking {
+        val configFileName = "config_small.json"
+        val configResource = this.javaClass.getResourceAsStream("/$configFileName")
+        if (configResource != null) {
+            val configJson = configResource.bufferedReader().readText()
+            val configurationFeature = TaintConfigurationFeature.fromJson(configJson)
+            db.classpath(allClasspath, listOf(configurationFeature) + classpathFeatures)
+        } else {
+            super.cp
+        }
+    }
 
-        println("Vulnerabilities found: ${result.size}")
-        println("Generated report:")
-        SarifReport.fromVulnerabilities(result).encodeToStream(System.out)
+    private val graph: JcApplicationGraph by lazy {
+        runBlocking {
+            cp.newApplicationGraphForAnalysis()
+        }
     }
 
     @Test
-    fun `test Unused variable analysis`() {
-        testOne(getClassUnitResolver(false), UnusedVariableRunnerFactory)
+    fun `test taint analysis`() {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = TaintManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
     fun `test NPE analysis`() {
-        testOne(MethodUnitResolver, newNpeRunnerFactory())
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = NpeManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
-    private val graph = runBlocking {
-        cp.newApplicationGraphForAnalysis()
+    @Test
+    fun `test unused variables analysis`() {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+        val unitResolver = SingletonUnitResolver
+        val manager = UnusedVariableManager(graph, unitResolver)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Unused variables found: ${sinks.size}" }
     }
 }

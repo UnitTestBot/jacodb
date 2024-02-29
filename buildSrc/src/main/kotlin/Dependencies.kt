@@ -29,7 +29,8 @@ object Versions {
     const val kotlinx_metadata = "0.5.0"
     const val kotlinx_serialization = "1.4.1"
     const val licenser = "0.6.1"
-    const val mockito = "4.8.0"
+    const val mockk = "1.13.3"
+    const val sarif4k = "0.5.0"
     const val shadow = "8.1.1"
     const val slf4j = "1.7.36"
     const val soot_utbot_fork = "4.4.0-FORK-2"
@@ -134,6 +135,11 @@ object Libs {
     )
 
     // https://github.com/Kotlin/kotlinx.serialization
+    val kotlinx_serialization_core = dep(
+        group = "org.jetbrains.kotlinx",
+        name = "kotlinx-serialization-core",
+        version = Versions.kotlinx_serialization
+    )
     val kotlinx_serialization_json = dep(
         group = "org.jetbrains.kotlinx",
         name = "kotlinx-serialization-json",
@@ -199,11 +205,11 @@ object Libs {
         version = Versions.jdot
     )
 
-    // https://github.com/mockito/mockito
-    val mockito_core = dep(
-        group = "org.mockito",
-        name = "mockito-core",
-        version = Versions.mockito
+    // https://github.com/mockk/mockk
+    val mockk = dep(
+        group = "io.mockk",
+        name = "mockk",
+        version = Versions.mockk
     )
 
     // https://github.com/JetBrains/java-annotations
@@ -274,6 +280,13 @@ object Libs {
         group = "com.github.UnitTestBot.juliet-java-test-suite",
         name = "cwe${cweNum}",
         version = Versions.juliet
+    )
+
+    // https://github.com/detekt/sarif4k
+    val sarif4k = dep(
+        group = "io.github.detekt.sarif4k",
+        name = "sarif4k",
+        version = Versions.sarif4k
     )
 }
 

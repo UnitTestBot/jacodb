@@ -20,10 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.api.cfg.JcInstLocation
-import org.jacodb.api.cfg.JcInstVisitor
 import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
@@ -33,14 +30,14 @@ import org.jacodb.impl.features.hierarchyExt
 /**
  * This is adopted specially for IFDS [JcApplicationGraph] that
  *  1. Ignores method calls matching [bannedPackagePrefixes] (i.e., treats them as simple instructions with no callees)
- *  2. In [callers] returns only callsites that were visited before
+ *  2. In [callers] returns only call sites that were visited before
  *  3. Adds a special [JcNoopInst] instruction to the beginning of each method
  *    (because backward analysis may want for method to start with neutral instruction)
  */
 internal class SimplifiedJcApplicationGraph(
-    private val impl: JcApplicationGraphImpl,
+    private val graph: JcApplicationGraph,
     private val bannedPackagePrefixes: List<String>,
-) : JcApplicationGraph by impl {
+) : JcApplicationGraph by graph {
     private val hierarchyExtension = runBlocking {
         classpath.hierarchyExt()
     }
@@ -48,6 +45,43 @@ internal class SimplifiedJcApplicationGraph(
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()
 
     private val cache: MutableMap<JcMethod, List<JcMethod>> = mutableMapOf()
+
+    // For backward analysis we may want for method to start with "neutral" operation =>
+    //  we add noop to the beginning of every method
+    private fun getStartInst(method: JcMethod): JcNoopInst {
+        val lineNumber = method.flowGraph().entries.firstOrNull()?.lineNumber?.let { it - 1 } ?: -1
+        return JcNoopInst(JcInstLocationImpl(method, -1, lineNumber))
+    }
+
+    override fun predecessors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return when (node) {
+            getStartInst(method) -> {
+                emptySequence()
+            }
+
+            in graph.entryPoints(method) -> {
+                sequenceOf(getStartInst(method))
+            }
+
+            else -> {
+                graph.predecessors(node)
+            }
+        }
+    }
+
+    override fun successors(node: JcInst): Sequence<JcInst> {
+        val method = methodOf(node)
+        return when (node) {
+            getStartInst(method) -> {
+                graph.entryPoints(method)
+            }
+
+            else -> {
+                graph.successors(node)
+            }
+        }
+    }
 
     private fun getOverrides(method: JcMethod): List<JcMethod> {
         return if (cache.containsKey(method)) {
@@ -59,37 +93,8 @@ internal class SimplifiedJcApplicationGraph(
         }
     }
 
-    // For backward analysis we may want for method to start with "neutral" operation =>
-    //  we add noop to the beginning of every method
-    private fun getStartInst(method: JcMethod): JcNoopInst {
-        val methodEntryLineNumber = method.flowGraph().entries.firstOrNull()?.lineNumber
-        return JcNoopInst(JcInstLocationImpl(method, -1, methodEntryLineNumber?.let { it - 1 } ?: -1))
-    }
-
-    override fun predecessors(node: JcInst): Sequence<JcInst> {
-        val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            emptySequence()
-        } else {
-            if (node in impl.entryPoint(method)) {
-                sequenceOf(getStartInst(method))
-            } else {
-                impl.predecessors(node)
-            }
-        }
-    }
-
-    override fun successors(node: JcInst): Sequence<JcInst> {
-        val method = methodOf(node)
-        return if (node == getStartInst(method)) {
-            impl.entryPoint(method)
-        } else {
-            impl.successors(node)
-        }
-    }
-
     private fun calleesUnmarked(node: JcInst): Sequence<JcMethod> {
-        val callees = impl.callees(node).filterNot { callee ->
+        val callees = graph.callees(node).filterNot { callee ->
             bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
         }
 
@@ -101,8 +106,8 @@ internal class SimplifiedJcApplicationGraph(
                 val allOverrides = getOverrides(callee)
                     .filter {
                         it.enclosingClass isSubClassOf instanceClass ||
-                                // TODO: use only down-most override here
-                                instanceClass isSubClassOf it.enclosingClass
+                            // TODO: use only down-most override here
+                            instanceClass isSubClassOf it.enclosingClass
                     }
 
                 // TODO: maybe filter inaccessible methods here?
@@ -112,8 +117,8 @@ internal class SimplifiedJcApplicationGraph(
 
     override fun callees(node: JcInst): Sequence<JcMethod> {
         return calleesUnmarked(node).also {
-            it.forEach {
-                visitedCallers.getOrPut(it) { mutableSetOf() }.add(node)
+            it.forEach { method ->
+                visitedCallers.getOrPut(method) { mutableSetOf() }.add(node)
             }
         }
     }
@@ -123,22 +128,22 @@ internal class SimplifiedJcApplicationGraph(
      * In IFDS we don't need all method callers, we need only method callers which we visited earlier.
      */
     // TODO: Think if this optimization is really needed
-    override fun callers(method: JcMethod): Sequence<JcInst> = visitedCallers.getOrDefault(method, mutableSetOf()).asSequence()
+    override fun callers(method: JcMethod): Sequence<JcInst> =
+        visitedCallers[method].orEmpty().asSequence()
 
-    override fun entryPoint(method: JcMethod): Sequence<JcInst> = sequenceOf(getStartInst(method))
-
-    companion object {
-    }
-}
-
-
-data class JcNoopInst(override val location: JcInstLocation): JcInst {
-    override val operands: List<JcExpr>
-        get() = emptyList()
-
-    override fun <T> accept(visitor: JcInstVisitor<T>): T {
-        return visitor.visitExternalJcInst(this)
+    override fun entryPoints(method: JcMethod): Sequence<JcInst> = try {
+        sequenceOf(getStartInst(method))
+    } catch (e: Throwable) {
+        // we couldn't find instructions list
+        // TODO: maybe fix flowGraph()
+        emptySequence()
     }
 
-    override fun toString(): String = "noop"
+    override fun exitPoints(method: JcMethod): Sequence<JcInst> = try {
+        graph.exitPoints(method)
+    } catch (e: Throwable) {
+        // we couldn't find instructions list
+        // TODO: maybe fix flowGraph()
+        emptySequence()
+    }
 }
