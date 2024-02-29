@@ -33,7 +33,7 @@ import org.jacodb.analysis.ifds.IfdsResult
 import org.jacodb.analysis.ifds.Manager
 import org.jacodb.analysis.ifds.QueueEmptinessChanged
 import org.jacodb.analysis.ifds.SummaryEdge
-import org.jacodb.analysis.ifds.SummaryStorageImpl
+import org.jacodb.analysis.ifds.SummaryStorageWithFlows
 import org.jacodb.analysis.ifds.SummaryStorageWithProducers
 import org.jacodb.analysis.ifds.TraceGraph
 import org.jacodb.analysis.ifds.UniRunner
@@ -64,7 +64,7 @@ open class TaintManager(
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
     private val summaryEdgesStorage = SummaryStorageWithProducers<SummaryEdge<TaintDomainFact>>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<TaintVulnerability>()
+    private val vulnerabilitiesStorage = SummaryStorageWithFlows<TaintVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 

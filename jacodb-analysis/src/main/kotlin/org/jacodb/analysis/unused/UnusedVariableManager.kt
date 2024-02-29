@@ -34,7 +34,7 @@ import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Manager
 import org.jacodb.analysis.ifds.QueueEmptinessChanged
 import org.jacodb.analysis.ifds.Runner
-import org.jacodb.analysis.ifds.SummaryStorageImpl
+import org.jacodb.analysis.ifds.SummaryStorageWithFlows
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
@@ -62,8 +62,8 @@ class UnusedVariableManager(
     private val runnerForUnit: MutableMap<UnitType, Runner<UnusedVariableDomainFact>> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
-    private val summaryEdgesStorage = SummaryStorageImpl<UnusedVariableSummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<UnusedVariableVulnerability>()
+    private val summaryEdgesStorage = SummaryStorageWithFlows<UnusedVariableSummaryEdge>()
+    private val vulnerabilitiesStorage = SummaryStorageWithFlows<UnusedVariableVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
