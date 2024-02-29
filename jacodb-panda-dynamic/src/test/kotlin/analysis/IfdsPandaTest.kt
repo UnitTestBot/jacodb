@@ -75,7 +75,7 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
     }
 
     @Test
-    fun `test taint analysis on Program1`() = with(PandaTraits) {
+    fun `test taint analysis on Program1`() {
         val project = loadProjectForSample("Program1")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
@@ -120,7 +120,7 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
 
     @Disabled("Requires IR updates and bytecode parser improvements")
     @Test
-    fun `test taint analysis on Program2`() = with(PandaTraits) {
+    fun `test taint analysis on Program2`()  {
         val project = loadProjectForSample("Program2")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
