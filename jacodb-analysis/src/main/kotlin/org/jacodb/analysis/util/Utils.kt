@@ -18,6 +18,7 @@ package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.Edge
+import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
@@ -54,4 +55,12 @@ fun AccessPath?.startsWith(other: AccessPath?): Boolean {
         return false
     }
     return this.accesses.take(other.accesses.size) == other.accesses
+}
+
+fun AccessPath.removeTrailingElementAccessors(): AccessPath {
+    val accesses = accesses.toMutableList()
+    while (accesses.lastOrNull() is ElementAccessor) {
+        accesses.removeLast()
+    }
+    return AccessPath(value, accesses)
 }

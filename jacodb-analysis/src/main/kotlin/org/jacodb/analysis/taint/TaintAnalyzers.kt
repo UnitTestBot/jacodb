@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.taint
 
+import org.jacodb.analysis.config.AdhocFactAwareConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
@@ -72,8 +73,23 @@ class TaintAnalyzer(
                 if (item.condition.accept(conditionEvaluator)) {
                     val message = item.ruleNote
                     val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
-                    logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
+                    logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}, rule = ${vulnerability.rule}" }
                     add(NewVulnerability(vulnerability))
+                } else {
+                    val adhocEvaluator = AdhocFactAwareConditionEvaluator(
+                        edge.to.fact,
+                        CallPositionToJcValueResolver(edge.to.statement),
+                    )
+                    for (result in adhocEvaluator.apply(item.condition)) {
+                        add(
+                            NewVulnerabilityWithAssumptions(
+                                message = item.ruleNote,
+                                rule = item,
+                                edge = edge,
+                                assumptions = result.assumptions
+                            )
+                        )
+                    }
                 }
             }
         }

@@ -17,6 +17,7 @@
 package org.jacodb.analysis.taint
 
 import org.jacodb.analysis.ifds.Reason
+import org.jacodb.taint.configuration.TaintMethodSink
 
 sealed interface TaintEvent
 
@@ -26,11 +27,22 @@ data class NewSummaryEdge(
 
 data class NewVulnerability(
     val vulnerability: TaintVulnerability,
+    // TODO: replace (i.e. inline) 'vulnerability' with its fields:
+    // val message: String,
+    // val sink: TaintVertex,
+    // val rule: TaintMethodSink? = null,
+) : TaintEvent
+
+data class NewVulnerabilityWithAssumptions(
+    val message: String,
+    val rule: TaintMethodSink,
+    val edge: TaintEdge,
+    val assumptions: Set<Tainted>,
 ) : TaintEvent
 
 data class EdgeForOtherRunner(
     val edge: TaintEdge,
-    val reason: Reason<TaintDomainFact>
+    val reason: Reason<TaintDomainFact>,
 ) : TaintEvent {
     init {
         // TODO: remove this check

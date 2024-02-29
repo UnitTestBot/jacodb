@@ -23,12 +23,12 @@ import org.jacodb.analysis.ifds.Reason
 import org.jacodb.analysis.taint.EdgeForOtherRunner
 import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
+import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
-import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintVertex
-import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.analysis.taint.Tainted
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr

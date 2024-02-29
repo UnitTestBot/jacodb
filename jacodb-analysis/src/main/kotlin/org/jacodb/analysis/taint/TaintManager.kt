@@ -42,8 +42,11 @@ import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.util.getPathEdges
+import org.jacodb.analysis.util.removeTrailingElementAccessors
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.taint.configuration.TaintMethodSink
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -235,6 +238,46 @@ open class TaintManager(
         foundVulnerabilities
     }
 
+    private val storageForUnit = ConcurrentHashMap<UnitType, MutableMap<Pair<TaintMethodSink, JcInst>, Vuln>>()
+
+    sealed interface Vuln
+
+    object BannedVulnerability : Vuln
+
+    class VulnerabilityWithAssumptions(
+        val message: String,
+        val rule: TaintMethodSink,
+    ) : Vuln {
+        private val events: MutableList<NewVulnerabilityWithAssumptions> = mutableListOf()
+
+        fun add(event: NewVulnerabilityWithAssumptions) {
+            events += event
+        }
+
+        fun createVulnerabilityIfSatisfied(): TaintVulnerability? {
+            val allFacts = events.mapTo(hashSetOf()) { it.edge.to.fact as Tainted }
+            for (e in events) {
+                // val unsatisfiedAssumptions = e.assumptions - allFacts
+                val unsatisfiedAssumptions = e.assumptions.filter {
+                    for (f in allFacts) {
+                        // Remove matches:
+                        if (it == f) return@filter false
+                        // FIXME: adhoc for arrays:
+                        if (it.mark == f.mark &&
+                            it.variable.removeTrailingElementAccessors() == f.variable.removeTrailingElementAccessors()
+                        ) return@filter false
+                    }
+                    // Retain unmatched:
+                    return@filter true
+                }
+                if (unsatisfiedAssumptions.isEmpty()) {
+                    return TaintVulnerability(message = e.message, sink = e.edge.to, rule = e.rule)
+                }
+            }
+            return null
+        }
+    }
+
     override fun handleEvent(event: TaintEvent) {
         when (event) {
             is NewSummaryEdge -> {
@@ -243,6 +286,28 @@ open class TaintManager(
 
             is NewVulnerability -> {
                 vulnerabilitiesStorage.add(event.vulnerability)
+            }
+
+            is NewVulnerabilityWithAssumptions -> {
+                val unit = unitResolver.resolve(event.edge.method)
+                val storage = storageForUnit.computeIfAbsent(unit) { ConcurrentHashMap() }
+                val key = event.rule to event.edge.to.statement
+                val vuln = storage.computeIfAbsent(key) {
+                    VulnerabilityWithAssumptions(event.rule.ruleNote, event.rule)
+                }
+                when (vuln) {
+                    is BannedVulnerability -> return
+                    is VulnerabilityWithAssumptions -> {
+                        vuln.add(event)
+                        val vulnerability = vuln.createVulnerabilityIfSatisfied()
+                        if (vulnerability != null) {
+                            storage[key] = BannedVulnerability
+
+                            logger.info { "Found with assumptions sink=${vulnerability.sink} in ${vulnerability.method}, rule = ${vulnerability.rule}" }
+                            handleEvent(NewVulnerability(vulnerability))
+                        }
+                    }
+                }
             }
 
             is EdgeForOtherRunner -> {
