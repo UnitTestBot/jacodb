@@ -22,8 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -34,7 +32,9 @@ import org.jacodb.analysis.ifds.ControlEvent
 import org.jacodb.analysis.ifds.IfdsResult
 import org.jacodb.analysis.ifds.Manager
 import org.jacodb.analysis.ifds.QueueEmptinessChanged
-import org.jacodb.analysis.ifds.SummaryStorageImpl
+import org.jacodb.analysis.ifds.SummaryEdge
+import org.jacodb.analysis.ifds.SummaryStorageWithFlows
+import org.jacodb.analysis.ifds.SummaryStorageWithProducers
 import org.jacodb.analysis.ifds.TraceGraph
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.ifds.UnitResolver
@@ -66,8 +66,8 @@ open class TaintManager(
     protected val runnerForUnit: MutableMap<UnitType, TaintRunner> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
-    private val summaryEdgesStorage = SummaryStorageImpl<TaintSummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageImpl<TaintVulnerability>()
+    private val summaryEdgesStorage = SummaryStorageWithProducers<SummaryEdge<TaintDomainFact>>()
+    private val vulnerabilitiesStorage = SummaryStorageWithFlows<TaintVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
@@ -342,10 +342,7 @@ open class TaintManager(
         scope: CoroutineScope,
         handler: (TaintEdge) -> Unit,
     ) {
-        summaryEdgesStorage
-            .getFacts(method)
-            .onEach { handler(it.edge) }
-            .launchIn(scope)
+        summaryEdgesStorage.subscribe(method) { handler(it.edge) }
     }
 
     fun vulnerabilityTraceGraph(vulnerability: TaintVulnerability): TraceGraph<TaintDomainFact> {

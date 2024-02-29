@@ -603,5 +603,46 @@
         }
       }
     ]
+  },
+  {
+    "_": "MethodSource",
+    "methodInfo": {
+      "cls": {
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "Properties"
+        },
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.util"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "getProperty"
+      },
+      "applyToOverrides": true,
+      "exclude": [],
+      "functionLabel": null,
+      "modifier": -1,
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      }
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Result"
+        },
+        "mark": {
+          "name": "PROPERTY"
+        }
+      }
+    ]
   }
 ]
