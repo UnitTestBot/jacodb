@@ -18,7 +18,6 @@ package org.jacodb.analysis.impl
 
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.unused.UnusedVariableManager
-import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -58,7 +57,7 @@ class IfdsUnusedTest : BaseAnalysisTest() {
 
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
-    fun `test on Juliet's CWE 563`(className: String) = with(JcTraits) {
+    fun `test on Juliet's CWE 563`(className: String) {
         testSingleJulietClass(className) { method ->
             val unitResolver = SingletonUnitResolver
             val manager = UnusedVariableManager(graph, unitResolver)
@@ -67,7 +66,7 @@ class IfdsUnusedTest : BaseAnalysisTest() {
     }
 
     @Test
-    fun `test on specific Juliet instance`() = with(JcTraits) {
+    fun `test on specific Juliet instance`() {
         val className =
             "juliet.testcases.CWE563_Unused_Variable.CWE563_Unused_Variable__unused_init_variable_StringBuilder_01"
         val clazz = cp.findClass(className)

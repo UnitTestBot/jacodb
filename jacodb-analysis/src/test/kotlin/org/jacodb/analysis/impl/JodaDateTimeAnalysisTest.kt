@@ -17,17 +17,13 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.unused.UnusedVariableManager
-import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
-import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.taint.configuration.TaintConfigurationFeature
-import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
 import org.joda.time.DateTime
@@ -36,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
-class JodaDateTimeAnalysisTest : BaseTest() {
+class JodaDateTimeAnalysisTest : BaseAnalysisTest() {
 
     companion object : WithGlobalDB()
 
@@ -52,14 +48,8 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         }
     }
 
-    private val graph: JcApplicationGraph by lazy {
-        runBlocking {
-            cp.newApplicationGraphForAnalysis()
-        }
-    }
-
     @Test
-    fun `test taint analysis`() = with(JcTraits) {
+    fun `test taint analysis`() {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         val unitResolver = SingletonUnitResolver
@@ -69,7 +59,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
     }
 
     @Test
-    fun `test NPE analysis`() = with(JcTraits) {
+    fun `test NPE analysis`() {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         val unitResolver = SingletonUnitResolver
@@ -79,7 +69,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
     }
 
     @Test
-    fun `test unused variables analysis`() = with(JcTraits) {
+    fun `test unused variables analysis`() {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         val unitResolver = SingletonUnitResolver

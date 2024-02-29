@@ -23,6 +23,7 @@ import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.JcTraits
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
@@ -49,7 +50,7 @@ import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-class TaintFlowFunctionsTest : BaseTest() {
+class TaintFlowFunctionsTest : BaseTest(), Traits<JcMethod, JcInst> by JcTraits {
 
     companion object : WithDB(Usages, InMemoryHierarchy)
 
@@ -96,7 +97,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test obtain start facts`() = with(JcTraits) {
+    fun `test obtain start facts`() {
         val flowSpace = ForwardTaintFlowFunctions(graph)
         val facts = flowSpace.obtainPossibleStartFacts(testMethod).toList()
         val arg0 = cp.getArgument(testMethod.parameters[0])!!
@@ -105,7 +106,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test sequential flow function assign mark`() = with(JcTraits) {
+    fun `test sequential flow function assign mark`() {
         // "x := y", where 'y' is tainted, should result in both 'x' and 'y' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
@@ -119,7 +120,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function assign mark`() = with(JcTraits) {
+    fun `test call flow function assign mark`() {
         // "x := test(...)", where 'test' is a source, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
@@ -133,7 +134,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function remove mark`() = with(JcTraits) {
+    fun `test call flow function remove mark`() {
         // "test(x)", where 'x' is tainted, should result in 'x' NOT to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
@@ -148,7 +149,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call flow function copy mark`() = with(JcTraits) {
+    fun `test call flow function copy mark`() {
         // "y := test(x)" should result in 'y' to be tainted only when 'x' is tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
@@ -169,7 +170,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test call to start flow function`() = with(JcTraits) {
+    fun `test call to start flow function`() {
         // "test(x)", where 'x' is tainted, should result in 'x' (formal argument of 'test') to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
@@ -194,7 +195,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     }
 
     @Test
-    fun `test exit flow function`() = with(JcTraits) {
+    fun `test exit flow function`() {
         // "x := test()" + "return y", where 'y' is tainted, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {

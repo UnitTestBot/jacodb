@@ -20,6 +20,8 @@ import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.Vulnerability
+import org.jacodb.analysis.util.JcTraits
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
@@ -39,7 +41,7 @@ import kotlin.streams.asStream
 
 private val logger = mu.KotlinLogging.logger {}
 
-abstract class BaseAnalysisTest : BaseTest() {
+abstract class BaseAnalysisTest : BaseTest(), Traits<JcMethod, JcInst> by JcTraits {
 
     companion object : WithGlobalDB(UnknownClasses) {
 

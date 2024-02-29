@@ -197,7 +197,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability<JcMethod, JcInst>> = with(JcTraits) {
+    private fun findSinks(method: JcMethod): List<TaintVulnerability<JcMethod, JcInst>> {
         val unitResolver = SingletonUnitResolver
         val manager = NpeManager(graph, unitResolver)
         return manager.analyze(listOf(method), timeout = 30.seconds)
