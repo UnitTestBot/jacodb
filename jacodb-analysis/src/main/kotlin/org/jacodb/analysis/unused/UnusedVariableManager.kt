@@ -63,7 +63,6 @@ class UnusedVariableManager(
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
     private val summaryEdgesStorage = SummaryStorageWithFlows<UnusedVariableSummaryEdge>()
-    private val vulnerabilitiesStorage = SummaryStorageWithFlows<UnusedVariableVulnerability>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
