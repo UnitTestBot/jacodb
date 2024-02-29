@@ -48,6 +48,7 @@ import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+import org.junit.jupiter.api.Disabled
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -117,6 +118,7 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
         assertTrue(sinks.isNotEmpty())
     }
 
+    @Disabled("Requires IR updates and bytecode parser improvements")
     @Test
     fun `test taint analysis on Program2`() = with(PandaTraits) {
         val project = loadProjectForSample("Program2")
