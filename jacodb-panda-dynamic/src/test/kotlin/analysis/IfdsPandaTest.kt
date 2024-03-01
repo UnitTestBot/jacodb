@@ -212,7 +212,7 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
                             it.instructions = listOf(
                                 PandaReturnInst(
                                     location = PandaInstLocation(method = it, index = 0, lineNumber = 3),
-                                    returnValue = PandaNullConstant(PandaAnyType)
+                                    returnValue = PandaNullConstant
                                 )
                             )
                             it.className = "Sample"

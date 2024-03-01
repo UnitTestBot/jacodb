@@ -21,47 +21,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.Mappable
-import org.jacodb.panda.dynamic.api.PandaAddExpr
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaArgument
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaCallInst
-import org.jacodb.panda.dynamic.api.PandaClass
-import org.jacodb.panda.dynamic.api.PandaCmpExpr
-import org.jacodb.panda.dynamic.api.PandaCmpOp
-import org.jacodb.panda.dynamic.api.PandaConditionExpr
-import org.jacodb.panda.dynamic.api.PandaConstant
-import org.jacodb.panda.dynamic.api.PandaEqExpr
-import org.jacodb.panda.dynamic.api.PandaGeExpr
-import org.jacodb.panda.dynamic.api.PandaGtExpr
-import org.jacodb.panda.dynamic.api.PandaIfInst
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaInstLocation
-import org.jacodb.panda.dynamic.api.PandaInstRef
-import org.jacodb.panda.dynamic.api.PandaLeExpr
-import org.jacodb.panda.dynamic.api.PandaLocalVar
-import org.jacodb.panda.dynamic.api.PandaLtExpr
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaNeqExpr
-import org.jacodb.panda.dynamic.api.PandaNewExpr
-import org.jacodb.panda.dynamic.api.PandaNumberConstant
-import org.jacodb.panda.dynamic.api.PandaNumberType
-import org.jacodb.panda.dynamic.api.PandaParameterInfo
-import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.panda.dynamic.api.PandaStaticCallExpr
-import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
-import org.jacodb.panda.dynamic.api.PandaStringConstant
-import org.jacodb.panda.dynamic.api.PandaThrowInst
-import org.jacodb.panda.dynamic.api.PandaToNumericExpr
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaTypeofExpr
-import org.jacodb.panda.dynamic.api.PandaValue
-import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
-import org.jacodb.panda.dynamic.api.TODOConstant
-import org.jacodb.panda.dynamic.api.TODOExpr
+import org.jacodb.panda.dynamic.api.*
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -363,7 +323,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
         method.idToIRInputs[outputId].orEmpty().forEachIndexed { index, programInst ->
             if (inputId == programInst.id()) {
-                method.idToInputs.getOrPut(outputId) { mutableListOf() }.add(index, input)
+                method.idToInputs.getOrPut(outputId) { mutableListOf() }.add(input)
             }
         }
     }
@@ -545,6 +505,12 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 method.insts.add(assign)
             }
 
+            opcode == "Intrinsic.ldnull" -> {
+                outputs.forEach { output ->
+                    addInput(method, id(), output, PandaNullConstant)
+                }
+            }
+
 //            opcode == "Intrinsic.ldundefined" -> {
 //                val lv = PandaLocalVar(method.currentLocalVarId++)
 //                val assign = PandaAssignInst(locationFromOp(this), lv, PandaUndefinedConstant)
@@ -608,15 +574,18 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
                 val name = connector.getLdName(method.name, bc!!)
+                val out = PandaStringConstant(name)
                 outputs.forEach { output ->
-                    addInput(method, id(), output, PandaStringConstant(name))
+                    addInput(method, id(), output, out)
                 }
             }
 
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = connector.getLdName(method.name, bc!!)
                 outputs.forEach { output ->
-                    addInput(method, id(), output, PandaStringConstant(name))
+                    addInput(method, id(), output, PandaLoadedValue(inputs[0], PandaStringConstant(name)))
+                    // for call insts not to have "instance.object" and "instance, object" in inputs
+                    method.idToInputs[output]?.remove(inputs[0])
                 }
             }
 
@@ -627,16 +596,49 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 }
             }
 
-            opcode == "Intrinsic.callthis1" -> {
+            opcode == "Intrinsic.callthis0" -> {
+                val instCallValue = inputs[0] as PandaInstanceCallValue
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
-                        method.pandaMethod.project.findInstanceMethodInStd(
-                            (inputs[0] as PandaStringConstant).value,
-                            (inputs[1] as PandaStringConstant).value
+                        val (instanceName, methodName) = instCallValue.getClassAndMethodName()
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            instanceName,
+                            methodName,
+                            method.getClass().name
                         )
                     },
-                    args = listOf(inputs[2]),
-                    instance = inputs[0]
+                    args = emptyList(),
+                    instance = instCallValue.instance
+                )
+                if (outputs.isEmpty()) {
+                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+                } else {
+                    val lv = PandaLocalVar(method.currentLocalVarId++)
+                    val assign = PandaAssignInst(
+                        locationFromOp(this),
+                        lv,
+                        callExpr
+                    )
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, lv)
+                    }
+                    method.insts.add(assign)
+                }
+            }
+
+            opcode == "Intrinsic.callthis1" -> {
+                val instCallValue = inputs[0] as PandaInstanceCallValue
+                val callExpr = PandaVirtualCallExpr(
+                    lazyMethod = lazy {
+                        val (instanceName, methodName) = instCallValue.getClassAndMethodName()
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            instanceName,
+                            methodName,
+                            method.getClass().name
+                        )
+                    },
+                    args = listOf(inputs[1]),
+                    instance = instCallValue.instance
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
@@ -662,10 +664,63 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callarg0" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val methodName = (inputs[0] as PandaStringConstant).value
+                val callExpr = PandaVirtualCallExpr(
+                    lazyMethod = lazy {
+                        method.pandaMethod.project.findMethodOrNull(
+                            methodName,
+                            method.getClass().name
+                        )!!
+                    },
+                    args = emptyList(),
+                    instance = PandaThis(PandaClassTypeImpl(method.getClass().name))
+                )
+                if (outputs.isEmpty()) {
+                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+                } else {
+                    val lv = PandaLocalVar(method.currentLocalVarId++)
+                    val assign = PandaAssignInst(
+                        locationFromOp(this),
+                        lv,
+                        callExpr
+                    )
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, lv)
+                    }
+                    method.insts.add(assign)
+                }
+            }
+
+            opcode == "Intrinsic.callarg1" -> {
+                val instanceName = (inputs[0] as PandaStringConstant).value
+                val methodName = (inputs[1] as PandaStringConstant).value
+                var instance = inputs[0]
+                if (instanceName == "this") instance = PandaThis(PandaClassTypeImpl(method.getClass().name))
+                val callExpr = PandaVirtualCallExpr(
+                    lazyMethod = lazy {
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            instanceName,
+                            methodName,
+                            method.getClass().name
+                        )
+                    },
+                    args = listOf(inputs[2]),
+                    instance = instance
+                )
+                if (outputs.isEmpty()) {
+                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+                } else {
+                    val lv = PandaLocalVar(method.currentLocalVarId++)
+                    val assign = PandaAssignInst(
+                        locationFromOp(this),
+                        lv,
+                        callExpr
+                    )
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, lv)
+                    }
+                    method.insts.add(assign)
+                }
             }
 
             else -> getInstType(this, method)

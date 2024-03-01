@@ -24,7 +24,7 @@ import org.jacodb.api.common.CommonTypeName
 
 sealed interface PandaType : CommonType {
     override val nullable: Boolean
-        get() = TODO("Not yet implemented")
+        get() = false
 }
 
 object PandaAnyType : PandaType {

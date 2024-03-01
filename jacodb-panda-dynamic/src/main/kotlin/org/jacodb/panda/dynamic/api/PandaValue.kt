@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.CommonClassField
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonThis
@@ -113,11 +112,13 @@ object PandaUndefinedConstant : PandaConstant {
     }
 }
 
-class PandaNullConstant(
-    override val type: PandaType,
-) : PandaConstant {
+object PandaNullConstant : PandaConstant {
     override val operands: List<PandaValue>
         get() = emptyList()
+
+    // actually "typeof null" is "object", so consider smth like PandaClassType but PandaObjectType
+    override val type: PandaType
+        get() = PandaAnyType
 
     override fun toString(): String = "null"
 
@@ -155,5 +156,67 @@ data class PandaArrayAccess(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArrayAccess(this)
+    }
+}
+
+interface PandaInstanceCallValue : PandaComplexValue {
+
+    val instance: PandaValue
+
+    val obj: PandaValue
+
+    fun getClassAndMethodName(): List<String>
+}
+
+// used to connect loaded object to instance
+class PandaLoadedValue(
+    override val instance: PandaValue,
+    override val obj: PandaValue
+) : PandaInstanceCallValue {
+
+    override val type: PandaType
+        get() = PandaAnyType
+    override val operands: List<PandaValue>
+        get() = listOf(instance, obj)
+
+    override fun getClassAndMethodName(): List<String> {
+        assert(instance is PandaStringConstant)
+        assert(obj is PandaStringConstant)
+
+        return listOf((instance as PandaStringConstant).value, (obj as PandaStringConstant).value)
+    }
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaLoadedValue(this)
+    }
+
+    override fun toString() = "Loaded[$instance.$obj]"
+}
+
+class PandaInstanceCallValueImpl(
+    override val instance: PandaValue,
+    override val obj: PandaValue
+) : PandaInstanceCallValue {
+    override val type: PandaType
+        get() = PandaAnyType
+    override val operands: List<PandaValue>
+        get() = listOf(instance, obj)
+
+    override fun getClassAndMethodName(): List<String> {
+        assert(obj is PandaStringConstant)
+
+        return listOf(instance.resolve(), (obj as PandaStringConstant).value)
+    }
+
+    private fun PandaValue.resolve(): String {
+        return when(this) {
+            is PandaStringConstant -> this.value
+            is PandaLocalVar -> (this.type as PandaClassType).typeName
+            else -> throw IllegalArgumentException("couldn't resolve $this")
+        }
+    }
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        TODO("Not yet implemented")
     }
 }

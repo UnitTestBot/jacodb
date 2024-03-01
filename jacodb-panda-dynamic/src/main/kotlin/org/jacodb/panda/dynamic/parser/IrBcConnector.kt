@@ -21,7 +21,7 @@ class IrBcConnector(
 ) {
     private fun mapOffset(numArgs: ULong, bc: String): Int {
         val initOffset = numArgs.toInt() * 2
-        return Integer.decode(bc) - initOffset
+        return Integer.decode(bc) - 0
     }
 
     fun getLdName(currentFuncName: String, bc: String): String {

@@ -59,6 +59,19 @@ class PandaProject(
         } ?: error("no std field $instanceName")
     }
 
+    /*  TODO: WIP
+        Order of search:
+            1. Local vars
+            2. Global vars
+            3. Imports
+            4. STD
+     */
+    fun findMethodByInstanceOrEmpty(instanceName: String, methodName: String, currentClassName: String): PandaMethod {
+        if (instanceName == "this") return findMethodOrNull(methodName, currentClassName)
+            ?: PandaMethod(methodName, PandaAnyType)
+        return findInstanceMethodInStd(instanceName, methodName)
+    }
+
     fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
 
     fun findMethodOrNull(name: String, currentClassName: String): PandaMethod? =
