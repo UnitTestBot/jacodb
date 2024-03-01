@@ -214,6 +214,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             "any" -> PandaAnyType
             else -> PandaAnyType
         }
+
+        inline fun <reified T: PandaValue> List<PandaValue>.find(): List<T> {
+            return this.filterIsInstance<T>()
+        }
     }
 
     fun getProgramIR(): ProgramIR {
@@ -362,6 +366,19 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 }
                 method.insts.add(assign)
             }*/
+
+            opcode == "Intrinsic.eq" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(
+                    locationFromOp(this),
+                    lv,
+                    PandaEqExpr(inputs[0], inputs[1])
+                )
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
 
             opcode == "Intrinsic.typeof" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
@@ -548,13 +565,19 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callargs2" -> {
-                val callExpr = PandaStaticCallExpr(
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
+                val args = inputs.filterNot { it == instCallValue }
+                val (instanceName, methodName) = instCallValue.getClassAndMethodName()
+                val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
-                        val callFuncName = (inputs[2] as PandaStringConstant).value
-                        method.pandaMethod.project.findMethodOrNull(callFuncName, method.getClass().name)
-                            ?: PandaMethod(callFuncName, PandaAnyType)
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            instanceName,
+                            methodName,
+                            method.getClass().name
+                        )
                     },
-                    args = listOf(inputs[0], inputs[1])
+                    instance = instCallValue.instance,
+                    args = args
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
@@ -592,7 +615,11 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             opcode == "Intrinsic.ldglobalvar" -> {
                 val name = connector.getLdName(method.name, bc!!)
                 outputs.forEach { output ->
-                    addInput(method, id(), output, PandaStringConstant(name))
+                    addInput(method, id(), output,
+                        PandaInstanceCallValueImpl(
+                            PandaThis(PandaClassTypeImpl(method.getClass().name)),
+                            PandaStringConstant(name)
+                    ))
                 }
             }
 
@@ -664,16 +691,18 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callarg0" -> {
-                val methodName = (inputs[0] as PandaStringConstant).value
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
+                val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
-                        method.pandaMethod.project.findMethodOrNull(
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            instanceName,
                             methodName,
                             method.getClass().name
-                        )!!
+                        )
                     },
                     args = emptyList(),
-                    instance = PandaThis(PandaClassTypeImpl(method.getClass().name))
+                    instance = instCallValue.instance
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
@@ -692,10 +721,9 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callarg1" -> {
-                val instanceName = (inputs[0] as PandaStringConstant).value
-                val methodName = (inputs[1] as PandaStringConstant).value
-                var instance = inputs[0]
-                if (instanceName == "this") instance = PandaThis(PandaClassTypeImpl(method.getClass().name))
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
+                val args = inputs.filterNot {it == instCallValue}
+                val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
@@ -704,8 +732,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                             method.getClass().name
                         )
                     },
-                    args = listOf(inputs[2]),
-                    instance = instance
+                    args = args,
+                    instance = instCallValue.instance
                 )
                 if (outputs.isEmpty()) {
                     method.insts.add(PandaCallInst(locationFromOp(this), callExpr))

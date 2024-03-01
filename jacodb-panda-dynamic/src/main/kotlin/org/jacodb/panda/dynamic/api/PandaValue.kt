@@ -212,6 +212,7 @@ class PandaInstanceCallValueImpl(
         return when(this) {
             is PandaStringConstant -> this.value
             is PandaLocalVar -> (this.type as PandaClassType).typeName
+            is PandaThis -> (this.type as PandaClassType).typeName
             else -> throw IllegalArgumentException("couldn't resolve $this")
         }
     }

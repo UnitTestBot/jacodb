@@ -40,7 +40,7 @@ class IRParserTest {
         programIR = irParser.getProgramIR()
     }
 
-    private fun loadIR(fileName: String = "/samples/Program1"): IRParser {
+    private fun loadIR(fileName: String = "/samples/Program2"): IRParser {
         val bcParser = javaClass.getResource("$fileName.abc")?.path?.let { FileInputStream(it).readBytes() }
             ?.let { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
             ?.let { ByteCodeParser(it) }
