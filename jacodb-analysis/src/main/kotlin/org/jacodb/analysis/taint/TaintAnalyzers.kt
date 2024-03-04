@@ -26,6 +26,8 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.ext.callExpr
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.impl.cfg.util.loops
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
 
@@ -83,6 +85,25 @@ class TaintAnalyzer<Method, Statement>(
                     val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
                     logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
                     add(NewVulnerability(vulnerability))
+                }
+            }
+        }
+
+        if (Globals.UNTRUSTED_LOOP_BOUND_SINK) {
+            val statement = edge.to.statement
+            val fact = edge.to.fact
+            if (statement is JcIfInst && fact is Tainted && fact.mark.name == "UNTRUSTED") {
+                val loops = statement.location.method.flowGraph().loops
+                val loopHeads = loops.map { it.head }
+                if (statement in loopHeads) {
+                    for (s in statement.condition.operands) {
+                        val p = s.toPath()
+                        if (p == fact.variable) {
+                            val message = "Untrusted loop bound"
+                            val vulnerability = TaintVulnerability(message, sink = edge.to)
+                            add(NewVulnerability(vulnerability))
+                        }
+                    }
                 }
             }
         }
