@@ -18,7 +18,6 @@ package org.jacodb.api.jvm
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.Project
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
