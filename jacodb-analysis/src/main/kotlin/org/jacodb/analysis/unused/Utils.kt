@@ -16,53 +16,46 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.CommonAccessPath
-import org.jacodb.analysis.ifds.JcAccessPath
-import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.analysis.util.Traits
+import org.jacodb.analysis.util.values
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcArrayAccess
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcBranchingInst
-import org.jacodb.api.jvm.cfg.JcExpr
-import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcTerminatingInst
-import org.jacodb.api.jvm.cfg.values
-import org.jacodb.api.jvm.ext.cfg.callExpr
 
-internal fun CommonAccessPath.isUsedAt(expr: CommonExpr): Boolean {
-    if (this is JcAccessPath && expr is JcExpr) {
-        return isUsedAt(expr)
-    }
-    error("Cannot determine whether path $this is used at expr: $expr")
-}
-
-internal fun CommonAccessPath.isUsedAt(inst: CommonInst<*, *>): Boolean {
-    if (this is JcAccessPath && inst is JcInst) {
-        return isUsedAt(inst)
-    }
-    error("Cannot determine whether path $this is used at inst: $inst")
-}
-
-internal fun JcAccessPath.isUsedAt(expr: JcExpr): Boolean {
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+internal fun AccessPath.isUsedAt(
+    expr: CommonExpr,
+): Boolean {
     return expr.values.any { it.toPathOrNull() == this }
 }
 
-internal fun JcAccessPath.isUsedAt(inst: JcInst): Boolean {
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+internal fun AccessPath.isUsedAt(
+    inst: CommonInst<*, *>,
+): Boolean {
     val callExpr = inst.callExpr
 
     if (callExpr != null) {
         // Don't count constructor calls as usages
-        if (callExpr.method.method.isConstructor && isUsedAt((callExpr as JcSpecialCallExpr).instance)) {
+        if (callExpr is JcSpecialCallExpr
+            && callExpr.method.method.isConstructor
+            && isUsedAt(callExpr.instance)
+        ) {
             return false
         }
 
         return isUsedAt(callExpr)
     }
     if (inst is JcAssignInst) {
-        if (inst.lhv is JcArrayAccess && isUsedAt((inst.lhv as JcArrayAccess))) {
+        if (inst.lhv is JcArrayAccess && isUsedAt(inst.lhv)) {
             return true
         }
         return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)

@@ -29,6 +29,7 @@ import org.jacodb.analysis.taint.TaintEvent
 import org.jacodb.analysis.taint.TaintVertex
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
@@ -40,6 +41,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class NpeAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : Analyzer<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
@@ -75,7 +77,7 @@ class NpeAnalyzer<Method, Statement>(
 
         run {
             val callExpr = edge.to.statement.callExpr ?: return@run
-            val callee = callExpr.method.method
+            val callee = callExpr.callee
 
             val config = taintConfigurationFeature?.let { feature ->
                 if (callee is JcMethod) {

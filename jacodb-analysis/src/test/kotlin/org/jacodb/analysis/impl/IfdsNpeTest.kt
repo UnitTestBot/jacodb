@@ -21,6 +21,7 @@ import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.ext.constructors

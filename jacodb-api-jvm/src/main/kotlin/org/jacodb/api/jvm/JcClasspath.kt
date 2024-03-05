@@ -18,7 +18,6 @@ package org.jacodb.api.jvm
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.common.CommonClass
 import org.jacodb.api.common.Project
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
@@ -64,11 +63,6 @@ interface JcClasspath : Closeable, Project {
      * @return class or interface or null if there is no such class found in locations
      */
     override fun findTypeOrNull(name: String): JcType?
-
-    override fun typeOf(clazz: CommonClass): JcClassType {
-        check(clazz is JcClassOrInterface)
-        return classTypeOf(clazz)
-    }
 
     fun classTypeOf(
         jcClass: JcClassOrInterface,

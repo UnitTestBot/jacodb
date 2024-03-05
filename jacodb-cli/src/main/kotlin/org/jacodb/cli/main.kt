@@ -36,6 +36,7 @@ import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.toSarif
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.analysis.unused.toSarif
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClassProcessingTask
 import org.jacodb.api.jvm.JcMethod
@@ -63,7 +64,7 @@ fun launchAnalysesByConfig(
     config: AnalysisConfig,
     graph: JcApplicationGraph,
     methods: List<JcMethod>,
-): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> {
+): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> = with(JcTraits) {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)

@@ -16,7 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-
 /**
  * Basic block represents a list of instructions that:
  * - guaranteed to execute one after other during normal control flow
@@ -29,34 +28,19 @@ package org.jacodb.api.jvm.cfg
  * However, any terminating instruction is guaranteed to be the last instruction of a basic block.
  */
 data class JcBasicBlock(val start: JcInstRef, val end: JcInstRef) {
-
-    fun contains(inst: JcInst): Boolean {
+    operator fun contains(inst: JcInst): Boolean {
         return inst.location.index <= end.index && inst.location.index >= start.index
     }
 
-    fun contains(inst: JcInstRef): Boolean {
+    operator fun contains(inst: JcInstRef): Boolean {
         return inst.index <= end.index && inst.index >= start.index
     }
-
 }
 
 interface JcBlockGraph : JcBytecodeGraph<JcBasicBlock> {
     val jcGraph: JcGraph
     val entry: JcBasicBlock
-    override val exits: List<JcBasicBlock>
+
     fun instructions(block: JcBasicBlock): List<JcInst>
-
     fun block(inst: JcInst): JcBasicBlock
-
-    /**
-     * `successors` and `predecessors` represent normal control flow
-     */
-    override fun predecessors(node: JcBasicBlock): Set<JcBasicBlock>
-    override fun successors(node: JcBasicBlock): Set<JcBasicBlock>
-
-    /**
-     * `throwers` and `catchers` represent control flow when an exception occurs
-     */
-    override fun catchers(node: JcBasicBlock): Set<JcBasicBlock>
-    override fun throwers(node: JcBasicBlock): Set<JcBasicBlock>
 }

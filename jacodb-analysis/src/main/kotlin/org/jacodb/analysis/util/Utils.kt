@@ -16,10 +16,9 @@
 
 package org.jacodb.analysis.util
 
-import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.JcAccessPath
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
@@ -29,7 +28,6 @@ import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
@@ -37,19 +35,6 @@ import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.ext.toType
-
-// TODO: rewrite
-internal val CommonMethod<*, *>.isConstructor: Boolean
-    get() = when (this) {
-        is JcMethod -> isConstructor
-        else -> error("Cannot determine whether method is constructor: $this")
-    }
-
-val CommonMethod<*, *>.thisInstance: CommonThis
-    get() = when (this) {
-        is JcMethod -> thisInstance
-        else -> error("Cannot get 'this' for method: $this")
-    }
 
 fun Project.getArgument(param: CommonMethodParameter): CommonArgument? {
     return when {
@@ -65,24 +50,6 @@ fun Project.getArgumentsOf(method: CommonMethod<*, *>): List<CommonArgument> {
     }
 }
 
-fun CommonAccessPath?.startsWith(other: CommonAccessPath?): Boolean {
-    if (this == null || other == null) {
-        return false
-    }
-    if (this is JcAccessPath && other is JcAccessPath) {
-        return startsWith(other)
-    }
-    error("Cannot determine whether the path $this starts with other path: $other")
-}
-
-internal fun CommonAccessPath.removeTrailingElementAccessors(): CommonAccessPath = when (this) {
-    is JcAccessPath -> removeTrailingElementAccessors()
-    else -> error("Cannot remove trailing element accessors for path: $this")
-}
-
-val JcMethod.thisInstance: JcThis
-    get() = JcThis(enclosingClass.toType())
-
 fun JcClasspath.getArgument(param: JcParameter): JcArgument? {
     val t = findTypeOrNull(param.type.typeName) ?: return null
     return JcArgument.of(param.index, param.name, t)
@@ -92,7 +59,7 @@ fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
     return method.parameters.map { getArgument(it)!! }
 }
 
-fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
+fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     if (this == null || other == null) {
         return false
     }
@@ -102,12 +69,12 @@ fun JcAccessPath?.startsWith(other: JcAccessPath?): Boolean {
     return this.accesses.take(other.accesses.size) == other.accesses
 }
 
-internal fun JcAccessPath.removeTrailingElementAccessors(): JcAccessPath {
-    val accesses = accesses.toMutableList()
-    while (accesses.lastOrNull() is ElementAccessor) {
-        accesses.removeLast()
+internal fun AccessPath.removeTrailingElementAccessors(): AccessPath {
+    var index = accesses.size
+    while (index > 0 && accesses[index - 1] is ElementAccessor) {
+        index--
     }
-    return JcAccessPath(value, accesses)
+    return AccessPath(value, accesses.subList(0, index))
 }
 
 internal fun Runner<*, *, *>.getPathEdges(): Set<Edge<*, *, *>> = when (this) {
@@ -144,16 +111,14 @@ class CommonValueResolver : TypedCommonExprResolver<CommonValue>() {
     }
 }
 
-// TODO: consider renaming to "values"
-val CommonExpr.coreValues: Set<CommonValue>
+val CommonExpr.values: Set<CommonValue>
     get() {
         val resolver = CommonValueResolver()
         accept(resolver)
         return resolver.result
     }
 
-// TODO: consider renaming to "values"
-val CommonInst<*, *>.coreValues: Set<CommonValue>
+val CommonInst<*, *>.values: Set<CommonValue>
     get() {
         val resolver = CommonValueResolver()
         accept(resolver)

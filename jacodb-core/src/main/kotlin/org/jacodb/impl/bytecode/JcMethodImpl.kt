@@ -45,7 +45,7 @@ class JcMethodImpl(
     override val name: String get() = methodInfo.name
     override val access: Int get() = methodInfo.access
     override val signature: String? get() = methodInfo.signature
-    override val returnType = TypeNameImpl(methodInfo.returnClass)
+    override val returnType: TypeName = TypeNameImpl(methodInfo.returnClass)
 
     override val exceptions: List<TypeName>
         get() {

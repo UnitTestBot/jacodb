@@ -14,18 +14,27 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.unused
+package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonThis
+import org.jacodb.api.common.cfg.CommonValue
 
-sealed interface UnusedVariableDomainFact
+/**
+ * Extensions for analysis.
+ */
+interface Traits<out Method, out Statement>
+    where Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement> {
 
-object UnusedVariableZeroFact : UnusedVariableDomainFact {
-    override fun toString(): String = "Zero"
+    val @UnsafeVariance Method.thisInstance: CommonThis
+    val @UnsafeVariance Method.isConstructor: Boolean
+
+    fun CommonExpr.toPathOrNull(): AccessPath?
+    fun CommonValue.toPathOrNull(): AccessPath?
+    fun CommonValue.toPath(): AccessPath
+
 }
-
-data class UnusedVariable(
-    val variable: AccessPath,
-    val initStatement: CommonInst<*, *>,
-) : UnusedVariableDomainFact

@@ -22,14 +22,17 @@ import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.toMaybe
-import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.JcTraits
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcPrimitiveType
 import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.PredefinedPrimitive
 import org.jacodb.api.jvm.PredefinedPrimitives
 import org.jacodb.api.jvm.cfg.JcBool
+import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
@@ -37,7 +40,6 @@ import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantEq
@@ -62,7 +64,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ConditionEvaluatorTest {
+class ConditionEvaluatorTest : Traits<JcMethod, JcInst> by JcTraits {
 
     private val cp = mockk<JcClasspath>()
 

@@ -23,23 +23,20 @@ import org.jacodb.analysis.config.EntryPointPositionToAccessPathResolver
 import org.jacodb.analysis.config.EntryPointPositionToValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
-import org.jacodb.analysis.ifds.JcAccessPath
 import org.jacodb.analysis.ifds.isOnHeap
 import org.jacodb.analysis.ifds.isStatic
 import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.ifds.onSome
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.ifds.toPathOrNull
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getArgumentsOf
-import org.jacodb.analysis.util.isConstructor
 import org.jacodb.analysis.util.startsWith
-import org.jacodb.analysis.util.thisInstance
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
 import org.jacodb.api.common.analysis.ApplicationGraph
@@ -79,6 +76,7 @@ import org.jacodb.taint.configuration.TaintPassThrough
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class ForwardNpeFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
@@ -132,8 +130,8 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             }
         }
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(cp, method))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(cp, method))
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {
@@ -228,7 +226,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         }
     }
 
-    private val JcIfInst.pathComparedWithNull: JcAccessPath?
+    private val JcIfInst.pathComparedWithNull: AccessPath?
         get() {
             val expr = condition
             return if (expr.rhv is JcNullConstant) {
@@ -358,7 +356,9 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
-        val callee = callExpr.method.method
+
+        @Suppress("UNCHECKED_CAST")
+        val callee = callExpr.callee as Method
 
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted
@@ -404,8 +404,12 @@ class ForwardNpeFlowFunctions<Method, Statement>(
                 }
 
                 if (config != null) {
-                    val conditionEvaluator = BasicConditionEvaluator(CallPositionToValueResolver(callStatement))
-                    val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                    val conditionEvaluator = BasicConditionEvaluator(
+                        CallPositionToValueResolver(callStatement)
+                    )
+                    val actionEvaluator = TaintActionEvaluator(
+                        CallPositionToAccessPathResolver(callStatement)
+                    )
 
                     // Handle MethodSource config items:
                     for (item in config.filterIsInstance<TaintMethodSource>()) {
@@ -432,8 +436,12 @@ class ForwardNpeFlowFunctions<Method, Statement>(
                 // Skip rules for StringBuilder::append in NPE analysis.
             } else {
                 val facts = mutableSetOf<Tainted>()
-                val conditionEvaluator = FactAwareConditionEvaluator(fact, CallPositionToValueResolver(callStatement))
-                val actionEvaluator = TaintActionEvaluator(CallPositionToAccessPathResolver(callStatement))
+                val conditionEvaluator = FactAwareConditionEvaluator(
+                    fact, CallPositionToValueResolver(callStatement)
+                )
+                val actionEvaluator = TaintActionEvaluator(
+                    CallPositionToAccessPathResolver(callStatement)
+                )
                 var defaultBehavior = true
 
                 // Handle PassThrough config items:

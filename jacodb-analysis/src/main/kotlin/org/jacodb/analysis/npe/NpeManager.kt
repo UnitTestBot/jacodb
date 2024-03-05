@@ -23,12 +23,14 @@ import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintRunner
 import org.jacodb.analysis.taint.TaintZeroFact
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class NpeManager<Method, Statement>(
     graph: ApplicationGraph<Method, Statement>,
     unitResolver: UnitResolver<Method>,

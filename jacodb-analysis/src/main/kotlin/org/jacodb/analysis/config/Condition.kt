@@ -18,9 +18,11 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.onSome
-import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.removeTrailingElementAccessors
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.cfg.JcBool
@@ -160,6 +162,7 @@ open class BasicConditionEvaluator(
     }
 }
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
     positionResolver: PositionResolver<Maybe<CommonValue>>,

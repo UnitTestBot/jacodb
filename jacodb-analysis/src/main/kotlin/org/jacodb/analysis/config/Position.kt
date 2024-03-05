@@ -16,14 +16,13 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.toMaybe
-import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getArgument
-import org.jacodb.analysis.util.thisInstance
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.CommonAssignInst
@@ -39,13 +38,14 @@ import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.This
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class CallPositionToAccessPathResolver(
     private val callStatement: CommonInst<*, *>,
-) : PositionResolver<Maybe<CommonAccessPath>> {
+) : PositionResolver<Maybe<AccessPath>> {
     private val callExpr = callStatement.callExpr
         ?: error("Call statement should have non-null callExpr")
 
-    override fun resolve(position: Position): Maybe<CommonAccessPath> = when (position) {
+    override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
         AnyArgument -> Maybe.none()
         is Argument -> callExpr.args[position.index].toPathOrNull().toMaybe()
         This -> (callExpr as? CommonInstanceCallExpr)?.instance?.toPathOrNull().toMaybe()
@@ -70,9 +70,10 @@ class CallPositionToValueResolver(
     }
 }
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class EntryPointPositionToValueResolver(
-    val cp: Project,
-    val method: CommonMethod<*, *>,
+    private val method: CommonMethod<*, *>,
+    private val cp: Project,
 ) : PositionResolver<Maybe<CommonValue>> {
     override fun resolve(position: Position): Maybe<CommonValue> = when (position) {
         This -> Maybe.some(method.thisInstance)
@@ -86,11 +87,12 @@ class EntryPointPositionToValueResolver(
     }
 }
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class EntryPointPositionToAccessPathResolver(
-    val cp: Project,
-    val method: CommonMethod<*, *>,
-) : PositionResolver<Maybe<CommonAccessPath>> {
-    override fun resolve(position: Position): Maybe<CommonAccessPath> = when (position) {
+    private val method: CommonMethod<*, *>,
+    private val cp: Project,
+) : PositionResolver<Maybe<AccessPath>> {
+    override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
         This -> method.thisInstance.toPathOrNull().toMaybe()
 
         is Argument -> {

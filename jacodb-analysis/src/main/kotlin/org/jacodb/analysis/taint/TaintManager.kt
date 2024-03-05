@@ -41,10 +41,12 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.taint.configuration.TaintConfigurationItem
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -54,10 +56,12 @@ import kotlin.time.TimeSource
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 open class TaintManager<Method, Statement>(
     protected val graph: ApplicationGraph<Method, Statement>,
     protected val unitResolver: UnitResolver<Method>,
     private val useBidiRunner: Boolean = false,
+    private val getConfigForMethod: (ForwardTaintFlowFunctions<Method, Statement>.(Method) -> List<TaintConfigurationItem>?)? = null,
 ) : Manager<TaintDomainFact, TaintEvent<Method, Statement>, Method, Statement>
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
@@ -83,7 +87,7 @@ open class TaintManager<Method, Statement>(
                 unitResolver = unitResolver,
                 unit = unit,
                 { manager ->
-                    val analyzer = TaintAnalyzer(graph)
+                    val analyzer = TaintAnalyzer(graph, getConfigForMethod)
                     UniRunner(
                         graph = graph,
                         analyzer = analyzer,
@@ -106,7 +110,7 @@ open class TaintManager<Method, Statement>(
                 }
             )
         } else {
-            val analyzer = TaintAnalyzer(graph)
+            val analyzer = TaintAnalyzer(graph, getConfigForMethod)
             UniRunner(
                 graph = graph,
                 analyzer = analyzer,

@@ -40,6 +40,7 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
@@ -53,6 +54,7 @@ import kotlin.time.TimeSource
 
 private val logger = mu.KotlinLogging.logger {}
 
+context(Traits<Method, Statement>)
 class UnusedVariableManager<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
     private val unitResolver: UnitResolver<Method>,

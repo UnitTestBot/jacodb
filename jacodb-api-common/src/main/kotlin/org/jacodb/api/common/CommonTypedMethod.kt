@@ -25,6 +25,9 @@ interface CommonTypedMethod<Method, Statement>
     val method: Method
     val returnType: CommonType
     val parameters: List<CommonTypedMethodParameter>
+
+    val name: String
+        get() = method.name
 }
 
 interface CommonTypedMethodParameter {

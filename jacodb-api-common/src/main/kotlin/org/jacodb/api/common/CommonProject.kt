@@ -18,6 +18,4 @@ package org.jacodb.api.common
 
 interface Project : AutoCloseable {
     fun findTypeOrNull(name: String): CommonType?
-
-    fun typeOf(clazz: CommonClass): CommonClassType
 }

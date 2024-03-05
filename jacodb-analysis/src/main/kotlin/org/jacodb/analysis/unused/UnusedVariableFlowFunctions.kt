@@ -19,8 +19,7 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.isOnHeap
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
@@ -31,6 +30,7 @@ import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcStaticCallExpr
 
+context(Traits<Method, Statement>)
 class UnusedVariableFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<UnusedVariableDomainFact, Method, Statement>

@@ -16,7 +16,7 @@
 
 package org.jacodb.analysis.taint
 
-import org.jacodb.analysis.ifds.CommonAccessPath
+import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.taint.configuration.TaintMark
 
 sealed interface TaintDomainFact
@@ -26,6 +26,6 @@ object TaintZeroFact : TaintDomainFact {
 }
 
 data class Tainted(
-    val variable: CommonAccessPath,
+    val variable: AccessPath,
     val mark: TaintMark,
 ) : TaintDomainFact

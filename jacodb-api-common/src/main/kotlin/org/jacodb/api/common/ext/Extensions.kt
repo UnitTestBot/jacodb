@@ -16,18 +16,8 @@
 
 package org.jacodb.api.common.ext
 
-import org.jacodb.api.common.CommonTypedMethod
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInst
-
-val CommonTypedMethod<*, *>.name: String
-    get() = method.name
-
-// val CommonTypedField.name: String
-//     get() = field.name
-
-val CommonInst<*, *>.lineNumber: Int
-    get() = location.lineNumber
 
 object CallExprVisitor : CommonInst.Visitor.Default<CommonCallExpr?> {
     override fun defaultVisitCommonInst(inst: CommonInst<*, *>): CommonCallExpr? {
