@@ -46,6 +46,13 @@ val actionModule = SerializersModule {
 
 // TODO add marks for aliases (if you pass an object and return it from the function)
 
+/**
+ * Copies all the marks from the [from] object to the [to].
+ * As a result, all marks from the initial object will be copied into the target object.
+ * If some marks were present only in the [to] object, they remain unchanged. <p>
+ *
+ * Behaviour should be the same as if [CopyMark] is applied to every existing mark.
+ */
 @Serializable
 @SerialName("CopyAllMarks")
 data class CopyAllMarks(
@@ -55,6 +62,9 @@ data class CopyAllMarks(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
+/**
+ * Adds the [mark] to the [to] object if it is present in the [from] object.
+ */
 @Serializable
 @SerialName("CopyMark")
 data class CopyMark(
@@ -65,6 +75,9 @@ data class CopyMark(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
+/**
+ * Assigns the [mark] to the [position].
+ */
 @Serializable
 @SerialName("AssignMark")
 data class AssignMark(
@@ -74,6 +87,9 @@ data class AssignMark(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
+/**
+ * Removes all the marks from the [position].
+ */
 @Serializable
 @SerialName("RemoveAllMarks")
 data class RemoveAllMarks(
@@ -82,6 +98,9 @@ data class RemoveAllMarks(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
+/**
+ * Removes a particular [mark] from the [position].
+ */
 @Serializable
 @SerialName("RemoveMark")
 data class RemoveMark(
