@@ -118,7 +118,6 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
         assertTrue(sinks.isNotEmpty())
     }
 
-    @Disabled("Requires IR updates and bytecode parser improvements")
     @Test
     fun `test taint analysis on Program2`()  {
         val project = loadProjectForSample("Program2")

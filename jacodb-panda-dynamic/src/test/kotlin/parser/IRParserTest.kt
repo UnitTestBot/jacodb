@@ -83,4 +83,13 @@ class IRParserTest {
             .toSortedSet()
         assertNotNull(opcodes)
     }
+
+    @Test
+    fun printMethodsInstructions() {
+        programIR.classes.forEach { cls ->
+            cls.methods.forEach { method ->
+                println(method)
+            }
+        }
+    }
 }

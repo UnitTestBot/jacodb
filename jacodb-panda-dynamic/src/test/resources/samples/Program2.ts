@@ -12,7 +12,7 @@ function validate(data) {
 }
 
 function sink(data) {
-    if (data == null) throw Error("Error!")
+    if (data == null) throw new Error("Error!")
 }
 
 function bad() {

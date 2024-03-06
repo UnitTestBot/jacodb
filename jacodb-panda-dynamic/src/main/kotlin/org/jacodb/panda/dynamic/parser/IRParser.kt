@@ -606,7 +606,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = connector.getLdName(method.name, bc!!)
                 outputs.forEach { output ->
-                    addInput(method, id(), output, PandaLoadedValue(inputs[0], PandaStringConstant(name)))
+                    addInput(
+                        method, id(), output,
+                        PandaLoadedValue(inputs[0], PandaStringConstant(name))
+                    )
                     // for call insts not to have "instance.object" and "instance, object" in inputs
                     method.idToInputs[output]?.remove(inputs[0])
                 }
@@ -619,7 +622,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                         PandaInstanceCallValueImpl(
                             PandaThis(PandaClassTypeImpl(method.getClass().name)),
                             PandaStringConstant(name)
-                    ))
+                        )
+                    )
                 }
             }
 
