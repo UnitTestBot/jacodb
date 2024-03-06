@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.ifds
 
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jacodb.api.JcMethod
@@ -48,35 +47,14 @@ interface Vulnerability<out Fact> : Summary {
 /**
  * Contains summaries for many methods and allows to update them and subscribe for them.
  */
-interface SummaryStorage<T : Summary> {
-    /**
-     * A list of all methods for which summaries are not empty.
-     */
-    val knownMethods: List<JcMethod>
-
-    /**
-     * Adds [fact] to summary of its method.
-     */
-    fun add(fact: T)
-
-    /**
-     * @return a flow with all facts summarized for the given [method].
-     * Already received facts, along with the facts that will be sent to this storage later,
-     * will be emitted to the returned flow.
-     */
-    fun getFacts(method: JcMethod): Flow<T>
-
-    /**
-     * @return a list will all facts summarized for the given [method] so far.
-     */
-    fun getCurrentFacts(method: JcMethod): List<T>
-}
-
-class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
+class SummaryStorageWithFlows<T : Summary> {
     private val summaries = ConcurrentHashMap<JcMethod, MutableSet<T>>()
     private val outFlows = ConcurrentHashMap<JcMethod, MutableSharedFlow<T>>()
 
-    override val knownMethods: List<JcMethod>
+    /**
+     * @return a list with all methods for which there are some summaries.
+     */
+     val knownMethods: List<JcMethod>
         get() = summaries.keys.toList()
 
     private fun getFlow(method: JcMethod): MutableSharedFlow<T> {
@@ -85,7 +63,10 @@ class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
         }
     }
 
-    override fun add(fact: T) {
+    /**
+     * Adds a new [fact] to the storage.
+     */
+     fun add(fact: T) {
         val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
         if (isNew) {
             val flow = getFlow(fact.method)
@@ -93,11 +74,49 @@ class SummaryStorageImpl<T : Summary> : SummaryStorage<T> {
         }
     }
 
-    override fun getFacts(method: JcMethod): SharedFlow<T> {
+    /**
+     * @return a flow with all facts summarized for the given [method].
+     * Already received facts, along with the facts that will be sent to this storage later,
+     * will be emitted to the returned flow.
+     */
+     fun getFacts(method: JcMethod): SharedFlow<T> {
         return getFlow(method)
     }
 
-    override fun getCurrentFacts(method: JcMethod): List<T> {
+    /**
+     * @return a list will all facts summarized for the given [method] so far.
+     */
+     fun getCurrentFacts(method: JcMethod): List<T> {
         return getFacts(method).replayCache
+    }
+}
+
+class SummaryStorageWithProducers<T : Summary>(
+    private val useConcurrentProducer: Boolean = false,
+) {
+    private val summaries = ConcurrentHashMap<JcMethod, MutableSet<T>>()
+    private val producers = ConcurrentHashMap<JcMethod, Producer<T>>()
+
+    private fun getProducer(method: JcMethod): Producer<T> {
+        return producers.computeIfAbsent(method) {
+            if (useConcurrentProducer) {
+                ConcurrentProducer()
+            } else {
+                SyncProducer()
+            }
+        }
+    }
+
+    fun add(fact: T) {
+        val isNew = summaries.computeIfAbsent(fact.method) { ConcurrentHashMap.newKeySet() }.add(fact)
+        if (isNew) {
+            val producer = getProducer(fact.method)
+            producer.produce(fact)
+        }
+    }
+
+    fun subscribe(method: JcMethod, handler: (T) -> Unit) {
+        val producer = getProducer(method)
+        producer.subscribe(handler)
     }
 }
