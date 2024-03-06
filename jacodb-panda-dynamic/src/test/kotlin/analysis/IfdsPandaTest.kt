@@ -48,7 +48,6 @@ import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
-import org.junit.jupiter.api.Disabled
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -119,7 +118,7 @@ class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
     }
 
     @Test
-    fun `test taint analysis on Program2`()  {
+    fun `test taint analysis on Program2`() {
         val project = loadProjectForSample("Program2")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
