@@ -655,10 +655,8 @@ data class JcInstanceOfExpr(
 
 interface JcCallExpr : JcExpr, CommonCallExpr {
     val method: JcTypedMethod
-    override val args: List<JcValue>
 
-    override val callee: JcMethod
-        get() = method.method
+    override val args: List<JcValue>
 
     override val type: JcType
         get() = method.returnType

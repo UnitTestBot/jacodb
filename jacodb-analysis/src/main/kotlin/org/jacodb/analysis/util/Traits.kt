@@ -18,6 +18,7 @@ package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonThis
@@ -36,5 +37,7 @@ interface Traits<out Method, out Statement>
     fun CommonExpr.toPathOrNull(): AccessPath?
     fun CommonValue.toPathOrNull(): AccessPath?
     fun CommonValue.toPath(): AccessPath
+
+    val CommonCallExpr.callee: CommonMethod<*, *>
 
 }

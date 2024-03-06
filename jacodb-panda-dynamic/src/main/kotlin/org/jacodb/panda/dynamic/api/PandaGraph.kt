@@ -141,7 +141,7 @@ class PandaApplicationGraphImpl(
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> {
         val callExpr = node.callExpr ?: return emptySequence()
-        return sequenceOf(callExpr.callee)
+        return sequenceOf(callExpr.method)
     }
 
     override fun callers(method: PandaMethod): Sequence<PandaInst> {

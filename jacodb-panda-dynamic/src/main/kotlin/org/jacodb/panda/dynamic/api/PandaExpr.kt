@@ -61,8 +61,6 @@ interface PandaBinaryExpr : PandaExpr {
 
 interface PandaCallExpr : PandaExpr, CommonCallExpr {
     val method: PandaMethod
-    override val callee: PandaMethod
-        get() = method
 
     override val args: List<PandaValue>
 

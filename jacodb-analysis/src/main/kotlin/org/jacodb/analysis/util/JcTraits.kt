@@ -20,10 +20,12 @@ import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.toPathOrNull
+import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcCallExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcFieldRef
@@ -32,6 +34,7 @@ import org.jacodb.api.jvm.cfg.JcSimpleValue
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.toType
+import org.jacodb.analysis.util.callee as _callee
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
@@ -59,10 +62,19 @@ object JcTraits : Traits<JcMethod, JcInst> {
         check(this is JcValue)
         return _toPath()
     }
+
+    override val CommonCallExpr.callee: JcMethod
+        get() {
+            check(this is JcCallExpr)
+            return _callee
+        }
 }
 
 val JcMethod.thisInstance: JcThis
     get() = JcThis(enclosingClass.toType())
+
+val JcCallExpr.callee: JcMethod
+    get() = method.method
 
 fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
     is JcValue -> toPathOrNull()

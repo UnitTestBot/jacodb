@@ -20,9 +20,11 @@ import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.toPathOrNull
+import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
+import org.jacodb.panda.dynamic.api.PandaCallExpr
 import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaClassType
@@ -60,6 +62,12 @@ object PandaTraits : Traits<PandaMethod, PandaInst> {
         check(this is PandaValue)
         return _toPath()
     }
+
+    override val CommonCallExpr.callee: PandaMethod
+        get() {
+            check(this is PandaCallExpr)
+            return method
+        }
 }
 
 val PandaMethod.thisInstance: PandaThis
