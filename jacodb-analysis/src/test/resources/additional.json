@@ -702,5 +702,47 @@
         }
       ]
     }
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "StringEscapeUtils"
+        },
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.apache.commons.lang"
+        }
+      },
+      "functionName": {
+        "_": "NameIsEqualTo",
+        "name": "escapeHtml"
+      },
+      "applyToOverrides": true,
+      "exclude": [],
+      "functionLabel": null,
+      "modifier": -1,
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      }
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyAllMarks",
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      }
+    ]
   }
 ]
