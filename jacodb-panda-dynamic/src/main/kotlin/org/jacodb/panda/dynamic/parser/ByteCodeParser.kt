@@ -498,6 +498,10 @@ class ByteCodeParser(
         constructor() : this(0, 0, 0)
     }
 
+    private fun Int.hex() = this.toString(radix = 16)
+
+    private fun UByte.hex() = this.toString(radix = 16)
+
     fun getMethodCodeByName(methodName: String): Code {
         return parsedFile.methods.find { m ->
             m.name == methodName
@@ -571,9 +575,10 @@ class ByteCodeParser(
         try {
             readMethod(offset, buffer)
         } catch (e: Exception) {
-            null
-        } catch (e: IllegalStateException) {
-            throw e
+            when (e) {
+                is IllegalArgumentException -> null
+                else -> throw e
+            }
         }
     }
 
@@ -581,7 +586,7 @@ class ByteCodeParser(
         val classIdx = it.getShort()
         val protoIdx = it.getShort()
         if (classIdx >= currentClassIdxSize || protoIdx >= currentProtoIdxSize)
-            throw Exception("Index overflow")
+            throw IllegalArgumentException("Not a method at offset 0x${offset.hex()}")
         Method(
             classIdx,
             protoIdx,
@@ -640,7 +645,7 @@ class ByteCodeParser(
         while (lastInst?.prevInst != null) {
             lastInst = lastInst.prevInst
         }
-        return lastInst ?: throw IllegalStateException("No instructions found")
+        return lastInst ?: throw IllegalStateException("No instructions found on offset 0x${startOffset.hex()}")
     }
 
     private fun readInstruction(buffer: ByteBuffer, startOffset: Int) = buffer.run {
@@ -651,7 +656,9 @@ class ByteCodeParser(
         var operandsCount = PandaBytecode.getBytecodeOrNull(opcode)?.operands
         if (operandsCount == null) {
             prefix = PandaBytecodePrefix.from(opcode)
-                ?: throw IllegalStateException("Unknown opcode or prefix: $opcode on offset $offset")
+                ?: throw IllegalStateException(
+                    "Unknown opcode or prefix: 0x${opcode.hex()} on offset 0x${offset.hex()}"
+                )
             opcode = get().toUByte()
             operandsCount = PandaBytecode.getBytecode(opcode, prefix).operands
         }

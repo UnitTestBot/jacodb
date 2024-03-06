@@ -70,6 +70,7 @@ enum class PandaBytecode(val opcode: UByte, val operands: Int = 0, val prefix: P
     DEFINEFUNC_IMM1_8_ID_16_IMM2_8(0x33.ub, 4),
     DEFINEMETHOD_IMM1_16_ID_16_IMM2_8(0xbe.ub, 5),
     DEFINEMETHOD_IMM1_8_ID_16_IMM2_8(0x34.ub, 4),
+    EQ(0x0f.ub, 2),
     IFSUPERNOTCORRECTCALL_IMM_16(0x08.ub, 2, prefix = PandaBytecodePrefix.THROW),
     IFSUPERNOTCORRECTCALL_IMM_8(0x07.ub, 1, prefix = PandaBytecodePrefix.THROW),
     INC(0x21.ub, 1),
