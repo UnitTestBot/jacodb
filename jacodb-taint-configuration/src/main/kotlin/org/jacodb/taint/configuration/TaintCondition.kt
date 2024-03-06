@@ -63,6 +63,9 @@ val conditionModule = SerializersModule {
     }
 }
 
+/**
+ * A constant true condition.
+ */
 @Serializable
 @SerialName("ConstantTrue")
 object ConstantTrue : Condition {
@@ -71,6 +74,9 @@ object ConstantTrue : Condition {
     override fun toString(): String = javaClass.simpleName
 }
 
+/**
+ * A negation of the [arg].
+ */
 @Serializable
 @SerialName("Not")
 data class Not(
@@ -79,6 +85,9 @@ data class Not(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A conjunction of the [args].
+ */
 @Serializable
 @SerialName("And")
 data class And(
@@ -87,6 +96,9 @@ data class And(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A disjunction of the [args].
+ */
 @Serializable
 @SerialName("Or")
 data class Or(
@@ -95,6 +107,10 @@ data class Or(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that an object at the [position] is a constant value,
+ * not an environment variable or a method parameter.
+ */
 @Serializable
 @SerialName("IsConstant")
 data class IsConstant(
@@ -103,6 +119,9 @@ data class IsConstant(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that an object at the [position] matches with the [typeMatcher].
+ */
 @Serializable
 @SerialName("IsType")
 data class IsType(
@@ -112,6 +131,9 @@ data class IsType(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that an object at the [position] contains an annotation matching with the [typeMatcher].
+ */
 @Serializable
 @SerialName("AnnotationType")
 data class AnnotationType(
@@ -121,6 +143,9 @@ data class AnnotationType(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] is equal to a [value].
+ */
 @Serializable
 @SerialName("ConstantEq")
 data class ConstantEq(
@@ -130,6 +155,10 @@ data class ConstantEq(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] is less than a [value].
+ * The meaning of `less` is specific for each type of the [ConstantValue].
+ */
 @Serializable
 @SerialName("ConstantLt")
 data class ConstantLt(
@@ -139,6 +168,10 @@ data class ConstantLt(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] is greater than a [value].
+ * The meaning of `greater` is specific for each type of the [ConstantValue].
+ */
 @Serializable
 @SerialName("ConstantGt")
 data class ConstantGt(
@@ -148,6 +181,9 @@ data class ConstantGt(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] is matching with the [pattern].
+ */
 @Serializable
 @SerialName("ConstantMatches")
 data class ConstantMatches(
@@ -166,6 +202,9 @@ data class SourceFunctionMatches(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] contains the [mark].
+ */
 @Serializable
 @SerialName("ContainsMark")
 data class ContainsMark(
@@ -175,6 +214,9 @@ data class ContainsMark(
     override fun <R> accept(conditionVisitor: ConditionVisitor<R>): R = conditionVisitor.visit(this)
 }
 
+/**
+ * A condition that a value at the [position] matches exactly with the [type].
+ */
 @Serializable
 @SerialName("TypeMatches")
 data class TypeMatches(

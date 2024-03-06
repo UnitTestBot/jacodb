@@ -23,31 +23,55 @@ fun interface PositionResolver<out R> {
     fun resolve(position: Position): R
 }
 
+/**
+ * A representation of a position of tainted data.
+ */
 @Serializable
 sealed interface Position
 
+/**
+ * Represents an argument of a method call.
+ * Numeration starts from zero, `this` parameter is not included.
+ *
+ * For instance, `obj.foo(a, b)` -> `a := Argument(0)`, `b := Argument(1)`
+ */
 @Serializable
 @SerialName("Argument")
 data class Argument(@SerialName("number") val index: Int) : Position
 
+/**
+ * Represents any argument of a method call except `this` instance,
+ * This is a short form for a set of [Argument]s with all indices of the method parameters.
+ */
 @Serializable
 @SerialName("AnyArgument")
 object AnyArgument : Position {
     override fun toString(): String = javaClass.simpleName
 }
 
+/**
+ * Represents `this` argument of a method call.
+ */
 @Serializable
 @SerialName("This")
 object This : Position {
     override fun toString(): String = javaClass.simpleName
 }
 
+/**
+ * Represents the resulting value of a method call.
+ * It is for regularly returned objects only, and it is not suitable for thrown exceptions.
+ */
 @Serializable
 @SerialName("Result")
 object Result : Position {
     override fun toString(): String = javaClass.simpleName
 }
 
+/**
+ * Represents any element of the collection (string, array, list, etc.),
+ * returned as a result from a method call.
+ */
 @Serializable
 @SerialName("ResultAnyElement")
 object ResultAnyElement : Position {
