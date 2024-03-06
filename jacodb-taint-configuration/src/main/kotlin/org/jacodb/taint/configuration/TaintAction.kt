@@ -49,7 +49,7 @@ val actionModule = SerializersModule {
 /**
  * Copies all the marks from the [from] object to the [to].
  * As a result, all marks from the initial object will be copied into the target object.
- * If some marks were present only in the [to] object, they remain unchanged. <p>
+ * If some marks were present only in the [to] object, they remain unchanged.
  *
  * Behaviour should be the same as if [CopyMark] is applied to every existing mark.
  */

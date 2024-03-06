@@ -31,7 +31,7 @@ sealed interface Position
 
 /**
  * Represents an argument of a method call.
- * Numeration starts from zero, `this` parameter is not included. <p>
+ * Numeration starts from zero, `this` parameter is not included.
  *
  * For instance, `obj.foo(a, b)` -> `a := Argument(0)`, `b := Argument(1)`
  */
