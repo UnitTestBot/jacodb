@@ -24,7 +24,7 @@ fun interface PositionResolver<out R> {
 }
 
 /**
- * A class representing a position of tainted data in a method.
+ * A representation of a position of tainted data.
  */
 @Serializable
 sealed interface Position
@@ -33,7 +33,7 @@ sealed interface Position
  * Represents an argument of a method call.
  * Numeration starts from zero, `this` parameter is not included. <p>
  *
- * For instance, `obj.foo(a, b)` -> a := Argument(0), b := Argument(1)
+ * For instance, `obj.foo(a, b)` -> `a := Argument(0)`, `b := Argument(1)`
  */
 @Serializable
 @SerialName("Argument")
@@ -59,7 +59,7 @@ object This : Position {
 }
 
 /**
- * Represents a resulting value of a method call.
+ * Represents the resulting value of a method call.
  * It is for regularly returned objects only, and it is not suitable for thrown exceptions.
  */
 @Serializable
@@ -70,7 +70,7 @@ object Result : Position {
 
 /**
  * Represents any element of the collection (string, array, list, etc.),
- * returned as a result from a method.
+ * returned as a result from a method call.
  */
 @Serializable
 @SerialName("ResultAnyElement")
