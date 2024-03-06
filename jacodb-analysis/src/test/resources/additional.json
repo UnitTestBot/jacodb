@@ -734,7 +734,139 @@
     },
     "actionsAfter": [
       {
-        "_": "CopyAllMarks",
+        "_": "CopyMark",
+        "mark": {
+          "name": "WEB"
+        },
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      },
+      {
+        "_": "CopyMark",
+        "mark": {
+          "name": "NETWORK"
+        },
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      }
+    ]
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "HtmlUtils"
+        },
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.springframework.web.util"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "htmlEscape|htmlEscapeDecimal|htmlEscapeHex|htmlEscapeQueryStringParameters"
+      },
+      "applyToOverrides": true,
+      "exclude": [],
+      "functionLabel": null,
+      "modifier": -1,
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      }
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyMark",
+        "mark": {
+          "name": "WEB"
+        },
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      },
+      {
+        "_": "CopyMark",
+        "mark": {
+          "name": "NETWORK"
+        },
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      }
+    ]
+  },
+  {
+    "_": "PassThrough",
+    "methodInfo": {
+      "cls": {
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "Encoder"
+        },
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "org.owasp.esapi"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "encodeFor.*"
+      },
+      "applyToOverrides": true,
+      "exclude": [],
+      "functionLabel": null,
+      "modifier": -1,
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      }
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "CopyMark",
+        "mark": {
+          "name": "WEB"
+        },
+        "from": {
+          "_": "Argument",
+          "number": 0
+        },
+        "to": {
+          "_": "Result"
+        }
+      },
+      {
+        "_": "CopyMark",
+        "mark": {
+          "name": "NETWORK"
+        },
         "from": {
           "_": "Argument",
           "number": 0
