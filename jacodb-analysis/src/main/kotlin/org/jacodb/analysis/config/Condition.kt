@@ -155,6 +155,15 @@ open class BasicConditionEvaluator(
     }
 }
 
+class IgnorantConditionEvaluator(
+    positionResolver: PositionResolver<Maybe<JcValue>>,
+) : BasicConditionEvaluator(positionResolver) {
+
+    override fun visit(condition: ContainsMark): Boolean {
+        return false
+    }
+}
+
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
     positionResolver: PositionResolver<Maybe<JcValue>>,

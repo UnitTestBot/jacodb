@@ -19,6 +19,7 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.config.AdhocFactAwareConditionEvaluator
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
+import org.jacodb.analysis.config.IgnorantConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
@@ -58,37 +59,45 @@ class TaintAnalyzer(
 
             val config = taintConfigurationFeature?.getConfigForMethod(callee) ?: return@run
 
-            // TODO: not always we want to skip sinks on Zero facts.
-            //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
-            if (edge.to.fact !is Tainted) {
-                return@run
-            }
-
             // Determine whether 'edge.to' is a sink via config:
-            val conditionEvaluator = FactAwareConditionEvaluator(
-                edge.to.fact,
-                CallPositionToJcValueResolver(edge.to.statement),
-            )
-            for (item in config.filterIsInstance<TaintMethodSink>()) {
-                if (item.condition.accept(conditionEvaluator)) {
-                    val message = item.ruleNote
-                    val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
-                    logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}, rule = ${vulnerability.rule}" }
-                    add(NewVulnerability(vulnerability))
-                } else {
-                    val adhocEvaluator = AdhocFactAwareConditionEvaluator(
-                        edge.to.fact,
-                        CallPositionToJcValueResolver(edge.to.statement),
-                    )
-                    for (result in adhocEvaluator.apply(item.condition)) {
-                        add(
-                            NewVulnerabilityWithAssumptions(
-                                message = item.ruleNote,
-                                rule = item,
-                                edge = edge,
-                                assumptions = result.assumptions
-                            )
+            if (edge.to.fact is Tainted) {
+                val conditionEvaluator = FactAwareConditionEvaluator(
+                    edge.to.fact,
+                    CallPositionToJcValueResolver(edge.to.statement),
+                )
+                for (item in config.filterIsInstance<TaintMethodSink>()) {
+                    if (item.condition.accept(conditionEvaluator)) {
+                        val message = item.ruleNote
+                        val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
+                        logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}, rule = ${vulnerability.rule}" }
+                        add(NewVulnerability(vulnerability))
+                    } else {
+                        val adhocEvaluator = AdhocFactAwareConditionEvaluator(
+                            edge.to.fact,
+                            CallPositionToJcValueResolver(edge.to.statement),
                         )
+                        for (result in adhocEvaluator.apply(item.condition)) {
+                            add(
+                                NewVulnerabilityWithAssumptions(
+                                    message = item.ruleNote,
+                                    rule = item,
+                                    edge = edge,
+                                    assumptions = result.assumptions
+                                )
+                            )
+                        }
+                    }
+                }
+            } else {
+                val conditionEvaluator = IgnorantConditionEvaluator(
+                    CallPositionToJcValueResolver(edge.to.statement)
+                )
+                for (item in config.filterIsInstance<TaintMethodSink>()) {
+                    if (item.condition.accept(conditionEvaluator)) {
+                        val message = item.ruleNote
+                        val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
+                        logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}, rule = ${vulnerability.rule}" }
+                        add(NewVulnerability(vulnerability))
                     }
                 }
             }

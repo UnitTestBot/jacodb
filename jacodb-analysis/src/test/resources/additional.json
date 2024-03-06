@@ -644,5 +644,63 @@
         }
       }
     ]
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "Weak Cryptographic Hash",
+    "cwe": [
+      328
+    ],
+    "methodInfo": {
+      "cls": {
+        "classNameMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "MessageDigest"
+        },
+        "packageMatcher": {
+          "_": "NameIsEqualTo",
+          "name": "java.security"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "getInstance|init\\^"
+      },
+      "applyToOverrides": true,
+      "exclude": [],
+      "functionLabel": null,
+      "modifier": -1,
+      "parametersMatchers": [],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      }
+    },
+    "condition": {
+      "_": "Or",
+      "args": [
+        {
+          "_": "ConstantEq",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "constant": {
+            "_": "StringValue",
+            "value": "MD5"
+          }
+        },
+        {
+          "_": "ConstantEq",
+          "position": {
+            "_": "Argument",
+            "number": 0
+          },
+          "constant": {
+            "_": "StringValue",
+            "value": "SHA1"
+          }
+        }
+      ]
+    }
   }
 ]
