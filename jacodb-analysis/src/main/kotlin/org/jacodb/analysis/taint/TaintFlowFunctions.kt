@@ -26,6 +26,8 @@ import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
+import org.jacodb.analysis.ifds.UnitResolver
+import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.ifds.toPathOrNull
@@ -61,6 +63,7 @@ private val logger = mu.KotlinLogging.logger {}
 class ForwardTaintFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
+    private val unitResolver: UnitResolver,
 ) : FlowFunctions<TaintDomainFact> {
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
@@ -322,7 +325,7 @@ class ForwardTaintFlowFunctions(
         //    to remove any marks from 'instance' and arguments.
         //   Currently, "analyzability" of the callee depends on the fact that the callee
         //    is "accessible" through the JcApplicationGraph::callees().
-        if (callee in graph.callees(callStatement)) {
+        if (callee in graph.callees(callStatement) && unitResolver.resolve(callee) != UnknownUnit) {
 
             if (fact.variable.isStatic) {
                 return@FlowFunction emptyList()

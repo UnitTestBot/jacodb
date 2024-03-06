@@ -83,7 +83,7 @@ open class TaintManager(
                 unitResolver = unitResolver,
                 unit = unit,
                 { manager ->
-                    val analyzer = TaintAnalyzer(graph)
+                    val analyzer = TaintAnalyzer(graph, unitResolver)
                     UniRunner(
                         graph = graph,
                         analyzer = analyzer,
@@ -106,7 +106,7 @@ open class TaintManager(
                 }
             )
         } else {
-            val analyzer = TaintAnalyzer(graph)
+            val analyzer = TaintAnalyzer(graph, unitResolver)
             UniRunner(
                 graph = graph,
                 analyzer = analyzer,
@@ -130,9 +130,13 @@ open class TaintManager(
     }
 
     protected open fun addStart(method: JcMethod) {
-        logger.info { "Adding start method: $method" }
         val unit = unitResolver.resolve(method)
-        if (unit == UnknownUnit) return
+        if (unit == UnknownUnit) {
+            logger.info { "Ignoring start method: $method" }
+            return
+        } else {
+            logger.info { "Adding start method: $method" }
+        }
         val isNew = methodsForUnit.getOrPut(unit) { hashSetOf() }.add(method)
         if (isNew) {
             for (dep in getAllCallees(method)) {

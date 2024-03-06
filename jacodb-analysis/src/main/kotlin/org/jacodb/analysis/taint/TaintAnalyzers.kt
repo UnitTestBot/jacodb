@@ -23,6 +23,7 @@ import org.jacodb.analysis.config.IgnorantConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
+import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -33,10 +34,11 @@ private val logger = mu.KotlinLogging.logger {}
 
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
+    private val unitResolver: UnitResolver,
 ) : Analyzer<TaintDomainFact, TaintEvent> {
 
     override val flowFunctions: ForwardTaintFlowFunctions by lazy {
-        ForwardTaintFlowFunctions(graph.classpath, graph)
+        ForwardTaintFlowFunctions(graph.classpath, graph, unitResolver)
     }
 
     private val taintConfigurationFeature: TaintConfigurationFeature?

@@ -20,6 +20,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.ifds.FlowFunctions
+import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -98,7 +99,7 @@ class TaintFlowFunctionsTest : BaseTest() {
 
     @Test
     fun `test obtain start facts`() {
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val facts = flowSpace.obtainPossibleStartFacts(testMethod).toList()
         val arg0 = cp.getArgument(testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("EXAMPLE"))
@@ -111,7 +112,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
         val inst = JcAssignInst(location = mockk(), lhv = x, rhv = y)
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainSequentFlowFunction(inst, next = mockk())
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
@@ -128,7 +129,7 @@ class TaintFlowFunctionsTest : BaseTest() {
                 every { method } returns testMethod
             }
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("EXAMPLE"))
         val facts = f.compute(TaintZeroFact).toList()
@@ -145,7 +146,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("REMOVE"))
         val facts = f.compute(xTaint).toList()
@@ -163,7 +164,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
         val xTaint = Tainted(x.toPath(), TaintMark("COPY"))
         val yTaint = Tainted(y.toPath(), TaintMark("COPY"))
@@ -185,7 +186,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainCallToStartFlowFunction(callStatement, calleeStart = mockk {
             every { location } returns mockk {
                 every { method } returns testMethod
@@ -215,7 +216,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         val exitStatement = JcReturnInst(location = mockk {
             every { method } returns testMethod
         }, returnValue = y)
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph)
+        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, SingletonUnitResolver)
         val f = flowSpace.obtainExitToReturnSiteFlowFunction(callStatement, returnSite = mockk(), exitStatement)
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
