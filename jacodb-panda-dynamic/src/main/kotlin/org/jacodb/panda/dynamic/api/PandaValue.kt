@@ -171,7 +171,7 @@ interface PandaInstanceCallValue : PandaComplexValue {
 // used to connect loaded object to instance
 class PandaLoadedValue(
     override val instance: PandaValue,
-    override val obj: PandaValue
+    override val obj: PandaValue,
 ) : PandaInstanceCallValue {
 
     override val type: PandaType
@@ -195,7 +195,7 @@ class PandaLoadedValue(
 
 class PandaInstanceCallValueImpl(
     override val instance: PandaValue,
-    override val obj: PandaValue
+    override val obj: PandaValue,
 ) : PandaInstanceCallValue {
     override val type: PandaType
         get() = PandaAnyType
@@ -209,7 +209,7 @@ class PandaInstanceCallValueImpl(
     }
 
     private fun PandaValue.resolve(): String {
-        return when(this) {
+        return when (this) {
             is PandaStringConstant -> this.value
             is PandaLocalVar -> (this.type as PandaClassType).typeName
             is PandaThis -> (this.type as PandaClassType).typeName
