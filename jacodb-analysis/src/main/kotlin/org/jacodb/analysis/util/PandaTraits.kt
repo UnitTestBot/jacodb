@@ -48,7 +48,20 @@ import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 
-object PandaTraits : Traits<PandaMethod, PandaInst> {
+// Ensure that all methods are default-implemented in the interface itself:
+private object PandaTraitsImpl : PandaTraits
+
+/**
+ * Panda-specific extensions for analysis.
+ *
+ * ### Usage:
+ * ```
+ * class MyClass {
+ *     companion object : PandaTraits
+ * }
+ * ```
+ */
+interface PandaTraits : Traits<PandaMethod, PandaInst> {
 
     override val PandaMethod.thisInstance: PandaThis
         get() = _thisInstance

@@ -23,7 +23,6 @@ import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.JcTraits
-import org.jacodb.analysis.util.Traits
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
@@ -50,9 +49,9 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.jacodb.analysis.util.getArgument as _getArgument
 
-class TaintFlowFunctionsTest : BaseTest(), Traits<JcMethod, JcInst> by JcTraits {
+class TaintFlowFunctionsTest : BaseTest() {
 
-    companion object : WithDB(Usages, InMemoryHierarchy)
+    companion object : WithDB(Usages, InMemoryHierarchy), JcTraits
 
     override val cp: JcClasspath = runBlocking {
         val configFileName = "config_test.json"

@@ -22,7 +22,6 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaTraits
-import org.jacodb.analysis.util.Traits
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
@@ -56,7 +55,9 @@ import kotlin.test.assertTrue
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IfdsPandaTest : Traits<PandaMethod, PandaInst> by PandaTraits {
+class IfdsPandaTest {
+
+    companion object : PandaTraits
 
     private fun loadProjectForSample(programName: String): PandaProject {
         val bcFilePath = javaClass.getResource("/samples/${programName}.abc")?.path ?: ""
