@@ -24,7 +24,6 @@ import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.JcTraits
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgument
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
@@ -49,6 +48,7 @@ import org.jacodb.testing.WithDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.jacodb.analysis.util.getArgument as _getArgument
 
 class TaintFlowFunctionsTest : BaseTest(), Traits<JcMethod, JcInst> by JcTraits {
 
@@ -184,7 +184,7 @@ class TaintFlowFunctionsTest : BaseTest(), Traits<JcMethod, JcInst> by JcTraits 
             }
         })
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
-        val arg0: JcArgument = cp.getArgument(testMethod.parameters[0])!!
+        val arg0: JcArgument = cp._getArgument(testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("TAINT"))
         val facts = f.compute(xTaint).toList()
         Assertions.assertEquals(listOf(arg0Taint), facts)
