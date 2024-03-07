@@ -50,7 +50,7 @@ object PandaTraits : Traits<PandaMethod, PandaInst> {
 
     override fun CommonExpr.toPathOrNull(): AccessPath? {
         check(this is PandaExpr)
-        return toPathOrNull()
+        return _toPathOrNull()
     }
 
     override fun CommonValue.toPathOrNull(): AccessPath? {
