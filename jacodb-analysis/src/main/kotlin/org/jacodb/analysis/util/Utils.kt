@@ -22,42 +22,9 @@ import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
-import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.Project
-import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.JcClasspath
-import org.jacodb.api.jvm.JcMethod
-import org.jacodb.api.jvm.JcParameter
-import org.jacodb.api.jvm.cfg.JcArgument
-import org.jacodb.api.jvm.cfg.JcThis
-import org.jacodb.api.jvm.ext.toType
-
-fun Project.getArgument(param: CommonMethodParameter): CommonArgument? {
-    return when {
-        this is JcClasspath && param is JcParameter -> getArgument(param)
-        else -> error("Cannot get argument from parameter: $param")
-    }
-}
-
-fun Project.getArgumentsOf(method: CommonMethod<*, *>): List<CommonArgument> {
-    return when {
-        this is JcClasspath && method is JcMethod -> getArgumentsOf(method)
-        else -> error("Cannot get arguments of method: $method")
-    }
-}
-
-fun JcClasspath.getArgument(param: JcParameter): JcArgument? {
-    val t = findTypeOrNull(param.type.typeName) ?: return null
-    return JcArgument.of(param.index, param.name, t)
-}
-
-fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
-    return method.parameters.map { getArgument(it)!! }
-}
 
 fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     if (this == null || other == null) {

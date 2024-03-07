@@ -19,10 +19,15 @@ package org.jacodb.analysis.util
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
+import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaArgument
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
 import org.jacodb.panda.dynamic.api.PandaCallExpr
 import org.jacodb.panda.dynamic.api.PandaCastExpr
@@ -32,9 +37,13 @@ import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaMethodParameter
+import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaThis
 import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.analysis.util.getArgument as _getArgument
+import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
@@ -68,10 +77,22 @@ object PandaTraits : Traits<PandaMethod, PandaInst> {
             check(this is PandaCallExpr)
             return method
         }
+
+    override fun Project.getArgument(param: CommonMethodParameter): PandaArgument {
+        check(this is PandaProject)
+        check(param is PandaMethodParameter)
+        return _getArgument(param)
+    }
+
+    override fun Project.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+        check(this is PandaProject)
+        return _getArgumentsOf(method)
+    }
 }
 
 val PandaMethod.thisInstance: PandaThis
-    get() = PandaThis(enclosingClass.toType())
+    // get() = PandaThis(enclosingClass.toType())
+    get() = PandaThis(PandaAnyType)
 
 internal fun PandaClass.toType(): PandaClassType {
     TODO("return project.classTypeOf(this)")
@@ -108,4 +129,12 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
 
 fun PandaValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
+}
+
+fun PandaProject.getArgument(param: PandaMethodParameter): PandaArgument {
+    return PandaArgument(param.index)
+}
+
+fun PandaProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+    return method.parameters.map { getArgument(it) }
 }

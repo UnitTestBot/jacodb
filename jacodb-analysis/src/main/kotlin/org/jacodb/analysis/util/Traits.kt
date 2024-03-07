@@ -18,6 +18,9 @@ package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
@@ -39,5 +42,8 @@ interface Traits<out Method, out Statement>
     fun CommonValue.toPath(): AccessPath
 
     val CommonCallExpr.callee: CommonMethod<*, *>
+
+    fun Project.getArgument(param: CommonMethodParameter): CommonArgument?
+    fun Project.getArgumentsOf(method: @UnsafeVariance Method): List<CommonArgument>
 
 }
