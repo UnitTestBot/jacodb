@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.api
 
+import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonThis
@@ -55,11 +56,14 @@ class PandaThis(
     }
 }
 
-class PandaArgument(val id: Int) : PandaSimpleValue {
+class PandaArgument(
+    override val index: Int,
+    override val name: String = "arg$index",
+) : PandaSimpleValue, CommonArgument {
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString() = "arg $id"
+    override fun toString() = "arg $index"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
