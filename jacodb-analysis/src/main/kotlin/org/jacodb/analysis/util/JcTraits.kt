@@ -47,9 +47,6 @@ import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 
-// Ensure that all methods are default-implemented in the interface itself:
-private object JcTraitsImpl : JcTraits
-
 /**
  * JVM-specific extensions for analysis.
  *
@@ -100,6 +97,9 @@ interface JcTraits : Traits<JcMethod, JcInst> {
         check(this is JcClasspath)
         return _getArgumentsOf(method)
     }
+
+    // Ensure that all methods are default-implemented in the interface itself:
+    companion object : JcTraits
 }
 
 val JcMethod.thisInstance: JcThis
