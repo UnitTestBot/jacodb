@@ -207,7 +207,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
          * First 3 arguments in Panda IR are placeholders for "this", etc.
          * Filter them out to include real parameters.
          */
-        private const val argThreshold = 3
+        private const val ARG_THRESHOLD = 3
 
         fun mapType(type: String?): PandaType = when (type) {
             "i64", "i32" -> PandaNumberType
@@ -222,7 +222,6 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
     fun getProgramIR(): ProgramIR {
         val programIR: ProgramIR = Json.decodeFromString(json)
-        val pandaProject = mapProgramIR(programIR)
         return programIR
     }
 
@@ -325,7 +324,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     }
 
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
-        method.idToIRInputs[outputId].orEmpty().forEachIndexed { index, programInst ->
+        method.idToIRInputs[outputId].orEmpty().forEachIndexed { _, programInst ->
             if (inputId == programInst.id()) {
                 method.idToInputs.getOrPut(outputId) { mutableListOf() }.add(input)
             }
@@ -345,8 +344,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                 outputs.forEach { output ->
                     addInput(method, id(), output, arg)
                 }
-                if (id() >= argThreshold) {
-                    val argInfo = PandaParameterInfo(id() - argThreshold, mapType(type))
+                if (id() >= ARG_THRESHOLD) {
+                    val argInfo = PandaParameterInfo(id() - ARG_THRESHOLD, mapType(type))
                     method.parameters.add(argInfo)
                 }
             }
@@ -579,20 +578,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     instance = instCallValue.instance,
                     args = args
                 )
-                if (outputs.isEmpty()) {
-                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-                } else {
-                    val lv = PandaLocalVar(method.currentLocalVarId++)
-                    val assign = PandaAssignInst(
-                        locationFromOp(this),
-                        lv,
-                        callExpr
-                    )
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, lv)
-                    }
-                    method.insts.add(assign)
-                }
+                handleOutputs(outputs, method, callExpr)
             }
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
@@ -641,20 +627,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     args = emptyList(),
                     instance = instCallValue.instance
                 )
-                if (outputs.isEmpty()) {
-                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-                } else {
-                    val lv = PandaLocalVar(method.currentLocalVarId++)
-                    val assign = PandaAssignInst(
-                        locationFromOp(this),
-                        lv,
-                        callExpr
-                    )
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, lv)
-                    }
-                    method.insts.add(assign)
-                }
+                handleOutputs(outputs, method, callExpr)
             }
 
             opcode == "Intrinsic.callthis1" -> {
@@ -671,20 +644,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     args = listOf(inputs[1]),
                     instance = instCallValue.instance
                 )
-                if (outputs.isEmpty()) {
-                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-                } else {
-                    val lv = PandaLocalVar(method.currentLocalVarId++)
-                    val assign = PandaAssignInst(
-                        locationFromOp(this),
-                        lv,
-                        callExpr
-                    )
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, lv)
-                    }
-                    method.insts.add(assign)
-                }
+                handleOutputs(outputs, method, callExpr)
             }
 
             opcode == "Intrinsic.stglobalvar" -> {
@@ -708,20 +668,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     args = emptyList(),
                     instance = instCallValue.instance
                 )
-                if (outputs.isEmpty()) {
-                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-                } else {
-                    val lv = PandaLocalVar(method.currentLocalVarId++)
-                    val assign = PandaAssignInst(
-                        locationFromOp(this),
-                        lv,
-                        callExpr
-                    )
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, lv)
-                    }
-                    method.insts.add(assign)
-                }
+                handleOutputs(outputs, method, callExpr)
             }
 
             opcode == "Intrinsic.callarg1" -> {
@@ -739,26 +686,34 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                     args = args,
                     instance = instCallValue.instance
                 )
-                if (outputs.isEmpty()) {
-                    method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-                } else {
-                    val lv = PandaLocalVar(method.currentLocalVarId++)
-                    val assign = PandaAssignInst(
-                        locationFromOp(this),
-                        lv,
-                        callExpr
-                    )
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, lv)
-                    }
-                    method.insts.add(assign)
-                }
+                handleOutputs(outputs, method, callExpr)
             }
 
             else -> getInstType(this, method)
         }
 
         matchBasicBlockInstructionId(bb, method.currentId)
+    }
+
+    private fun ProgramInst.handleOutputs(
+        outputs: List<Int>,
+        method: ProgramMethod,
+        callExpr: PandaVirtualCallExpr
+    ) {
+        if (outputs.isEmpty()) {
+            method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+        } else {
+            val lv = PandaLocalVar(method.currentLocalVarId++)
+            val assign = PandaAssignInst(
+                locationFromOp(this),
+                lv,
+                callExpr
+            )
+            outputs.forEach { output ->
+                addInput(method, id(), output, lv)
+            }
+            method.insts.add(assign)
+        }
     }
 
     private fun matchBasicBlockInstructionId(
