@@ -16,13 +16,13 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.analysis.ApplicationGraph
+import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.panda.staticvm.*
 import org.jacodb.panda.staticvm.classpath.MethodNode
 import org.jacodb.panda.staticvm.classpath.PandaClasspath
 
 class PandaApplicationGraph(
-    private val project: PandaClasspath
+    override val project: PandaClasspath
 ) : ApplicationGraph<MethodNode, PandaInst> {
     private val callersMap = project.methods
         .flatMap { it.flowGraph().instructions }
@@ -36,8 +36,8 @@ class PandaApplicationGraph(
 
     override fun callees(node: PandaInst): Sequence<MethodNode> = when (node) {
         is PandaAssignInst -> when (val expr = node.rhv) {
-            is PandaStaticCallExpr -> sequenceOf(expr.method)
-            is PandaVirtualCallExpr -> sequenceOf(expr.method)
+            is PandaStaticCallExpr -> sequenceOf(expr.callee)
+            is PandaVirtualCallExpr -> sequenceOf(expr.callee)
             else -> emptySequence()
         }
         else -> emptySequence()
@@ -46,7 +46,7 @@ class PandaApplicationGraph(
     override fun callers(method: MethodNode): Sequence<PandaInst>
             = callersMap[method]?.asSequence() ?: emptySequence()
 
-    override fun entryPoint(method: MethodNode): Sequence<PandaInst> =
+    override fun entryPoints(method: MethodNode): Sequence<PandaInst> =
         method.flowGraph().entries.asSequence()
 
     override fun exitPoints(method: MethodNode): Sequence<PandaInst> =

@@ -23,13 +23,16 @@ import org.jacodb.panda.staticvm.ir.*
 sealed interface LocalVarNode {
     val name: String
 }
-class LeafVarNode(override val name: String, val type: TypeNode) : LocalVarNode
+open class LeafVarNode(override val name: String, val type: TypeNode) : LocalVarNode
+
 class DependentVarNode(override val name: String, val bounds: List<String>) : LocalVarNode
 
 class LoadArrayNode(override val name: String, val array: String) : LocalVarNode
 
+class ThisNode(type: TypeNode) : LeafVarNode("this", type)
+
 class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<LocalVarNode?> {
-    private val classpath = method.enclosingClass.classpath
+    private val classpath = method.enclosingClass.project
 
     private fun default(inst: PandaInstIr) = LeafVarNode(inst.id, classpath.findType(inst.type))
 

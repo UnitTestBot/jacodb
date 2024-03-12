@@ -16,49 +16,51 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.cfg.CoreExpr
-import org.jacodb.api.core.cfg.CoreExprVisitor
-import org.jacodb.api.core.cfg.CoreValue
+import org.jacodb.api.common.cfg.*
 import org.jacodb.panda.staticvm.classpath.*
 
-sealed interface PandaExpr : CoreExpr<TypeNode, PandaValue> {
-    override fun <T> accept(visitor: CoreExprVisitor<T>): T {
+sealed interface PandaExpr : CommonExpr {
+    override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
         TODO("Not yet implemented")
     }
 }
 
-sealed interface PandaValue : PandaExpr, CoreValue<PandaValue, TypeNode> {
+sealed interface PandaValue : PandaExpr, CommonValue {
     override val operands: List<PandaValue> get() = emptyList()
 }
 
 class PandaArgument(
-    val index: Int,
-    val name: String,
+    override val index: Int,
+    override val name: String,
     override val type: TypeNode
-) : PandaValue {
+) : PandaValue, CommonArgument {
     override fun toString(): String = "$name(${type.typeName})"
 }
 
-class PandaLocalVar(
+open class PandaLocalVar(
     val name: String,
     override val type: TypeNode
 ) : PandaValue {
     override fun toString(): String = name
 }
 
-class PandaFieldRef(
-    val instance: PandaValue?,
-    val field: FieldNode,
+class PandaThis(
     override val type: TypeNode
-) : PandaValue {
-    override fun toString(): String = "${instance ?: field.enclosingClass}.${field.name}"
+) : PandaLocalVar("this", type), CommonThis
+
+class PandaFieldRef(
+    override val instance: PandaValue?,
+    override val classField: FieldNode,
+    override val type: TypeNode
+) : PandaValue, CommonFieldRef {
+    override fun toString(): String = "${instance ?: classField.enclosingClass}.${classField.name}"
 }
 
 class PandaArrayRef(
-    val array: PandaValue,
-    val index: PandaValue,
+    override val array: PandaValue,
+    override val index: PandaValue,
     override val type: TypeNode
-) : PandaValue {
+) : PandaValue, CommonArrayAccess {
     override fun toString(): String = "$array[$index]"
 }
 
@@ -348,22 +350,26 @@ data class PandaNeExpr(
 }
 
 data class PandaStaticCallExpr(
-    val method: MethodNode,
+    override val callee: MethodNode,
     override val operands: List<PandaValue>
-) : PandaExpr {
-    override val type: TypeNode = method.returnType
+) : PandaExpr, CommonCallExpr {
+    override val type: TypeNode = callee.returnType
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(",")})"
+    override val args: List<CommonValue>
+        get() = operands
+    override fun toString(): String = "${callee.signature}(${operands.joinToString(",")})"
 }
 
 data class PandaVirtualCallExpr(
-    val method: MethodNode,
-    val instance: PandaValue,
+    override val callee: MethodNode,
+    override val instance: PandaValue,
     override val operands: List<PandaValue>
-) : PandaExpr {
-    override val type: TypeNode = method.returnType
+) : PandaExpr, CommonInstanceCallExpr {
+    override val type: TypeNode = callee.returnType
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(",")})"
+    override val args: List<CommonValue>
+        get() = operands
+    override fun toString(): String = "${callee.signature}(${operands.joinToString(",")})"
 }
 
 data class PandaPhiExpr(

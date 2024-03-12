@@ -16,14 +16,14 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.core.Project
-import org.jacodb.api.core.cfg.ControlFlowGraph
+import org.jacodb.api.common.Project
+import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
-class PandaClasspath : Project<TypeNode> {
+class PandaClasspath : Project {
     private data class TreeEntry<T>(
         val depth: Int,
         val parent: TreeEntry<T>?,

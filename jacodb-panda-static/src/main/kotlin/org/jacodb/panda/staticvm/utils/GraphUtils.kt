@@ -16,7 +16,7 @@
 
 package org.jacodb.panda.staticvm.utils
 
-import org.jacodb.api.core.cfg.Graph
+import org.jacodb.api.common.cfg.Graph
 
 data class SimpleDirectedGraph<T>(
     val nodes: MutableSet<T> = mutableSetOf(),

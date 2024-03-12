@@ -44,7 +44,7 @@ private fun buildLocalVariables(
     methodNode: MethodNode,
     blocks: List<PandaBasicBlockIr>
 ) : Map<String, PandaLocalVar> {
-    val classpath = methodNode.enclosingClass.classpath
+    val classpath = methodNode.enclosingClass.project
 
     val localVarsIndex = hashMapOf<String, PandaLocalVar>()
 
@@ -64,9 +64,7 @@ private fun buildLocalVariables(
     } }
 
     val sccs = graph.SCCs()
-    require(sccs.inTopsortOrder() != null) {
-        "wtf"
-    }
+    check(sccs.inTopsortOrder() != null)
 
     graph.SCCs().runDP { vars, inputTypes ->
         vars.map { lvar -> when (lvar) {
@@ -95,7 +93,7 @@ open class InstListBuilder(
     val method: MethodNode,
     val blocks: List<PandaBasicBlockIr>
 ) {
-    val classpath = method.enclosingClass.classpath
+    val classpath = method.enclosingClass.project
 
     val localVars = buildLocalVariables(method, blocks)
 

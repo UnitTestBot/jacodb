@@ -16,12 +16,11 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.core.CoreMethod
-import org.jacodb.api.core.CoreType
-import org.jacodb.api.core.cfg.ControlFlowGraph
+import org.jacodb.api.common.*
+import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
-sealed interface TypeNode : CoreType {
+sealed interface TypeNode : CommonType, CommonTypeName {
     val array: ArrayNode
 }
 
@@ -33,6 +32,8 @@ data class ArrayNode(
 
     override val typeName: String
         get() = wrappedType.typeName + "[]".repeat(dimensions)
+    override val nullable: Boolean
+        get() = true
 
     val elementType: TypeNode
         get() = if (dimensions == 1) wrappedType else ArrayNode(dimensions - 1, wrappedType)
@@ -47,11 +48,14 @@ sealed interface SingleTypeNode : TypeNode {
         get() = ArrayNode(1, this)
 }
 
-sealed interface ObjectTypeNode : SingleTypeNode {
+sealed interface ObjectTypeNode : SingleTypeNode, CommonClass, CommonClassType {
     /** qualified class/interface name */
-    val name: String
+    override val name: String
 
-    val classpath: PandaClasspath
+    override val simpleName: String
+        get() = name
+
+    override val project: PandaClasspath
 
     val directSuperClass: ClassTypeNode?
 
@@ -66,6 +70,9 @@ sealed interface ObjectTypeNode : SingleTypeNode {
     override val typeName: String
         get() = name
 
+    override val nullable: Boolean?
+        get() = true
+
     fun findFieldOrNull(name: String): FieldNode? = declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
     fun findMethodOrNull(name: String): MethodNode? = declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
 
@@ -74,25 +81,46 @@ sealed interface ObjectTypeNode : SingleTypeNode {
 }
 
 class FieldNode(
-    val name: String,
-    val enclosingClass: ObjectTypeNode,
-    val type: TypeNode,
+    override val name: String,
+    override val enclosingClass: ObjectTypeNode,
+    override val type: TypeNode,
     val flags: AccessFlags
-)
+) : CommonClassField, CommonTypedField {
+    override val signature: String?
+        get() = "${enclosingClass.name}.$name"
+    override val field: CommonClassField
+        get() = this
+}
 
 class MethodNode(
     val signature: String,
-    val enclosingClass: ObjectTypeNode,
-    val returnType: TypeNode,
+    override val enclosingClass: ObjectTypeNode,
+    override val returnType: TypeNode,
     val parameterTypes: List<TypeNode>,
     val flags: AccessFlags
-) : CoreMethod<PandaInst> {
+) : CommonMethod<MethodNode, PandaInst> {
+    override val name: String
+        get() = signature
+
+    data class Parameter(
+        override val type: TypeNode,
+        override val index: Int,
+        override val method: CommonMethod<*, *>
+    ) : CommonMethodParameter {
+        override val name: String?
+            get() = null
+    }
+
+    override val parameters: List<CommonMethodParameter>
+        get() = parameterTypes.mapIndexed { index, typeNode ->
+            Parameter(typeNode, index, this)
+        }
     override fun flowGraph(): ControlFlowGraph<PandaInst> =
-        enclosingClass.classpath.flowGraph(this)
+        enclosingClass.project.flowGraph(this)
 }
 
 class ClassTypeNode(
-    override val classpath: PandaClasspath,
+    override val project: PandaClasspath,
     override val name: String,
     override val directSuperClass: ClassTypeNode?,
     override val directSuperInterfaces: Set<InterfaceTypeNode>,
@@ -102,7 +130,7 @@ class ClassTypeNode(
 ) : ObjectTypeNode
 
 class InterfaceTypeNode(
-    override val classpath: PandaClasspath,
+    override val project: PandaClasspath,
     override val name: String,
     override val directSuperInterfaces: Set<InterfaceTypeNode>,
     override val flags: AccessFlags,

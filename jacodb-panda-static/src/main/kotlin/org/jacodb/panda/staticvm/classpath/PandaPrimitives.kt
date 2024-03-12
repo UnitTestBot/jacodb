@@ -33,6 +33,9 @@ enum class PandaPrimitiveTypeNode(
     DOUBLE("f64");
 
     override fun toString(): String = typeName
+
+    override val nullable: Boolean?
+        get() = false
 }
 
 object PandaPrimitives {

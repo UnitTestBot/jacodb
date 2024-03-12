@@ -9,7 +9,6 @@ repositories {
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-api-jvm"))
-    api(project(":jacodb-api-core"))
     api(project(":jacodb-analysis"))
 
     implementation(Libs.kotlin_logging)

@@ -16,8 +16,8 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.cfg.InstList
-import org.jacodb.api.core.cfg.MutableInstList
+import org.jacodb.api.common.cfg.InstList
+import org.jacodb.api.common.cfg.MutableInstList
 
 class PandaInstList(override val instructions: List<PandaInst>) : InstList<PandaInst> {
     override val size: Int

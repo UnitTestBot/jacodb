@@ -16,8 +16,8 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.cfg.ControlFlowGraph
-import org.jacodb.api.core.cfg.Graph
+import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.api.common.cfg.Graph
 import org.jacodb.panda.staticvm.classpath.MethodNode
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.utils.SimpleDirectedGraph

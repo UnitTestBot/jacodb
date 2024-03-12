@@ -16,14 +16,13 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.core.cfg.*
+import org.jacodb.api.common.cfg.*
 import org.jacodb.panda.staticvm.classpath.MethodNode
-import org.jacodb.panda.staticvm.classpath.TypeNode
 
 class PandaInstLocation(
     override val method: MethodNode,
     override val index: Int
-) : CoreInstLocation<MethodNode> {
+) : CommonInstLocation<MethodNode, PandaInst> {
     // TODO: expand like JcInstLocation
 
     override fun toString() = "method.$index"
@@ -43,13 +42,13 @@ class PandaInstRef(
     override fun toString() = index.toString()
 }
 
-sealed interface PandaInst : CoreInst<PandaInstLocation, MethodNode, PandaExpr> {
+sealed interface PandaInst : CommonInst<MethodNode, PandaInst> {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
     override val lineNumber: Int
         get() = location.lineNumber
 
-    override fun <T> accept(visitor: InstVisitor<T>): T {
+    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         TODO("Not yet implemented")
     }
 }
@@ -80,7 +79,7 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr
-) : PandaInst, CoreAssignInst<PandaInstLocation, MethodNode, PandaValue, PandaExpr, TypeNode> {
+) : PandaInst, CommonAssignInst<MethodNode, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(rhv)
 
@@ -96,7 +95,7 @@ class PandaIfInst(
     val condition: PandaConditionExpr,
     val trueBranch: PandaInstRef,
     val falseBranch: PandaInstRef
-) : PandaBranchingInst, CoreIfInst<PandaInstLocation, MethodNode, PandaExpr> {
+) : PandaBranchingInst, CommonIfInst<MethodNode, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
     override val successors: List<PandaInstRef>
@@ -108,7 +107,7 @@ class PandaIfInst(
 class PandaGotoInst(
     override val location: PandaInstLocation,
     val target: PandaInstRef
-) : PandaBranchingInst, CoreGotoInst<PandaInstLocation, MethodNode, PandaExpr> {
+) : PandaBranchingInst, CommonGotoInst<MethodNode, PandaInst> {
     override val successors: List<PandaInstRef>
         get() = listOf(target)
 
@@ -122,10 +121,10 @@ sealed interface PandaTerminatingInst : PandaInst
 
 class PandaReturnInst(
     override val location: PandaInstLocation,
-    val value: PandaValue?
-) : PandaTerminatingInst, CoreReturnInst<PandaInstLocation, MethodNode, PandaExpr> {
+    override val returnValue: PandaValue?
+) : PandaTerminatingInst, CommonReturnInst<MethodNode, PandaInst> {
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString() = "return " + (value ?: "")
+    override fun toString() = "return " + (returnValue ?: "")
 }
