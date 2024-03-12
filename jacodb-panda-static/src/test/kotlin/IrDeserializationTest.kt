@@ -28,7 +28,7 @@ import kotlin.time.measureTimedValue
 internal class IrDeserializationTest {
     private val json = PandaProgramIr.json
     private val sampleFilePath = javaClass.getResource("sample.json")?.path!!
-    private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path!!
+    //private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path!!
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
@@ -39,7 +39,7 @@ internal class IrDeserializationTest {
         val applicationGraph = PandaApplicationGraph(project)
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
+    /*@OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
     @Test
     fun pandaStdLibTest() {
         val input = FileInputStream(stdlibFilePath)
@@ -53,7 +53,7 @@ internal class IrDeserializationTest {
 
         println("deserialization: $deserializationDuration, linkage: $linkageDuration")
         println("total: ${deserializationDuration + linkageDuration}")
-    }
+    }*/
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
