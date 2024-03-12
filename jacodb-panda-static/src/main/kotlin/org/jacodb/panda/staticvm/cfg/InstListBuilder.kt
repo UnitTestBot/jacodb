@@ -290,39 +290,39 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaLoadStaticInstInfo(inst: PandaLoadStaticInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldRef(null, field))
+        pushAssign(result(inst), PandaFieldAccess(null, field))
     }
 
     override fun visitPandaLoadObjectInstInfo(inst: PandaLoadObjectInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldRef(local(inst.inputs.first()), field))
+        pushAssign(result(inst), PandaFieldAccess(local(inst.inputs.first()), field))
     }
 
     override fun visitPandaStoreStaticInstInfo(inst: PandaStoreStaticInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldRef(null, field), local(inst.inputs[1]))
+        pushAssign(PandaFieldAccess(null, field), local(inst.inputs[1]))
     }
 
     override fun visitPandaStoreObjectInstInfo(inst: PandaStoreObjectInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldRef(local(inst.inputs[0]), field), local(inst.inputs[1]))
+        pushAssign(PandaFieldAccess(local(inst.inputs[0]), field), local(inst.inputs[1]))
     }
 
     override fun visitPandaLoadArrayInstInfo(inst: PandaLoadArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index) = inst.inputs.map(this::local)
         val arrayType = array.type
         require(arrayType is PandaArrayType)
-        pushAssign(result(inst), PandaArrayRef(array, index, arrayType.elementType))
+        pushAssign(result(inst), PandaArrayAccess(array, index, arrayType.elementType))
     }
 
     override fun visitPandaStoreArrayInstInfo(inst: PandaStoreArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index, value) = inst.inputs.map(this::local)
         val arrayType = array.type
         require(arrayType is PandaArrayType)
-        pushAssign(PandaArrayRef(array, index, arrayType.elementType), value)
+        pushAssign(PandaArrayAccess(array, index, arrayType.elementType), value)
     }
 
     override fun visitPandaCastInstInfo(inst: PandaCastInstIr): InstListBuilder.() -> Unit = {

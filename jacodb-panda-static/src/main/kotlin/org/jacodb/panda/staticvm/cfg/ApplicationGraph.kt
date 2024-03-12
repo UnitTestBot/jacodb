@@ -32,7 +32,7 @@ class PandaApplicationGraph(
     override fun predecessors(node: PandaInst): Sequence<PandaInst> =
         node.location.method.flowGraph().predecessors(node).asSequence()
     override fun successors(node: PandaInst): Sequence<PandaInst> =
-        node.location.method.flowGraph().predecessors(node).asSequence()
+        node.location.method.flowGraph().successors(node).asSequence()
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> = when (node) {
         is PandaAssignInst -> when (val expr = node.rhv) {

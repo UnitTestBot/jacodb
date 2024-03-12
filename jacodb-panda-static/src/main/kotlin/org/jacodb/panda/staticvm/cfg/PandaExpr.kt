@@ -59,7 +59,7 @@ class PandaThis(
     override fun toString(): String = name
 }
 
-class PandaFieldRef(
+class PandaFieldAccess(
     override val instance: PandaValue?,
     override val classField: PandaField
 ) : PandaValue, CommonFieldRef {
@@ -69,7 +69,7 @@ class PandaFieldRef(
         get() = classField.type
 }
 
-class PandaArrayRef(
+class PandaArrayAccess(
     override val array: PandaValue,
     override val index: PandaValue,
     override val type: PandaType
@@ -362,10 +362,14 @@ data class PandaNeExpr(
     override fun toString(): String = "$lhv != $rhv"
 }
 
+sealed interface PandaCallExpr : PandaExpr, CommonCallExpr {
+    val callee: PandaMethod
+}
+
 data class PandaStaticCallExpr(
     override val callee: PandaMethod,
     override val operands: List<PandaValue>
-) : PandaExpr, CommonCallExpr {
+) : PandaCallExpr {
     override val type: PandaType = callee.returnType
 
     override val args: List<CommonValue>
@@ -377,7 +381,7 @@ data class PandaVirtualCallExpr(
     override val callee: PandaMethod,
     override val instance: PandaValue,
     override val operands: List<PandaValue>
-) : PandaExpr, CommonInstanceCallExpr {
+) : PandaCallExpr, CommonInstanceCallExpr {
     override val type: PandaType = callee.returnType
 
     override val args: List<CommonValue>
