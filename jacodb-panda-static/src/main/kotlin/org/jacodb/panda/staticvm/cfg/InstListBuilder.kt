@@ -181,6 +181,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
         .order(ByteOrder.LITTLE_ENDIAN)
         .putLong(value.toLong())
         .rewind()
+        .let { it as ByteBuffer }
         .let(getter)
 
     private fun getConstant(value: ULong, type: PandaPrimitivePandaType) = when (type) {
