@@ -18,23 +18,23 @@ package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.panda.staticvm.*
-import org.jacodb.panda.staticvm.classpath.MethodNode
-import org.jacodb.panda.staticvm.classpath.PandaClasspath
+import org.jacodb.panda.staticvm.classpath.PandaMethod
+import org.jacodb.panda.staticvm.classpath.PandaProject
 
 class PandaApplicationGraph(
-    override val project: PandaClasspath
-) : ApplicationGraph<MethodNode, PandaInst> {
+    override val project: PandaProject
+) : ApplicationGraph<PandaMethod, PandaInst> {
     private val callersMap = project.methods
         .flatMap { it.flowGraph().instructions }
         .flatMap { inst -> callees(inst).map { it to inst } }
-        .groupBy(Pair<MethodNode, PandaInst>::first, Pair<MethodNode, PandaInst>::second)
+        .groupBy(Pair<PandaMethod, PandaInst>::first, Pair<PandaMethod, PandaInst>::second)
 
     override fun predecessors(node: PandaInst): Sequence<PandaInst> =
         node.location.method.flowGraph().predecessors(node).asSequence()
     override fun successors(node: PandaInst): Sequence<PandaInst> =
         node.location.method.flowGraph().predecessors(node).asSequence()
 
-    override fun callees(node: PandaInst): Sequence<MethodNode> = when (node) {
+    override fun callees(node: PandaInst): Sequence<PandaMethod> = when (node) {
         is PandaAssignInst -> when (val expr = node.rhv) {
             is PandaStaticCallExpr -> sequenceOf(expr.callee)
             is PandaVirtualCallExpr -> sequenceOf(expr.callee)
@@ -43,15 +43,15 @@ class PandaApplicationGraph(
         else -> emptySequence()
     }
 
-    override fun callers(method: MethodNode): Sequence<PandaInst>
+    override fun callers(method: PandaMethod): Sequence<PandaInst>
             = callersMap[method]?.asSequence() ?: emptySequence()
 
-    override fun entryPoints(method: MethodNode): Sequence<PandaInst> =
+    override fun entryPoints(method: PandaMethod): Sequence<PandaInst> =
         method.flowGraph().entries.asSequence()
 
-    override fun exitPoints(method: MethodNode): Sequence<PandaInst> =
+    override fun exitPoints(method: PandaMethod): Sequence<PandaInst> =
         method.flowGraph().exits.asSequence()
 
-    override fun methodOf(node: PandaInst): MethodNode =
+    override fun methodOf(node: PandaInst): PandaMethod =
         node.location.method
 }

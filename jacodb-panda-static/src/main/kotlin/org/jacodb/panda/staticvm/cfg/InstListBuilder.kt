@@ -41,14 +41,14 @@ class DefaultInstBuilder<T : PandaInst>(private val inst: T) : InstBuilder {
 class BranchingInstBuilder<T : PandaBranchingInst>(override val build: InstListBuilder.() -> T) : InstBuilder
 
 private fun buildLocalVariables(
-    methodNode: MethodNode,
+    pandaMethod: PandaMethod,
     blocks: List<PandaBasicBlockIr>
 ) : Map<String, PandaLocalVar> {
-    val classpath = methodNode.enclosingClass.project
+    val project = pandaMethod.enclosingClass.project
 
     val localVarsIndex = hashMapOf<String, PandaLocalVar>()
 
-    val outputVarBuilder = OutputVarBuilder(methodNode)
+    val outputVarBuilder = OutputVarBuilder(pandaMethod)
 
     val varNodes = blocks.flatMap { block ->
         block.insts.mapNotNull { it.accept(outputVarBuilder) }
@@ -68,18 +68,23 @@ private fun buildLocalVariables(
 
     graph.SCCs().runDP { vars, inputTypes ->
         vars.map { lvar -> when (lvar) {
-            is LeafVarNode -> lvar.type
-            is DependentVarNode -> requireNotNull(classpath.commonType(inputTypes.values.flatten())) {
-                "No common type for ${inputTypes.values}"
-            }
-            is LoadArrayNode -> {
-                val arrayTypes = inputTypes.values.toList().flatten<TypeNode>()
-                require(arrayTypes.all { it is ArrayNode })
-                val elementTypes = arrayTypes.filterIsInstance<ArrayNode>()
-                    .map(ArrayNode::elementType)
-                requireNotNull(classpath.commonType(elementTypes))
-            }
-        }.also { localVarsIndex[lvar.name] = PandaLocalVar(lvar.name, it) } }
+                is LeafVarNode -> lvar.type
+                is DependentVarNode -> requireNotNull(project.commonType(inputTypes.values.flatten())) {
+                    "No common type for ${inputTypes.values}"
+                }
+                is LoadArrayNode -> {
+                    val arrayTypes = inputTypes.values.toList().flatten<PandaType>()
+                    require(arrayTypes.all { it is PandaArrayType })
+                    val elementTypes = arrayTypes.filterIsInstance<PandaArrayType>()
+                        .map(PandaArrayType::elementType)
+                    requireNotNull(project.commonType(elementTypes))
+                }
+            }.also {
+                if (lvar is ThisNode)
+                    localVarsIndex[lvar.name] = PandaThis(lvar.name, it)
+                else
+                    localVarsIndex[lvar.name] = PandaLocalVarImpl(lvar.name, it)
+            } }
     }
 
     return localVarsIndex
@@ -90,10 +95,10 @@ data class IrInstLocation(val block: Int, val index: Int)
 
 
 open class InstListBuilder(
-    val method: MethodNode,
+    val method: PandaMethod,
     val blocks: List<PandaBasicBlockIr>
 ) {
-    val classpath = method.enclosingClass.project
+    val project = method.enclosingClass.project
 
     val localVars = buildLocalVariables(method, blocks)
 
@@ -178,19 +183,19 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
         .rewind()
         .let(getter)
 
-    private fun getConstant(value: ULong, type: PandaPrimitiveTypeNode) = when (type) {
-        PandaPrimitiveTypeNode.VOID -> throw IllegalArgumentException("cannot create void constant")
-        PandaPrimitiveTypeNode.BOOL -> PandaBoolean(value != 0UL)
-        PandaPrimitiveTypeNode.BYTE -> PandaByte(value.toByte())
-        PandaPrimitiveTypeNode.UBYTE -> TODO()
-        PandaPrimitiveTypeNode.SHORT -> PandaShort(value.toShort())
-        PandaPrimitiveTypeNode.USHORT -> TODO()
-        PandaPrimitiveTypeNode.INT -> PandaInt(value.toInt())
-        PandaPrimitiveTypeNode.UINT -> TODO()
-        PandaPrimitiveTypeNode.LONG -> PandaLong(value.toLong())
-        PandaPrimitiveTypeNode.ULONG -> TODO()
-        PandaPrimitiveTypeNode.FLOAT -> PandaFloat(convert(value, ByteBuffer::getFloat))
-        PandaPrimitiveTypeNode.DOUBLE -> PandaDouble(convert(value, ByteBuffer::getDouble))
+    private fun getConstant(value: ULong, type: PandaPrimitivePandaType) = when (type) {
+        PandaPrimitivePandaType.VOID -> throw IllegalArgumentException("cannot create void constant")
+        PandaPrimitivePandaType.BOOL -> PandaBoolean(value != 0UL)
+        PandaPrimitivePandaType.BYTE -> PandaByte(value.toByte())
+        PandaPrimitivePandaType.UBYTE -> TODO()
+        PandaPrimitivePandaType.SHORT -> PandaShort(value.toShort())
+        PandaPrimitivePandaType.USHORT -> TODO()
+        PandaPrimitivePandaType.INT -> PandaInt(value.toInt())
+        PandaPrimitivePandaType.UINT -> TODO()
+        PandaPrimitivePandaType.LONG -> PandaLong(value.toLong())
+        PandaPrimitivePandaType.ULONG -> TODO()
+        PandaPrimitivePandaType.FLOAT -> PandaFloat(convert(value, ByteBuffer::getFloat))
+        PandaPrimitivePandaType.DOUBLE -> PandaDouble(convert(value, ByteBuffer::getDouble))
     }
 
     private fun getConditionType(operator: String) = when (operator) {
@@ -207,18 +212,18 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     private fun pushUnary(
         inst: PandaInstIr,
-        exprConstructor: (TypeNode, PandaValue) -> PandaUnaryExpr
+        exprConstructor: (PandaType, PandaValue) -> PandaUnaryExpr
     ): InstListBuilder.() -> Unit = {
         val value = local(inst.inputs.first())
-        pushAssign(result(inst), exprConstructor(classpath.findType(inst.type), value))
+        pushAssign(result(inst), exprConstructor(project.findType(inst.type), value))
     }
 
     private fun pushBinary(
         inst: PandaInstIr,
-        exprConstructor: (TypeNode, PandaValue, PandaValue) -> PandaBinaryExpr
+        exprConstructor: (PandaType, PandaValue, PandaValue) -> PandaBinaryExpr
     ): InstListBuilder.() -> Unit = {
         val (lhv, rhv) = inst.inputs.map(this::local)
-        pushAssign(result(inst), exprConstructor(classpath.findType(inst.type), lhv, rhv))
+        pushAssign(result(inst), exprConstructor(project.findType(inst.type), lhv, rhv))
     }
 
     override fun visitPandaConstantInstInfo(inst: PandaConstantInstIr): InstListBuilder.() -> Unit = {
@@ -230,15 +235,15 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaSaveStateInstInfo(inst: PandaSaveStateInstIr) = skip
 
     override fun visitPandaNewObjectInstInfo(inst: PandaNewObjectInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaNewExpr(classpath.findClass(inst.objectClass)))
+        pushAssign(result(inst), PandaNewExpr(project.findClass(inst.objectClass).type))
     }
 
     override fun visitPandaNewArrayInstInfo(inst: PandaNewArrayInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaNewArrayExpr(classpath.getElementType(inst.arrayType), local(inst.inputs[1])))
+        pushAssign(result(inst), PandaNewArrayExpr(project.getElementType(inst.arrayType), local(inst.inputs[1])))
     }
 
     override fun visitPandaCallStaticInstInfo(inst: PandaCallStaticInstIr): InstListBuilder.() -> Unit = {
-        val callee = classpath.findMethod(inst.method)
+        val callee = project.findMethod(inst.method)
         pushAssign(result(inst), PandaStaticCallExpr(
             callee,
             inst.inputs.take(callee.parameterTypes.size).map { local(it) }
@@ -254,11 +259,11 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     }
 
     override fun visitPandaLoadStringInstInfo(inst: PandaLoadStringInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaString("", classpath.findClass("std.core.String")))
+        pushAssign(result(inst), PandaString("", project.stringClass.type))
     }
 
     override fun visitPandaCallVirtualInstInfo(inst: PandaCallVirtualInstIr): InstListBuilder.() -> Unit = {
-        val callee = classpath.findMethod(inst.method)
+        val callee = project.findMethod(inst.method)
         val instance = local(inst.inputs.first())
         val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map(this::local)
         pushAssign(result(inst), PandaVirtualCallExpr(callee, instance, args))
@@ -283,56 +288,58 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     }
 
     override fun visitPandaLoadStaticInstInfo(inst: PandaLoadStaticInstIr): InstListBuilder.() -> Unit = {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldRef(null, field, enclosingClass))
+        pushAssign(result(inst), PandaFieldRef(null, field))
     }
 
     override fun visitPandaLoadObjectInstInfo(inst: PandaLoadObjectInstIr): InstListBuilder.() -> Unit = {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldRef(local(inst.inputs.first()), field, enclosingClass))
+        pushAssign(result(inst), PandaFieldRef(local(inst.inputs.first()), field))
     }
 
     override fun visitPandaStoreStaticInstInfo(inst: PandaStoreStaticInstIr): InstListBuilder.() -> Unit = {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldRef(null, field, enclosingClass), local(inst.inputs[1]))
+        pushAssign(PandaFieldRef(null, field), local(inst.inputs[1]))
     }
 
     override fun visitPandaStoreObjectInstInfo(inst: PandaStoreObjectInstIr): InstListBuilder.() -> Unit = {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldRef(local(inst.inputs[0]), field, enclosingClass), local(inst.inputs[1]))
+        pushAssign(PandaFieldRef(local(inst.inputs[0]), field), local(inst.inputs[1]))
     }
 
     override fun visitPandaLoadArrayInstInfo(inst: PandaLoadArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index) = inst.inputs.map(this::local)
-        require(array.type is ArrayNode)
-        pushAssign(result(inst), PandaArrayRef(array, index, array.type.elementType))
+        val arrayType = array.type
+        require(arrayType is PandaArrayType)
+        pushAssign(result(inst), PandaArrayRef(array, index, arrayType.elementType))
     }
 
     override fun visitPandaStoreArrayInstInfo(inst: PandaStoreArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index, value) = inst.inputs.map(this::local)
-        require(array.type is ArrayNode)
-        pushAssign(PandaArrayRef(array, index, array.type.elementType), value)
+        val arrayType = array.type
+        require(arrayType is PandaArrayType)
+        pushAssign(PandaArrayRef(array, index, arrayType.elementType), value)
     }
 
     override fun visitPandaCastInstInfo(inst: PandaCastInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaCastExpr(classpath.findType(inst.type), local(inst.inputs.first())))
+        pushAssign(result(inst), PandaCastExpr(project.findType(inst.type), local(inst.inputs.first())))
     }
 
     override fun visitPandaIsInstanceInstInfo(inst: PandaIsInstanceInstIr): InstListBuilder.() -> Unit = {
         pushAssign(result(inst), PandaIsInstanceExpr(
-            classpath.findType(inst.type), 
+            project.findType(inst.type),
             local(inst.inputs.first()),
-            classpath.findClassOrInterface(inst.candidateType))
+            project.findClassOrInterface(inst.candidateType).type)
         )
     }
 
     override fun visitPandaCheckCastInstInfo(inst: PandaCheckCastInstIr): InstListBuilder.() -> Unit = {
         pushAssign(result(inst), PandaCastExpr(
-            classpath.findClassOrInterface(inst.candidateType),
+            project.findClassOrInterface(inst.candidateType).type,
             local(inst.inputs.first())
         )
         )
@@ -340,7 +347,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     override fun visitPandaIfImmInstInfo(inst: PandaIfImmInstIr): InstListBuilder.() -> Unit = {
         val conditionExpr = getConditionType(inst.operator).invoke(
-            classpath.findType(inst.type),
+            project.findType(inst.type),
             local(inst.inputs.first()),
             getConstant(inst.immediate, PandaPrimitives.find(inst.operandsType))
         )
@@ -351,7 +358,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     override fun visitPandaCompareInstInfo(inst: PandaCompareInstIr): InstListBuilder.() -> Unit = {
         val conditionExpr = getConditionType(inst.operator).invoke(
-            classpath.findType(inst.type),
+            project.findType(inst.type),
             local(inst.inputs.component1()),
             local(inst.inputs.component2())
         )
@@ -420,11 +427,11 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaBoundsCheckInstInfo(inst: PandaBoundsCheckInstIr): InstListBuilder.() -> Unit = skip
 
     override fun visitPandaNullPtrInstInfo(inst: PandaNullPtrInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaNullPtr(classpath.findType("std.core.Object")))
+        pushAssign(result(inst), PandaNullPtr(project.findType("std.core.Object")))
     }
 
     override fun visitPandaLoadUndefinedInstInfo(inst: PandaLoadUndefinedInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaUndefined(classpath.findType("std.core.UndefinedType")))
+        pushAssign(result(inst), PandaUndefined(project.findType("std.core.UndefinedType")))
     }
 
     override fun visitPandaRefTypeCheckInstInfo(inst: PandaRefTypeCheckInstIr): InstListBuilder.() -> Unit = skip

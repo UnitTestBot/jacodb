@@ -16,41 +16,41 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.panda.staticvm.classpath.MethodNode
-import org.jacodb.panda.staticvm.classpath.TypeNode
+import org.jacodb.panda.staticvm.classpath.PandaMethod
+import org.jacodb.panda.staticvm.classpath.PandaType
 import org.jacodb.panda.staticvm.ir.*
 
 sealed interface LocalVarNode {
     val name: String
 }
-open class LeafVarNode(override val name: String, val type: TypeNode) : LocalVarNode
+open class LeafVarNode(override val name: String, val type: PandaType) : LocalVarNode
 
 class DependentVarNode(override val name: String, val bounds: List<String>) : LocalVarNode
 
 class LoadArrayNode(override val name: String, val array: String) : LocalVarNode
 
-class ThisNode(type: TypeNode) : LeafVarNode("this", type)
+class ThisNode(name: String, type: PandaType) : LeafVarNode(name, type)
 
-class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<LocalVarNode?> {
-    private val classpath = method.enclosingClass.project
+class OutputVarBuilder(private val method: PandaMethod) : PandaInstIrVisitor<LocalVarNode?> {
+    private val project = method.enclosingClass.project
 
-    private fun default(inst: PandaInstIr) = LeafVarNode(inst.id, classpath.findType(inst.type))
+    private fun default(inst: PandaInstIr) = LeafVarNode(inst.id, project.findType(inst.type))
 
     override fun visitPandaConstantInstInfo(inst: PandaConstantInstIr): LocalVarNode =
-        LeafVarNode(inst.id, classpath.findType(inst.type))
+        LeafVarNode(inst.id, project.findType(inst.type))
 
     override fun visitPandaSafePointInstInfo(inst: PandaSafePointInstIr): LocalVarNode? = null
 
     override fun visitPandaSaveStateInstInfo(inst: PandaSaveStateInstIr): LocalVarNode? = null
 
     override fun visitPandaNewObjectInstInfo(inst: PandaNewObjectInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findClass(inst.objectClass))
+        LeafVarNode(inst.id, project.findClass(inst.objectClass).type)
 
     override fun visitPandaNewArrayInstInfo(inst: PandaNewArrayInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType(inst.arrayType))
+        LeafVarNode(inst.id, project.findType(inst.arrayType))
 
     override fun visitPandaCallStaticInstInfo(inst: PandaCallStaticInstIr): LocalVarNode? {
-        val returnType = requireNotNull(classpath.findMethod(inst.method)).returnType
+        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
@@ -58,14 +58,13 @@ class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<Loca
         DependentVarNode(inst.id, inst.inputs.dropLast(1))
 
     override fun visitPandaZeroCheckInstInfo(inst: PandaZeroCheckInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType(inst.type))
+        LeafVarNode(inst.id, project.findType(inst.type))
 
     override fun visitPandaLoadStringInstInfo(inst: PandaLoadStringInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findClass("std.core.String"))
-    // TODO: refactor
+        LeafVarNode(inst.id, project.stringClass.type)
 
     override fun visitPandaCallVirtualInstInfo(inst: PandaCallVirtualInstIr): LocalVarNode? {
-        val returnType = requireNotNull(classpath.findMethod(inst.method)).returnType
+        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
@@ -80,16 +79,19 @@ class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<Loca
     override fun visitPandaReturnInstInfo(inst: PandaReturnInstIr): LocalVarNode? = null
 
     override fun visitPandaParameterInstInfo(inst: PandaParameterInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, method.parameterTypes[inst.index])
+        if (inst.index == 0 && !method.flags.isStatic)
+            ThisNode(inst.id, method.parameterTypes[inst.index])
+        else
+            LeafVarNode(inst.id, method.parameterTypes[inst.index])
 
     override fun visitPandaLoadStaticInstInfo(inst: PandaLoadStaticInstIr): LocalVarNode? {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = requireNotNull(enclosingClass.findFieldOrNull(inst.field))
         return LeafVarNode(inst.id, field.type)
     }
 
     override fun visitPandaLoadObjectInstInfo(inst: PandaLoadObjectInstIr): LocalVarNode? {
-        val enclosingClass = classpath.findClass(inst.enclosingClass)
+        val enclosingClass = project.findClass(inst.enclosingClass)
         val field = requireNotNull(enclosingClass.findFieldOrNull(inst.field))
         return LeafVarNode(inst.id, field.type)
     }
@@ -106,11 +108,11 @@ class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<Loca
     override fun visitPandaCastInstInfo(inst: PandaCastInstIr): LocalVarNode? = default(inst)
 
     override fun visitPandaIsInstanceInstInfo(inst: PandaIsInstanceInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType("u1"))
+        LeafVarNode(inst.id, project.findType("u1"))
     // TODO: refactor
 
     override fun visitPandaCheckCastInstInfo(inst: PandaCheckCastInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType(inst.candidateType))
+        LeafVarNode(inst.id, project.findType(inst.candidateType))
 
     override fun visitPandaIfImmInstInfo(inst: PandaIfImmInstIr): LocalVarNode? = null
 
@@ -160,11 +162,11 @@ class OutputVarBuilder(private val method: MethodNode) : PandaInstIrVisitor<Loca
     override fun visitPandaBoundsCheckInstInfo(inst: PandaBoundsCheckInstIr): LocalVarNode? = default(inst)
 
     override fun visitPandaNullPtrInstInfo(inst: PandaNullPtrInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType("std.core.Object"))
+        LeafVarNode(inst.id, project.findType("std.core.Object"))
     // TODO: refactor
 
     override fun visitPandaLoadUndefinedInstInfo(inst: PandaLoadUndefinedInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, classpath.findType("std.core.UndefinedType"))
+        LeafVarNode(inst.id, project.findType("std.core.UndefinedType"))
     // TODO: refactor
 
     override fun visitPandaRefTypeCheckInstInfo(inst: PandaRefTypeCheckInstIr): LocalVarNode? =

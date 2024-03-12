@@ -34,7 +34,7 @@ data class PandaProgramIr(
         }
     }
 
-    fun addClassesHierarchyToPandaClasspath(pandaClasspath: PandaClasspath) {
+    fun addClassesHierarchyToPandaClasspath(pandaProject: PandaProject) {
         val classesInfo = classes
             .filterNot { AccessFlags(it.accessFlags).isInterface }
             .associateBy { it.name }
@@ -45,14 +45,14 @@ data class PandaProgramIr(
 
         requireNotNull(graph.inTopsortOrder()) {
             "Found cyclic inheritance"
-        }.reversed().applyFold(pandaClasspath) {
+        }.reversed().applyFold(pandaProject) {
             val superClass = it.superClass?.let { superClassName -> requireNotNull(findClassOrNull(superClassName)) }
             val interfaces = it.interfaces.map { interfaceName -> requireNotNull(findInterfaceOrNull(interfaceName)) }.toSet()
-            addClass(ClassTypeNode(this, it.name, superClass, interfaces, AccessFlags(it.accessFlags)))
+            addClass(PandaClass(this, it.name, superClass, interfaces, AccessFlags(it.accessFlags)))
         }
     }
 
-    fun addInterfacesHierarchyToPandaClasspath(pandaClasspath: PandaClasspath) {
+    fun addInterfacesHierarchyToPandaClasspath(pandaProject: PandaProject) {
         val interfacesInfo = classes
             .filter { AccessFlags(it.accessFlags).isInterface }
             .associateBy { it.name }
@@ -63,41 +63,48 @@ data class PandaProgramIr(
 
         requireNotNull(graph.inTopsortOrder()) {
             "Found cyclic inheritance"
-        }.reversed().applyFold(pandaClasspath) {
+        }.reversed().applyFold(pandaProject) {
             val interfaces = it.interfaces.map { interfaceName -> requireNotNull(findInterfaceOrNull(interfaceName)) }.toSet()
-            addInterface(InterfaceTypeNode(this, it.name, interfaces, AccessFlags(it.accessFlags)))
+            addInterface(PandaInterface(this, it.name, interfaces, AccessFlags(it.accessFlags)))
         }
     }
 
-    fun addFieldsToPandaClasspath(pandaClasspath: PandaClasspath) {
-        classes.applyFold(pandaClasspath) { classInfo ->
+    fun addFieldsToPandaClasspath(pandaProject: PandaProject) {
+        classes.applyFold(pandaProject) { classInfo ->
             val enclosingClass = requireNotNull(findClassOrInterfaceOrNull(classInfo.name))
             classInfo.fields.applyFold(this) { fieldInfo ->
                 val fieldType = requireNotNull(findTypeOrNull(fieldInfo.type))
-                addField(FieldNode(fieldInfo.name, enclosingClass, fieldType, AccessFlags(fieldInfo.accessFlags)))
+                addField(PandaField(fieldInfo.name, enclosingClass, fieldType, AccessFlags(fieldInfo.accessFlags)))
             }
         }
     }
 
-    fun addMethodsToPandaClasspath(pandaClasspath: PandaClasspath) {
-        classes.applyFold(pandaClasspath) { classInfo ->
+    fun addMethodsToPandaClasspath(pandaProject: PandaProject) {
+        classes.applyFold(pandaProject) { classInfo ->
             val enclosingClass = requireNotNull(findClassOrInterfaceOrNull(classInfo.name))
             classInfo.methods.applyFold(this) { methodInfo ->
                 val returnType = findType(methodInfo.returnType)
                 val isStatic = AccessFlags(methodInfo.accessFlags).isStatic
-                val parameterTypes = (if (isStatic) emptyList<TypeNode>() else listOf(enclosingClass)) + methodInfo.parameters.map {
+                val parameterTypes = (if (isStatic) emptyList<PandaType>() else listOf(enclosingClass.type)) + methodInfo.parameters.map {
                     requireNotNull(findTypeOrNull(it))
                 }
-                val methodNode = MethodNode(methodInfo.signature, enclosingClass, returnType, parameterTypes, AccessFlags(methodInfo.accessFlags))
-                addMethod(methodNode)
+                val pandaMethod = PandaMethod(
+                    methodInfo.signature,
+                    methodInfo.name,
+                    enclosingClass,
+                    returnType,
+                    parameterTypes,
+                    AccessFlags(methodInfo.accessFlags)
+                )
+                addMethod(pandaMethod)
             }
         }
     }
 
-    fun addFlowGraphsToPandaClasspath(pandaClasspath: PandaClasspath) {
-        classes.applyFold(pandaClasspath) { classInfo ->
+    fun addFlowGraphsToPandaClasspath(pandaProject: PandaProject) {
+        classes.applyFold(pandaProject) { classInfo ->
             classInfo.methods.applyFold(this) { methodInfo ->
-                val methodNode = requireNotNull(pandaClasspath.findMethod(methodInfo.signature))
+                val methodNode = requireNotNull(pandaProject.findMethod(methodInfo.signature))
                 if (methodInfo.basicBlocks.isNotEmpty())
                     addFlowGraph(methodNode, methodInfo.basicBlocks)
             }

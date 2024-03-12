@@ -20,70 +20,10 @@ import org.jacodb.api.common.*
 import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
-sealed interface TypeNode : CommonType, CommonTypeName {
-    val array: ArrayNode
-}
-
-data class ArrayNode(
-    val dimensions: Int,
-    private val wrappedType: SingleTypeNode
-) : TypeNode {
-    init { require(dimensions > 0) { "Cannot create array with $dimensions dimensions" } }
-
-    override val typeName: String
-        get() = wrappedType.typeName + "[]".repeat(dimensions)
-    override val nullable: Boolean
-        get() = true
-
-    val elementType: TypeNode
-        get() = if (dimensions == 1) wrappedType else ArrayNode(dimensions - 1, wrappedType)
-
-    override val array: ArrayNode
-        get() = ArrayNode(dimensions + 1, wrappedType)
-}
-
-/** any kind of non-array type */
-sealed interface SingleTypeNode : TypeNode {
-    override val array: ArrayNode
-        get() = ArrayNode(1, this)
-}
-
-sealed interface ObjectTypeNode : SingleTypeNode, CommonClass, CommonClassType {
-    /** qualified class/interface name */
-    override val name: String
-
-    override val simpleName: String
-        get() = name
-
-    override val project: PandaClasspath
-
-    val directSuperClass: ClassTypeNode?
-
-    val directSuperInterfaces: Set<InterfaceTypeNode>
-
-    val declaredFields: HashMap<String, FieldNode>
-
-    val declaredMethods: HashMap<String, MethodNode>
-
-    val flags: AccessFlags
-
-    override val typeName: String
-        get() = name
-
-    override val nullable: Boolean?
-        get() = true
-
-    fun findFieldOrNull(name: String): FieldNode? = declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
-    fun findMethodOrNull(name: String): MethodNode? = declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
-
-    fun findField(name: String) = requireNotNull(findFieldOrNull(name))
-    fun findMethod(name: String) = requireNotNull(findMethodOrNull(name))
-}
-
-class FieldNode(
+class PandaField(
     override val name: String,
-    override val enclosingClass: ObjectTypeNode,
-    override val type: TypeNode,
+    override val enclosingClass: PandaClassOrInterface,
+    override val type: PandaType,
     val flags: AccessFlags
 ) : CommonClassField, CommonTypedField {
     override val signature: String?
@@ -92,18 +32,17 @@ class FieldNode(
         get() = this
 }
 
-class MethodNode(
+class PandaMethod(
     val signature: String,
-    override val enclosingClass: ObjectTypeNode,
-    override val returnType: TypeNode,
-    val parameterTypes: List<TypeNode>,
+    override val name: String,
+    override val enclosingClass: PandaClassOrInterface,
+    override val returnType: PandaType,
+    val parameterTypes: List<PandaType>,
     val flags: AccessFlags
-) : CommonMethod<MethodNode, PandaInst> {
-    override val name: String
-        get() = signature
+) : CommonMethod<PandaMethod, PandaInst> {
 
     data class Parameter(
-        override val type: TypeNode,
+        override val type: PandaType,
         override val index: Int,
         override val method: CommonMethod<*, *>
     ) : CommonMethodParameter {
@@ -111,7 +50,7 @@ class MethodNode(
             get() = null
     }
 
-    override val parameters: List<CommonMethodParameter>
+    override val parameters: List<Parameter>
         get() = parameterTypes.mapIndexed { index, typeNode ->
             Parameter(typeNode, index, this)
         }
@@ -119,24 +58,64 @@ class MethodNode(
         enclosingClass.project.flowGraph(this)
 }
 
-class ClassTypeNode(
-    override val project: PandaClasspath,
-    override val name: String,
-    override val directSuperClass: ClassTypeNode?,
-    override val directSuperInterfaces: Set<InterfaceTypeNode>,
-    override val flags: AccessFlags,
-    override val declaredFields: HashMap<String, FieldNode> = hashMapOf(),
-    override val declaredMethods: HashMap<String, MethodNode> = hashMapOf()
-) : ObjectTypeNode
+sealed interface PandaClassOrInterface : CommonClass {
+    /** qualified class/interface name */
+    override val name: String
 
-class InterfaceTypeNode(
-    override val project: PandaClasspath,
+    override val simpleName: String
+        get() = name
+
+    override val project: PandaProject
+
+    val directSuperClass: PandaClass?
+
+    val directSuperInterfaces: Set<PandaInterface>
+
+    val declaredFields: HashMap<String, PandaField>
+
+    val declaredMethods: HashMap<String, PandaMethod>
+
+    val flags: AccessFlags
+
+    fun findFieldOrNull(name: String): PandaField? = declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
+    fun findMethodOrNull(name: String): PandaMethod? = declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
+
+    fun findField(name: String) = requireNotNull(findFieldOrNull(name))
+    fun findMethod(name: String) = requireNotNull(findMethodOrNull(name))
+
+    val fields: List<PandaField>
+        get() = (directSuperClass?.fields ?: emptyList()) + declaredFields.values
+
+    val methods: List<PandaMethod>
+        get() = (directSuperClass?.methods ?: emptyList()) + declaredMethods.values
+
+    val type: PandaObjectType
+}
+
+class PandaClass(
+    override val project: PandaProject,
     override val name: String,
-    override val directSuperInterfaces: Set<InterfaceTypeNode>,
+    override val directSuperClass: PandaClass?,
+    override val directSuperInterfaces: Set<PandaInterface>,
     override val flags: AccessFlags,
-    override val declaredFields: HashMap<String, FieldNode> = hashMapOf(),
-    override val declaredMethods: HashMap<String, MethodNode> = hashMapOf()
-) : ObjectTypeNode {
-    override val directSuperClass: ClassTypeNode?
+    override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+) : PandaClassOrInterface {
+    override val type: PandaClassType
+        get() = PandaClassType(project, this)
+}
+
+class PandaInterface(
+    override val project: PandaProject,
+    override val name: String,
+    override val directSuperInterfaces: Set<PandaInterface>,
+    override val flags: AccessFlags,
+    override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+) : PandaClassOrInterface {
+    override val directSuperClass: PandaClass?
         get() = null
+
+    override val type: PandaInterfaceType
+        get() = PandaInterfaceType(project, this)
 }

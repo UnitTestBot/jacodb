@@ -18,14 +18,14 @@ package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.api.common.cfg.Graph
-import org.jacodb.panda.staticvm.classpath.MethodNode
+import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.utils.SimpleDirectedGraph
 import org.jacodb.panda.staticvm.utils.applyFold
 
 class PandaControlFlowGraph private constructor(
-    val method: MethodNode,
-    val instList: PandaInstList,
+    val method: PandaMethod,
+    private val instList: PandaInstList,
     private val graph: SimpleDirectedGraph<PandaInst>
 ) : ControlFlowGraph<PandaInst>, Graph<PandaInst> by graph {
     companion object {
@@ -44,7 +44,7 @@ class PandaControlFlowGraph private constructor(
             override fun iterator(): Iterator<PandaInst> = emptyList<PandaInst>().iterator()
         }
 
-        fun of(method: MethodNode, blocks: List<PandaBasicBlockIr>): PandaControlFlowGraph {
+        fun of(method: PandaMethod, blocks: List<PandaBasicBlockIr>): PandaControlFlowGraph {
             val instList = InstListBuilder(method, blocks).build()
             val graph = instList.flatMapIndexed { index, inst ->
                 when (inst) {
@@ -60,7 +60,7 @@ class PandaControlFlowGraph private constructor(
 
     override val entries: List<PandaInst> = listOfNotNull(instList.firstOrNull())
 
-    override val exits: List<PandaInst> = setOfNotNull(instList.lastOrNull())
+    override val exits: List<PandaInst> = setOfNotNull(instList.lastOrNull().takeIf { it !is PandaGotoInst })
         .plus(instList.filterIsInstance<PandaTerminatingInst>())
         .toList()
 

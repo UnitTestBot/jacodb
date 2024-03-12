@@ -17,12 +17,12 @@
 package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.cfg.*
-import org.jacodb.panda.staticvm.classpath.MethodNode
+import org.jacodb.panda.staticvm.classpath.PandaMethod
 
 class PandaInstLocation(
-    override val method: MethodNode,
+    override val method: PandaMethod,
     override val index: Int
-) : CommonInstLocation<MethodNode, PandaInst> {
+) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
 
     override fun toString() = "method.$index"
@@ -42,14 +42,14 @@ class PandaInstRef(
     override fun toString() = index.toString()
 }
 
-sealed interface PandaInst : CommonInst<MethodNode, PandaInst> {
+sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
     override val lineNumber: Int
         get() = location.lineNumber
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        TODO("Not yet implemented")
+        return visitor.visitExternalCommonInst(this)
     }
 }
 
@@ -79,11 +79,15 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr
-) : PandaInst, CommonAssignInst<MethodNode, PandaInst> {
+) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(rhv)
 
     override fun toString(): String = "$lhv = $rhv"
+
+    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
+        return visitor.visitCommonAssignInst(this)
+    }
 }
 
 sealed interface PandaBranchingInst : PandaInst {
@@ -95,19 +99,23 @@ class PandaIfInst(
     val condition: PandaConditionExpr,
     val trueBranch: PandaInstRef,
     val falseBranch: PandaInstRef
-) : PandaBranchingInst, CommonIfInst<MethodNode, PandaInst> {
+) : PandaBranchingInst, CommonIfInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
 
     override fun toString() = "if ($condition) goto ${trueBranch.index} else goto ${falseBranch.index}"
+
+    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
+        return visitor.visitCommonIfInst(this)
+    }
 }
 
 class PandaGotoInst(
     override val location: PandaInstLocation,
     val target: PandaInstRef
-) : PandaBranchingInst, CommonGotoInst<MethodNode, PandaInst> {
+) : PandaBranchingInst, CommonGotoInst<PandaMethod, PandaInst> {
     override val successors: List<PandaInstRef>
         get() = listOf(target)
 
@@ -115,6 +123,10 @@ class PandaGotoInst(
         get() = emptyList()
 
     override fun toString() = "goto ${target.index}"
+
+    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
+        return visitor.visitCommonGotoInst(this)
+    }
 }
 
 sealed interface PandaTerminatingInst : PandaInst
@@ -122,9 +134,13 @@ sealed interface PandaTerminatingInst : PandaInst
 class PandaReturnInst(
     override val location: PandaInstLocation,
     override val returnValue: PandaValue?
-) : PandaTerminatingInst, CommonReturnInst<MethodNode, PandaInst> {
+) : PandaTerminatingInst, CommonReturnInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = emptyList()
 
     override fun toString() = "return " + (returnValue ?: "")
+
+    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
+        return visitor.visitCommonReturnInst(this)
+    }
 }

@@ -18,7 +18,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.jupiter.api.Test
 import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
-import org.jacodb.panda.staticvm.classpath.PandaClasspath
+import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import java.io.FileInputStream
 import kotlin.time.ExperimentalTime
@@ -35,7 +35,7 @@ internal class IrDeserializationTest {
     fun deserializationTest() {
         val input = FileInputStream(sampleFilePath)
         val program = json.decodeFromStream<PandaProgramIr>(input)
-        val project = PandaClasspath.fromProgramInfo(program)
+        val project = PandaProject.fromProgramInfo(program)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
@@ -48,7 +48,7 @@ internal class IrDeserializationTest {
             json.decodeFromStream<PandaProgramIr>(input)
         }
         val (project, linkageDuration) = measureTimedValue {
-            PandaClasspath.fromProgramInfo(program)
+            PandaProject.fromProgramInfo(program)
         }
 
         println("deserialization: $deserializationDuration, linkage: $linkageDuration")
@@ -60,7 +60,7 @@ internal class IrDeserializationTest {
     fun pandaClasspathFlowGraphTest() {
         val input = FileInputStream(sampleFilePath)
         val program = json.decodeFromStream<PandaProgramIr>(input)
-        val project = PandaClasspath.fromProgramInfo(program)
+        val project = PandaProject.fromProgramInfo(program)
         val method = project.findMethod("A.greet:i32;std.core.void;")
         val flowGraph = method.flowGraph()
     }
