@@ -27,7 +27,7 @@ class PandaProject : Project {
     private data class TreeEntry<T>(
         val depth: Int,
         val parent: TreeEntry<T>?,
-        val data: T
+        val data: T,
     )
 
     val objectClass = PandaClass(
@@ -45,7 +45,7 @@ class PandaProject : Project {
         emptySet(),
         AccessFlags(1)
     )
-    
+
     private val classesIndex = hashMapOf<String, TreeEntry<PandaClass>>()
     private val classesPool = hashSetOf<PandaClass>()
 
@@ -53,15 +53,15 @@ class PandaProject : Project {
     private val interfacesPool = hashSetOf<PandaInterface>()
 
     private val methodIndex = hashMapOf<String, PandaMethod>()
-    
-    fun addClass(node: PandaClass) : Boolean {
+
+    fun addClass(node: PandaClass): Boolean {
         if (classesIndex.containsKey(node.name))
             return false
-        
+
         require(interfacesPool.containsAll(node.directSuperInterfaces))
         val parentNode = node.directSuperClass?.let { requireNotNull(classesIndex[it.name]) }
             ?: classesIndex[objectClass.name]
-        
+
         classesIndex[node.name] = TreeEntry(parentNode?.depth?.inc() ?: 0, parentNode, node)
         classesPool.add(node)
         return true
@@ -72,18 +72,18 @@ class PandaProject : Project {
         addClass(stringClass)
     }
 
-    fun addInterface(node: PandaInterface) : Boolean {
+    fun addInterface(node: PandaInterface): Boolean {
         require(interfacesPool.containsAll(node.directSuperInterfaces))
         interfacesPool.add(node)
         return interfacesIndex.putIfAbsent(node.name, node) == null
     }
 
-    fun addField(field: PandaField) : Boolean {
+    fun addField(field: PandaField): Boolean {
         require(field.enclosingClass in classesPool)
         return field.enclosingClass.declaredFields.putIfAbsent(field.name, field) == null
     }
 
-    fun addMethod(method: PandaMethod) : Boolean {
+    fun addMethod(method: PandaMethod): Boolean {
         require(method.enclosingClass in classesPool || method.enclosingClass in interfacesPool)
         method.parameterTypes.forEach { requireNotNull(findTypeOrNull(it.typeName)) }
         if (methodIndex.containsKey(method.signature))
@@ -93,14 +93,15 @@ class PandaProject : Project {
         return true
     }
 
-    fun addFlowGraph(method: PandaMethod, basicBlocksInfo: List<PandaBasicBlockIr>) : Boolean {
+    fun addFlowGraph(method: PandaMethod, basicBlocksInfo: List<PandaBasicBlockIr>): Boolean {
         require(method.enclosingClass in classesPool || method.enclosingClass in interfacesPool)
         return flowGraphs.putIfAbsent(method, PandaControlFlowGraph.of(method, basicBlocksInfo)) == null
     }
 
     fun findClassOrNull(name: String): PandaClass? = classesIndex[name]?.data
     fun findInterfaceOrNull(name: String): PandaInterface? = interfacesIndex[name]
-    fun findClassOrInterfaceOrNull(name: String): PandaClassOrInterface? = classesIndex[name]?.data ?: interfacesIndex[name]
+    fun findClassOrInterfaceOrNull(name: String): PandaClassOrInterface? =
+        classesIndex[name]?.data ?: interfacesIndex[name]
 
     fun findMethod(name: String) = requireNotNull(methodIndex[name]) {
         "Not found method $name"
@@ -130,9 +131,10 @@ class PandaProject : Project {
     fun findClass(name: String) = requireNotNull(findClassOrNull(name)) {
         "Not found class $name"
     }
+
     fun findClassOrInterface(name: String) = requireNotNull(findClassOrInterfaceOrNull(name))
     fun getElementType(name: String) = if (name.endsWith("[]")) findType(name.removeSuffix("[]"))
-        else throw IllegalArgumentException("Expected array type")
+    else throw IllegalArgumentException("Expected array type")
 
     override fun close() {
         // TODO: not necessary for now

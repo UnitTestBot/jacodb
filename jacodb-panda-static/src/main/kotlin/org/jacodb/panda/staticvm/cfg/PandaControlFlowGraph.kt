@@ -26,8 +26,9 @@ import org.jacodb.panda.staticvm.utils.applyFold
 class PandaControlFlowGraph private constructor(
     val method: PandaMethod,
     private val instList: PandaInstList,
-    private val graph: SimpleDirectedGraph<PandaInst>
+    private val graph: SimpleDirectedGraph<PandaInst>,
 ) : ControlFlowGraph<PandaInst>, Graph<PandaInst> by graph {
+
     companion object {
         fun empty() = object : ControlFlowGraph<PandaInst> {
             override fun successors(node: PandaInst): Set<PandaInst> = emptySet()

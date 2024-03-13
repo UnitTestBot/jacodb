@@ -21,7 +21,7 @@ import org.jacodb.api.common.cfg.Graph
 data class SimpleDirectedGraph<T>(
     val nodes: MutableSet<T> = mutableSetOf(),
     private val predecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
-    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
+    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
 ) : Graph<T> {
     override fun predecessors(node: T): Set<T> = predecessorsMap.getOrDefault(node, emptySet())
 
@@ -50,6 +50,7 @@ data class SimpleDirectedGraph<T>(
         successorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersectMutable(value) else null }
             .toMap().toMutableMap()
     )
+
     fun weaklyConnectedComponents(): List<SimpleDirectedGraph<T>> = components(nodes) {
         predecessors(it) + successors(it)
     }.map(::induced)
@@ -107,6 +108,7 @@ fun <T> Graph<T>.rpo(): List<T> {
     nodes.forEach { if (it !in visited) dfs(it) }
     return order.reversed()
 }
+
 fun <T> Graph<T>.inTopsortOrder(): List<T>? {
     val visited = hashSetOf<T>()
     val order = mutableListOf<T>()
@@ -133,7 +135,7 @@ fun <T> Graph<T>.inTopsortOrder(): List<T>? {
 
 fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
     val components = components(rpo(), this::predecessors)
-    val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) {nodes ->
+    val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) { nodes ->
         nodes.forEach { put(it, nodes) }
     }
     return OneDirectionGraph(components) { nodes ->
@@ -142,11 +144,12 @@ fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
     }
 }
 
-fun <K, V> Map<K, V?>.removeNulls(): Map<K, V> = entries.filterIsInstance<Map.Entry<K, V>>().associate { (k, v) -> k to v }
+fun <K, V> Map<K, V?>.removeNulls(): Map<K, V> =
+    entries.filterIsInstance<Map.Entry<K, V>>().associate { (k, v) -> k to v }
 
 fun <T, V> Graph<T>.runDP(transition: (T, Map<T, V>) -> V): Map<T, V> {
     val tsOrder = requireNotNull(inTopsortOrder()) { "Cannot run DP because of cycle found" }
-    return tsOrder.reversed().applyFold(hashMapOf()) {v ->
+    return tsOrder.reversed().applyFold(hashMapOf()) { v ->
         put(v, transition.invoke(v, successors(v).associateWith(this::get).removeNulls()))
     }
 }

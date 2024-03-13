@@ -16,7 +16,11 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.common.*
+import org.jacodb.api.common.CommonClass
+import org.jacodb.api.common.CommonClassField
+import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.api.common.CommonTypedField
 import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
@@ -24,9 +28,9 @@ class PandaField(
     override val name: String,
     override val enclosingClass: PandaClassOrInterface,
     override val type: PandaType,
-    val flags: AccessFlags
+    val flags: AccessFlags,
 ) : CommonClassField, CommonTypedField {
-    override val signature: String?
+    override val signature: String
         get() = "${enclosingClass.name}.$name"
     override val field: CommonClassField
         get() = this
@@ -38,13 +42,13 @@ class PandaMethod(
     override val enclosingClass: PandaClassOrInterface,
     override val returnType: PandaType,
     val parameterTypes: List<PandaType>,
-    val flags: AccessFlags
+    val flags: AccessFlags,
 ) : CommonMethod<PandaMethod, PandaInst> {
 
     data class Parameter(
         override val type: PandaType,
         override val index: Int,
-        override val method: CommonMethod<*, *>
+        override val method: CommonMethod<*, *>,
     ) : CommonMethodParameter {
         override val name: String?
             get() = null
@@ -54,6 +58,7 @@ class PandaMethod(
         get() = parameterTypes.mapIndexed { index, typeNode ->
             Parameter(typeNode, index, this)
         }
+
     override fun flowGraph(): ControlFlowGraph<PandaInst> =
         enclosingClass.project.flowGraph(this)
 }
@@ -99,7 +104,7 @@ class PandaClass(
     override val directSuperInterfaces: Set<PandaInterface>,
     override val flags: AccessFlags,
     override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
-    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf(),
 ) : PandaClassOrInterface {
     override val type: PandaClassType
         get() = PandaClassType(project, this)
@@ -111,7 +116,7 @@ class PandaInterface(
     override val directSuperInterfaces: Set<PandaInterface>,
     override val flags: AccessFlags,
     override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
-    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf(),
 ) : PandaClassOrInterface {
     override val directSuperClass: PandaClass?
         get() = null

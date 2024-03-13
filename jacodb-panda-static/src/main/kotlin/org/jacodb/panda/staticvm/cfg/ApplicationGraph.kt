@@ -22,7 +22,7 @@ import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.classpath.PandaProject
 
 class PandaApplicationGraph(
-    override val project: PandaProject
+    override val project: PandaProject,
 ) : ApplicationGraph<PandaMethod, PandaInst> {
     private val callersMap = project.methods
         .flatMap { it.flowGraph().instructions }
@@ -31,20 +31,22 @@ class PandaApplicationGraph(
 
     override fun predecessors(node: PandaInst): Sequence<PandaInst> =
         node.location.method.flowGraph().predecessors(node).asSequence()
+
     override fun successors(node: PandaInst): Sequence<PandaInst> =
         node.location.method.flowGraph().successors(node).asSequence()
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> = when (node) {
         is PandaAssignInst -> when (val expr = node.rhv) {
-            is PandaStaticCallExpr -> sequenceOf(expr.callee)
-            is PandaVirtualCallExpr -> sequenceOf(expr.callee)
+            is PandaStaticCallExpr -> sequenceOf(expr.method)
+            is PandaVirtualCallExpr -> sequenceOf(expr.method)
             else -> emptySequence()
         }
+
         else -> emptySequence()
     }
 
-    override fun callers(method: PandaMethod): Sequence<PandaInst>
-            = callersMap[method]?.asSequence() ?: emptySequence()
+    override fun callers(method: PandaMethod): Sequence<PandaInst> =
+        callersMap[method]?.asSequence() ?: emptySequence()
 
     override fun entryPoints(method: PandaMethod): Sequence<PandaInst> =
         method.flowGraph().entries.asSequence()

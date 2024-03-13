@@ -16,18 +16,73 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.panda.staticvm.classpath.*
-import org.jacodb.panda.staticvm.ir.*
+import org.jacodb.panda.staticvm.classpath.PandaArrayType
+import org.jacodb.panda.staticvm.classpath.PandaMethod
+import org.jacodb.panda.staticvm.classpath.PandaPrimitivePandaType
+import org.jacodb.panda.staticvm.classpath.PandaPrimitives
+import org.jacodb.panda.staticvm.classpath.PandaType
+import org.jacodb.panda.staticvm.ir.PandaAShlInstIr
+import org.jacodb.panda.staticvm.ir.PandaAShrInstIr
+import org.jacodb.panda.staticvm.ir.PandaAddInstIr
+import org.jacodb.panda.staticvm.ir.PandaAndInstIr
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
+import org.jacodb.panda.staticvm.ir.PandaBoundsCheckInstIr
+import org.jacodb.panda.staticvm.ir.PandaCallStaticInstIr
+import org.jacodb.panda.staticvm.ir.PandaCallVirtualInstIr
+import org.jacodb.panda.staticvm.ir.PandaCastInstIr
+import org.jacodb.panda.staticvm.ir.PandaCatchPhiInstIr
+import org.jacodb.panda.staticvm.ir.PandaCheckCastInstIr
+import org.jacodb.panda.staticvm.ir.PandaCmpInstIr
+import org.jacodb.panda.staticvm.ir.PandaCompareInstIr
+import org.jacodb.panda.staticvm.ir.PandaConstantInstIr
+import org.jacodb.panda.staticvm.ir.PandaDivInstIr
+import org.jacodb.panda.staticvm.ir.PandaIfImmInstIr
+import org.jacodb.panda.staticvm.ir.PandaInitClassInstIr
 import org.jacodb.panda.staticvm.ir.PandaInstIr
+import org.jacodb.panda.staticvm.ir.PandaInstIrVisitor
+import org.jacodb.panda.staticvm.ir.PandaIsInstanceInstIr
+import org.jacodb.panda.staticvm.ir.PandaLenArrayInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadAndInitClassInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadArrayInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadClassInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadObjectInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadStaticInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadStringInstIr
+import org.jacodb.panda.staticvm.ir.PandaLoadUndefinedInstIr
+import org.jacodb.panda.staticvm.ir.PandaModInstIr
+import org.jacodb.panda.staticvm.ir.PandaMulInstIr
+import org.jacodb.panda.staticvm.ir.PandaNegInstIr
+import org.jacodb.panda.staticvm.ir.PandaNegativeCheckInstIr
+import org.jacodb.panda.staticvm.ir.PandaNewArrayInstIr
+import org.jacodb.panda.staticvm.ir.PandaNewObjectInstIr
+import org.jacodb.panda.staticvm.ir.PandaNotInstIr
+import org.jacodb.panda.staticvm.ir.PandaNullCheckInstIr
+import org.jacodb.panda.staticvm.ir.PandaNullPtrInstIr
+import org.jacodb.panda.staticvm.ir.PandaOrInstIr
+import org.jacodb.panda.staticvm.ir.PandaParameterInstIr
+import org.jacodb.panda.staticvm.ir.PandaPhiInstIr
+import org.jacodb.panda.staticvm.ir.PandaRefTypeCheckInstIr
+import org.jacodb.panda.staticvm.ir.PandaReturnInstIr
+import org.jacodb.panda.staticvm.ir.PandaReturnVoidInstIr
+import org.jacodb.panda.staticvm.ir.PandaSafePointInstIr
+import org.jacodb.panda.staticvm.ir.PandaSaveStateDeoptimizeInstIr
+import org.jacodb.panda.staticvm.ir.PandaSaveStateInstIr
+import org.jacodb.panda.staticvm.ir.PandaShlInstIr
+import org.jacodb.panda.staticvm.ir.PandaShrInstIr
+import org.jacodb.panda.staticvm.ir.PandaStoreArrayInstIr
+import org.jacodb.panda.staticvm.ir.PandaStoreObjectInstIr
+import org.jacodb.panda.staticvm.ir.PandaStoreStaticInstIr
+import org.jacodb.panda.staticvm.ir.PandaSubInstIr
+import org.jacodb.panda.staticvm.ir.PandaThrowInstIr
+import org.jacodb.panda.staticvm.ir.PandaTryInstIr
+import org.jacodb.panda.staticvm.ir.PandaXorInstIr
+import org.jacodb.panda.staticvm.ir.PandaZeroCheckInstIr
 import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 import org.jacodb.panda.staticvm.utils.SCCs
 import org.jacodb.panda.staticvm.utils.inTopsortOrder
 import org.jacodb.panda.staticvm.utils.runDP
-import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-
 
 sealed interface InstBuilder {
     val build: InstListBuilder.() -> PandaInst
@@ -42,8 +97,8 @@ class BranchingInstBuilder<T : PandaBranchingInst>(override val build: InstListB
 
 private fun buildLocalVariables(
     pandaMethod: PandaMethod,
-    blocks: List<PandaBasicBlockIr>
-) : Map<String, PandaLocalVar> {
+    blocks: List<PandaBasicBlockIr>,
+): Map<String, PandaLocalVar> {
     val project = pandaMethod.enclosingClass.project
 
     val localVarsIndex = hashMapOf<String, PandaLocalVar>()
@@ -54,24 +109,29 @@ private fun buildLocalVariables(
         block.insts.mapNotNull { it.accept(outputVarBuilder) }
     }.associateBy { it.name }
 
-    val graph = OneDirectionGraph(varNodes.values) { node -> when (node) {
-        is LeafVarNode -> emptySet()
-        is DependentVarNode -> node.bounds.map(varNodes::get).also {
-            if (it.contains(null))
-                require(false)
-        }.requireNoNulls().toSet()
-        is LoadArrayNode -> setOf(requireNotNull(varNodes[node.array]))
-    } }
+    val graph = OneDirectionGraph(varNodes.values) { node ->
+        when (node) {
+            is LeafVarNode -> emptySet()
+            is DependentVarNode -> node.bounds.map(varNodes::get).also {
+                if (it.contains(null))
+                    require(false)
+            }.requireNoNulls().toSet()
+
+            is LoadArrayNode -> setOf(requireNotNull(varNodes[node.array]))
+        }
+    }
 
     val sccs = graph.SCCs()
     check(sccs.inTopsortOrder() != null)
 
     graph.SCCs().runDP { vars, inputTypes ->
-        vars.map { lvar -> when (lvar) {
+        vars.map { lvar ->
+            when (lvar) {
                 is LeafVarNode -> lvar.type
                 is DependentVarNode -> requireNotNull(project.commonType(inputTypes.values.flatten())) {
                     "No common type for ${inputTypes.values}"
                 }
+
                 is LoadArrayNode -> {
                     val arrayTypes = inputTypes.values.toList().flatten<PandaType>()
                     require(arrayTypes.all { it is PandaArrayType })
@@ -84,7 +144,8 @@ private fun buildLocalVariables(
                     localVarsIndex[lvar.name] = PandaThis(lvar.name, it)
                 else
                     localVarsIndex[lvar.name] = PandaLocalVarImpl(lvar.name, it)
-            } }
+            }
+        }
     }
 
     return localVarsIndex
@@ -92,11 +153,9 @@ private fun buildLocalVariables(
 
 data class IrInstLocation(val block: Int, val index: Int)
 
-
-
 open class InstListBuilder(
     val method: PandaMethod,
-    val blocks: List<PandaBasicBlockIr>
+    val blocks: List<PandaBasicBlockIr>,
 ) {
     val project = method.enclosingClass.project
 
@@ -115,6 +174,7 @@ open class InstListBuilder(
     fun local(name: String) = requireNotNull(localVars[name]) {
         "Not found local var $name (method=${method.signature})"
     }
+
     fun result(inst: PandaInstIr) = local(inst.id)
 
     val instBuildersList = mutableListOf<InstBuilder>()
@@ -135,9 +195,10 @@ open class InstListBuilder(
         DefaultInstBuilder(PandaReturnInst(location, value))
     }
 
-    internal fun pushIf(conditionExpr: PandaConditionExpr, trueBranch: IrInstLocation, falseBranch: IrInstLocation) = push { location ->
-        BranchingInstBuilder { PandaIfInst(location, conditionExpr, linearRef(trueBranch), linearRef(falseBranch)) }
-    }
+    internal fun pushIf(conditionExpr: PandaConditionExpr, trueBranch: IrInstLocation, falseBranch: IrInstLocation) =
+        push { location ->
+            BranchingInstBuilder { PandaIfInst(location, conditionExpr, linearRef(trueBranch), linearRef(falseBranch)) }
+        }
 
     internal fun pushGoto(target: IrInstLocation) = push { location ->
         BranchingInstBuilder { PandaGotoInst(location, linearRef(target)) }
@@ -213,7 +274,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     private fun pushUnary(
         inst: PandaInstIr,
-        exprConstructor: (PandaType, PandaValue) -> PandaUnaryExpr
+        exprConstructor: (PandaType, PandaValue) -> PandaUnaryExpr,
     ): InstListBuilder.() -> Unit = {
         val value = local(inst.inputs.first())
         pushAssign(result(inst), exprConstructor(project.findType(inst.type), value))
@@ -221,7 +282,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     private fun pushBinary(
         inst: PandaInstIr,
-        exprConstructor: (PandaType, PandaValue, PandaValue) -> PandaBinaryExpr
+        exprConstructor: (PandaType, PandaValue, PandaValue) -> PandaBinaryExpr,
     ): InstListBuilder.() -> Unit = {
         val (lhv, rhv) = inst.inputs.map(this::local)
         pushAssign(result(inst), exprConstructor(project.findType(inst.type), lhv, rhv))
@@ -331,18 +392,21 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     }
 
     override fun visitPandaIsInstanceInstInfo(inst: PandaIsInstanceInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaIsInstanceExpr(
-            project.findType(inst.type),
-            local(inst.inputs.first()),
-            project.findClassOrInterface(inst.candidateType).type)
+        pushAssign(
+            result(inst), PandaIsInstanceExpr(
+                project.findType(inst.type),
+                local(inst.inputs.first()),
+                project.findClassOrInterface(inst.candidateType).type
+            )
         )
     }
 
     override fun visitPandaCheckCastInstInfo(inst: PandaCheckCastInstIr): InstListBuilder.() -> Unit = {
-        pushAssign(result(inst), PandaCastExpr(
-            project.findClassOrInterface(inst.candidateType).type,
-            local(inst.inputs.first())
-        )
+        pushAssign(
+            result(inst), PandaCastExpr(
+                project.findClassOrInterface(inst.candidateType).type,
+                local(inst.inputs.first())
+            )
         )
     }
 
@@ -401,10 +465,10 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaShrInstInfo(inst: PandaShrInstIr): InstListBuilder.() -> Unit =
         pushBinary(inst, ::PandaShrExpr)
 
-    override fun visitPandaAShlInstInfo(inst: org.jacodb.panda.staticvm.ir.PandaAShlInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAShlInstInfo(inst: PandaAShlInstIr): InstListBuilder.() -> Unit =
         pushBinary(inst, ::PandaAshlExpr)
 
-    override fun visitPandaAShrInstInfo(inst: org.jacodb.panda.staticvm.ir.PandaAShrInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAShrInstInfo(inst: PandaAShrInstIr): InstListBuilder.() -> Unit =
         pushBinary(inst, ::PandaAshrExpr)
 
     override fun visitPandaCmpInstInfo(inst: PandaCmpInstIr): InstListBuilder.() -> Unit =
@@ -414,7 +478,8 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     override fun visitPandaNegativeCheckInstInfo(inst: PandaNegativeCheckInstIr): InstListBuilder.() -> Unit = skip
 
-    override fun visitPandaSaveStateDeoptimizeInstInfo(inst: org.jacodb.panda.staticvm.ir.PandaSaveStateDeoptimizeInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaSaveStateDeoptimizeInstInfo(inst: PandaSaveStateDeoptimizeInstIr): InstListBuilder.() -> Unit =
+        skip
 
     override fun visitPandaNegInstInfo(inst: PandaNegInstIr): InstListBuilder.() -> Unit =
         pushUnary(inst, ::PandaNegExpr)

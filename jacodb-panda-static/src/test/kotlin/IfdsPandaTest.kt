@@ -14,25 +14,34 @@
  *  limitations under the License.
  */
 
+import io.mockk.mockk
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
-import org.jacodb.taint.configuration.Result
-import org.jacodb.analysis.util.PandaTraits
+import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.util.PandaStaticTraits
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
-import io.mockk.mockk
-import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.analysis.util.PandaStaticTraits
-import org.jacodb.taint.configuration.*
-import org.junit.jupiter.api.Assertions.assertTrue
 
 private val logger = mu.KotlinLogging.logger {}
 
