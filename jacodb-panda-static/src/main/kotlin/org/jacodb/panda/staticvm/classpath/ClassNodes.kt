@@ -1,0 +1,121 @@
+/*
+ *  Copyright 2022 UnitTestBot contributors (utbot.org)
+ * <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package org.jacodb.panda.staticvm.classpath
+
+import org.jacodb.api.common.*
+import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.panda.staticvm.cfg.PandaInst
+
+class PandaField(
+    override val name: String,
+    override val enclosingClass: PandaClassOrInterface,
+    override val type: PandaType,
+    val flags: AccessFlags
+) : CommonClassField, CommonTypedField {
+    override val signature: String?
+        get() = "${enclosingClass.name}.$name"
+    override val field: CommonClassField
+        get() = this
+}
+
+class PandaMethod(
+    val signature: String,
+    override val name: String,
+    override val enclosingClass: PandaClassOrInterface,
+    override val returnType: PandaType,
+    val parameterTypes: List<PandaType>,
+    val flags: AccessFlags
+) : CommonMethod<PandaMethod, PandaInst> {
+
+    data class Parameter(
+        override val type: PandaType,
+        override val index: Int,
+        override val method: CommonMethod<*, *>
+    ) : CommonMethodParameter {
+        override val name: String?
+            get() = null
+    }
+
+    override val parameters: List<Parameter>
+        get() = parameterTypes.mapIndexed { index, typeNode ->
+            Parameter(typeNode, index, this)
+        }
+    override fun flowGraph(): ControlFlowGraph<PandaInst> =
+        enclosingClass.project.flowGraph(this)
+}
+
+sealed interface PandaClassOrInterface : CommonClass {
+    /** qualified class/interface name */
+    override val name: String
+
+    override val simpleName: String
+        get() = name
+
+    override val project: PandaProject
+
+    val directSuperClass: PandaClass?
+
+    val directSuperInterfaces: Set<PandaInterface>
+
+    val declaredFields: HashMap<String, PandaField>
+
+    val declaredMethods: HashMap<String, PandaMethod>
+
+    val flags: AccessFlags
+
+    fun findFieldOrNull(name: String): PandaField? = declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
+    fun findMethodOrNull(name: String): PandaMethod? = declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
+
+    fun findField(name: String) = requireNotNull(findFieldOrNull(name))
+    fun findMethod(name: String) = requireNotNull(findMethodOrNull(name))
+
+    val fields: List<PandaField>
+        get() = (directSuperClass?.fields ?: emptyList()) + declaredFields.values
+
+    val methods: List<PandaMethod>
+        get() = (directSuperClass?.methods ?: emptyList()) + declaredMethods.values
+
+    val type: PandaObjectType
+}
+
+class PandaClass(
+    override val project: PandaProject,
+    override val name: String,
+    override val directSuperClass: PandaClass?,
+    override val directSuperInterfaces: Set<PandaInterface>,
+    override val flags: AccessFlags,
+    override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+) : PandaClassOrInterface {
+    override val type: PandaClassType
+        get() = PandaClassType(project, this)
+}
+
+class PandaInterface(
+    override val project: PandaProject,
+    override val name: String,
+    override val directSuperInterfaces: Set<PandaInterface>,
+    override val flags: AccessFlags,
+    override val declaredFields: HashMap<String, PandaField> = hashMapOf(),
+    override val declaredMethods: HashMap<String, PandaMethod> = hashMapOf()
+) : PandaClassOrInterface {
+    override val directSuperClass: PandaClass?
+        get() = null
+
+    override val type: PandaInterfaceType
+        get() = PandaInterfaceType(project, this)
+}

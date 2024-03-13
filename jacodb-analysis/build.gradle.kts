@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api(project(":jacodb-api-jvm"))
+    api(project(":jacodb-panda-static"))
     api(project(":jacodb-core"))
     api(project(":jacodb-taint-configuration"))
 
