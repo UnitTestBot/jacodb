@@ -16,46 +16,38 @@
 
 package parser
 
-import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
 
 class IRParserTest {
-    private lateinit var irParser: IRParser
-    private lateinit var pandaProject: PandaProject
-    private lateinit var programIR: IRParser.ProgramIR
-
-    @BeforeEach
-    fun setup() {
-        irParser = loadIR()
-        pandaProject = irParser.getProject()
-        programIR = irParser.getProgramIR()
-    }
-
-    private fun loadIR(fileName: String = "/samples/Program2"): IRParser {
-        val bcParser = javaClass.getResource("$fileName.abc")?.path?.let { FileInputStream(it).readBytes() }
+    private fun loadIR(fileName: String = "TypeMismatch"): IRParser {
+        val bcParser = javaClass.getResource("/samples/$fileName.abc")?.path?.let { FileInputStream(it).readBytes() }
             ?.let { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
             ?.let { ByteCodeParser(it) }
             ?.also { it.parseABC() }
-        val sampleFilePath = javaClass.getResource("$fileName.json")?.path ?: ""
+        val sampleFilePath = javaClass.getResource("/samples/$fileName.json")?.path ?: ""
         return IRParser(sampleFilePath, bcParser!!)
     }
 
     @Test
     fun getProject() {
+        val irParser = loadIR()
+        val pandaProject = irParser.getProject()
         assertNotNull(pandaProject)
     }
 
     @Test
     fun getProgramIR() {
+        val irParser = loadIR()
+        val programIR = irParser.getProgramIR()
         val classes = programIR.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
         logger.info { "Methods name: ${classes.flatMap { it.methods }.joinToString(separator = ", ") { it.name }}" }
@@ -64,18 +56,23 @@ class IRParserTest {
 
     @Test
     fun getPandaMethods() {
+        val irParser = loadIR()
+        val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 val pandaMethod = method.pandaMethod
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
-                logger.info { "Panda methods \'${pandaMethod.name}\' has ${pandaMethod.instructions.size} instructions" }
+                logger.info { "Panda method '${pandaMethod.name}', instructions: ${pandaMethod.instructions}" }
+
             }
         }
     }
 
     @Test
     fun getSetOfProgramOpcodes() {
+        val irParser = loadIR()
+        val programIR = irParser.getProgramIR()
         val opcodes = programIR.classes.asSequence().flatMap { it.methods }
             .flatMap { it.basicBlocks }
             .flatMap { it.insts }
@@ -86,9 +83,35 @@ class IRParserTest {
 
     @Test
     fun printMethodsInstructions() {
+        val irParser = loadIR()
+        val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 println(method)
+            }
+        }
+    }
+
+    @Test
+    fun `test parser on TypeMismatch`() {
+        val irParser = loadIR("TypeMismatch")
+        val programIR = irParser.getProgramIR()
+        programIR.classes.forEach { cls ->
+            cls.methods.forEach { method ->
+                val pandaMethod = method.pandaMethod
+                assertNotNull(pandaMethod.name)
+                assertNotNull(pandaMethod.instructions)
+                when (pandaMethod.name) {
+                    "add" -> {
+                        assertEquals(9, pandaMethod.instructions.size)
+                        assertEquals(4, pandaMethod.blocks.size)
+                    }
+
+                    "main" -> {
+                        assertEquals(3, pandaMethod.instructions.size)
+                        assertEquals(2, pandaMethod.blocks.size)
+                    }
+                }
             }
         }
     }
