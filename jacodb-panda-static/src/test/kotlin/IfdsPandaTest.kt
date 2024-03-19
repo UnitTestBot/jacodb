@@ -58,8 +58,17 @@ class IfdsPandaTest {
     }
 
     @Test
-    fun `test taint analysis on Program2`() {
-        val project = loadProjectForSample("Program2")
+    fun `test taint analysis on program 2`() {
+        `test taint analysis`("Program2")
+    }
+
+    @Test
+    fun `test taint analysis on program 2 with catch`() {
+        `test taint analysis`("testCatch")
+    }
+
+    fun `test taint analysis`(programName: String) {
+        val project = loadProjectForSample(programName)
         val graph = PandaApplicationGraph(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =

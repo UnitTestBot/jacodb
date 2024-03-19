@@ -21,12 +21,13 @@ import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 internal class IrDeserializationTest {
     private val json = PandaProgramIr.json
-    private val sampleFilePath = javaClass.getResource("sample.json")?.path!!
-    // private val stdlibFilePath = javaClass.getResource("stdlib.json")?.path!!
-
+    private val sampleFilePath = javaClass.getResource("sample.ir")?.path!!
+    private val catchFilePath = javaClass.getResource("testCatch.ir")?.path!!
     @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun deserializationTest() {
@@ -36,7 +37,19 @@ internal class IrDeserializationTest {
         val applicationGraph = PandaApplicationGraph(project)
     }
 
-    /*@OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun catchTest() {
+        val input = FileInputStream(catchFilePath)
+        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val project = PandaProject.fromProgramInfo(program)
+        val applicationGraph = PandaApplicationGraph(project)
+    }
+
+    /*
+    private val stdlibFilePath = javaClass.getResource("stdlib.ir")?.path!!
+
+    @OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
     @Test
     fun pandaStdLibTest() {
         val input = FileInputStream(stdlibFilePath)
@@ -50,7 +63,8 @@ internal class IrDeserializationTest {
 
         println("deserialization: $deserializationDuration, linkage: $linkageDuration")
         println("total: ${deserializationDuration + linkageDuration}")
-    }*/
+    }
+    */
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test

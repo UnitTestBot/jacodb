@@ -46,7 +46,8 @@ class PandaControlFlowGraph private constructor(
         }
 
         fun of(method: PandaMethod, blocks: List<PandaBasicBlockIr>): PandaControlFlowGraph {
-            val instList = InstListBuilder(method, blocks).build()
+            val instListBuilder = InstListBuilder(method, blocks)
+            val instList = instListBuilder.instList
             val graph = instList.flatMapIndexed { index, inst ->
                 when (inst) {
                     is PandaBranchingInst -> inst.successors.map { instList[it.index] }
@@ -54,8 +55,8 @@ class PandaControlFlowGraph private constructor(
                     else -> listOfNotNull(instList.getOrNull(index + 1))
                 }.map { inst to it }
             }.applyFold(SimpleDirectedGraph<PandaInst>()) { (from, to) -> withEdge(from, to) }
-
-            return PandaControlFlowGraph(method, instList, graph)
+            instListBuilder.throwEdges.applyFold(graph) { (from, to) -> withEdge(instList[from.index], instList[to.index]) }
+            return PandaControlFlowGraph(method, PandaInstList(instList), graph)
         }
     }
 

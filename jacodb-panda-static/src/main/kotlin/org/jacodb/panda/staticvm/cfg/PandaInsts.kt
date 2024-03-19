@@ -148,3 +148,27 @@ class PandaReturnInst(
         return visitor.visitCommonReturnInst(this)
     }
 }
+
+class PandaThrowInst(
+    override val location: PandaInstLocation,
+    val error: PandaValue,
+    val catchers: List<PandaInstRef>
+) : PandaBranchingInst, PandaTerminatingInst {
+    override val operands: List<PandaExpr>
+        get() = listOf(error)
+
+    override val successors: List<PandaInstRef>
+        get() = catchers
+
+    override fun toString(): String = "throw $error"
+}
+
+class PandaCatchInst(
+    override val location: PandaInstLocation,
+    val throwers: List<PandaInstRef>
+) : PandaInst {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun toString(): String = "catch <- ${throwers.joinToString()}"
+}

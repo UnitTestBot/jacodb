@@ -90,9 +90,13 @@ class PandaArrayAccess(
 
 sealed interface PandaConstant : PandaSimpleValue
 
-data class PandaNullPtr(override val type: PandaType) : PandaConstant
+data class PandaNullPtr(override val type: PandaType) : PandaConstant {
+    override fun toString(): String = "null"
+}
 
-data class PandaUndefined(override val type: PandaType) : PandaConstant
+data class PandaUndefined(override val type: PandaType) : PandaConstant {
+    override fun toString(): String = "undefined"
+}
 
 data class PandaBoolean(
     val value: Boolean,

@@ -159,6 +159,9 @@ data class PandaBasicBlockIr(
     val predecessors: List<Int> = emptyList(),
     val successors: List<Int> = emptyList(),
     val insts: List<PandaInstIr> = emptyList(),
+    val isCatchBegin: Boolean = false,
+    val isTryBegin: Boolean = false,
+    val isTryEnd: Boolean = false
 )
 
 @Serializable
@@ -168,6 +171,7 @@ sealed interface PandaInstIr {
     val users: List<String>
     val opcode: String
     val type: String
+    val catchers: List<Int>
 
     fun <T> accept(visitor: PandaInstIrVisitor<T>): T
 }
