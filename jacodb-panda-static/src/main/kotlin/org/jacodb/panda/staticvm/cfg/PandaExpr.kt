@@ -165,7 +165,7 @@ data class PandaString(
     val value: String,
     override val type: PandaClassType,
 ) : PandaConstant {
-    override fun toString(): String = value
+    override fun toString(): String = "\"$value\""
 }
 
 data class PandaNewExpr(
