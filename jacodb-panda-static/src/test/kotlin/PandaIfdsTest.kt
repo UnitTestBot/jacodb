@@ -45,7 +45,7 @@ import java.io.FileInputStream
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IfdsPandaTest {
+class PandaIfdsTest {
 
     companion object : PandaStaticTraits
 
@@ -59,15 +59,15 @@ class IfdsPandaTest {
 
     @Test
     fun `test taint analysis on program 2`() {
-        `test taint analysis`("Program2")
+        runTaintAnalysis("Program2")
     }
 
     @Test
     fun `test taint analysis on program 2 with catch`() {
-        `test taint analysis`("testCatch")
+        runTaintAnalysis("testCatch")
     }
 
-    fun `test taint analysis`(programName: String) {
+    private fun runTaintAnalysis(programName: String) {
         val project = loadProjectForSample(programName)
         val graph = PandaApplicationGraph(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }

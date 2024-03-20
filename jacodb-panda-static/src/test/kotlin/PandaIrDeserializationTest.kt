@@ -21,13 +21,12 @@ import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
 
-internal class IrDeserializationTest {
+internal class PandaIrDeserializationTest {
     private val json = PandaProgramIr.json
     private val sampleFilePath = javaClass.getResource("sample.ir")?.path!!
     private val catchFilePath = javaClass.getResource("testCatch.ir")?.path!!
+
     @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun deserializationTest() {
