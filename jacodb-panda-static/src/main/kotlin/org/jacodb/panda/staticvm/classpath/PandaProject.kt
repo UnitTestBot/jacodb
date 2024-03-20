@@ -18,7 +18,7 @@ package org.jacodb.panda.staticvm.classpath
 
 import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.ControlFlowGraph
-import org.jacodb.panda.staticvm.cfg.PandaControlFlowGraph
+import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
@@ -95,7 +95,7 @@ class PandaProject : Project {
 
     fun addFlowGraph(method: PandaMethod, basicBlocksInfo: List<PandaBasicBlockIr>): Boolean {
         require(method.enclosingClass in classesPool || method.enclosingClass in interfacesPool)
-        return flowGraphs.putIfAbsent(method, PandaControlFlowGraph.of(method, basicBlocksInfo)) == null
+        return flowGraphs.putIfAbsent(method, PandaGraph.of(method, basicBlocksInfo)) == null
     }
 
     fun findClassOrNull(name: String): PandaClass? = classesIndex[name]?.data
@@ -140,7 +140,7 @@ class PandaProject : Project {
         // TODO: not necessary for now
     }
 
-    private val flowGraphs = hashMapOf<PandaMethod, ControlFlowGraph<PandaInst>>()
+    private val flowGraphs: MutableMap<PandaMethod, PandaGraph> = hashMapOf()
 
     val classes: List<PandaClass>
         get() = classesIndex.values.map { it.data }
@@ -148,7 +148,7 @@ class PandaProject : Project {
     val methods: List<PandaMethod>
         get() = methodIndex.values.toList()
 
-    fun flowGraph(method: PandaMethod) = flowGraphs.getOrPut(method, PandaControlFlowGraph.Companion::empty)
+    fun flowGraph(method: PandaMethod): PandaGraph = flowGraphs.getOrPut(method) { PandaGraph.empty() }
 
     private fun ancestors(node: TreeEntry<PandaClass>): List<PandaClassType> =
         (node.parent?.let { ancestors(it) } ?: emptyList()).plus(node.data.type)

@@ -174,7 +174,7 @@ data class PandaNewExpr(
     override val operands: List<PandaValue>
         get() = emptyList()
 
-    override fun toString(): String = "new $type()"
+    override fun toString(): String = "new ${type.typeName}"
 }
 
 interface PandaUnaryExpr : PandaExpr {

@@ -22,6 +22,7 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonTypedField
 import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
 class PandaField(
@@ -59,7 +60,7 @@ class PandaMethod(
             Parameter(typeNode, index, this)
         }
 
-    override fun flowGraph(): ControlFlowGraph<PandaInst> =
+    override fun flowGraph(): PandaGraph =
         enclosingClass.project.flowGraph(this)
 }
 

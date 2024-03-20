@@ -34,11 +34,16 @@ data class PandaArrayType(
 
     override val typeName: String
         get() = wrappedType.typeName + "[]".repeat(dimensions)
+
     override val nullable: Boolean
         get() = true
 
     val elementType: PandaType
-        get() = if (dimensions == 1) wrappedType else PandaArrayType(dimensions - 1, wrappedType)
+        get() = if (dimensions == 1) {
+            wrappedType
+        } else {
+            PandaArrayType(dimensions - 1, wrappedType)
+        }
 
     override val array: PandaArrayType
         get() = PandaArrayType(dimensions + 1, wrappedType)
