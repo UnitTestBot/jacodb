@@ -395,7 +395,7 @@ data class PandaStaticCallExpr(
     override val args: List<CommonValue>
         get() = operands
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(",")})"
+    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
 }
 
 data class PandaVirtualCallExpr(
@@ -408,14 +408,14 @@ data class PandaVirtualCallExpr(
     override val args: List<CommonValue>
         get() = operands
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(",")})"
+    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
 }
 
 data class PandaPhiExpr(
     override val type: PandaType,
     override val operands: List<PandaValue>,
 ) : PandaExpr {
-    override fun toString(): String = "Phi(${operands.joinToString(",")})"
+    override fun toString(): String = "Phi(${operands.joinToString(", ")})"
 }
 
 data class PandaNewArrayExpr(
