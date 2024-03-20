@@ -102,7 +102,7 @@ fun PandaGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, fil
     }
 
     val outFile = graph.dot2file("svg")
-    val newFile = "${outFile.removeSuffix("out")}svg"
+    val newFile = "${outFile.removeSuffix(".out")}.svg"
     val resultingFile = file?.toPath() ?: File(newFile).toPath()
     Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
