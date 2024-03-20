@@ -31,7 +31,6 @@ import org.jacodb.analysis.ifds.isStatic
 import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
@@ -150,7 +149,6 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                 return setOf(fact, newTaint)
             }
         }
-
 
         if (fact.variable.startsWith(toPath)) {
             // 'to' was (sub-)tainted, but it is now overridden by 'from':
