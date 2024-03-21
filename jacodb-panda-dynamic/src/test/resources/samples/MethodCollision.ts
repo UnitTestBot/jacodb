@@ -4,7 +4,7 @@ function add(a, b) {
     return a + b
 }
 
-class Kek {
+class Foo {
     x: number
 
     isSame(y: number): boolean {
@@ -12,7 +12,7 @@ class Kek {
     }
 }
 
-class Heh {
+class Bar {
     x: number
 
     isSame(y: number): boolean {
@@ -21,8 +21,8 @@ class Heh {
 }
 
 function main() {
-    let a = new Kek()
-    let b = new Heh()
+    let a = new Foo()
+    let b = new Bar()
 
     let c = a.isSame(9) ? b : a;
 
