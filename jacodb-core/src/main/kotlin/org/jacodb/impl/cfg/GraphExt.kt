@@ -21,6 +21,7 @@ import info.leadinglight.jdot.Graph
 import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
+import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
@@ -128,6 +129,7 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: 
             for (catcher in catchers(inst)) {
                 graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
                     it.setLabel("catch ${catcher.throwable.type}")
+                    it.setStyle(Style.Edge.dashed)
                 })
             }
         }
