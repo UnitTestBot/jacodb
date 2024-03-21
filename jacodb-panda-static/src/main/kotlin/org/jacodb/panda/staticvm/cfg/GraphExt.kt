@@ -24,6 +24,7 @@ import info.leadinglight.jdot.Graph
 import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
+import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
 
 fun PandaGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
@@ -96,6 +97,7 @@ fun PandaGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, fil
                 graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
                     // it.setLabel("catch ${catcher.throwable.type}")
                     it.setLabel("catch")
+                    it.setStyle(Style.Edge.dashed)
                 })
             }
         }
