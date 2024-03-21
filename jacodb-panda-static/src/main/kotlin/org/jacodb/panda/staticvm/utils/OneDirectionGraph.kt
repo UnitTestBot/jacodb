@@ -20,15 +20,15 @@ import org.jacodb.api.common.cfg.Graph
 
 class OneDirectionGraph<T>(
     val nodes: Collection<T>,
-    val successorsGetter: (T) -> Set<T>,
+    val successorsGetter: (T) -> Collection<T>,
 ) : Graph<T>, Collection<T> by nodes.toSet() {
-    val successorsMap = hashMapOf<T, Set<T>>()
-
-    override fun successors(node: T): Set<T> = successorsMap.getOrPut(node) { successorsGetter.invoke(node) }
+    override fun successors(node: T): Set<T> = successorsMap.getOrPut(node) { successorsGetter(node).toSet() }
 
     override fun predecessors(node: T) = reversed.successors(node)
 
-    val predecessorsMap: Map<T, Set<T>> by lazy {
+    private val successorsMap = hashMapOf<T, Set<T>>()
+
+    private val predecessorsMap: Map<T, Set<T>> by lazy {
         nodes.applyFold(hashMapOf<T, HashSet<T>>()) {
             successors(it)
                 .also { require(this@OneDirectionGraph.containsAll(it)) { "Cannot reverse non-closed relation" } }

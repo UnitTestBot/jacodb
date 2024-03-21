@@ -23,6 +23,7 @@ import org.jacodb.panda.staticvm.*
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
+import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 import org.jacodb.panda.staticvm.utils.SimpleDirectedGraph
 import org.jacodb.panda.staticvm.utils.applyFold
 
@@ -34,6 +35,7 @@ interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
 class PandaGraph private constructor(
     private val instList: PandaInstList,
     private val graph: SimpleDirectedGraph<PandaInst>,
+    private val throwGraph: OneDirectionGraph<PandaInst>
 ) : PandaBytecodeGraph<PandaInst>, Graph<PandaInst> by graph {
 
     override val entries: List<PandaInst> = listOfNotNull(instList.firstOrNull())
@@ -44,30 +46,31 @@ class PandaGraph private constructor(
 
     override val instructions: List<PandaInst> = instList.instructions
 
-     fun index(inst: PandaInst): Int {
+    fun index(inst: PandaInst): Int {
         if (instructions.contains(inst)) {
             return inst.location.index
         }
         return -1
     }
 
-     fun ref(inst: PandaInst): PandaInstRef = PandaInstRef(index(inst))
-     fun inst(ref: PandaInstRef): PandaInst = instructions[ref.index]
+    fun ref(inst: PandaInst): PandaInstRef = PandaInstRef(index(inst))
+    fun inst(ref: PandaInstRef): PandaInst = instructions[ref.index]
 
-     fun previous(inst: PandaInst): PandaInst = instructions[ref(inst).index - 1]
-     fun next(inst: PandaInst): PandaInst = instructions[ref(inst).index + 1]
+    fun previous(inst: PandaInst): PandaInst = instructions[ref(inst).index - 1]
+    fun next(inst: PandaInst): PandaInst = instructions[ref(inst).index + 1]
 
     override fun iterator(): Iterator<PandaInst> = instList.iterator()
 
     // TODO: throwers and catchers
-    override fun throwers(node: PandaInst): Set<PandaInst> = emptySet()
-    override fun catchers(node: PandaInst): Set<PandaCatchInst> = emptySet()
+    override fun throwers(node: PandaInst): Set<PandaInst> = throwGraph.successors(node)
+    override fun catchers(node: PandaInst): Set<PandaInst> = throwGraph.predecessors(node)
 
     companion object {
         fun empty(): PandaGraph {
             return PandaGraph(
                 PandaInstList(emptyList()),
-                SimpleDirectedGraph(mutableSetOf(), mutableMapOf(), mutableMapOf())
+                SimpleDirectedGraph(mutableSetOf(), mutableMapOf(), mutableMapOf()),
+                OneDirectionGraph(emptySet()) { emptySet() }
             )
         }
 
@@ -81,13 +84,12 @@ class PandaGraph private constructor(
                     else -> listOfNotNull(instList.getOrNull(index + 1))
                 }.map { inst to it }
             }.applyFold(SimpleDirectedGraph<PandaInst>()) { (from, to) -> withEdge(from, to) }
-            instListBuilder.throwEdges.applyFold(graph) { (from, to) ->
-                withEdge(
-                    instList[from.index],
-                    instList[to.index]
-                )
+            val throwGraph = OneDirectionGraph(instList) { thrower ->
+                instListBuilder.throwEdges
+                    .filter { (from, _) -> instList[from.index] == thrower }
+                    .map { instList[it.second.index] }
             }
-            return PandaGraph(PandaInstList(instList), graph)
+            return PandaGraph(PandaInstList(instList), graph, throwGraph)
         }
     }
 }

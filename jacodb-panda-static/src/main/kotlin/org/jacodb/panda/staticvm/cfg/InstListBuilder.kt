@@ -150,8 +150,6 @@ internal fun buildLocalVariables(
 
 data class IrInstLocation(val block: Int, val index: Int)
 
-interface InstGraphBuilder
-
 open class InstListBuilder(
     val method: PandaMethod,
     val blocks: List<PandaBasicBlockIr>,
