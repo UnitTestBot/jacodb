@@ -26,9 +26,7 @@ import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
-
-    private val connector = IrBcConnector(bcParser)
+class IRParser(jsonPath: String) {
 
     @Serializable
     data class ProgramIR(val classes: List<ProgramClass>) {
@@ -39,44 +37,45 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
     @Serializable
     data class ProgramClass(
-        @SerialName("is_interface")
-        val isInterface: Boolean = false,
-        val methods: List<ProgramMethod> = emptyList(),
         val name: String,
-        @SerialName("simple_name")
-        val simpleName: String? = null,
-        @SerialName("super_class")
-        val superClass: String? = null,
+        val properties: List<Properties> = emptyList(),
     ) {
+        @Transient
+        val superClass: String = ""
         init {
-            methods.forEach {
+            properties.forEach {
                 it.setClass(this)
             }
         }
 
         override fun toString(): String {
-            return "Class: $name\nMethods:\n${methods.joinToString("\n")}"
+            return "Class: $name\nMethods:\n${properties.joinToString("\n")}"
+        }
+    }
+
+    @Serializable
+    data class Properties(
+        val method: ProgramMethod,
+        val name: String,
+    ) {
+        fun setClass(c: ProgramClass) {
+            method.setClass(c)
+        }
+
+        override fun toString(): String {
+            return "Property: $name\n$method"
         }
     }
 
     @Serializable
     data class ProgramMethod(
-        @SerialName("basic_blocks")
+        val accessFlags: Int? = null,
         val basicBlocks: List<ProgramBasicBlock> = emptyList(),
-        @SerialName("is_class_initializer")
-        val isClassInitializer: Boolean = false,
-        @SerialName("is_constructor")
-        val isConstructor: Boolean = false,
-        @SerialName("is_native")
-        val isNative: Boolean = false,
-        @SerialName("is_synchronized")
-        val isSynchronized: Boolean = false,
         val name: String,
-        @SerialName("return_type")
+        @SerialName("parameters")
+        val programParameters: List<String> = emptyList(),
         val returnType: String? = null,
         val signature: String,
-        val args: Int = 0,
-        val regs: Int = 0,
     ) {
 
         @Transient
@@ -111,7 +110,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         @Transient
         var currentId = 0
 
-        fun setClass(c: ProgramClass) {
+        fun setClass(c: ProgramClass?) {
             clazz = c
         }
 
@@ -124,7 +123,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         }
 
         override fun toString(): String {
-            return "Method: $name\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
+            return "Method: $name\nClass: ${clazz?.name}\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
         }
     }
 
@@ -151,8 +150,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
         override fun toString(): String {
             return insts.takeIf { it.isNotEmpty() }?.let {
-                "Basic block: $id\nInstructions:\n${it.joinToString("\n")}"
-            } ?: "Basic block: $id\nNo instructions"
+                "Basic block id: $id\nInstructions:\n${it.joinToString("\n")}"
+            } ?: "Basic block id: $id\nNo instructions"
         }
 
         fun setMethod(m: ProgramMethod) {
@@ -165,23 +164,34 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     @Serializable
     data class ProgramInst(
         val id: String,
+        val index: Int? = null,
+        val imms: List<Int> = emptyList(),
         val inputs: List<String> = emptyList(),
-        val opcode: String,
+        val inputBlocks: List<Int> = emptyList(),
+        @SerialName("intrinsic_id")
+        val intrinsicId: String? = null,
+        var opcode: String,
+        val operandsType: String? = null,
+        val operator: String? = null,
+        @SerialName("string_data")
+        val stringData: String? = null,
         val type: String? = null,
         val users: List<String> = emptyList(),
-        val value: String? = null,
+        val value: Int? = null,
         val visit: String? = null,
-        val bc: String? = null,
+        val immediate: Int? = null,
     ) {
 
         private var basicBlock: ProgramBasicBlock? = null
 
-        private fun String.trimId(): Int = this.drop(1).toInt()
-
         private val _id: Int = id.trimId()
 
-        override fun toString(): String {
-            return "\tInst: $id\n\t\tOpcode: $opcode\n\t\tInputs: $inputs\n\t\tOutputs: $users\n\t\tBC: $bc"
+        init {
+            opcode = intrinsicId ?: opcode
+        }
+
+        private fun String.trimId(): Int {
+            return this.filter { it.isDigit() }.toInt()
         }
 
         fun setBasicBlock(bb: ProgramBasicBlock) {
@@ -195,6 +205,10 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         fun inputs(): List<Int> = inputs.map { it.trimId() }
 
         fun outputs(): List<Int> = users.map { it.trimId() }
+
+        override fun toString(): String {
+            return "\tInst: $id\n\t\tOpcode: $opcode\n\t\tInputs: $inputs\n\t\tOutputs: $users\n\t\tValue: $value"
+        }
     }
 
     private val jsonFile: File = File(jsonPath)
@@ -248,8 +262,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
     private fun mapIdToIRInputs(programIR: ProgramIR) {
         programIR.classes.forEach { clazz ->
-            clazz.methods.forEach { method ->
-                method.basicBlocks.forEach { bb ->
+            clazz.properties.forEach { property ->
+                property.method.basicBlocks.forEach { bb ->
                     bb.insts.forEach { inst ->
                         // TODO(to delete?: map IfImm)
                         // TODO(reply): no.
@@ -269,7 +283,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                         */
                         when {
                             else -> inst.outputs().forEach { output ->
-                                method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
+                                property.method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
                             }
                         }
                     }
@@ -279,27 +293,24 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     }
 
     private fun mapMethods(programIR: ProgramIR): List<PandaClass> {
-        val classes = buildList {
-            programIR.classes.forEach { clazz ->
-                val pandaMethods = clazz.methods
-                    .onEach { method ->
-                        method.pandaMethod.blocks = method.idToBB.values.toList()
-                        method.pandaMethod.instructions = method.insts
-                        method.pandaMethod.parameterInfos = method.parameters
-                        method.pandaMethod.className = clazz.name
-                    }.map { it.pandaMethod }
-
-                add(PandaClass(clazz.name, clazz.superClass!!, pandaMethods))
+        return programIR.classes.map { clazz ->
+            val pandaMethods = clazz.properties.map { property ->
+                property.method.also { method ->
+                    val panda = method.pandaMethod
+                    panda.blocks = method.idToBB.values.toList()
+                    panda.instructions = method.insts
+                    panda.parameterInfos = method.parameters
+                    panda.className = clazz.name
+                }.pandaMethod
             }
+            PandaClass(clazz.name, clazz.superClass, pandaMethods)
         }
-
-        return classes
     }
 
     private fun mapInstructions(programIR: ProgramIR) {
         val programInstructions = programIR.classes
-            .flatMap { it.methods }
-            .flatMap { it.basicBlocks }
+            .flatMap { it.properties }
+            .flatMap { it.method.basicBlocks }
             .flatMap { it.insts }
 
         programInstructions.forEach { programInst ->
@@ -420,14 +431,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode.startsWith("Compare") -> {
-                val cmpOp = PandaCmpOp.valueOf(
-                    Regex("Compare (.*) (.*)")
-                        .find(opcode)
-                        ?.groups
-                        ?.get(1)
-                        ?.value
-                        ?: error("No compare op")
-                )
+                val cmpOp = operator?.let(PandaCmpOp::valueOf) ?: error("No operator")
                 val cmp = PandaCmpExpr(cmpOp, inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
@@ -593,7 +597,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
-                val name = connector.getLdName(method.name, bc!!)
+                val name = stringData ?: error("No string data")
                 val out = PandaStringConstant(name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
@@ -601,7 +605,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.ldobjbyname" -> {
-                val name = connector.getLdName(method.name, bc!!)
+                val name = stringData ?: error("No string data")
                 outputs.forEach { output ->
                     addInput(
                         method, id(), output,
@@ -613,7 +617,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.ldglobalvar" -> {
-                val name = connector.getLdName(method.name, bc!!)
+                val name = stringData ?: error("No string data")
                 outputs.forEach { output ->
                     addInput(method, id(), output,
                         PandaInstanceCallValueImpl(
@@ -642,7 +646,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
             }
 
             opcode == "Intrinsic.callthis1" -> {
-                val instCallValue = inputs[0] as PandaInstanceCallValue
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -652,7 +656,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
                             method.getClass().name
                         )
                     },
-                    args = listOf(inputs[1]),
+                    args = inputs.filterNot { it == instCallValue },
                     instance = instCallValue.instance
                 )
                 handleOutputs(outputs, method, callExpr)
@@ -790,23 +794,8 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
     }
 
     private fun mapIfInst(op: ProgramInst, inputs: List<PandaValue>): PandaIfInst {
-        val ifImmMatch = Regex("IfImm (.*) (.*)").find(op.opcode)
-        val ifMatch = Regex("If (.*)").find(op.opcode)
-        val cmpOp = (
-            ifImmMatch?.groups?.get(1)
-                ?: ifMatch?.groups?.get(1)
-                ?: error("No compare operator")
-            ).value.let(PandaCmpOp::valueOf)
-
-        /*val cmpOp = PandaCmpOp.valueOf(
-            Regex("IfImm (.*) (.*)")
-                .find(op.opcode)
-                ?.groups
-                ?.get(1)
-                ?.value
-                ?: error("No IfImm op")
-        )*/
-        val immValue = mapImm(op.inputs.last())
+        val cmpOp = op.operator?.let(PandaCmpOp::valueOf) ?: error("No operator")
+        val immValue = mapImm(op.immediate)
         val condExpr: PandaConditionExpr = when (cmpOp) {
             PandaCmpOp.NE -> PandaNeqExpr(inputs[0], immValue)
             PandaCmpOp.EQ -> PandaEqExpr(inputs[0], immValue)
@@ -836,15 +825,12 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
         )
     }
 
-    private fun mapImm(imm: String): PandaConstant {
-        return when {
-            imm.startsWith("0x") -> PandaNumberConstant(Integer.decode(imm))
-            else -> TODOConstant(imm)
-        }
+    private fun mapImm(imm: Int?): PandaConstant {
+        return imm?.let { PandaNumberConstant(it) } ?: PandaNullConstant
     }
 
     private fun mapConstant(op: ProgramInst): PandaConstant = when (mapType(op.type)) {
-        is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value!!.toString()))
-        else -> TODOConstant(op.value)
+        is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value.toString()))
+        else -> TODOConstant(op.value.toString())
     }
 }

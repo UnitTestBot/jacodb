@@ -23,12 +23,8 @@ import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaTraits
 import org.jacodb.panda.dynamic.api.*
-import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.jacodb.taint.configuration.*
-import java.io.FileInputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -39,15 +35,8 @@ class IfdsPandaTest {
     companion object : PandaTraits
 
     private fun loadProjectForSample(programName: String): PandaProject {
-        val bcFilePath = javaClass.getResource("/samples/${programName}.abc")?.path ?: ""
-        val bytes = FileInputStream(bcFilePath).readBytes()
-        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        val bcParser = ByteCodeParser(buffer)
-
-        bcParser.parseABC()
-
         val sampleFilePath = javaClass.getResource("/samples/${programName}.json")?.path ?: ""
-        val parser = IRParser(sampleFilePath, bcParser)
+        val parser = IRParser(sampleFilePath)
         val project = parser.getProject()
 
         return project

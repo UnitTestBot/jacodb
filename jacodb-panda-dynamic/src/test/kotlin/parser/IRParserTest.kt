@@ -16,25 +16,17 @@
 
 package parser
 
-import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import java.io.FileInputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
 
 class IRParserTest {
-    private fun loadIR(fileName: String = "TypeMismatch"): IRParser {
-        val bcParser = javaClass.getResource("/samples/$fileName.abc")?.path?.let { FileInputStream(it).readBytes() }
-            ?.let { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
-            ?.let { ByteCodeParser(it) }
-            ?.also { it.parseABC() }
+    private fun loadIR(fileName: String = "DataFlowSecurity"): IRParser {
         val sampleFilePath = javaClass.getResource("/samples/$fileName.json")?.path ?: ""
-        return IRParser(sampleFilePath, bcParser!!)
+        return IRParser(sampleFilePath)
     }
 
     @Test
@@ -50,7 +42,13 @@ class IRParserTest {
         val programIR = irParser.getProgramIR()
         val classes = programIR.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
-        logger.info { "Methods name: ${classes.flatMap { it.methods }.joinToString(separator = ", ") { it.name }}" }
+        logger.info {
+            "Methods name: ${
+                classes
+                    .flatMap { it.properties }
+                    .joinToString(separator = ", ") { it.name }
+            }"
+        }
         assertNotNull(programIR)
     }
 
@@ -59,8 +57,8 @@ class IRParserTest {
         val irParser = loadIR()
         val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
-            cls.methods.forEach { method ->
-                val pandaMethod = method.pandaMethod
+            cls.properties.forEach { property ->
+                val pandaMethod = property.method.pandaMethod
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
                 logger.info { "Panda method '${pandaMethod.name}', instructions: ${pandaMethod.instructions}" }
@@ -73,8 +71,9 @@ class IRParserTest {
     fun getSetOfProgramOpcodes() {
         val irParser = loadIR()
         val programIR = irParser.getProgramIR()
-        val opcodes = programIR.classes.asSequence().flatMap { it.methods }
-            .flatMap { it.basicBlocks }
+        val opcodes = programIR.classes.asSequence()
+            .flatMap { it.properties }
+            .flatMap { it.method.basicBlocks }
             .flatMap { it.insts }
             .map { it.opcode }
             .toSortedSet()
@@ -86,8 +85,8 @@ class IRParserTest {
         val irParser = loadIR()
         val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
-            cls.methods.forEach { method ->
-                println(method)
+            cls.properties.forEach { property ->
+                println(property)
             }
         }
     }
@@ -97,8 +96,8 @@ class IRParserTest {
         val irParser = loadIR("TypeMismatch")
         val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
-            cls.methods.forEach { method ->
-                val pandaMethod = method.pandaMethod
+            cls.properties.forEach { property ->
+                val pandaMethod = property.method.pandaMethod
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {

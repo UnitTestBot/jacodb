@@ -76,7 +76,7 @@ class TODOConstant(val value: String?) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString() = value?.let { "\"$it\"" } ?: "null"
+    override fun toString() = value?.let { "TODOConstant($it)" } ?: "null"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTODOConstant(this)
