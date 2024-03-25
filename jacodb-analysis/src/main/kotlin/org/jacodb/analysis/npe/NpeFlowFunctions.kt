@@ -35,7 +35,6 @@ import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
@@ -357,8 +356,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
-        @Suppress("UNCHECKED_CAST")
-        val callee = callExpr.callee as Method
+        val callee = callExpr.callee
 
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted

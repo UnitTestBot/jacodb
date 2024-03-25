@@ -31,7 +31,6 @@ import org.jacodb.analysis.ifds.isStatic
 import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.Project
@@ -151,7 +150,6 @@ class ForwardTaintFlowFunctions<Method, Statement>(
             }
         }
 
-
         if (fact.variable.startsWith(toPath)) {
             // 'to' was (sub-)tainted, but it is now overridden by 'from':
             return emptySet()
@@ -236,8 +234,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
-        @Suppress("UNCHECKED_CAST")
-        val callee = callExpr.callee as Method
+        val callee = callExpr.callee
 
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted

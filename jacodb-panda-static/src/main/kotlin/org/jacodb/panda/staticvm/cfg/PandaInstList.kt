@@ -35,10 +35,7 @@ class PandaInstList(override val instructions: List<PandaInst>) : InstList<Panda
 
     override fun iterator(): Iterator<PandaInst> = instructions.iterator()
 
-    override fun toString(): String = instructions.joinToString(
-        separator = "\n",
-        transform = { "${it.location.index}: $it" }
-    )
+    override fun toString(): String = instructions.joinToString(separator = "\n") { "${it.location.index}: $it" }
 }
 
 data class PandaMutableInstList(override val instructions: MutableList<PandaInst>) : MutableInstList<PandaInst> {

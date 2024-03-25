@@ -21,11 +21,10 @@ import org.jacodb.api.common.cfg.Graph
 data class SimpleDirectedGraph<T>(
     val nodes: MutableSet<T> = mutableSetOf(),
     private val predecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
-    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
+    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
 ) : Graph<T> {
-    override fun predecessors(node: T): Set<T> = predecessorsMap.getOrDefault(node, emptySet())
-
-    override fun successors(node: T): Set<T> = successorsMap.getOrDefault(node, emptySet())
+    override fun predecessors(node: T): Set<T> = predecessorsMap[node].orEmpty()
+    override fun successors(node: T): Set<T> = successorsMap[node].orEmpty()
 
     fun withNode(node: T): SimpleDirectedGraph<T> {
         nodes.add(node)
@@ -35,30 +34,36 @@ data class SimpleDirectedGraph<T>(
     fun withEdge(from: T, to: T): SimpleDirectedGraph<T> {
         nodes.add(from)
         nodes.add(to)
-        predecessorsMap.getOrPut(to, ::mutableSetOf).add(from)
-        successorsMap.getOrPut(from, ::mutableSetOf).add(to)
+        predecessorsMap.getOrPut(to) { hashSetOf() }.add(from)
+        successorsMap.getOrPut(from) { hashSetOf() }.add(to)
         return this
     }
 
-    private fun <K> Collection<K>.intersectMutable(other: Collection<K>) =
-        toSet().intersect(other.toSet()).toMutableSet()
+    fun induced(subset: Set<T>): SimpleDirectedGraph<T> {
+        val newNodes = nodes.toMutableSet().also { it.retainAll(subset) }
+        val newPredecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
+        for ((key, value) in predecessorsMap) {
+            if (key in subset) {
+                newPredecessorsMap[key] = value.toMutableSet().also { it.retainAll(subset) }
+            }
+        }
+        val newSuccessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
+        for ((key, value) in successorsMap) {
+            if (key in subset) {
+                newSuccessorsMap[key] = value.toMutableSet().also { it.retainAll(subset) }
+            }
+        }
+        return SimpleDirectedGraph(newNodes, newPredecessorsMap, newSuccessorsMap)
+    }
 
-    fun induced(subset: Collection<T>) = SimpleDirectedGraph(
-        nodes.intersectMutable(subset),
-        predecessorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersectMutable(value) else null }
-            .toMap().toMutableMap(),
-        successorsMap.mapNotNull { (key, value) -> if (subset.contains(key)) key to subset.intersectMutable(value) else null }
-            .toMap().toMutableMap()
-    )
-    fun weaklyConnectedComponents(): List<SimpleDirectedGraph<T>> = components(nodes) {
-        predecessors(it) + successors(it)
-    }.map(::induced)
+    fun weaklyConnectedComponents(): List<SimpleDirectedGraph<T>> =
+        components(nodes) { predecessors(it) + successors(it) }.map { induced(it) }
 
     companion object {
         fun <T> union(lhs: SimpleDirectedGraph<T>, rhs: SimpleDirectedGraph<T>) = SimpleDirectedGraph(
-            lhs.nodes.plus(rhs.nodes).toMutableSet(),
-            lhs.predecessorsMap.plus(rhs.predecessorsMap).toMutableMap(),
-            lhs.successorsMap.plus(rhs.successorsMap).toMutableMap()
+            (lhs.nodes + rhs.nodes).toMutableSet(),
+            (lhs.predecessorsMap + rhs.predecessorsMap).toMutableMap(),
+            (lhs.successorsMap + rhs.successorsMap).toMutableMap()
         )
     }
 
@@ -107,6 +112,7 @@ fun <T> Graph<T>.rpo(): List<T> {
     nodes.forEach { if (it !in visited) dfs(it) }
     return order.reversed()
 }
+
 fun <T> Graph<T>.inTopsortOrder(): List<T>? {
     val visited = hashSetOf<T>()
     val order = mutableListOf<T>()
@@ -133,7 +139,7 @@ fun <T> Graph<T>.inTopsortOrder(): List<T>? {
 
 fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
     val components = components(rpo(), this::predecessors)
-    val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) {nodes ->
+    val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) { nodes ->
         nodes.forEach { put(it, nodes) }
     }
     return OneDirectionGraph(components) { nodes ->
@@ -142,11 +148,12 @@ fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
     }
 }
 
-fun <K, V> Map<K, V?>.removeNulls(): Map<K, V> = entries.filterIsInstance<Map.Entry<K, V>>().associate { (k, v) -> k to v }
+fun <K, V> Map<K, V?>.removeNulls(): Map<K, V> =
+    entries.filterIsInstance<Map.Entry<K, V>>().associate { (k, v) -> k to v }
 
 fun <T, V> Graph<T>.runDP(transition: (T, Map<T, V>) -> V): Map<T, V> {
     val tsOrder = requireNotNull(inTopsortOrder()) { "Cannot run DP because of cycle found" }
-    return tsOrder.reversed().applyFold(hashMapOf()) {v ->
+    return tsOrder.reversed().applyFold(hashMapOf()) { v ->
         put(v, transition.invoke(v, successors(v).associateWith(this::get).removeNulls()))
     }
 }

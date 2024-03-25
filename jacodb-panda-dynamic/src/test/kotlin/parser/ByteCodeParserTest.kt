@@ -37,7 +37,7 @@ class ByteCodeParserTest {
 
     @Test
     fun `parse bytecode`() {
-        val fileName = "/samples/Program2.abc"
+        val fileName = "/samples/DataFlowSecurity.abc"
         val abc = ByteCodeParser(loadBuffer(fileName)).parseABC()
         logger.info { "Bytecode version: ${abc.header.version.joinToString(".")}" }
         logger.info { "Fount methods names: ${abc.methods.map { it.name }}" }
@@ -47,7 +47,7 @@ class ByteCodeParserTest {
     @Disabled("Requires update")
     @Test
     fun `validate header from Program1`() {
-        val buffer = loadBuffer("/samples/Program1.abc")
+        val buffer = loadBuffer("/samples/TypeMismatch.abc")
         val expectedMagic = listOf(0x50, 0x41, 0x4E, 0x44, 0x41, 0x00, 0x00, 0x00).map { it.toByte() }
         val expectedChecksum = listOf(0x60, 0x7A, 0x49, 0x42).map { it.toByte() }
         val expectedVersion = listOf(0x0B, 0x00, 0x01, 0x00).map { it.toByte() }
@@ -85,7 +85,7 @@ class ByteCodeParserTest {
     @Disabled("Requires update")
     @Test
     fun `validate methods from Program1`() {
-        val buffer = loadBuffer("/samples/Program1.abc")
+        val buffer = loadBuffer("/samples/TypeMismatch.abc")
         val parser = ByteCodeParser(buffer)
         val actualMethods = parser.parseABC().methods
         assertEquals(2, actualMethods.size)

@@ -16,7 +16,9 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.common.*
+import org.jacodb.api.common.CommonClassType
+import org.jacodb.api.common.CommonType
+import org.jacodb.api.common.CommonTypeName
 
 sealed interface PandaType : CommonType, CommonTypeName {
     val array: PandaArrayType
@@ -24,17 +26,24 @@ sealed interface PandaType : CommonType, CommonTypeName {
 
 data class PandaArrayType(
     val dimensions: Int,
-    private val wrappedType: PandaSingleType
+    private val wrappedType: PandaSingleType,
 ) : PandaType {
-    init { require(dimensions > 0) { "Cannot create array with $dimensions dimensions" } }
+    init {
+        require(dimensions > 0) { "Cannot create array with $dimensions dimensions" }
+    }
 
     override val typeName: String
         get() = wrappedType.typeName + "[]".repeat(dimensions)
+
     override val nullable: Boolean
         get() = true
 
     val elementType: PandaType
-        get() = if (dimensions == 1) wrappedType else PandaArrayType(dimensions - 1, wrappedType)
+        get() = if (dimensions == 1) {
+            wrappedType
+        } else {
+            PandaArrayType(dimensions - 1, wrappedType)
+        }
 
     override val array: PandaArrayType
         get() = PandaArrayType(dimensions + 1, wrappedType)
@@ -61,10 +70,10 @@ sealed interface PandaObjectType : PandaSingleType, CommonClassType {
 
 data class PandaClassType(
     override val project: PandaProject,
-    override val pandaClassOrInterface: PandaClass
+    override val pandaClassOrInterface: PandaClass,
 ) : PandaObjectType
 
 data class PandaInterfaceType(
     override val project: PandaProject,
-    override val pandaClassOrInterface: PandaInterface
+    override val pandaClassOrInterface: PandaInterface,
 ) : PandaObjectType

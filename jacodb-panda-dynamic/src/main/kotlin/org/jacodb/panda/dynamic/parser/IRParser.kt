@@ -222,6 +222,7 @@ class IRParser(jsonPath: String, bcParser: ByteCodeParser) {
 
     fun getProgramIR(): ProgramIR {
         val programIR: ProgramIR = Json.decodeFromString(json)
+        mapProgramIR(programIR)
         return programIR
     }
 

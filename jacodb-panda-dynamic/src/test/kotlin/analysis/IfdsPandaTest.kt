@@ -22,31 +22,10 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaTraits
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaClass
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaInstLocation
-import org.jacodb.panda.dynamic.api.PandaInstRef
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaNullConstant
-import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.panda.dynamic.api.PandaReturnInst
+import org.jacodb.panda.dynamic.api.*
 import org.jacodb.panda.dynamic.parser.ByteCodeParser
 import org.jacodb.panda.dynamic.parser.IRParser
-import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.ConstantTrue
-import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.Result
-import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMark
-import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.taint.configuration.TaintMethodSource
-import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.*
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -75,8 +54,8 @@ class IfdsPandaTest {
     }
 
     @Test
-    fun `test taint analysis on Program1`() {
-        val project = loadProjectForSample("Program1")
+    fun `test taint analysis on TypeMismatch`() {
+        val project = loadProjectForSample("TypeMismatch")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -119,8 +98,8 @@ class IfdsPandaTest {
     }
 
     @Test
-    fun `test taint analysis on Program2`() {
-        val project = loadProjectForSample("Program2")
+    fun `test taint analysis on DataFlowSecurity`() {
+        val project = loadProjectForSample("DataFlowSecurity")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =

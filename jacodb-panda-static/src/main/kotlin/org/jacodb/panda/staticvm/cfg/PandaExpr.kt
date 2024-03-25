@@ -17,8 +17,19 @@
 package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.CommonType
-import org.jacodb.api.common.cfg.*
-import org.jacodb.panda.staticvm.classpath.*
+import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonArrayAccess
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonFieldRef
+import org.jacodb.api.common.cfg.CommonInstanceCallExpr
+import org.jacodb.api.common.cfg.CommonThis
+import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.panda.staticvm.classpath.PandaClassType
+import org.jacodb.panda.staticvm.classpath.PandaField
+import org.jacodb.panda.staticvm.classpath.PandaMethod
+import org.jacodb.panda.staticvm.classpath.PandaPrimitivePandaType
+import org.jacodb.panda.staticvm.classpath.PandaType
 
 sealed interface PandaExpr : CommonExpr {
     override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
@@ -35,7 +46,7 @@ interface PandaSimpleValue : PandaValue
 class PandaArgument(
     override val index: Int,
     override val name: String,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaSimpleValue, CommonArgument {
     override fun toString(): String = "$name(${type.typeName})"
 }
@@ -47,21 +58,21 @@ sealed interface PandaLocalVar : PandaSimpleValue {
 
 class PandaLocalVarImpl(
     override val name: String,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaLocalVar {
     override fun toString(): String = name
 }
 
 class PandaThis(
     override val name: String,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaLocalVar, CommonThis {
     override fun toString(): String = name
 }
 
 class PandaFieldAccess(
     override val instance: PandaValue?,
-    override val classField: PandaField
+    override val classField: PandaField,
 ) : PandaValue, CommonFieldRef {
     override fun toString(): String = "${instance ?: classField.enclosingClass}.${classField.name}"
 
@@ -72,19 +83,23 @@ class PandaFieldAccess(
 class PandaArrayAccess(
     override val array: PandaValue,
     override val index: PandaValue,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaValue, CommonArrayAccess {
     override fun toString(): String = "$array[$index]"
 }
 
 sealed interface PandaConstant : PandaSimpleValue
 
-data class PandaNullPtr(override val type: PandaType) : PandaConstant
+data class PandaNullPtr(override val type: PandaType) : PandaConstant {
+    override fun toString(): String = "null"
+}
 
-data class PandaUndefined(override val type: PandaType) : PandaConstant
+data class PandaUndefined(override val type: PandaType) : PandaConstant {
+    override fun toString(): String = "undefined"
+}
 
 data class PandaBoolean(
-    val value: Boolean
+    val value: Boolean,
 ) : PandaConstant {
     override val type: PandaPrimitivePandaType
         get() = PandaPrimitivePandaType.BYTE
@@ -93,68 +108,73 @@ data class PandaBoolean(
 }
 
 data class PandaByte(
-    val value: Byte
+    val value: Byte,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.BYTE
+
     override fun toString(): String = "$value"
 }
 
 data class PandaShort(
-    val value: Short
+    val value: Short,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.SHORT
+
     override fun toString(): String = "$value"
 }
 
 data class PandaInt(
-    val value: Int
+    val value: Int,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.INT
+
     override fun toString(): String = "$value"
 }
 
 data class PandaLong(
-    val value: Long
+    val value: Long,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.LONG
+
     override fun toString(): String = "$value"
 }
 
 data class PandaFloat(
-    val value: Float
+    val value: Float,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.FLOAT
+
     override fun toString(): String = "$value"
 }
 
 data class PandaDouble(
-    val value: Double
+    val value: Double,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaPrimitivePandaType.DOUBLE
+
     override fun toString(): String = "$value"
 }
 
 data class PandaString(
     val value: String,
-    override val type: PandaClassType
+    override val type: PandaClassType,
 ) : PandaConstant {
-    override fun toString(): String = value
+    override fun toString(): String = "\"$value\""
 }
 
-
 data class PandaNewExpr(
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaExpr {
     override val operands: List<PandaValue>
         get() = emptyList()
 
-    override fun toString(): String = "new $type()"
+    override fun toString(): String = "new ${type.typeName}"
 }
 
 interface PandaUnaryExpr : PandaExpr {
@@ -166,28 +186,28 @@ interface PandaUnaryExpr : PandaExpr {
 
 data class PandaNegExpr(
     override val type: PandaType,
-    override val value: PandaValue
+    override val value: PandaValue,
 ) : PandaUnaryExpr {
     override fun toString(): String = "-$value"
 }
 
 data class PandaNotExpr(
     override val type: PandaType,
-    override val value: PandaValue
+    override val value: PandaValue,
 ) : PandaUnaryExpr {
     override fun toString(): String = "!$value"
 }
 
 data class PandaLenArrayExpr(
     override val type: PandaType,
-    override val value: PandaValue
+    override val value: PandaValue,
 ) : PandaUnaryExpr {
     override fun toString(): String = "length($value)"
 }
 
 data class PandaCastExpr(
     override val type: PandaType,
-    override val value: PandaValue
+    override val value: PandaValue,
 ) : PandaUnaryExpr {
     override fun toString(): String = "($type) $value"
 }
@@ -195,7 +215,7 @@ data class PandaCastExpr(
 data class PandaIsInstanceExpr(
     override val type: PandaType,
     override val value: PandaValue,
-    val candidateType: PandaType
+    val candidateType: PandaType,
 ) : PandaUnaryExpr {
     override fun toString(): String = "$value is $candidateType"
 }
@@ -211,7 +231,7 @@ sealed interface PandaBinaryExpr : PandaExpr {
 data class PandaAddExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv + $rhv"
 }
@@ -219,7 +239,7 @@ data class PandaAddExpr(
 data class PandaSubExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv - $rhv"
 }
@@ -227,7 +247,7 @@ data class PandaSubExpr(
 data class PandaMulExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv * $rhv"
 }
@@ -235,7 +255,7 @@ data class PandaMulExpr(
 data class PandaDivExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv / $rhv"
 }
@@ -243,7 +263,7 @@ data class PandaDivExpr(
 data class PandaModExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv % $rhv"
 }
@@ -251,7 +271,7 @@ data class PandaModExpr(
 data class PandaAndExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv & $rhv"
 }
@@ -259,7 +279,7 @@ data class PandaAndExpr(
 data class PandaOrExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv | $rhv"
 }
@@ -267,7 +287,7 @@ data class PandaOrExpr(
 data class PandaXorExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv ^ $rhv"
 }
@@ -275,7 +295,7 @@ data class PandaXorExpr(
 data class PandaShlExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv << $rhv"
 }
@@ -283,7 +303,7 @@ data class PandaShlExpr(
 data class PandaShrExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv >> $rhv"
 }
@@ -291,7 +311,7 @@ data class PandaShrExpr(
 data class PandaAshlExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv a<< $rhv"
 }
@@ -299,7 +319,7 @@ data class PandaAshlExpr(
 data class PandaAshrExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv a>> $rhv"
 }
@@ -307,7 +327,7 @@ data class PandaAshrExpr(
 data class PandaCmpExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaBinaryExpr {
     override fun toString(): String = "$lhv cmp $rhv"
 }
@@ -317,7 +337,7 @@ interface PandaConditionExpr : PandaBinaryExpr
 data class PandaLeExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv <= $rhv"
 }
@@ -325,7 +345,7 @@ data class PandaLeExpr(
 data class PandaLtExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv < $rhv"
 }
@@ -333,7 +353,7 @@ data class PandaLtExpr(
 data class PandaGeExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv >= $rhv"
 }
@@ -341,7 +361,7 @@ data class PandaGeExpr(
 data class PandaGtExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv > $rhv"
 }
@@ -349,7 +369,7 @@ data class PandaGtExpr(
 data class PandaEqExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv == $rhv"
 }
@@ -357,48 +377,50 @@ data class PandaEqExpr(
 data class PandaNeExpr(
     override val type: PandaType,
     override val lhv: PandaValue,
-    override val rhv: PandaValue
+    override val rhv: PandaValue,
 ) : PandaConditionExpr {
     override fun toString(): String = "$lhv != $rhv"
 }
 
 sealed interface PandaCallExpr : PandaExpr, CommonCallExpr {
-    val callee: PandaMethod
+    val method: PandaMethod
 }
 
 data class PandaStaticCallExpr(
-    override val callee: PandaMethod,
-    override val operands: List<PandaValue>
+    override val method: PandaMethod,
+    override val operands: List<PandaValue>,
 ) : PandaCallExpr {
-    override val type: PandaType = callee.returnType
+    override val type: PandaType = method.returnType
 
     override val args: List<CommonValue>
         get() = operands
-    override fun toString(): String = "${callee.signature}(${operands.joinToString(",")})"
+
+    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
 }
 
 data class PandaVirtualCallExpr(
-    override val callee: PandaMethod,
+    override val method: PandaMethod,
     override val instance: PandaValue,
-    override val operands: List<PandaValue>
+    override val operands: List<PandaValue>,
 ) : PandaCallExpr, CommonInstanceCallExpr {
-    override val type: PandaType = callee.returnType
+    override val type: PandaType = method.returnType
 
     override val args: List<CommonValue>
         get() = operands
-    override fun toString(): String = "${callee.signature}(${operands.joinToString(",")})"
+
+    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
 }
 
 data class PandaPhiExpr(
     override val type: PandaType,
-    override val operands: List<PandaValue>
+    override val operands: List<PandaValue>,
 ) : PandaExpr {
-    override fun toString(): String = "Phi(${operands.joinToString(",")})"
+    override fun toString(): String = "Phi(${operands.joinToString(", ")})"
 }
 
 data class PandaNewArrayExpr(
     override val type: PandaType,
-    val length: PandaValue
+    val length: PandaValue,
 ) : PandaExpr {
     override val operands: List<PandaValue>
         get() = listOf(length)

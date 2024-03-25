@@ -18,14 +18,20 @@ package org.jacodb.panda.staticvm.ir
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.staticvm.classpath.*
+import org.jacodb.panda.staticvm.classpath.AccessFlags
+import org.jacodb.panda.staticvm.classpath.PandaClass
+import org.jacodb.panda.staticvm.classpath.PandaField
+import org.jacodb.panda.staticvm.classpath.PandaInterface
+import org.jacodb.panda.staticvm.classpath.PandaMethod
+import org.jacodb.panda.staticvm.classpath.PandaProject
+import org.jacodb.panda.staticvm.classpath.PandaType
 import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 import org.jacodb.panda.staticvm.utils.applyFold
 import org.jacodb.panda.staticvm.utils.inTopsortOrder
 
 @Serializable
 data class PandaProgramIr(
-    val classes: List<PandaClassIr> = emptyList()
+    val classes: List<PandaClassIr> = emptyList(),
 ) {
     companion object {
         val json = Json {
@@ -46,8 +52,12 @@ data class PandaProgramIr(
         requireNotNull(graph.inTopsortOrder()) {
             "Found cyclic inheritance"
         }.reversed().applyFold(pandaProject) {
-            val superClass = it.superClass?.let { superClassName -> requireNotNull(findClassOrNull(superClassName)) }
-            val interfaces = it.interfaces.map { interfaceName -> requireNotNull(findInterfaceOrNull(interfaceName)) }.toSet()
+            val superClass = it.superClass?.let { superClassName ->
+                requireNotNull(findClassOrNull(superClassName))
+            }
+            val interfaces = it.interfaces.mapTo(hashSetOf()) { interfaceName ->
+                requireNotNull(findInterfaceOrNull(interfaceName))
+            }
             addClass(PandaClass(this, it.name, superClass, interfaces, AccessFlags(it.accessFlags)))
         }
     }
@@ -58,13 +68,15 @@ data class PandaProgramIr(
             .associateBy { it.name }
 
         val graph = OneDirectionGraph(interfacesInfo.values) {
-            it.interfaces.mapNotNull(interfacesInfo::get).toSet()
+            it.interfaces.mapNotNullTo(hashSetOf()) { interfacesInfo[it] }
         }
 
         requireNotNull(graph.inTopsortOrder()) {
             "Found cyclic inheritance"
         }.reversed().applyFold(pandaProject) {
-            val interfaces = it.interfaces.map { interfaceName -> requireNotNull(findInterfaceOrNull(interfaceName)) }.toSet()
+            val interfaces = it.interfaces.mapTo(hashSetOf()) { interfaceName ->
+                requireNotNull(findInterfaceOrNull(interfaceName))
+            }
             addInterface(PandaInterface(this, it.name, interfaces, AccessFlags(it.accessFlags)))
         }
     }
@@ -85,9 +97,10 @@ data class PandaProgramIr(
             classInfo.methods.applyFold(this) { methodInfo ->
                 val returnType = findType(methodInfo.returnType)
                 val isStatic = AccessFlags(methodInfo.accessFlags).isStatic
-                val parameterTypes = (if (isStatic) emptyList<PandaType>() else listOf(enclosingClass.type)) + methodInfo.parameters.map {
-                    requireNotNull(findTypeOrNull(it))
-                }
+                val parameterTypes =
+                    (if (isStatic) emptyList<PandaType>() else listOf(enclosingClass.type)) + methodInfo.parameters.map {
+                        requireNotNull(findTypeOrNull(it))
+                    }
                 val pandaMethod = PandaMethod(
                     methodInfo.signature,
                     methodInfo.name,
@@ -120,7 +133,7 @@ data class PandaClassIr(
     val interfaces: List<String> = emptyList(),
     val accessFlags: Int = 1,
     val fields: List<PandaFieldIr> = emptyList(),
-    val methods: List<PandaMethodIr> = emptyList()
+    val methods: List<PandaMethodIr> = emptyList(),
 )
 
 @Serializable
@@ -137,7 +150,7 @@ data class PandaMethodIr(
     val returnType: String,
     val parameters: List<String> = emptyList(),
     val accessFlags: Int,
-    val basicBlocks: List<PandaBasicBlockIr> = emptyList()
+    val basicBlocks: List<PandaBasicBlockIr> = emptyList(),
 )
 
 @Serializable
@@ -145,7 +158,10 @@ data class PandaBasicBlockIr(
     val id: Int,
     val predecessors: List<Int> = emptyList(),
     val successors: List<Int> = emptyList(),
-    val insts: List<PandaInstIr> = emptyList()
+    val insts: List<PandaInstIr> = emptyList(),
+    val isCatchBegin: Boolean = false,
+    val isTryBegin: Boolean = false,
+    val isTryEnd: Boolean = false
 )
 
 @Serializable
@@ -155,6 +171,7 @@ sealed interface PandaInstIr {
     val users: List<String>
     val opcode: String
     val type: String
+    val catchers: List<Int>
 
     fun <T> accept(visitor: PandaInstIrVisitor<T>): T
 }

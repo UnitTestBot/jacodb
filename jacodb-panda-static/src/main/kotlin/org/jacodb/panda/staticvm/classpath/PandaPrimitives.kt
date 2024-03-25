@@ -17,7 +17,7 @@
 package org.jacodb.panda.staticvm.classpath
 
 enum class PandaPrimitivePandaType(
-    override val typeName: String
+    override val typeName: String,
 ) : PandaSingleType {
     VOID("void"),
     BOOL("u1"),

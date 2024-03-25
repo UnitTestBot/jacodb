@@ -16,12 +16,17 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.common.cfg.*
+import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonGotoInst
+import org.jacodb.api.common.cfg.CommonIfInst
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonInstLocation
+import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 
 class PandaInstLocation(
     override val method: PandaMethod,
-    override val index: Int
+    override val index: Int,
 ) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
 
@@ -32,7 +37,7 @@ class PandaInstLocation(
 }
 
 class PandaInstRef(
-    val index: Int
+    val index: Int,
 ) : Comparable<PandaInstRef> {
 
     override fun compareTo(other: PandaInstRef): Int {
@@ -53,10 +58,9 @@ sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
     }
 }
 
-
 // TODO: придумать, как убрать этот костыль (нужно корректно обрабатывать ссылки на пустой basicBlock)
 class PandaDoNothingInst(
-    override val location: PandaInstLocation
+    override val location: PandaInstLocation,
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
@@ -67,7 +71,7 @@ class PandaDoNothingInst(
 class PandaParameterInst(
     override val location: PandaInstLocation,
     val lhv: PandaValue,
-    val index: Int
+    val index: Int,
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
@@ -78,7 +82,7 @@ class PandaParameterInst(
 class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
-    override val rhv: PandaExpr
+    override val rhv: PandaExpr,
 ) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(rhv)
@@ -98,7 +102,7 @@ class PandaIfInst(
     override val location: PandaInstLocation,
     val condition: PandaConditionExpr,
     val trueBranch: PandaInstRef,
-    val falseBranch: PandaInstRef
+    val falseBranch: PandaInstRef,
 ) : PandaBranchingInst, CommonIfInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
@@ -114,7 +118,7 @@ class PandaIfInst(
 
 class PandaGotoInst(
     override val location: PandaInstLocation,
-    val target: PandaInstRef
+    val target: PandaInstRef,
 ) : PandaBranchingInst, CommonGotoInst<PandaMethod, PandaInst> {
     override val successors: List<PandaInstRef>
         get() = listOf(target)
@@ -133,7 +137,7 @@ sealed interface PandaTerminatingInst : PandaInst
 
 class PandaReturnInst(
     override val location: PandaInstLocation,
-    override val returnValue: PandaValue?
+    override val returnValue: PandaValue?,
 ) : PandaTerminatingInst, CommonReturnInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = emptyList()
@@ -143,4 +147,28 @@ class PandaReturnInst(
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonReturnInst(this)
     }
+}
+
+class PandaThrowInst(
+    override val location: PandaInstLocation,
+    val error: PandaValue,
+    val catchers: List<PandaInstRef>
+) : PandaBranchingInst, PandaTerminatingInst {
+    override val operands: List<PandaExpr>
+        get() = listOf(error)
+
+    override val successors: List<PandaInstRef>
+        get() = catchers
+
+    override fun toString(): String = "throw $error"
+}
+
+class PandaCatchInst(
+    override val location: PandaInstLocation,
+    val throwers: List<PandaInstRef>
+) : PandaInst {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun toString(): String = "catch <- ${throwers.joinToString()}"
 }

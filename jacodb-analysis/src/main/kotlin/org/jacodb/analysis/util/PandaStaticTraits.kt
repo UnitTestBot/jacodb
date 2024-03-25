@@ -74,7 +74,7 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     override val CommonCallExpr.callee: PandaMethod
         get() {
             check(this is PandaCallExpr)
-            return callee
+            return method
         }
 
     override fun Project.getArgument(param: CommonMethodParameter): PandaArgument {
