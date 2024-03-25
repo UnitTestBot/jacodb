@@ -344,3 +344,17 @@ class PandaToNumericExpr(
         return visitor.visitPandaToNumericExpr(this)
     }
 }
+
+class PandaCreateEmptyArrayExpr: PandaExpr {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf()
+
+    override fun toString() = "[]"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaCreateEmptyArrayExpr(this)
+    }
+}

@@ -37,6 +37,8 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaTypeofExpr(expr: PandaTypeofExpr): T
     fun visitPandaToNumericExpr(expr: PandaToNumericExpr): T
 
+    fun visitPandaCreateEmptyArrayExpr(expr: PandaCreateEmptyArrayExpr): T
+
     fun visitPandaLocalVar(expr: PandaLocalVar): T
     fun visitPandaThis(expr: PandaThis): T
     fun visitPandaArgument(expr: PandaArgument): T
