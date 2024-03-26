@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonCallExpr
@@ -42,11 +41,12 @@ sealed interface PandaExpr : CommonExpr {
     }
 }
 
-sealed interface PandaValue : PandaExpr, CommonValue {
-    override val operands: List<PandaValue> get() = emptyList()
-}
+sealed interface PandaValue : PandaExpr, CommonValue
 
-interface PandaSimpleValue : PandaValue
+interface PandaSimpleValue : PandaValue {
+    override val operands: List<PandaValue>
+        get() = emptyList()
+}
 
 class PandaArgument(
     override val index: Int,
@@ -75,14 +75,21 @@ class PandaThis(
     override fun toString(): String = name
 }
 
-class PandaFieldAccess(
+class PandaFieldRef(
     override val instance: PandaValue?,
-    override val classField: PandaField,
+    val field: PandaField,
 ) : PandaValue, CommonFieldRef {
-    override fun toString(): String = "${instance ?: classField.enclosingClass}.${classField.name}"
 
     override val type: PandaType
-        get() = classField.type
+        get() = this.field.type
+
+    override val classField: PandaField
+        get() = this.field
+
+    override val operands: List<CommonValue>
+        get() = listOfNotNull(instance)
+
+    override fun toString(): String = "${instance ?: field.enclosingClass.name}.${classField.name}"
 }
 
 class PandaArrayAccess(
@@ -90,6 +97,9 @@ class PandaArrayAccess(
     override val index: PandaValue,
     override val type: PandaType,
 ) : PandaValue, CommonArrayAccess {
+    override val operands: List<CommonValue>
+        get() = listOf(array, index)
+
     override fun toString(): String = "$array[$index]"
 }
 

@@ -21,7 +21,6 @@ import org.jacodb.api.common.CommonClassField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonTypedField
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
@@ -33,6 +32,7 @@ class PandaField(
 ) : CommonClassField, CommonTypedField {
     override val signature: String
         get() = "${enclosingClass.name}.$name"
+
     override val field: CommonClassField
         get() = this
 }
@@ -56,8 +56,8 @@ class PandaMethod(
     }
 
     override val parameters: List<Parameter>
-        get() = parameterTypes.mapIndexed { index, typeNode ->
-            Parameter(typeNode, index, this)
+        get() = parameterTypes.mapIndexed { index, typeName ->
+            Parameter(typeName, index, this)
         }
 
     override fun flowGraph(): PandaGraph =
@@ -65,26 +65,27 @@ class PandaMethod(
 }
 
 sealed interface PandaClassOrInterface : CommonClass {
+    override val project: PandaProject
+
     /** qualified class/interface name */
     override val name: String
 
     override val simpleName: String
         get() = name
 
-    override val project: PandaProject
-
     val directSuperClass: PandaClass?
-
     val directSuperInterfaces: Set<PandaInterface>
 
     val declaredFields: HashMap<String, PandaField>
-
     val declaredMethods: HashMap<String, PandaMethod>
 
     val flags: AccessFlags
 
-    fun findFieldOrNull(name: String): PandaField? = declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
-    fun findMethodOrNull(name: String): PandaMethod? = declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
+    fun findFieldOrNull(name: String): PandaField? =
+        declaredFields[name] ?: directSuperClass?.findFieldOrNull(name)
+
+    fun findMethodOrNull(name: String): PandaMethod? =
+        declaredMethods[name] ?: directSuperClass?.findMethodOrNull(name)
 
     fun findField(name: String) = requireNotNull(findFieldOrNull(name))
     fun findMethod(name: String) = requireNotNull(findMethodOrNull(name))

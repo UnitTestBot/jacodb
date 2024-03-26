@@ -21,6 +21,7 @@ import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
 
 sealed interface PandaType : CommonType, CommonTypeName {
+    // val project: PandaProject
     val array: PandaArrayType
 }
 
@@ -45,6 +46,9 @@ data class PandaArrayType(
             PandaArrayType(dimensions - 1, wrappedType)
         }
 
+    // override val project: PandaProject
+    //     get() = elementType.project
+
     override val array: PandaArrayType
         get() = PandaArrayType(dimensions + 1, wrappedType)
 }
@@ -57,7 +61,6 @@ sealed interface PandaSingleType : PandaType {
 
 sealed interface PandaObjectType : PandaSingleType, CommonClassType {
     val project: PandaProject
-
     val pandaClassOrInterface: PandaClassOrInterface
 
     override val typeName: String
@@ -65,7 +68,6 @@ sealed interface PandaObjectType : PandaSingleType, CommonClassType {
 
     override val nullable: Boolean
         get() = true
-
 }
 
 data class PandaClassType(

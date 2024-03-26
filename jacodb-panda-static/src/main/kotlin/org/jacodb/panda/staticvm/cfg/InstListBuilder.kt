@@ -370,25 +370,25 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaLoadStaticInstIr(inst: PandaLoadStaticInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldAccess(null, field))
+        pushAssign(result(inst), PandaFieldRef(null, field))
     }
 
     override fun visitPandaLoadObjectInstIr(inst: PandaLoadObjectInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(result(inst), PandaFieldAccess(local(inst.inputs.first()), field))
+        pushAssign(result(inst), PandaFieldRef(local(inst.inputs.first()), field))
     }
 
     override fun visitPandaStoreStaticInstIr(inst: PandaStoreStaticInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldAccess(null, field), local(inst.inputs[1]))
+        pushAssign(PandaFieldRef(null, field), local(inst.inputs[1]))
     }
 
     override fun visitPandaStoreObjectInstIr(inst: PandaStoreObjectInstIr): InstListBuilder.() -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
-        pushAssign(PandaFieldAccess(local(inst.inputs[0]), field), local(inst.inputs[1]))
+        pushAssign(PandaFieldRef(local(inst.inputs[0]), field), local(inst.inputs[1]))
     }
 
     override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): InstListBuilder.() -> Unit = {

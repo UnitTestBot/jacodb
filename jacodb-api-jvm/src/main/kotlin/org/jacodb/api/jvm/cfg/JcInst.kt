@@ -907,11 +907,11 @@ data class JcFieldRef(
     override val type: JcType
         get() = this.field.type
 
-    override val operands: List<JcValue>
-        get() = instance?.let { listOf(it) }.orEmpty()
-
     override val classField: CommonClassField
         get() = this.field.field
+
+    override val operands: List<JcValue>
+        get() = listOfNotNull(instance)
 
     override fun toString(): String = "${instance ?: field.enclosingType.typeName}.${field.name}"
 
