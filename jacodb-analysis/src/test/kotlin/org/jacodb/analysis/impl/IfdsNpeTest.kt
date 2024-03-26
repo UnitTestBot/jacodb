@@ -16,11 +16,17 @@
 
 package org.jacodb.analysis.impl
 
+import org.jacodb.actors.impl.systemOf
+import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Vertex
+import org.jacodb.ifds.messages.NewEdge
+import org.jacodb.ifds.messages.ObtainResults
+import org.jacodb.ifds.taint.TaintIfdsContext
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.ifds.SingletonUnitResolver
-import org.jacodb.analysis.npe.NpeManager
-import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
+import org.jacodb.analysis.npe.NpeAnalyzer
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
@@ -36,9 +42,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
+import java.util.StringTokenizer
 import java.util.stream.Stream
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -196,10 +201,29 @@ class IfdsNpeTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability> {
-        val unitResolver = SingletonUnitResolver
-        val manager = NpeManager(graph, unitResolver)
-        return manager.analyze(listOf(method), timeout = 30.seconds)
+    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+        val npeAnalyzer = NpeAnalyzer(graph)
+        val ifdsContext = TaintIfdsContext(
+            cp,
+            graph,
+            npeAnalyzer,
+            defaultBannedPackagePrefixes
+        )
+
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        for (fact in npeAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+            for (entryPoint in graph.entryPoints(method)) {
+                val vertex = Vertex(entryPoint, fact)
+                val message = NewEdge(TaintIfdsContext.Runner1, Edge(vertex, vertex), Edge(vertex, vertex))
+                system.send(message)
+            }
+        }
+
+        system.awaitTermination()
+        val results = system.ack { ObtainResults(it) }
+        results.map { it as TaintVulnerability }
     }
 
     @ParameterizedTest

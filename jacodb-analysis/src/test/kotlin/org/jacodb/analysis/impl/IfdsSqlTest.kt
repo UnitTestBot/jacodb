@@ -16,20 +16,34 @@
 
 package org.jacodb.analysis.impl
 
+import org.jacodb.actors.impl.systemOf
+import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Vertex
+import org.jacodb.ifds.messages.NewEdge
+import org.jacodb.ifds.messages.ObtainResults
+import org.jacodb.ifds.taint.TaintIfdsContext
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.ClassUnitResolver
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.toSarif
+import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.analysis.SqlInjectionExamples
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -70,6 +84,32 @@ class IfdsSqlTest : BaseAnalysisTest() {
         assertTrue(trace.isNotEmpty())
     }
 
+    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+        val taintAnalyzer = org.jacodb.analysis.taint.TaintAnalyzer(graph)
+        val ifdsContext = TaintIfdsContext(
+            cp,
+            graph,
+            taintAnalyzer,
+            defaultBannedPackagePrefixes
+        )
+
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        for (fact in taintAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+            for (entryPoint in graph.entryPoints(method)) {
+                val vertex = Vertex(entryPoint, fact)
+                val message = NewEdge(TaintIfdsContext.Runner1, Edge(vertex, vertex), Edge(vertex, vertex))
+                system.send(message)
+            }
+        }
+
+        system.awaitTermination()
+        val results = system.ack { ObtainResults(it) }
+        results.map { it as TaintVulnerability }
+    }
+
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet89")
     fun `test on Juliet's CWE 89`(className: String) {
@@ -80,7 +120,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         }
     }
 
-    @Test
+    @RepeatedTest(1000)
     fun `test on specific Juliet instance`() {
         val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__connect_tcp_execute_01"
         testSingleJulietClass(className) { method ->

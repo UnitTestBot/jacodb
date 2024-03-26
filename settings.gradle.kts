@@ -3,6 +3,7 @@ rootProject.name = "jacodb"
 plugins {
     `gradle-enterprise`
     id("org.danilopianini.gradle-pre-commit-git-hooks") version "1.1.11"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
 }
 
 gradleEnterprise {
@@ -27,3 +28,5 @@ include("jacodb-benchmarks")
 include("jacodb-cli")
 include("jacodb-approximations")
 include("jacodb-taint-configuration")
+include("jacodb-ifds:actors")
+include("jacodb-ifds:ifds")
