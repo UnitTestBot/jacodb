@@ -27,6 +27,10 @@ sealed interface PandaType : CommonType {
         get() = false
 }
 
+class PandaNamedType(
+    override val typeName: String,
+) : PandaType
+
 object PandaAnyType : PandaType {
     override val typeName: String
         get() = "any"
@@ -43,6 +47,15 @@ object PandaUndefinedType : PandaType {
 }
 
 interface PandaRefType : PandaType, CommonRefType
+
+object PandaObjectType : PandaRefType {
+    override val typeName: String
+        get() = "object"
+
+    override fun toString(): String {
+        return "[object Object]"
+    }
+}
 
 interface PandaArrayType : PandaRefType, CommonArrayType {
     override val elementType: PandaType

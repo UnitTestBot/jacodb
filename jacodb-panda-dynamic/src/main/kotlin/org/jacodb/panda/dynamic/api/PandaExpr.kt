@@ -21,7 +21,11 @@ import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 
 interface PandaExpr : CommonExpr, Mappable {
-    override val type: PandaType
+    val type: PandaType
+
+    override val typeName: String
+        get() = type.typeName
+
     override val operands: List<PandaValue>
 
     fun <T> accept(visitor: PandaExprVisitor<T>): T
@@ -78,7 +82,10 @@ interface PandaInstanceCallExpr : PandaCallExpr, CommonInstanceCallExpr {
         get() = listOf(instance) + args
 }
 
-interface PandaConditionExpr : PandaBinaryExpr
+interface PandaConditionExpr : PandaBinaryExpr {
+    override val type: PandaType
+        get() = PandaBoolType
+}
 
 enum class PandaCmpOp {
     EQ, NE, LT, LE, GT, GE
@@ -110,7 +117,7 @@ class PandaCastExpr(
     override val operands: List<PandaValue>
         get() = listOf(operand)
 
-    override fun toString() = "($type) $operands"
+    override fun toString() = "($type) $operand"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCastExpr(this)
@@ -121,9 +128,6 @@ class PandaNeqExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -138,9 +142,6 @@ class PandaEqExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -155,9 +156,6 @@ class PandaLtExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -172,9 +170,6 @@ class PandaLeExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -189,9 +184,6 @@ class PandaGtExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -206,9 +198,6 @@ class PandaGeExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -223,9 +212,6 @@ class PandaStrictEqExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
 ) : PandaConditionExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
@@ -237,33 +223,19 @@ class PandaStrictEqExpr(
 }
 
 class PandaNewExpr(
-    val clazz: PandaValue,
+    override val typeName: String,
     val params: List<PandaValue>,
 ) : PandaExpr {
     override val type: PandaType
         get() = PandaAnyType
 
     override val operands: List<PandaValue>
-        get() = listOf(clazz, *params.toTypedArray())
+        get() = params
 
-    override fun toString() = "new $clazz(${params.joinToString(separator = ", ")})"
+    override fun toString(): String = "new ${typeName}(${params.joinToString(separator = ", ")})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNewExpr(this)
-    }
-}
-
-class PandaThrowInst(
-    override val location: PandaInstLocation,
-    val throwable: PandaValue,
-) : PandaTerminatingInst {
-    override val operands: List<PandaExpr>
-        get() = listOf(throwable)
-
-    override fun toString(): String = "throw $throwable"
-
-    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        return visitor.visitPandaThrowInst(this)
     }
 }
 
@@ -322,7 +294,7 @@ class PandaTypeofExpr(
     override val operands: List<PandaValue>
         get() = listOf(value)
 
-    override fun toString() = "typeof $value"
+    override fun toString(): String = "typeof $value"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTypeofExpr(this)
@@ -338,21 +310,22 @@ class PandaToNumericExpr(
     override val operands: List<PandaValue>
         get() = listOf(value)
 
-    override fun toString() = "typeof $value"
+    // TODO: fix
+    override fun toString(): String = "typeof $value"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaToNumericExpr(this)
     }
 }
 
-class PandaCreateEmptyArrayExpr: PandaExpr {
+class PandaCreateEmptyArrayExpr : PandaExpr {
     override val type: PandaType
         get() = PandaAnyType
 
     override val operands: List<PandaValue>
         get() = listOf()
 
-    override fun toString() = "[]"
+    override fun toString(): String = "[]"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCreateEmptyArrayExpr(this)

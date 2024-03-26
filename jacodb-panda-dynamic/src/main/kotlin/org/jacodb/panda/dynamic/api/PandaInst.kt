@@ -128,6 +128,20 @@ class PandaReturnInst(
     }
 }
 
+class PandaThrowInst(
+    override val location: PandaInstLocation,
+    val throwable: PandaValue,
+) : PandaTerminatingInst {
+    override val operands: List<PandaExpr>
+        get() = listOf(throwable)
+
+    override fun toString(): String = "throw $throwable"
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaThrowInst(this)
+    }
+}
+
 class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,

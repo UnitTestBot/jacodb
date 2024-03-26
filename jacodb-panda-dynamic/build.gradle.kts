@@ -9,6 +9,7 @@ dependencies {
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_serialization_json)
+    implementation(Libs.jdot)
 
     testImplementation(kotlin("test"))
     testImplementation(project(":jacodb-analysis"))

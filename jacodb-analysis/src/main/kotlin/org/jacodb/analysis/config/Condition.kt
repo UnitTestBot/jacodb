@@ -24,11 +24,11 @@ import org.jacodb.analysis.util.removeTrailingElementAccessors
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.cfg.JcBool
 import org.jacodb.api.jvm.cfg.JcConstant
 import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcStringConstant
+import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
@@ -153,9 +153,12 @@ open class BasicConditionEvaluator(
 
     override fun visit(condition: TypeMatches): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            return when (val valueType = value.type) {
-                is JcType -> valueType.isAssignable(condition.type)
-                else -> error("Cannot evaluate $condition for $valueType")
+            return when (value) {
+                is JcValue -> {
+                    value.type.isAssignable(condition.type)
+                }
+
+                else -> error("Cannot evaluate $condition for $value")
             }
         }
         return false

@@ -21,7 +21,53 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.Mappable
+import org.jacodb.panda.dynamic.api.PandaAddExpr
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaArgument
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaClass
+import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
+import org.jacodb.panda.dynamic.api.PandaCmpExpr
+import org.jacodb.panda.dynamic.api.PandaCmpOp
+import org.jacodb.panda.dynamic.api.PandaConditionExpr
+import org.jacodb.panda.dynamic.api.PandaConstant
+import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
+import org.jacodb.panda.dynamic.api.PandaEqExpr
+import org.jacodb.panda.dynamic.api.PandaGeExpr
+import org.jacodb.panda.dynamic.api.PandaGtExpr
+import org.jacodb.panda.dynamic.api.PandaIfInst
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaInstLocation
+import org.jacodb.panda.dynamic.api.PandaInstRef
+import org.jacodb.panda.dynamic.api.PandaInstanceCallValue
+import org.jacodb.panda.dynamic.api.PandaInstanceCallValueImpl
+import org.jacodb.panda.dynamic.api.PandaLeExpr
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaLocalVar
+import org.jacodb.panda.dynamic.api.PandaLtExpr
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaNeqExpr
+import org.jacodb.panda.dynamic.api.PandaNewExpr
+import org.jacodb.panda.dynamic.api.PandaNullConstant
+import org.jacodb.panda.dynamic.api.PandaNumberConstant
+import org.jacodb.panda.dynamic.api.PandaNumberType
+import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaProject
+import org.jacodb.panda.dynamic.api.PandaReturnInst
+import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
+import org.jacodb.panda.dynamic.api.PandaStringConstant
+import org.jacodb.panda.dynamic.api.PandaThis
+import org.jacodb.panda.dynamic.api.PandaThrowInst
+import org.jacodb.panda.dynamic.api.PandaToNumericExpr
+import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaTypeofExpr
+import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
+import org.jacodb.panda.dynamic.api.TODOConstant
+import org.jacodb.panda.dynamic.api.TODOExpr
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -42,6 +88,7 @@ class IRParser(jsonPath: String) {
     ) {
         @Transient
         val superClass: String = ""
+
         init {
             properties.forEach {
                 it.setClass(this)
@@ -229,7 +276,7 @@ class IRParser(jsonPath: String) {
             else -> PandaAnyType
         }
 
-        inline fun <reified T: PandaValue> List<PandaValue>.find(): List<T> {
+        inline fun <reified T : PandaValue> List<PandaValue>.find(): List<T> {
             return this.filterIsInstance<T>()
         }
     }
@@ -446,6 +493,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "LoadString" -> {
+                // TODO: get string data from somewhere
                 val sc = PandaStringConstant("")
                 outputs.forEach { output ->
                     addInput(method, id(), output, sc)
@@ -459,7 +507,8 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.newobjrange" -> {
-                val newExpr = PandaNewExpr(inputs[0], inputs.drop(1))
+                val stringData = inputs[0] as PandaStringConstant
+                val newExpr = PandaNewExpr(stringData.value, inputs.drop(1))
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, newExpr)
                 outputs.forEach { output ->
@@ -619,7 +668,8 @@ class IRParser(jsonPath: String) {
             opcode == "Intrinsic.ldglobalvar" -> {
                 val name = stringData ?: error("No string data")
                 outputs.forEach { output ->
-                    addInput(method, id(), output,
+                    addInput(
+                        method, id(), output,
                         PandaInstanceCallValueImpl(
                             PandaThis(PandaClassTypeImpl(method.getClass().name)),
                             PandaStringConstant(name)
@@ -722,7 +772,7 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.callarg1" -> {
                 val instCallValue = inputs.find<PandaInstanceCallValue>().first()
-                val args = inputs.filterNot {it == instCallValue}
+                val args = inputs.filterNot { it == instCallValue }
                 val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
@@ -747,7 +797,7 @@ class IRParser(jsonPath: String) {
     private fun ProgramInst.handleOutputs(
         outputs: List<Int>,
         method: ProgramMethod,
-        callExpr: PandaVirtualCallExpr
+        callExpr: PandaVirtualCallExpr,
     ) {
         if (outputs.isEmpty()) {
             method.insts.add(PandaCallInst(locationFromOp(this), callExpr))

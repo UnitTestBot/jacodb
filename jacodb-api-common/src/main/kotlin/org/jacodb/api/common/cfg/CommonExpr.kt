@@ -16,10 +16,8 @@
 
 package org.jacodb.api.common.cfg
 
-import org.jacodb.api.common.CommonType
-
 interface CommonExpr {
-    val type: CommonType
+    val typeName: String
     val operands: List<CommonValue>
 
     interface Visitor<out T> : CommonValue.Visitor<T> {

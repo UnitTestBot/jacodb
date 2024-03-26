@@ -16,8 +16,18 @@
 
 package org.jacodb.panda.dynamic.api
 
+import info.leadinglight.jdot.Edge
+import info.leadinglight.jdot.Graph
+import info.leadinglight.jdot.Node
+import info.leadinglight.jdot.enums.Color
+import info.leadinglight.jdot.enums.Shape
+import info.leadinglight.jdot.enums.Style
+import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.ControlFlowGraph
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
     fun throwers(node: @UnsafeVariance Statement): Set<Statement>
@@ -159,4 +169,87 @@ class PandaApplicationGraphImpl(
     override fun methodOf(node: PandaInst): PandaMethod {
         return node.location.method
     }
+}
+
+fun PandaGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
+    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))
+}
+
+fun PandaGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: File? = null): Path {
+    Graph.setDefaultCmd(dotCmd)
+
+    val graph = Graph("pandaGraph")
+
+    val nodes = mutableMapOf<PandaInst, Node>()
+    for ((index, inst) in instructions.withIndex()) {
+        val node = Node("$index")
+            .setShape(Shape.box)
+            .setLabel(inst.toString().replace("\"", "\\\""))
+            .setFontSize(12.0)
+        nodes[inst] = node
+        graph.addNode(node)
+    }
+
+    graph.setBgColor(Color.X11.transparent)
+    graph.setFontSize(12.0)
+    graph.setFontName("Fira Mono")
+
+    for ((inst, node) in nodes) {
+        when (inst) {
+            // is PandaGotoInst -> for (successor in successors(inst)) {
+            //     graph.addEdge(Edge(node.name, nodes[successor]!!.name))
+            // }
+
+            is PandaIfInst -> {
+                graph.addEdge(
+                    Edge(node.name, nodes[inst(inst.trueBranch)]!!.name)
+                        .also {
+                            it.setLabel("true")
+                        }
+                )
+                graph.addEdge(
+                    Edge(node.name, nodes[inst(inst.falseBranch)]!!.name)
+                        .also {
+                            it.setLabel("false")
+                        }
+                )
+            }
+
+            // is PandaSwitchInst -> {
+            //     for ((key, branch) in inst.branches) {
+            //         graph.addEdge(
+            //             Edge(node.name, nodes[inst(branch)]!!.name)
+            //                 .also {
+            //                     it.setLabel("$key")
+            //                 }
+            //         )
+            //     }
+            //     graph.addEdge(
+            //         Edge(node.name, nodes[inst(inst.default)]!!.name)
+            //             .also {
+            //                 it.setLabel("else")
+            //             }
+            //     )
+            // }
+
+            else -> for (successor in successors(inst)) {
+                graph.addEdge(Edge(node.name, nodes[successor]!!.name))
+            }
+        }
+        if (viewCatchConnections) {
+            for (catcher in catchers(inst)) {
+                graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
+                    // it.setLabel("catch ${catcher.throwable.type}")
+                    it.setLabel("catch")
+                    it.setStyle(Style.Edge.dashed)
+                })
+            }
+        }
+    }
+
+    val outFile = graph.dot2file("svg")
+    val newFile = "${outFile.removeSuffix(".out")}.svg"
+    val resultingFile = file?.toPath() ?: File(newFile).toPath()
+    Files.move(File(outFile).toPath(), resultingFile)
+    return resultingFile
 }

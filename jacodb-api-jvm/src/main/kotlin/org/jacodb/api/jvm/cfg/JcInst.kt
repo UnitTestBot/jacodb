@@ -17,7 +17,6 @@
 package org.jacodb.api.jvm.cfg
 
 import org.jacodb.api.common.CommonClassField
-import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonAssignInst
@@ -244,8 +243,11 @@ class JcSwitchInst(
 }
 
 interface JcExpr : CommonExpr {
-    override val type: JcType
+    val type: JcType
     override val operands: List<JcValue>
+
+    override val typeName: String
+        get() = type.typeName
 
     fun <T> accept(visitor: JcExprVisitor<T>): T
 }

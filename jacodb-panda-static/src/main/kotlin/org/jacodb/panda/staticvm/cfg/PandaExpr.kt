@@ -32,6 +32,11 @@ import org.jacodb.panda.staticvm.classpath.PandaPrimitivePandaType
 import org.jacodb.panda.staticvm.classpath.PandaType
 
 sealed interface PandaExpr : CommonExpr {
+    val type: PandaType
+
+    override val typeName: String
+        get() = type.typeName
+
     override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
         TODO("Not yet implemented")
     }
@@ -76,7 +81,7 @@ class PandaFieldAccess(
 ) : PandaValue, CommonFieldRef {
     override fun toString(): String = "${instance ?: classField.enclosingClass}.${classField.name}"
 
-    override val type: CommonType
+    override val type: PandaType
         get() = classField.type
 }
 
