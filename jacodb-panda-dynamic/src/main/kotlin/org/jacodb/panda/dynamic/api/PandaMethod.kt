@@ -41,6 +41,9 @@ open class PandaMethod(
     var className: String? = null
         internal set
 
+    var localVarsCount: Int = 0
+        internal set
+
     private var flowGraph: PandaGraph? = null
 
     override val enclosingClass: PandaClass

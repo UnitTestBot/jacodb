@@ -348,6 +348,7 @@ class IRParser(jsonPath: String) {
                     panda.instructions = method.insts
                     panda.parameterInfos = method.parameters
                     panda.className = clazz.name
+                    panda.localVarsCount = method.currentLocalVarId + 1
                 }.pandaMethod
             }
             PandaClass(clazz.name, clazz.superClass, pandaMethods)
