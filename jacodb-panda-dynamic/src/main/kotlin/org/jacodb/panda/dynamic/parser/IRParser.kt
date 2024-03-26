@@ -35,6 +35,7 @@ import org.jacodb.panda.dynamic.api.PandaCmpOp
 import org.jacodb.panda.dynamic.api.PandaConditionExpr
 import org.jacodb.panda.dynamic.api.PandaConstant
 import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
+import org.jacodb.panda.dynamic.api.PandaDivExpr
 import org.jacodb.panda.dynamic.api.PandaEqExpr
 import org.jacodb.panda.dynamic.api.PandaGeExpr
 import org.jacodb.panda.dynamic.api.PandaGtExpr
@@ -774,6 +775,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.sub2" -> {
+                // TODO: Inputs are unordered, so we need to find the right order by inst.inputs
                 val subExpr = PandaSubExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, subExpr)
@@ -787,6 +789,26 @@ class IRParser(jsonPath: String) {
                 val mulExpr = PandaMulExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, mulExpr)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.div2" -> {
+                // TODO: Inputs are unordered, so we need to find the right order by inst.inputs
+                val divExpr = PandaDivExpr(inputs[0], inputs[1])
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, divExpr)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.neg" -> {
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, PandaMulExpr(PandaNumberConstant(-1), inputs[0]))
                 outputs.forEach { output ->
                     addInput(method, id(), output, lv)
                 }
