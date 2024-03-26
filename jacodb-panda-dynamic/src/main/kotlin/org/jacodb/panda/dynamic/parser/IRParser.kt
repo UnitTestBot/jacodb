@@ -49,6 +49,7 @@ import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
 import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaMulExpr
 import org.jacodb.panda.dynamic.api.PandaNeqExpr
 import org.jacodb.panda.dynamic.api.PandaNewExpr
 import org.jacodb.panda.dynamic.api.PandaNullConstant
@@ -59,6 +60,7 @@ import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
 import org.jacodb.panda.dynamic.api.PandaStringConstant
+import org.jacodb.panda.dynamic.api.PandaSubExpr
 import org.jacodb.panda.dynamic.api.PandaThis
 import org.jacodb.panda.dynamic.api.PandaThrowInst
 import org.jacodb.panda.dynamic.api.PandaToNumericExpr
@@ -312,26 +314,8 @@ class IRParser(jsonPath: String) {
             clazz.properties.forEach { property ->
                 property.method.basicBlocks.forEach { bb ->
                     bb.insts.forEach { inst ->
-                        // TODO(to delete?: map IfImm)
-                        // TODO(reply): no.
-                        /*
-                        inst.opcode.startsWith("IfImm") -> {
-                            val successors =
-                                bb.successors ?: error("No bb succ after IfImm op")
-                            val trueBB = method.basic_blocks.find { it.id == successors[0] }!!
-                            val falseBB = method.basic_blocks.find { it.id == successors[1] }!!
-                            listOfNotNull(
-                                trueBB.insts?.minBy { it.id() }?.id(),
-                                falseBB.insts?.minBy { it.id() }?.id()
-                            ).forEach { output ->
-                                method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
-                            }
-                        }
-                        */
-                        when {
-                            else -> inst.outputs().forEach { output ->
-                                property.method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
-                            }
+                        inst.outputs().forEach { output ->
+                            property.method.idToIRInputs.getOrPut(output) { mutableListOf() }.add(inst)
                         }
                     }
                 }
@@ -787,6 +771,26 @@ class IRParser(jsonPath: String) {
                     instance = instCallValue.instance
                 )
                 handleOutputs(outputs, method, callExpr)
+            }
+
+            opcode == "Intrinsic.sub2" -> {
+                val subExpr = PandaSubExpr(inputs[0], inputs[1])
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, subExpr)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.mul2" -> {
+                val mulExpr = PandaMulExpr(inputs[0], inputs[1])
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, mulExpr)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
             }
 
             else -> getInstType(this, method)
