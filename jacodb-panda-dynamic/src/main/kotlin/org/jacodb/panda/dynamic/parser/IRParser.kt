@@ -139,7 +139,7 @@ class IRParser(jsonPath: String) {
 
         // ArkTS id -> Panda input
         @Transient
-        val idToInputs: MutableMap<Int, MutableList<PandaValue>> = mutableMapOf()
+        val idToInputs: MutableMap<Int, MutableList<PandaValue?>> = mutableMapOf()
 
         @Transient
         val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = mutableMapOf()
@@ -160,13 +160,29 @@ class IRParser(jsonPath: String) {
         @Transient
         var currentId = 0
 
+        @Transient
+        private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
+
+        fun getInstViaId(instId: Int): ProgramInst {
+            return idToInst.getOrPut(instId) {
+                basicBlocks.forEach { bb ->
+                    bb.insts.find { it.id() == instId }?.let {
+                        return@getOrPut it
+                    }
+                }
+
+                throw IllegalArgumentException("No instruction in method $name with id v$instId")
+            }
+        }
+
+
         fun setClass(c: ProgramClass?) {
             clazz = c
         }
 
         fun getClass() = clazz ?: error("Class not set for method $name")
 
-        fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs[op.id()].orEmpty()
+        fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs[op.id()].orEmpty().filterNotNull()
 
         init {
             basicBlocks.forEach { it.setMethod(this) }
@@ -369,11 +385,9 @@ class IRParser(jsonPath: String) {
     }
 
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
-        method.idToIRInputs[outputId].orEmpty().forEachIndexed { _, programInst ->
-            if (inputId == programInst.id()) {
-                method.idToInputs.getOrPut(outputId) { mutableListOf() }.add(input)
-            }
-        }
+        val outputInst = method.getInstViaId(outputId)
+        val index = outputInst.inputs().indexOf(inputId)
+        method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }.add(index, input)
     }
 
     private var currentBasicBlock: ProgramBasicBlock? = null
