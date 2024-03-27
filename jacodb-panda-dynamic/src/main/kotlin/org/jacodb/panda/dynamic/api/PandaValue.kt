@@ -59,7 +59,7 @@ class PandaThis(
 class PandaArgument(
     override val index: Int,
     override val name: String = "arg$index",
-) : PandaSimpleValue, CommonArgument {
+) : PandaLocal, CommonArgument {
     override val type: PandaType
         get() = PandaAnyType
 
