@@ -43,6 +43,22 @@ class PandaLocalVar(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLocalVar(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaLocalVar) return false
+
+        if (index != other.index) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
 class PandaThis(
@@ -54,6 +70,21 @@ class PandaThis(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaThis(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaThis) return false
+
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return type.hashCode()
+    }
+
+
 }
 
 class PandaArgument(
@@ -68,6 +99,22 @@ class PandaArgument(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaArgument) return false
+
+        if (index != other.index) return false
+        if (name != other.name) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + name.hashCode()
+        return result
+    }
 }
 
 interface PandaConstant : PandaSimpleValue
@@ -81,6 +128,19 @@ class TODOConstant(val value: String?) : PandaConstant {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTODOConstant(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TODOConstant) return false
+
+        if (value != other.value) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return value?.hashCode() ?: 0
+    }
 }
 
 class PandaNumberConstant(val value: Int) : PandaConstant {
@@ -91,6 +151,19 @@ class PandaNumberConstant(val value: Int) : PandaConstant {
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNumberConstant(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaNumberConstant) return false
+
+        if (value != other.value) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return value
     }
 }
 
@@ -103,6 +176,19 @@ class PandaStringConstant(val value: String) : PandaConstant {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStringConstant(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaStringConstant) return false
+
+        if (value != other.value) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 }
 
 object PandaUndefinedConstant : PandaConstant {
@@ -113,6 +199,17 @@ object PandaUndefinedConstant : PandaConstant {
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaUndefinedConstant(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaUndefinedConstant) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return 0
     }
 }
 
@@ -128,6 +225,17 @@ object PandaNullConstant : PandaConstant {
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNullConstant(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaNullConstant) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return 0
     }
 }
 
@@ -146,6 +254,24 @@ data class PandaFieldRef(
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaFieldRef(this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaFieldRef) return false
+
+        if (instance != other.instance) return false
+        if (classField != other.classField) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = instance?.hashCode() ?: 0
+        result = 31 * result + classField.hashCode()
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
 data class PandaArrayAccess(
@@ -160,6 +286,24 @@ data class PandaArrayAccess(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArrayAccess(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaArrayAccess) return false
+
+        if (array != other.array) return false
+        if (index != other.index) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = array.hashCode()
+        result = 31 * result + index.hashCode()
+        result = 31 * result + type.hashCode()
+        return result
     }
 }
 
@@ -195,6 +339,22 @@ class PandaLoadedValue(
     }
 
     override fun toString() = "Loaded[$instance.$obj]"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaLoadedValue) return false
+
+        if (instance != other.instance) return false
+        if (obj != other.obj) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = instance.hashCode()
+        result = 31 * result + obj.hashCode()
+        return result
+    }
 }
 
 class PandaInstanceCallValueImpl(
@@ -223,5 +383,21 @@ class PandaInstanceCallValueImpl(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         TODO("Not yet implemented")
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaInstanceCallValueImpl) return false
+
+        if (instance != other.instance) return false
+        if (obj != other.obj) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = instance.hashCode()
+        result = 31 * result + obj.hashCode()
+        return result
     }
 }
