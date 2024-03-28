@@ -68,7 +68,7 @@ internal class ActorSystemImpl<Message>(
 
 fun <Message> systemOf(
     name: String,
-    options: SpawnOptions = SpawnOptions.default(),
+    options: SpawnOptions = SpawnOptions.default,
     factory: Factory<Message>,
 ): ActorSystem<Message> = ActorSystemImpl(
     name,

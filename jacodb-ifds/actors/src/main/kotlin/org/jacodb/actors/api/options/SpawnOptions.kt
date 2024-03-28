@@ -40,12 +40,9 @@ data class SpawnOptions(
     )
 
     companion object {
-        private val default = SpawnOptions(
+        val default = SpawnOptions(
             ChannelFactory.unlimited(),
             EmptyCoroutineContext
         )
-
-        fun default(): SpawnOptions =
-            default
     }
 }

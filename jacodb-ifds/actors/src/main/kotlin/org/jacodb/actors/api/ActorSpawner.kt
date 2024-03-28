@@ -21,7 +21,7 @@ import org.jacodb.actors.api.options.SpawnOptions
 interface ActorSpawner {
     fun <ChildMessage> spawn(
         name: String,
-        options: SpawnOptions = SpawnOptions.default(),
+        options: SpawnOptions = SpawnOptions.default,
         factory: Factory<ChildMessage>,
     ): ActorRef<ChildMessage>
 

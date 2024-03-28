@@ -16,13 +16,12 @@
 
 package org.jacodb.actors.impl
 
+import mu.KLogger
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
 import org.jacodb.actors.api.Factory
 import org.jacodb.actors.impl.workers.ActorWorker
-import kotlinx.coroutines.channels.Channel
-import mu.KLogger
 import kotlin.coroutines.CoroutineContext
 
 internal class ActorContextImpl<M>(

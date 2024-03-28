@@ -85,7 +85,7 @@ class Root : Actor<RootMessage> {
     private val producers = List(PRODUCERS) {
         spawn(
             "producer#$it",
-            SpawnOptions.default().channelFactory(buffered(32768))
+            SpawnOptions.default.channelFactory(buffered(32768))
         ) {
             Producer(consumers, iterations = CNT, sleep = SLEEP, it)
         }
@@ -109,7 +109,7 @@ class Root : Actor<RootMessage> {
 private val logger = logger("Main")
 
 suspend fun main() {
-    val system = systemOf("example", SpawnOptions.default(), ::Root)
+    val system = systemOf("example", SpawnOptions.default, ::Root)
     val ms = measureTimeMillis {
         system.send(RootMessage.Start)
         system.awaitTermination()

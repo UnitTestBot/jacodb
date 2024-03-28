@@ -21,7 +21,7 @@ import org.jacodb.actors.api.options.SpawnOptions
 
 fun <Message> roundRobinRouter(
     size: Int = 8,
-    routeeSpawnOptions: SpawnOptions = SpawnOptions.default(),
+    routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: Factory<Message>,
 ) = Factory {
     RoundRobinRouter(size, routeeSpawnOptions, routeeFactory)
@@ -29,7 +29,7 @@ fun <Message> roundRobinRouter(
 
 fun <Message> firstReadyRouter(
     size: Int = 8,
-    routeeSpawnOptions: SpawnOptions = SpawnOptions.default(),
+    routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: Factory<Message>,
 ) = Factory {
     FirstReadyRouter(size, routeeSpawnOptions, routeeFactory)
@@ -37,7 +37,7 @@ fun <Message> firstReadyRouter(
 
 fun <Message> randomRouter(
     size: Int = 8,
-    routeeSpawnOptions: SpawnOptions = SpawnOptions.default(),
+    routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: Factory<Message>,
 ) = Factory {
     RandomRouter(size, routeeSpawnOptions, routeeFactory)
@@ -46,7 +46,7 @@ fun <Message> randomRouter(
 fun <Message, Key> messageKeyRouter(
     keyExtractor: (Message) -> Key,
     routeeNameFactory: (Key) -> String = { it.toString() },
-    routeeSpawnOptions: SpawnOptions = SpawnOptions.default(),
+    routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: KeyRouteeFactory<Message, Key>
 ) = Factory {
     MessageKeyRouter(keyExtractor, routeeNameFactory, routeeSpawnOptions, routeeFactory)
