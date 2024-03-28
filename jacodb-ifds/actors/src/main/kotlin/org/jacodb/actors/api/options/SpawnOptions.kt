@@ -20,21 +20,21 @@ import kotlinx.coroutines.channels.Channel
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-data class SpawnOptions(
+class SpawnOptions(
     val channelFactory: ChannelFactory,
     val coroutineContext: CoroutineContext,
 ) {
-    fun channelFactory(channelFactory: ChannelFactory) = copy(
+    fun channelFactory(channelFactory: ChannelFactory) = SpawnOptions(
         channelFactory = channelFactory,
         coroutineContext = coroutineContext
     )
 
-    fun channel(channel: Channel<Any?>) = copy(
+    fun channel(channel: Channel<Any?>) = SpawnOptions(
         channelFactory = { channel },
         coroutineContext = coroutineContext
     )
 
-    fun coroutineContext(coroutineContext: CoroutineContext) = copy(
+    fun coroutineContext(coroutineContext: CoroutineContext) = SpawnOptions(
         channelFactory = channelFactory,
         coroutineContext = coroutineContext
     )

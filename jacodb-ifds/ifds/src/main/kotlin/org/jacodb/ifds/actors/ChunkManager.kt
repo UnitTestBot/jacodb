@@ -34,11 +34,11 @@ class ChunkManager<Stmt, Fact>(
     private val routerFactory = messageKeyRouter(
         ifdsContext::runnerTypeByMessage
     ) { runnerType ->
-        RunnerManager(this@ActorContext.self, ifdsContext, chunk, runnerType)
+        Runner(this@ActorContext.self, ifdsContext, chunk, runnerType)
     }
 
     private val router = spawn(
-        "router",
+        "runners",
         factory = routerFactory
     )
 

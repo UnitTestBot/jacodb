@@ -19,20 +19,49 @@ package org.jacodb.ifds.actors
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.ifds.domain.Analyzer
+import org.jacodb.actors.impl.routing.firstReadyRouter
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.domain.IfdsContext
+import org.jacodb.ifds.domain.RunnerType
 import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.IndirectionMessage
+import org.jacodb.ifds.messages.StorageMessage
 
-context(ActorContext<AnalyzerMessage<Stmt, Fact>>)
+context(ActorContext<CommonMessage>)
 class Runner<Stmt, Fact>(
-    private val analyzer: Analyzer<Stmt, Fact>,
     private val parent: ActorRef<CommonMessage>,
-) : Actor<AnalyzerMessage<Stmt, Fact>> {
+    private val ifdsContext: IfdsContext<Stmt, Fact>,
+    private val chunk: Chunk,
+    private val runnerType: RunnerType,
+) : Actor<CommonMessage> {
+    private val routerFactory = firstReadyRouter(size = 8) {
+        Worker(ifdsContext.getAnalyzer(chunk, runnerType), this@ActorContext.self)
+    }
 
-    override suspend fun receive(message: AnalyzerMessage<Stmt, Fact>) {
-        val newMessages = analyzer.step(message)
-        for (newMessage in newMessages) {
-            parent.send(newMessage)
+    private val router = spawn("workers", factory = routerFactory)
+
+    private val storage = spawn("storage") {
+        RunnerStorage<Stmt, Fact>(this@ActorContext.self, runnerType)
+    }
+
+    private val indirectionHandler = spawn(
+        "indirection",
+        factory = ifdsContext.indirectionHandlerFactory(self)
+    )
+
+    override suspend fun receive(message: CommonMessage) {
+        when {
+            ifdsContext.chunkByMessage(message) == chunk && ifdsContext.runnerTypeByMessage(message) == runnerType -> {
+                @Suppress("UNCHECKED_CAST")
+                when (message) {
+                    is StorageMessage -> storage.send(message)
+                    is AnalyzerMessage<*, *> -> router.send(message as AnalyzerMessage<Stmt, Fact>)
+                    is IndirectionMessage -> indirectionHandler.send(message)
+                }
+            }
+
+            else -> parent.send(message)
         }
     }
 }

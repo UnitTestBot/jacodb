@@ -18,21 +18,21 @@ package org.jacodb.ifds.actors
 
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
-import org.jacodb.actors.impl.routing.messageKeyRouter
-import org.jacodb.ifds.domain.IfdsContext
+import org.jacodb.actors.api.ActorRef
+import org.jacodb.ifds.domain.Analyzer
+import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.CommonMessage
 
-context(ActorContext<CommonMessage>)
-class ProjectManager<Stmt, Fact>(
-    private val ifdsContext: IfdsContext<Stmt, Fact>,
-) : Actor<CommonMessage> {
-    private val routerFactory = messageKeyRouter(
-        keyExtractor = ifdsContext::chunkByMessage
-    ) { chunk -> ChunkManager(ifdsContext, chunk, this@ActorContext.self) }
+context(ActorContext<AnalyzerMessage<Stmt, Fact>>)
+class Worker<Stmt, Fact>(
+    private val analyzer: Analyzer<Stmt, Fact>,
+    private val parent: ActorRef<CommonMessage>,
+) : Actor<AnalyzerMessage<Stmt, Fact>> {
 
-    private val router = spawn("chunks", factory = routerFactory)
-
-    override suspend fun receive(message: CommonMessage) {
-        router.send(message)
+    override suspend fun receive(message: AnalyzerMessage<Stmt, Fact>) {
+        val newMessages = analyzer.step(message)
+        for (newMessage in newMessages) {
+            parent.send(newMessage)
+        }
     }
 }
