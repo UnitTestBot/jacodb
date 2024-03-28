@@ -24,15 +24,20 @@ import org.jacodb.panda.dynamic.api.PandaMulExpr
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaSubExpr
+import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class BinarySamplesTest(private val parser: IRParserTest) {
+class BinarySamplesTest {
+    private fun loadIR(fileName: String): IRParser {
+        val sampleFilePath = javaClass.getResource("/samples/binary/$fileName.json")?.path ?: ""
+        return IRParser(sampleFilePath)
+    }
 
     @Test
     fun `test parser on binary subtraction`() {
-        val irParser = parser.loadIR("binary/Subtraction")
+        val irParser = loadIR("Subtraction")
         val programIR = irParser.getProgramIR()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
