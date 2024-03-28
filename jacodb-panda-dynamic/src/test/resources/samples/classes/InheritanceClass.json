@@ -63,7 +63,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "age",
+          "stringData": "age",
           "type": "any",
           "users": [
            "v5"
@@ -181,7 +181,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "any",
           "users": [
            "v5"
@@ -835,7 +835,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "users": [
            "v11"
@@ -979,7 +979,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "ParentClass",
+          "stringData": "ParentClass",
           "type": "any",
           "users": [
            "v23"
@@ -1037,7 +1037,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "users": [
            "v27"
@@ -1159,7 +1159,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "ChildClass",
+          "stringData": "ChildClass",
           "type": "any",
           "users": [
            "v41"
@@ -1181,11 +1181,13 @@
            "v37"
           ],
           "opcode": "LoadString",
+          "stringData": "Child Example",
+          "stringOffset": 336,
           "type": "ref",
           "users": [
            "v39"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v39",
@@ -1272,7 +1274,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v55",
@@ -1301,7 +1303,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v55"
@@ -1328,7 +1330,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "childObj",
+          "stringData": "childObj",
           "type": "any",
           "users": [
            "v53",
@@ -1357,7 +1359,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "getName",
+          "stringData": "getName",
           "type": "any",
           "users": [
            "v53"
@@ -1436,7 +1438,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v67",
@@ -1465,7 +1467,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v67"
@@ -1492,7 +1494,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "childObj",
+          "stringData": "childObj",
           "type": "any",
           "users": [
            "v65",
@@ -1521,7 +1523,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "getAge",
+          "stringData": "getAge",
           "type": "any",
           "users": [
            "v65"
@@ -1727,7 +1729,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "void",
           "visit": "ldobjbyname"
          },
@@ -1878,7 +1880,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "age",
+          "stringData": "age",
           "type": "void",
           "visit": "ldobjbyname"
          },

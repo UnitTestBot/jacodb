@@ -120,11 +120,13 @@
            "v31"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 197,
           "type": "ref",
           "users": [
            "v33"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v33",
@@ -177,11 +179,13 @@
            "v36"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 197,
           "type": "ref",
           "users": [
            "v38"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v38",
@@ -281,11 +285,13 @@
            "v41"
           ],
           "opcode": "LoadString",
+          "stringData": "An error occurred in inner try block!",
+          "stringOffset": 199,
           "type": "ref",
           "users": [
            "v43"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v43",
@@ -319,7 +325,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v46"
@@ -557,11 +563,13 @@
            "v50"
           ],
           "opcode": "LoadString",
+          "stringData": "Caught an error in inner catch block: ",
+          "stringOffset": 238,
           "type": "ref",
           "users": [
            "v52"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v52",
@@ -596,7 +604,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "message",
+          "stringData": "message",
           "type": "any",
           "users": [
            "v55"
@@ -837,11 +845,13 @@
            "v59"
           ],
           "opcode": "LoadString",
+          "stringData": "Caught an error in outer catch block: ",
+          "stringOffset": 278,
           "type": "ref",
           "users": [
            "v61"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v61",
@@ -876,7 +886,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "message",
+          "stringData": "message",
           "type": "any",
           "users": [
            "v64"
@@ -1058,7 +1068,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v87",
@@ -1087,7 +1097,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v87"
@@ -1114,7 +1124,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "outerResult",
+          "stringData": "outerResult",
           "type": "any",
           "users": [
            "v87"
@@ -1166,7 +1176,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v95",
@@ -1195,7 +1205,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v95"
@@ -1222,7 +1232,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "innerResult",
+          "stringData": "innerResult",
           "type": "any",
           "users": [
            "v95"

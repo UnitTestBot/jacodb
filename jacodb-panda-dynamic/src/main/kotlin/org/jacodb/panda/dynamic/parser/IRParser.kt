@@ -239,8 +239,8 @@ class IRParser(jsonPath: String) {
         var opcode: String,
         val operandsType: String? = null,
         val operator: String? = null,
-        @SerialName("string_data")
         val stringData: String? = null,
+        val stringOffset: Int? = null,
         val type: String? = null,
         val users: List<String> = emptyList(),
         val value: Int? = null,
@@ -493,8 +493,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "LoadString" -> {
-                // TODO: get string data from somewhere
-                val sc = PandaStringConstant("")
+                val sc = PandaStringConstant(stringData ?: error("No string data"))
                 outputs.forEach { output ->
                     addInput(method, id(), output, sc)
                 }

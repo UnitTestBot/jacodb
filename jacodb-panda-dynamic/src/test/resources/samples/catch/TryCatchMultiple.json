@@ -90,11 +90,13 @@
            "v31"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 201,
           "type": "ref",
           "users": [
            "v33"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v33",
@@ -147,11 +149,13 @@
            "v36"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 201,
           "type": "ref",
           "users": [
            "v38"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v38",
@@ -233,11 +237,13 @@
            "v41"
           ],
           "opcode": "LoadString",
+          "stringData": "An error occurred in try block 1!",
+          "stringOffset": 203,
           "type": "ref",
           "users": [
            "v43"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v43",
@@ -271,7 +277,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v46"
@@ -461,11 +467,13 @@
            "v50"
           ],
           "opcode": "LoadString",
+          "stringData": "Caught an error in catch block 1: ",
+          "stringOffset": 273,
           "type": "ref",
           "users": [
            "v52"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v52",
@@ -500,7 +508,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "message",
+          "stringData": "message",
           "type": "any",
           "users": [
            "v55"
@@ -602,11 +610,13 @@
            "v59"
           ],
           "opcode": "LoadString",
+          "stringData": "An error occurred in try block 2!",
+          "stringOffset": 238,
           "type": "ref",
           "users": [
            "v61"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v61",
@@ -640,7 +650,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v64"
@@ -752,11 +762,13 @@
            "v68"
           ],
           "opcode": "LoadString",
+          "stringData": "Caught an error in catch block 2: ",
+          "stringOffset": 309,
           "type": "ref",
           "users": [
            "v70"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v70",
@@ -791,7 +803,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "message",
+          "stringData": "message",
           "type": "any",
           "users": [
            "v73"
@@ -880,7 +892,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v83",
@@ -909,7 +921,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v83"
@@ -936,7 +948,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "result1",
+          "stringData": "result1",
           "type": "any",
           "users": [
            "v83"
@@ -988,7 +1000,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v91",
@@ -1017,7 +1029,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v91"
@@ -1044,7 +1056,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "result2",
+          "stringData": "result2",
           "type": "any",
           "users": [
            "v91"

@@ -63,7 +63,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "any",
           "users": [
            "v5"
@@ -252,7 +252,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "users": [
            "v11"
@@ -374,7 +374,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "ConstructorClass",
+          "stringData": "ConstructorClass",
           "type": "any",
           "users": [
            "v24"
@@ -396,11 +396,13 @@
            "v21"
           ],
           "opcode": "LoadString",
+          "stringData": "Constructor Example",
+          "stringOffset": 251,
           "type": "ref",
           "users": [
            "v23"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v23",
@@ -486,7 +488,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v38",
@@ -515,7 +517,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v38"
@@ -542,7 +544,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "constructorObj",
+          "stringData": "constructorObj",
           "type": "any",
           "users": [
            "v36",
@@ -571,7 +573,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "getName",
+          "stringData": "getName",
           "type": "any",
           "users": [
            "v36"
@@ -950,7 +952,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "void",
           "visit": "ldobjbyname"
          },

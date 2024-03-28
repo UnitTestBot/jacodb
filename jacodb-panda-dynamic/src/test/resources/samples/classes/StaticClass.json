@@ -63,7 +63,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "count",
+          "stringData": "count",
           "type": "any",
           "users": [
            "v5"
@@ -177,7 +177,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "count",
+          "stringData": "count",
           "type": "any",
           "users": [
            "v9",
@@ -524,7 +524,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "visit": "ldobjbyname"
          },
@@ -624,7 +624,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "StaticClass",
+          "stringData": "StaticClass",
           "type": "any",
           "users": [
            "v19",
@@ -653,7 +653,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "incrementCount",
+          "stringData": "incrementCount",
           "type": "any",
           "users": [
            "v19"
@@ -704,7 +704,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v31",
@@ -733,7 +733,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v31"
@@ -760,7 +760,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "StaticClass",
+          "stringData": "StaticClass",
           "type": "any",
           "users": [
            "v29",
@@ -789,7 +789,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "getCount",
+          "stringData": "getCount",
           "type": "any",
           "users": [
            "v29"
@@ -983,7 +983,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "count",
+          "stringData": "count",
           "type": "void",
           "visit": "ldobjbyname"
          },

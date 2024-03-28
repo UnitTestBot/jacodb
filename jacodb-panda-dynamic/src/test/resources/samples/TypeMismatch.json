@@ -209,7 +209,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v19"
@@ -231,11 +231,13 @@
            "v16"
           ],
           "opcode": "LoadString",
+          "stringData": "Types mismatch!",
+          "stringOffset": 213,
           "type": "ref",
           "users": [
            "v18"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v18",
@@ -460,7 +462,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v13",
@@ -489,7 +491,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v13"
@@ -516,7 +518,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "add",
+          "stringData": "add",
           "type": "any",
           "users": [
            "v11"

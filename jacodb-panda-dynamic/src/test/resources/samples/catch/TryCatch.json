@@ -54,11 +54,13 @@
            "v16"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 189,
           "type": "ref",
           "users": [
            "v18"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v18",
@@ -140,11 +142,13 @@
            "v21"
           ],
           "opcode": "LoadString",
+          "stringData": "An error occurred!",
+          "stringOffset": 191,
           "type": "ref",
           "users": [
            "v23"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v23",
@@ -178,7 +182,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v26"
@@ -290,11 +294,13 @@
            "v30"
           ],
           "opcode": "LoadString",
+          "stringData": "Caught an error: ",
+          "stringOffset": 211,
           "type": "ref",
           "users": [
            "v32"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v32",
@@ -329,7 +335,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "message",
+          "stringData": "message",
           "type": "any",
           "users": [
            "v35"
@@ -418,7 +424,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v45",
@@ -447,7 +453,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v45"
@@ -474,7 +480,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "result",
+          "stringData": "result",
           "type": "any",
           "users": [
            "v45"

@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 private val logger = mu.KotlinLogging.logger {}
 
 class IRParserTest {
-    private fun loadIR(fileName: String = "DataFlowSecurity"): IRParser {
+    private fun loadIR(fileName: String = "TypeMismatch"): IRParser {
         val sampleFilePath = javaClass.getResource("/samples/$fileName.json")?.path ?: ""
         return IRParser(sampleFilePath)
     }

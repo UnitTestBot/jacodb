@@ -381,7 +381,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "users": [
            "v11"
@@ -503,7 +503,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "User",
+          "stringData": "User",
           "type": "any",
           "users": [
            "v30"
@@ -525,11 +525,13 @@
            "v21"
           ],
           "opcode": "LoadString",
+          "stringData": "johndoe",
+          "stringOffset": 283,
           "type": "ref",
           "users": [
            "v23"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v23",
@@ -558,11 +560,13 @@
            "v24"
           ],
           "opcode": "LoadString",
+          "stringData": "johndoe@example.com",
+          "stringOffset": 292,
           "type": "ref",
           "users": [
            "v26"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v26",
@@ -591,11 +595,13 @@
            "v27"
           ],
           "opcode": "LoadString",
+          "stringData": "John Doe",
+          "stringOffset": 251,
           "type": "ref",
           "users": [
            "v29"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v29",
@@ -683,7 +689,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v42",
@@ -712,7 +718,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v42"
@@ -739,7 +745,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "user",
+          "stringData": "user",
           "type": "any",
           "users": [
            "v40"
@@ -767,7 +773,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "any",
           "users": [
            "v42"
@@ -948,7 +954,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "username",
+          "stringData": "username",
           "type": "void",
           "visit": "ldobjbyname"
          },
@@ -996,7 +1002,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "email",
+          "stringData": "email",
           "type": "void",
           "visit": "ldobjbyname"
          },
@@ -1044,7 +1050,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "name",
+          "stringData": "name",
           "type": "void",
           "visit": "ldobjbyname"
          },

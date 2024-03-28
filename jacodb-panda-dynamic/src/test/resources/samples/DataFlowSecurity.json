@@ -59,7 +59,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "source",
+          "stringData": "source",
           "type": "any",
           "users": [
            "v5"
@@ -112,7 +112,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "pass",
+          "stringData": "pass",
           "type": "any",
           "users": [
            "v9"
@@ -166,7 +166,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "sink",
+          "stringData": "sink",
           "type": "any",
           "users": [
            "v13"
@@ -317,7 +317,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "source",
+          "stringData": "source",
           "type": "any",
           "users": [
            "v5"
@@ -370,7 +370,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "validate",
+          "stringData": "validate",
           "type": "any",
           "users": [
            "v9"
@@ -424,7 +424,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "sink",
+          "stringData": "sink",
           "type": "any",
           "users": [
            "v13"
@@ -776,7 +776,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v16"
@@ -798,11 +798,13 @@
            "v13"
           ],
           "opcode": "LoadString",
+          "stringData": "Error!",
+          "stringOffset": 275,
           "type": "ref",
           "users": [
            "v15"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v15",
@@ -1205,11 +1207,13 @@
            "v11"
           ],
           "opcode": "LoadString",
+          "stringData": "OK",
+          "stringOffset": 283,
           "type": "ref",
           "users": [
            "v13"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v13",

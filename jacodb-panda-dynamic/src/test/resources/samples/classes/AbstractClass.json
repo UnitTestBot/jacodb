@@ -64,7 +64,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "width",
+          "stringData": "width",
           "type": "any",
           "users": [
            "v7"
@@ -92,7 +92,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "height",
+          "stringData": "height",
           "type": "any",
           "users": [
            "v7"
@@ -745,7 +745,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "visit": "ldobjbyname"
          },
@@ -815,7 +815,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Shape",
+          "stringData": "Shape",
           "type": "any",
           "users": [
            "v15"
@@ -873,7 +873,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
+          "stringData": "prototype",
           "type": "any",
           "users": [
            "v19"
@@ -995,7 +995,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Rectangle",
+          "stringData": "Rectangle",
           "type": "any",
           "users": [
            "v31"
@@ -1075,7 +1075,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v45",
@@ -1104,7 +1104,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v45"
@@ -1131,7 +1131,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "rectangle",
+          "stringData": "rectangle",
           "type": "any",
           "users": [
            "v43",
@@ -1160,7 +1160,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "getArea",
+          "stringData": "getArea",
           "type": "any",
           "users": [
            "v43"
@@ -1367,7 +1367,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "width",
+          "stringData": "width",
           "type": "void",
           "visit": "ldobjbyname"
          },
@@ -1415,7 +1415,7 @@
           ],
           "intrinsic_id": "Intrinsic.definefieldbyname",
           "opcode": "Intrinsic",
-          "string_data": "height",
+          "stringData": "height",
           "type": "void",
           "visit": "ldobjbyname"
          },

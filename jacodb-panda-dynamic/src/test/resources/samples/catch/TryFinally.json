@@ -101,11 +101,13 @@
            "v31"
           ],
           "opcode": "LoadString",
+          "stringData": "",
+          "stringOffset": 185,
           "type": "ref",
           "users": [
            "v33"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v33",
@@ -236,11 +238,13 @@
            "v38"
           ],
           "opcode": "LoadString",
+          "stringData": "An error occurred!",
+          "stringOffset": 187,
           "type": "ref",
           "users": [
            "v40"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v40",
@@ -274,7 +278,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "Error",
+          "stringData": "Error",
           "type": "any",
           "users": [
            "v43"
@@ -659,11 +663,13 @@
            "v56"
           ],
           "opcode": "LoadString",
+          "stringData": "Finally block executed.",
+          "stringOffset": 214,
           "type": "ref",
           "users": [
            "v58"
           ],
-          "visit": "default"
+          "visit": "load_string"
          },
          {
           "id": "v58",
@@ -866,7 +872,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "console",
+          "stringData": "console",
           "type": "any",
           "users": [
            "v77",
@@ -895,7 +901,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "string_data": "log",
+          "stringData": "log",
           "type": "any",
           "users": [
            "v77"
@@ -922,7 +928,7 @@
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "string_data": "result",
+          "stringData": "result",
           "type": "any",
           "users": [
            "v77"
