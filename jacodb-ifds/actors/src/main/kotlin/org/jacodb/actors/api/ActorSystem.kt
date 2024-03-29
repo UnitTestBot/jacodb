@@ -23,7 +23,7 @@ interface ActorSystem<Message> {
 
     suspend fun send(message: Message)
 
-    suspend fun <R> ack(messageBuilder: (Channel<R>) -> Message): R
+    suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R
 
     suspend fun awaitCompletion()
 }

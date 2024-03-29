@@ -104,7 +104,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         }
 
         system.awaitCompletion()
-        val results = system.ack { ObtainResults(it) }
+        val results = system.ask { ObtainResults(it) }
         results.map { it as TaintVulnerability }
     }
 

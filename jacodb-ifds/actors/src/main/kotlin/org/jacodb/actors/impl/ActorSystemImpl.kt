@@ -46,7 +46,7 @@ internal class ActorSystemImpl<Message>(
         user.send(message)
     }
 
-    override suspend fun <R> ack(messageBuilder: (Channel<R>) -> Message): R {
+    override suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R {
         watcher.send(WatcherMessage.OutOfSystemSend)
         val channel = Channel<R>(Channel.RENDEZVOUS)
         val ack = messageBuilder(channel)
