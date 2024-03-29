@@ -914,18 +914,17 @@ fun programToDot(program: IRParser.Program): String {
 
     // Classes with properties:
     program.classes.forEach { clazz ->
-        lines += ""
-
         // CLASS
-        lines += "  ${clazz.name} [shape=diamond]"
+        lines += ""
+        lines += "  \"${clazz.name}\" [shape=diamond]"
 
         // Properties inside class:
         clazz.properties.forEach { property ->
             // PROPERTY
-            lines += "  ${property.name} [shape=triangle];"
+            lines += "  \"${clazz.name}.${property.name}\" [shape=triangle,label=\"${clazz.name}::${property.name}\"];"
         }
         clazz.properties.forEach { property ->
-            lines += "  ${clazz.name} -> ${property.name}"
+            lines += "  \"${clazz.name}\" -> \"${clazz.name}.${property.name}\""
         }
     }
 
@@ -934,14 +933,14 @@ fun programToDot(program: IRParser.Program): String {
         clazz.properties.forEach { property ->
             // Link to the first basic block inside method:
             if (property.method.basicBlocks.isNotEmpty()) {
-                lines += "  \"${property.name}\" -> \"${property.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${property.name}.bb${property.method.basicBlocks.first().id}\"];"
+                lines += "  \"${clazz.name}.${property.name}\" -> \"${clazz.name}.${property.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${property.name}.bb${property.method.basicBlocks.first().id}\"];"
             }
 
             // Basic blocks successors:
             property.method.basicBlocks.forEach { bb ->
                 bb.successors.forEach { succ ->
-                    lines += "  \"${property.name}.bb${bb.id}.0\" -> \"${property.name}.bb${succ}.0\"" +
-                        " [ltail=\"${property.name}.bb${bb.id}\",lhead=\"${property.name}.bb${succ}\"];"
+                    lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.0\" -> \"${clazz.name}.${property.name}.bb${succ}.0\"" +
+                        " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
                 }
             }
 
@@ -949,12 +948,12 @@ fun programToDot(program: IRParser.Program): String {
             property.method.basicBlocks.forEach { bb ->
                 // BASIC BLOCK
                 lines += ""
-                lines += "  subgraph \"${property.name}.bb${bb.id}\" {"
+                lines += "  subgraph \"${clazz.name}.${property.name}.bb${bb.id}\" {"
                 lines += "    cluster=true;"
-                lines += "    label=\"BB ${bb.id}\";"
+                lines += "    label=\"BB ${bb.id}\\nsuccessors = ${bb.successors}\";"
 
                 if (bb.insts.isEmpty()) {
-                    lines += "    \"${property.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
+                    lines += "    \"${clazz.name}.${property.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
                 }
 
                 // Instructions inside basic block:
@@ -1001,7 +1000,7 @@ fun programToDot(program: IRParser.Program): String {
                         labelLines += "immediate = ${inst.immediate}"
                     }
                     // INSTRUCTION
-                    lines += "    \"${property.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
+                    lines += "    \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
                         labelLines.joinToString("") { "${it}\\l" }
                     }\"];"
                 }
@@ -1010,7 +1009,7 @@ fun programToDot(program: IRParser.Program): String {
                 if (bb.insts.isNotEmpty()) {
                     lines += "    ${
                         List(bb.insts.size) { i ->
-                            "\"${property.name}.bb${bb.id}.${i}\""
+                            "\"${clazz.name}.${property.name}.bb${bb.id}.${i}\""
                         }.joinToString(" -> ")
                     };"
                 }
