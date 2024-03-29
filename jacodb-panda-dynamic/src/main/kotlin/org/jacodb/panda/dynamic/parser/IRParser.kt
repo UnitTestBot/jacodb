@@ -67,6 +67,7 @@ import org.jacodb.panda.dynamic.api.PandaThrowInst
 import org.jacodb.panda.dynamic.api.PandaToNumericExpr
 import org.jacodb.panda.dynamic.api.PandaType
 import org.jacodb.panda.dynamic.api.PandaTypeofExpr
+import org.jacodb.panda.dynamic.api.PandaUndefinedConstant
 import org.jacodb.panda.dynamic.api.PandaValue
 import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
 import org.jacodb.panda.dynamic.api.TODOConstant
@@ -416,15 +417,6 @@ class IRParser(jsonPath: String) {
                 }
             }
 
-            /*opcode == "CastValueToAnyType" -> {
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, inputs[0])
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
-            }*/
-
             opcode == "Intrinsic.eq" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(
@@ -590,13 +582,6 @@ class IRParser(jsonPath: String) {
                 }
             }
 
-//            opcode == "Intrinsic.ldundefined" -> {
-//                val lv = PandaLocalVar(method.currentLocalVarId++)
-//                val assign = PandaAssignInst(locationFromOp(this), lv, PandaUndefinedConstant)
-//                outputs.forEach { output -> addInput(method, id(), output, lv) }
-//                method.insts.add(assign)
-//            }
-
             opcode == "Intrinsic.less" -> {
                 val ltExpr = PandaLtExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
@@ -608,8 +593,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.returnundefined" -> {
-                // TODO: consider 'returnValue = PandaUndefinedConstant'
-                val inst = PandaReturnInst(locationFromOp(this), null)
+                val inst = PandaReturnInst(locationFromOp(this), PandaUndefinedConstant)
                 method.insts.add(inst)
             }
 
@@ -788,7 +772,6 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.sub2" -> {
-                // TODO: Inputs are unordered, so we need to find the right order by inst.inputs
                 val subExpr = PandaSubExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, subExpr)
@@ -809,7 +792,6 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.div2" -> {
-                // TODO: Inputs are unordered, so we need to find the right order by inst.inputs
                 val divExpr = PandaDivExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, divExpr)
@@ -828,7 +810,7 @@ class IRParser(jsonPath: String) {
                 method.insts.add(assign)
             }
 
-            else -> getInstType(this, method)
+            else -> checkIgnoredInstructions(this)
         }
 
         matchBasicBlockInstructionId(bb, method.currentId)
@@ -870,7 +852,7 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    private fun getInstType(op: ProgramInst, method: ProgramMethod) = with(op) {
+    private fun checkIgnoredInstructions(op: ProgramInst) = with(op) {
         when (opcode) {
             // Unuseful
             "SaveState" -> {}

@@ -89,7 +89,6 @@ interface PandaConditionExpr : PandaBinaryExpr {
 
 enum class PandaCmpOp {
     EQ, NE, LT, LE, GT, GE
-    // TODO: expand
 }
 
 class PandaCmpExpr(
@@ -361,8 +360,7 @@ class PandaToNumericExpr(
     override val operands: List<PandaValue>
         get() = listOf(value)
 
-    // TODO: fix
-    override fun toString(): String = "typeof $value"
+    override fun toString(): String = "numeric($value)"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaToNumericExpr(this)
