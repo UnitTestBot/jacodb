@@ -25,5 +25,5 @@ interface ActorSystem<Message> {
 
     suspend fun <R> ack(messageBuilder: (Channel<R>) -> Message): R
 
-    suspend fun awaitTermination()
+    suspend fun awaitCompletion()
 }

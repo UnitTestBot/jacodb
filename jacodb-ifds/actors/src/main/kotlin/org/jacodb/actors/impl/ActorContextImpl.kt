@@ -24,18 +24,18 @@ import org.jacodb.actors.api.Factory
 import org.jacodb.actors.impl.workers.ActorWorker
 import kotlin.coroutines.CoroutineContext
 
-internal class ActorContextImpl<M>(
+internal class ActorContextImpl<Message>(
     private val spawner: ActorSpawner,
-    private val worker: ActorWorker<M>,
+    private val worker: ActorWorker<Message>,
     override val logger: KLogger,
-) : ActorContext<M>, ActorSpawner by spawner {
+) : ActorContext<Message>, ActorSpawner by spawner {
 
-    override val self: ActorRef<M>
+    override val self: ActorRef<Message>
         get() = worker.self
 
     fun launch(
         coroutineContext: CoroutineContext,
-        factory: Factory<M>,
+        factory: Factory<Message>,
     ) {
         val actor = factory.run { create() }
         worker.launchLoop(coroutineContext, actor)

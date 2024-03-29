@@ -16,20 +16,20 @@
 
 package org.jacodb.actors.impl
 
+import kotlinx.coroutines.channels.Channel
+import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
 import org.jacodb.actors.api.Factory
 import org.jacodb.actors.api.options.SpawnOptions
-import org.jacodb.actors.impl.workers.ActorWorker
+import org.jacodb.actors.impl.workers.InternalActorWorker
+import org.jacodb.actors.impl.workers.UserActorWorker
 import org.jacodb.actors.impl.workers.WorkerFactory
-import kotlinx.coroutines.channels.Channel
-import mu.KotlinLogging.logger
 
 internal class ActorSpawnerImpl(
     private val self: ActorPath,
     private val system: ActorSystemImpl<*>,
-    private val workerFactory: WorkerFactory,
 ) : ActorSpawner {
     private val children = hashMapOf<String, ActorRefImpl<*>>()
 
@@ -37,16 +37,34 @@ internal class ActorSpawnerImpl(
         name: String,
         options: SpawnOptions,
         factory: Factory<ChildMessage>,
+    ): ActorRefImpl<ChildMessage> =
+        spawnImpl(name, options, factory) { ref, channel, system ->
+            UserActorWorker(ref, channel, system.scope, system.watcher)
+        }
+
+    internal fun <ChildMessage> spawnInternalActor(
+        name: String,
+        options: SpawnOptions,
+        factory: Factory<ChildMessage>,
+    ): ActorRefImpl<ChildMessage> =
+        spawnImpl(name, options, factory) { ref, channel, system ->
+            InternalActorWorker(ref, channel, system.scope)
+        }
+
+    private fun <ChildMessage> spawnImpl(
+        name: String,
+        options: SpawnOptions,
+        factory: Factory<ChildMessage>,
+        workerFactory: WorkerFactory<ChildMessage>,
     ): ActorRefImpl<ChildMessage> {
         @Suppress("UNCHECKED_CAST")
-        val channel = options.channelFactory.create() as Channel<Message>
-        val ref = createRef<ChildMessage>(name, channel)
+        val channel = options.channelFactory.create() as Channel<ChildMessage>
+        val ref = createRef(name, channel)
 
-        val spawner = ActorSpawnerImpl(ref.path, system, workerFactory)
+        val spawner = ActorSpawnerImpl(ref.path, system)
 
-        @Suppress("UNCHECKED_CAST")
-        val worker = workerFactory(ref, channel, system) as ActorWorker<ChildMessage>
-        val context = ActorContextImpl(spawner, worker, logger(ref.path.toString()))
+        val worker = workerFactory(ref, channel, system)
+        val context = ActorContextImpl(spawner, worker, logger(ref.toString()))
         context.launch(options.coroutineContext, factory)
 
         return ref
@@ -54,13 +72,13 @@ internal class ActorSpawnerImpl(
 
     private fun <ChildMessage> createRef(
         name: String,
-        channel: Channel<Message>,
+        channel: Channel<ChildMessage>,
     ): ActorRefImpl<ChildMessage> {
         if (children[name] != null) {
             error("$self already has $name child")
         }
         val path = self / name
-        val ref = ActorRefImpl<ChildMessage>(path, channel)
+        val ref = ActorRefImpl(path, channel)
         children[name] = ref
         return ref
     }

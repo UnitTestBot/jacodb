@@ -16,48 +16,42 @@
 
 package org.jacodb.actors.impl.workers
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onClosed
+import kotlinx.coroutines.channels.onSuccess
+import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorStatus
 import org.jacodb.actors.api.signal.Signal
 import org.jacodb.actors.impl.ActorRefImpl
-import org.jacodb.actors.impl.Die
-import org.jacodb.actors.impl.InternalMessage
-import org.jacodb.actors.impl.Message
-import org.jacodb.actors.impl.UserMessage
 import org.jacodb.actors.impl.actors.Snapshot
 import org.jacodb.actors.impl.actors.WatcherMessage
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.onSuccess
-import kotlinx.coroutines.launch
-import mu.KotlinLogging.logger
 import kotlin.coroutines.CoroutineContext
 
 
-internal class UserActorWorker<M>(
-    override val self: ActorRef<M>,
+internal class UserActorWorker<Message>(
+    override val self: ActorRef<Message>,
     override val channel: Channel<Message>,
     private val scope: CoroutineScope,
     private val watcher: ActorRefImpl<WatcherMessage>,
-) : ActorWorker<M> {
+) : ActorWorker<Message> {
 
     private var received = 0
     private var sent = 0
     private var status = ActorStatus.IDLE
-
-    private val handler = CoroutineExceptionHandler { _, it ->
-        System.err.println("$self: ${it.stackTraceToString()}")
-    }
+    private val job = Job()
 
     override fun launchLoop(
         coroutineContext: CoroutineContext,
-        actor: Actor<M>,
+        actor: Actor<Message>,
     ) {
-        scope.launch(coroutineContext + handler) {
+        scope.launch(job) {
             sendInternal(watcher, WatcherMessage.Register(self))
             loop(actor)
+            actor.receive(Signal.PostStop)
         }
     }
 
@@ -71,31 +65,38 @@ internal class UserActorWorker<M>(
     }
 
     private suspend fun loop(
-        actor: Actor<M>,
+        actor: Actor<Message>,
     ) {
-        while (true) {
-            val receiveResult = channel.tryReceive()
+        var running = true
+        while (running) {
+            var receiveResult = channel.tryReceive()
+            if (receiveResult.isFailure) {
+                processEmptyChannel()
+                receiveResult = channel.receiveCatching()
+            }
             receiveResult
+                .onClosed {
+                    processEmptyChannel()
+                    running = false
+                }
                 .onSuccess { message ->
                     processMessage(actor, message)
                 }
-            if (receiveResult.isFailure) {
-                processEmptyChannel()
-                val result = channel.receive()
-                processMessage(actor, result)
-            }
         }
     }
 
     private suspend fun processMessage(
-        actor: Actor<M>,
+        actor: Actor<Message>,
         message: Message,
     ) {
-        @Suppress("UNCHECKED_CAST")
-        when (message) {
-            is UserMessage<*> -> processUserMessage(actor, message.message as M)
-            is InternalMessage -> processInternalMessage(actor, message)
+        if (actor.flag) {
+            received++
         }
+        if (status == ActorStatus.IDLE) {
+            status = ActorStatus.BUSY
+            watcher.send(WatcherMessage.UpdateSnapshot(self, Snapshot(status, sent, received)))
+        }
+        actor.receive(message)
     }
 
     private suspend fun processEmptyChannel() {
@@ -105,29 +106,4 @@ internal class UserActorWorker<M>(
             watcher.send(snapshot)
         }
     }
-
-    private suspend fun processUserMessage(actor: Actor<M>, message: M) {
-        if (actor.flag) {
-            received++
-        }
-
-        if (status == ActorStatus.IDLE) {
-            status = ActorStatus.BUSY
-            watcher.send(WatcherMessage.UpdateSnapshot(self, Snapshot(status, sent, received)))
-        }
-
-        actor.receive(message)
-    }
-
-    private suspend fun processInternalMessage(actor: Actor<M>, message: InternalMessage) {
-        when (message) {
-            Die -> {
-                channel.close()
-                actor.receive(Signal.PostStop)
-            }
-        }
-    }
 }
-
-internal val userActorWorkerFactory: WorkerFactory =
-    { self, channel, system -> UserActorWorker(self, channel, system.scope, system.watcher) }

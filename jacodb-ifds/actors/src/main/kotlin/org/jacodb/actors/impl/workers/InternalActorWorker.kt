@@ -16,25 +16,22 @@
 
 package org.jacodb.actors.impl.workers
 
-import org.jacodb.actors.api.Actor
-import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.impl.ActorRefImpl
-import org.jacodb.actors.impl.Message
-import org.jacodb.actors.impl.UserMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import org.jacodb.actors.api.Actor
+import org.jacodb.actors.api.ActorRef
+import org.jacodb.actors.impl.ActorRefImpl
 import kotlin.coroutines.CoroutineContext
 
-
-internal class InternalActorWorker<M>(
-    override val self: ActorRef<M>,
+internal class InternalActorWorker<Message>(
+    override val self: ActorRef<Message>,
     override val channel: Channel<Message>,
     private val scope: CoroutineScope,
-) : ActorWorker<M> {
+) : ActorWorker<Message> {
     override fun launchLoop(
         coroutineContext: CoroutineContext,
-        actor: Actor<M>,
+        actor: Actor<Message>,
     ) {
         scope.launch(coroutineContext) {
             loop(actor)
@@ -46,15 +43,10 @@ internal class InternalActorWorker<M>(
     }
 
     private suspend fun loop(
-        actor: Actor<M>,
+        actor: Actor<Message>,
     ) {
         for (message in channel) {
-            @Suppress("UNCHECKED_CAST")
-            val userMessage = (message as UserMessage<M>).message
-            actor.receive(userMessage)
+            actor.receive(message)
         }
     }
 }
-
-internal val internalActorWorkerFactory: WorkerFactory =
-    { self, channel, system -> InternalActorWorker(self, channel, system.scope) }

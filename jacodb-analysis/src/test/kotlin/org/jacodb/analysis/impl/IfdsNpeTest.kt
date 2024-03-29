@@ -221,7 +221,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
             }
         }
 
-        system.awaitTermination()
+        system.awaitCompletion()
         val results = system.ack { ObtainResults(it) }
         results.map { it as TaintVulnerability }
     }

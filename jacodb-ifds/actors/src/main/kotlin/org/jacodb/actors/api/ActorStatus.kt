@@ -17,6 +17,6 @@
 package org.jacodb.actors.api
 
 enum class ActorStatus {
-    BUSY,
-    IDLE
+    IDLE,
+    BUSY
 }

@@ -27,8 +27,8 @@ import mu.KotlinLogging.logger
 import java.util.concurrent.atomic.AtomicIntegerArray
 import kotlin.system.measureTimeMillis
 
-const val CNT = 1_000_000
-const val SLEEP = 0L
+const val CNT = 1_000
+const val SLEEP = 1L
 const val PRODUCERS = 10
 
 class Msg(val id: Int, val x: Int)
@@ -41,10 +41,10 @@ sealed interface ConsumerMessage {
 private var sums = AtomicIntegerArray(PRODUCERS)
 
 class Consumer(
-    total: Int,
 ) : Actor<ConsumerMessage> {
 
     override suspend fun receive(message: ConsumerMessage) {
+        delay(SLEEP)
         when (message) {
             is ConsumerMessage.Msg -> sums.addAndGet(message.id, message.x)
             is ConsumerMessage.Ack -> {}
@@ -77,9 +77,9 @@ sealed interface RootMessage {
 context(ActorContext<RootMessage>)
 class Root : Actor<RootMessage> {
     //    private val consumers = spawn("consumer") { Consumer(PRODUCERS) }
-    private val consumers = spawn("consumer", factory = firstReadyRouter(PRODUCERS) {
-        Consumer(PRODUCERS)
-    }
+    private val consumers = spawn(
+        "consumer",
+        factory = firstReadyRouter(2) { Consumer() }
     )
 
     private val producers = List(PRODUCERS) {
@@ -112,7 +112,7 @@ suspend fun main() {
     val system = systemOf("example", SpawnOptions.default, ::Root)
     val ms = measureTimeMillis {
         system.send(RootMessage.Start)
-        system.awaitTermination()
+        system.awaitCompletion()
         logger.info { List(PRODUCERS) { sums.get(it) } }
     }
     logger.info { "Finished in $ms" }

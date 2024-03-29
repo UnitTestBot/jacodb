@@ -20,8 +20,6 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.Factory
 import org.jacodb.actors.api.options.SpawnOptions
-import org.jacodb.actors.impl.UserMessage
-
 
 context(ActorContext<Message>)
 internal class FirstReadyRouter<Message>(
@@ -42,6 +40,6 @@ internal class FirstReadyRouter<Message>(
     }
 
     override suspend fun receive(message: Message) {
-        channel.send(UserMessage(message))
+        channel.send(message)
     }
 }

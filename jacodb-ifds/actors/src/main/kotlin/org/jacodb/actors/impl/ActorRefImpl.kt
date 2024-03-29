@@ -20,13 +20,13 @@ import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import kotlinx.coroutines.channels.Channel
 
-internal class ActorRefImpl<M>(
+internal class ActorRefImpl<Message>(
     override val path: ActorPath,
     private val channel: Channel<Message>,
-) : ActorRef<M> {
+) : ActorRef<Message> {
     override fun toString(): String = "actor@$path"
 
-    internal suspend fun send(message: M) {
-        channel.send(UserMessage(message))
+    internal suspend fun send(message: Message) {
+        channel.send(message)
     }
 }
