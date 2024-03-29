@@ -906,3 +906,53 @@ class IRParser(jsonPath: String) {
         else -> TODOConstant(op.value.toString())
     }
 }
+
+fun programToDot(program: IRParser.Program): String {
+    val lines: MutableList<String> = mutableListOf()
+    lines += "digraph {"
+
+    program.classes.forEach { clazz ->
+        lines += "  ${clazz.name} [shape=diamond]"
+        clazz.properties.forEach { property ->
+            lines += "  ${clazz.name} -> ${property.name}"
+        }
+        clazz.properties.forEach { property ->
+            lines += "  ${property.name} [shape=ellipse]"
+            property.method.basicBlocks.forEachIndexed { i, bb ->
+                if (i == 0) {
+                    lines += "  ${property.name} -> \"${property.name}.${bb.id}\""
+                } else {
+                    lines += "  ${property.name} -> \"${property.name}.${bb.id}\" [style=dotted,dir=none]"
+                }
+            }
+            lines += "  { rank=same"
+            property.method.basicBlocks.forEach { bb ->
+                lines += "  \"${property.name}.${bb.id}\" [shape=box]"
+            }
+            lines += "  }"
+            property.method.basicBlocks.forEach { bb ->
+                bb.successors.forEach { succ ->
+                    lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${succ}\" [style=dashed,label=\"succ\"]"
+                }
+                if (bb.insts.isNotEmpty()) {
+                    lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${bb.insts.first().id}\""
+                }
+                for ((cur, next) in bb.insts.zipWithNext()) {
+                    lines += "  \"${property.name}.${cur.id}\" -> \"${property.name}.${next.id}\""
+                }
+            }
+        }
+    }
+
+    lines += "}"
+    return lines.joinToString("\n")
+}
+
+fun IRParser.Program.dumpDot(file: File) {
+    val s = programToDot(this)
+    file.writeText(s)
+}
+
+fun IRParser.Program.dumpDot(path: String) {
+    dumpDot(File(path))
+}

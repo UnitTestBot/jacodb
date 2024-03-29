@@ -17,16 +17,21 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.dumpDot
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import java.io.File
 import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
 
 class IRParserTest {
-    private fun loadIR(fileName: String = "TypeMismatch"): IRParser {
-        val sampleFilePath = javaClass.getResource("/samples/$fileName.json")?.path ?: ""
-        return IRParser(sampleFilePath)
+
+    companion object {
+        private fun loadIR(fileName: String = "DataFlowSecurity"): IRParser {
+            val sampleFilePath = this::class.java.getResource("/samples/$fileName.json")?.path ?: ""
+            return IRParser(sampleFilePath)
+        }
     }
 
     @Test
@@ -112,6 +117,28 @@ class IRParserTest {
                     }
                 }
             }
+        }
+    }
+
+    object TestDot {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val parser = loadIR("x")
+            val program = parser.getProgram()
+            val project = parser.getProject()
+            println(program)
+            println(project)
+
+            val dotFile = File("x")
+            program.dumpDot(dotFile)
+            for (format in listOf("pdf", "png")) {
+                val p = Runtime.getRuntime().exec("dot -T$format -O $dotFile")
+                p.waitFor()
+                print(p.inputStream.bufferedReader().readText())
+                print(p.errorStream.bufferedReader().readText())
+            }
+            dotFile.renameTo(dotFile.resolveSibling(dotFile.name + ".dot"))
+            println("Generated dot file: ${dotFile.absolutePath}")
         }
     }
 }
