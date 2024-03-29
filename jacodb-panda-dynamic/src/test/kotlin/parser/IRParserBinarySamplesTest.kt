@@ -29,17 +29,20 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class BinarySamplesTest {
-    private fun loadIR(fileName: String): IRParser {
-        val sampleFilePath = javaClass.getResource("/samples/binary/$fileName.json")?.path ?: ""
-        return IRParser(sampleFilePath)
+class IRParserBinarySamplesTest {
+
+    companion object {
+        private fun loadIR(fileName: String): IRParser {
+            val sampleFilePath = this::class.java.getResource("/samples/binary/$fileName.json")?.path ?: ""
+            return IRParser(sampleFilePath)
+        }
     }
 
     @Test
     fun `test parser on binary subtraction`() {
         val irParser = loadIR("Subtraction")
-        val programIR = irParser.getProgramIR()
-        programIR.classes.forEach { cls ->
+        val program = irParser.getProgram()
+        program.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 val pandaMethod = property.method.pandaMethod
                 Assertions.assertNotNull(pandaMethod.name)

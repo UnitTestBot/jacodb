@@ -25,10 +25,10 @@ import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IRParserTest {
+class IRParserSamplesTest {
 
     companion object {
-        private fun loadIR(fileName: String = "DataFlowSecurity"): IRParser {
+        private fun loadIR(fileName: String): IRParser {
             val sampleFilePath = this::class.java.getResource("/samples/$fileName.json")?.path ?: ""
             return IRParser(sampleFilePath)
         }
@@ -36,14 +36,14 @@ class IRParserTest {
 
     @Test
     fun getProject() {
-        val irParser = loadIR()
+        val irParser = loadIR("DataFlowSecurity")
         val pandaProject = irParser.getProject()
         assertNotNull(pandaProject)
     }
 
     @Test
     fun getProgramIR() {
-        val irParser = loadIR()
+        val irParser = loadIR("DataFlowSecurity")
         val programIR = irParser.getProgram()
         val classes = programIR.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
@@ -59,7 +59,7 @@ class IRParserTest {
 
     @Test
     fun getPandaMethods() {
-        val irParser = loadIR()
+        val irParser = loadIR("DataFlowSecurity")
         val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
@@ -74,7 +74,7 @@ class IRParserTest {
 
     @Test
     fun getSetOfProgramOpcodes() {
-        val irParser = loadIR()
+        val irParser = loadIR("DataFlowSecurity")
         val programIR = irParser.getProgram()
         val opcodes = programIR.classes.asSequence()
             .flatMap { it.properties }
@@ -87,7 +87,7 @@ class IRParserTest {
 
     @Test
     fun printMethodsInstructions() {
-        val irParser = loadIR()
+        val irParser = loadIR("DataFlowSecurity")
         val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->

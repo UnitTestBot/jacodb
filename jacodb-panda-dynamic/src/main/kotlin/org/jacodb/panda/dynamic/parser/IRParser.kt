@@ -176,7 +176,6 @@ class IRParser(jsonPath: String) {
             }
         }
 
-
         fun setClass(c: ProgramClass?) {
             clazz = c
         }
@@ -240,6 +239,7 @@ class IRParser(jsonPath: String) {
         var opcode: String,
         val operandsType: String? = null,
         val operator: String? = null,
+        @SerialName("string_data")
         val stringData: String? = null,
         val stringOffset: Int? = null,
         val type: String? = null,
@@ -912,12 +912,14 @@ fun programToDot(program: IRParser.Program): String {
     lines += "digraph {"
 
     program.classes.forEach { clazz ->
+        // CLASS
         lines += "  ${clazz.name} [shape=diamond]"
         clazz.properties.forEach { property ->
             lines += "  ${clazz.name} -> ${property.name}"
         }
         clazz.properties.forEach { property ->
-            lines += "  ${property.name} [shape=ellipse]"
+            // PROPERTY
+            lines += "  ${property.name} [shape=triangle]"
             property.method.basicBlocks.forEachIndexed { i, bb ->
                 if (i == 0) {
                     lines += "  ${property.name} -> \"${property.name}.${bb.id}\""
@@ -927,18 +929,68 @@ fun programToDot(program: IRParser.Program): String {
             }
             lines += "  { rank=same"
             property.method.basicBlocks.forEach { bb ->
-                lines += "  \"${property.name}.${bb.id}\" [shape=box]"
+                // BASIC BLOCK
+                lines += "  \"${property.name}.${bb.id}\" [shape=ellipse,label=\"BB ${bb.id}\"]"
             }
             lines += "  }"
             property.method.basicBlocks.forEach { bb ->
+                // Basic block successors:
                 bb.successors.forEach { succ ->
                     lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${succ}\" [style=dashed,label=\"succ\"]"
                 }
+                // Instructions chain inside basic block:
                 if (bb.insts.isNotEmpty()) {
                     lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${bb.insts.first().id}\""
                 }
                 for ((cur, next) in bb.insts.zipWithNext()) {
                     lines += "  \"${property.name}.${cur.id}\" -> \"${property.name}.${next.id}\""
+                }
+                bb.insts.forEach { inst ->
+                    // INSTRUCTION
+                    val labelLines: MutableList<String> = mutableListOf()
+                    labelLines += "${inst.id}: ${inst.opcode}"
+                    if (inst.index != null) {
+                        labelLines += "index = ${inst.index}"
+                    }
+                    if (inst.imms.isNotEmpty()) {
+                        labelLines += "imms = ${inst.imms}"
+                    }
+                    if (inst.inputs.isNotEmpty()) {
+                        labelLines += "inputs = ${inst.inputs}"
+                    }
+                    if (inst.inputBlocks.isNotEmpty()) {
+                        labelLines += "inputBlocks = ${inst.inputBlocks}"
+                    }
+                    if (inst.operandsType != null) {
+                        labelLines += "operandsType = ${inst.operandsType}"
+                    }
+                    if (inst.operator != null) {
+                        labelLines += "operator = ${inst.operator}"
+                    }
+                    if (inst.stringData != null) {
+                        labelLines += "stringData = ${inst.stringData}"
+                    }
+                    if (inst.stringOffset != null) {
+                        labelLines += "stringOffset = ${inst.stringOffset}"
+                    }
+                    if (inst.type != null) {
+                        labelLines += "type = ${inst.type}"
+                    }
+                    if (inst.users.isNotEmpty()) {
+                        labelLines += "users = ${inst.users}"
+                    }
+                    if (inst.value != null) {
+                        labelLines += "value = ${inst.value}"
+                    }
+                    if (inst.visit != null) {
+                        labelLines += "visit = ${inst.visit}"
+                    }
+                    if (inst.immediate != null) {
+                        labelLines += "immediate = ${inst.immediate}"
+                    }
+                    lines += "  \"${property.name}.${inst.id}\" [shape=box,label=\"${
+                        labelLines.joinToString("") { "${it}\\l" }
+                    }\"]"
                 }
             }
         }
