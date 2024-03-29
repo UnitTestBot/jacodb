@@ -910,43 +910,55 @@ class IRParser(jsonPath: String) {
 fun programToDot(program: IRParser.Program): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "digraph {"
+    lines += "  compound=true;"
 
+    // Classes with properties:
     program.classes.forEach { clazz ->
+        lines += ""
+
         // CLASS
         lines += "  ${clazz.name} [shape=diamond]"
+
+        // Properties inside class:
+        clazz.properties.forEach { property ->
+            // PROPERTY
+            lines += "  ${property.name} [shape=triangle];"
+        }
         clazz.properties.forEach { property ->
             lines += "  ${clazz.name} -> ${property.name}"
         }
+    }
+
+    // Basic blocks inside each class:
+    program.classes.forEach { clazz ->
         clazz.properties.forEach { property ->
-            // PROPERTY
-            lines += "  ${property.name} [shape=triangle]"
-            property.method.basicBlocks.forEachIndexed { i, bb ->
-                if (i == 0) {
-                    lines += "  ${property.name} -> \"${property.name}.${bb.id}\""
-                } else {
-                    lines += "  ${property.name} -> \"${property.name}.${bb.id}\" [style=dotted,dir=none]"
+            // Link to the first basic block inside method:
+            if (property.method.basicBlocks.isNotEmpty()) {
+                lines += "  \"${property.name}\" -> \"${property.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${property.name}.bb${property.method.basicBlocks.first().id}\"];"
+            }
+
+            // Basic blocks successors:
+            property.method.basicBlocks.forEach { bb ->
+                bb.successors.forEach { succ ->
+                    lines += "  \"${property.name}.bb${bb.id}.0\" -> \"${property.name}.bb${succ}.0\"" +
+                        " [ltail=\"${property.name}.bb${bb.id}\",lhead=\"${property.name}.bb${succ}\"];"
                 }
             }
-            lines += "  { rank=same"
+
+            // Basic blocks with instructions:
             property.method.basicBlocks.forEach { bb ->
                 // BASIC BLOCK
-                lines += "  \"${property.name}.${bb.id}\" [shape=ellipse,label=\"BB ${bb.id}\"]"
-            }
-            lines += "  }"
-            property.method.basicBlocks.forEach { bb ->
-                // Basic block successors:
-                bb.successors.forEach { succ ->
-                    lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${succ}\" [style=dashed,label=\"succ\"]"
+                lines += ""
+                lines += "  subgraph \"${property.name}.bb${bb.id}\" {"
+                lines += "    cluster=true;"
+                lines += "    label=\"BB ${bb.id}\";"
+
+                if (bb.insts.isEmpty()) {
+                    lines += "    \"${property.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
                 }
-                // Instructions chain inside basic block:
-                if (bb.insts.isNotEmpty()) {
-                    lines += "  \"${property.name}.${bb.id}\" -> \"${property.name}.${bb.insts.first().id}\""
-                }
-                for ((cur, next) in bb.insts.zipWithNext()) {
-                    lines += "  \"${property.name}.${cur.id}\" -> \"${property.name}.${next.id}\""
-                }
-                bb.insts.forEach { inst ->
-                    // INSTRUCTION
+
+                // Instructions inside basic block:
+                bb.insts.forEachIndexed { i, inst ->
                     val labelLines: MutableList<String> = mutableListOf()
                     labelLines += "${inst.id}: ${inst.opcode}"
                     if (inst.index != null) {
@@ -988,10 +1000,22 @@ fun programToDot(program: IRParser.Program): String {
                     if (inst.immediate != null) {
                         labelLines += "immediate = ${inst.immediate}"
                     }
-                    lines += "  \"${property.name}.${inst.id}\" [shape=box,label=\"${
+                    // INSTRUCTION
+                    lines += "    \"${property.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
                         labelLines.joinToString("") { "${it}\\l" }
-                    }\"]"
+                    }\"];"
                 }
+
+                // Instructions chain:
+                if (bb.insts.isNotEmpty()) {
+                    lines += "    ${
+                        List(bb.insts.size) { i ->
+                            "\"${property.name}.bb${bb.id}.${i}\""
+                        }.joinToString(" -> ")
+                    };"
+                }
+
+                lines += "  }"
             }
         }
     }
