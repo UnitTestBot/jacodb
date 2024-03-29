@@ -79,7 +79,7 @@ private val logger = mu.KotlinLogging.logger {}
 class IRParser(jsonPath: String) {
 
     @Serializable
-    data class ProgramIR(val classes: List<ProgramClass>) {
+    data class Program(val classes: List<ProgramClass>) {
         override fun toString(): String {
             return classes.joinToString("\n")
         }
@@ -88,7 +88,7 @@ class IRParser(jsonPath: String) {
     @Serializable
     data class ProgramClass(
         val name: String,
-        val properties: List<Properties> = emptyList(),
+        val properties: List<ProgramProperty> = emptyList(),
     ) {
         @Transient
         val superClass: String = ""
@@ -105,7 +105,7 @@ class IRParser(jsonPath: String) {
     }
 
     @Serializable
-    data class Properties(
+    data class ProgramProperty(
         val method: ProgramMethod,
         val name: String,
     ) {
@@ -301,15 +301,15 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    fun getProgramIR(): ProgramIR {
-        val programIR: ProgramIR = Json.decodeFromString(json)
-        mapProgramIR(programIR)
-        return programIR
+    fun getProgram(): Program {
+        val program: Program = Json.decodeFromString(json)
+        mapProgramIR(program)
+        return program
     }
 
     fun getProject(): PandaProject {
-        val programIR: ProgramIR = Json.decodeFromString(json)
-        return mapProgramIR(programIR)
+        val program: Program = Json.decodeFromString(json)
+        return mapProgramIR(program)
     }
 
     private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
@@ -318,17 +318,17 @@ class IRParser(jsonPath: String) {
 
     private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
 
-    private fun mapProgramIR(programIR: ProgramIR): PandaProject {
-        mapIdToIRInputs(programIR)
+    private fun mapProgramIR(program: Program): PandaProject {
+        mapIdToIRInputs(program)
 
-        mapInstructions(programIR)
+        mapInstructions(program)
 
-        val classes = mapMethods(programIR)
+        val classes = mapMethods(program)
         return PandaProject(classes)
     }
 
-    private fun mapIdToIRInputs(programIR: ProgramIR) {
-        programIR.classes.forEach { clazz ->
+    private fun mapIdToIRInputs(program: Program) {
+        program.classes.forEach { clazz ->
             clazz.properties.forEach { property ->
                 property.method.basicBlocks.forEach { bb ->
                     bb.insts.forEach { inst ->
@@ -341,8 +341,8 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    private fun mapMethods(programIR: ProgramIR): List<PandaClass> {
-        return programIR.classes.map { clazz ->
+    private fun mapMethods(program: Program): List<PandaClass> {
+        return program.classes.map { clazz ->
             val pandaMethods = clazz.properties.map { property ->
                 property.method.also { method ->
                     val panda = method.pandaMethod
@@ -357,8 +357,8 @@ class IRParser(jsonPath: String) {
         }
     }
 
-    private fun mapInstructions(programIR: ProgramIR) {
-        val programInstructions = programIR.classes
+    private fun mapInstructions(program: Program) {
+        val programInstructions = program.classes
             .flatMap { it.properties }
             .flatMap { it.method.basicBlocks }
             .flatMap { it.insts }

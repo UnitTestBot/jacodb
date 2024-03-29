@@ -39,7 +39,7 @@ class IRParserTest {
     @Test
     fun getProgramIR() {
         val irParser = loadIR()
-        val programIR = irParser.getProgramIR()
+        val programIR = irParser.getProgram()
         val classes = programIR.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
         logger.info {
@@ -55,7 +55,7 @@ class IRParserTest {
     @Test
     fun getPandaMethods() {
         val irParser = loadIR()
-        val programIR = irParser.getProgramIR()
+        val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 val pandaMethod = property.method.pandaMethod
@@ -70,7 +70,7 @@ class IRParserTest {
     @Test
     fun getSetOfProgramOpcodes() {
         val irParser = loadIR()
-        val programIR = irParser.getProgramIR()
+        val programIR = irParser.getProgram()
         val opcodes = programIR.classes.asSequence()
             .flatMap { it.properties }
             .flatMap { it.method.basicBlocks }
@@ -83,7 +83,7 @@ class IRParserTest {
     @Test
     fun printMethodsInstructions() {
         val irParser = loadIR()
-        val programIR = irParser.getProgramIR()
+        val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 println(property)
@@ -94,7 +94,7 @@ class IRParserTest {
     @Test
     fun `test parser on TypeMismatch`() {
         val irParser = loadIR("TypeMismatch")
-        val programIR = irParser.getProgramIR()
+        val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 val pandaMethod = property.method.pandaMethod
