@@ -532,6 +532,16 @@ class IRParser(jsonPath: String) {
                 }
             }
 
+            opcode == "Intrinsic.greater" -> {
+                val gtExpr = PandaGtExpr(inputs[0], inputs[1])
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, gtExpr)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
             opcode == "Intrinsic.less" -> {
                 val ltExpr = PandaLtExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
