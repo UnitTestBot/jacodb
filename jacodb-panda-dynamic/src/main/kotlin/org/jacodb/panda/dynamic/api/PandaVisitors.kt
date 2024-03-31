@@ -47,6 +47,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaArgument(expr: PandaArgument): T
     fun visitPandaLoadedValue(expr: PandaLoadedValue): T
     fun visitPandaTODOConstant(expr: TODOConstant): T
+    fun visitPandaBoolConstant(expr: PandaBoolConstant): T
     fun visitPandaNumberConstant(expr: PandaNumberConstant): T
     fun visitPandaStringConstant(expr: PandaStringConstant): T
     fun visitPandaUndefinedConstant(expr: PandaUndefinedConstant): T

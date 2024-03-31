@@ -143,6 +143,30 @@ class TODOConstant(val value: String?) : PandaConstant {
     }
 }
 
+class PandaBoolConstant(val value: Boolean) : PandaConstant {
+    override val type: PandaType
+        get() = PandaBoolType
+
+    override fun toString() = value.toString()
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaBoolConstant(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PandaBoolConstant) return false
+
+        if (value != other.value) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
+}
+
 class PandaNumberConstant(val value: Int) : PandaConstant {
     override val type: PandaType
         get() = PandaNumberType
