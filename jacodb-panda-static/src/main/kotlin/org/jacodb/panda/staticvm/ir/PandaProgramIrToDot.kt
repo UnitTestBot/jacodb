@@ -17,41 +17,38 @@
 package org.jacodb.panda.staticvm.ir
 
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
-fun programToDot(program: PandaProgramIr): String {
+fun PandaProgramIr.toDot(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "digraph {"
-    lines += "  compound=true;"
     lines += "  rankdir=LR;"
+    lines += "  compound=true;"
+
+    val classes = this.classes
+        .filterNot { it.name.startsWith("std.") }
+        .filterNot { it.name.startsWith("escompat.") }
+        .filterNot { it.name.startsWith("FunctionalInterface") }
 
     // Classes with properties:
-    program.classes.forEach { clazz ->
-        if (clazz.name.startsWith("std.") || clazz.name.startsWith("FunctionalInterface") || clazz.name.startsWith("escompat.")) {
-            return@forEach
-        }
-
+    classes.forEach { clazz ->
         // CLASS
         lines += ""
         lines += "  \"${clazz.name}\" [shape=diamond]"
         // TODO: add fields+methods to the label for class
 
-        // // Fields inside class:
-        // clazz.fields.forEach { field ->
-        //     // FIELD
-        //     lines += "  \"${clazz.name}.${field.name}\" [shape=box,label=\"${clazz.name}::${field.name}\"];"
-        // }
+        val methods = clazz.methods
 
         // Methods inside class:
-        clazz.methods.forEach { method ->
+        methods.forEach { method ->
             // METHOD
             lines += "  \"${clazz.name}.${method.name}\" [shape=triangle,label=\"${clazz.name}::${method.name}\"];"
-        }
-        clazz.methods.forEach { property ->
-            lines += "  \"${clazz.name}\" -> \"${clazz.name}.${property.name}\""
+            lines += "  \"${clazz.name}\" -> \"${clazz.name}.${method.name}\""
         }
 
-        // Basic blocks inside class:
-        clazz.methods.forEach { method ->
+        // Basic blocks inside method:
+        methods.forEach { method ->
             // Link to the first basic block inside method:
             if (method.basicBlocks.isNotEmpty()) {
                 lines += "  \"${clazz.name}.${method.name}\" -> \"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}\"];"
@@ -76,18 +73,6 @@ fun programToDot(program: PandaProgramIr): String {
                 if (bb.insts.isEmpty()) {
                     lines += "    \"${clazz.name}.${method.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
                 }
-
-                // sealed interface PandaInstIr {
-                //     val id: String
-                //     val inputs: List<String>
-                //     val users: List<String>
-                //     val opcode: String
-                //     val type: String
-                //     val catchers: List<Int>
-                //
-                //     fun <T> accept(visitor: PandaInstIrVisitor<T>): T
-                // }
-
 
                 // Instructions inside basic block:
                 bb.insts.forEachIndexed { i, inst ->
@@ -127,8 +112,11 @@ fun programToDot(program: PandaProgramIr): String {
 }
 
 fun PandaProgramIr.dumpDot(file: File) {
-    val s = programToDot(this)
-    file.writeText(s)
+    file.writeText(toDot())
+}
+
+fun PandaProgramIr.dumpDot(path: Path) {
+    path.writeText(toDot())
 }
 
 fun PandaProgramIr.dumpDot(path: String) {

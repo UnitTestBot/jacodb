@@ -19,7 +19,17 @@ package org.jacodb.panda.staticvm.ir
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+sealed interface PandaInstIr {
+    val id: String
+    val inputs: List<String>
+    val users: List<String>
+    val opcode: String
+    val type: String
+    val catchers: List<Int>
 
+    fun <T> accept(visitor: PandaInstIrVisitor<T>): T
+}
 
 @Serializable
 sealed interface PandaComparisonInstIr : PandaInstIr {
@@ -162,7 +172,7 @@ data class PandaLoadStringInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    val string: String
+    val string: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadStringInstIr(this)
