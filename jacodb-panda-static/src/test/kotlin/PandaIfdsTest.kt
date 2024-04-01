@@ -49,12 +49,12 @@ class PandaIfdsTest {
 
     companion object : PandaStaticTraits
 
-    @OptIn(ExperimentalSerializationApi::class)
     private fun loadProjectForSample(programName: String): PandaProject {
-        val sampleFilePath = javaClass.getResource("/${programName}.ir")?.path ?: ""
-        val input = FileInputStream(sampleFilePath)
-        val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
-        return PandaProject.fromProgramInfo(program)
+        val stream = this::class.java.getResourceAsStream("/${programName}.ir")
+            ?: error("Could not find resource for program: '$programName'")
+        val program = PandaProgramIr.from(stream)
+        val project = PandaProject.fromProgramInfo(program)
+        return project
     }
 
     @Test

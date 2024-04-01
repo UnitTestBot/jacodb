@@ -16,8 +16,11 @@
 
 package org.jacodb.panda.staticvm.ir
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.panda.staticvm.classpath.AccessFlags
 import org.jacodb.panda.staticvm.classpath.PandaClass
 import org.jacodb.panda.staticvm.classpath.PandaField
@@ -28,15 +31,36 @@ import org.jacodb.panda.staticvm.classpath.PandaType
 import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 import org.jacodb.panda.staticvm.utils.applyFold
 import org.jacodb.panda.staticvm.utils.inTopsortOrder
+import java.io.File
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.inputStream
 
 @Serializable
 data class PandaProgramIr(
     val classes: List<PandaClassIr> = emptyList(),
 ) {
     companion object {
-        val json = Json {
+        private val json = Json {
             ignoreUnknownKeys = true
             classDiscriminator = "opcode"
+        }
+
+        fun fromJson(jsonString: String): PandaProgramIr {
+            return json.decodeFromString(jsonString)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun from(inputStream: InputStream): PandaProgramIr {
+            return json.decodeFromStream(inputStream)
+        }
+
+        fun from(file: File): PandaProgramIr {
+            return from(file.inputStream().buffered())
+        }
+
+        fun from(path: Path): PandaProgramIr {
+            return from(path.inputStream().buffered())
         }
     }
 

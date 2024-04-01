@@ -14,33 +14,33 @@
  *  limitations under the License.
  */
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.junit.jupiter.api.Test
-import java.io.FileInputStream
 
 internal class PandaIrDeserializationTest {
-    private val json = PandaProgramIr.json
-    private val sampleFilePath = javaClass.getResource("sample.ir")?.path!!
-    private val catchFilePath = javaClass.getResource("testCatch.ir")?.path!!
 
-    @OptIn(ExperimentalSerializationApi::class)
+    companion object {
+        private const val SAMPLE_FILE_PATH: String = "sample.ir"
+    }
+
     @Test
     fun deserializationTest() {
-        val input = FileInputStream(sampleFilePath)
-        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val filePath = SAMPLE_FILE_PATH
+        val stream = this::class.java.getResourceAsStream("/$filePath")
+            ?: error("Could not find resource: '$filePath'")
+        val program = PandaProgramIr.from(stream)
         val project = PandaProject.fromProgramInfo(program)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun catchTest() {
-        val input = FileInputStream(catchFilePath)
-        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val filePath = "testCatch.ir"
+        val stream = this::class.java.getResourceAsStream("/$filePath")
+            ?: error("Could not find resource: '$filePath'")
+        val program = PandaProgramIr.from(stream)
         val project = PandaProject.fromProgramInfo(program)
         val applicationGraph = PandaApplicationGraph(project)
     }
@@ -65,11 +65,12 @@ internal class PandaIrDeserializationTest {
     }
     */
 
-    @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun pandaClasspathFlowGraphTest() {
-        val input = FileInputStream(sampleFilePath)
-        val program = json.decodeFromStream<PandaProgramIr>(input)
+        val filePath = SAMPLE_FILE_PATH
+        val stream = this::class.java.getResourceAsStream("/$filePath")
+            ?: error("Could not find resource: '$filePath'")
+        val program = PandaProgramIr.from(stream)
         val project = PandaProject.fromProgramInfo(program)
         val method = project.findMethod("A.greet:i32;std.core.void;")
         val flowGraph = method.flowGraph()
