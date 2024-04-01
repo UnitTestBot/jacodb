@@ -87,7 +87,7 @@ fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<
 
 /**
  * Applies [operation] to [initial] object with all arguments from [Iterable] consecutively
- * */
+ */
 fun <T, A> Iterable<T>.applyFold(initial: A, operation: A.(T) -> Unit) =
     fold(initial) { acc, elem -> acc.apply { operation(elem) } }
 
