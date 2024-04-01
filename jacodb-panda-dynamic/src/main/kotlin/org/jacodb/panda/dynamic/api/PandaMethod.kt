@@ -74,7 +74,7 @@ open class PandaMethod(
             "arg ${it.index}: ${it.type.typeName}"
         }
 
-    override fun toString() = "function $name($signature): $returnType"
+    override fun toString(): String = "function $name($signature): $returnType"
 }
 
 class PandaStdMethod(

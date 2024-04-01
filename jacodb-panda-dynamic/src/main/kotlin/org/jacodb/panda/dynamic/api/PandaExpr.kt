@@ -116,7 +116,7 @@ class PandaCastExpr(
     override val operands: List<PandaValue>
         get() = listOf(operand)
 
-    override fun toString() = "($type) $operand"
+    override fun toString(): String = "($type) $operand"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaCastExpr(this)

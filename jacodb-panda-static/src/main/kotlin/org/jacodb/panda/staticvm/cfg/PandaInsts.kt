@@ -30,7 +30,7 @@ class PandaInstLocation(
 ) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
 
-    override fun toString() = "method.$index"
+    override fun toString(): String = "method.$index"
 
     override val lineNumber: Int
         get() = 0 // TODO("Not yet implemented")
@@ -44,7 +44,7 @@ class PandaInstRef(
         return this.index.compareTo(other.index)
     }
 
-    override fun toString() = index.toString()
+    override fun toString(): String = index.toString()
 }
 
 sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
@@ -65,7 +65,7 @@ class PandaDoNothingInst(
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString() = "NOP"
+    override fun toString(): String = "NOP"
 }
 
 class PandaParameterInst(
@@ -76,7 +76,7 @@ class PandaParameterInst(
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString() = "$lhv = arg$index"
+    override fun toString(): String = "$lhv = arg$index"
 }
 
 class PandaAssignInst(
@@ -109,7 +109,7 @@ class PandaIfInst(
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
 
-    override fun toString() = "if ($condition) goto ${trueBranch.index} else goto ${falseBranch.index}"
+    override fun toString(): String = "if ($condition) goto ${trueBranch.index} else goto ${falseBranch.index}"
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonIfInst(this)
@@ -126,7 +126,7 @@ class PandaGotoInst(
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString() = "goto ${target.index}"
+    override fun toString(): String = "goto ${target.index}"
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonGotoInst(this)
@@ -142,7 +142,7 @@ class PandaReturnInst(
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString() = "return " + (returnValue ?: "")
+    override fun toString(): String = "return " + (returnValue ?: "")
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonReturnInst(this)

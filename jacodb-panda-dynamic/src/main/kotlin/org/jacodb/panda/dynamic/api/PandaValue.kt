@@ -94,7 +94,7 @@ class PandaArgument(
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString() = "arg $index"
+    override fun toString(): String = "arg $index"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
@@ -123,7 +123,7 @@ class TODOConstant(val value: String?) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString() = value?.let { "TODOConstant($it)" } ?: "null"
+    override fun toString(): String = value?.let { "TODOConstant($it)" } ?: "null"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTODOConstant(this)
@@ -147,7 +147,7 @@ class PandaBoolConstant(val value: Boolean) : PandaConstant {
     override val type: PandaType
         get() = PandaBoolType
 
-    override fun toString() = value.toString()
+    override fun toString(): String = value.toString()
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaBoolConstant(this)
@@ -171,7 +171,7 @@ class PandaNumberConstant(val value: Int) : PandaConstant {
     override val type: PandaType
         get() = PandaNumberType
 
-    override fun toString() = value.toString()
+    override fun toString(): String = value.toString()
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNumberConstant(this)
@@ -195,7 +195,7 @@ class PandaStringConstant(val value: String) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString() = "\"$value\""
+    override fun toString(): String = "\"$value\""
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStringConstant(this)
@@ -362,7 +362,7 @@ class PandaLoadedValue(
         return visitor.visitPandaLoadedValue(this)
     }
 
-    override fun toString() = "Loaded[$instance.$obj]"
+    override fun toString(): String = "Loaded[$instance.$obj]"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

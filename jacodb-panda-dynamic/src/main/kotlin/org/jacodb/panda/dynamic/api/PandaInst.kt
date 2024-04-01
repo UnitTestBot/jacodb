@@ -70,7 +70,7 @@ class TODOInst(
     override val operands: List<PandaExpr>,
 ) : PandaInst {
 
-    override fun toString() = "$opcode(${operands.joinToString(separator = ", ")})"
+    override fun toString(): String = "$opcode(${operands.joinToString(separator = ", ")})"
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitTODOInst(this)
