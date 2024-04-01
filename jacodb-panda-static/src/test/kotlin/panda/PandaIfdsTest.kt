@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
+package panda
+
 import io.mockk.mockk
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -39,9 +39,8 @@ import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.io.FileInputStream
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -122,12 +121,12 @@ class PandaIfdsTest {
         logger.info { "good() method: $goodMethod" }
         val goodSinks = manager.analyze(listOf(goodMethod))
         logger.info { "Sinks in good(): $goodSinks" }
-        assertTrue(goodSinks.isEmpty())
+        Assertions.assertTrue(goodSinks.isEmpty())
 
         val badMethod = project.classes.flatMap { it.methods }.single { it.name == "bad" }
         logger.info { "bad() method: $badMethod" }
         val badSinks = manager.analyze(listOf(badMethod))
         logger.info { "Sinks in bad(): $badSinks" }
-        assertTrue(badSinks.isNotEmpty())
+        Assertions.assertTrue(badSinks.isNotEmpty())
     }
 }

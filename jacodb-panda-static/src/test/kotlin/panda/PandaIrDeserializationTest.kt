@@ -14,12 +14,16 @@
  *  limitations under the License.
  */
 
+package panda
+
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
+import org.jacodb.panda.staticvm.ir.dumpDot
 import org.junit.jupiter.api.Test
+import java.io.File
 
-internal class PandaIrDeserializationTest {
+class PandaIrDeserializationTest {
 
     companion object {
         private const val SAMPLE_FILE_PATH: String = "sample.ir"
@@ -74,5 +78,26 @@ internal class PandaIrDeserializationTest {
         val project = PandaProject.fromProgramInfo(program)
         val method = project.findMethod("A.greet:i32;std.core.void;")
         val flowGraph = method.flowGraph()
+    }
+
+    object TestDot {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val filePath = SAMPLE_FILE_PATH
+            val stream = this::class.java.getResourceAsStream("/$filePath")
+                ?: error("Could not find resource: '$filePath'")
+            val program = PandaProgramIr.from(stream)
+
+            val dotFile = File("x")
+            program.dumpDot(dotFile)
+            for (format in listOf("pdf", "png")) {
+                val p = Runtime.getRuntime().exec("dot -T$format -O $dotFile")
+                p.waitFor()
+                print(p.inputStream.bufferedReader().readText())
+                print(p.errorStream.bufferedReader().readText())
+            }
+            dotFile.renameTo(dotFile.resolveSibling(dotFile.name + ".dot"))
+            println("Generated dot file: ${dotFile.absolutePath}")
+        }
     }
 }
