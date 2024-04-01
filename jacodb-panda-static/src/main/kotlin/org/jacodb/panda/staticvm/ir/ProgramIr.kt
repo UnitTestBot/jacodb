@@ -161,7 +161,7 @@ data class PandaBasicBlockIr(
     val insts: List<PandaInstIr> = emptyList(),
     val isCatchBegin: Boolean = false,
     val isTryBegin: Boolean = false,
-    val isTryEnd: Boolean = false
+    val isTryEnd: Boolean = false,
 )
 
 @Serializable
