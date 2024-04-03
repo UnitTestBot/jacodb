@@ -109,20 +109,6 @@ class PandaCmpExpr(
     }
 }
 
-class PandaCastExpr(
-    override val type: PandaType,
-    val operand: PandaValue,
-) : PandaExpr {
-    override val operands: List<PandaValue>
-        get() = listOf(operand)
-
-    override fun toString(): String = "($type) $operand"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaCastExpr(this)
-    }
-}
-
 class PandaNeqExpr(
     override val lhv: PandaValue,
     override val rhv: PandaValue,
@@ -218,6 +204,20 @@ class PandaStrictEqExpr(
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStrictEqExpr(this)
+    }
+}
+
+class PandaCastExpr(
+    override val type: PandaType,
+    val operand: PandaValue,
+) : PandaExpr {
+    override val operands: List<PandaValue>
+        get() = listOf(operand)
+
+    override fun toString(): String = "($type) $operand"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaCastExpr(this)
     }
 }
 
