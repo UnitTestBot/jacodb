@@ -21,7 +21,58 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.Mappable
+import org.jacodb.panda.dynamic.api.PandaAddExpr
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaArgument
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaBoolConstant
+import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaClass
+import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
+import org.jacodb.panda.dynamic.api.PandaCmpExpr
+import org.jacodb.panda.dynamic.api.PandaCmpOp
+import org.jacodb.panda.dynamic.api.PandaConditionExpr
+import org.jacodb.panda.dynamic.api.PandaConstant
+import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
+import org.jacodb.panda.dynamic.api.PandaDivExpr
+import org.jacodb.panda.dynamic.api.PandaEqExpr
+import org.jacodb.panda.dynamic.api.PandaGeExpr
+import org.jacodb.panda.dynamic.api.PandaGtExpr
+import org.jacodb.panda.dynamic.api.PandaIfInst
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaInstLocation
+import org.jacodb.panda.dynamic.api.PandaInstRef
+import org.jacodb.panda.dynamic.api.PandaInstanceCallValue
+import org.jacodb.panda.dynamic.api.PandaInstanceCallValueImpl
+import org.jacodb.panda.dynamic.api.PandaLeExpr
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaLocalVar
+import org.jacodb.panda.dynamic.api.PandaLtExpr
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNeqExpr
+import org.jacodb.panda.dynamic.api.PandaNewExpr
+import org.jacodb.panda.dynamic.api.PandaNullConstant
+import org.jacodb.panda.dynamic.api.PandaNumberConstant
+import org.jacodb.panda.dynamic.api.PandaNumberType
+import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaProject
+import org.jacodb.panda.dynamic.api.PandaReturnInst
+import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
+import org.jacodb.panda.dynamic.api.PandaStringConstant
+import org.jacodb.panda.dynamic.api.PandaSubExpr
+import org.jacodb.panda.dynamic.api.PandaThis
+import org.jacodb.panda.dynamic.api.PandaThrowInst
+import org.jacodb.panda.dynamic.api.PandaToNumericExpr
+import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaTypeofExpr
+import org.jacodb.panda.dynamic.api.PandaUndefinedConstant
+import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
+import org.jacodb.panda.dynamic.api.TODOConstant
+import org.jacodb.panda.dynamic.api.TODOExpr
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -44,9 +95,7 @@ class IRParser(jsonPath: String) {
         val superClass: String = ""
 
         init {
-            properties.forEach {
-                it.setClass(this)
-            }
+            properties.forEach { it.method.clazz = this }
         }
 
         override fun toString(): String {
@@ -59,10 +108,6 @@ class IRParser(jsonPath: String) {
         val method: ProgramMethod,
         val name: String,
     ) {
-        fun setClass(c: ProgramClass) {
-            method.setClass(c)
-        }
-
         override fun toString(): String {
             return "Property: $name\n$method"
         }
@@ -80,7 +125,8 @@ class IRParser(jsonPath: String) {
     ) {
 
         @Transient
-        private var clazz: ProgramClass? = null
+        lateinit var clazz: ProgramClass
+            internal set
 
         @Transient
         val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
@@ -126,20 +172,14 @@ class IRParser(jsonPath: String) {
             }
         }
 
-        fun setClass(c: ProgramClass?) {
-            clazz = c
-        }
-
-        fun getClass() = clazz ?: error("Class not set for method $name")
-
         fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs[op.id()].orEmpty().filterNotNull()
 
         init {
-            basicBlocks.forEach { it.setMethod(this) }
+            basicBlocks.forEach { it.method = this }
         }
 
         override fun toString(): String {
-            return "Method: $name\nClass: ${clazz?.name}\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
+            return "Method: $name\nClass: ${clazz.name}\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
         }
     }
 
@@ -152,7 +192,8 @@ class IRParser(jsonPath: String) {
     ) {
 
         @Transient
-        private var method: ProgramMethod? = null
+        lateinit var method: ProgramMethod
+            internal set
 
         @Transient
         var start: Int = -1
@@ -161,7 +202,7 @@ class IRParser(jsonPath: String) {
         var end: Int = -1
 
         init {
-            insts.forEach { it.setBasicBlock(this) }
+            insts.forEach { it.basicBlock = this }
         }
 
         override fun toString(): String {
@@ -169,12 +210,6 @@ class IRParser(jsonPath: String) {
                 "Basic block id: $id\nInstructions:\n${it.joinToString("\n")}"
             } ?: "Basic block id: $id\nNo instructions"
         }
-
-        fun setMethod(m: ProgramMethod) {
-            method = m
-        }
-
-        fun getMethod(): ProgramMethod = method ?: error("Method not set for basic block $id")
     }
 
     @Serializable
@@ -189,7 +224,6 @@ class IRParser(jsonPath: String) {
         var opcode: String,
         val operandsType: String? = null,
         val operator: String? = null,
-        @SerialName("string_data")
         val stringData: String? = null,
         val stringOffset: Int? = null,
         val type: String? = null,
@@ -199,8 +233,11 @@ class IRParser(jsonPath: String) {
         val immediate: Int? = null,
     ) {
 
-        private var basicBlock: ProgramBasicBlock? = null
+        @Transient
+        lateinit var basicBlock: ProgramBasicBlock
+            internal set
 
+        @Transient
         private val _id: Int = id.trimId()
 
         init {
@@ -210,12 +247,6 @@ class IRParser(jsonPath: String) {
         private fun String.trimId(): Int {
             return this.filter { it.isDigit() }.toInt()
         }
-
-        fun setBasicBlock(bb: ProgramBasicBlock) {
-            basicBlock = bb
-        }
-
-        fun getBasicBlock(): ProgramBasicBlock = basicBlock ?: error("Basic block not set for inst $id")
 
         fun id(): Int = _id
 
@@ -262,9 +293,9 @@ class IRParser(jsonPath: String) {
         return mapProgramIR(program)
     }
 
-    private fun ProgramInst.currentMethod() = this.getBasicBlock().getMethod()
+    private fun ProgramInst.currentBB() = this.basicBlock
 
-    private fun ProgramInst.currentBB() = this.getBasicBlock()
+    private fun ProgramInst.currentMethod() = currentBB().method
 
     private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
 
@@ -579,7 +610,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     instance = instCallValue.instance,
@@ -614,7 +645,7 @@ class IRParser(jsonPath: String) {
                     addInput(
                         method, id(), output,
                         PandaInstanceCallValueImpl(
-                            PandaThis(PandaClassTypeImpl(method.getClass().name)),
+                            PandaThis(PandaClassTypeImpl(method.clazz.name)),
                             PandaStringConstant(name)
                         )
                     )
@@ -629,7 +660,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = emptyList(),
@@ -646,7 +677,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = inputs.filterNot { it == instCallValue },
@@ -663,7 +694,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = listOf(inputs[1], inputs[2]),
@@ -680,7 +711,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = listOf(inputs[1], inputs[2], inputs[3]),
@@ -704,7 +735,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = emptyList(),
@@ -722,7 +753,7 @@ class IRParser(jsonPath: String) {
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.getClass().name
+                            method.clazz.name
                         )
                     },
                     args = args,
@@ -838,11 +869,11 @@ class IRParser(jsonPath: String) {
         }
 
         val trueBranch = lazy {
-            op.currentMethod().idToBB[op.getBasicBlock().successors[0]]!!.start
+            op.currentMethod().idToBB[op.basicBlock.successors[0]]!!.start
         }
 
         val falseBranch = lazy {
-            op.currentMethod().idToBB[op.getBasicBlock().successors[1]]!!.start
+            op.currentMethod().idToBB[op.basicBlock.successors[1]]!!.start
         }
 
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
