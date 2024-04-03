@@ -306,6 +306,23 @@ class PandaDivExpr(
     }
 }
 
+class PandaNegExpr(
+    override val typeName: String,
+    val arg: PandaValue,
+): PandaExpr {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf(arg)
+
+    override fun toString(): String = "-$arg"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaNegExpr(this)
+    }
+}
+
 class PandaStaticCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
