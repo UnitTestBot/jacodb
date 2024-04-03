@@ -52,6 +52,7 @@ import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNeqExpr
 import org.jacodb.panda.dynamic.api.PandaNewExpr
 import org.jacodb.panda.dynamic.api.PandaNullConstant
@@ -793,8 +794,9 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.neg" -> {
+                val negExpr = PandaNegExpr(inputs[0])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, PandaMulExpr(PandaNumberConstant(-1), inputs[0]))
+                val assign = PandaAssignInst(locationFromOp(this), lv, negExpr)
                 outputs.forEach { output ->
                     addInput(method, id(), output, lv)
                 }

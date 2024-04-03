@@ -20,7 +20,7 @@ import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaLocalVar
-import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaSubExpr
@@ -289,19 +289,13 @@ class IRParserBinarySamplesTest {
                                         expectedInst,
                                         assignInst.lhv
                                     )
-                                    val mulExpr = assignInst.rhv as PandaMulExpr
-                                    assertEquals(
-                                        PandaNumberConstant(
-                                            value = -1
-                                        ),
-                                        mulExpr.lhv
-                                    )
+                                    val negExpr = assignInst.rhv as PandaNegExpr
                                     assertEquals(
                                         PandaArgument(
                                             index = 3,
                                             name = "arg3"
                                         ),
-                                        mulExpr.rhv
+                                        negExpr.arg
                                     )
                                 }
 

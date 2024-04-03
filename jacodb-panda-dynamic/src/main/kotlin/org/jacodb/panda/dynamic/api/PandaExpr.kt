@@ -55,7 +55,7 @@ class TODOExpr(
 }
 
 interface PandaUnaryExpr : PandaExpr {
-    val value: PandaValue
+    val arg: PandaValue
 }
 
 interface PandaBinaryExpr : PandaExpr {
@@ -306,23 +306,6 @@ class PandaDivExpr(
     }
 }
 
-class PandaNegExpr(
-    override val typeName: String,
-    val arg: PandaValue,
-): PandaExpr {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = listOf(arg)
-
-    override fun toString(): String = "-$arg"
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaNegExpr(this)
-    }
-}
-
 class PandaStaticCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
@@ -352,16 +335,32 @@ class PandaVirtualCallExpr(
     }
 }
 
+class PandaNegExpr(
+    override  val arg: PandaValue,
+): PandaUnaryExpr {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf(arg)
+
+    override fun toString(): String = "-$arg"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaNegExpr(this)
+    }
+}
+
 class PandaTypeofExpr(
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
     override val type: PandaType
         get() = PandaAnyType
 
     override val operands: List<PandaValue>
-        get() = listOf(value)
+        get() = listOf(arg)
 
-    override fun toString(): String = "typeof $value"
+    override fun toString(): String = "typeof $arg"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaTypeofExpr(this)
@@ -369,15 +368,15 @@ class PandaTypeofExpr(
 }
 
 class PandaToNumericExpr(
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
     override val type: PandaType
         get() = PandaNumberType
 
     override val operands: List<PandaValue>
-        get() = listOf(value)
+        get() = listOf(arg)
 
-    override fun toString(): String = "numeric($value)"
+    override fun toString(): String = "numeric($arg)"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaToNumericExpr(this)
