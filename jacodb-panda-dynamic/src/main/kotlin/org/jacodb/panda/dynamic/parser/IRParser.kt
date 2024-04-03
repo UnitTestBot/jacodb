@@ -38,6 +38,7 @@ import org.jacodb.panda.dynamic.api.PandaConstant
 import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
 import org.jacodb.panda.dynamic.api.PandaDivExpr
 import org.jacodb.panda.dynamic.api.PandaEqExpr
+import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaGeExpr
 import org.jacodb.panda.dynamic.api.PandaGtExpr
 import org.jacodb.panda.dynamic.api.PandaIfInst
@@ -380,6 +381,22 @@ class IRParser(jsonPath: String) {
         val outputs = outputs()
         val bb = currentBB()
 
+        fun handle(expr: PandaExpr) {
+            val lv = PandaLocalVar(method.currentLocalVarId++)
+            outputs.forEach { output ->
+                addInput(method, id(), output, lv)
+            }
+            method.insts += PandaAssignInst(locationFromOp(this), lv, expr)
+        }
+
+        fun handle2(callExpr: PandaVirtualCallExpr) {
+            if (outputs.isEmpty()) {
+                method.insts += PandaCallInst(locationFromOp(this), callExpr)
+            } else {
+                handle(callExpr)
+            }
+        }
+
         when {
             opcode == "Parameter" -> {
                 val arg = PandaArgument(id())
@@ -388,7 +405,7 @@ class IRParser(jsonPath: String) {
                 }
                 if (id() >= ARG_THRESHOLD) {
                     val argInfo = PandaParameterInfo(id() - ARG_THRESHOLD, mapType(type))
-                    method.parameters.add(argInfo)
+                    method.parameters += argInfo
                 }
             }
 
@@ -401,57 +418,32 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.typeof" -> {
                 val typeofExpr = PandaTypeofExpr(inputs[0])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, typeofExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(typeofExpr)
             }
 
             opcode == "Intrinsic.tonumeric" -> {
                 val toNumericExpr = PandaToNumericExpr(inputs[0])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, toNumericExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(toNumericExpr)
             }
 
             opcode == "Intrinsic.eq" -> {
                 val eqExpr = PandaEqExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, eqExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(eqExpr)
             }
 
             opcode == "Intrinsic.noteq" -> {
                 val neqExpr = PandaNeqExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, neqExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(neqExpr)
             }
 
             opcode.startsWith("Compare") -> {
                 val cmpOp = operator?.let(PandaCmpOp::valueOf) ?: error("No operator")
-                val cmp = PandaCmpExpr(cmpOp, inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, cmp)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                val cmpExpr = PandaCmpExpr(cmpOp, inputs[0], inputs[1])
+                handle(cmpExpr)
             }
 
             opcode.startsWith("IfImm") -> {
-                method.insts.add(mapIfInst(this, inputs))
+                method.insts += mapIfInst(this, inputs)
             }
 
             opcode == "LoadString" -> {
@@ -470,69 +462,47 @@ class IRParser(jsonPath: String) {
             opcode == "Intrinsic.newobjrange" -> {
                 val stringData = inputs[0] as PandaStringConstant
                 val newExpr = PandaNewExpr(stringData.value, inputs.drop(1))
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, newExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(newExpr)
             }
 
             opcode == "Intrinsic.createemptyarray" -> {
                 val createEmptyExpr = PandaCreateEmptyArrayExpr()
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, createEmptyExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(createEmptyExpr)
             }
 
             opcode == "Intrinsic.throw" -> {
-                val inst = PandaThrowInst(locationFromOp(this), inputs[0])
-                method.insts.add(inst)
+                val throwInst = PandaThrowInst(locationFromOp(this), inputs[0])
+                method.insts += throwInst
             }
 
             opcode == "Intrinsic.return" -> {
-                val inst = PandaReturnInst(locationFromOp(this), inputs.getOrNull(0))
-                method.insts.add(inst)
+                val returnInst = PandaReturnInst(locationFromOp(this), inputs.getOrNull(0))
+                method.insts += returnInst
             }
 
             opcode == "Intrinsic.returnundefined" -> {
-                val inst = PandaReturnInst(locationFromOp(this), PandaUndefinedConstant)
-                method.insts.add(inst)
+                val returnInst = PandaReturnInst(locationFromOp(this), PandaUndefinedConstant)
+                method.insts += returnInst
             }
 
             opcode == "Intrinsic.istrue" -> {
-                val compareExpr = PandaEqExpr(inputs[0], PandaNumberConstant(1))
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, compareExpr)
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val eqExpr = PandaEqExpr(inputs[0], PandaNumberConstant(1))
+                handle(eqExpr)
             }
 
             opcode == "Intrinsic.isfalse" -> {
-                val compareExpr = PandaEqExpr(inputs[0], PandaNumberConstant(0))
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, compareExpr)
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                val eqExpr = PandaEqExpr(inputs[0], PandaNumberConstant(0))
+                handle(eqExpr)
             }
 
             opcode == "Intrinsic.ldfalse" -> {
                 val falseConstant = PandaBoolConstant(false)
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, falseConstant)
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                handle(falseConstant)
             }
 
             opcode == "Intrinsic.ldtrue" -> {
                 val trueConstant = PandaBoolConstant(true)
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, trueConstant)
-                outputs.forEach { output -> addInput(method, id(), output, lv) }
-                method.insts.add(assign)
+                handle(trueConstant)
             }
 
             opcode == "Intrinsic.ldnull" -> {
@@ -543,32 +513,17 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.greater" -> {
                 val gtExpr = PandaGtExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, gtExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(gtExpr)
             }
 
             opcode == "Intrinsic.less" -> {
                 val ltExpr = PandaLtExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, ltExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(ltExpr)
             }
 
             opcode == "Intrinsic.stricteq" -> {
                 val strictEqExpr = PandaStrictEqExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, strictEqExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(strictEqExpr)
             }
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
@@ -602,12 +557,7 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.stglobalvar" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, todoExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(todoExpr)
             }
 
             opcode == "Intrinsic.callthis0" -> {
@@ -624,7 +574,7 @@ class IRParser(jsonPath: String) {
                     args = emptyList(),
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis1" -> {
@@ -641,7 +591,7 @@ class IRParser(jsonPath: String) {
                     args = inputs.filterNot { it == instCallValue },
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis2" -> {
@@ -658,7 +608,7 @@ class IRParser(jsonPath: String) {
                     args = listOf(inputs[1], inputs[2]),
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis3" -> {
@@ -675,7 +625,7 @@ class IRParser(jsonPath: String) {
                     args = listOf(inputs[1], inputs[2], inputs[3]),
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callarg0" -> {
@@ -692,7 +642,7 @@ class IRParser(jsonPath: String) {
                     args = emptyList(),
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callarg1" -> {
@@ -710,7 +660,7 @@ class IRParser(jsonPath: String) {
                     args = args,
                     instance = instCallValue.instance
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.callargs2" -> {
@@ -728,67 +678,37 @@ class IRParser(jsonPath: String) {
                     instance = instCallValue.instance,
                     args = args
                 )
-                handleOutputs(outputs, method, callExpr)
+                handle2(callExpr)
             }
 
             opcode == "Intrinsic.inc" -> {
                 val addExpr = PandaAddExpr(inputs[0], PandaNumberConstant(1))
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, addExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(addExpr)
             }
 
             opcode == "Intrinsic.add2" -> {
                 val addExpr = PandaAddExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, addExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(addExpr)
             }
 
             opcode == "Intrinsic.sub2" -> {
                 val subExpr = PandaSubExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, subExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(subExpr)
             }
 
             opcode == "Intrinsic.mul2" -> {
                 val mulExpr = PandaMulExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, mulExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(mulExpr)
             }
 
             opcode == "Intrinsic.div2" -> {
                 val divExpr = PandaDivExpr(inputs[0], inputs[1])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, divExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(divExpr)
             }
 
             opcode == "Intrinsic.neg" -> {
                 val negExpr = PandaNegExpr(inputs[0])
-                val lv = PandaLocalVar(method.currentLocalVarId++)
-                val assign = PandaAssignInst(locationFromOp(this), lv, negExpr)
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                method.insts.add(assign)
+                handle(negExpr)
             }
 
             else -> checkIgnoredInstructions(this)
@@ -797,22 +717,22 @@ class IRParser(jsonPath: String) {
         matchBasicBlockInstructionId(bb, method.currentId)
     }
 
-    private fun ProgramInst.handleOutputs(
-        outputs: List<Int>,
-        method: ProgramMethod,
-        callExpr: PandaVirtualCallExpr,
-    ) {
-        if (outputs.isEmpty()) {
-            method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
-        } else {
-            val lv = PandaLocalVar(method.currentLocalVarId++)
-            val assign = PandaAssignInst(locationFromOp(this), lv, callExpr)
-            outputs.forEach { output ->
-                addInput(method, id(), output, lv)
-            }
-            method.insts.add(assign)
-        }
-    }
+    // private fun ProgramInst.handleOutputs(
+    //     outputs: List<Int>,
+    //     method: ProgramMethod,
+    //     callExpr: PandaVirtualCallExpr,
+    // ) {
+    //     if (outputs.isEmpty()) {
+    //         method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+    //     } else {
+    //         val lv = PandaLocalVar(method.currentLocalVarId++)
+    //         val assign = PandaAssignInst(locationFromOp(this), lv, callExpr)
+    //         outputs.forEach { output ->
+    //             addInput(method, id(), output, lv)
+    //         }
+    //         method.insts.add(assign)
+    //     }
+    // }
 
     private fun matchBasicBlockInstructionId(
         bb: ProgramBasicBlock,
