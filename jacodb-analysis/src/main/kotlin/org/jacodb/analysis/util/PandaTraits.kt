@@ -29,19 +29,27 @@ import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
+import org.jacodb.panda.dynamic.api.PandaBoolConstant
 import org.jacodb.panda.dynamic.api.PandaCallExpr
 import org.jacodb.panda.dynamic.api.PandaCastExpr
 import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaClassType
+import org.jacodb.panda.dynamic.api.PandaConstant
 import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodParameter
+import org.jacodb.panda.dynamic.api.PandaNumberConstant
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
+import org.jacodb.panda.dynamic.api.PandaStringConstant
 import org.jacodb.panda.dynamic.api.PandaThis
 import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.taint.configuration.ConstantBooleanValue
+import org.jacodb.taint.configuration.ConstantIntValue
+import org.jacodb.taint.configuration.ConstantStringValue
+import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.getArgument as _getArgument
 import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
@@ -97,6 +105,58 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
     override fun Project.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
         check(this is PandaProject)
         return _getArgumentsOf(method)
+    }
+
+    override fun CommonValue.isConstant(): Boolean {
+        check(this is PandaValue)
+        return this is PandaConstant
+    }
+
+    override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {
+        check(this is PandaValue)
+        return when (constant) {
+            is ConstantBooleanValue -> {
+                this is PandaBoolConstant && this.value == constant.value
+            }
+
+            is ConstantIntValue -> {
+                this is PandaNumberConstant && this.value == constant.value
+            }
+
+            is ConstantStringValue -> {
+                // TODO: convert to string if necessary
+                this is PandaStringConstant && this.value == constant.value
+            }
+        }
+    }
+
+    override fun CommonValue.ltConstant(constant: ConstantValue): Boolean {
+        check(this is PandaValue)
+        return when (constant) {
+            is ConstantIntValue -> {
+                this is PandaNumberConstant && this.value < constant.value
+            }
+
+            else -> false
+        }
+    }
+
+    override fun CommonValue.gtConstant(constant: ConstantValue): Boolean {
+        check(this is PandaValue)
+        return when (constant) {
+            is ConstantIntValue -> {
+                this is PandaNumberConstant && this.value > constant.value
+            }
+
+            else -> false
+        }
+    }
+
+    override fun CommonValue.matches(pattern: String): Boolean {
+        check(this is PandaValue)
+        val s = this.toString()
+        val re = pattern.toRegex()
+        return re.matches(s)
     }
 
     // Ensure that all methods are default-implemented in the interface itself:

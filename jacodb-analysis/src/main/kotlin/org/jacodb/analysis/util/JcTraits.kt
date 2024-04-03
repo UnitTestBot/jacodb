@@ -31,15 +31,23 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcArrayAccess
+import org.jacodb.api.jvm.cfg.JcBool
 import org.jacodb.api.jvm.cfg.JcCallExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
+import org.jacodb.api.jvm.cfg.JcConstant
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcFieldRef
 import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcSimpleValue
+import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.toType
+import org.jacodb.taint.configuration.ConstantBooleanValue
+import org.jacodb.taint.configuration.ConstantIntValue
+import org.jacodb.taint.configuration.ConstantStringValue
+import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.callee as _callee
 import org.jacodb.analysis.util.getArgument as _getArgument
 import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
@@ -96,6 +104,58 @@ interface JcTraits : Traits<JcMethod, JcInst> {
     override fun Project.getArgumentsOf(method: JcMethod): List<JcArgument> {
         check(this is JcClasspath)
         return _getArgumentsOf(method)
+    }
+
+    override fun CommonValue.isConstant(): Boolean {
+        check(this is JcValue)
+        return this is JcConstant
+    }
+
+    override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {
+        check(this is JcValue)
+        return when (constant) {
+            is ConstantBooleanValue -> {
+                this is JcBool && value == constant.value
+            }
+
+            is ConstantIntValue -> {
+                this is JcInt && value == constant.value
+            }
+
+            is ConstantStringValue -> {
+                // TODO: if 'value' is not string, convert it to string and compare with 'constant.value'
+                this is JcStringConstant && value == constant.value
+            }
+        }
+    }
+
+    override fun CommonValue.ltConstant(constant: ConstantValue): Boolean {
+        check(this is JcValue)
+        return when (constant) {
+            is ConstantIntValue -> {
+                this is JcInt && value < constant.value
+            }
+
+            else -> error("Unexpected constant: $constant")
+        }
+    }
+
+    override fun CommonValue.gtConstant(constant: ConstantValue): Boolean {
+        check(this is JcValue)
+        return when (constant) {
+            is ConstantIntValue -> {
+                this is JcInt && value > constant.value
+            }
+
+            else -> error("Unexpected constant: $constant")
+        }
+    }
+
+    override fun CommonValue.matches(pattern: String): Boolean {
+        check(this is JcValue)
+        val s = this.toString()
+        val re = pattern.toRegex()
+        return re.matches(s)
     }
 
     // Ensure that all methods are default-implemented in the interface itself:

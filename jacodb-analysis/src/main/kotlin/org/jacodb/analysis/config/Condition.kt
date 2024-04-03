@@ -24,22 +24,17 @@ import org.jacodb.analysis.util.removeTrailingElementAccessors
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.cfg.JcBool
-import org.jacodb.api.jvm.cfg.JcConstant
 import org.jacodb.api.jvm.cfg.JcInt
-import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor
-import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantEq
 import org.jacodb.taint.configuration.ConstantGt
 import org.jacodb.taint.configuration.ConstantIntValue
 import org.jacodb.taint.configuration.ConstantLt
 import org.jacodb.taint.configuration.ConstantMatches
-import org.jacodb.taint.configuration.ConstantStringValue
 import org.jacodb.taint.configuration.ConstantTrue
 import org.jacodb.taint.configuration.ContainsMark
 import org.jacodb.taint.configuration.IsConstant
@@ -52,6 +47,7 @@ import org.jacodb.taint.configuration.TypeMatches
 
 // TODO: replace 'JcInt' with 'CommonInt', etc
 
+context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 open class BasicConditionEvaluator(
     internal val positionResolver: PositionResolver<Maybe<CommonValue>>,
 ) : ConditionVisitor<Boolean> {
@@ -72,11 +68,6 @@ open class BasicConditionEvaluator(
         return condition.args.any { it.accept(this) }
     }
 
-    override fun visit(condition: IsConstant): Boolean {
-        positionResolver.resolve(condition.position).onSome { return it is JcConstant }
-        return false
-    }
-
     override fun visit(condition: IsType): Boolean {
         // Note: TaintConfigurationFeature.ConditionSpecializer is responsible for
         // expanding IsType condition upon parsing the taint configuration.
@@ -89,56 +80,37 @@ open class BasicConditionEvaluator(
         error("Unexpected condition: $condition")
     }
 
+    override fun visit(condition: IsConstant): Boolean {
+        positionResolver.resolve(condition.position).onSome {
+            return it.isConstant()
+        }
+        return false
+    }
+
     override fun visit(condition: ConstantEq): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            return when (val constant = condition.value) {
-                is ConstantBooleanValue -> {
-                    value is JcBool && value.value == constant.value
-                }
-
-                is ConstantIntValue -> {
-                    value is JcInt && value.value == constant.value
-                }
-
-                is ConstantStringValue -> {
-                    // TODO: if 'value' is not string, convert it to string and compare with 'constant.value'
-                    value is JcStringConstant && value.value == constant.value
-                }
-            }
+            return value.eqConstant(condition.value)
         }
         return false
     }
 
     override fun visit(condition: ConstantLt): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            return when (val constant = condition.value) {
-                is ConstantIntValue -> {
-                    value is JcInt && value.value < constant.value
-                }
-
-                else -> error("Unexpected constant: $constant")
-            }
+           return value.ltConstant(condition.value)
         }
         return false
     }
 
     override fun visit(condition: ConstantGt): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            return when (val constant = condition.value) {
-                is ConstantIntValue -> {
-                    value is JcInt && value.value > constant.value
-                }
-
-                else -> error("Unexpected constant: $constant")
-            }
+            return value.gtConstant(condition.value)
         }
         return false
     }
 
     override fun visit(condition: ConstantMatches): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-            val re = condition.pattern.toRegex()
-            return re.matches(value.toString())
+            return value.matches(condition.pattern)
         }
         return false
     }
