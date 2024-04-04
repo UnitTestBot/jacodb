@@ -121,10 +121,9 @@ data class PandaProgramIr(
             classInfo.methods.applyFold(this) { methodInfo ->
                 val returnType = findType(methodInfo.returnType)
                 val isStatic = AccessFlags(methodInfo.accessFlags).isStatic
-                val parameterTypes =
-                    (if (isStatic) emptyList<PandaType>() else listOf(enclosingClass.type)) + methodInfo.parameters.map {
-                        requireNotNull(findTypeOrNull(it))
-                    }
+                val enclosing: List<PandaType> = if (isStatic) emptyList() else listOf(enclosingClass.type)
+                val parameters: List<PandaType> = methodInfo.parameters.map { requireNotNull(findTypeOrNull(it)) }
+                val parameterTypes = enclosing + parameters
                 val pandaMethod = PandaMethod(
                     methodInfo.signature,
                     methodInfo.name,
