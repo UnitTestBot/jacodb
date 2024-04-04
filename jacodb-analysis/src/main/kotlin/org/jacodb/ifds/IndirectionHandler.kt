@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.taint
+package org.jacodb.ifds
 
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
@@ -27,6 +27,7 @@ import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.ResolvedCall
@@ -37,6 +38,7 @@ class IndirectionHandler(
     private val hierarchy: HierarchyExtension,
     private val bannedPackagePrefixes: List<String>,
     private val parent: ActorRef<CommonMessage>,
+    private val runnerId: RunnerId,
 ) : Actor<IndirectionMessage> {
     private val cache = hashMapOf<JcMethod, List<JcMethod>>()
 
@@ -55,13 +57,13 @@ class IndirectionHandler(
         val callExpr = node.callExpr as? JcVirtualCallExpr
         if (callExpr == null) {
             for (override in callees) {
-                parent.send(ResolvedCall(message.edge, override))
+                parent.send(ResolvedCall(runnerId, message.edge, override))
             }
             return
         }
         val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass
         if (instanceClass == null) {
-            parent.send(ResolvedCall(message.edge, callExpr.method.method))
+            parent.send(ResolvedCall(runnerId, message.edge, callExpr.method.method))
             return
         }
 
@@ -79,7 +81,7 @@ class IndirectionHandler(
             }
 
         for (override in overrides) {
-            parent.send(ResolvedCall(message.edge, override))
+            parent.send(ResolvedCall(runnerId, message.edge, override))
         }
     }
 }

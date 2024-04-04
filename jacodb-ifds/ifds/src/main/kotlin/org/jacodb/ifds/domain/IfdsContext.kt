@@ -22,9 +22,9 @@ import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 
 interface IfdsContext<Stmt, Fact> {
-    fun chunkByMessage(message: CommonMessage): Chunk
-    fun runnerTypeByMessage(message: CommonMessage): RunnerType
+    fun chunkByMessage(message: CommonMessage): ChunkId
+    fun runnerIdByMessage(message: CommonMessage): RunnerId
 
-    fun getAnalyzer(chunk: Chunk, type: RunnerType): Analyzer<Stmt, Fact>
-    fun indirectionHandlerFactory(parent: ActorRef<CommonMessage>): Factory<IndirectionMessage>
+    fun getAnalyzer(chunkId: ChunkId, runnerId: RunnerId): Analyzer<Stmt, Fact>
+    fun indirectionHandlerFactory(parent: ActorRef<CommonMessage>, runnerId: RunnerId): Factory<IndirectionMessage>
 }

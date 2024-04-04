@@ -14,23 +14,25 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.taint
+package org.jacodb.ifds
 
+import org.jacodb.analysis.ifds.Analyzer
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.FlowFunction
 import org.jacodb.ifds.domain.FlowScope
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.Reason
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.messages.SubscriptionOnStart
-import org.jacodb.analysis.ifds.Analyzer
-import org.jacodb.api.cfg.JcInst
 
+typealias JcEventProcessor<Fact, Event> = FlowScope<JcInst, Fact>.(Event) -> Unit
 
 class JcFlowFunctionsAdapter<Fact, Event>(
-    private val runnerType: RunnerType,
+    private val runnerId: RunnerId,
     private val jcAnalyzer: Analyzer<Fact, Event>,
-    private val jcEventProcessor: FlowScope<JcInst, Fact>.(Event) -> Unit,
+    private val jcEventProcessor: JcEventProcessor<Fact, Event>,
 ) : FlowFunction<JcInst, Fact> {
     private val jcFlowFunctions = jcAnalyzer.flowFunctions
 
@@ -40,7 +42,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
             .compute(edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(next, newFact))
-                processNewEdge(runnerType, newEdge)
+                processNewEdge(runnerId, newEdge, Reason.Sequent(edge))
             }
 
     override fun FlowScope<JcInst, Fact>.callToReturn(returnSite: JcInst) =
@@ -49,7 +51,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
             .compute(edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(returnSite, newFact))
-                processNewEdge(runnerType, newEdge)
+                processNewEdge(runnerId, newEdge, Reason.CallToReturn(edge))
             }
 
     override fun FlowScope<JcInst, Fact>.callToStart(calleeStart: JcInst) =
@@ -59,11 +61,11 @@ class JcFlowFunctionsAdapter<Fact, Event>(
             .forEach { newFact ->
                 val vertex = Vertex(calleeStart, newFact)
 
-                val subscription = SubscriptionOnStart(runnerType, vertex, runnerType, edge)
+                val subscription = SubscriptionOnStart(runnerId, vertex, runnerId, edge)
                 add(subscription)
 
                 val newEdge = Edge(vertex, vertex)
-                processNewEdge(runnerType, newEdge)
+                processNewEdge(runnerId, newEdge, Reason.CallToStart(edge))
             }
 
     override fun FlowScope<JcInst, Fact>.exitToReturnSite(
@@ -74,23 +76,26 @@ class JcFlowFunctionsAdapter<Fact, Event>(
         .compute(edge.to.fact)
         .forEach { newFact ->
             val newEdge = Edge(callerEdge.from, Vertex(returnSite, newFact))
-            processNewEdge(runnerType, newEdge)
+            processNewEdge(runnerId, newEdge, Reason.ExitToReturnSite(callerEdge, edge))
         }
 
     private fun FlowScope<JcInst, Fact>.processNewEdge(
-        runnerType: RunnerType,
+        runnerId: RunnerId,
         newEdge: Edge<JcInst, Fact>,
+        reason: Reason<JcInst, Fact>,
     ) {
-        val edge = NewEdge(runnerType, newEdge, edge)
+        val edge = NewEdge(runnerId, newEdge, reason)
         add(edge)
 
         val jcEvents = jcAnalyzer.handleNewEdge(newEdge.toJcEdge())
         for (event in jcEvents) {
             jcEventProcessor(event)
         }
-
     }
 }
 
 private fun <Fact> Vertex<JcInst, Fact>.toJcVertex() = org.jacodb.analysis.ifds.Vertex(stmt, fact)
 private fun <Fact> Edge<JcInst, Fact>.toJcEdge() = org.jacodb.analysis.ifds.Edge(from.toJcVertex(), to.toJcVertex())
+
+fun <Fact> org.jacodb.analysis.ifds.Vertex<Fact>.toVertex() = Vertex(statement, fact)
+fun <Fact> org.jacodb.analysis.ifds.Edge<Fact>.toEdge() = Edge(from.toVertex(), to.toVertex())

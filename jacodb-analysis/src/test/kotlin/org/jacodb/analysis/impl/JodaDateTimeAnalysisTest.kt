@@ -17,14 +17,24 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jacodb.actors.impl.systemOf
+import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.api.JcClasspath
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
+import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.taint.collectTaintResults
+import org.jacodb.ifds.taint.startTaintAnalysis
+import org.jacodb.ifds.taint.taintIfdsContext
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
@@ -53,8 +63,17 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     private val graph: JcApplicationGraph by lazy {
         runBlocking {
-            cp.newApplicationGraphForAnalysis()
+            JcApplicationGraphImpl(cp, cp.usagesExt())
         }
+    }
+
+    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        system.startTaintAnalysis(method)
+        system.awaitCompletion()
+        system.collectTaintResults()
     }
 
     @Test

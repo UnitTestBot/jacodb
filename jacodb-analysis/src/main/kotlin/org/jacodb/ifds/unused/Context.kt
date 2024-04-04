@@ -14,6 +14,5 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.domain
+package org.jacodb.ifds.unused
 
-interface RunnerType

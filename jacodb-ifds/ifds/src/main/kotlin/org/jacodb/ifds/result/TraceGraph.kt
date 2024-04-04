@@ -14,6 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.domain
+package org.jacodb.ifds.result
 
-interface Chunk
+import org.jacodb.ifds.domain.Vertex
+
+interface TraceGraph<Stmt, Fact> {
+    val sink: Vertex<Stmt, Fact>
+    val sources: Collection<Vertex<Stmt, Fact>>
+    val edges: Map<Vertex<Stmt, Fact>, Collection<Vertex<Stmt, Fact>>>
+
+    /**
+     * Returns all traces from [sources] to [sink].
+     */
+    fun getAllTraces(): Sequence<List<Vertex<Stmt, Fact>>>
+}

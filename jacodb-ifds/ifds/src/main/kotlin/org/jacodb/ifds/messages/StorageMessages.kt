@@ -17,42 +17,46 @@
 package org.jacodb.ifds.messages
 
 import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
 import kotlinx.coroutines.channels.Channel
+import org.jacodb.ifds.domain.Reason
+import org.jacodb.ifds.result.IfdsComputationData
+import org.jacodb.ifds.result.IfdsResult
 
 sealed interface StorageMessage : CommonMessage
 
 data class NewEdge<Stmt, Fact>(
-    val runnerType: RunnerType,
+    override val runnerId: RunnerId,
     val edge: Edge<Stmt, Fact>,
-    val reason: Edge<Stmt, Fact>,
+    val reason: Reason<Stmt, Fact>,
 ) : StorageMessage
 
 data class NewSummaryEdge<Stmt, Fact>(
-    val runnerType: RunnerType,
+    override val runnerId: RunnerId,
     val edge: Edge<Stmt, Fact>,
 ) : StorageMessage
 
 data class SubscriptionOnStart<Stmt, Fact>(
-    val runnerType: RunnerType,
+    override val runnerId: RunnerId,
     val startVertex: Vertex<Stmt, Fact>,
-    val subscriber: RunnerType,
+    val subscriber: RunnerId,
     val data: Edge<Stmt, Fact>,
 ) : StorageMessage
 
 data class SubscriptionOnEnd<Stmt, Fact>(
-    val runnerType: RunnerType,
+    override val runnerId: RunnerId,
     val endVertex: Vertex<Stmt, Fact>,
-    val subscriber: RunnerType,
+    val subscriber: RunnerId,
     val data: Edge<Stmt, Fact>,
 ) : StorageMessage
 
-data class NewResult(
-    val author: RunnerType,
-    val result: Any?,
+data class NewResult<Stmt, Fact>(
+    override val runnerId: RunnerId,
+    val result: IfdsResult<Stmt, Fact>,
 ) : StorageMessage
 
-data class ObtainResults(
-    val channel: Channel<List<Any?>>
+data class ObtainData<Stmt, Fact, Result : IfdsResult<Stmt, Fact>>(
+    override val runnerId: RunnerId,
+    val channel: Channel<IfdsComputationData<Stmt, Fact, Result>>,
 ) : StorageMessage

@@ -19,8 +19,10 @@ package org.jacodb.ifds.actors
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
+import org.jacodb.ifds.domain.ChunkId
 import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.Reason
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.EdgeMessage
@@ -29,34 +31,37 @@ import org.jacodb.ifds.messages.NewResult
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
-import org.jacodb.ifds.messages.ObtainResults
+import org.jacodb.ifds.messages.ObtainData
 import org.jacodb.ifds.messages.StorageMessage
 import org.jacodb.ifds.messages.SubscriptionOnEnd
 import org.jacodb.ifds.messages.SubscriptionOnStart
+import org.jacodb.ifds.result.IfdsComputationData
+import org.jacodb.ifds.result.IfdsResult
 
 context(ActorContext<StorageMessage>)
 class RunnerStorage<Stmt, Fact>(
     private val parent: ActorRef<CommonMessage>,
-    private val runnerType: RunnerType,
+    private val chunkId: ChunkId,
+    private val runnerId: RunnerId,
 ) : Actor<StorageMessage> {
     data class SubscriptionData<Stmt, Fact>(
         val edge: Edge<Stmt, Fact>,
-        val subscriber: RunnerType,
+        val subscriber: RunnerId,
     )
 
-    private val endSubscribers =
-        HashMap<Vertex<Stmt, Fact>, HashSet<SubscriptionData<Stmt, Fact>>>()
     private val startSubscribers =
+        HashMap<Vertex<Stmt, Fact>, HashSet<SubscriptionData<Stmt, Fact>>>()
+    private val endSubscribers =
         HashMap<Vertex<Stmt, Fact>, HashSet<SubscriptionData<Stmt, Fact>>>()
 
     private val edges = hashSetOf<Edge<Stmt, Fact>>()
-    private val reasons = hashMapOf<Edge<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
+    private val reasons = hashMapOf<Edge<Stmt, Fact>, HashSet<Reason<Stmt, Fact>>>()
 
     private val summaryEdges = hashSetOf<Edge<Stmt, Fact>>()
     private val summaryEdgesByStart = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
     private val summaryEdgesByEnd = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
 
-    private val foundResults = hashSetOf<Any?>()
+    private val foundResults = hashSetOf<IfdsResult<Stmt, Fact>>()
 
     override suspend fun receive(message: StorageMessage) {
         when (message) {
@@ -71,8 +76,7 @@ class RunnerStorage<Stmt, Fact>(
 
                 if (edges.add(edge)) {
                     // new edge
-                    parent.send(EdgeMessage(edge))
-
+                    parent.send(EdgeMessage(runnerId, edge))
                 }
             }
 
@@ -121,12 +125,24 @@ class RunnerStorage<Stmt, Fact>(
                     .add(subscriptionData)
             }
 
-            is NewResult -> {
+            is NewResult<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                message as NewResult<Stmt, Fact>
                 foundResults.add(message.result)
             }
 
-            is ObtainResults -> {
-                message.channel.send(foundResults.toList())
+            is ObtainData<*, *, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                message as ObtainData<Stmt, Fact, IfdsResult<Stmt, Fact>>
+                val data = IfdsComputationData(
+                    chunkId,
+                    runnerId,
+                    edges.groupByTo(hashMapOf()) { it.to },
+                    edges.groupByTo(hashMapOf(), { it.to.stmt }) { it.to.fact },
+                    reasons.toMap(hashMapOf()),
+                    foundResults.toHashSet()
+                )
+                message.channel.send(data)
             }
         }
     }
@@ -139,7 +155,7 @@ class RunnerStorage<Stmt, Fact>(
         for (summaryEdge in summaries) {
             val notification = NotificationOnStart(
                 subscriptionData.subscriber,
-                runnerType,
+                runnerId,
                 summaryEdge,
                 subscriptionData.edge
             )
@@ -155,7 +171,7 @@ class RunnerStorage<Stmt, Fact>(
         for (summaryEdge in summaries) {
             val notification = NotificationOnEnd(
                 subscriptionData.subscriber,
-                runnerType,
+                runnerId,
                 summaryEdge,
                 subscriptionData.edge
             )
@@ -171,7 +187,7 @@ class RunnerStorage<Stmt, Fact>(
         for ((data, subscriber) in currentEdgeStartSubscribers) {
             val notification = NotificationOnStart(
                 subscriber,
-                runnerType,
+                runnerId,
                 edge,
                 data
             )
@@ -186,7 +202,7 @@ class RunnerStorage<Stmt, Fact>(
         for ((data, subscriber) in currentEdgeEndSubscribers) {
             val notification = NotificationOnEnd(
                 subscriber,
-                runnerType,
+                runnerId,
                 edge,
                 data
             )

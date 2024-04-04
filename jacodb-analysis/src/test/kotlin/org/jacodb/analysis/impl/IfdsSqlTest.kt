@@ -20,26 +20,24 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.actors.impl.systemOf
-import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.ClassUnitResolver
-import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.toSarif
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.ifds.actors.ProjectManager
-import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.ObtainResults
-import org.jacodb.ifds.taint.TaintIfdsContext
+import org.jacodb.ifds.result.buildTraceGraph
+import org.jacodb.ifds.taint.collectTaintComputationData
+import org.jacodb.ifds.taint.collectTaintResults
+import org.jacodb.ifds.taint.startTaintAnalysis
+import org.jacodb.ifds.taint.taintIfdsContext
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
-import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.analysis.SqlInjectionExamples
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -69,43 +67,31 @@ class IfdsSqlTest : BaseAnalysisTest() {
     }
 
     @Test
-    fun `simple SQL injection`() {
+    fun `simple SQL injection`() = runBlocking {
         val methodName = "bad"
         val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
-        val methods = listOf(method)
-        val unitResolver = SingletonUnitResolver
-        val manager = TaintManager(graph, unitResolver)
-        val sinks = manager.analyze(methods, timeout = 30.seconds)
+
+        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        system.startTaintAnalysis(method)
+        system.awaitCompletion()
+        val data = system.collectTaintComputationData()
+        val sinks = data.results
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
-        val graph = manager.vulnerabilityTraceGraph(sink)
+        val graph = data.buildTraceGraph(sink.vertex, zeroFact = TaintZeroFact)
         val trace = graph.getAllTraces().first()
         assertTrue(trace.isNotEmpty())
     }
 
     private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
-        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-        val taintAnalyzer = org.jacodb.analysis.taint.TaintAnalyzer(graph)
-        val ifdsContext = TaintIfdsContext(
-            cp,
-            graph,
-            taintAnalyzer,
-            defaultBannedPackagePrefixes
-        )
-
+        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = systemOf("ifds") { ProjectManager(ifdsContext) }
 
-        for (fact in taintAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
-            for (entryPoint in graph.entryPoints(method)) {
-                val vertex = Vertex(entryPoint, fact)
-                val message = NewEdge(TaintIfdsContext.Runner1, Edge(vertex, vertex), Edge(vertex, vertex))
-                system.send(message)
-            }
-        }
-
+        system.startTaintAnalysis(method)
         system.awaitCompletion()
-        val results = system.ask { ObtainResults(it) }
-        results.map { it as TaintVulnerability }
+        system.collectTaintResults()
     }
 
 

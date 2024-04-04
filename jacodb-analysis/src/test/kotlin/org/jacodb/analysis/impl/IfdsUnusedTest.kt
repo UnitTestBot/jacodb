@@ -55,6 +55,31 @@ class IfdsUnusedTest : BaseAnalysisTest() {
         )
     }
 
+//    private fun findSinks(): List<UnusedVariableVulnerability> = runBlocking {
+//        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
+//        val unusedVariableAnalyzer = UnusedVariableAnalyzer(graph)
+//        val ifdsContext = JcIfdsContext(
+//            cp,
+//            graph,
+//            unusedVariableAnalyzer,
+//            defaultBannedPackagePrefixes
+//        )
+//
+//        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+//
+//        for (fact in unusedVariableAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+//            for (entryPoint in graph.entryPoints(method)) {
+//                val vertex = Vertex(entryPoint, fact)
+//                val message = NewEdge(JcIfdsContext.ForwardRunner, Edge(vertex, vertex), Reason.Initial)
+//                system.send(message)
+//            }
+//        }
+//
+//        system.awaitCompletion()
+//        val results = system.ask { ObtainData(JcIfdsContext.ForwardRunner, it) }
+//        results.map { it as UnusedVariableVulnerability }
+//    }
+
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
     fun `test on Juliet's CWE 563`(className: String) {

@@ -20,9 +20,9 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.impl.routing.firstReadyRouter
-import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.domain.ChunkId
 import org.jacodb.ifds.domain.IfdsContext
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.IndirectionMessage
@@ -32,27 +32,27 @@ context(ActorContext<CommonMessage>)
 class Runner<Stmt, Fact>(
     private val parent: ActorRef<CommonMessage>,
     private val ifdsContext: IfdsContext<Stmt, Fact>,
-    private val chunk: Chunk,
-    private val runnerType: RunnerType,
+    private val chunkId: ChunkId,
+    private val runnerId: RunnerId,
 ) : Actor<CommonMessage> {
     private val routerFactory = firstReadyRouter(size = 8) {
-        Worker(ifdsContext.getAnalyzer(chunk, runnerType), this@ActorContext.self)
+        Worker(ifdsContext.getAnalyzer(chunkId, runnerId), this@ActorContext.self)
     }
 
     private val router = spawn("workers", factory = routerFactory)
 
     private val storage = spawn("storage") {
-        RunnerStorage<Stmt, Fact>(this@ActorContext.self, runnerType)
+        RunnerStorage<Stmt, Fact>(this@ActorContext.self, chunkId, runnerId)
     }
 
     private val indirectionHandler = spawn(
         "indirection",
-        factory = ifdsContext.indirectionHandlerFactory(self)
+        factory = ifdsContext.indirectionHandlerFactory(this@ActorContext.self, runnerId)
     )
 
     override suspend fun receive(message: CommonMessage) {
         when {
-            ifdsContext.chunkByMessage(message) == chunk && ifdsContext.runnerTypeByMessage(message) == runnerType -> {
+            ifdsContext.chunkByMessage(message) == chunkId && ifdsContext.runnerIdByMessage(message) == runnerId -> {
                 @Suppress("UNCHECKED_CAST")
                 when (message) {
                     is StorageMessage -> storage.send(message)

@@ -18,6 +18,7 @@ package org.jacodb.analysis.impl
 
 import juliet.support.AbstractTestCase
 import kotlinx.coroutines.runBlocking
+import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
 import org.jacodb.analysis.ifds.Vulnerability
 import org.jacodb.api.JcClasspath
@@ -27,6 +28,7 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
@@ -100,7 +102,7 @@ abstract class BaseAnalysisTest : BaseTest() {
 
     protected val graph: JcApplicationGraph by lazy {
         runBlocking {
-            cp.newApplicationGraphForAnalysis()
+            JcApplicationGraphImpl(cp, cp.usagesExt())
         }
     }
 

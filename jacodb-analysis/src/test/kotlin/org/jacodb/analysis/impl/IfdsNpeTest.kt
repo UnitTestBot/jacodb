@@ -16,21 +16,18 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.actors.impl.systemOf
-import org.jacodb.ifds.actors.ProjectManager
-import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.ObtainResults
-import org.jacodb.ifds.taint.TaintIfdsContext
 import kotlinx.coroutines.runBlocking
+import org.jacodb.actors.impl.systemOf
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.npe.NpeAnalyzer
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
+import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.npe.collectNpeResults
+import org.jacodb.ifds.npe.npeIfdsContext
+import org.jacodb.ifds.npe.startNpeAnalysis
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
@@ -202,28 +199,12 @@ class IfdsNpeTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
-        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-        val npeAnalyzer = NpeAnalyzer(graph)
-        val ifdsContext = TaintIfdsContext(
-            cp,
-            graph,
-            npeAnalyzer,
-            defaultBannedPackagePrefixes
-        )
-
+        val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = systemOf("ifds") { ProjectManager(ifdsContext) }
 
-        for (fact in npeAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
-            for (entryPoint in graph.entryPoints(method)) {
-                val vertex = Vertex(entryPoint, fact)
-                val message = NewEdge(TaintIfdsContext.Runner1, Edge(vertex, vertex), Edge(vertex, vertex))
-                system.send(message)
-            }
-        }
-
+        system.startNpeAnalysis(method)
         system.awaitCompletion()
-        val results = system.ask { ObtainResults(it) }
-        results.map { it as TaintVulnerability }
+        system.collectNpeResults()
     }
 
     @ParameterizedTest

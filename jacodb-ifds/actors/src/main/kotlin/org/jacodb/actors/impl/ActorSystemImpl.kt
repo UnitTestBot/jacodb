@@ -48,7 +48,7 @@ internal class ActorSystemImpl<Message>(
 
     override suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R {
         watcher.send(WatcherMessage.OutOfSystemSend)
-        val channel = Channel<R>(Channel.RENDEZVOUS)
+        val channel = Channel<R>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         val ack = messageBuilder(channel)
         user.send(ack)
         val received = channel.receive()

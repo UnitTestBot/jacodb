@@ -14,14 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.messages
+package org.jacodb.ifds.npe
 
-import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.analysis.taint.TaintDomainFact
+import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Vertex
+import org.jacodb.ifds.toVertex
+import org.jacodb.ifds.result.IfdsResult
 
-interface IndirectionMessage : CommonMessage
-
-data class UnresolvedCall<Stmt, Fact>(
-    override val runnerId: RunnerId,
-    val edge: Edge<Stmt, Fact>,
-) : IndirectionMessage
+data class NpeVulnerability(
+    val vulnerability: TaintVulnerability,
+) : IfdsResult<JcInst, TaintDomainFact> {
+    override val vertex: Vertex<JcInst, TaintDomainFact>
+        get() = vulnerability.sink.toVertex()
+}

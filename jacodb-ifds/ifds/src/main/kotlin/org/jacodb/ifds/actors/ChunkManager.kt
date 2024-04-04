@@ -20,21 +20,21 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.impl.routing.messageKeyRouter
-import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.domain.ChunkId
 import org.jacodb.ifds.domain.IfdsContext
 import org.jacodb.ifds.messages.CommonMessage
 
 context(ActorContext<CommonMessage>)
 class ChunkManager<Stmt, Fact>(
     private val ifdsContext: IfdsContext<Stmt, Fact>,
-    private val chunk: Chunk,
+    private val chunkId: ChunkId,
     private val parent: ActorRef<CommonMessage>,
 ) : Actor<CommonMessage> {
 
     private val routerFactory = messageKeyRouter(
-        ifdsContext::runnerTypeByMessage
-    ) { runnerType ->
-        Runner(this@ActorContext.self, ifdsContext, chunk, runnerType)
+        ifdsContext::runnerIdByMessage
+    ) { runnerId ->
+        Runner(this@ActorContext.self, ifdsContext, chunkId, runnerId)
     }
 
     private val router = spawn(
@@ -44,7 +44,7 @@ class ChunkManager<Stmt, Fact>(
 
     override suspend fun receive(message: CommonMessage) {
         when {
-            chunk == ifdsContext.chunkByMessage(message) -> router.send(message)
+            chunkId == ifdsContext.chunkByMessage(message) -> router.send(message)
 
             else -> parent.send(message)
         }

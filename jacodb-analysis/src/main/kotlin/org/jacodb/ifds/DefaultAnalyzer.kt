@@ -14,17 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.taint
+package org.jacodb.ifds
 
 import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.FlowFunction
 import org.jacodb.ifds.domain.FlowScope
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.EdgeMessage
-import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.UnresolvedCall
@@ -35,10 +34,10 @@ import org.jacodb.api.ext.cfg.callExpr
 
 typealias TaintFlowScope<Fact> = FlowScope<JcInst, Fact>
 
-class TaintAnalyzer<Fact>(
+class DefaultAnalyzer<Fact>(
     private val applicationGraph: JcApplicationGraph,
     private val flowFunction: FlowFunction<JcInst, Fact>,
-    private val runnerType: RunnerType,
+    private val runnerId: RunnerId,
 ) : Analyzer<JcInst, Fact> {
     override fun step(message: AnalyzerMessage<JcInst, Fact>): Collection<CommonMessage> = buildList {
         when (message) {
@@ -73,13 +72,12 @@ class TaintAnalyzer<Fact>(
 
         when {
             callExpr != null -> processCall(edge)
-            isExit -> processExit(edge)
-            else -> processSequent(edge)
+            !isExit -> processSequent(edge)
         }
     }
 
     private fun TaintFlowScope<Fact>.processCall(edge: Edge<JcInst, Fact>) {
-        val callMessage = UnresolvedCall(edge)
+        val callMessage = UnresolvedCall(runnerId, edge)
         add(callMessage)
 
         val successors = applicationGraph.successors(edge.to.stmt)
@@ -89,11 +87,6 @@ class TaintAnalyzer<Fact>(
                 callToReturn(successor)
             }
         }
-    }
-
-    private fun TaintFlowScope<Fact>.processExit(edge: Edge<JcInst, Fact>) {
-        val summaryEdge = NewSummaryEdge(runnerType, edge)
-        add(summaryEdge)
     }
 
     private fun TaintFlowScope<Fact>.processSequent(edge: Edge<JcInst, Fact>) {

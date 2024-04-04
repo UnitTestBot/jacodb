@@ -17,29 +17,31 @@
 package org.jacodb.ifds.messages
 
 import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.RunnerType
+import org.jacodb.ifds.domain.RunnerId
 
 interface AnalyzerMessage<Stmt, Fact> : CommonMessage
 
 data class EdgeMessage<Stmt, Fact>(
-    val edge: Edge<Stmt, Fact>
+    override val runnerId: RunnerId,
+    val edge: Edge<Stmt, Fact>,
 ) : AnalyzerMessage<Stmt, Fact>
 
 data class ResolvedCall<Stmt, Fact, Method>(
+    override val runnerId: RunnerId,
     val edge: Edge<Stmt, Fact>,
-    val method: Method
+    val method: Method,
 ) : AnalyzerMessage<Stmt, Fact>
 
 data class NotificationOnStart<Stmt, Fact>(
-    val runnerType: RunnerType,
-    val author: RunnerType,
+    override val runnerId: RunnerId,
+    val author: RunnerId,
     val edge: Edge<Stmt, Fact>,
     val data: Edge<Stmt, Fact>,
 ) : AnalyzerMessage<Stmt, Fact>
 
 data class NotificationOnEnd<Stmt, Fact>(
-    val runnerType: RunnerType,
-    val author: RunnerType,
+    override val runnerId: RunnerId,
+    val author: RunnerId,
     val edge: Edge<Stmt, Fact>,
-    val data: Edge<Stmt, Fact>
+    val data: Edge<Stmt, Fact>,
 ) : AnalyzerMessage<Stmt, Fact>

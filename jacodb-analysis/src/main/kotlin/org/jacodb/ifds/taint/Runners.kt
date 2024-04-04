@@ -14,14 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.messages
+package org.jacodb.ifds.taint
 
-import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.RunnerId
 
-interface IndirectionMessage : CommonMessage
-
-data class UnresolvedCall<Stmt, Fact>(
-    override val runnerId: RunnerId,
-    val edge: Edge<Stmt, Fact>,
-) : IndirectionMessage
+data object ForwardRunner : RunnerId
+data object BackwardRunner : RunnerId

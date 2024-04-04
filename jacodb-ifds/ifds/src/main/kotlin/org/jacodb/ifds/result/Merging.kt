@@ -14,14 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.messages
+package org.jacodb.ifds.result
 
-import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.RunnerId
-
-interface IndirectionMessage : CommonMessage
-
-data class UnresolvedCall<Stmt, Fact>(
-    override val runnerId: RunnerId,
-    val edge: Edge<Stmt, Fact>,
-) : IndirectionMessage
+fun <Stmt, Fact, Result : IfdsResult<Stmt, Fact>> mergeIfdsResults(
+    ifdsResults: Collection<IfdsComputationData<Stmt, Fact, Result>>,
+): IfdsComputationData<Stmt, Fact, Result> {
+    TODO()
+}
