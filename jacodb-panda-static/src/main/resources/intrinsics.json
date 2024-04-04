@@ -1,0 +1,1892 @@
+[
+  {
+    "intrinsicId": "MathAbsI32",
+    "className": "Math",
+    "methodName": "absI32"
+  },
+  {
+    "intrinsicId": "MathAbsI64",
+    "className": "Math",
+    "methodName": "absI64"
+  },
+  {
+    "intrinsicId": "MathAbsF32",
+    "className": "Math",
+    "methodName": "absF32"
+  },
+  {
+    "intrinsicId": "MathAbsF64",
+    "className": "Math",
+    "methodName": "absF64"
+  },
+  {
+    "intrinsicId": "MathMinI32",
+    "className": "Math",
+    "methodName": "minI32"
+  },
+  {
+    "intrinsicId": "MathMinI64",
+    "className": "Math",
+    "methodName": "minI64"
+  },
+  {
+    "intrinsicId": "MathMinF32",
+    "className": "Math",
+    "methodName": "minF32"
+  },
+  {
+    "intrinsicId": "MathMinF64",
+    "className": "Math",
+    "methodName": "minF64"
+  },
+  {
+    "intrinsicId": "MathMaxI32",
+    "className": "Math",
+    "methodName": "maxI32"
+  },
+  {
+    "intrinsicId": "MathMaxI64",
+    "className": "Math",
+    "methodName": "maxI64"
+  },
+  {
+    "intrinsicId": "MathMaxF32",
+    "className": "Math",
+    "methodName": "maxF32"
+  },
+  {
+    "intrinsicId": "MathMaxF64",
+    "className": "Math",
+    "methodName": "maxF64"
+  },
+  {
+    "intrinsicId": "DoubleIsInf",
+    "className": "Double",
+    "methodName": "isInfinite"
+  },
+  {
+    "intrinsicId": "FloatIsInf",
+    "className": "Float",
+    "methodName": "isInfinite"
+  },
+  {
+    "intrinsicId": "MathSinF32",
+    "className": "Math",
+    "methodName": "fsin"
+  },
+  {
+    "intrinsicId": "MathSinF64",
+    "className": "Math",
+    "methodName": "sin"
+  },
+  {
+    "intrinsicId": "MathCosF32",
+    "className": "Math",
+    "methodName": "fcos"
+  },
+  {
+    "intrinsicId": "MathCosF64",
+    "className": "Math",
+    "methodName": "cos"
+  },
+  {
+    "intrinsicId": "MathPowF32",
+    "className": "Math",
+    "methodName": "fpow"
+  },
+  {
+    "intrinsicId": "MathPowF64",
+    "className": "Math",
+    "methodName": "pow"
+  },
+  {
+    "intrinsicId": "MathSqrtF32",
+    "className": "Math",
+    "methodName": "fsqrt"
+  },
+  {
+    "intrinsicId": "MathSqrtF64",
+    "className": "Math",
+    "methodName": "sqrt"
+  },
+  {
+    "intrinsicId": "MathCalculateDouble",
+    "className": "Math",
+    "methodName": "calculateDouble"
+  },
+  {
+    "intrinsicId": "MathCalculateFloat",
+    "className": "Math",
+    "methodName": "calculateFloat"
+  },
+  {
+    "intrinsicId": "IOPrintString",
+    "className": "IO",
+    "methodName": "printString"
+  },
+  {
+    "intrinsicId": "IOPrintF32",
+    "className": "IO",
+    "methodName": "printF32"
+  },
+  {
+    "intrinsicId": "IOPrintF64",
+    "className": "IO",
+    "methodName": "printF64"
+  },
+  {
+    "intrinsicId": "IOPrintI32",
+    "className": "IO",
+    "methodName": "printI32"
+  },
+  {
+    "intrinsicId": "IOPrintU32",
+    "className": "IO",
+    "methodName": "printU32"
+  },
+  {
+    "intrinsicId": "IOPrintI64",
+    "className": "IO",
+    "methodName": "printI64"
+  },
+  {
+    "intrinsicId": "IOPrintU64",
+    "className": "IO",
+    "methodName": "printU64"
+  },
+  {
+    "intrinsicId": "SystemCompileMethod",
+    "className": "System",
+    "methodName": "compileMethod"
+  },
+  {
+    "intrinsicId": "SystemExit",
+    "className": "System",
+    "methodName": "exit"
+  },
+  {
+    "intrinsicId": "SystemNanoTime",
+    "className": "System",
+    "methodName": "nanoTime"
+  },
+  {
+    "intrinsicId": "SystemAssert",
+    "className": "System",
+    "methodName": "assert"
+  },
+  {
+    "intrinsicId": "SystemAssertPrint",
+    "className": "System",
+    "methodName": "assertPrint"
+  },
+  {
+    "intrinsicId": "SystemScheduleCoroutine",
+    "className": "System",
+    "methodName": "scheduleCoroutine"
+  },
+  {
+    "intrinsicId": "SystemCoroutineGetWorkerId",
+    "className": "System",
+    "methodName": "getCoroutineWorkerId"
+  },
+  {
+    "intrinsicId": "CheckTag",
+    "className": "DebugUtils",
+    "methodName": "checkTag"
+  },
+  {
+    "intrinsicId": "ConvertStringToI32",
+    "className": "Convert",
+    "methodName": "stringToI32"
+  },
+  {
+    "intrinsicId": "ConvertStringToU32",
+    "className": "Convert",
+    "methodName": "stringToU32"
+  },
+  {
+    "intrinsicId": "ConvertStringToI64",
+    "className": "Convert",
+    "methodName": "stringToI64"
+  },
+  {
+    "intrinsicId": "ConvertStringToU64",
+    "className": "Convert",
+    "methodName": "stringToU64"
+  },
+  {
+    "intrinsicId": "ConvertStringToF32",
+    "className": "Convert",
+    "methodName": "stringToF32"
+  },
+  {
+    "intrinsicId": "ConvertStringToF64",
+    "className": "Convert",
+    "methodName": "stringToF64"
+  },
+  {
+    "intrinsicId": "ObjectCreateNonMovable",
+    "className": "Object",
+    "methodName": "createNonMovable"
+  },
+  {
+    "intrinsicId": "ObjectMonitorEnter",
+    "className": "Object",
+    "methodName": "monitorEnter"
+  },
+  {
+    "intrinsicId": "ObjectMonitorExit",
+    "className": "Object",
+    "methodName": "monitorExit"
+  },
+  {
+    "intrinsicId": "ObjectWait",
+    "className": "Object",
+    "methodName": "Wait"
+  },
+  {
+    "intrinsicId": "ObjectTimedWait",
+    "className": "Object",
+    "methodName": "TimedWait"
+  },
+  {
+    "intrinsicId": "ObjectTimedWaitNanos",
+    "className": "Object",
+    "methodName": "TimedWaitNanos"
+  },
+  {
+    "intrinsicId": "ObjectNotify",
+    "className": "Object",
+    "methodName": "Notify"
+  },
+  {
+    "intrinsicId": "ObjectNotifyAll",
+    "className": "Object",
+    "methodName": "NotifyAll"
+  },
+  {
+    "intrinsicId": "SlowPathEntry",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "SaveRegistersEp",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "RestoreRegistersEp",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "Unreachable",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "TailCall",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "InterpreterReturn",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "LoadAcquireMarkWordExclusive",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "StoreReleaseMarkWordExclusive",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompareAndSetMarkWord",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "DataMemoryBarrierFull",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompressEightUtf16ToUtf8CharsUsingSimd",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompressSixteenUtf16ToUtf8CharsUsingSimd",
+    "className": "Irtoc",
+    "methodName": null
+  },
+  {
+    "intrinsicId": "StdMathSin",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "sin"
+  },
+  {
+    "intrinsicId": "StdMathCos",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "cos"
+  },
+  {
+    "intrinsicId": "StdMathPower",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "power"
+  },
+  {
+    "intrinsicId": "StdMathSqrt",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "sqrt"
+  },
+  {
+    "intrinsicId": "StdMathAbs",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "abs"
+  },
+  {
+    "intrinsicId": "StdMathMaxI32",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "max"
+  },
+  {
+    "intrinsicId": "StdMathMaxI64",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "max"
+  },
+  {
+    "intrinsicId": "StdMathMaxF32",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "max"
+  },
+  {
+    "intrinsicId": "StdMathMaxF64",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "max"
+  },
+  {
+    "intrinsicId": "StdMathMinI32",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "min"
+  },
+  {
+    "intrinsicId": "StdMathMinI64",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "min"
+  },
+  {
+    "intrinsicId": "StdMathMinF32",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "min"
+  },
+  {
+    "intrinsicId": "StdMathMinF64",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "min"
+  },
+  {
+    "intrinsicId": "StdMathRandom",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "random"
+  },
+  {
+    "intrinsicId": "StdMathAcos",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "acos"
+  },
+  {
+    "intrinsicId": "StdMathAcosh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "acosh"
+  },
+  {
+    "intrinsicId": "StdMathAsin",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "asin"
+  },
+  {
+    "intrinsicId": "StdMathAsinh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "asinh"
+  },
+  {
+    "intrinsicId": "StdMathAtan2",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "atan2"
+  },
+  {
+    "intrinsicId": "StdMathAtanh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "atanh"
+  },
+  {
+    "intrinsicId": "StdMathAtan",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "atan"
+  },
+  {
+    "intrinsicId": "StdMathSinh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "sinh"
+  },
+  {
+    "intrinsicId": "StdMathCosh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "cosh"
+  },
+  {
+    "intrinsicId": "StdMathFloor",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "floor"
+  },
+  {
+    "intrinsicId": "StdMathRound",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "round"
+  },
+  {
+    "intrinsicId": "StdMathTrunc",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "trunc"
+  },
+  {
+    "intrinsicId": "StdMathCbrt",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "cbrt"
+  },
+  {
+    "intrinsicId": "StdMathTan",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "tan"
+  },
+  {
+    "intrinsicId": "StdMathTanh",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "tanh"
+  },
+  {
+    "intrinsicId": "StdMathExp",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "exp"
+  },
+  {
+    "intrinsicId": "StdMathLog10",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "log10"
+  },
+  {
+    "intrinsicId": "StdMathExpm1",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "expm1"
+  },
+  {
+    "intrinsicId": "StdMathCeil",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "ceil"
+  },
+  {
+    "intrinsicId": "StdMathLog",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "log"
+  },
+  {
+    "intrinsicId": "StdMathRem",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "rem"
+  },
+  {
+    "intrinsicId": "StdMathMod",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "mod"
+  },
+  {
+    "intrinsicId": "StdMathClz64",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "clz64"
+  },
+  {
+    "intrinsicId": "StdMathClz32",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "clz32"
+  },
+  {
+    "intrinsicId": "StdMathClz32Double",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "clz32Double"
+  },
+  {
+    "intrinsicId": "StdMathSignbit",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "signbit"
+  },
+  {
+    "intrinsicId": "StdMathImul",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "imul"
+  },
+  {
+    "intrinsicId": "StdMathFround",
+    "className": "std.math.ETSGLOBAL",
+    "methodName": "fround"
+  },
+  {
+    "intrinsicId": "StdConsolePrintString",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintU1",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintI8",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintI16",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintU16",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintI32",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintI64",
+    "className": "std.core.Console",
+    "methodName": "print"
+  },
+  {
+    "intrinsicId": "StdConsolePrintln",
+    "className": "std.core.Console",
+    "methodName": "println"
+  },
+  {
+    "intrinsicId": "StdCoreLoadLibrary",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "loadLibrary"
+  },
+  {
+    "intrinsicId": "StdCoreStringGetChars",
+    "className": "std.core.String",
+    "methodName": "getChars"
+  },
+  {
+    "intrinsicId": "StdCoreStringGetLength",
+    "className": "std.core.String",
+    "methodName": "getLength"
+  },
+  {
+    "intrinsicId": "StdCoreStringLength",
+    "className": "std.core.String",
+    "methodName": "<get>length"
+  },
+  {
+    "intrinsicId": "StdCoreStringIsEmpty",
+    "className": "std.core.String",
+    "methodName": "isEmpty"
+  },
+  {
+    "intrinsicId": "StdCoreStringCharAt",
+    "className": "std.core.String",
+    "methodName": "charAt"
+  },
+  {
+    "intrinsicId": "StdCoreStringEquals",
+    "className": "std.core.String",
+    "methodName": "equals"
+  },
+  {
+    "intrinsicId": "StdCoreStringLocaleCmp",
+    "className": "std.core.String",
+    "methodName": "localeCompare"
+  },
+  {
+    "intrinsicId": "StdCoreStringNormalizeNFC",
+    "className": "std.core.String",
+    "methodName": "normalizeNFC"
+  },
+  {
+    "intrinsicId": "StdCoreStringNormalizeNFD",
+    "className": "std.core.String",
+    "methodName": "normalizeNFD"
+  },
+  {
+    "intrinsicId": "StdCoreStringNormalizeNFKC",
+    "className": "std.core.String",
+    "methodName": "normalizeNFKC"
+  },
+  {
+    "intrinsicId": "StdCoreStringNormalizeNFKD",
+    "className": "std.core.String",
+    "methodName": "normalizeNFKD"
+  },
+  {
+    "intrinsicId": "StdCoreStringToLowerCase",
+    "className": "std.core.String",
+    "methodName": "toLowerCase"
+  },
+  {
+    "intrinsicId": "StdCoreStringToUpperCase",
+    "className": "std.core.String",
+    "methodName": "toUpperCase"
+  },
+  {
+    "intrinsicId": "StdCoreStringToLocaleLowerCase",
+    "className": "std.core.String",
+    "methodName": "toLocaleLowerCase"
+  },
+  {
+    "intrinsicId": "StdCoreStringToLocaleUpperCase",
+    "className": "std.core.String",
+    "methodName": "toLocaleUpperCase"
+  },
+  {
+    "intrinsicId": "StdCoreStringIsWellFormed",
+    "className": "std.core.String",
+    "methodName": "isWellFormed"
+  },
+  {
+    "intrinsicId": "StdCoreStringIndexOf",
+    "className": "std.core.String",
+    "methodName": "indexOf"
+  },
+  {
+    "intrinsicId": "StdCoreStringIndexOfAfter",
+    "className": "std.core.String",
+    "methodName": "indexOf"
+  },
+  {
+    "intrinsicId": "StdCoreStringIndexOfString",
+    "className": "std.core.String",
+    "methodName": "indexOf"
+  },
+  {
+    "intrinsicId": "StdCoreStringLastIndexOfString",
+    "className": "std.core.String",
+    "methodName": "lastIndexOf"
+  },
+  {
+    "intrinsicId": "StdCoreStringSubstring",
+    "className": "std.core.String",
+    "methodName": "substring"
+  },
+  {
+    "intrinsicId": "StdCoreStringCodePointToChar",
+    "className": "std.core.String",
+    "methodName": "codePointToChar"
+  },
+  {
+    "intrinsicId": "StdCoreStringHashCode",
+    "className": "std.core.String",
+    "methodName": "$_hashCode"
+  },
+  {
+    "intrinsicId": "StdCoreStringIsCompressed",
+    "className": "std.core.String",
+    "methodName": "isCompressed"
+  },
+  {
+    "intrinsicId": "StdCoreStringBuilderConcatStrings",
+    "className": "std.core.StringBuilder",
+    "methodName": "concatStrings"
+  },
+  {
+    "intrinsicId": "StdCoreToStringBoolean",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreToStringByte",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreToStringChar",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreToStringShort",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreToStringInt",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreToStringLong",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendFloat",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendDouble",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendLong",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendInt",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendShort",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendByte",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendChar",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendBool",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbAppendString",
+    "className": "std.core.StringBuilder",
+    "methodName": "append"
+  },
+  {
+    "intrinsicId": "StdCoreSbToString",
+    "className": "std.core.StringBuilder",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "EscompatDateNow",
+    "className": "escompat.Date",
+    "methodName": "now"
+  },
+  {
+    "intrinsicId": "EscompatDateGetLocalTimezoneOffset",
+    "className": "escompat.Date",
+    "methodName": "getLocalTimezoneOffset"
+  },
+  {
+    "intrinsicId": "EscompatDateGetTimezoneName",
+    "className": "escompat.Date",
+    "methodName": "getTimezoneName"
+  },
+  {
+    "intrinsicId": "EscompatDateGetLocaleString",
+    "className": "escompat.Date",
+    "methodName": "getLocaleString"
+  },
+  {
+    "intrinsicId": "EscompatArrayBufferFrom",
+    "className": "escompat.ArrayBuffer",
+    "methodName": "from"
+  },
+  {
+    "intrinsicId": "StdTimeDateNanoNow",
+    "className": "std.time.Chrono",
+    "methodName": "nanoNow"
+  },
+  {
+    "intrinsicId": "StdFloatToString",
+    "className": "std.core.Float",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdFloatIsNan",
+    "className": "std.core.Float",
+    "methodName": "isNaN"
+  },
+  {
+    "intrinsicId": "StdFloatIsFinite",
+    "className": "std.core.Float",
+    "methodName": "isFinite"
+  },
+  {
+    "intrinsicId": "StdFloatBitCastFromInt",
+    "className": "std.core.Float",
+    "methodName": "bitCastFromInt"
+  },
+  {
+    "intrinsicId": "StdFloatBitCastToInt",
+    "className": "std.core.Float",
+    "methodName": "bitCastToInt"
+  },
+  {
+    "intrinsicId": "StdFloatIsInteger",
+    "className": "std.core.Float",
+    "methodName": "isInteger"
+  },
+  {
+    "intrinsicId": "StdFloatIsSafeInteger",
+    "className": "std.core.Float",
+    "methodName": "isSafeInteger"
+  },
+  {
+    "intrinsicId": "StdDoubleToString",
+    "className": "std.core.Double",
+    "methodName": "toString"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleToLocaleString",
+    "className": "std.core.Double",
+    "methodName": "toLocaleString"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleParseFloat",
+    "className": "std.core.Double",
+    "methodName": "parseFloat"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleParseInt",
+    "className": "std.core.Double",
+    "methodName": "parseIntCore"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleToExponential",
+    "className": "std.core.Double",
+    "methodName": "toExponential"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleToPrecision",
+    "className": "std.core.Double",
+    "methodName": "toPrecision"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleToFixed",
+    "className": "std.core.Double",
+    "methodName": "toFixed"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleNumberFromString",
+    "className": "std.core.Double",
+    "methodName": "numberFromString"
+  },
+  {
+    "intrinsicId": "StdDoubleIsNan",
+    "className": "std.core.Double",
+    "methodName": "isNaN"
+  },
+  {
+    "intrinsicId": "StdDoubleIsFinite",
+    "className": "std.core.Double",
+    "methodName": "isFinite"
+  },
+  {
+    "intrinsicId": "StdDoubleBitCastFromLong",
+    "className": "std.core.Double",
+    "methodName": "bitCastFromLong"
+  },
+  {
+    "intrinsicId": "StdDoubleBitCastToLong",
+    "className": "std.core.Double",
+    "methodName": "bitCastToLong"
+  },
+  {
+    "intrinsicId": "StdDoubleIsInteger",
+    "className": "std.core.Double",
+    "methodName": "isInteger"
+  },
+  {
+    "intrinsicId": "StdDoubleIsSafeInteger",
+    "className": "std.core.Double",
+    "methodName": "isSafeInteger"
+  },
+  {
+    "intrinsicId": "StdCoreAllocGenericArray",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "__alloc_array"
+  },
+  {
+    "intrinsicId": "StdCoreBoolCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreCharCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreByteCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreShortCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreIntCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreLongCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreFloatCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCoreDoubleCopyTo",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "copyTo"
+  },
+  {
+    "intrinsicId": "StdCorePrintStackTrace",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "printStackTrace"
+  },
+  {
+    "intrinsicId": "StdCoreStackTraceLines",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "stackTraceLines"
+  },
+  {
+    "intrinsicId": "StdCoreStackTraceProvisionStackTrace",
+    "className": "std.core.StackTrace",
+    "methodName": "provisionStackTrace"
+  },
+  {
+    "intrinsicId": "StdCoreExit",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "exit"
+  },
+  {
+    "intrinsicId": "StdGCStartGC",
+    "className": "std.core.GC",
+    "methodName": "startGCImpl"
+  },
+  {
+    "intrinsicId": "StdGCWaitForFinishGC",
+    "className": "std.core.GC",
+    "methodName": "waitForFinishGC"
+  },
+  {
+    "intrinsicId": "StdGCScheduleGCAfterNthAlloc",
+    "className": "std.core.GC",
+    "methodName": "scheduleGcAfterNthAlloc"
+  },
+  {
+    "intrinsicId": "StdGCIsScheduledGCTriggered",
+    "className": "std.core.GC",
+    "methodName": "isScheduledGCTriggered"
+  },
+  {
+    "intrinsicId": "StdGCPostponeGCStart",
+    "className": "std.core.GC",
+    "methodName": "postponeGCStart"
+  },
+  {
+    "intrinsicId": "StdGCPostponeGCEnd",
+    "className": "std.core.GC",
+    "methodName": "postponeGCEnd"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedBooleanArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedBooleanArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedByteArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedByteArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedCharArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedCharArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedShortArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedShortArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedIntArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedIntArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedLongArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedLongArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedFloatArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedFloatArray"
+  },
+  {
+    "intrinsicId": "StdGCAllocatePinnedDoubleArray",
+    "className": "std.core.GC",
+    "methodName": "allocatePinnedDoubleArray"
+  },
+  {
+    "intrinsicId": "StdGCGetObjectSpaceType",
+    "className": "std.core.GC",
+    "methodName": "getObjectSpaceType"
+  },
+  {
+    "intrinsicId": "StdGCGetObjectAddress",
+    "className": "std.core.GC",
+    "methodName": "getObjectAddress"
+  },
+  {
+    "intrinsicId": "StdGCPinObject",
+    "className": "std.core.GC",
+    "methodName": "pinObject"
+  },
+  {
+    "intrinsicId": "StdGCUnpinObject",
+    "className": "std.core.GC",
+    "methodName": "unpinObject"
+  },
+  {
+    "intrinsicId": "StdGetFreeHeapSize",
+    "className": "std.core.GC",
+    "methodName": "getFreeHeapSize"
+  },
+  {
+    "intrinsicId": "StdGetUsedHeapSize",
+    "className": "std.core.GC",
+    "methodName": "getUsedHeapSize"
+  },
+  {
+    "intrinsicId": "StdGetReservedHeapSize",
+    "className": "std.core.GC",
+    "methodName": "getReservedHeapSize"
+  },
+  {
+    "intrinsicId": "StdGCRegisterNativeAllocation",
+    "className": "std.core.GC",
+    "methodName": "registerNativeAllocation"
+  },
+  {
+    "intrinsicId": "StdGCRegisterNativeFree",
+    "className": "std.core.GC",
+    "methodName": "registerNativeFree"
+  },
+  {
+    "intrinsicId": "StdFinalizationRegistryRegisterInstance",
+    "className": "std.core.FinalizationRegistry",
+    "methodName": "registerInstance"
+  },
+  {
+    "intrinsicId": "StdPromiseResolve",
+    "className": "std.core.Promise",
+    "methodName": "resolveImpl"
+  },
+  {
+    "intrinsicId": "StdPromiseReject",
+    "className": "std.core.Promise",
+    "methodName": "rejectImpl"
+  },
+  {
+    "intrinsicId": "StdPromiseAddToJobQueue",
+    "className": "std.core.Promise",
+    "methodName": "addToJobQueue"
+  },
+  {
+    "intrinsicId": "StdPromiseAwait",
+    "className": "std.core.Promise",
+    "methodName": "awaitResolution"
+  },
+  {
+    "intrinsicId": "StdCoroutineSchedule",
+    "className": "std.core.Coroutine",
+    "methodName": "Schedule"
+  },
+  {
+    "intrinsicId": "SharedMemoryCreate",
+    "className": "escompat.SharedMemory",
+    "methodName": "create"
+  },
+  {
+    "intrinsicId": "SharedMemoryAddI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicAddI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryAndI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicAndI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryCompareExchangeI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicCompareExchangeI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryExchangeI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicExchangeI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryLoadI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicLoadI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryOrI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicOrI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryStoreI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicStoreI8"
+  },
+  {
+    "intrinsicId": "SharedMemorySubI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicSubI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryXorI8",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicXorI8"
+  },
+  {
+    "intrinsicId": "SharedMemoryWaitI32",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicWaitI32"
+  },
+  {
+    "intrinsicId": "SharedMemoryWaitI64",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicWaitI64"
+  },
+  {
+    "intrinsicId": "SharedMemoryTimedWaitI32",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicTimedWaitI32"
+  },
+  {
+    "intrinsicId": "SharedMemoryTimedWaitI64",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicTimedWaitI64"
+  },
+  {
+    "intrinsicId": "SharedMemoryNotify",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicNotify"
+  },
+  {
+    "intrinsicId": "SharedMemoryBoundedNotify",
+    "className": "escompat.SharedMemory",
+    "methodName": "atomicBoundedNotify"
+  },
+  {
+    "intrinsicId": "StdCoroutineGetWorkerId",
+    "className": "std.debug.concurrency.CoroutineExtras",
+    "methodName": "getWorkerId"
+  },
+  {
+    "intrinsicId": "StdCoroutineSetSchedulingPolicy",
+    "className": "std.debug.concurrency.CoroutineExtras",
+    "methodName": "setSchedulingPolicy"
+  },
+  {
+    "intrinsicId": "StdAtomicFlagSet",
+    "className": "std.debug.concurrency.AtomicFlag",
+    "methodName": "set"
+  },
+  {
+    "intrinsicId": "StdAtomicFlagGet",
+    "className": "std.debug.concurrency.AtomicFlag",
+    "methodName": "get"
+  },
+  {
+    "intrinsicId": "StdRuntimeGetPlatformIsLittleEndian",
+    "className": "escompat.ETSGLOBAL",
+    "methodName": "RuntimeGetPlatformIsLittleEndian"
+  },
+  {
+    "intrinsicId": "StdCoreRuntimeIsSameReference",
+    "className": "std.core.Runtime",
+    "methodName": "isSameReference"
+  },
+  {
+    "intrinsicId": "StdRuntimeGetHashCode",
+    "className": "std.core.Runtime",
+    "methodName": "getHashCode"
+  },
+  {
+    "intrinsicId": "StdCoreRuntimeFailedTypeCastException",
+    "className": "std.core.Runtime",
+    "methodName": "failedTypeCastException"
+  },
+  {
+    "intrinsicId": "StdCoreRuntimeTypeof",
+    "className": "std.core.Runtime",
+    "methodName": "typeOf"
+  },
+  {
+    "intrinsicId": "escompatJSONStringifyObj",
+    "className": "escompat.JSON",
+    "methodName": "stringifyObj"
+  },
+  {
+    "intrinsicId": "EscompatRegExpCompile",
+    "className": "escompat.RegExp",
+    "methodName": "compile"
+  },
+  {
+    "intrinsicId": "EscompatRegExpExec",
+    "className": "escompat.RegExp",
+    "methodName": "execImpl"
+  },
+  {
+    "intrinsicId": "TypeAPIGetTypeDescriptor",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetTypeDescriptor"
+  },
+  {
+    "intrinsicId": "TypeAPIGetTypeKind",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetTypeKind"
+  },
+  {
+    "intrinsicId": "TypeAPIIsValueType",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIIsValueType"
+  },
+  {
+    "intrinsicId": "TypeAPIGetTypeName",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetTypeName"
+  },
+  {
+    "intrinsicId": "TypeAPIGetClassAttributes",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetClassAttributes"
+  },
+  {
+    "intrinsicId": "TypeAPIGetFieldsNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetFieldsNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetOwnFieldsNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetOwnFieldsNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetField",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetField"
+  },
+  {
+    "intrinsicId": "TypeAPIGetOwnField",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetOwnField"
+  },
+  {
+    "intrinsicId": "TypeAPIGetFieldByName",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetFieldByName"
+  },
+  {
+    "intrinsicId": "TypeAPIGetStaticFieldValue",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetStaticFieldValue"
+  },
+  {
+    "intrinsicId": "TypeAPIGetMethodsNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetMethodsNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetMethod",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetMethod"
+  },
+  {
+    "intrinsicId": "TypeAPIGetConstructorsNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetConstructorsNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetConstructor",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetConstructor"
+  },
+  {
+    "intrinsicId": "TypeAPIGetParametersNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetParametersNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetParameter",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetParameter"
+  },
+  {
+    "intrinsicId": "TypeAPIGetTypeId",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetTypeId"
+  },
+  {
+    "intrinsicId": "TypeAPIGetArrayElementType",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetArrayElementType"
+  },
+  {
+    "intrinsicId": "TypeAPIMakeArrayInstance",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIMakeArrayInstance"
+  },
+  {
+    "intrinsicId": "TypeAPIGetBaseType",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetBaseType"
+  },
+  {
+    "intrinsicId": "TypeAPIGetInterfacesNum",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetInterfacesNum"
+  },
+  {
+    "intrinsicId": "TypeAPIGetInterface",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetInterface"
+  },
+  {
+    "intrinsicId": "TypeAPISetStaticFieldValue",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPISetStaticFieldValue"
+  },
+  {
+    "intrinsicId": "TypeAPIIsInheritedFrom",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIIsInheritedFrom"
+  },
+  {
+    "intrinsicId": "TypeAPIGetFunctionAttributes",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetFunctionAttributes"
+  },
+  {
+    "intrinsicId": "TypeAPIGetResultType",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetResultType"
+  },
+  {
+    "intrinsicId": "StdMethodInvoke",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIMethodInvoke"
+  },
+  {
+    "intrinsicId": "StdMethodInvokeConstructor",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIMethodInvokeConstructor"
+  },
+  {
+    "intrinsicId": "TypeAPIGetReceiverType",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "TypeAPIGetReceiverType"
+  },
+  {
+    "intrinsicId": "StdCoreCharIsUpperCase",
+    "className": "std.core.Char",
+    "methodName": "isUpperCase"
+  },
+  {
+    "intrinsicId": "StdCoreCharToUpperCase",
+    "className": "std.core.Char",
+    "methodName": "toUpperCase"
+  },
+  {
+    "intrinsicId": "StdCoreCharIsLowerCase",
+    "className": "std.core.Char",
+    "methodName": "isLowerCase"
+  },
+  {
+    "intrinsicId": "StdCoreCharToLowerCase",
+    "className": "std.core.Char",
+    "methodName": "toLowerCase"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldObject"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByte"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldChar"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldShort"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldInt"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldLong"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldFloat"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldDouble"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameObject"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameByte"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameChar"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameShort"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameInt"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameLong"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameFloat"
+  },
+  {
+    "intrinsicId": "ValueAPIGetFieldByNameDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetFieldByNameDouble"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldObject"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByte"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldChar"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldShort"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldInt"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldLong"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldFloat"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldDouble"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameObject"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameByte"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameChar"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameShort"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameInt"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameLong"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameFloat"
+  },
+  {
+    "intrinsicId": "ValueAPISetFieldByNameDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetFieldByNameDouble"
+  },
+  {
+    "intrinsicId": "ValueAPIGetArrayLength",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetArrayLength"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementObject"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementByte"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementChar"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementShort"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementInt"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementLong"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementFloat"
+  },
+  {
+    "intrinsicId": "ValueAPISetElementDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPISetElementDouble"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementObject",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementObject"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementBoolean",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementBoolean"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementByte",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementByte"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementChar",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementChar"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementShort",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementShort"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementInt",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementInt"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementLong",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementLong"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementFloat",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementFloat"
+  },
+  {
+    "intrinsicId": "ValueAPIGetElementDouble",
+    "className": "std.core.ETSGLOBAL",
+    "methodName": "ValueAPIGetElementDouble"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxCreate",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "createCtx"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxDestroy",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "destroyCtx"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxCommit",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "commit"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxGetError",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "getError"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxGetObjectsArrayForCCtor",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "getObjectsArrayForCCtor"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxGetTypeDescFromPointer",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "getTypeDescFromPointer"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxClassCreate",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "classCreate"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxClassSetBase",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "classSetBase"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxClassAddIface",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "classAddIface"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxClassAddField",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "classAddField"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxInterfaceCreate",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "interfaceCreate"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxInterfaceAddBase",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "interfaceAddBase"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodCreate",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodCreate"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddAccessMod",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddAccessMod"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddParam",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddParam"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddBodyFromMethod",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddBodyFromMethod"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddBodyFromLambda",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddBodyFromLambda"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddBodyFromErasedLambda",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddBodyFromErasedLambda"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddBodyDefault",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddBodyDefault"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAddResult",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAddResult"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxMethodAdd",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "methodAdd"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxLambdaTypeCreate",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "lambdaTypeCreate"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxLambdaTypeAddParam",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "lambdaTypeAddParam"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxLambdaTypeAddResult",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "lambdaTypeAddResult"
+  },
+  {
+    "intrinsicId": "TypeAPITypeCreatorCtxLambdaTypeAdd",
+    "className": "std.core.TypeCreatorCtx",
+    "methodName": "lambdaTypeAdd"
+  },
+  {
+    "intrinsicId": "CompilerEtsLdObjByNameObj",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsLdObjByNameI32",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsLdObjByNameI64",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsLdObjByNameF32",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsLdObjByNameF64",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsStObjByNameObj",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsStObjByNameI32",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsStObjByNameI64",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsStObjByNameF32",
+    "className": null,
+    "methodName": null
+  },
+  {
+    "intrinsicId": "CompilerEtsStObjByNameF64",
+    "className": null,
+    "methodName": null
+  }
+]

@@ -18,57 +18,26 @@ package org.jacodb.panda.staticvm.utils
 
 import org.jacodb.api.common.cfg.Graph
 
-data class SimpleDirectedGraph<T>(
-    val nodes: MutableSet<T> = mutableSetOf(),
-    private val predecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
-    private val successorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf(),
-) : Graph<T> {
-    override fun predecessors(node: T): Set<T> = predecessorsMap[node].orEmpty()
-    override fun successors(node: T): Set<T> = successorsMap[node].orEmpty()
-
-    fun withNode(node: T): SimpleDirectedGraph<T> {
-        nodes.add(node)
-        return this
-    }
-
-    fun withEdge(from: T, to: T): SimpleDirectedGraph<T> {
-        nodes.add(from)
-        nodes.add(to)
-        predecessorsMap.getOrPut(to) { hashSetOf() }.add(from)
-        successorsMap.getOrPut(from) { hashSetOf() }.add(to)
-        return this
-    }
-
-    fun induced(subset: Set<T>): SimpleDirectedGraph<T> {
-        val newNodes = nodes.toMutableSet().also { it.retainAll(subset) }
-        val newPredecessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
-        for ((key, value) in predecessorsMap) {
-            if (key in subset) {
-                newPredecessorsMap[key] = value.toMutableSet().also { it.retainAll(subset) }
-            }
-        }
-        val newSuccessorsMap: MutableMap<T, MutableSet<T>> = mutableMapOf()
-        for ((key, value) in successorsMap) {
-            if (key in subset) {
-                newSuccessorsMap[key] = value.toMutableSet().also { it.retainAll(subset) }
-            }
-        }
-        return SimpleDirectedGraph(newNodes, newPredecessorsMap, newSuccessorsMap)
-    }
-
-    fun weaklyConnectedComponents(): List<SimpleDirectedGraph<T>> =
-        components(nodes) { predecessors(it) + successors(it) }.map { induced(it) }
-
-    companion object {
-        fun <T> union(lhs: SimpleDirectedGraph<T>, rhs: SimpleDirectedGraph<T>) = SimpleDirectedGraph(
-            (lhs.nodes + rhs.nodes).toMutableSet(),
-            (lhs.predecessorsMap + rhs.predecessorsMap).toMutableMap(),
-            (lhs.successorsMap + rhs.successorsMap).toMutableMap()
-        )
-    }
-
-    override fun iterator(): Iterator<T> = nodes.asIterable().iterator()
+fun <T> search(start: T, successors: (T) -> List<T>, visitor: (T) -> Unit): Set<T> {
+    val visited = hashSetOf<T>()
+    fun dfs(node: T) = node.takeIf(visited::add)?.also(visitor)?.let { successors(it).forEach(::dfs) }
+    dfs(start)
+    return visited
 }
+
+fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<Set<T>> {
+    val visited = hashSetOf<T>()
+    return starts.mapNotNull { start ->
+        if (start !in visited) search(start, { successors(it).filter { it !in visited } }, visited::add)
+        else null
+    }
+}
+
+fun <T> reachable(starts: Iterable<T>, successors: (T) -> Collection<T>): Set<T> =
+    starts.applyFold(hashSetOf()) { start ->
+        if (!contains(start))
+            addAll(search(start, { successors(it).filterNot(this::contains) }, {}))
+    }
 
 fun <T> Graph<T>.rpo(): List<T> {
     val visited = hashSetOf<T>()

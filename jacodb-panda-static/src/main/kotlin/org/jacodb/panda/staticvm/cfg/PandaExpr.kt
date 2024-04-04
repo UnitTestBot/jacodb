@@ -27,7 +27,7 @@ import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.staticvm.classpath.PandaClassType
 import org.jacodb.panda.staticvm.classpath.PandaField
 import org.jacodb.panda.staticvm.classpath.PandaMethod
-import org.jacodb.panda.staticvm.classpath.PandaPrimitivePandaType
+import org.jacodb.panda.staticvm.classpath.PandaPrimitiveType
 import org.jacodb.panda.staticvm.classpath.PandaType
 
 sealed interface PandaExpr : CommonExpr {
@@ -116,8 +116,8 @@ data class PandaUndefined(override val type: PandaType) : PandaConstant {
 data class PandaBoolean(
     val value: Boolean,
 ) : PandaConstant {
-    override val type: PandaPrimitivePandaType
-        get() = PandaPrimitivePandaType.BYTE
+    override val type: PandaPrimitiveType
+        get() = PandaPrimitiveType.BYTE
 
     override fun toString(): String = "$value"
 }
@@ -126,7 +126,7 @@ data class PandaByte(
     val value: Byte,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.BYTE
+        get() = PandaPrimitiveType.BYTE
 
     override fun toString(): String = "$value"
 }
@@ -135,7 +135,7 @@ data class PandaShort(
     val value: Short,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.SHORT
+        get() = PandaPrimitiveType.SHORT
 
     override fun toString(): String = "$value"
 }
@@ -144,7 +144,7 @@ data class PandaInt(
     val value: Int,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.INT
+        get() = PandaPrimitiveType.INT
 
     override fun toString(): String = "$value"
 }
@@ -153,7 +153,43 @@ data class PandaLong(
     val value: Long,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.LONG
+        get() = PandaPrimitiveType.LONG
+
+    override fun toString(): String = "$value"
+}
+
+data class PandaUByte(
+    val value: UByte,
+) : PandaConstant {
+    override val type: PandaType
+        get() = PandaPrimitiveType.UBYTE
+
+    override fun toString(): String = "$value"
+}
+
+data class PandaUShort(
+    val value: UShort,
+) : PandaConstant {
+    override val type: PandaType
+        get() = PandaPrimitiveType.USHORT
+
+    override fun toString(): String = "$value"
+}
+
+data class PandaUInt(
+    val value: UInt,
+) : PandaConstant {
+    override val type: PandaType
+        get() = PandaPrimitiveType.UINT
+
+    override fun toString(): String = "$value"
+}
+
+data class PandaULong(
+    val value: ULong,
+) : PandaConstant {
+    override val type: PandaType
+        get() = PandaPrimitiveType.ULONG
 
     override fun toString(): String = "$value"
 }
@@ -162,7 +198,7 @@ data class PandaFloat(
     val value: Float,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.FLOAT
+        get() = PandaPrimitiveType.FLOAT
 
     override fun toString(): String = "$value"
 }
@@ -171,7 +207,7 @@ data class PandaDouble(
     val value: Double,
 ) : PandaConstant {
     override val type: PandaType
-        get() = PandaPrimitivePandaType.DOUBLE
+        get() = PandaPrimitiveType.DOUBLE
 
     override fun toString(): String = "$value"
 }
@@ -181,6 +217,13 @@ data class PandaString(
     override val type: PandaClassType,
 ) : PandaConstant {
     override fun toString(): String = "\"$value\""
+}
+
+data class PandaTypeConstant(
+    val value: PandaType,
+    override val type: PandaType
+) : PandaConstant {
+    override fun toString(): String = "${value}.class"
 }
 
 data class PandaNewExpr(
@@ -399,6 +442,8 @@ data class PandaNeExpr(
 
 sealed interface PandaCallExpr : PandaExpr, CommonCallExpr {
     val method: PandaMethod
+    override val operands: List<CommonValue>
+        get() = args
 }
 
 data class PandaStaticCallExpr(
@@ -407,10 +452,21 @@ data class PandaStaticCallExpr(
 ) : PandaCallExpr {
     override val type: PandaType = method.returnType
 
-    override val args: List<CommonValue>
+    override val args: List<PandaValue>
         get() = operands
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
+    override fun toString(): String = "${method.enclosingClass.name}::${method.name}(${operands.joinToString(", ")})"
+}
+
+data class PandaIntrinsicCallExpr(
+    val intrinsic: String,
+    override val type: PandaType,
+    override val operands: List<PandaValue>,
+) : PandaExpr, CommonCallExpr {
+    override val args: List<PandaValue>
+        get() = operands
+
+    override fun toString(): String = "intrinsic<${intrinsic}>(${operands.joinToString(", ")})"
 }
 
 data class PandaVirtualCallExpr(
@@ -420,15 +476,16 @@ data class PandaVirtualCallExpr(
 ) : PandaCallExpr, CommonInstanceCallExpr {
     override val type: PandaType = method.returnType
 
-    override val args: List<CommonValue>
+    override val args: List<PandaValue>
         get() = operands
 
-    override fun toString(): String = "${method.signature}(${operands.joinToString(", ")})"
+    override fun toString(): String = "${instance}.${method.name}(${operands.joinToString(", ")})"
 }
 
 data class PandaPhiExpr(
     override val type: PandaType,
     override val operands: List<PandaValue>,
+    val predecessors: List<PandaInstRef>
 ) : PandaExpr {
     override fun toString(): String = "Phi(${operands.joinToString(", ")})"
 }

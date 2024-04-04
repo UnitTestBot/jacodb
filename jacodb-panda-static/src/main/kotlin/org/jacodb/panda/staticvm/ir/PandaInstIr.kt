@@ -19,17 +19,7 @@ package org.jacodb.panda.staticvm.ir
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Serializable
-sealed interface PandaInstIr {
-    val id: String
-    val inputs: List<String>
-    val users: List<String>
-    val opcode: String
-    val type: String
-    val catchers: List<Int>
 
-    fun <T> accept(visitor: PandaInstIrVisitor<T>): T
-}
 
 @Serializable
 sealed interface PandaComparisonInstIr : PandaInstIr {
@@ -179,6 +169,36 @@ data class PandaLoadStringInstIr(
 }
 
 @Serializable
+@SerialName("LoadType")
+data class PandaLoadTypeInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val loadedType: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadTypeInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadRuntimeClass")
+data class PandaLoadRuntimeClassInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val loadedClass: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadRuntimeClassInstIr(this)
+}
+
+@Serializable
 @SerialName("CallVirtual")
 data class PandaCallVirtualInstIr(
     override val id: String,
@@ -191,6 +211,36 @@ data class PandaCallVirtualInstIr(
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaCallVirtualInstIr(this)
+}
+
+@Serializable
+@SerialName("CallLaunchVirtual")
+data class PandaCallLaunchVirtualInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val method: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaCallLaunchVirtualInstIr(this)
+}
+
+@Serializable
+@SerialName("CallLaunchStatic")
+data class PandaCallLaunchStaticInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val method: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaCallLaunchStaticInstIr(this)
 }
 
 @Serializable
@@ -810,7 +860,23 @@ data class PandaCatchPhiInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
+    val throwers: List<String> = emptyList(),
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaCatchPhiInstIr(this)
+}
+
+@Serializable
+@SerialName("Intrinsic")
+data class PandaIntrinsicInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val intrinsicId: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaIntrinsicInstIr(this)
 }

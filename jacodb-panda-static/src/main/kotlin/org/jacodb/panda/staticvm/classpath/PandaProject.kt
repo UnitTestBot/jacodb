@@ -17,9 +17,7 @@
 package org.jacodb.panda.staticvm.classpath
 
 import org.jacodb.api.common.Project
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.staticvm.cfg.PandaGraph
-import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
@@ -30,21 +28,20 @@ class PandaProject : Project {
         val data: T,
     )
 
-    val objectClass = PandaClass(
-        this,
-        "std.core.Object",
-        null,
-        emptySet(),
-        AccessFlags(1)
-    )
+    private val autoInitializedClasses = mutableListOf<PandaClass>()
+    private fun newBlankClass(
+        name: String,
+        parent: PandaClass?,
+        interfaces: Collection<PandaInterface> = emptySet(),
+        accessFlags: AccessFlags = AccessFlags(1)
+    ) = PandaClass(this, name, parent, interfaces.toSet(), accessFlags)
+        .also(autoInitializedClasses::add)
 
-    val stringClass = PandaClass(
-        this,
-        "std.core.String",
-        objectClass,
-        emptySet(),
-        AccessFlags(1)
-    )
+    val objectClass = newBlankClass("std.core.Object", null)
+    val stringClass = newBlankClass("std.core.String", objectClass)
+    val undefinedClass = newBlankClass("std.core.Undefined", objectClass)
+    val typeClass = newBlankClass("std.core.Type", objectClass)
+    val voidClass = newBlankClass("std.core.Void", objectClass)
 
     private val classesIndex = hashMapOf<String, TreeEntry<PandaClass>>()
     private val classesPool = hashSetOf<PandaClass>()
@@ -68,8 +65,7 @@ class PandaProject : Project {
     }
 
     init {
-        addClass(objectClass)
-        addClass(stringClass)
+        autoInitializedClasses.forEach(this::addClass)
     }
 
     fun addInterface(node: PandaInterface): Boolean {
@@ -136,9 +132,7 @@ class PandaProject : Project {
     fun getElementType(name: String) = if (name.endsWith("[]")) findType(name.removeSuffix("[]"))
     else throw IllegalArgumentException("Expected array type")
 
-    override fun close() {
-        // TODO: not necessary for now
-    }
+    override fun close() = Unit
 
     private val flowGraphs: MutableMap<PandaMethod, PandaGraph> = hashMapOf()
 
@@ -171,12 +165,17 @@ class PandaProject : Project {
                 ?.map { it.elementType }
                 ?.let(this::commonType)
                 ?.array
+                ?: objectClass.type
         }
-        if (types.any { it is PandaPrimitivePandaType }) {
-            return types.takeIf { it.all { it is PandaPrimitivePandaType } }
-                ?.filterIsInstance<PandaPrimitivePandaType>()
+        if (types.any { it is PandaPrimitiveType }) {
+            return types.takeIf { it.all { it is PandaPrimitiveType } }
+                ?.filterIsInstance<PandaPrimitiveType>()
                 ?.max()
         }
         return commonClassType(types.filterIsInstance<PandaClassType>())
+    }
+
+    fun resolveIntrinsic(id: String) = Intrinsics.resolve(id)?.let { (className, methodName) ->
+        findClassOrInterface(className).findMethodBySimpleName(methodName)
     }
 }

@@ -16,7 +16,7 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-enum class PandaPrimitivePandaType(
+enum class PandaPrimitiveType(
     // override val project: PandaProject,
     override val typeName: String,
 ) : PandaSingleType {
@@ -40,7 +40,7 @@ enum class PandaPrimitivePandaType(
 }
 
 object PandaPrimitives {
-    fun findPrimitiveOrNull(name: String) = enumValues<PandaPrimitivePandaType>().find { it.typeName == name }
+    fun findPrimitiveOrNull(name: String) = enumValues<PandaPrimitiveType>().find { it.typeName == name }
 
     fun find(name: String) = requireNotNull(findPrimitiveOrNull(name)) {
         "Not found primitive $name"

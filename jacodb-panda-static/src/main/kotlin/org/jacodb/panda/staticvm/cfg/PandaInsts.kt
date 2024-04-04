@@ -58,7 +58,6 @@ sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
     }
 }
 
-// TODO: придумать, как убрать этот костыль (нужно корректно обрабатывать ссылки на пустой basicBlock)
 class PandaDoNothingInst(
     override val location: PandaInstLocation,
 ) : PandaInst {
@@ -153,12 +152,9 @@ class PandaThrowInst(
     override val location: PandaInstLocation,
     val error: PandaValue,
     val catchers: List<PandaInstRef>
-) : PandaBranchingInst, PandaTerminatingInst {
+) : PandaTerminatingInst {
     override val operands: List<PandaExpr>
         get() = listOf(error)
-
-    override val successors: List<PandaInstRef>
-        get() = catchers
 
     override fun toString(): String = "throw $error"
 }

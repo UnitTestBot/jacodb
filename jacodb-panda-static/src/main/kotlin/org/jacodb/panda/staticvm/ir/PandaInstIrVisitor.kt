@@ -16,6 +16,11 @@
 
 package org.jacodb.panda.staticvm.ir
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+
+
 interface PandaInstIrVisitor<T> {
     fun visitPandaConstantInstIr(inst: PandaConstantInstIr): T
     fun visitPandaSafePointInstIr(inst: PandaSafePointInstIr): T
@@ -26,7 +31,11 @@ interface PandaInstIrVisitor<T> {
     fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): T
     fun visitPandaZeroCheckInstIr(inst: PandaZeroCheckInstIr): T
     fun visitPandaLoadStringInstIr(inst: PandaLoadStringInstIr): T
+    fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): T
+    fun visitPandaLoadRuntimeClassInstIr(inst: PandaLoadRuntimeClassInstIr): T
     fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): T
+    fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): T
+    fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): T
     fun visitPandaLoadAndInitClassInstIr(inst: PandaLoadAndInitClassInstIr): T
     fun visitPandaLoadClassInstIr(inst: PandaLoadClassInstIr): T
     fun visitPandaInitClassInstIr(inst: PandaInitClassInstIr): T
@@ -70,4 +79,5 @@ interface PandaInstIrVisitor<T> {
     fun visitPandaRefTypeCheckInstIr(inst: PandaRefTypeCheckInstIr): T
     fun visitPandaTryInstIr(inst: PandaTryInstIr): T
     fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): T
+    fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): T
 }

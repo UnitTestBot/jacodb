@@ -18,65 +18,10 @@ package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.panda.staticvm.classpath.PandaArrayType
 import org.jacodb.panda.staticvm.classpath.PandaMethod
-import org.jacodb.panda.staticvm.classpath.PandaPrimitivePandaType
+import org.jacodb.panda.staticvm.classpath.PandaPrimitiveType
 import org.jacodb.panda.staticvm.classpath.PandaPrimitives
 import org.jacodb.panda.staticvm.classpath.PandaType
-import org.jacodb.panda.staticvm.ir.PandaAShlInstIr
-import org.jacodb.panda.staticvm.ir.PandaAShrInstIr
-import org.jacodb.panda.staticvm.ir.PandaAddInstIr
-import org.jacodb.panda.staticvm.ir.PandaAndInstIr
-import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
-import org.jacodb.panda.staticvm.ir.PandaBoundsCheckInstIr
-import org.jacodb.panda.staticvm.ir.PandaCallStaticInstIr
-import org.jacodb.panda.staticvm.ir.PandaCallVirtualInstIr
-import org.jacodb.panda.staticvm.ir.PandaCastInstIr
-import org.jacodb.panda.staticvm.ir.PandaCatchPhiInstIr
-import org.jacodb.panda.staticvm.ir.PandaCheckCastInstIr
-import org.jacodb.panda.staticvm.ir.PandaCmpInstIr
-import org.jacodb.panda.staticvm.ir.PandaCompareInstIr
-import org.jacodb.panda.staticvm.ir.PandaConstantInstIr
-import org.jacodb.panda.staticvm.ir.PandaDivInstIr
-import org.jacodb.panda.staticvm.ir.PandaIfImmInstIr
-import org.jacodb.panda.staticvm.ir.PandaInitClassInstIr
-import org.jacodb.panda.staticvm.ir.PandaInstIr
-import org.jacodb.panda.staticvm.ir.PandaInstIrVisitor
-import org.jacodb.panda.staticvm.ir.PandaIsInstanceInstIr
-import org.jacodb.panda.staticvm.ir.PandaLenArrayInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadAndInitClassInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadArrayInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadClassInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadObjectInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadStaticInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadStringInstIr
-import org.jacodb.panda.staticvm.ir.PandaLoadUndefinedInstIr
-import org.jacodb.panda.staticvm.ir.PandaModInstIr
-import org.jacodb.panda.staticvm.ir.PandaMulInstIr
-import org.jacodb.panda.staticvm.ir.PandaNegInstIr
-import org.jacodb.panda.staticvm.ir.PandaNegativeCheckInstIr
-import org.jacodb.panda.staticvm.ir.PandaNewArrayInstIr
-import org.jacodb.panda.staticvm.ir.PandaNewObjectInstIr
-import org.jacodb.panda.staticvm.ir.PandaNotInstIr
-import org.jacodb.panda.staticvm.ir.PandaNullCheckInstIr
-import org.jacodb.panda.staticvm.ir.PandaNullPtrInstIr
-import org.jacodb.panda.staticvm.ir.PandaOrInstIr
-import org.jacodb.panda.staticvm.ir.PandaParameterInstIr
-import org.jacodb.panda.staticvm.ir.PandaPhiInstIr
-import org.jacodb.panda.staticvm.ir.PandaRefTypeCheckInstIr
-import org.jacodb.panda.staticvm.ir.PandaReturnInstIr
-import org.jacodb.panda.staticvm.ir.PandaReturnVoidInstIr
-import org.jacodb.panda.staticvm.ir.PandaSafePointInstIr
-import org.jacodb.panda.staticvm.ir.PandaSaveStateDeoptimizeInstIr
-import org.jacodb.panda.staticvm.ir.PandaSaveStateInstIr
-import org.jacodb.panda.staticvm.ir.PandaShlInstIr
-import org.jacodb.panda.staticvm.ir.PandaShrInstIr
-import org.jacodb.panda.staticvm.ir.PandaStoreArrayInstIr
-import org.jacodb.panda.staticvm.ir.PandaStoreObjectInstIr
-import org.jacodb.panda.staticvm.ir.PandaStoreStaticInstIr
-import org.jacodb.panda.staticvm.ir.PandaSubInstIr
-import org.jacodb.panda.staticvm.ir.PandaThrowInstIr
-import org.jacodb.panda.staticvm.ir.PandaTryInstIr
-import org.jacodb.panda.staticvm.ir.PandaXorInstIr
-import org.jacodb.panda.staticvm.ir.PandaZeroCheckInstIr
+import org.jacodb.panda.staticvm.ir.*
 import org.jacodb.panda.staticvm.utils.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -90,7 +35,8 @@ class DefaultInstBuilder<T : PandaInst>(private val inst: T) : InstBuilder {
         get() = { inst }
 }
 
-class BranchingInstBuilder<T : PandaBranchingInst>(override val build: InstListBuilder.() -> T) : InstBuilder
+class InstBuilderImpl<T : PandaInst>(override val build: InstListBuilder.() -> T) : InstBuilder
+class ThrowInstBuilder(override val build: InstListBuilder.() -> PandaThrowInst) : InstBuilder
 
 internal fun buildLocalVariables(
     pandaMethod: PandaMethod,
@@ -131,7 +77,9 @@ internal fun buildLocalVariables(
 
                 is LoadArrayNode -> {
                     val arrayTypes = inputTypes.values.toList().flatten<PandaType>()
-                    require(arrayTypes.all { it is PandaArrayType })
+                    require(arrayTypes.all { it is PandaArrayType || it == project.objectClass.type }) {
+                        println()
+                    }
                     val elementTypes = arrayTypes.filterIsInstance<PandaArrayType>()
                         .map(PandaArrayType::elementType)
                     requireNotNull(project.commonType(elementTypes))
@@ -176,7 +124,7 @@ open class InstListBuilder(
 
     val instBuildersList = mutableListOf<InstBuilder>()
 
-    private fun push(value: InstListBuilder.(PandaInstLocation) -> InstBuilder) {
+    internal fun push(value: InstListBuilder.(PandaInstLocation) -> InstBuilder) {
         instBuildersList.add(value(PandaInstLocation(method, instBuildersList.size)))
     }
 
@@ -194,24 +142,42 @@ open class InstListBuilder(
 
     internal fun pushIf(conditionExpr: PandaConditionExpr, trueBranch: IrInstLocation, falseBranch: IrInstLocation) =
         push { location ->
-            BranchingInstBuilder { PandaIfInst(location, conditionExpr, linearRef(trueBranch), linearRef(falseBranch)) }
+            InstBuilderImpl { PandaIfInst(location, conditionExpr, linearRef(trueBranch), linearRef(falseBranch)) }
         }
 
     internal fun pushGoto(target: IrInstLocation) = push { location ->
-        BranchingInstBuilder { PandaGotoInst(location, linearRef(target)) }
+        InstBuilderImpl { PandaGotoInst(location, linearRef(target)) }
     }
 
     private fun pushDoNothing(target: IrInstLocation) = push { location ->
         DefaultInstBuilder(PandaDoNothingInst(location))
     }
 
-    internal fun pushCatch(throwerIds: List<String>) = push { location ->
-        val throwers = throwerIds.map(idMap::get).requireNoNulls().map(::PandaInstRef)
-        DefaultInstBuilder(PandaCatchInst(location, throwers))
+    internal fun pushCatchPhi(lhv: PandaValue, inputs: List<PandaValue>, throwers: List<String>) = push { location ->
+        InstBuilderImpl {
+            val throwerIndices = throwers.map(idMap::get).requireNoNulls()
+            val (throwInputs, throwPredecessors) = (inputs zip throwerIndices).filter { (_, thrower) ->
+                instBuildersList[thrower] is ThrowInstBuilder
+            }.unzip()
+            PandaAssignInst(location, lhv, PandaPhiExpr(lhv.type, throwInputs, throwPredecessors.map(::PandaInstRef)))
+        }
     }
 
+    internal fun pushPhi(lhv: PandaValue, inputs: List<PandaValue>, blocks: List<Int>) = push { location ->
+        InstBuilderImpl {
+            PandaAssignInst(location, lhv, PandaPhiExpr(lhv.type, inputs, blocks.map {
+                linearRef(IrInstLocation(it, maxOf(0, getBlock(it).insts.lastIndex)))
+            }))
+        }
+    }
+
+    /*internal fun pushCatch(lhv: PandaValue, throwerIds: List<String>) = push { location ->
+        val throwers = throwerIds.map(idMap::get).requireNoNulls().map(::PandaInstRef)
+        DefaultInstBuilder(PandaAssignInst(location, lhv, PandaPhiExpr(lhv.type,  throwers))
+    }*/
+
     internal fun pushThrow(error: PandaValue, catchers: List<Int>) = push { location ->
-        BranchingInstBuilder {
+        ThrowInstBuilder {
             PandaThrowInst(location, error, catchers.map { linearRef(IrInstLocation(it, 0)) })
         }
     }
@@ -229,7 +195,8 @@ open class InstListBuilder(
                 idMap[inst.id] = instBuildersList.size
                 inst.accept(visitor)(this)
 
-                throwEdgeBuilders.addAll(inst.catchers.map { visitor.location to IrInstLocation(it, 0) })
+                if (inst is PandaThrowInstIr)
+                    throwEdgeBuilders.addAll(inst.catchers.map { visitor.location to IrInstLocation(it, 0) })
             }
 
             if (block.isTryBegin || block.isTryEnd)
@@ -263,19 +230,19 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
         .let { it as ByteBuffer }
         .let(getter)
 
-    private fun getConstant(value: ULong, type: PandaPrimitivePandaType) = when (type) {
-        PandaPrimitivePandaType.VOID -> throw IllegalArgumentException("cannot create void constant")
-        PandaPrimitivePandaType.BOOL -> PandaBoolean(value != 0UL)
-        PandaPrimitivePandaType.BYTE -> PandaByte(value.toByte())
-        PandaPrimitivePandaType.UBYTE -> TODO()
-        PandaPrimitivePandaType.SHORT -> PandaShort(value.toShort())
-        PandaPrimitivePandaType.USHORT -> TODO()
-        PandaPrimitivePandaType.INT -> PandaInt(value.toInt())
-        PandaPrimitivePandaType.UINT -> TODO()
-        PandaPrimitivePandaType.LONG -> PandaLong(value.toLong())
-        PandaPrimitivePandaType.ULONG -> TODO()
-        PandaPrimitivePandaType.FLOAT -> PandaFloat(convert(value, ByteBuffer::getFloat))
-        PandaPrimitivePandaType.DOUBLE -> PandaDouble(convert(value, ByteBuffer::getDouble))
+    private fun getConstant(value: ULong, type: PandaPrimitiveType) = when (type) {
+        PandaPrimitiveType.VOID -> throw IllegalArgumentException("cannot create void constant")
+        PandaPrimitiveType.BOOL -> PandaBoolean(value != 0UL)
+        PandaPrimitiveType.BYTE -> PandaByte(value.toByte())
+        PandaPrimitiveType.UBYTE -> PandaUByte(value.toUByte())
+        PandaPrimitiveType.SHORT -> PandaShort(value.toShort())
+        PandaPrimitiveType.USHORT -> PandaUShort(value.toUShort())
+        PandaPrimitiveType.INT -> PandaInt(value.toInt())
+        PandaPrimitiveType.UINT -> PandaUInt(value.toUInt())
+        PandaPrimitiveType.LONG -> PandaLong(value.toLong())
+        PandaPrimitiveType.ULONG -> PandaULong(value)
+        PandaPrimitiveType.FLOAT -> PandaFloat(convert(value, ByteBuffer::getFloat))
+        PandaPrimitiveType.DOUBLE -> PandaDouble(convert(value, ByteBuffer::getDouble))
     }
 
     private fun getConditionType(operator: String) = when (operator) {
@@ -330,6 +297,14 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
         ))
     }
 
+    override fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): InstListBuilder.() -> Unit = {
+        val callee = project.findMethod(inst.method)
+        pushAssign(result(inst), PandaStaticCallExpr(
+            callee,
+            inst.inputs.take(callee.parameterTypes.size).map { local(it) }
+        ))
+    }
+
     override fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): InstListBuilder.() -> Unit = {
         pushAssign(result(inst), local(inst.inputs.first()))
     }
@@ -343,6 +318,13 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     }
 
     override fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): InstListBuilder.() -> Unit = {
+        val callee = project.findMethod(inst.method)
+        val instance = local(inst.inputs.first())
+        val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map(this::local)
+        pushAssign(result(inst), PandaVirtualCallExpr(callee, instance, args))
+    }
+
+    override fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): InstListBuilder.() -> Unit = {
         val callee = project.findMethod(inst.method)
         val instance = local(inst.inputs.first())
         val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map(this::local)
@@ -394,15 +376,13 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index) = inst.inputs.map(this::local)
         val arrayType = array.type
-        require(arrayType is PandaArrayType)
-        pushAssign(result(inst), PandaArrayAccess(array, index, arrayType.elementType))
+        pushAssign(result(inst), PandaArrayAccess(array, index, if (arrayType is PandaArrayType) arrayType.elementType else project.objectClass.type))
     }
 
     override fun visitPandaStoreArrayInstIr(inst: PandaStoreArrayInstIr): InstListBuilder.() -> Unit = {
         val (array, index, value) = inst.inputs.map(this::local)
         val arrayType = array.type
-        require(arrayType is PandaArrayType)
-        pushAssign(PandaArrayAccess(array, index, arrayType.elementType), value)
+        pushAssign(PandaArrayAccess(array, index, if (arrayType is PandaArrayType) arrayType.elementType else project.objectClass.type), value)
     }
 
     override fun visitPandaCastInstIr(inst: PandaCastInstIr): InstListBuilder.() -> Unit = {
@@ -450,7 +430,7 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
 
     override fun visitPandaPhiInstIr(inst: PandaPhiInstIr): InstListBuilder.() -> Unit = {
         if (inst.users.isNotEmpty())
-            pushAssign(result(inst), PandaPhiExpr(result(inst).type, inst.inputs.map(this::local)))
+            pushPhi(result(inst), inst.inputs.map(this::local), inst.inputBlocks)
     }
 
     override fun visitPandaAddInstIr(inst: PandaAddInstIr): InstListBuilder.() -> Unit =
@@ -525,13 +505,20 @@ class InstListBuilderVisitor() : PandaInstIrVisitor<InstListBuilder.() -> Unit> 
     override fun visitPandaTryInstIr(inst: PandaTryInstIr): InstListBuilder.() -> Unit = skip
 
     override fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): InstListBuilder.() -> Unit = {
-        /*check(getBlock(location.block).isCatchBegin)
-        if (location.index == 0) {
-            pushCatch(inst.throwers)
-        }*/
-        if (inst.users.isNotEmpty()) {
-            pushAssign(result(inst), PandaPhiExpr(result(inst).type, inst.inputs.map(this::local)))
-        }
+        pushCatchPhi(result(inst), inst.inputs.map(this::local), inst.throwers)
     }
 
+    override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): InstListBuilder.() -> Unit = {
+        val operands = inst.inputs.dropLast(1).map(this::local)
+        val expr = project.resolveIntrinsic(inst.intrinsicId)?.let { method ->
+            PandaStaticCallExpr(method, operands)
+        } ?: PandaIntrinsicCallExpr(inst.intrinsicId, result(inst).type, operands)
+        pushAssign(result(inst), expr)
+    }
+
+    override fun visitPandaLoadRuntimeClassInstIr(inst: PandaLoadRuntimeClassInstIr): InstListBuilder.() -> Unit = skip
+
+    override fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): InstListBuilder.() -> Unit = {
+        pushAssign(result(inst), PandaTypeConstant(project.findType(inst.loadedType), project.typeClass.type))
+    }
 }

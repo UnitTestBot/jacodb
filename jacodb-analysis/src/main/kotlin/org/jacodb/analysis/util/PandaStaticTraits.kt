@@ -26,17 +26,7 @@ import org.jacodb.api.common.Project
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.panda.staticvm.cfg.PandaArgument
-import org.jacodb.panda.staticvm.cfg.PandaArrayAccess
-import org.jacodb.panda.staticvm.cfg.PandaCallExpr
-import org.jacodb.panda.staticvm.cfg.PandaCastExpr
-import org.jacodb.panda.staticvm.cfg.PandaConstant
-import org.jacodb.panda.staticvm.cfg.PandaExpr
-import org.jacodb.panda.staticvm.cfg.PandaFieldRef
-import org.jacodb.panda.staticvm.cfg.PandaInst
-import org.jacodb.panda.staticvm.cfg.PandaSimpleValue
-import org.jacodb.panda.staticvm.cfg.PandaThis
-import org.jacodb.panda.staticvm.cfg.PandaValue
+import org.jacodb.panda.staticvm.cfg.*
 import org.jacodb.panda.staticvm.classpath.PandaClass
 import org.jacodb.panda.staticvm.classpath.PandaClassType
 import org.jacodb.panda.staticvm.classpath.PandaMethod
@@ -49,6 +39,7 @@ import org.jacodb.analysis.util.getArgument as _getArgument
 import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
+import org.jacodb.analysis.util.toPaths as _toPaths
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 
 /**
@@ -73,6 +64,11 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     override fun CommonExpr.toPathOrNull(): AccessPath? {
         check(this is PandaExpr)
         return _toPathOrNull()
+    }
+
+    override fun CommonExpr.toPaths(): List<AccessPath> {
+        check(this is PandaExpr)
+        return _toPaths()
     }
 
     override fun CommonValue.toPathOrNull(): AccessPath? {
@@ -172,6 +168,11 @@ fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
     is PandaValue -> toPathOrNull()
     is PandaCastExpr -> value.toPathOrNull()
     else -> null
+}
+
+fun PandaExpr.toPaths(): List<AccessPath> = when (this) {
+    is PandaPhiExpr -> operands.mapNotNull(PandaValue::_toPathOrNull)
+    else -> listOfNotNull(_toPathOrNull())
 }
 
 fun PandaValue.toPathOrNull(): AccessPath? = when (this) {

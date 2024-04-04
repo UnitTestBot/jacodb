@@ -90,6 +90,11 @@ sealed interface PandaClassOrInterface : CommonClass {
     fun findField(name: String) = requireNotNull(findFieldOrNull(name))
     fun findMethod(name: String) = requireNotNull(findMethodOrNull(name))
 
+    fun findMethodBySimpleNameOrNull(name: String): PandaMethod? = declaredMethods.values.find { it.name == name }
+        ?: directSuperClass?.findMethodBySimpleNameOrNull(name)
+
+    fun findMethodBySimpleName(name: String) = requireNotNull(findMethodBySimpleNameOrNull(name))
+
     val fields: List<PandaField>
         get() = (directSuperClass?.fields ?: emptyList()) + declaredFields.values
 
@@ -110,6 +115,8 @@ class PandaClass(
 ) : PandaClassOrInterface {
     override val type: PandaClassType
         get() = PandaClassType(project, this)
+
+    override fun toString(): String = name
 }
 
 class PandaInterface(
@@ -125,4 +132,6 @@ class PandaInterface(
 
     override val type: PandaInterfaceType
         get() = PandaInterfaceType(project, this)
+
+    override fun toString(): String = name
 }

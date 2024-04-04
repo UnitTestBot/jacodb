@@ -24,9 +24,11 @@ function sink(data: MaybeString) {
 function bad() {
     let data = source()
     try {
-        sink(data);
+        sink("data")
+        throw new Error("error");
     } catch (e: Error) {
-        sink("data");
+        sink(data);
+        console.log(e);
     }
 }
 
@@ -34,9 +36,8 @@ function good() {
     let data = source()
     try {
         sink("data")
-        throw new Error("errorerrorerror");
+        throw new Error("error");
     } catch (e: Error) {
-        sink(data);
-        console.log(e);
+        sink(validate(data));
     }
 }

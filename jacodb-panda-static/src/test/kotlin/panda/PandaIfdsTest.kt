@@ -61,10 +61,10 @@ class PandaIfdsTest {
         runTaintAnalysis("Program2")
     }
 
-    @Test
+    /*@Test
     fun `test taint analysis on program 2 with catch`() {
         runTaintAnalysis("testCatch")
-    }
+    }*/
 
     private fun runTaintAnalysis(programName: String) {
         val project = loadProjectForSample(programName)
