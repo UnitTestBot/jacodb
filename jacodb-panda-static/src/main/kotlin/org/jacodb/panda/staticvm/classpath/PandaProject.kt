@@ -33,7 +33,7 @@ class PandaProject : Project {
         name: String,
         parent: PandaClass?,
         interfaces: Collection<PandaInterface> = emptySet(),
-        accessFlags: AccessFlags = AccessFlags(1)
+        accessFlags: AccessFlags = AccessFlags(1),
     ) = PandaClass(this, name, parent, interfaces.toSet(), accessFlags)
         .also(autoInitializedClasses::add)
 

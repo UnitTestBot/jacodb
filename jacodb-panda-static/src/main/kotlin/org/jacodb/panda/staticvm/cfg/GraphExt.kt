@@ -16,9 +16,6 @@
 
 package org.jacodb.panda.staticvm.cfg
 
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
 import info.leadinglight.jdot.Edge
 import info.leadinglight.jdot.Graph
 import info.leadinglight.jdot.Node
@@ -26,6 +23,9 @@ import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 fun PandaGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
     Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))

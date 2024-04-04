@@ -16,11 +16,6 @@
 
 package org.jacodb.panda.staticvm.ir
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-
-
 interface PandaInstIrVisitor<T> {
     fun visitPandaConstantInstIr(inst: PandaConstantInstIr): T
     fun visitPandaSafePointInstIr(inst: PandaSafePointInstIr): T

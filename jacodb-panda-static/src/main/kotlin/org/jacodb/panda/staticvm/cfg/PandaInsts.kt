@@ -151,7 +151,7 @@ class PandaReturnInst(
 class PandaThrowInst(
     override val location: PandaInstLocation,
     val error: PandaValue,
-    val catchers: List<PandaInstRef>
+    val catchers: List<PandaInstRef>,
 ) : PandaTerminatingInst {
     override val operands: List<PandaExpr>
         get() = listOf(error)
@@ -161,7 +161,7 @@ class PandaThrowInst(
 
 class PandaCatchInst(
     override val location: PandaInstLocation,
-    val throwers: List<PandaInstRef>
+    val throwers: List<PandaInstRef>,
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = emptyList()

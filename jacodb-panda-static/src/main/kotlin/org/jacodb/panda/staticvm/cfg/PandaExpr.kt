@@ -221,7 +221,7 @@ data class PandaString(
 
 data class PandaTypeConstant(
     val value: PandaType,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaConstant {
     override fun toString(): String = "${value}.class"
 }
@@ -485,7 +485,7 @@ data class PandaVirtualCallExpr(
 data class PandaPhiExpr(
     override val type: PandaType,
     override val operands: List<PandaValue>,
-    val predecessors: List<PandaInstRef>
+    val predecessors: List<PandaInstRef>,
 ) : PandaExpr {
     override fun toString(): String = "Phi(${operands.joinToString(", ")})"
 }

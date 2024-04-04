@@ -19,8 +19,6 @@ package org.jacodb.panda.staticvm.ir
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
-
 @Serializable
 sealed interface PandaComparisonInstIr : PandaInstIr {
     val operator: String
