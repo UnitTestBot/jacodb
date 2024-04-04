@@ -87,6 +87,22 @@ class Kek : TypeScriptParserBaseListener() {
         }
     }
 
+    override fun enterMethodDeclarationExpression(ctx: TypeScriptParser.MethodDeclarationExpressionContext?) {
+        ctx?.let { context ->
+            val funcName = context.propertyName()
+            val callSignature = context.callSignature()
+            val paramList = callSignature.parameterList()
+            val returnType = callSignature.typeAnnotation()
+
+            funcs.add(TSFunction(
+                name = funcName.text,
+                arguments = paramList?.parameter()?.mapParameters() ?: emptyList(),
+                returnType = returnType.toPandaType(),
+                containingClass = traceClasses(context)
+            ))
+        }
+    }
+
     private fun traceClasses(node: RuleContext): TSClass? {
         var parent: RuleContext? = node.parent
         while (parent != null) {
