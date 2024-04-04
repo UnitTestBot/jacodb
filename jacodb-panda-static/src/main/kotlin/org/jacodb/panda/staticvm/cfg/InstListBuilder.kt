@@ -235,7 +235,7 @@ class InstListBuilder(
                 visitor.location = IrInstLocation(block.id, instIndex)
                 locationMap[visitor.location] = instBuilders.size
                 idMap[inst.id] = instBuilders.size
-                inst.accept(visitor).invoke(this)
+                inst.accept(visitor).invoke()
 
                 if (inst is PandaThrowInstIr) {
                     throwEdgeBuilders.addAll(inst.catchers.map { visitor.location to IrInstLocation(it, 0) })
@@ -325,7 +325,8 @@ internal fun buildLocalVariables(
     return localVarsIndex
 }
 
-class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
+context(InstListBuilder)
+class InstListBuilderVisitor : PandaInstIrVisitor<() -> Unit> {
     lateinit var location: IrInstLocation
 
     private inline fun <reified T> convert(value: ULong, getter: ByteBuffer.() -> T) = ByteBuffer
@@ -361,12 +362,12 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         else -> throw AssertionError("Unknown operator: $operator")
     }
 
-    private val skip: InstListBuilder.() -> Unit = {}
+    private val skip: () -> Unit = {}
 
     private fun pushUnary(
         inst: PandaInstIr,
         exprConstructor: (PandaType, PandaValue) -> PandaUnaryExpr,
-    ): InstListBuilder.() -> Unit = {
+    ): () -> Unit = {
         val value = local(inst.inputs.first())
         pushAssign(
             lhv = result(inst),
@@ -377,12 +378,12 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
     private fun pushBinary(
         inst: PandaInstIr,
         exprConstructor: (PandaType, PandaValue, PandaValue) -> PandaBinaryExpr,
-    ): InstListBuilder.() -> Unit = {
-        val (lhv, rhv) = inst.inputs.map(this::local)
+    ): () -> Unit = {
+        val (lhv, rhv) = inst.inputs.map { local(it) }
         pushAssign(result(inst), exprConstructor(project.findType(inst.type), lhv, rhv))
     }
 
-    override fun visitPandaConstantInstIr(inst: PandaConstantInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaConstantInstIr(inst: PandaConstantInstIr): () -> Unit = {
         pushAssign(result(inst), getConstant(inst.value, PandaPrimitives.find(inst.type)))
     }
 
@@ -390,15 +391,15 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
 
     override fun visitPandaSaveStateInstIr(inst: PandaSaveStateInstIr) = skip
 
-    override fun visitPandaNewObjectInstIr(inst: PandaNewObjectInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaNewObjectInstIr(inst: PandaNewObjectInstIr): () -> Unit = {
         pushAssign(result(inst), PandaNewExpr(project.findClass(inst.objectClass).type))
     }
 
-    override fun visitPandaNewArrayInstIr(inst: PandaNewArrayInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaNewArrayInstIr(inst: PandaNewArrayInstIr): () -> Unit = {
         pushAssign(result(inst), PandaNewArrayExpr(project.getElementType(inst.arrayType), local(inst.inputs[1])))
     }
 
-    override fun visitPandaCallStaticInstIr(inst: PandaCallStaticInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCallStaticInstIr(inst: PandaCallStaticInstIr): () -> Unit = {
         val callee = project.findMethod(inst.method)
         pushAssign(result(inst), PandaStaticCallExpr(
             callee,
@@ -406,7 +407,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         ))
     }
 
-    override fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): () -> Unit = {
         val callee = project.findMethod(inst.method)
         pushAssign(result(inst), PandaStaticCallExpr(
             callee,
@@ -414,29 +415,29 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         ))
     }
 
-    override fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): () -> Unit = {
         pushAssign(result(inst), local(inst.inputs.first()))
     }
 
-    override fun visitPandaZeroCheckInstIr(inst: PandaZeroCheckInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaZeroCheckInstIr(inst: PandaZeroCheckInstIr): () -> Unit = {
         pushAssign(result(inst), local(inst.inputs.first()))
     }
 
-    override fun visitPandaLoadStringInstIr(inst: PandaLoadStringInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaLoadStringInstIr(inst: PandaLoadStringInstIr): () -> Unit = {
         pushAssign(result(inst), PandaString(inst.string, project.stringClass.type))
     }
 
-    override fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): () -> Unit = {
         val callee = project.findMethod(inst.method)
         val instance = local(inst.inputs.first())
-        val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map(this::local)
+        val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map { local(it) }
         pushAssign(result(inst), PandaVirtualCallExpr(callee, instance, args))
     }
 
-    override fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): () -> Unit = {
         val callee = project.findMethod(inst.method)
         val instance = local(inst.inputs.first())
-        val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map(this::local)
+        val args = inst.inputs.drop(1).take(callee.parameterTypes.size - 1).map { local(it) }
         pushAssign(result(inst), PandaVirtualCallExpr(callee, instance, args))
     }
 
@@ -446,44 +447,44 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
 
     override fun visitPandaInitClassInstIr(inst: PandaInitClassInstIr) = skip
 
-    override fun visitPandaReturnVoidInstIr(inst: PandaReturnVoidInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaReturnVoidInstIr(inst: PandaReturnVoidInstIr): () -> Unit = {
         pushReturn(null)
     }
 
-    override fun visitPandaReturnInstIr(inst: PandaReturnInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaReturnInstIr(inst: PandaReturnInstIr): () -> Unit = {
         pushReturn(local(inst.inputs.first()))
     }
 
-    override fun visitPandaParameterInstIr(inst: PandaParameterInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaParameterInstIr(inst: PandaParameterInstIr): () -> Unit = {
         pushParameter(result(inst), inst.index)
     }
 
-    override fun visitPandaLoadStaticInstIr(inst: PandaLoadStaticInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaLoadStaticInstIr(inst: PandaLoadStaticInstIr): () -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
         pushAssign(result(inst), PandaFieldRef(null, field))
     }
 
-    override fun visitPandaLoadObjectInstIr(inst: PandaLoadObjectInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaLoadObjectInstIr(inst: PandaLoadObjectInstIr): () -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
         pushAssign(result(inst), PandaFieldRef(local(inst.inputs.first()), field))
     }
 
-    override fun visitPandaStoreStaticInstIr(inst: PandaStoreStaticInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaStoreStaticInstIr(inst: PandaStoreStaticInstIr): () -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
         pushAssign(PandaFieldRef(null, field), local(inst.inputs[1]))
     }
 
-    override fun visitPandaStoreObjectInstIr(inst: PandaStoreObjectInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaStoreObjectInstIr(inst: PandaStoreObjectInstIr): () -> Unit = {
         val enclosingClass = project.findClass(inst.enclosingClass)
         val field = enclosingClass.findField(inst.field)
         pushAssign(PandaFieldRef(local(inst.inputs[0]), field), local(inst.inputs[1]))
     }
 
-    override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): InstListBuilder.() -> Unit = {
-        val (array, index) = inst.inputs.map(this::local)
+    override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): () -> Unit = {
+        val (array, index) = inst.inputs.map { local(it) }
         val arrayType = array.type
         pushAssign(
             result(inst),
@@ -495,8 +496,8 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         )
     }
 
-    override fun visitPandaStoreArrayInstIr(inst: PandaStoreArrayInstIr): InstListBuilder.() -> Unit = {
-        val (array, index, value) = inst.inputs.map(this::local)
+    override fun visitPandaStoreArrayInstIr(inst: PandaStoreArrayInstIr): () -> Unit = {
+        val (array, index, value) = inst.inputs.map { local(it) }
         val arrayType = array.type
         pushAssign(
             PandaArrayAccess(
@@ -507,11 +508,11 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         )
     }
 
-    override fun visitPandaCastInstIr(inst: PandaCastInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCastInstIr(inst: PandaCastInstIr): () -> Unit = {
         pushAssign(result(inst), PandaCastExpr(project.findType(inst.type), local(inst.inputs.first())))
     }
 
-    override fun visitPandaIsInstanceInstIr(inst: PandaIsInstanceInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaIsInstanceInstIr(inst: PandaIsInstanceInstIr): () -> Unit = {
         pushAssign(
             result(inst), PandaIsInstanceExpr(
                 project.findType(inst.type),
@@ -521,7 +522,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         )
     }
 
-    override fun visitPandaCheckCastInstIr(inst: PandaCheckCastInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCheckCastInstIr(inst: PandaCheckCastInstIr): () -> Unit = {
         pushAssign(
             result(inst), PandaCastExpr(
                 project.findClassOrInterface(inst.candidateType).type,
@@ -530,7 +531,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         )
     }
 
-    override fun visitPandaIfImmInstIr(inst: PandaIfImmInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaIfImmInstIr(inst: PandaIfImmInstIr): () -> Unit = {
         val conditionExpr = getConditionType(inst.operator).invoke(
             project.findType(inst.type),
             local(inst.inputs.first()),
@@ -541,7 +542,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         pushIf(conditionExpr, trueBranch, falseBranch)
     }
 
-    override fun visitPandaCompareInstIr(inst: PandaCompareInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaCompareInstIr(inst: PandaCompareInstIr): () -> Unit = {
         val conditionExpr = getConditionType(inst.operator).invoke(
             project.findType(inst.type),
             local(inst.inputs.component1()),
@@ -550,97 +551,97 @@ class InstListBuilderVisitor : PandaInstIrVisitor<InstListBuilder.() -> Unit> {
         pushAssign(result(inst), conditionExpr)
     }
 
-    override fun visitPandaPhiInstIr(inst: PandaPhiInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaPhiInstIr(inst: PandaPhiInstIr): () -> Unit = {
         if (inst.users.isNotEmpty())
-            pushPhi(result(inst), inst.inputs.map(this::local), inst.inputBlocks)
+            pushPhi(result(inst), inst.inputs.map { local(it) }, inst.inputBlocks)
     }
 
-    override fun visitPandaAddInstIr(inst: PandaAddInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAddInstIr(inst: PandaAddInstIr): () -> Unit =
         pushBinary(inst, ::PandaAddExpr)
 
-    override fun visitPandaSubInstIr(inst: PandaSubInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaSubInstIr(inst: PandaSubInstIr): () -> Unit =
         pushBinary(inst, ::PandaSubExpr)
 
-    override fun visitPandaMulInstIr(inst: PandaMulInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaMulInstIr(inst: PandaMulInstIr): () -> Unit =
         pushBinary(inst, ::PandaMulExpr)
 
-    override fun visitPandaDivInstIr(inst: PandaDivInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaDivInstIr(inst: PandaDivInstIr): () -> Unit =
         pushBinary(inst, ::PandaDivExpr)
 
-    override fun visitPandaModInstIr(inst: PandaModInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaModInstIr(inst: PandaModInstIr): () -> Unit =
         pushBinary(inst, ::PandaModExpr)
 
-    override fun visitPandaAndInstIr(inst: PandaAndInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAndInstIr(inst: PandaAndInstIr): () -> Unit =
         pushBinary(inst, ::PandaAndExpr)
 
-    override fun visitPandaOrInstIr(inst: PandaOrInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaOrInstIr(inst: PandaOrInstIr): () -> Unit =
         pushBinary(inst, ::PandaOrExpr)
 
-    override fun visitPandaXorInstIr(inst: PandaXorInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaXorInstIr(inst: PandaXorInstIr): () -> Unit =
         pushBinary(inst, ::PandaXorExpr)
 
-    override fun visitPandaShlInstIr(inst: PandaShlInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaShlInstIr(inst: PandaShlInstIr): () -> Unit =
         pushBinary(inst, ::PandaShlExpr)
 
-    override fun visitPandaShrInstIr(inst: PandaShrInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaShrInstIr(inst: PandaShrInstIr): () -> Unit =
         pushBinary(inst, ::PandaShrExpr)
 
-    override fun visitPandaAShlInstIr(inst: PandaAShlInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAShlInstIr(inst: PandaAShlInstIr): () -> Unit =
         pushBinary(inst, ::PandaAshlExpr)
 
-    override fun visitPandaAShrInstIr(inst: PandaAShrInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaAShrInstIr(inst: PandaAShrInstIr): () -> Unit =
         pushBinary(inst, ::PandaAshrExpr)
 
-    override fun visitPandaCmpInstIr(inst: PandaCmpInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaCmpInstIr(inst: PandaCmpInstIr): () -> Unit =
         pushBinary(inst, ::PandaCmpExpr)
 
-    override fun visitPandaThrowInstIr(inst: PandaThrowInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaThrowInstIr(inst: PandaThrowInstIr): () -> Unit = {
         pushThrow(local(inst.inputs.first()), inst.catchers)
     }
 
-    override fun visitPandaNegativeCheckInstIr(inst: PandaNegativeCheckInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaNegativeCheckInstIr(inst: PandaNegativeCheckInstIr): () -> Unit = skip
 
-    override fun visitPandaSaveStateDeoptimizeInstIr(inst: PandaSaveStateDeoptimizeInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaSaveStateDeoptimizeInstIr(inst: PandaSaveStateDeoptimizeInstIr): () -> Unit =
         skip
 
-    override fun visitPandaNegInstIr(inst: PandaNegInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaNegInstIr(inst: PandaNegInstIr): () -> Unit =
         pushUnary(inst, ::PandaNegExpr)
 
-    override fun visitPandaNotInstIr(inst: PandaNotInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaNotInstIr(inst: PandaNotInstIr): () -> Unit =
         pushUnary(inst, ::PandaNotExpr)
 
-    override fun visitPandaLenArrayInstIr(inst: PandaLenArrayInstIr): InstListBuilder.() -> Unit =
+    override fun visitPandaLenArrayInstIr(inst: PandaLenArrayInstIr): () -> Unit =
         pushUnary(inst, ::PandaLenArrayExpr)
 
-    override fun visitPandaBoundsCheckInstIr(inst: PandaBoundsCheckInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaBoundsCheckInstIr(inst: PandaBoundsCheckInstIr): () -> Unit = skip
 
-    override fun visitPandaNullPtrInstIr(inst: PandaNullPtrInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaNullPtrInstIr(inst: PandaNullPtrInstIr): () -> Unit = {
         pushAssign(result(inst), PandaNullPtr(project.findType("std.core.Object")))
     }
 
-    override fun visitPandaLoadUndefinedInstIr(inst: PandaLoadUndefinedInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaLoadUndefinedInstIr(inst: PandaLoadUndefinedInstIr): () -> Unit = {
         pushAssign(result(inst), PandaUndefined(project.findType("std.core.UndefinedType")))
     }
 
-    override fun visitPandaRefTypeCheckInstIr(inst: PandaRefTypeCheckInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaRefTypeCheckInstIr(inst: PandaRefTypeCheckInstIr): () -> Unit = skip
 
-    override fun visitPandaTryInstIr(inst: PandaTryInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaTryInstIr(inst: PandaTryInstIr): () -> Unit = skip
 
-    override fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): InstListBuilder.() -> Unit = {
-        pushCatchPhi(result(inst), inst.inputs.map(this::local), inst.throwers)
+    override fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): () -> Unit = {
+        pushCatchPhi(result(inst), inst.inputs.map { local(it) }, inst.throwers)
     }
 
-    override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): InstListBuilder.() -> Unit = {
-        val operands = inst.inputs.dropLast(1).map(this::local)
+    override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): () -> Unit = {
+        val operands = inst.inputs.dropLast(1).map { local(it) }
         val expr = project.resolveIntrinsic(inst.intrinsicId)?.let { method ->
             PandaStaticCallExpr(method, operands)
         } ?: PandaIntrinsicCallExpr(inst.intrinsicId, result(inst).type, operands)
         pushAssign(result(inst), expr)
     }
 
-    override fun visitPandaLoadRuntimeClassInstIr(inst: PandaLoadRuntimeClassInstIr): InstListBuilder.() -> Unit = skip
+    override fun visitPandaLoadRuntimeClassInstIr(inst: PandaLoadRuntimeClassInstIr): () -> Unit = skip
 
-    override fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): InstListBuilder.() -> Unit = {
+    override fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): () -> Unit = {
         pushAssign(result(inst), PandaTypeConstant(project.findType(inst.loadedType), project.typeClass.type))
     }
 }
