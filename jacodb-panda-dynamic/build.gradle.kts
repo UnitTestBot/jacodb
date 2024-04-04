@@ -11,7 +11,8 @@ dependencies {
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_serialization_json)
     implementation(Libs.jdot)
-    antlr("org.antlr:antlr4:4.13.1")
+
+    antlr(Libs.antlr)
 
     testImplementation(kotlin("test"))
     testImplementation(project(":jacodb-analysis"))
@@ -19,15 +20,10 @@ dependencies {
     testImplementation(Libs.mockk)
 }
 
-sourceSets.getByName("main").java {
-    srcDir("build/generated-src/antlr/main/java")
-}
-
 tasks {
     generateGrammarSource {
-
+        maxHeapSize = "64m"
         arguments.addAll(listOf("-visitor", "-package", "antlr"))
-        outputDirectory = File("${project.projectDir}/build/generated-src/antlr/main/java/antlr")
     }
 
     compileKotlin {
