@@ -22,7 +22,6 @@ import org.jacodb.api.common.CommonMethodParameter
 open class PandaMethod(
     override val name: String,
     // override val enclosingClass: PandaClass,
-    val type: PandaType,
 ) : CommonMethod<PandaMethod, PandaInst> {
 
     lateinit var project: PandaProject
@@ -39,6 +38,8 @@ open class PandaMethod(
     var parameterInfos: List<PandaParameterInfo> = emptyList()
         internal set
     var className: String? = null
+        internal set
+    var type: PandaType = PandaAnyType
         internal set
 
     var localVarsCount: Int = 0
@@ -80,8 +81,7 @@ open class PandaMethod(
 class PandaStdMethod(
     name: String,
     // enclosingClass: PandaClass,
-    returnType: PandaType,
-) : PandaMethod(name, returnType)
+) : PandaMethod(name)
 
 class PandaParameterInfo(
     val index: Int,

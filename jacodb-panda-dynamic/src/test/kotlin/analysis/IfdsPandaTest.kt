@@ -159,7 +159,7 @@ class IfdsPandaTest {
                     name = "Sample",
                     superClassName = "std.core.Object",
                     methods = listOf(
-                        PandaMethod(name = "source", type = PandaAnyType).also {
+                        PandaMethod(name = "source").also {
                             it.blocks = listOf(
                                 PandaBasicBlock(
                                     id = 0,
@@ -183,6 +183,7 @@ class IfdsPandaTest {
                                 )
                             )
                             it.className = "Sample"
+                            it.type = PandaAnyType
                         }
                     )
                 )

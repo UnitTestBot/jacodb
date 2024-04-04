@@ -69,7 +69,7 @@ class PandaProject(
     fun findMethodByInstanceOrEmpty(instanceName: String, methodName: String, currentClassName: String): PandaMethod {
         // if (instanceName == "this") {
         return findMethodOrNull(methodName, currentClassName)
-            ?: PandaMethod(methodName, PandaAnyType)
+            ?: PandaMethod(methodName)
         // }
         // return findInstanceMethodInStd(instanceName, methodName)
     }
@@ -95,7 +95,7 @@ object PandaStdLib {
     val fields = listOf(
         PandaObject(
             "console",
-            listOf(PandaStdMethod("log", PandaAnyType))
+            listOf(PandaStdMethod("log"))
         )
     )
 }

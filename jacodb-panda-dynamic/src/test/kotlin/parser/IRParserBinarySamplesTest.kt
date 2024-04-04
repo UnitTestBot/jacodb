@@ -25,6 +25,7 @@ import org.jacodb.panda.dynamic.api.PandaNumberConstant
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaSubExpr
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.TSParser
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -34,7 +35,11 @@ class IRParserBinarySamplesTest {
     companion object {
         private fun loadIR(fileName: String): IRParser {
             val sampleFilePath = this::class.java.getResource("/samples/binary/$fileName.json")?.path ?: ""
-            return IRParser(sampleFilePath)
+            val sampleTSPath = this::class.java.getResource("/samples/binary/$fileName.ts")?.toURI()
+                ?: throw IllegalStateException()
+            val tsParser = TSParser(sampleTSPath)
+            val tsFunctions = tsParser.collectFunctions()
+            return IRParser(sampleFilePath, tsFunctions)
         }
     }
 

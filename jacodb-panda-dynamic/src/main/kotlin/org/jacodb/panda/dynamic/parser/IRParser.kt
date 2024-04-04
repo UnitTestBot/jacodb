@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.parser
 
+import antlr.TypeScriptLexer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -79,7 +80,10 @@ import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IRParser(jsonPath: String) {
+class IRParser(
+    jsonPath: String,
+    private val tsFunctions: List<TSFunction>? = null
+) {
 
     @Serializable
     data class Program(val classes: List<ProgramClass>) {
@@ -148,7 +152,7 @@ class IRParser(jsonPath: String) {
         val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
 
         @Transient
-        val pandaMethod: PandaMethod = PandaMethod(name, mapType(returnType))
+        val pandaMethod: PandaMethod = PandaMethod(name)
 
         @Transient
         val parameters: MutableList<PandaParameterInfo> = mutableListOf()
@@ -324,6 +328,36 @@ class IRParser(jsonPath: String) {
         }
     }
 
+    /*
+        containingClass in [TSClass] IS NOT super class!
+        It is used for scoping, since in different scopes classes with the same name are allowed.
+
+        However, it was possible to easily resolve in ts parser, but in Program[...] IR classes it is
+        more complex to instantiate class SCOPE, not SUPER CLASS.
+
+        Currently, only first class in chain of class scopes is analyzed.
+
+        TODO: Expand for more complex samples.
+     */
+    private fun setMethodTypes(method: PandaMethod) {
+        if (tsFunctions == null) return
+        if (method.name == "func_main_0") return
+        tsFunctions.find { tsFunc ->
+            tsFunc.name == method.name &&
+            tsFunc.arguments.size == method.parameterInfos.size &&
+            // here comes the result of comment above
+            tsFunc.containingClass?.name == method.className
+        }?.let { tsFunc ->
+            method.type = tsFunc.returnType
+            method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
+                PandaParameterInfo(
+                    index = paramInfo.index,
+                    type
+                )
+            }
+        } ?: error("No method ${method.name} with superclass ${method.className} was found in parsed functions")
+    }
+
     private fun mapMethods(program: Program): List<PandaClass> {
         return program.classes.map { clazz ->
             val pandaMethods = clazz.properties.map { property ->
@@ -334,6 +368,7 @@ class IRParser(jsonPath: String) {
                     panda.parameterInfos = method.parameters
                     panda.className = clazz.name
                     panda.localVarsCount = method.currentLocalVarId + 1
+                    setMethodTypes(panda)
                 }.pandaMethod
             }
             PandaClass(clazz.name, clazz.superClass, pandaMethods)

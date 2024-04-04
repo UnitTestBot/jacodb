@@ -17,6 +17,7 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.TSParser
 import org.jacodb.panda.dynamic.parser.dumpDot
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -30,7 +31,11 @@ class IRParserSamplesTest {
     companion object {
         private fun loadIR(fileName: String): IRParser {
             val sampleFilePath = this::class.java.getResource("/samples/$fileName.json")?.path ?: ""
-            return IRParser(sampleFilePath)
+            val sampleTSPath = this::class.java.getResource("/samples/$fileName.ts")?.toURI()
+                ?: throw IllegalStateException()
+            val tsParser = TSParser(sampleTSPath)
+            val tsFunctions = tsParser.collectFunctions()
+            return IRParser(sampleFilePath, tsFunctions)
         }
     }
 
@@ -66,7 +71,7 @@ class IRParserSamplesTest {
                 val pandaMethod = property.method.pandaMethod
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
-                logger.info { "Panda method '${pandaMethod.name}', instructions: ${pandaMethod.instructions}" }
+                logger.info { "Panda method '$pandaMethod', instructions: ${pandaMethod.instructions}" }
 
             }
         }

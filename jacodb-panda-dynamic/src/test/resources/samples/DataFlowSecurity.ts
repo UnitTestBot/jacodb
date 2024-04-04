@@ -1,8 +1,8 @@
-function source() {
+function source(): number {
     return null
 }
 
-function pass(data) {
+function pass(data: boolean) {
     return data
 }
 
