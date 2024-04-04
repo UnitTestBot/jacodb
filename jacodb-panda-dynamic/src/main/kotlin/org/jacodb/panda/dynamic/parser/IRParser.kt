@@ -382,7 +382,7 @@ class IRParser(jsonPath: String) {
         val bb = currentBB()
 
         fun handle(expr: PandaExpr) {
-            val lv = PandaLocalVar(method.currentLocalVarId++)
+            val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
