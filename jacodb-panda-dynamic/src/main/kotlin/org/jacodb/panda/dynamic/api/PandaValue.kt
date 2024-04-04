@@ -175,16 +175,14 @@ data class PandaArrayAccess(
 }
 
 interface PandaInstanceCallValue : PandaComplexValue {
-
     val instance: PandaValue
-
     val obj: PandaValue
 
     fun getClassAndMethodName(): List<String>
 }
 
 // used to connect loaded object to instance
-class PandaLoadedValue(
+data class PandaLoadedValue(
     override val instance: PandaValue,
     override val obj: PandaValue,
 ) : PandaInstanceCallValue {
@@ -208,7 +206,7 @@ class PandaLoadedValue(
     override fun toString(): String = "Loaded[$instance.$obj]"
 }
 
-class PandaInstanceCallValueImpl(
+data class PandaInstanceCallValueImpl(
     override val instance: PandaValue,
     override val obj: PandaValue,
 ) : PandaInstanceCallValue {
