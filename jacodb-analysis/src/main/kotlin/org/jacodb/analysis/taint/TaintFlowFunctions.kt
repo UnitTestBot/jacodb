@@ -47,6 +47,7 @@ import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.panda.staticvm.cfg.PandaPhiExpr
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
@@ -177,7 +178,19 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         check(fact is Tainted)
 
         if (current is CommonAssignInst<*, *>) {
-            transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
+            if (current.rhv is PandaPhiExpr) {
+                if (current.rhv.operands.isEmpty() ) {
+                    transmitTaintNormal(fact, current)
+                } else {
+                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+                    for (operand in current.rhv.operands) {
+                        facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
+                    }
+                    facts
+                }
+            } else {
+                transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
+            }
         } else {
             transmitTaintNormal(fact, current)
         }
