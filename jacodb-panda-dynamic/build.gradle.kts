@@ -24,9 +24,16 @@ tasks {
     generateGrammarSource {
         maxHeapSize = "64m"
         arguments.addAll(listOf("-visitor", "-package", "antlr"))
+        outputDirectory = layout.buildDirectory.file("antlr/main/java/antlr").get().asFile
     }
 
     compileKotlin {
         dependsOn(generateGrammarSource)
+    }
+}
+
+tasks {
+    license {
+        exclude("**/antlr/")
     }
 }
