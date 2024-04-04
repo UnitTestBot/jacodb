@@ -33,7 +33,7 @@ interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
 class PandaGraph private constructor(
     private val instList: PandaInstList,
     private val graph: OneDirectionGraph<PandaInst>,
-    private val throwGraph: OneDirectionGraph<PandaInst>
+    private val throwGraph: OneDirectionGraph<PandaInst>,
 ) : PandaBytecodeGraph<PandaInst>, Graph<PandaInst> {
 
     override val entries: List<PandaInst> = listOfNotNull(instList.firstOrNull())
@@ -45,7 +45,7 @@ class PandaGraph private constructor(
     override val instructions: List<PandaInst> = instList.instructions
 
     fun index(inst: PandaInst): Int {
-        if (instructions.contains(inst)) {
+        if (inst in instructions) {
             return inst.location.index
         }
         return -1
@@ -56,25 +56,14 @@ class PandaGraph private constructor(
 
     fun previous(inst: PandaInst): PandaInst = instructions[ref(inst).index - 1]
     fun next(inst: PandaInst): PandaInst = instructions[ref(inst).index + 1]
-    override fun successors(node: PandaInst): Set<PandaInst> {
-        val successors = graph.successors(node)
-        /*if (node is PandaThrowInst) {
-            val catchers = throwGraph.successors(node)
-            return successors + catchers
-        }*/
-        return successors
-    }
 
-    override fun predecessors(node: PandaInst): Set<PandaInst> {
-        val predecessors = graph.predecessors(node)
-        //val throwers = throwGraph.predecessors(node).filterIsInstance<PandaThrowInst>()
-        return predecessors // + throwers
-    }
-
-    override fun iterator(): Iterator<PandaInst> = instList.iterator()
+    override fun successors(node: PandaInst): Set<PandaInst> = graph.successors(node)
+    override fun predecessors(node: PandaInst): Set<PandaInst> = graph.predecessors(node)
 
     override fun throwers(node: PandaInst): Set<PandaInst> = throwGraph.predecessors(node)
     override fun catchers(node: PandaInst): Set<PandaInst> = throwGraph.successors(node)
+
+    override fun iterator(): Iterator<PandaInst> = instList.iterator()
 
     companion object {
         fun empty(): PandaGraph {
@@ -100,7 +89,7 @@ class PandaGraph private constructor(
                     .filter { (from, _) -> instList[from.index] == thrower }
                     .map { instList[it.second.index] }
             }
-            //instListBuilder.throwEdges.applyFold(graph) { (from, to) -> withEdge(instList[from.index], instList[to.index]) }
+            // instListBuilder.throwEdges.applyFold(graph) { (from, to) -> withEdge(instList[from.index], instList[to.index]) }
             return PandaGraph(PandaInstList(instList), graph, throwGraph)
         }
     }
@@ -117,15 +106,23 @@ class PandaApplicationGraph(
     override fun predecessors(node: PandaInst): Sequence<PandaInst> {
         val graph = node.location.method.flowGraph()
         val predecessors = graph.predecessors(node)
-        val throwers = graph.throwers(node)
-        return predecessors.asSequence() + throwers.asSequence()
+        if (node is PandaCatchInst) {
+            val throwers = graph.throwers(node)
+            return predecessors.asSequence() + throwers.asSequence()
+        } else {
+            return predecessors.asSequence()
+        }
     }
 
     override fun successors(node: PandaInst): Sequence<PandaInst> {
         val graph = node.location.method.flowGraph()
         val successors = graph.successors(node)
-        val catchers = graph.catchers(node)
-        return successors.asSequence() + catchers.asSequence()
+        if (node is PandaThrowInst) {
+            val catchers = graph.catchers(node)
+            return successors.asSequence() + catchers.asSequence()
+        } else {
+            return successors.asSequence()
+        }
     }
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> = when (node) {
