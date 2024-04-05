@@ -193,7 +193,7 @@ if (!repoUrl.isNullOrEmpty()) {
                     groupId = "org.jacodb"
                     artifactId = project.name
                     addPom()
-//                    signPublication(this@configure)
+                    signPublication(this@configure)
                 }
             }
 
