@@ -16,3 +16,38 @@
 
 package org.jacodb.ifds.unused
 
+import org.jacodb.analysis.unused.UnusedVariableAnalyzer
+import org.jacodb.analysis.unused.UnusedVariableDomainFact
+import org.jacodb.api.JcClasspath
+import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.ifds.JcFlowFunctionsAdapter
+import org.jacodb.ifds.JcIfdsContext
+import org.jacodb.ifds.toEdge
+
+fun unusedIfdsContext(
+    cp: JcClasspath,
+    graph: JcApplicationGraph,
+    bannedPackagePrefixes: List<String>,
+): JcIfdsContext<UnusedVariableDomainFact> =
+    JcIfdsContext(
+        cp,
+        graph,
+        bannedPackagePrefixes
+    ) { _, runnerId ->
+        val analyzer = when (runnerId) {
+            is SingleRunner -> UnusedVariableAnalyzer(graph)
+            else -> error("Unexpected runnerId: $runnerId")
+        }
+
+        JcFlowFunctionsAdapter(
+            runnerId,
+            analyzer
+        ) { event ->
+            when (event) {
+                is org.jacodb.analysis.unused.NewSummaryEdge -> {
+                    val edge = org.jacodb.ifds.messages.NewSummaryEdge(runnerId, event.edge.toEdge())
+                    add(edge)
+                }
+            }
+        }
+    }

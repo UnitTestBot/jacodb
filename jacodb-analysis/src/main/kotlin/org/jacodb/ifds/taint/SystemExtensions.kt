@@ -34,9 +34,9 @@ import org.jacodb.impl.features.usagesExt
 suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-    val npeAnalyzer = NpeAnalyzer(graph)
+    val taintAnalyzer = NpeAnalyzer(graph)
 
-    for (fact in npeAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+    for (fact in taintAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
             val vertex = Vertex(entryPoint, fact)
             val message = NewEdge(ForwardRunner, Edge(vertex, vertex), Reason.Initial)

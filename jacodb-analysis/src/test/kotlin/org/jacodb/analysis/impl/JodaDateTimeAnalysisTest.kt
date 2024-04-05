@@ -20,20 +20,19 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.actors.impl.systemOf
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.ifds.SingletonUnitResolver
-import org.jacodb.analysis.npe.NpeManager
-import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.analysis.taint.TaintVulnerability
-import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.npe.collectNpeResults
+import org.jacodb.ifds.npe.npeIfdsContext
+import org.jacodb.ifds.npe.startNpeAnalysis
 import org.jacodb.ifds.taint.collectTaintResults
 import org.jacodb.ifds.taint.startTaintAnalysis
 import org.jacodb.ifds.taint.taintIfdsContext
+import org.jacodb.ifds.unused.collectUnusedResult
+import org.jacodb.ifds.unused.startUnusedAnalysis
+import org.jacodb.ifds.unused.unusedIfdsContext
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
@@ -41,7 +40,6 @@ import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -67,42 +65,53 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         }
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+    @Test
+    fun `test taint analysis`() = runBlocking {
+        val clazz = cp.findClass<DateTime>()
+        val methods = clazz.declaredMethods
+
         val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = systemOf("ifds") { ProjectManager(ifdsContext) }
 
-        system.startTaintAnalysis(method)
+        for (method in methods) {
+            system.startTaintAnalysis(method)
+        }
         system.awaitCompletion()
-        system.collectTaintResults()
-    }
+        val sinks = system.collectTaintResults()
 
-    @Test
-    fun `test taint analysis`() {
-        val clazz = cp.findClass<DateTime>()
-        val methods = clazz.declaredMethods
-        val unitResolver = SingletonUnitResolver
-        val manager = TaintManager(graph, unitResolver)
-        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
-    fun `test NPE analysis`() {
+    fun `test NPE analysis`() = runBlocking {
+        // TODO: lacks timeout feature
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        val unitResolver = SingletonUnitResolver
-        val manager = NpeManager(graph, unitResolver)
-        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        for (method in methods) {
+            system.startNpeAnalysis(method)
+        }
+        system.awaitCompletion()
+        val sinks = system.collectNpeResults()
+
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
-    fun `test unused variables analysis`() {
+    fun `test unused variables analysis`() = runBlocking {
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        val unitResolver = SingletonUnitResolver
-        val manager = UnusedVariableManager(graph, unitResolver)
-        val sinks = manager.analyze(methods, timeout = 60.seconds)
-        logger.info { "Unused variables found: ${sinks.size}" }
+        val ifdsContext = unusedIfdsContext(cp, graph, defaultBannedPackagePrefixes)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        for (method in methods) {
+            system.startUnusedAnalysis(method)
+        }
+        system.awaitCompletion()
+        val sinks = system.collectUnusedResult()
+
+        logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 }

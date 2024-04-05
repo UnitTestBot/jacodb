@@ -16,10 +16,17 @@
 
 package org.jacodb.analysis.impl
 
-import org.jacodb.analysis.ifds.SingletonUnitResolver
-import org.jacodb.analysis.unused.UnusedVariableManager
+import kotlinx.coroutines.runBlocking
+import org.jacodb.actors.impl.systemOf
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
+import org.jacodb.analysis.unused.UnusedVariableVulnerability
+import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
+import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.unused.collectUnusedResult
+import org.jacodb.ifds.unused.startUnusedAnalysis
+import org.jacodb.ifds.unused.unusedIfdsContext
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -29,7 +36,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
-import kotlin.time.Duration.Companion.seconds
 
 class IfdsUnusedTest : BaseAnalysisTest() {
 
@@ -55,38 +61,20 @@ class IfdsUnusedTest : BaseAnalysisTest() {
         )
     }
 
-//    private fun findSinks(): List<UnusedVariableVulnerability> = runBlocking {
-//        val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-//        val unusedVariableAnalyzer = UnusedVariableAnalyzer(graph)
-//        val ifdsContext = JcIfdsContext(
-//            cp,
-//            graph,
-//            unusedVariableAnalyzer,
-//            defaultBannedPackagePrefixes
-//        )
-//
-//        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
-//
-//        for (fact in unusedVariableAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
-//            for (entryPoint in graph.entryPoints(method)) {
-//                val vertex = Vertex(entryPoint, fact)
-//                val message = NewEdge(JcIfdsContext.ForwardRunner, Edge(vertex, vertex), Reason.Initial)
-//                system.send(message)
-//            }
-//        }
-//
-//        system.awaitCompletion()
-//        val results = system.ask { ObtainData(JcIfdsContext.ForwardRunner, it) }
-//        results.map { it as UnusedVariableVulnerability }
-//    }
+    private fun findSinks(method: JcMethod): List<UnusedVariableVulnerability> = runBlocking {
+        val ifdsContext = unusedIfdsContext(cp, graph, defaultBannedPackagePrefixes)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        system.startUnusedAnalysis(method)
+        system.awaitCompletion()
+        system.collectUnusedResult()
+    }
 
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
     fun `test on Juliet's CWE 563`(className: String) {
         testSingleJulietClass(className) { method ->
-            val unitResolver = SingletonUnitResolver
-            val manager = UnusedVariableManager(graph, unitResolver)
-            manager.analyze(listOf(method), timeout = 30.seconds)
+            findSinks(method)
         }
     }
 
@@ -96,9 +84,7 @@ class IfdsUnusedTest : BaseAnalysisTest() {
             "juliet.testcases.CWE563_Unused_Variable.CWE563_Unused_Variable__unused_init_variable_StringBuilder_01"
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
-        val unitResolver = SingletonUnitResolver
-        val manager = UnusedVariableManager(graph, unitResolver)
-        val sinks = manager.analyze(listOf(badMethod), timeout = 30.seconds)
+        val sinks = findSinks(badMethod)
         Assertions.assertTrue(sinks.isNotEmpty())
     }
 }

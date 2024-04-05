@@ -14,18 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.taint
+package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.result.IfdsResult
-import org.jacodb.ifds.toVertex
-import org.jacodb.analysis.taint.TaintVulnerability as JcTaintVulnerability
+import org.jacodb.ifds.domain.RunnerId
 
-data class TaintVulnerability(
-    val vulnerability: JcTaintVulnerability,
-) : IfdsResult<JcInst, TaintDomainFact> {
-    override val vertex: Vertex<JcInst, TaintDomainFact>
-        get() = vulnerability.sink.toVertex()
-}
+data object SingleRunner : RunnerId
