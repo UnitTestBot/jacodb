@@ -24,11 +24,19 @@ tasks {
     generateGrammarSource {
         maxHeapSize = "64m"
         arguments.addAll(listOf("-visitor", "-package", "antlr"))
-        outputDirectory = layout.buildDirectory.file("antlr/main/java/antlr").get().asFile
+        outputDirectory = layout.buildDirectory.file("generated-src/antlr/main/java/antlr").get().asFile
     }
 
     compileKotlin {
         dependsOn(generateGrammarSource)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir(layout.buildDirectory.file("generated-src/antlr/main/java"))
+        }
     }
 }
 
