@@ -28,20 +28,4 @@ data class Parameter(
     fun isOptional(): Boolean = attributes.isOptional()
 
     override fun toString(): String = "$name: $type"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Parameter) return false
-        if (td != other.td) return false
-        if (name != other.name) return false
-        if (attributes != other.attributes) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = td.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + attributes.hashCode()
-        return result
-    }
 }
