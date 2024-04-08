@@ -110,7 +110,7 @@ class PandaProject : Project {
     fun findClassOrInterfaceOrNull(name: String): PandaClassOrInterface? =
         classesIndex[name]?.data ?: interfacesIndex[name]
 
-    fun findMethod(name: String) = requireNotNull(methodIndex[name]) {
+    fun findMethod(name: String): PandaMethod = requireNotNull(methodIndex[name]) {
         "Not found method $name"
     }
 
