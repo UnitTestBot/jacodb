@@ -20,7 +20,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import java.io.FileInputStream
 
 object Intrinsics {
     @Serializable
@@ -30,19 +29,21 @@ object Intrinsics {
         val methodName: String?,
     )
 
-    private val intrinsicsFile = javaClass.getResource("/intrinsics.json")?.file
-        ?: throw IllegalStateException("Intrinsics mapping not found")
+    private val intrinsicsMapping: Map<String, IntrinsicMethod> = run {
+        val resource = this::class.java.getResourceAsStream("/intrinsics.json")
+            ?: error("Intrinsics mapping not found")
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private val intrinsics = Json.decodeFromStream<List<IntrinsicMethod>>(
-        FileInputStream(intrinsicsFile)
-    )
+        @OptIn(ExperimentalSerializationApi::class)
+        val intrinsics: List<IntrinsicMethod> = Json.decodeFromStream(resource)
 
-    private val intrinsicsMapping = intrinsics.associateBy { it.intrinsicId }
+        intrinsics.associateBy { it.intrinsicId }
+    }
 
     fun resolve(id: String): Pair<String, String>? = intrinsicsMapping[id]?.let {
-        if (it.className != null && it.methodName != null)
-            it.className to it.methodName
-        else null
+        if (it.className != null && it.methodName != null) {
+            Pair(it.className, it.methodName)
+        } else {
+            null
+        }
     }
 }
