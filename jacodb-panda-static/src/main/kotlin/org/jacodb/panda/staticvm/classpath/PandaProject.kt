@@ -101,6 +101,7 @@ class PandaProject : Project {
 
     fun addFlowGraph(method: PandaMethod, basicBlocksInfo: List<PandaBasicBlockIr>): Boolean {
         require(method.enclosingClass in classesPool || method.enclosingClass in interfacesPool)
+        // TODO: use lazy putIfAbsent
         return flowGraphs.putIfAbsent(method, PandaGraph.of(method, basicBlocksInfo)) == null
     }
 
@@ -163,6 +164,7 @@ class PandaProject : Project {
     val methods: List<PandaMethod>
         get() = methodIndex.values.toList()
 
+    // TODO: why PUT empty graph? why not just use 'flowGraphs[method] ?: PandaGraph.empty()'
     fun flowGraph(method: PandaMethod): PandaGraph = flowGraphs.getOrPut(method) { PandaGraph.empty() }
 
     private fun ancestors(node: TreeEntry<PandaClass>): List<PandaClassType> =
