@@ -303,11 +303,7 @@ internal fun buildLocalVariables(
     val graph = OneDirectionGraph(varNodes.values) { node ->
         when (node) {
             is LeafVarNode -> emptySet()
-            is DependentVarNode -> node.bounds.map(varNodes::get).also {
-                if (it.contains(null))
-                    require(false)
-            }.requireNoNulls().toSet()
-
+            is DependentVarNode -> node.bounds.mapTo(hashSetOf()) { requireNotNull(varNodes[it]) }
             is LoadArrayNode -> setOf(requireNotNull(varNodes[node.array]))
         }
     }

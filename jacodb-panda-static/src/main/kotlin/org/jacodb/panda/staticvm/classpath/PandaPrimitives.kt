@@ -40,7 +40,8 @@ enum class PandaPrimitiveType(
 }
 
 object PandaPrimitives {
-    fun findPrimitiveOrNull(name: String) = enumValues<PandaPrimitiveType>().find { it.typeName == name }
+    fun findPrimitiveOrNull(name: String): PandaPrimitiveType? =
+        enumValues<PandaPrimitiveType>().find { it.typeName == name }
 
     fun find(name: String) = requireNotNull(findPrimitiveOrNull(name)) {
         "Not found primitive $name"

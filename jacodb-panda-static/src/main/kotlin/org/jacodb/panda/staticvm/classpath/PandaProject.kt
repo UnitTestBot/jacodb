@@ -22,6 +22,7 @@ import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
 class PandaProject : Project {
+
     private data class TreeEntry<T>(
         val depth: Int,
         val parent: TreeEntry<T>?,
@@ -29,13 +30,19 @@ class PandaProject : Project {
     )
 
     private val autoInitializedClasses = mutableListOf<PandaClass>()
+
     private fun newBlankClass(
         name: String,
         parent: PandaClass?,
         interfaces: Collection<PandaInterface> = emptySet(),
         accessFlags: AccessFlags = AccessFlags(1),
-    ) = PandaClass(this, name, parent, interfaces.toSet(), accessFlags)
-        .also(autoInitializedClasses::add)
+    ) = PandaClass(
+        project = this,
+        name = name,
+        directSuperClass = parent,
+        directSuperInterfaces = interfaces.toSet(),
+        flags = accessFlags,
+    ).also { autoInitializedClasses.add(it) }
 
     val objectClass = newBlankClass("std.core.Object", null)
     val stringClass = newBlankClass("std.core.String", objectClass)
@@ -51,6 +58,10 @@ class PandaProject : Project {
 
     private val methodIndex = hashMapOf<String, PandaMethod>()
 
+    init {
+        autoInitializedClasses.forEach { this.addClass(it) }
+    }
+
     fun addClass(node: PandaClass): Boolean {
         if (classesIndex.containsKey(node.name))
             return false
@@ -62,10 +73,6 @@ class PandaProject : Project {
         classesIndex[node.name] = TreeEntry(parentNode?.depth?.inc() ?: 0, parentNode, node)
         classesPool.add(node)
         return true
-    }
-
-    init {
-        autoInitializedClasses.forEach(this::addClass)
     }
 
     fun addInterface(node: PandaInterface): Boolean {
@@ -81,9 +88,12 @@ class PandaProject : Project {
 
     fun addMethod(method: PandaMethod): Boolean {
         require(method.enclosingClass in classesPool || method.enclosingClass in interfacesPool)
-        method.parameterTypes.forEach { requireNotNull(findTypeOrNull(it.typeName)) }
-        if (methodIndex.containsKey(method.signature))
-            return false
+        method.parameterTypes.forEach {
+            requireNotNull(findTypeOrNull(it.typeName)) {
+                "Not found type ${it.typeName}"
+            }
+        }
+        if (method.signature in methodIndex) return false
         methodIndex[method.signature] = method
         method.enclosingClass.declaredMethods[method.signature] = method
         return true
@@ -104,7 +114,7 @@ class PandaProject : Project {
     }
 
     companion object {
-        fun fromProgramInfo(programInfo: PandaProgramIr): PandaProject {
+        fun fromProgramIr(programInfo: PandaProgramIr): PandaProject {
             val pandaProject = PandaProject()
             programInfo.addInterfacesHierarchyToPandaClasspath(pandaProject)
             programInfo.addClassesHierarchyToPandaClasspath(pandaProject)
@@ -116,9 +126,11 @@ class PandaProject : Project {
     }
 
     override fun findTypeOrNull(name: String): PandaType? =
-        if (name.endsWith("[]"))
+        if (name.endsWith("[]")) {
             findTypeOrNull(name.removeSuffix("[]"))?.array
-        else PandaPrimitives.findPrimitiveOrNull(name) ?: findClassOrInterfaceOrNull(name)?.type
+        } else {
+            PandaPrimitives.findPrimitiveOrNull(name) ?: findClassOrInterfaceOrNull(name)?.type
+        }
 
     fun findType(name: String) = requireNotNull(findTypeOrNull(name)) {
         "Not found type $name"
@@ -128,11 +140,20 @@ class PandaProject : Project {
         "Not found class $name"
     }
 
-    fun findClassOrInterface(name: String) = requireNotNull(findClassOrInterfaceOrNull(name))
-    fun getElementType(name: String) = if (name.endsWith("[]")) findType(name.removeSuffix("[]"))
-    else throw IllegalArgumentException("Expected array type")
+    fun findClassOrInterface(name: String) = requireNotNull(findClassOrInterfaceOrNull(name)) {
+        "Not found class or interface $name"
+    }
 
-    override fun close() = Unit
+    fun getElementType(name: String): PandaType =
+        if (name.endsWith("[]")) {
+            findType(name.removeSuffix("[]"))
+        } else {
+            throw IllegalArgumentException("Expected array type")
+        }
+
+    override fun close() {
+        // Do nothing.
+    }
 
     private val flowGraphs: MutableMap<PandaMethod, PandaGraph> = hashMapOf()
 
@@ -148,11 +169,13 @@ class PandaProject : Project {
         (node.parent?.let { ancestors(it) } ?: emptyList()).plus(node.data.type)
 
     fun commonClassType(types: Collection<PandaClassType>): PandaClassType? {
-        if (types.isEmpty())
-            return objectClass.type
-        val nodes = types.map { requireNotNull(classesIndex[it.typeName]) }
+        if (types.isEmpty()) return objectClass.type
+        val nodes = types.map {
+            requireNotNull(classesIndex[it.typeName]) {
+                "Not found class ${it.typeName}"
+            }
+        }
         val paths = nodes.map { ancestors(it) }
-
         return paths.reduce { p1, p2 ->
             p1.zip(p2) { t1, t2 -> t1.takeIf { t1 == t2 } }.filterNotNull()
         }.lastOrNull()

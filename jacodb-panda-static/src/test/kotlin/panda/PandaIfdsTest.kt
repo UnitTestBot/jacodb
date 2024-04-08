@@ -52,7 +52,7 @@ class PandaIfdsTest {
         val stream = this::class.java.getResourceAsStream("/${programName}.ir")
             ?: error("Could not find resource for program: '$programName'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramInfo(program)
+        val project = PandaProject.fromProgramIr(program)
         return project
     }
 

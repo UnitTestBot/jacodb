@@ -35,7 +35,7 @@ class PandaIrDeserializationTest {
         val stream = this::class.java.getResourceAsStream("/$filePath")
             ?: error("Could not find resource: '$filePath'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramInfo(program)
+        val project = PandaProject.fromProgramIr(program)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
@@ -45,7 +45,7 @@ class PandaIrDeserializationTest {
         val stream = this::class.java.getResourceAsStream("/$filePath")
             ?: error("Could not find resource: '$filePath'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramInfo(program)
+        val project = PandaProject.fromProgramIr(program)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
@@ -75,7 +75,7 @@ class PandaIrDeserializationTest {
         val stream = this::class.java.getResourceAsStream("/$filePath")
             ?: error("Could not find resource: '$filePath'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramInfo(program)
+        val project = PandaProject.fromProgramIr(program)
         val method = project.findMethod("A.greet:i32;std.core.void;")
         val flowGraph = method.flowGraph()
     }

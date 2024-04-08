@@ -95,52 +95,71 @@ class ThisNode(name: String, type: PandaType) : LeafVarNode(name, type)
 class OutputVarBuilder(private val method: PandaMethod) : PandaInstIrVisitor<LocalVarNode?> {
     private val project = method.enclosingClass.project
 
-    private fun default(inst: PandaInstIr) = LeafVarNode(inst.id, project.findType(inst.type))
+    private fun default(inst: PandaInstIr): LeafVarNode {
+        val type = project.findType(inst.type)
+        return LeafVarNode(inst.id, type)
+    }
 
-    override fun visitPandaConstantInstIr(inst: PandaConstantInstIr): LocalVarNode =
-        LeafVarNode(inst.id, project.findType(inst.type))
+    // TODO: default(inst)
+    override fun visitPandaConstantInstIr(inst: PandaConstantInstIr): LocalVarNode {
+        val type = project.findType(inst.type)
+        return LeafVarNode(inst.id, type)
+    }
 
     override fun visitPandaSafePointInstIr(inst: PandaSafePointInstIr): LocalVarNode? = null
 
     override fun visitPandaSaveStateInstIr(inst: PandaSaveStateInstIr): LocalVarNode? = null
 
-    override fun visitPandaNewObjectInstIr(inst: PandaNewObjectInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.findClass(inst.objectClass).type)
+    override fun visitPandaNewObjectInstIr(inst: PandaNewObjectInstIr): LocalVarNode {
+        val classType = project.findClass(inst.objectClass).type
+        return LeafVarNode(inst.id, classType)
+    }
 
-    override fun visitPandaNewArrayInstIr(inst: PandaNewArrayInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.findType(inst.arrayType))
+    override fun visitPandaNewArrayInstIr(inst: PandaNewArrayInstIr): LocalVarNode {
+        val arrayType = project.findType(inst.arrayType)
+        return LeafVarNode(inst.id, arrayType)
+    }
 
-    override fun visitPandaCallStaticInstIr(inst: PandaCallStaticInstIr): LocalVarNode? {
-        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
+    override fun visitPandaCallStaticInstIr(inst: PandaCallStaticInstIr): LocalVarNode {
+        val returnType = project.findMethod(inst.method).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
-    override fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): LocalVarNode? {
-        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
+    override fun visitPandaCallLaunchStaticInstIr(inst: PandaCallLaunchStaticInstIr): LocalVarNode {
+        val returnType = project.findMethod(inst.method).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
-    override fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): LocalVarNode? =
-        DependentVarNode(inst.id, inst.inputs.dropLast(1))
+    override fun visitPandaNullCheckInstIr(inst: PandaNullCheckInstIr): LocalVarNode {
+        val bounds = inst.inputs.dropLast(1)
+        return DependentVarNode(inst.id, bounds)
+    }
 
-    override fun visitPandaZeroCheckInstIr(inst: PandaZeroCheckInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.findType(inst.type))
+    // TODO: default(inst)
+    override fun visitPandaZeroCheckInstIr(inst: PandaZeroCheckInstIr): LocalVarNode {
+        val type = project.findType(inst.type)
+        return LeafVarNode(inst.id, type)
+    }
 
-    override fun visitPandaLoadStringInstIr(inst: PandaLoadStringInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.stringClass.type)
+    override fun visitPandaLoadStringInstIr(inst: PandaLoadStringInstIr): LocalVarNode {
+        val stringType = project.stringClass.type
+        return LeafVarNode(inst.id, stringType)
+    }
 
-    override fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.typeClass.type)
+    override fun visitPandaLoadTypeInstIr(inst: PandaLoadTypeInstIr): LocalVarNode {
+        val typeType = project.typeClass.type
+        return LeafVarNode(inst.id, typeType)
+    }
 
     override fun visitPandaLoadRuntimeClassInstIr(inst: PandaLoadRuntimeClassInstIr): LocalVarNode? = null
 
-    override fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): LocalVarNode? {
-        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
+    override fun visitPandaCallVirtualInstIr(inst: PandaCallVirtualInstIr): LocalVarNode {
+        val returnType = project.findMethod(inst.method).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
-    override fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): LocalVarNode? {
-        val returnType = requireNotNull(project.findMethod(inst.method)).returnType
+    override fun visitPandaCallLaunchVirtualInstIr(inst: PandaCallLaunchVirtualInstIr): LocalVarNode {
+        val returnType = project.findMethod(inst.method).returnType
         return LeafVarNode(inst.id, returnType)
     }
 
@@ -154,21 +173,22 @@ class OutputVarBuilder(private val method: PandaMethod) : PandaInstIrVisitor<Loc
 
     override fun visitPandaReturnInstIr(inst: PandaReturnInstIr): LocalVarNode? = null
 
-    override fun visitPandaParameterInstIr(inst: PandaParameterInstIr): LocalVarNode? =
-        if (inst.index == 0 && !method.flags.isStatic)
+    override fun visitPandaParameterInstIr(inst: PandaParameterInstIr): LocalVarNode =
+        if (inst.index == 0 && !method.flags.isStatic) {
             ThisNode(inst.id, method.parameterTypes[inst.index])
-        else
+        } else {
             LeafVarNode(inst.id, method.parameterTypes[inst.index])
+        }
 
-    override fun visitPandaLoadStaticInstIr(inst: PandaLoadStaticInstIr): LocalVarNode? {
+    override fun visitPandaLoadStaticInstIr(inst: PandaLoadStaticInstIr): LocalVarNode {
         val enclosingClass = project.findClass(inst.enclosingClass)
-        val field = requireNotNull(enclosingClass.findFieldOrNull(inst.field))
+        val field = enclosingClass.findField(inst.field)
         return LeafVarNode(inst.id, field.type)
     }
 
-    override fun visitPandaLoadObjectInstIr(inst: PandaLoadObjectInstIr): LocalVarNode? {
+    override fun visitPandaLoadObjectInstIr(inst: PandaLoadObjectInstIr): LocalVarNode {
         val enclosingClass = project.findClass(inst.enclosingClass)
-        val field = requireNotNull(enclosingClass.findFieldOrNull(inst.field))
+        val field = enclosingClass.findField(inst.field)
         return LeafVarNode(inst.id, field.type)
     }
 
@@ -176,85 +196,92 @@ class OutputVarBuilder(private val method: PandaMethod) : PandaInstIrVisitor<Loc
 
     override fun visitPandaStoreObjectInstIr(inst: PandaStoreObjectInstIr): LocalVarNode? = null
 
-    override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): LocalVarNode? =
-        LoadArrayNode(inst.id, inst.inputs.first())
+    override fun visitPandaLoadArrayInstIr(inst: PandaLoadArrayInstIr): LocalVarNode {
+        val array = inst.inputs.first()
+        return LoadArrayNode(inst.id, array)
+    }
 
     override fun visitPandaStoreArrayInstIr(inst: PandaStoreArrayInstIr): LocalVarNode? = null
 
-    override fun visitPandaCastInstIr(inst: PandaCastInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaCastInstIr(inst: PandaCastInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaIsInstanceInstIr(inst: PandaIsInstanceInstIr): LocalVarNode? =
+    override fun visitPandaIsInstanceInstIr(inst: PandaIsInstanceInstIr): LocalVarNode =
         LeafVarNode(inst.id, PandaPrimitiveType.BOOL)
 
-    override fun visitPandaCheckCastInstIr(inst: PandaCheckCastInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.findType(inst.candidateType))
+    override fun visitPandaCheckCastInstIr(inst: PandaCheckCastInstIr): LocalVarNode {
+        val candidateType = project.findType(inst.candidateType)
+        return LeafVarNode(inst.id, candidateType)
+    }
 
     override fun visitPandaIfImmInstIr(inst: PandaIfImmInstIr): LocalVarNode? = null
 
-    override fun visitPandaCompareInstIr(inst: PandaCompareInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaCompareInstIr(inst: PandaCompareInstIr): LocalVarNode = default(inst)
 
     override fun visitPandaPhiInstIr(inst: PandaPhiInstIr): LocalVarNode? =
         DependentVarNode(inst.id, inst.inputs).takeIf { inst.users.isNotEmpty() }
 
-    override fun visitPandaAddInstIr(inst: PandaAddInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaAddInstIr(inst: PandaAddInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaSubInstIr(inst: PandaSubInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaSubInstIr(inst: PandaSubInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaMulInstIr(inst: PandaMulInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaMulInstIr(inst: PandaMulInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaDivInstIr(inst: PandaDivInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaDivInstIr(inst: PandaDivInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaModInstIr(inst: PandaModInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaModInstIr(inst: PandaModInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaAndInstIr(inst: PandaAndInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaAndInstIr(inst: PandaAndInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaOrInstIr(inst: PandaOrInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaOrInstIr(inst: PandaOrInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaXorInstIr(inst: PandaXorInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaXorInstIr(inst: PandaXorInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaShlInstIr(inst: PandaShlInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaShlInstIr(inst: PandaShlInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaShrInstIr(inst: PandaShrInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaShrInstIr(inst: PandaShrInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaAShlInstIr(inst: PandaAShlInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaAShlInstIr(inst: PandaAShlInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaAShrInstIr(inst: PandaAShrInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaAShrInstIr(inst: PandaAShrInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaCmpInstIr(inst: PandaCmpInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaCmpInstIr(inst: PandaCmpInstIr): LocalVarNode = default(inst)
 
     override fun visitPandaThrowInstIr(inst: PandaThrowInstIr): LocalVarNode? = null
 
-    override fun visitPandaNegativeCheckInstIr(inst: PandaNegativeCheckInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaNegativeCheckInstIr(inst: PandaNegativeCheckInstIr): LocalVarNode = default(inst)
 
     override fun visitPandaSaveStateDeoptimizeInstIr(inst: PandaSaveStateDeoptimizeInstIr): LocalVarNode? = null
 
-    override fun visitPandaNegInstIr(inst: PandaNegInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaNegInstIr(inst: PandaNegInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaNotInstIr(inst: PandaNotInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaNotInstIr(inst: PandaNotInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaLenArrayInstIr(inst: PandaLenArrayInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaLenArrayInstIr(inst: PandaLenArrayInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaBoundsCheckInstIr(inst: PandaBoundsCheckInstIr): LocalVarNode? = default(inst)
+    override fun visitPandaBoundsCheckInstIr(inst: PandaBoundsCheckInstIr): LocalVarNode = default(inst)
 
-    override fun visitPandaNullPtrInstIr(inst: PandaNullPtrInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.objectClass.type)
+    override fun visitPandaNullPtrInstIr(inst: PandaNullPtrInstIr): LocalVarNode {
+        val objectType = project.objectClass.type
+        return LeafVarNode(inst.id, objectType)
+    }
 
-    override fun visitPandaLoadUndefinedInstIr(inst: PandaLoadUndefinedInstIr): LocalVarNode? =
-        LeafVarNode(inst.id, project.undefinedClass.type)
+    override fun visitPandaLoadUndefinedInstIr(inst: PandaLoadUndefinedInstIr): LocalVarNode {
+        val undefinedType = project.undefinedClass.type
+        return LeafVarNode(inst.id, undefinedType)
+    }
 
-    override fun visitPandaRefTypeCheckInstIr(inst: PandaRefTypeCheckInstIr): LocalVarNode? =
-        DependentVarNode(inst.id, listOf(inst.inputs.first()))
+    override fun visitPandaRefTypeCheckInstIr(inst: PandaRefTypeCheckInstIr): LocalVarNode {
+        val bounds = inst.inputs.take(1)
+        return DependentVarNode(inst.id, bounds)
+    }
 
     override fun visitPandaTryInstIr(inst: PandaTryInstIr): LocalVarNode? = null
 
     override fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): LocalVarNode? =
         DependentVarNode(inst.id, inst.inputs).takeIf { inst.users.isNotEmpty() }
 
-    override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): LocalVarNode =
-        LeafVarNode(
-            inst.id,
-            project.resolveIntrinsic(inst.intrinsicId)?.returnType
-                ?: project.findTypeOrNull(inst.type)
-                ?: throw IllegalArgumentException("Cannot find intrinsic return type")
-        )
+    override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): LocalVarNode {
+        val type = project.resolveIntrinsic(inst.intrinsicId)?.returnType ?: project.findType(inst.type)
+        return LeafVarNode(inst.id, type)
+    }
 }
