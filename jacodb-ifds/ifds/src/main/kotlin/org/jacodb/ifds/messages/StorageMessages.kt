@@ -16,15 +16,16 @@
 
 package org.jacodb.ifds.messages
 
+import kotlinx.coroutines.channels.Channel
+import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
-import kotlinx.coroutines.channels.Channel
-import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.IfdsResult
 
-sealed interface StorageMessage : CommonMessage
+sealed interface StorageMessage : RunnerMessage
 
 data class NewEdge<Stmt, Fact>(
     override val runnerId: RunnerId,
@@ -57,6 +58,7 @@ data class NewResult<Stmt, Fact>(
 ) : StorageMessage
 
 data class ObtainData<Stmt, Fact, Result : IfdsResult<Stmt, Fact>>(
+    val chunk: Chunk,
     override val runnerId: RunnerId,
     val channel: Channel<IfdsComputationData<Stmt, Fact, Result>>,
 ) : StorageMessage

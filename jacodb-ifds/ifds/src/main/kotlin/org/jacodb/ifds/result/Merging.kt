@@ -16,8 +16,37 @@
 
 package org.jacodb.ifds.result
 
+import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Reason
+import org.jacodb.ifds.domain.Vertex
+
 fun <Stmt, Fact, Result : IfdsResult<Stmt, Fact>> mergeIfdsResults(
-    ifdsResults: Collection<IfdsComputationData<Stmt, Fact, Result>>,
+    ifdsDatas: Collection<IfdsComputationData<Stmt, Fact, Result>>,
 ): IfdsComputationData<Stmt, Fact, Result> {
-    TODO()
+    val edgesByEnd = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
+    val factsByStmt = hashMapOf<Stmt, HashSet<Fact>>()
+    val reasonsByEdge = hashMapOf<Edge<Stmt, Fact>, HashSet<Reason<Stmt, Fact>>>()
+    val results = hashSetOf<Result>()
+    for (data in ifdsDatas) {
+        for ((end, edges) in data.edgesByEnd) {
+            edgesByEnd.getOrPut(end, ::hashSetOf)
+                .addAll(edges)
+        }
+        for ((stmt, facts) in data.facts) {
+            factsByStmt.getOrPut(stmt, ::hashSetOf)
+                .addAll(facts)
+        }
+        for ((edge, reasons) in data.reasons) {
+            reasonsByEdge.getOrPut(edge, ::hashSetOf)
+                .addAll(reasons)
+        }
+        results.addAll(data.results)
+    }
+    val mergedData = IfdsComputationData(
+        edgesByEnd,
+        factsByStmt,
+        reasonsByEdge,
+        results
+    )
+    return mergedData
 }

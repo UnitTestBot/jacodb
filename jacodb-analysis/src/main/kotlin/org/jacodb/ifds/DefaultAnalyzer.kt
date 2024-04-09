@@ -22,7 +22,7 @@ import org.jacodb.ifds.domain.FlowFunction
 import org.jacodb.ifds.domain.FlowScope
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.EdgeMessage
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ResolvedCall
@@ -39,7 +39,7 @@ class DefaultAnalyzer<Fact>(
     private val flowFunction: FlowFunction<JcInst, Fact>,
     private val runnerId: RunnerId,
 ) : Analyzer<JcInst, Fact> {
-    override fun step(message: AnalyzerMessage<JcInst, Fact>): Collection<CommonMessage> = buildList {
+    override fun step(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
         when (message) {
             is EdgeMessage<JcInst, Fact> -> {
                 val scope = TaintFlowScope(message.edge, this)

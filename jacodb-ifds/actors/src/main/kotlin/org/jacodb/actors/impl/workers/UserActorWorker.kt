@@ -50,6 +50,7 @@ internal class UserActorWorker<Message>(
     ) {
         scope.launch(job) {
             sendInternal(watcher, WatcherMessage.Register(self))
+            actor.receive(Signal.Start)
             loop(actor)
             actor.receive(Signal.PostStop)
         }

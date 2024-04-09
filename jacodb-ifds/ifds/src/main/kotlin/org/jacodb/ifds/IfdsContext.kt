@@ -14,17 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.domain
+package org.jacodb.ifds
 
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.Factory
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.domain.Analyzer
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 
 interface IfdsContext<Stmt, Fact> {
-    fun chunkByMessage(message: CommonMessage): ChunkId
-    fun runnerIdByMessage(message: CommonMessage): RunnerId
+    fun chunkByMessage(message: RunnerMessage): Chunk
+    fun runnerIdByMessage(message: RunnerMessage): RunnerId
 
-    fun getAnalyzer(chunkId: ChunkId, runnerId: RunnerId): Analyzer<Stmt, Fact>
-    fun indirectionHandlerFactory(parent: ActorRef<CommonMessage>, runnerId: RunnerId): Factory<IndirectionMessage>
+    fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<Stmt, Fact>
+    fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId): Factory<IndirectionMessage>
 }

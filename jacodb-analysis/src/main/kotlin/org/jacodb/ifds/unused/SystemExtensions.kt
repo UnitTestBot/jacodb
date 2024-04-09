@@ -29,10 +29,11 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
+import org.jacodb.ifds.messages.CollectAll
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.ObtainData
 import org.jacodb.ifds.result.IfdsComputationData
+import org.jacodb.ifds.result.mergeIfdsResults
 import org.jacodb.impl.features.usagesExt
 
 suspend fun ActorSystem<CommonMessage>.startUnusedAnalysis(method: JcMethod) {
@@ -75,10 +76,16 @@ suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): List<UnusedVariabl
     return vulnerabilities
 }
 
-suspend fun ActorSystem<CommonMessage>.collectUnusedComputationData(): IfdsComputationData<JcInst, UnusedVariableDomainFact, UnusedVulnerability> =
-    ask {
-        ObtainData(
+suspend fun ActorSystem<CommonMessage>.collectUnusedComputationData(): IfdsComputationData<JcInst, UnusedVariableDomainFact, UnusedVulnerability> {
+    val results = ask {
+        CollectAll(
             SingleRunner,
             it
         )
     }
+
+    @Suppress("UNCHECKED_CAST")
+    val mergedData =
+        mergeIfdsResults(results.values as Collection<IfdsComputationData<JcInst, UnusedVariableDomainFact, UnusedVulnerability>>)
+    return mergedData
+}

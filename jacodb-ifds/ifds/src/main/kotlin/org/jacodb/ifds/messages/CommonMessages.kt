@@ -18,6 +18,8 @@ package org.jacodb.ifds.messages
 
 import org.jacodb.ifds.domain.RunnerId
 
-sealed interface CommonMessage {
+sealed interface CommonMessage
+
+sealed interface RunnerMessage : CommonMessage {
     val runnerId: RunnerId
 }

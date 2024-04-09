@@ -19,12 +19,11 @@ package org.jacodb.ifds.actors
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.ifds.domain.ChunkId
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.EdgeMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.messages.NewResult
@@ -40,8 +39,7 @@ import org.jacodb.ifds.result.IfdsResult
 
 context(ActorContext<StorageMessage>)
 class RunnerStorage<Stmt, Fact>(
-    private val parent: ActorRef<CommonMessage>,
-    private val chunkId: ChunkId,
+    private val parent: ActorRef<RunnerMessage>,
     private val runnerId: RunnerId,
 ) : Actor<StorageMessage> {
     data class SubscriptionData<Stmt, Fact>(
@@ -135,8 +133,6 @@ class RunnerStorage<Stmt, Fact>(
                 @Suppress("UNCHECKED_CAST")
                 message as ObtainData<Stmt, Fact, IfdsResult<Stmt, Fact>>
                 val data = IfdsComputationData(
-                    chunkId,
-                    runnerId,
                     edges.groupByTo(hashMapOf()) { it.to },
                     edges.groupByTo(hashMapOf(), { it.to.stmt }) { it.to.fact },
                     reasons.toMap(hashMapOf()),

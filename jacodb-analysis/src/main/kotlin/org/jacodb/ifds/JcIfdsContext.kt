@@ -22,35 +22,33 @@ import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Analyzer
-import org.jacodb.ifds.domain.ChunkId
+import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.FlowFunction
-import org.jacodb.ifds.domain.IfdsContext
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.impl.features.HierarchyExtensionImpl
 
 class JcIfdsContext<Fact>(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
     private val bannedPackagePrefixes: List<String>,
-    private val flowFunctionFactory: (ChunkId, RunnerId) -> FlowFunction<JcInst, Fact>,
+    private val chunkStrategy: ChunkResolver,
+    private val flowFunctionFactory: (RunnerId) -> FlowFunction<JcInst, Fact>,
 ) : IfdsContext<JcInst, Fact> {
-    data object SingleChunk : ChunkId
+    override fun chunkByMessage(message: RunnerMessage): Chunk =
+        chunkStrategy.chunkByMessage(message)
 
-    override fun chunkByMessage(message: CommonMessage): ChunkId =
-        SingleChunk
-
-    override fun runnerIdByMessage(message: CommonMessage): RunnerId =
+    override fun runnerIdByMessage(message: RunnerMessage): RunnerId =
         message.runnerId
 
-    override fun getAnalyzer(chunkId: ChunkId, runnerId: RunnerId): Analyzer<JcInst, Fact> =
+    override fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<JcInst, Fact> =
         DefaultAnalyzer(
             graph,
-            flowFunctionFactory(chunkId, runnerId),
+            flowFunctionFactory(runnerId),
             runnerId
         )
 
-    override fun indirectionHandlerFactory(parent: ActorRef<CommonMessage>, runnerId: RunnerId) =
+    override fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId) =
         Factory {
             IndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, parent, runnerId)
         }

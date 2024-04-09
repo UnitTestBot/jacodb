@@ -28,7 +28,7 @@ import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.UnresolvedCall
@@ -37,7 +37,7 @@ context(ActorContext<IndirectionMessage>)
 class IndirectionHandler(
     private val hierarchy: HierarchyExtension,
     private val bannedPackagePrefixes: List<String>,
-    private val parent: ActorRef<CommonMessage>,
+    private val parent: ActorRef<RunnerMessage>,
     private val runnerId: RunnerId,
 ) : Actor<IndirectionMessage> {
     private val cache = hashMapOf<JcMethod, List<JcMethod>>()

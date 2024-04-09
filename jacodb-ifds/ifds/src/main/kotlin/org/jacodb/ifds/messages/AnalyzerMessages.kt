@@ -19,7 +19,7 @@ package org.jacodb.ifds.messages
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.RunnerId
 
-interface AnalyzerMessage<Stmt, Fact> : CommonMessage
+interface AnalyzerMessage<Stmt, Fact> : RunnerMessage
 
 data class EdgeMessage<Stmt, Fact>(
     override val runnerId: RunnerId,

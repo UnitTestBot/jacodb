@@ -17,24 +17,27 @@
 package org.jacodb.ifds.actors
 
 import org.jacodb.actors.api.Actor
-import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorContext
+import org.jacodb.actors.api.ActorRef
+import org.jacodb.actors.api.signal.Signal
 import org.jacodb.actors.impl.routing.messageKeyRouter
-import org.jacodb.ifds.domain.ChunkId
-import org.jacodb.ifds.domain.IfdsContext
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.IfdsContext
 import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.NewChunk
+import org.jacodb.ifds.messages.RunnerMessage
 
-context(ActorContext<CommonMessage>)
+context(ActorContext<RunnerMessage>)
 class ChunkManager<Stmt, Fact>(
     private val ifdsContext: IfdsContext<Stmt, Fact>,
-    private val chunkId: ChunkId,
+    private val chunk: Chunk,
     private val parent: ActorRef<CommonMessage>,
-) : Actor<CommonMessage> {
+) : Actor<RunnerMessage> {
 
     private val routerFactory = messageKeyRouter(
         ifdsContext::runnerIdByMessage
     ) { runnerId ->
-        Runner(this@ActorContext.self, ifdsContext, chunkId, runnerId)
+        Runner(this@ActorContext.self, ifdsContext, chunk, runnerId)
     }
 
     private val router = spawn(
@@ -42,11 +45,22 @@ class ChunkManager<Stmt, Fact>(
         factory = routerFactory
     )
 
-    override suspend fun receive(message: CommonMessage) {
+    override suspend fun receive(message: RunnerMessage) {
         when {
-            chunkId == ifdsContext.chunkByMessage(message) -> router.send(message)
+            chunk == ifdsContext.chunkByMessage(message) -> router.send(message)
 
             else -> parent.send(message)
+        }
+    }
+
+    override suspend fun receive(signal: Signal) {
+        when (signal) {
+            Signal.Start -> {
+                parent.send(NewChunk(chunk))
+            }
+            Signal.PostStop -> {
+
+            }
         }
     }
 }

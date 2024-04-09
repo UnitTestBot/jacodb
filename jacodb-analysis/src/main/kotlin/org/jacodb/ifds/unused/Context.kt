@@ -20,20 +20,25 @@ import org.jacodb.analysis.unused.UnusedVariableAnalyzer
 import org.jacodb.analysis.unused.UnusedVariableDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.ifds.ChunkResolver
+import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
+import org.jacodb.ifds.MethodChunkStrategy
 import org.jacodb.ifds.toEdge
 
 fun unusedIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
+    chunkStrategy: ChunkResolver = DefaultChunkResolver(MethodChunkStrategy),
 ): JcIfdsContext<UnusedVariableDomainFact> =
     JcIfdsContext(
         cp,
         graph,
-        bannedPackagePrefixes
-    ) { _, runnerId ->
+        bannedPackagePrefixes,
+        chunkStrategy
+    ) { runnerId ->
         val analyzer = when (runnerId) {
             is SingleRunner -> UnusedVariableAnalyzer(graph)
             else -> error("Unexpected runnerId: $runnerId")

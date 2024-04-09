@@ -21,12 +21,12 @@ import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.messages.AnalyzerMessage
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 
 context(ActorContext<AnalyzerMessage<Stmt, Fact>>)
 class Worker<Stmt, Fact>(
     private val analyzer: Analyzer<Stmt, Fact>,
-    private val parent: ActorRef<CommonMessage>,
+    private val parent: ActorRef<RunnerMessage>,
 ) : Actor<AnalyzerMessage<Stmt, Fact>> {
 
     override suspend fun receive(message: AnalyzerMessage<Stmt, Fact>) {

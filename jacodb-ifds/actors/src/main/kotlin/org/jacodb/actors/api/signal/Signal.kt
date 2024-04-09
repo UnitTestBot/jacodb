@@ -19,6 +19,7 @@ package org.jacodb.actors.api.signal
 import org.jacodb.actors.api.ActorRef
 
 sealed interface Signal {
+    data object Start : Signal
     data object PostStop : Signal
     class Terminated(val ref: ActorRef<*>)
 }

@@ -20,29 +20,29 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.impl.routing.firstReadyRouter
-import org.jacodb.ifds.domain.ChunkId
-import org.jacodb.ifds.domain.IfdsContext
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.IfdsContext
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
-import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.IndirectionMessage
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.StorageMessage
 
-context(ActorContext<CommonMessage>)
+context(ActorContext<RunnerMessage>)
 class Runner<Stmt, Fact>(
-    private val parent: ActorRef<CommonMessage>,
+    private val parent: ActorRef<RunnerMessage>,
     private val ifdsContext: IfdsContext<Stmt, Fact>,
-    private val chunkId: ChunkId,
+    private val chunk: Chunk,
     private val runnerId: RunnerId,
-) : Actor<CommonMessage> {
+) : Actor<RunnerMessage> {
     private val routerFactory = firstReadyRouter(size = 8) {
-        Worker(ifdsContext.getAnalyzer(chunkId, runnerId), this@ActorContext.self)
+        Worker(ifdsContext.getAnalyzer(chunk, runnerId), this@ActorContext.self)
     }
 
     private val router = spawn("workers", factory = routerFactory)
 
     private val storage = spawn("storage") {
-        RunnerStorage<Stmt, Fact>(this@ActorContext.self, chunkId, runnerId)
+        RunnerStorage<Stmt, Fact>(this@ActorContext.self, runnerId)
     }
 
     private val indirectionHandler = spawn(
@@ -50,9 +50,9 @@ class Runner<Stmt, Fact>(
         factory = ifdsContext.indirectionHandlerFactory(this@ActorContext.self, runnerId)
     )
 
-    override suspend fun receive(message: CommonMessage) {
+    override suspend fun receive(message: RunnerMessage) {
         when {
-            ifdsContext.chunkByMessage(message) == chunkId && ifdsContext.runnerIdByMessage(message) == runnerId -> {
+            ifdsContext.chunkByMessage(message) == chunk && ifdsContext.runnerIdByMessage(message) == runnerId -> {
                 @Suppress("UNCHECKED_CAST")
                 when (message) {
                     is StorageMessage -> storage.send(message)

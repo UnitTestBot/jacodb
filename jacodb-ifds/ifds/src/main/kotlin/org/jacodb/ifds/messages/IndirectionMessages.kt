@@ -19,7 +19,7 @@ package org.jacodb.ifds.messages
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.RunnerId
 
-interface IndirectionMessage : CommonMessage
+interface IndirectionMessage : RunnerMessage
 
 data class UnresolvedCall<Stmt, Fact>(
     override val runnerId: RunnerId,

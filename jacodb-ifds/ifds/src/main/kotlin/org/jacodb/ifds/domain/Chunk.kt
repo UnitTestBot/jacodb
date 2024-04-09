@@ -16,9 +16,4 @@
 
 package org.jacodb.ifds.domain
 
-import org.jacodb.ifds.messages.AnalyzerMessage
-import org.jacodb.ifds.messages.RunnerMessage
-
-interface Analyzer<Stmt, Fact> {
-    fun step(message: AnalyzerMessage<Stmt, Fact>): Collection<RunnerMessage>
-}
+interface Chunk

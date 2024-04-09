@@ -16,17 +16,17 @@
 
 package org.jacodb.ifds.domain
 
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.RunnerMessage
 
 class FlowScope<Stmt, Fact>(
     val edge: Edge<Stmt, Fact>,
-    private val messages: MutableList<CommonMessage>,
+    private val messages: MutableList<RunnerMessage>,
 ) {
-    fun add(message: CommonMessage) {
+    fun add(message: RunnerMessage) {
         messages.add(message)
     }
 
-    fun addAll(messages: Collection<CommonMessage>) {
+    fun addAll(messages: Collection<RunnerMessage>) {
         this.messages.addAll(messages)
     }
 }

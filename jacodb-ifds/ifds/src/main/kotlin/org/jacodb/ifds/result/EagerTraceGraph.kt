@@ -20,7 +20,7 @@ import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
 
-data class SingleStorageTraceGraph<Stmt, Fact>(
+data class EagerTraceGraph<Stmt, Fact>(
     override val sink: Vertex<Stmt, Fact>,
     override val sources: Set<Vertex<Stmt, Fact>>,
     override val edges: Map<Vertex<Stmt, Fact>, MutableSet<Vertex<Stmt, Fact>>>,
@@ -146,5 +146,5 @@ fun <Stmt, Fact> IfdsComputationData<Stmt, Fact, *>.buildTraceGraph(
         dfs(edge, edge.to, false)
     }
 
-    return SingleStorageTraceGraph(sink, sources, edges)
+    return EagerTraceGraph(sink, sources, edges)
 }

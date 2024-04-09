@@ -14,6 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.domain
+package org.jacodb.ifds.messages
 
-interface ChunkId
+import kotlinx.coroutines.channels.Channel
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.result.IfdsComputationData
+
+sealed interface ProjectMessage : CommonMessage
+
+data class NewChunk(
+    val chunk: Chunk
+) : ProjectMessage
+
+data class CollectAll(
+    val runnerId: RunnerId,
+    val channel: Channel<Map<Chunk, IfdsComputationData<*, *, *>>>
+) : ProjectMessage

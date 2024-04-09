@@ -16,11 +16,20 @@
 
 package org.jacodb.ifds.actors
 
+import kotlinx.coroutines.channels.Channel
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.impl.routing.messageKeyRouter
-import org.jacodb.ifds.domain.IfdsContext
+import org.jacodb.ifds.IfdsContext
+import org.jacodb.ifds.domain.Chunk
+import org.jacodb.ifds.messages.CollectAll
 import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.messages.NewChunk
+import org.jacodb.ifds.messages.ObtainData
+import org.jacodb.ifds.messages.ProjectMessage
+import org.jacodb.ifds.messages.RunnerMessage
+import org.jacodb.ifds.result.IfdsComputationData
+import org.jacodb.ifds.result.IfdsResult
 
 context(ActorContext<CommonMessage>)
 class ProjectManager<Stmt, Fact>(
@@ -32,7 +41,37 @@ class ProjectManager<Stmt, Fact>(
 
     private val router = spawn("chunks", factory = routerFactory)
 
+    private val chunks = hashSetOf<Chunk>()
+
     override suspend fun receive(message: CommonMessage) {
-        router.send(message)
+        when (message) {
+            is RunnerMessage -> {
+                router.send(message)
+            }
+
+            is ProjectMessage -> {
+                processProjectMessage(message)
+            }
+        }
+    }
+
+    private suspend fun processProjectMessage(message: ProjectMessage) {
+        when (message) {
+            is NewChunk -> {
+                chunks.add(message.chunk)
+            }
+
+            is CollectAll -> {
+                val results = hashMapOf<Chunk, IfdsComputationData<*, *, *>>()
+                for (chunk in chunks) {
+                    val channel = Channel<IfdsComputationData<Stmt, Fact, IfdsResult<Stmt, Fact>>>()
+                    val msg = ObtainData(chunk, message.runnerId, channel)
+                    router.send(msg)
+                    val data = channel.receive()
+                    results[chunk] = data
+                }
+                message.channel.send(results)
+            }
+        }
     }
 }
