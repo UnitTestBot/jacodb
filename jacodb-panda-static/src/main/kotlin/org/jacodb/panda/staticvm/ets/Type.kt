@@ -48,18 +48,70 @@ package org.jacodb.panda.staticvm.ets
 data class TypeDesc(val typeDesc: String) {
     override fun toString(): String = typeDesc
 
-    // override fun equals(other: Any?): Boolean {
-    //     if (this === other) return true
-    //     if (other !is TypeDesc) return false
-    //     return typeDesc == other.typeDesc
-    // }
-    //
-    // override fun hashCode(): Int {
-    //     return typeDesc.hashCode()
-    // }
-
     fun getKind(): TypeKind {
-        TODO()
+        return if (this == NULL) {
+            TypeKind.NULL
+        } else if (typeDesc[0] == 'M') {
+            TypeKind.METHOD
+        } else if (typeDesc[0] == 'V') {
+            TypeKind.VOID
+        } else if (typeDesc[0] == '[') {
+            TypeKind.ARRAY
+        } else if (typeDesc[0] == 'L') {
+            check(typeDesc.last() == ';')
+            val className = typeDesc.substring(1, typeDesc.length - 1)
+            when (className) {
+                "std/core/Boolean" -> {
+                    TypeKind.BOOLEAN
+                }
+
+                "std/core/Byte" -> {
+                    TypeKind.BYTE
+                }
+
+                "std/core/Char" -> {
+                    TypeKind.CHAR
+                }
+
+                "std/core/Short" -> {
+                    TypeKind.SHORT
+                }
+
+                "std/core/Int" -> {
+                    TypeKind.INT
+                }
+
+                "std/core/Long" -> {
+                    TypeKind.LONG
+                }
+
+                "std/core/Float" -> {
+                    TypeKind.FLOAT
+                }
+
+                "std/core/Double" -> {
+                    TypeKind.DOUBLE
+                }
+
+                "std/core/__internal_undefined" -> {
+                    TypeKind.UNDEFINED
+                }
+
+                else -> {
+                    TypeKind.CLASS
+                }
+            }
+        } else when (this) {
+            ValueTypeDesc.BOOLEAN -> TypeKind.BOOLEAN
+            ValueTypeDesc.BYTE -> TypeKind.BYTE
+            ValueTypeDesc.SHORT -> TypeKind.SHORT
+            ValueTypeDesc.CHAR -> TypeKind.CHAR
+            ValueTypeDesc.INT -> TypeKind.INT
+            ValueTypeDesc.LONG -> TypeKind.LONG
+            ValueTypeDesc.FLOAT -> TypeKind.FLOAT
+            ValueTypeDesc.DOUBLE -> TypeKind.DOUBLE
+            else -> TypeKind.NONE
+        }
     }
 
     fun isValueType(): Boolean {
@@ -83,6 +135,7 @@ data class TypeDesc(val typeDesc: String) {
         val I64: TypeDesc = TypeDesc("J")
         val U64: TypeDesc = TypeDesc("Q")
         val ANY: TypeDesc = TypeDesc("A")
+        val NULL: TypeDesc = TypeDesc("Null")
         fun array(elemType: TypeDesc): TypeDesc = TypeDesc("[$elemType")
         fun ref(className: String): TypeDesc = TypeDesc("L${className.replace('.', '/')};")
     }
@@ -118,9 +171,6 @@ enum class TypeKind(val value: Byte) {
 
     ENUM(0x14),
 }
-
-// 5 lower bits for type kind
-const val TYPE_KIND_MASK = (1 shl 6) - 1
 
 /**
  * Value type descriptor.
@@ -280,7 +330,7 @@ class NullType private constructor(
     }
 
     companion object {
-        val REF: NullType = NullType(TypeDesc("null"))
+        val REF: NullType = NullType(TypeDesc.NULL)
     }
 }
 
@@ -343,6 +393,10 @@ class CharType private constructor(
 
     override fun equals(other: Any?): Boolean {
         return other is CharType && this.isValue != other.isReference()
+    }
+
+    override fun hashCode(): Int {
+        return td.hashCode()
     }
 
     companion object {
