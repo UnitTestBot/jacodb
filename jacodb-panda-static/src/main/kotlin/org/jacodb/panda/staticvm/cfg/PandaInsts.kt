@@ -30,7 +30,7 @@ class PandaInstLocation(
 ) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
 
-    override fun toString(): String = "method.$index"
+    override fun toString(): String = "${method.name}:$index"
 
     override val lineNumber: Int
         get() = 0 // TODO("Not yet implemented")
