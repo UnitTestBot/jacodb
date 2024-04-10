@@ -60,8 +60,15 @@ class PandaMethod(
             Parameter(typeName, index, this)
         }
 
-    override fun flowGraph(): PandaGraph =
-        enclosingClass.project.flowGraph(this)
+    override fun flowGraph(): PandaGraph {
+        return enclosingClass.project.flowGraph(this)
+    }
+
+    // TODO: equals
+
+    override fun toString(): String {
+        return "${enclosingClass.name}::$name(${parameterTypes.joinToString { it.typeName }})"
+    }
 }
 
 sealed interface PandaClassOrInterface : CommonClass {
