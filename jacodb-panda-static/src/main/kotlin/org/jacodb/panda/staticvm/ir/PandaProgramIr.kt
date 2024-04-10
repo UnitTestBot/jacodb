@@ -17,6 +17,7 @@
 package org.jacodb.panda.staticvm.ir
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -42,7 +43,7 @@ data class PandaProgramIr(
 ) {
     companion object {
         val json = Json {
-            ignoreUnknownKeys = true
+            // ignoreUnknownKeys = true
             classDiscriminator = "opcode"
         }
 
@@ -184,6 +185,7 @@ data class PandaBasicBlockIr(
     val insts: List<PandaInstIr> = emptyList(),
     val isCatchBegin: Boolean = false,
     val isTryBegin: Boolean = false,
+    @SerialName("IsTryEnd")
     val isTryEnd: Boolean = false,
 )
 
@@ -195,6 +197,7 @@ sealed interface PandaInstIr {
     val opcode: String
     val type: String
     val catchers: List<Int>
+    val visit: String
 
     fun <T> accept(visitor: PandaInstIrVisitor<T>): T
 }
