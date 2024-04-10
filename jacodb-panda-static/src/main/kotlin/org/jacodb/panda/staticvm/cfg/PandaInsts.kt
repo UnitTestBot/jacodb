@@ -45,6 +45,7 @@ data class PandaInstRef(
 sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
+
     override val lineNumber: Int
         get() = location.lineNumber
 
