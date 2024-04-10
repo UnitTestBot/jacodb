@@ -115,14 +115,14 @@ class PandaProject : Project {
     }
 
     companion object {
-        fun fromProgramIr(programInfo: PandaProgramIr): PandaProject {
-            val pandaProject = PandaProject()
-            programInfo.addInterfacesHierarchyToPandaClasspath(pandaProject)
-            programInfo.addClassesHierarchyToPandaClasspath(pandaProject)
-            programInfo.addFieldsToPandaClasspath(pandaProject)
-            programInfo.addMethodsToPandaClasspath(pandaProject)
-            programInfo.addFlowGraphsToPandaClasspath(pandaProject)
-            return pandaProject
+        fun fromProgramIr(program: PandaProgramIr): PandaProject {
+            val project = PandaProject()
+            program.addInterfacesHierarchyToPandaClasspath(project)
+            program.addClassesHierarchyToPandaClasspath(project)
+            program.addFieldsToPandaClasspath(project)
+            program.addMethodsToPandaClasspath(project)
+            program.addFlowGraphsToPandaClasspath(project)
+            return project
         }
     }
 
