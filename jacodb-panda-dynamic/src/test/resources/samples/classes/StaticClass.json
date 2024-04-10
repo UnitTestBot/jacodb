@@ -483,11 +483,12 @@
           "visit": "default"
          },
          {
+          "constructorName": ".StaticClass",
           "id": "v5",
           "imms": [
            0,
            446,
-           617,
+           625,
            0
           ],
           "inputs": [
@@ -503,7 +504,7 @@
            "v9",
            "v7"
           ],
-          "visit": "intrinsic"
+          "visit": "define_class"
          },
          {
           "id": "v8",

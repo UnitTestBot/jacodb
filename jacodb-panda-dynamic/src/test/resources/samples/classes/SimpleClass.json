@@ -413,11 +413,12 @@
           "visit": "default"
          },
          {
+          "constructorName": ".SimpleClass",
           "id": "v5",
           "imms": [
            0,
            471,
-           574,
+           582,
            0
           ],
           "inputs": [
@@ -431,7 +432,7 @@
            "v9",
            "v7"
           ],
-          "visit": "intrinsic"
+          "visit": "define_class"
          },
          {
           "id": "v8",

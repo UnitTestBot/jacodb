@@ -36,7 +36,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getProject() {
-        val irParser = loadIR("MethodCollision")
+        val irParser = loadIR("classes/StaticClass")
         val pandaProject = irParser.getProject()
         assertNotNull(pandaProject)
     }
@@ -59,7 +59,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getPandaMethods() {
-        val irParser = loadIR("MethodCollision")
+        val irParser = loadIR("classes/StaticClass")
         val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->

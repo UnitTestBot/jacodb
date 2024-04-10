@@ -199,6 +199,7 @@ class IRParser(jsonPath: String) {
         val value: Int? = null,
         val visit: String? = null,
         val immediate: Int? = null,
+        val constructorName: String? = null
     ) {
 
         private var basicBlock: ProgramBasicBlock? = null
@@ -616,25 +617,26 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.ldobjbyname" -> {
-                val name = stringData ?: error("No string data")
-                var input = PandaLoadedValue(PandaStringConstant("WOCKHARDT"), PandaStringConstant(name))
-                if (inputs.isEmpty()) {
-                    logger.warn { "index out of range in: $opcode" }
-                }
-                else {
-                    input = PandaLoadedValue(inputs[0], PandaStringConstant(name));
-                }
-                outputs.forEach { output ->
-//                    addInput(
-//                        method, id(), output,
-//                        PandaLoadedValue(inputs[0], PandaStringConstant(name))
-//                    )
-                    addInput(
-                        method, id(), output, input
-                    )
-                    // for call insts not to have "instance.object" and "instance, object" in inputs
-                    if (!inputs.isEmpty()) {
-                        method.idToInputs[output]?.remove(inputs[0])
+                if (!outputs.isEmpty()) {
+                    val name = stringData ?: error("No string data")
+                    var input = PandaLoadedValue(PandaStringConstant("WOCKHARDT"), PandaStringConstant(name))
+                    if (inputs.isEmpty()) {
+                        logger.warn { "index out of range in: $opcode" }
+                    } else {
+                        input = PandaLoadedValue(inputs[0], PandaStringConstant(name));
+                    }
+                    outputs.forEach { output ->
+                        //                    addInput(
+                        //                        method, id(), output,
+                        //                        PandaLoadedValue(inputs[0], PandaStringConstant(name))
+                        //                    )
+                        addInput(
+                            method, id(), output, input
+                        )
+                        // for call insts not to have "instance.object" and "instance, object" in inputs
+                        if (!inputs.isEmpty()) {
+                            method.idToInputs[output]?.remove(inputs[0])
+                        }
                     }
                 }
             }
