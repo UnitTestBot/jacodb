@@ -141,7 +141,12 @@ class PandaReturnInst(
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString(): String = "return " + (returnValue ?: "")
+    override fun toString(): String =
+        if (returnValue != null) {
+            "return $returnValue"
+        } else {
+            "return"
+        }
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonReturnInst(this)
