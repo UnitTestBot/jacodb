@@ -156,7 +156,10 @@ class InstListBuilder(
 
     internal fun pushReturn(value: PandaValue?) {
         push { location ->
-            PandaReturnInst(location, value)
+            PandaReturnInst(
+                location = location,
+                returnValue = value
+            )
         }
     }
 
