@@ -24,26 +24,21 @@ import org.jacodb.api.common.cfg.CommonInstLocation
 import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 
-class PandaInstLocation(
+data class PandaInstLocation(
     override val method: PandaMethod,
     override val index: Int,
 ) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
 
-    override fun toString(): String = "${method.name}:$index"
-
     override val lineNumber: Int
         get() = 0 // TODO("Not yet implemented")
+
+    override fun toString(): String = "${method.name}:$index"
 }
 
-class PandaInstRef(
+data class PandaInstRef(
     val index: Int,
-) : Comparable<PandaInstRef> {
-
-    override fun compareTo(other: PandaInstRef): Int {
-        return this.index.compareTo(other.index)
-    }
-
+) {
     override fun toString(): String = index.toString()
 }
 
