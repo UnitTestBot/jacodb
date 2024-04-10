@@ -114,6 +114,9 @@ class IRParser(jsonPath: String) {
         @Transient
         private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
 
+        @Transient
+        val varNameToId : MutableMap<String, PandaValue> = mutableMapOf()
+
         fun getInstViaId(instId: Int): ProgramInst {
             return idToInst.getOrPut(instId) {
                 basicBlocks.forEach { bb ->
@@ -189,7 +192,6 @@ class IRParser(jsonPath: String) {
         var opcode: String,
         val operandsType: String? = null,
         val operator: String? = null,
-        @SerialName("string_data")
         val stringData: String? = null,
         val stringOffset: Int? = null,
         val type: String? = null,
@@ -351,8 +353,12 @@ class IRParser(jsonPath: String) {
         when {
             opcode == "Parameter" -> {
                 val arg = PandaArgument(id())
+//                outputs.forEach { output ->
+//                    addInput(method, id(), output, arg)
+//                }
+                val out = if (id() >= ARG_THRESHOLD) arg else PandaThis(PandaClassTypeImpl(method.getClass().name))
                 outputs.forEach { output ->
-                    addInput(method, id(), output, arg)
+                    addInput(method, id(), output, out)
                 }
                 if (id() >= ARG_THRESHOLD) {
                     val argInfo = PandaParameterInfo(id() - ARG_THRESHOLD, mapType(type))
@@ -448,6 +454,12 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.newobjrange" -> {
+//                val stringData = inputs[0] as PandaStringConstant
+//                val newExpr = PandaNewExpr(stringData.value, inputs.drop(1))
+//                outputs.forEach { output ->
+//                    addInput(method, id(), output, newExpr as PandaValue)
+//                }
+
                 val stringData = inputs[0] as PandaStringConstant
                 val newExpr = PandaNewExpr(stringData.value, inputs.drop(1))
                 val lv = PandaLocalVar(method.currentLocalVarId++)
@@ -456,6 +468,12 @@ class IRParser(jsonPath: String) {
                     addInput(method, id(), output, lv)
                 }
                 method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.stconsttoglobalrecord" -> {
+                val variableName = "simpleObjjjjjjjjjj" // TODO stringData
+                val localVar = inputs[0]
+                method.varNameToId[variableName] = localVar
             }
 
             opcode == "Intrinsic.createemptyarray" -> {
@@ -590,7 +608,8 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaStringConstant(name)
+                val out = method.varNameToId.getOrDefault(name, PandaStringConstant(name))
+//                val out = PandaStringConstant(name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }
@@ -598,13 +617,25 @@ class IRParser(jsonPath: String) {
 
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = stringData ?: error("No string data")
+                var input = PandaLoadedValue(PandaStringConstant("WOCKHARDT"), PandaStringConstant(name))
+                if (inputs.isEmpty()) {
+                    logger.warn { "index out of range in: $opcode" }
+                }
+                else {
+                    input = PandaLoadedValue(inputs[0], PandaStringConstant(name));
+                }
                 outputs.forEach { output ->
+//                    addInput(
+//                        method, id(), output,
+//                        PandaLoadedValue(inputs[0], PandaStringConstant(name))
+//                    )
                     addInput(
-                        method, id(), output,
-                        PandaLoadedValue(inputs[0], PandaStringConstant(name))
+                        method, id(), output, input
                     )
                     // for call insts not to have "instance.object" and "instance, object" in inputs
-                    method.idToInputs[output]?.remove(inputs[0])
+                    if (!inputs.isEmpty()) {
+                        method.idToInputs[output]?.remove(inputs[0])
+                    }
                 }
             }
 
@@ -618,6 +649,27 @@ class IRParser(jsonPath: String) {
                             PandaStringConstant(name)
                         )
                     )
+                }
+            }
+
+//            opcode == "Intrinsic.defineclasswithbuffer" -> {
+//                val name = "ClassName" // stringData
+//                val pc = PandaClass(
+//                    name,
+//                    "",
+//                    emptyList()
+//                )
+//                outputs.forEach { output ->
+//                    addInput(
+//                        method, id(), output, pc
+//                    )
+//                }
+//            }
+
+            opcode == "Intrinsic.definemethod" -> {
+                val out = PandaLoadedValue(PandaStringConstant("AINTNORMALINSTANCE"),PandaStringConstant(stringData ?: "AINTNORMALMETHOD"))
+                outputs.forEach { output ->
+                    addInput(method, id(), output, out)
                 }
             }
 
@@ -656,7 +708,7 @@ class IRParser(jsonPath: String) {
             }
 
             opcode == "Intrinsic.callthis2" -> {
-                val instCallValue = inputs[0] as PandaInstanceCallValue
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -666,7 +718,7 @@ class IRParser(jsonPath: String) {
                             method.getClass().name
                         )
                     },
-                    args = listOf(inputs[1], inputs[2]),
+                    args = inputs.filterNot { it == instCallValue },
                     instance = instCallValue.instance
                 )
                 handleOutputs(outputs, method, callExpr)
@@ -693,6 +745,16 @@ class IRParser(jsonPath: String) {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, TODOExpr(opcode, inputs))
                 outputs.forEach { output -> addInput(method, id(), output, lv) }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.stobjbyname" -> {
+                val objectName = PandaStringConstant("objectName") // stringData
+                val instance = inputs[0]
+                val value = inputs[1]
+
+                val property = PandaLoadedValue(instance, objectName)
+                val assign = PandaAssignInst(locationFromOp(this), property, value)
                 method.insts.add(assign)
             }
 
@@ -731,6 +793,31 @@ class IRParser(jsonPath: String) {
                 handleOutputs(outputs, method, callExpr)
             }
 
+            opcode == "Intrinsic.supercallthisrange" -> {
+                val superClassName = method.getClass().superClass
+                val thisInstance = PandaThis(PandaClassTypeImpl(method.getClass().name))
+
+                val callExpr = PandaVirtualCallExpr(
+                    lazyMethod = lazy {
+                        method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                            "is instanceName that essential here",
+                            ".$superClassName",
+                            superClassName
+                        )
+                    },
+                    args = inputs.filter { it !is PandaThis },//inputs.subList(1, inputs.size),
+                    instance = thisInstance
+                )
+
+                method.insts.add(PandaCallInst(locationFromOp(this), callExpr))
+
+
+                // TODO: ADD SUPER CALL INSTRUCTION
+                outputs.forEach { output ->
+                    addInput(method, id(), output, thisInstance)
+                }
+            }
+
             opcode == "Intrinsic.sub2" -> {
                 val subExpr = PandaSubExpr(inputs[0], inputs[1])
                 val lv = PandaLocalVar(method.currentLocalVarId++)
@@ -764,6 +851,16 @@ class IRParser(jsonPath: String) {
             opcode == "Intrinsic.neg" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++)
                 val assign = PandaAssignInst(locationFromOp(this), lv, PandaMulExpr(PandaNumberConstant(-1), inputs[0]))
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts.add(assign)
+            }
+
+            opcode == "Intrinsic.exp" -> {
+                val expExpr = PandaExpExpr(inputs[0], inputs[1])
+                val lv = PandaLocalVar(method.currentLocalVarId++)
+                val assign = PandaAssignInst(locationFromOp(this), lv, expExpr)
                 outputs.forEach { output ->
                     addInput(method, id(), output, lv)
                 }
@@ -819,6 +916,10 @@ class IRParser(jsonPath: String) {
             "Intrinsic.definefunc" -> {}
             "Intrinsic.ldundefined" -> {}
             "Intrinsic.copyrestargs" -> {}
+            "Intrinsic.ldlexvar" -> {}
+            "Intrinsic.ldhole" -> {}
+            "Intrinsic.newlexenv" -> {}
+            "Intrinsic.callruntime.callinit" -> {}
             else -> {
                 logger.warn { "Unknown opcode: $opcode" }
             }

@@ -36,14 +36,14 @@ class IRParserSamplesTest {
 
     @Test
     fun getProject() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("MethodCollision")
         val pandaProject = irParser.getProject()
         assertNotNull(pandaProject)
     }
 
     @Test
     fun getProgramIR() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("classes/SimpleClass")
         val programIR = irParser.getProgram()
         val classes = programIR.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
@@ -59,7 +59,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getPandaMethods() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("MethodCollision")
         val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->
@@ -74,7 +74,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getSetOfProgramOpcodes() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("classes/SimpleClass")
         val programIR = irParser.getProgram()
         val opcodes = programIR.classes.asSequence()
             .flatMap { it.properties }
@@ -87,7 +87,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printMethodsInstructions() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("classes/SimpleClass")
         val programIR = irParser.getProgram()
         programIR.classes.forEach { cls ->
             cls.properties.forEach { property ->

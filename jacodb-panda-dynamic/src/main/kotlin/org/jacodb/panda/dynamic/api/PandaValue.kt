@@ -352,6 +352,9 @@ class PandaLoadedValue(
         get() = listOf(instance, obj)
 
     override fun getClassAndMethodName(): List<String> {
+        if (!(instance is PandaStringConstant)) {
+            return listOf("placeholderplaceholder", (obj as PandaStringConstant).value)
+        }
         assert(instance is PandaStringConstant)
         assert(obj is PandaStringConstant)
 
