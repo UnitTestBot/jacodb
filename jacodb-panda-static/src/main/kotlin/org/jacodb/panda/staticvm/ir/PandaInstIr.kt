@@ -20,6 +20,19 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+sealed interface PandaInstIr {
+    val id: String
+    val inputs: List<String>
+    val users: List<String>
+    val opcode: String
+    val type: String
+    val catchers: List<Int>
+    val visit: String
+
+    fun <T> accept(visitor: PandaInstIrVisitor<T>): T
+}
+
+@Serializable
 sealed interface PandaComparisonInstIr : PandaInstIr {
     val operator: String
     val operandsType: String
