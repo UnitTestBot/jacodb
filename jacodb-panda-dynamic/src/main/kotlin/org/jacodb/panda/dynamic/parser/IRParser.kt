@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.parser
 
-import antlr.TypeScriptLexer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -237,6 +236,7 @@ class IRParser(
         val value: Int? = null,
         val visit: String? = null,
         val immediate: Int? = null,
+        val constructorName: String? = null,
     ) {
 
         @Transient
@@ -344,9 +344,9 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-            tsFunc.arguments.size == method.parameterInfos.size &&
-            // here comes the result of comment above
-            tsFunc.containingClass?.name == method.className
+                    tsFunc.arguments.size == method.parameterInfos.size &&
+                    // here comes the result of comment above
+                    tsFunc.containingClass?.name == method.className
         }?.let { tsFunc ->
             method.type = tsFunc.returnType
             method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
@@ -355,7 +355,8 @@ class IRParser(
                     type
                 )
             }
-        } ?: error("No method ${method.name} with superclass ${method.className} was found in parsed functions")
+            // TODO: Add class constructor to GLOBAL
+        } ?: logger.error("No method ${method.name} with superclass ${method.className} was found in parsed functions")
     }
 
     private fun mapMethods(program: Program): List<PandaClass> {
@@ -389,17 +390,12 @@ class IRParser(
     }
 
     private fun mapBasicBlock(bb: ProgramBasicBlock): PandaBasicBlock {
-        val start = bb.start
-        val end = bb.end
-        val successors = bb.successors.toSet()
-        val predecessors = bb.predecessors.toSet()
-
         return PandaBasicBlock(
-            bb.id,
-            successors,
-            predecessors,
-            PandaInstRef(start),
-            PandaInstRef(end)
+            id = bb.id,
+            successors = bb.successors.toSet(),
+            predecessors = bb.predecessors.toSet(),
+            start = PandaInstRef(bb.start),
+            end = PandaInstRef(bb.end)
         )
     }
 
@@ -591,6 +587,21 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stglobalvar" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.stobjbyname" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.ldhole" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.defineclasswithbuffer" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
@@ -872,7 +883,7 @@ fun programToDot(program: IRParser.Program): String {
             property.method.basicBlocks.forEach { bb ->
                 bb.successors.forEach { succ ->
                     lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.0\" -> \"${clazz.name}.${property.name}.bb${succ}.0\"" +
-                        " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+                            " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
                 }
             }
 

@@ -27,7 +27,9 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaBoolType
 import org.jacodb.panda.dynamic.api.PandaNumberType
+import org.jacodb.panda.dynamic.api.PandaStringType
 import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaVoidType
 import java.net.URI
 import java.nio.file.Paths
 
@@ -78,12 +80,14 @@ class Kek : TypeScriptParserBaseListener() {
             val paramList = callSignature.parameterList()
             val returnType = callSignature.typeAnnotation()
 
-            funcs.add(TSFunction(
-                name = funcName.text,
-                arguments = paramList?.parameter()?.mapParameters() ?: emptyList(),
-                returnType = returnType.toPandaType(),
-                containingClass = traceClasses(context)
-            ))
+            funcs.add(
+                TSFunction(
+                    name = funcName.text,
+                    arguments = paramList?.parameter()?.mapParameters() ?: emptyList(),
+                    returnType = returnType.toPandaType(),
+                    containingClass = traceClasses(context)
+                )
+            )
         }
     }
 
@@ -94,16 +98,18 @@ class Kek : TypeScriptParserBaseListener() {
             val paramList = callSignature.parameterList()
             val returnType = callSignature.typeAnnotation()
 
-            funcs.add(TSFunction(
-                name = funcName.text,
-                arguments = paramList?.parameter()?.mapParameters() ?: emptyList(),
-                returnType = returnType.toPandaType(),
-                containingClass = traceClasses(context)
-            ))
+            funcs.add(
+                TSFunction(
+                    name = funcName.text,
+                    arguments = paramList?.parameter()?.mapParameters() ?: emptyList(),
+                    returnType = returnType.toPandaType(),
+                    containingClass = traceClasses(context)
+                )
+            )
         }
     }
 
-    private fun traceClasses(node: RuleContext): TSClass? {
+    private fun traceClasses(node: RuleContext): TSClass {
         var parent: RuleContext? = node.parent
         while (parent != null) {
             if (parent is ClassDeclarationContext) {
@@ -131,6 +137,8 @@ class Kek : TypeScriptParserBaseListener() {
         null, "any" -> PandaAnyType
         "number" -> PandaNumberType
         "boolean" -> PandaBoolType
+        "string" -> PandaStringType
+        "void" -> PandaVoidType
         else -> error("Unknown type: ${this.text}")
     }
 }

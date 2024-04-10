@@ -92,6 +92,11 @@ object PandaNumberType : PandaPrimitiveType {
         get() = "number"
 }
 
+object PandaStringType : PandaPrimitiveType {
+    override val typeName: String
+        get() = "string"
+}
+
 // ------------------------------------------------------
 
 data class PandaTypeName(

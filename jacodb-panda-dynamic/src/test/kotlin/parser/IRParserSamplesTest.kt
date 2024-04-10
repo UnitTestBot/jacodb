@@ -41,7 +41,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getProject() {
-        val irParser = loadIR("DataFlowSecurity")
+        val irParser = loadIR("classes/SimpleClass")
         val pandaProject = irParser.getProject()
         assertNotNull(pandaProject)
     }
@@ -128,13 +128,13 @@ class IRParserSamplesTest {
     object TestDot {
         @JvmStatic
         fun main(args: Array<String>) {
-            val parser = loadIR("x")
+            val parser = loadIR("binary/Division")
             val program = parser.getProgram()
             val project = parser.getProject()
             println(program)
             println(project)
 
-            val dotFile = File("x")
+            val dotFile = File("dump")
             program.dumpDot(dotFile)
             for (format in listOf("pdf", "png")) {
                 val p = Runtime.getRuntime().exec("dot -T$format -O $dotFile")

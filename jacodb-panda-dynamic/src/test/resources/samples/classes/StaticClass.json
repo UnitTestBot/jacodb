@@ -143,7 +143,7 @@
           "opcode": "Parameter",
           "type": "any",
           "users": [
-           "v7",
+           "v9",
            "v3"
           ],
           "visit": "parameter"
@@ -180,7 +180,6 @@
           "stringData": "count",
           "type": "any",
           "users": [
-           "v9",
            "v5"
           ],
           "visit": "ldobjbyname"
@@ -203,7 +202,7 @@
            "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.inc",
+          "intrinsic_id": "Intrinsic.tonumeric",
           "opcode": "Intrinsic",
           "type": "any",
           "users": [
@@ -223,17 +222,18 @@
          {
           "id": "v7",
           "imms": [
-           3,
-           258
+           3
           ],
           "inputs": [
-           "v2",
            "v5",
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.stobjbyname",
+          "intrinsic_id": "Intrinsic.inc",
           "opcode": "Intrinsic",
-          "type": "void",
+          "type": "any",
+          "users": [
+           "v9"
+          ],
           "visit": "intrinsic"
          },
          {
@@ -248,15 +248,17 @@
          {
           "id": "v9",
           "imms": [
-           5
+           4,
+           258
           ],
           "inputs": [
-           "v3",
+           "v2",
+           "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.tonumeric",
+          "intrinsic_id": "Intrinsic.stobjbyname",
           "opcode": "Intrinsic",
-          "type": "any",
+          "type": "void",
           "visit": "intrinsic"
          },
          {
@@ -481,6 +483,7 @@
           "visit": "default"
          },
          {
+          "constructorName": ".StaticClass",
           "id": "v5",
           "imms": [
            0,
@@ -501,7 +504,7 @@
            "v9",
            "v7"
           ],
-          "visit": "intrinsic"
+          "visit": "define_class"
          },
          {
           "id": "v8",
