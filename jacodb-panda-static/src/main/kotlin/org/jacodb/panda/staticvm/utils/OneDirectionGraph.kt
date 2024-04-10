@@ -22,21 +22,23 @@ class OneDirectionGraph<T>(
     val nodes: Collection<T>,
     val successorsGetter: (T) -> Collection<T>,
 ) : Graph<T>, Collection<T> by nodes.toSet() {
-    override fun successors(node: T): Set<T> = if (node in nodes)
+    private val successorsMap = hashMapOf<T, Set<T>>()
+
+    override fun successors(node: T): Set<T> = if (node in nodes) {
         successorsMap.getOrPut(node) { successorsGetter(node).toSet() }
-    else emptySet()
+    } else {
+        emptySet()
+    }
 
-    override fun predecessors(node: T) = reversed.successors(node)
-
-    val successorsMap = hashMapOf<T, Set<T>>()
-
-    val predecessorsMap: Map<T, Set<T>> by lazy {
+    private val predecessorsMap: Map<T, Set<T>> by lazy {
         nodes.applyFold(hashMapOf<T, HashSet<T>>()) {
             successors(it)
-                .also { require(this@OneDirectionGraph.containsAll(it)) { "Cannot reverse non-closed relation" } }
+                .also { vs -> check(this@OneDirectionGraph.containsAll(vs)) { "Cannot reverse non-closed relation" } }
                 .map { v -> getOrPut(v) { hashSetOf() }.add(it) }
         }
     }
+
+    override fun predecessors(node: T) = reversed.successors(node)
 
     val reversed: OneDirectionGraph<T> by lazy {
         OneDirectionGraph(nodes) { predecessorsMap[it].orEmpty() }
