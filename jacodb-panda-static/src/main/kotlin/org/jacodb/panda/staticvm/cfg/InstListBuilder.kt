@@ -216,9 +216,10 @@ class InstListBuilder(
         blocks: List<Int>,
     ) {
         push { location ->
-            val phiExpr = PandaPhiExpr(lhv.type, inputs, blocks.map {
+            val predecessors = blocks.map {
                 linearRef(IrInstLocation(it, maxOf(0, getBlock(it).insts.lastIndex)))
-            })
+            }
+            val phiExpr = PandaPhiExpr(lhv.type, inputs, predecessors)
             PandaAssignInst(
                 location = location,
                 lhv = lhv,
