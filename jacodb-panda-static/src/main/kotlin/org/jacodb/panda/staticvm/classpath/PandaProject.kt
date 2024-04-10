@@ -23,12 +23,6 @@ import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
 class PandaProject : Project {
 
-    private data class TreeEntry<T>(
-        val depth: Int,
-        val parent: TreeEntry<T>?,
-        val data: T,
-    )
-
     private val autoInitializedClasses = mutableListOf<PandaClass>()
 
     private fun newBlankClass(
@@ -61,6 +55,12 @@ class PandaProject : Project {
     init {
         autoInitializedClasses.forEach { this.addClass(it) }
     }
+
+    private data class TreeEntry<T>(
+        val depth: Int,
+        val parent: TreeEntry<T>?,
+        val data: T,
+    )
 
     fun addClass(node: PandaClass): Boolean {
         if (classesIndex.containsKey(node.name))
