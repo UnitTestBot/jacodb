@@ -405,7 +405,7 @@ class CharType private constructor(
     }
 }
 
-class BooleanType(
+class BooleanType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -430,7 +430,7 @@ class BooleanType(
     }
 }
 
-class ByteType(
+class ByteType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -455,7 +455,7 @@ class ByteType(
     }
 }
 
-class ShortType(
+class ShortType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -480,7 +480,7 @@ class ShortType(
     }
 }
 
-class IntType(
+class IntType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -497,7 +497,7 @@ class IntType(
     }
 }
 
-class LongType(
+class LongType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -522,7 +522,7 @@ class LongType(
     }
 }
 
-class FloatType(
+class FloatType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -547,7 +547,7 @@ class FloatType(
     }
 }
 
-class DoubleType(
+class DoubleType private constructor(
     override val td: TypeDesc,
     private val isValue: Boolean,
 ) : Type() {
@@ -826,6 +826,7 @@ class StringType(
 class EnumType(
     override val td: TypeDesc,
 ) : Type() {
+
     override fun isPrimitive(): Boolean = false
     override fun isReference(): Boolean = false
     override fun hasName(): Boolean = true
@@ -853,6 +854,7 @@ class EnumType(
 class UnionType(
     override val td: TypeDesc,
 ) : Type() {
+
     override fun isPrimitive(): Boolean = false
     override fun isReference(): Boolean = true
     override fun hasName(): Boolean = false
