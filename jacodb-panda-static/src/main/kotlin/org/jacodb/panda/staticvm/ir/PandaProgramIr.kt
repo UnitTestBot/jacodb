@@ -83,7 +83,14 @@ data class PandaProgramIr(
             val interfaces = it.interfaces.mapTo(hashSetOf()) { interfaceName ->
                 requireNotNull(findInterfaceOrNull(interfaceName))
             }
-            addClass(PandaClass(this, it.name, superClass, interfaces, AccessFlags(it.accessFlags)))
+            val pandaClass = PandaClass(
+                project = this,
+                name = it.name,
+                directSuperClass = superClass,
+                directSuperInterfaces = interfaces,
+                flags = AccessFlags(it.accessFlags)
+            )
+            addClass(pandaClass)
         }
     }
 
@@ -102,7 +109,13 @@ data class PandaProgramIr(
             val interfaces = it.interfaces.mapTo(hashSetOf()) { interfaceName ->
                 requireNotNull(findInterfaceOrNull(interfaceName))
             }
-            addInterface(PandaInterface(this, it.name, interfaces, AccessFlags(it.accessFlags)))
+            val pandaInterface = PandaInterface(
+                project = this,
+                name = it.name,
+                directSuperInterfaces = interfaces,
+                flags = AccessFlags(it.accessFlags)
+            )
+            addInterface(pandaInterface)
         }
     }
 
@@ -111,7 +124,13 @@ data class PandaProgramIr(
             val enclosingClass = requireNotNull(findClassOrInterfaceOrNull(classInfo.name))
             classInfo.fields.applyFold(this) { fieldInfo ->
                 val fieldType = requireNotNull(findTypeOrNull(fieldInfo.type))
-                addField(PandaField(fieldInfo.name, enclosingClass, fieldType, AccessFlags(fieldInfo.accessFlags)))
+                val pandaField = PandaField(
+                    name = fieldInfo.name,
+                    enclosingClass = enclosingClass,
+                    type = fieldType,
+                    flags = AccessFlags(fieldInfo.accessFlags)
+                )
+                addField(pandaField)
             }
         }
     }
@@ -126,12 +145,12 @@ data class PandaProgramIr(
                 val parameters: List<PandaType> = methodInfo.parameters.map { requireNotNull(findTypeOrNull(it)) }
                 val parameterTypes = enclosing + parameters
                 val pandaMethod = PandaMethod(
-                    methodInfo.signature,
-                    methodInfo.name,
-                    enclosingClass,
-                    returnType,
-                    parameterTypes,
-                    AccessFlags(methodInfo.accessFlags)
+                    signature = methodInfo.signature,
+                    name = methodInfo.name,
+                    enclosingClass = enclosingClass,
+                    returnType = returnType,
+                    parameterTypes = parameterTypes,
+                    flags = AccessFlags(methodInfo.accessFlags)
                 )
                 addMethod(pandaMethod)
             }
@@ -142,8 +161,9 @@ data class PandaProgramIr(
         classes.applyFold(pandaProject) { classInfo ->
             classInfo.methods.applyFold(this) { methodInfo ->
                 val methodNode = requireNotNull(pandaProject.findMethod(methodInfo.signature))
-                if (methodInfo.basicBlocks.isNotEmpty())
+                if (methodInfo.basicBlocks.isNotEmpty()) {
                     addFlowGraph(methodNode, methodInfo.basicBlocks)
+                }
             }
         }
     }
