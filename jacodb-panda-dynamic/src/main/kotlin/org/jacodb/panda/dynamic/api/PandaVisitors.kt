@@ -20,6 +20,8 @@ import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 
 interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
+    fun visitPandaExpr(expr: PandaExpr): T
+
     fun visitTODOExpr(expr: TODOExpr): T
     fun visitPandaCmpExpr(expr: PandaCmpExpr): T
     fun visitPandaEqExpr(expr: PandaEqExpr): T
