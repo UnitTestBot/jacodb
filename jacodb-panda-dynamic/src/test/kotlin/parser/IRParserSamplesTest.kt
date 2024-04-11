@@ -17,11 +17,8 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
-import org.jacodb.panda.dynamic.parser.TSParser
-import org.jacodb.panda.dynamic.parser.dumpDot
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import java.io.File
 import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
@@ -29,28 +26,26 @@ private val logger = mu.KotlinLogging.logger {}
 class IRParserSamplesTest {
 
     companion object {
-        private fun loadIR(fileName: String): IRParser {
-            val sampleFilePath = this::class.java.getResource("/samples/$fileName.json")?.path ?: ""
-            val sampleTSPath = this::class.java.getResource("/samples/$fileName.ts")?.toURI()
-                ?: throw IllegalStateException()
-            val tsParser = TSParser(sampleTSPath)
-            val tsFunctions = tsParser.collectFunctions()
-            return IRParser(sampleFilePath, tsFunctions)
+        private fun load(name: String): IRParser {
+            return loadIr(
+                filePath = "/samples/$name.json",
+                tsPath = "/samples/$name.ts",
+            )
         }
     }
 
     @Test
     fun getProject() {
-        val irParser = loadIR("classes/SimpleClass")
-        val pandaProject = irParser.getProject()
-        assertNotNull(pandaProject)
+        val parser = load("classes/SimpleClass")
+        val project = parser.getProject()
+        assertNotNull(project)
     }
 
     @Test
     fun getProgramIR() {
-        val irParser = loadIR("DataFlowSecurity")
-        val programIR = irParser.getProgram()
-        val classes = programIR.classes
+        val parser = load("DataFlowSecurity")
+        val program = parser.getProgram()
+        val classes = program.classes
         logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
         logger.info {
             "Methods name: ${
@@ -59,14 +54,14 @@ class IRParserSamplesTest {
                     .joinToString(separator = ", ") { it.name }
             }"
         }
-        assertNotNull(programIR)
+        assertNotNull(program)
     }
 
     @Test
     fun getPandaMethods() {
-        val irParser = loadIR("DataFlowSecurity")
-        val programIR = irParser.getProgram()
-        programIR.classes.forEach { cls ->
+        val parser = load("DataFlowSecurity")
+        val program = parser.getProgram()
+        program.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 val pandaMethod = property.method.pandaMethod
                 assertNotNull(pandaMethod.name)
@@ -79,9 +74,9 @@ class IRParserSamplesTest {
 
     @Test
     fun getSetOfProgramOpcodes() {
-        val irParser = loadIR("DataFlowSecurity")
-        val programIR = irParser.getProgram()
-        val opcodes = programIR.classes.asSequence()
+        val parser = load("DataFlowSecurity")
+        val program = parser.getProgram()
+        val opcodes = program.classes.asSequence()
             .flatMap { it.properties }
             .flatMap { it.method.basicBlocks }
             .flatMap { it.insts }
@@ -92,9 +87,9 @@ class IRParserSamplesTest {
 
     @Test
     fun printMethodsInstructions() {
-        val irParser = loadIR("DataFlowSecurity")
-        val programIR = irParser.getProgram()
-        programIR.classes.forEach { cls ->
+        val parser = load("DataFlowSecurity")
+        val program = parser.getProgram()
+        program.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 println(property)
             }
@@ -103,9 +98,9 @@ class IRParserSamplesTest {
 
     @Test
     fun `test parser on TypeMismatch`() {
-        val irParser = loadIR("TypeMismatch")
-        val programIR = irParser.getProgram()
-        programIR.classes.forEach { cls ->
+        val parser = load("TypeMismatch")
+        val program = parser.getProgram()
+        program.classes.forEach { cls ->
             cls.properties.forEach { property ->
                 val pandaMethod = property.method.pandaMethod
                 assertNotNull(pandaMethod.name)
@@ -122,28 +117,6 @@ class IRParserSamplesTest {
                     }
                 }
             }
-        }
-    }
-
-    object TestDot {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            val parser = loadIR("binary/Division")
-            val program = parser.getProgram()
-            val project = parser.getProject()
-            println(program)
-            println(project)
-
-            val dotFile = File("dump")
-            program.dumpDot(dotFile)
-            for (format in listOf("pdf", "png")) {
-                val p = Runtime.getRuntime().exec("dot -T$format -O $dotFile")
-                p.waitFor()
-                print(p.inputStream.bufferedReader().readText())
-                print(p.errorStream.bufferedReader().readText())
-            }
-            dotFile.renameTo(dotFile.resolveSibling(dotFile.name + ".dot"))
-            println("Generated dot file: ${dotFile.absolutePath}")
         }
     }
 }
