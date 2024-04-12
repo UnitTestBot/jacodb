@@ -21,6 +21,7 @@ enum class PandaPrimitiveType(
     override val typeName: String,
 ) : PandaSingleType {
     VOID("void"),
+    NULL("null"),
     BOOL("u1"),
     BYTE("i8"),
     UBYTE("u8"),

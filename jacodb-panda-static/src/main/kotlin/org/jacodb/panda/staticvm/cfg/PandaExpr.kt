@@ -105,7 +105,10 @@ class PandaArrayAccess(
 
 sealed interface PandaConstant : PandaSimpleValue
 
-data class PandaNullPtr(override val type: PandaType) : PandaConstant {
+object PandaNull : PandaConstant {
+    override val type: PandaType
+        get() = PandaPrimitiveType.NULL
+
     override fun toString(): String = "null"
 }
 

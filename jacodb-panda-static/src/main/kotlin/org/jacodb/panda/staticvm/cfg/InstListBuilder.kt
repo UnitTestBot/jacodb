@@ -358,6 +358,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<Unit> {
 
     private fun getConstant(value: ULong, type: PandaPrimitiveType) = when (type) {
         PandaPrimitiveType.VOID -> throw IllegalArgumentException("cannot create void constant")
+        PandaPrimitiveType.NULL -> PandaNull
         PandaPrimitiveType.BOOL -> PandaBoolean(value != 0UL)
         PandaPrimitiveType.BYTE -> PandaByte(value.toByte())
         PandaPrimitiveType.UBYTE -> PandaUByte(value.toUByte())
@@ -671,7 +672,7 @@ class InstListBuilderVisitor : PandaInstIrVisitor<Unit> {
     }
 
     override fun visitPandaNullPtrInstIr(inst: PandaNullPtrInstIr) {
-        val nullPtr = PandaNullPtr(project.findType("std.core.Object"))
+        val nullPtr = PandaNull
         pushAssign(result(inst), nullPtr)
     }
 
