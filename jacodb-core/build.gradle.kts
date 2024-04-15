@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jooq.codegen.GenerationTool
 import org.jooq.meta.jaxb.*
 import org.jooq.meta.jaxb.Configuration
@@ -92,6 +93,12 @@ tasks {
     processResources {
         filesMatching("**/*.properties") {
             expand("version" to project.version)
+        }
+    }
+
+    compileTestFixturesKotlin {
+        compilerOptions {
+            languageVersion.set(KotlinVersion.KOTLIN_1_7)
         }
     }
 }
