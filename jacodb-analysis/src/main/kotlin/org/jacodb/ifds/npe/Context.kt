@@ -22,13 +22,11 @@ import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
-import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkResolver
-import org.jacodb.ifds.ChunkStrategy
+import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.MethodChunkStrategy
 import org.jacodb.ifds.messages.NewResult
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.toEdge
@@ -37,7 +35,7 @@ fun npeIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
-    chunkStrategy: ChunkResolver = DefaultChunkResolver(MethodChunkStrategy),
+    chunkStrategy: ChunkResolver = DefaultChunkResolver(ClassChunkStrategy),
 ): JcIfdsContext<TaintDomainFact> =
     JcIfdsContext(
         cp,

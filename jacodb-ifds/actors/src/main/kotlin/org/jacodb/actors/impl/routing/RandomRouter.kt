@@ -18,14 +18,14 @@ package org.jacodb.actors.impl.routing
 
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
 
 context(ActorContext<Message>)
 internal class RandomRouter<Message>(
     size: Int,
     routeeSpawnOptions: SpawnOptions,
-    routeeFactory: Factory<Message>
+    routeeFactory: ActorFactory<Message>
 ) : Actor<Message> {
     private val routees = List(size) {
         spawn("$it", routeeSpawnOptions, routeeFactory)

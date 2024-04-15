@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.impl
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jacodb.actors.impl.systemOf
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
@@ -40,6 +42,7 @@ import org.jacodb.testing.WithGlobalDB
 import org.jacodb.testing.allClasspath
 import org.joda.time.DateTime
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -76,7 +79,12 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         for (method in methods) {
             system.startTaintAnalysis(method)
         }
+        launch {
+            delay(20.seconds)
+            system.stop()
+        }
         system.awaitCompletion()
+        system.resume()
         val sinks = system.collectTaintResults()
 
         logger.info { "Vulnerabilities found: ${sinks.size}" }
@@ -84,7 +92,6 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() = runBlocking {
-        // TODO: lacks timeout feature
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
@@ -93,7 +100,12 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         for (method in methods) {
             system.startNpeAnalysis(method)
         }
+        launch {
+            delay(20.seconds)
+            system.stop()
+        }
         system.awaitCompletion()
+        system.resume()
         val sinks = system.collectNpeResults()
 
         logger.info { "Vulnerabilities found: ${sinks.size}" }

@@ -16,12 +16,13 @@
 
 package org.jacodb.actors.impl
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import org.jacodb.actors.api.ActorSystem
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
 import org.jacodb.actors.impl.actors.WatcherActor
 import org.jacodb.actors.impl.actors.WatcherMessage
@@ -29,7 +30,7 @@ import org.jacodb.actors.impl.actors.WatcherMessage
 internal class ActorSystemImpl<Message>(
     override val name: String,
     options: SpawnOptions,
-    factory: Factory<Message>,
+    actorFactory: ActorFactory<Message>,
 ) : ActorSystem<Message> {
     private val path = root() / name
 
@@ -37,39 +38,52 @@ internal class ActorSystemImpl<Message>(
 
     internal val scope = CoroutineScope(SupervisorJob())
 
-    internal val watcher = spawner.spawnInternalActor("watcher", SpawnOptions.default, ::WatcherActor)
+    internal val watcher = spawner.spawnInternalActor(WATCHER_ACTOR_NAME, SpawnOptions.default, ::WatcherActor)
 
-    private val user = spawner.spawn("usr", options, factory)
+    private val user = spawner.spawn(USER_ACTOR_NAME, options, actorFactory)
 
     override suspend fun send(message: Message) {
-        watcher.send(WatcherMessage.OutOfSystemSend)
-        user.send(message)
+        watcher.receive(WatcherMessage.OutOfSystemSend)
+        user.receive(message)
     }
 
     override suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R {
-        watcher.send(WatcherMessage.OutOfSystemSend)
+        watcher.receive(WatcherMessage.OutOfSystemSend)
         val channel = Channel<R>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         val ack = messageBuilder(channel)
-        user.send(ack)
+        user.receive(ack)
         val received = channel.receive()
         return received
     }
 
 
     override suspend fun awaitCompletion() {
-        val channel = Channel<Unit>(capacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
-        watcher.send(WatcherMessage.AwaitTermination(channel))
-        channel.receive()
-        watcher.send(WatcherMessage.Idle)
+        val ready = CompletableDeferred<Unit>()
+        watcher.receive(WatcherMessage.AwaitTermination(ready))
+        ready.await()
+        watcher.receive(WatcherMessage.Idle)
+    }
+
+    override suspend fun resume() {
+        spawner.resumeChild(USER_ACTOR_NAME)
+    }
+
+    override fun stop() {
+        spawner.stopChild(USER_ACTOR_NAME)
+    }
+
+    companion object {
+        private const val USER_ACTOR_NAME = "usr"
+        private const val WATCHER_ACTOR_NAME = "watcher"
     }
 }
 
 fun <Message> systemOf(
     name: String,
     options: SpawnOptions = SpawnOptions.default,
-    factory: Factory<Message>,
+    actorFactory: ActorFactory<Message>,
 ): ActorSystem<Message> = ActorSystemImpl(
     name,
     options,
-    factory
+    actorFactory
 )

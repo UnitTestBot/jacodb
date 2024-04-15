@@ -18,25 +18,27 @@ package org.jacodb.actors.impl.workers
 
 import kotlinx.coroutines.channels.Channel
 import org.jacodb.actors.api.Actor
+import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.impl.ActorRefImpl
 import org.jacodb.actors.impl.ActorSystemImpl
 import kotlin.coroutines.CoroutineContext
 
-internal typealias WorkerFactory<Messate> =
-        (ActorRef<Messate>, Channel<Messate>, ActorSystemImpl<*>) -> ActorWorker<Messate>
+internal typealias WorkerFactory<Message> =
+        (ActorPath, Channel<Message>, ActorSystemImpl<*>) -> ActorWorker<Message>
 
-internal interface ActorWorker<Message> {
-    val channel: Channel<Message>
-    val self: ActorRef<Message>
-
-    fun launchLoop(
+internal abstract class ActorWorker<Message>(
+    path: ActorPath
+) : ActorRef<Message>(path) {
+    abstract fun launchLoop(
         coroutineContext: CoroutineContext,
         actor: Actor<Message>,
     )
 
-    suspend fun <TargetMessage> send(
-        ref: ActorRefImpl<TargetMessage>,
+    abstract fun stop()
+    abstract fun resume()
+
+    abstract suspend fun <TargetMessage> send(
+        destination: ActorRef<TargetMessage>,
         message: TargetMessage,
     )
 }

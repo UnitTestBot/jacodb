@@ -16,9 +16,9 @@
 
 package org.jacodb.actors.impl.actors
 
-import org.jacodb.actors.api.ActorRef
+import kotlinx.coroutines.CompletableDeferred
+import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorStatus
-import kotlinx.coroutines.channels.Channel
 
 internal data class Snapshot(
     val status: ActorStatus,
@@ -31,17 +31,17 @@ internal sealed interface WatcherMessage {
     data object Idle : WatcherMessage
 
     data class Register(
-        val ref: ActorRef<*>,
+        val path: ActorPath,
     ) : WatcherMessage
 
     data object OutOfSystemSend : WatcherMessage
 
     data class UpdateSnapshot(
-        val ref: ActorRef<*>,
+        val path: ActorPath,
         val snapshot: Snapshot,
     ) : WatcherMessage
 
     data class AwaitTermination(
-        val rendezvous: Channel<Unit>,
+        val computationFinished: CompletableDeferred<Unit>,
     ) : WatcherMessage
 }

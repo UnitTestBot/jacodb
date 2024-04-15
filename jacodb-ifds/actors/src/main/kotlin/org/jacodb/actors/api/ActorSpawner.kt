@@ -22,9 +22,12 @@ interface ActorSpawner {
     fun <ChildMessage> spawn(
         name: String,
         options: SpawnOptions = SpawnOptions.default,
-        factory: Factory<ChildMessage>,
+        actorFactory: ActorFactory<ChildMessage>,
     ): ActorRef<ChildMessage>
 
     fun child(name: String): ActorRef<*>?
-    fun children(): Collection<ActorRef<*>>
+    fun children(): Map<String, ActorRef<*>>
+
+    fun stopChild(name: String)
+    fun resumeChild(name: String)
 }

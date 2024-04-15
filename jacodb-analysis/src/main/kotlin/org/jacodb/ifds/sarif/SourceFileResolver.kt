@@ -14,19 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.actors.impl
+package org.jacodb.ifds.sarif
 
-import org.jacodb.actors.api.ActorPath
-import org.jacodb.actors.api.ActorRef
-import kotlinx.coroutines.channels.Channel
+import org.jacodb.api.cfg.JcInst
 
-internal class ActorRefImpl<Message>(
-    override val path: ActorPath,
-    private val channel: Channel<Message>,
-) : ActorRef<Message> {
-    override fun toString(): String = "actor@$path"
-
-    internal suspend fun send(message: Message) {
-        channel.send(message)
-    }
+fun interface SourceFileResolver {
+    fun resolve(inst: JcInst): String?
 }

@@ -21,8 +21,9 @@ import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
+import org.jacodb.actors.impl.workers.ActorWorker
 import org.jacodb.actors.impl.workers.InternalActorWorker
 import org.jacodb.actors.impl.workers.UserActorWorker
 import org.jacodb.actors.impl.workers.WorkerFactory
@@ -31,61 +32,61 @@ internal class ActorSpawnerImpl(
     private val self: ActorPath,
     private val system: ActorSystemImpl<*>,
 ) : ActorSpawner {
-    private val children = hashMapOf<String, ActorRefImpl<*>>()
+    private val children = hashMapOf<String, ActorContextImpl<*>>()
 
     override fun <ChildMessage> spawn(
         name: String,
         options: SpawnOptions,
-        factory: Factory<ChildMessage>,
-    ): ActorRefImpl<ChildMessage> =
-        spawnImpl(name, options, factory) { ref, channel, system ->
+        actorFactory: ActorFactory<ChildMessage>,
+    ): ActorWorker<ChildMessage> =
+        spawnImpl(name, options, actorFactory) { ref, channel, system ->
             UserActorWorker(ref, channel, system.scope, system.watcher)
         }
 
     internal fun <ChildMessage> spawnInternalActor(
         name: String,
         options: SpawnOptions,
-        factory: Factory<ChildMessage>,
-    ): ActorRefImpl<ChildMessage> =
-        spawnImpl(name, options, factory) { ref, channel, system ->
+        actorFactory: ActorFactory<ChildMessage>,
+    ): ActorWorker<ChildMessage> =
+        spawnImpl(name, options, actorFactory) { ref, channel, system ->
             InternalActorWorker(ref, channel, system.scope)
         }
 
     private fun <ChildMessage> spawnImpl(
         name: String,
         options: SpawnOptions,
-        factory: Factory<ChildMessage>,
+        actorFactory: ActorFactory<ChildMessage>,
         workerFactory: WorkerFactory<ChildMessage>,
-    ): ActorRefImpl<ChildMessage> {
+    ): ActorWorker<ChildMessage> {
         @Suppress("UNCHECKED_CAST")
         val channel = options.channelFactory.create() as Channel<ChildMessage>
-        val ref = createRef(name, channel)
-
-        val spawner = ActorSpawnerImpl(ref.path, system)
-
-        val worker = workerFactory(ref, channel, system)
-        val context = ActorContextImpl(spawner, worker, logger(ref.toString()))
-        context.launch(options.coroutineContext, factory)
-
-        return ref
-    }
-
-    private fun <ChildMessage> createRef(
-        name: String,
-        channel: Channel<ChildMessage>,
-    ): ActorRefImpl<ChildMessage> {
         if (children[name] != null) {
             error("$self already has $name child")
         }
+
         val path = self / name
-        val ref = ActorRefImpl(path, channel)
-        children[name] = ref
-        return ref
+
+        val spawner = ActorSpawnerImpl(path, system)
+
+        val worker = workerFactory(path, channel, system)
+        val context = ActorContextImpl(spawner, worker, logger(path.toString()))
+        context.launch(options.coroutineContext, actorFactory)
+        children[name] = context
+
+        return worker
     }
 
     override fun child(name: String): ActorRef<*>? =
-        children[name]
+        children[name]?.worker
 
-    override fun children(): Collection<ActorRef<*>> =
-        children.values
+    override fun children(): Map<String, ActorRef<*>> =
+        children.mapValues { (_, v) -> v.worker }
+
+    override fun stopChild(name: String) {
+        children[name]?.stop()
+    }
+
+    override fun resumeChild(name: String) {
+        children[name]?.resume()
+    }
 }

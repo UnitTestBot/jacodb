@@ -24,7 +24,7 @@ import org.jacodb.ifds.domain.Chunk
 
 data object SingleChunk : Chunk
 
-val singleChunkStrategy = ChunkStrategy<JcInst> {
+val SingleChunkStrategy = ChunkStrategy<JcInst> {
     SingleChunk
 }
 
@@ -40,12 +40,12 @@ data class ClassChunk(
     val method: JcClassOrInterface,
 ) : Chunk
 
-val classChunkStrategy = ChunkStrategy<JcInst> {
+val ClassChunkStrategy = ChunkStrategy<JcInst> {
     val jcClass = it.location.method.enclosingClass
     ClassChunk(jcClass)
 }
 
-val classWithNestedChunkStrategy = ChunkStrategy<JcInst> {
+val ClassWithNestedChunkStrategy = ChunkStrategy<JcInst> {
     val jClass = generateSequence(it.location.method.enclosingClass) { it.outerClass }
         .last()
     ClassChunk(jClass)
@@ -55,6 +55,6 @@ data class PackageChunk(
     val packageName: String,
 ) : Chunk
 
-val packageChunkStrategy = ChunkStrategy<JcInst> {
+val PackageChunkStrategy = ChunkStrategy<JcInst> {
     PackageChunk(it.location.method.enclosingClass.packageName)
 }

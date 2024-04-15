@@ -24,7 +24,7 @@ interface ActorContext<M> : ActorSpawner {
     suspend fun <TargetMessage> ActorRef<TargetMessage>.send(message: TargetMessage)
 
     fun stop()
-    fun stopChild(name: String)
+    fun resume()
 
     val logger: KLogger
 }

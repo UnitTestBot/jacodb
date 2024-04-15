@@ -19,9 +19,9 @@ package org.jacodb.ifds.actors
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.impl.routing.firstReadyRouter
-import org.jacodb.ifds.domain.Chunk
+import org.jacodb.actors.impl.routing.roundRobinRouter
 import org.jacodb.ifds.IfdsContext
+import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
@@ -35,11 +35,11 @@ class Runner<Stmt, Fact>(
     private val chunk: Chunk,
     private val runnerId: RunnerId,
 ) : Actor<RunnerMessage> {
-    private val routerFactory = firstReadyRouter(size = 8) {
+    private val routerFactory = roundRobinRouter(size = 8) {
         Worker(ifdsContext.getAnalyzer(chunk, runnerId), this@ActorContext.self)
     }
 
-    private val router = spawn("workers", factory = routerFactory)
+    private val router = spawn("workers", actorFactory = routerFactory)
 
     private val storage = spawn("storage") {
         RunnerStorage<Stmt, Fact>(this@ActorContext.self, runnerId)
@@ -47,7 +47,7 @@ class Runner<Stmt, Fact>(
 
     private val indirectionHandler = spawn(
         "indirection",
-        factory = ifdsContext.indirectionHandlerFactory(this@ActorContext.self, runnerId)
+        actorFactory = ifdsContext.indirectionHandlerFactory(this@ActorContext.self, runnerId)
     )
 
     override suspend fun receive(message: RunnerMessage) {

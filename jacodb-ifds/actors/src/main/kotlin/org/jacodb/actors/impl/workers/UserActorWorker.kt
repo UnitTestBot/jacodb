@@ -17,59 +17,64 @@
 package org.jacodb.actors.impl.workers
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
+import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorStatus
 import org.jacodb.actors.api.signal.Signal
-import org.jacodb.actors.impl.ActorRefImpl
 import org.jacodb.actors.impl.actors.Snapshot
 import org.jacodb.actors.impl.actors.WatcherMessage
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
 
 internal class UserActorWorker<Message>(
-    override val self: ActorRef<Message>,
-    override val channel: Channel<Message>,
+    path: ActorPath,
+    private val channel: Channel<Message>,
     private val scope: CoroutineScope,
-    private val watcher: ActorRefImpl<WatcherMessage>,
-) : ActorWorker<Message> {
+    private val watcher: ActorRef<WatcherMessage>,
+) : ActorWorker<Message>(path) {
 
     private var received = 0
     private var sent = 0
-    private var status = ActorStatus.IDLE
-    private val job = Job()
+    private var status = ActorStatus.BUSY
+    private val working = AtomicBoolean(true)
 
     override fun launchLoop(
         coroutineContext: CoroutineContext,
         actor: Actor<Message>,
     ) {
-        scope.launch(job) {
-            sendInternal(watcher, WatcherMessage.Register(self))
+        scope.launch {
+            sendInternal(watcher, WatcherMessage.Register(path))
             actor.receive(Signal.Start)
             loop(actor)
             actor.receive(Signal.PostStop)
         }
     }
 
-    override suspend fun <TargetMessage> send(ref: ActorRefImpl<TargetMessage>, message: TargetMessage) {
-        sent++
-        ref.send(message)
+    override suspend fun <TargetMessage> send(destination: ActorRef<TargetMessage>, message: TargetMessage) {
+        if (destination.receive(message)) {
+            sent++
+        }
     }
 
-    private suspend fun <TargetMessage> sendInternal(ref: ActorRefImpl<TargetMessage>, message: TargetMessage) {
-        ref.send(message)
+    override suspend fun receive(message: Message): Boolean {
+        channel.send(message)
+        return true
+    }
+
+    private suspend fun <TargetMessage> sendInternal(to: ActorRef<TargetMessage>, message: TargetMessage) {
+        to.receive(message)
     }
 
     private suspend fun loop(
         actor: Actor<Message>,
     ) {
-        var running = true
-        while (running) {
+        while (true) {
             var receiveResult = channel.tryReceive()
             if (receiveResult.isFailure) {
                 processEmptyChannel()
@@ -78,7 +83,6 @@ internal class UserActorWorker<Message>(
             receiveResult
                 .onClosed {
                     processEmptyChannel()
-                    running = false
                 }
                 .onSuccess { message ->
                     processMessage(actor, message)
@@ -90,21 +94,34 @@ internal class UserActorWorker<Message>(
         actor: Actor<Message>,
         message: Message,
     ) {
-        if (actor.flag) {
-            received++
+        updateReceived()
+        if (working.get()) {
+            actor.receive(message)
         }
+    }
+
+    private suspend fun updateReceived() {
+        received++
+
         if (status == ActorStatus.IDLE) {
             status = ActorStatus.BUSY
-            watcher.send(WatcherMessage.UpdateSnapshot(self, Snapshot(status, sent, received)))
+            watcher.receive(WatcherMessage.UpdateSnapshot(path, Snapshot(status, sent, received)))
         }
-        actor.receive(message)
     }
 
     private suspend fun processEmptyChannel() {
         if (status == ActorStatus.BUSY) {
             status = ActorStatus.IDLE
-            val snapshot = WatcherMessage.UpdateSnapshot(self, Snapshot(status, sent, received))
-            watcher.send(snapshot)
+            val snapshot = WatcherMessage.UpdateSnapshot(path, Snapshot(status, sent, received))
+            watcher.receive(snapshot)
         }
+    }
+
+    override fun stop() {
+        working.set(false)
+    }
+
+    override fun resume() {
+        working.set(true)
     }
 }

@@ -16,6 +16,6 @@
 
 package org.jacodb.actors.api
 
-fun interface Factory<M> {
+fun interface ActorFactory<M> {
     fun ActorContext<M>.create(): Actor<M>
 }

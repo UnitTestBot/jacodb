@@ -21,17 +21,15 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.actors.impl.systemOf
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.ifds.ClassUnitResolver
-import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
-import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.TaintZeroFact
-import org.jacodb.analysis.taint.toSarif
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.result.buildTraceGraph
+import org.jacodb.ifds.sarif.sarifReportFromVulnerabilities
+import org.jacodb.ifds.sarif.toSarif
 import org.jacodb.ifds.taint.collectTaintComputationData
 import org.jacodb.ifds.taint.collectTaintResults
 import org.jacodb.ifds.taint.startTaintAnalysis
@@ -46,7 +44,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -112,18 +109,24 @@ class IfdsSqlTest : BaseAnalysisTest() {
     }
 
     @Test
-    fun `test bidirectional runner and other stuff`() {
+    fun `test bidirectional runner and other stuff`() = runBlocking {
         val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_51a"
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
-        val unitResolver = ClassUnitResolver(true)
-        val manager = TaintManager(graph, unitResolver, useBidiRunner = true)
-        val sinks = manager.analyze(listOf(badMethod), timeout = 30.seconds)
+
+        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes, useBackwardRunner = true)
+        val system = systemOf("ifds") { ProjectManager(ifdsContext) }
+
+        system.startTaintAnalysis(badMethod)
+        system.awaitCompletion()
+        val data = system.collectTaintComputationData()
+        val sinks = data.results
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
-        val graph = manager.vulnerabilityTraceGraph(sink)
+        val graph = data.buildTraceGraph(sink.vertex, zeroFact = TaintZeroFact)
         val trace = graph.getAllTraces().first()
         assertTrue(trace.isNotEmpty())
+
         val sarif = sarifReportFromVulnerabilities(listOf(sink.toSarif(graph)))
         val sarifJson = myJson.encodeToString(sarif)
         logger.info { "SARIF:\n$sarifJson" }

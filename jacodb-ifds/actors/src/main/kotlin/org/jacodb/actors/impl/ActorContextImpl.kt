@@ -20,36 +20,42 @@ import mu.KLogger
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.impl.workers.ActorWorker
 import kotlin.coroutines.CoroutineContext
 
 internal class ActorContextImpl<Message>(
     private val spawner: ActorSpawner,
-    private val worker: ActorWorker<Message>,
+    val worker: ActorWorker<Message>,
     override val logger: KLogger,
 ) : ActorContext<Message>, ActorSpawner by spawner {
 
     override val self: ActorRef<Message>
-        get() = worker.self
+        get() = worker
 
     fun launch(
         coroutineContext: CoroutineContext,
-        factory: Factory<Message>,
+        actorFactory: ActorFactory<Message>,
     ) {
-        val actor = factory.run { create() }
+        val actor = actorFactory.run { create() }
         worker.launchLoop(coroutineContext, actor)
     }
 
     override suspend fun <TargetMessage> ActorRef<TargetMessage>.send(message: TargetMessage) {
-        worker.send(this as ActorRefImpl<TargetMessage>, message)
+        worker.send(this, message)
     }
 
     override fun stop() {
-        TODO("Not yet implemented")
+        worker.stop()
+        for ((name, _) in children()) {
+            stopChild(name)
+        }
     }
 
-    override fun stopChild(name: String) {
-        TODO("Not yet implemented")
+    override fun resume() {
+        worker.resume()
+        for ((name, _) in children()) {
+            resumeChild(name)
+        }
     }
 }

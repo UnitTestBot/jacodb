@@ -17,7 +17,7 @@
 package org.jacodb.ifds
 
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
@@ -29,5 +29,5 @@ interface IfdsContext<Stmt, Fact> {
     fun runnerIdByMessage(message: RunnerMessage): RunnerId
 
     fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<Stmt, Fact>
-    fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId): Factory<IndirectionMessage>
+    fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId): ActorFactory<IndirectionMessage>
 }

@@ -16,6 +16,9 @@
 
 package org.jacodb.actors.api
 
-interface ActorRef<in M> {
-    val path: ActorPath
+// Abstract class used instead of interface to support internal abstract functions
+abstract class ActorRef<in M>(
+    val path: ActorPath,
+) {
+    internal abstract suspend fun receive(message: M): Boolean
 }

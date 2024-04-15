@@ -21,17 +21,17 @@ import org.jacodb.analysis.unused.UnusedVariableDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.ifds.ChunkResolver
+import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.MethodChunkStrategy
 import org.jacodb.ifds.toEdge
 
 fun unusedIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
-    chunkStrategy: ChunkResolver = DefaultChunkResolver(MethodChunkStrategy),
+    chunkStrategy: ChunkResolver = DefaultChunkResolver(ClassChunkStrategy),
 ): JcIfdsContext<UnusedVariableDomainFact> =
     JcIfdsContext(
         cp,

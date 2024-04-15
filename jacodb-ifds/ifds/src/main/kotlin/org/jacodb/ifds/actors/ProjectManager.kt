@@ -39,7 +39,7 @@ class ProjectManager<Stmt, Fact>(
         keyExtractor = ifdsContext::chunkByMessage
     ) { chunk -> ChunkManager(ifdsContext, chunk, this@ActorContext.self) }
 
-    private val router = spawn("chunks", factory = routerFactory)
+    private val router = spawn("chunks", actorFactory = routerFactory)
 
     private val chunks = hashSetOf<Chunk>()
 

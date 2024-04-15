@@ -24,11 +24,10 @@ import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.ifds.ChunkResolver
-import org.jacodb.ifds.ChunkStrategy
+import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.MethodChunkStrategy
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.NewEdge
@@ -47,7 +46,8 @@ fun taintIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
-    chunkStrategy: ChunkResolver = DefaultChunkResolver(MethodChunkStrategy),
+    chunkStrategy: ChunkResolver = DefaultChunkResolver(ClassChunkStrategy),
+    useBackwardRunner: Boolean = false,
 ): JcIfdsContext<TaintDomainFact> =
     JcIfdsContext(
         cp,
@@ -67,13 +67,15 @@ fun taintIfdsContext(
         ) { event ->
             when (event) {
                 is EdgeForOtherRunner -> {
-                    val edgeForOtherRunner =
-                        NewEdge(
-                            complementRunner(runnerId),
-                            event.edge.toEdge(),
-                            Reason.FromOtherRunner(edge, runnerId)
-                        )
-                    add(edgeForOtherRunner)
+                    if (useBackwardRunner) {
+                        val edgeForOtherRunner =
+                            NewEdge(
+                                complementRunner(runnerId),
+                                event.edge.toEdge(),
+                                Reason.FromOtherRunner(edge, runnerId)
+                            )
+                        add(edgeForOtherRunner)
+                    }
                 }
 
                 is org.jacodb.analysis.taint.NewSummaryEdge -> {

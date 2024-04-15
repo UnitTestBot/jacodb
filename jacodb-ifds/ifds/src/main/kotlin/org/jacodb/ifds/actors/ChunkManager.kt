@@ -42,7 +42,7 @@ class ChunkManager<Stmt, Fact>(
 
     private val router = spawn(
         "runners",
-        factory = routerFactory
+        actorFactory = routerFactory
     )
 
     override suspend fun receive(message: RunnerMessage) {

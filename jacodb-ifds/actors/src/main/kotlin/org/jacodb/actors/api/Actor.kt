@@ -19,8 +19,6 @@ package org.jacodb.actors.api
 import org.jacodb.actors.api.signal.Signal
 
 interface Actor<M> {
-    val flag: Boolean get() = true
-
     suspend fun receive(message: M)
     suspend fun receive(signal: Signal) {}
 }

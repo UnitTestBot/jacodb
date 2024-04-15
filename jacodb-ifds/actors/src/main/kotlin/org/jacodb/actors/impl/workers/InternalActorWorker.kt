@@ -20,15 +20,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
+import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.impl.ActorRefImpl
 import kotlin.coroutines.CoroutineContext
 
 internal class InternalActorWorker<Message>(
-    override val self: ActorRef<Message>,
-    override val channel: Channel<Message>,
+    path: ActorPath,
+    private val channel: Channel<Message>,
     private val scope: CoroutineScope,
-) : ActorWorker<Message> {
+) : ActorWorker<Message>(path) {
     override fun launchLoop(
         coroutineContext: CoroutineContext,
         actor: Actor<Message>,
@@ -38,8 +38,19 @@ internal class InternalActorWorker<Message>(
         }
     }
 
-    override suspend fun <TargetMessage> send(ref: ActorRefImpl<TargetMessage>, message: TargetMessage) {
-        ref.send(message)
+    override fun stop() {
+    }
+
+    override fun resume() {
+    }
+
+    override suspend fun <TargetMessage> send(destination: ActorRef<TargetMessage>, message: TargetMessage) {
+        destination.receive(message)
+    }
+
+    override suspend fun receive(message: Message): Boolean {
+        channel.send(message)
+        return true
     }
 
     private suspend fun loop(

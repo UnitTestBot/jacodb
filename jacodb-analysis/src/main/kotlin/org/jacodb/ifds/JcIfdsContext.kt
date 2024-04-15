@@ -17,7 +17,7 @@
 package org.jacodb.ifds
 
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.actors.api.Factory
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
@@ -49,7 +49,7 @@ class JcIfdsContext<Fact>(
         )
 
     override fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId) =
-        Factory {
+        ActorFactory {
             IndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, parent, runnerId)
         }
 }

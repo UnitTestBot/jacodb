@@ -16,11 +16,11 @@
 
 package org.jacodb.actors.impl.actors
 
+import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
-import org.jacodb.actors.api.ActorRef
+import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorStatus
-import kotlinx.coroutines.channels.Channel
 
 
 context(ActorContext<WatcherMessage>)
@@ -28,7 +28,7 @@ internal class WatcherActor : Actor<WatcherMessage> {
     private sealed interface Status {
         data object Idle : Status
         data class DetectingTermination(
-            val rendezvousChannel: Channel<Unit>,
+            val computation: CompletableDeferred<Unit>,
         ) : Status
     }
 
@@ -39,7 +39,7 @@ internal class WatcherActor : Actor<WatcherMessage> {
         var totalReceived: Long,
     )
 
-    private val watchList = hashMapOf<ActorRef<*>, Snapshot>()
+    private val watchList = hashMapOf<ActorPath, Snapshot>()
     private val state = State(
         status = Status.Idle,
         terminatedActors = 0,
@@ -58,35 +58,34 @@ internal class WatcherActor : Actor<WatcherMessage> {
             }
 
             is WatcherMessage.AwaitTermination -> {
-                state.status = Status.DetectingTermination(message.rendezvous)
+                state.status = Status.DetectingTermination(message.computationFinished)
             }
 
             is WatcherMessage.Register -> {
-                state.terminatedActors++
-                watchList[message.ref] = Snapshot(status = ActorStatus.IDLE, sent = 0, received = 0)
+                watchList[message.path] = Snapshot(status = ActorStatus.BUSY, sent = 0, received = 0)
             }
 
             is WatcherMessage.UpdateSnapshot -> {
-                updateSnapshot(message.ref, message.snapshot)
+                updateSnapshot(message.path, message.snapshot)
             }
         }
         val status = state.status
         if (status is Status.DetectingTermination) {
-            checkTermination(status.rendezvousChannel)
+            checkTermination(status.computation)
         }
     }
 
-    private suspend fun checkTermination(rendezvousOnTermination: Channel<Unit>) {
+    private fun checkTermination(computationFinished: CompletableDeferred<Unit>) {
         if (state.terminatedActors == watchList.size && state.totalSent == state.totalReceived) {
             logger.info { "Actors:   ${state.terminatedActors}/${watchList.size}" }
             logger.info { "Messages: ${state.totalReceived}/${state.totalSent}" }
             logger.info { "Computation finished..." }
-            rendezvousOnTermination.send(Unit)
+            computationFinished.complete(Unit)
         }
     }
 
-    private fun updateSnapshot(ref: ActorRef<*>, newSnapshot: Snapshot) {
-        val currentSnapshot = watchList[ref] ?: error("$this can't find the current snapshot of $ref")
+    private fun updateSnapshot(path: ActorPath, newSnapshot: Snapshot) {
+        val currentSnapshot = watchList[path] ?: error("$this can't find the current snapshot of $path")
 
         if (newSnapshot.status == ActorStatus.BUSY && currentSnapshot.status == ActorStatus.IDLE) {
             state.terminatedActors--
@@ -96,6 +95,6 @@ internal class WatcherActor : Actor<WatcherMessage> {
         }
         state.totalSent += newSnapshot.sent - currentSnapshot.sent
         state.totalReceived += newSnapshot.received - currentSnapshot.received
-        watchList[ref] = newSnapshot
+        watchList[path] = newSnapshot
     }
 }
