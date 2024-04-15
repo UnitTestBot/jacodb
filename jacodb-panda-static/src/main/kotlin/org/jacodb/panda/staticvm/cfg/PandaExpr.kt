@@ -239,46 +239,46 @@ data class PandaNewExpr(
 }
 
 interface PandaUnaryExpr : PandaExpr {
-    val value: PandaValue
+    val arg: PandaValue
 
     override val operands: List<PandaValue>
-        get() = listOf(value)
+        get() = listOf(arg)
 }
 
 data class PandaNegExpr(
     override val type: PandaType,
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
-    override fun toString(): String = "-$value"
+    override fun toString(): String = "-$arg"
 }
 
 data class PandaNotExpr(
     override val type: PandaType,
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
-    override fun toString(): String = "!$value"
+    override fun toString(): String = "!$arg"
 }
 
 data class PandaLenArrayExpr(
     override val type: PandaType,
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
-    override fun toString(): String = "length($value)"
+    override fun toString(): String = "length($arg)"
 }
 
 data class PandaCastExpr(
     override val type: PandaType,
-    override val value: PandaValue,
+    override val arg: PandaValue,
 ) : PandaUnaryExpr {
-    override fun toString(): String = "($type) $value"
+    override fun toString(): String = "($type) $arg"
 }
 
 data class PandaIsInstanceExpr(
     override val type: PandaType,
-    override val value: PandaValue,
+    override val arg: PandaValue,
     val candidateType: PandaType,
 ) : PandaUnaryExpr {
-    override fun toString(): String = "$value is $candidateType"
+    override fun toString(): String = "$arg is $candidateType"
 }
 
 sealed interface PandaBinaryExpr : PandaExpr {

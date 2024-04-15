@@ -166,7 +166,7 @@ internal fun PandaClass.toType(): PandaClassType = type
 
 fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
     is PandaValue -> toPathOrNull()
-    is PandaCastExpr -> value.toPathOrNull()
+    is PandaCastExpr -> arg.toPathOrNull()
     else -> null
 }
 
