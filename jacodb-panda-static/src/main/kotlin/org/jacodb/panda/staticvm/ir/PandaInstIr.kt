@@ -501,6 +501,7 @@ data class PandaCastInstIr(
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
     override val visit: String,
+    val candidateType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaCastInstIr(this)
