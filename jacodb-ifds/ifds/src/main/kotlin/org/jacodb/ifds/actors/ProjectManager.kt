@@ -32,8 +32,8 @@ import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.IfdsResult
 
 context(ActorContext<CommonMessage>)
-class ProjectManager<Stmt, Fact>(
-    private val ifdsContext: IfdsContext<Stmt, Fact>,
+class ProjectManager<Stmt>(
+    private val ifdsContext: IfdsContext<Stmt>,
 ) : Actor<CommonMessage> {
     private val routerFactory = messageKeyRouter(
         keyExtractor = ifdsContext::chunkByMessage
@@ -64,7 +64,7 @@ class ProjectManager<Stmt, Fact>(
             is CollectAll -> {
                 val results = hashMapOf<Chunk, IfdsComputationData<*, *, *>>()
                 for (chunk in chunks) {
-                    val channel = Channel<IfdsComputationData<Stmt, Fact, IfdsResult<Stmt, Fact>>>()
+                    val channel = Channel<IfdsComputationData<Stmt, Any?, IfdsResult<Stmt, Any?>>>()
                     val msg = ObtainData(chunk, message.runnerId, channel)
                     router.send(msg)
                     val data = channel.receive()

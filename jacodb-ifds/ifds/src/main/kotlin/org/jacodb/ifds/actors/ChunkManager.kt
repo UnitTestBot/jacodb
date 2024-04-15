@@ -28,8 +28,8 @@ import org.jacodb.ifds.messages.NewChunk
 import org.jacodb.ifds.messages.RunnerMessage
 
 context(ActorContext<RunnerMessage>)
-class ChunkManager<Stmt, Fact>(
-    private val ifdsContext: IfdsContext<Stmt, Fact>,
+class ChunkManager<Stmt>(
+    private val ifdsContext: IfdsContext<Stmt>,
     private val chunk: Chunk,
     private val parent: ActorRef<CommonMessage>,
 ) : Actor<RunnerMessage> {
@@ -37,7 +37,7 @@ class ChunkManager<Stmt, Fact>(
     private val routerFactory = messageKeyRouter(
         ifdsContext::runnerIdByMessage
     ) { runnerId ->
-        Runner(this@ActorContext.self, ifdsContext, chunk, runnerId)
+        Runner<Stmt, Any?>(this@ActorContext.self, ifdsContext, chunk, runnerId)
     }
 
     private val router = spawn(

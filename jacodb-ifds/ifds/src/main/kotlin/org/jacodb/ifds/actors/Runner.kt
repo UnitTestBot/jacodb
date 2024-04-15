@@ -21,6 +21,7 @@ import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.impl.routing.roundRobinRouter
 import org.jacodb.ifds.IfdsContext
+import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.AnalyzerMessage
@@ -31,12 +32,13 @@ import org.jacodb.ifds.messages.StorageMessage
 context(ActorContext<RunnerMessage>)
 class Runner<Stmt, Fact>(
     private val parent: ActorRef<RunnerMessage>,
-    private val ifdsContext: IfdsContext<Stmt, Fact>,
+    private val ifdsContext: IfdsContext<Stmt>,
     private val chunk: Chunk,
     private val runnerId: RunnerId,
 ) : Actor<RunnerMessage> {
     private val routerFactory = roundRobinRouter(size = 8) {
-        Worker(ifdsContext.getAnalyzer(chunk, runnerId), this@ActorContext.self)
+        @Suppress("UNCHECKED_CAST")
+        Worker<Stmt, Fact>(ifdsContext.getAnalyzer(chunk, runnerId) as Analyzer<Stmt, Fact>, this@ActorContext.self)
     }
 
     private val router = spawn("workers", actorFactory = routerFactory)

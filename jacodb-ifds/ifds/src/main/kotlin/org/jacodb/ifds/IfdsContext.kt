@@ -24,10 +24,10 @@ import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 
-interface IfdsContext<Stmt, Fact> {
+interface IfdsContext<Stmt> {
     fun chunkByMessage(message: RunnerMessage): Chunk
     fun runnerIdByMessage(message: RunnerMessage): RunnerId
 
-    fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<Stmt, Fact>
+    fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<Stmt, *>
     fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId): ActorFactory<IndirectionMessage>
 }

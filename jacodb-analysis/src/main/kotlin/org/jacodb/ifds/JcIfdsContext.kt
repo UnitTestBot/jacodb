@@ -34,7 +34,7 @@ class JcIfdsContext<Fact>(
     private val bannedPackagePrefixes: List<String>,
     private val chunkStrategy: ChunkResolver,
     private val flowFunctionFactory: (RunnerId) -> FlowFunction<JcInst, Fact>,
-) : IfdsContext<JcInst, Fact> {
+) : IfdsContext<JcInst> {
     override fun chunkByMessage(message: RunnerMessage): Chunk =
         chunkStrategy.chunkByMessage(message)
 
