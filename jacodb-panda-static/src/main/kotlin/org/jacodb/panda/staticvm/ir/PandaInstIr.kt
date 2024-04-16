@@ -19,18 +19,7 @@ package org.jacodb.panda.staticvm.ir
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Serializable
-sealed interface PandaInstIr {
-    val id: String
-    val inputs: List<String>
-    val users: List<String>
-    val opcode: String
-    val type: String
-    val catchers: List<Int>
-    val visit: String
 
-    fun <T> accept(visitor: PandaInstIrVisitor<T>): T
-}
 
 @Serializable
 sealed interface PandaComparisonInstIr : PandaInstIr {
@@ -57,7 +46,6 @@ data class PandaConstantInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val value: ULong,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -73,7 +61,6 @@ data class PandaSafePointInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaSafePointInstIr(this)
@@ -88,7 +75,6 @@ data class PandaSaveStateInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaSaveStateInstIr(this)
@@ -103,7 +89,6 @@ data class PandaNewObjectInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val objectClass: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -119,7 +104,6 @@ data class PandaNewArrayInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val arrayType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -135,7 +119,6 @@ data class PandaCallStaticInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val method: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -151,7 +134,6 @@ data class PandaNullCheckInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaNullCheckInstIr(this)
@@ -166,7 +148,6 @@ data class PandaZeroCheckInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaZeroCheckInstIr(this)
@@ -181,9 +162,7 @@ data class PandaLoadStringInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val string: String,
-    val string_offset: Long,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadStringInstIr(this)
@@ -198,7 +177,6 @@ data class PandaLoadTypeInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val loadedType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -214,7 +192,6 @@ data class PandaLoadRuntimeClassInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val loadedClass: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -230,7 +207,6 @@ data class PandaCallVirtualInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val method: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -246,7 +222,6 @@ data class PandaCallLaunchVirtualInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val method: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -262,7 +237,6 @@ data class PandaCallLaunchStaticInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val method: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -278,7 +252,6 @@ data class PandaLoadAndInitClassInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val loadedClass: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -294,7 +267,6 @@ data class PandaLoadClassInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadClassInstIr(this)
@@ -309,7 +281,6 @@ data class PandaInitClassInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaInitClassInstIr(this)
@@ -324,7 +295,6 @@ data class PandaReturnVoidInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaTerminatingInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaReturnVoidInstIr(this)
@@ -339,7 +309,6 @@ data class PandaReturnInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaTerminatingInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaReturnInstIr(this)
@@ -354,7 +323,6 @@ data class PandaParameterInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val index: Int,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -370,7 +338,6 @@ data class PandaLoadStaticInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val enclosingClass: String,
     override val field: String,
 ) : PandaWithPropertyInstIr {
@@ -387,7 +354,6 @@ data class PandaLoadObjectInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val enclosingClass: String,
     override val field: String,
 ) : PandaWithPropertyInstIr {
@@ -404,7 +370,6 @@ data class PandaStoreStaticInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val enclosingClass: String,
     override val field: String,
 ) : PandaWithPropertyInstIr {
@@ -421,7 +386,6 @@ data class PandaStoreObjectInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val enclosingClass: String,
     override val field: String,
 ) : PandaWithPropertyInstIr {
@@ -438,7 +402,6 @@ data class PandaLoadArrayInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadArrayInstIr(this)
@@ -453,7 +416,6 @@ data class PandaStoreArrayInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaStoreArrayInstIr(this)
@@ -468,7 +430,6 @@ data class PandaIsInstanceInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val candidateType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -484,11 +445,25 @@ data class PandaCheckCastInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val candidateType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaCheckCastInstIr(this)
+}
+
+@Serializable
+@SerialName("Bitcast")
+data class PandaBitcastInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val candidateType: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaBitcastInstIr(this)
 }
 
 @Serializable
@@ -500,7 +475,6 @@ data class PandaCastInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val candidateType: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -516,7 +490,6 @@ data class PandaIfImmInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val operator: String,
     override val operandsType: String,
     val immediate: ULong,
@@ -534,7 +507,6 @@ data class PandaCompareInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val operator: String,
     override val operandsType: String,
 ) : PandaComparisonInstIr {
@@ -551,7 +523,6 @@ data class PandaPhiInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val inputBlocks: List<Int>,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -567,7 +538,6 @@ data class PandaAddInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaAddInstIr(this)
@@ -582,7 +552,6 @@ data class PandaSubInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaSubInstIr(this)
@@ -597,7 +566,6 @@ data class PandaMulInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaMulInstIr(this)
@@ -612,7 +580,6 @@ data class PandaDivInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaDivInstIr(this)
@@ -627,7 +594,6 @@ data class PandaModInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaModInstIr(this)
@@ -642,7 +608,6 @@ data class PandaAndInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaAndInstIr(this)
@@ -657,7 +622,6 @@ data class PandaOrInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaOrInstIr(this)
@@ -672,7 +636,6 @@ data class PandaXorInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaXorInstIr(this)
@@ -687,7 +650,6 @@ data class PandaShlInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaShlInstIr(this)
@@ -702,7 +664,6 @@ data class PandaShrInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaShrInstIr(this)
@@ -717,7 +678,6 @@ data class PandaAShlInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaAShlInstIr(this)
@@ -732,7 +692,6 @@ data class PandaAShrInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaAShrInstIr(this)
@@ -747,7 +706,6 @@ data class PandaCmpInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     override val operator: String,
     override val operandsType: String,
 ) : PandaComparisonInstIr {
@@ -764,8 +722,6 @@ data class PandaThrowInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
-    val method: String,
 ) : PandaTerminatingInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaThrowInstIr(this)
@@ -780,7 +736,6 @@ data class PandaNegativeCheckInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaNegativeCheckInstIr(this)
@@ -795,7 +750,6 @@ data class PandaSaveStateDeoptimizeInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaSaveStateDeoptimizeInstIr(this)
@@ -810,7 +764,6 @@ data class PandaNegInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaNegInstIr(this)
@@ -825,7 +778,6 @@ data class PandaNotInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaNotInstIr(this)
@@ -840,7 +792,6 @@ data class PandaLenArrayInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLenArrayInstIr(this)
@@ -855,7 +806,6 @@ data class PandaBoundsCheckInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaBoundsCheckInstIr(this)
@@ -870,7 +820,6 @@ data class PandaNullPtrInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaNullPtrInstIr(this)
@@ -885,7 +834,6 @@ data class PandaLoadUndefinedInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadUndefinedInstIr(this)
@@ -900,7 +848,6 @@ data class PandaRefTypeCheckInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaRefTypeCheckInstIr(this)
@@ -915,8 +862,6 @@ data class PandaTryInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
-    val end_bb: Int,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaTryInstIr(this)
@@ -931,7 +876,6 @@ data class PandaCatchPhiInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val throwers: List<String> = emptyList(),
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
@@ -947,9 +891,290 @@ data class PandaIntrinsicInstIr(
     override val type: String,
     override val opcode: String,
     override val catchers: List<Int> = emptyList(),
-    override val visit: String,
     val intrinsicId: String,
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaIntrinsicInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadFromConstantPool")
+data class PandaLoadFromConstantPoolInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val isString: Boolean,
+    val objectType: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadFromConstantPoolInstIr(this)
+}
+
+@Serializable
+@SerialName("ResolveStatic")
+data class PandaResolveStaticInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaResolveStaticInstIr(this)
+}
+
+@Serializable
+@SerialName("ResolveVirtual")
+data class PandaResolveVirtualInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaResolveVirtualInstIr(this)
+}
+
+@Serializable
+@SerialName("CallDynamic")
+data class PandaCallDynamicInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val method: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaCallDynamicInstIr(this)
+}
+
+@Serializable
+@SerialName("CallResolvedVirtual")
+data class PandaCallResolvedVirtualInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val method: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaCallResolvedVirtualInstIr(this)
+}
+
+@Serializable
+@SerialName("CallResolvedStatic")
+data class PandaCallResolvedStaticInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val method: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaCallResolvedStaticInstIr(this)
+}
+
+@Serializable
+@SerialName("FillConstArray")
+data class PandaFillConstArrayInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val objectClass: String,
+    val length: Int,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaFillConstArrayInstIr(this)
+}
+
+@Serializable
+@SerialName("Builtin")
+data class PandaBuiltinInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val intrinsicId: String,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaBuiltinInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadResolvedObjectField")
+data class PandaLoadResolvedObjectFieldInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    override val enclosingClass: String,
+    override val field: String,
+) : PandaWithPropertyInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadResolvedObjectFieldInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadResolvedObjectFieldStatic")
+data class PandaLoadResolvedObjectFieldStaticInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    override val enclosingClass: String,
+    override val field: String,
+) : PandaWithPropertyInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadResolvedObjectFieldStaticInstIr(this)
+}
+
+@Serializable
+@SerialName("StoreResolvedObjectField")
+data class PandaStoreResolvedObjectFieldInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    override val enclosingClass: String,
+    override val field: String,
+) : PandaWithPropertyInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaStoreResolvedObjectFieldInstIr(this)
+}
+
+@Serializable
+@SerialName("StoreResolvedObjectFieldStatic")
+data class PandaStoreResolvedObjectFieldStaticInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    override val enclosingClass: String,
+    override val field: String,
+) : PandaWithPropertyInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaStoreResolvedObjectFieldStaticInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadObjectDynamic")
+data class PandaLoadObjectDynamicInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val accessType: Int,
+    val accessMode: Int,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadObjectDynamicInstIr(this)
+}
+
+@Serializable
+@SerialName("StoreObjectDynamic")
+data class PandaStoreObjectDynamicInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val accessType: Int,
+    val accessMode: Int,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaStoreObjectDynamicInstIr(this)
+}
+
+@Serializable
+@SerialName("FunctionImmediate")
+data class PandaFunctionImmediateInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val funcPtr: Long,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaFunctionImmediateInstIr(this)
+}
+
+@Serializable
+@SerialName("HclassCheck")
+data class PandaHclassCheckInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val checkIsFunction: Boolean,
+    val checkFunctionIsNotClassConstructor: Boolean,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaHclassCheckInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadObjFromConst")
+data class PandaLoadObjFromConstInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val objPtr: Long,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadObjFromConstInstIr(this)
+}
+
+@Serializable
+@SerialName("LoadImmediate")
+data class PandaLoadImmediateInstIr(
+    override val id: String,
+    override val inputs: List<String> = emptyList(),
+    override val users: List<String> = emptyList(),
+    override val type: String,
+    override val opcode: String,
+    override val catchers: List<Int> = emptyList(),
+    val immediateType: Int,
+    val immediateClass: String? = null,
+    val method: String? = null,
+    val constantPool: Long? = null,
+    val string: String? = null,
+    val offset: Long? = null,
+) : PandaInstIr {
+    override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
+        visitor.visitPandaLoadImmediateInstIr(this)
 }

@@ -28,6 +28,6 @@ internal object TestUtils {
         val sampleFilePath = javaClass.getResource("/samples/out/${programName}.ir")?.path ?: ""
         val input = FileInputStream(sampleFilePath)
         val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
-        return PandaProject.fromProgramIr(program)
+        return PandaProject.fromStdlib(program)
     }
 }

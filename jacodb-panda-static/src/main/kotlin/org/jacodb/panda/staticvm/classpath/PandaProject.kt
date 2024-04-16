@@ -18,6 +18,7 @@ package org.jacodb.panda.staticvm.classpath
 
 import org.jacodb.api.common.Project
 import org.jacodb.panda.staticvm.cfg.PandaGraph
+import org.jacodb.panda.staticvm.ir.EtsStdlib
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
@@ -117,13 +118,23 @@ class PandaProject : Project {
     companion object {
         fun fromProgramIr(program: PandaProgramIr): PandaProject {
             val project = PandaProject()
-            program.addInterfacesHierarchyToPandaClasspath(project)
-            program.addClassesHierarchyToPandaClasspath(project)
-            program.addFieldsToPandaClasspath(project)
-            program.addMethodsToPandaClasspath(project)
-            program.addFlowGraphsToPandaClasspath(project)
+            project.addProgramIr(program)
             return project
         }
+
+        fun fromStdlib(program: PandaProgramIr): PandaProject {
+            val project = PandaProject.fromProgramIr(EtsStdlib.programInfo)
+            project.addProgramIr(program)
+            return project
+        }
+    }
+
+    fun addProgramIr(program: PandaProgramIr) {
+        program.addInterfacesHierarchyToPandaClasspath(this)
+        program.addClassesHierarchyToPandaClasspath(this)
+        program.addFieldsToPandaClasspath(this)
+        program.addMethodsToPandaClasspath(this)
+        program.addFlowGraphsToPandaClasspath(this)
     }
 
     override fun findTypeOrNull(name: String): PandaType? =

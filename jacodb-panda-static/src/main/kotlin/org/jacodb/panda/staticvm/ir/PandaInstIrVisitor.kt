@@ -16,6 +16,11 @@
 
 package org.jacodb.panda.staticvm.ir
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+
+
 interface PandaInstIrVisitor<T> {
     fun visitPandaConstantInstIr(inst: PandaConstantInstIr): T
     fun visitPandaSafePointInstIr(inst: PandaSafePointInstIr): T
@@ -45,6 +50,7 @@ interface PandaInstIrVisitor<T> {
     fun visitPandaStoreArrayInstIr(inst: PandaStoreArrayInstIr): T
     fun visitPandaIsInstanceInstIr(inst: PandaIsInstanceInstIr): T
     fun visitPandaCheckCastInstIr(inst: PandaCheckCastInstIr): T
+    fun visitPandaBitcastInstIr(inst: PandaBitcastInstIr): T
     fun visitPandaCastInstIr(inst: PandaCastInstIr): T
     fun visitPandaIfImmInstIr(inst: PandaIfImmInstIr): T
     fun visitPandaCompareInstIr(inst: PandaCompareInstIr): T
@@ -75,4 +81,22 @@ interface PandaInstIrVisitor<T> {
     fun visitPandaTryInstIr(inst: PandaTryInstIr): T
     fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr): T
     fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr): T
+    fun visitPandaLoadFromConstantPoolInstIr(inst: PandaLoadFromConstantPoolInstIr): T
+    fun visitPandaResolveStaticInstIr(inst: PandaResolveStaticInstIr): T
+    fun visitPandaResolveVirtualInstIr(inst: PandaResolveVirtualInstIr): T
+    fun visitPandaCallDynamicInstIr(inst: PandaCallDynamicInstIr): T
+    fun visitPandaCallResolvedVirtualInstIr(inst: PandaCallResolvedVirtualInstIr): T
+    fun visitPandaCallResolvedStaticInstIr(inst: PandaCallResolvedStaticInstIr): T
+    fun visitPandaFillConstArrayInstIr(inst: PandaFillConstArrayInstIr): T
+    fun visitPandaBuiltinInstIr(inst: PandaBuiltinInstIr): T
+    fun visitPandaLoadResolvedObjectFieldInstIr(inst: PandaLoadResolvedObjectFieldInstIr): T
+    fun visitPandaLoadResolvedObjectFieldStaticInstIr(inst: PandaLoadResolvedObjectFieldStaticInstIr): T
+    fun visitPandaStoreResolvedObjectFieldInstIr(inst: PandaStoreResolvedObjectFieldInstIr): T
+    fun visitPandaStoreResolvedObjectFieldStaticInstIr(inst: PandaStoreResolvedObjectFieldStaticInstIr): T
+    fun visitPandaLoadObjectDynamicInstIr(inst: PandaLoadObjectDynamicInstIr): T
+    fun visitPandaStoreObjectDynamicInstIr(inst: PandaStoreObjectDynamicInstIr): T
+    fun visitPandaFunctionImmediateInstIr(inst: PandaFunctionImmediateInstIr): T
+    fun visitPandaHclassCheckInstIr(inst: PandaHclassCheckInstIr): T
+    fun visitPandaLoadObjFromConstInstIr(inst: PandaLoadObjFromConstInstIr): T
+    fun visitPandaLoadImmediateInstIr(inst: PandaLoadImmediateInstIr): T
 }

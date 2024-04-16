@@ -52,7 +52,7 @@ class PandaIfdsTest {
         val stream = this::class.java.getResourceAsStream("/${programName}.ir")
             ?: error("Could not find resource for program: '$programName'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program)
+        val project = PandaProject.fromStdlib(program)
         return project
     }
 
@@ -62,7 +62,7 @@ class PandaIfdsTest {
     }
 
     @Test
-    fun `test taint analysis on program 2 with catch`() {
+    fun `test taint analysis on program with catch`() {
         runTaintAnalysis("testCatch")
     }
 
