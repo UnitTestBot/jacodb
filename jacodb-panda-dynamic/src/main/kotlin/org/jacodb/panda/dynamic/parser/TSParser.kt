@@ -24,14 +24,11 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaBoolType
-import org.jacodb.panda.dynamic.api.PandaNumberType
-import org.jacodb.panda.dynamic.api.PandaStringType
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaVoidType
+import org.jacodb.panda.dynamic.api.*
 import java.net.URI
 import java.nio.file.Paths
+
+private val logger = mu.KotlinLogging.logger {}
 
 class TSParser(tsPath: URI) {
 
@@ -133,12 +130,30 @@ class Kek : TypeScriptParserBaseListener() {
         } ?: parameter.optionalParameter().typeAnnotation().toPandaType()
     }
 
-    fun TypeScriptParser.TypeAnnotationContext?.toPandaType(): PandaType = when (this?.type_()?.text) {
-        null, "any" -> PandaAnyType
-        "number" -> PandaNumberType
-        "boolean" -> PandaBoolType
-        "string" -> PandaStringType
-        "void" -> PandaVoidType
-        else -> error("Unknown type: ${this.text}")
+    companion object {
+        private val arrTypeRegex = Regex("(.*)\\[]")
+    }
+
+    fun TypeScriptParser.TypeAnnotationContext?.toPandaType(): PandaType {
+
+        arrTypeRegex.find(this?.type_()?.text ?: "")?.groups?.get(1)?.value?.let { basicType ->
+            return PandaArrayTypeImpl(mapBasicPandaType(basicType))
+        }
+
+        return mapBasicPandaType(this?.type_()?.text)
+    }
+
+    private fun mapBasicPandaType(type: String?): PandaType {
+        return when (type) {
+            null, "any" -> PandaAnyType
+            "number" -> PandaNumberType
+            "boolean" -> PandaBoolType
+            "string" -> PandaStringType
+            "void" -> PandaVoidType
+            else -> {
+                logger.warn {  "Unknown type: $type" }
+                PandaAnyType
+            }
+        }
     }
 }
