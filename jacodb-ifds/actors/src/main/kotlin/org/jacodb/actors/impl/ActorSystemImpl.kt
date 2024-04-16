@@ -19,10 +19,8 @@ package org.jacodb.actors.impl
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.api.ActorFactory
+import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.api.options.SpawnOptions
 import org.jacodb.actors.impl.actors.WatcherActor
 import org.jacodb.actors.impl.actors.WatcherMessage
@@ -47,13 +45,13 @@ internal class ActorSystemImpl<Message>(
         user.receive(message)
     }
 
-    override suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R {
+    override suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R {
         watcher.receive(WatcherMessage.OutOfSystemSend)
-        val channel = Channel<R>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        val ack = messageBuilder(channel)
+        val deferred = CompletableDeferred<R>()
+        val ack = messageBuilder(deferred)
         user.receive(ack)
-        val received = channel.receive()
-        return received
+        val answer = deferred.await()
+        return answer
     }
 
 

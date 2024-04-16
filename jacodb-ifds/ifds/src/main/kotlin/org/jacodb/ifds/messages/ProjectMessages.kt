@@ -16,7 +16,7 @@
 
 package org.jacodb.ifds.messages
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.result.IfdsComputationData
@@ -29,5 +29,5 @@ data class NewChunk(
 
 data class CollectAll(
     val runnerId: RunnerId,
-    val channel: Channel<Map<Chunk, IfdsComputationData<*, *, *>>>
+    val result: CompletableDeferred<Map<Chunk, IfdsComputationData<*, *, *>>>
 ) : ProjectMessage

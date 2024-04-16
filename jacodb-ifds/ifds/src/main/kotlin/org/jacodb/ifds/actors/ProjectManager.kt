@@ -70,7 +70,7 @@ class ProjectManager<Stmt>(
                     val data = channel.receive()
                     results[chunk] = data
                 }
-                message.channel.send(results)
+                message.result.complete(results)
             }
         }
     }

@@ -16,14 +16,14 @@
 
 package org.jacodb.actors.api
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
 
 interface ActorSystem<Message> {
     val name: String
 
     suspend fun send(message: Message)
 
-    suspend fun <R> ask(messageBuilder: (Channel<R>) -> Message): R
+    suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R
 
     suspend fun awaitCompletion()
 
