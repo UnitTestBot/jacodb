@@ -25,6 +25,7 @@ import org.jacodb.panda.dynamic.api.Mappable
 import org.jacodb.panda.dynamic.api.PandaAddExpr
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
+import org.jacodb.panda.dynamic.api.PandaArrayAccess
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaBoolConstant
@@ -572,6 +573,17 @@ class IRParser(
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
                     method.idToInputs[output]?.remove(inputs[0])
+                }
+            }
+
+            opcode == "Intrinsic.ldobjbyvalue" -> {
+                val out = PandaArrayAccess(
+                    array = inputs[0],
+                    index = inputs[1],
+                    type = PandaAnyType
+                )
+                outputs.forEach { output ->
+                    addInput(method, id(), output, out)
                 }
             }
 

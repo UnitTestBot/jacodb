@@ -17,6 +17,7 @@ function sink(data) {
 
 function bad() {
     let data = source()
+    // @ts-ignore
     data = pass(data)
     sink(data)
 }

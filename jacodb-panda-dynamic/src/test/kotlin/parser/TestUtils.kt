@@ -34,7 +34,7 @@ fun loadIr(filePath: String, tsPath: String): IRParser {
 object TestDot {
     @JvmStatic
     fun main(args: Array<String>) {
-        val name = "binary/Division"
+        val name = "MinValue"
         val parser = loadIr("/samples/$name.json", "/samples/$name.ts")
         val program = parser.getProgram()
         val project = parser.getProject()
