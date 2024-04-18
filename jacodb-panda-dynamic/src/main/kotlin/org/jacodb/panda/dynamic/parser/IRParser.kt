@@ -613,6 +613,10 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            opcode == "Intrinsic.ldundefined" -> {
+                handle(PandaUndefinedConstant)
+            }
+
             opcode == "Intrinsic.defineclasswithbuffer" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
@@ -837,7 +841,6 @@ class IRParser(
             // Unuseful
             "SaveState" -> {}
             "Intrinsic.definefunc" -> {}
-            "Intrinsic.ldundefined" -> {}
             "Intrinsic.copyrestargs" -> {}
             else -> {
                 logger.warn { "Unknown opcode: $opcode" }
