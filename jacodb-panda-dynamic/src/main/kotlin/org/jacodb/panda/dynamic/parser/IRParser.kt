@@ -769,6 +769,31 @@ class IRParser(
                 handle(negExpr)
             }
 
+            opcode == "Phi" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "CatchPhi" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Try" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.sttoglobalrecord" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.trystglobalbyname" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             else -> checkIgnoredInstructions(this)
         }
 
