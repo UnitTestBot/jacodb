@@ -14,21 +14,21 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.common.cfg
+package org.jacodb.testing.analysis;
 
-interface Graph<out Statement> : Iterable<Statement> {
-    fun successors(node: @UnsafeVariance Statement): Set<Statement>
-    fun predecessors(node: @UnsafeVariance Statement): Set<Statement>
-}
+import org.jetbrains.annotations.NotNull;
 
-interface ControlFlowGraph<out Statement> : Graph<Statement> {
-    val entries: List<Statement>
-    val exits: List<Statement>
+public class UntrustedLoopBound {
+    public static class Message {
+        int readInt() {
+            return 999;
+        }
+    }
 
-    val instructions: List<Statement>
-}
-
-interface BytecodeGraph <out Statement> : ControlFlowGraph<Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
+    public void handle(@NotNull Message data) {
+        int n = -(-(data.readInt() + 1));
+        for (int i = 0; i < n; i++) {
+            System.out.println("i = " + i);
+        }
+    }
 }

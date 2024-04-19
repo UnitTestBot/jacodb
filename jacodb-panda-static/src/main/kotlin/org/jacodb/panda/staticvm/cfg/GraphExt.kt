@@ -23,6 +23,7 @@ import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
+import org.jacodb.impl.cfg.graphs.GraphDominators
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -109,3 +110,15 @@ fun PandaGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, fil
     Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
 }
+
+fun PandaGraph.findDominators(): GraphDominators<PandaInst> {
+    return GraphDominators(this).also {
+        it.find()
+    }
+}
+
+// fun PandaBlockGraph.findDominators(): GraphDominators<PandaBasicBlock> {
+//     return GraphDominators(this).also {
+//         it.find()
+//     }
+// }

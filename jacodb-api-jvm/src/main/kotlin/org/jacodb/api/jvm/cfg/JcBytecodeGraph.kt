@@ -16,9 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.api.common.cfg.BytecodeGraph
 
-interface JcBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
-}
+interface JcBytecodeGraph<out Statement> : BytecodeGraph<Statement>

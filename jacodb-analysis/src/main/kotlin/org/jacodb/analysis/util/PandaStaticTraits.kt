@@ -59,7 +59,7 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
 
     // TODO
     override val PandaMethod.isConstructor: Boolean
-        get() = false
+        get() = name == "<ctor>"
 
     override fun CommonExpr.toPathOrNull(): AccessPath? {
         check(this is PandaExpr)

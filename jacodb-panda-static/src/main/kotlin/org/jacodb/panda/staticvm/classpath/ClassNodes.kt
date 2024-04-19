@@ -77,6 +77,7 @@ sealed interface PandaClassOrInterface : CommonClass {
     /** qualified class/interface name */
     override val name: String
 
+    // TODO: remove package prefix from 'name'
     override val simpleName: String
         get() = name
 

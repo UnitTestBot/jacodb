@@ -14,21 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.common.cfg
+package org.jacodb.analysis.taint
 
-interface Graph<out Statement> : Iterable<Statement> {
-    fun successors(node: @UnsafeVariance Statement): Set<Statement>
-    fun predecessors(node: @UnsafeVariance Statement): Set<Statement>
-}
-
-interface ControlFlowGraph<out Statement> : Graph<Statement> {
-    val entries: List<Statement>
-    val exits: List<Statement>
-
-    val instructions: List<Statement>
-}
-
-interface BytecodeGraph <out Statement> : ControlFlowGraph<Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
+object TaintAnalysisOptions {
+    var UNTRUSTED_LOOP_BOUND_SINK = false
 }

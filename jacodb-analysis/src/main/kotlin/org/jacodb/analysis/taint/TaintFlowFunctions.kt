@@ -46,8 +46,16 @@ import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcBinaryExpr
+import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcNegExpr
+import org.jacodb.panda.staticvm.cfg.PandaBinaryExpr
+import org.jacodb.panda.staticvm.cfg.PandaCastExpr
+import org.jacodb.panda.staticvm.cfg.PandaNegExpr
+import org.jacodb.panda.staticvm.cfg.PandaNotExpr
 import org.jacodb.panda.staticvm.cfg.PandaPhiExpr
+import org.jacodb.panda.staticvm.cfg.PandaUnaryExpr
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
@@ -178,18 +186,54 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         check(fact is Tainted)
 
         if (current is CommonAssignInst<*, *>) {
-            if (current.rhv is PandaPhiExpr) {
-                if (current.rhv.operands.isEmpty() ) {
-                    transmitTaintNormal(fact, current)
-                } else {
+            when (val rhv = current.rhv) {
+                is PandaPhiExpr -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
-                    for (operand in current.rhv.operands) {
+                    for (operand in rhv.operands) {
                         facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
                     }
+                    // For empty phi, pass-through:
+                    val pass = transmitTaintNormal(fact, current)
+                    facts + pass
+                }
+
+                is JcBinaryExpr -> {
+                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+                    facts += transmitTaintAssign(fact, from = rhv.lhv, to = current.lhv)
+                    facts += transmitTaintAssign(fact, from = rhv.rhv, to = current.lhv)
                     facts
                 }
-            } else {
-                transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
+
+                is JcNegExpr -> {
+                    transmitTaintAssign(fact, from = rhv.operand, to = current.lhv)
+                }
+
+                is JcCastExpr -> {
+                    transmitTaintAssign(fact, from = rhv.operand, to = current.lhv)
+                }
+
+                is PandaBinaryExpr -> {
+                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+                    facts += transmitTaintAssign(fact, from = rhv.lhv, to = current.lhv)
+                    facts += transmitTaintAssign(fact, from = rhv.rhv, to = current.lhv)
+                    facts
+                }
+
+                is PandaNegExpr -> {
+                    transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
+                }
+
+                is PandaNotExpr -> {
+                    transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
+                }
+
+                is PandaCastExpr -> {
+                    transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
+                }
+
+                else -> {
+                    transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
+                }
             }
         } else {
             transmitTaintNormal(fact, current)

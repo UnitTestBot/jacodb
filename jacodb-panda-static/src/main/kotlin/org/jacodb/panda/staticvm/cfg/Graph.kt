@@ -17,7 +17,7 @@
 package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.analysis.ApplicationGraph
-import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.api.common.cfg.BytecodeGraph
 import org.jacodb.api.common.cfg.Graph
 import org.jacodb.panda.staticvm.*
 import org.jacodb.panda.staticvm.classpath.PandaMethod
@@ -25,10 +25,7 @@ import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 
-interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
-}
+interface PandaBytecodeGraph<out Statement> : BytecodeGraph<Statement>
 
 class PandaGraph private constructor(
     private val instList: PandaInstList,

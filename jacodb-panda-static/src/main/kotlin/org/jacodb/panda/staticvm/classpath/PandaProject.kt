@@ -116,14 +116,11 @@ class PandaProject : Project {
     }
 
     companion object {
-        fun fromProgramIr(program: PandaProgramIr): PandaProject {
+        fun fromProgramIr(program: PandaProgramIr, withStdlib: Boolean = false): PandaProject {
             val project = PandaProject()
-            project.addProgramIr(program)
-            return project
-        }
-
-        fun fromStdlib(program: PandaProgramIr): PandaProject {
-            val project = PandaProject.fromProgramIr(EtsStdlib.programInfo)
+            if (withStdlib) {
+                project.addProgramIr(EtsStdlib.programInfo)
+            }
             project.addProgramIr(program)
             return project
         }

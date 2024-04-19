@@ -217,14 +217,14 @@ data class PandaDouble(
 
 data class PandaString(
     val value: String,
-    override val type: PandaClassType,
+    override val type: PandaClassType, // TODO: StringType (std.core.String)
 ) : PandaConstant {
     override fun toString(): String = "\"$value\""
 }
 
 data class PandaTypeConstant(
     val value: PandaType,
-    override val type: PandaType,
+    override val type: PandaType, // TODO: ClassType
 ) : PandaConstant {
     override fun toString(): String = "${value}.class"
 }

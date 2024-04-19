@@ -20,6 +20,7 @@ import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
+import org.jacodb.analysis.taint.TaintAnalysisOptions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaStaticTraits
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
@@ -31,84 +32,48 @@ import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
 import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.RemoveMark
 import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
-import org.jacodb.taint.configuration.TaintPassThrough
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 private val logger = mu.KotlinLogging.logger {}
 
-class PandaIfdsTest {
+class PandaDemoCases {
 
     companion object : PandaStaticTraits
 
-    private fun loadProjectForSample(programName: String): PandaProject {
-        val stream = this::class.java.getResourceAsStream("/${programName}.ir")
-            ?: error("Could not find resource for program: '$programName'")
+    private fun loadProject(path: String): PandaProject {
+        val stream = this::class.java.getResourceAsStream("/$path")
+            ?: error("Could not find resource for program: '$path'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+        val project = PandaProject.fromProgramIr(program)
         return project
     }
 
     @Test
-    fun `test taint analysis on program 2`() {
-        runTaintAnalysis("Program2")
-    }
-
-    @Test
-    fun `test taint analysis on program with catch`() {
-        runTaintAnalysis("testCatch")
-    }
-
-    private fun runTaintAnalysis(programName: String) {
-        val project = loadProjectForSample(programName)
+    fun `taint analysis on case1`() {
+        val path = "cases/case1.ir"
+        val project = loadProject(path)
         val graph = PandaApplicationGraph(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.name == "source") add(
+                    if (method.name == "readInt") add(
                         TaintMethodSource(
                             method = mockk(),
                             condition = ConstantTrue,
                             actionsAfter = listOf(
-                                AssignMark(mark = TaintMark("TAINT"), position = Result),
-                            ),
-                        )
-                    )
-                    if (method.name == "sink") add(
-                        TaintMethodSink(
-                            method = mockk(),
-                            ruleNote = "SINK", // FIXME
-                            cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
-                        )
-                    )
-                    if (method.name == "pass") add(
-                        TaintPassThrough(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(
-                                CopyAllMarks(from = Argument(0), to = Result)
-                            ),
-                        )
-                    )
-                    if (method.name == "validate") add(
-                        TaintPassThrough(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(
-                                RemoveMark(mark = TaintMark("TAINT"), position = Argument(0))
+                                AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
                             ),
                         )
                     )
                 }
+                // Return the rules if they are not empty, otherwise return null:
                 rules.ifEmpty { null }
             }
         val manager = TaintManager(
@@ -117,16 +82,63 @@ class PandaIfdsTest {
             getConfigForMethod = getConfigForMethod,
         )
 
-        val goodMethod = project.classes.flatMap { it.methods }.single { it.name == "good" }
-        logger.info { "good() method: $goodMethod" }
-        val goodSinks = manager.analyze(listOf(goodMethod))
-        logger.info { "Sinks in good(): $goodSinks" }
-        Assertions.assertTrue(goodSinks.isEmpty())
+        // Enable untrusted loop bounds analysis:
+        TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
 
-        val badMethod = project.classes.flatMap { it.methods }.single { it.name == "bad" }
-        logger.info { "bad() method: $badMethod" }
-        val badSinks = manager.analyze(listOf(badMethod))
-        logger.info { "Sinks in bad(): $badSinks" }
-        Assertions.assertTrue(badSinks.isNotEmpty())
+        val method = project.classes.flatMap { it.methods }.single { it.name == "onRequest" }
+        logger.info { "Method: $method" }
+        val sinks = manager.analyze(listOf(method))
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `taint analysis on case2`() {
+        val path = "cases/case2.ir"
+        val project = loadProject(path)
+        val graph = PandaApplicationGraph(project)
+        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "readInt") add(
+                        TaintMethodSource(
+                            method = mockk(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
+                            ),
+                        )
+                    )
+                    if (method.isConstructor && method.enclosingClass.name == "escompat.ArrayBuffer") add(
+                        TaintMethodSink(
+                            method = mockk(),
+                            ruleNote = "ArrayBuffer constructor",
+                            cwe = emptyList(),
+                            condition = ContainsMark(position = Argument(1), mark = TaintMark("UNTRUSTED")),
+                        )
+                    )
+                }
+                // Return the rules if they are not empty, otherwise return null:
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+
+        // Enable untrusted loop bounds analysis:
+        TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
+
+        val method = project.classes.single {
+            it.name == "Request"
+        }.methods.single {
+            it.name == "onRemoteMessageRequest"
+        }
+        logger.info { "Method: $method" }
+        val sinks = manager.analyze(listOf(method))
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
     }
 }

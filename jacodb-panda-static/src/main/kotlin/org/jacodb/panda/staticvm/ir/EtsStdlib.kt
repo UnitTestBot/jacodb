@@ -18,7 +18,6 @@ package org.jacodb.panda.staticvm.ir
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
-import org.jacodb.panda.staticvm.classpath.PandaProject
 
 @OptIn(ExperimentalSerializationApi::class)
 object EtsStdlib {
