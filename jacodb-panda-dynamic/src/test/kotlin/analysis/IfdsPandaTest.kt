@@ -22,11 +22,32 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.PandaTraits
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaClass
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaInstLocation
+import org.jacodb.panda.dynamic.api.PandaInstRef
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaNullConstant
+import org.jacodb.panda.dynamic.api.PandaProject
+import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.parser.IRParser
-import org.jacodb.taint.configuration.*
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -61,8 +82,7 @@ class IfdsPandaTest {
                     )
                     if (method.name == "log") add(
                         TaintMethodSink(
-                            method = mockk(),
-                            ruleNote = "CUSTOM SINK", // FIXME
+                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )
@@ -105,8 +125,7 @@ class IfdsPandaTest {
                     )
                     if (method.name == "sink") add(
                         TaintMethodSink(
-                            method = mockk(),
-                            ruleNote = "SINK", // FIXME
+                            method = mockk(), ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )
@@ -158,34 +177,31 @@ class IfdsPandaTest {
                 PandaClass(
                     name = "Sample",
                     superClassName = "std.core.Object",
-                    methods = listOf(
-                        PandaMethod(name = "source").also {
-                            it.blocks = listOf(
-                                PandaBasicBlock(
-                                    id = 0,
-                                    successors = setOf(1),
-                                    predecessors = emptySet(),
-                                    start = PandaInstRef(0),
-                                    end = PandaInstRef(1)
-                                ),
-                                PandaBasicBlock(
-                                    id = 1,
-                                    successors = setOf(),
-                                    predecessors = setOf(0),
-                                    start = PandaInstRef(0),
-                                    end = PandaInstRef(1)
-                                )
+                    methods = listOf(PandaMethod(name = "source").also {
+                        it.blocks = listOf(
+                            PandaBasicBlock(
+                                id = 0,
+                                successors = setOf(1),
+                                predecessors = emptySet(),
+                                start = PandaInstRef(0),
+                                end = PandaInstRef(1)
+                            ), PandaBasicBlock(
+                                id = 1,
+                                successors = setOf(),
+                                predecessors = setOf(0),
+                                start = PandaInstRef(0),
+                                end = PandaInstRef(1)
                             )
-                            it.instructions = listOf(
-                                PandaReturnInst(
-                                    location = PandaInstLocation(method = it, index = 0, lineNumber = 3),
-                                    returnValue = PandaNullConstant
-                                )
+                        )
+                        it.instructions = listOf(
+                            PandaReturnInst(
+                                location = PandaInstLocation(method = it, index = 0, lineNumber = 3),
+                                returnValue = PandaNullConstant
                             )
-                            it.className = "Sample"
-                            it.type = PandaAnyType
-                        }
-                    )
+                        )
+                        it.className = "Sample"
+                        it.type = PandaAnyType
+                    })
                 )
             )
         )

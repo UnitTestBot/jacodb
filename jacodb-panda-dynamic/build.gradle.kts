@@ -14,7 +14,6 @@ dependencies {
 
     antlr(Libs.antlr)
 
-    testImplementation(kotlin("test"))
     testImplementation(project(":jacodb-analysis"))
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(Libs.mockk)

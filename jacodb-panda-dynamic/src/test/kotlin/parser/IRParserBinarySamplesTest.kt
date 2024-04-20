@@ -26,8 +26,8 @@ import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaSubExpr
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 class IRParserBinarySamplesTest {
 

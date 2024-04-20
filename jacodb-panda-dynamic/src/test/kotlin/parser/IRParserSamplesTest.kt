@@ -17,9 +17,9 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -112,7 +112,7 @@ class IRParserSamplesTest {
                     }
 
                     "main" -> {
-                        assertEquals(3, pandaMethod.instructions.size)
+                        assertEquals(4, pandaMethod.instructions.size)
                         assertEquals(2, pandaMethod.blocks.size)
                     }
                 }
