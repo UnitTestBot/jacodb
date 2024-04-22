@@ -55,10 +55,37 @@ fun IRParser.Program.toDot(): String {
             }
 
             // Basic blocks successors:
-            property.method.basicBlocks.forEach { bb ->
-                bb.successors.forEach { succ ->
-                    lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.0\" -> \"${clazz.name}.${property.name}.bb${succ}.0\"" +
-                        " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+            // property.method.basicBlocks.forEach { bb ->
+            //     bb.successors.forEach { succ ->
+            //         lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.0\" -> \"${clazz.name}.${property.name}.bb${succ}.0\"" +
+            //             " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+            //     }
+            // }
+
+            property.method.basicBlocks.forEach { basicBlock ->
+                val last = basicBlock.insts.lastOrNull()
+                if (last != null) {
+                    val i = basicBlock.insts.size - 1
+                    when (last.opcode) {
+                        "IfImm" -> {
+                            for ((j, succ) in basicBlock.successors.withIndex()) {
+                                lines += "  \"${clazz.name}.${property.name}.bb${basicBlock.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
+                            }
+                        }
+
+                        "Try" -> {
+                            for ((j, succ) in basicBlock.successors.withIndex()) {
+                                lines += "  \"${clazz.name}.${property.name}.bb${basicBlock.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
+                            }
+                        }
+
+                        else -> {
+                            check(basicBlock.successors.size <= 1)
+                            for (succ in basicBlock.successors) {
+                                lines += "  \"${clazz.name}.${property.name}.bb${basicBlock.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+                            }
+                        }
+                    }
                 }
             }
 
