@@ -75,6 +75,7 @@ internal class ActorSystemImpl<Message>(
     }
 }
 
+// TODO: consider just 'system', because 'Of' implies a vararg, which is not the case here
 fun <Message> systemOf(
     name: String,
     options: SpawnOptions = SpawnOptions.default,
