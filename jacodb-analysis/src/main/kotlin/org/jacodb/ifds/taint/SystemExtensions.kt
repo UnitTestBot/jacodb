@@ -31,6 +31,7 @@ import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.mergeIfdsResults
 import org.jacodb.impl.features.usagesExt
+import org.jacodb.analysis.taint.TaintVulnerability as JcTaintVulnerability
 
 suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
@@ -46,7 +47,7 @@ suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
     }
 }
 
-suspend fun ActorSystem<CommonMessage>.collectTaintResults(): List<org.jacodb.analysis.taint.TaintVulnerability> =
+suspend fun ActorSystem<CommonMessage>.collectTaintResults(): List<JcTaintVulnerability> =
     collectTaintComputationData()
         .results
         .mapTo(mutableListOf()) { it.vulnerability }
