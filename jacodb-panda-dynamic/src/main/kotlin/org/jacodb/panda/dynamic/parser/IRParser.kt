@@ -82,7 +82,7 @@ private val logger = mu.KotlinLogging.logger {}
 
 class IRParser(
     jsonPath: String,
-    private val tsFunctions: List<TSFunction>? = null
+    private val tsFunctions: List<TSFunction>? = null,
 ) {
 
     @Serializable
