@@ -42,7 +42,7 @@ object TestDot {
         println(project)
 
         val path = "dump"
-        val dotFile = File(path)
+        val dotFile = File("$path.dot")
         program.dumpDot(dotFile)
         println("Generated DOT file: ${dotFile.absolutePath}")
         for (format in listOf("pdf", "png")) {
