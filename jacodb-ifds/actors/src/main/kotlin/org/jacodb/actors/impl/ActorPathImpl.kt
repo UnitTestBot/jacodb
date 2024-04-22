@@ -19,7 +19,7 @@ package org.jacodb.actors.impl
 import org.jacodb.actors.api.ActorPath
 
 internal data class ActorPathImpl(
-    private val path: List<String>
+    private val path: List<String>,
 ) : ActorPath {
     override fun div(name: String): ActorPath =
         ActorPathImpl(path + name)

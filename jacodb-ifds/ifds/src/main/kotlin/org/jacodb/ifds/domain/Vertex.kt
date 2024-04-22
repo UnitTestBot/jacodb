@@ -18,5 +18,5 @@ package org.jacodb.ifds.domain
 
 data class Vertex<Stmt, Fact>(
     val stmt: Stmt,
-    val fact: Fact
+    val fact: Fact,
 )

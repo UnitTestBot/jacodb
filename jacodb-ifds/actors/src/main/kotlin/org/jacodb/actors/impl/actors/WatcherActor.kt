@@ -22,7 +22,6 @@ import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorStatus
 
-
 context(ActorContext<WatcherMessage>)
 internal class WatcherActor : Actor<WatcherMessage> {
     private sealed interface Status {

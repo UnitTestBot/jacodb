@@ -25,7 +25,7 @@ context(ActorContext<Message>)
 internal class RoundRobinRouter<Message>(
     private val size: Int,
     routeeSpawnOptions: SpawnOptions,
-    routeeFactory: ActorFactory<Message>
+    routeeFactory: ActorFactory<Message>,
 ) : Actor<Message> {
     private val routees = List(size) {
         spawn("$it", routeeSpawnOptions, routeeFactory)

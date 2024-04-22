@@ -24,10 +24,10 @@ import org.jacodb.ifds.result.IfdsComputationData
 sealed interface ProjectMessage : CommonMessage
 
 data class NewChunk(
-    val chunk: Chunk
+    val chunk: Chunk,
 ) : ProjectMessage
 
 data class CollectAll(
     val runnerId: RunnerId,
-    val result: CompletableDeferred<Map<Chunk, IfdsComputationData<*, *, *>>>
+    val result: CompletableDeferred<Map<Chunk, IfdsComputationData<*, *, *>>>,
 ) : ProjectMessage

@@ -18,5 +18,5 @@ package org.jacodb.ifds.domain
 
 data class Edge<Stmt, Fact>(
     val from: Vertex<Stmt, Fact>,
-    val to: Vertex<Stmt, Fact>
+    val to: Vertex<Stmt, Fact>,
 )

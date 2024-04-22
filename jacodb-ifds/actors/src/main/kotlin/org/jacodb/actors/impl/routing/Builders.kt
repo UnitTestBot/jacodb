@@ -39,7 +39,7 @@ fun <Message, Key> messageKeyRouter(
     keyExtractor: (Message) -> Key,
     routeeNameFactory: (Key) -> String = { it.toString() },
     routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
-    routeeFactory: KeyRouteeFactory<Message, Key>
+    routeeFactory: KeyRouteeFactory<Message, Key>,
 ) = ActorFactory {
     MessageKeyRouter(keyExtractor, routeeNameFactory, routeeSpawnOptions, routeeFactory)
 }

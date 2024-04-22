@@ -31,7 +31,6 @@ import org.jacodb.actors.impl.actors.WatcherMessage
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
-
 internal class UserActorWorker<Message>(
     path: ActorPath,
     private val channel: Channel<Message>,

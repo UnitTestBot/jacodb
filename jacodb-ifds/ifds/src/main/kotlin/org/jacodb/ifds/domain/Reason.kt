@@ -24,7 +24,7 @@ sealed interface Reason<out Stmt, out Fact> {
     ) : Reason<Stmt, Fact>
 
     data class CallToReturn<Stmt, Fact>(
-        val edge: Edge<Stmt, Fact>
+        val edge: Edge<Stmt, Fact>,
     ) : Reason<Stmt, Fact>
 
     data class CallToStart<Stmt, Fact>(

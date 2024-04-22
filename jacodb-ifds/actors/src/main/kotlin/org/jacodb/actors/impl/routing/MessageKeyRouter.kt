@@ -17,8 +17,8 @@
 package org.jacodb.actors.impl.routing
 
 import org.jacodb.actors.api.Actor
-import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorContext
+import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.options.SpawnOptions
 
 internal typealias KeyRouteeFactory<Message, Key> = ActorContext<Message>.(Key) -> Actor<Message>

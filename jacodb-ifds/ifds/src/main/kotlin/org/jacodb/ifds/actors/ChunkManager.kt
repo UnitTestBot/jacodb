@@ -21,8 +21,8 @@ import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.signal.Signal
 import org.jacodb.actors.impl.routing.messageKeyRouter
-import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.IfdsContext
+import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewChunk
 import org.jacodb.ifds.messages.RunnerMessage
@@ -58,6 +58,7 @@ class ChunkManager<Stmt>(
             Signal.Start -> {
                 parent.send(NewChunk(chunk))
             }
+
             Signal.PostStop -> {
                 // TODO: explain why we do nothing here
                 // do nothing

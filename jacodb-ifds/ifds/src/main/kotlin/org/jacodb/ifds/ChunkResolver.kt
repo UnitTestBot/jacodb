@@ -33,7 +33,6 @@ import org.jacodb.ifds.messages.SubscriptionOnEnd
 import org.jacodb.ifds.messages.SubscriptionOnStart
 import org.jacodb.ifds.messages.UnresolvedCall
 
-
 fun interface ChunkResolver {
     fun chunkByMessage(message: RunnerMessage): Chunk
 }

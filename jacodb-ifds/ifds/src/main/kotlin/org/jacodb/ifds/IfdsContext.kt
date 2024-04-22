@@ -16,13 +16,13 @@
 
 package org.jacodb.ifds
 
-import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorFactory
+import org.jacodb.actors.api.ActorRef
 import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
+import org.jacodb.ifds.messages.RunnerMessage
 
 interface IfdsContext<Stmt> {
     fun chunkByMessage(message: RunnerMessage): Chunk

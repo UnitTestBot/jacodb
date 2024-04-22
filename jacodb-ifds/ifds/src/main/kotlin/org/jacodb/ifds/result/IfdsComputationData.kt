@@ -18,7 +18,6 @@ package org.jacodb.ifds.result
 
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
-import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
 
 /**
