@@ -79,14 +79,16 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         for (method in methods) {
             system.startTaintAnalysis(method)
         }
-        launch {
+        val stopper = launch {
             delay(20.seconds)
+            logger.info { "Timeout! Stopping the system..." }
             system.stop()
+            system.resume()
         }
         system.awaitCompletion()
-        system.resume()
-        val sinks = system.collectTaintResults()
+        stopper.cancel()
 
+        val sinks = system.collectTaintResults()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
@@ -100,14 +102,16 @@ class JodaDateTimeAnalysisTest : BaseTest() {
         for (method in methods) {
             system.startNpeAnalysis(method)
         }
-        launch {
+        val stopper = launch {
             delay(20.seconds)
+            logger.info { "Timeout! Stopping the system..." }
             system.stop()
+            system.resume()
         }
         system.awaitCompletion()
-        system.resume()
-        val sinks = system.collectNpeResults()
+        stopper.cancel()
 
+        val sinks = system.collectNpeResults()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
