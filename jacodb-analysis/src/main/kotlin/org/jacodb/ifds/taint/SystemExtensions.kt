@@ -18,7 +18,7 @@ package org.jacodb.ifds.taint
 
 import org.jacodb.actors.api.ActorSystem
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.npe.NpeAnalyzer
+import org.jacodb.analysis.taint.TaintAnalyzer
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
@@ -36,7 +36,7 @@ import org.jacodb.analysis.taint.TaintVulnerability as JcTaintVulnerability
 suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-    val taintAnalyzer = NpeAnalyzer(graph)
+    val taintAnalyzer = TaintAnalyzer(graph)
 
     for (fact in taintAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
