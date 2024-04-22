@@ -43,15 +43,15 @@ fun IRParser.Program.toDot(): String {
         // Methods inside class:
         properties.forEach { property ->
             // METHOD
-            lines += "  \"${clazz.name}.${property.name}\" [shape=triangle,label=\"${clazz.name}::${property.name}\"];"
-            lines += "  \"${clazz.name}\" -> \"${clazz.name}.${property.name}\""
+            lines += "  \"${clazz.name}.${property.method.name}\" [shape=triangle,label=\"${clazz.name}::${property.method.name}\"];"
+            lines += "  \"${clazz.name}\" -> \"${clazz.name}.${property.method.name}\""
         }
 
         // Basic blocks inside method:
         properties.forEach { property ->
             // Link to the first basic block inside property:
             if (property.method.basicBlocks.isNotEmpty()) {
-                lines += "  \"${clazz.name}.${property.name}\" -> \"${clazz.name}.${property.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${property.name}.bb${property.method.basicBlocks.first().id}\"];"
+                lines += "  \"${clazz.name}.${property.method.name}\" -> \"${clazz.name}.${property.method.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${property.method.basicBlocks.first().id}\"];"
             }
 
             property.method.basicBlocks.forEach { bb ->
@@ -61,20 +61,20 @@ fun IRParser.Program.toDot(): String {
                     when (last.opcode) {
                         "IfImm" -> {
                             for ((j, succ) in bb.successors.withIndex()) {
-                                lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
+                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
                             }
                         }
 
                         "Try" -> {
                             for ((j, succ) in bb.successors.withIndex()) {
-                                lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
+                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
                             }
                         }
 
                         else -> {
                             check(bb.successors.size <= 1)
                             for (succ in bb.successors) {
-                                lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\"];"
                             }
                         }
                     }
@@ -85,12 +85,12 @@ fun IRParser.Program.toDot(): String {
             property.method.basicBlocks.forEach { bb ->
                 // BASIC BLOCK
                 lines += ""
-                lines += "  subgraph \"${clazz.name}.${property.name}.bb${bb.id}\" {"
+                lines += "  subgraph \"${clazz.name}.${property.method.name}.bb${bb.id}\" {"
                 lines += "    cluster=true;"
                 lines += "    label=\"BB ${bb.id}\\nsuccessors = ${bb.successors}\";"
 
                 if (bb.insts.isEmpty()) {
-                    lines += "    \"${clazz.name}.${property.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
+                    lines += "    \"${clazz.name}.${property.method.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
                 }
 
                 // Instructions inside basic block:
@@ -113,7 +113,7 @@ fun IRParser.Program.toDot(): String {
                     //     labelLines += "catchers = ${inst.catchers}"
                     // }
                     // INSTRUCTION
-                    lines += "    \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
+                    lines += "    \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
                         labelLines.joinToString("") { "${it}\\l" }
                     }\"];"
                 }
@@ -122,7 +122,7 @@ fun IRParser.Program.toDot(): String {
                 if (bb.insts.isNotEmpty()) {
                     lines += "    ${
                         List(bb.insts.size) { i ->
-                            "\"${clazz.name}.${property.name}.bb${bb.id}.${i}\""
+                            "\"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\""
                         }.joinToString(" -> ")
                     };"
                 }
