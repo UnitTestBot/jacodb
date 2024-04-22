@@ -5,5 +5,5 @@ dependencies {
 
     implementation(project(":jacodb-ifds:actors"))
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation(kotlin("test"))
 }

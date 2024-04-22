@@ -3,5 +3,5 @@ dependencies {
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_coroutines_core)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation(kotlin("test"))
 }
