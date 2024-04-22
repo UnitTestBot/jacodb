@@ -345,9 +345,9 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                    tsFunc.arguments.size == method.parameterInfos.size &&
-                    // here comes the result of comment above
-                    tsFunc.containingClass?.name == method.className
+                tsFunc.arguments.size == method.parameterInfos.size &&
+                // here comes the result of comment above
+                tsFunc.containingClass?.name == method.className
         }?.let { tsFunc ->
             method.type = tsFunc.returnType
             method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
