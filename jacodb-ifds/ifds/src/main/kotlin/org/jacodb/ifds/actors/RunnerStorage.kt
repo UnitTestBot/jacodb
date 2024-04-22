@@ -23,7 +23,6 @@ import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.EdgeMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.messages.NewResult
@@ -31,6 +30,7 @@ import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ObtainData
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.StorageMessage
 import org.jacodb.ifds.messages.SubscriptionOnEnd
 import org.jacodb.ifds.messages.SubscriptionOnStart
@@ -66,6 +66,7 @@ class RunnerStorage<Stmt, Fact>(
             is NewEdge<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 message as NewEdge<Stmt, Fact>
+
                 val edge = message.edge
 
                 reasons
@@ -83,6 +84,7 @@ class RunnerStorage<Stmt, Fact>(
                 message as NewSummaryEdge<Stmt, Fact>
 
                 val edge = message.edge
+
                 if (summaryEdges.add(edge)) {
                     summaryEdgesByStart
                         .computeIfAbsent(edge.from) { hashSetOf() }
@@ -147,7 +149,7 @@ class RunnerStorage<Stmt, Fact>(
         vertex: Vertex<Stmt, Fact>,
         subscriptionData: SubscriptionData<Stmt, Fact>,
     ) {
-        val summaries = summaryEdgesByStart.getOrDefault(vertex, emptySet())
+        val summaries = summaryEdgesByStart[vertex].orEmpty()
         for (summaryEdge in summaries) {
             val notification = NotificationOnStart(
                 subscriptionData.subscriber,
@@ -163,7 +165,7 @@ class RunnerStorage<Stmt, Fact>(
         vertex: Vertex<Stmt, Fact>,
         subscriptionData: SubscriptionData<Stmt, Fact>,
     ) {
-        val summaries = summaryEdgesByEnd.getOrDefault(vertex, emptySet())
+        val summaries = summaryEdgesByEnd[vertex].orEmpty()
         for (summaryEdge in summaries) {
             val notification = NotificationOnEnd(
                 subscriptionData.subscriber,
@@ -175,11 +177,8 @@ class RunnerStorage<Stmt, Fact>(
         }
     }
 
-
     private suspend fun sendStartNotifications(edge: Edge<Stmt, Fact>) {
-        val currentEdgeStartSubscribers = startSubscribers
-            .getOrDefault(edge.from, emptySet())
-
+        val currentEdgeStartSubscribers = startSubscribers[edge.from].orEmpty()
         for ((data, subscriber) in currentEdgeStartSubscribers) {
             val notification = NotificationOnStart(
                 subscriber,
@@ -192,9 +191,7 @@ class RunnerStorage<Stmt, Fact>(
     }
 
     private suspend fun sendEndNotifications(edge: Edge<Stmt, Fact>) {
-        val currentEdgeEndSubscribers = endSubscribers
-            .getOrDefault(edge.to, emptySet())
-
+        val currentEdgeEndSubscribers = endSubscribers[edge.to].orEmpty()
         for ((data, subscriber) in currentEdgeEndSubscribers) {
             val notification = NotificationOnEnd(
                 subscriber,

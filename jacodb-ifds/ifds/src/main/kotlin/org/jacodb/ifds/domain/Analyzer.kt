@@ -20,5 +20,6 @@ import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.RunnerMessage
 
 interface Analyzer<Stmt, Fact> {
+    // TODO: consider 'handle'
     fun step(message: AnalyzerMessage<Stmt, Fact>): Collection<RunnerMessage>
 }

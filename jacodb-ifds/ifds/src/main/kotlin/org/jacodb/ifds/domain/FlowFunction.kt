@@ -16,6 +16,7 @@
 
 package org.jacodb.ifds.domain
 
+// TODO: consider 'FlowFunctions' (plural)
 interface FlowFunction<Stmt, Fact> {
     fun FlowScope<Stmt, Fact>.sequent(
         next: Stmt,

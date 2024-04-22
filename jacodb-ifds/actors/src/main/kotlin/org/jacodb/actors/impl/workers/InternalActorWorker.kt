@@ -29,6 +29,7 @@ internal class InternalActorWorker<Message>(
     private val channel: Channel<Message>,
     private val scope: CoroutineScope,
 ) : ActorWorker<Message>(path) {
+
     override fun launchLoop(
         coroutineContext: CoroutineContext,
         actor: Actor<Message>,

@@ -18,9 +18,9 @@ package org.jacodb.actors.impl
 
 import mu.KLogger
 import org.jacodb.actors.api.ActorContext
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
-import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.impl.workers.ActorWorker
 import kotlin.coroutines.CoroutineContext
 

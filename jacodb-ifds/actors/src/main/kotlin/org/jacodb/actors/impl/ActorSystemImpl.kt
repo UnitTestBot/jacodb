@@ -54,7 +54,6 @@ internal class ActorSystemImpl<Message>(
         return answer
     }
 
-
     override suspend fun awaitCompletion() {
         val ready = CompletableDeferred<Unit>()
         watcher.receive(WatcherMessage.AwaitTermination(ready))

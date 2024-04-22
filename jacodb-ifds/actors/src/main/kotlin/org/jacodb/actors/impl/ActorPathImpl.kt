@@ -25,7 +25,7 @@ internal data class ActorPathImpl(
         ActorPathImpl(path + name)
 
     override fun toString(): String =
-        path.joinToString(separator = "/", prefix = "/")
+        path.joinToString(prefix = "/", separator = "/")
 
     companion object {
         val emptyPath = ActorPathImpl(emptyList())

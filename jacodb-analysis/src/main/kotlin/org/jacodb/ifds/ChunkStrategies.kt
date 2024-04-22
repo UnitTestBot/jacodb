@@ -22,6 +22,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.packageName
 import org.jacodb.ifds.domain.Chunk
 
+// TODO: consider 'SingletonChunk'
 data object SingleChunk : Chunk
 
 val SingleChunkStrategy = ChunkStrategy<JcInst> {
@@ -32,21 +33,21 @@ data class MethodChunk(
     val method: JcMethod,
 ) : Chunk
 
-val MethodChunkStrategy = ChunkStrategy<JcInst> {
-    MethodChunk(it.location.method)
+val MethodChunkStrategy = ChunkStrategy<JcInst> { stmt ->
+    MethodChunk(stmt.location.method)
 }
 
 data class ClassChunk(
     val method: JcClassOrInterface,
 ) : Chunk
 
-val ClassChunkStrategy = ChunkStrategy<JcInst> {
-    val jcClass = it.location.method.enclosingClass
+val ClassChunkStrategy = ChunkStrategy<JcInst> { stmt ->
+    val jcClass = stmt.location.method.enclosingClass
     ClassChunk(jcClass)
 }
 
-val ClassWithNestedChunkStrategy = ChunkStrategy<JcInst> {
-    val jClass = generateSequence(it.location.method.enclosingClass) { it.outerClass }
+val ClassWithNestedChunkStrategy = ChunkStrategy<JcInst> { stmt ->
+    val jClass = generateSequence(stmt.location.method.enclosingClass) { it.outerClass }
         .last()
     ClassChunk(jClass)
 }
@@ -55,6 +56,6 @@ data class PackageChunk(
     val packageName: String,
 ) : Chunk
 
-val PackageChunkStrategy = ChunkStrategy<JcInst> {
-    PackageChunk(it.location.method.enclosingClass.packageName)
+val PackageChunkStrategy = ChunkStrategy<JcInst> { stmt ->
+    PackageChunk(stmt.location.method.enclosingClass.packageName)
 }

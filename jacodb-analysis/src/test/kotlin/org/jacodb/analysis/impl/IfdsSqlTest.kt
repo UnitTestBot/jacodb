@@ -91,7 +91,6 @@ class IfdsSqlTest : BaseAnalysisTest() {
         system.collectTaintResults()
     }
 
-
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet89")
     fun `test on Juliet's CWE 89`(className: String) {

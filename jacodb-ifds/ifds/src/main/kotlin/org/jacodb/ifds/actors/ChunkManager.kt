@@ -59,7 +59,8 @@ class ChunkManager<Stmt>(
                 parent.send(NewChunk(chunk))
             }
             Signal.PostStop -> {
-
+                // TODO: explain why we do nothing here
+                // do nothing
             }
         }
     }

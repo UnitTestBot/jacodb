@@ -3,7 +3,6 @@ dependencies {
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_coroutines_core)
 
-    // ifds
     implementation(project(":jacodb-ifds:actors"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")

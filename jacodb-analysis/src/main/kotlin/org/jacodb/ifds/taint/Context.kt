@@ -18,6 +18,7 @@ package org.jacodb.ifds.taint
 
 import org.jacodb.analysis.taint.BackwardTaintAnalyzer
 import org.jacodb.analysis.taint.EdgeForOtherRunner
+import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintAnalyzer
 import org.jacodb.analysis.taint.TaintDomainFact
@@ -30,10 +31,10 @@ import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.NewResult
-import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.toEdge
+import org.jacodb.ifds.messages.NewEdge as IfdsNewEdge
+import org.jacodb.ifds.messages.NewResult as IfdsNewResult
+import org.jacodb.ifds.messages.NewSummaryEdge as IfdsNewSummaryEdge
 
 private fun complementRunner(type: RunnerId): RunnerId =
     when (type) {
@@ -69,7 +70,7 @@ fun taintIfdsContext(
                 is EdgeForOtherRunner -> {
                     if (useBackwardRunner) {
                         val edgeForOtherRunner =
-                            NewEdge(
+                            IfdsNewEdge(
                                 complementRunner(runnerId),
                                 event.edge.toEdge(),
                                 Reason.FromOtherRunner(edge, runnerId)
@@ -78,13 +79,13 @@ fun taintIfdsContext(
                     }
                 }
 
-                is org.jacodb.analysis.taint.NewSummaryEdge -> {
-                    val summaryEdge = NewSummaryEdge(runnerId, event.edge.toEdge())
+                is NewSummaryEdge -> {
+                    val summaryEdge = IfdsNewSummaryEdge(runnerId, event.edge.toEdge())
                     add(summaryEdge)
                 }
 
                 is NewVulnerability -> {
-                    val result = NewResult(runnerId, TaintVulnerability(event.vulnerability))
+                    val result = IfdsNewResult(runnerId, TaintVulnerability(event.vulnerability))
                     add(result)
                 }
             }

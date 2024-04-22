@@ -38,7 +38,8 @@ class Runner<Stmt, Fact>(
 ) : Actor<RunnerMessage> {
     private val routerFactory = roundRobinRouter(size = 8) {
         @Suppress("UNCHECKED_CAST")
-        Worker<Stmt, Fact>(ifdsContext.getAnalyzer(chunk, runnerId) as Analyzer<Stmt, Fact>, this@ActorContext.self)
+        val analyzer = ifdsContext.getAnalyzer(chunk, runnerId) as Analyzer<Stmt, Fact>
+        Worker<Stmt, Fact>(analyzer, this@ActorContext.self)
     }
 
     private val router = spawn("workers", actorFactory = routerFactory)

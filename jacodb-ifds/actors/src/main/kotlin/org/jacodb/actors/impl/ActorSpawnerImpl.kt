@@ -18,10 +18,10 @@ package org.jacodb.actors.impl
 
 import kotlinx.coroutines.channels.Channel
 import mu.KotlinLogging.logger
+import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
-import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
 import org.jacodb.actors.impl.workers.ActorWorker
 import org.jacodb.actors.impl.workers.InternalActorWorker
@@ -32,6 +32,7 @@ internal class ActorSpawnerImpl(
     private val self: ActorPath,
     private val system: ActorSystemImpl<*>,
 ) : ActorSpawner {
+
     private val children = hashMapOf<String, ActorContextImpl<*>>()
 
     override fun <ChildMessage> spawn(

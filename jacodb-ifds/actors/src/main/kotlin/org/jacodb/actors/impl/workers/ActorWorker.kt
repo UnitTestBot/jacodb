@@ -27,7 +27,7 @@ internal typealias WorkerFactory<Message> =
         (ActorPath, Channel<Message>, ActorSystemImpl<*>) -> ActorWorker<Message>
 
 internal abstract class ActorWorker<Message>(
-    path: ActorPath
+    path: ActorPath,
 ) : ActorRef<Message>(path) {
     abstract fun launchLoop(
         coroutineContext: CoroutineContext,
