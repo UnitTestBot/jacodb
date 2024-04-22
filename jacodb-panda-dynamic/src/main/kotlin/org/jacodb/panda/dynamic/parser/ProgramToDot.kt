@@ -58,7 +58,7 @@ fun IRParser.Program.toDot(): String {
             property.method.basicBlocks.forEach { bb ->
                 bb.successors.forEach { succ ->
                     lines += "  \"${clazz.name}.${property.name}.bb${bb.id}.0\" -> \"${clazz.name}.${property.name}.bb${succ}.0\"" +
-                            " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
+                        " [ltail=\"${clazz.name}.${property.name}.bb${bb.id}\",lhead=\"${clazz.name}.${property.name}.bb${succ}\"];"
                 }
             }
 
@@ -84,9 +84,9 @@ fun IRParser.Program.toDot(): String {
                     if (inst.users.isNotEmpty()) {
                         labelLines += "users = ${inst.users}"
                     }
-//                    if (inst.catchers.isNotEmpty()) {
-//                        labelLines += "catchers = ${inst.catchers}"
-//                    }
+                    // if (inst.catchers.isNotEmpty()) {
+                    //     labelLines += "catchers = ${inst.catchers}"
+                    // }
                     // INSTRUCTION
                     lines += "    \"${clazz.name}.${property.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
                         labelLines.joinToString("") { "${it}\\l" }
