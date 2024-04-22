@@ -114,6 +114,9 @@ fun IRParser.Program.toDot(): String {
                     if (inst.users.isNotEmpty()) {
                         labelLines += "users = ${inst.users}"
                     }
+                    if (inst.stringData != null) {
+                        labelLines += "string_data = ${inst.stringData}"
+                    }
                     // if (inst.catchers.isNotEmpty()) {
                     //     labelLines += "catchers = ${inst.catchers}"
                     // }
