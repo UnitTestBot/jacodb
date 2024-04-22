@@ -53,16 +53,10 @@ suspend fun ActorSystem<CommonMessage>.collectTaintResults(): List<JcTaintVulner
         .mapTo(mutableListOf()) { it.vulnerability }
 
 suspend fun ActorSystem<CommonMessage>.collectTaintComputationData(): IfdsComputationData<JcInst, TaintDomainFact, TaintVulnerability> {
-    val results = ask {
-        CollectAll(
-            ForwardRunner,
-            it
-        )
-    }
+    val results = ask { CollectAll(ForwardRunner, it) }
 
     @Suppress("UNCHECKED_CAST")
-    val mergedData =
-        mergeIfdsResults(results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, TaintVulnerability>>)
+    val ifdsData = results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, TaintVulnerability>>
 
-    return mergedData
+    return mergeIfdsResults(ifdsData)
 }

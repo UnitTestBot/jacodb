@@ -20,7 +20,6 @@ import org.jacodb.actors.api.ActorSystem
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.npe.NpeAnalyzer
 import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
@@ -32,6 +31,7 @@ import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.mergeIfdsResults
 import org.jacodb.impl.features.usagesExt
+import org.jacodb.analysis.taint.TaintVulnerability as JcTaintVulnerability
 
 suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
@@ -46,11 +46,16 @@ suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     }
 }
 
-suspend fun ActorSystem<CommonMessage>.collectNpeResults(): List<TaintVulnerability> {
+suspend fun ActorSystem<CommonMessage>.collectNpeResults(): List<JcTaintVulnerability> =
+    collectNpeComputationData()
+        .results
+        .mapTo(mutableListOf()) { it.vulnerability }
+
+suspend fun ActorSystem<CommonMessage>.collectNpeComputationData(): IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability> {
     val results = ask { CollectAll(SingleRunner, it) }
 
     @Suppress("UNCHECKED_CAST")
-    val mergedData =
-        mergeIfdsResults(results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability>>)
-    return mergedData.results.mapTo(mutableListOf()) { it.vulnerability }
+    val ifdsData = results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability>>
+
+    return mergeIfdsResults(ifdsData)
 }
