@@ -54,11 +54,38 @@ fun PandaProgramIr.toDot(): String {
                 lines += "  \"${clazz.name}.${method.name}\" -> \"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}\"];"
             }
 
-            // Basic blocks successors:
+            // // Basic blocks successors:
+            // method.basicBlocks.forEach { bb ->
+            //     bb.successors.forEach { succ ->
+            //         lines += "  \"${clazz.name}.${method.name}.bb${bb.id}.0\" -> \"${clazz.name}.${method.name}.bb${succ}.0\"" +
+            //             " [ltail=\"${clazz.name}.${method.name}.bb${bb.id}\",lhead=\"${clazz.name}.${method.name}.bb${succ}\"];"
+            //     }
+            // }
+
             method.basicBlocks.forEach { bb ->
-                bb.successors.forEach { succ ->
-                    lines += "  \"${clazz.name}.${method.name}.bb${bb.id}.0\" -> \"${clazz.name}.${method.name}.bb${succ}.0\"" +
-                        " [ltail=\"${clazz.name}.${method.name}.bb${bb.id}\",lhead=\"${clazz.name}.${method.name}.bb${succ}\"];"
+                val last = bb.insts.lastOrNull()
+                if (last != null) {
+                    val i = bb.insts.size - 1
+                    when (last) {
+                        is PandaIfImmInstIr -> {
+                            for ((j, succ) in bb.successors.withIndex()) {
+                                lines += "  \"${clazz.name}.${method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${method.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
+                            }
+                        }
+
+                        is PandaTryInstIr -> {
+                            for ((j, succ) in bb.successors.withIndex()) {
+                                lines += "  \"${clazz.name}.${method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${method.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
+                            }
+                        }
+
+                        else -> {
+                            check(bb.successors.size <= 1)
+                            for (succ in bb.successors) {
+                                lines += "  \"${clazz.name}.${method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${method.name}.bb${succ}\"];"
+                            }
+                        }
+                    }
                 }
             }
 

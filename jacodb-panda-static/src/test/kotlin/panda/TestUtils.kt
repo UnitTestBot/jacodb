@@ -18,8 +18,11 @@ package panda
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
+import org.jacodb.panda.dynamic.parser.dumpDot
 import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
+import org.jacodb.panda.staticvm.ir.dumpDot
+import java.io.File
 import java.io.FileInputStream
 
 internal object TestUtils {
@@ -29,5 +32,28 @@ internal object TestUtils {
         val input = FileInputStream(sampleFilePath)
         val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
         return PandaProject.fromProgramIr(program, withStdlib = true)
+    }
+}
+
+object TestDot {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val filePath = "async.ir"
+        val stream = this::class.java.getResourceAsStream("/$filePath")
+            ?: error("Could not find resource: '$filePath'")
+        val program = PandaProgramIr.from(stream)
+
+        val path = "dump"
+        val dotFile = File("$path.dot")
+        program.dumpDot(dotFile)
+        println("Generated DOT file: ${dotFile.absolutePath}")
+        for (format in listOf("pdf", "png")) {
+            val formatFile = File("$path.$format")
+            val p = Runtime.getRuntime().exec("dot -T$format $dotFile -o $formatFile")
+            p.waitFor()
+            print(p.inputStream.bufferedReader().readText())
+            print(p.errorStream.bufferedReader().readText())
+            println("Generated ${format.uppercase()} file: ${formatFile.absolutePath}")
+        }
     }
 }
