@@ -122,12 +122,6 @@
        }
       ],
       "name": "divideByOne",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideByOne"
      },
@@ -182,7 +176,7 @@
           "id": "v3",
           "imms": [
            0,
-           744,
+           732,
            2
           ],
           "inputs": [
@@ -190,11 +184,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v5"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v6",
@@ -209,7 +204,7 @@
           "id": "v5",
           "imms": [
            1,
-           415
+           403
           ],
           "inputs": [
            "v3",
@@ -217,8 +212,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideMixedNumbers",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v8",
@@ -233,7 +229,7 @@
           "id": "v7",
           "imms": [
            2,
-           604,
+           592,
            1
           ],
           "inputs": [
@@ -241,11 +237,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v9"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v10",
@@ -260,7 +257,7 @@
           "id": "v9",
           "imms": [
            3,
-           378
+           366
           ],
           "inputs": [
            "v7",
@@ -268,8 +265,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideByOne",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v12",
@@ -284,7 +282,7 @@
           "id": "v11",
           "imms": [
            4,
-           772,
+           760,
            2
           ],
           "inputs": [
@@ -292,11 +290,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v13"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v14",
@@ -311,7 +310,7 @@
           "id": "v13",
           "imms": [
            5,
-           450
+           438
           ],
           "inputs": [
            "v11",
@@ -319,8 +318,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideNumbersReversed",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v16",
@@ -335,7 +335,7 @@
           "id": "v15",
           "imms": [
            6,
-           800,
+           788,
            1
           ],
           "inputs": [
@@ -343,11 +343,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v17"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v18",
@@ -362,7 +363,7 @@
           "id": "v17",
           "imms": [
            7,
-           391
+           379
           ],
           "inputs": [
            "v15",
@@ -370,8 +371,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideConstantByNumber",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v20",
@@ -386,7 +388,7 @@
           "id": "v19",
           "imms": [
            8,
-           716,
+           704,
            1
           ],
           "inputs": [
@@ -394,11 +396,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v21"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v22",
@@ -413,7 +416,7 @@
           "id": "v21",
           "imms": [
            9,
-           473
+           461
           ],
           "inputs": [
            "v19",
@@ -421,8 +424,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideOneByNumber",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v24",
@@ -437,7 +441,7 @@
           "id": "v23",
           "imms": [
            10,
-           660,
+           648,
            2
           ],
           "inputs": [
@@ -445,11 +449,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v25"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v26",
@@ -464,7 +469,7 @@
           "id": "v25",
           "imms": [
            11,
-           435
+           423
           ],
           "inputs": [
            "v23",
@@ -472,8 +477,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideNumbers",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v28",
@@ -488,7 +494,7 @@
           "id": "v27",
           "imms": [
            12,
-           688,
+           676,
            1
           ],
           "inputs": [
@@ -496,11 +502,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v29"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v30",
@@ -515,7 +522,7 @@
           "id": "v29",
           "imms": [
            13,
-           360
+           348
           ],
           "inputs": [
            "v27",
@@ -523,8 +530,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "divideByConstant",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v32",
@@ -580,11 +588,6 @@
        }
       ],
       "name": "func_main_0",
-      "parameters": [
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".func_main_0"
      },
@@ -709,13 +712,6 @@
        }
       ],
       "name": "divideNumbers",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideNumbers"
      },
@@ -840,12 +836,6 @@
        }
       ],
       "name": "divideByConstant",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideByConstant"
      },
@@ -970,12 +960,6 @@
        }
       ],
       "name": "divideOneByNumber",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideOneByNumber"
      },
@@ -1152,13 +1136,6 @@
        }
       ],
       "name": "divideMixedNumbers",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideMixedNumbers"
      },
@@ -1283,13 +1260,6 @@
        }
       ],
       "name": "divideNumbersReversed",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideNumbersReversed"
      },
@@ -1414,12 +1384,6 @@
        }
       ],
       "name": "divideConstantByNumber",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".divideConstantByNumber"
      },

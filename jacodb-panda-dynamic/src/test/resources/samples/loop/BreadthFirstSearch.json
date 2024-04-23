@@ -1,0 +1,4616 @@
+{
+ "classes": [
+  {
+   "name": "GLOBAL",
+   "properties": [
+    {
+     "method": {
+      "accessFlags": 264,
+      "basicBlocks": [
+       {
+        "id": 36,
+        "insts": [
+         {
+          "id": "v84",
+          "index": 0,
+          "opcode": "Parameter",
+          "type": "any",
+          "users": [
+           "103p",
+           "95p"
+          ],
+          "visit": "parameter"
+         },
+         {
+          "id": "v85",
+          "index": 1,
+          "opcode": "Parameter",
+          "type": "any",
+          "users": [
+           "104p",
+           "96p"
+          ],
+          "visit": "parameter"
+         },
+         {
+          "id": "v86",
+          "index": 2,
+          "opcode": "Parameter",
+          "type": "any",
+          "users": [
+           "105p",
+           "97p"
+          ],
+          "visit": "parameter"
+         },
+         {
+          "id": "v87",
+          "index": 3,
+          "opcode": "Parameter",
+          "type": "any",
+          "users": [
+           "106p",
+           "98p"
+          ],
+          "visit": "parameter"
+         },
+         {
+          "id": "v88",
+          "index": 4,
+          "opcode": "Parameter",
+          "type": "any",
+          "users": [
+           "107p",
+           "99p",
+           "v93"
+          ],
+          "visit": "parameter"
+         },
+         {
+          "id": "v111",
+          "opcode": "Constant",
+          "type": "i32",
+          "users": [
+           "v112"
+          ],
+          "value": 0,
+          "visit": "constant"
+         },
+         {
+          "id": "v115",
+          "opcode": "Constant",
+          "type": "i64",
+          "users": [
+           "v221",
+           "v207",
+           "v199",
+           "v190",
+           "v180",
+           "v136",
+           "v127",
+           "v114"
+          ],
+          "value": 0,
+          "visit": "constant"
+         }
+        ],
+        "successors": [
+         0
+        ]
+       },
+       {
+        "id": 0,
+        "insts": [
+         {
+          "id": "v90",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v89"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v89",
+          "imms": [
+           0
+          ],
+          "inputs": [
+           "v90"
+          ],
+          "intrinsic_id": "Intrinsic.createemptyarray",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "101p"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v92",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v91"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v91",
+          "imms": [
+           1
+          ],
+          "inputs": [
+           "v92"
+          ],
+          "intrinsic_id": "Intrinsic.createemptyarray",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "100p",
+           "v93"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v94",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v93"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v93",
+          "imms": [
+           2,
+           0
+          ],
+          "inputs": [
+           "v91",
+           "v88",
+           "v94"
+          ],
+          "intrinsic_id": "Intrinsic.stownbyindex",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         36
+        ],
+        "successors": [
+         21
+        ]
+       },
+       {
+        "id": 21,
+        "insts": [
+         {
+          "id": "95p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v84",
+           "265p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "265p",
+           "152p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "96p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v85",
+           "266p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "266p",
+           "153p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "97p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v86",
+           "267p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "267p",
+           "154p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "98p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v87",
+           "268p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "268p",
+           "161p",
+           "155p",
+           "v142"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "99p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v88",
+           "269p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "269p",
+           "156p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "100p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v91",
+           "270p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "270p",
+           "157p",
+           "v119",
+           "v117",
+           "v109"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "101p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v89",
+           "271p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "271p",
+           "158p",
+           "v282",
+           "v140",
+           "v138",
+           "v123",
+           "v121"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "103p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v84",
+           "276p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "276p",
+           "166p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "104p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v85",
+           "277p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "277p",
+           "167p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "105p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v86",
+           "278p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "278p",
+           "168p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "106p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v87",
+           "279p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "279p",
+           "169p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "107p",
+          "inputBlocks": [
+           0,
+           6
+          ],
+          "inputs": [
+           "v88",
+           "280p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "280p",
+           "170p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "v110",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v109"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v109",
+          "imms": [
+           4,
+           352
+          ],
+          "inputs": [
+           "100p",
+           "v110"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "length",
+          "type": "any",
+          "users": [
+           "v112"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v113",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v112"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v112",
+          "imms": [
+           6
+          ],
+          "inputs": [
+           "v109",
+           "v111",
+           "v113"
+          ],
+          "intrinsic_id": "Intrinsic.greater",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v114"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v114",
+          "inputs": [
+           "v112",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "EQ",
+          "type": "u1",
+          "users": [
+           "v116"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v116",
+          "immediate": 0,
+          "inputs": [
+           "v114"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         0,
+         6
+        ],
+        "successors": [
+         1,
+         2
+        ]
+       },
+       {
+        "id": 2,
+        "insts": [
+         {
+          "id": "v118",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v117"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v117",
+          "imms": [
+           7,
+           385
+          ],
+          "inputs": [
+           "100p",
+           "v118"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "shift",
+          "type": "any",
+          "users": [
+           "v119"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v120",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v119"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v119",
+          "imms": [
+           9
+          ],
+          "inputs": [
+           "100p",
+           "v117",
+           "v120"
+          ],
+          "intrinsic_id": "Intrinsic.callthis0",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "162p",
+           "159p",
+           "v142",
+           "v140",
+           "v123"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v122",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v121"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v121",
+          "imms": [
+           11,
+           342
+          ],
+          "inputs": [
+           "101p",
+           "v122"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "includes",
+          "type": "any",
+          "users": [
+           "v123"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v124",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v123"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v123",
+          "imms": [
+           13
+          ],
+          "inputs": [
+           "101p",
+           "v119",
+           "v121",
+           "v124"
+          ],
+          "intrinsic_id": "Intrinsic.callthis1",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v125"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v126",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v125"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v125",
+          "inputs": [
+           "v123",
+           "v126"
+          ],
+          "intrinsic_id": "Intrinsic.istrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v127"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v127",
+          "inputs": [
+           "v125",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v128"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v128",
+          "immediate": 0,
+          "inputs": [
+           "v127"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         21
+        ],
+        "successors": [
+         3,
+         4
+        ]
+       },
+       {
+        "id": 4,
+        "insts": [
+         {
+          "id": "v130",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v129"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v129",
+          "inputs": [
+           "v130"
+          ],
+          "intrinsic_id": "Intrinsic.ldtrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "133p"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         2
+        ],
+        "successors": [
+         5
+        ]
+       },
+       {
+        "id": 3,
+        "insts": [
+         {
+          "id": "v132",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v131"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v131",
+          "inputs": [
+           "v132"
+          ],
+          "intrinsic_id": "Intrinsic.ldfalse",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "133p"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         2
+        ],
+        "successors": [
+         5
+        ]
+       },
+       {
+        "id": 5,
+        "insts": [
+         {
+          "id": "133p",
+          "inputBlocks": [
+           4,
+           3
+          ],
+          "inputs": [
+           "v129",
+           "v131"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "v134"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "v135",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v134"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v134",
+          "inputs": [
+           "133p",
+           "v135"
+          ],
+          "intrinsic_id": "Intrinsic.isfalse",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v136"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v136",
+          "inputs": [
+           "v134",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v137"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v137",
+          "immediate": 0,
+          "inputs": [
+           "v136"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         4,
+         3
+        ],
+        "successors": [
+         6,
+         7
+        ]
+       },
+       {
+        "id": 7,
+        "insts": [
+         {
+          "id": "v139",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v138"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v138",
+          "imms": [
+           15,
+           371
+          ],
+          "inputs": [
+           "101p",
+           "v139"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "push",
+          "type": "any",
+          "users": [
+           "v140"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v141",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v140"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v140",
+          "imms": [
+           17
+          ],
+          "inputs": [
+           "101p",
+           "v119",
+           "v138",
+           "v141"
+          ],
+          "intrinsic_id": "Intrinsic.callthis1",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "call"
+         },
+         {
+          "id": "v143",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v142"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v142",
+          "imms": [
+           19
+          ],
+          "inputs": [
+           "98p",
+           "v119",
+           "v143"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyvalue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "160p",
+           "v146"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         5
+        ],
+        "successors": [
+         24
+        ]
+       },
+       {
+        "id": 24,
+        "insts": [
+         {
+          "id": "v0",
+          "opcode": "Try",
+          "type": "void",
+          "visit": "default"
+         }
+        ],
+        "predecessors": [
+         7
+        ],
+        "successors": [
+         28,
+         38
+        ]
+       },
+       {
+        "id": 28,
+        "predecessors": [
+         24
+        ],
+        "successors": [
+         25
+        ]
+       },
+       {
+        "id": 25,
+        "predecessors": [
+         28
+        ],
+        "successors": [
+         29,
+         38
+        ]
+       },
+       {
+        "id": 38,
+        "insts": [
+         {
+          "id": "v29",
+          "opcode": "CatchPhi",
+          "type": "any",
+          "users": [
+           "v144"
+          ],
+          "visit": "catch_phi"
+         }
+        ],
+        "predecessors": [
+         24,
+         25
+        ],
+        "successors": [
+         33
+        ]
+       },
+       {
+        "id": 33,
+        "insts": [
+         {
+          "id": "v145",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v144"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v144",
+          "inputs": [
+           "v29",
+           "v145"
+          ],
+          "intrinsic_id": "Intrinsic.throw",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         38
+        ],
+        "successors": [
+         37
+        ]
+       },
+       {
+        "id": 29,
+        "predecessors": [
+         25
+        ],
+        "successors": [
+         8
+        ]
+       },
+       {
+        "id": 8,
+        "insts": [
+         {
+          "id": "v147",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v146"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v146",
+          "imms": [
+           21
+          ],
+          "inputs": [
+           "v142",
+           "v147"
+          ],
+          "intrinsic_id": "Intrinsic.getiterator",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "165p",
+           "v148"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v149",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v148"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v148",
+          "imms": [
+           23,
+           365
+          ],
+          "inputs": [
+           "v146",
+           "v149"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "next",
+          "type": "any",
+          "users": [
+           "164p"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v151",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v150"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v150",
+          "inputs": [
+           "v151"
+          ],
+          "intrinsic_id": "Intrinsic.ldfalse",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "163p"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         29
+        ],
+        "successors": [
+         20
+        ]
+       },
+       {
+        "id": 20,
+        "insts": [
+         {
+          "id": "152p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "95p",
+           "152p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "265p",
+           "152p",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30",
+           "v30"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "153p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "96p",
+           "153p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "266p",
+           "153p",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31",
+           "v31"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "154p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "97p",
+           "154p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "267p",
+           "154p",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32",
+           "v32"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "155p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "98p",
+           "155p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "268p",
+           "155p",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33",
+           "v33"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "156p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "99p",
+           "156p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "269p",
+           "156p",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34",
+           "v34"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "157p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "100p",
+           "157p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "270p",
+           "157p",
+           "v35",
+           "v203",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v35",
+           "v201"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "158p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "101p",
+           "158p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "271p",
+           "158p",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v36",
+           "v186",
+           "v184"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "159p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v119",
+           "159p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "159p",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38",
+           "v38"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "160p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v142",
+           "160p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "160p",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39",
+           "v39"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "161p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "98p",
+           "161p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "161p",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40",
+           "v40"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "162p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v119",
+           "162p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "162p",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "163p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v150",
+           "163p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "163p",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42",
+           "v42"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "164p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v148",
+           "164p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "164p",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v43",
+           "v172"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "165p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "v146",
+           "165p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "165p",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v44",
+           "v172"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "166p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "103p",
+           "166p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "276p",
+           "166p",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51",
+           "v51"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "167p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "104p",
+           "167p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "277p",
+           "167p",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52",
+           "v52"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "168p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "105p",
+           "168p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "278p",
+           "168p",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53",
+           "v53"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "169p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "106p",
+           "169p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "279p",
+           "169p",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54",
+           "v54"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "170p",
+          "inputBlocks": [
+           8,
+           15
+          ],
+          "inputs": [
+           "107p",
+           "170p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "280p",
+           "170p",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55",
+           "v55"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "v173",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v172"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v172",
+          "imms": [
+           25
+          ],
+          "inputs": [
+           "165p",
+           "164p",
+           "v173"
+          ],
+          "intrinsic_id": "Intrinsic.callthis0",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v45",
+           "v182",
+           "v176",
+           "v174"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v175",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v174"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v174",
+          "inputs": [
+           "v172",
+           "v175"
+          ],
+          "intrinsic_id": "Intrinsic.throw.ifnotobject",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v177",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v176"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v176",
+          "imms": [
+           27,
+           323
+          ],
+          "inputs": [
+           "v172",
+           "v177"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "done",
+          "type": "any",
+          "users": [
+           "v178"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v179",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v178"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v178",
+          "inputs": [
+           "v176",
+           "v179"
+          ],
+          "intrinsic_id": "Intrinsic.istrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v180"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v180",
+          "inputs": [
+           "v178",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v181"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v181",
+          "immediate": 0,
+          "inputs": [
+           "v180"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         8,
+         15
+        ],
+        "successors": [
+         6,
+         9
+        ]
+       },
+       {
+        "id": 9,
+        "insts": [
+         {
+          "id": "v183",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v182"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v182",
+          "imms": [
+           29,
+           392
+          ],
+          "inputs": [
+           "v172",
+           "v183"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "value",
+          "type": "any",
+          "users": [
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v50",
+           "v46",
+           "v203",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v46",
+           "v186"
+          ],
+          "visit": "ldobjbyname"
+         }
+        ],
+        "predecessors": [
+         20
+        ],
+        "successors": [
+         26
+        ]
+       },
+       {
+        "id": 26,
+        "insts": [
+         {
+          "id": "v1",
+          "opcode": "Try",
+          "type": "void",
+          "visit": "default"
+         }
+        ],
+        "predecessors": [
+         9
+        ],
+        "successors": [
+         30,
+         39
+        ]
+       },
+       {
+        "id": 30,
+        "insts": [
+         {
+          "id": "v185",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v184"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v184",
+          "imms": [
+           31,
+           342
+          ],
+          "inputs": [
+           "158p",
+           "v185"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "includes",
+          "type": "any",
+          "users": [
+           "v186"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v187",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v186"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v186",
+          "imms": [
+           33
+          ],
+          "inputs": [
+           "158p",
+           "v182",
+           "v184",
+           "v187"
+          ],
+          "intrinsic_id": "Intrinsic.callthis1",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v188"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v189",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v188"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v188",
+          "inputs": [
+           "v186",
+           "v189"
+          ],
+          "intrinsic_id": "Intrinsic.istrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v190"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v190",
+          "inputs": [
+           "v188",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v191"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v191",
+          "immediate": 0,
+          "inputs": [
+           "v190"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         26
+        ],
+        "successors": [
+         10,
+         11
+        ]
+       },
+       {
+        "id": 11,
+        "insts": [
+         {
+          "id": "v193",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v192"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v192",
+          "inputs": [
+           "v193"
+          ],
+          "intrinsic_id": "Intrinsic.ldtrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "196p"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         30
+        ],
+        "successors": [
+         12
+        ]
+       },
+       {
+        "id": 10,
+        "insts": [
+         {
+          "id": "v195",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v194"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v194",
+          "inputs": [
+           "v195"
+          ],
+          "intrinsic_id": "Intrinsic.ldfalse",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "196p"
+          ],
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         30
+        ],
+        "successors": [
+         12
+        ]
+       },
+       {
+        "id": 12,
+        "insts": [
+         {
+          "id": "196p",
+          "inputBlocks": [
+           11,
+           10
+          ],
+          "inputs": [
+           "v192",
+           "v194"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "v197"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "v198",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v197"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v197",
+          "inputs": [
+           "196p",
+           "v198"
+          ],
+          "intrinsic_id": "Intrinsic.isfalse",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v199"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v199",
+          "inputs": [
+           "v197",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v200"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v200",
+          "immediate": 0,
+          "inputs": [
+           "v199"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         11,
+         10
+        ],
+        "successors": [
+         13,
+         14
+        ]
+       },
+       {
+        "id": 14,
+        "insts": [
+         {
+          "id": "v202",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v201"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v201",
+          "imms": [
+           35,
+           371
+          ],
+          "inputs": [
+           "157p",
+           "v202"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "push",
+          "type": "any",
+          "users": [
+           "v203"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v204",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v203"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v203",
+          "imms": [
+           37
+          ],
+          "inputs": [
+           "157p",
+           "v182",
+           "v201",
+           "v204"
+          ],
+          "intrinsic_id": "Intrinsic.callthis1",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "call"
+         }
+        ],
+        "predecessors": [
+         12
+        ],
+        "successors": [
+         27
+        ]
+       },
+       {
+        "id": 27,
+        "predecessors": [
+         14
+        ],
+        "successors": [
+         13,
+         39
+        ]
+       },
+       {
+        "id": 39,
+        "insts": [
+         {
+          "id": "v30",
+          "inputs": [
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p",
+           "152p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v31",
+          "inputs": [
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p",
+           "153p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v32",
+          "inputs": [
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p",
+           "154p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v33",
+          "inputs": [
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p",
+           "155p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v34",
+          "inputs": [
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p",
+           "156p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v35",
+          "inputs": [
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p",
+           "157p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v36",
+          "inputs": [
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p",
+           "158p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v38",
+          "inputs": [
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p",
+           "159p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v39",
+          "inputs": [
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p",
+           "160p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v40",
+          "inputs": [
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p",
+           "161p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v41",
+          "inputs": [
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p",
+           "162p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "users": [
+           "236p",
+           "v68",
+           "v68",
+           "v68",
+           "v68",
+           "v68",
+           "v68"
+          ],
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v42",
+          "inputs": [
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p",
+           "163p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "users": [
+           "v205"
+          ],
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v43",
+          "inputs": [
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p",
+           "164p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v44",
+          "inputs": [
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p",
+           "165p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "users": [
+           "v223",
+           "v215"
+          ],
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v45",
+          "inputs": [
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172",
+           "v172"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v46",
+          "inputs": [
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v50",
+          "inputs": [
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182",
+           "v182"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v51",
+          "inputs": [
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p",
+           "166p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v52",
+          "inputs": [
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p",
+           "167p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v53",
+          "inputs": [
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p",
+           "168p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v54",
+          "inputs": [
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p",
+           "169p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v55",
+          "inputs": [
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p",
+           "170p"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v184",
+           "v186",
+           "v188",
+           "v190",
+           "v191",
+           "v192",
+           "v194",
+           "v197",
+           "v199",
+           "v200",
+           "v201",
+           "v203"
+          ],
+          "type": "any",
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v56",
+          "opcode": "CatchPhi",
+          "type": "any",
+          "users": [
+           "242p",
+           "v260",
+           "v74",
+           "v74",
+           "v74",
+           "v74",
+           "v74",
+           "v74"
+          ],
+          "visit": "catch_phi"
+         }
+        ],
+        "predecessors": [
+         26,
+         27
+        ],
+        "successors": [
+         34
+        ]
+       },
+       {
+        "id": 34,
+        "insts": [
+         {
+          "id": "v206",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v205"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v205",
+          "inputs": [
+           "v42",
+           "v206"
+          ],
+          "intrinsic_id": "Intrinsic.istrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v207"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v207",
+          "inputs": [
+           "v205",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v208"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v208",
+          "immediate": 0,
+          "inputs": [
+           "v207"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         39
+        ],
+        "successors": [
+         16,
+         17
+        ]
+       },
+       {
+        "id": 17,
+        "insts": [
+         {
+          "id": "v210",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v209"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v209",
+          "inputs": [
+           "v210"
+          ],
+          "intrinsic_id": "Intrinsic.ldtrue",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v212",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v211"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v211",
+          "inputs": [
+           "v212"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v214",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v213"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v213",
+          "inputs": [
+           "v214"
+          ],
+          "intrinsic_id": "Intrinsic.ldhole",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         34
+        ],
+        "successors": [
+         22
+        ]
+       },
+       {
+        "id": 22,
+        "insts": [
+         {
+          "id": "v2",
+          "opcode": "Try",
+          "type": "void",
+          "visit": "default"
+         }
+        ],
+        "predecessors": [
+         17
+        ],
+        "successors": [
+         31,
+         40
+        ]
+       },
+       {
+        "id": 31,
+        "insts": [
+         {
+          "id": "v216",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v215"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v215",
+          "imms": [
+           39,
+           377
+          ],
+          "inputs": [
+           "v44",
+           "v216"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "return",
+          "type": "any",
+          "users": [
+           "v223",
+           "v219"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v218",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v217"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v217",
+          "inputs": [
+           "v218"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v219"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v220",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v219"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v219",
+          "imms": [
+           41
+          ],
+          "inputs": [
+           "v215",
+           "v217",
+           "v220"
+          ],
+          "intrinsic_id": "Intrinsic.eq",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v221"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v221",
+          "inputs": [
+           "v219",
+           "v115"
+          ],
+          "opcode": "Compare",
+          "operandsType": "any",
+          "operator": "NE",
+          "type": "u1",
+          "users": [
+           "v222"
+          ],
+          "visit": "compare"
+         },
+         {
+          "id": "v222",
+          "immediate": 0,
+          "inputs": [
+           "v221"
+          ],
+          "opcode": "IfImm",
+          "operandsType": "u1",
+          "operator": "NE",
+          "type": "void",
+          "visit": "if_imm"
+         }
+        ],
+        "predecessors": [
+         22
+        ],
+        "successors": [
+         16,
+         18
+        ]
+       },
+       {
+        "id": 18,
+        "insts": [
+         {
+          "id": "v224",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v223"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v223",
+          "imms": [
+           42
+          ],
+          "inputs": [
+           "v44",
+           "v215",
+           "v224"
+          ],
+          "intrinsic_id": "Intrinsic.callthis0",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "call"
+         }
+        ],
+        "predecessors": [
+         31
+        ],
+        "successors": [
+         23
+        ]
+       },
+       {
+        "id": 23,
+        "predecessors": [
+         18
+        ],
+        "successors": [
+         32,
+         40
+        ]
+       },
+       {
+        "id": 40,
+        "insts": [
+         {
+          "id": "v68",
+          "inputs": [
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41",
+           "v41"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v215",
+           "v217",
+           "v219",
+           "v221",
+           "v222",
+           "v223"
+          ],
+          "type": "any",
+          "users": [
+           "236p"
+          ],
+          "visit": "catch_phi"
+         },
+         {
+          "id": "v74",
+          "inputs": [
+           "v56",
+           "v56",
+           "v56",
+           "v56",
+           "v56",
+           "v56"
+          ],
+          "opcode": "CatchPhi",
+          "throwers": [
+           "v215",
+           "v217",
+           "v219",
+           "v221",
+           "v222",
+           "v223"
+          ],
+          "type": "any",
+          "users": [
+           "242p"
+          ],
+          "visit": "catch_phi"
+         }
+        ],
+        "predecessors": [
+         22,
+         23
+        ],
+        "successors": [
+         35
+        ]
+       },
+       {
+        "id": 35,
+        "predecessors": [
+         40
+        ],
+        "successors": [
+         19
+        ]
+       },
+       {
+        "id": 32,
+        "predecessors": [
+         23
+        ],
+        "successors": [
+         19
+        ]
+       },
+       {
+        "id": 19,
+        "insts": [
+         {
+          "id": "236p",
+          "inputBlocks": [
+           32,
+           35
+          ],
+          "inputs": [
+           "v41",
+           "v68"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "visit": "phi"
+         },
+         {
+          "id": "242p",
+          "inputBlocks": [
+           32,
+           35
+          ],
+          "inputs": [
+           "v56",
+           "v74"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "v252"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "v253",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v252"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v252",
+          "inputs": [
+           "242p",
+           "v253"
+          ],
+          "intrinsic_id": "Intrinsic.throw",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         32,
+         35
+        ],
+        "successors": [
+         37
+        ]
+       },
+       {
+        "id": 16,
+        "insts": [
+         {
+          "id": "v261",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v260"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v260",
+          "inputs": [
+           "v56",
+           "v261"
+          ],
+          "intrinsic_id": "Intrinsic.throw",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         34,
+         31
+        ],
+        "successors": [
+         37
+        ]
+       },
+       {
+        "id": 13,
+        "predecessors": [
+         12,
+         27
+        ],
+        "successors": [
+         15
+        ]
+       },
+       {
+        "id": 15,
+        "predecessors": [
+         13
+        ],
+        "successors": [
+         20
+        ]
+       },
+       {
+        "id": 6,
+        "insts": [
+         {
+          "id": "265p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "95p",
+           "152p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "95p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "266p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "96p",
+           "153p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "96p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "267p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "97p",
+           "154p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "97p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "268p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "98p",
+           "155p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "98p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "269p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "99p",
+           "156p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "99p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "270p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "100p",
+           "157p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "100p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "271p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "101p",
+           "158p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "101p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "276p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "103p",
+           "166p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "103p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "277p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "104p",
+           "167p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "104p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "278p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "105p",
+           "168p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "105p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "279p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "106p",
+           "169p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "106p"
+          ],
+          "visit": "phi"
+         },
+         {
+          "id": "280p",
+          "inputBlocks": [
+           5,
+           20
+          ],
+          "inputs": [
+           "107p",
+           "170p"
+          ],
+          "opcode": "Phi",
+          "type": "any",
+          "users": [
+           "107p"
+          ],
+          "visit": "phi"
+         }
+        ],
+        "predecessors": [
+         5,
+         20
+        ],
+        "successors": [
+         21
+        ]
+       },
+       {
+        "id": 1,
+        "insts": [
+         {
+          "id": "v283",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v282"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v282",
+          "inputs": [
+           "101p",
+           "v283"
+          ],
+          "intrinsic_id": "Intrinsic.return",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         21
+        ],
+        "successors": [
+         37
+        ]
+       },
+       {
+        "id": 37,
+        "predecessors": [
+         33,
+         19,
+         16,
+         1
+        ]
+       }
+      ],
+      "name": "bfs",
+      "returnType": "any",
+      "signature": ".bfs"
+     },
+     "name": "bfs"
+    },
+    {
+     "method": {
+      "accessFlags": 264,
+      "basicBlocks": [
+       {
+        "id": 1,
+        "insts": [
+         {
+          "id": "v0",
+          "index": 0,
+          "opcode": "Parameter",
+          "type": "any",
+          "visit": "parameter"
+         },
+         {
+          "id": "v1",
+          "index": 1,
+          "opcode": "Parameter",
+          "type": "any",
+          "visit": "parameter"
+         },
+         {
+          "id": "v2",
+          "index": 2,
+          "opcode": "Parameter",
+          "type": "any",
+          "visit": "parameter"
+         }
+        ],
+        "successors": [
+         0
+        ]
+       },
+       {
+        "id": 0,
+        "insts": [
+         {
+          "id": "v4",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v3"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v3",
+          "imms": [
+           0,
+           523,
+           2
+          ],
+          "inputs": [
+           "v4"
+          ],
+          "intrinsic_id": "Intrinsic.definefunc",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v5"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v6",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v5"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v5",
+          "imms": [
+           1,
+           303
+          ],
+          "inputs": [
+           "v3",
+           "v6"
+          ],
+          "intrinsic_id": "Intrinsic.stglobalvar",
+          "opcode": "Intrinsic",
+          "string_data": "bfs",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v8",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v7"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v7",
+          "imms": [
+           2,
+           628
+          ],
+          "inputs": [
+           "v8"
+          ],
+          "intrinsic_id": "Intrinsic.createobjectwithbuffer",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v33",
+           "v31",
+           "v27",
+           "v23",
+           "v19",
+           "v15",
+           "v11"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v10",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v9"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v9",
+          "imms": [
+           3,
+           674
+          ],
+          "inputs": [
+           "v10"
+          ],
+          "intrinsic_id": "Intrinsic.createarraywithbuffer",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v11"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v12",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v11"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v11",
+          "imms": [
+           4,
+           297
+          ],
+          "inputs": [
+           "v7",
+           "v9",
+           "v12"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "a",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v14",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v13"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v13",
+          "imms": [
+           6,
+           688
+          ],
+          "inputs": [
+           "v14"
+          ],
+          "intrinsic_id": "Intrinsic.createarraywithbuffer",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v15"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v16",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v15"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v15",
+          "imms": [
+           7,
+           300
+          ],
+          "inputs": [
+           "v7",
+           "v13",
+           "v16"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "b",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v18",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v17"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v17",
+          "imms": [
+           9,
+           697
+          ],
+          "inputs": [
+           "v18"
+          ],
+          "intrinsic_id": "Intrinsic.createarraywithbuffer",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v19"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v20",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v19"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v19",
+          "imms": [
+           10,
+           308
+          ],
+          "inputs": [
+           "v7",
+           "v17",
+           "v20"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "c",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v22",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v21"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v21",
+          "imms": [
+           12,
+           706
+          ],
+          "inputs": [
+           "v22"
+          ],
+          "intrinsic_id": "Intrinsic.createarraywithbuffer",
+          "opcode": "Intrinsic",
+          "string_data": "",
+          "type": "any",
+          "users": [
+           "v23"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v24",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v23"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v23",
+          "imms": [
+           13,
+           320
+          ],
+          "inputs": [
+           "v7",
+           "v21",
+           "v24"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "d",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v26",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v25"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v25",
+          "imms": [
+           15
+          ],
+          "inputs": [
+           "v26"
+          ],
+          "intrinsic_id": "Intrinsic.createemptyarray",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v27"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v28",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v27"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v27",
+          "imms": [
+           16,
+           329
+          ],
+          "inputs": [
+           "v7",
+           "v25",
+           "v28"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "e",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v30",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v29"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v29",
+          "imms": [
+           18
+          ],
+          "inputs": [
+           "v30"
+          ],
+          "intrinsic_id": "Intrinsic.createemptyarray",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v31"
+          ],
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v32",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v31"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v31",
+          "imms": [
+           19,
+           332
+          ],
+          "inputs": [
+           "v7",
+           "v29",
+           "v32"
+          ],
+          "intrinsic_id": "Intrinsic.definefieldbyname",
+          "opcode": "Intrinsic",
+          "string_data": "f",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v34",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v33"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v33",
+          "imms": [
+           21,
+           335
+          ],
+          "inputs": [
+           "v7",
+           "v34"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "graph",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v36",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v35"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v35",
+          "imms": [
+           22,
+           303
+          ],
+          "inputs": [
+           "v36"
+          ],
+          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "opcode": "Intrinsic",
+          "string_data": "bfs",
+          "type": "any",
+          "users": [
+           "v42"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v38",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v37"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v37",
+          "imms": [
+           23,
+           335
+          ],
+          "inputs": [
+           "v38"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "graph",
+          "type": "any",
+          "users": [
+           "v42"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v39",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v40"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v40",
+          "inputs": [
+           "v39"
+          ],
+          "opcode": "LoadString",
+          "string": "a",
+          "stringOffset": 297,
+          "type": "ref",
+          "users": [
+           "v41"
+          ],
+          "visit": "load_string"
+         },
+         {
+          "id": "v41",
+          "inputs": [
+           "v40"
+          ],
+          "opcode": "CastValueToAnyType",
+          "type": "any",
+          "users": [
+           "v42"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v43",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v42"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v42",
+          "imms": [
+           24
+          ],
+          "inputs": [
+           "v37",
+           "v41",
+           "v35",
+           "v43"
+          ],
+          "intrinsic_id": "Intrinsic.callargs2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v44"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v45",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v44"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v44",
+          "imms": [
+           26,
+           399
+          ],
+          "inputs": [
+           "v42",
+           "v45"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "visitOrder",
+          "type": "void",
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v47",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v46"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v46",
+          "imms": [
+           27,
+           311
+          ],
+          "inputs": [
+           "v47"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "console",
+          "type": "any",
+          "users": [
+           "v55",
+           "v48"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v49",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v48"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v48",
+          "imms": [
+           28,
+           360
+          ],
+          "inputs": [
+           "v46",
+           "v49"
+          ],
+          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "opcode": "Intrinsic",
+          "string_data": "log",
+          "type": "any",
+          "users": [
+           "v55"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v50",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v51"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v51",
+          "inputs": [
+           "v50"
+          ],
+          "opcode": "LoadString",
+          "string": "Visit order:",
+          "stringOffset": 283,
+          "type": "ref",
+          "users": [
+           "v52"
+          ],
+          "visit": "load_string"
+         },
+         {
+          "id": "v52",
+          "inputs": [
+           "v51"
+          ],
+          "opcode": "CastValueToAnyType",
+          "type": "any",
+          "users": [
+           "v55"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v54",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v53"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v53",
+          "imms": [
+           30,
+           399
+          ],
+          "inputs": [
+           "v54"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "visitOrder",
+          "type": "any",
+          "users": [
+           "v55"
+          ],
+          "visit": "ldobjbyname"
+         },
+         {
+          "id": "v56",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v55"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v55",
+          "imms": [
+           31
+          ],
+          "inputs": [
+           "v46",
+           "v52",
+           "v53",
+           "v48",
+           "v56"
+          ],
+          "intrinsic_id": "Intrinsic.callthis2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "call"
+         },
+         {
+          "id": "v58",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v57"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v57",
+          "inputs": [
+           "v58"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v60",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v59"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v59",
+          "inputs": [
+           "v60"
+          ],
+          "intrinsic_id": "Intrinsic.returnundefined",
+          "opcode": "Intrinsic",
+          "type": "void",
+          "visit": "intrinsic"
+         }
+        ],
+        "predecessors": [
+         1
+        ],
+        "successors": [
+         2
+        ]
+       },
+       {
+        "id": 2,
+        "predecessors": [
+         0
+        ]
+       }
+      ],
+      "name": "func_main_0",
+      "returnType": "any",
+      "signature": ".func_main_0"
+     },
+     "name": "func_main_0"
+    }
+   ]
+  }
+ ]
+}

@@ -230,7 +230,9 @@ class IRParser(
         var opcode: String,
         val operandsType: String? = null,
         val operator: String? = null,
-        val stringData: String? = null,
+        @SerialName("string_data")
+        var stringData: String? = null,
+        val string: String? = null,
         val stringOffset: Int? = null,
         val type: String? = null,
         val users: List<String> = emptyList(),
@@ -249,6 +251,8 @@ class IRParser(
 
         init {
             opcode = intrinsicId ?: opcode
+            // Remove later
+            stringData = string ?: stringData
         }
 
         private fun String.trimId(): Int {

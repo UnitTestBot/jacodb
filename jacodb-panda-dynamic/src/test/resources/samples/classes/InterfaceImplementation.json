@@ -65,14 +65,14 @@
           "id": "v3",
           "imms": [
            0,
-           244
+           236
           ],
           "inputs": [
            "v4"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "Math",
+          "string_data": "Math",
           "type": "any",
           "users": [
            "v5"
@@ -92,7 +92,7 @@
           "id": "v5",
           "imms": [
            1,
-           250
+           242
           ],
           "inputs": [
            "v3",
@@ -100,7 +100,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "PI",
+          "string_data": "PI",
           "type": "any",
           "users": [
            "v12"
@@ -120,7 +120,7 @@
           "id": "v7",
           "imms": [
            3,
-           296
+           288
           ],
           "inputs": [
            "v2",
@@ -128,7 +128,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "radius",
+          "string_data": "radius",
           "type": "any",
           "users": [
            "v10"
@@ -225,11 +225,6 @@
        }
       ],
       "name": "getArea",
-      "parameters": [
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".getArea"
      },
@@ -303,7 +298,7 @@
           "id": "v4",
           "imms": [
            0,
-           296
+           288
           ],
           "inputs": [
            "v2",
@@ -312,8 +307,9 @@
           ],
           "intrinsic_id": "Intrinsic.stobjbyname",
           "opcode": "Intrinsic",
+          "string_data": "radius",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v7",
@@ -351,12 +347,6 @@
        }
       ],
       "name": "Circle",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".Circle"
      },
@@ -444,8 +434,8 @@
           "id": "v5",
           "imms": [
            0,
-           416,
-           564,
+           408,
+           547,
            1
           ],
           "inputs": [
@@ -474,7 +464,7 @@
           "id": "v7",
           "imms": [
            1,
-           285
+           277
           ],
           "inputs": [
            "v5",
@@ -482,7 +472,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "prototype",
+          "string_data": "prototype",
           "type": "any",
           "visit": "ldobjbyname"
          },
@@ -499,7 +489,7 @@
           "id": "v9",
           "imms": [
            3,
-           222
+           214
           ],
           "inputs": [
            "v5",
@@ -507,8 +497,9 @@
           ],
           "intrinsic_id": "Intrinsic.sttoglobalrecord",
           "opcode": "Intrinsic",
+          "string_data": "Circle",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v12",
@@ -523,14 +514,14 @@
           "id": "v11",
           "imms": [
            4,
-           222
+           214
           ],
           "inputs": [
            "v12"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "Circle",
+          "string_data": "Circle",
           "type": "any",
           "users": [
            "v14"
@@ -578,7 +569,7 @@
           "id": "v16",
           "imms": [
            7,
-           254
+           246
           ],
           "inputs": [
            "v14",
@@ -586,8 +577,9 @@
           ],
           "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
           "opcode": "Intrinsic",
+          "string_data": "circle",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v19",
@@ -602,14 +594,14 @@
           "id": "v18",
           "imms": [
            8,
-           262
+           254
           ],
           "inputs": [
            "v19"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "console",
+          "string_data": "console",
           "type": "any",
           "users": [
            "v31",
@@ -630,7 +622,7 @@
           "id": "v20",
           "imms": [
            9,
-           280
+           272
           ],
           "inputs": [
            "v18",
@@ -638,7 +630,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "log",
+          "string_data": "log",
           "type": "any",
           "users": [
            "v31"
@@ -660,8 +652,8 @@
            "v22"
           ],
           "opcode": "LoadString",
-          "stringData": "Circle area:",
-          "stringOffset": 230,
+          "string": "Circle area:",
+          "stringOffset": 222,
           "type": "ref",
           "users": [
            "v24"
@@ -693,14 +685,14 @@
           "id": "v25",
           "imms": [
            11,
-           254
+           246
           ],
           "inputs": [
            "v26"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "circle",
+          "string_data": "circle",
           "type": "any",
           "users": [
            "v29",
@@ -721,7 +713,7 @@
           "id": "v27",
           "imms": [
            12,
-           271
+           263
           ],
           "inputs": [
            "v25",
@@ -729,7 +721,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "getArea",
+          "string_data": "getArea",
           "type": "any",
           "users": [
            "v29"
@@ -843,11 +835,6 @@
        }
       ],
       "name": "func_main_0",
-      "parameters": [
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".func_main_0"
      },

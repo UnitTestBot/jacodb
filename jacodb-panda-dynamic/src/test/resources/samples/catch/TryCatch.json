@@ -54,8 +54,8 @@
            "v16"
           ],
           "opcode": "LoadString",
-          "stringData": "",
-          "stringOffset": 189,
+          "string": "",
+          "stringOffset": 185,
           "type": "ref",
           "users": [
            "v18"
@@ -87,7 +87,7 @@
           "id": "v19",
           "imms": [
            0,
-           260
+           256
           ],
           "inputs": [
            "v18",
@@ -95,8 +95,9 @@
           ],
           "intrinsic_id": "Intrinsic.sttoglobalrecord",
           "opcode": "Intrinsic",
+          "string_data": "result",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          }
         ],
         "predecessors": [
@@ -142,8 +143,8 @@
            "v21"
           ],
           "opcode": "LoadString",
-          "stringData": "An error occurred!",
-          "stringOffset": 191,
+          "string": "An error occurred!",
+          "stringOffset": 187,
           "type": "ref",
           "users": [
            "v23"
@@ -175,14 +176,14 @@
           "id": "v24",
           "imms": [
            1,
-           230
+           226
           ],
           "inputs": [
            "v25"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "Error",
+          "string_data": "Error",
           "type": "any",
           "users": [
            "v26"
@@ -265,7 +266,7 @@
           "users": [
            "v33"
           ],
-          "visit": "default"
+          "visit": "catch_phi"
          }
         ],
         "predecessors": [
@@ -294,8 +295,8 @@
            "v30"
           ],
           "opcode": "LoadString",
-          "stringData": "Caught an error: ",
-          "stringOffset": 211,
+          "string": "Caught an error: ",
+          "stringOffset": 207,
           "type": "ref",
           "users": [
            "v32"
@@ -327,7 +328,7 @@
           "id": "v33",
           "imms": [
            4,
-           251
+           247
           ],
           "inputs": [
            "v12",
@@ -335,7 +336,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "message",
+          "string_data": "message",
           "type": "any",
           "users": [
            "v35"
@@ -382,7 +383,7 @@
           "id": "v37",
           "imms": [
            7,
-           260
+           256
           ],
           "inputs": [
            "v35",
@@ -390,8 +391,9 @@
           ],
           "intrinsic_id": "Intrinsic.trystglobalbyname",
           "opcode": "Intrinsic",
+          "string_data": "result",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          }
         ],
         "predecessors": [
@@ -417,14 +419,14 @@
           "id": "v39",
           "imms": [
            8,
-           237
+           233
           ],
           "inputs": [
            "v40"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "console",
+          "string_data": "console",
           "type": "any",
           "users": [
            "v45",
@@ -445,7 +447,7 @@
           "id": "v41",
           "imms": [
            9,
-           246
+           242
           ],
           "inputs": [
            "v39",
@@ -453,7 +455,7 @@
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "stringData": "log",
+          "string_data": "log",
           "type": "any",
           "users": [
            "v45"
@@ -473,14 +475,14 @@
           "id": "v43",
           "imms": [
            11,
-           260
+           256
           ],
           "inputs": [
            "v44"
           ],
           "intrinsic_id": "Intrinsic.tryldglobalbyname",
           "opcode": "Intrinsic",
-          "stringData": "result",
+          "string_data": "result",
           "type": "any",
           "users": [
            "v45"
@@ -567,11 +569,6 @@
        }
       ],
       "name": "func_main_0",
-      "parameters": [
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".func_main_0"
      },

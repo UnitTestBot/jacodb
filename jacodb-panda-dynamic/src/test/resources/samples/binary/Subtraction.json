@@ -52,7 +52,7 @@
           "id": "v3",
           "imms": [
            0,
-           667,
+           655,
            1
           ],
           "inputs": [
@@ -60,11 +60,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v5"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v6",
@@ -79,7 +80,7 @@
           "id": "v5",
           "imms": [
            1,
-           457
+           445
           ],
           "inputs": [
            "v3",
@@ -87,8 +88,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractToZero",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v8",
@@ -103,7 +105,7 @@
           "id": "v7",
           "imms": [
            2,
-           723,
+           711,
            1
           ],
           "inputs": [
@@ -111,11 +113,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v9"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v10",
@@ -130,7 +133,7 @@
           "id": "v9",
           "imms": [
            3,
-           357
+           345
           ],
           "inputs": [
            "v7",
@@ -138,8 +141,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractFromZero",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v12",
@@ -154,7 +158,7 @@
           "id": "v11",
           "imms": [
            4,
-           779,
+           767,
            2
           ],
           "inputs": [
@@ -162,11 +166,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v13"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v14",
@@ -181,7 +186,7 @@
           "id": "v13",
           "imms": [
            5,
-           375
+           363
           ],
           "inputs": [
            "v11",
@@ -189,8 +194,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractMixedNumbers",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v16",
@@ -205,7 +211,7 @@
           "id": "v15",
           "imms": [
            6,
-           807,
+           795,
            2
           ],
           "inputs": [
@@ -213,11 +219,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v17"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v18",
@@ -232,7 +239,7 @@
           "id": "v17",
           "imms": [
            7,
-           414
+           402
           ],
           "inputs": [
            "v15",
@@ -240,8 +247,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractNumbersReversed",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v20",
@@ -256,7 +264,7 @@
           "id": "v19",
           "imms": [
            8,
-           695,
+           683,
            2
           ],
           "inputs": [
@@ -264,11 +272,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v21"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v22",
@@ -283,7 +292,7 @@
           "id": "v21",
           "imms": [
            9,
-           397
+           385
           ],
           "inputs": [
            "v19",
@@ -291,8 +300,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractNumbers",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v24",
@@ -307,7 +317,7 @@
           "id": "v23",
           "imms": [
            10,
-           751,
+           739,
            1
           ],
           "inputs": [
@@ -315,11 +325,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v25"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v26",
@@ -334,7 +345,7 @@
           "id": "v25",
           "imms": [
            11,
-           439
+           427
           ],
           "inputs": [
            "v23",
@@ -342,8 +353,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtractReversed",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v28",
@@ -358,7 +370,7 @@
           "id": "v27",
           "imms": [
            12,
-           639,
+           627,
            1
           ],
           "inputs": [
@@ -366,11 +378,12 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
            "v29"
           ],
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v30",
@@ -385,7 +398,7 @@
           "id": "v29",
           "imms": [
            13,
-           473
+           461
           ],
           "inputs": [
            "v27",
@@ -393,8 +406,9 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
+          "string_data": "subtraction",
           "type": "void",
-          "visit": "intrinsic"
+          "visit": "ldobjbyname"
          },
          {
           "id": "v32",
@@ -450,11 +464,6 @@
        }
       ],
       "name": "func_main_0",
-      "parameters": [
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".func_main_0"
      },
@@ -579,12 +588,6 @@
        }
       ],
       "name": "subtraction",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtraction"
      },
@@ -709,12 +712,6 @@
        }
       ],
       "name": "subtractToZero",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractToZero"
      },
@@ -839,13 +836,6 @@
        }
       ],
       "name": "subtractNumbers",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractNumbers"
      },
@@ -970,12 +960,6 @@
        }
       ],
       "name": "subtractFromZero",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractFromZero"
      },
@@ -1100,12 +1084,6 @@
        }
       ],
       "name": "subtractReversed",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractReversed"
      },
@@ -1256,13 +1234,6 @@
        }
       ],
       "name": "subtractMixedNumbers",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractMixedNumbers"
      },
@@ -1387,13 +1358,6 @@
        }
       ],
       "name": "subtractNumbersReversed",
-      "parameters": [
-       "any",
-       "any",
-       "any",
-       "any",
-       "any"
-      ],
       "returnType": "any",
       "signature": ".subtractNumbersReversed"
      },
