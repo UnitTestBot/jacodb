@@ -105,6 +105,9 @@ fun PandaProgramIr.toDot(): String {
                 bb.insts.forEachIndexed { i, inst ->
                     val labelLines: MutableList<String> = mutableListOf()
                     labelLines += "${inst.id}: ${inst.opcode}: ${inst.type}"
+                    if (inst is PandaConstantInstIr) {
+                        labelLines += "value = ${inst.value}"
+                    }
                     if (inst.inputs.isNotEmpty()) {
                         labelLines += "inputs = ${inst.inputs}"
                     }
