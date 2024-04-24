@@ -98,6 +98,9 @@ fun PandaProgramIr.toDot(): String {
                     if (inst is PandaConstantInstIr) {
                         labelLines += "value = ${inst.value}"
                     }
+                    if (inst is PandaLoadStringInstIr) {
+                        labelLines += "string = ${inst.string}"
+                    }
                     if (inst.inputs.isNotEmpty()) {
                         labelLines += "inputs = ${inst.inputs}"
                     }
