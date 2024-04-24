@@ -66,4 +66,5 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitPandaAssignInst(inst: PandaAssignInst): T
     fun visitPandaCallInst(inst: PandaCallInst): T
     fun visitPandaIfInst(inst: PandaIfInst): T
+    fun visitPandaGotoInst(inst: PandaGotoInst): T
 }

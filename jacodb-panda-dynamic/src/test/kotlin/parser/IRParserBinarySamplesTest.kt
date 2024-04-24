@@ -97,7 +97,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractToZero" -> {
                         assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {
@@ -142,7 +142,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractNumbers" -> {
                         assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {
@@ -188,7 +188,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractFromZero" -> {
                         assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {
@@ -233,7 +233,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractReversed" -> {
                         assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {
@@ -278,7 +278,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractMixedNumbers" -> {
                         assertEquals(3, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {
@@ -344,7 +344,7 @@ class IRParserBinarySamplesTest {
 
                     "subtractNumbersReversed" -> {
                         assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
                                 0 -> {

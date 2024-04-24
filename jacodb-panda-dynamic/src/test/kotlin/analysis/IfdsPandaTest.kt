@@ -183,19 +183,19 @@ class IfdsPandaTest {
                                 id = 0,
                                 successors = setOf(1),
                                 predecessors = emptySet(),
-                                start = PandaInstRef(0),
-                                end = PandaInstRef(1)
+                                _start = PandaInstRef(0),
+                                _end = PandaInstRef(1)
                             ), PandaBasicBlock(
                                 id = 1,
                                 successors = setOf(),
                                 predecessors = setOf(0),
-                                start = PandaInstRef(0),
-                                end = PandaInstRef(1)
+                                _start = PandaInstRef(0),
+                                _end = PandaInstRef(1)
                             )
                         )
                         it.instructions = listOf(
                             PandaReturnInst(
-                                location = PandaInstLocation(method = it, index = 0, lineNumber = 3),
+                                location = PandaInstLocation(method = it, _index = 0, lineNumber = 3),
                                 returnValue = PandaNullConstant
                             )
                         )

@@ -41,6 +41,7 @@ import org.jacodb.panda.dynamic.api.PandaDivExpr
 import org.jacodb.panda.dynamic.api.PandaEqExpr
 import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaGeExpr
+import org.jacodb.panda.dynamic.api.PandaGotoInst
 import org.jacodb.panda.dynamic.api.PandaGtExpr
 import org.jacodb.panda.dynamic.api.PandaIfInst
 import org.jacodb.panda.dynamic.api.PandaInst
@@ -161,7 +162,7 @@ class IRParser(
         var currentLocalVarId = 0
 
         @Transient
-        var currentId = 0
+        var currentId = -1
 
         @Transient
         private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
@@ -383,15 +384,80 @@ class IRParser(
     }
 
     private fun mapInstructions(program: Program) {
-        val programInstructions = program.classes
+        val programMethods: List<ProgramMethod> = program.classes
             .flatMap { it.properties }
-            .flatMap { it.method.basicBlocks }
-            .flatMap { it.insts }
+            .map {it.method}
 
-        programInstructions.forEach { programInst ->
-            val currentMethod: ProgramMethod = programInst.currentMethod()
-            mapOpcode(programInst, currentMethod)
-            currentMethod.idToBB[programInst.currentBB().id] = mapBasicBlock(programInst.currentBB())
+        programMethods.flatMap { it.basicBlocks }.forEach { bb ->
+            val currentMethod: ProgramMethod = bb.method
+            val startId = if (currentMethod.currentId == -1) -1 else currentMethod.currentId + 1
+            bb.insts.forEach { programInst ->
+                mapOpcode(programInst, currentMethod)
+            }
+            val endId = currentMethod.currentId
+            if (startId <= endId && endId >= 0) {
+                bb.start = if (startId == -1) 0 else startId
+                addEmptyJump(currentMethod)
+                bb.end = currentMethod.currentId
+            }
+
+            currentMethod.idToBB[bb.id] = mapBasicBlock(bb)
+        }
+
+        val gotoToBB = preprocessGoto(programMethods)
+
+        postprocessGoto(programMethods, gotoToBB)
+    }
+
+    private fun preprocessGoto(programMethods: List<ProgramMethod>): Map<PandaInst, PandaBasicBlock> {
+        val gotoToBB = mutableMapOf<PandaInst, PandaBasicBlock>()
+        programMethods.forEach { method ->
+            val instructions = method.insts
+            val basicBlocks = method.idToBB.values.sortedBy { it.id }
+            val visited = mutableSetOf<Int>()
+            val queue = ArrayDeque<Int>()
+            queue.add(0)
+            while (queue.isNotEmpty()) {
+                val currentBB = basicBlocks[queue.removeFirst()]
+                visited.add(currentBB.id)
+
+                val gotoInst =
+                    (instructions.find { it.location.index == currentBB.end.index } as? PandaGotoInst)
+               gotoInst?.let { gotoToBB[it] = currentBB }
+
+                for (succId in currentBB.successors) {
+                    if (gotoInst != null && succId in visited) {
+                        val succBB = basicBlocks[succId]
+                        gotoInst.setTarget(succBB.start)
+                        continue
+                    }
+                    queue.add(succId)
+                }
+            }
+        }
+
+        return gotoToBB
+    }
+
+    private fun postprocessGoto(programMethods: List<ProgramMethod>, gotoToBB: Map<PandaInst, PandaBasicBlock>) {
+        programMethods.forEach { method ->
+            val gotoToRemove = method.insts.filter { inst ->
+                inst is PandaGotoInst && inst.target.index == inst.location.index + 1
+            }
+            val gotoIndices = gotoToRemove.map {it.location.index}
+
+            method.insts.forEachIndexed { idx, inst ->
+                inst.decLocationIndex(gotoIndices)
+            }
+
+            gotoToRemove.forEach { gotoInst ->
+                method.insts.remove(gotoInst)
+                val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
+                enclosingBB.updateRange(
+                    enclosingBB.start,
+                    PandaInstRef(enclosingBB.end.index - 1)
+                )
+            }
         }
     }
 
@@ -400,8 +466,8 @@ class IRParser(
             id = bb.id,
             successors = bb.successors.toSet(),
             predecessors = bb.predecessors.toSet(),
-            start = PandaInstRef(bb.start),
-            end = PandaInstRef(bb.end)
+            _start = PandaInstRef(bb.start),
+            _end = PandaInstRef(bb.end)
         )
     }
 
@@ -412,6 +478,13 @@ class IRParser(
     }
 
     private var currentBasicBlock: ProgramBasicBlock? = null
+
+    private fun addEmptyJump(method: ProgramMethod) {
+        val location = locationFromOp(method=method)
+        method.insts += PandaGotoInst(location).apply {
+            this.setTarget(PandaInstRef(location.index + 1))
+        }
+    }
 
     private fun mapOpcode(op: ProgramInst, method: ProgramMethod) = with(op) {
         val inputs = inputsViaOp(this)
@@ -627,6 +700,16 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            opcode == "Intrinsic.createarraywithbuffer" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.stconsttoglobalrecord" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             opcode == "Intrinsic.callthis0" -> {
                 val instCallValue = inputs[0] as PandaInstanceCallValue
                 val callExpr = PandaVirtualCallExpr(
@@ -806,7 +889,17 @@ class IRParser(
             else -> checkIgnoredInstructions(this)
         }
 
-        matchBasicBlockInstructionId(bb, method.currentId)
+//        if (currentBasicBlock != null && currentBasicBlock != bb) {
+//            addEmptyJump(method)
+//            matchBasicBlockInstructionId(
+//                currentBasicBlock!!,
+//                method.currentId
+//            )
+//
+//            return@with
+//        }
+//
+//        matchBasicBlockInstructionId(bb, method.currentId)
     }
 
     // private fun ProgramInst.handleOutputs(
@@ -876,11 +969,11 @@ class IRParser(
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
     }
 
-    private fun locationFromOp(op: ProgramInst): PandaInstLocation {
-        val method = op.currentMethod()
+    private fun locationFromOp(op: ProgramInst? = null, method: ProgramMethod? = null): PandaInstLocation {
+        val currentMethod = method ?: op!!.currentMethod()
         return PandaInstLocation(
-            method.pandaMethod,
-            method.currentId++,
+            currentMethod.pandaMethod,
+            ++currentMethod.currentId,
             0
         )
     }

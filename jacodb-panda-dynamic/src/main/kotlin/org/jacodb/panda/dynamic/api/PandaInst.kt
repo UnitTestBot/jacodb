@@ -18,6 +18,7 @@ package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonCallInst
+import org.jacodb.api.common.cfg.CommonGotoInst
 import org.jacodb.api.common.cfg.CommonIfInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstLocation
@@ -27,10 +28,17 @@ interface Mappable
 
 class PandaInstLocation(
     override val method: PandaMethod,
-    override val index: Int,
+    private var _index: Int,
     override val lineNumber: Int,
 ) : CommonInstLocation<PandaMethod, PandaInst> {
     // TODO: expand like JcInstLocation
+
+    internal fun decLocationIndex(count: Int) {
+        _index -= count
+    }
+
+    override val index: Int
+        get() = _index
 
     override fun toString(): String = "method.$index"
 }
@@ -50,14 +58,22 @@ data class PandaInstRef(
     override fun toString(): String = index.toString()
 }
 
-interface PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
-    override val location: PandaInstLocation
-    override val operands: List<PandaExpr>
+abstract class PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
+    abstract override val location: PandaInstLocation
+    abstract override val operands: List<PandaExpr>
 
-    fun <T> accept(visitor: PandaInstVisitor<T>): T
+    abstract fun <T> accept(visitor: PandaInstVisitor<T>): T
+
+    /**
+     * Decrements
+     */
+    internal open fun decLocationIndex(idxList: List<Int>) {
+        val count = idxList.count { gotoIdx -> gotoIdx < location.index }
+        location.decLocationIndex(count)
+    }
 }
 
-interface PandaTerminatingInst : PandaInst
+abstract class PandaTerminatingInst : PandaInst()
 
 /**
  * Mocks PandaInst for WIP purposes.
@@ -68,7 +84,7 @@ class TODOInst(
     val opcode: String,
     override val location: PandaInstLocation,
     override val operands: List<PandaExpr>,
-) : PandaInst {
+) : PandaInst() {
 
     override fun toString(): String = "$opcode(${operands.joinToString(separator = ", ")})"
 
@@ -77,16 +93,16 @@ class TODOInst(
     }
 }
 
-interface PandaBranchingInst : PandaInst {
-    val successors: List<PandaInstRef>
+abstract class PandaBranchingInst : PandaInst() {
+    abstract val successors: List<PandaInstRef>
 }
 
 class PandaIfInst(
     override val location: PandaInstLocation,
     val condition: PandaConditionExpr,
-    private val _trueBranch: Lazy<PandaInstRef>,
-    private val _falseBranch: Lazy<PandaInstRef>,
-) : PandaBranchingInst, CommonIfInst<PandaMethod, PandaInst> {
+    private var _trueBranch: Lazy<PandaInstRef>,
+    private var _falseBranch: Lazy<PandaInstRef>,
+) : PandaBranchingInst(), CommonIfInst<PandaMethod, PandaInst> {
 
     val trueBranch: PandaInstRef
         get() = minOf(_trueBranch.value, _falseBranch.value)
@@ -105,12 +121,24 @@ class PandaIfInst(
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaIfInst(this)
     }
+
+    override fun decLocationIndex(idxList: List<Int>) {
+        super.decLocationIndex(idxList)
+        val trueBranchIndex = trueBranch.index
+        val falseBranchIndex = falseBranch.index
+        val trueBranchDiff = idxList.count { gotoIdx -> gotoIdx < trueBranchIndex }
+        val falseBranchDiff = idxList.count { gotoIdx -> gotoIdx < falseBranchIndex }
+
+        _trueBranch = lazy { PandaInstRef(trueBranchIndex - trueBranchDiff) }
+        _falseBranch = lazy { PandaInstRef(falseBranchIndex - falseBranchDiff) }
+
+    }
 }
 
 class PandaReturnInst(
     override val location: PandaInstLocation,
     override val returnValue: PandaValue?,
-) : PandaTerminatingInst, CommonReturnInst<PandaMethod, PandaInst> {
+) : PandaTerminatingInst(), CommonReturnInst<PandaMethod, PandaInst> {
 
     override val operands: List<PandaExpr>
         get() = listOfNotNull(returnValue)
@@ -131,7 +159,7 @@ class PandaReturnInst(
 class PandaThrowInst(
     override val location: PandaInstLocation,
     val throwable: PandaValue,
-) : PandaTerminatingInst {
+) : PandaTerminatingInst() {
     override val operands: List<PandaExpr>
         get() = listOf(throwable)
 
@@ -146,7 +174,7 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr,
-) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
+) : PandaInst(), CommonAssignInst<PandaMethod, PandaInst> {
 
     override val operands: List<PandaExpr>
         get() = listOf(lhv, rhv)
@@ -161,7 +189,7 @@ class PandaAssignInst(
 class PandaCallInst(
     override val location: PandaInstLocation,
     val callExpr: PandaCallExpr,
-) : PandaInst, CommonCallInst<PandaMethod, PandaInst> {
+) : PandaInst(), CommonCallInst<PandaMethod, PandaInst> {
 
     override val operands: List<PandaExpr>
         get() = listOf(callExpr)
@@ -170,6 +198,37 @@ class PandaCallInst(
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaCallInst(this)
+    }
+}
+
+class PandaGotoInst(
+    override val location: PandaInstLocation
+) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {
+
+    private var _target: PandaInstRef = PandaInstRef(-1)
+
+    val target: PandaInstRef
+        get() = _target
+
+    override val successors: List<PandaInstRef>
+        get() = listOf(target)
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaGotoInst(this)
+    }
+
+    override fun toString(): String = "goto $target"
+
+    fun setTarget(newTarget: PandaInstRef) {
+        _target = newTarget
+    }
+
+    override fun decLocationIndex(idxList: List<Int>) {
+        super.decLocationIndex(idxList)
+        val diff = idxList.count { gotoIdx -> gotoIdx < target.index }
+        _target = PandaInstRef(target.index - diff)
     }
 }
 
@@ -191,6 +250,7 @@ object CallExprVisitor :
     override fun visitPandaAssignInst(inst: PandaAssignInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaCallInst(inst: PandaCallInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaIfInst(inst: PandaIfInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaGotoInst(inst: PandaGotoInst): PandaCallExpr? = defaultVisitPandaInst(inst)
 }
 
 val PandaInst.callExpr: PandaCallExpr?

@@ -73,6 +73,24 @@ class IRParserSamplesTest {
     }
 
     @Test
+    fun printPandaInstructions()  {
+        val parser = load("loop/ForLoop")
+        val program = parser.getProgram()
+        program.classes.forEach { cls ->
+            cls.properties.forEach { property ->
+                val pandaMethod = property.method.pandaMethod
+                assertNotNull(pandaMethod.name)
+                assertNotNull(pandaMethod.instructions)
+                logger.info { "Panda method '$pandaMethod'" }
+                pandaMethod.instructions.forEach { inst ->
+                    logger.info { "${inst.location.index}. $inst" }
+                }
+                logger.info { "-------------------------------------" }
+            }
+        }
+    }
+
+    @Test
     fun getSetOfProgramOpcodes() {
         val parser = load("DataFlowSecurity")
         val program = parser.getProgram()
@@ -108,12 +126,12 @@ class IRParserSamplesTest {
                 when (pandaMethod.name) {
                     "add" -> {
                         assertEquals(9, pandaMethod.instructions.size)
-                        assertEquals(4, pandaMethod.blocks.size)
+                        assertEquals(5, pandaMethod.blocks.size)
                     }
 
                     "main" -> {
                         assertEquals(4, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                     }
                 }
             }

@@ -87,9 +87,21 @@ data class PandaBasicBlock(
     val id: Int,
     val successors: Set<Int>,
     val predecessors: Set<Int>,
-    val start: PandaInstRef,
-    val end: PandaInstRef,
+    private var _start: PandaInstRef,
+    private var _end: PandaInstRef,
 ) {
+
+    val start: PandaInstRef
+        get() = _start
+
+    val end: PandaInstRef
+        get() = _end
+
+    fun updateRange(newStart: PandaInstRef, newEnd: PandaInstRef) {
+        _start = newStart
+        _end = newEnd
+    }
+
     operator fun contains(inst: PandaInst): Boolean {
         return inst.location.index in start.index..end.index
     }
