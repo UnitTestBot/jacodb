@@ -84,7 +84,8 @@ open class PandaMethod(
 
         if (name != other.name) return false
         if (parameterInfos != other.parameterInfos) return false
-        if (enclosingClass != other.enclosingClass) return false
+        // TODO waiting for support
+//        if (enclosingClass != other.enclosingClass) return false
 
         return true
     }
@@ -92,7 +93,8 @@ open class PandaMethod(
     override fun hashCode(): Int {
         var result = name.hashCode()
         result = 31 * result + parameterInfos.hashCode()
-        result = 31 * result + enclosingClass.hashCode()
+        // TODO waiting for support
+//        result = 31 * result + enclosingClass.hashCode()
         return result
     }
 }
