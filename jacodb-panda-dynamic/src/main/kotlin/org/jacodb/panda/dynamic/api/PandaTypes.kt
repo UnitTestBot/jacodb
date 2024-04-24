@@ -29,7 +29,20 @@ sealed interface PandaType : CommonType {
 
 class PandaNamedType(
     override val typeName: String,
-) : PandaType
+) : PandaType {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaNamedType
+
+        return typeName == other.typeName
+    }
+
+    override fun hashCode(): Int {
+        return typeName.hashCode()
+    }
+}
 
 object PandaAnyType : PandaType {
     override val typeName: String
@@ -72,13 +85,44 @@ class PandaArrayTypeImpl(
             is PandaArrayType -> elementType.dimensions + 1
             else -> 1
         }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaArrayTypeImpl
+
+        if (elementType != other.elementType) return false
+        if (dimensions != other.dimensions) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = elementType.hashCode()
+        result = 31 * result + dimensions
+        return result
+    }
 }
 
 interface PandaClassType : PandaRefType, CommonClassType
 
 class PandaClassTypeImpl(
     override val typeName: String,
-) : PandaClassType
+) : PandaClassType {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaClassTypeImpl
+
+        return typeName == other.typeName
+    }
+
+    override fun hashCode(): Int {
+        return typeName.hashCode()
+    }
+}
 
 interface PandaPrimitiveType : PandaType
 

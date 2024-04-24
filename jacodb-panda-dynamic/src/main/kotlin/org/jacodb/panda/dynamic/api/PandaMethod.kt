@@ -76,6 +76,25 @@ open class PandaMethod(
         }
 
     override fun toString(): String = "function $name($signature): $returnType"
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaMethod
+
+        if (name != other.name) return false
+        if (parameterInfos != other.parameterInfos) return false
+        if (enclosingClass != other.enclosingClass) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + parameterInfos.hashCode()
+        result = 31 * result + enclosingClass.hashCode()
+        return result
+    }
 }
 
 class PandaStdMethod(

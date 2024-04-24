@@ -29,6 +29,19 @@ class PandaClass(
 
     override val simpleName: String
         get() = name
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaClass
+
+        return name == other.name
+    }
+
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
 }
 
 class PandaField(
@@ -36,4 +49,22 @@ class PandaField(
     override val type: PandaTypeName,
     override val signature: String?,
     override val enclosingClass: PandaClass,
-) : CommonClassField
+) : CommonClassField {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PandaField
+
+        if (name != other.name) return false
+        if (enclosingClass != other.enclosingClass) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + enclosingClass.hashCode()
+        return result
+    }
+}
