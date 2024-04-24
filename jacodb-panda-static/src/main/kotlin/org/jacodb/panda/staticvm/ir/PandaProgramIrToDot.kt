@@ -110,6 +110,9 @@ fun PandaProgramIr.toDot(): String {
                     if (inst.catchers.isNotEmpty()) {
                         labelLines += "catchers = ${inst.catchers}"
                     }
+                    if (inst is PandaCatchPhiInstIr) {
+                        labelLines += "throwers = ${inst.throwers}"
+                    }
                     // INSTRUCTION
                     lines += "    \"${clazz.name}.${method.name}.bb${bb.id}.${i}\" [shape=box,label=\"${
                         labelLines.joinToString("") { "${it}\\l" }
