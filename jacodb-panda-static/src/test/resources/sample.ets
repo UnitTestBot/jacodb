@@ -41,7 +41,7 @@ class A extends A0 implements I1, I2 {
         try {
             if (c > 0) {
                 d = this.a / c;
-                console.print(this.b + c.toString());
+                console.print(this.b + c);
             } else if (c < 0) {
                 console.print("lapki");
             } else {

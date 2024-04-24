@@ -50,7 +50,7 @@ class PandaDemoCases {
         val stream = this::class.java.getResourceAsStream("/$path")
             ?: error("Could not find resource for program: '$path'")
         val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program)
+        val project = PandaProject.fromProgramIr(program, withStdlib = true)
         return project
     }
 

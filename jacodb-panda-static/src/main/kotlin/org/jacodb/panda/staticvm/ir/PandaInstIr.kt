@@ -182,7 +182,6 @@ data class PandaLoadStringInstIr(
     override val catchers: List<Int> = emptyList(),
     override val visit: String = "",
     val string: String,
-    val string_offset: Long = 0, // TODO: remove default value
 ) : PandaInstIr {
     override fun <T> accept(visitor: PandaInstIrVisitor<T>): T =
         visitor.visitPandaLoadStringInstIr(this)
