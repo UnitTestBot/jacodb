@@ -193,7 +193,6 @@ data class PandaLoadedValue(
         get() = listOf(instance, obj)
 
     override fun getClassAndMethodName(): List<String> {
-        assert(instance is PandaStringConstant)
         assert(obj is PandaStringConstant)
 
         return listOf((instance as PandaStringConstant).value, (obj as PandaStringConstant).value)

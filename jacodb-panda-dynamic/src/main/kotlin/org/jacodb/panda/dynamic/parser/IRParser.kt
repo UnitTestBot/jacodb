@@ -240,6 +240,7 @@ class IRParser(
         val visit: String? = null,
         val immediate: Int? = null,
         val constructorName: String? = null,
+        val throwers: List<String> = emptyList()
     ) {
 
         @Transient
