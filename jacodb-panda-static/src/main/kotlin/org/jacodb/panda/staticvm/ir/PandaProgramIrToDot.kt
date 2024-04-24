@@ -85,7 +85,7 @@ fun PandaProgramIr.toDot(): String {
                 lines += ""
                 lines += "  subgraph \"${clazz.name}.${method.name}.bb${bb.id}\" {"
                 lines += "    cluster=true;"
-                lines += "    label=\"BB ${bb.id}\\nsuccessors = ${bb.successors}\";"
+                lines += "    label=\"BB ${bb.id}\\nsuccessors = ${bb.successors}\\nisCatchBegin = ${bb.isCatchBegin}\\nisTryBegin = ${bb.isTryBegin}\\nisTryEnd = ${bb.isTryEnd}\";"
 
                 if (bb.insts.isEmpty()) {
                     lines += "    \"${clazz.name}.${method.name}.bb${bb.id}.0\" [shape=box,label=\"NOP\"];"
