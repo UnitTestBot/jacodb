@@ -46,12 +46,12 @@ class IRParserSamplesTest {
         val parser = load("DataFlowSecurity")
         val program = parser.getProgram()
         val classes = program.classes
-        logger.info { "Classes name: ${classes.joinToString(separator = ", ") { it.name }}" }
+        logger.info { "Classes name: ${classes.joinToString { it.name }}" }
         logger.info {
             "Methods name: ${
                 classes
                     .flatMap { it.properties }
-                    .joinToString(separator = ", ") { it.name }
+                    .joinToString { it.name }
             }"
         }
         assertNotNull(program)
