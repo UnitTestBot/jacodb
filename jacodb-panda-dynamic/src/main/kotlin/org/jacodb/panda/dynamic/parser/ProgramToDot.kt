@@ -56,26 +56,24 @@ fun IRParser.Program.toDot(): String {
 
             property.method.basicBlocks.forEach { bb ->
                 val last = bb.insts.lastOrNull()
-                if (last != null) {
-                    val i = bb.insts.size - 1
-                    when (last.opcode) {
-                        "IfImm" -> {
-                            for ((j, succ) in bb.successors.withIndex()) {
-                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
-                            }
+                val i = if (bb.insts.isNotEmpty()) bb.insts.lastIndex else 0
+                when (last?.opcode ?: "NOP") {
+                    "IfImm" -> {
+                        for ((j, succ) in bb.successors.withIndex()) {
+                            lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "true" else "false"}\"];"
                         }
+                    }
 
-                        "Try" -> {
-                            for ((j, succ) in bb.successors.withIndex()) {
-                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
-                            }
+                    "Try" -> {
+                        for ((j, succ) in bb.successors.withIndex()) {
+                            lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\", label=\"${if (j == 0) "try" else "catch"}\"];"
                         }
+                    }
 
-                        else -> {
-                            check(bb.successors.size <= 1)
-                            for (succ in bb.successors) {
-                                lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\"];"
-                            }
+                    else -> {
+                        // check(bb.successors.size <= 1)
+                        for (succ in bb.successors) {
+                            lines += "  \"${clazz.name}.${property.method.name}.bb${bb.id}.${i}\" -> \"${clazz.name}.${property.method.name}.bb${succ}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${succ}\"];"
                         }
                     }
                 }
