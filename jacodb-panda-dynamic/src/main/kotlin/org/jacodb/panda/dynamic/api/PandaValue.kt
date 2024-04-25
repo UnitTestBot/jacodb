@@ -186,16 +186,24 @@ data class PandaLoadedValue(
     override val instance: PandaValue,
     override val obj: PandaValue,
 ) : PandaInstanceCallValue {
+    private fun PandaValue.resolve(): String {
+        return when (this) {
+            is PandaStringConstant -> this.value
+            is PandaLocalVar -> this.typeName
+            is PandaThis -> this.typeName
+            else -> throw IllegalArgumentException("couldn't resolve $this")
+        }
+    }
 
     override val type: PandaType
         get() = PandaAnyType
+
     override val operands: List<PandaValue>
         get() = listOf(instance, obj)
 
     override fun getClassAndMethodName(): List<String> {
         assert(obj is PandaStringConstant)
-
-        return listOf((instance as PandaStringConstant).value, (obj as PandaStringConstant).value)
+        return listOf(instance.resolve(), (obj as PandaStringConstant).value)
     }
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {

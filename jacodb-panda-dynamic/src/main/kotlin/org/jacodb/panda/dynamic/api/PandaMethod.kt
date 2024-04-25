@@ -48,7 +48,7 @@ open class PandaMethod(
     private var flowGraph: PandaGraph? = null
 
     override val enclosingClass: PandaClass
-        get() = TODO("Not yet implemented")
+        get() = project.classes.find { it.name == className } ?: project.getGlobalClass()
 
     override val returnType: PandaTypeName
         get() = PandaTypeName(type.typeName)
@@ -75,7 +75,7 @@ open class PandaMethod(
             "arg ${it.index}: ${it.type.typeName}"
         }
 
-    override fun toString(): String = "function $name($signature): $returnType"
+    override fun toString(): String = "function ${enclosingClass.name}::$name($signature): $returnType"
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
