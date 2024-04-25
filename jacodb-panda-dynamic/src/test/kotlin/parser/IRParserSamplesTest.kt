@@ -26,6 +26,8 @@ private val logger = mu.KotlinLogging.logger {}
 class IRParserSamplesTest {
 
     companion object {
+        private const val SAMPLE_NAME = "MethodCollision"
+
         private fun load(name: String): IRParser {
             return loadIr(
                 filePath = "/samples/$name.json",
@@ -36,14 +38,14 @@ class IRParserSamplesTest {
 
     @Test
     fun getProject() {
-        val parser = load("classes/SimpleClass")
+        val parser = load(SAMPLE_NAME)
         val project = parser.getProject()
         assertNotNull(project)
     }
 
     @Test
     fun getProgramIR() {
-        val parser = load("DataFlowSecurity")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         val classes = program.classes
         logger.info { "Classes name: ${classes.joinToString { it.name }}" }
@@ -59,7 +61,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getPandaMethods() {
-        val parser = load("DataFlowSecurity")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->
@@ -74,7 +76,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printPandaInstructions()  {
-        val parser = load("loop/ForLoop")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->
@@ -92,7 +94,7 @@ class IRParserSamplesTest {
 
     @Test
     fun getSetOfProgramOpcodes() {
-        val parser = load("DataFlowSecurity")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         val opcodes = program.classes.asSequence()
             .flatMap { it.properties }
@@ -105,7 +107,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printMethodsInstructions() {
-        val parser = load("DataFlowSecurity")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->
