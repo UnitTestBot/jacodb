@@ -413,38 +413,53 @@ class IRParser(
         val gotoToBB = mutableMapOf<PandaInst, PandaBasicBlock>()
         programMethods.forEach { method ->
             val instructions = method.insts
-            val basicBlocks = method.idToBB.values.sortedBy { it.id }
+            val basicBlocks = method.idToBB.toMap()
 
             tailrec fun setTargetRec(gotoInst: PandaGotoInst, succBB: PandaBasicBlock) {
                 if (succBB.start.index == -1) {
                     val newSuccBBidx = succBB.successors.first().takeIf { succBB.successors.size == 1 }
                         ?: error("Can't resolve goto for multiple successors of basic block $succBB")
 
-                    setTargetRec(gotoInst, basicBlocks[newSuccBBidx])
+                    setTargetRec(gotoInst, basicBlocks[newSuccBBidx]!!)
                 } else {
                     gotoInst.setTarget(succBB.start)
                 }
             }
 
-            val visited = mutableSetOf<Int>()
-            val queue = ArrayDeque<Int>()
-            queue.add(0)
-            while (queue.isNotEmpty()) {
-                val currentBB = basicBlocks[queue.removeFirst()]
-                visited.add(currentBB.id)
+            /*
+                0 -- unvisited
+                1 -- pending
+                2 -- visited
+             */
+            val vertexState = mutableMapOf<Int, Int>().apply {
+                for (bbId in basicBlocks.keys) {
+                    this[bbId] = 0
+                }
+            }
+
+            fun detectJump(bb: PandaBasicBlock) {
+                vertexState[bb.id] = 1
 
                 val gotoInst =
-                    (instructions.find { it.location.index == currentBB.end.index } as? PandaGotoInst)
-               gotoInst?.let { gotoToBB[it] = currentBB }
-
-                for (succId in currentBB.successors) {
-                    if (gotoInst != null && succId in visited) {
-                        val succBB = basicBlocks[succId]
-                        setTargetRec(gotoInst, succBB)
-                        continue
-                    }
-                    queue.add(succId)
+                    (instructions.find { it.location.index == bb.end.index } as? PandaGotoInst)
+                gotoInst?.let {
+                    gotoToBB[it] = bb
                 }
+
+                for (succBBId in bb.successors) {
+                    val succBB = basicBlocks[succBBId]!!
+                    if (vertexState[succBBId] == 1) {
+                        setTargetRec(gotoInst!!, succBB)
+                    } else if (vertexState[succBBId] == 0) {
+                        detectJump(succBB)
+                    }
+                }
+
+                vertexState[bb.id] = 2
+            }
+
+            for (bbId in basicBlocks.keys) {
+                if (vertexState[bbId] == 0) detectJump(basicBlocks[bbId]!!)
             }
         }
 
