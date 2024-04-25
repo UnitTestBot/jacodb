@@ -414,6 +414,18 @@ class IRParser(
         programMethods.forEach { method ->
             val instructions = method.insts
             val basicBlocks = method.idToBB.values.sortedBy { it.id }
+
+            tailrec fun setTargetRec(gotoInst: PandaGotoInst, succBB: PandaBasicBlock) {
+                if (succBB.start.index == -1) {
+                    val newSuccBBidx = succBB.successors.first().takeIf { succBB.successors.size == 1 }
+                        ?: error("Can't resolve goto for multiple successors of basic block $succBB")
+
+                    setTargetRec(gotoInst, basicBlocks[newSuccBBidx])
+                } else {
+                    gotoInst.setTarget(succBB.start)
+                }
+            }
+
             val visited = mutableSetOf<Int>()
             val queue = ArrayDeque<Int>()
             queue.add(0)
@@ -428,7 +440,7 @@ class IRParser(
                 for (succId in currentBB.successors) {
                     if (gotoInst != null && succId in visited) {
                         val succBB = basicBlocks[succId]
-                        gotoInst.setTarget(succBB.start)
+                        setTargetRec(gotoInst, succBB)
                         continue
                     }
                     queue.add(succId)
@@ -489,7 +501,6 @@ class IRParser(
     private fun mapOpcode(op: ProgramInst, method: ProgramMethod) = with(op) {
         val inputs = inputsViaOp(this)
         val outputs = outputs()
-        val bb = currentBB()
 
         fun handle(expr: PandaExpr) {
             val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
@@ -700,6 +711,11 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            opcode == "Intrinsic.getiterator" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             opcode == "Intrinsic.createarraywithbuffer" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
@@ -888,18 +904,6 @@ class IRParser(
 
             else -> checkIgnoredInstructions(this)
         }
-
-//        if (currentBasicBlock != null && currentBasicBlock != bb) {
-//            addEmptyJump(method)
-//            matchBasicBlockInstructionId(
-//                currentBasicBlock!!,
-//                method.currentId
-//            )
-//
-//            return@with
-//        }
-//
-//        matchBasicBlockInstructionId(bb, method.currentId)
     }
 
     // private fun ProgramInst.handleOutputs(
@@ -919,20 +923,6 @@ class IRParser(
     //     }
     // }
 
-    private fun matchBasicBlockInstructionId(
-        bb: ProgramBasicBlock,
-        currentId: Int,
-    ) {
-        bb.end = currentId - 1
-
-        if (currentBasicBlock == null) {
-            bb.start = if (currentId == 0) -1 else 0
-            currentBasicBlock = bb
-        } else if (bb.id != currentBasicBlock?.id) {
-            bb.start = currentId
-            currentBasicBlock = bb
-        }
-    }
 
     private fun checkIgnoredInstructions(op: ProgramInst) = with(op) {
         when (opcode) {
@@ -958,12 +948,24 @@ class IRParser(
             PandaCmpOp.GE -> PandaGeExpr(inputs[0], immValue)
         }
 
+        val basicBlocks = op.currentMethod().basicBlocks.sortedBy { it.id }
+
+        tailrec fun setTargetRec(bb: ProgramBasicBlock): PandaInstRef {
+            if (bb.start == -1) {
+                val newBBidx = bb.successors.first().takeIf { bb.successors.size == 1 }
+                    ?: error("Can't resolve next instruction for conditional jump of basic block id ${bb.id}")
+                return setTargetRec(basicBlocks[newBBidx])
+            } else {
+                return op.currentMethod().idToBB[bb.id]!!.start
+            }
+        }
+
         val trueBranch = lazy {
-            op.currentMethod().idToBB[op.basicBlock.successors[0]]!!.start
+            setTargetRec(basicBlocks[op.basicBlock.successors[0]])
         }
 
         val falseBranch = lazy {
-            op.currentMethod().idToBB[op.basicBlock.successors[1]]!!.start
+            setTargetRec(basicBlocks[op.basicBlock.successors[1]])
         }
 
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
