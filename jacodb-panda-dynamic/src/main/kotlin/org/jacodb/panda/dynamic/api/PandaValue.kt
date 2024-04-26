@@ -46,17 +46,20 @@ class PandaCaughtError : PandaValue {
     override fun toString(): String = "error"
 }
 
-class PandaPhiValue : PandaValue {
+class PandaPhiValue(
+    private val _operands: Lazy<List<PandaValue>>
+) : PandaValue {
     override val type: PandaType
         get() = PandaAnyType
+
     override val operands: List<PandaValue>
-        get() = emptyList()
+        get() = _operands.value
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaPhiValue(this)
     }
 
-    override fun toString(): String = "Phi"
+    override fun toString(): String = "Phi(${operands.joinToString(separator=", ") { it.toString() }})"
 }
 
 data class PandaLocalVar(

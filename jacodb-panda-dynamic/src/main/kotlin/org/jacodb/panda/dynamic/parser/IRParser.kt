@@ -696,11 +696,10 @@ class IRParser(
             }
 
             opcode == "Phi" -> {
-                if (outputs.size > 1) {
-                    outputs.forEach { output ->
-                        addInput(method, id(), output, PandaPhiValue())
-                    }
-                }
+                if ((users.size == 1 && users[0] == id) || users.isEmpty()) return@with
+
+                val phiExpr = PandaPhiValue(lazy { inputsViaOp(this) })
+                handle(phiExpr)
             }
 
             opcode == "CatchPhi" -> {
