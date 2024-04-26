@@ -101,6 +101,7 @@ class PandaIfInst(
 ) : PandaBranchingInst, CommonIfInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
+
     override val successors: List<PandaInstRef>
         get() = listOf(trueBranch, falseBranch)
 
@@ -115,11 +116,11 @@ class PandaGotoInst(
     override val location: PandaInstLocation,
     val target: PandaInstRef,
 ) : PandaBranchingInst, CommonGotoInst<PandaMethod, PandaInst> {
-    override val successors: List<PandaInstRef>
-        get() = listOf(target)
-
     override val operands: List<PandaExpr>
         get() = emptyList()
+
+    override val successors: List<PandaInstRef>
+        get() = listOf(target)
 
     override fun toString(): String = "goto ${target.index}"
 
