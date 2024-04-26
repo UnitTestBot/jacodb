@@ -202,13 +202,11 @@ class PandaCallInst(
 }
 
 class PandaGotoInst(
-    override val location: PandaInstLocation
+    override val location: PandaInstLocation,
 ) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {
 
-    private var _target: PandaInstRef = PandaInstRef(-1)
-
-    val target: PandaInstRef
-        get() = _target
+    var target: PandaInstRef = PandaInstRef(-1)
+        private set
 
     override val successors: List<PandaInstRef>
         get() = listOf(target)
@@ -222,20 +220,20 @@ class PandaGotoInst(
     override fun toString(): String = "goto $target"
 
     internal fun setTarget(newTarget: PandaInstRef) {
-        _target = newTarget
+        target = newTarget
     }
 
     override fun decLocationIndex(idxList: List<Int>) {
         super.decLocationIndex(idxList)
         val diff = idxList.count { gotoIdx -> gotoIdx < target.index }
-        _target = PandaInstRef(target.index - diff)
+        target = PandaInstRef(target.index - diff)
     }
 }
 
 class PandaCatchInst(
     override val location: PandaInstLocation,
     val throwable: PandaValue,
-    private var _throwers: List<PandaInstRef>
+    private var _throwers: List<PandaInstRef>,
 ) : PandaInst() {
     override val operands: List<PandaExpr>
         get() = listOf(throwable)
