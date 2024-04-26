@@ -34,21 +34,29 @@ fun PandaProgramIr.toDot(): String {
     // Classes with properties:
     classes.forEach { clazz ->
         // CLASS
-        lines += ""
-        lines += "  \"${clazz.name}\" [shape=diamond]"
-        // TODO: add fields+methods to the label for class
-
-        val methods = clazz.methods
+        run {
+            val labelLines: MutableList<String> = mutableListOf()
+            labelLines += clazz.name
+            labelLines += "Methods: (${clazz.methods.size})"
+            for (method in clazz.methods) {
+                labelLines += "  ${method.signature}"
+            }
+            lines += ""
+            lines += "  \"${clazz.name}\" [shape=rectangle,label=\"${
+                labelLines.joinToString("") { "$it\\l" }
+            }\"]"
+            // TODO: add fields to the label for class
+        }
 
         // Methods inside class:
-        methods.forEach { method ->
+        clazz.methods.forEach { method ->
             // METHOD
-            lines += "  \"${clazz.name}.${method.name}\" [shape=triangle,label=\"${clazz.name}::${method.name}\"];"
+            lines += "  \"${clazz.name}.${method.name}\" [shape=diamond,label=\"${clazz.name}::${method.name}\"];"
             lines += "  \"${clazz.name}\" -> \"${clazz.name}.${method.name}\""
         }
 
         // Basic blocks inside method:
-        methods.forEach { method ->
+        clazz.methods.forEach { method ->
             // Link to the first basic block inside method:
             if (method.basicBlocks.isNotEmpty()) {
                 lines += "  \"${clazz.name}.${method.name}\" -> \"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${method.name}.bb${method.basicBlocks.first().id}\"];"

@@ -34,21 +34,29 @@ fun Program.toDot(): String {
     // Classes with properties:
     classes.forEach { clazz ->
         // CLASS
-        lines += ""
-        lines += "  \"${clazz.name}\" [shape=diamond]"
-        // TODO: add fields+methods to the label for class
-
-        val properties = clazz.properties
+        run {
+            val labelLines: MutableList<String> = mutableListOf()
+            labelLines += clazz.name
+            labelLines += "Properties: (${clazz.properties.size})"
+            for (prop in clazz.properties) {
+                labelLines += "  ${prop.method.signature}"
+            }
+            lines += ""
+            lines += "  \"${clazz.name}\" [shape=rectangle,label=\"${
+                labelLines.joinToString("") { "$it\\l" }
+            }\"]"
+            // TODO: add fields to the label for class
+        }
 
         // Methods inside class:
-        properties.forEach { property ->
+        clazz.properties.forEach { property ->
             // METHOD
-            lines += "  \"${clazz.name}.${property.method.name}\" [shape=triangle,label=\"${clazz.name}::${property.method.name}\"];"
+            lines += "  \"${clazz.name}.${property.method.name}\" [shape=diamond,label=\"${clazz.name}::${property.method.name}\"];"
             lines += "  \"${clazz.name}\" -> \"${clazz.name}.${property.method.name}\""
         }
 
         // Basic blocks inside method:
-        properties.forEach { property ->
+        clazz.properties.forEach { property ->
             // Link to the first basic block inside property:
             if (property.method.basicBlocks.isNotEmpty()) {
                 lines += "  \"${clazz.name}.${property.method.name}\" -> \"${clazz.name}.${property.method.name}.bb${property.method.basicBlocks.first().id}.0\" [lhead=\"${clazz.name}.${property.method.name}.bb${property.method.basicBlocks.first().id}\"];"
