@@ -221,7 +221,7 @@ class PandaGotoInst(
 
     override fun toString(): String = "goto $target"
 
-    fun setTarget(newTarget: PandaInstRef) {
+    internal fun setTarget(newTarget: PandaInstRef) {
         _target = newTarget
     }
 
@@ -229,6 +229,34 @@ class PandaGotoInst(
         super.decLocationIndex(idxList)
         val diff = idxList.count { gotoIdx -> gotoIdx < target.index }
         _target = PandaInstRef(target.index - diff)
+    }
+}
+
+class PandaCatchInst(
+    override val location: PandaInstLocation,
+    val throwable: PandaValue,
+    private var _throwers: List<PandaInstRef>
+) : PandaInst() {
+    override val operands: List<PandaExpr>
+        get() = listOf(throwable)
+
+    val throwers: List<PandaInstRef>
+        get() = _throwers
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaCatchInst(this)
+    }
+
+    override fun toString(): String = "catch$throwers ($throwable)"
+
+    override fun decLocationIndex(idxList: List<Int>) {
+        super.decLocationIndex(idxList)
+        _throwers = _throwers.mapNotNull { inst ->
+            if (idxList.find { gotoIdx -> gotoIdx == inst.index } != null) return@mapNotNull null
+
+            val diff = idxList.count { gotoIdx -> gotoIdx < inst.index }
+            PandaInstRef(inst.index - diff)
+        }
     }
 }
 
@@ -251,6 +279,7 @@ object CallExprVisitor :
     override fun visitPandaCallInst(inst: PandaCallInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaIfInst(inst: PandaIfInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaGotoInst(inst: PandaGotoInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaCatchInst(inst: PandaCatchInst): PandaCallExpr? = defaultVisitPandaInst(inst)
 }
 
 val PandaInst.callExpr: PandaCallExpr?

@@ -16,12 +16,8 @@
 
 package org.jacodb.panda.dynamic.parser
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.Mappable
 import org.jacodb.panda.dynamic.api.PandaAddExpr
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
@@ -30,6 +26,8 @@ import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaBoolConstant
 import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaCatchInst
+import org.jacodb.panda.dynamic.api.PandaCaughtError
 import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
 import org.jacodb.panda.dynamic.api.PandaCmpExpr
@@ -62,6 +60,7 @@ import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
 import org.jacodb.panda.dynamic.api.PandaNumberType
 import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaPhiValue
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
@@ -86,192 +85,6 @@ class IRParser(
     private val tsFunctions: List<TSFunction>? = null,
 ) {
 
-    @Serializable
-    data class Program(val classes: List<ProgramClass>) {
-        override fun toString(): String {
-            return classes.joinToString("\n")
-        }
-    }
-
-    @Serializable
-    data class ProgramClass(
-        val name: String,
-        val properties: List<ProgramProperty> = emptyList(),
-    ) {
-        @Transient
-        val superClass: String = ""
-
-        init {
-            properties.forEach { it.method.clazz = this }
-        }
-
-        override fun toString(): String {
-            return "Class: $name\nMethods:\n${properties.joinToString("\n")}"
-        }
-    }
-
-    @Serializable
-    data class ProgramProperty(
-        val method: ProgramMethod,
-        val name: String,
-    ) {
-        override fun toString(): String {
-            return "Property: $name\n$method"
-        }
-    }
-
-    @Serializable
-    data class ProgramMethod(
-        val accessFlags: Int? = null,
-        val basicBlocks: List<ProgramBasicBlock> = emptyList(),
-        val name: String,
-        @SerialName("parameters")
-        val programParameters: List<String> = emptyList(),
-        val returnType: String? = null,
-        val signature: String,
-    ) {
-
-        @Transient
-        lateinit var clazz: ProgramClass
-            internal set
-
-        @Transient
-        val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
-
-        @Transient
-        val insts: MutableList<PandaInst> = mutableListOf()
-
-        // ArkTS id -> Panda input
-        @Transient
-        val idToInputs: MutableMap<Int, MutableList<PandaValue?>> = mutableMapOf()
-
-        @Transient
-        val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = mutableMapOf()
-
-        // ArkTS bb id -> bb
-        @Transient
-        val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
-
-        @Transient
-        val pandaMethod: PandaMethod = PandaMethod(name)
-
-        @Transient
-        val parameters: MutableList<PandaParameterInfo> = mutableListOf()
-
-        @Transient
-        var currentLocalVarId = 0
-
-        @Transient
-        var currentId = -1
-
-        @Transient
-        private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
-
-        fun getInstViaId(instId: Int): ProgramInst {
-            return idToInst.getOrPut(instId) {
-                basicBlocks.forEach { bb ->
-                    bb.insts.find { it.id() == instId }?.let {
-                        return@getOrPut it
-                    }
-                }
-
-                throw IllegalArgumentException("No instruction in method $name with id v$instId")
-            }
-        }
-
-        fun inputsViaOp(op: ProgramInst): List<PandaValue> = idToInputs[op.id()].orEmpty().filterNotNull()
-
-        init {
-            basicBlocks.forEach { it.method = this }
-        }
-
-        override fun toString(): String {
-            return "Method: $name\nClass: ${clazz.name}\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
-        }
-    }
-
-    @Serializable
-    data class ProgramBasicBlock(
-        val id: Int,
-        val insts: List<ProgramInst> = emptyList(),
-        val successors: List<Int> = emptyList(),
-        val predecessors: List<Int> = emptyList(),
-    ) {
-
-        @Transient
-        lateinit var method: ProgramMethod
-            internal set
-
-        @Transient
-        var start: Int = -1
-
-        @Transient
-        var end: Int = -1
-
-        init {
-            insts.forEach { it.basicBlock = this }
-        }
-
-        override fun toString(): String {
-            return insts.takeIf { it.isNotEmpty() }?.let {
-                "Basic block id: $id\nInstructions:\n${it.joinToString("\n")}"
-            } ?: "Basic block id: $id\nNo instructions"
-        }
-    }
-
-    @Serializable
-    data class ProgramInst(
-        val id: String,
-        val index: Int? = null,
-        val imms: List<Int> = emptyList(),
-        val inputs: List<String> = emptyList(),
-        val inputBlocks: List<Int> = emptyList(),
-        @SerialName("intrinsic_id")
-        val intrinsicId: String? = null,
-        var opcode: String,
-        val operandsType: String? = null,
-        val operator: String? = null,
-        @SerialName("string_data")
-        var stringData: String? = null,
-        val string: String? = null,
-        val stringOffset: Int? = null,
-        val type: String? = null,
-        val users: List<String> = emptyList(),
-        val value: Int? = null,
-        val visit: String? = null,
-        val immediate: Int? = null,
-        val constructorName: String? = null,
-        val throwers: List<String> = emptyList()
-    ) {
-
-        @Transient
-        lateinit var basicBlock: ProgramBasicBlock
-            internal set
-
-        @Transient
-        private val _id: Int = id.trimId()
-
-        init {
-            opcode = intrinsicId ?: opcode
-            // Remove later
-            stringData = string ?: stringData
-        }
-
-        private fun String.trimId(): Int {
-            return this.filter { it.isDigit() }.toInt()
-        }
-
-        fun id(): Int = _id
-
-        fun inputs(): List<Int> = inputs.map { it.trimId() }
-
-        fun outputs(): List<Int> = users.map { it.trimId() }
-
-        override fun toString(): String {
-            return "\tInst: $id\n\t\tOpcode: $opcode\n\t\tInputs: $inputs\n\t\tOutputs: $users\n\t\tValue: $value"
-        }
-    }
-
     private val jsonFile: File = File(jsonPath)
 
     private val json = jsonFile.readText()
@@ -293,6 +106,19 @@ class IRParser(
         inline fun <reified T : PandaValue> List<PandaValue>.find(): List<T> {
             return this.filterIsInstance<T>()
         }
+
+        fun locationFromOp(op: ProgramInst? = null, method: ProgramMethod? = null): PandaInstLocation {
+            val currentMethod = method ?: op!!.currentMethod()
+            return PandaInstLocation(
+                currentMethod.pandaMethod,
+                ++currentMethod.currentId,
+                0
+            )
+        }
+
+        fun ProgramInst.currentBB() = this.basicBlock
+
+        fun ProgramInst.currentMethod() = currentBB().method
     }
 
     fun getProgram(): Program {
@@ -305,10 +131,6 @@ class IRParser(
         val program: Program = Json.decodeFromString(json)
         return mapProgramIR(program)
     }
-
-    private fun ProgramInst.currentBB() = this.basicBlock
-
-    private fun ProgramInst.currentMethod() = currentBB().method
 
     private fun inputsViaOp(op: ProgramInst) = op.currentMethod().inputsViaOp(op)
 
@@ -383,29 +205,23 @@ class IRParser(
         }
     }
 
+
+
     private fun mapInstructions(program: Program) {
         val programMethods: List<ProgramMethod> = program.classes
             .flatMap { it.properties }
             .map {it.method}
 
-        programMethods.flatMap { it.basicBlocks }.forEach { bb ->
-            val currentMethod: ProgramMethod = bb.method
-            val startId = if (currentMethod.currentId == -1) -1 else currentMethod.currentId + 1
-            bb.insts.forEach { programInst ->
-                mapOpcode(programInst, currentMethod)
-            }
-            val endId = currentMethod.currentId
-            if (startId <= endId && endId >= 0) {
-                bb.start = if (startId == -1) 0 else startId
-                addEmptyJump(currentMethod)
-                bb.end = currentMethod.currentId
-            }
+        programMethods.forEach { currentMethod ->
+            val traversalManager = IRTraversalManager(
+                programMethod = currentMethod,
+                mapOpcode = ::mapOpcode,
+            )
 
-            currentMethod.idToBB[bb.id] = mapBasicBlock(bb)
+            traversalManager.run()
         }
 
         val gotoToBB = preprocessGoto(programMethods)
-
         postprocessGoto(programMethods, gotoToBB)
     }
 
@@ -488,32 +304,19 @@ class IRParser(
         }
     }
 
-    private fun mapBasicBlock(bb: ProgramBasicBlock): PandaBasicBlock {
-        return PandaBasicBlock(
-            id = bb.id,
-            successors = bb.successors.toSet(),
-            predecessors = bb.predecessors.toSet(),
-            _start = PandaInstRef(bb.start),
-            _end = PandaInstRef(bb.end)
-        )
-    }
-
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
         val outputInst = method.getInstViaId(outputId)
         val index = outputInst.inputs().indexOf(inputId)
         method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }.add(index, input)
     }
 
-    private var currentBasicBlock: ProgramBasicBlock? = null
-
-    private fun addEmptyJump(method: ProgramMethod) {
-        val location = locationFromOp(method=method)
-        method.insts += PandaGotoInst(location).apply {
-            this.setTarget(PandaInstRef(location.index + 1))
-        }
-    }
-
-    private fun mapOpcode(op: ProgramInst, method: ProgramMethod) = with(op) {
+    private fun mapOpcode(
+        op: ProgramInst,
+        method: ProgramMethod,
+        env: IREnvironment,
+        opIdx: Int,
+        changeTraversalStrategy: (ProgramBasicBlock, TraversalType) -> Unit
+    ) = with(op) {
         val inputs = inputsViaOp(this)
         val outputs = outputs()
 
@@ -893,28 +696,73 @@ class IRParser(
             }
 
             opcode == "Phi" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                if (outputs.size > 1) {
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, PandaPhiValue())
+                    }
+                }
             }
 
             opcode == "CatchPhi" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                fun pathToCatchBlock(currentBB: PandaBasicBlock, acc: List<PandaInstRef>, targetId: Int): List<PandaInstRef>? {
+                    val newList = acc + (currentBB.start.index..currentBB.end.index)
+                        .mapNotNull { if (it == -1) null else PandaInstRef(it) }
+
+                    for (succBBId in currentBB.successors) {
+                        if (succBBId == targetId) return acc
+                        method.idToBB[succBBId]?.let { succBB ->
+                            pathToCatchBlock(succBB, newList, targetId)?.let { return it }
+                        }
+                    }
+
+                    return null
+                }
+
+                // Catch basic block contains multiple CatchPhi, but only the last one contains "error" variable.
+                // This CatchPhi is the last one, so ignoring all the other ones before it.
+                val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
+                if (nextInstOpcode != "CatchPhi") {
+                    val tryBBId = env.getTryBlockBBId(basicBlock.id)
+                    val tryBB = method.idToBB[tryBBId] ?: error("No try basic block saved in environment for $op")
+                    val path = pathToCatchBlock(tryBB, emptyList(), basicBlock.id)
+                        ?: error("No path from basic block $tryBBId to ${basicBlock.id}")
+
+                    val throwable = PandaCaughtError()
+
+                    method.insts += PandaCatchInst(
+                        location = locationFromOp(this),
+                        throwable = throwable,
+                        _throwers = path.sortedBy { it.index }
+                    )
+
+                    outputs.forEach { output ->
+                        addInput(method, id(), output, throwable)
+                    }
+                }
             }
 
             opcode == "Try" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                assert(basicBlock.successors.size == 2)
+                val tryBBid = basicBlock.successors[0]
+                val catchBBid = basicBlock.successors[1]
+                // Order is crucial for CatchPhi processor
+                assert(tryBBid < catchBBid)
+
+                changeTraversalStrategy(basicBlock, TraversalType.TRY_BLOCK)
+
+                env.setTryBlockBBId(catchBBid, tryBBid)
             }
 
             opcode == "Intrinsic.sttoglobalrecord" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
+                method.insts += PandaAssignInst(locationFromOp(this), lv, inputs[0])
+                env.setLocalVar(stringData!!, lv)
             }
 
             opcode == "Intrinsic.trystglobalbyname" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val lv = env.getLocalVar(stringData!!)
+                    ?: error("Can't load local var from environment for literal \"$stringData\"")
+                method.insts += PandaAssignInst(locationFromOp(this), lv, inputs[0])
             }
 
             else -> checkIgnoredInstructions(this)
@@ -966,12 +814,12 @@ class IRParser(
         val basicBlocks = op.currentMethod().basicBlocks.sortedBy { it.id }
 
         tailrec fun setTargetRec(bb: ProgramBasicBlock): PandaInstRef {
-            if (bb.start == -1) {
+            return if (bb.start == -1) {
                 val newBBidx = bb.successors.first().takeIf { bb.successors.size == 1 }
                     ?: error("Can't resolve next instruction for conditional jump of basic block id ${bb.id}")
-                return setTargetRec(basicBlocks[newBBidx])
+                setTargetRec(basicBlocks[newBBidx])
             } else {
-                return op.currentMethod().idToBB[bb.id]!!.start
+                op.currentMethod().idToBB[bb.id]!!.start
             }
         }
 
@@ -984,15 +832,6 @@ class IRParser(
         }
 
         return PandaIfInst(locationFromOp(op), condExpr, trueBranch, falseBranch)
-    }
-
-    private fun locationFromOp(op: ProgramInst? = null, method: ProgramMethod? = null): PandaInstLocation {
-        val currentMethod = method ?: op!!.currentMethod()
-        return PandaInstLocation(
-            currentMethod.pandaMethod,
-            ++currentMethod.currentId,
-            0
-        )
     }
 
     private fun mapImm(imm: Int?): PandaConstant {

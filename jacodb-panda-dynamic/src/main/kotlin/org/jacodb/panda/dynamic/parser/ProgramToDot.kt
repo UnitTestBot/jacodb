@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-fun IRParser.Program.toDot(): String {
+fun Program.toDot(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "digraph {"
     lines += "  rankdir=LR;"
@@ -134,14 +134,14 @@ fun IRParser.Program.toDot(): String {
     return lines.joinToString("\n")
 }
 
-fun IRParser.Program.dumpDot(file: File) {
+fun Program.dumpDot(file: File) {
     file.writeText(toDot())
 }
 
-fun IRParser.Program.dumpDot(path: Path) {
+fun Program.dumpDot(path: Path) {
     path.writeText(toDot())
 }
 
-fun IRParser.Program.dumpDot(path: String) {
+fun Program.dumpDot(path: String) {
     dumpDot(File(path))
 }

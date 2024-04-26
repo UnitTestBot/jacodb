@@ -33,6 +33,32 @@ interface PandaLocal : PandaSimpleValue {
     // TODO: val name: String
 }
 
+class PandaCaughtError : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaCaughtError(this)
+    }
+
+    override fun toString(): String = "error"
+}
+
+class PandaPhiValue : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaPhiValue(this)
+    }
+
+    override fun toString(): String = "Phi"
+}
+
 data class PandaLocalVar(
     val index: Int,
     override val type: PandaType,
