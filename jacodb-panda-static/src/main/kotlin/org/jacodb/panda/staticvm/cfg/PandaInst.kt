@@ -80,7 +80,7 @@ class PandaAssignInst(
     override val rhv: PandaExpr,
 ) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
     override val operands: List<PandaExpr>
-        get() = listOf(rhv)
+        get() = listOf(lhv, rhv)
 
     override fun toString(): String = "$lhv = $rhv"
 
