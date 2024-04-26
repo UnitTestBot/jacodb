@@ -289,7 +289,7 @@ class IRParser(
             }
             val gotoIndices = gotoToRemove.map {it.location.index}
 
-            method.insts.forEachIndexed { idx, inst ->
+            method.insts.forEach { inst ->
                 inst.decLocationIndex(gotoIndices)
             }
 
