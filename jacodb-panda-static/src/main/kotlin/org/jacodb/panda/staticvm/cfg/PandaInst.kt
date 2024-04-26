@@ -162,10 +162,11 @@ class PandaThrowInst(
 
 class PandaCatchInst(
     override val location: PandaInstLocation,
+    val throwable: PandaValue,
     val throwers: List<PandaInstRef>,
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
 
-    override fun toString(): String = "catch <- ${throwers.joinToString()}"
+    override fun toString(): String = "catch($throwable: ${throwable.typeName})"
 }
