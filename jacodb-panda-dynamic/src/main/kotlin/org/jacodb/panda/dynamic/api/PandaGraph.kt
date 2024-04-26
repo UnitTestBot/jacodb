@@ -150,15 +150,23 @@ class PandaApplicationGraphImpl(
     override fun predecessors(node: PandaInst): Sequence<PandaInst> {
         val graph = node.location.method.flowGraph()
         val predecessors = graph.predecessors(node)
-        val throwers = graph.throwers(node)
-        return predecessors.asSequence() + throwers.asSequence()
+        if (node is PandaCatchInst) {
+            val throwers = graph.throwers(node)
+            return predecessors.asSequence() + throwers.asSequence()
+        } else {
+            return predecessors.asSequence()
+        }
     }
 
     override fun successors(node: PandaInst): Sequence<PandaInst> {
         val graph = node.location.method.flowGraph()
         val successors = graph.successors(node)
-        val catchers = graph.catchers(node)
-        return successors.asSequence() + catchers.asSequence()
+        if (node is PandaThrowInst) {
+            val catchers = graph.catchers(node)
+            return successors.asSequence() + catchers.asSequence()
+        } else {
+            return successors.asSequence()
+        }
     }
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> {
