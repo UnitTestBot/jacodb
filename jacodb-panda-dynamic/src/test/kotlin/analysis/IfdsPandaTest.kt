@@ -48,6 +48,7 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -56,10 +57,8 @@ class IfdsPandaTest {
     companion object : PandaTraits
 
     private fun loadProjectForSample(programName: String): PandaProject {
-        val sampleFilePath = javaClass.getResource("/samples/${programName}.json")?.path ?: ""
-        val parser = IRParser(sampleFilePath)
+        val parser = loadIr("/samples/${programName}.json")
         val project = parser.getProject()
-
         return project
     }
 

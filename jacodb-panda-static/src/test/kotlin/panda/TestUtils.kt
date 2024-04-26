@@ -16,17 +16,14 @@
 
 package panda
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.panda.staticvm.ir.dumpDot
 import java.io.File
 
-@OptIn(ExperimentalSerializationApi::class)
 fun loadProgram(path: String): PandaProgramIr {
     val input = object {}::class.java.getResourceAsStream(path)
         ?: error("Could not find resource: $path")
-    val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
+    val program = PandaProgramIr.from(input)
     return program
 }
 
