@@ -18,10 +18,7 @@ package panda
 
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.classpath.PandaProject
-import org.jacodb.panda.staticvm.ir.PandaProgramIr
-import org.jacodb.panda.staticvm.ir.dumpDot
 import org.junit.jupiter.api.Test
-import java.io.File
 
 class PandaIrDeserializationTest {
 
@@ -32,20 +29,16 @@ class PandaIrDeserializationTest {
     @Test
     fun deserializationTest() {
         val filePath = SAMPLE_FILE_PATH
-        val stream = this::class.java.getResourceAsStream("/$filePath")
-            ?: error("Could not find resource: '$filePath'")
-        val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+        val program = loadProgram("/$filePath")
+        val project = PandaProject.fromProgramIr(program, withStdLib = true)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
     @Test
     fun catchTest() {
         val filePath = "testCatch.ir"
-        val stream = this::class.java.getResourceAsStream("/$filePath")
-            ?: error("Could not find resource: '$filePath'")
-        val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+        val program = loadProgram("/$filePath")
+        val project = PandaProject.fromProgramIr(program, withStdLib = true)
         val applicationGraph = PandaApplicationGraph(project)
     }
 
@@ -72,10 +65,8 @@ class PandaIrDeserializationTest {
     @Test
     fun pandaClasspathFlowGraphTest() {
         val filePath = SAMPLE_FILE_PATH
-        val stream = this::class.java.getResourceAsStream("/$filePath")
-            ?: error("Could not find resource: '$filePath'")
-        val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+        val program = loadProgram("/$filePath")
+        val project = PandaProject.fromProgramIr(program, withStdLib = true)
         val method = project.findMethod("A.greet:i32;void;")
         val flowGraph = method.flowGraph()
     }

@@ -18,30 +18,23 @@ package panda
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
-import org.jacodb.panda.dynamic.parser.dumpDot
-import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.panda.staticvm.ir.dumpDot
 import java.io.File
-import java.io.FileInputStream
 
-internal object TestUtils {
-    @OptIn(ExperimentalSerializationApi::class)
-    fun loadProjectFromSample(programName: String): PandaProject {
-        val sampleFilePath = javaClass.getResource("/samples/out/${programName}.ir")?.path ?: ""
-        val input = FileInputStream(sampleFilePath)
-        val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
-        return PandaProject.fromProgramIr(program, withStdlib = true)
-    }
+@OptIn(ExperimentalSerializationApi::class)
+fun loadProgram(path: String): PandaProgramIr {
+    val input = object {}::class.java.getResourceAsStream(path)
+        ?: error("Could not find resource: $path")
+    val program = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(input)
+    return program
 }
 
 object TestDot {
     @JvmStatic
     fun main(args: Array<String>) {
-        val filePath = "async.ir"
-        val stream = this::class.java.getResourceAsStream("/$filePath")
-            ?: error("Could not find resource: '$filePath'")
-        val program = PandaProgramIr.from(stream)
+        val filePath = "sample.ir"
+        val program = loadProgram("/$filePath")
 
         val path = "dump"
         val dotFile = File("$path.dot")

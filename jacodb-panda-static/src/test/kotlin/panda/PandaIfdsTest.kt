@@ -26,7 +26,6 @@ import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.classpath.PandaProject
-import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
@@ -48,11 +47,9 @@ class PandaIfdsTest {
 
     companion object : PandaStaticTraits
 
-    private fun loadProjectForSample(programName: String): PandaProject {
-        val stream = this::class.java.getResourceAsStream("/${programName}.ir")
-            ?: error("Could not find resource for program: '$programName'")
-        val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+    private fun loadProject(programName: String): PandaProject {
+        val program = loadProgram("/$programName.ir")
+        val project = PandaProject.fromProgramIr(program, withStdLib = true)
         return project
     }
 
@@ -67,7 +64,7 @@ class PandaIfdsTest {
     }
 
     private fun runTaintAnalysis(programName: String) {
-        val project = loadProjectForSample(programName)
+        val project = loadProject(programName)
         val graph = PandaApplicationGraph(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =

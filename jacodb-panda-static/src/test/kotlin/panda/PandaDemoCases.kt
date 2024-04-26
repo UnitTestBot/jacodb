@@ -27,7 +27,6 @@ import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.classpath.PandaMethod
 import org.jacodb.panda.staticvm.classpath.PandaProject
-import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
@@ -47,10 +46,8 @@ class PandaDemoCases {
     companion object : PandaStaticTraits
 
     private fun loadProject(path: String): PandaProject {
-        val stream = this::class.java.getResourceAsStream("/$path")
-            ?: error("Could not find resource for program: '$path'")
-        val program = PandaProgramIr.from(stream)
-        val project = PandaProject.fromProgramIr(program, withStdlib = true)
+        val program = loadProgram("/$path")
+        val project = PandaProject.fromProgramIr(program, withStdLib = true)
         return project
     }
 
