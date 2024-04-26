@@ -487,10 +487,13 @@ data class PandaVirtualCallExpr(
 
 data class PandaPhiExpr(
     override val type: PandaType,
-    override val operands: List<PandaValue>,
+    val inputs: List<PandaValue>,
     val predecessors: List<PandaInstRef>,
 ) : PandaExpr {
-    override fun toString(): String = "Phi(${operands.joinToString(", ")})"
+    override val operands: List<PandaValue>
+        get() = inputs
+
+    override fun toString(): String = "Phi(${inputs.joinToString(", ")})"
 }
 
 data class PandaNewArrayExpr(
