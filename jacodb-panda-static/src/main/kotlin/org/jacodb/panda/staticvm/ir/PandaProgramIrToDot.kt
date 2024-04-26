@@ -37,15 +37,18 @@ fun PandaProgramIr.toDot(): String {
         run {
             val labelLines: MutableList<String> = mutableListOf()
             labelLines += clazz.name
+            labelLines += "Fields: (${clazz.fields.size})"
+            for (field in clazz.fields) {
+                labelLines += "  ${field.name}: ${field.type}"
+            }
             labelLines += "Methods: (${clazz.methods.size})"
             for (method in clazz.methods) {
-                labelLines += "  ${method.signature}"
+                labelLines += "  ${method.name}: ${method.returnType}"
             }
             lines += ""
             lines += "  \"${clazz.name}\" [shape=rectangle,label=\"${
                 labelLines.joinToString("") { "$it\\l" }
             }\"]"
-            // TODO: add fields to the label for class
         }
 
         // Methods inside class:
