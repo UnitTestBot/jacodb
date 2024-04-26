@@ -31,7 +31,7 @@ fun loadIr(filePath: String, tsPath: String): IRParser {
     return IRParser(sampleFilePath, tsFunctions)
 }
 
-object TestDot {
+object DumpIrToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val name = "MinValue"

@@ -30,7 +30,7 @@ fun loadProgram(path: String): PandaProgramIr {
     return program
 }
 
-object TestDot {
+object DumpIrToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val filePath = "sample.ir"
