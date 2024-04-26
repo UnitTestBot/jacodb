@@ -205,12 +205,10 @@ class IRParser(
         }
     }
 
-
-
     private fun mapInstructions(program: Program) {
         val programMethods: List<ProgramMethod> = program.classes
             .flatMap { it.properties }
-            .map {it.method}
+            .map { it.method }
 
         programMethods.forEach { currentMethod ->
             val traversalManager = IRTraversalManager(
@@ -287,7 +285,7 @@ class IRParser(
             val gotoToRemove = method.insts.filter { inst ->
                 inst is PandaGotoInst && inst.target.index == inst.location.index + 1
             }
-            val gotoIndices = gotoToRemove.map {it.location.index}
+            val gotoIndices = gotoToRemove.map { it.location.index }
 
             method.insts.forEach { inst ->
                 inst.decLocationIndex(gotoIndices)
@@ -315,7 +313,7 @@ class IRParser(
         method: ProgramMethod,
         env: IREnvironment,
         opIdx: Int,
-        changeTraversalStrategy: (ProgramBasicBlock, TraversalType) -> Unit
+        changeTraversalStrategy: (ProgramBasicBlock, TraversalType) -> Unit,
     ) = with(op) {
         val inputs = inputsViaOp(this)
         val outputs = outputs()
@@ -703,7 +701,11 @@ class IRParser(
             }
 
             opcode == "CatchPhi" -> {
-                fun pathToCatchBlock(currentBB: PandaBasicBlock, acc: List<PandaInstRef>, targetId: Int): List<PandaInstRef>? {
+                fun pathToCatchBlock(
+                    currentBB: PandaBasicBlock,
+                    acc: List<PandaInstRef>,
+                    targetId: Int,
+                ): List<PandaInstRef>? {
                     val newList = acc + (currentBB.start.index..currentBB.end.index)
                         .mapNotNull { if (it == -1) null else PandaInstRef(it) }
 
@@ -784,7 +786,6 @@ class IRParser(
     //         method.insts.add(assign)
     //     }
     // }
-
 
     private fun checkIgnoredInstructions(op: ProgramInst) = with(op) {
         when (opcode) {
