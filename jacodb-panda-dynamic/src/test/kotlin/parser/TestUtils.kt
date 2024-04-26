@@ -45,7 +45,7 @@ object TestDot {
         val dotFile = File("$path.dot")
         program.dumpDot(dotFile)
         println("Generated DOT file: ${dotFile.absolutePath}")
-        for (format in listOf("pdf", "png")) {
+        for (format in listOf("pdf")) {
             val formatFile = File("$path.$format")
             val p = Runtime.getRuntime().exec("dot -T$format $dotFile -o $formatFile")
             p.waitFor()
