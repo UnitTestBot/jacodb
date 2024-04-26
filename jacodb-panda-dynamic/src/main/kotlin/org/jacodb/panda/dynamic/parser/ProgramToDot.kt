@@ -37,9 +37,9 @@ fun Program.toDot(): String {
         run {
             val labelLines: MutableList<String> = mutableListOf()
             labelLines += clazz.name
-            labelLines += "Properties: (${clazz.properties.size})"
+            labelLines += "Methods: (${clazz.properties.size})"
             for (prop in clazz.properties) {
-                labelLines += "  ${prop.method.signature}"
+                labelLines += "  ${prop.method.name}: ${prop.method.returnType}"
             }
             lines += ""
             lines += "  \"${clazz.name}\" [shape=rectangle,label=\"${
