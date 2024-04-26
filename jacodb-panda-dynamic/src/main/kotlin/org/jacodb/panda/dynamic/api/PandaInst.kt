@@ -73,8 +73,6 @@ abstract class PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
     }
 }
 
-abstract class PandaTerminatingInst : PandaInst()
-
 /**
  * Mocks PandaInst for WIP purposes.
  *
@@ -93,8 +91,54 @@ class TODOInst(
     }
 }
 
+class PandaAssignInst(
+    override val location: PandaInstLocation,
+    override val lhv: PandaValue,
+    override val rhv: PandaExpr,
+) : PandaInst(), CommonAssignInst<PandaMethod, PandaInst> {
+
+    override val operands: List<PandaExpr>
+        get() = listOf(lhv, rhv)
+
+    override fun toString(): String = "$lhv = $rhv"
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaAssignInst(this)
+    }
+}
+
 abstract class PandaBranchingInst : PandaInst() {
     abstract val successors: List<PandaInstRef>
+}
+
+class PandaGotoInst(
+    override val location: PandaInstLocation,
+) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {
+
+    var target: PandaInstRef = PandaInstRef(-1)
+        private set
+
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override val successors: List<PandaInstRef>
+        get() = listOf(target)
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaGotoInst(this)
+    }
+
+    override fun toString(): String = "goto $target"
+
+    internal fun setTarget(newTarget: PandaInstRef) {
+        target = newTarget
+    }
+
+    override fun decLocationIndex(idxList: List<Int>) {
+        super.decLocationIndex(idxList)
+        val diff = idxList.count { gotoIdx -> gotoIdx < target.index }
+        target = PandaInstRef(target.index - diff)
+    }
 }
 
 class PandaIfInst(
@@ -135,6 +179,8 @@ class PandaIfInst(
     }
 }
 
+abstract class PandaTerminatingInst : PandaInst()
+
 class PandaReturnInst(
     override val location: PandaInstLocation,
     override val returnValue: PandaValue?,
@@ -170,66 +216,6 @@ class PandaThrowInst(
     }
 }
 
-class PandaAssignInst(
-    override val location: PandaInstLocation,
-    override val lhv: PandaValue,
-    override val rhv: PandaExpr,
-) : PandaInst(), CommonAssignInst<PandaMethod, PandaInst> {
-
-    override val operands: List<PandaExpr>
-        get() = listOf(lhv, rhv)
-
-    override fun toString(): String = "$lhv = $rhv"
-
-    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        return visitor.visitPandaAssignInst(this)
-    }
-}
-
-class PandaCallInst(
-    override val location: PandaInstLocation,
-    val callExpr: PandaCallExpr,
-) : PandaInst(), CommonCallInst<PandaMethod, PandaInst> {
-
-    override val operands: List<PandaExpr>
-        get() = listOf(callExpr)
-
-    override fun toString(): String = callExpr.toString()
-
-    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        return visitor.visitPandaCallInst(this)
-    }
-}
-
-class PandaGotoInst(
-    override val location: PandaInstLocation,
-) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {
-
-    var target: PandaInstRef = PandaInstRef(-1)
-        private set
-
-    override val successors: List<PandaInstRef>
-        get() = listOf(target)
-    override val operands: List<PandaExpr>
-        get() = emptyList()
-
-    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        return visitor.visitPandaGotoInst(this)
-    }
-
-    override fun toString(): String = "goto $target"
-
-    internal fun setTarget(newTarget: PandaInstRef) {
-        target = newTarget
-    }
-
-    override fun decLocationIndex(idxList: List<Int>) {
-        super.decLocationIndex(idxList)
-        val diff = idxList.count { gotoIdx -> gotoIdx < target.index }
-        target = PandaInstRef(target.index - diff)
-    }
-}
-
 class PandaCatchInst(
     override val location: PandaInstLocation,
     val throwable: PandaValue,
@@ -255,6 +241,21 @@ class PandaCatchInst(
             val diff = idxList.count { gotoIdx -> gotoIdx < inst.index }
             PandaInstRef(inst.index - diff)
         }
+    }
+}
+
+class PandaCallInst(
+    override val location: PandaInstLocation,
+    val callExpr: PandaCallExpr,
+) : PandaInst(), CommonCallInst<PandaMethod, PandaInst> {
+
+    override val operands: List<PandaExpr>
+        get() = listOf(callExpr)
+
+    override fun toString(): String = callExpr.toString()
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaCallInst(this)
     }
 }
 
