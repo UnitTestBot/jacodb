@@ -33,38 +33,6 @@ interface PandaLocal : PandaSimpleValue {
     // TODO: val name: String
 }
 
-class PandaCaughtError : PandaValue {
-    override val type: PandaType
-        get() = PandaAnyType
-    override val operands: List<PandaValue>
-        get() = emptyList()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaCaughtError(this)
-    }
-
-    override fun toString(): String = "error"
-}
-
-class PandaPhiValue(
-    private val _inputs: Lazy<List<PandaValue>>
-) : PandaValue {
-    val inputs: List<PandaValue>
-        get() = _inputs.value
-
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = inputs
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaPhiValue(this)
-    }
-
-    override fun toString(): String = "Phi(${inputs.joinToString()})"
-}
-
 data class PandaLocalVar(
     val index: Int,
     override val type: PandaType,
@@ -218,6 +186,12 @@ data class PandaLoadedValue(
     override val instance: PandaValue,
     override val obj: PandaValue,
 ) : PandaInstanceCallValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf(instance, obj)
+
     private fun PandaValue.resolve(): String {
         return when (this) {
             is PandaStringConstant -> this.value
@@ -227,22 +201,16 @@ data class PandaLoadedValue(
         }
     }
 
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = listOf(instance, obj)
-
     override fun getClassAndMethodName(): List<String> {
         assert(obj is PandaStringConstant)
         return listOf(instance.resolve(), (obj as PandaStringConstant).value)
     }
 
+    override fun toString(): String = "Loaded[$instance.$obj]"
+
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLoadedValue(this)
     }
-
-    override fun toString(): String = "Loaded[$instance.$obj]"
 }
 
 data class PandaInstanceCallValueImpl(
@@ -251,6 +219,7 @@ data class PandaInstanceCallValueImpl(
 ) : PandaInstanceCallValue {
     override val type: PandaType
         get() = PandaAnyType
+
     override val operands: List<PandaValue>
         get() = listOf(instance, obj)
 
@@ -269,7 +238,42 @@ data class PandaInstanceCallValueImpl(
         }
     }
 
+    // TODO: toString()
+
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         TODO("Not yet implemented")
+    }
+}
+
+class PandaCaughtError : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = "error"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaCaughtError(this)
+    }
+}
+
+class PandaPhiValue(
+    private val _inputs: Lazy<List<PandaValue>>,
+) : PandaValue {
+    val inputs: List<PandaValue>
+        get() = _inputs.value
+
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = inputs
+
+    override fun toString(): String = "Phi(${inputs.joinToString()})"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaPhiValue(this)
     }
 }
