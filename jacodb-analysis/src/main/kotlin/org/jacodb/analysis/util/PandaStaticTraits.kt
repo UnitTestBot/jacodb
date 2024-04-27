@@ -57,7 +57,6 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     override val PandaMethod.thisInstance: PandaThis
         get() = _thisInstance
 
-    // TODO
     override val PandaMethod.isConstructor: Boolean
         get() = name == "<ctor>"
 
