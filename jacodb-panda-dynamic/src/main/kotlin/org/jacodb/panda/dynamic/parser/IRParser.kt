@@ -657,8 +657,8 @@ class IRParser(
                             method.clazz.name
                         )
                     },
-                    instance = instCallValue.instance,
-                    args = args
+                    args = args,
+                    instance = instCallValue.instance
                 )
                 handle2(callExpr)
             }
