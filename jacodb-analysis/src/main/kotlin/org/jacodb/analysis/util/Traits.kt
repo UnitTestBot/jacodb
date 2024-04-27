@@ -19,7 +19,7 @@ package org.jacodb.analysis.util
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
@@ -44,8 +44,8 @@ interface Traits<out Method, out Statement>
 
     val CommonCallExpr.callee: Method
 
-    fun Project.getArgument(param: CommonMethodParameter): CommonArgument?
-    fun Project.getArgumentsOf(method: @UnsafeVariance Method): List<CommonArgument>
+    fun CommonProject.getArgument(param: CommonMethodParameter): CommonArgument?
+    fun CommonProject.getArgumentsOf(method: @UnsafeVariance Method): List<CommonArgument>
 
     fun CommonValue.isConstant(): Boolean
     fun CommonValue.eqConstant(constant: ConstantValue): Boolean

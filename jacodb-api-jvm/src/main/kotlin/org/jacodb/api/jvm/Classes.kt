@@ -21,7 +21,6 @@ import org.jacodb.api.common.CommonClassField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonTypeName
-import org.jacodb.api.common.Project
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInstList

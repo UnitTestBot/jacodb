@@ -20,9 +20,8 @@ import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.isOnHeap
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgumentsOf
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
@@ -37,7 +36,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
-    private val cp: Project
+    private val cp: CommonProject
         get() = graph.project
 
     override fun obtainPossibleStartFacts(

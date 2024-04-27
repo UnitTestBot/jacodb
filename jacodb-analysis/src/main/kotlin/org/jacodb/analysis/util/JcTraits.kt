@@ -22,7 +22,7 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -95,13 +95,13 @@ interface JcTraits : Traits<JcMethod, JcInst> {
             return _callee
         }
 
-    override fun Project.getArgument(param: CommonMethodParameter): JcArgument? {
+    override fun CommonProject.getArgument(param: CommonMethodParameter): JcArgument? {
         check(this is JcClasspath)
         check(param is JcParameter)
         return _getArgument(param)
     }
 
-    override fun Project.getArgumentsOf(method: JcMethod): List<JcArgument> {
+    override fun CommonProject.getArgumentsOf(method: JcMethod): List<JcArgument> {
         check(this is JcClasspath)
         return _getArgumentsOf(method)
     }

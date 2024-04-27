@@ -22,9 +22,8 @@ import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.getArgument
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
@@ -73,7 +72,7 @@ class CallPositionToValueResolver(
 context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class EntryPointPositionToValueResolver(
     private val method: CommonMethod<*, *>,
-    private val cp: Project,
+    private val cp: CommonProject,
 ) : PositionResolver<Maybe<CommonValue>> {
     override fun resolve(position: Position): Maybe<CommonValue> = when (position) {
         This -> Maybe.some(method.thisInstance)
@@ -90,7 +89,7 @@ class EntryPointPositionToValueResolver(
 context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
 class EntryPointPositionToAccessPathResolver(
     private val method: CommonMethod<*, *>,
-    private val cp: Project,
+    private val cp: CommonProject,
 ) : PositionResolver<Maybe<AccessPath>> {
     override fun resolve(position: Position): Maybe<AccessPath> = when (position) {
         This -> method.thisInstance.toPathOrNull().toMaybe()

@@ -18,7 +18,7 @@ package org.jacodb.api.jvm
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInstList
@@ -32,7 +32,7 @@ import java.util.concurrent.Future
  * Classpath **must be** closed when it's not needed anymore.
  * This will release references from database to possibly outdated libraries
  */
-interface JcClasspath : Closeable, Project {
+interface JcClasspath : Closeable, CommonProject {
 
     /** locations of this classpath */
     val db: JcDatabase

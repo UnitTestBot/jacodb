@@ -16,13 +16,13 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.ir.EtsStdlib
 import org.jacodb.panda.staticvm.ir.PandaBasicBlockIr
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 
-class PandaProject : Project {
+class PandaProject : CommonProject {
 
     private val autoInitializedClasses = mutableListOf<PandaClass>()
 

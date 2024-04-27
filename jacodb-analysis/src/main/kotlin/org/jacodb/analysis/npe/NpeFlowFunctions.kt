@@ -37,7 +37,7 @@ import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
@@ -82,7 +82,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
     where Method : CommonMethod<Method, Statement>,
           Statement : CommonInst<Method, Statement> {
 
-    private val cp: Project
+    private val cp: CommonProject
         get() = graph.project
 
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {

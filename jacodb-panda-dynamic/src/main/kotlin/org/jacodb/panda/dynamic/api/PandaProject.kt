@@ -16,11 +16,11 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 
 class PandaProject(
     val classes: List<PandaClass>,
-) : Project {
+) : CommonProject {
 
     private val std = PandaStdLib
 

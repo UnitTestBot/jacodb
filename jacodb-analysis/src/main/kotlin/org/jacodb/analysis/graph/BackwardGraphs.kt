@@ -18,7 +18,7 @@
 
 package org.jacodb.analysis.graph
 
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
@@ -29,7 +29,7 @@ private class BackwardApplicationGraphImpl<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>,
 ) : ApplicationGraph<Method, Statement> {
 
-    override val project: Project
+    override val project: CommonProject
         get() = forward.project
 
     override fun predecessors(node: Statement) = forward.successors(node)

@@ -16,6 +16,6 @@
 
 package org.jacodb.api.common
 
-interface Project : AutoCloseable {
+interface CommonProject : AutoCloseable {
     fun findTypeOrNull(name: String): CommonType?
 }

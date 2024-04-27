@@ -22,7 +22,7 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -96,13 +96,13 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
             return method
         }
 
-    override fun Project.getArgument(param: CommonMethodParameter): PandaArgument {
+    override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
         check(this is PandaProject)
         check(param is PandaMethodParameter)
         return _getArgument(param)
     }
 
-    override fun Project.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+    override fun CommonProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
         check(this is PandaProject)
         return _getArgumentsOf(method)
     }

@@ -17,7 +17,7 @@
 package org.jacodb.api.common
 
 interface CommonClass {
-    val project: Project
+    val project: CommonProject
     val name: String
     val simpleName: String
 }
