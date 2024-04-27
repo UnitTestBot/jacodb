@@ -19,17 +19,21 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.isOnHeap
-import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcStaticCallExpr
 
-context(Traits<Method, Statement>)
+context(Traits<CommonProject, Method, Statement, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class UnusedVariableFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<UnusedVariableDomainFact, Method, Statement>
@@ -99,7 +103,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
             return@FlowFunction buildSet {
                 add(UnusedVariableZeroFact)
                 val callee = calleeStart.location.method
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArguments(cp, callee)
                 for (formal in formalParams) {
                     add(UnusedVariable(formal.toPath(), callStatement))
                 }

@@ -31,27 +31,30 @@ import org.jacodb.taint.configuration.ConstantValue
 /**
  * Extensions for analysis.
  */
-interface Traits<out Method, out Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+interface Traits<out Project, out Method, out Statement, out Value, out Expr, out CallExpr, out MethodParameter>
+    where Project : CommonProject,
+          Method : CommonMethod<Method, Statement>,
+          Statement : CommonInst<Method, Statement>,
+          Value : CommonValue,
+          Expr : CommonExpr,
+          CallExpr : CommonCallExpr,
+          MethodParameter : CommonMethodParameter {
 
     val @UnsafeVariance Method.thisInstance: CommonThis
     val @UnsafeVariance Method.isConstructor: Boolean
 
-    fun CommonExpr.toPathOrNull(): AccessPath?
-    fun CommonValue.toPathOrNull(): AccessPath?
-    fun CommonValue.toPath(): AccessPath
+    fun @UnsafeVariance Expr.toPathOrNull(): AccessPath?
+    fun @UnsafeVariance Value.toPathOrNull(): AccessPath?
+    fun @UnsafeVariance Value.toPath(): AccessPath
 
-    val CommonCallExpr.callee: Method
+    val @UnsafeVariance CallExpr.callee: Method
 
-    fun CommonProject.getArgument(param: CommonMethodParameter): CommonArgument?
-    fun CommonProject.getArgumentsOf(method: @UnsafeVariance Method): List<CommonArgument>
+    fun getArgument(project: @UnsafeVariance Project, param: @UnsafeVariance MethodParameter): CommonArgument?
+    fun getArguments(project: @UnsafeVariance Project, method: @UnsafeVariance Method): List<CommonArgument>
 
-    fun CommonValue.isConstant(): Boolean
-    fun CommonValue.eqConstant(constant: ConstantValue): Boolean
-    fun CommonValue.ltConstant(constant: ConstantValue): Boolean
-    fun CommonValue.gtConstant(constant: ConstantValue): Boolean
-    fun CommonValue.matches(pattern: String): Boolean
-
-    fun CommonExpr.toPaths(): List<AccessPath> = listOfNotNull(toPathOrNull())
+    fun @UnsafeVariance Value.isConstant(): Boolean
+    fun @UnsafeVariance Value.eqConstant(constant: ConstantValue): Boolean
+    fun @UnsafeVariance Value.ltConstant(constant: ConstantValue): Boolean
+    fun @UnsafeVariance Value.gtConstant(constant: ConstantValue): Boolean
+    fun @UnsafeVariance Value.matches(pattern: String): Boolean
 }

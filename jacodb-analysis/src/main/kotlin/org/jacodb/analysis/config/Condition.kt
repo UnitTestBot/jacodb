@@ -19,12 +19,15 @@ package org.jacodb.analysis.config
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.removeTrailingElementAccessors
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
+import org.jacodb.api.common.CommonProject
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.taint.configuration.And
@@ -32,7 +35,6 @@ import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantEq
 import org.jacodb.taint.configuration.ConstantGt
-import org.jacodb.taint.configuration.ConstantIntValue
 import org.jacodb.taint.configuration.ConstantLt
 import org.jacodb.taint.configuration.ConstantMatches
 import org.jacodb.taint.configuration.ConstantTrue
@@ -47,7 +49,7 @@ import org.jacodb.taint.configuration.TypeMatches
 
 // TODO: replace 'JcInt' with 'CommonInt', etc
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 open class BasicConditionEvaluator(
     internal val positionResolver: PositionResolver<Maybe<CommonValue>>,
 ) : ConditionVisitor<Boolean> {
@@ -96,7 +98,7 @@ open class BasicConditionEvaluator(
 
     override fun visit(condition: ConstantLt): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-           return value.ltConstant(condition.value)
+            return value.ltConstant(condition.value)
         }
         return false
     }
@@ -137,7 +139,7 @@ open class BasicConditionEvaluator(
     }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class FactAwareConditionEvaluator(
     private val fact: Tainted,
     positionResolver: PositionResolver<Maybe<CommonValue>>,

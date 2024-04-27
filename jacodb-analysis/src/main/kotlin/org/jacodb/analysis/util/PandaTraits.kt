@@ -21,11 +21,6 @@ import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
-import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
-import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
@@ -66,7 +61,11 @@ import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
  * }
  * ```
  */
-interface PandaTraits : Traits<PandaMethod, PandaInst> {
+interface PandaTraits :
+    Traits<PandaProject, PandaMethod, PandaInst, PandaValue, PandaExpr, PandaCallExpr, PandaMethodParameter> {
+
+    // Ensure that all methods are default-implemented in the interface itself:
+    companion object : PandaTraits
 
     override val PandaMethod.thisInstance: PandaThis
         get() = _thisInstance
@@ -75,45 +74,34 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
     override val PandaMethod.isConstructor: Boolean
         get() = false
 
-    override fun CommonExpr.toPathOrNull(): AccessPath? {
-        check(this is PandaExpr)
+    override fun PandaExpr.toPathOrNull(): AccessPath? {
         return _toPathOrNull()
     }
 
-    override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is PandaValue)
+    override fun PandaValue.toPathOrNull(): AccessPath? {
         return _toPathOrNull()
     }
 
-    override fun CommonValue.toPath(): AccessPath {
-        check(this is PandaValue)
+    override fun PandaValue.toPath(): AccessPath {
         return _toPath()
     }
 
-    override val CommonCallExpr.callee: PandaMethod
-        get() {
-            check(this is PandaCallExpr)
-            return method
-        }
+    override val PandaCallExpr.callee: PandaMethod
+        get() = method
 
-    override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
-        check(this is PandaProject)
-        check(param is PandaMethodParameter)
-        return _getArgument(param)
+    override fun getArgument(project: PandaProject, param: PandaMethodParameter): PandaArgument {
+        return project._getArgument(param)
     }
 
-    override fun CommonProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
-        check(this is PandaProject)
-        return _getArgumentsOf(method)
+    override fun getArguments(project: PandaProject, method: PandaMethod): List<PandaArgument> {
+        return project._getArgumentsOf(method)
     }
 
-    override fun CommonValue.isConstant(): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.isConstant(): Boolean {
         return this is PandaConstant
     }
 
-    override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.eqConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantBooleanValue -> {
                 this is PandaBoolConstant && this.value == constant.value
@@ -130,8 +118,7 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.ltConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.ltConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 this is PandaNumberConstant && this.value < constant.value
@@ -141,8 +128,7 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.gtConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.gtConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 this is PandaNumberConstant && this.value > constant.value
@@ -152,15 +138,11 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.matches(pattern: String): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.matches(pattern: String): Boolean {
         val s = this.toString()
         val re = pattern.toRegex()
         return re.matches(s)
     }
-
-    // Ensure that all methods are default-implemented in the interface itself:
-    companion object : PandaTraits
 }
 
 val PandaMethod.thisInstance: PandaThis

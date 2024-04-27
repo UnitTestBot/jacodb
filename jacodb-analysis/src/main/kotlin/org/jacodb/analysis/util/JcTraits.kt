@@ -21,11 +21,6 @@ import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
-import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
-import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcParameter
@@ -65,54 +60,46 @@ import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
  * }
  * ```
  */
-interface JcTraits : Traits<JcMethod, JcInst> {
+interface JcTraits : Traits<JcClasspath, JcMethod, JcInst, JcValue, JcExpr, JcCallExpr, JcParameter> {
+
+    // Ensure that all methods are default-implemented in the interface itself:
+    companion object : JcTraits
 
     override val JcMethod.thisInstance: JcThis
-        get() = _thisInstance
+        get() = this._thisInstance
 
     @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
     override val JcMethod.isConstructor: Boolean
-        get() = isConstructor
+        get() = this.isConstructor
 
-    override fun CommonExpr.toPathOrNull(): AccessPath? {
-        check(this is JcExpr)
-        return _toPathOrNull()
+    override fun JcExpr.toPathOrNull(): AccessPath? {
+        return this._toPathOrNull()
     }
 
-    override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is JcValue)
-        return _toPathOrNull()
+    override fun JcValue.toPathOrNull(): AccessPath? {
+        return this._toPathOrNull()
     }
 
-    override fun CommonValue.toPath(): AccessPath {
-        check(this is JcValue)
-        return _toPath()
+    override fun JcValue.toPath(): AccessPath {
+        return this._toPath()
     }
 
-    override val CommonCallExpr.callee: JcMethod
-        get() {
-            check(this is JcCallExpr)
-            return _callee
-        }
+    override val JcCallExpr.callee: JcMethod
+        get() = this._callee
 
-    override fun CommonProject.getArgument(param: CommonMethodParameter): JcArgument? {
-        check(this is JcClasspath)
-        check(param is JcParameter)
-        return _getArgument(param)
+    override fun getArgument(project: JcClasspath, param: JcParameter): JcArgument? {
+        return project._getArgument(param)
     }
 
-    override fun CommonProject.getArgumentsOf(method: JcMethod): List<JcArgument> {
-        check(this is JcClasspath)
-        return _getArgumentsOf(method)
+    override fun getArguments(project: JcClasspath, method: JcMethod): List<JcArgument> {
+        return project._getArgumentsOf(method)
     }
 
-    override fun CommonValue.isConstant(): Boolean {
-        check(this is JcValue)
+    override fun JcValue.isConstant(): Boolean {
         return this is JcConstant
     }
 
-    override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {
-        check(this is JcValue)
+    override fun JcValue.eqConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantBooleanValue -> {
                 this is JcBool && value == constant.value
@@ -129,8 +116,7 @@ interface JcTraits : Traits<JcMethod, JcInst> {
         }
     }
 
-    override fun CommonValue.ltConstant(constant: ConstantValue): Boolean {
-        check(this is JcValue)
+    override fun JcValue.ltConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 this is JcInt && value < constant.value
@@ -140,8 +126,7 @@ interface JcTraits : Traits<JcMethod, JcInst> {
         }
     }
 
-    override fun CommonValue.gtConstant(constant: ConstantValue): Boolean {
-        check(this is JcValue)
+    override fun JcValue.gtConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 this is JcInt && value > constant.value
@@ -151,15 +136,11 @@ interface JcTraits : Traits<JcMethod, JcInst> {
         }
     }
 
-    override fun CommonValue.matches(pattern: String): Boolean {
-        check(this is JcValue)
-        val s = this.toString()
+    override fun JcValue.matches(pattern: String): Boolean {
+        val s = toString()
         val re = pattern.toRegex()
         return re.matches(s)
     }
-
-    // Ensure that all methods are default-implemented in the interface itself:
-    companion object : JcTraits
 }
 
 val JcMethod.thisInstance: JcThis

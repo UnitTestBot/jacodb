@@ -19,12 +19,17 @@ package org.jacodb.analysis.unused
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonValue
 
-context(Traits<Method, Statement>)
+context(Traits<CommonProject, Method, Statement, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class UnusedVariableAnalyzer<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : Analyzer<UnusedVariableDomainFact, UnusedVariableEvent<Method, Statement>, Method, Statement>

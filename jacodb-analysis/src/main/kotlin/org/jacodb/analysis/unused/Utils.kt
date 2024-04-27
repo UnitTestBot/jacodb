@@ -17,11 +17,15 @@
 package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.values
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
+import org.jacodb.api.common.CommonProject
+import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcArrayAccess
 import org.jacodb.api.jvm.cfg.JcAssignInst
@@ -30,14 +34,14 @@ import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcTerminatingInst
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 internal fun AccessPath.isUsedAt(
     expr: CommonExpr,
 ): Boolean {
     return expr.values.any { it.toPathOrNull() == this }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 internal fun AccessPath.isUsedAt(
     inst: CommonInst<*, *>,
 ): Boolean {

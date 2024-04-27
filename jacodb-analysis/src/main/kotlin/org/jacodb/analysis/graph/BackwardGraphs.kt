@@ -18,6 +18,7 @@
 
 package org.jacodb.analysis.graph
 
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.jvm.JcClasspath

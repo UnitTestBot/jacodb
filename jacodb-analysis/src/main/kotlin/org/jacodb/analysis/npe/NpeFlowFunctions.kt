@@ -34,12 +34,15 @@ import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
@@ -75,7 +78,7 @@ import org.jacodb.taint.configuration.TaintPassThrough
 
 private val logger = mu.KotlinLogging.logger {}
 
-context(Traits<Method, Statement>)
+context(Traits<CommonProject, Method, Statement, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class ForwardNpeFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
@@ -553,7 +556,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             val actualParams = callExpr.args
-            val formalParams = cp.getArgumentsOf(callee)
+            val formalParams = getArguments(cp, callee)
             for ((formal, actual) in formalParams.zip(actualParams)) {
                 addAll(
                     transmitTaintArgumentActualToFormal(
@@ -615,7 +618,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             if (fact.variable.isOnHeap) {
                 val actualParams = callExpr.args
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArguments(cp, callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
                     addAll(
                         transmitTaintArgumentFormalToActual(

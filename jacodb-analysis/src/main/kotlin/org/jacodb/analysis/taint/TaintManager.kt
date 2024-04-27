@@ -41,11 +41,16 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.ifds.UnitType
 import org.jacodb.analysis.ifds.UnknownUnit
 import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
+import org.jacodb.analysis.util.Traits
+import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -56,7 +61,7 @@ import kotlin.time.TimeSource
 
 private val logger = mu.KotlinLogging.logger {}
 
-context(Traits<Method, Statement>)
+context(Traits<CommonProject, Method, Statement, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 open class TaintManager<Method, Statement>(
     protected val graph: ApplicationGraph<Method, Statement>,
     protected val unitResolver: UnitResolver<Method>,

@@ -99,7 +99,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     fun `test obtain start facts`() {
         val flowSpace = ForwardTaintFlowFunctions(graph)
         val facts = flowSpace.obtainPossibleStartFacts(testMethod).toList()
-        val arg0 = cp.getArgument(testMethod.parameters[0])!!
+        val arg0 = getArgument(cp, testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("EXAMPLE"))
         Assertions.assertEquals(listOf(TaintZeroFact, arg0Taint), facts)
     }

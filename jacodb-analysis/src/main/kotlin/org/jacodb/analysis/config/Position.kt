@@ -23,8 +23,11 @@ import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -37,7 +40,7 @@ import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.This
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class CallPositionToAccessPathResolver(
     private val callStatement: CommonInst<*, *>,
 ) : PositionResolver<Maybe<AccessPath>> {
@@ -69,7 +72,7 @@ class CallPositionToValueResolver(
     }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class EntryPointPositionToValueResolver(
     private val method: CommonMethod<*, *>,
     private val cp: CommonProject,
@@ -79,14 +82,14 @@ class EntryPointPositionToValueResolver(
 
         is Argument -> {
             val p = method.parameters[position.index]
-            cp.getArgument(p).toMaybe()
+            getArgument(cp, p).toMaybe()
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
     }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonProject, CommonMethod<*, *>, CommonInst<*, *>, CommonValue, CommonExpr, CommonCallExpr, CommonMethodParameter>)
 class EntryPointPositionToAccessPathResolver(
     private val method: CommonMethod<*, *>,
     private val cp: CommonProject,
@@ -96,7 +99,7 @@ class EntryPointPositionToAccessPathResolver(
 
         is Argument -> {
             val p = method.parameters[position.index]
-            cp.getArgument(p)?.toPathOrNull().toMaybe()
+            getArgument(cp, p)?.toPathOrNull().toMaybe()
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")

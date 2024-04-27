@@ -21,12 +21,17 @@ import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
-import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
-import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.panda.staticvm.cfg.*
+import org.jacodb.panda.staticvm.cfg.PandaArgument
+import org.jacodb.panda.staticvm.cfg.PandaArrayAccess
+import org.jacodb.panda.staticvm.cfg.PandaCallExpr
+import org.jacodb.panda.staticvm.cfg.PandaCastExpr
+import org.jacodb.panda.staticvm.cfg.PandaConstant
+import org.jacodb.panda.staticvm.cfg.PandaExpr
+import org.jacodb.panda.staticvm.cfg.PandaFieldRef
+import org.jacodb.panda.staticvm.cfg.PandaInst
+import org.jacodb.panda.staticvm.cfg.PandaSimpleValue
+import org.jacodb.panda.staticvm.cfg.PandaThis
+import org.jacodb.panda.staticvm.cfg.PandaValue
 import org.jacodb.panda.staticvm.classpath.PandaClass
 import org.jacodb.panda.staticvm.classpath.PandaClassType
 import org.jacodb.panda.staticvm.classpath.PandaMethod
@@ -39,7 +44,6 @@ import org.jacodb.analysis.util.getArgument as _getArgument
 import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
-import org.jacodb.analysis.util.toPaths as _toPaths
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 
 /**
@@ -52,7 +56,11 @@ import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
  * }
  * ```
  */
-interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
+interface PandaStaticTraits :
+    Traits<PandaProject, PandaMethod, PandaInst, PandaValue, PandaExpr, PandaCallExpr, PandaMethod.Parameter> {
+
+    // Ensure that all methods are default-implemented in the interface itself:
+    companion object : PandaStaticTraits
 
     override val PandaMethod.thisInstance: PandaThis
         get() = _thisInstance
@@ -60,50 +68,34 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     override val PandaMethod.isConstructor: Boolean
         get() = name == "<ctor>"
 
-    override fun CommonExpr.toPathOrNull(): AccessPath? {
-        check(this is PandaExpr)
-        return _toPathOrNull()
+    override fun PandaExpr.toPathOrNull(): AccessPath? {
+        return this._toPathOrNull()
     }
 
-    override fun CommonExpr.toPaths(): List<AccessPath> {
-        check(this is PandaExpr)
-        return _toPaths()
+    override fun PandaValue.toPathOrNull(): AccessPath? {
+        return this._toPathOrNull()
     }
 
-    override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is PandaValue)
-        return _toPathOrNull()
+    override fun PandaValue.toPath(): AccessPath {
+        return this._toPath()
     }
 
-    override fun CommonValue.toPath(): AccessPath {
-        check(this is PandaValue)
-        return _toPath()
+    override val PandaCallExpr.callee: PandaMethod
+        get() = this.method
+
+    override fun getArgument(project: PandaProject, param: PandaMethod.Parameter): PandaArgument {
+        return project._getArgument(param)
     }
 
-    override val CommonCallExpr.callee: PandaMethod
-        get() {
-            check(this is PandaCallExpr)
-            return method
-        }
-
-    override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
-        check(this is PandaProject)
-        check(param is PandaMethod.Parameter)
-        return _getArgument(param)
+    override fun getArguments(project: PandaProject, method: PandaMethod): List<PandaArgument> {
+        return project._getArgumentsOf(method)
     }
 
-    override fun CommonProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
-        check(this is PandaProject)
-        return _getArgumentsOf(method)
-    }
-
-    override fun CommonValue.isConstant(): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.isConstant(): Boolean {
         return this is PandaConstant
     }
 
-    override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.eqConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantBooleanValue -> {
                 // this is PandaBoolConstant && this.value == constant.value
@@ -123,8 +115,7 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.ltConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.ltConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 // this is PandaNumberConstant && this.value < constant.value
@@ -135,8 +126,7 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.gtConstant(constant: ConstantValue): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.gtConstant(constant: ConstantValue): Boolean {
         return when (constant) {
             is ConstantIntValue -> {
                 // this is PandaNumberConstant && this.value > constant.value
@@ -147,15 +137,11 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
         }
     }
 
-    override fun CommonValue.matches(pattern: String): Boolean {
-        check(this is PandaValue)
+    override fun PandaValue.matches(pattern: String): Boolean {
         val s = this.toString()
         val re = pattern.toRegex()
         return re.matches(s)
     }
-
-    // Ensure that all methods are default-implemented in the interface itself:
-    companion object : PandaStaticTraits
 }
 
 val PandaMethod.thisInstance: PandaThis
@@ -167,11 +153,6 @@ fun PandaExpr.toPathOrNull(): AccessPath? = when (this) {
     is PandaValue -> toPathOrNull()
     is PandaCastExpr -> arg.toPathOrNull()
     else -> null
-}
-
-fun PandaExpr.toPaths(): List<AccessPath> = when (this) {
-    is PandaPhiExpr -> operands.mapNotNull(PandaValue::_toPathOrNull)
-    else -> listOfNotNull(_toPathOrNull())
 }
 
 fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
