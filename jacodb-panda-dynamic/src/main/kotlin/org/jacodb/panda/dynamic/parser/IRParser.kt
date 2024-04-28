@@ -37,6 +37,7 @@ import org.jacodb.panda.dynamic.api.PandaConstant
 import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
 import org.jacodb.panda.dynamic.api.PandaDivExpr
 import org.jacodb.panda.dynamic.api.PandaEqExpr
+import org.jacodb.panda.dynamic.api.PandaExpExpr
 import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaGeExpr
 import org.jacodb.panda.dynamic.api.PandaGotoInst
@@ -577,7 +578,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis2" -> {
-                val instCallValue = inputs[0] as PandaInstanceCallValue
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -587,14 +588,14 @@ class IRParser(
                             method.clazz.name
                         )
                     },
-                    args = listOf(inputs[1], inputs[2]),
+                    args = inputs.filterNot { it == instCallValue },
                     instance = instCallValue.instance
                 )
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis3" -> {
-                val instCallValue = inputs[0] as PandaInstanceCallValue
+                val instCallValue = inputs.find<PandaInstanceCallValue>().first()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -604,7 +605,7 @@ class IRParser(
                             method.clazz.name
                         )
                     },
-                    args = listOf(inputs[1], inputs[2], inputs[3]),
+                    args = inputs.filterNot { it == instCallValue },
                     instance = instCallValue.instance
                 )
                 handle2(callExpr)
@@ -686,6 +687,11 @@ class IRParser(
             opcode == "Intrinsic.div2" -> {
                 val divExpr = PandaDivExpr(inputs[0], inputs[1])
                 handle(divExpr)
+            }
+
+            opcode == "Intrinsic.exp" -> {
+                val expExpr = PandaExpExpr(inputs[0], inputs[1])
+                handle(expExpr)
             }
 
             opcode == "Intrinsic.neg" -> {

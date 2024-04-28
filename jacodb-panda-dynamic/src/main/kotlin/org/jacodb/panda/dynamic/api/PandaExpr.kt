@@ -306,6 +306,23 @@ class PandaDivExpr(
     }
 }
 
+class PandaExpExpr(
+    override val lhv: PandaValue,
+    override val rhv: PandaValue,
+) : PandaBinaryExpr {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = listOf(lhv, rhv)
+
+    override fun toString(): String = "$lhv ** $rhv"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaExpExpr(this)
+    }
+}
+
 class PandaStaticCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
