@@ -510,8 +510,12 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stobjbyname" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val objectName = PandaStringConstant(stringData ?: error("No string data"))
+                val instance = inputs[0]
+                val value = inputs[1]
+
+                val property = PandaLoadedValue(instance, objectName)
+                method.insts += PandaAssignInst(locationFromOp(this), property, value)
             }
 
             opcode == "Intrinsic.ldhole" -> {
