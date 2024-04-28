@@ -466,7 +466,7 @@ class IRParser(
 
             opcode == "Intrinsic.tryldglobalbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaStringConstant(name)
+                val out = method.nameToLocalVarId.getOrDefault(name, PandaStringConstant(name))
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }
@@ -539,8 +539,13 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stconsttoglobalrecord" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val variableName = stringData?.takeIf { it.isNotEmpty() }
+                    ?: run {
+                        logger.error("No stringData for stconsttoglobalrecord")
+                        "STRINGDATANAME"
+                    }
+                val localVar = inputs[0]
+                method.nameToLocalVarId[variableName] = localVar
             }
 
             opcode == "Intrinsic.callthis0" -> {

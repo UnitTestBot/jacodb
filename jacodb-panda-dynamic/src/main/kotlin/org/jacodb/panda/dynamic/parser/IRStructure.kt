@@ -107,6 +107,9 @@ data class ProgramMethod(
     @Transient
     private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
 
+    @Transient
+    val nameToLocalVarId : MutableMap<String, PandaValue> = mutableMapOf()
+
     fun getInstViaId(instId: Int): ProgramInst {
         return idToInst.getOrPut(instId) {
             basicBlocks.forEach { bb ->
