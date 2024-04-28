@@ -31,6 +31,16 @@ data class Program(val classes: List<ProgramClass>) {
     override fun toString(): String {
         return classes.joinToString("\n")
     }
+
+    fun findClassOrNull(name: String): ProgramClass? = classes.find { it.name == name }
+
+    fun findMethodOrNull(name: String, methodClassName: String): ProgramMethod? {
+        // TODO: find better solution
+        if (name == "log" && methodClassName == "console") {
+            return ProgramMethod(name="log", signature = "std::.log")
+        }
+        return findClassOrNull(methodClassName)?.properties?.find { it.name == name }?.method
+    }
 }
 
 @Serializable

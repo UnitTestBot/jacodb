@@ -226,7 +226,7 @@ class PandaNewExpr(
     val params: List<PandaValue>,
 ) : PandaExpr {
     override val type: PandaType
-        get() = PandaAnyType
+        get() = PandaClassTypeImpl(typeName)
 
     override val operands: List<PandaValue>
         get() = params

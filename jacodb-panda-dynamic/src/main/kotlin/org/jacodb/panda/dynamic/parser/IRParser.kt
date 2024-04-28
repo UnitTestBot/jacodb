@@ -122,11 +122,18 @@ class IRParser(
         fun ProgramInst.currentMethod() = currentBB().method
     }
 
+    private var program: Program? = null;
     fun getProgram(): Program {
-        val program: Program = Json.decodeFromString(json)
-        mapProgramIR(program)
-        return program
+//        val program: Program = Json.decodeFromString(json)
+//        mapProgramIR(program)
+//        return program
+        if (this.program == null) {
+            this.program = Json.decodeFromString(json)
+        }
+        mapProgramIR(this.program!!)
+        return program!!
     }
+    fun getProgramInstance() = this.program!!
 
     fun getProject(): PandaProject {
         val program: Program = Json.decodeFromString(json)
@@ -400,7 +407,12 @@ class IRParser(
             opcode == "Intrinsic.newobjrange" -> {
                 val stringData = inputs[0] as PandaStringConstant
                 val newExpr = PandaNewExpr(stringData.value, inputs.drop(1))
-                handle(newExpr)
+
+                val lv = PandaLocalVar(method.currentLocalVarId++, newExpr.type)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                method.insts += PandaAssignInst(locationFromOp(this), lv, newExpr)
             }
 
             opcode == "Intrinsic.createemptyarray" -> {
@@ -474,7 +486,16 @@ class IRParser(
 
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaLoadedValue(inputs[0], PandaStringConstant(name))
+                val obj = inputs[0]
+                val className = when(obj) {
+                    is PandaStringConstant -> obj.value
+                    else -> obj.typeName
+                }
+                val isField = getProgramInstance().findMethodOrNull(name, className) == null
+                val out = when(isField) {
+                    true -> PandaLoadedValue(obj, PandaStringConstant(name))
+                    false -> PandaInstanceCallValueImpl(obj, PandaStringConstant(name))
+                }
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
