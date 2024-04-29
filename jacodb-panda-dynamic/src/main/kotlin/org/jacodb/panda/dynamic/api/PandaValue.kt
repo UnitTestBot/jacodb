@@ -183,14 +183,28 @@ interface PandaInstanceCallValue : PandaComplexValue {
 
 // used to connect loaded object to instance
 data class PandaLoadedValue(
-    val instance: PandaValue,
-    val obj: PandaValue,
-) : PandaComplexValue {
+    override val instance: PandaValue,
+    override val obj: PandaValue,
+) : PandaInstanceCallValue {
     override val type: PandaType
         get() = PandaAnyType
 
     override val operands: List<PandaValue>
         get() = listOf(instance, obj)
+
+    private fun PandaValue.resolve(): String {
+        return when (this) {
+            is PandaStringConstant -> this.value
+            is PandaLocalVar -> this.typeName
+            is PandaThis -> this.typeName
+            else -> throw IllegalArgumentException("couldn't resolve $this")
+        }
+    }
+
+    override fun getClassAndMethodName(): List<String> {
+        assert(obj is PandaStringConstant)
+        return listOf(instance.resolve(), (obj as PandaStringConstant).value)
+    }
 
     override fun toString(): String = "Loaded[$instance.$obj]"
 
