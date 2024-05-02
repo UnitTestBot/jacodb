@@ -33,23 +33,6 @@
    "simpleName": "Function3"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u16[][].<ctor>:u16[][];i32;i32;void;"
-    }
-   ],
-   "name": "u16[][]",
-   "simpleName": "u16[][]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function7",
    "simpleName": "Function7"
@@ -65,13 +48,13 @@
    "simpleName": "Function14"
   },
   {
-   "accessFlags": 1537,
-   "name": "std.core.Function1",
-   "simpleName": "Function1"
-  },
-  {
    "accessFlags": 1025,
    "fields": [
+    {
+     "accessFlags": 0,
+     "name": "KEY_NOT_FOUND",
+     "type": "i32"
+    },
     {
      "accessFlags": 0,
      "name": "OBJECT_HAS_OWN_PROPERTY_MEMBER_NAME",
@@ -89,22 +72,7 @@
     },
     {
      "accessFlags": 0,
-     "name": "KEY_NOT_FOUND",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
      "name": "ARRAY_LENGTH_MEMBER_NAME",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
-     "name": "OBJECT_TO_LOCALE_STRING_MEMBER_NAME",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
-     "name": "FUNCTION_NAME_MEMBER_NAME",
      "type": "std.core.String"
     },
     {
@@ -114,8 +82,23 @@
     },
     {
      "accessFlags": 0,
-     "name": "runtime",
-     "type": "std.core.Runtime"
+     "name": "OBJECT_TO_LOCALE_STRING_MEMBER_NAME",
+     "type": "std.core.String"
+    },
+    {
+     "accessFlags": 0,
+     "name": "ObjectTD",
+     "type": "std.core.String"
+    },
+    {
+     "accessFlags": 0,
+     "name": "FUNCTION_NAME_MEMBER_NAME",
+     "type": "std.core.String"
+    },
+    {
+     "accessFlags": 0,
+     "name": "coroutine",
+     "type": "std.core.Coroutine"
     },
     {
      "accessFlags": 0,
@@ -129,18 +112,13 @@
     },
     {
      "accessFlags": 0,
-     "name": "ObjectTD",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
      "name": "MAX_CODE_UNIT",
      "type": "i32"
     },
     {
      "accessFlags": 0,
-     "name": "coroutine",
-     "type": "std.core.Coroutine"
+     "name": "runtime",
+     "type": "std.core.Runtime"
     },
     {
      "accessFlags": 0,
@@ -155,6 +133,21 @@
    ],
    "name": "std.core.ETSGLOBAL",
    "simpleName": "ETSGLOBAL"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function8",
+   "simpleName": "Function8"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function2",
+   "simpleName": "Function2"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function6",
+   "simpleName": "Function6"
   },
   {
    "accessFlags": 1,
@@ -269,74 +262,9 @@
    "superClass": "std.core.Object"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f32[][].<ctor>:f32[][];i32;i32;void;"
-    }
-   ],
-   "name": "f32[][]",
-   "simpleName": "f32[][]"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function8",
-   "simpleName": "Function8"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function2",
-   "simpleName": "Function2"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function6",
-   "simpleName": "Function6"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function16",
    "simpleName": "Function16"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i8[].<ctor>:i8[];i32;void;"
-    }
-   ],
-   "name": "i8[]",
-   "simpleName": "i8[]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i32[][].<ctor>:i32[][];i32;i32;void;"
-    }
-   ],
-   "name": "i32[][]",
-   "simpleName": "i32[][]"
   },
   {
    "accessFlags": 1537,
@@ -344,38 +272,44 @@
    "simpleName": "Function4"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i64[][].<ctor>:i64[][];i32;i32;void;"
-    }
-   ],
-   "name": "i64[][]",
-   "simpleName": "i64[][]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function13",
    "simpleName": "Function13"
   },
   {
+   "accessFlags": 1537,
+   "name": "std.core.Function1",
+   "simpleName": "Function1"
+  },
+  {
    "accessFlags": 1025,
    "methods": [
     {
-     "accessFlags": 8,
+     "accessFlags": 1025,
+     "name": "greet",
+     "parameters": [
+      "i32"
+     ],
+     "returnType": "void",
+     "signature": "A0.greet:i32;void;"
+    },
+    {
+     "accessFlags": 1,
      "basicBlocks": [
       {
        "id": 1,
        "insts": [
         {
          "id": "v0",
+         "index": 0,
+         "opcode": "Parameter",
+         "type": "ref",
+         "users": [
+          "v3"
+         ]
+        },
+        {
+         "id": "v1",
          "opcode": "SafePoint",
          "type": "void"
         }
@@ -391,7 +325,38 @@
        "id": 0,
        "insts": [
         {
-         "id": "v1",
+         "id": "v2",
+         "opcode": "SaveState",
+         "type": "void",
+         "users": [
+          "v4",
+          "v3"
+         ]
+        },
+        {
+         "id": "v3",
+         "inputs": [
+          "v0",
+          "v2"
+         ],
+         "opcode": "NullCheck",
+         "type": "ref",
+         "users": [
+          "v4"
+         ]
+        },
+        {
+         "id": "v4",
+         "inputs": [
+          "v3",
+          "v2"
+         ],
+         "method": "std.core.Object.<ctor>:void;",
+         "opcode": "CallStatic",
+         "type": "void"
+        },
+        {
+         "id": "v5",
          "opcode": "ReturnVoid",
          "type": "void"
         }
@@ -416,10 +381,368 @@
        ]
       }
      ],
-     "name": "<cctor>",
+     "name": "<ctor>",
      "returnType": "void",
-     "signature": "ETSGLOBAL.<cctor>:void;"
+     "signature": "A0.<ctor>:void;"
+    }
+   ],
+   "name": "A0",
+   "simpleName": "A0",
+   "superClass": "std.core.Object"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.FunctionN",
+   "simpleName": "FunctionN"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function15",
+   "simpleName": "Function15"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function12",
+   "simpleName": "Function12"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function5",
+   "simpleName": "Function5"
+  },
+  {
+   "accessFlags": 1,
+   "fields": [
+    {
+     "accessFlags": 1,
+     "name": "t",
+     "type": "std.core.Object"
     },
+    {
+     "accessFlags": 1,
+     "name": "t",
+     "type": "std.core.Object"
+    }
+   ],
+   "methods": [
+    {
+     "accessFlags": 1,
+     "basicBlocks": [
+      {
+       "id": 1,
+       "insts": [
+        {
+         "id": "v0",
+         "index": 0,
+         "opcode": "Parameter",
+         "type": "ref",
+         "users": [
+          "v7",
+          "v3"
+         ]
+        },
+        {
+         "id": "v1",
+         "opcode": "SafePoint",
+         "type": "void"
+        },
+        {
+         "id": "v5",
+         "opcode": "NullPtr",
+         "type": "ref",
+         "users": [
+          "v8"
+         ]
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "successors": [
+        0
+       ]
+      },
+      {
+       "id": 0,
+       "insts": [
+        {
+         "id": "v2",
+         "opcode": "SaveState",
+         "type": "void",
+         "users": [
+          "v4",
+          "v3"
+         ]
+        },
+        {
+         "id": "v3",
+         "inputs": [
+          "v0",
+          "v2"
+         ],
+         "opcode": "NullCheck",
+         "type": "ref",
+         "users": [
+          "v4"
+         ]
+        },
+        {
+         "id": "v4",
+         "inputs": [
+          "v3",
+          "v2"
+         ],
+         "method": "std.core.Object.<ctor>:void;",
+         "opcode": "CallStatic",
+         "type": "void"
+        },
+        {
+         "id": "v6",
+         "opcode": "SaveState",
+         "type": "void",
+         "users": [
+          "v7"
+         ]
+        },
+        {
+         "id": "v7",
+         "inputs": [
+          "v0",
+          "v6"
+         ],
+         "opcode": "NullCheck",
+         "type": "ref",
+         "users": [
+          "v8"
+         ]
+        },
+        {
+         "enclosingClass": "P",
+         "field": "t",
+         "id": "v8",
+         "inputs": [
+          "v7",
+          "v5"
+         ],
+         "opcode": "StoreObject",
+         "type": "ref"
+        },
+        {
+         "id": "v9",
+         "opcode": "ReturnVoid",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        1
+       ],
+       "successors": [
+        2
+       ]
+      },
+      {
+       "id": 2,
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ]
+      }
+     ],
+     "name": "<ctor>",
+     "returnType": "void",
+     "signature": "P.<ctor>:void;"
+    }
+   ],
+   "name": "P",
+   "simpleName": "P",
+   "superClass": "std.core.Object"
+  },
+  {
+   "accessFlags": 1,
+   "fields": [
+    {
+     "accessFlags": 0,
+     "name": "a",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
+     "name": "b",
+     "type": "std.core.String"
+    },
+    {
+     "accessFlags": 1,
+     "name": "c",
+     "type": "std.core.String"
+    },
+    {
+     "accessFlags": 1,
+     "name": "c",
+     "type": "std.core.String"
+    }
+   ],
+   "methods": [
+    {
+     "accessFlags": 1,
+     "basicBlocks": [
+      {
+       "id": 1,
+       "insts": [
+        {
+         "id": "v0",
+         "index": 0,
+         "opcode": "Parameter",
+         "type": "ref",
+         "users": [
+          "v7",
+          "v3"
+         ]
+        },
+        {
+         "id": "v1",
+         "opcode": "SafePoint",
+         "type": "void"
+        },
+        {
+         "id": "v5",
+         "opcode": "NullPtr",
+         "type": "ref",
+         "users": [
+          "v8"
+         ]
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "successors": [
+        0
+       ]
+      },
+      {
+       "id": 0,
+       "insts": [
+        {
+         "id": "v2",
+         "opcode": "SaveState",
+         "type": "void",
+         "users": [
+          "v4",
+          "v3"
+         ]
+        },
+        {
+         "id": "v3",
+         "inputs": [
+          "v0",
+          "v2"
+         ],
+         "opcode": "NullCheck",
+         "type": "ref",
+         "users": [
+          "v4"
+         ]
+        },
+        {
+         "id": "v4",
+         "inputs": [
+          "v3",
+          "v2"
+         ],
+         "method": "A.<ctor>:void;",
+         "opcode": "CallStatic",
+         "type": "void"
+        },
+        {
+         "id": "v6",
+         "opcode": "SaveState",
+         "type": "void",
+         "users": [
+          "v7"
+         ]
+        },
+        {
+         "id": "v7",
+         "inputs": [
+          "v0",
+          "v6"
+         ],
+         "opcode": "NullCheck",
+         "type": "ref",
+         "users": [
+          "v8"
+         ]
+        },
+        {
+         "enclosingClass": "A1",
+         "field": "c",
+         "id": "v8",
+         "inputs": [
+          "v7",
+          "v5"
+         ],
+         "opcode": "StoreObject",
+         "type": "ref"
+        },
+        {
+         "id": "v9",
+         "opcode": "ReturnVoid",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        1
+       ],
+       "successors": [
+        2
+       ]
+      },
+      {
+       "id": 2,
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ]
+      }
+     ],
+     "name": "<ctor>",
+     "returnType": "void",
+     "signature": "A1.<ctor>:void;"
+    }
+   ],
+   "name": "A1",
+   "simpleName": "A1",
+   "superClass": "A"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "I2",
+   "simpleName": "I2",
+   "superClass": "std.core.Object"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function11",
+   "simpleName": "Function11"
+  },
+  {
+   "accessFlags": 1537,
+   "name": "std.core.Function9",
+   "simpleName": "Function9"
+  },
+  {
+   "accessFlags": 1025,
+   "methods": [
     {
      "accessFlags": 9,
      "basicBlocks": [
@@ -508,6 +831,273 @@
      ],
      "returnType": "i32",
      "signature": "ETSGLOBAL.aplusb:i32;i32;i32;"
+    },
+    {
+     "accessFlags": 8,
+     "basicBlocks": [
+      {
+       "id": 1,
+       "insts": [
+        {
+         "id": "v0",
+         "opcode": "SafePoint",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "successors": [
+        0
+       ]
+      },
+      {
+       "id": 0,
+       "insts": [
+        {
+         "id": "v1",
+         "opcode": "ReturnVoid",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        1
+       ],
+       "successors": [
+        2
+       ]
+      },
+      {
+       "id": 2,
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ]
+      }
+     ],
+     "name": "<cctor>",
+     "returnType": "void",
+     "signature": "ETSGLOBAL.<cctor>:void;"
+    },
+    {
+     "accessFlags": 9,
+     "basicBlocks": [
+      {
+       "id": 1,
+       "insts": [
+        {
+         "id": "v0",
+         "opcode": "SafePoint",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "successors": [
+        0
+       ]
+      },
+      {
+       "id": 0,
+       "insts": [
+        {
+         "id": "v1",
+         "opcode": "ReturnVoid",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        1
+       ],
+       "successors": [
+        2
+       ]
+      },
+      {
+       "id": 2,
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ]
+      }
+     ],
+     "name": "_$init$_",
+     "returnType": "void",
+     "signature": "ETSGLOBAL._$init$_:void;"
+    },
+    {
+     "accessFlags": 9,
+     "basicBlocks": [
+      {
+       "id": 4,
+       "insts": [
+        {
+         "id": "v0",
+         "index": 0,
+         "opcode": "Parameter",
+         "type": "i32",
+         "users": [
+          "v7",
+          "v6",
+          "v4"
+         ]
+        },
+        {
+         "id": "v1",
+         "index": 1,
+         "opcode": "Parameter",
+         "type": "i32",
+         "users": [
+          "v7"
+         ]
+        },
+        {
+         "id": "v2",
+         "opcode": "SafePoint",
+         "type": "void"
+        },
+        {
+         "id": "v3",
+         "opcode": "Constant",
+         "type": "i32",
+         "users": [
+          "v4"
+         ],
+         "value": 0
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "successors": [
+        0
+       ]
+      },
+      {
+       "id": 0,
+       "insts": [
+        {
+         "id": "v4",
+         "inputs": [
+          "v3",
+          "v0"
+         ],
+         "opcode": "Compare",
+         "operandsType": "i32",
+         "operator": "NE",
+         "type": "u1",
+         "users": [
+          "v5"
+         ]
+        },
+        {
+         "id": "v5",
+         "immediate": 0,
+         "inputs": [
+          "v4"
+         ],
+         "opcode": "IfImm",
+         "operandsType": "u1",
+         "operator": "NE",
+         "type": "void"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        4
+       ],
+       "successors": [
+        1,
+        2
+       ]
+      },
+      {
+       "id": 2,
+       "insts": [
+        {
+         "id": "v6",
+         "inputs": [
+          "v0"
+         ],
+         "opcode": "Return",
+         "type": "i32"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ],
+       "successors": [
+        5
+       ]
+      },
+      {
+       "id": 1,
+       "insts": [
+        {
+         "id": "v7",
+         "inputs": [
+          "v0",
+          "v1"
+         ],
+         "opcode": "Mul",
+         "type": "i32",
+         "users": [
+          "v8"
+         ]
+        },
+        {
+         "id": "v8",
+         "inputs": [
+          "v7"
+         ],
+         "opcode": "Return",
+         "type": "i32"
+        }
+       ],
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        0
+       ],
+       "successors": [
+        5
+       ]
+      },
+      {
+       "id": 5,
+       "isCatchBegin": false,
+       "isTryBegin": false,
+       "isTryEnd": false,
+       "predecessors": [
+        2,
+        1
+       ]
+      }
+     ],
+     "name": "aorb",
+     "parameters": [
+      "i32",
+      "i32"
+     ],
+     "returnType": "i32",
+     "signature": "ETSGLOBAL.aorb:i32;i32;i32;"
     },
     {
      "accessFlags": 9,
@@ -1315,866 +1905,11 @@
      "name": "main",
      "returnType": "void",
      "signature": "ETSGLOBAL.main:void;"
-    },
-    {
-     "accessFlags": 9,
-     "basicBlocks": [
-      {
-       "id": 1,
-       "insts": [
-        {
-         "id": "v0",
-         "opcode": "SafePoint",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "successors": [
-        0
-       ]
-      },
-      {
-       "id": 0,
-       "insts": [
-        {
-         "id": "v1",
-         "opcode": "ReturnVoid",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        1
-       ],
-       "successors": [
-        2
-       ]
-      },
-      {
-       "id": 2,
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ]
-      }
-     ],
-     "name": "_$init$_",
-     "returnType": "void",
-     "signature": "ETSGLOBAL._$init$_:void;"
-    },
-    {
-     "accessFlags": 9,
-     "basicBlocks": [
-      {
-       "id": 4,
-       "insts": [
-        {
-         "id": "v0",
-         "index": 0,
-         "opcode": "Parameter",
-         "type": "i32",
-         "users": [
-          "v7",
-          "v6",
-          "v4"
-         ]
-        },
-        {
-         "id": "v1",
-         "index": 1,
-         "opcode": "Parameter",
-         "type": "i32",
-         "users": [
-          "v7"
-         ]
-        },
-        {
-         "id": "v2",
-         "opcode": "SafePoint",
-         "type": "void"
-        },
-        {
-         "id": "v3",
-         "opcode": "Constant",
-         "type": "i32",
-         "users": [
-          "v4"
-         ],
-         "value": 0
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "successors": [
-        0
-       ]
-      },
-      {
-       "id": 0,
-       "insts": [
-        {
-         "id": "v4",
-         "inputs": [
-          "v3",
-          "v0"
-         ],
-         "opcode": "Compare",
-         "operandsType": "i32",
-         "operator": "NE",
-         "type": "u1",
-         "users": [
-          "v5"
-         ]
-        },
-        {
-         "id": "v5",
-         "immediate": 0,
-         "inputs": [
-          "v4"
-         ],
-         "opcode": "IfImm",
-         "operandsType": "u1",
-         "operator": "NE",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        4
-       ],
-       "successors": [
-        1,
-        2
-       ]
-      },
-      {
-       "id": 2,
-       "insts": [
-        {
-         "id": "v6",
-         "inputs": [
-          "v0"
-         ],
-         "opcode": "Return",
-         "type": "i32"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ],
-       "successors": [
-        5
-       ]
-      },
-      {
-       "id": 1,
-       "insts": [
-        {
-         "id": "v7",
-         "inputs": [
-          "v0",
-          "v1"
-         ],
-         "opcode": "Mul",
-         "type": "i32",
-         "users": [
-          "v8"
-         ]
-        },
-        {
-         "id": "v8",
-         "inputs": [
-          "v7"
-         ],
-         "opcode": "Return",
-         "type": "i32"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ],
-       "successors": [
-        5
-       ]
-      },
-      {
-       "id": 5,
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        2,
-        1
-       ]
-      }
-     ],
-     "name": "aorb",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "i32",
-     "signature": "ETSGLOBAL.aorb:i32;i32;i32;"
     }
    ],
    "name": "ETSGLOBAL",
    "simpleName": "ETSGLOBAL",
    "superClass": "std.core.Object"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "I2",
-   "simpleName": "I2",
-   "superClass": "std.core.Object"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.FunctionN",
-   "simpleName": "FunctionN"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i16[].<ctor>:i16[];i32;void;"
-    }
-   ],
-   "name": "i16[]",
-   "simpleName": "i16[]"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function15",
-   "simpleName": "Function15"
-  },
-  {
-   "accessFlags": 1025,
-   "methods": [
-    {
-     "accessFlags": 1025,
-     "name": "greet",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "A0.greet:i32;void;"
-    },
-    {
-     "accessFlags": 1,
-     "basicBlocks": [
-      {
-       "id": 1,
-       "insts": [
-        {
-         "id": "v0",
-         "index": 0,
-         "opcode": "Parameter",
-         "type": "ref",
-         "users": [
-          "v3"
-         ]
-        },
-        {
-         "id": "v1",
-         "opcode": "SafePoint",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "successors": [
-        0
-       ]
-      },
-      {
-       "id": 0,
-       "insts": [
-        {
-         "id": "v2",
-         "opcode": "SaveState",
-         "type": "void",
-         "users": [
-          "v4",
-          "v3"
-         ]
-        },
-        {
-         "id": "v3",
-         "inputs": [
-          "v0",
-          "v2"
-         ],
-         "opcode": "NullCheck",
-         "type": "ref",
-         "users": [
-          "v4"
-         ]
-        },
-        {
-         "id": "v4",
-         "inputs": [
-          "v3",
-          "v2"
-         ],
-         "method": "std.core.Object.<ctor>:void;",
-         "opcode": "CallStatic",
-         "type": "void"
-        },
-        {
-         "id": "v5",
-         "opcode": "ReturnVoid",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        1
-       ],
-       "successors": [
-        2
-       ]
-      },
-      {
-       "id": 2,
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ]
-      }
-     ],
-     "name": "<ctor>",
-     "returnType": "void",
-     "signature": "A0.<ctor>:void;"
-    }
-   ],
-   "name": "A0",
-   "simpleName": "A0",
-   "superClass": "std.core.Object"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u16[].<ctor>:u16[];i32;void;"
-    }
-   ],
-   "name": "u16[]",
-   "simpleName": "u16[]"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function12",
-   "simpleName": "Function12"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function5",
-   "simpleName": "Function5"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u1[][].<ctor>:u1[][];i32;i32;void;"
-    }
-   ],
-   "name": "u1[][]",
-   "simpleName": "u1[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u1[].<ctor>:u1[];i32;void;"
-    }
-   ],
-   "name": "u1[]",
-   "simpleName": "u1[]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i64[].<ctor>:i64[];i32;void;"
-    }
-   ],
-   "name": "i64[]",
-   "simpleName": "i64[]"
-  },
-  {
-   "accessFlags": 1,
-   "fields": [
-    {
-     "accessFlags": 0,
-     "name": "a",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
-     "name": "b",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 1,
-     "name": "c",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 1,
-     "name": "c",
-     "type": "std.core.String"
-    }
-   ],
-   "methods": [
-    {
-     "accessFlags": 1,
-     "basicBlocks": [
-      {
-       "id": 1,
-       "insts": [
-        {
-         "id": "v0",
-         "index": 0,
-         "opcode": "Parameter",
-         "type": "ref",
-         "users": [
-          "v7",
-          "v3"
-         ]
-        },
-        {
-         "id": "v1",
-         "opcode": "SafePoint",
-         "type": "void"
-        },
-        {
-         "id": "v5",
-         "opcode": "NullPtr",
-         "type": "ref",
-         "users": [
-          "v8"
-         ]
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "successors": [
-        0
-       ]
-      },
-      {
-       "id": 0,
-       "insts": [
-        {
-         "id": "v2",
-         "opcode": "SaveState",
-         "type": "void",
-         "users": [
-          "v4",
-          "v3"
-         ]
-        },
-        {
-         "id": "v3",
-         "inputs": [
-          "v0",
-          "v2"
-         ],
-         "opcode": "NullCheck",
-         "type": "ref",
-         "users": [
-          "v4"
-         ]
-        },
-        {
-         "id": "v4",
-         "inputs": [
-          "v3",
-          "v2"
-         ],
-         "method": "A.<ctor>:void;",
-         "opcode": "CallStatic",
-         "type": "void"
-        },
-        {
-         "id": "v6",
-         "opcode": "SaveState",
-         "type": "void",
-         "users": [
-          "v7"
-         ]
-        },
-        {
-         "id": "v7",
-         "inputs": [
-          "v0",
-          "v6"
-         ],
-         "opcode": "NullCheck",
-         "type": "ref",
-         "users": [
-          "v8"
-         ]
-        },
-        {
-         "enclosingClass": "A1",
-         "field": "c",
-         "id": "v8",
-         "inputs": [
-          "v7",
-          "v5"
-         ],
-         "opcode": "StoreObject",
-         "type": "ref"
-        },
-        {
-         "id": "v9",
-         "opcode": "ReturnVoid",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        1
-       ],
-       "successors": [
-        2
-       ]
-      },
-      {
-       "id": 2,
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ]
-      }
-     ],
-     "name": "<ctor>",
-     "returnType": "void",
-     "signature": "A1.<ctor>:void;"
-    }
-   ],
-   "name": "A1",
-   "simpleName": "A1",
-   "superClass": "A"
-  },
-  {
-   "accessFlags": 1,
-   "fields": [
-    {
-     "accessFlags": 1,
-     "name": "t",
-     "type": "std.core.Object"
-    },
-    {
-     "accessFlags": 1,
-     "name": "t",
-     "type": "std.core.Object"
-    }
-   ],
-   "methods": [
-    {
-     "accessFlags": 1,
-     "basicBlocks": [
-      {
-       "id": 1,
-       "insts": [
-        {
-         "id": "v0",
-         "index": 0,
-         "opcode": "Parameter",
-         "type": "ref",
-         "users": [
-          "v7",
-          "v3"
-         ]
-        },
-        {
-         "id": "v1",
-         "opcode": "SafePoint",
-         "type": "void"
-        },
-        {
-         "id": "v5",
-         "opcode": "NullPtr",
-         "type": "ref",
-         "users": [
-          "v8"
-         ]
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "successors": [
-        0
-       ]
-      },
-      {
-       "id": 0,
-       "insts": [
-        {
-         "id": "v2",
-         "opcode": "SaveState",
-         "type": "void",
-         "users": [
-          "v4",
-          "v3"
-         ]
-        },
-        {
-         "id": "v3",
-         "inputs": [
-          "v0",
-          "v2"
-         ],
-         "opcode": "NullCheck",
-         "type": "ref",
-         "users": [
-          "v4"
-         ]
-        },
-        {
-         "id": "v4",
-         "inputs": [
-          "v3",
-          "v2"
-         ],
-         "method": "std.core.Object.<ctor>:void;",
-         "opcode": "CallStatic",
-         "type": "void"
-        },
-        {
-         "id": "v6",
-         "opcode": "SaveState",
-         "type": "void",
-         "users": [
-          "v7"
-         ]
-        },
-        {
-         "id": "v7",
-         "inputs": [
-          "v0",
-          "v6"
-         ],
-         "opcode": "NullCheck",
-         "type": "ref",
-         "users": [
-          "v8"
-         ]
-        },
-        {
-         "enclosingClass": "P",
-         "field": "t",
-         "id": "v8",
-         "inputs": [
-          "v7",
-          "v5"
-         ],
-         "opcode": "StoreObject",
-         "type": "ref"
-        },
-        {
-         "id": "v9",
-         "opcode": "ReturnVoid",
-         "type": "void"
-        }
-       ],
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        1
-       ],
-       "successors": [
-        2
-       ]
-      },
-      {
-       "id": 2,
-       "isCatchBegin": false,
-       "isTryBegin": false,
-       "isTryEnd": false,
-       "predecessors": [
-        0
-       ]
-      }
-     ],
-     "name": "<ctor>",
-     "returnType": "void",
-     "signature": "P.<ctor>:void;"
-    }
-   ],
-   "name": "P",
-   "simpleName": "P",
-   "superClass": "std.core.Object"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f64[][].<ctor>:f64[][];i32;i32;void;"
-    }
-   ],
-   "name": "f64[][]",
-   "simpleName": "f64[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f32[].<ctor>:f32[];i32;void;"
-    }
-   ],
-   "name": "f32[]",
-   "simpleName": "f32[]"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function11",
-   "simpleName": "Function11"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f64[].<ctor>:f64[];i32;void;"
-    }
-   ],
-   "name": "f64[]",
-   "simpleName": "f64[]"
-  },
-  {
-   "accessFlags": 1537,
-   "methods": [
-    {
-     "accessFlags": 1025,
-     "name": "foo",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "i32",
-     "signature": "I1.foo:i32;i32;"
-    }
-   ],
-   "name": "I1",
-   "simpleName": "I1",
-   "superClass": "std.core.Object"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i8[][].<ctor>:i8[][];i32;i32;void;"
-    }
-   ],
-   "name": "i8[][]",
-   "simpleName": "i8[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i16[][].<ctor>:i16[][];i32;i32;void;"
-    }
-   ],
-   "name": "i16[][]",
-   "simpleName": "i16[][]"
-  },
-  {
-   "accessFlags": 1537,
-   "name": "std.core.Function9",
-   "simpleName": "Function9"
   },
   {
    "accessFlags": 1,
@@ -2472,20 +2207,21 @@
    "superClass": "ABVGDEJOZH"
   },
   {
-   "accessFlags": 0,
+   "accessFlags": 1537,
    "methods": [
     {
-     "accessFlags": 0,
-     "name": "<ctor>",
+     "accessFlags": 1025,
+     "name": "foo",
      "parameters": [
       "i32"
      ],
-     "returnType": "void",
-     "signature": "i32[].<ctor>:i32[];i32;void;"
+     "returnType": "i32",
+     "signature": "I1.foo:i32;i32;"
     }
    ],
-   "name": "i32[]",
-   "simpleName": "i32[]"
+   "name": "I1",
+   "simpleName": "I1",
+   "superClass": "std.core.Object"
   },
   {
    "accessFlags": 1,
@@ -2637,6 +2373,12 @@
        ]
       },
       {
+       "handledTypes": [
+        "finally"
+       ],
+       "handlerIds": [
+        18
+       ],
        "id": 10,
        "insts": [
         {
@@ -2657,6 +2399,12 @@
        ]
       },
       {
+       "handledTypes": [
+        "std.core.Object"
+       ],
+       "handlerIds": [
+        17
+       ],
        "id": 8,
        "insts": [
         {

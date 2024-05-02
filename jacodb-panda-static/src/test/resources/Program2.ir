@@ -33,23 +33,6 @@
    "simpleName": "Function3"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u16[][].<ctor>:u16[][];i32;i32;void;"
-    }
-   ],
-   "name": "u16[][]",
-   "simpleName": "u16[][]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function7",
    "simpleName": "Function7"
@@ -70,54 +53,6 @@
    "simpleName": "Function1"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i16[].<ctor>:i16[];i32;void;"
-    }
-   ],
-   "name": "i16[]",
-   "simpleName": "i16[]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i64[].<ctor>:i64[];i32;void;"
-    }
-   ],
-   "name": "i64[]",
-   "simpleName": "i64[]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i32[].<ctor>:i32[];i32;void;"
-    }
-   ],
-   "name": "i32[]",
-   "simpleName": "i32[]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function8",
    "simpleName": "Function8"
@@ -128,42 +63,9 @@
    "simpleName": "Function2"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u1[][].<ctor>:u1[][];i32;i32;void;"
-    }
-   ],
-   "name": "u1[][]",
-   "simpleName": "u1[][]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function16",
    "simpleName": "Function16"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u1[].<ctor>:u1[];i32;void;"
-    }
-   ],
-   "name": "u1[]",
-   "simpleName": "u1[]"
   },
   {
    "accessFlags": 1025,
@@ -1146,43 +1048,9 @@
    "simpleName": "Function12"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f32[][].<ctor>:f32[][];i32;i32;void;"
-    }
-   ],
-   "name": "f32[][]",
-   "simpleName": "f32[][]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function5",
    "simpleName": "Function5"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f64[][].<ctor>:f64[][];i32;i32;void;"
-    }
-   ],
-   "name": "f64[][]",
-   "simpleName": "f64[][]"
   },
   {
    "accessFlags": 1537,
@@ -1190,24 +1058,13 @@
    "simpleName": "Function14"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "u16[].<ctor>:u16[];i32;void;"
-    }
-   ],
-   "name": "u16[]",
-   "simpleName": "u16[]"
-  },
-  {
    "accessFlags": 1025,
    "fields": [
+    {
+     "accessFlags": 0,
+     "name": "KEY_NOT_FOUND",
+     "type": "i32"
+    },
     {
      "accessFlags": 0,
      "name": "OBJECT_HAS_OWN_PROPERTY_MEMBER_NAME",
@@ -1225,22 +1082,7 @@
     },
     {
      "accessFlags": 0,
-     "name": "KEY_NOT_FOUND",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
      "name": "ARRAY_LENGTH_MEMBER_NAME",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
-     "name": "OBJECT_TO_LOCALE_STRING_MEMBER_NAME",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
-     "name": "FUNCTION_NAME_MEMBER_NAME",
      "type": "std.core.String"
     },
     {
@@ -1250,28 +1092,18 @@
     },
     {
      "accessFlags": 0,
-     "name": "runtime",
-     "type": "std.core.Runtime"
+     "name": "OBJECT_TO_LOCALE_STRING_MEMBER_NAME",
+     "type": "std.core.String"
     },
     {
      "accessFlags": 0,
-     "name": "console",
-     "type": "std.core.Console"
+     "name": "ObjectTD",
+     "type": "std.core.String"
     },
     {
      "accessFlags": 0,
-     "name": "MAX_CODE_UNIT",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
-     "name": "TypeKindMask",
-     "type": "i8"
-    },
-    {
-     "accessFlags": 0,
-     "name": "MAX_CODE_POINT",
-     "type": "i32"
+     "name": "FUNCTION_NAME_MEMBER_NAME",
+     "type": "std.core.String"
     },
     {
      "accessFlags": 0,
@@ -1280,8 +1112,28 @@
     },
     {
      "accessFlags": 0,
-     "name": "ObjectTD",
-     "type": "std.core.String"
+     "name": "console",
+     "type": "std.core.Console"
+    },
+    {
+     "accessFlags": 0,
+     "name": "MAX_CODE_POINT",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
+     "name": "MAX_CODE_UNIT",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
+     "name": "runtime",
+     "type": "std.core.Runtime"
+    },
+    {
+     "accessFlags": 0,
+     "name": "TypeKindMask",
+     "type": "i8"
     },
     {
      "accessFlags": 0,
@@ -1293,91 +1145,9 @@
    "simpleName": "ETSGLOBAL"
   },
   {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i64[][].<ctor>:i64[][];i32;i32;void;"
-    }
-   ],
-   "name": "i64[][]",
-   "simpleName": "i64[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i16[][].<ctor>:i16[][];i32;i32;void;"
-    }
-   ],
-   "name": "i16[][]",
-   "simpleName": "i16[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f64[].<ctor>:f64[];i32;void;"
-    }
-   ],
-   "name": "f64[]",
-   "simpleName": "f64[]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i8[].<ctor>:i8[];i32;void;"
-    }
-   ],
-   "name": "i8[]",
-   "simpleName": "i8[]"
-  },
-  {
    "accessFlags": 1537,
    "name": "std.core.Function9",
    "simpleName": "Function9"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "f32[].<ctor>:f32[];i32;void;"
-    }
-   ],
-   "name": "f32[]",
-   "simpleName": "f32[]"
   },
   {
    "accessFlags": 1537,
@@ -1388,40 +1158,6 @@
    "accessFlags": 1537,
    "name": "std.core.Function13",
    "simpleName": "Function13"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i32[][].<ctor>:i32[][];i32;i32;void;"
-    }
-   ],
-   "name": "i32[][]",
-   "simpleName": "i32[][]"
-  },
-  {
-   "accessFlags": 0,
-   "methods": [
-    {
-     "accessFlags": 0,
-     "name": "<ctor>",
-     "parameters": [
-      "i32",
-      "i32"
-     ],
-     "returnType": "void",
-     "signature": "i8[][].<ctor>:i8[][];i32;i32;void;"
-    }
-   ],
-   "name": "i8[][]",
-   "simpleName": "i8[][]"
   }
  ]
 }

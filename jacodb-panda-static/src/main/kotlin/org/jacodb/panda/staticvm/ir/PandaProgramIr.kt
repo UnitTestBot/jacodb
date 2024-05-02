@@ -205,5 +205,11 @@ data class PandaBasicBlockIr(
     val isCatchBegin: Boolean = false,
     val isTryBegin: Boolean = false,
     val isTryEnd: Boolean = false,
-    val visit: String = "",
-)
+    private val handlerIds: List<Int> = emptyList(),
+    private val handledTypes: List<String> = emptyList()
+) {
+    data class Handler(val id: Int, val type: String?)
+
+    val handlers: List<Handler>
+        get() = handlerIds.zip(handledTypes) { id, type -> Handler(id, if (type == "finally") null else type) }
+}
