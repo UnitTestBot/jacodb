@@ -174,6 +174,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-approximations"),
             project(":jacodb-taint-configuration"),
             project(":jacodb-ets"),
+            project(":jacodb-go"),
         )
     ) {
         tasks {
