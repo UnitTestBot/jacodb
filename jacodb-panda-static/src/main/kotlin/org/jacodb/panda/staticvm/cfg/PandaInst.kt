@@ -161,6 +161,22 @@ class PandaThrowInst(
     override fun toString(): String = "throw $error"
 }
 
+class PandaPhiInst(
+    override val location: PandaInstLocation,
+    val lhv: PandaValue,
+    val phiInputs: List<PhiInput>
+) : PandaInst {
+    data class PhiInput(val value: PandaValue, val cfgBranch: PandaInstRef)
+
+    val inputs: List<PandaExpr>
+        get() = phiInputs.map { it.value }
+
+    override val operands: List<PandaExpr>
+        get() = inputs
+
+    override fun toString() = "$lhv = Phi(${phiInputs.joinToString { "${it.value} <- ${it.cfgBranch}" }})"
+}
+
 class PandaCatchInst(
     override val location: PandaInstLocation,
     val throwable: PandaValue,
@@ -170,4 +186,14 @@ class PandaCatchInst(
         get() = emptyList()
 
     override fun toString(): String = "catch($throwable: ${throwable.typeName})"
+}
+
+class PandaTryPseudoInst(
+    override val location: PandaInstLocation,
+    val catchers: List<PandaInstRef>
+) : PandaInst {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun toString(): String = "try"
 }

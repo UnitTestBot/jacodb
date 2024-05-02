@@ -148,15 +148,16 @@ class InstListBuilder(
     private val instBuilders: MutableList<InstBuilder> = mutableListOf()
 
     private inline fun <reified T : PandaInst> push(noinline build: (PandaInstLocation) -> T) {
+        val index = instBuilders.size
         when (typeOf<T>()) {
             typeOf<PandaThrowInst>() -> {
                 @Suppress("UNCHECKED_CAST", "NAME_SHADOWING")
                 val build = build as (PandaInstLocation) -> PandaThrowInst
-                instBuilders += ThrowInstBuilder { build(PandaInstLocation(method, instBuilders.size)) }
+                instBuilders += ThrowInstBuilder { build(PandaInstLocation(method, index)) }
             }
 
             else -> {
-                instBuilders += InstBuilder { build(PandaInstLocation(method, instBuilders.size)) }
+                instBuilders += InstBuilder { build(PandaInstLocation(method, index)) }
             }
         }
     }
@@ -219,15 +220,15 @@ class InstListBuilder(
     ) {
         push { location ->
             val throwerIndices = throwers.map { idMap[it] }.requireNoNulls()
+
             val (throwInputs, throwPredecessors) = (inputs zip throwerIndices).filter { (_, thrower) ->
                 instBuilders[thrower] is ThrowInstBuilder
             }.unzip()
             val predecessors = throwPredecessors.map { PandaInstRef(it) }
-            val phiExpr = PandaPhiExpr(lhv.type, throwInputs, predecessors)
-            PandaAssignInst(
+            PandaPhiInst(
                 location = location,
                 lhv = lhv,
-                rhv = phiExpr
+                phiInputs = throwInputs.zip(predecessors, PandaPhiInst::PhiInput)
             )
         }
     }
@@ -241,19 +242,20 @@ class InstListBuilder(
             val predecessors = blocks.map {
                 linearRef(IrInstLocation(it, maxOf(0, getBlock(it).insts.lastIndex)))
             }
-            val phiExpr = PandaPhiExpr(lhv.type, inputs, predecessors)
             PandaAssignInst(
+                location, lhv, PandaPhiExpr(lhv.type, inputs, predecessors)
+            )
+            /*PandaPhiInst(
                 location = location,
                 lhv = lhv,
-                rhv = phiExpr
-            )
+                phiInputs = inputs.zip(predecessors, PandaPhiInst::PhiInput)
+            )*/
         }
     }
 
-    /*internal fun pushCatch(lhv: PandaValue, throwerIds: List<String>) = push { location ->
-        val throwers = throwerIds.map(idMap::get).requireNoNulls().map(::PandaInstRef)
-        DefaultInstBuilder(PandaAssignInst(location, lhv, PandaPhiExpr(lhv.type,  throwers))
-    }*/
+    internal fun pushCatch(lhv: PandaValue, throwerIds: List<String>) = push { location ->
+        PandaCatchInst(location, lhv, TODO())
+    }
 
     internal fun pushThrow(error: PandaValue, catchers: List<Int>) {
         push { location ->
@@ -269,12 +271,44 @@ class InstListBuilder(
 
     private val throwEdgeBuilders: MutableList<Pair<IrInstLocation, IrInstLocation>> = mutableListOf()
 
+    private val throwersToCatchBlocks = OneDirectionGraph(blocks) { block ->
+        block.insts.flatMap { it.catchers }.map(this::getBlock)
+    }
+
+    private fun throwersLocations(block: PandaBasicBlockIr) =
+        block.insts.mapIndexedNotNull { index, inst ->
+            if (inst.catchers.isNotEmpty()) IrInstLocation(block.id, index) else null
+        }
+
     init {
         val visitor = InstListBuilderVisitor()
         blocks.sortedBy { it.predecessors.size }.forEach { block ->
+            if (block.isCatchBegin) {
+                visitor.location = IrInstLocation(block.id, 0)
+                locationMap[visitor.location] = instBuilders.size
+                val exceptionCatcher = block.insts.filterIsInstance<PandaCatchPhiInstIr>().find { it.throwers.isEmpty() }
+                exceptionCatcher?.let { push { location ->
+                    PandaCatchInst(
+                        location,
+                        result(it),
+                        throwersToCatchBlocks.predecessors(block)
+                            .flatMap { throwersLocations(it) }
+                            .map(this::linearRef)
+                    )
+                } }
+            }
+
+            if (block.isTryBegin) {
+                visitor.location = IrInstLocation(block.id, 0)
+                locationMap[visitor.location] = instBuilders.size
+                push { location ->
+                    PandaTryPseudoInst(location, block.successors.drop(1).map { linearRef(IrInstLocation(it, 0)) })
+                }
+            }
+
             block.insts.forEachIndexed { instIndex, inst ->
                 visitor.location = IrInstLocation(block.id, instIndex)
-                locationMap[visitor.location] = instBuilders.size
+                locationMap.putIfAbsent(visitor.location, instBuilders.size)
                 idMap[inst.id] = instBuilders.size
 
                 inst.accept(visitor)
@@ -284,20 +318,19 @@ class InstListBuilder(
                 }
             }
 
+            val endOfBlock = IrInstLocation(block.id, block.insts.size)
+            visitor.location = endOfBlock
+            locationMap[endOfBlock] = instBuilders.size
             if (block.isTryBegin || block.isTryEnd) {
                 pushGoto(IrInstLocation(block.successors.first(), 0))
-            }
-
-            block.successors.singleOrNull()?.let {
-                if (block.insts.lastOrNull() !is PandaTerminatingInstIr) {
-                    pushGoto(IrInstLocation(it, 0))
-                }
-            }
-
-            if (block.insts.isEmpty()) {
-                val loc = IrInstLocation(block.id, 0)
-                locationMap[loc] = instBuilders.size
-                pushDoNothing()
+            } else {
+                block.successors.singleOrNull()?.let {
+                    if (block.insts.lastOrNull() !is PandaTerminatingInstIr) {
+                        pushGoto(IrInstLocation(it, 0))
+                    }
+                } ?: if (block.insts.isEmpty()) {
+                    pushDoNothing()
+                } else Unit
             }
         }
     }
@@ -317,9 +350,11 @@ internal fun buildLocalVariables(
 
     val localVarsIndex = hashMapOf<String, PandaLocalVar>()
 
-    val outputVarBuilder = OutputVarBuilder(pandaMethod)
+    val handledType = blocks.flatMap { it.handlers }.associate {
+        it.id to (if (it.type == "finally") null else it.type)?.let(project::findTypeOrNull) }
 
     val varNodes = blocks.flatMap { block ->
+        val outputVarBuilder = OutputVarBuilder(pandaMethod, block, handledType[block.id])
         block.insts.mapNotNull { it.accept(outputVarBuilder) }
     }.associateBy { it.name }
 
@@ -715,7 +750,8 @@ class InstListBuilderVisitor : PandaInstIrVisitor<Unit> {
     override fun visitPandaCatchPhiInstIr(inst: PandaCatchPhiInstIr) {
         val inputs = inst.inputs.map { local(it) }
         val throwers = inst.throwers
-        pushCatchPhi(result(inst), inputs, throwers)
+        if (inst.inputs.isNotEmpty())
+            pushCatchPhi(result(inst), inputs, throwers)
     }
 
     override fun visitPandaIntrinsicInstIr(inst: PandaIntrinsicInstIr) {

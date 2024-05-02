@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test
 class PandaIrDeserializationTest {
 
     companion object {
-        private const val SAMPLE_FILE_PATH: String = "sample.ir"
+        private const val SAMPLE_FILE_PATH: String = "sample.abc.ir"
     }
 
     @Test
@@ -36,7 +36,7 @@ class PandaIrDeserializationTest {
 
     @Test
     fun catchTest() {
-        val filePath = "testCatch.ir"
+        val filePath = "try_catch_finally.abc.ir"
         val program = loadProgram("/$filePath")
         val project = PandaProject.fromProgramIr(program, withStdLib = true)
         val applicationGraph = PandaApplicationGraph(project)

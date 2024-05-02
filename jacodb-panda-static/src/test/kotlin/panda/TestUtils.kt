@@ -16,6 +16,8 @@
 
 package panda
 
+import org.jacodb.panda.staticvm.cfg.toDot
+import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.panda.staticvm.ir.dumpDot
 import java.io.File
@@ -30,12 +32,36 @@ fun loadProgram(path: String): PandaProgramIr {
 object DumpIrToDot {
     @JvmStatic
     fun main(args: Array<String>) {
-        val filePath = "sample.ir"
+        val filePath = "try_catch_finally.abc.ir"
         val program = loadProgram("/$filePath")
 
         val path = "dump"
         val dotFile = File("$path.dot")
         program.dumpDot(dotFile)
+        println("Generated DOT file: ${dotFile.absolutePath}")
+        for (format in listOf("pdf")) {
+            val formatFile = File("$path.$format")
+            val p = Runtime.getRuntime().exec("dot -T$format $dotFile -o $formatFile")
+            p.waitFor()
+            print(p.inputStream.bufferedReader().readText())
+            print(p.errorStream.bufferedReader().readText())
+            println("Generated ${format.uppercase()} file: ${formatFile.absolutePath}")
+        }
+    }
+}
+
+object DumpCFGToDot {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val filePath = "try_catch_finally.abc.ir"
+        val program = loadProgram("/$filePath")
+        val cfg = PandaProject.fromProgramIr(program, withStdLib = true)
+            .findMethod("ETSGLOBAL.main:void;")
+            .flowGraph()
+
+        val path = "cfg_dump"
+        val dotFile = File("$path.dot")
+        dotFile.writer().use { it.write(cfg.toDot()) }
         println("Generated DOT file: ${dotFile.absolutePath}")
         for (format in listOf("pdf")) {
             val formatFile = File("$path.$format")
