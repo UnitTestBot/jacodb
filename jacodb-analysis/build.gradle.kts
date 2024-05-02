@@ -9,6 +9,7 @@ dependencies {
     api(project(":jacodb-taint-configuration"))
     api(project(":jacodb-ets"))
     api(project(":jacodb-panda-static"))
+    api(project(":jacodb-go"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)
