@@ -16,8 +16,8 @@
 
 package org.jacodb.api.common
 
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.ControlFlowGraph
 
 interface CommonMethod<out Method, out Statement>
     where Method : CommonMethod<Method, Statement>,

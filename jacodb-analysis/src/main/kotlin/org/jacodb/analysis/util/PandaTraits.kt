@@ -19,6 +19,7 @@ package org.jacodb.analysis.util
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
+import org.jacodb.analysis.ifds.PandaFieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
@@ -36,8 +37,10 @@ import org.jacodb.panda.dynamic.api.PandaClass
 import org.jacodb.panda.dynamic.api.PandaClassType
 import org.jacodb.panda.dynamic.api.PandaConstant
 import org.jacodb.panda.dynamic.api.PandaExpr
+import org.jacodb.panda.dynamic.api.PandaField
 import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodParameter
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
@@ -45,6 +48,7 @@ import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaStringConstant
 import org.jacodb.panda.dynamic.api.PandaThis
+import org.jacodb.panda.dynamic.api.PandaTypeName
 import org.jacodb.panda.dynamic.api.PandaValue
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantIntValue
@@ -194,6 +198,12 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
             instance.toPathOrNull()?.let {
                 it + FieldAccessor(classField)
             }
+        }
+    }
+
+    is PandaLoadedValue -> {
+        instance.toPathOrNull()?.let {
+            it + PandaFieldAccessor(PandaField(property,  PandaTypeName(typeName), null))
         }
     }
 

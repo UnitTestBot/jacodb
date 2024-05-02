@@ -17,6 +17,7 @@
 package org.jacodb.analysis.ifds
 
 import org.jacodb.api.common.CommonClassField
+import org.jacodb.panda.dynamic.api.PandaField
 
 sealed interface Accessor {
     fun toSuffix(): String
@@ -32,4 +33,11 @@ data class FieldAccessor(
 object ElementAccessor : Accessor {
     override fun toSuffix(): String = "[*]"
     override fun toString(): String = "*"
+}
+
+data class PandaFieldAccessor(
+    val field: PandaField,
+): Accessor {
+    override fun toSuffix(): String = ".${field.name}"
+    override fun toString(): String = field.name
 }

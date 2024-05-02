@@ -82,3 +82,22 @@ data class PandaInterfaceType(
 ) : PandaObjectType {
     override fun toString(): String = pandaClassOrInterface.name
 }
+
+data class PandaUnionType(
+    val types: Set<PandaSingleType>,
+) : PandaSingleType {
+    init {
+        require(types.isNotEmpty()) { "Cannot create empty union type" }
+    }
+
+    override val typeName: String
+        get() = types.joinToString(" | ") { it.typeName }
+
+    override val nullable: Boolean
+        get() = TODO()
+
+    val methods: List<PandaMethod>
+        get() = types.flatMap { if (it is PandaObjectType) it.pandaClassOrInterface.methods else emptyList() }
+
+    override fun toString(): String = typeName
+}

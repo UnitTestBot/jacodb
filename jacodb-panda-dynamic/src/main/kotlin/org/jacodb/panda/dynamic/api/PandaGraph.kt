@@ -171,7 +171,10 @@ class PandaApplicationGraphImpl(
 
     override fun callees(node: PandaInst): Sequence<PandaMethod> {
         val callExpr = node.callExpr ?: return emptySequence()
-        return sequenceOf(callExpr.method)
+        // return sequenceOf(callExpr.method)
+        // TODO: handle virtual calls properly
+        val method = callExpr.method
+        return project.classes.asSequence().flatMap { it.methods }.filter { it.name == method.name }
     }
 
     override fun callers(method: PandaMethod): Sequence<PandaInst> {

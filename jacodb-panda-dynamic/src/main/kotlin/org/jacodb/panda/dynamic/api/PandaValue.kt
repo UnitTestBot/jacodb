@@ -174,23 +174,18 @@ data class PandaArrayAccess(
     }
 }
 
-interface PandaInstanceCallValue : PandaComplexValue {
-    val instance: PandaValue
-    val obj: PandaValue
-
-    fun getClassAndMethodName(): List<String>
-}
-
-// used to connect loaded object to instance
 data class PandaLoadedValue(
-    override val instance: PandaValue,
-    override val obj: PandaValue,
-) : PandaInstanceCallValue {
+     val instance: PandaValue,
+     val property: String,
+) : PandaComplexValue {
     override val type: PandaType
         get() = PandaAnyType
 
+    val className: String
+        get() = instance.typeName
+
     override val operands: List<PandaValue>
-        get() = listOf(instance, obj)
+        get() = listOf(instance)
 
     private fun PandaValue.resolve(): String {
         return when (this) {
@@ -201,47 +196,14 @@ data class PandaLoadedValue(
         }
     }
 
-    override fun getClassAndMethodName(): List<String> {
-        assert(obj is PandaStringConstant)
-        return listOf(instance.resolve(), (obj as PandaStringConstant).value)
+    fun getClassAndMethodName(): List<String> {
+        return listOf(instance.resolve(), property)
     }
 
-    override fun toString(): String = "Loaded[$instance.$obj]"
+    override fun toString(): String = "Property($instance, $property)"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLoadedValue(this)
-    }
-}
-
-data class PandaInstanceCallValueImpl(
-    override val instance: PandaValue,
-    override val obj: PandaValue,
-) : PandaInstanceCallValue {
-    override val type: PandaType
-        get() = PandaAnyType
-
-    override val operands: List<PandaValue>
-        get() = listOf(instance, obj)
-
-    override fun getClassAndMethodName(): List<String> {
-        assert(obj is PandaStringConstant)
-
-        return listOf(instance.resolve(), (obj as PandaStringConstant).value)
-    }
-
-    private fun PandaValue.resolve(): String {
-        return when (this) {
-            is PandaStringConstant -> this.value
-            is PandaLocalVar -> (this.type as PandaClassType).typeName
-            is PandaThis -> (this.type as PandaClassType).typeName
-            else -> throw IllegalArgumentException("couldn't resolve $this")
-        }
-    }
-
-    // TODO: toString()
-
-    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        TODO("Not yet implemented")
     }
 }
 

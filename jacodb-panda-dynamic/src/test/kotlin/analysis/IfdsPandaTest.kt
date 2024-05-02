@@ -33,7 +33,6 @@ import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.panda.dynamic.parser.IRParser
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
@@ -60,6 +59,49 @@ class IfdsPandaTest {
         val parser = loadIr("/samples/${programName}.json")
         val project = parser.getProject()
         return project
+    }
+
+    @Test
+    fun kek() {
+        val project = loadProjectForSample("MethodCollision")
+        val graph = PandaApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "isSame" && method.className == "Foo") add(
+                        TaintMethodSource(
+                            method = mockk(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("TAINT"), position = Result),
+                            ),
+                        )
+                    )
+                    if (method.name == "log") add(
+                        TaintMethodSink(
+                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                            cwe = listOf(), // FIXME
+                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                        )
+                    )
+                }
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+
+        val methods = project.classes.flatMap { it.methods }.filter { it.name == "main" }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
     }
 
     @Test

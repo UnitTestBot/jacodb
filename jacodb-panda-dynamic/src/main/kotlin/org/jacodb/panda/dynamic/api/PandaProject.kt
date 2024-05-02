@@ -22,7 +22,7 @@ class PandaProject(
     val classes: List<PandaClass>,
 ) : CommonProject {
 
-    private val std = PandaStdLib
+    // private val std = PandaStdLib
 
     init {
         classes.forEach { clazz ->
@@ -49,15 +49,15 @@ class PandaProject(
 //        throw IllegalStateException("couldn't find object $name starting from class $currentClassName")
 //    }
 
-    fun findInstanceMethodInStd(instanceName: String, methodName: String): PandaStdMethod {
-        std.fields.find { it.name == instanceName }?.let { obj ->
-            return (obj.methods.find { it.name == methodName }
-                ?: error("no method $methodName for $instanceName"))
-                .also {
-                    it.project = this
-                }
-        } ?: error("no std field $instanceName")
-    }
+    // fun findInstanceMethodInStd(instanceName: String, methodName: String): PandaStdMethod {
+    //     std.fields.find { it.name == instanceName }?.let { obj ->
+    //         return (obj.methods.find { it.name == methodName }
+    //             ?: error("no method $methodName for $instanceName"))
+    //             .also {
+    //                 it.project = this
+    //             }
+    //     } ?: error("no std field $instanceName")
+    // }
 
     /*  TODO: WIP
         Order of search:
@@ -69,7 +69,9 @@ class PandaProject(
     fun findMethodByInstanceOrEmpty(instanceName: String, methodName: String, currentClassName: String): PandaMethod {
         // if (instanceName == "this") {
         return findMethodOrNull(methodName, currentClassName)
-            ?: PandaMethod(methodName)
+            ?: run {
+                PandaMethod(methodName)
+            }
         // }
         // return findInstanceMethodInStd(instanceName, methodName)
     }
@@ -86,16 +88,16 @@ class PandaProject(
     }
 }
 
-class PandaObject(
-    val name: String,
-    val methods: List<PandaStdMethod>,
-)
+// class PandaObject(
+//     val name: String,
+//     val methods: List<PandaStdMethod>,
+// )
 
-object PandaStdLib {
-    val fields = listOf(
-        PandaObject(
-            "console",
-            listOf(PandaStdMethod("log"))
-        )
-    )
-}
+// object PandaStdLib {
+//     val fields = listOf(
+//         PandaObject(
+//             "console",
+//             listOf(PandaStdMethod("log"))
+//         )
+//     )
+// }

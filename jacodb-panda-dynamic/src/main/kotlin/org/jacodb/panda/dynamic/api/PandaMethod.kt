@@ -21,8 +21,10 @@ import org.jacodb.api.common.CommonMethodParameter
 
 open class PandaMethod(
     override val name: String,
-    // override val enclosingClass: PandaClass,
 ) : CommonMethod<PandaMethod, PandaInst> {
+
+    override lateinit var enclosingClass: PandaClass
+        internal set
 
     lateinit var project: PandaProject
     var blocks: List<PandaBasicBlock> = emptyList()
@@ -46,9 +48,9 @@ open class PandaMethod(
         internal set
 
     private var flowGraph: PandaGraph? = null
-
-    override val enclosingClass: PandaClass
-        get() = project.classes.find { it.name == className } ?: project.getGlobalClass()
+    //
+    // override val enclosingClass: PandaClass
+    //     get() = project.classes.find { it.name == className } ?: project.getGlobalClass()
 
     override val returnType: PandaTypeName
         get() = PandaTypeName(type.typeName)
@@ -99,10 +101,10 @@ open class PandaMethod(
     }
 }
 
-class PandaStdMethod(
-    name: String,
-    // enclosingClass: PandaClass,
-) : PandaMethod(name)
+// class PandaStdMethod(
+//     name: String,
+//     // enclosingClass: PandaClass,
+// ) : PandaMethod(name)
 
 class PandaParameterInfo(
     val index: Int,

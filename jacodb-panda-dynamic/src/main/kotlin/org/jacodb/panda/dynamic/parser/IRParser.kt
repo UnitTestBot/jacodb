@@ -46,8 +46,6 @@ import org.jacodb.panda.dynamic.api.PandaIfInst
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaInstLocation
 import org.jacodb.panda.dynamic.api.PandaInstRef
-import org.jacodb.panda.dynamic.api.PandaInstanceCallValue
-import org.jacodb.panda.dynamic.api.PandaInstanceCallValueImpl
 import org.jacodb.panda.dynamic.api.PandaLeExpr
 import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
@@ -133,6 +131,7 @@ class IRParser(
         mapProgramIR(this.program!!)
         return program!!
     }
+
     fun getProgramInstance() = this.program!!
 
     fun getProject(): PandaProject {
@@ -200,16 +199,20 @@ class IRParser(
         return program.classes.map { clazz ->
             val pandaMethods = clazz.properties.map { property ->
                 property.method.also { method ->
-                    val panda = method.pandaMethod
-                    panda.blocks = method.idToBB.values.toList()
-                    panda.instructions = method.insts
-                    panda.parameterInfos = method.parameters
-                    panda.className = clazz.name
-                    panda.localVarsCount = method.currentLocalVarId + 1
-                    setMethodTypes(panda)
+                    val pandaMethod = method.pandaMethod
+                    pandaMethod.blocks = method.idToBB.values.toList()
+                    pandaMethod.instructions = method.insts
+                    pandaMethod.parameterInfos = method.parameters
+                    pandaMethod.className = clazz.name
+                    pandaMethod.localVarsCount = method.currentLocalVarId + 1
+                    setMethodTypes(pandaMethod)
                 }.pandaMethod
             }
-            PandaClass(clazz.name, clazz.superClass, pandaMethods)
+            val pandaClass = PandaClass(clazz.name, clazz.superClass, pandaMethods)
+            pandaMethods.forEach {
+                it.enclosingClass = pandaClass
+            }
+            pandaClass
         }
     }
 
@@ -327,7 +330,7 @@ class IRParser(
         val outputs = outputs()
 
         fun handle(expr: PandaExpr) {
-            val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
+            val lv = PandaLocalVar(method.currentLocalVarId++, if (expr is PandaNewExpr) expr.type else PandaAnyType)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
@@ -482,7 +485,7 @@ class IRParser(
 
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaLoadedValue(inputs[0], PandaStringConstant(name))
+                val out = PandaLoadedValue(inputs[0], name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
@@ -503,10 +506,7 @@ class IRParser(
 
             opcode == "Intrinsic.ldglobalvar" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaInstanceCallValueImpl(
-                    PandaThis(PandaClassTypeImpl(method.clazz.name)),
-                    PandaStringConstant(name)
-                )
+                val out = PandaLoadedValue(PandaThis(PandaClassTypeImpl(method.clazz.name)), name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }
@@ -518,7 +518,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stobjbyname" -> {
-                val objectName = PandaStringConstant(stringData ?: error("No string data"))
+                val objectName = stringData ?: error("No string data")
                 val instance = inputs[0]
                 val value = inputs[1]
 
@@ -561,7 +561,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis0" -> {
-                val instCallValue = inputs.last() as PandaInstanceCallValue
+                val instCallValue = inputs.last() as PandaLoadedValue
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -578,14 +578,14 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis1" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                         method.pandaMethod.project.findMethodByInstanceOrEmpty(
                             instanceName,
                             methodName,
-                            method.clazz.name
+                            instCallValue.className
                         )
                     },
                     args = inputs.filterNot { it == instCallValue },
@@ -595,7 +595,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis2" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -612,7 +612,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis3" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
                         val (instanceName, methodName) = instCallValue.getClassAndMethodName()
@@ -629,7 +629,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callarg0" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
                     lazyMethod = lazy {
@@ -646,7 +646,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callarg1" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val args = inputs.filterNot { it == instCallValue }
                 val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
@@ -664,7 +664,7 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callargs2" -> {
-                val instCallValue = inputs.find<PandaInstanceCallValue>().last()
+                val instCallValue = inputs.find<PandaLoadedValue>().last()
                 val args = inputs.filterNot { it == instCallValue }
                 val (instanceName, methodName) = instCallValue.getClassAndMethodName()
                 val callExpr = PandaVirtualCallExpr(
