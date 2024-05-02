@@ -27,6 +27,9 @@ import org.jacodb.panda.staticvm.utils.OneDirectionGraph
 
 interface PandaBytecodeGraph<out Statement> : BytecodeGraph<Statement>
 
+/**
+ * Control flow graph for a single [PandaMethod].
+ */
 class PandaGraph private constructor(
     private val instList: PandaInstList,
     private val graph: OneDirectionGraph<PandaInst>,
