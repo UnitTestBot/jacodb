@@ -17,7 +17,6 @@
 package org.jacodb.go.api
 
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.go.api.GoExpr
 
 interface GoValue : GoExpr, CommonValue {
     override val typeName: String

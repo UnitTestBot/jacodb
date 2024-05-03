@@ -36,8 +36,6 @@ interface GoInstVisitor<T> : CommonInst.Visitor<T> {
 
     fun visitGoCallInst(inst: GoCallInst): T
 
-    fun visitGoNullInst(inst: GoNullInst): T
-
     fun visitGoAssignInst(inst: GoAssignInst): T
 }
 

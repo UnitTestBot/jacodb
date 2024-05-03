@@ -17,7 +17,6 @@
 package org.jacodb.go.api
 
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.cfg.ControlFlowGraph
 
 interface GoMethod : CommonMethod<GoMethod, GoInst>, GoValue {
     val metName: String

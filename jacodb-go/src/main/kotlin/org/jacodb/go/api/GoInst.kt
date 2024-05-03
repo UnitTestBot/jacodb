@@ -278,7 +278,7 @@ class GoNullInst(val parent: GoMethod) : AbstractGoInst(
     override fun toString(): String = "null"
 
     override fun <T> accept(visitor: GoInstVisitor<T>): T {
-        return visitor.visitGoNullInst(this)
+        error("NULL inst")
     }
 }
 
