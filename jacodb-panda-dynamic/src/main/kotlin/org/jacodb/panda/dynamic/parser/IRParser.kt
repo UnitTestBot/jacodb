@@ -348,8 +348,9 @@ class IRParser(
         when {
             opcode == "Parameter" -> {
                 val arg = PandaArgument(id())
+                val out = if (id() >= ARG_THRESHOLD) arg else PandaThis(PandaClassTypeImpl(method.clazz.name))
                 outputs.forEach { output ->
-                    addInput(method, id(), output, arg)
+                    addInput(method, id(), output, out)
                 }
                 if (id() >= ARG_THRESHOLD) {
                     val argInfo = PandaParameterInfo(id() - ARG_THRESHOLD, mapType(type))
