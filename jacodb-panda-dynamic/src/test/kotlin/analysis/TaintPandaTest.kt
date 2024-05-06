@@ -39,7 +39,7 @@ class TaintPandaTest {
     data class CaseTaintConfig(
         val sourceMethodName: String,
         val cleanerMethodName: String? = null,
-        val sinkMethodName: String,
+        val sinkMethodName: String? = null,
         val startMethodNamesForAnalysis: List<String>? = null
     )
 
@@ -166,6 +166,47 @@ class TaintPandaTest {
 
     }
 
+    @Nested
+    inner class UntrustedLoopBoundTest {
+
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/untrustedLoopBound")
+
+        @Test
+        fun `counterexample - untrusted bound in for loop`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserData",
+                    startMethodNamesForAnalysis = listOf("forLoop")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+        @Test
+        fun `counterexample - untrusted bound in do while loop`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserData",
+                    startMethodNamesForAnalysis = listOf("doWhileLoop")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+
+        @Test
+        fun `counterexample - untrusted bound in while loop`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserData",
+                    startMethodNamesForAnalysis = listOf("whileLoop")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+
+    }
     @Nested
     inner class FieldSampleTest {
         private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/fieldSample")
