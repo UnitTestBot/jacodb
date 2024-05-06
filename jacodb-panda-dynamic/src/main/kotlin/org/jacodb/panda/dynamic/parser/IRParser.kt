@@ -541,6 +541,26 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            opcode == "Intrinsic.definemethod" -> {
+                val name = functionName ?: error("No functionName")
+                val out = PandaLoadedValue(inputs[0], name)
+                outputs.forEach { output ->
+                    addInput(method, id(), output, out)
+                    // for call insts not to have "instance.object" and "instance, object" in inputs
+                    method.idToInputs[output]?.remove(inputs[0])
+                }
+            }
+
+            opcode == "Intrinsic.definefieldbyname" -> {
+                val fieldName = stringData ?: error("No stringData")
+
+                val instance = inputs[0]
+                val value = inputs[1]
+
+                val property = PandaLoadedValue(instance, fieldName)
+                method.insts += PandaAssignInst(locationFromOp(this), property, value)
+            }
+
             opcode == "Intrinsic.getiterator" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)

@@ -474,7 +474,7 @@
           "imms": [
            0,
            442,
-           617,
+           609,
            0
           ],
           "inputs": [
@@ -527,6 +527,7 @@
           "visit": "default"
          },
          {
+          "functionName": ".static_initializer",
           "id": "v9",
           "imms": [
            3,
@@ -539,12 +540,11 @@
           ],
           "intrinsic_id": "Intrinsic.definemethod",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
           "users": [
            "v11"
           ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v12",
