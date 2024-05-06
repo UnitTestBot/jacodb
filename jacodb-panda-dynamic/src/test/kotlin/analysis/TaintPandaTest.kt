@@ -26,76 +26,160 @@ import org.jacodb.analysis.util.PandaTraits
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.ConstantTrue
-import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.Result
-import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMark
-import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.taint.configuration.TaintMethodSource
 import org.junit.jupiter.api.Test
 import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.taint.configuration.*
+import org.junit.jupiter.api.Nested
 import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
 
 class TaintPandaTest {
-    companion object : PandaTraits
+    data class CaseTaintConfig(
+        val sourceMethodName: String,
+        val cleanerMethodName: String? = null,
+        val sinkMethodName: String,
+        val startMethodNamesForAnalysis: List<String>? = null
+    )
 
-    private fun loadProjectForSample(programName: String): PandaProject {
-        val parser = loadIr("/samples/${programName}.json")
-        val project = parser.getProject()
-        return project
-    }
+    class FileTaintAnalyzer(programName: String) {
+        companion object : PandaTraits
 
-    private fun `log as sink and one source method`(programName: String, sourceMethodName: String): List<TaintVulnerability<PandaMethod, PandaInst>> {
-        val project = loadProjectForSample(programName)
-        val graph = PandaApplicationGraphImpl(project)
-//        graph.project.classes.flatMap { it.methods }.single { it.name == "main" }.flowGraph().view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
-        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
-        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
-            { method ->
-                val rules = buildList {
-                    if (method.name == sourceMethodName) add(
-                        TaintMethodSource(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(
-                                AssignMark(mark = TaintMark("TAINT"), position = Result),
-                            ),
-                        )
-                    )
-                    if (method.name == "log") add(
-                        TaintMethodSink(
-                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
-                            cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
-                        )
-                    )
-                }
-                rules.ifEmpty { null }
-            }
-        val manager = TaintManager(
-            graph = graph,
-            unitResolver = unitResolver,
-            getConfigForMethod = getConfigForMethod,
-        )
-
-        val methods = project.classes.flatMap { it.methods }
-        logger.info { "Methods: ${methods.size}" }
-        for (method in methods) {
-            logger.info { "  ${method.name}" }
+        private fun loadProjectForSample(programName: String): PandaProject {
+            val parser = loadIr("/samples/${programName}.json")
+            val project = parser.getProject()
+            return project
         }
-        val sinks = manager.analyze(methods)
-        logger.info { "Sinks: $sinks" }
-        return sinks
+
+        private val project : PandaProject = loadProjectForSample(programName)
+        private val graph : PandaApplicationGraph = PandaApplicationGraphImpl(this.project)
+
+        fun analyseOneCase(caseTaintConfig: CaseTaintConfig) : List<TaintVulnerability<PandaMethod, PandaInst>> {
+            val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+            val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+                { method ->
+                    val rules = buildList {
+                        if (method.name == caseTaintConfig.sourceMethodName) add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                        else if (method.name == caseTaintConfig.cleanerMethodName) add(
+                            TaintPassThrough(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    RemoveMark(mark = TaintMark("TAINT"), position = Argument(0))
+                                ),
+                            )
+                        )
+                        else if (method.name == caseTaintConfig.sinkMethodName) add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
+                        )
+                        // TODO(): generalize semantic
+                        else add(
+                            TaintPassThrough(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = List(method.parameters.size) {index ->
+                                    CopyAllMarks(from = Argument(index), to = Result)
+                                }
+                            )
+                        )
+                    }
+                    rules.ifEmpty { null }
+                }
+            val manager = TaintManager(
+                graph = graph,
+                unitResolver = unitResolver,
+                getConfigForMethod = getConfigForMethod,
+            )
+
+            val methods = this.project.classes.flatMap { it.methods }
+            val filteredMethods = caseTaintConfig.startMethodNamesForAnalysis?.let {names ->
+                methods.filter { method -> names.contains(method.name) }
+            } ?: methods
+
+
+            logger.info { "Methods: ${filteredMethods.size}" }
+            for (method in filteredMethods) {
+                logger.info { "  ${method.name}" }
+            }
+            val sinks = manager.analyze(filteredMethods)
+            logger.info { "Sinks: $sinks" }
+            return sinks
+        }
     }
 
-    @Test
-    fun `test taint analysis on fieldSample`() {
-        val sinks = `log as sink and one source method`("taintSamples/fieldSample", "getNameOption")
-        assert(sinks.size == 2)
+
+
+    @Nested
+    inner class PasswordLeakTest {
+
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/passwordLeak")
+
+        @Test
+        fun `counterexample - print unencrypted password to console`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserPassword",
+                    sinkMethodName = "log",
+                    startMethodNamesForAnalysis = listOf("case1")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+        @Test
+        fun `positive example - print encrypted password to console (with forgotten cleaner)`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserPassword",
+                    sinkMethodName = "log",
+                    startMethodNamesForAnalysis = listOf("case2")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+        @Test
+        fun `positive example - print encrypted password to console`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getUserPassword",
+                    cleanerMethodName = "encryptPassword",
+                    sinkMethodName = "log",
+                    startMethodNamesForAnalysis = listOf("case2")
+                )
+            )
+            assert(sinks.isEmpty())
+        }
+
+    }
+
+    @Nested
+    inner class FieldSampleTest {
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/fieldSample")
+
+        @Test
+        fun `test taint analysis on fieldSample`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodName = "getNameOption",
+                    sinkMethodName = "log"
+                )
+            )
+            assert(sinks.size == 2)
+        }
     }
 }
+
