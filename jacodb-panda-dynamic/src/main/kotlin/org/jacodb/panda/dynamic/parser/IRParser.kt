@@ -301,8 +301,22 @@ class IRParser(
                 inst.decLocationIndex(gotoIndices)
             }
 
+            val blocks = method.idToBB.toMap().values.sortedBy { it.start }
+
+
             gotoToRemove.forEach { gotoInst ->
                 method.insts.remove(gotoInst)
+
+                var startIdx = blocks.indexOfFirst { it.start.index > gotoInst.location.index }
+                while (startIdx < blocks.size) {
+                    val b = blocks[startIdx]
+                    b.updateRange(
+                        PandaInstRef(b.start.index - 1),
+                        PandaInstRef(b.end.index - 1)
+                    )
+                    startIdx++
+                }
+
                 val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
                 enclosingBB.updateRange(
                     enclosingBB.start,
