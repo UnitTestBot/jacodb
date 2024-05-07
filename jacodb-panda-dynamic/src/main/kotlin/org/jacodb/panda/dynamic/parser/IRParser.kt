@@ -307,6 +307,7 @@ class IRParser(
             gotoToRemove.forEach { gotoInst ->
                 method.insts.remove(gotoInst)
 
+                // Fixing range for basic blocks that are after the removed goto
                 var startIdx = blocks.indexOfFirst { it.start.index > gotoInst.location.index }
                 while (startIdx < blocks.size) {
                     val b = blocks[startIdx]
@@ -317,6 +318,7 @@ class IRParser(
                     startIdx++
                 }
 
+                // Fixing end of range for the enclosing basic block of the removed goto
                 val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
                 enclosingBB.updateRange(
                     enclosingBB.start,
