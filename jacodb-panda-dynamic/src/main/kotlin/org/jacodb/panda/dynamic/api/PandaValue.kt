@@ -59,9 +59,8 @@ data class PandaThis(
 data class PandaArgument(
     override val index: Int,
     override val name: String = "arg$index",
+    override val type: PandaType = PandaAnyType
 ) : PandaLocal, CommonArgument {
-    override val type: PandaType
-        get() = PandaAnyType
 
     override fun toString(): String = "arg $index"
 

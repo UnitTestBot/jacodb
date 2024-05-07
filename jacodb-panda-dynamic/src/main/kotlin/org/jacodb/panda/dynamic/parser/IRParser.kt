@@ -52,7 +52,6 @@ import org.jacodb.panda.dynamic.api.PandaLengthExpr
 import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
-import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMulExpr
 import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNeqExpr
@@ -174,24 +173,24 @@ class IRParser(
 
         TODO: Expand for more complex samples.
      */
-    private fun setMethodTypes(method: PandaMethod) {
+    private fun setMethodTypes(method: ProgramMethod) {
         if (tsFunctions == null) return
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                    tsFunc.arguments.size == method.parameterInfos.size &&
                     // here comes the result of comment above
-                    tsFunc.containingClass?.name == method.className
+                    tsFunc.containingClass?.name == method.clazz.name
         }?.let { tsFunc ->
-            method.type = tsFunc.returnType
-            method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
-                PandaParameterInfo(
-                    index = paramInfo.index,
-                    type
-                )
-            }
+            method.paramTypes.addAll(tsFunc.arguments)
+//            method.type = tsFunc.returnType
+//            method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
+//                PandaParameterInfo(
+//                    index = paramInfo.index,
+//                    type
+//                )
+//            }
             // TODO: Add class constructor to GLOBAL
-        } ?: logger.error("No method ${method.name} with superclass ${method.className} was found in parsed functions")
+        } ?: logger.error("No method ${method.name} with superclass ${method.clazz.name} was found in parsed functions")
     }
 
     private fun mapMethods(program: Program): List<PandaClass> {
@@ -204,7 +203,6 @@ class IRParser(
                     pandaMethod.parameterInfos = method.parameters
                     pandaMethod.className = clazz.name
                     pandaMethod.localVarsCount = method.currentLocalVarId + 1
-                    setMethodTypes(pandaMethod)
                 }.pandaMethod
             }
             val pandaClass = PandaClass(clazz.name, clazz.superClass, pandaMethods)
@@ -221,6 +219,9 @@ class IRParser(
             .map { it.method }
 
         programMethods.forEach { currentMethod ->
+
+            setMethodTypes(currentMethod)
+
             val traversalManager = IRTraversalManager(
                 programMethod = currentMethod,
                 irParser = this
@@ -363,14 +364,20 @@ class IRParser(
 
         when {
             opcode == "Parameter" -> {
-                val arg = PandaArgument(id())
-                val out = if (id() >= ARG_THRESHOLD) arg else PandaThis(PandaClassTypeImpl(method.clazz.name))
+                val c = id() - ARG_THRESHOLD
+
+                val out = if (id() >= ARG_THRESHOLD) {
+                    val type = method.paramTypes.getOrElse(c) {_ -> PandaAnyType}
+                    val arg = PandaArgument(c, type = type)
+                    val argInfo = PandaParameterInfo(c, type)
+                    method.parameters += argInfo
+                    arg
+                } else {
+                    PandaThis(PandaClassTypeImpl(method.clazz.name))
+                }
+
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
-                }
-                if (id() >= ARG_THRESHOLD) {
-                    val argInfo = PandaParameterInfo(id() - ARG_THRESHOLD, mapType(type))
-                    method.parameters += argInfo
                 }
             }
 

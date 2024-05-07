@@ -24,6 +24,7 @@ import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaType
 import org.jacodb.panda.dynamic.api.PandaValue
 
 @Serializable
@@ -119,6 +120,9 @@ data class ProgramMethod(
 
     @Transient
     val nameToLocalVarId : MutableMap<String, PandaValue> = mutableMapOf()
+
+    @Transient
+    var paramTypes: MutableList<PandaType> = mutableListOf()
 
     fun getInstViaId(instId: Int): ProgramInst {
         return idToInst.getOrPut(instId) {

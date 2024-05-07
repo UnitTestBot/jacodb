@@ -76,7 +76,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printPandaInstructions()  {
-        val parser = load("PhiTest")
+        val parser = load(SAMPLE_NAME)
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->
