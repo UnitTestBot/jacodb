@@ -368,7 +368,8 @@ class IRParser(
 
                 val out = if (id() >= ARG_THRESHOLD) {
                     val type = method.paramTypes.getOrElse(c) {_ -> PandaAnyType}
-                    val arg = PandaArgument(c, type = type)
+                    // TODO(): figure out what happened with indexes
+                    val arg = PandaArgument(id(), type = type)
                     val argInfo = PandaParameterInfo(c, type)
                     method.parameters += argInfo
                     arg
