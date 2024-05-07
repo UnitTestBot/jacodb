@@ -40,8 +40,8 @@ fun loadIr(filePath: String, tsPath: String): IRParser {
 object DumpIrToDot {
     @JvmStatic
     fun main(args: Array<String>) {
-        val name = "MethodCollision"
-        val parser = loadIr("/samples/$name.json")
+        val name = "PhiTest"
+        val parser = loadIr("/samples/$name.json", "/samples/$name.ts")
         val program = parser.getProgram()
         val project = parser.getProject()
         println(program)

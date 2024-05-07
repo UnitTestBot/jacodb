@@ -24,7 +24,13 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaArrayTypeImpl
+import org.jacodb.panda.dynamic.api.PandaBoolType
+import org.jacodb.panda.dynamic.api.PandaNumberType
+import org.jacodb.panda.dynamic.api.PandaStringType
+import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaVoidType
 import java.net.URI
 import java.nio.file.Paths
 

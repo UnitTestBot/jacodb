@@ -127,12 +127,12 @@ class IRParserSamplesTest {
                 assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {
                     "add" -> {
-                        assertEquals(9, pandaMethod.instructions.size)
+                        assertEquals(10, pandaMethod.instructions.size)
                         assertEquals(5, pandaMethod.blocks.size)
                     }
 
                     "main" -> {
-                        assertEquals(4, pandaMethod.instructions.size)
+                        assertEquals(5, pandaMethod.instructions.size)
                         assertEquals(3, pandaMethod.blocks.size)
                     }
                 }

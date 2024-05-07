@@ -22,6 +22,7 @@ import org.jacodb.panda.dynamic.api.PandaAddExpr
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaArgument
 import org.jacodb.panda.dynamic.api.PandaArrayAccess
+import org.jacodb.panda.dynamic.api.PandaArrayType
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaBoolConstant
@@ -47,6 +48,7 @@ import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaInstLocation
 import org.jacodb.panda.dynamic.api.PandaInstRef
 import org.jacodb.panda.dynamic.api.PandaLeExpr
+import org.jacodb.panda.dynamic.api.PandaLengthExpr
 import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
@@ -120,11 +122,8 @@ class IRParser(
         fun ProgramInst.currentMethod() = currentBB().method
     }
 
-    private var program: Program? = null;
+    private var program: Program? = null
     fun getProgram(): Program {
-//        val program: Program = Json.decodeFromString(json)
-//        mapProgramIR(program)
-//        return program
         if (this.program == null) {
             this.program = Json.decodeFromString(json)
         }
@@ -180,9 +179,9 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                tsFunc.arguments.size == method.parameterInfos.size &&
-                // here comes the result of comment above
-                tsFunc.containingClass?.name == method.className
+                    tsFunc.arguments.size == method.parameterInfos.size &&
+                    // here comes the result of comment above
+                    tsFunc.containingClass?.name == method.className
         }?.let { tsFunc ->
             method.type = tsFunc.returnType
             method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
@@ -224,7 +223,7 @@ class IRParser(
         programMethods.forEach { currentMethod ->
             val traversalManager = IRTraversalManager(
                 programMethod = currentMethod,
-                mapOpcode = ::mapOpcode,
+                irParser = this
             )
 
             traversalManager.run()
@@ -319,7 +318,8 @@ class IRParser(
         method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }.add(index, input)
     }
 
-    private fun mapOpcode(
+
+    internal fun mapOpcode(
         op: ProgramInst,
         method: ProgramMethod,
         env: IREnvironment,
@@ -486,7 +486,12 @@ class IRParser(
 
             opcode == "Intrinsic.ldobjbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaLoadedValue(inputs[0], name)
+                val out = if (inputs[0].type is PandaArrayType && name == "length") {
+                    val expr = PandaLengthExpr(inputs[0])
+                    val lv = PandaLocalVar(method.currentLocalVarId++, expr.type)
+                    method.insts += PandaAssignInst(locationFromOp(this), lv, expr)
+                    lv
+                } else PandaLoadedValue(inputs[0], name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
@@ -739,8 +744,7 @@ class IRParser(
 
             opcode == "Phi" -> {
                 if ((users.size == 1 && users[0] == id) || users.isEmpty()) return@with
-
-                val phiExpr = PandaPhiValue(lazy { inputsViaOp(this) })
+                val phiExpr = PandaPhiValue(lazy { inputsViaOp(this) }, op.inputBlocks)
                 handle(phiExpr)
             }
 

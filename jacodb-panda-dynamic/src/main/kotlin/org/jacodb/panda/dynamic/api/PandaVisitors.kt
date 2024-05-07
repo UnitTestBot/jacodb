@@ -60,6 +60,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaArrayAccess(expr: PandaArrayAccess): T
     fun visitPandaCaughtError(expr: PandaCaughtError): T
     fun visitPandaPhiValue(expr: PandaPhiValue): T
+    fun visitPandaLengthExpr(expr: PandaLengthExpr): T
 }
 
 interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
@@ -71,4 +72,5 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitPandaIfInst(inst: PandaIfInst): T
     fun visitPandaGotoInst(inst: PandaGotoInst): T
     fun visitPandaCatchInst(inst: PandaCatchInst): T
+    fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): T
 }

@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic.parser
 
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaEmptyBBPlaceholderInst
 import org.jacodb.panda.dynamic.api.PandaGotoInst
 import org.jacodb.panda.dynamic.api.PandaInstRef
 
@@ -27,7 +28,7 @@ enum class TraversalType {
 
 class IRTraversalManager(
     private val programMethod: ProgramMethod,
-    private val mapOpcode: (ProgramInst, ProgramMethod, IREnvironment, Int, (ProgramBasicBlock, TraversalType) -> Unit) -> Unit,
+    private val irParser: IRParser
 ) {
     private val strategyStack = ArrayDeque<TraversalStrategy>()
     
@@ -155,9 +156,16 @@ class IRTraversalManager(
         unprocessedBB.remove(currentBB)
         val startId = if (programMethod.currentId == -1) -1 else programMethod.currentId + 1
         currentBB.insts.forEachIndexed { idx, programInst ->
-            mapOpcode(programInst, programMethod, env, idx, ::setTraversalStrategy)
+            irParser.mapOpcode(programInst, programMethod, env, idx, ::setTraversalStrategy)
         }
         val endId = programMethod.currentId
+
+        if (startId > endId) {
+            currentBB.start = if (startId == -1) 0 else startId
+            addEmptyBlockPlaceholder(programMethod, currentBB.id)
+            currentBB.end = programMethod.currentId
+        }
+
         if (startId <= endId && endId >= 0) {
             currentBB.start = if (startId == -1) 0 else startId
             addEmptyJump(programMethod)
@@ -182,5 +190,10 @@ class IRTraversalManager(
         method.insts += PandaGotoInst(location).apply {
             this.setTarget(PandaInstRef(location.index + 1))
         }
+    }
+
+    private fun addEmptyBlockPlaceholder(method: ProgramMethod, bbId: Int) {
+        val location = IRParser.locationFromOp(method=method)
+        method.insts += PandaEmptyBBPlaceholderInst(location, bbId)
     }
 }

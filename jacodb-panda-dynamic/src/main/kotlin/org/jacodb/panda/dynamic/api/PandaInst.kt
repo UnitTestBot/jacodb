@@ -91,6 +91,21 @@ class TODOInst(
     }
 }
 
+class PandaEmptyBBPlaceholderInst(
+    override val location: PandaInstLocation,
+    private val bbId: Int
+) : PandaTerminatingInst() {
+
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        return visitor.visitPandaEmptyBBPlaceholderInst(this)
+    }
+
+    override fun toString(): String = "Empty [$bbId]"
+}
+
 class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
@@ -279,6 +294,8 @@ object CallExprVisitor :
     override fun visitPandaIfInst(inst: PandaIfInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaGotoInst(inst: PandaGotoInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaCatchInst(inst: PandaCatchInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): PandaCallExpr? =
+        defaultVisitPandaInst(inst)
 }
 
 val PandaInst.callExpr: PandaCallExpr?

@@ -400,6 +400,20 @@ class PandaToNumericExpr(
     }
 }
 
+class PandaLengthExpr(
+    val array: PandaValue
+) : PandaExpr {
+    override val type: PandaType
+        get() = PandaNumberType
+    override val operands: List<PandaValue>
+        get() = listOf(array)
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaLengthExpr(this)
+    }
+
+}
+
 class PandaCreateEmptyArrayExpr : PandaExpr {
     override val type: PandaType
         get() = PandaAnyType

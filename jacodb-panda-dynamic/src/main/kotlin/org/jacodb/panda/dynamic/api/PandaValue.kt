@@ -223,6 +223,7 @@ class PandaCaughtError : PandaValue {
 
 class PandaPhiValue(
     private val _inputs: Lazy<List<PandaValue>>,
+    val basicBlockIds: List<Int>
 ) : PandaValue {
     val inputs: List<PandaValue>
         get() = _inputs.value
@@ -233,7 +234,7 @@ class PandaPhiValue(
     override val operands: List<PandaValue>
         get() = inputs
 
-    override fun toString(): String = "Phi(${inputs.joinToString()})"
+    override fun toString(): String = "Phi(${inputs.zip(basicBlockIds).joinToString { (input, id) -> "$input {$id}"}})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaPhiValue(this)
