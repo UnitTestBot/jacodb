@@ -24,15 +24,14 @@ import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.BytecodeGraph
 import org.jacodb.api.common.cfg.ControlFlowGraph
+import org.jacodb.impl.cfg.graphs.GraphDominators
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-interface PandaBytecodeGraph<out Statement> : ControlFlowGraph<Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
-}
+interface PandaBytecodeGraph<out Statement> : BytecodeGraph<Statement>
 
 class PandaGraph(
     override val instructions: List<PandaInst>,
@@ -275,4 +274,10 @@ fun PandaGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, fil
     val resultingFile = file?.toPath() ?: File(newFile).toPath()
     Files.move(File(outFile).toPath(), resultingFile)
     return resultingFile
+}
+
+fun PandaGraph.findDominators(): GraphDominators<PandaInst> {
+    return GraphDominators(this).also {
+        it.find()
+    }
 }

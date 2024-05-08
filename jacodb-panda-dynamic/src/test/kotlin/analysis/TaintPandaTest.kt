@@ -58,8 +58,13 @@ class TaintPandaTest {
         private val project : PandaProject = loadProjectForSample(programName)
         private val graph : PandaApplicationGraph = PandaApplicationGraphImpl(this.project)
 
+
+//        init {
+//            graph.project.classes.flatMap { it.methods }.single { it.name == "forLoop" }.flowGraph().view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
+//        }
+
         fun analyseOneCase(caseTaintConfig: CaseTaintConfig) : List<TaintVulnerability<PandaMethod, PandaInst>> {
-            println(TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK)
+//            println(TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK)
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
             val (sourceMethodName, markName) = caseTaintConfig.sourceMethodAndMarkNames
             val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -172,7 +177,6 @@ class TaintPandaTest {
 
     }
 
-    @Disabled("UNTRUSTED_LOOP_BOUND_SINK handler for dynamic panda is not implemented yet")
     @Nested
     inner class UntrustedLoopBoundTest {
 

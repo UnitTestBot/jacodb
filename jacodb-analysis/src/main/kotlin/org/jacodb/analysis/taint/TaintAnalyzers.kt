@@ -28,6 +28,7 @@ import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcIfInst
 import org.jacodb.impl.cfg.util.loops
+import org.jacodb.panda.dynamic.api.loops
 import org.jacodb.panda.staticvm.cfg.PandaIfInst as StaticPandaIfInst
 import org.jacodb.panda.dynamic.api.PandaIfInst as DynamicPandaIfInst
 import org.jacodb.panda.staticvm.utils.loops
@@ -121,7 +122,18 @@ class TaintAnalyzer<Method, Statement>(
                         }
                     }
                 } else if (statement is DynamicPandaIfInst) {
-                    TODO("support processing for dynamic pandaIfInst")
+                    val pandaGraph = statement.location.method.flowGraph()
+                    val loops = pandaGraph.loops
+                    if (loops.any { statement in it.instructions }) {
+                        for (s in statement.condition.operands) {
+                            val p = s.toPath()
+                            if (p == fact.variable) {
+                                val message = "Untrusted loop bound"
+                                val vulnerability = TaintVulnerability(message, sink = edge.to)
+                                add(NewVulnerability(vulnerability))
+                            }
+                        }
+                    }
                 }
 
             }

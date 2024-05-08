@@ -50,11 +50,15 @@ import org.jacodb.api.jvm.cfg.JcBinaryExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
 import org.jacodb.api.jvm.cfg.JcNegExpr
-import org.jacodb.panda.staticvm.cfg.PandaBinaryExpr
-import org.jacodb.panda.staticvm.cfg.PandaCastExpr
-import org.jacodb.panda.staticvm.cfg.PandaNegExpr
-import org.jacodb.panda.staticvm.cfg.PandaNotExpr
-import org.jacodb.panda.staticvm.cfg.PandaPhiExpr
+import org.jacodb.panda.staticvm.cfg.PandaBinaryExpr as StaticPandaBinaryExpr
+import org.jacodb.panda.dynamic.api.PandaBinaryExpr as DynamicPandaBinaryExpr
+import org.jacodb.panda.staticvm.cfg.PandaCastExpr as StaticPandaCastExpr
+import org.jacodb.panda.dynamic.api.PandaCastExpr as DynamicPandaCastExpr
+import org.jacodb.panda.staticvm.cfg.PandaNegExpr as StaticPandaNegExpr
+import org.jacodb.panda.dynamic.api.PandaNegExpr as DynamicPandaNegExpr
+import org.jacodb.panda.staticvm.cfg.PandaNotExpr as StaticPandaNotExpr
+import org.jacodb.panda.staticvm.cfg.PandaPhiExpr as StaticPandaPhiExpr
+import org.jacodb.panda.dynamic.api.PandaPhiValue as DynamicPandaPhiValue
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
@@ -186,7 +190,17 @@ class ForwardTaintFlowFunctions<Method, Statement>(
 
         if (current is CommonAssignInst<*, *>) {
             when (val rhv = current.rhv) {
-                is PandaPhiExpr -> {
+                is StaticPandaPhiExpr -> {
+                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+                    for (operand in rhv.operands) {
+                        facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
+                    }
+                    // For empty phi, pass-through:
+                    val pass = transmitTaintNormal(fact, current)
+                    facts + pass
+                }
+
+                is DynamicPandaPhiValue -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
                     for (operand in rhv.operands) {
                         facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
@@ -211,23 +225,38 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                     transmitTaintAssign(fact, from = rhv.operand, to = current.lhv)
                 }
 
-                is PandaBinaryExpr -> {
+                is StaticPandaBinaryExpr -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
                     facts += transmitTaintAssign(fact, from = rhv.lhv, to = current.lhv)
                     facts += transmitTaintAssign(fact, from = rhv.rhv, to = current.lhv)
                     facts
                 }
 
-                is PandaNegExpr -> {
+                is DynamicPandaBinaryExpr -> {
+                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+                    facts += transmitTaintAssign(fact, from = rhv.lhv, to = current.lhv)
+                    facts += transmitTaintAssign(fact, from = rhv.rhv, to = current.lhv)
+                    facts
+                }
+
+                is StaticPandaNegExpr -> {
                     transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
                 }
 
-                is PandaNotExpr -> {
+                is DynamicPandaNegExpr -> {
                     transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
                 }
 
-                is PandaCastExpr -> {
+                is StaticPandaNotExpr -> {
                     transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
+                }
+
+                is StaticPandaCastExpr -> {
+                    transmitTaintAssign(fact, from = rhv.arg, to = current.lhv)
+                }
+
+                is DynamicPandaCastExpr -> {
+                    transmitTaintAssign(fact, from = rhv.operand, to = current.lhv)
                 }
 
                 else -> {
