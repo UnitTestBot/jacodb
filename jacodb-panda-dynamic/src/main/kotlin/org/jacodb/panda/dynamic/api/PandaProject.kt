@@ -76,6 +76,8 @@ class PandaProject(
         // return findInstanceMethodInStd(instanceName, methodName)
     }
 
+    fun createInstance(instanceName: String): PandaMethod = PandaMethod(instanceName)
+
     fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
 
     fun findMethodOrNull(name: String, currentClassName: String): PandaMethod? =

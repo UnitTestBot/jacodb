@@ -40,7 +40,7 @@ import org.jacodb.panda.dynamic.api.PandaExpr
 import org.jacodb.panda.dynamic.api.PandaField
 import org.jacodb.panda.dynamic.api.PandaFieldRef
 import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaValueByInstance
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodParameter
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
@@ -201,7 +201,7 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
         }
     }
 
-    is PandaLoadedValue -> {
+    is PandaValueByInstance -> {
         instance.toPathOrNull()?.let {
             it + PandaFieldAccessor(PandaField(property,  PandaTypeName(typeName), null))
         }

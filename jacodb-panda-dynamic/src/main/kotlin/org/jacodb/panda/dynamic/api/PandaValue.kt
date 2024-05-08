@@ -173,9 +173,42 @@ data class PandaArrayAccess(
     }
 }
 
-data class PandaLoadedValue(
+data class PandaValueByInstance(
      val instance: PandaValue,
      val property: String,
+) : PandaComplexValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    val className: String
+        get() = instance.typeName
+
+    override val operands: List<PandaValue>
+        get() = listOf(instance)
+
+    private fun PandaValue.resolve(): String {
+        return when (this) {
+            is PandaStringConstant -> this.value
+            is PandaLocalVar -> this.typeName
+            is PandaThis -> this.typeName
+            is PandaLoadedValue -> this.getLoadedValueClassName()
+            else -> throw IllegalArgumentException("couldn't resolve $this")
+        }
+    }
+
+    fun getClassAndMethodName(): List<String> {
+        return listOf(instance.resolve(), property)
+    }
+
+    override fun toString(): String = "ValueByInstance($instance, $property)"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaValueByInstance(this)
+    }
+}
+
+data class PandaLoadedValue(
+    val instance: PandaValue,
 ) : PandaComplexValue {
     override val type: PandaType
         get() = PandaAnyType
@@ -195,11 +228,11 @@ data class PandaLoadedValue(
         }
     }
 
-    fun getClassAndMethodName(): List<String> {
-        return listOf(instance.resolve(), property)
+    fun getLoadedValueClassName(): String {
+        return instance.resolve()
     }
 
-    override fun toString(): String = "Property($instance, $property)"
+    override fun toString(): String = "$instance"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLoadedValue(this)

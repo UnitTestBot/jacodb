@@ -21,7 +21,6 @@ import org.jacodb.api.common.cfg.CommonInst
 
 interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaExpr(expr: PandaExpr): T
-
     fun visitTODOExpr(expr: TODOExpr): T
     fun visitPandaCmpExpr(expr: PandaCmpExpr): T
     fun visitPandaEqExpr(expr: PandaEqExpr): T
@@ -41,6 +40,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaStaticCallExpr(expr: PandaStaticCallExpr): T
     fun visitPandaVirtualCallExpr(expr: PandaVirtualCallExpr): T
     fun visitPandaNegExpr(expr: PandaNegExpr): T
+    fun visitPandaStrictNeqExpr(expr: PandaStrictNeqExpr): T
     fun visitPandaTypeofExpr(expr: PandaTypeofExpr): T
     fun visitPandaToNumericExpr(expr: PandaToNumericExpr): T
 
@@ -50,6 +50,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaThis(expr: PandaThis): T
     fun visitPandaArgument(expr: PandaArgument): T
     fun visitPandaLoadedValue(expr: PandaLoadedValue): T
+    fun visitPandaValueByInstance(expr: PandaValueByInstance): T
     fun visitPandaTODOConstant(expr: TODOConstant): T
     fun visitPandaBoolConstant(expr: PandaBoolConstant): T
     fun visitPandaNumberConstant(expr: PandaNumberConstant): T
