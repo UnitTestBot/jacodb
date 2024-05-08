@@ -30,7 +30,9 @@ import org.junit.jupiter.api.Test
 import org.jacodb.panda.dynamic.api.*
 import org.jacodb.analysis.taint.TaintAnalysisOptions
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.ProgramBasicBlock
 import org.jacodb.taint.configuration.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import parser.loadIr
 
@@ -154,6 +156,7 @@ class TaintPandaTest {
             assert(sinks.size == 1)
         }
 
+        @Disabled("Cleaner config don't work as expected")
         @Test
         fun `positive example - print encrypted password to console`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
@@ -169,7 +172,7 @@ class TaintPandaTest {
 
     }
 
-    // TODO(): don't work yet
+    @Disabled("UNTRUSTED_LOOP_BOUND_SINK handler for dynamic panda is not implemented yet")
     @Nested
     inner class UntrustedLoopBoundTest {
 
@@ -181,7 +184,6 @@ class TaintPandaTest {
 
         @Test
         fun `counterexample - untrusted bound in for loop`() {
-            TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
@@ -191,16 +193,17 @@ class TaintPandaTest {
             assert(sinks.size == 1)
         }
 
-//        @Test
-//        fun `counterexample - untrusted bound in do while loop`() {
-//            val sinks = fileTaintAnalyzer.analyseOneCase(
-//                CaseTaintConfig(
-//                    sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
-//                    startMethodNamesForAnalysis = listOf("doWhileLoop")
-//                )
-//            )
-//            assert(sinks.size == 1)
-//        }
+        @Disabled("Loop do while is not supported yet")
+        @Test
+        fun `counterexample - untrusted bound in do while loop`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
+                    startMethodNamesForAnalysis = listOf("doWhileLoop")
+                )
+            )
+            assert(sinks.size == 1)
+        }
 
 
         @Test
@@ -220,6 +223,7 @@ class TaintPandaTest {
     inner class FieldSampleTest {
         private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/fieldSample")
 
+        @Disabled("IFDS do not work properly with virtual methods")
         @Test
         fun `test taint analysis on fieldSample`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(

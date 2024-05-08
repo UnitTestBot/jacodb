@@ -28,7 +28,8 @@ import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcIfInst
 import org.jacodb.impl.cfg.util.loops
-import org.jacodb.panda.staticvm.cfg.PandaIfInst
+import org.jacodb.panda.staticvm.cfg.PandaIfInst as StaticPandaIfInst
+import org.jacodb.panda.dynamic.api.PandaIfInst as DynamicPandaIfInst
 import org.jacodb.panda.staticvm.utils.loops
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
@@ -107,7 +108,7 @@ class TaintAnalyzer<Method, Statement>(
                             }
                         }
                     }
-                } else if (statement is PandaIfInst) {
+                } else if (statement is StaticPandaIfInst) {
                     val loops = statement.location.method.flowGraph().loops
                     if (loops.any { statement in it.instructions }) {
                         for (s in statement.condition.operands) {
@@ -119,7 +120,10 @@ class TaintAnalyzer<Method, Statement>(
                             }
                         }
                     }
+                } else if (statement is DynamicPandaIfInst) {
+                    TODO("support processing for dynamic pandaIfInst")
                 }
+
             }
         }
     }
