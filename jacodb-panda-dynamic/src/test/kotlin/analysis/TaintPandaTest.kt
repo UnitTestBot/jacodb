@@ -223,6 +223,29 @@ class TaintPandaTest {
 
 
     }
+
+    @Nested
+    inner class UntrustedArraySizeTest {
+
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/untrustedArraySize")
+
+        init {
+            TaintAnalysisOptions.UNTRUSTED_ARRAY_SIZE_SINK = true
+            TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
+        }
+
+        @Test
+        fun `counterexample - untrusted size in array constructor and loop bound`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodAndMarkNames = Pair("getNumber", "UNTRUSTED"),
+                    startMethodNamesForAnalysis = listOf("main")
+                )
+            )
+            assert(sinks.size == 2)
+        }
+
+    }
     @Nested
     inner class FieldSampleTest {
         private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/fieldSample")

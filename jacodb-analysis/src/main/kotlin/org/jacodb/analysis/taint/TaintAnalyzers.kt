@@ -31,6 +31,8 @@ import org.jacodb.impl.cfg.util.loops
 import org.jacodb.panda.dynamic.api.loops
 import org.jacodb.panda.staticvm.cfg.PandaIfInst as StaticPandaIfInst
 import org.jacodb.panda.dynamic.api.PandaIfInst as DynamicPandaIfInst
+import org.jacodb.panda.dynamic.api.PandaAssignInst as DynamicPandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaNewExpr as DynamicPandaNewExpr
 import org.jacodb.panda.staticvm.utils.loops
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
@@ -135,7 +137,23 @@ class TaintAnalyzer<Method, Statement>(
                         }
                     }
                 }
-
+            }
+        }
+        if (TaintAnalysisOptions.UNTRUSTED_ARRAY_SIZE_SINK) {
+            val statement = edge.to.statement
+            val fact = edge.to.fact
+            if (fact is Tainted && fact.mark.name == "UNTRUSTED") {
+                if (statement is DynamicPandaAssignInst) {
+                    val expr = statement.rhv
+                    if (expr is DynamicPandaNewExpr && expr.typeName == "Array") {
+                        val arg = expr.params.first()
+                        if (arg.toPath() == fact.variable) {
+                            val message = "Untrusted array size"
+                            val vulnerability = TaintVulnerability(message, sink = edge.to)
+                            add(NewVulnerability(vulnerability))
+                        }
+                    }
+                }
             }
         }
     }
