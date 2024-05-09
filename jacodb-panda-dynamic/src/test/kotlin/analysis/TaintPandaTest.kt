@@ -39,8 +39,15 @@ import parser.loadIr
 private val logger = mu.KotlinLogging.logger {}
 
 class TaintPandaTest {
+
+    data class SourceMethodConfig(
+        val methodName: String,
+        val markName : String = "TAINT",
+        val position: Position = Result
+    )
+
     data class CaseTaintConfig(
-        val sourceMethodAndMarkNames: Pair<String, String>,
+        val sourceMethodConfig: SourceMethodConfig,
         val cleanerMethodName: String? = null,
         val sinkMethodName: String? = null,
         val startMethodNamesForAnalysis: List<String>? = null
@@ -66,7 +73,7 @@ class TaintPandaTest {
         fun analyseOneCase(caseTaintConfig: CaseTaintConfig) : List<TaintVulnerability<PandaMethod, PandaInst>> {
 //            println(TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK)
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
-            val (sourceMethodName, markName) = caseTaintConfig.sourceMethodAndMarkNames
+            val (sourceMethodName, markName, sourcePosition) = caseTaintConfig.sourceMethodConfig
             val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
                 { method ->
                     val rules = buildList {
@@ -75,7 +82,7 @@ class TaintPandaTest {
                                 method = mockk(),
                                 condition = ConstantTrue,
                                 actionsAfter = listOf(
-                                    AssignMark(mark = TaintMark(markName), position = Result),
+                                    AssignMark(mark = TaintMark(markName), position = sourcePosition),
                                 ),
                             )
                         )
@@ -141,7 +148,9 @@ class TaintPandaTest {
         fun `counterexample - print unencrypted password to console`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserPassword", "TAINT"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserPassword",
+                    ),
                     sinkMethodName = "log",
                     startMethodNamesForAnalysis = listOf("case1")
                 )
@@ -153,7 +162,9 @@ class TaintPandaTest {
         fun `positive example - print encrypted password to console (with forgotten cleaner)`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserPassword", "TAINT"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserPassword",
+                    ),
                     sinkMethodName = "log",
                     startMethodNamesForAnalysis = listOf("case2")
                 )
@@ -166,7 +177,9 @@ class TaintPandaTest {
         fun `positive example - print encrypted password to console`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserPassword", "TAINT"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserPassword",
+                    ),
                     cleanerMethodName = "encryptPassword",
                     sinkMethodName = "log",
                     startMethodNamesForAnalysis = listOf("case2")
@@ -190,7 +203,10 @@ class TaintPandaTest {
         fun `counterexample - untrusted bound in for loop`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserData",
+                        markName = "UNTRUSTED"
+                    ),
                     startMethodNamesForAnalysis = listOf("forLoop")
                 )
             )
@@ -202,7 +218,10 @@ class TaintPandaTest {
         fun `counterexample - untrusted bound in do while loop`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserData",
+                        markName = "UNTRUSTED"
+                    ),
                     startMethodNamesForAnalysis = listOf("doWhileLoop")
                 )
             )
@@ -214,7 +233,10 @@ class TaintPandaTest {
         fun `counterexample - untrusted bound in while loop`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getUserData", "UNTRUSTED"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getUserData",
+                        markName = "UNTRUSTED"
+                    ),
                     startMethodNamesForAnalysis = listOf("whileLoop")
                 )
             )
@@ -238,7 +260,10 @@ class TaintPandaTest {
         fun `counterexample - untrusted size in array constructor and loop bound`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getNumber", "UNTRUSTED"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getNumber",
+                        markName = "UNTRUSTED"
+                    ),
                     startMethodNamesForAnalysis = listOf("main")
                 )
             )
@@ -262,7 +287,10 @@ class TaintPandaTest {
         fun `false positive - potential index out of range alert when it's not feasible`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("readUInt", "UNTRUSTED"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "readUInt",
+                        markName = "UNTRUSTED"
+                    ),
                     startMethodNamesForAnalysis = listOf("main")
                 )
             )
@@ -281,11 +309,40 @@ class TaintPandaTest {
         fun `test taint analysis on fieldSample`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
-                    sourceMethodAndMarkNames = Pair("getNameOption", "TAINT"),
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = "getNameOption",
+                    ),
                     sinkMethodName = "log"
                 )
             )
             assert(sinks.size == 2)
+        }
+    }
+
+    @Nested
+    inner class LoopBoundInjectionUseCaseTest {
+        private val fileTaintAnalyzer = FileTaintAnalyzer("codeqlSamples/loopBoundInjection")
+
+        init {
+            TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
+        }
+
+        val postHandlerMethodName = "#4722804945120678178#"
+
+        @Disabled("There is no ability to mark method argument as tainted")
+        @Test
+        fun `counterexample - loop bound injection (could possibly lead to DoS if length is large)`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfig = SourceMethodConfig(
+                        methodName = postHandlerMethodName,
+                        markName = "UNTRUSTED",
+                        position = Argument(0)
+                    ),
+                    startMethodNamesForAnalysis = listOf(postHandlerMethodName)
+                )
+            )
+            assert(sinks.size == 1)
         }
     }
 }
