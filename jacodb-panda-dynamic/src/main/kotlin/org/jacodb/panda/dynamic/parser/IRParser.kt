@@ -53,6 +53,7 @@ import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
 import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaModExpr
 import org.jacodb.panda.dynamic.api.PandaMulExpr
 import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNeqExpr
@@ -510,9 +511,19 @@ class IRParser(
                 handle(gtExpr)
             }
 
+            opcode == "Intrinsic.greatereq" -> {
+                val geExpr = PandaGeExpr(inputs[0], inputs[1])
+                handle(geExpr)
+            }
+
             opcode == "Intrinsic.less" -> {
                 val ltExpr = PandaLtExpr(inputs[0], inputs[1])
                 handle(ltExpr)
+            }
+
+            opcode == "Intrinsic.lesseq" -> {
+                val leExpr = PandaLeExpr(inputs[0], inputs[1])
+                handle(leExpr)
             }
 
             opcode == "Intrinsic.stricteq" -> {
@@ -723,6 +734,11 @@ class IRParser(
             opcode == "Intrinsic.div2" -> {
                 val divExpr = PandaDivExpr(inputs[0], inputs[1])
                 handle(divExpr)
+            }
+
+            opcode == "Intrinsic.mod2" -> {
+                val modExpr = PandaModExpr(inputs[0], inputs[1])
+                handle(modExpr)
             }
 
             opcode == "Intrinsic.exp" -> {

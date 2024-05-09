@@ -246,6 +246,32 @@ class TaintPandaTest {
         }
 
     }
+
+
+    @Nested
+    inner class IndexOutOfRangeTest {
+
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/indexOutOfRange")
+
+        init {
+            TaintAnalysisOptions.UNTRUSTED_INDEX_ARRAY_ACCESS_SINK = true
+        }
+
+        @Disabled("Taint marks don't pass through as expected")
+        @Test
+        fun `false positive - potential index out of range alert when it's not feasible`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodAndMarkNames = Pair("readUInt", "UNTRUSTED"),
+                    startMethodNamesForAnalysis = listOf("main")
+                )
+            )
+            assert(sinks.size == 2)
+        }
+
+    }
+
+
     @Nested
     inner class FieldSampleTest {
         private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/fieldSample")
