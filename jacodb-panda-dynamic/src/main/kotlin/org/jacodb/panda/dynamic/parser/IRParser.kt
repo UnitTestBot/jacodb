@@ -26,6 +26,7 @@ import org.jacodb.panda.dynamic.api.PandaArrayType
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaBoolConstant
+import org.jacodb.panda.dynamic.api.PandaBuiltInError
 import org.jacodb.panda.dynamic.api.PandaCallInst
 import org.jacodb.panda.dynamic.api.PandaCatchInst
 import org.jacodb.panda.dynamic.api.PandaCaughtError
@@ -467,6 +468,11 @@ class IRParser(
 
             opcode == "Intrinsic.throw" -> {
                 val throwInst = PandaThrowInst(locationFromOp(this), inputs[0])
+                method.insts += throwInst
+            }
+
+            opcode == "Intrinsic.throw.constassignment" -> {
+                val throwInst = PandaThrowInst(locationFromOp(this), PandaBuiltInError("ConstAssignmentError"))
                 method.insts += throwInst
             }
 

@@ -272,3 +272,17 @@ class PandaPhiValue(
         return visitor.visitPandaPhiValue(this)
     }
 }
+
+class PandaBuiltInError(override val typeName: String) : PandaValue {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override val operands: List<PandaValue>
+        get() = emptyList()
+
+    override fun toString(): String = typeName
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaBuiltInError(this)
+    }
+}
