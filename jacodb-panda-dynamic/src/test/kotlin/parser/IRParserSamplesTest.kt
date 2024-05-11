@@ -139,4 +139,11 @@ class IRParserSamplesTest {
             }
         }
     }
+
+    @Test
+    fun `test IR parser on module`() {
+        val parser = load("AccountManager")
+        val project = parser.getProject()
+        print(project)
+    }
 }

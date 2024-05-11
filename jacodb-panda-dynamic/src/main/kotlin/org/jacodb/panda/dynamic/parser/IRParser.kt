@@ -18,69 +18,7 @@ package org.jacodb.panda.dynamic.parser
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.PandaAddExpr
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaArgument
-import org.jacodb.panda.dynamic.api.PandaArrayAccess
-import org.jacodb.panda.dynamic.api.PandaArrayType
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaBoolConstant
-import org.jacodb.panda.dynamic.api.PandaBuiltInError
-import org.jacodb.panda.dynamic.api.PandaCallInst
-import org.jacodb.panda.dynamic.api.PandaCatchInst
-import org.jacodb.panda.dynamic.api.PandaCaughtError
-import org.jacodb.panda.dynamic.api.PandaClass
-import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
-import org.jacodb.panda.dynamic.api.PandaCmpExpr
-import org.jacodb.panda.dynamic.api.PandaCmpOp
-import org.jacodb.panda.dynamic.api.PandaConditionExpr
-import org.jacodb.panda.dynamic.api.PandaConstant
-import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
-import org.jacodb.panda.dynamic.api.PandaDivExpr
-import org.jacodb.panda.dynamic.api.PandaEqExpr
-import org.jacodb.panda.dynamic.api.PandaExpExpr
-import org.jacodb.panda.dynamic.api.PandaExpr
-import org.jacodb.panda.dynamic.api.PandaGeExpr
-import org.jacodb.panda.dynamic.api.PandaGotoInst
-import org.jacodb.panda.dynamic.api.PandaGtExpr
-import org.jacodb.panda.dynamic.api.PandaIfInst
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaInstLocation
-import org.jacodb.panda.dynamic.api.PandaInstRef
-import org.jacodb.panda.dynamic.api.PandaLeExpr
-import org.jacodb.panda.dynamic.api.PandaLengthExpr
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
-import org.jacodb.panda.dynamic.api.PandaLocalVar
-import org.jacodb.panda.dynamic.api.PandaLtExpr
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaModExpr
-import org.jacodb.panda.dynamic.api.PandaMulExpr
-import org.jacodb.panda.dynamic.api.PandaNegExpr
-import org.jacodb.panda.dynamic.api.PandaNeqExpr
-import org.jacodb.panda.dynamic.api.PandaNewExpr
-import org.jacodb.panda.dynamic.api.PandaNullConstant
-import org.jacodb.panda.dynamic.api.PandaNumberConstant
-import org.jacodb.panda.dynamic.api.PandaNumberType
-import org.jacodb.panda.dynamic.api.PandaParameterInfo
-import org.jacodb.panda.dynamic.api.PandaPhiValue
-import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
-import org.jacodb.panda.dynamic.api.PandaStrictNeqExpr
-import org.jacodb.panda.dynamic.api.PandaStringConstant
-import org.jacodb.panda.dynamic.api.PandaSubExpr
-import org.jacodb.panda.dynamic.api.PandaThis
-import org.jacodb.panda.dynamic.api.PandaThrowInst
-import org.jacodb.panda.dynamic.api.PandaToNumericExpr
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaTypeofExpr
-import org.jacodb.panda.dynamic.api.PandaUndefinedConstant
-import org.jacodb.panda.dynamic.api.PandaValue
-import org.jacodb.panda.dynamic.api.PandaValueByInstance
-import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
-import org.jacodb.panda.dynamic.api.TODOConstant
-import org.jacodb.panda.dynamic.api.TODOExpr
+import org.jacodb.panda.dynamic.api.*
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -223,8 +161,10 @@ class IRParser(
             .flatMap { it.properties }
             .map { it.method }
 
-        programMethods.forEach { currentMethod ->
+        val main = programMethods.filter { it.signature == ".func_main_0" }
+        val other = programMethods.filter { it.signature != ".func_main_0" }
 
+        (main + other).forEach { currentMethod ->
             setMethodTypes(currentMethod)
 
             val traversalManager = IRTraversalManager(
@@ -356,10 +296,12 @@ class IRParser(
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
-            method.insts += PandaAssignInst(locationFromOp(this), lv, expr)
+            val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
+            env.setLocalAssignment(method.signature, lv, assignment)
+            method.insts += assignment
         }
 
-        fun handle2(callExpr: PandaVirtualCallExpr) {
+        fun handle2(callExpr: PandaCallExpr) {
             if (outputs.isEmpty()) {
                 method.insts += PandaCallInst(locationFromOp(this), callExpr)
             } else {
@@ -550,7 +492,9 @@ class IRParser(
                 val out = if (inputs[0].type is PandaArrayType && name == "length") {
                     val expr = PandaLengthExpr(inputs[0])
                     val lv = PandaLocalVar(method.currentLocalVarId++, expr.type)
-                    method.insts += PandaAssignInst(locationFromOp(this), lv, expr)
+                    val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
+                    method.insts += assignment
+                    env.setLocalAssignment(method.signature, lv, assignment)
                     lv
                 } else PandaValueByInstance(inputs[0], name)
                 outputs.forEach { output ->
@@ -613,18 +557,31 @@ class IRParser(
             }
 
             opcode == "Intrinsic.newlexenv" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                env.newLexenv()
+                method.insts += PandaNewLexenvInst(locationFromOp(this))
+            }
+
+            opcode == "Intrinsic.poplexenv" -> {
+                env.popLexenv()
+                method.insts += PandaPopLexenvInst(locationFromOp(this))
             }
 
             opcode == "Intrinsic.stlexvar" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val lexvar = PandaLexVar(
+                    lexenv ?: error("No lexenv"),
+                    lexvar ?: error("No lexvar"),
+                    PandaAnyType)
+                val value = inputs[0]
+                env.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
+                method.insts += PandaAssignInst(locationFromOp(this), lexvar, value)
             }
 
             opcode == "Intrinsic.ldlexvar" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val lexvar = PandaLexVar(
+                    lexenv ?: error("No lexenv"),
+                    lexvar ?: error("No lexvar"),
+                    PandaAnyType)
+                handle(PandaLoadedValue(lexvar))
             }
 
             opcode == "Intrinsic.definemethod" -> {
@@ -645,6 +602,11 @@ class IRParser(
 
                 val property = PandaValueByInstance(instance, fieldName)
                 method.insts += PandaAssignInst(locationFromOp(this), property, value)
+            }
+
+            opcode == "Intrinsic.definefunc" -> {
+                val methodConstant = PandaMethodConstant(functionName ?: error("No function name"))
+                handle(methodConstant)
             }
 
             opcode == "Intrinsic.getiterator" -> {
@@ -683,37 +645,42 @@ class IRParser(
             }
 
             opcode == "Intrinsic.callthis0" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis1" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis2" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callthis3" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callarg0" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callarg1" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
             opcode == "Intrinsic.callargs2" -> {
-                val callExpr = getVirtualCallExprByInputs(inputs, method)
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
+                handle2(callExpr)
+            }
+
+            opcode == "Intrinsic.callargs3" -> {
+                val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
@@ -819,7 +786,9 @@ class IRParser(
 
             opcode == "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
-                method.insts += PandaAssignInst(locationFromOp(this), lv, inputs[0])
+                val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0])
+                method.insts += assignment
+                env.setLocalAssignment(method.signature, lv, assignment)
                 env.setLocalVar(stringData!!, lv)
             }
 
@@ -853,12 +822,14 @@ class IRParser(
     private fun getVirtualCallExprByInputs(
         inputs: List<PandaValue>,
         method: ProgramMethod,
-    ): PandaVirtualCallExpr {
+        env: IREnvironment
+    ): PandaCallExpr {
 
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
         val loadedValue = inputs.find<PandaLoadedValue>().lastOrNull()
+        val localVar = inputs.find<PandaLocalVar>().lastOrNull()
         instCallValue?.let { instValue ->
-            return PandaVirtualCallExpr(
+            return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
                     val (instanceName, methodName) = instValue.getClassAndMethodName()
                     method.pandaMethod.project.findMethodByInstanceOrEmpty(
@@ -872,7 +843,7 @@ class IRParser(
             )
         }
         loadedValue?.let { pandaLoadedValue ->
-            return PandaVirtualCallExpr(
+            return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
                     val instanceName = pandaLoadedValue.getLoadedValueClassName()
                     method.pandaMethod.project.createInstance(
@@ -883,6 +854,22 @@ class IRParser(
                 instance = pandaLoadedValue
             )
         }
+        localVar?.let { pandaLocalVar ->
+            return PandaVirtualCallExpr(
+                lazyMethod = lazy {
+                    val value = method.getLocalVarRoot(env, method.signature, pandaLocalVar)
+                    if (value is PandaMethodConstant)
+                        method.pandaMethod.project.findMethodOrNull(
+                            value.methodName.drop(1),
+                            method.pandaMethod.className ?: "GLOBAL"
+                        ) ?: error ("no method")
+                    else method.pandaMethod.project.createInstance(
+                        value.typeName
+                    )
+                },
+                args = inputs.filterNot { it == pandaLocalVar },
+            )
+        }
         error("No instance or loaded value found in inputs")
     }
 
@@ -890,7 +877,6 @@ class IRParser(
         when (opcode) {
             // Unuseful
             "SaveState" -> {}
-            "Intrinsic.definefunc" -> {}
             "Intrinsic.copyrestargs" -> {}
             else -> {
                 logger.warn { "Unknown opcode: $opcode" }

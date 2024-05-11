@@ -19,13 +19,7 @@ package org.jacodb.panda.dynamic.parser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jacodb.panda.dynamic.api.Mappable
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaParameterInfo
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.*
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {
@@ -124,6 +118,20 @@ data class ProgramMethod(
     @Transient
     var paramTypes: MutableList<PandaType> = mutableListOf()
 
+    @Transient
+    val localVarAssignment = mutableMapOf<PandaLocalVar, PandaAssignInst>()
+
+    tailrec fun getLocalVarRoot(env: IREnvironment, methodName: String, value: PandaExpr) : PandaExpr {
+        return if (value is PandaLocalVar) {
+            getLocalVarRoot(env, methodName, env.getLocalAssignment(methodName, value).rhv)
+        } else if (value is PandaLexVar) {
+            val (method, parent) = env.getLexvar(value.lexenvIndex, value.lexvarIndex)
+            getLocalVarRoot(env, method, parent)
+        } else if (value is PandaLoadedValue) {
+            getLocalVarRoot(env, methodName, value.instance)
+        } else value
+    }
+
     fun getInstViaId(instId: Int): ProgramInst {
         return idToInst.getOrPut(instId) {
             basicBlocks.forEach { bb ->
@@ -199,7 +207,9 @@ data class ProgramInst(
     val immediate: Int? = null,
     val constructorName: String? = null,
     val functionName: String? = null,
-    val throwers: List<String> = emptyList()
+    val throwers: List<String> = emptyList(),
+    val lexenv: Int? = null,
+    val lexvar: Int? = null
 ) {
 
     @Transient

@@ -126,6 +126,32 @@ abstract class PandaBranchingInst : PandaInst() {
     abstract val successors: List<PandaInstRef>
 }
 
+class PandaNewLexenvInst(
+    override val location: PandaInstLocation
+) : PandaInst() {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        TODO("Not yet implemented")
+    }
+
+    override fun toString(): String = "newlexenv"
+}
+
+class PandaPopLexenvInst(
+    override val location: PandaInstLocation
+) : PandaInst() {
+    override val operands: List<PandaExpr>
+        get() = emptyList()
+
+    override fun <T> accept(visitor: PandaInstVisitor<T>): T {
+        TODO("Not yet implemented")
+    }
+
+    override fun toString(): String = "poplexenv"
+}
+
 class PandaGotoInst(
     override val location: PandaInstLocation,
 ) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {

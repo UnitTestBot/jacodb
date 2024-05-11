@@ -63,6 +63,8 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaCaughtError(expr: PandaCaughtError): T
     fun visitPandaPhiValue(expr: PandaPhiValue): T
     fun visitPandaLengthExpr(expr: PandaLengthExpr): T
+    fun visitPandaMethodConstant(expr: PandaMethodConstant): T
+    fun visitPandaInstanceVirtualCallExpr(expr: PandaInstanceVirtualCallExpr): T
     fun visitPandaBuiltInError(expr: PandaBuiltInError): T
 }
 

@@ -45,6 +45,16 @@ data class PandaLocalVar(
     }
 }
 
+data class PandaLexVar(
+    val lexenvIndex: Int,
+    val lexvarIndex: Int,
+    override val type: PandaType
+) : PandaSimpleValue {
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        TODO("Not yet implemented")
+    }
+}
+
 data class PandaThis(
     override val type: PandaType,
 ) : PandaLocal, CommonThis {
@@ -138,6 +148,17 @@ object PandaNullConstant : PandaConstant {
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNullConstant(this)
+    }
+}
+
+data class PandaMethodConstant(
+    val methodName: String
+) : PandaConstant {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaMethodConstant(this)
     }
 }
 

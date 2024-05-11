@@ -371,6 +371,21 @@ class PandaStaticCallExpr(
 class PandaVirtualCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
+) : PandaCallExpr {
+    override val method: PandaMethod
+        get() = lazyMethod.value
+
+    override fun toString(): String = "${method.name}(${args.joinToString(", ")})"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaVirtualCallExpr(this)
+    }
+}
+
+
+class PandaInstanceVirtualCallExpr(
+    private val lazyMethod: Lazy<PandaMethod>,
+    override val args: List<PandaValue>,
     override val instance: PandaValue,
 ) : PandaInstanceCallExpr {
     override val method: PandaMethod
@@ -379,7 +394,7 @@ class PandaVirtualCallExpr(
     override fun toString(): String = "$instance.${method.name}(${args.joinToString(", ")})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
-        return visitor.visitPandaVirtualCallExpr(this)
+        return visitor.visitPandaInstanceVirtualCallExpr(this)
     }
 }
 
