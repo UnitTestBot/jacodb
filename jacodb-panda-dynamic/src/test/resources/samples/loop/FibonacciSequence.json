@@ -32,11 +32,11 @@
           "visit": "parameter"
          },
          {
-          "id": "v9",
+          "id": "v5",
           "opcode": "Constant",
           "type": "i32",
           "users": [
-           "v10"
+           "v6"
           ],
           "value": 10,
           "visit": "constant"
@@ -59,10 +59,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".generateFibonacci",
           "id": "v3",
           "imms": [
            0,
-           427,
+           478,
            1
           ],
           "inputs": [
@@ -70,61 +71,63 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
           "users": [
-           "v5"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v6",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v5"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v5",
-          "imms": [
-           1,
-           250
-          ],
-          "inputs": [
-           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
-          "opcode": "Intrinsic",
-          "string_data": "generateFibonacci",
-          "type": "void",
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v8",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v7"
-          ],
-          "visit": "default"
+          "visit": "define_function"
          },
          {
           "id": "v7",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v6"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v6",
           "imms": [
-           2,
-           250
+           1
           ],
           "inputs": [
-           "v8"
+           "v5",
+           "v3",
+           "v7"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.callarg1",
           "opcode": "Intrinsic",
-          "string_data": "generateFibonacci",
           "type": "any",
           "users": [
+           "v15"
+          ],
+          "visit": "call"
+         },
+         {
+          "id": "v9",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v8"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v8",
+          "imms": [
+           3,
+           232
+          ],
+          "inputs": [
+           "v9"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "console",
+          "type": "any",
+          "users": [
+           "v15",
            "v10"
           ],
           "visit": "ldobjbyname"
@@ -141,104 +144,104 @@
          {
           "id": "v10",
           "imms": [
-           3
+           4,
+           241
           ],
           "inputs": [
-           "v9",
-           "v7",
+           "v8",
            "v11"
-          ],
-          "intrinsic_id": "Intrinsic.callarg1",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "users": [
-           "v12"
-          ],
-          "visit": "call"
-         },
-         {
-          "id": "v13",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v12"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v12",
-          "imms": [
-           5,
-           233
-          ],
-          "inputs": [
-           "v10",
-           "v13"
-          ],
-          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
-          "opcode": "Intrinsic",
-          "string_data": "fibonacciSeries",
-          "type": "void",
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v15",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v14"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v14",
-          "imms": [
-           6,
-           224
-          ],
-          "inputs": [
-           "v15"
-          ],
-          "intrinsic_id": "Intrinsic.tryldglobalbyname",
-          "opcode": "Intrinsic",
-          "string_data": "console",
-          "type": "any",
-          "users": [
-           "v23",
-           "v16"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v17",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v16"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v16",
-          "imms": [
-           7,
-           269
-          ],
-          "inputs": [
-           "v14",
-           "v17"
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
           "string_data": "log",
           "type": "any",
           "users": [
-           "v23"
+           "v15"
           ],
           "visit": "ldobjbyname"
          },
          {
+          "id": "v12",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v13"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v13",
+          "inputs": [
+           "v12"
+          ],
+          "opcode": "LoadString",
+          "string": "Fibonacci Series:",
+          "stringOffset": 213,
+          "type": "ref",
+          "users": [
+           "v14"
+          ],
+          "visit": "load_string"
+         },
+         {
+          "id": "v14",
+          "inputs": [
+           "v13"
+          ],
+          "opcode": "CastValueToAnyType",
+          "type": "any",
+          "users": [
+           "v15"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v16",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v15"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v15",
+          "imms": [
+           6
+          ],
+          "inputs": [
+           "v8",
+           "v14",
+           "v6",
+           "v10",
+           "v16"
+          ],
+          "intrinsic_id": "Intrinsic.callthis2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "call"
+         },
+         {
           "id": "v18",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v17"
+          ],
+          "visit": "default"
+         },
+         {
+          "id": "v17",
+          "inputs": [
+           "v18"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "visit": "intrinsic"
+         },
+         {
+          "id": "v20",
           "opcode": "SaveState",
           "type": "void",
           "users": [
@@ -249,114 +252,7 @@
          {
           "id": "v19",
           "inputs": [
-           "v18"
-          ],
-          "opcode": "LoadString",
-          "string": "Fibonacci Series:",
-          "stringOffset": 205,
-          "type": "ref",
-          "users": [
            "v20"
-          ],
-          "visit": "load_string"
-         },
-         {
-          "id": "v20",
-          "inputs": [
-           "v19"
-          ],
-          "opcode": "CastValueToAnyType",
-          "type": "any",
-          "users": [
-           "v23"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v22",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v21"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v21",
-          "imms": [
-           9,
-           233
-          ],
-          "inputs": [
-           "v22"
-          ],
-          "intrinsic_id": "Intrinsic.tryldglobalbyname",
-          "opcode": "Intrinsic",
-          "string_data": "fibonacciSeries",
-          "type": "any",
-          "users": [
-           "v23"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v24",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v23"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v23",
-          "imms": [
-           10
-          ],
-          "inputs": [
-           "v14",
-           "v20",
-           "v21",
-           "v16",
-           "v24"
-          ],
-          "intrinsic_id": "Intrinsic.callthis2",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "call"
-         },
-         {
-          "id": "v26",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v25"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v25",
-          "inputs": [
-           "v26"
-          ],
-          "intrinsic_id": "Intrinsic.ldundefined",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
-         },
-         {
-          "id": "v28",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v27"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v27",
-          "inputs": [
-           "v28"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",
@@ -487,7 +383,7 @@
           "id": "v4",
           "imms": [
            0,
-           490
+           553
           ],
           "inputs": [
            "v5"

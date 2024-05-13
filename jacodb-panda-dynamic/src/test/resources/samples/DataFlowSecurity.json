@@ -52,19 +52,20 @@
           "id": "v3",
           "imms": [
            0,
-           302
+           0
           ],
           "inputs": [
            "v4"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 0,
           "opcode": "Intrinsic",
-          "string_data": "source",
           "type": "any",
           "users": [
            "v5"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v6",
@@ -78,7 +79,7 @@
          {
           "id": "v5",
           "imms": [
-           1
+           0
           ],
           "inputs": [
            "v3",
@@ -104,20 +105,21 @@
          {
           "id": "v7",
           "imms": [
-           3,
-           290
+           0,
+           1
           ],
           "inputs": [
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 1,
           "opcode": "Intrinsic",
-          "string_data": "pass",
           "type": "any",
           "users": [
            "v9"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v10",
@@ -131,7 +133,7 @@
          {
           "id": "v9",
           "imms": [
-           4
+           2
           ],
           "inputs": [
            "v5",
@@ -158,20 +160,21 @@
          {
           "id": "v11",
           "imms": [
-           6,
-           296
+           0,
+           2
           ],
           "inputs": [
            "v12"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 2,
           "opcode": "Intrinsic",
-          "string_data": "sink",
           "type": "any",
           "users": [
            "v13"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v14",
@@ -185,7 +188,7 @@
          {
           "id": "v13",
           "imms": [
-           7
+           4
           ],
           "inputs": [
            "v9",
@@ -305,19 +308,20 @@
           "id": "v3",
           "imms": [
            0,
-           302
+           0
           ],
           "inputs": [
            "v4"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 0,
           "opcode": "Intrinsic",
-          "string_data": "source",
           "type": "any",
           "users": [
            "v5"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v6",
@@ -331,7 +335,7 @@
          {
           "id": "v5",
           "imms": [
-           1
+           0
           ],
           "inputs": [
            "v3",
@@ -357,20 +361,21 @@
          {
           "id": "v7",
           "imms": [
-           3,
-           310
+           0,
+           3
           ],
           "inputs": [
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 3,
           "opcode": "Intrinsic",
-          "string_data": "validate",
           "type": "any",
           "users": [
            "v9"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v10",
@@ -384,7 +389,7 @@
          {
           "id": "v9",
           "imms": [
-           4
+           2
           ],
           "inputs": [
            "v5",
@@ -411,20 +416,21 @@
          {
           "id": "v11",
           "imms": [
-           6,
-           296
+           0,
+           2
           ],
           "inputs": [
            "v12"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 2,
           "opcode": "Intrinsic",
-          "string_data": "sink",
           "type": "any",
           "users": [
            "v13"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v14",
@@ -438,7 +444,7 @@
          {
           "id": "v13",
           "imms": [
-           7
+           4
           ],
           "inputs": [
            "v9",
@@ -753,7 +759,7 @@
           "id": "v11",
           "imms": [
            1,
-           260
+           252
           ],
           "inputs": [
            "v12"
@@ -783,7 +789,7 @@
           ],
           "opcode": "LoadString",
           "string": "Error!",
-          "stringOffset": 267,
+          "stringOffset": 259,
           "type": "ref",
           "users": [
            "v15"
@@ -1181,7 +1187,7 @@
           ],
           "opcode": "LoadString",
           "string": "OK",
-          "stringOffset": 275,
+          "stringOffset": 267,
           "type": "ref",
           "users": [
            "v13"
@@ -1321,21 +1327,15 @@
          {
           "id": "v3",
           "imms": [
-           0,
-           460,
-           0
+           4
           ],
           "inputs": [
            "v4"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.newlexenv",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v5"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v6",
@@ -1347,20 +1347,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".good",
           "id": "v5",
           "imms": [
-           1,
-           284
+           0,
+           489,
+           0
           ],
           "inputs": [
-           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "good",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "define_function"
          },
          {
           "id": "v8",
@@ -1372,10 +1372,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".bad",
           "id": "v7",
           "imms": [
-           2,
-           432,
+           1,
+           461,
            0
           ],
           "inputs": [
@@ -1383,12 +1384,8 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v9"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v10",
@@ -1400,20 +1397,23 @@
           "visit": "default"
          },
          {
+          "functionName": ".validate",
           "id": "v9",
           "imms": [
-           3,
-           279
+           2,
+           601,
+           1
           ],
           "inputs": [
-           "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "bad",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "users": [
+           "v11"
+          ],
+          "visit": "define_function"
          },
          {
           "id": "v12",
@@ -1427,21 +1427,19 @@
          {
           "id": "v11",
           "imms": [
-           4,
-           572,
-           1
+           0,
+           3
           ],
           "inputs": [
+           "v9",
            "v12"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.stlexvar",
+          "lexenv": 0,
+          "lexvar": 3,
           "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v13"
-          ],
-          "visit": "ldobjbyname"
+          "type": "void",
+          "visit": "intrinsic"
          },
          {
           "id": "v14",
@@ -1453,20 +1451,23 @@
           "visit": "default"
          },
          {
+          "functionName": ".pass",
           "id": "v13",
           "imms": [
-           5,
-           310
+           3,
+           517,
+           1
           ],
           "inputs": [
-           "v11",
            "v14"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "validate",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "users": [
+           "v15"
+          ],
+          "visit": "define_function"
          },
          {
           "id": "v16",
@@ -1480,21 +1481,19 @@
          {
           "id": "v15",
           "imms": [
-           6,
-           488,
+           0,
            1
           ],
           "inputs": [
+           "v13",
            "v16"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.stlexvar",
+          "lexenv": 0,
+          "lexvar": 1,
           "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v17"
-          ],
-          "visit": "ldobjbyname"
+          "type": "void",
+          "visit": "intrinsic"
          },
          {
           "id": "v18",
@@ -1506,20 +1505,23 @@
           "visit": "default"
          },
          {
+          "functionName": ".sink",
           "id": "v17",
           "imms": [
-           7,
-           290
+           4,
+           545,
+           1
           ],
           "inputs": [
-           "v15",
            "v18"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "pass",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "users": [
+           "v19"
+          ],
+          "visit": "define_function"
          },
          {
           "id": "v20",
@@ -1533,21 +1535,19 @@
          {
           "id": "v19",
           "imms": [
-           8,
-           516,
-           1
+           0,
+           2
           ],
           "inputs": [
+           "v17",
            "v20"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.stlexvar",
+          "lexenv": 0,
+          "lexvar": 2,
           "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v21"
-          ],
-          "visit": "ldobjbyname"
+          "type": "void",
+          "visit": "intrinsic"
          },
          {
           "id": "v22",
@@ -1559,20 +1559,23 @@
           "visit": "default"
          },
          {
+          "functionName": ".source",
           "id": "v21",
           "imms": [
-           9,
-           296
+           5,
+           573,
+           0
           ],
           "inputs": [
-           "v19",
            "v22"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "sink",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "users": [
+           "v23"
+          ],
+          "visit": "define_function"
          },
          {
           "id": "v24",
@@ -1586,21 +1589,19 @@
          {
           "id": "v23",
           "imms": [
-           10,
-           544,
+           0,
            0
           ],
           "inputs": [
+           "v21",
            "v24"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.stlexvar",
+          "lexenv": 0,
+          "lexvar": 0,
           "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v25"
-          ],
-          "visit": "ldobjbyname"
+          "type": "void",
+          "visit": "intrinsic"
          },
          {
           "id": "v26",
@@ -1613,19 +1614,13 @@
          },
          {
           "id": "v25",
-          "imms": [
-           11,
-           302
-          ],
           "inputs": [
-           "v23",
            "v26"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "string_data": "source",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "intrinsic"
          },
          {
           "id": "v28",
@@ -1640,25 +1635,6 @@
           "id": "v27",
           "inputs": [
            "v28"
-          ],
-          "intrinsic_id": "Intrinsic.ldundefined",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
-         },
-         {
-          "id": "v30",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v29"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v29",
-          "inputs": [
-           "v30"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",

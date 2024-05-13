@@ -49,10 +49,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".findMinValue",
           "id": "v3",
           "imms": [
            0,
-           374,
+           451,
            1
           ],
           "inputs": [
@@ -60,12 +61,8 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v5"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v6",
@@ -78,19 +75,13 @@
          },
          {
           "id": "v5",
-          "imms": [
-           1,
-           212
-          ],
           "inputs": [
-           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "string_data": "findMinValue",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "intrinsic"
          },
          {
           "id": "v8",
@@ -105,25 +96,6 @@
           "id": "v7",
           "inputs": [
            "v8"
-          ],
-          "intrinsic_id": "Intrinsic.ldundefined",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
-         },
-         {
-          "id": "v10",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v9"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v9",
-          "inputs": [
-           "v10"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",
@@ -259,7 +231,7 @@
           "id": "v4",
           "imms": [
            0,
-           226
+           224
           ],
           "inputs": [
            "v3",
@@ -353,7 +325,7 @@
           "id": "v12",
           "imms": [
            3,
-           205
+           217
           ],
           "inputs": [
            "v13"
@@ -383,7 +355,7 @@
           ],
           "opcode": "LoadString",
           "string": "Array is empty!",
-          "stringOffset": 188,
+          "stringOffset": 200,
           "type": "ref",
           "users": [
            "v16"
@@ -707,7 +679,7 @@
           "id": "v36",
           "imms": [
            8,
-           226
+           224
           ],
           "inputs": [
            "27p",

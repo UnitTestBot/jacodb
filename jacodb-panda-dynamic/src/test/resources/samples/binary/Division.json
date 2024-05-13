@@ -173,10 +173,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideMixedNumbers",
           "id": "v3",
           "imms": [
            0,
-           732,
+           678,
            2
           ],
           "inputs": [
@@ -184,12 +185,8 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v5"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v6",
@@ -201,20 +198,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideByOne",
           "id": "v5",
           "imms": [
            1,
-           403
+           538,
+           1
           ],
           "inputs": [
-           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "divideMixedNumbers",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "define_function"
          },
          {
           "id": "v8",
@@ -226,23 +223,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideNumbersReversed",
           "id": "v7",
           "imms": [
            2,
-           592,
-           1
+           706,
+           2
           ],
           "inputs": [
            "v8"
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v9"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v10",
@@ -254,20 +248,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideConstantByNumber",
           "id": "v9",
           "imms": [
            3,
-           366
+           734,
+           1
           ],
           "inputs": [
-           "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "divideByOne",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "define_function"
          },
          {
           "id": "v12",
@@ -279,23 +273,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideOneByNumber",
           "id": "v11",
           "imms": [
            4,
-           760,
-           2
+           650,
+           1
           ],
           "inputs": [
            "v12"
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v13"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v14",
@@ -307,20 +298,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideNumbers",
           "id": "v13",
           "imms": [
            5,
-           438
+           594,
+           2
           ],
           "inputs": [
-           "v11",
            "v14"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "divideNumbersReversed",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "define_function"
          },
          {
           "id": "v16",
@@ -332,10 +323,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".divideByConstant",
           "id": "v15",
           "imms": [
            6,
-           788,
+           622,
            1
           ],
           "inputs": [
@@ -343,12 +335,8 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v17"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v18",
@@ -361,19 +349,13 @@
          },
          {
           "id": "v17",
-          "imms": [
-           7,
-           379
-          ],
           "inputs": [
-           "v15",
            "v18"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "string_data": "divideConstantByNumber",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "intrinsic"
          },
          {
           "id": "v20",
@@ -386,186 +368,8 @@
          },
          {
           "id": "v19",
-          "imms": [
-           8,
-           704,
-           1
-          ],
           "inputs": [
            "v20"
-          ],
-          "intrinsic_id": "Intrinsic.definefunc",
-          "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v21"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v22",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v21"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v21",
-          "imms": [
-           9,
-           461
-          ],
-          "inputs": [
-           "v19",
-           "v22"
-          ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
-          "opcode": "Intrinsic",
-          "string_data": "divideOneByNumber",
-          "type": "void",
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v24",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v23"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v23",
-          "imms": [
-           10,
-           648,
-           2
-          ],
-          "inputs": [
-           "v24"
-          ],
-          "intrinsic_id": "Intrinsic.definefunc",
-          "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v25"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v26",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v25"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v25",
-          "imms": [
-           11,
-           423
-          ],
-          "inputs": [
-           "v23",
-           "v26"
-          ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
-          "opcode": "Intrinsic",
-          "string_data": "divideNumbers",
-          "type": "void",
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v28",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v27"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v27",
-          "imms": [
-           12,
-           676,
-           1
-          ],
-          "inputs": [
-           "v28"
-          ],
-          "intrinsic_id": "Intrinsic.definefunc",
-          "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v29"
-          ],
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v30",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v29"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v29",
-          "imms": [
-           13,
-           348
-          ],
-          "inputs": [
-           "v27",
-           "v30"
-          ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
-          "opcode": "Intrinsic",
-          "string_data": "divideByConstant",
-          "type": "void",
-          "visit": "ldobjbyname"
-         },
-         {
-          "id": "v32",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v31"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v31",
-          "inputs": [
-           "v32"
-          ],
-          "intrinsic_id": "Intrinsic.ldundefined",
-          "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
-         },
-         {
-          "id": "v34",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v33"
-          ],
-          "visit": "default"
-         },
-         {
-          "id": "v33",
-          "inputs": [
-           "v34"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",

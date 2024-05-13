@@ -202,7 +202,7 @@
           "id": "v14",
           "imms": [
            5,
-           198
+           206
           ],
           "inputs": [
            "v15"
@@ -232,7 +232,7 @@
           ],
           "opcode": "LoadString",
           "string": "Types mismatch!",
-          "stringOffset": 205,
+          "stringOffset": 213,
           "type": "ref",
           "users": [
            "v18"
@@ -448,7 +448,7 @@
           "id": "v3",
           "imms": [
            0,
-           227
+           230
           ],
           "inputs": [
            "v4"
@@ -476,7 +476,7 @@
           "id": "v5",
           "imms": [
            1,
-           236
+           239
           ],
           "inputs": [
            "v3",
@@ -503,20 +503,21 @@
          {
           "id": "v7",
           "imms": [
-           3,
-           222
+           0,
+           0
           ],
           "inputs": [
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 0,
           "opcode": "Intrinsic",
-          "string_data": "add",
           "type": "any",
           "users": [
            "v11"
           ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v12",
@@ -530,7 +531,7 @@
          {
           "id": "v11",
           "imms": [
-           4
+           3
           ],
           "inputs": [
            "v9",
@@ -558,7 +559,7 @@
          {
           "id": "v13",
           "imms": [
-           6
+           5
           ],
           "inputs": [
            "v3",
@@ -678,21 +679,15 @@
          {
           "id": "v3",
           "imms": [
-           0,
-           387,
-           0
+           1
           ],
           "inputs": [
            "v4"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.newlexenv",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
-          "users": [
-           "v5"
-          ],
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v6",
@@ -704,20 +699,20 @@
           "visit": "default"
          },
          {
+          "functionName": ".main",
           "id": "v5",
           "imms": [
-           1,
-           241
+           0,
+           458,
+           0
           ],
           "inputs": [
-           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "main",
-          "type": "void",
-          "visit": "ldobjbyname"
+          "type": "any",
+          "visit": "define_function"
          },
          {
           "id": "v8",
@@ -729,10 +724,11 @@
           "visit": "default"
          },
          {
+          "functionName": ".add",
           "id": "v7",
           "imms": [
-           2,
-           359,
+           1,
+           430,
            2
           ],
           "inputs": [
@@ -740,12 +736,11 @@
           ],
           "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "string_data": "",
           "type": "any",
           "users": [
            "v9"
           ],
-          "visit": "ldobjbyname"
+          "visit": "define_function"
          },
          {
           "id": "v10",
@@ -759,18 +754,19 @@
          {
           "id": "v9",
           "imms": [
-           3,
-           222
+           0,
+           0
           ],
           "inputs": [
            "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.stlexvar",
+          "lexenv": 0,
+          "lexvar": 0,
           "opcode": "Intrinsic",
-          "string_data": "add",
           "type": "void",
-          "visit": "ldobjbyname"
+          "visit": "intrinsic"
          },
          {
           "id": "v12",
