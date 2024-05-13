@@ -45,7 +45,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
-class IfdsPandaTest {
+class PandaIfds {
 
     companion object : PandaTraits
 
@@ -161,7 +161,8 @@ class IfdsPandaTest {
                     )
                     if (method.name == "sink") add(
                         TaintMethodSink(
-                            method = mockk(), ruleNote = "SINK", // FIXME
+                            method = mockk(),
+                            ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )

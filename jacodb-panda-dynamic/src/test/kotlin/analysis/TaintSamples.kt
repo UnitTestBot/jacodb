@@ -49,7 +49,7 @@ import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
 
-class TaintPandaTest {
+class TaintSamples {
 
     data class SourceMethodConfig(
         val methodName: String,
