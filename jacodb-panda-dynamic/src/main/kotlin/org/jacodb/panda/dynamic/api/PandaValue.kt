@@ -48,7 +48,7 @@ data class PandaLocalVar(
 data class PandaLexVar(
     val lexenvIndex: Int,
     val lexvarIndex: Int,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaSimpleValue {
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         TODO("Not yet implemented")
@@ -69,7 +69,7 @@ data class PandaThis(
 data class PandaArgument(
     override val index: Int,
     override val name: String = "arg$index",
-    override val type: PandaType = PandaAnyType
+    override val type: PandaType = PandaAnyType,
 ) : PandaLocal, CommonArgument {
 
     override fun toString(): String = "arg $index"
@@ -152,7 +152,7 @@ object PandaNullConstant : PandaConstant {
 }
 
 data class PandaMethodConstant(
-    val methodName: String
+    val methodName: String,
 ) : PandaConstant {
     override val type: PandaType
         get() = PandaAnyType
@@ -195,8 +195,8 @@ data class PandaArrayAccess(
 }
 
 data class PandaValueByInstance(
-     val instance: PandaValue,
-     val property: String,
+    val instance: PandaValue,
+    val property: String,
 ) : PandaComplexValue {
     override val type: PandaType
         get() = PandaAnyType
@@ -276,7 +276,7 @@ class PandaCaughtError : PandaValue {
 
 class PandaPhiValue(
     private val _inputs: Lazy<List<PandaValue>>,
-    val basicBlockIds: List<Int>
+    val basicBlockIds: List<Int>,
 ) : PandaValue {
     val inputs: List<PandaValue>
         get() = _inputs.value
