@@ -93,7 +93,7 @@ class TODOInst(
 
 class PandaEmptyBBPlaceholderInst(
     override val location: PandaInstLocation,
-    private val bbId: Int
+    private val bbId: Int,
 ) : PandaTerminatingInst() {
 
     override val operands: List<PandaExpr>
@@ -127,7 +127,7 @@ abstract class PandaBranchingInst : PandaInst() {
 }
 
 class PandaNewLexenvInst(
-    override val location: PandaInstLocation
+    override val location: PandaInstLocation,
 ) : PandaInst() {
     override val operands: List<PandaExpr>
         get() = emptyList()
@@ -140,7 +140,7 @@ class PandaNewLexenvInst(
 }
 
 class PandaPopLexenvInst(
-    override val location: PandaInstLocation
+    override val location: PandaInstLocation,
 ) : PandaInst() {
     override val operands: List<PandaExpr>
         get() = emptyList()
@@ -322,6 +322,7 @@ object CallExprVisitor :
     override fun visitPandaCatchInst(inst: PandaCatchInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): PandaCallExpr? =
         defaultVisitPandaInst(inst)
+
     override fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
 }
