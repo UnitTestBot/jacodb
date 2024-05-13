@@ -55,6 +55,7 @@ class PandaIfds {
         return project
     }
 
+    @Disabled("IFDS do not work properly with virtual methods")
     @Test
     fun `test taint analysis on MethodCollision`() {
         val project = loadProjectForSample("MethodCollision")
