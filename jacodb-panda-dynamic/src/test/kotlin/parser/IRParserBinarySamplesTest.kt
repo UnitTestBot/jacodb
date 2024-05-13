@@ -68,8 +68,8 @@ class IRParserBinarySamplesTest {
                                     val subExpr = assignInst.rhv as PandaSubExpr
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.lhv
                                     )
@@ -113,8 +113,8 @@ class IRParserBinarySamplesTest {
                                     val subExpr = assignInst.rhv as PandaSubExpr
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.lhv
                                     )
@@ -158,15 +158,15 @@ class IRParserBinarySamplesTest {
                                     val subExpr = assignInst.rhv as PandaSubExpr
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.lhv
                                     )
                                     assertEquals(
                                         PandaArgument(
-                                            index = 4,
-                                            name = "arg4"
+                                            index = 1,
+                                            name = "arg1"
                                         ),
                                         subExpr.rhv
                                     )
@@ -210,8 +210,8 @@ class IRParserBinarySamplesTest {
                                     )
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.rhv
                                     )
@@ -255,8 +255,8 @@ class IRParserBinarySamplesTest {
                                     )
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.rhv
                                     )
@@ -294,8 +294,8 @@ class IRParserBinarySamplesTest {
                                     val negExpr = assignInst.rhv as PandaNegExpr
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         negExpr.arg
                                     )
@@ -321,8 +321,8 @@ class IRParserBinarySamplesTest {
                                     )
                                     assertEquals(
                                         PandaArgument(
-                                            index = 4,
-                                            name = "arg4"
+                                            index = 1,
+                                            name = "arg1"
                                         ),
                                         subExpr.rhv
                                     )
@@ -360,15 +360,15 @@ class IRParserBinarySamplesTest {
                                     val subExpr = assignInst.rhv as PandaSubExpr
                                     assertEquals(
                                         PandaArgument(
-                                            index = 4,
-                                            name = "arg4"
+                                            index = 1,
+                                            name = "arg1"
                                         ),
                                         subExpr.lhv
                                     )
                                     assertEquals(
                                         PandaArgument(
-                                            index = 3,
-                                            name = "arg3"
+                                            index = 0,
+                                            name = "arg0"
                                         ),
                                         subExpr.rhv
                                     )

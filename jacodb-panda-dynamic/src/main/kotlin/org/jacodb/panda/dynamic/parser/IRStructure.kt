@@ -19,7 +19,18 @@ package org.jacodb.panda.dynamic.parser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.Mappable
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaExpr
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaLexVar
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaLocalVar
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaValue
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {
@@ -188,7 +199,7 @@ data class ProgramBasicBlock(
 data class ProgramInst(
     val id: String,
     val index: Int? = null,
-    val imms: List<Int> = emptyList(),
+    val imms: List<Long> = emptyList(),
     val inputs: List<String> = emptyList(),
     val inputBlocks: List<Int> = emptyList(),
     @SerialName("intrinsic_id")
@@ -202,7 +213,7 @@ data class ProgramInst(
     val stringOffset: Int? = null,
     val type: String? = null,
     val users: List<String> = emptyList(),
-    val value: Int? = null,
+    val value: Long? = null,
     val visit: String? = null,
     val immediate: Int? = null,
     val constructorName: String? = null,

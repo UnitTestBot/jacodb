@@ -17,7 +17,6 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
-import org.jacodb.panda.dynamic.parser.TSParser
 import org.jacodb.panda.dynamic.parser.dumpDot
 import java.io.File
 
@@ -32,9 +31,9 @@ fun loadIr(filePath: String, tsPath: String): IRParser {
         ?: error("Resource not found: $filePath")
     val sampleTSPath = object {}::class.java.getResource(tsPath)?.toURI()
         ?: error("Resource not found: $tsPath")
-    val tsParser = TSParser(sampleTSPath)
-    val tsFunctions = tsParser.collectFunctions()
-    return IRParser(sampleFilePath, tsFunctions)
+//    val tsParser = TSParser(sampleTSPath)
+//    val tsFunctions = tsParser.collectFunctions()
+    return IRParser(sampleFilePath)
 }
 
 object DumpIrToDot {

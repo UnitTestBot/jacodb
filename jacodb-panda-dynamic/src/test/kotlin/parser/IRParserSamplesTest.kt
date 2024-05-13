@@ -132,7 +132,7 @@ class IRParserSamplesTest {
                     }
 
                     "main" -> {
-                        assertEquals(5, pandaMethod.instructions.size)
+                        assertEquals(6, pandaMethod.instructions.size)
                         assertEquals(3, pandaMethod.blocks.size)
                     }
                 }
