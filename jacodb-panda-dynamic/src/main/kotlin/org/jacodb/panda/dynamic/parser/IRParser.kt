@@ -605,8 +605,8 @@ class IRParser(
             }
 
             opcode == "Intrinsic.definefunc" -> {
-                val methodConstant = PandaMethodConstant(functionName ?: error("No function name"))
-                handle(methodConstant)
+//                val methodConstant = PandaMethodConstant(functionName ?: error("No function name"))
+//                handle(methodConstant)
             }
 
             opcode == "Intrinsic.getiterator" -> {
