@@ -458,7 +458,7 @@ class PandaIfds {
             getConfigForMethod = getConfigForMethod,
         )
 
-        val methods = project.classes.flatMap { it.methods }.filter { it.name == "main" }
+        val methods = project.classes.flatMap { it.methods }.filter { it.name == "getDeviceIdListWithCursor" }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
             logger.info { "  ${method.name}" }
