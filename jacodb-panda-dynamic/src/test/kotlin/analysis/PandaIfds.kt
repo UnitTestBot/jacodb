@@ -74,7 +74,8 @@ class PandaIfds {
                     )
                     if (method.name == "log") add(
                         TaintMethodSink(
-                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                            method = mockk(),
+                            ruleNote = "CUSTOM SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )

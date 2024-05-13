@@ -1059,7 +1059,6 @@ class IRParser(
         method: ProgramMethod,
         env: IREnvironment,
     ): PandaCallExpr {
-
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
         val loadedValue = inputs.find<PandaLoadedValue>().lastOrNull()
         val localVar = inputs.find<PandaLocalVar>().lastOrNull()
