@@ -20,6 +20,7 @@ import org.jacodb.panda.dynamic.parser.IRParser
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Collectors
@@ -28,25 +29,30 @@ private val logger = mu.KotlinLogging.logger {}
 
 class IRParserProjectTest {
     companion object {
-        private val BASE_PATH = "/samples/project1/entry/src/main/ets/"
+        private const val PROJECT_PATH = "/samples/project1"
+        private const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
 
         private fun load(name: String): IRParser {
-            return loadIr(
-                filePath = "$BASE_PATH$name.json",
-                tsPath = "$BASE_PATH$name.ts",
-            )
+            return loadIr(filePath = "$BASE_PATH$name.json")
         }
 
         private fun countFileLines(path: String): Long {
-            val tsFile = object {}::class.java.getResource(path)?.toURI() ?: error("Resource not found")
-            return Files.lines(Paths.get(tsFile)).count()
+            val stream = object {}::class.java.getResourceAsStream(path) ?: error("Resource not found")
+            stream.bufferedReader().use { reader ->
+                return reader.lines().count()
+            }
         }
     }
 
     private var tsLinesSuccess = 0L
     private var tsLinesFailed = 0L
 
+    private fun projectAvailable(): Boolean {
+        val resource = object {}::class.java.getResource(PROJECT_PATH)?.toURI()
+        return resource != null && Files.exists(Paths.get(resource))
+    }
 
+    @EnabledIf("projectAvailable")
     @TestFactory
     fun processAllFiles(): List<DynamicTest> {
         val baseDirUrl = object {}::class.java.getResource(BASE_PATH)

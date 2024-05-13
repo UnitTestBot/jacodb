@@ -29,7 +29,7 @@ class IRParserSamplesTest {
         private const val SAMPLE_NAME = "MethodCollision"
 
         private fun load(name: String): IRParser {
-            return loadIr(
+            return loadIrWithTs(
                 filePath = "/samples/$name.json",
                 tsPath = "/samples/$name.ts",
             )

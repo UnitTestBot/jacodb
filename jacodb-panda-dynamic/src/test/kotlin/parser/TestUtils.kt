@@ -17,6 +17,7 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.TSParser
 import org.jacodb.panda.dynamic.parser.dumpDot
 import java.io.File
 
@@ -26,21 +27,21 @@ fun loadIr(filePath: String): IRParser {
     return IRParser(sampleFilePath)
 }
 
-fun loadIr(filePath: String, tsPath: String): IRParser {
+fun loadIrWithTs(filePath: String, tsPath: String): IRParser {
     val sampleFilePath = object {}::class.java.getResource(filePath)?.path
         ?: error("Resource not found: $filePath")
     val sampleTSPath = object {}::class.java.getResource(tsPath)?.toURI()
         ?: error("Resource not found: $tsPath")
-//    val tsParser = TSParser(sampleTSPath)
-//    val tsFunctions = tsParser.collectFunctions()
-    return IRParser(sampleFilePath)
+    val tsParser = TSParser(sampleTSPath)
+    val tsFunctions = tsParser.collectFunctions()
+    return IRParser(sampleFilePath, tsFunctions)
 }
 
 object DumpIrToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val name = "PhiTest"
-        val parser = loadIr("/samples/$name.json", "/samples/$name.ts")
+        val parser = loadIrWithTs("/samples/$name.json", "/samples/$name.ts")
         val program = parser.getProgram()
         val project = parser.getProject()
         println(program)

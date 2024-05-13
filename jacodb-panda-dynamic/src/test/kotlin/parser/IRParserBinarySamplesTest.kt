@@ -33,7 +33,7 @@ class IRParserBinarySamplesTest {
 
     companion object {
         private fun load(name: String): IRParser {
-            return loadIr(
+            return loadIrWithTs(
                 filePath = "/samples/binary/$name.json",
                 tsPath = "/samples/binary/$name.ts",
             )

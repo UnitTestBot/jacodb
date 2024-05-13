@@ -56,6 +56,7 @@ import org.jacodb.panda.dynamic.api.PandaLexVar
 import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaLtExpr
+import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodConstant
 import org.jacodb.panda.dynamic.api.PandaModExpr
 import org.jacodb.panda.dynamic.api.PandaMulExpr
@@ -188,8 +189,8 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                    // here comes the result of comment above
-                    tsFunc.containingClass?.name == method.clazz.name
+                // here comes the result of comment above
+                tsFunc.containingClass?.name == method.clazz.name
         }?.let { tsFunc ->
             method.paramTypes.addAll(tsFunc.arguments)
 //            method.type = tsFunc.returnType
@@ -347,7 +348,6 @@ class IRParser(
         method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }.add(index, input)
     }
 
-
     internal fun mapOpcode(
         op: ProgramInst,
         method: ProgramMethod,
@@ -422,7 +422,7 @@ class IRParser(
                 handle(neqExpr)
             }
 
-            opcode =="Intrinsic.strictnoteq" -> {
+            opcode == "Intrinsic.strictnoteq" -> {
                 val neqExpr = PandaStrictNeqExpr(inputs[0], inputs[1])
                 handle(neqExpr)
             }
@@ -456,12 +456,15 @@ class IRParser(
                     input is PandaLocalVar -> {
                         input.toString()
                     }
+
                     input is PandaLoadedValue -> {
                         input.getLoadedValueClassName()
                     }
+
                     input is PandaStringConstant -> {
                         input.value
                     }
+
                     else -> error("No string data")
                 }
 //                        as PandaStringConstant
@@ -637,7 +640,8 @@ class IRParser(
                 val lexvar = PandaLexVar(
                     lexenv ?: error("No lexenv"),
                     lexvar ?: error("No lexvar"),
-                    PandaAnyType)
+                    PandaAnyType
+                )
                 val value = inputs[0]
                 env.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
                 method.insts += PandaAssignInst(locationFromOp(this), lexvar, value)
@@ -647,7 +651,8 @@ class IRParser(
                 val lexvar = PandaLexVar(
                     lexenv ?: error("No lexenv"),
                     lexvar ?: error("No lexvar"),
-                    PandaAnyType)
+                    PandaAnyType
+                )
                 handle(PandaLoadedValue(lexvar))
             }
 
@@ -1054,7 +1059,7 @@ class IRParser(
     private fun getVirtualCallExprByInputs(
         inputs: List<PandaValue>,
         method: ProgramMethod,
-        env: IREnvironment
+        env: IREnvironment,
     ): PandaCallExpr {
 
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
@@ -1077,10 +1082,8 @@ class IRParser(
         loadedValue?.let { pandaLoadedValue ->
             return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
-                    val instanceName = pandaLoadedValue.getLoadedValueClassName()
-                    method.pandaMethod.project.createInstance(
-                        instanceName
-                    )
+                    val name = pandaLoadedValue.getLoadedValueClassName()
+                    PandaMethod(name)
                 },
                 args = inputs.filterNot { it == pandaLoadedValue },
                 instance = pandaLoadedValue
@@ -1090,14 +1093,14 @@ class IRParser(
             return PandaVirtualCallExpr(
                 lazyMethod = lazy {
                     val value = method.getLocalVarRoot(env, method.signature, pandaLocalVar)
-                    if (value is PandaMethodConstant)
-                        method.pandaMethod.project.findMethodOrNull(
-                            value.methodName.drop(1),
-                            method.pandaMethod.className ?: "GLOBAL"
-                        ) ?: error ("no method")
-                    else method.pandaMethod.project.createInstance(
-                        value.typeName
-                    )
+                    if (value is PandaMethodConstant) {
+                        val methodName = value.methodName.drop(1)
+                        val className = method.pandaMethod.className ?: "GLOBAL"
+                        method.pandaMethod.project.findMethodOrNull(methodName, className)
+                            ?: error("Could not find method: $methodName")
+                    } else {
+                        PandaMethod(value.typeName)
+                    }
                 },
                 args = inputs.filterNot { it == pandaLocalVar },
             )
