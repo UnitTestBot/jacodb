@@ -331,7 +331,7 @@ class TaintPandaTest {
             TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
         }
 
-        val postHandlerMethodName = "#4722804945120678178#"
+        private val postHandlerMethodName = "#4722804945120678178#"
 
         @Disabled("There is no ability to mark method argument as tainted")
         @Test
