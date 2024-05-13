@@ -27,7 +27,7 @@ class ssa_UnOp : ssaToJacoExpr, ssaToJacoValue {
 
 	override fun createJacoDBExpr(parent: GoMethod): GoUnaryExpr {
         val type = (register!!.typ!! as ssaToJacoType).createJacoDBType()
-        val name = "t${register!!.num!!}"
+        val name = "t${register!!.num!!.toInt()}"
         val location = GoInstLocationImpl(
             register!!.anInstruction!!.block!!.Index!!.toInt(),
             register!!.pos!!.toInt(),

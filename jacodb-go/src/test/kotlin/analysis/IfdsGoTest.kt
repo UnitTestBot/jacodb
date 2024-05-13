@@ -16,8 +16,6 @@
 
 package analysis
 
-import analysis.GoToJava.TypeMismatch.StartDeserializer
-import analysis.GoToJava.TypeMismatch.ssaToJacoProject
 import io.mockk.mockk
 import org.jacodb.taint.configuration.*
 import java.io.File
@@ -27,6 +25,9 @@ import org.jacodb.analysis.util.GoTraits
 import org.jacodb.go.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.usvm.jacodb.gen.StartDeserializer
+import org.usvm.jacodb.gen.ssaToJacoProject
+import java.util.zip.GZIPInputStream
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -35,9 +36,9 @@ class IfdsGoTest {
     companion object : GoTraits
 
     private fun loadProjectForSample(programName: String): GoProject {
-        val sampleFilePath = javaClass.getResource("/${programName}/filled.txt")?.path ?: ""
+        val sampleFilePath = javaClass.getResource("/${programName}/filled.gzip")?.path ?: ""
 
-        val res = StartDeserializer(File(sampleFilePath).bufferedReader()) as ssaToJacoProject
+        val res = StartDeserializer(GZIPInputStream(File(sampleFilePath).inputStream()).bufferedReader()) as ssaToJacoProject
         val jcdb = res.createJacoDBProject()
 
         return jcdb
@@ -62,13 +63,15 @@ class IfdsGoTest {
                             )
                         )
                     }
-                    if (method.metName == "log") add(
-                        TaintMethodSink(
-                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
-                            cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                    if (method.metName == "log") {
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
                         )
-                    )
+                    }
                 }
                 rules.ifEmpty { null }
             }
@@ -79,6 +82,55 @@ class IfdsGoTest {
             getConfigForMethod = getConfigForMethod
         )
         val methods = project.methods
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.metName}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on SQLI`() {
+        val project = loadProjectForSample("SQLI")
+        val graph = GoApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<GoMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.metName == "Sprintf" && method.packageName == "fmt") {
+                        add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                    }
+                    if (method.metName == "Query" && method.packageName == "sql") {
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
+                        )
+                    }
+                }
+                rules.ifEmpty { null }
+            }
+
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod
+        )
+        val methods = project.methods.filter {
+            it.packageName == "main" || it.packageName == "fmt" || it.packageName == "sql"
+        }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
             logger.info { "  ${method.metName}" }

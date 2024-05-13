@@ -20,6 +20,7 @@ import org.jacodb.api.common.CommonMethod
 
 interface GoMethod : CommonMethod<GoMethod, GoInst>, GoValue {
     val metName: String
+    val packageName: String
     val blocks: List<GoBasicBlock>
     override fun flowGraph(): GoGraph
 }

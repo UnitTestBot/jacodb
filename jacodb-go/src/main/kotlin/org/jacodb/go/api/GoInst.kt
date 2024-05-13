@@ -1027,7 +1027,21 @@ data class GoPhiExpr(
         )
     }
 
-    override fun toString(): String = "phi [$edges]"
+    override fun toString(): String {
+        var res = "phi ["
+        edges.forEachIndexed { i, edge ->
+            res += if (edge is GoAssignableInst) {
+                edge.name
+            } else {
+                edge.toString()
+            }
+            if (i + 1 != edges.size) {
+                res += ", "
+            }
+        }
+        res += "]"
+        return res
+    }
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
         return visitor.visitGoPhiExpr(this)
@@ -1770,7 +1784,7 @@ data class GoFunction(
     override val metName: String,
     override var blocks: List<GoBasicBlock>,
     val returnTypes: List<GoType>,
-    val packageName: String
+    override val packageName: String
 ) : GoMethod {
 
     private var flowGraph: GoGraph? = null

@@ -37,7 +37,8 @@ class types_Named : ssaToJacoType {
         }
 
         val res = NamedType(
-            InterfaceType()
+            InterfaceType(),
+            obj!!.Object!!.name!!,
         )
 
         if (structToPtrMap.containsKey(this)) {

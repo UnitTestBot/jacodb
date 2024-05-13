@@ -90,10 +90,11 @@ class MapType(
 }
 
 class NamedType(
-    var underlyingType: GoType
+    var underlyingType: GoType,
+    val name: String,
 ) : GoType, AbstractGoType() {
     override val typeName: String
-        get() = underlyingType.typeName
+        get() = name
 }
 
 class PointerType(
