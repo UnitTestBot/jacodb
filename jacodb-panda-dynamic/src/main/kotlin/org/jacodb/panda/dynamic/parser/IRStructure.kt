@@ -166,6 +166,45 @@ data class ProgramMethod(
     }
 }
 
+data class AccessFlags(val flags: Int) {
+    val isPublic: Boolean // field, method, class
+        get() = flags and 0x0001 > 0
+    val isPrivate: Boolean // field, method
+        get() = flags and 0x0002 > 0
+    val isProtected: Boolean // field, method
+        get() = flags and 0x0004 > 0
+    val isStatic: Boolean // field, method
+        get() = flags and 0x0008 > 0
+    val isFinal: Boolean // field, method, class
+        get() = flags and 0x0010 > 0
+    val isSuper: Boolean // class
+        get() = flags and 0x0020 > 0
+    val isSynchronized: Boolean // method
+        get() = flags and 0x0020 > 0
+    val isBridge: Boolean // method
+        get() = flags and 0x0040 > 0
+    val isVolatile: Boolean // field
+        get() = flags and 0x0040 > 0
+    val isTransient: Boolean // field
+        get() = flags and 0x0080 > 0
+    val isVarargs: Boolean // method
+        get() = flags and 0x0080 > 0
+    val isNative: Boolean // method
+        get() = flags and 0x0100 > 0
+    val isInterface: Boolean // class
+        get() = flags and 0x0200 > 0
+    val isAbstract: Boolean // method, class
+        get() = flags and 0x0400 > 0
+    val isStrict: Boolean // method
+        get() = flags and 0x0800 > 0
+    val isSynthetic: Boolean // field, method, class
+        get() = flags and 0x1000 > 0
+    val isAnnotation: Boolean // class
+        get() = flags and 0x2000 > 0
+    val isEnum: Boolean // field, class
+        get() = flags and 0x4000 > 0
+}
+
 @Serializable
 data class ProgramBasicBlock(
     val id: Int,
