@@ -287,7 +287,7 @@ class PandaPhiValue(
     override val operands: List<PandaValue>
         get() = inputs
 
-    override fun toString(): String = "Phi(${inputs.zip(basicBlockIds).joinToString { (input, id) -> "$input {$id}"}})"
+    override fun toString(): String = "Phi(${inputs.zip(basicBlockIds).joinToString { (input, id) -> "$id: $input" }})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaPhiValue(this)
