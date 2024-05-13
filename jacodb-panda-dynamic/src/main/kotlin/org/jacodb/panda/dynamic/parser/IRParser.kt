@@ -137,14 +137,12 @@ class IRParser(
         if (this.program == null) {
             this.program = Json.decodeFromString(json)
         }
-        mapProgramIR(this.program!!)
-        return program!!
+        // mapProgramIR(this.program!!)
+        return this.program!!
     }
 
-    fun getProgramInstance() = this.program!!
-
     fun getProject(): PandaProject {
-        val program: Program = Json.decodeFromString(json)
+        val program = getProgram()
         return mapProgramIR(program)
     }
 
