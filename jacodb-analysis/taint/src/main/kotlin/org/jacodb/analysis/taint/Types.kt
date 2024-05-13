@@ -17,9 +17,7 @@
 package org.jacodb.analysis.taint
 
 import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.Vertex
 
 typealias TaintVertex = Vertex<TaintDomainFact>
 typealias TaintEdge = Edge<TaintDomainFact>
-typealias TaintRunner = Runner<TaintDomainFact>

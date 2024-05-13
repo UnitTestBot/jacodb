@@ -79,12 +79,6 @@ class TaintAnalyzer(
         }
     }
 
-    override fun handleCrossUnitCall(
-        caller: TaintVertex,
-        callee: TaintVertex,
-    ): List<TaintEvent> = buildList {
-        add(EdgeForOtherRunner(TaintEdge(callee, callee), Reason.CrossUnitCall(caller)))
-    }
 }
 
 class BackwardTaintAnalyzer(
@@ -105,12 +99,5 @@ class BackwardTaintAnalyzer(
         if (isExitPoint(edge.to.statement)) {
             add(EdgeForOtherRunner(Edge(edge.to, edge.to), reason = Reason.External))
         }
-    }
-
-    override fun handleCrossUnitCall(
-        caller: TaintVertex,
-        callee: TaintVertex,
-    ): List<TaintEvent> {
-        return emptyList()
     }
 }

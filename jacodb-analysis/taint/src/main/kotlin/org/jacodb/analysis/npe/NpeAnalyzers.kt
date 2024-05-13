@@ -19,14 +19,11 @@ package org.jacodb.analysis.npe
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
-import org.jacodb.analysis.ifds.Reason
-import org.jacodb.analysis.taint.EdgeForOtherRunner
 import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
 import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.TaintVertex
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -97,10 +94,4 @@ class NpeAnalyzer(
         }
     }
 
-    override fun handleCrossUnitCall(
-        caller: TaintVertex,
-        callee: TaintVertex,
-    ): List<TaintEvent> = buildList {
-        add(EdgeForOtherRunner(TaintEdge(callee, callee), Reason.CrossUnitCall(caller)))
-    }
 }

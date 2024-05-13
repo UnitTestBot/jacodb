@@ -22,9 +22,4 @@ interface Analyzer<Fact, out Event> {
     fun handleNewEdge(
         edge: Edge<Fact>,
     ): List<Event>
-
-    fun handleCrossUnitCall(
-        caller: Vertex<Fact>,
-        callee: Vertex<Fact>,
-    ): List<Event>
 }

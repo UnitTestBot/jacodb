@@ -17,10 +17,6 @@
 package org.jacodb.analysis.util
 
 import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.Runner
-import org.jacodb.analysis.ifds.UniRunner
-import org.jacodb.analysis.taint.TaintBidiRunner
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter
@@ -38,12 +34,6 @@ fun JcClasspath.getArgument(param: JcParameter): JcArgument? {
 
 fun JcClasspath.getArgumentsOf(method: JcMethod): List<JcArgument> {
     return method.parameters.map { getArgument(it)!! }
-}
-
-internal fun Runner<*>.getPathEdges(): Set<Edge<*>> = when (this) {
-    is UniRunner<*, *> -> pathEdges
-    is TaintBidiRunner -> forwardRunner.getPathEdges() + backwardRunner.getPathEdges()
-    else -> error("Cannot extract pathEdges for $this")
 }
 
 fun AccessPath?.startsWith(other: AccessPath?): Boolean {

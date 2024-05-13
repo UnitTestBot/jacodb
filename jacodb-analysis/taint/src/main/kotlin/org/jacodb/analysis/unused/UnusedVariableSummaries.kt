@@ -16,14 +16,8 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.SummaryEdge
 import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.ifds.Vulnerability
-
-data class UnusedVariableSummaryEdge(
-    override val edge: Edge<UnusedVariableDomainFact>,
-) : SummaryEdge<UnusedVariableDomainFact>
 
 data class UnusedVariableVulnerability(
     override val message: String,

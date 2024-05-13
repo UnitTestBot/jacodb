@@ -18,7 +18,6 @@ package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
@@ -40,7 +39,4 @@ class UnusedVariableAnalyzer(
         }
     }
 
-    override fun handleCrossUnitCall(caller: Vertex<UnusedVariableDomainFact>, callee: Vertex<UnusedVariableDomainFact>): List<Event> {
-        return emptyList()
-    }
 }

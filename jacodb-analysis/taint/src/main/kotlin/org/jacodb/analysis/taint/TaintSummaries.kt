@@ -16,13 +16,8 @@
 
 package org.jacodb.analysis.taint
 
-import org.jacodb.analysis.ifds.SummaryEdge
 import org.jacodb.analysis.ifds.Vulnerability
 import org.jacodb.taint.configuration.TaintMethodSink
-
-data class TaintSummaryEdge(
-    override val edge: TaintEdge,
-) : SummaryEdge<TaintDomainFact>
 
 data class TaintVulnerability(
     override val message: String,
