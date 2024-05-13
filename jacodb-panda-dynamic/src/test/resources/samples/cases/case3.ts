@@ -5,30 +5,21 @@ interface MyError {
     stack?: string
 }
 
-class CommonEventManager {
-    publish(event: string, options: CommonEventPublishDataObject, callback: (err: MyError) => void) {
-        // publish event
-    }
+function publishEvent(event: string, password: String, callback: (err: MyError) => void) {
+    // publish event
 }
 
-let commonEventManager = new CommonEventManager();
+function getPassword() {
+    return "Password123"
+}
 
 class CommonSecurity {
     private publish: String = ""
 
-    private getPassword() {
-        return "Password123"
-    }
-
     private publishEventWithData() {
-        let password = this.getPassword()
-        let code = 1
-        let options = {
-            code: code,
-            data: password,
-        };
+        let password = getPassword()
         // SINK: send with sensitive data
-        commonEventManager.publish("MyCommonEvent", options, (err) => {
+        publishEvent("MyCommonEvent", password, (err) => {
             if (err.code) {
                 this.publish = "publish event error: " + err.code + ", " + err.message + ", " + err.name + ", " + err.stack;
             } else {

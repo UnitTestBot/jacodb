@@ -343,7 +343,7 @@ class IRParser(
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
         val outputInst = method.getInstViaId(outputId)
         val index = outputInst.inputs().indexOf(inputId)
-        method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }.add(index, input)
+        method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }[index] = input
     }
 
     internal fun mapOpcode(
@@ -585,7 +585,7 @@ class IRParser(
 
             opcode == "Intrinsic.ldglobalvar" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaValueByInstance(PandaThis(PandaClassTypeImpl(method.clazz.name)), name)
+                val out = PandaValueByInstance(PandaThis(PandaClassTypeImpl("GLOBAL")), name)
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }

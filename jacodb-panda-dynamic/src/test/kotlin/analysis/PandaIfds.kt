@@ -344,7 +344,7 @@ class PandaIfds {
         assertTrue(sinks.isNotEmpty())
     }
 
-    @Disabled("don't work yet")
+    // TODO(): support AnyArgument Position type for more flexible configs
     @Test
     fun `test taint analysis on case3 - send plain information with sensitive data`() {
         val project = loadProjectForSample("cases/case3")
@@ -362,11 +362,11 @@ class PandaIfds {
                             ),
                         )
                     )
-                    if (method.name == "publish") add(
+                    if (method.name == "publishEvent") add(
                         TaintMethodSink(
                             method = mockk(), ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = AnyArgument, mark = TaintMark("TAINT"))
+                            condition = ContainsMark(position = Argument(1), mark = TaintMark("TAINT"))
                         )
                     )
                 }
