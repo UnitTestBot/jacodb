@@ -201,7 +201,6 @@ class UnusedVariableManager<Method, Statement>(
                             used[fact.initStatement] = true
                         }
                     }
-
                 }
             }
             used.filterValues { !it }.keys.map {

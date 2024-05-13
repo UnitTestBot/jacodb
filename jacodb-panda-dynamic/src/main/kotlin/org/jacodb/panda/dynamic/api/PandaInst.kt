@@ -262,17 +262,17 @@ class PandaCatchInst(
     val throwable: PandaValue,
     private var _throwers: List<PandaInstRef>,
 ) : PandaInst() {
+    val throwers: List<PandaInstRef>
+        get() = _throwers
+
     override val operands: List<PandaExpr>
         get() = listOf(throwable)
 
-    val throwers: List<PandaInstRef>
-        get() = _throwers
+    override fun toString(): String = "catch$throwers ($throwable)"
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
         return visitor.visitPandaCatchInst(this)
     }
-
-    override fun toString(): String = "catch$throwers ($throwable)"
 
     override fun decLocationIndex(idxList: List<Int>) {
         super.decLocationIndex(idxList)

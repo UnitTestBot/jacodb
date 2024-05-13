@@ -20,20 +20,31 @@ import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
+import org.jacodb.analysis.taint.TaintAnalysisOptions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.util.PandaTraits
+import org.jacodb.panda.dynamic.api.PandaApplicationGraph
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
-import org.junit.jupiter.api.Test
-import org.jacodb.panda.dynamic.api.*
-import org.jacodb.analysis.taint.TaintAnalysisOptions
-import org.jacodb.panda.dynamic.parser.IRParser
-import org.jacodb.panda.dynamic.parser.ProgramBasicBlock
-import org.jacodb.taint.configuration.*
+import org.jacodb.panda.dynamic.api.PandaProject
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.Position
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
@@ -42,15 +53,15 @@ class TaintPandaTest {
 
     data class SourceMethodConfig(
         val methodName: String,
-        val markName : String = "TAINT",
-        val position: Position = Result
+        val markName: String = "TAINT",
+        val position: Position = Result,
     )
 
     data class CaseTaintConfig(
         val sourceMethodConfig: SourceMethodConfig,
         val cleanerMethodName: String? = null,
         val sinkMethodName: String? = null,
-        val startMethodNamesForAnalysis: List<String>? = null
+        val startMethodNamesForAnalysis: List<String>? = null,
     )
 
     class FileTaintAnalyzer(programName: String) {
@@ -62,15 +73,14 @@ class TaintPandaTest {
             return project
         }
 
-        private val project : PandaProject = loadProjectForSample(programName)
-        private val graph : PandaApplicationGraph = PandaApplicationGraphImpl(this.project)
-
+        private val project: PandaProject = loadProjectForSample(programName)
+        private val graph: PandaApplicationGraph = PandaApplicationGraphImpl(this.project)
 
 //        init {
 //            graph.project.classes.flatMap { it.methods }.single { it.name == "forLoop" }.flowGraph().view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
 //        }
 
-        fun analyseOneCase(caseTaintConfig: CaseTaintConfig) : List<TaintVulnerability<PandaMethod, PandaInst>> {
+        fun analyseOneCase(caseTaintConfig: CaseTaintConfig): List<TaintVulnerability<PandaMethod, PandaInst>> {
 //            println(TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK)
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
             val (sourceMethodName, markName, sourcePosition) = caseTaintConfig.sourceMethodConfig
@@ -107,7 +117,7 @@ class TaintPandaTest {
                             TaintPassThrough(
                                 method = mockk(),
                                 condition = ConstantTrue,
-                                actionsAfter = List(method.parameters.size) {index ->
+                                actionsAfter = List(method.parameters.size) { index ->
                                     CopyAllMarks(from = Argument(index), to = Result)
                                 }
                             )
@@ -122,7 +132,7 @@ class TaintPandaTest {
             )
 
             val methods = this.project.classes.flatMap { it.methods }
-            val filteredMethods = caseTaintConfig.startMethodNamesForAnalysis?.let {names ->
+            val filteredMethods = caseTaintConfig.startMethodNamesForAnalysis?.let { names ->
                 methods.filter { method -> names.contains(method.name) }
             } ?: methods
 
@@ -136,8 +146,6 @@ class TaintPandaTest {
             return sinks
         }
     }
-
-
 
     @Nested
     inner class PasswordLeakTest {
@@ -228,7 +236,6 @@ class TaintPandaTest {
             assert(sinks.size == 1)
         }
 
-
         @Test
         fun `counterexample - untrusted bound in while loop`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
@@ -242,7 +249,6 @@ class TaintPandaTest {
             )
             assert(sinks.size == 1)
         }
-
 
     }
 
@@ -272,7 +278,6 @@ class TaintPandaTest {
 
     }
 
-
     @Nested
     inner class IndexOutOfRangeTest {
 
@@ -298,7 +303,6 @@ class TaintPandaTest {
         }
 
     }
-
 
     @Nested
     inner class FieldSampleTest {
@@ -346,4 +350,3 @@ class TaintPandaTest {
         }
     }
 }
-

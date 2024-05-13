@@ -62,9 +62,8 @@ class IfdsPandaTest {
         return project
     }
 
-    @Disabled("IFDS do not work properly with virtual methods")
     @Test
-    fun kek() {
+    fun `test taint analysis on MethodCollision`() {
         val project = loadProjectForSample("MethodCollision")
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
