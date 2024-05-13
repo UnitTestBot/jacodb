@@ -147,7 +147,7 @@ class TaintAnalyzer<Method, Statement>(
             if (fact is Tainted && fact.mark.name == "UNTRUSTED") {
                 if (statement is DynamicPandaAssignInst) {
                     val expr = statement.rhv
-                    if (expr is DynamicPandaNewExpr && expr.typeName == "Array") {
+                    if (expr is DynamicPandaNewExpr && expr.typeName in listOf("Array", "ArrayBuffer")) {
                         val arg = expr.params.first()
                         if (arg.toPath() == fact.variable) {
                             val message = "Untrusted array size"

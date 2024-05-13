@@ -21,6 +21,8 @@ import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.TaintAnalysisOptions
+import org.jacodb.analysis.unused.UnusedVariableManager
 import org.jacodb.analysis.util.PandaTraits
 import org.jacodb.panda.dynamic.api.PandaAnyType
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
@@ -33,22 +35,13 @@ import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.ConstantTrue
-import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.Result
-import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMark
-import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.taint.configuration.TaintMethodSource
-import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.*
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import parser.loadIr
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -253,6 +246,124 @@ class IfdsPandaTest {
         assertTrue(project.classes.isNotEmpty())
         logger.info { "methods = ${project.classes.flatMap { it.methods }}" }
         assertTrue(project.classes.flatMap { it.methods }.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on case1 - untrusted loop bound scenario`() {
+        val project = loadProjectForSample("cases/case1")
+        val graph = PandaApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "readInt") add(
+                        TaintMethodSource(
+                            method = mockk(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
+                            ),
+                        )
+                    )
+                }
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+        TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
+
+        val methods = project.classes.flatMap { it.methods }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on case2 - untrusted array buffer size scenario`() {
+        val project = loadProjectForSample("cases/case2")
+        val graph = PandaApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "readInt") add(
+                        TaintMethodSource(
+                            method = mockk(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
+                            ),
+                        )
+                    )
+                }
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+        TaintAnalysisOptions.UNTRUSTED_ARRAY_SIZE_SINK = true
+
+        val methods = project.classes.flatMap { it.methods }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Disabled("don't work yet")
+    @Test
+    fun `test taint analysis on case3 - send plain information with sensitive data`() {
+        val project = loadProjectForSample("cases/case3")
+        val graph = PandaApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "getPassword") add(
+                        TaintMethodSource(
+                            method = mockk(),
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("TAINT"), position = Result),
+                            ),
+                        )
+                    )
+                    if (method.name == "publish") add(
+                        TaintMethodSink(
+                            method = mockk(), ruleNote = "SINK", // FIXME
+                            cwe = listOf(), // FIXME
+                            condition = ContainsMark(position = AnyArgument, mark = TaintMark("TAINT"))
+                        )
+                    )
+                }
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+
+        val methods = project.classes.flatMap { it.methods }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
     }
 
 }
