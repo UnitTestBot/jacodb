@@ -78,4 +78,6 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitPandaGotoInst(inst: PandaGotoInst): T
     fun visitPandaCatchInst(inst: PandaCatchInst): T
     fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): T
+    fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): T
+    fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): T
 }

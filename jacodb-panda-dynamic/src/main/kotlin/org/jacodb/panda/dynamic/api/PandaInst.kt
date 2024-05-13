@@ -133,7 +133,7 @@ class PandaNewLexenvInst(
         get() = emptyList()
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        TODO("Not yet implemented")
+        return visitor.visitPandaNewLexenvInst(this)
     }
 
     override fun toString(): String = "newlexenv"
@@ -146,7 +146,7 @@ class PandaPopLexenvInst(
         get() = emptyList()
 
     override fun <T> accept(visitor: PandaInstVisitor<T>): T {
-        TODO("Not yet implemented")
+        return visitor.visitPandaPopLexenvInst(this)
     }
 
     override fun toString(): String = "poplexenv"
@@ -322,6 +322,8 @@ object CallExprVisitor :
     override fun visitPandaCatchInst(inst: PandaCatchInst): PandaCallExpr? = defaultVisitPandaInst(inst)
     override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): PandaCallExpr? =
         defaultVisitPandaInst(inst)
+    override fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
+    override fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
 }
 
 val PandaInst.callExpr: PandaCallExpr?
