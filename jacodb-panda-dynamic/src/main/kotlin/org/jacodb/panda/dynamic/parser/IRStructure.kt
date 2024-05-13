@@ -43,7 +43,7 @@ data class Program(val classes: List<ProgramClass>) {
     fun findMethodOrNull(name: String, methodClassName: String): ProgramMethod? {
         // TODO: find better solution
         if (name == "log" && methodClassName == "console") {
-            return ProgramMethod(name="log", signature = "std::.log")
+            return ProgramMethod(name = "log", signature = "std::.log")
         }
         return findClassOrNull(methodClassName)?.properties?.find { it.name == name }?.method
     }
@@ -124,7 +124,7 @@ data class ProgramMethod(
     private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
 
     @Transient
-    val nameToLocalVarId : MutableMap<String, PandaValue> = mutableMapOf()
+    val nameToLocalVarId: MutableMap<String, PandaValue> = mutableMapOf()
 
     @Transient
     var paramTypes: MutableList<PandaType> = mutableListOf()
@@ -132,7 +132,7 @@ data class ProgramMethod(
     @Transient
     val localVarAssignment = mutableMapOf<PandaLocalVar, PandaAssignInst>()
 
-    tailrec fun getLocalVarRoot(env: IREnvironment, methodName: String, value: PandaExpr) : PandaExpr {
+    tailrec fun getLocalVarRoot(env: IREnvironment, methodName: String, value: PandaExpr): PandaExpr {
         return if (value is PandaLocalVar) {
             getLocalVarRoot(env, methodName, env.getLocalAssignment(methodName, value).rhv)
         } else if (value is PandaLexVar) {
@@ -220,7 +220,7 @@ data class ProgramInst(
     val functionName: String? = null,
     val throwers: List<String> = emptyList(),
     val lexenv: Int? = null,
-    val lexvar: Int? = null
+    val lexvar: Int? = null,
 ) {
 
     @Transient

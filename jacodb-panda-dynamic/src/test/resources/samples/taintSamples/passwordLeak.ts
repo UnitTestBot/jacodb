@@ -38,5 +38,3 @@ function case2() {
     // password was encrypted so there is no exposure
     console.log(encryptedPassword)
 }
-
-

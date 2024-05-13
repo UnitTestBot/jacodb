@@ -76,12 +76,12 @@ class TaintPandaTest {
         private val project: PandaProject = loadProjectForSample(programName)
         private val graph: PandaApplicationGraph = PandaApplicationGraphImpl(this.project)
 
-//        init {
-//            graph.project.classes.flatMap { it.methods }.single { it.name == "forLoop" }.flowGraph().view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
-//        }
+        // init {
+        //     graph.project.classes.flatMap { it.methods }.single { it.name == "forLoop" }.flowGraph()
+        //         .view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
+        // }
 
         fun analyseOneCase(caseTaintConfig: CaseTaintConfig): List<TaintVulnerability<PandaMethod, PandaInst>> {
-//            println(TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK)
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
             val (sourceMethodName, markName, sourcePosition) = caseTaintConfig.sourceMethodConfig
             val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -135,7 +135,6 @@ class TaintPandaTest {
             val filteredMethods = caseTaintConfig.startMethodNamesForAnalysis?.let { names ->
                 methods.filter { method -> names.contains(method.name) }
             } ?: methods
-
 
             logger.info { "Methods: ${filteredMethods.size}" }
             for (method in filteredMethods) {
