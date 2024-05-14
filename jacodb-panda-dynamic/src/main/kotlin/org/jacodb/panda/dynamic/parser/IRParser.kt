@@ -187,8 +187,8 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                // here comes the result of comment above
-                tsFunc.containingClass?.name == method.clazz.name
+                    // here comes the result of comment above
+                    tsFunc.containingClass?.name == method.clazz.name
         }?.let { tsFunc ->
             method.paramTypes.addAll(tsFunc.arguments)
 //            method.type = tsFunc.returnType
@@ -464,6 +464,10 @@ class IRParser(
                         input.value
                     }
 
+                    input is PandaValueByInstance -> {
+                        input.getClassAndMethodName().toString()
+                    }
+
                     else -> error("No string data")
                 }
 //                        as PandaStringConstant
@@ -569,7 +573,7 @@ class IRParser(
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
-                    method.idToInputs[output]?.remove(inputs[0])
+                    // method.idToInputs[output]?.remove(inputs[0])
                 }
             }
 
@@ -1064,6 +1068,8 @@ class IRParser(
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
         val loadedValue = inputs.find<PandaLoadedValue>().lastOrNull()
         val localVar = inputs.find<PandaLocalVar>().lastOrNull()
+        val arrayAccess = inputs.find<PandaArrayAccess>().lastOrNull()
+        val stringConstant = inputs.find<PandaStringConstant>().lastOrNull()
         instCallValue?.let { instValue ->
             return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
@@ -1088,6 +1094,17 @@ class IRParser(
                 instance = pandaLoadedValue
             )
         }
+        stringConstant?.let { pandaString ->
+            return PandaInstanceVirtualCallExpr(
+                lazyMethod = lazy {
+                    val name = pandaString.value
+                    PandaMethod(name)
+                },
+                args = inputs.filterNot { it == pandaString },
+                instance = PandaThis(PandaClassTypeImpl("GLOBAL"))
+            )
+
+        }
         localVar?.let { pandaLocalVar ->
             return PandaVirtualCallExpr(
                 lazyMethod = lazy {
@@ -1095,15 +1112,28 @@ class IRParser(
                     if (value is PandaMethodConstant) {
                         val methodName = value.methodName.drop(1)
                         val className = method.pandaMethod.className ?: "GLOBAL"
-                        method.pandaMethod.project.findMethodOrNull(methodName, className)
+                        fun findIn(className: String) = method.pandaMethod.project.findMethodOrNull(methodName, className)
+                        findIn(className) ?: findIn("GLOBAL")
                             ?: error("Could not find method: $methodName")
                     } else {
+                        val aaa = inputs
                         PandaMethod(value.typeName)
                     }
                 },
                 args = inputs.filterNot { it == pandaLocalVar },
             )
         }
+        arrayAccess?.let { pandaArrayAccess ->
+            return PandaInstanceVirtualCallExpr(
+                lazyMethod = lazy {
+                    val name = pandaArrayAccess.array.type.typeName
+                    PandaMethod(name)
+                },
+                args = inputs.filterNot { it == pandaArrayAccess },
+                instance = pandaArrayAccess.array
+            )
+        }
+
         error("No instance or loaded value found in inputs")
     }
 

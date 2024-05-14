@@ -398,55 +398,53 @@ class PandaIfds {
             { method ->
                 val rules = buildList {
                     // adhoc taint second argument (cursor: string)
-                    if (method.name == "getDeviceIdListWithCursor") add(
-                        TaintEntryPointSource(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(
-                                AssignMark(position = Argument(1), mark = TaintMark("UNSAFE")),
-                            ),
-                        )
-                    )
-                    // encodeURI*
-                    if (method.name.startsWith("encodeURI")) add(
-                        TaintMethodSource(
-                            method = mockk(),
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE")),
-                            actionsAfter = listOf(
-                                RemoveMark(position = Result, mark = TaintMark("UNSAFE")),
-                            ),
-                        )
-                    )
-                    // RequestOption.setUrl
-                    if (method.name == "setUrl") add(
-                        TaintMethodSource(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(
-                                CopyMark(
-                                    mark = TaintMark("UNSAFE"),
-                                    from = Argument(0),
-                                    to = Result
-                                ),
-                            ),
-                        )
-                    )
-                    // HttpManager.requestSync
-                    if (method.name == "requestSync") add(
+                    if (method.name == "taintSink") add(
                         TaintMethodSink(
                             method = mockk(),
-                            ruleNote = "Unsafe request", // FIXME
-                            cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE"))
+                            cwe = listOf(),
+                            ruleNote = "SINK",
+                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT")),
                         )
                     )
+//                    // encodeURI*
+//                    if (method.name.startsWith("encodeURI")) add(
+//                        TaintMethodSource(
+//                            method = mockk(),
+//                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE")),
+//                            actionsAfter = listOf(
+//                                RemoveMark(position = Result, mark = TaintMark("UNSAFE")),
+//                            ),
+//                        )
+//                    )
+//                    // RequestOption.setUrl
+//                    if (method.name == "setUrl") add(
+//                        TaintMethodSource(
+//                            method = mockk(),
+//                            condition = ConstantTrue,
+//                            actionsAfter = listOf(
+//                                CopyMark(
+//                                    mark = TaintMark("UNSAFE"),
+//                                    from = Argument(0),
+//                                    to = Result
+//                                ),
+//                            ),
+//                        )
+//                    )
+//                    // HttpManager.requestSync
+//                    if (method.name == "requestSync") add(
+//                        TaintMethodSink(
+//                            method = mockk(),
+//                            ruleNote = "Unsafe request", // FIXME
+//                            cwe = listOf(), // FIXME
+//                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE"))
+//                        )
+//                    )
                     // SyncUtil.requestGet
                     if (method.name == "requestGet") add(
-                        TaintMethodSink(
+                        TaintMethodSource(
                             method = mockk(),
-                            ruleNote = "Unsafe request", // FIXME
-                            cwe = listOf(), // FIXME
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE"))
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(AssignMark(position = Result, mark = TaintMark("TAINT")))
                         )
                     )
                 }
@@ -458,7 +456,14 @@ class PandaIfds {
             getConfigForMethod = getConfigForMethod,
         )
 
-        val methods = project.classes.flatMap { it.methods }.filter { it.name == "getDeviceIdListWithCursor" }
+        val methodNames = setOf(
+            "getDeviceIdListWithCursor",
+            "requestGet",
+            "taintRun",
+            "taintSink"
+        )
+
+        val methods = project.classes.flatMap { it.methods }.filter { it.name in methodNames }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
             logger.info { "  ${method.name}" }

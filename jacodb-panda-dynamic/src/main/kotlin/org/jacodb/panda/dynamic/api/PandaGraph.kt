@@ -45,7 +45,7 @@ class PandaGraph(
             val successors = when (inst) {
                 is PandaTerminatingInst -> emptySet()
                 is PandaBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
-                else -> setOf(next(inst))
+                else -> setOfNotNull(next(inst))
             }
             successorMap[inst] = successors
             for (successor in successors) {
@@ -69,7 +69,7 @@ class PandaGraph(
 
     fun ref(inst: PandaInst): PandaInstRef = PandaInstRef(index(inst))
     fun inst(ref: PandaInstRef): PandaInst = instructions[ref.index]
-    fun next(inst: PandaInst): PandaInst = instructions[ref(inst).index + 1]
+    fun next(inst: PandaInst): PandaInst? = instructions.getOrNull(ref(inst).index + 1)
     fun previous(inst: PandaInst): PandaInst = instructions[ref(inst).index - 1]
 
     override fun successors(node: PandaInst): Set<PandaInst> = successorMap[node].orEmpty()
@@ -173,7 +173,8 @@ class PandaApplicationGraphImpl(
         // return sequenceOf(callExpr.method)
         // TODO: handle virtual calls properly
         val method = callExpr.method
-        return project.classes.asSequence().flatMap { it.methods }.filter { it.name == method.name }
+        val result = project.classes.asSequence().flatMap { it.methods }.filter { it.name == method.name }
+        return result
     }
 
     override fun callers(method: PandaMethod): Sequence<PandaInst> {
