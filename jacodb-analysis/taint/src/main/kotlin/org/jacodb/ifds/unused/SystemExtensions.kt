@@ -28,7 +28,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.CollectAll
+import org.jacodb.ifds.messages.CollectAllData
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
@@ -77,7 +77,7 @@ suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): Collection<UnusedV
 
 suspend fun ActorSystem<CommonMessage>.collectUnusedComputationData(): IfdsComputationData<JcInst, UnusedVariableDomainFact, UnusedVulnerability> {
     val results = ask {
-        CollectAll(
+        CollectAllData(
             SingletonRunnerId,
             it
         )

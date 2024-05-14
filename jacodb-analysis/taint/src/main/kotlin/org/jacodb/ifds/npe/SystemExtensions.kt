@@ -25,7 +25,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.CollectAll
+import org.jacodb.ifds.messages.CollectAllData
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
@@ -47,11 +47,11 @@ suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
 
 suspend fun ActorSystem<CommonMessage>.collectNpeResults(): Collection<NpeVulnerability> =
     collectNpeComputationData()
-        .results
+        .findings
 
 
 suspend fun ActorSystem<CommonMessage>.collectNpeComputationData(): IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability> {
-    val results = ask { CollectAll(SingletonRunnerId, it) }
+    val results = ask { CollectAllData(SingletonRunnerId, it) }
 
     @Suppress("UNCHECKED_CAST")
     val ifdsData = results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability>>

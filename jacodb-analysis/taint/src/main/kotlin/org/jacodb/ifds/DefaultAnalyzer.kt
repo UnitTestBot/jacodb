@@ -39,7 +39,7 @@ class DefaultAnalyzer<Fact>(
     private val flowFunctions: FlowFunctions<JcInst, Fact>,
     private val runnerId: RunnerId,
 ) : Analyzer<JcInst, Fact> {
-    override fun step(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
+    override fun handle(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
         when (message) {
             is EdgeMessage<JcInst, Fact> -> {
                 val scope = JcFlowScope(message.edge, this)

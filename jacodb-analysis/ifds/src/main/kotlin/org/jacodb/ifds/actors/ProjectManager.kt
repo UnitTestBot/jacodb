@@ -16,20 +16,20 @@
 
 package org.jacodb.ifds.actors
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.impl.routing.messageKeyRouter
 import org.jacodb.ifds.IfdsContext
 import org.jacodb.ifds.domain.Chunk
-import org.jacodb.ifds.messages.CollectAll
+import org.jacodb.ifds.messages.CollectAllData
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewChunk
-import org.jacodb.ifds.messages.ObtainData
+import org.jacodb.ifds.messages.CollectData
 import org.jacodb.ifds.messages.ProjectMessage
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.result.IfdsComputationData
-import org.jacodb.ifds.result.IfdsResult
+import org.jacodb.ifds.result.Finding
 
 context(ActorContext<CommonMessage>)
 class ProjectManager<Stmt>(
@@ -62,13 +62,13 @@ class ProjectManager<Stmt>(
                 chunks.add(message.chunk)
             }
 
-            is CollectAll -> {
+            is CollectAllData -> {
                 val results = hashMapOf<Chunk, IfdsComputationData<*, *, *>>()
                 for (chunk in chunks) {
-                    val channel = Channel<IfdsComputationData<Stmt, Any?, IfdsResult<Stmt, Any?>>>()
-                    val msg = ObtainData(chunk, message.runnerId, channel)
+                    val ready = CompletableDeferred<IfdsComputationData<Stmt, Any?, Finding<Stmt, Any?>>>()
+                    val msg = CollectData(chunk, message.runnerId, ready)
                     router.send(msg)
-                    val data = channel.receive()
+                    val data = ready.await()
                     results[chunk] = data
                 }
                 message.result.complete(results)

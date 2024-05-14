@@ -18,6 +18,6 @@ package org.jacodb.ifds.result
 
 import org.jacodb.ifds.domain.Vertex
 
-interface IfdsResult<Stmt, Fact> {
+interface Finding<Stmt, Fact> {
     val vertex: Vertex<Stmt, Fact>
 }

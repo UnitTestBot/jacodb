@@ -30,7 +30,7 @@ class Worker<Stmt, Fact>(
 ) : Actor<AnalyzerMessage<Stmt, Fact>> {
 
     override suspend fun receive(message: AnalyzerMessage<Stmt, Fact>) {
-        val newMessages = analyzer.step(message)
+        val newMessages = analyzer.handle(message)
         for (newMessage in newMessages) {
             parent.send(newMessage)
         }

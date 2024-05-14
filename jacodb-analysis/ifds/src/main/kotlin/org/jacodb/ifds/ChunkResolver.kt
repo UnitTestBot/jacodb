@@ -25,7 +25,7 @@ import org.jacodb.ifds.messages.NewResult
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
-import org.jacodb.ifds.messages.ObtainData
+import org.jacodb.ifds.messages.CollectData
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.StorageMessage
@@ -105,8 +105,8 @@ class DefaultChunkResolver<Stmt>(
                         chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
-                    is ObtainData<*, *, *> -> {
-                        message as ObtainData<Stmt, *, *>
+                    is CollectData<*, *, *> -> {
+                        message as CollectData<Stmt, *, *>
                         message.chunk
                     }
 

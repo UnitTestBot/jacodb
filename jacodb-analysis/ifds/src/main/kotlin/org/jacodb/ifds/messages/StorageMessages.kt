@@ -16,14 +16,14 @@
 
 package org.jacodb.ifds.messages
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.IfdsComputationData
-import org.jacodb.ifds.result.IfdsResult
+import org.jacodb.ifds.result.Finding
 
 sealed interface StorageMessage : RunnerMessage
 
@@ -54,11 +54,11 @@ data class SubscriptionOnEnd<Stmt, Fact>(
 
 data class NewResult<Stmt, Fact>(
     override val runnerId: RunnerId,
-    val result: IfdsResult<Stmt, Fact>,
+    val result: Finding<Stmt, Fact>,
 ) : StorageMessage
 
-data class ObtainData<Stmt, Fact, Result : IfdsResult<Stmt, Fact>>(
+data class CollectData<Stmt, Fact, Result : Finding<Stmt, Fact>>(
     val chunk: Chunk,
     override val runnerId: RunnerId,
-    val channel: Channel<IfdsComputationData<Stmt, Fact, Result>>,
+    val data: CompletableDeferred<IfdsComputationData<Stmt, Fact, Result>>,
 ) : StorageMessage

@@ -23,9 +23,9 @@ import org.jacodb.ifds.domain.Vertex
 /**
  * Aggregates all facts and edges found by the tabulation algorithm.
  */
-data class IfdsComputationData<Stmt, Fact, Result : IfdsResult<Stmt, Fact>>(
+data class IfdsComputationData<Stmt, Fact, F : Finding<Stmt, Fact>>(
     val edgesByEnd: Map<Vertex<Stmt, Fact>, Collection<Edge<Stmt, Fact>>>,
     val facts: Map<Stmt, Collection<Fact>>,
     val reasons: Map<Edge<Stmt, Fact>, Collection<Reason<Stmt, Fact>>>,
-    val results: Collection<Result>,
+    val findings: Collection<F>,
 )

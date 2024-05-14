@@ -20,13 +20,13 @@ import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
 
-fun <Stmt, Fact, Result : IfdsResult<Stmt, Fact>> mergeIfdsResults(
-    ifdsResults: Collection<IfdsComputationData<Stmt, Fact, Result>>,
-): IfdsComputationData<Stmt, Fact, Result> {
+fun <Stmt, Fact, F : Finding<Stmt, Fact>> mergeIfdsResults(
+    ifdsResults: Collection<IfdsComputationData<Stmt, Fact, F>>,
+): IfdsComputationData<Stmt, Fact, F> {
     val edgesByEnd = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
     val factsByStmt = hashMapOf<Stmt, HashSet<Fact>>()
     val reasonsByEdge = hashMapOf<Edge<Stmt, Fact>, HashSet<Reason<Stmt, Fact>>>()
-    val results = hashSetOf<Result>()
+    val findings = hashSetOf<F>()
     for (data in ifdsResults) {
         for ((end, edges) in data.edgesByEnd) {
             edgesByEnd.getOrPut(end, ::hashSetOf)
@@ -40,13 +40,13 @@ fun <Stmt, Fact, Result : IfdsResult<Stmt, Fact>> mergeIfdsResults(
             reasonsByEdge.getOrPut(edge, ::hashSetOf)
                 .addAll(reasons)
         }
-        results.addAll(data.results)
+        findings.addAll(data.findings)
     }
     val mergedData = IfdsComputationData(
         edgesByEnd,
         factsByStmt,
         reasonsByEdge,
-        results
+        findings
     )
     return mergedData
 }

@@ -27,7 +27,7 @@ data class NewChunk(
     val chunk: Chunk,
 ) : ProjectMessage
 
-data class CollectAll(
+data class CollectAllData(
     val runnerId: RunnerId,
     val result: CompletableDeferred<Map<Chunk, IfdsComputationData<*, *, *>>>,
 ) : ProjectMessage

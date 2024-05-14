@@ -29,13 +29,13 @@ import org.jacodb.ifds.messages.NewResult
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
-import org.jacodb.ifds.messages.ObtainData
+import org.jacodb.ifds.messages.CollectData
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.StorageMessage
 import org.jacodb.ifds.messages.SubscriptionOnEnd
 import org.jacodb.ifds.messages.SubscriptionOnStart
 import org.jacodb.ifds.result.IfdsComputationData
-import org.jacodb.ifds.result.IfdsResult
+import org.jacodb.ifds.result.Finding
 
 context(ActorContext<StorageMessage>)
 class RunnerStorage<Stmt, Fact>(
@@ -59,7 +59,7 @@ class RunnerStorage<Stmt, Fact>(
     private val summaryEdgesByStart = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
     private val summaryEdgesByEnd = hashMapOf<Vertex<Stmt, Fact>, HashSet<Edge<Stmt, Fact>>>()
 
-    private val foundResults = hashSetOf<IfdsResult<Stmt, Fact>>()
+    private val foundResults = hashSetOf<Finding<Stmt, Fact>>()
 
     override suspend fun receive(message: StorageMessage) {
         when (message) {
@@ -131,16 +131,16 @@ class RunnerStorage<Stmt, Fact>(
                 foundResults.add(message.result)
             }
 
-            is ObtainData<*, *, *> -> {
+            is CollectData<*, *, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                message as ObtainData<Stmt, Fact, IfdsResult<Stmt, Fact>>
+                message as CollectData<Stmt, Fact, Finding<Stmt, Fact>>
                 val data = IfdsComputationData(
                     edges.groupByTo(hashMapOf()) { it.to },
                     edges.groupByTo(hashMapOf(), { it.to.statement }) { it.to.fact },
                     reasons.toMap(hashMapOf()),
                     foundResults.toHashSet()
                 )
-                message.channel.send(data)
+                message.data.complete(data)
             }
         }
     }

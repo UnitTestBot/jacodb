@@ -25,7 +25,7 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.messages.CollectAll
+import org.jacodb.ifds.messages.CollectAllData
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
@@ -48,10 +48,10 @@ suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
 
 suspend fun ActorSystem<CommonMessage>.collectTaintResults(): Collection<TaintVulnerability> =
     collectTaintComputationData()
-        .results
+        .findings
 
 suspend fun ActorSystem<CommonMessage>.collectTaintComputationData(): IfdsComputationData<JcInst, TaintDomainFact, TaintVulnerability> {
-    val results = ask { CollectAll(ForwardRunnerId, it) }
+    val results = ask { CollectAllData(ForwardRunnerId, it) }
 
     @Suppress("UNCHECKED_CAST")
     val ifdsData = results.values as Collection<IfdsComputationData<JcInst, TaintDomainFact, TaintVulnerability>>

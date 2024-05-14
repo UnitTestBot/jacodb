@@ -20,13 +20,13 @@ import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintVertex
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
-import org.jacodb.ifds.result.IfdsResult
+import org.jacodb.ifds.result.Finding
 import org.jacodb.taint.configuration.TaintMethodSink
 
 data class TaintVulnerability(
     val message: String,
     val sink: TaintVertex,
     val rule: TaintMethodSink? = null,
-) : IfdsResult<JcInst, TaintDomainFact> {
+) : Finding<JcInst, TaintDomainFact> {
     override val vertex: Vertex<JcInst, TaintDomainFact> = sink
 }

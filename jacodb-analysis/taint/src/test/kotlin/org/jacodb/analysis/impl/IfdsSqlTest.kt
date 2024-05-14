@@ -74,7 +74,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         system.startTaintAnalysis(method)
         system.awaitCompletion()
         val data = system.collectTaintComputationData()
-        val sinks = data.results
+        val sinks = data.findings
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
         val graph = data.buildTraceGraph(sink.vertex, zeroFact = TaintZeroFact)
@@ -119,7 +119,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         system.startTaintAnalysis(badMethod)
         system.awaitCompletion()
         val data = system.collectTaintComputationData()
-        val sinks = data.results
+        val sinks = data.findings
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
         val graph = data.buildTraceGraph(sink.vertex, zeroFact = TaintZeroFact)
