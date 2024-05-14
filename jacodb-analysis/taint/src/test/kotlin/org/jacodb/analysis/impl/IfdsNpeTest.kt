@@ -17,16 +17,13 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
-import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.npe.NpeVulnerability
 import org.jacodb.ifds.npe.collectNpeResults
-import org.jacodb.ifds.npe.npeIfdsContext
 import org.jacodb.ifds.npe.npeIfdsSystem
 import org.jacodb.ifds.npe.startNpeAnalysis
 import org.jacodb.impl.features.InMemoryHierarchy

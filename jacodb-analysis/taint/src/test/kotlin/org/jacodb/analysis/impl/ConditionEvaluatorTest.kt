@@ -18,12 +18,12 @@ package org.jacodb.analysis.impl
 
 import io.mockk.every
 import io.mockk.mockk
-import org.jacodb.analysis.config.BasicConditionEvaluator
-import org.jacodb.analysis.config.FactAwareConditionEvaluator
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.toMaybe
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.taint.Tainted
+import org.jacodb.ifds.config.BasicConditionEvaluator
+import org.jacodb.ifds.config.FactAwareConditionEvaluator
+import org.jacodb.ifds.util.Maybe
+import org.jacodb.ifds.util.toMaybe
+import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.taint.Tainted
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcPrimitiveType
 import org.jacodb.api.JcType
@@ -37,7 +37,6 @@ import org.jacodb.api.cfg.JcValue
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantEq

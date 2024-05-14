@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds
+package org.jacodb.ifds.domain
 
 import org.jacodb.api.JcField
 import org.jacodb.api.cfg.JcArrayAccess

@@ -14,27 +14,27 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.npe
+package org.jacodb.ifds.npe
 
-import org.jacodb.analysis.config.BasicConditionEvaluator
-import org.jacodb.analysis.config.CallPositionToAccessPathResolver
-import org.jacodb.analysis.config.CallPositionToJcValueResolver
-import org.jacodb.analysis.config.EntryPointPositionToAccessPathResolver
-import org.jacodb.analysis.config.EntryPointPositionToJcValueResolver
-import org.jacodb.analysis.config.FactAwareConditionEvaluator
-import org.jacodb.analysis.config.TaintActionEvaluator
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.FlowFunctions
-import org.jacodb.analysis.ifds.onSome
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.TaintZeroFact
-import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.util.getArgumentsOf
-import org.jacodb.analysis.util.startsWith
-import org.jacodb.analysis.util.thisInstance
+import org.jacodb.ifds.config.BasicConditionEvaluator
+import org.jacodb.ifds.config.CallPositionToAccessPathResolver
+import org.jacodb.ifds.config.CallPositionToJcValueResolver
+import org.jacodb.ifds.config.EntryPointPositionToAccessPathResolver
+import org.jacodb.ifds.config.EntryPointPositionToJcValueResolver
+import org.jacodb.ifds.config.FactAwareConditionEvaluator
+import org.jacodb.ifds.config.TaintActionEvaluator
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.domain.ElementAccessor
+import org.jacodb.ifds.common.FlowFunctions
+import org.jacodb.ifds.util.onSome
+import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.taint.TaintDomainFact
+import org.jacodb.ifds.taint.TaintZeroFact
+import org.jacodb.ifds.taint.Tainted
+import org.jacodb.ifds.util.getArgumentsOf
+import org.jacodb.ifds.util.startsWith
+import org.jacodb.ifds.util.thisInstance
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
@@ -75,7 +75,7 @@ class ForwardNpeFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
     private val taintConfigurationFeature: TaintConfigurationFeature?,
-) : FlowFunctions<TaintDomainFact> {
+) : FlowFunctions<JcInst, TaintDomainFact> {
     fun obtainPossibleStartFacts(
         method: JcMethod,
     ): Collection<TaintDomainFact> = buildSet {

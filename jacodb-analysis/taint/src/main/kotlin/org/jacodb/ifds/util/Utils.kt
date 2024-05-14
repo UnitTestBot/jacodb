@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.util
+package org.jacodb.ifds.util
 
-import org.jacodb.analysis.ifds.AccessPath
+import org.jacodb.ifds.domain.AccessPath
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.JcParameter

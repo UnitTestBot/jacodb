@@ -16,17 +16,14 @@
 
 package org.jacodb.ifds.npe
 
-import org.jacodb.analysis.npe.NpeAnalyzer
-import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.ifds.ChunkResolver
 import org.jacodb.ifds.ChunkStrategy
-import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
-import org.jacodb.ifds.JcFlowFunctionsAdapter
-import org.jacodb.ifds.JcIfdsContext
+import org.jacodb.ifds.common.ClassChunkStrategy
+import org.jacodb.ifds.common.JcIfdsContext
+import org.jacodb.ifds.taint.TaintDomainFact
 
 fun npeIfdsContext(
     cp: JcClasspath,
@@ -36,7 +33,6 @@ fun npeIfdsContext(
 ): JcIfdsContext<TaintDomainFact> =
     JcIfdsContext(
         cp,
-        graph,
         bannedPackagePrefixes,
         DefaultChunkResolver(chunkStrategy)
     ) { runnerId ->
@@ -45,10 +41,5 @@ fun npeIfdsContext(
             else -> error("Unexpected runnerId: $runnerId")
         }
 
-        JcFlowFunctionsAdapter(
-            runnerId,
-            analyzer
-        ) { event ->
-            add(event)
-        }
+        analyzer
     }

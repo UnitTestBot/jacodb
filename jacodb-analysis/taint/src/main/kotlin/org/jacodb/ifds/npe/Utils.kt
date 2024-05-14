@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.npe
+package org.jacodb.ifds.npe
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.analysis.util.startsWith
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.startsWith
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr

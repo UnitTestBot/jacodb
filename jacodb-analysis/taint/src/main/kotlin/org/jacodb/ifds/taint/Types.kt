@@ -14,18 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.unused
+package org.jacodb.ifds.taint
 
-import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Vertex
 
-sealed interface UnusedVariableDomainFact
 
-object UnusedVariableZeroFact : UnusedVariableDomainFact {
-    override fun toString(): String = "Zero"
-}
-
-data class UnusedVariable(
-    val variable: AccessPath,
-    val initStatement: JcInst,
-) : UnusedVariableDomainFact
+typealias TaintVertex = Vertex<JcInst, TaintDomainFact>
+typealias TaintEdge = Edge<JcInst, TaintDomainFact>

@@ -14,12 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.taint
+package org.jacodb.ifds.taint
 
-import org.jacodb.api.cfg.JcInst
-import org.jacodb.ifds.domain.Edge
-import org.jacodb.ifds.domain.Vertex
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.taint.configuration.TaintMark
 
+sealed interface TaintDomainFact
 
-typealias TaintVertex = Vertex<JcInst, TaintDomainFact>
-typealias TaintEdge = Edge<JcInst, TaintDomainFact>
+object TaintZeroFact : TaintDomainFact {
+    override fun toString(): String = "Zero"
+}
+
+data class Tainted(
+    val variable: AccessPath,
+    val mark: TaintMark,
+) : TaintDomainFact

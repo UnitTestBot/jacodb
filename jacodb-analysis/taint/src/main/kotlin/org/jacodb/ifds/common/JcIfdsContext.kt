@@ -14,26 +14,25 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds
+package org.jacodb.ifds.common
 
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorFactory
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.ChunkResolver
+import org.jacodb.ifds.IfdsContext
 import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Chunk
-import org.jacodb.ifds.domain.FlowFunctions
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.impl.features.HierarchyExtensionImpl
 
 class JcIfdsContext<Fact>(
     private val cp: JcClasspath,
-    private val graph: JcApplicationGraph,
     private val bannedPackagePrefixes: List<String>,
     private val chunkStrategy: ChunkResolver,
-    private val flowFunctionsFactory: (RunnerId) -> FlowFunctions<JcInst, Fact>,
+    private val analyzerFactory: (RunnerId) -> Analyzer<JcInst, Fact>,
 ) : IfdsContext<JcInst> {
     override fun chunkByMessage(message: RunnerMessage): Chunk =
         chunkStrategy.chunkByMessage(message)
@@ -42,11 +41,7 @@ class JcIfdsContext<Fact>(
         message.runnerId
 
     override fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<JcInst, Fact> =
-        DefaultAnalyzer(
-            graph,
-            flowFunctionsFactory(runnerId),
-            runnerId
-        )
+        analyzerFactory(runnerId)
 
     override fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId) =
         ActorFactory {

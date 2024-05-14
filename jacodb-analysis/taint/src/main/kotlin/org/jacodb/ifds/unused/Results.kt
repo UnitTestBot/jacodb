@@ -16,7 +16,6 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.unused.UnusedVariableDomainFact
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.Finding

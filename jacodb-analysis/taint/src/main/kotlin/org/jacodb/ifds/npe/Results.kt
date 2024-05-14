@@ -16,8 +16,8 @@
 
 package org.jacodb.ifds.npe
 
-import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.TaintVertex
+import org.jacodb.ifds.taint.TaintDomainFact
+import org.jacodb.ifds.taint.TaintVertex
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.Finding

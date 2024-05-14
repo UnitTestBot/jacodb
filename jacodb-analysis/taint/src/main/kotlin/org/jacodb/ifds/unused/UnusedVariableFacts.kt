@@ -14,18 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.taint
+package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.api.cfg.JcInst
 
-sealed interface TaintDomainFact
+sealed interface UnusedVariableDomainFact
 
-object TaintZeroFact : TaintDomainFact {
+object UnusedVariableZeroFact : UnusedVariableDomainFact {
     override fun toString(): String = "Zero"
 }
 
-data class Tainted(
+data class UnusedVariable(
     val variable: AccessPath,
-    val mark: TaintMark,
-) : TaintDomainFact
+    val initStatement: JcInst,
+) : UnusedVariableDomainFact

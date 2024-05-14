@@ -18,16 +18,14 @@ package org.jacodb.analysis.impl
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.ifds.FlowFunctions
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
-import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.TaintZeroFact
-import org.jacodb.analysis.taint.Tainted
-import org.jacodb.analysis.util.getArgument
+import org.jacodb.ifds.common.FlowFunctions
+import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.taint.ForwardTaintFlowFunctions
+import org.jacodb.ifds.taint.TaintDomainFact
+import org.jacodb.ifds.taint.TaintZeroFact
+import org.jacodb.ifds.taint.Tainted
+import org.jacodb.ifds.util.getArgument
 import org.jacodb.api.JcClassType
-import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
@@ -47,7 +45,6 @@ import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
-import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -111,7 +108,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
         val inst = JcAssignInst(location = mockk(), lhv = x, rhv = y)
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
         val facts = flowSpace.sequent(inst, next = mockk(), yTaint).toList()
@@ -127,7 +124,7 @@ class TaintFlowFunctionsTest : BaseTest() {
                 every { method } returns testMethod
             }
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
         val xTaint = Tainted(x.toPath(), TaintMark("EXAMPLE"))
         val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), TaintZeroFact).toList()
         Assertions.assertEquals(listOf(TaintZeroFact, xTaint), facts)
@@ -143,7 +140,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
         val xTaint = Tainted(x.toPath(), TaintMark("REMOVE"))
         val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), xTaint).toList()
         Assertions.assertTrue(facts.isEmpty())
@@ -160,7 +157,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
         val xTaint = Tainted(x.toPath(), TaintMark("COPY"))
         val yTaint = Tainted(y.toPath(), TaintMark("COPY"))
         val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), xTaint).toList()
@@ -181,7 +178,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             }
             every { args } returns listOf(x)
         })
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
 
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
         val arg0: JcArgument = cp.getArgument(testMethod.parameters[0])!!
@@ -220,7 +217,7 @@ class TaintFlowFunctionsTest : BaseTest() {
         val exitStatement = JcReturnInst(location = mockk {
             every { method } returns testMethod
         }, returnValue = y)
-        val flowSpace: FlowFunctions<TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
+        val flowSpace: FlowFunctions<JcInst, TaintDomainFact> = ForwardTaintFlowFunctions(cp, graph, configurationFeature)
         val yTaint = Tainted(y.toPath(), TaintMark("TAINT"))
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
         val facts = flowSpace.exitToReturnSite(callStatement, returnSite = mockk(), exitStatement, yTaint).toList()

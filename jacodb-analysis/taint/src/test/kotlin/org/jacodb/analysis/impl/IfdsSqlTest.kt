@@ -21,7 +21,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.taint.TaintZeroFact
+import org.jacodb.ifds.taint.TaintZeroFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
@@ -108,12 +108,12 @@ class IfdsSqlTest : BaseAnalysisTest() {
     }
 
     @Test
-    fun `test bidirectional runner and other stuff`() = runBlocking {
+    fun `test trace collection`() = runBlocking {
         val className = "juliet.testcases.CWE89_SQL_Injection.s01.CWE89_SQL_Injection__Environment_executeBatch_51a"
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes, useBackwardRunner = true)
+        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = system("ifds") { ProjectManager(ifdsContext) }
 
         system.startTaintAnalysis(badMethod)

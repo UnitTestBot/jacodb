@@ -23,14 +23,13 @@ import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.npe.NpeAnalyzer
-import org.jacodb.analysis.taint.TaintDomainFact
+import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkStrategy
-import org.jacodb.ifds.ClassChunkStrategy
+import org.jacodb.ifds.common.ClassChunkStrategy
 import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason

@@ -14,11 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds
+package org.jacodb.ifds.common
 
-import org.jacodb.api.cfg.JcInst
-
-interface FlowFunctions<Fact> {
+interface FlowFunctions<Stmt, Fact> {
     /**
      * Sequent flow function.
      *
@@ -31,8 +29,8 @@ interface FlowFunctions<Fact> {
      * ```
      */
     fun sequent(
-        current: JcInst,
-        next: JcInst,
+        current: Stmt,
+        next: Stmt,
         fact: Fact,
     ): Collection<Fact>
 
@@ -48,8 +46,8 @@ interface FlowFunctions<Fact> {
      * ```
      */
     fun callToReturn(
-        callStatement: JcInst,
-        returnSite: JcInst,
+        callStatement: Stmt,
+        returnSite: Stmt,
         fact: Fact
     ): Collection<Fact>
 
@@ -61,7 +59,7 @@ interface FlowFunctions<Fact> {
      *   : \
      *   :  \ (call-to-start edge)
      *   :   \
-     *   :  [ START p ]
+     *   :  [ START p ] :: calleeStart
      *   :    |
      *   :  [ EXIT p ]
      *   :   /
@@ -70,8 +68,8 @@ interface FlowFunctions<Fact> {
      * ```
      */
     fun callToStart(
-        callStatement: JcInst,
-        calleeStart: JcInst,
+        callStatement: Stmt,
+        calleeStart: Stmt,
         fact: Fact,
     ): Collection<Fact>
 
@@ -92,9 +90,9 @@ interface FlowFunctions<Fact> {
      * ```
      */
     fun exitToReturnSite(
-        callStatement: JcInst,
-        returnSite: JcInst,
-        exitStatement: JcInst,
+        callStatement: Stmt,
+        returnSite: Stmt,
+        exitStatement: Stmt,
         fact: Fact,
     ): Collection<Fact>
 }

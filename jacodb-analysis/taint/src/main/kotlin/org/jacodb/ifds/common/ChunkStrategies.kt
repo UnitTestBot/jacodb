@@ -14,12 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds
+package org.jacodb.ifds.common
 
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.packageName
+import org.jacodb.ifds.ChunkStrategy
 import org.jacodb.ifds.domain.Chunk
 
 data object SingletonChunk : Chunk

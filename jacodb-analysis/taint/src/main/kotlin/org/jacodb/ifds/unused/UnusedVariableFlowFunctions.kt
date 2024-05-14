@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.unused
+package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.ifds.FlowFunctions
-import org.jacodb.analysis.ifds.toPath
-import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.analysis.util.getArgumentsOf
+import org.jacodb.ifds.common.FlowFunctions
+import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.getArgumentsOf
 import org.jacodb.api.JcClasspath
-import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
@@ -31,7 +30,7 @@ import org.jacodb.api.ext.cfg.callExpr
 
 class UnusedVariableFlowFunctions(
     private val graph: JcApplicationGraph,
-) : FlowFunctions<UnusedVariableDomainFact> {
+) : FlowFunctions<JcInst, UnusedVariableDomainFact> {
     private val cp: JcClasspath
         get() = graph.classpath
 

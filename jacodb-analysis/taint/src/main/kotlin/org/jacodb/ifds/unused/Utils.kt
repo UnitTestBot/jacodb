@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.unused
+package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.toPathOrNull
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.domain.toPathOrNull
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBranchingInst

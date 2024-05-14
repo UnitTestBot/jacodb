@@ -17,16 +17,13 @@
 package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.unused.UnusedVulnerability
 import org.jacodb.ifds.unused.collectUnusedResults
 import org.jacodb.ifds.unused.startUnusedAnalysis
-import org.jacodb.ifds.unused.unusedIfdsContext
 import org.jacodb.ifds.unused.unusedIfdsSystem
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages

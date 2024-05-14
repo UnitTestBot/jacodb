@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds
+package org.jacodb.ifds.common
 
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.analysis.taint.TaintDomainFact
+import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst

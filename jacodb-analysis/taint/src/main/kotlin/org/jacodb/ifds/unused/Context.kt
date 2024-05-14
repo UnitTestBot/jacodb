@@ -16,17 +16,13 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.unused.UnusedVariableAnalyzer
-import org.jacodb.analysis.unused.UnusedVariableDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.ifds.ChunkResolver
 import org.jacodb.ifds.ChunkStrategy
-import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
-import org.jacodb.ifds.JcFlowFunctionsAdapter
-import org.jacodb.ifds.JcIfdsContext
+import org.jacodb.ifds.common.ClassChunkStrategy
+import org.jacodb.ifds.common.JcIfdsContext
 
 fun unusedIfdsContext(
     cp: JcClasspath,
@@ -36,19 +32,11 @@ fun unusedIfdsContext(
 ): JcIfdsContext<UnusedVariableDomainFact> =
     JcIfdsContext(
         cp,
-        graph,
         bannedPackagePrefixes,
         DefaultChunkResolver(chunkStrategy)
     ) { runnerId ->
-        val analyzer = when (runnerId) {
+        when (runnerId) {
             is SingletonRunnerId -> UnusedVariableAnalyzer(SingletonRunnerId, graph)
             else -> error("Unexpected runnerId: $runnerId")
-        }
-
-        JcFlowFunctionsAdapter(
-            runnerId,
-            analyzer
-        ) { event ->
-            add(event)
         }
     }

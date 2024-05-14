@@ -14,23 +14,25 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.unused
+package org.jacodb.ifds.unused
 
-import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.common.JcBaseAnalyzer
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.RunnerMessage
 
 class UnusedVariableAnalyzer(
-    private val selfRunnerId: RunnerId,
-    private val graph: JcApplicationGraph,
-) : Analyzer<UnusedVariableDomainFact, RunnerMessage> {
-
-    override val flowFunctions: UnusedVariableFlowFunctions by lazy {
+    selfRunnerId: RunnerId,
+    graph: JcApplicationGraph,
+) : JcBaseAnalyzer<UnusedVariableDomainFact>(
+    selfRunnerId,
+    graph,
+) {
+    override val flowFunctions by lazy {
         UnusedVariableFlowFunctions(graph)
     }
 
@@ -41,9 +43,9 @@ class UnusedVariableAnalyzer(
         return statement in graph.exitPoints(statement.location.method)
     }
 
-    override fun handleNewEdge(edge: Edge<JcInst, UnusedVariableDomainFact>): List<RunnerMessage> = buildList {
-        if (isExitPoint(edge.to.statement)) {
-            add(NewSummaryEdge(selfRunnerId, edge))
+    override fun MutableList<RunnerMessage>.onNewEdge(newEdge: Edge<JcInst, UnusedVariableDomainFact>) {
+        if (isExitPoint(newEdge.to.statement)) {
+            add(NewSummaryEdge(selfRunnerId, newEdge))
         }
     }
 }

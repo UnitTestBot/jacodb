@@ -24,7 +24,7 @@ import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
 import org.jacodb.api.JcMethod;
 import org.jacodb.api.analysis.JcApplicationGraph;
-import org.jacodb.ifds.ChunkStrategiesKt;
+import org.jacodb.ifds.common.ChunkStrategiesKt;
 import org.jacodb.ifds.messages.CommonMessage;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;

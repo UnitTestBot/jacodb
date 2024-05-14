@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.config
+package org.jacodb.ifds.config
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.fmap
-import org.jacodb.analysis.ifds.map
-import org.jacodb.analysis.taint.Tainted
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.util.Maybe
+import org.jacodb.ifds.util.fmap
+import org.jacodb.ifds.util.map
+import org.jacodb.ifds.taint.Tainted
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

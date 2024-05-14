@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.config
+package org.jacodb.ifds.config
 
-import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.fmap
-import org.jacodb.analysis.ifds.toMaybe
-import org.jacodb.analysis.ifds.toPathOrNull
-import org.jacodb.analysis.util.getArgument
-import org.jacodb.analysis.util.thisInstance
+import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.domain.ElementAccessor
+import org.jacodb.ifds.util.Maybe
+import org.jacodb.ifds.util.fmap
+import org.jacodb.ifds.util.toMaybe
+import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.getArgument
+import org.jacodb.ifds.util.thisInstance
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
