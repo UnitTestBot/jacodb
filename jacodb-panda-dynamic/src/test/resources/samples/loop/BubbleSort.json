@@ -18,8 +18,7 @@
           "users": [
            "154p",
            "147p"
-          ],
-          "visit": "parameter"
+          ]
          },
          {
           "id": "v141",
@@ -29,8 +28,7 @@
           "users": [
            "155p",
            "148p"
-          ],
-          "visit": "parameter"
+          ]
          },
          {
           "id": "v142",
@@ -40,8 +38,7 @@
           "users": [
            "156p",
            "149p"
-          ],
-          "visit": "parameter"
+          ]
          },
          {
           "id": "v143",
@@ -53,8 +50,7 @@
            "152p",
            "150p",
            "v144"
-          ],
-          "visit": "parameter"
+          ]
          },
          {
           "id": "v146",
@@ -64,8 +60,7 @@
            "175p",
            "153p"
           ],
-          "value": 0,
-          "visit": "constant"
+          "value": 0
          },
          {
           "id": "v159",
@@ -78,8 +73,7 @@
            "v183",
            "v160"
           ],
-          "value": 1,
-          "visit": "constant"
+          "value": 1
          },
          {
           "id": "v165",
@@ -101,10 +95,12 @@
            "v187",
            "v164"
           ],
-          "value": 0,
-          "visit": "constant"
+          "value": 0
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "successors": [
          0
         ]
@@ -118,14 +114,13 @@
           "type": "void",
           "users": [
            "v144"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v144",
           "imms": [
            0,
-           256
+           264
           ],
           "inputs": [
            "v143",
@@ -137,10 +132,12 @@
           "type": "any",
           "users": [
            "151p"
-          ],
-          "visit": "ldobjbyname"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          58
         ],
@@ -165,8 +162,7 @@
           "type": "any",
           "users": [
            "167p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "148p",
@@ -182,8 +178,7 @@
           "type": "any",
           "users": [
            "168p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "149p",
@@ -199,8 +194,7 @@
           "type": "any",
           "users": [
            "169p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "150p",
@@ -217,8 +211,7 @@
           "users": [
            "170p",
            "v488"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "151p",
@@ -235,8 +228,7 @@
           "users": [
            "171p",
            "v160"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "152p",
@@ -252,8 +244,7 @@
           "type": "any",
           "users": [
            "172p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "153p",
@@ -271,8 +262,7 @@
            "174p",
            "173p",
            "v162"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "154p",
@@ -288,8 +278,7 @@
           "type": "any",
           "users": [
            "176p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "155p",
@@ -305,8 +294,7 @@
           "type": "any",
           "users": [
            "177p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "156p",
@@ -322,8 +310,7 @@
           "type": "any",
           "users": [
            "178p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "157p",
@@ -339,8 +326,7 @@
           "type": "any",
           "users": [
            "179p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v161",
@@ -348,8 +334,7 @@
           "type": "void",
           "users": [
            "v160"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v160",
@@ -366,8 +351,7 @@
           "type": "any",
           "users": [
            "v162"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v163",
@@ -375,8 +359,7 @@
           "type": "void",
           "users": [
            "v162"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v162",
@@ -393,8 +376,7 @@
           "type": "any",
           "users": [
            "v164"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v164",
@@ -408,8 +390,7 @@
           "type": "u1",
           "users": [
            "v166"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v166",
@@ -420,10 +401,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          0,
          3
@@ -435,6 +418,9 @@
        },
        {
         "id": 2,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          32
         ],
@@ -525,8 +511,7 @@
            "v5",
            "v5",
            "v5"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "168p",
@@ -608,8 +593,7 @@
            "v6",
            "v6",
            "v6"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "169p",
@@ -691,8 +675,7 @@
            "v7",
            "v7",
            "v7"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "170p",
@@ -806,8 +789,7 @@
            "v203",
            "v193",
            "v189"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "171p",
@@ -890,8 +872,7 @@
            "v9",
            "v9",
            "v181"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "172p",
@@ -973,8 +954,7 @@
            "v11",
            "v11",
            "v11"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "173p",
@@ -1057,8 +1037,7 @@
            "v12",
            "v12",
            "v181"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "174p",
@@ -1139,8 +1118,7 @@
            "v13",
            "v13",
            "v13"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "175p",
@@ -1257,8 +1235,7 @@
            "v191",
            "v189",
            "v185"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "176p",
@@ -1340,8 +1317,7 @@
            "v27",
            "v27",
            "v27"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "177p",
@@ -1423,8 +1399,7 @@
            "v28",
            "v28",
            "v28"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "178p",
@@ -1506,8 +1481,7 @@
            "v29",
            "v29",
            "v29"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "179p",
@@ -1589,8 +1563,7 @@
            "v30",
            "v30",
            "v30"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v182",
@@ -1598,8 +1571,7 @@
           "type": "void",
           "users": [
            "v181"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v181",
@@ -1616,8 +1588,7 @@
           "type": "any",
           "users": [
            "v183"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v184",
@@ -1625,8 +1596,7 @@
           "type": "void",
           "users": [
            "v183"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v183",
@@ -1643,8 +1613,7 @@
           "type": "any",
           "users": [
            "v185"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v186",
@@ -1652,8 +1621,7 @@
           "type": "void",
           "users": [
            "v185"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v185",
@@ -1670,8 +1638,7 @@
           "type": "any",
           "users": [
            "v187"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v187",
@@ -1685,8 +1652,7 @@
           "type": "u1",
           "users": [
            "v188"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v188",
@@ -1697,10 +1663,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          2,
          5
@@ -1719,8 +1687,7 @@
           "type": "void",
           "users": [
            "v189"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v189",
@@ -1737,8 +1704,7 @@
           "type": "any",
           "users": [
            "v195"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v192",
@@ -1746,8 +1712,7 @@
           "type": "void",
           "users": [
            "v191"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v191",
@@ -1764,8 +1729,7 @@
           "type": "any",
           "users": [
            "v193"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v194",
@@ -1773,8 +1737,7 @@
           "type": "void",
           "users": [
            "v193"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v193",
@@ -1791,8 +1754,7 @@
           "type": "any",
           "users": [
            "v195"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v196",
@@ -1800,8 +1762,7 @@
           "type": "void",
           "users": [
            "v195"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v195",
@@ -1818,8 +1779,7 @@
           "type": "any",
           "users": [
            "v197"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v197",
@@ -1833,8 +1793,7 @@
           "type": "u1",
           "users": [
            "v198"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v198",
@@ -1845,10 +1804,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          31
         ],
@@ -1866,8 +1827,7 @@
           "type": "void",
           "users": [
            "v199"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v199",
@@ -1949,8 +1909,7 @@
            "v211",
            "v209",
            "v205"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v202",
@@ -1958,8 +1917,7 @@
           "type": "void",
           "users": [
            "v201"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v201",
@@ -1976,8 +1934,7 @@
           "type": "any",
           "users": [
            "v203"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v204",
@@ -1985,8 +1942,7 @@
           "type": "void",
           "users": [
            "v203"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v203",
@@ -2003,8 +1959,7 @@
           "type": "any",
           "users": [
            "v205"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v206",
@@ -2012,8 +1967,7 @@
           "type": "void",
           "users": [
            "v205"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v205",
@@ -2028,8 +1982,7 @@
           ],
           "intrinsic_id": "Intrinsic.stownbyindex",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          },
          {
           "id": "v208",
@@ -2037,8 +1990,7 @@
           "type": "void",
           "users": [
            "v207"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v207",
@@ -2055,8 +2007,7 @@
           "type": "any",
           "users": [
            "v209"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v210",
@@ -2064,8 +2015,7 @@
           "type": "void",
           "users": [
            "v209"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v209",
@@ -2080,8 +2030,7 @@
           ],
           "intrinsic_id": "Intrinsic.stownbyindex",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          },
          {
           "id": "v212",
@@ -2089,8 +2038,7 @@
           "type": "void",
           "users": [
            "v211"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v211",
@@ -2175,8 +2123,7 @@
            "v18",
            "v225",
            "v213"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v214",
@@ -2184,14 +2131,13 @@
           "type": "void",
           "users": [
            "v213"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v213",
           "imms": [
            25,
-           269
+           277
           ],
           "inputs": [
            "v211",
@@ -2262,8 +2208,7 @@
            "v17",
            "v17",
            "v225"
-          ],
-          "visit": "ldobjbyname"
+          ]
          },
          {
           "id": "v216",
@@ -2271,8 +2216,7 @@
           "type": "void",
           "users": [
            "v215"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v215",
@@ -2341,8 +2285,7 @@
            "v16",
            "v16",
            "v16"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v218",
@@ -2350,8 +2293,7 @@
           "type": "void",
           "users": [
            "v217"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v217",
@@ -2376,8 +2318,7 @@
            "v20",
            "v20",
            "v221"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v220",
@@ -2385,8 +2326,7 @@
           "type": "void",
           "users": [
            "v219"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v219",
@@ -2398,10 +2338,12 @@
           "type": "any",
           "users": [
            "250p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          4
         ],
@@ -2410,15 +2352,20 @@
         ]
        },
        {
+        "handlerIds": [
+         63
+        ],
         "id": 41,
         "insts": [
          {
           "id": "v0",
           "opcode": "Try",
-          "type": "void",
-          "visit": "default"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": true,
+        "isTryEnd": false,
         "predecessors": [
          6
         ],
@@ -2429,6 +2376,9 @@
        },
        {
         "id": 43,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          41
         ],
@@ -2437,15 +2387,20 @@
         ]
        },
        {
+        "handlerIds": [
+         60
+        ],
         "id": 33,
         "insts": [
          {
           "id": "v1",
           "opcode": "Try",
-          "type": "void",
-          "visit": "default"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": true,
+        "isTryEnd": false,
         "predecessors": [
          43
         ],
@@ -2463,10 +2418,13 @@
           "type": "void",
           "users": [
            "v221"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v221",
           "inputs": [
            "v217",
@@ -2477,10 +2435,13 @@
           "type": "any",
           "users": [
            "v223"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v223",
           "inputs": [
            "v221",
@@ -2492,10 +2453,13 @@
           "type": "u1",
           "users": [
            "v224"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v224",
           "immediate": 0,
           "inputs": [
@@ -2504,10 +2468,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          33
         ],
@@ -2525,10 +2491,13 @@
           "type": "void",
           "users": [
            "v225"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v225",
           "imms": [
            27
@@ -2545,8 +2514,7 @@
            "v239",
            "v229",
            "v227"
-          ],
-          "visit": "call"
+          ]
          },
          {
           "id": "v228",
@@ -2554,10 +2522,13 @@
           "type": "void",
           "users": [
            "v227"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v227",
           "inputs": [
            "v225",
@@ -2565,8 +2536,7 @@
           ],
           "intrinsic_id": "Intrinsic.throw.ifnotobject",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          },
          {
           "id": "v230",
@@ -2574,14 +2544,17 @@
           "type": "void",
           "users": [
            "v229"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v229",
           "imms": [
            29,
-           250
+           258
           ],
           "inputs": [
            "v225",
@@ -2604,8 +2577,7 @@
            "v20",
            "v20",
            "v231"
-          ],
-          "visit": "ldobjbyname"
+          ]
          },
          {
           "id": "v232",
@@ -2613,10 +2585,13 @@
           "type": "void",
           "users": [
            "v231"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v231",
           "inputs": [
            "v229",
@@ -2627,10 +2602,13 @@
           "type": "any",
           "users": [
            "v233"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v233",
           "inputs": [
            "v231",
@@ -2642,10 +2620,13 @@
           "type": "u1",
           "users": [
            "v234"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v234",
           "immediate": 0,
           "inputs": [
@@ -2654,10 +2635,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          45
         ],
@@ -2675,10 +2658,13 @@
           "type": "void",
           "users": [
            "v235"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v235",
           "inputs": [
            "v236"
@@ -2690,8 +2676,7 @@
            "241p",
            "v74",
            "v20"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v238",
@@ -2699,20 +2684,25 @@
           "type": "void",
           "users": [
            "v237"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v237",
           "inputs": [
            "v238"
           ],
           "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
+          "type": "any"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          8
         ],
@@ -2729,14 +2719,17 @@
           "type": "void",
           "users": [
            "v239"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v239",
           "imms": [
            31,
-           283
+           319
           ],
           "inputs": [
            "v225",
@@ -2749,10 +2742,12 @@
           "users": [
            "251p",
            "250p"
-          ],
-          "visit": "ldobjbyname"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          8
         ],
@@ -2779,8 +2774,7 @@
            "249p",
            "v74",
            "v20"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v244",
@@ -2788,10 +2782,13 @@
           "type": "void",
           "users": [
            "v243"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           60,
+           63
+          ],
           "id": "v243",
           "inputs": [
            "v244"
@@ -2801,10 +2798,12 @@
           "type": "any",
           "users": [
            "251p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          45,
          10
@@ -2815,6 +2814,9 @@
        },
        {
         "id": 34,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": true,
         "predecessors": [
          7
         ],
@@ -2863,8 +2865,7 @@
           "users": [
            "v59",
            "v59"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v6",
@@ -2903,8 +2904,7 @@
           "users": [
            "v60",
            "v60"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v7",
@@ -2943,8 +2943,7 @@
           "users": [
            "v61",
            "v61"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v8",
@@ -2983,8 +2982,7 @@
           "users": [
            "v62",
            "v62"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v9",
@@ -3023,8 +3021,7 @@
           "users": [
            "v63",
            "v63"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v11",
@@ -3063,8 +3060,7 @@
           "users": [
            "v65",
            "v65"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v12",
@@ -3103,8 +3099,7 @@
           "users": [
            "v66",
            "v66"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v13",
@@ -3143,8 +3138,7 @@
           "users": [
            "v67",
            "v67"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v14",
@@ -3183,8 +3177,7 @@
           "users": [
            "v68",
            "v68"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v15",
@@ -3223,8 +3216,7 @@
           "users": [
            "v69",
            "v69"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v16",
@@ -3263,8 +3255,7 @@
           "users": [
            "v70",
            "v70"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v17",
@@ -3303,8 +3294,7 @@
           "users": [
            "v71",
            "v71"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v18",
@@ -3343,8 +3333,7 @@
           "users": [
            "v72",
            "v72"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v20",
@@ -3382,8 +3371,7 @@
           "type": "any",
           "users": [
            "v74"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v22",
@@ -3418,8 +3406,7 @@
            "v239",
            "v243"
           ],
-          "type": "any",
-          "visit": "catch_phi"
+          "type": "any"
          },
          {
           "id": "v23",
@@ -3458,8 +3445,7 @@
           "users": [
            "v77",
            "v77"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v27",
@@ -3498,8 +3484,7 @@
           "users": [
            "v81",
            "v81"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v28",
@@ -3538,8 +3523,7 @@
           "users": [
            "v82",
            "v82"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v29",
@@ -3578,8 +3562,7 @@
           "users": [
            "v83",
            "v83"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v30",
@@ -3618,8 +3601,7 @@
           "users": [
            "v84",
            "v84"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v31",
@@ -3627,10 +3609,12 @@
           "type": "any",
           "users": [
            "v247"
-          ],
-          "visit": "catch_phi"
+          ]
          }
         ],
+        "isCatchBegin": true,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          33,
          34
@@ -3648,10 +3632,12 @@
           "type": "void",
           "users": [
            "v245"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v245",
           "inputs": [
            "v246"
@@ -3661,8 +3647,7 @@
           "type": "any",
           "users": [
            "v74"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v248",
@@ -3670,10 +3655,12 @@
           "type": "void",
           "users": [
            "v247"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v247",
           "inputs": [
            "v31",
@@ -3681,10 +3668,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          60
         ],
@@ -3694,6 +3683,9 @@
        },
        {
         "id": 46,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          34
         ],
@@ -3733,8 +3725,7 @@
            "v74",
            "v74",
            "v256"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "250p",
@@ -3750,8 +3741,7 @@
           "type": "any",
           "users": [
            "287p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "251p",
@@ -3767,8 +3757,7 @@
           "type": "any",
           "users": [
            "v252"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v253",
@@ -3776,10 +3765,12 @@
           "type": "void",
           "users": [
            "v252"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v252",
           "imms": [
            33
@@ -3792,8 +3783,7 @@
           ],
           "intrinsic_id": "Intrinsic.stobjbyvalue",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          },
          {
           "id": "v255",
@@ -3801,10 +3791,12 @@
           "type": "void",
           "users": [
            "v254"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v254",
           "imms": [
            35
@@ -3847,10 +3839,12 @@
            "v77",
            "v77",
            "v77"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          9,
          46
@@ -3860,15 +3854,20 @@
         ]
        },
        {
+        "handlerIds": [
+         61
+        ],
         "id": 35,
         "insts": [
          {
           "id": "v2",
           "opcode": "Try",
-          "type": "void",
-          "visit": "default"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": true,
+        "isTryEnd": false,
         "predecessors": [
          11
         ],
@@ -3886,10 +3885,13 @@
           "type": "void",
           "users": [
            "v256"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v256",
           "inputs": [
            "249p",
@@ -3900,10 +3902,13 @@
           "type": "any",
           "users": [
            "v258"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v258",
           "inputs": [
            "v256",
@@ -3915,10 +3920,13 @@
           "type": "u1",
           "users": [
            "v259"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v259",
           "immediate": 0,
           "inputs": [
@@ -3927,10 +3935,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          35
         ],
@@ -3948,10 +3958,13 @@
           "type": "void",
           "users": [
            "v260"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v260",
           "imms": [
            36
@@ -3968,8 +3981,7 @@
            "v274",
            "v264",
            "v262"
-          ],
-          "visit": "call"
+          ]
          },
          {
           "id": "v263",
@@ -3977,10 +3989,13 @@
           "type": "void",
           "users": [
            "v262"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v262",
           "inputs": [
            "v260",
@@ -3988,8 +4003,7 @@
           ],
           "intrinsic_id": "Intrinsic.throw.ifnotobject",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          },
          {
           "id": "v265",
@@ -3997,14 +4011,17 @@
           "type": "void",
           "users": [
            "v264"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v264",
           "imms": [
            38,
-           250
+           258
           ],
           "inputs": [
            "v260",
@@ -4027,8 +4044,7 @@
            "v74",
            "v74",
            "v266"
-          ],
-          "visit": "ldobjbyname"
+          ]
          },
          {
           "id": "v267",
@@ -4036,10 +4052,13 @@
           "type": "void",
           "users": [
            "v266"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v266",
           "inputs": [
            "v264",
@@ -4050,10 +4069,13 @@
           "type": "any",
           "users": [
            "v268"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v268",
           "inputs": [
            "v266",
@@ -4065,10 +4087,13 @@
           "type": "u1",
           "users": [
            "v269"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v269",
           "immediate": 0,
           "inputs": [
@@ -4077,10 +4102,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          47
         ],
@@ -4098,10 +4125,13 @@
           "type": "void",
           "users": [
            "v270"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v270",
           "inputs": [
            "v271"
@@ -4113,8 +4143,7 @@
            "277p",
            "v74",
            "v47"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v273",
@@ -4122,20 +4151,25 @@
           "type": "void",
           "users": [
            "v272"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v272",
           "inputs": [
            "v273"
           ],
           "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
+          "type": "any"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          13
         ],
@@ -4152,14 +4186,17 @@
           "type": "void",
           "users": [
            "v274"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v274",
           "imms": [
            40,
-           283
+           319
           ],
           "inputs": [
            "v260",
@@ -4172,10 +4209,12 @@
           "users": [
            "288p",
            "287p"
-          ],
-          "visit": "ldobjbyname"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          13
         ],
@@ -4202,8 +4241,7 @@
            "286p",
            "v74",
            "v47"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v280",
@@ -4211,10 +4249,13 @@
           "type": "void",
           "users": [
            "v279"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           61,
+           63
+          ],
           "id": "v279",
           "inputs": [
            "v280"
@@ -4224,10 +4265,12 @@
           "type": "any",
           "users": [
            "288p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          47,
          15
@@ -4238,6 +4281,9 @@
        },
        {
         "id": 36,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": true,
         "predecessors": [
          12
         ],
@@ -4286,8 +4332,7 @@
           "users": [
            "v59",
            "v59"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v33",
@@ -4326,8 +4371,7 @@
           "users": [
            "v60",
            "v60"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v34",
@@ -4366,8 +4410,7 @@
           "users": [
            "v61",
            "v61"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v35",
@@ -4406,8 +4449,7 @@
           "users": [
            "v62",
            "v62"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v36",
@@ -4446,8 +4488,7 @@
           "users": [
            "v63",
            "v63"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v38",
@@ -4486,8 +4527,7 @@
           "users": [
            "v65",
            "v65"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v39",
@@ -4526,8 +4566,7 @@
           "users": [
            "v66",
            "v66"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v40",
@@ -4566,8 +4605,7 @@
           "users": [
            "v67",
            "v67"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v41",
@@ -4606,8 +4644,7 @@
           "users": [
            "v68",
            "v68"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v42",
@@ -4646,8 +4683,7 @@
           "users": [
            "v69",
            "v69"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v43",
@@ -4686,8 +4722,7 @@
           "users": [
            "v70",
            "v70"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v44",
@@ -4726,8 +4761,7 @@
           "users": [
            "v71",
            "v71"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v45",
@@ -4766,8 +4800,7 @@
           "users": [
            "v72",
            "v72"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v47",
@@ -4805,8 +4838,7 @@
           "type": "any",
           "users": [
            "v74"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v49",
@@ -4841,8 +4873,7 @@
            "v274",
            "v279"
           ],
-          "type": "any",
-          "visit": "catch_phi"
+          "type": "any"
          },
          {
           "id": "v50",
@@ -4881,8 +4912,7 @@
           "users": [
            "v77",
            "v77"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v54",
@@ -4921,8 +4951,7 @@
           "users": [
            "v81",
            "v81"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v55",
@@ -4961,8 +4990,7 @@
           "users": [
            "v82",
            "v82"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v56",
@@ -5001,8 +5029,7 @@
           "users": [
            "v83",
            "v83"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v57",
@@ -5041,8 +5068,7 @@
           "users": [
            "v84",
            "v84"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v58",
@@ -5050,10 +5076,12 @@
           "type": "any",
           "users": [
            "v283"
-          ],
-          "visit": "catch_phi"
+          ]
          }
         ],
+        "isCatchBegin": true,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          35,
          36
@@ -5071,10 +5099,12 @@
           "type": "void",
           "users": [
            "v281"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v281",
           "inputs": [
            "v282"
@@ -5084,8 +5114,7 @@
           "type": "any",
           "users": [
            "v74"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v284",
@@ -5093,10 +5122,12 @@
           "type": "void",
           "users": [
            "v283"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v283",
           "inputs": [
            "v58",
@@ -5104,10 +5135,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          61
         ],
@@ -5117,6 +5150,9 @@
        },
        {
         "id": 48,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          36
         ],
@@ -5151,8 +5187,7 @@
            "v128",
            "v354",
            "v74"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "287p",
@@ -5176,8 +5211,7 @@
            "v129",
            "v129",
            "v129"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "288p",
@@ -5193,8 +5227,7 @@
           "type": "any",
           "users": [
            "v289"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v290",
@@ -5202,10 +5235,12 @@
           "type": "void",
           "users": [
            "v289"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           63
+          ],
           "id": "v289",
           "imms": [
            42
@@ -5218,10 +5253,12 @@
           ],
           "intrinsic_id": "Intrinsic.stobjbyvalue",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          14,
          48
@@ -5232,6 +5269,9 @@
        },
        {
         "id": 42,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": true,
         "predecessors": [
          16
         ],
@@ -5325,8 +5365,7 @@
            "v86",
            "v86",
            "v86"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v60",
@@ -5410,8 +5449,7 @@
            "v87",
            "v87",
            "v87"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v61",
@@ -5495,8 +5533,7 @@
            "v88",
            "v88",
            "v88"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v62",
@@ -5580,8 +5617,7 @@
            "v89",
            "v89",
            "v89"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v63",
@@ -5665,8 +5701,7 @@
            "v90",
            "v90",
            "v90"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v65",
@@ -5750,8 +5785,7 @@
            "v92",
            "v92",
            "v92"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v66",
@@ -5835,8 +5869,7 @@
            "v93",
            "v93",
            "v93"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v67",
@@ -5920,8 +5953,7 @@
            "v94",
            "v94",
            "v94"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v68",
@@ -6005,8 +6037,7 @@
            "v95",
            "v95",
            "v95"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v69",
@@ -6090,8 +6121,7 @@
            "v96",
            "v96",
            "v96"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v70",
@@ -6170,8 +6200,7 @@
           "users": [
            "344p",
            "v295"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v71",
@@ -6250,8 +6279,7 @@
           "users": [
            "345p",
            "v98"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v72",
@@ -6337,8 +6365,7 @@
            "v99",
            "v99",
            "v305"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v74",
@@ -6423,8 +6450,7 @@
            "v101",
            "v101",
            "v291"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v77",
@@ -6502,8 +6528,7 @@
           "type": "any",
           "users": [
            "346p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v81",
@@ -6587,8 +6612,7 @@
            "v108",
            "v108",
            "v108"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v82",
@@ -6672,8 +6696,7 @@
            "v109",
            "v109",
            "v109"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v83",
@@ -6757,8 +6780,7 @@
            "v110",
            "v110",
            "v110"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v84",
@@ -6842,8 +6864,7 @@
            "v111",
            "v111",
            "v111"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v85",
@@ -6866,10 +6887,12 @@
            "v102",
            "v102",
            "v102"
-          ],
-          "visit": "catch_phi"
+          ]
          }
         ],
+        "isCatchBegin": true,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          41,
          42
@@ -6887,8 +6910,7 @@
           "type": "void",
           "users": [
            "v291"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v291",
@@ -6901,8 +6923,7 @@
           "type": "any",
           "users": [
            "v293"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v293",
@@ -6916,8 +6937,7 @@
           "type": "u1",
           "users": [
            "v294"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v294",
@@ -6928,10 +6948,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          63
         ],
@@ -6949,8 +6971,7 @@
           "type": "void",
           "users": [
            "v295"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v295",
@@ -6963,8 +6984,7 @@
           "type": "any",
           "users": [
            "v297"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v297",
@@ -6978,8 +6998,7 @@
           "type": "u1",
           "users": [
            "v298"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v298",
@@ -6990,10 +7009,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          56
         ],
@@ -7011,8 +7032,7 @@
           "type": "void",
           "users": [
            "v299"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v299",
@@ -7031,8 +7051,7 @@
            "v97",
            "v97",
            "v97"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v302",
@@ -7040,8 +7059,7 @@
           "type": "void",
           "users": [
            "v301"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v301",
@@ -7059,8 +7077,7 @@
            "v104",
            "v104",
            "v104"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v304",
@@ -7068,8 +7085,7 @@
           "type": "void",
           "users": [
            "v303"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v303",
@@ -7078,10 +7094,12 @@
           ],
           "intrinsic_id": "Intrinsic.ldhole",
           "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
+          "type": "any"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          26
         ],
@@ -7090,15 +7108,20 @@
         ]
        },
        {
+        "handlerIds": [
+         64
+        ],
         "id": 39,
         "insts": [
          {
           "id": "v4",
           "opcode": "Try",
-          "type": "void",
-          "visit": "default"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": true,
+        "isTryEnd": false,
         "predecessors": [
          28
         ],
@@ -7116,14 +7139,16 @@
           "type": "void",
           "users": [
            "v305"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v305",
           "imms": [
            50,
-           275
+           283
           ],
           "inputs": [
            "v72",
@@ -7143,8 +7168,7 @@
            "v98",
            "v98",
            "v309"
-          ],
-          "visit": "ldobjbyname"
+          ]
          },
          {
           "id": "v308",
@@ -7152,10 +7176,12 @@
           "type": "void",
           "users": [
            "v307"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v307",
           "inputs": [
            "v308"
@@ -7165,8 +7191,7 @@
           "type": "any",
           "users": [
            "v309"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v310",
@@ -7174,10 +7199,12 @@
           "type": "void",
           "users": [
            "v309"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v309",
           "imms": [
            52
@@ -7192,10 +7219,12 @@
           "type": "any",
           "users": [
            "v311"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v311",
           "inputs": [
            "v309",
@@ -7207,10 +7236,12 @@
           "type": "u1",
           "users": [
            "v312"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v312",
           "immediate": 0,
           "inputs": [
@@ -7219,10 +7250,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          39
         ],
@@ -7240,10 +7273,12 @@
           "type": "void",
           "users": [
            "v313"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           64
+          ],
           "id": "v313",
           "imms": [
            53
@@ -7258,10 +7293,12 @@
           "type": "any",
           "users": [
            "333p"
-          ],
-          "visit": "call"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          51
         ],
@@ -7271,6 +7308,9 @@
        },
        {
         "id": 40,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": true,
         "predecessors": [
          29
         ],
@@ -7304,8 +7344,7 @@
           "type": "any",
           "users": [
            "315p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v87",
@@ -7329,8 +7368,7 @@
           "type": "any",
           "users": [
            "316p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v88",
@@ -7354,8 +7392,7 @@
           "type": "any",
           "users": [
            "317p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v89",
@@ -7379,8 +7416,7 @@
           "type": "any",
           "users": [
            "318p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v90",
@@ -7404,8 +7440,7 @@
           "type": "any",
           "users": [
            "319p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v92",
@@ -7429,8 +7464,7 @@
           "type": "any",
           "users": [
            "321p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v93",
@@ -7454,8 +7488,7 @@
           "type": "any",
           "users": [
            "322p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v94",
@@ -7479,8 +7512,7 @@
           "type": "any",
           "users": [
            "323p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v95",
@@ -7504,8 +7536,7 @@
           "type": "any",
           "users": [
            "324p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v96",
@@ -7529,8 +7560,7 @@
           "type": "any",
           "users": [
            "325p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v97",
@@ -7554,8 +7584,7 @@
           "type": "any",
           "users": [
            "326p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v98",
@@ -7579,8 +7608,7 @@
           "type": "any",
           "users": [
            "327p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v99",
@@ -7604,8 +7632,7 @@
           "type": "any",
           "users": [
            "328p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v101",
@@ -7629,8 +7656,7 @@
           "type": "any",
           "users": [
            "330p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v102",
@@ -7654,8 +7680,7 @@
           "type": "any",
           "users": [
            "331p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v103",
@@ -7679,8 +7704,7 @@
           "type": "any",
           "users": [
            "332p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v104",
@@ -7704,8 +7728,7 @@
           "type": "any",
           "users": [
            "333p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v108",
@@ -7729,8 +7752,7 @@
           "type": "any",
           "users": [
            "337p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v109",
@@ -7754,8 +7776,7 @@
           "type": "any",
           "users": [
            "338p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v110",
@@ -7779,8 +7800,7 @@
           "type": "any",
           "users": [
            "339p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v111",
@@ -7804,10 +7824,12 @@
           "type": "any",
           "users": [
            "340p"
-          ],
-          "visit": "catch_phi"
+          ]
          }
         ],
+        "isCatchBegin": true,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          39,
          40
@@ -7818,6 +7840,9 @@
        },
        {
         "id": 57,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          64
         ],
@@ -7827,6 +7852,9 @@
        },
        {
         "id": 52,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          40
         ],
@@ -7848,8 +7876,7 @@
            "v86"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "316p",
@@ -7862,8 +7889,7 @@
            "v87"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "317p",
@@ -7876,8 +7902,7 @@
            "v88"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "318p",
@@ -7890,8 +7915,7 @@
            "v89"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "319p",
@@ -7904,8 +7928,7 @@
            "v90"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "321p",
@@ -7918,8 +7941,7 @@
            "v92"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "322p",
@@ -7932,8 +7954,7 @@
            "v93"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "323p",
@@ -7946,8 +7967,7 @@
            "v94"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "324p",
@@ -7960,8 +7980,7 @@
            "v95"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "325p",
@@ -7974,8 +7993,7 @@
            "v96"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "326p",
@@ -7988,8 +8006,7 @@
            "v97"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "327p",
@@ -8002,8 +8019,7 @@
            "v98"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "328p",
@@ -8016,8 +8032,7 @@
            "v99"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "330p",
@@ -8030,8 +8045,7 @@
            "v101"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "331p",
@@ -8044,8 +8058,7 @@
            "v102"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "332p",
@@ -8061,8 +8074,7 @@
           "type": "any",
           "users": [
            "v342"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "333p",
@@ -8075,8 +8087,7 @@
            "v104"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "337p",
@@ -8089,8 +8100,7 @@
            "v108"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "338p",
@@ -8103,8 +8113,7 @@
            "v109"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "339p",
@@ -8117,8 +8126,7 @@
            "v110"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "340p",
@@ -8131,8 +8139,7 @@
            "v111"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "v343",
@@ -8140,8 +8147,7 @@
           "type": "void",
           "users": [
            "v342"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v342",
@@ -8151,10 +8157,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          52,
          57
@@ -8177,8 +8185,7 @@
            "v299"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "345p",
@@ -8191,8 +8198,7 @@
            "v305"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "346p",
@@ -8205,8 +8211,7 @@
            "v301"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "v351",
@@ -8214,8 +8219,7 @@
           "type": "void",
           "users": [
            "v350"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v350",
@@ -8225,10 +8229,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          26,
          51
@@ -8246,8 +8252,7 @@
           "type": "void",
           "users": [
            "v352"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v352",
@@ -8257,10 +8262,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          56
         ],
@@ -8277,8 +8284,7 @@
           "type": "void",
           "users": [
            "v354"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v354",
@@ -8300,8 +8306,7 @@
            "v130",
            "v130",
            "v356"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v356",
@@ -8315,8 +8320,7 @@
           "type": "u1",
           "users": [
            "v357"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v357",
@@ -8327,10 +8331,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          42
         ],
@@ -8348,8 +8354,7 @@
           "type": "void",
           "users": [
            "v358"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v358",
@@ -8362,8 +8367,7 @@
           "type": "any",
           "users": [
            "v360"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v360",
@@ -8377,8 +8381,7 @@
           "type": "u1",
           "users": [
            "v361"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v361",
@@ -8389,10 +8392,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          44
         ],
@@ -8410,8 +8415,7 @@
           "type": "void",
           "users": [
            "v362"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v362",
@@ -8430,8 +8434,7 @@
            "v124",
            "v124",
            "v124"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v365",
@@ -8439,8 +8442,7 @@
           "type": "void",
           "users": [
            "v364"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v364",
@@ -8458,8 +8460,7 @@
            "v131",
            "v131",
            "v131"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v367",
@@ -8467,8 +8468,7 @@
           "type": "void",
           "users": [
            "v366"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v366",
@@ -8481,10 +8481,12 @@
           "users": [
            "431p",
            "396p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          18
         ],
@@ -8493,15 +8495,20 @@
         ]
        },
        {
+        "handlerIds": [
+         62
+        ],
         "id": 37,
         "insts": [
          {
           "id": "v3",
           "opcode": "Try",
-          "type": "void",
-          "visit": "default"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": true,
+        "isTryEnd": false,
         "predecessors": [
          20
         ],
@@ -8519,14 +8526,16 @@
           "type": "void",
           "users": [
            "v368"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v368",
           "imms": [
            44,
-           275
+           283
           ],
           "inputs": [
            "v211",
@@ -8546,8 +8555,7 @@
            "v125",
            "v125",
            "v372"
-          ],
-          "visit": "ldobjbyname"
+          ]
          },
          {
           "id": "v371",
@@ -8555,10 +8563,12 @@
           "type": "void",
           "users": [
            "v370"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v370",
           "inputs": [
            "v371"
@@ -8568,8 +8578,7 @@
           "type": "any",
           "users": [
            "v372"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v373",
@@ -8577,10 +8586,12 @@
           "type": "void",
           "users": [
            "v372"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v372",
           "imms": [
            46
@@ -8595,10 +8606,12 @@
           "type": "any",
           "users": [
            "v374"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v374",
           "inputs": [
            "v372",
@@ -8610,10 +8623,12 @@
           "type": "u1",
           "users": [
            "v375"
-          ],
-          "visit": "compare"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v375",
           "immediate": 0,
           "inputs": [
@@ -8622,10 +8637,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          37
         ],
@@ -8643,10 +8660,12 @@
           "type": "void",
           "users": [
            "v376"
-          ],
-          "visit": "default"
+          ]
          },
          {
+          "catchers": [
+           62
+          ],
           "id": "v376",
           "imms": [
            47
@@ -8661,10 +8680,12 @@
           "type": "any",
           "users": [
            "395p"
-          ],
-          "visit": "call"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          49
         ],
@@ -8674,6 +8695,9 @@
        },
        {
         "id": 38,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": true,
         "predecessors": [
          21
         ],
@@ -8707,8 +8731,7 @@
           "type": "any",
           "users": [
            "378p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v114",
@@ -8732,8 +8755,7 @@
           "type": "any",
           "users": [
            "379p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v115",
@@ -8757,8 +8779,7 @@
           "type": "any",
           "users": [
            "380p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v116",
@@ -8782,8 +8803,7 @@
           "type": "any",
           "users": [
            "381p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v117",
@@ -8807,8 +8827,7 @@
           "type": "any",
           "users": [
            "382p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v119",
@@ -8832,8 +8851,7 @@
           "type": "any",
           "users": [
            "383p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v120",
@@ -8857,8 +8875,7 @@
           "type": "any",
           "users": [
            "384p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v121",
@@ -8882,8 +8899,7 @@
           "type": "any",
           "users": [
            "385p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v122",
@@ -8907,8 +8923,7 @@
           "type": "any",
           "users": [
            "386p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v123",
@@ -8932,8 +8947,7 @@
           "type": "any",
           "users": [
            "387p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v124",
@@ -8957,8 +8971,7 @@
           "type": "any",
           "users": [
            "388p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v125",
@@ -8982,8 +8995,7 @@
           "type": "any",
           "users": [
            "389p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v126",
@@ -9007,8 +9019,7 @@
           "type": "any",
           "users": [
            "390p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v128",
@@ -9032,8 +9043,7 @@
           "type": "any",
           "users": [
            "392p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v129",
@@ -9057,8 +9067,7 @@
           "type": "any",
           "users": [
            "393p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v130",
@@ -9082,8 +9091,7 @@
           "type": "any",
           "users": [
            "394p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v131",
@@ -9107,8 +9115,7 @@
           "type": "any",
           "users": [
            "395p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v135",
@@ -9132,8 +9139,7 @@
           "type": "any",
           "users": [
            "398p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v136",
@@ -9157,8 +9163,7 @@
           "type": "any",
           "users": [
            "399p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v137",
@@ -9182,8 +9187,7 @@
           "type": "any",
           "users": [
            "400p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v138",
@@ -9207,8 +9211,7 @@
           "type": "any",
           "users": [
            "401p"
-          ],
-          "visit": "catch_phi"
+          ]
          },
          {
           "id": "v139",
@@ -9216,10 +9219,12 @@
           "type": "any",
           "users": [
            "396p"
-          ],
-          "visit": "catch_phi"
+          ]
          }
         ],
+        "isCatchBegin": true,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          37,
          38
@@ -9230,6 +9235,9 @@
        },
        {
         "id": 55,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          62
         ],
@@ -9239,6 +9247,9 @@
        },
        {
         "id": 50,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          38
         ],
@@ -9263,8 +9274,7 @@
           "type": "any",
           "users": [
            "413p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "379p",
@@ -9280,8 +9290,7 @@
           "type": "any",
           "users": [
            "414p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "380p",
@@ -9297,8 +9306,7 @@
           "type": "any",
           "users": [
            "415p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "381p",
@@ -9314,8 +9322,7 @@
           "type": "any",
           "users": [
            "416p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "382p",
@@ -9331,8 +9338,7 @@
           "type": "any",
           "users": [
            "417p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "383p",
@@ -9348,8 +9354,7 @@
           "type": "any",
           "users": [
            "418p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "384p",
@@ -9365,8 +9370,7 @@
           "type": "any",
           "users": [
            "419p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "385p",
@@ -9382,8 +9386,7 @@
           "type": "any",
           "users": [
            "420p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "386p",
@@ -9399,8 +9402,7 @@
           "type": "any",
           "users": [
            "421p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "387p",
@@ -9416,8 +9418,7 @@
           "type": "any",
           "users": [
            "422p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "388p",
@@ -9433,8 +9434,7 @@
           "type": "any",
           "users": [
            "423p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "389p",
@@ -9450,8 +9450,7 @@
           "type": "any",
           "users": [
            "424p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "390p",
@@ -9467,8 +9466,7 @@
           "type": "any",
           "users": [
            "425p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "392p",
@@ -9484,8 +9482,7 @@
           "type": "any",
           "users": [
            "427p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "393p",
@@ -9501,8 +9498,7 @@
           "type": "any",
           "users": [
            "428p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "394p",
@@ -9518,8 +9514,7 @@
           "type": "any",
           "users": [
            "429p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "395p",
@@ -9536,8 +9531,7 @@
           "users": [
            "430p",
            "v411"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "396p",
@@ -9555,8 +9549,7 @@
            "431p",
            "v409",
            "v405"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "398p",
@@ -9572,8 +9565,7 @@
           "type": "any",
           "users": [
            "433p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "399p",
@@ -9589,8 +9581,7 @@
           "type": "any",
           "users": [
            "434p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "400p",
@@ -9606,8 +9597,7 @@
           "type": "any",
           "users": [
            "435p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "401p",
@@ -9623,8 +9613,7 @@
           "type": "any",
           "users": [
            "436p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v404",
@@ -9632,8 +9621,7 @@
           "type": "void",
           "users": [
            "v403"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v403",
@@ -9645,8 +9633,7 @@
           "type": "any",
           "users": [
            "v405"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v406",
@@ -9654,8 +9641,7 @@
           "type": "void",
           "users": [
            "v405"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v405",
@@ -9672,8 +9658,7 @@
           "type": "any",
           "users": [
            "v407"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v407",
@@ -9687,8 +9672,7 @@
           "type": "u1",
           "users": [
            "v408"
-          ],
-          "visit": "compare"
+          ]
          },
          {
           "id": "v408",
@@ -9699,10 +9683,12 @@
           "opcode": "IfImm",
           "operandsType": "u1",
           "operator": "NE",
-          "type": "void",
-          "visit": "if_imm"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          50,
          55
@@ -9721,8 +9707,7 @@
           "type": "void",
           "users": [
            "v409"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v409",
@@ -9732,10 +9717,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          22
         ],
@@ -9752,8 +9739,7 @@
           "type": "void",
           "users": [
            "v411"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v411",
@@ -9763,10 +9749,12 @@
           ],
           "intrinsic_id": "Intrinsic.throw.ifnotobject",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          22
         ],
@@ -9793,8 +9781,7 @@
           "type": "any",
           "users": [
            "438p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "414p",
@@ -9812,8 +9799,7 @@
           "type": "any",
           "users": [
            "439p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "415p",
@@ -9831,8 +9817,7 @@
           "type": "any",
           "users": [
            "440p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "416p",
@@ -9850,8 +9835,7 @@
           "type": "any",
           "users": [
            "441p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "417p",
@@ -9869,8 +9853,7 @@
           "type": "any",
           "users": [
            "442p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "418p",
@@ -9888,8 +9871,7 @@
           "type": "any",
           "users": [
            "443p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "419p",
@@ -9907,8 +9889,7 @@
           "type": "any",
           "users": [
            "444p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "420p",
@@ -9926,8 +9907,7 @@
           "type": "any",
           "users": [
            "445p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "421p",
@@ -9945,8 +9925,7 @@
           "type": "any",
           "users": [
            "446p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "422p",
@@ -9964,8 +9943,7 @@
           "type": "any",
           "users": [
            "447p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "423p",
@@ -9983,8 +9961,7 @@
           "type": "any",
           "users": [
            "448p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "424p",
@@ -10002,8 +9979,7 @@
           "type": "any",
           "users": [
            "449p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "425p",
@@ -10021,8 +9997,7 @@
           "type": "any",
           "users": [
            "450p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "427p",
@@ -10037,8 +10012,7 @@
            "392p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "428p",
@@ -10053,8 +10027,7 @@
            "393p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "429p",
@@ -10069,8 +10042,7 @@
            "394p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "430p",
@@ -10085,8 +10057,7 @@
            "395p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "431p",
@@ -10101,8 +10072,7 @@
            "396p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "433p",
@@ -10120,8 +10090,7 @@
           "type": "any",
           "users": [
            "457p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "434p",
@@ -10139,8 +10108,7 @@
           "type": "any",
           "users": [
            "458p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "435p",
@@ -10158,8 +10126,7 @@
           "type": "any",
           "users": [
            "459p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "436p",
@@ -10177,10 +10144,12 @@
           "type": "any",
           "users": [
            "460p"
-          ],
-          "visit": "phi"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          18,
          49,
@@ -10207,8 +10176,7 @@
           "type": "any",
           "users": [
            "462p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "439p",
@@ -10224,8 +10192,7 @@
           "type": "any",
           "users": [
            "463p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "440p",
@@ -10241,8 +10208,7 @@
           "type": "any",
           "users": [
            "464p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "441p",
@@ -10258,8 +10224,7 @@
           "type": "any",
           "users": [
            "465p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "442p",
@@ -10275,8 +10240,7 @@
           "type": "any",
           "users": [
            "466p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "443p",
@@ -10292,8 +10256,7 @@
           "type": "any",
           "users": [
            "467p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "444p",
@@ -10309,8 +10272,7 @@
           "type": "any",
           "users": [
            "468p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "445p",
@@ -10326,8 +10288,7 @@
           "type": "any",
           "users": [
            "469p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "446p",
@@ -10343,8 +10304,7 @@
           "type": "any",
           "users": [
            "470p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "447p",
@@ -10357,8 +10317,7 @@
            "422p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "448p",
@@ -10371,8 +10330,7 @@
            "423p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "449p",
@@ -10385,8 +10343,7 @@
            "424p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "450p",
@@ -10399,8 +10356,7 @@
            "425p"
           ],
           "opcode": "Phi",
-          "type": "any",
-          "visit": "phi"
+          "type": "any"
          },
          {
           "id": "457p",
@@ -10416,8 +10372,7 @@
           "type": "any",
           "users": [
            "475p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "458p",
@@ -10433,8 +10388,7 @@
           "type": "any",
           "users": [
            "476p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "459p",
@@ -10450,8 +10404,7 @@
           "type": "any",
           "users": [
            "477p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "460p",
@@ -10467,10 +10420,12 @@
           "type": "any",
           "users": [
            "478p"
-          ],
-          "visit": "phi"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          44,
          19
@@ -10496,8 +10451,7 @@
           "type": "any",
           "users": [
            "167p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "463p",
@@ -10513,8 +10467,7 @@
           "type": "any",
           "users": [
            "168p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "464p",
@@ -10530,8 +10483,7 @@
           "type": "any",
           "users": [
            "169p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "465p",
@@ -10547,8 +10499,7 @@
           "type": "any",
           "users": [
            "170p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "466p",
@@ -10564,8 +10515,7 @@
           "type": "any",
           "users": [
            "171p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "467p",
@@ -10581,8 +10531,7 @@
           "type": "any",
           "users": [
            "172p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "468p",
@@ -10598,8 +10547,7 @@
           "type": "any",
           "users": [
            "173p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "469p",
@@ -10615,8 +10563,7 @@
           "type": "any",
           "users": [
            "174p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "470p",
@@ -10632,8 +10579,7 @@
           "type": "any",
           "users": [
            "v480"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "475p",
@@ -10649,8 +10595,7 @@
           "type": "any",
           "users": [
            "176p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "476p",
@@ -10666,8 +10611,7 @@
           "type": "any",
           "users": [
            "177p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "477p",
@@ -10683,8 +10627,7 @@
           "type": "any",
           "users": [
            "178p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "478p",
@@ -10700,8 +10643,7 @@
           "type": "any",
           "users": [
            "179p"
-          ],
-          "visit": "phi"
+          ]
          },
          {
           "id": "v481",
@@ -10709,8 +10651,7 @@
           "type": "void",
           "users": [
            "v480"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v480",
@@ -10726,8 +10667,7 @@
           "type": "any",
           "users": [
            "v482"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v483",
@@ -10735,8 +10675,7 @@
           "type": "void",
           "users": [
            "v482"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v482",
@@ -10752,10 +10691,12 @@
           "type": "any",
           "users": [
            "175p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          4,
          17
@@ -10773,8 +10714,7 @@
           "type": "void",
           "users": [
            "v484"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v484",
@@ -10790,8 +10730,7 @@
           "type": "any",
           "users": [
            "v486"
-          ],
-          "visit": "intrinsic"
+          ]
          },
          {
           "id": "v487",
@@ -10799,8 +10738,7 @@
           "type": "void",
           "users": [
            "v486"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v486",
@@ -10816,10 +10754,12 @@
           "type": "any",
           "users": [
            "153p"
-          ],
-          "visit": "intrinsic"
+          ]
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          31
         ],
@@ -10836,8 +10776,7 @@
           "type": "void",
           "users": [
            "v488"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v488",
@@ -10847,10 +10786,12 @@
           ],
           "intrinsic_id": "Intrinsic.return",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          32
         ],
@@ -10860,6 +10801,9 @@
        },
        {
         "id": 59,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          53,
          54,
@@ -10888,24 +10832,24 @@
           "id": "v0",
           "index": 0,
           "opcode": "Parameter",
-          "type": "any",
-          "visit": "parameter"
+          "type": "any"
          },
          {
           "id": "v1",
           "index": 1,
           "opcode": "Parameter",
-          "type": "any",
-          "visit": "parameter"
+          "type": "any"
          },
          {
           "id": "v2",
           "index": 2,
           "opcode": "Parameter",
-          "type": "any",
-          "visit": "parameter"
+          "type": "any"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "successors": [
          0
         ]
@@ -10919,15 +10863,14 @@
           "type": "void",
           "users": [
            "v3"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "functionName": ".bubbleSort",
           "id": "v3",
           "imms": [
            0,
-           486,
+           438,
            1
           ],
           "inputs": [
@@ -10937,9 +10880,8 @@
           "opcode": "Intrinsic",
           "type": "any",
           "users": [
-           "v7"
-          ],
-          "visit": "define_function"
+           "v5"
+          ]
          },
          {
           "id": "v6",
@@ -10947,26 +10889,22 @@
           "type": "void",
           "users": [
            "v5"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v5",
           "imms": [
            1,
-           583
+           237
           ],
           "inputs": [
+           "v3",
            "v6"
           ],
-          "intrinsic_id": "Intrinsic.createarraywithbuffer",
+          "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "",
-          "type": "any",
-          "users": [
-           "v7"
-          ],
-          "visit": "ldobjbyname"
+          "string_data": "bubbleSort",
+          "type": "void"
          },
          {
           "id": "v8",
@@ -10974,26 +10912,24 @@
           "type": "void",
           "users": [
            "v7"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v7",
           "imms": [
-           2
+           2,
+           535
           ],
           "inputs": [
-           "v5",
-           "v3",
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.callarg1",
+          "intrinsic_id": "Intrinsic.createarraywithbuffer",
           "opcode": "Intrinsic",
+          "string_data": "",
           "type": "any",
           "users": [
-           "v16"
-          ],
-          "visit": "call"
+           "v9"
+          ]
          },
          {
           "id": "v10",
@@ -11001,27 +10937,22 @@
           "type": "void",
           "users": [
            "v9"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v9",
           "imms": [
-           4,
-           241
+           3,
+           304
           ],
           "inputs": [
+           "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
           "opcode": "Intrinsic",
-          "string_data": "console",
-          "type": "any",
-          "users": [
-           "v16",
-           "v11"
-          ],
-          "visit": "ldobjbyname"
+          "string_data": "unsortedArray",
+          "type": "void"
          },
          {
           "id": "v12",
@@ -11029,128 +10960,269 @@
           "type": "void",
           "users": [
            "v11"
-          ],
-          "visit": "default"
+          ]
          },
          {
           "id": "v11",
           "imms": [
-           5,
-           264
+           4,
+           237
           ],
           "inputs": [
-           "v9",
            "v12"
+          ],
+          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "opcode": "Intrinsic",
+          "string_data": "bubbleSort",
+          "type": "any",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v14",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v13"
+          ]
+         },
+         {
+          "id": "v13",
+          "imms": [
+           5,
+           304
+          ],
+          "inputs": [
+           "v14"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "unsortedArray",
+          "type": "any",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v16",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v15",
+          "imms": [
+           6
+          ],
+          "inputs": [
+           "v13",
+           "v11",
+           "v16"
+          ],
+          "intrinsic_id": "Intrinsic.callarg1",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v17"
+          ]
+         },
+         {
+          "id": "v18",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v17"
+          ]
+         },
+         {
+          "id": "v17",
+          "imms": [
+           8,
+           291
+          ],
+          "inputs": [
+           "v15",
+           "v18"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "sortedArray",
+          "type": "void"
+         },
+         {
+          "id": "v20",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v19"
+          ]
+         },
+         {
+          "id": "v19",
+          "imms": [
+           9,
+           249
+          ],
+          "inputs": [
+           "v20"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "console",
+          "type": "any",
+          "users": [
+           "v28",
+           "v21"
+          ]
+         },
+         {
+          "id": "v22",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v21"
+          ]
+         },
+         {
+          "id": "v21",
+          "imms": [
+           10,
+           272
+          ],
+          "inputs": [
+           "v19",
+           "v22"
           ],
           "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
           "string_data": "log",
           "type": "any",
           "users": [
-           "v16"
-          ],
-          "visit": "ldobjbyname"
+           "v28"
+          ]
          },
          {
-          "id": "v13",
+          "id": "v23",
           "opcode": "SaveState",
           "type": "void",
           "users": [
-           "v14"
-          ],
-          "visit": "default"
+           "v24"
+          ]
          },
          {
-          "id": "v14",
+          "id": "v24",
           "inputs": [
-           "v13"
+           "v23"
           ],
           "opcode": "LoadString",
           "string": "Sorted Array:",
-          "stringOffset": 226,
+          "stringOffset": 222,
           "type": "ref",
           "users": [
-           "v15"
-          ],
-          "visit": "load_string"
+           "v25"
+          ]
          },
          {
-          "id": "v15",
+          "id": "v25",
           "inputs": [
-           "v14"
+           "v24"
           ],
           "opcode": "CastValueToAnyType",
           "type": "any",
           "users": [
-           "v16"
-          ],
-          "visit": "default"
+           "v28"
+          ]
          },
          {
-          "id": "v17",
+          "id": "v27",
           "opcode": "SaveState",
           "type": "void",
           "users": [
-           "v16"
-          ],
-          "visit": "default"
+           "v26"
+          ]
          },
          {
-          "id": "v16",
+          "id": "v26",
           "imms": [
-           7
+           12,
+           291
           ],
           "inputs": [
-           "v9",
-           "v15",
-           "v7",
-           "v11",
-           "v17"
+           "v27"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "sortedArray",
+          "type": "any",
+          "users": [
+           "v28"
+          ]
+         },
+         {
+          "id": "v29",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v28"
+          ]
+         },
+         {
+          "id": "v28",
+          "imms": [
+           13
+          ],
+          "inputs": [
+           "v19",
+           "v25",
+           "v26",
+           "v21",
+           "v29"
           ],
           "intrinsic_id": "Intrinsic.callthis2",
           "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "call"
+          "type": "any"
          },
          {
-          "id": "v19",
+          "id": "v31",
           "opcode": "SaveState",
           "type": "void",
           "users": [
-           "v18"
-          ],
-          "visit": "default"
+           "v30"
+          ]
          },
          {
-          "id": "v18",
+          "id": "v30",
           "inputs": [
-           "v19"
+           "v31"
           ],
           "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "type": "any",
-          "visit": "intrinsic"
+          "type": "any"
          },
          {
-          "id": "v21",
+          "id": "v33",
           "opcode": "SaveState",
           "type": "void",
           "users": [
-           "v20"
-          ],
-          "visit": "default"
+           "v32"
+          ]
          },
          {
-          "id": "v20",
+          "id": "v32",
           "inputs": [
-           "v21"
+           "v33"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",
-          "type": "void",
-          "visit": "intrinsic"
+          "type": "void"
          }
         ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          1
         ],
@@ -11160,6 +11232,9 @@
        },
        {
         "id": 2,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
         "predecessors": [
          0
         ]

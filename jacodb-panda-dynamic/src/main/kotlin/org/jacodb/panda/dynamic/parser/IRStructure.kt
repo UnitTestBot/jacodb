@@ -216,6 +216,10 @@ data class ProgramBasicBlock(
     val insts: List<ProgramInst> = emptyList(),
     val successors: List<Int> = emptyList(),
     val predecessors: List<Int> = emptyList(),
+    val isCatchBegin: Boolean = false,
+    val isTryBegin: Boolean = false,
+    val isTryEnd: Boolean = false,
+    val handlerIds: List<Int> = emptyList(),
 ) {
 
     @Transient
@@ -263,6 +267,7 @@ data class ProgramInst(
     val constructorName: String? = null,
     val functionName: String? = null,
     val throwers: List<String> = emptyList(),
+    val catchers: List<Int> = emptyList(),
     val lexenv: Int? = null,
     val lexvar: Int? = null,
 ) {
