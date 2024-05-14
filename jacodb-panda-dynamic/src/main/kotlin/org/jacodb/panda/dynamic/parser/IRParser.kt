@@ -137,7 +137,7 @@ class IRParser(
         if (this.program == null) {
             this.program = Json.decodeFromString(json)
         }
-        // mapProgramIR(this.program!!)
+        mapProgramIR(this.program!!)
         return this.program!!
     }
 
@@ -319,8 +319,16 @@ class IRParser(
             gotoToRemove.forEach { gotoInst ->
                 method.insts.remove(gotoInst)
 
+                // Fixing end of range for the enclosing basic block of the removed goto
+                val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
+                enclosingBB.updateRange(
+                    enclosingBB.start,
+                    PandaInstRef(enclosingBB.end.index - 1)
+                )
+
                 // Fixing range for basic blocks that are after the removed goto
                 var startIdx = blocks.indexOfFirst { it.start.index > gotoInst.location.index }
+                    .takeIf { it > 0 } ?: return
                 while (startIdx < blocks.size) {
                     val b = blocks[startIdx]
                     b.updateRange(
@@ -329,13 +337,6 @@ class IRParser(
                     )
                     startIdx++
                 }
-
-                // Fixing end of range for the enclosing basic block of the removed goto
-                val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
-                enclosingBB.updateRange(
-                    enclosingBB.start,
-                    PandaInstRef(enclosingBB.end.index - 1)
-                )
             }
         }
     }
@@ -968,20 +969,17 @@ class IRParser(
             opcode == "CatchPhi" -> {
                 fun pathToCatchBlock(
                     currentBB: PandaBasicBlock,
-                    acc: List<PandaInstRef>,
+                    currentPath: Set<PandaInstRef>,
                     targetId: Int,
-                ): List<PandaInstRef>? {
-                    val newList = acc + (currentBB.start.index..currentBB.end.index)
-                        .mapNotNull { if (it == -1) null else PandaInstRef(it) }
+                ): Set<PandaInstRef> {
+                    val newSet = currentPath + (currentBB.start.index..currentBB.end.index)
+                        .mapNotNull { if (it == -1) null else PandaInstRef(it) }.toSet()
 
-                    for (succBBId in currentBB.successors) {
-                        if (succBBId == targetId) return acc
-                        method.idToBB[succBBId]?.let { succBB ->
-                            pathToCatchBlock(succBB, newList, targetId)?.let { return it }
-                        }
+                    if (currentBB.id == targetId) return newSet
+
+                    return currentBB.predecessors.fold(newSet) { acc, id ->
+                        acc + pathToCatchBlock(method.idToBB[id]!!, acc, targetId)
                     }
-
-                    return null
                 }
 
                 // Catch basic block contains multiple CatchPhi, but only the last one contains "error" variable.
@@ -989,10 +987,13 @@ class IRParser(
                 val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
                 if (nextInstOpcode != "CatchPhi") {
                     val tryBBId = env.getTryBlockBBId(basicBlock.id)
-                    val tryBB = method.idToBB[tryBBId] ?: error("No try basic block saved in environment for $op")
-                    val path = pathToCatchBlock(tryBB, emptyList(), basicBlock.id)
-                        ?: error("No path from basic block $tryBBId to ${basicBlock.id}")
+                        ?: error("No try basic block saved in environment for $op")
 
+                    val emptyBBBeforeCatch = method.idToBB[basicBlock.predecessors.find { id ->
+                        method.basicBlocks.find { it.id == id }!!.insts.isEmpty()
+                    }!!] ?: error("No empty basic block before catch basic block!")
+
+                    val path = pathToCatchBlock(emptyBBBeforeCatch, emptySet(), tryBBId).sorted()
                     val throwable = PandaCaughtError()
 
                     method.insts += PandaCatchInst(

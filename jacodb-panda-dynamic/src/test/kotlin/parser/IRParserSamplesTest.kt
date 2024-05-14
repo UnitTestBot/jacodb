@@ -29,9 +29,8 @@ class IRParserSamplesTest {
         private const val SAMPLE_NAME = "MethodCollision"
 
         private fun load(name: String): IRParser {
-            return loadIrWithTs(
+            return loadIr(
                 filePath = "/samples/$name.json",
-                tsPath = "/samples/$name.ts",
             )
         }
     }
@@ -76,7 +75,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printPandaInstructions()  {
-        val parser = load(SAMPLE_NAME)
+        val parser = load("project1/entry/src/main/ets/backup/cloudbackup/BackupMissionAppOperate")
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->

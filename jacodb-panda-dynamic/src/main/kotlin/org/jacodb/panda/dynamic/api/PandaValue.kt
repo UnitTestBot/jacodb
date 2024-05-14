@@ -213,6 +213,7 @@ data class PandaValueByInstance(
             is PandaLocalVar -> this.typeName
             is PandaThis -> this.typeName
             is PandaLoadedValue -> this.getLoadedValueClassName()
+            is PandaArgument -> this.name // TODO: ???
             else -> throw IllegalArgumentException("couldn't resolve $this")
         }
     }
@@ -245,6 +246,7 @@ data class PandaLoadedValue(
             is PandaStringConstant -> this.value
             is PandaLocalVar -> this.typeName
             is PandaThis -> this.typeName
+            is PandaArgument -> this.name // TODO: ???
             else -> throw IllegalArgumentException("couldn't resolve $this")
         }
     }

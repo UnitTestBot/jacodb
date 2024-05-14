@@ -58,7 +58,10 @@ class IRTraversalManager(
 
             parseBB(programBB, env.copy())
 
-            if (checkCondition(programBB)) strategyStack.removeFirst()
+            if (checkCondition(programBB)) {
+                strategyStack.removeFirst()
+                return
+            }
 
             val naturalOrderSuccessors = programBB.successors.sortedBy { bbId ->
                 programMethod.basicBlocks.indexOfFirst { pbb -> pbb.id == bbId }
@@ -84,6 +87,7 @@ class IRTraversalManager(
 
     inner class TryBlockTraversalStrategy(
         env: IREnvironment,
+        private val stopperBBId: Int
     ) : TraversalStrategy(env) {
 
         override fun chooseBB(): ProgramBasicBlock? {
@@ -91,7 +95,7 @@ class IRTraversalManager(
         }
 
         override fun checkCondition(bb: ProgramBasicBlock): Boolean {
-            return bb.insts.isEmpty()
+            return bb.id == stopperBBId
         }
     }
 
@@ -133,13 +137,15 @@ class IRTraversalManager(
         val currentStrategy = strategyStack.first()
         when (ts) {
             TraversalType.TRY_BLOCK -> {
-
+                val tryBB = idToProgramBB[progBB.successors[0]]!!
+                val catchBB = idToProgramBB[progBB.successors[1]]!!
                 val catchStrategy = CatchBlockTraversalStrategy(currentStrategy.env.copy()).apply {
-                    pendingBB.addLast(idToProgramBB[progBB.successors[1]]!!)
+                    pendingBB.addLast(catchBB)
                 }
 
-                val tryStrategy = TryBlockTraversalStrategy(currentStrategy.env.copy()).apply {
-                    pendingBB.addLast(idToProgramBB[progBB.successors[0]]!!)
+                val stopperBBId = catchBB.predecessors.first { it != progBB.id }
+                val tryStrategy = TryBlockTraversalStrategy(currentStrategy.env.copy(), stopperBBId).apply {
+                    pendingBB.addLast(tryBB)
                 }
 
                 strategyStack.addFirst(catchStrategy)
@@ -160,7 +166,7 @@ class IRTraversalManager(
         }
         val endId = programMethod.currentId
 
-        if (startId > endId) {
+        if (startId > endId || endId == -1) {
             currentBB.start = if (startId == -1) 0 else startId
             addEmptyBlockPlaceholder(programMethod, currentBB.id)
             currentBB.end = programMethod.currentId
