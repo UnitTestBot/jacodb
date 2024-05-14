@@ -463,6 +463,10 @@ class IRParser(
                         input.value
                     }
 
+                    input is PandaValueByInstance -> {
+                        input.getClassAndMethodName().toString()
+                    }
+
                     else -> error("No string data")
                 }
 //                        as PandaStringConstant

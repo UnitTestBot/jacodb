@@ -221,7 +221,7 @@ data class PandaValueByInstance(
         return listOf(instance.resolve(), property)
     }
 
-    override fun toString(): String = "ValueByInstance($instance, $property)"
+    override fun toString(): String = "$instance.$property"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaValueByInstance(this)
