@@ -19,12 +19,7 @@ package org.jacodb.analysis.ifds
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
-fun interface FlowFunction<Fact> {
-    fun compute(fact: Fact): Collection<Fact>
-}
-
 interface FlowFunctions<Fact> {
-
     /**
      * Method for obtaining initial domain facts at the method entrypoint.
      * Commonly, it is only `listOf(Zero)`.
@@ -42,10 +37,11 @@ interface FlowFunctions<Fact> {
      *   [ DO() ]
      * ```
      */
-    fun obtainSequentFlowFunction(
+    fun sequent(
         current: JcInst,
         next: JcInst,
-    ): FlowFunction<Fact>
+        fact: Fact,
+    ): Collection<Fact>
 
     /**
      * Call-to-return-site flow function.
@@ -58,10 +54,11 @@ interface FlowFunctions<Fact> {
      * [ RETURN FROM p ] :: returnSite
      * ```
      */
-    fun obtainCallToReturnSiteFlowFunction(
+    fun callToReturn(
         callStatement: JcInst,
         returnSite: JcInst,
-    ): FlowFunction<Fact>
+        fact: Fact
+    ): Collection<Fact>
 
     /**
      * Call-to-start flow function.
@@ -79,10 +76,11 @@ interface FlowFunctions<Fact> {
      * [ RETURN FROM p ]
      * ```
      */
-    fun obtainCallToStartFlowFunction(
+    fun callToStart(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ): FlowFunction<Fact>
+        fact: Fact,
+    ): Collection<Fact>
 
     /**
      * Exit-to-return-site flow function.
@@ -100,9 +98,10 @@ interface FlowFunctions<Fact> {
      * [ RETURN FROM p ] :: returnSite
      * ```
      */
-    fun obtainExitToReturnSiteFlowFunction(
+    fun exitToReturnSite(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-    ): FlowFunction<Fact>
+        fact: Fact,
+    ): Collection<Fact>
 }

@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.toPath
 import org.jacodb.analysis.ifds.toPathOrNull
@@ -42,20 +41,21 @@ class UnusedVariableFlowFunctions(
         return setOf(UnusedVariableZeroFact)
     }
 
-    override fun obtainSequentFlowFunction(
+    override fun sequent(
         current: JcInst,
         next: JcInst,
-    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
+        fact: UnusedVariableDomainFact
+    ): Collection<UnusedVariableDomainFact> {
         if (current !is JcAssignInst) {
-            return@FlowFunction setOf(fact)
+            return setOf(fact)
         }
 
         if (fact == UnusedVariableZeroFact) {
             val toPath = current.lhv.toPath()
             if (!toPath.isOnHeap) {
-                return@FlowFunction setOf(UnusedVariableZeroFact, UnusedVariable(toPath, current))
+                return setOf(UnusedVariableZeroFact, UnusedVariable(toPath, current))
             } else {
-                return@FlowFunction setOf(UnusedVariableZeroFact)
+                return setOf(UnusedVariableZeroFact)
             }
         }
         check(fact is UnusedVariable)
@@ -63,36 +63,38 @@ class UnusedVariableFlowFunctions(
         val toPath = current.lhv.toPath()
         val default = if (toPath == fact.variable) emptySet() else setOf(fact)
         val fromPath = current.rhv.toPathOrNull()
-            ?: return@FlowFunction default
+            ?: return default
 
         if (fromPath.isOnHeap || toPath.isOnHeap) {
-            return@FlowFunction default
+            return default
         }
 
         if (fromPath == fact.variable) {
-            return@FlowFunction default + fact.copy(variable = toPath)
+            return default + fact.copy(variable = toPath)
         }
 
-        default
+        return default
     }
 
-    override fun obtainCallToReturnSiteFlowFunction(
+    override fun callToReturn(
         callStatement: JcInst,
         returnSite: JcInst,
-    ) = obtainSequentFlowFunction(callStatement, returnSite)
+        fact: UnusedVariableDomainFact
+    ): Collection<UnusedVariableDomainFact> = sequent(callStatement, returnSite, fact)
 
-    override fun obtainCallToStartFlowFunction(
+    override fun callToStart(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
+        fact: UnusedVariableDomainFact
+    ): Collection<UnusedVariableDomainFact> {
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
         if (fact == UnusedVariableZeroFact) {
             if (callExpr !is JcStaticCallExpr && callExpr !is JcSpecialCallExpr) {
-                return@FlowFunction setOf(UnusedVariableZeroFact)
+                return setOf(UnusedVariableZeroFact)
             }
-            return@FlowFunction buildSet {
+            return buildSet {
                 add(UnusedVariableZeroFact)
                 val callee = calleeStart.location.method
                 val formalParams = cp.getArgumentsOf(callee)
@@ -103,15 +105,16 @@ class UnusedVariableFlowFunctions(
         }
         check(fact is UnusedVariable)
 
-        emptySet()
+        return emptySet()
     }
 
-    override fun obtainExitToReturnSiteFlowFunction(
+    override fun exitToReturnSite(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-    ) = FlowFunction<UnusedVariableDomainFact> { fact ->
-        if (fact == UnusedVariableZeroFact) {
+        fact: UnusedVariableDomainFact
+    ): Collection<UnusedVariableDomainFact> {
+        return if (fact == UnusedVariableZeroFact) {
             setOf(UnusedVariableZeroFact)
         } else {
             emptySet()

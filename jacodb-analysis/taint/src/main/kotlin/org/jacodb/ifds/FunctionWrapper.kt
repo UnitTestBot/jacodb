@@ -38,8 +38,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.sequent(next: JcInst) =
         jcFlowFunctions
-            .obtainSequentFlowFunction(edge.to.statement, next)
-            .compute(edge.to.fact)
+            .sequent(edge.to.statement, next, edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(next, newFact))
                 processNewEdge(runnerId, newEdge, Reason.Sequent(edge))
@@ -47,8 +46,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.callToReturn(returnSite: JcInst) =
         jcFlowFunctions
-            .obtainCallToReturnSiteFlowFunction(edge.to.statement, returnSite)
-            .compute(edge.to.fact)
+            .callToReturn(edge.to.statement, returnSite, edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(returnSite, newFact))
                 processNewEdge(runnerId, newEdge, Reason.CallToReturn(edge))
@@ -56,8 +54,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.callToStart(calleeStart: JcInst) =
         jcFlowFunctions
-            .obtainCallToStartFlowFunction(edge.to.statement, calleeStart)
-            .compute(edge.to.fact)
+            .callToStart(edge.to.statement, calleeStart, edge.to.fact)
             .forEach { newFact ->
                 val vertex = Vertex(calleeStart, newFact)
 
@@ -72,8 +69,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
         callerEdge: Edge<JcInst, Fact>,
         returnSite: JcInst,
     ) = jcFlowFunctions
-        .obtainExitToReturnSiteFlowFunction(callerEdge.to.statement, returnSite, edge.to.statement)
-        .compute(edge.to.fact)
+        .exitToReturnSite(callerEdge.to.statement, returnSite, edge.to.statement, edge.to.fact)
         .forEach { newFact ->
             val newEdge = Edge(callerEdge.from, Vertex(returnSite, newFact))
             processNewEdge(runnerId, newEdge, Reason.ExitToReturnSite(callerEdge, edge))

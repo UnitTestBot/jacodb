@@ -25,7 +25,6 @@ import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.config.TaintActionEvaluator
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.ifds.toPath
@@ -212,13 +211,14 @@ class ForwardNpeFlowFunctions(
             }
         }
 
-    override fun obtainSequentFlowFunction(
+    override fun sequent(
         current: JcInst,
         next: JcInst,
-    ) = FlowFunction<TaintDomainFact> { fact ->
+        fact: TaintDomainFact
+    ): Collection<TaintDomainFact> {
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(current)) {
-                return@FlowFunction emptySet()
+                return emptySet()
             }
         }
 
@@ -233,29 +233,29 @@ class ForwardNpeFlowFunctions(
                         // This is a hack: instructions like `return null` in branch of next will be considered only if
                         //  the fact holds (otherwise we could not get there)
                         // Note the absence of 'Zero' here!
-                        return@FlowFunction listOf(Tainted(pathComparedWithNull, TaintMark.NULLNESS))
+                        return listOf(Tainted(pathComparedWithNull, TaintMark.NULLNESS))
                     }
                 }
             } else if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
                 val expr = current.condition
                 if (pathComparedWithNull != fact.variable) {
-                    return@FlowFunction listOf(fact)
+                    return listOf(fact)
                 }
                 if ((expr is JcEqExpr && nextIsTrueBranch) || (expr is JcNeqExpr && !nextIsTrueBranch)) {
                     // comparedPath is null in this branch
-                    return@FlowFunction listOf(TaintZeroFact)
+                    return listOf(TaintZeroFact)
                 } else {
-                    return@FlowFunction emptyList()
+                    return emptyList()
                 }
             }
         }
 
         if (fact is TaintZeroFact) {
-            return@FlowFunction listOf(TaintZeroFact) + generates(current)
+            return listOf(TaintZeroFact) + generates(current)
         }
         check(fact is Tainted)
 
-        if (current is JcAssignInst) {
+        return if (current is JcAssignInst) {
             transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
         } else {
             transmitTaintNormal(fact, current)
@@ -318,13 +318,14 @@ class ForwardNpeFlowFunctions(
         to: JcValue,
     ): Collection<Tainted> = transmitTaint(fact, at, from, to)
 
-    override fun obtainCallToReturnSiteFlowFunction(
+    override fun callToReturn(
         callStatement: JcInst,
-        returnSite: JcInst, // FIXME: unused?
-    ) = FlowFunction<TaintDomainFact> { fact ->
+        returnSite: JcInst,
+        fact: TaintDomainFact
+    ): Collection<TaintDomainFact> {
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(callStatement)) {
-                return@FlowFunction emptySet()
+                return emptySet()
             }
         }
 
@@ -340,19 +341,19 @@ class ForwardNpeFlowFunctions(
         ) {
             for (arg in callExpr.args) {
                 if (arg.toPath() == fact.variable) {
-                    return@FlowFunction setOf(
+                    return setOf(
                         fact,
                         fact.copy(variable = callStatement.lhv.toPath())
                     )
                 }
             }
-            return@FlowFunction setOf(fact)
+            return setOf(fact)
         }
 
         val config = taintConfigurationFeature?.getConfigForMethod(callee)
 
         if (fact == TaintZeroFact) {
-            return@FlowFunction buildSet {
+            return buildSet {
                 add(TaintZeroFact)
 
                 if (callStatement is JcAssignInst) {
@@ -441,7 +442,7 @@ class ForwardNpeFlowFunctions(
                     if (facts.size > 0) {
                         logger.trace { "Got ${facts.size} facts from config for $callee: $facts" }
                     }
-                    return@FlowFunction facts
+                    return facts
                 } else {
                     // Fall back to the default behavior, as if there were no config at all.
                 }
@@ -450,7 +451,7 @@ class ForwardNpeFlowFunctions(
 
         // FIXME: adhoc for constructors:
         if (callee.isConstructor) {
-            return@FlowFunction listOf(fact)
+            return listOf(fact)
         }
 
         // TODO: CONSIDER REFACTORING THIS
@@ -465,20 +466,20 @@ class ForwardNpeFlowFunctions(
         if (callee in graph.callees(callStatement)) {
 
             if (fact.variable.isStatic) {
-                return@FlowFunction emptyList()
+                return emptyList()
             }
 
             for (actual in callExpr.args) {
                 // Possibly tainted actual parameter:
                 if (fact.variable.startsWith(actual.toPathOrNull())) {
-                    return@FlowFunction emptyList() // Will be handled by summary edge
+                    return emptyList() // Will be handled by summary edge
                 }
             }
 
             if (callExpr is JcInstanceCallExpr) {
                 // Possibly tainted instance:
                 if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                    return@FlowFunction emptyList() // Will be handled by summary edge
+                    return emptyList() // Will be handled by summary edge
                 }
             }
 
@@ -487,29 +488,30 @@ class ForwardNpeFlowFunctions(
         if (callStatement is JcAssignInst) {
             // Possibly tainted lhv:
             if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
-                return@FlowFunction emptyList() // Overridden by rhv
+                return emptyList() // Overridden by rhv
             }
         }
 
         // The "most default" behaviour is encapsulated here:
-        transmitTaintNormal(fact, callStatement)
+        return transmitTaintNormal(fact, callStatement)
     }
 
-    override fun obtainCallToStartFlowFunction(
+    override fun callToStart(
         callStatement: JcInst,
         calleeStart: JcInst,
-    ) = FlowFunction<TaintDomainFact> { fact ->
+        fact: TaintDomainFact
+    ): Collection<TaintDomainFact> {
         val callee = calleeStart.location.method
 
         if (fact == TaintZeroFact) {
-            return@FlowFunction obtainPossibleStartFactsBasic(callee)
+            return obtainPossibleStartFactsBasic(callee)
         }
         check(fact is Tainted)
 
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
 
-        buildSet {
+        return buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             val actualParams = callExpr.args
             val formalParams = cp.getArgumentsOf(callee)
@@ -543,15 +545,16 @@ class ForwardNpeFlowFunctions(
         }
     }
 
-    override fun obtainExitToReturnSiteFlowFunction(
+    override fun exitToReturnSite(
         callStatement: JcInst,
-        returnSite: JcInst, // unused
+        returnSite: JcInst,
         exitStatement: JcInst,
-    ) = FlowFunction<TaintDomainFact> { fact ->
+        fact: TaintDomainFact
+    ): Collection<TaintDomainFact> {
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == TaintZeroFact) {
-            // return@FlowFunctions listOf(Zero)
-            return@FlowFunction buildSet {
+            // returns listOf(Zero)
+            return buildSet {
                 add(TaintZeroFact)
                 if (exitStatement is JcReturnInst && callStatement is JcAssignInst) {
                     // Note: returnValue can be null here in some weird cases, e.g. in lambda.
@@ -570,7 +573,7 @@ class ForwardNpeFlowFunctions(
             ?: error("Call statement should have non-null callExpr")
         val callee = exitStatement.location.method
 
-        buildSet {
+        return buildSet {
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             if (fact.variable.isOnHeap) {
                 val actualParams = callExpr.args
