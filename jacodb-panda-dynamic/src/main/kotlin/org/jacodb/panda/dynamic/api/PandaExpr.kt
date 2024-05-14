@@ -382,7 +382,6 @@ class PandaVirtualCallExpr(
     }
 }
 
-
 class PandaInstanceVirtualCallExpr(
     private val lazyMethod: Lazy<PandaMethod>,
     override val args: List<PandaValue>,
@@ -447,7 +446,7 @@ class PandaToNumericExpr(
 }
 
 class PandaLengthExpr(
-    val array: PandaValue
+    val array: PandaValue,
 ) : PandaExpr {
     override val type: PandaType
         get() = PandaNumberType
