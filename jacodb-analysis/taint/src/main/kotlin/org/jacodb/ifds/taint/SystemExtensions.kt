@@ -37,7 +37,7 @@ suspend fun ActorSystem<CommonMessage>.startTaintAnalysis(method: JcMethod) {
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
     val taintAnalyzer = TaintAnalyzer(graph)
 
-    for (fact in taintAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+    for (fact in taintAnalyzer.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
             val vertex = Vertex(entryPoint, fact)
             val message = NewEdge(ForwardRunnerId, Edge(vertex, vertex), Reason.Initial)

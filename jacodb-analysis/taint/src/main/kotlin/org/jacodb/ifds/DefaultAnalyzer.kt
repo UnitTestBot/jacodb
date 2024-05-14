@@ -53,7 +53,7 @@ class DefaultAnalyzer<Fact>(
             }
 
             is NotificationOnStart<JcInst, Fact> -> {
-                val scope = JcFlowScope(message.edge, this)
+                val scope = JcFlowScope(message.summaryEdge, this)
                 scope.processNotificationOnStart(message)
             }
 
@@ -114,11 +114,11 @@ class DefaultAnalyzer<Fact>(
 
 
     private fun JcFlowScope<Fact>.processNotificationOnStart(message: NotificationOnStart<JcInst, Fact>) {
-        val successors = applicationGraph.successors(message.data.to.statement)
+        val successors = applicationGraph.successors(message.subscribingEdge.to.statement)
 
         flowFunctions.run {
             for (successor in successors) {
-                exitToReturnSite(message.data, successor)
+                exitToReturnSite(message.subscribingEdge, successor)
             }
         }
     }

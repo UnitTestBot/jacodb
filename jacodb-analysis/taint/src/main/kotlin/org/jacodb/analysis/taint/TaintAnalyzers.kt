@@ -19,6 +19,7 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -29,20 +30,30 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
+
 class TaintAnalyzer(
     private val graph: JcApplicationGraph,
 ) : Analyzer<TaintDomainFact, TaintEvent> {
+    private val cp = graph.classpath
 
-    override val flowFunctions: ForwardTaintFlowFunctions by lazy {
-        ForwardTaintFlowFunctions(graph.classpath, graph)
+    private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+        cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
     }
 
-    private val taintConfigurationFeature: TaintConfigurationFeature?
-        get() = flowFunctions.taintConfigurationFeature
+
+    override val flowFunctions: ForwardTaintFlowFunctions by lazy {
+        ForwardTaintFlowFunctions(cp, graph, taintConfigurationFeature)
+    }
 
     private fun isExitPoint(statement: JcInst): Boolean {
         return statement in graph.exitPoints(statement.location.method)
     }
+
+    override fun obtainPossibleStartFacts(
+        method: JcMethod,
+    ): Collection<TaintDomainFact> = flowFunctions.obtainPossibleStartFacts(method)
 
     override fun handleNewEdge(
         edge: TaintEdge,
@@ -88,6 +99,12 @@ class BackwardTaintAnalyzer(
 
     override val flowFunctions: BackwardTaintFlowFunctions by lazy {
         BackwardTaintFlowFunctions(graph.classpath, graph)
+    }
+
+    override fun obtainPossibleStartFacts(
+        method: JcMethod,
+    ): Collection<TaintDomainFact> {
+        return listOf(TaintZeroFact)
     }
 
     private fun isExitPoint(statement: JcInst): Boolean {

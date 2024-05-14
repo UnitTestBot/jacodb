@@ -35,12 +35,6 @@ class UnusedVariableFlowFunctions(
     private val cp: JcClasspath
         get() = graph.classpath
 
-    override fun obtainPossibleStartFacts(
-        method: JcMethod,
-    ): Collection<UnusedVariableDomainFact> {
-        return setOf(UnusedVariableZeroFact)
-    }
-
     override fun sequent(
         current: JcInst,
         next: JcInst,

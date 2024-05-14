@@ -40,7 +40,7 @@ suspend fun ActorSystem<CommonMessage>.startUnusedAnalysis(method: JcMethod) {
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
     val unusedAnalyzer = UnusedVariableAnalyzer(graph)
 
-    for (fact in unusedAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+    for (fact in unusedAnalyzer.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
             val vertex = Vertex(entryPoint, fact)
             val message = NewEdge(SingletonRunnerId, Edge(vertex, vertex), Reason.Initial)

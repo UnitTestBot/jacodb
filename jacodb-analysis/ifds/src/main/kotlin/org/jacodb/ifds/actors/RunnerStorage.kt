@@ -103,7 +103,7 @@ class RunnerStorage<Stmt, Fact>(
                 @Suppress("UNCHECKED_CAST")
                 message as SubscriptionOnStart<Stmt, Fact>
 
-                val savedSubscription = SavedSubscription(message.data, message.subscriber)
+                val savedSubscription = SavedSubscription(message.subscribingEdge, message.subscriber)
 
                 sendStartNotificationsOnExistingSummaryEdges(message.startVertex, savedSubscription)
 
@@ -116,7 +116,7 @@ class RunnerStorage<Stmt, Fact>(
                 @Suppress("UNCHECKED_CAST")
                 message as SubscriptionOnEnd<Stmt, Fact>
 
-                val savedSubscription = SavedSubscription(message.data, message.subscriber)
+                val savedSubscription = SavedSubscription(message.subscribingEdge, message.subscriber)
 
                 sendEndNotificationsOnExistingSummaryEdges(message.endVertex, savedSubscription)
 

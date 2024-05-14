@@ -25,6 +25,7 @@ import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -35,16 +36,25 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
+
 class NpeAnalyzer(
     private val graph: JcApplicationGraph,
 ) : Analyzer<TaintDomainFact, TaintEvent> {
+    val cp = graph.classpath
 
-    override val flowFunctions: ForwardNpeFlowFunctions by lazy {
-        ForwardNpeFlowFunctions(graph.classpath, graph)
+    private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+        cp.features
+            ?.singleOrNull { it is TaintConfigurationFeature }
+            ?.let { it as TaintConfigurationFeature }
     }
 
-    private val taintConfigurationFeature: TaintConfigurationFeature?
-        get() = flowFunctions.taintConfigurationFeature
+
+    override val flowFunctions: ForwardNpeFlowFunctions by lazy {
+        ForwardNpeFlowFunctions(cp, graph, taintConfigurationFeature)
+    }
+
+    override fun obtainPossibleStartFacts(method: JcMethod): Collection<TaintDomainFact> =
+        flowFunctions.obtainPossibleStartFacts(method)
 
     private fun isExitPoint(statement: JcInst): Boolean {
         return statement in graph.exitPoints(statement.location.method)

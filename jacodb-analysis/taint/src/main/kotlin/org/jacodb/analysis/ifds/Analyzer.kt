@@ -16,11 +16,18 @@
 
 package org.jacodb.analysis.ifds
 
+import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 
 interface Analyzer<Fact, out Event> {
     val flowFunctions: FlowFunctions<Fact>
+
+    /**
+     * Method for obtaining initial domain facts at the method entrypoint.
+     * Commonly, it is only `listOf(Zero)`.
+     */
+    fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact>
 
     fun handleNewEdge(
         edge: Edge<JcInst, Fact>,

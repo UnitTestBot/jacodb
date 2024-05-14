@@ -42,14 +42,14 @@ data class SubscriptionOnStart<Stmt, Fact>(
     override val runnerId: RunnerId,
     val startVertex: Vertex<Stmt, Fact>,
     val subscriber: RunnerId,
-    val data: Edge<Stmt, Fact>,
+    val subscribingEdge: Edge<Stmt, Fact>,
 ) : StorageMessage
 
 data class SubscriptionOnEnd<Stmt, Fact>(
     override val runnerId: RunnerId,
     val endVertex: Vertex<Stmt, Fact>,
     val subscriber: RunnerId,
-    val data: Edge<Stmt, Fact>,
+    val subscribingEdge: Edge<Stmt, Fact>,
 ) : StorageMessage
 
 data class NewResult<Stmt, Fact>(

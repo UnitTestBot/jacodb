@@ -16,16 +16,9 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
 
 interface FlowFunctions<Fact> {
-    /**
-     * Method for obtaining initial domain facts at the method entrypoint.
-     * Commonly, it is only `listOf(Zero)`.
-     */
-    fun obtainPossibleStartFacts(method: JcMethod): Collection<Fact>
-
     /**
      * Sequent flow function.
      *

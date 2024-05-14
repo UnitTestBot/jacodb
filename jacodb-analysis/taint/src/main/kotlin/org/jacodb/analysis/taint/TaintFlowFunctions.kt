@@ -60,15 +60,10 @@ private val logger = mu.KotlinLogging.logger {}
 class ForwardTaintFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
+    private val taintConfigurationFeature: TaintConfigurationFeature?,
 ) : FlowFunctions<TaintDomainFact> {
 
-    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
-        cp.features
-            ?.singleOrNull { it is TaintConfigurationFeature }
-            ?.let { it as TaintConfigurationFeature }
-    }
-
-    override fun obtainPossibleStartFacts(
+    fun obtainPossibleStartFacts(
         method: JcMethod,
     ): Collection<TaintDomainFact> = buildSet {
         // Zero (reachability) fact always present at entrypoint:
@@ -441,8 +436,7 @@ class BackwardTaintFlowFunctions(
     private val project: JcClasspath,
     private val graph: JcApplicationGraph,
 ) : FlowFunctions<TaintDomainFact> {
-
-    override fun obtainPossibleStartFacts(
+    fun obtainPossibleStartFacts(
         method: JcMethod,
     ): Collection<TaintDomainFact> {
         return listOf(TaintZeroFact)

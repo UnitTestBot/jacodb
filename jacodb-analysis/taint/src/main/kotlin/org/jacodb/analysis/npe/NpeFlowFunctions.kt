@@ -74,15 +74,9 @@ private val logger = mu.KotlinLogging.logger {}
 class ForwardNpeFlowFunctions(
     private val cp: JcClasspath,
     private val graph: JcApplicationGraph,
+    private val taintConfigurationFeature: TaintConfigurationFeature?,
 ) : FlowFunctions<TaintDomainFact> {
-
-    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
-        cp.features
-            ?.singleOrNull { it is TaintConfigurationFeature }
-            ?.let { it as TaintConfigurationFeature }
-    }
-
-    override fun obtainPossibleStartFacts(
+    fun obtainPossibleStartFacts(
         method: JcMethod,
     ): Collection<TaintDomainFact> = buildSet {
         addAll(obtainPossibleStartFactsBasic(method))

@@ -56,12 +56,12 @@ class DefaultChunkResolver<Stmt>(
 
                     is NotificationOnEnd<*, *> -> {
                         message as NotificationOnEnd<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.statement)
+                        chunkStrategy.chunkByStmt(message.summaryEdge.to.statement)
                     }
 
                     is NotificationOnStart<*, *> -> {
                         message as NotificationOnStart<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.statement)
+                        chunkStrategy.chunkByStmt(message.summaryEdge.to.statement)
                     }
 
                     is ResolvedCall<*, *, *> -> {

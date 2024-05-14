@@ -35,13 +35,13 @@ data class ResolvedCall<Stmt, Fact, Method>(
 data class NotificationOnStart<Stmt, Fact>(
     override val runnerId: RunnerId,
     val author: RunnerId,
-    val edge: Edge<Stmt, Fact>,
-    val data: Edge<Stmt, Fact>,
+    val summaryEdge: Edge<Stmt, Fact>,
+    val subscribingEdge: Edge<Stmt, Fact>,
 ) : AnalyzerMessage<Stmt, Fact>
 
 data class NotificationOnEnd<Stmt, Fact>(
     override val runnerId: RunnerId,
     val author: RunnerId,
-    val edge: Edge<Stmt, Fact>,
-    val data: Edge<Stmt, Fact>,
+    val summaryEdge: Edge<Stmt, Fact>,
+    val subscribingEdge: Edge<Stmt, Fact>,
 ) : AnalyzerMessage<Stmt, Fact>

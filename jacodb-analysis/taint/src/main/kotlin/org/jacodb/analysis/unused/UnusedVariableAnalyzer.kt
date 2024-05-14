@@ -17,6 +17,7 @@
 package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.Analyzer
+import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
@@ -29,6 +30,9 @@ class UnusedVariableAnalyzer(
         UnusedVariableFlowFunctions(graph)
     }
 
+    override fun obtainPossibleStartFacts(method: JcMethod): Collection<UnusedVariableDomainFact> =
+        setOf(UnusedVariableZeroFact)
+
     private fun isExitPoint(statement: JcInst): Boolean {
         return statement in graph.exitPoints(statement.location.method)
     }
@@ -38,5 +42,4 @@ class UnusedVariableAnalyzer(
             add(NewSummaryEdge(edge))
         }
     }
-
 }

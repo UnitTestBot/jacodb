@@ -30,14 +30,13 @@ import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.mergeIfdsResults
-import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.impl.features.usagesExt
 
 suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
     val npeAnalyzer = NpeAnalyzer(graph)
-    for (fact in npeAnalyzer.flowFunctions.obtainPossibleStartFacts(method)) {
+    for (fact in npeAnalyzer.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
             val vertex = Vertex(entryPoint, fact)
             val message = NewEdge(SingletonRunnerId, Edge(vertex, vertex), Reason.Initial)
