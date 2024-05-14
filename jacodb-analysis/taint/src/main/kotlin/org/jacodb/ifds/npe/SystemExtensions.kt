@@ -35,7 +35,7 @@ import org.jacodb.impl.features.usagesExt
 suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-    val npeAnalyzer = NpeAnalyzer(graph)
+    val npeAnalyzer = NpeAnalyzer(SingletonRunnerId, graph)
     for (fact in npeAnalyzer.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {
             val vertex = Vertex(entryPoint, fact)

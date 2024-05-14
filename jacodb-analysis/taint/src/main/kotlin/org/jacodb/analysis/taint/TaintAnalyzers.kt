@@ -24,6 +24,12 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Reason
+import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.NewEdge
+import org.jacodb.ifds.messages.NewFinding
+import org.jacodb.ifds.messages.NewSummaryEdge
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
@@ -31,9 +37,10 @@ import org.jacodb.taint.configuration.TaintMethodSink
 private val logger = mu.KotlinLogging.logger {}
 
 
-class TaintAnalyzer(
+class ForwardTaintAnalyzer(
+    private val selfRunnerId: RunnerId,
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintDomainFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, RunnerMessage> {
     private val cp = graph.classpath
 
     private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
@@ -57,9 +64,9 @@ class TaintAnalyzer(
 
     override fun handleNewEdge(
         edge: TaintEdge,
-    ): List<TaintEvent> = buildList {
+    ): List<RunnerMessage> = buildList {
         if (isExitPoint(edge.to.statement)) {
-            add(NewSummaryEdge(edge))
+            add(NewSummaryEdge(selfRunnerId, edge))
         }
 
         run {
@@ -85,7 +92,7 @@ class TaintAnalyzer(
                     val message = item.ruleNote
                     val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
                     logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.sink.statement.location.method}" }
-                    add(NewVulnerability(vulnerability))
+                    add(NewFinding(selfRunnerId, vulnerability))
                 }
             }
         }
@@ -94,8 +101,10 @@ class TaintAnalyzer(
 }
 
 class BackwardTaintAnalyzer(
+    private val selfRunnerId: RunnerId,
+    private val otherRunnerId: RunnerId,
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintDomainFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, RunnerMessage> {
 
     override val flowFunctions: BackwardTaintFlowFunctions by lazy {
         BackwardTaintFlowFunctions(graph.classpath, graph)
@@ -113,9 +122,9 @@ class BackwardTaintAnalyzer(
 
     override fun handleNewEdge(
         edge: TaintEdge,
-    ): List<TaintEvent> = buildList {
+    ): List<RunnerMessage> = buildList {
         if (isExitPoint(edge.to.statement)) {
-            add(EdgeForOtherRunner(Edge(edge.to, edge.to)))
+            add(NewEdge(otherRunnerId, Edge(edge.to, edge.to), Reason.FromOtherRunner(edge, selfRunnerId)))
         }
     }
 }

@@ -19,16 +19,17 @@ package org.jacodb.analysis.npe
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
-import org.jacodb.analysis.taint.NewSummaryEdge
-import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintEdge
-import org.jacodb.analysis.taint.TaintEvent
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.NewFinding
+import org.jacodb.ifds.messages.RunnerMessage
+import org.jacodb.ifds.npe.NpeVulnerability
 import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
@@ -38,8 +39,9 @@ private val logger = mu.KotlinLogging.logger {}
 
 
 class NpeAnalyzer(
+    private val selfRunnerId: RunnerId,
     private val graph: JcApplicationGraph,
-) : Analyzer<TaintDomainFact, TaintEvent> {
+) : Analyzer<TaintDomainFact, RunnerMessage> {
     val cp = graph.classpath
 
     private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
@@ -62,18 +64,18 @@ class NpeAnalyzer(
 
     override fun handleNewEdge(
         edge: TaintEdge,
-    ): List<TaintEvent> = buildList {
+    ): List<RunnerMessage> = buildList {
         if (isExitPoint(edge.to.statement)) {
-            add(NewSummaryEdge(edge))
+            add(org.jacodb.ifds.messages.NewSummaryEdge(selfRunnerId, edge))
         }
 
         val fact = edge.to.fact
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(edge.to.statement)) {
                 val message = "NPE" // TODO
-                val vulnerability = TaintVulnerability(message, sink = edge.to)
+                val vulnerability = NpeVulnerability(message, sink = edge.to)
                 logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.sink.statement.location.method}" }
-                add(NewVulnerability(vulnerability))
+                add(NewFinding(selfRunnerId, vulnerability))
             }
         }
 
@@ -98,8 +100,8 @@ class NpeAnalyzer(
                 if (item.condition.accept(conditionEvaluator)) {
                     logger.trace { "Found sink at ${edge.to} in ${edge.from.statement.location.method} on $item" }
                     val message = item.ruleNote
-                    val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
-                    add(NewVulnerability(vulnerability))
+                    val vulnerability = NpeVulnerability(message, sink = edge.to, rule = item)
+                    add(NewFinding(selfRunnerId, vulnerability))
                 }
             }
         }

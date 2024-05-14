@@ -21,10 +21,14 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.NewSummaryEdge
+import org.jacodb.ifds.messages.RunnerMessage
 
 class UnusedVariableAnalyzer(
+    private val selfRunnerId: RunnerId,
     private val graph: JcApplicationGraph,
-) : Analyzer<UnusedVariableDomainFact, Event> {
+) : Analyzer<UnusedVariableDomainFact, RunnerMessage> {
 
     override val flowFunctions: UnusedVariableFlowFunctions by lazy {
         UnusedVariableFlowFunctions(graph)
@@ -37,9 +41,9 @@ class UnusedVariableAnalyzer(
         return statement in graph.exitPoints(statement.location.method)
     }
 
-    override fun handleNewEdge(edge: Edge<JcInst, UnusedVariableDomainFact>): List<Event> = buildList {
+    override fun handleNewEdge(edge: Edge<JcInst, UnusedVariableDomainFact>): List<RunnerMessage> = buildList {
         if (isExitPoint(edge.to.statement)) {
-            add(NewSummaryEdge(edge))
+            add(NewSummaryEdge(selfRunnerId, edge))
         }
     }
 }

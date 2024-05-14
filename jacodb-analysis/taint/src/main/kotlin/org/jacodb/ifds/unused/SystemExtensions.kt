@@ -38,7 +38,7 @@ import org.jacodb.impl.features.usagesExt
 suspend fun ActorSystem<CommonMessage>.startUnusedAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
     val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
-    val unusedAnalyzer = UnusedVariableAnalyzer(graph)
+    val unusedAnalyzer = UnusedVariableAnalyzer(SingletonRunnerId, graph)
 
     for (fact in unusedAnalyzer.obtainPossibleStartFacts(method)) {
         for (entryPoint in graph.entryPoints(method)) {

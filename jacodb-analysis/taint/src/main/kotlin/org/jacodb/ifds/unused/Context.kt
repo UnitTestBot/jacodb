@@ -39,7 +39,7 @@ fun unusedIfdsContext(
         chunkStrategy
     ) { runnerId ->
         val analyzer = when (runnerId) {
-            is SingletonRunnerId -> UnusedVariableAnalyzer(graph)
+            is SingletonRunnerId -> UnusedVariableAnalyzer(SingletonRunnerId, graph)
             else -> error("Unexpected runnerId: $runnerId")
         }
 
@@ -47,11 +47,6 @@ fun unusedIfdsContext(
             runnerId,
             analyzer
         ) { event ->
-            when (event) {
-                is org.jacodb.analysis.unused.NewSummaryEdge -> {
-                    val edge = org.jacodb.ifds.messages.NewSummaryEdge(runnerId, event.edge)
-                    add(edge)
-                }
-            }
+            add(event)
         }
     }

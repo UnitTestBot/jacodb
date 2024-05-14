@@ -17,8 +17,6 @@
 package org.jacodb.ifds.npe
 
 import org.jacodb.analysis.npe.NpeAnalyzer
-import org.jacodb.analysis.taint.EdgeForOtherRunner
-import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -27,8 +25,6 @@ import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.messages.NewFinding
-import org.jacodb.ifds.messages.NewSummaryEdge
 
 fun npeIfdsContext(
     cp: JcClasspath,
@@ -43,7 +39,7 @@ fun npeIfdsContext(
         chunkStrategy
     ) { runnerId ->
         val analyzer = when (runnerId) {
-            is SingletonRunnerId -> NpeAnalyzer(graph)
+            is SingletonRunnerId -> NpeAnalyzer(runnerId, graph)
             else -> error("Unexpected runnerId: $runnerId")
         }
 
@@ -51,27 +47,6 @@ fun npeIfdsContext(
             runnerId,
             analyzer
         ) { event ->
-            when (event) {
-                is EdgeForOtherRunner -> {
-                    error("Unexpected event: $event")
-                }
-
-                is org.jacodb.analysis.taint.NewSummaryEdge -> {
-                    val summaryEdge = NewSummaryEdge(runnerId, event.edge)
-                    add(summaryEdge)
-                }
-
-                is NewVulnerability -> {
-                    val result = NewFinding(
-                        runnerId,
-                        NpeVulnerability(
-                            event.vulnerability.message,
-                            event.vulnerability.sink,
-                            event.vulnerability.rule
-                        )
-                    )
-                    add(result)
-                }
-            }
+            add(event)
         }
     }

@@ -17,10 +17,7 @@
 package org.jacodb.ifds.taint
 
 import org.jacodb.analysis.taint.BackwardTaintAnalyzer
-import org.jacodb.analysis.taint.EdgeForOtherRunner
-import org.jacodb.analysis.taint.NewSummaryEdge
-import org.jacodb.analysis.taint.NewVulnerability
-import org.jacodb.analysis.taint.TaintAnalyzer
+import org.jacodb.analysis.taint.ForwardTaintAnalyzer
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -31,9 +28,7 @@ import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.NewEdge as IfdsNewEdge
-import org.jacodb.ifds.messages.NewFinding as IfdsNewResult
-import org.jacodb.ifds.messages.NewSummaryEdge as IfdsNewSummaryEdge
+import org.jacodb.ifds.messages.NewEdge
 
 private fun complementRunner(type: RunnerId): RunnerId =
     when (type) {
@@ -56,8 +51,8 @@ fun taintIfdsContext(
         chunkStrategy
     ) { runnerId ->
         val analyzer = when (runnerId) {
-            is ForwardRunnerId -> TaintAnalyzer(graph)
-            is BackwardRunnerId -> BackwardTaintAnalyzer(graph)
+            is ForwardRunnerId -> ForwardTaintAnalyzer(ForwardRunnerId, graph)
+            is BackwardRunnerId -> BackwardTaintAnalyzer(BackwardRunnerId, ForwardRunnerId, graph)
             else -> error("Unexpected runnerId: $runnerId")
         }
 
@@ -65,28 +60,8 @@ fun taintIfdsContext(
             runnerId,
             analyzer
         ) { event ->
-            when (event) {
-                is EdgeForOtherRunner -> {
-                    if (useBackwardRunner) {
-                        val edgeForOtherRunner =
-                            IfdsNewEdge(
-                                complementRunner(runnerId),
-                                event.edge,
-                                Reason.FromOtherRunner(edge, runnerId)
-                            )
-                        add(edgeForOtherRunner)
-                    }
-                }
-
-                is NewSummaryEdge -> {
-                    val summaryEdge = IfdsNewSummaryEdge(runnerId, event.edge)
-                    add(summaryEdge)
-                }
-
-                is NewVulnerability -> {
-                    val result = IfdsNewResult(runnerId, event.vulnerability)
-                    add(result)
-                }
+            if (useBackwardRunner || !(event is NewEdge<*, *> && event.reason is Reason.FromOtherRunner)) {
+                add(event)
             }
         }
     }
