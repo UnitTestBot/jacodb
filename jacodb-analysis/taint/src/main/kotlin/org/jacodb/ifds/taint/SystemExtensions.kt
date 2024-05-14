@@ -84,6 +84,7 @@ suspend fun ActorSystem<CommonMessage>.runTaintAnalysis(
 }
 
 @OptIn(DelicateCoroutinesApi::class)
+@JvmName("runTaintAnalysisAsync")
 fun ActorSystem<CommonMessage>.runTaintAnalysisAsync(
     methods: Collection<JcMethod>,
     timeout: Duration = 60.seconds,

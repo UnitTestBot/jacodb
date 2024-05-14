@@ -27,28 +27,14 @@ import org.jacodb.impl.features.usagesExt
 import java.util.concurrent.CompletableFuture
 
 /**
- * Creates an instance of [SimplifiedJcApplicationGraph], see its docs for more info.
- */
-suspend fun JcClasspath.newApplicationGraphForAnalysis(bannedPackagePrefixes: List<String>? = null): JcApplicationGraph {
-    val mainGraph = JcApplicationGraphImpl(this, usagesExt())
-    return if (bannedPackagePrefixes != null) {
-        SimplifiedJcApplicationGraph(mainGraph, bannedPackagePrefixes)
-    } else {
-        SimplifiedJcApplicationGraph(mainGraph, defaultBannedPackagePrefixes)
-    }
-}
-
-/**
  * Async adapter for calling [newApplicationGraphForAnalysis] from Java.
  *
  * See also: [answer on StackOverflow](https://stackoverflow.com/a/52887677/3592218).
  */
 @OptIn(DelicateCoroutinesApi::class)
-fun JcClasspath.newApplicationGraphForAnalysisAsync(
-    bannedPackagePrefixes: List<String>? = null,
-): CompletableFuture<JcApplicationGraph> =
+fun JcClasspath.newApplicationGraphForAnalysisAsync(): CompletableFuture<JcApplicationGraph> =
     GlobalScope.future {
-        newApplicationGraphForAnalysis(bannedPackagePrefixes)
+        JcApplicationGraphImpl(this@newApplicationGraphForAnalysisAsync, usagesExt())
     }
 
 val defaultBannedPackagePrefixes: List<String> = listOf(

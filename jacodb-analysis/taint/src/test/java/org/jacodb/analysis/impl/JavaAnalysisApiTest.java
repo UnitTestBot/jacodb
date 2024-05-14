@@ -16,7 +16,6 @@
 
 package org.jacodb.analysis.impl;
 
-import kotlin.Unit;
 import kotlin.time.DurationUnit;
 import org.jacodb.actors.api.ActorSystem;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
@@ -36,9 +35,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static kotlin.time.DurationKt.toDuration;
@@ -63,7 +60,7 @@ public class JavaAnalysisApiTest {
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
         JcApplicationGraph applicationGraph = ApplicationGraphFactory
-            .newApplicationGraphForAnalysisAsync(classpath, null)
+            .newApplicationGraphForAnalysisAsync(classpath)
             .get();
 
         ActorSystem<CommonMessage> system = taintIfdsSystem(
@@ -72,21 +69,10 @@ public class JavaAnalysisApiTest {
             applicationGraph,
             getDefaultBannedPackagePrefixes(),
             ChunkStrategiesKt.getClassChunkStrategy());
-        CompletableFuture<Unit> future = runTaintAnalysisAsync(
+        runTaintAnalysisAsync(
             system,
             methodsToAnalyze,
-            toDuration(30, DurationUnit.SECONDS));
-        future.get();
-    }
-
-    @Test
-    public void testCustomBannedPackagesApi() throws ExecutionException, InterruptedException {
-        List<String> bannedPackages = new ArrayList<>(ApplicationGraphFactory.getDefaultBannedPackagePrefixes());
-        bannedPackages.add("my.package.that.wont.be.analyzed");
-
-        JcApplicationGraph customGraph = ApplicationGraphFactory
-            .newApplicationGraphForAnalysisAsync(classpath, bannedPackages)
+            toDuration(30, DurationUnit.SECONDS))
             .get();
-        Assertions.assertNotNull(customGraph);
     }
 }
