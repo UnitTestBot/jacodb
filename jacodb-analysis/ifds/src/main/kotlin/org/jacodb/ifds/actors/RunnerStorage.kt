@@ -42,15 +42,15 @@ class RunnerStorage<Stmt, Fact>(
     private val parent: ActorRef<RunnerMessage>,
     private val runnerId: RunnerId,
 ) : Actor<StorageMessage> {
-    data class SubscriptionData<Stmt, Fact>(
+    data class SavedSubscription<Stmt, Fact>(
         val edge: Edge<Stmt, Fact>,
         val subscriber: RunnerId,
     )
 
     private val startSubscribers =
-        HashMap<Vertex<Stmt, Fact>, HashSet<SubscriptionData<Stmt, Fact>>>()
+        HashMap<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
     private val endSubscribers =
-        HashMap<Vertex<Stmt, Fact>, HashSet<SubscriptionData<Stmt, Fact>>>()
+        HashMap<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
 
     private val edges = hashSetOf<Edge<Stmt, Fact>>()
     private val reasons = hashMapOf<Edge<Stmt, Fact>, HashSet<Reason<Stmt, Fact>>>()
@@ -103,26 +103,26 @@ class RunnerStorage<Stmt, Fact>(
                 @Suppress("UNCHECKED_CAST")
                 message as SubscriptionOnStart<Stmt, Fact>
 
-                val subscriptionData = SubscriptionData(message.data, message.subscriber)
+                val savedSubscription = SavedSubscription(message.data, message.subscriber)
 
-                sendStartNotificationsOnExistingSummaryEdges(message.startVertex, subscriptionData)
+                sendStartNotificationsOnExistingSummaryEdges(message.startVertex, savedSubscription)
 
                 startSubscribers
                     .computeIfAbsent(message.startVertex) { hashSetOf() }
-                    .add(subscriptionData)
+                    .add(savedSubscription)
             }
 
             is SubscriptionOnEnd<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 message as SubscriptionOnEnd<Stmt, Fact>
 
-                val subscriptionData = SubscriptionData(message.data, message.subscriber)
+                val savedSubscription = SavedSubscription(message.data, message.subscriber)
 
-                sendEndNotificationsOnExistingSummaryEdges(message.endVertex, subscriptionData)
+                sendEndNotificationsOnExistingSummaryEdges(message.endVertex, savedSubscription)
 
                 endSubscribers
                     .computeIfAbsent(message.endVertex) { hashSetOf() }
-                    .add(subscriptionData)
+                    .add(savedSubscription)
             }
 
             is NewResult<*, *> -> {
@@ -147,15 +147,15 @@ class RunnerStorage<Stmt, Fact>(
 
     private suspend fun sendStartNotificationsOnExistingSummaryEdges(
         vertex: Vertex<Stmt, Fact>,
-        subscriptionData: SubscriptionData<Stmt, Fact>,
+        savedSubscription: SavedSubscription<Stmt, Fact>,
     ) {
         val summaries = summaryEdgesByStart[vertex].orEmpty()
         for (summaryEdge in summaries) {
             val notification = NotificationOnStart(
-                subscriptionData.subscriber,
+                savedSubscription.subscriber,
                 runnerId,
                 summaryEdge,
-                subscriptionData.edge
+                savedSubscription.edge
             )
             parent.send(notification)
         }
@@ -163,15 +163,15 @@ class RunnerStorage<Stmt, Fact>(
 
     private suspend fun sendEndNotificationsOnExistingSummaryEdges(
         vertex: Vertex<Stmt, Fact>,
-        subscriptionData: SubscriptionData<Stmt, Fact>,
+        savedSubscription: SavedSubscription<Stmt, Fact>,
     ) {
         val summaries = summaryEdgesByEnd[vertex].orEmpty()
         for (summaryEdge in summaries) {
             val notification = NotificationOnEnd(
-                subscriptionData.subscriber,
+                savedSubscription.subscriber,
                 runnerId,
                 summaryEdge,
-                subscriptionData.edge
+                savedSubscription.edge
             )
             parent.send(notification)
         }

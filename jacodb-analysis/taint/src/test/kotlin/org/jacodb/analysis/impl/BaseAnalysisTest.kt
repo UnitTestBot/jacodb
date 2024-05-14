@@ -25,6 +25,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
+import org.jacodb.ifds.result.IfdsResult
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.features.usagesExt
@@ -105,7 +106,7 @@ abstract class BaseAnalysisTest : BaseTest() {
         }
     }
 
-    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> List<Vulnerability<*>>) {
+    protected fun testSingleJulietClass(className: String, findSinks: (JcMethod) -> Collection<IfdsResult<*, *>>) {
         logger.info { className }
 
         val clazz = cp.findClass(className)

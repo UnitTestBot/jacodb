@@ -21,7 +21,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
@@ -30,6 +29,7 @@ import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.result.buildTraceGraph
 import org.jacodb.ifds.sarif.sarifReportFromVulnerabilities
 import org.jacodb.ifds.sarif.toSarif
+import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.ifds.taint.collectTaintComputationData
 import org.jacodb.ifds.taint.collectTaintResults
 import org.jacodb.ifds.taint.startTaintAnalysis
@@ -82,7 +82,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         assertTrue(trace.isNotEmpty())
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+    private fun findSinks(method: JcMethod): Collection<TaintVulnerability> = runBlocking {
         val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = system("ifds") { ProjectManager(ifdsContext) }
 

@@ -20,11 +20,11 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.ifds.actors.ProjectManager
+import org.jacodb.ifds.npe.NpeVulnerability
 import org.jacodb.ifds.npe.collectNpeResults
 import org.jacodb.ifds.npe.npeIfdsContext
 import org.jacodb.ifds.npe.startNpeAnalysis
@@ -198,7 +198,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability> = runBlocking {
+    private fun findSinks(method: JcMethod): Collection<NpeVulnerability> = runBlocking {
         val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
         val system = system("ifds") { ProjectManager(ifdsContext) }
 

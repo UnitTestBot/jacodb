@@ -21,7 +21,6 @@ import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.unused.UnusedVariable
 import org.jacodb.analysis.unused.UnusedVariableAnalyzer
 import org.jacodb.analysis.unused.UnusedVariableDomainFact
-import org.jacodb.analysis.unused.UnusedVariableVulnerability
 import org.jacodb.analysis.unused.UnusedVariableZeroFact
 import org.jacodb.analysis.unused.isUsedAt
 import org.jacodb.api.JcMethod
@@ -50,7 +49,7 @@ suspend fun ActorSystem<CommonMessage>.startUnusedAnalysis(method: JcMethod) {
     }
 }
 
-suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): List<UnusedVariableVulnerability> {
+suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): Collection<UnusedVulnerability> {
     val data = collectUnusedComputationData()
 
     val allFacts = data.facts
@@ -68,7 +67,7 @@ suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): List<UnusedVariabl
         }
     }
     val vulnerabilities = used.filterValues { !it }.keys.map {
-        UnusedVariableVulnerability(
+        UnusedVulnerability(
             message = "Assigned value is unused",
             sink = Vertex(it, UnusedVariableZeroFact)
         )

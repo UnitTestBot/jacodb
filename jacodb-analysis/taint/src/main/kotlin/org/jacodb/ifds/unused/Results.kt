@@ -17,14 +17,14 @@
 package org.jacodb.ifds.unused
 
 import org.jacodb.analysis.unused.UnusedVariableDomainFact
-import org.jacodb.analysis.unused.UnusedVariableVulnerability
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.IfdsResult
 
 data class UnusedVulnerability(
-    val vulnerability: UnusedVariableVulnerability,
+    val message: String,
+    val sink: Vertex<JcInst, UnusedVariableDomainFact>,
 ) : IfdsResult<JcInst, UnusedVariableDomainFact> {
     override val vertex: Vertex<JcInst, UnusedVariableDomainFact>
-        get() = vulnerability.sink
+        get() = sink
 }

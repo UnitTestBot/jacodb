@@ -23,6 +23,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
 
@@ -72,7 +73,7 @@ class TaintAnalyzer(
                 if (item.condition.accept(conditionEvaluator)) {
                     val message = item.ruleNote
                     val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
-                    logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
+                    logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.sink.statement.location.method}" }
                     add(NewVulnerability(vulnerability))
                 }
             }

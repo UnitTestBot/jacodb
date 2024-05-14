@@ -24,11 +24,11 @@ import org.jacodb.analysis.taint.NewVulnerability
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
-import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
@@ -62,7 +62,7 @@ class NpeAnalyzer(
             if (fact.variable.isDereferencedAt(edge.to.statement)) {
                 val message = "NPE" // TODO
                 val vulnerability = TaintVulnerability(message, sink = edge.to)
-                logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
+                logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.sink.statement.location.method}" }
                 add(NewVulnerability(vulnerability))
             }
         }

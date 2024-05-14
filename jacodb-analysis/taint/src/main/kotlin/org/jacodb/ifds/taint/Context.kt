@@ -84,7 +84,7 @@ fun taintIfdsContext(
                 }
 
                 is NewVulnerability -> {
-                    val result = IfdsNewResult(runnerId, TaintVulnerability(event.vulnerability))
+                    val result = IfdsNewResult(runnerId, event.vulnerability)
                     add(result)
                 }
             }

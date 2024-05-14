@@ -30,8 +30,8 @@ import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.mergeIfdsResults
+import org.jacodb.ifds.taint.TaintVulnerability
 import org.jacodb.impl.features.usagesExt
-import org.jacodb.analysis.taint.TaintVulnerability as JcTaintVulnerability
 
 suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     val cp = method.enclosingClass.classpath
@@ -46,10 +46,10 @@ suspend fun ActorSystem<CommonMessage>.startNpeAnalysis(method: JcMethod) {
     }
 }
 
-suspend fun ActorSystem<CommonMessage>.collectNpeResults(): List<JcTaintVulnerability> =
+suspend fun ActorSystem<CommonMessage>.collectNpeResults(): Collection<NpeVulnerability> =
     collectNpeComputationData()
         .results
-        .mapTo(mutableListOf()) { it.vulnerability }
+
 
 suspend fun ActorSystem<CommonMessage>.collectNpeComputationData(): IfdsComputationData<JcInst, TaintDomainFact, NpeVulnerability> {
     val results = ask { CollectAll(SingletonRunnerId, it) }

@@ -16,6 +16,8 @@
 
 package org.jacodb.analysis.taint
 
+import org.jacodb.ifds.taint.TaintVulnerability
+
 sealed interface TaintEvent
 
 data class NewSummaryEdge(

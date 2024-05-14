@@ -37,7 +37,7 @@ class ChunkManager<Stmt>(
     private val routerFactory = messageKeyRouter(
         ifdsContext::runnerIdByMessage
     ) { runnerId ->
-        Runner<Stmt, Any?>(this@ActorContext.self, ifdsContext, chunk, runnerId)
+        Runner<Stmt, Nothing>(this@ActorContext.self, ifdsContext, chunk, runnerId)
     }
 
     private val router = spawn(

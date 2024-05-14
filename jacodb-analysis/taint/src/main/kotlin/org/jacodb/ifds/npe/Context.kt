@@ -62,7 +62,14 @@ fun npeIfdsContext(
                 }
 
                 is NewVulnerability -> {
-                    val result = NewResult(runnerId, NpeVulnerability(event.vulnerability))
+                    val result = NewResult(
+                        runnerId,
+                        NpeVulnerability(
+                            event.vulnerability.message,
+                            event.vulnerability.sink,
+                            event.vulnerability.rule
+                        )
+                    )
                     add(result)
                 }
             }
