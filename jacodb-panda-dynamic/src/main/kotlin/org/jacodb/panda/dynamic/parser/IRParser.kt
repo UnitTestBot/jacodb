@@ -1066,6 +1066,7 @@ class IRParser(
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
         val loadedValue = inputs.find<PandaLoadedValue>().lastOrNull()
         val localVar = inputs.find<PandaLocalVar>().lastOrNull()
+        val arrayAccess = inputs.find<PandaArrayAccess>().lastOrNull()
         instCallValue?.let { instValue ->
             return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
@@ -1104,6 +1105,16 @@ class IRParser(
                     }
                 },
                 args = inputs.filterNot { it == pandaLocalVar },
+            )
+        }
+        arrayAccess?.let { pandaArrayAccess ->
+            return PandaInstanceVirtualCallExpr(
+                lazyMethod = lazy {
+                    val name = pandaArrayAccess.array.type.typeName
+                    PandaMethod(name)
+                },
+                args = inputs.filterNot { it == pandaArrayAccess },
+                instance = pandaArrayAccess.array
             )
         }
         error("No instance or loaded value found in inputs")
