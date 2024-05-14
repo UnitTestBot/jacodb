@@ -32,7 +32,7 @@ import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
 
-typealias TaintFlowScope<Fact> = FlowScope<JcInst, Fact>
+typealias JcFlowScope<Fact> = FlowScope<JcInst, Fact>
 
 class DefaultAnalyzer<Fact>(
     private val applicationGraph: JcApplicationGraph,
@@ -42,18 +42,18 @@ class DefaultAnalyzer<Fact>(
     override fun step(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
         when (message) {
             is EdgeMessage<JcInst, Fact> -> {
-                val scope = TaintFlowScope(message.edge, this)
+                val scope = JcFlowScope(message.edge, this)
                 scope.processEdge(message.edge)
             }
 
             is ResolvedCall<JcInst, Fact, *> -> {
-                val scope = TaintFlowScope(message.edge, this)
+                val scope = JcFlowScope(message.edge, this)
                 @Suppress("UNCHECKED_CAST")
                 scope.processResolvedCall(message as ResolvedCall<JcInst, Fact, JcMethod>)
             }
 
             is NotificationOnStart<JcInst, Fact> -> {
-                val scope = TaintFlowScope(message.edge, this)
+                val scope = JcFlowScope(message.edge, this)
                 scope.processNotificationOnStart(message)
             }
 
@@ -63,7 +63,7 @@ class DefaultAnalyzer<Fact>(
         }
     }
 
-    private fun TaintFlowScope<Fact>.processEdge(edge: Edge<JcInst, Fact>) {
+    private fun JcFlowScope<Fact>.processEdge(edge: Edge<JcInst, Fact>) {
         val toStmt = edge.to.statement
         val method = applicationGraph.methodOf(toStmt)
 
@@ -76,7 +76,7 @@ class DefaultAnalyzer<Fact>(
         }
     }
 
-    private fun TaintFlowScope<Fact>.processCall(edge: Edge<JcInst, Fact>) {
+    private fun JcFlowScope<Fact>.processCall(edge: Edge<JcInst, Fact>) {
         val callMessage = UnresolvedCall(runnerId, edge)
         add(callMessage)
 
@@ -89,7 +89,7 @@ class DefaultAnalyzer<Fact>(
         }
     }
 
-    private fun TaintFlowScope<Fact>.processSequent(edge: Edge<JcInst, Fact>) {
+    private fun JcFlowScope<Fact>.processSequent(edge: Edge<JcInst, Fact>) {
         val successors = applicationGraph.successors(edge.to.statement)
 
         flowFunctions.run {
@@ -100,7 +100,7 @@ class DefaultAnalyzer<Fact>(
     }
 
 
-    private fun TaintFlowScope<Fact>.processResolvedCall(
+    private fun JcFlowScope<Fact>.processResolvedCall(
         resolvedCall: ResolvedCall<JcInst, Fact, JcMethod>,
     ) {
         val entryPoints = applicationGraph.entryPoints(resolvedCall.method)
@@ -113,7 +113,7 @@ class DefaultAnalyzer<Fact>(
     }
 
 
-    private fun TaintFlowScope<Fact>.processNotificationOnStart(message: NotificationOnStart<JcInst, Fact>) {
+    private fun JcFlowScope<Fact>.processNotificationOnStart(message: NotificationOnStart<JcInst, Fact>) {
         val successors = applicationGraph.successors(message.data.to.statement)
 
         flowFunctions.run {

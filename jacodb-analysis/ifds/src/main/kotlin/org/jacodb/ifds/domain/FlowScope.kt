@@ -22,11 +22,11 @@ class FlowScope<Stmt, Fact>(
     val edge: Edge<Stmt, Fact>,
     private val messages: MutableList<RunnerMessage>,
 ) {
-    fun add(message: RunnerMessage) {
-        messages.add(message)
+    fun add(newMessage: RunnerMessage) {
+        messages.add(newMessage)
     }
 
-    fun addAll(messages: Collection<RunnerMessage>) {
-        this.messages.addAll(messages)
+    fun addAll(newMessages: Collection<RunnerMessage>) {
+        messages.addAll(newMessages)
     }
 }
