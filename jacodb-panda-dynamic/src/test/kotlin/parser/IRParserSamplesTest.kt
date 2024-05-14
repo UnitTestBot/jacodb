@@ -75,7 +75,7 @@ class IRParserSamplesTest {
 
     @Test
     fun printPandaInstructions()  {
-        val parser = load("project1/entry/src/main/ets/backup/cloudbackup/BackupMissionAppOperate")
+        val parser = load("project1/entry/src/main/ets/backup/cloudbackup/BackupMissionAttachUpload")
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->

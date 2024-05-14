@@ -87,7 +87,8 @@ class IRTraversalManager(
 
     inner class TryBlockTraversalStrategy(
         env: IREnvironment,
-        private val stopperBBId: Int
+        private val stopperBBId: Int,
+        private val catchBBId: Int
     ) : TraversalStrategy(env) {
 
         override fun chooseBB(): ProgramBasicBlock? {
@@ -95,7 +96,16 @@ class IRTraversalManager(
         }
 
         override fun checkCondition(bb: ProgramBasicBlock): Boolean {
-            return bb.id == stopperBBId
+            if (bb.id == stopperBBId) {
+                strategyStack.nextTryStrategy(0)?.let { ts ->
+                    ts.pendingBB.addAll(
+                        bb.successors.filterNot { it == catchBBId }.map { idToProgramBB[it]!! }
+                    )
+                }
+                return true
+            }
+
+            return false
         }
     }
 
@@ -109,7 +119,11 @@ class IRTraversalManager(
         }
 
         override fun checkCondition(bb: ProgramBasicBlock): Boolean {
-            return bb.insts.isEmpty()
+            return strategyStack.find {
+                (it as? CatchBlockTraversalStrategy)?.let { ts ->
+                    ts.pendingBB.size == 1 && ts.pendingBB.first().id == bb.id
+                } ?: false
+            } != null
         }
     }
 
@@ -144,7 +158,7 @@ class IRTraversalManager(
                 }
 
                 val stopperBBId = catchBB.predecessors.first { it != progBB.id }
-                val tryStrategy = TryBlockTraversalStrategy(currentStrategy.env.copy(), stopperBBId).apply {
+                val tryStrategy = TryBlockTraversalStrategy(currentStrategy.env.copy(), stopperBBId, catchBB.id).apply {
                     pendingBB.addLast(tryBB)
                 }
 
@@ -201,5 +215,13 @@ class IRTraversalManager(
     private fun addEmptyBlockPlaceholder(method: ProgramMethod, bbId: Int) {
         val location = IRParser.locationFromOp(method=method)
         method.insts += PandaEmptyBBPlaceholderInst(location, bbId)
+    }
+
+    private fun ArrayDeque<TraversalStrategy>.nextTryStrategy(idx: Int): TryBlockTraversalStrategy? {
+        for (i in idx+1 until this.size) {
+            if (this[i] is TryBlockTraversalStrategy) return this[i] as TryBlockTraversalStrategy
+        }
+
+        return null
     }
 }

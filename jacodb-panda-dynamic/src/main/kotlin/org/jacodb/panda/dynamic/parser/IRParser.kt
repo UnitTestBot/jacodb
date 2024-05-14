@@ -967,11 +967,16 @@ class IRParser(
             }
 
             opcode == "CatchPhi" -> {
+                val visitedBB = mutableSetOf<Int>()
+
                 fun pathToCatchBlock(
                     currentBB: PandaBasicBlock,
                     currentPath: Set<PandaInstRef>,
                     targetId: Int,
                 ): Set<PandaInstRef> {
+                    if (currentBB.id in visitedBB) return currentPath
+                    visitedBB += currentBB.id
+
                     val newSet = currentPath + (currentBB.start.index..currentBB.end.index)
                         .mapNotNull { if (it == -1) null else PandaInstRef(it) }.toSet()
 
