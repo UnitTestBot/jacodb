@@ -241,6 +241,8 @@ class IRParser(
             traversalManager.run()
         }
 
+        programMethods.forEach { it.buildInsts() }
+
         val gotoToBB = preprocessGoto(programMethods)
         postprocessGoto(programMethods, gotoToBB)
     }
@@ -315,7 +317,6 @@ class IRParser(
 
             val blocks = method.idToBB.toMap().values.sortedBy { it.start }
 
-
             gotoToRemove.forEach { gotoInst ->
                 method.insts.remove(gotoInst)
 
@@ -363,12 +364,12 @@ class IRParser(
             }
             val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
             env.setLocalAssignment(method.signature, lv, assignment)
-            method.insts += assignment
+            method.pushInst(assignment)
         }
 
         fun handle2(callExpr: PandaCallExpr) {
             if (outputs.isEmpty()) {
-                method.insts += PandaCallInst(locationFromOp(this), callExpr)
+                method.pushInst(PandaCallInst(locationFromOp(this), callExpr))
             } else {
                 handle(callExpr)
             }
@@ -432,7 +433,7 @@ class IRParser(
             }
 
             opcode.startsWith("IfImm") -> {
-                method.insts += mapIfInst(this, inputs)
+                method.pushInst(mapIfInst(this, inputs))
             }
 
             opcode == "LoadString" -> {
@@ -463,10 +464,6 @@ class IRParser(
                         input.value
                     }
 
-                    input is PandaValueByInstance -> {
-                        input.getClassAndMethodName().toString()
-                    }
-
                     else -> error("No string data")
                 }
 //                        as PandaStringConstant
@@ -482,22 +479,22 @@ class IRParser(
 
             opcode == "Intrinsic.throw" -> {
                 val throwInst = PandaThrowInst(locationFromOp(this), inputs[0])
-                method.insts += throwInst
+                method.pushInst(throwInst)
             }
 
             opcode == "Intrinsic.throw.constassignment" -> {
                 val throwInst = PandaThrowInst(locationFromOp(this), PandaBuiltInError("ConstAssignmentError"))
-                method.insts += throwInst
+                method.pushInst(throwInst)
             }
 
             opcode == "Intrinsic.return" -> {
                 val returnInst = PandaReturnInst(locationFromOp(this), inputs.getOrNull(0))
-                method.insts += returnInst
+                method.pushInst(returnInst)
             }
 
             opcode == "Intrinsic.returnundefined" -> {
                 val returnInst = PandaReturnInst(locationFromOp(this), PandaUndefinedConstant)
-                method.insts += returnInst
+                method.pushInst(returnInst)
             }
 
             opcode == "Intrinsic.istrue" -> {
@@ -565,7 +562,7 @@ class IRParser(
                     val expr = PandaLengthExpr(inputs[0])
                     val lv = PandaLocalVar(method.currentLocalVarId++, expr.type)
                     val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
-                    method.insts += assignment
+                    method.pushInst(assignment)
                     env.setLocalAssignment(method.signature, lv, assignment)
                     lv
                 } else PandaValueByInstance(inputs[0], name)
@@ -606,7 +603,7 @@ class IRParser(
                 val value = inputs[1]
 
                 val property = PandaValueByInstance(instance, objectName)
-                method.insts += PandaAssignInst(locationFromOp(this), property, value)
+                method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
             }
 
             opcode == "Intrinsic.ldhole" -> {
@@ -630,12 +627,12 @@ class IRParser(
 
             opcode == "Intrinsic.newlexenv" -> {
                 env.newLexenv()
-                method.insts += PandaNewLexenvInst(locationFromOp(this))
+                method.pushInst(PandaNewLexenvInst(locationFromOp(this)))
             }
 
             opcode == "Intrinsic.poplexenv" -> {
                 env.popLexenv()
-                method.insts += PandaPopLexenvInst(locationFromOp(this))
+                method.pushInst(PandaPopLexenvInst(locationFromOp(this)))
             }
 
             opcode == "Intrinsic.stlexvar" -> {
@@ -646,7 +643,7 @@ class IRParser(
                 )
                 val value = inputs[0]
                 env.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
-                method.insts += PandaAssignInst(locationFromOp(this), lexvar, value)
+                method.pushInst(PandaAssignInst(locationFromOp(this), lexvar, value))
             }
 
             opcode == "Intrinsic.ldlexvar" -> {
@@ -675,7 +672,7 @@ class IRParser(
                 val value = inputs[1]
 
                 val property = PandaValueByInstance(instance, fieldName)
-                method.insts += PandaAssignInst(locationFromOp(this), property, value)
+                method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
             }
 
             opcode == "Intrinsic.definefunc" -> {
@@ -970,40 +967,41 @@ class IRParser(
             }
 
             opcode == "CatchPhi" -> {
-                fun pathToCatchBlock(
-                    currentBB: PandaBasicBlock,
-                    acc: List<PandaInstRef>,
-                    targetId: Int,
-                ): List<PandaInstRef>? {
-                    val newList = acc + (currentBB.start.index..currentBB.end.index)
-                        .mapNotNull { if (it == -1) null else PandaInstRef(it) }
-
-                    for (succBBId in currentBB.successors) {
-                        if (succBBId == targetId) return acc
-                        method.idToBB[succBBId]?.let { succBB ->
-                            pathToCatchBlock(succBB, newList, targetId)?.let { return it }
-                        }
-                    }
-
-                    return null
-                }
-
                 // Catch basic block contains multiple CatchPhi, but only the last one contains "error" variable.
                 // This CatchPhi is the last one, so ignoring all the other ones before it.
                 val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
                 if (nextInstOpcode != "CatchPhi") {
+                    val throwable = PandaCaughtError()
                     val tryBBId = env.getTryBlockBBId(basicBlock.id)
                     val tryBB = method.idToBB[tryBBId] ?: error("No try basic block saved in environment for $op")
-                    val path = pathToCatchBlock(tryBB, emptyList(), basicBlock.id)
-                        ?: error("No path from basic block $tryBBId to ${basicBlock.id}")
+                    method.pushBuilder {
+                        fun pathToCatchBlock(
+                            currentBB: PandaBasicBlock,
+                            acc: List<PandaInstRef>,
+                            targetId: Int,
+                        ): List<PandaInstRef>? {
+                            val newList = acc + (currentBB.start.index..currentBB.end.index)
+                                .mapNotNull { if (it == -1) null else PandaInstRef(it) }
 
-                    val throwable = PandaCaughtError()
+                            for (succBBId in currentBB.successors) {
+                                if (succBBId == targetId) return acc
+                                idToBB[succBBId]?.let { succBB ->
+                                    pathToCatchBlock(succBB, newList, targetId)?.let { return it }
+                                }
+                            }
 
-                    method.insts += PandaCatchInst(
-                        location = locationFromOp(this),
-                        throwable = throwable,
-                        _throwers = path.sortedBy { it.index }
-                    )
+                            return null
+                        }
+
+                        val path = pathToCatchBlock(tryBB, emptyList(), basicBlock.id)
+                            ?: error("No path from basic block $tryBBId to ${basicBlock.id}")
+
+                        PandaCatchInst(
+                            location = locationFromOp(this@with),
+                            throwable = throwable,
+                            _throwers = path.sortedBy { it.index }
+                        )
+                    }
 
                     outputs.forEach { output ->
                         addInput(method, id(), output, throwable)
@@ -1026,7 +1024,7 @@ class IRParser(
             opcode == "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
                 val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0])
-                method.insts += assignment
+                method.pushInst(assignment)
                 env.setLocalAssignment(method.signature, lv, assignment)
                 env.setLocalVar(stringData!!, lv)
             }
@@ -1034,7 +1032,7 @@ class IRParser(
             opcode == "Intrinsic.trystglobalbyname" -> {
                 val lv = env.getLocalVar(stringData!!)
                     ?: error("Can't load local var from environment for literal \"$stringData\"")
-                method.insts += PandaAssignInst(locationFromOp(this), lv, inputs[0])
+                method.pushInst(PandaAssignInst(locationFromOp(this), lv, inputs[0]))
             }
 
             else -> checkIgnoredInstructions(this)
@@ -1066,7 +1064,6 @@ class IRParser(
         val instCallValue = inputs.find<PandaValueByInstance>().lastOrNull()
         val loadedValue = inputs.find<PandaLoadedValue>().lastOrNull()
         val localVar = inputs.find<PandaLocalVar>().lastOrNull()
-        val arrayAccess = inputs.find<PandaArrayAccess>().lastOrNull()
         instCallValue?.let { instValue ->
             return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
@@ -1105,16 +1102,6 @@ class IRParser(
                     }
                 },
                 args = inputs.filterNot { it == pandaLocalVar },
-            )
-        }
-        arrayAccess?.let { pandaArrayAccess ->
-            return PandaInstanceVirtualCallExpr(
-                lazyMethod = lazy {
-                    val name = pandaArrayAccess.array.type.typeName
-                    PandaMethod(name)
-                },
-                args = inputs.filterNot { it == pandaArrayAccess },
-                instance = pandaArrayAccess.array
             )
         }
         error("No instance or loaded value found in inputs")

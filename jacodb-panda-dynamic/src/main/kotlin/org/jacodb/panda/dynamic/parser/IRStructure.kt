@@ -19,18 +19,7 @@ package org.jacodb.panda.dynamic.parser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jacodb.panda.dynamic.api.Mappable
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaExpr
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaLexVar
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
-import org.jacodb.panda.dynamic.api.PandaLocalVar
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaParameterInfo
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.*
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {
@@ -77,7 +66,7 @@ data class ProgramProperty(
 }
 
 @Serializable
-data class ProgramMethod(
+class ProgramMethod(
     val accessFlags: Int? = null,
     val basicBlocks: List<ProgramBasicBlock> = emptyList(),
     val name: String,
@@ -95,7 +84,11 @@ data class ProgramMethod(
     val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
 
     @Transient
-    val insts: MutableList<PandaInst> = mutableListOf()
+    val instBuilders: MutableList<PandaInstBuilder> = mutableListOf()
+
+    @Transient
+    var insts: MutableList<PandaInst> = mutableListOf()
+        private set
 
     // ArkTS id -> Panda input
     @Transient
@@ -163,6 +156,18 @@ data class ProgramMethod(
 
     override fun toString(): String {
         return "Method: $name\nClass: ${clazz.name}\nBasic blocks:\n${basicBlocks.joinToString("\n")}"
+    }
+
+    fun buildInsts() {
+        insts = instBuilders.map { it.build(this) }.toMutableList()
+    }
+
+    fun pushInst(inst: PandaInst) {
+        instBuilders.add(PandaDefaultBuilder(inst))
+    }
+
+    fun pushBuilder(builder: ProgramMethod.() -> PandaInst) {
+        instBuilders.add(PandaCatchBuilder(builder))
     }
 }
 

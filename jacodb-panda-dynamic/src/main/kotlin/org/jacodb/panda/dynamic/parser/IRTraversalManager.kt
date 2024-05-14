@@ -33,7 +33,7 @@ class IRTraversalManager(
     private val strategyStack = ArrayDeque<TraversalStrategy>()
     
     // bb id -> ProgramBasicBlock
-    private val idToProgramBB = programMethod.basicBlocks.map { it.id }.zip(programMethod.basicBlocks).toMap()
+    private val idToProgramBB = programMethod.basicBlocks.associateBy { it.id } //.zip(programMethod.basicBlocks).toMap()
 
     private val unprocessedBB = programMethod.basicBlocks.toMutableSet()
 
@@ -187,13 +187,13 @@ class IRTraversalManager(
 
     private fun addEmptyJump(method: ProgramMethod) {
         val location = IRParser.locationFromOp(method=method)
-        method.insts += PandaGotoInst(location).apply {
+        method.pushInst(PandaGotoInst(location).apply {
             this.setTarget(PandaInstRef(location.index + 1))
-        }
+        })
     }
 
     private fun addEmptyBlockPlaceholder(method: ProgramMethod, bbId: Int) {
         val location = IRParser.locationFromOp(method=method)
-        method.insts += PandaEmptyBBPlaceholderInst(location, bbId)
+        method.pushInst(PandaEmptyBBPlaceholderInst(location, bbId))
     }
 }
