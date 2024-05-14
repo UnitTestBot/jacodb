@@ -52,7 +52,7 @@ suspend fun ActorSystem<CommonMessage>.startUnusedAnalysis(method: JcMethod) {
 suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): Collection<UnusedVulnerability> {
     val data = collectUnusedComputationData()
 
-    val allFacts = data.facts
+    val allFacts = data.factsByStmt
 
     val used = hashMapOf<JcInst, Boolean>()
     for ((inst, facts) in allFacts) {

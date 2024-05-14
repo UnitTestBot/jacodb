@@ -25,7 +25,7 @@ import org.jacodb.ifds.domain.Vertex
  */
 data class IfdsComputationData<Stmt, Fact, F : Finding<Stmt, Fact>>(
     val edgesByEnd: Map<Vertex<Stmt, Fact>, Collection<Edge<Stmt, Fact>>>,
-    val facts: Map<Stmt, Collection<Fact>>,
-    val reasons: Map<Edge<Stmt, Fact>, Collection<Reason<Stmt, Fact>>>,
+    val factsByStmt: Map<Stmt, Collection<Fact>>,
+    val reasonsByEdge: Map<Edge<Stmt, Fact>, Collection<Reason<Stmt, Fact>>>,
     val findings: Collection<F>,
 )

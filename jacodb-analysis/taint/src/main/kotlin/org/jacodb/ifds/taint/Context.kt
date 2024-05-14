@@ -32,7 +32,7 @@ import org.jacodb.ifds.JcIfdsContext
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.NewEdge as IfdsNewEdge
-import org.jacodb.ifds.messages.NewResult as IfdsNewResult
+import org.jacodb.ifds.messages.NewFinding as IfdsNewResult
 import org.jacodb.ifds.messages.NewSummaryEdge as IfdsNewSummaryEdge
 
 private fun complementRunner(type: RunnerId): RunnerId =

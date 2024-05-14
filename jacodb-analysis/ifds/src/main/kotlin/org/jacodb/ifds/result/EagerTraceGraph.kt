@@ -91,7 +91,7 @@ fun <Stmt, Fact> IfdsComputationData<Stmt, Fact, *>.buildTraceGraph(
             return
         }
 
-        for (reason in reasons[edge].orEmpty()) {
+        for (reason in reasonsByEdge[edge].orEmpty()) {
             when (reason) {
                 Reason.Initial -> {
                     sources.add(vertex)

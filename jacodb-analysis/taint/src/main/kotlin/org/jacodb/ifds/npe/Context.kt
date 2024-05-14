@@ -27,7 +27,7 @@ import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.messages.NewResult
+import org.jacodb.ifds.messages.NewFinding
 import org.jacodb.ifds.messages.NewSummaryEdge
 
 fun npeIfdsContext(
@@ -62,7 +62,7 @@ fun npeIfdsContext(
                 }
 
                 is NewVulnerability -> {
-                    val result = NewResult(
+                    val result = NewFinding(
                         runnerId,
                         NpeVulnerability(
                             event.vulnerability.message,

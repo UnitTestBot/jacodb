@@ -52,9 +52,9 @@ data class SubscriptionOnEnd<Stmt, Fact>(
     val subscribingEdge: Edge<Stmt, Fact>,
 ) : StorageMessage
 
-data class NewResult<Stmt, Fact>(
+data class NewFinding<Stmt, Fact>(
     override val runnerId: RunnerId,
-    val result: Finding<Stmt, Fact>,
+    val finding: Finding<Stmt, Fact>,
 ) : StorageMessage
 
 data class CollectData<Stmt, Fact, Result : Finding<Stmt, Fact>>(

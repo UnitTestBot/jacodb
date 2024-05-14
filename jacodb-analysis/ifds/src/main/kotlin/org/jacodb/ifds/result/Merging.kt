@@ -32,11 +32,11 @@ fun <Stmt, Fact, F : Finding<Stmt, Fact>> mergeIfdsResults(
             edgesByEnd.getOrPut(end, ::hashSetOf)
                 .addAll(edges)
         }
-        for ((stmt, facts) in data.facts) {
+        for ((stmt, facts) in data.factsByStmt) {
             factsByStmt.getOrPut(stmt, ::hashSetOf)
                 .addAll(facts)
         }
-        for ((edge, reasons) in data.reasons) {
+        for ((edge, reasons) in data.reasonsByEdge) {
             reasonsByEdge.getOrPut(edge, ::hashSetOf)
                 .addAll(reasons)
         }

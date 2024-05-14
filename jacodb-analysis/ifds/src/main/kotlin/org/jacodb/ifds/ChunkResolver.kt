@@ -21,7 +21,7 @@ import org.jacodb.ifds.messages.AnalyzerMessage
 import org.jacodb.ifds.messages.EdgeMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.NewResult
+import org.jacodb.ifds.messages.NewFinding
 import org.jacodb.ifds.messages.NewSummaryEdge
 import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
@@ -95,9 +95,9 @@ class DefaultChunkResolver<Stmt>(
                         chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
-                    is NewResult<*, *> -> {
-                        message as NewResult<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.result.vertex.statement)
+                    is NewFinding<*, *> -> {
+                        message as NewFinding<Stmt, *>
+                        chunkStrategy.chunkByStmt(message.finding.vertex.statement)
                     }
 
                     is NewSummaryEdge<*, *> -> {
