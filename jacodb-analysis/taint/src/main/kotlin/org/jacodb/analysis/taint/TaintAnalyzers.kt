@@ -19,10 +19,10 @@ package org.jacodb.analysis.taint
 import org.jacodb.analysis.config.CallPositionToJcValueResolver
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
-import org.jacodb.analysis.ifds.Edge
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.domain.Edge
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMethodSink
 
@@ -58,13 +58,14 @@ class TaintAnalyzer(
 
             // TODO: not always we want to skip sinks on Zero facts.
             //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
-            if (edge.to.fact !is Tainted) {
+            val fact = edge.to.fact
+            if (fact !is Tainted) {
                 return@run
             }
 
             // Determine whether 'edge.to' is a sink via config:
             val conditionEvaluator = FactAwareConditionEvaluator(
-                edge.to.fact,
+                fact,
                 CallPositionToJcValueResolver(edge.to.statement),
             )
             for (item in config.filterIsInstance<TaintMethodSink>()) {

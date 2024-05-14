@@ -38,7 +38,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.sequent(next: JcInst) =
         jcFlowFunctions
-            .obtainSequentFlowFunction(edge.to.stmt, next)
+            .obtainSequentFlowFunction(edge.to.statement, next)
             .compute(edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(next, newFact))
@@ -47,7 +47,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.callToReturn(returnSite: JcInst) =
         jcFlowFunctions
-            .obtainCallToReturnSiteFlowFunction(edge.to.stmt, returnSite)
+            .obtainCallToReturnSiteFlowFunction(edge.to.statement, returnSite)
             .compute(edge.to.fact)
             .forEach { newFact ->
                 val newEdge = Edge(edge.from, Vertex(returnSite, newFact))
@@ -56,7 +56,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
 
     override fun FlowScope<JcInst, Fact>.callToStart(calleeStart: JcInst) =
         jcFlowFunctions
-            .obtainCallToStartFlowFunction(edge.to.stmt, calleeStart)
+            .obtainCallToStartFlowFunction(edge.to.statement, calleeStart)
             .compute(edge.to.fact)
             .forEach { newFact ->
                 val vertex = Vertex(calleeStart, newFact)
@@ -72,7 +72,7 @@ class JcFlowFunctionsAdapter<Fact, Event>(
         callerEdge: Edge<JcInst, Fact>,
         returnSite: JcInst,
     ) = jcFlowFunctions
-        .obtainExitToReturnSiteFlowFunction(callerEdge.to.stmt, returnSite, edge.to.stmt)
+        .obtainExitToReturnSiteFlowFunction(callerEdge.to.statement, returnSite, edge.to.statement)
         .compute(edge.to.fact)
         .forEach { newFact ->
             val newEdge = Edge(callerEdge.from, Vertex(returnSite, newFact))
@@ -87,15 +87,9 @@ class JcFlowFunctionsAdapter<Fact, Event>(
         val edge = NewEdge(runnerId, newEdge, reason)
         add(edge)
 
-        val jcEvents = jcAnalyzer.handleNewEdge(newEdge.toJcEdge())
+        val jcEvents = jcAnalyzer.handleNewEdge(newEdge)
         for (event in jcEvents) {
             jcEventProcessor(event)
         }
     }
 }
-
-private fun <Fact> Vertex<JcInst, Fact>.toJcVertex() = org.jacodb.analysis.ifds.Vertex(stmt, fact)
-private fun <Fact> Edge<JcInst, Fact>.toJcEdge() = org.jacodb.analysis.ifds.Edge(from.toJcVertex(), to.toJcVertex())
-
-fun <Fact> org.jacodb.analysis.ifds.Vertex<Fact>.toVertex() = Vertex(statement, fact)
-fun <Fact> org.jacodb.analysis.ifds.Edge<Fact>.toEdge() = Edge(from.toVertex(), to.toVertex())

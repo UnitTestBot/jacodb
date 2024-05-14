@@ -25,7 +25,6 @@ import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
-import org.jacodb.ifds.toEdge
 
 fun unusedIfdsContext(
     cp: JcClasspath,
@@ -50,7 +49,7 @@ fun unusedIfdsContext(
         ) { event ->
             when (event) {
                 is org.jacodb.analysis.unused.NewSummaryEdge -> {
-                    val edge = org.jacodb.ifds.messages.NewSummaryEdge(runnerId, event.edge.toEdge())
+                    val edge = org.jacodb.ifds.messages.NewSummaryEdge(runnerId, event.edge)
                     add(edge)
                 }
             }

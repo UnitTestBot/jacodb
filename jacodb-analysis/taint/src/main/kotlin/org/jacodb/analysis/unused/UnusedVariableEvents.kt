@@ -16,10 +16,11 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.Edge
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Edge
 
 sealed interface Event
 
 data class NewSummaryEdge(
-    val edge: Edge<UnusedVariableDomainFact>,
+    val edge: Edge<JcInst, UnusedVariableDomainFact>,
 ) : Event

@@ -21,11 +21,11 @@ import org.jacodb.analysis.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.taint.NewSummaryEdge
 import org.jacodb.analysis.taint.NewVulnerability
+import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintEdge
 import org.jacodb.analysis.taint.TaintEvent
-import org.jacodb.analysis.taint.TaintDomainFact
-import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.taint.TaintVulnerability
+import org.jacodb.analysis.taint.Tainted
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.cfg.callExpr
@@ -57,8 +57,9 @@ class NpeAnalyzer(
             add(NewSummaryEdge(edge))
         }
 
-        if (edge.to.fact is Tainted && edge.to.fact.mark == TaintMark.NULLNESS) {
-            if (edge.to.fact.variable.isDereferencedAt(edge.to.statement)) {
+        val fact = edge.to.fact
+        if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
+            if (fact.variable.isDereferencedAt(edge.to.statement)) {
                 val message = "NPE" // TODO
                 val vulnerability = TaintVulnerability(message, sink = edge.to)
                 logger.info { "Found sink=${vulnerability.sink} in ${vulnerability.method}" }
@@ -74,18 +75,18 @@ class NpeAnalyzer(
 
             // TODO: not always we want to skip sinks on Zero facts.
             //  Some rules might have ConstantTrue or just true (when evaluated with Zero fact) condition.
-            if (edge.to.fact !is Tainted) {
+            if (fact !is Tainted) {
                 return@run
             }
 
             // Determine whether 'edge.to' is a sink via config:
             val conditionEvaluator = FactAwareConditionEvaluator(
-                edge.to.fact,
+                fact,
                 CallPositionToJcValueResolver(edge.to.statement),
             )
             for (item in config.filterIsInstance<TaintMethodSink>()) {
                 if (item.condition.accept(conditionEvaluator)) {
-                    logger.trace { "Found sink at ${edge.to} in ${edge.method} on $item" }
+                    logger.trace { "Found sink at ${edge.to} in ${edge.from.statement.location.method} on $item" }
                     val message = item.ruleNote
                     val vulnerability = TaintVulnerability(message, sink = edge.to, rule = item)
                     add(NewVulnerability(vulnerability))

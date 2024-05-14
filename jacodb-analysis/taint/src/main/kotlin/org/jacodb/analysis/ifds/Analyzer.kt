@@ -16,10 +16,13 @@
 
 package org.jacodb.analysis.ifds
 
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Edge
+
 interface Analyzer<Fact, out Event> {
     val flowFunctions: FlowFunctions<Fact>
 
     fun handleNewEdge(
-        edge: Edge<Fact>,
+        edge: Edge<JcInst, Fact>,
     ): List<Event>
 }

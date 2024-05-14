@@ -51,22 +51,22 @@ class DefaultChunkResolver<Stmt>(
                 when (message) {
                     is EdgeMessage<*, *> -> {
                         message as EdgeMessage<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     is NotificationOnEnd<*, *> -> {
                         message as NotificationOnEnd<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     is NotificationOnStart<*, *> -> {
                         message as NotificationOnStart<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     is ResolvedCall<*, *, *> -> {
                         message as ResolvedCall<Stmt, *, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     else -> {
@@ -79,7 +79,7 @@ class DefaultChunkResolver<Stmt>(
                 when (message) {
                     is UnresolvedCall<*, *> -> {
                         message as UnresolvedCall<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     else -> {
@@ -92,17 +92,17 @@ class DefaultChunkResolver<Stmt>(
                 when (message) {
                     is NewEdge<*, *> -> {
                         message as NewEdge<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     is NewResult<*, *> -> {
                         message as NewResult<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.result.vertex.stmt)
+                        chunkStrategy.chunkByStmt(message.result.vertex.statement)
                     }
 
                     is NewSummaryEdge<*, *> -> {
                         message as NewSummaryEdge<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.edge.to.stmt)
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 
                     is ObtainData<*, *, *> -> {
@@ -112,12 +112,12 @@ class DefaultChunkResolver<Stmt>(
 
                     is SubscriptionOnEnd<*, *> -> {
                         message as SubscriptionOnEnd<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.endVertex.stmt)
+                        chunkStrategy.chunkByStmt(message.endVertex.statement)
                     }
 
                     is SubscriptionOnStart<*, *> -> {
                         message as SubscriptionOnStart<Stmt, *>
-                        chunkStrategy.chunkByStmt(message.startVertex.stmt)
+                        chunkStrategy.chunkByStmt(message.startVertex.statement)
                     }
                 }
             }

@@ -31,7 +31,6 @@ import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
 import org.jacodb.ifds.domain.Reason
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.toEdge
 import org.jacodb.ifds.messages.NewEdge as IfdsNewEdge
 import org.jacodb.ifds.messages.NewResult as IfdsNewResult
 import org.jacodb.ifds.messages.NewSummaryEdge as IfdsNewSummaryEdge
@@ -72,7 +71,7 @@ fun taintIfdsContext(
                         val edgeForOtherRunner =
                             IfdsNewEdge(
                                 complementRunner(runnerId),
-                                event.edge.toEdge(),
+                                event.edge,
                                 Reason.FromOtherRunner(edge, runnerId)
                             )
                         add(edgeForOtherRunner)
@@ -80,7 +79,7 @@ fun taintIfdsContext(
                 }
 
                 is NewSummaryEdge -> {
-                    val summaryEdge = IfdsNewSummaryEdge(runnerId, event.edge.toEdge())
+                    val summaryEdge = IfdsNewSummaryEdge(runnerId, event.edge)
                     add(summaryEdge)
                 }
 

@@ -16,8 +16,10 @@
 
 package org.jacodb.analysis.taint
 
-import org.jacodb.analysis.ifds.Edge
-import org.jacodb.analysis.ifds.Vertex
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Edge
+import org.jacodb.ifds.domain.Vertex
 
-typealias TaintVertex = Vertex<TaintDomainFact>
-typealias TaintEdge = Edge<TaintDomainFact>
+
+typealias TaintVertex = Vertex<JcInst, TaintDomainFact>
+typealias TaintEdge = Edge<JcInst, TaintDomainFact>

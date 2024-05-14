@@ -64,7 +64,7 @@ class DefaultAnalyzer<Fact>(
     }
 
     private fun TaintFlowScope<Fact>.processEdge(edge: Edge<JcInst, Fact>) {
-        val toStmt = edge.to.stmt
+        val toStmt = edge.to.statement
         val method = applicationGraph.methodOf(toStmt)
 
         val callExpr = toStmt.callExpr
@@ -80,7 +80,7 @@ class DefaultAnalyzer<Fact>(
         val callMessage = UnresolvedCall(runnerId, edge)
         add(callMessage)
 
-        val successors = applicationGraph.successors(edge.to.stmt)
+        val successors = applicationGraph.successors(edge.to.statement)
 
         flowFunctions.run {
             for (successor in successors) {
@@ -90,7 +90,7 @@ class DefaultAnalyzer<Fact>(
     }
 
     private fun TaintFlowScope<Fact>.processSequent(edge: Edge<JcInst, Fact>) {
-        val successors = applicationGraph.successors(edge.to.stmt)
+        val successors = applicationGraph.successors(edge.to.statement)
 
         flowFunctions.run {
             for (successor in successors) {
@@ -114,7 +114,7 @@ class DefaultAnalyzer<Fact>(
 
 
     private fun TaintFlowScope<Fact>.processNotificationOnStart(message: NotificationOnStart<JcInst, Fact>) {
-        val successors = applicationGraph.successors(message.data.to.stmt)
+        val successors = applicationGraph.successors(message.data.to.statement)
 
         flowFunctions.run {
             for (successor in successors) {

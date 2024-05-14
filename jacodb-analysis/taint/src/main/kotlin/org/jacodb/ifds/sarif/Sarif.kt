@@ -69,7 +69,7 @@ fun sarifReportFromVulnerabilities(
                             text = instance.description.message
                         ),
                         level = instance.description.level,
-                        locations = listOf(instToSarifLocation(instance.traceGraph.sink.stmt, sourceFileResolver)),
+                        locations = listOf(instToSarifLocation(instance.traceGraph.sink.statement, sourceFileResolver)),
                         codeFlows = instance.traceGraph
                             .getAllTraces()
                             .take(maxPathsCount)
@@ -120,7 +120,7 @@ private fun traceToSarifCodeFlow(
             ThreadFlow(
                 locations = trace.map {
                     ThreadFlowLocation(
-                        location = instToSarifLocation(it.stmt, sourceFileResolver),
+                        location = instToSarifLocation(it.statement, sourceFileResolver),
                         state = mapOf(
                             "fact" to MultiformatMessageString(
                                 text = it.fact.toString()

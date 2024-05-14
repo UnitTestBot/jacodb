@@ -17,6 +17,8 @@
 package org.jacodb.analysis.ifds
 
 import org.jacodb.api.JcMethod
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Vertex
 
 /**
  * A common interface for anything that should be remembered
@@ -28,9 +30,9 @@ interface Summary {
 
 interface Vulnerability<out Fact> : Summary {
     val message: String
-    val sink: Vertex<Fact>
+    val sink: Vertex<JcInst, Fact>
 
     override val method: JcMethod
-        get() = sink.method
+        get() = sink.statement.location.method
 }
 

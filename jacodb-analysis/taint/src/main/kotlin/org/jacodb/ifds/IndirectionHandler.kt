@@ -47,7 +47,7 @@ class IndirectionHandler(
         @Suppress("UNCHECKED_CAST")
         message as? UnresolvedCall<JcInst, TaintDomainFact> ?: return
 
-        val node = message.edge.to.stmt
+        val node = message.edge.to.statement
 
         val callees = (node.callExpr?.let { sequenceOf(it.method.method) } ?: emptySequence())
             .filterNot { callee ->

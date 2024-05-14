@@ -16,7 +16,7 @@
 
 package org.jacodb.ifds.domain
 
-data class Vertex<Stmt, Fact>(
-    val stmt: Stmt,
+data class Vertex<Stmt, out Fact>(
+    val statement: Stmt,
     val fact: Fact,
 )

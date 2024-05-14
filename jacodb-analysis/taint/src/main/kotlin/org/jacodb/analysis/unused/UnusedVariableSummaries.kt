@@ -16,10 +16,11 @@
 
 package org.jacodb.analysis.unused
 
-import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.analysis.ifds.Vulnerability
+import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Vertex
 
 data class UnusedVariableVulnerability(
     override val message: String,
-    override val sink: Vertex<UnusedVariableDomainFact>,
+    override val sink: Vertex<JcInst, UnusedVariableDomainFact>,
 ) : Vulnerability<UnusedVariableDomainFact>

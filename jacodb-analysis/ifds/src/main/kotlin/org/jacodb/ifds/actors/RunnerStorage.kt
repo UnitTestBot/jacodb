@@ -136,7 +136,7 @@ class RunnerStorage<Stmt, Fact>(
                 message as ObtainData<Stmt, Fact, IfdsResult<Stmt, Fact>>
                 val data = IfdsComputationData(
                     edges.groupByTo(hashMapOf()) { it.to },
-                    edges.groupByTo(hashMapOf(), { it.to.stmt }) { it.to.fact },
+                    edges.groupByTo(hashMapOf(), { it.to.statement }) { it.to.fact },
                     reasons.toMap(hashMapOf()),
                     foundResults.toHashSet()
                 )

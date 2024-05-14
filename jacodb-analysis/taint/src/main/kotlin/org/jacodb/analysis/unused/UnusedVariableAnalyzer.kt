@@ -17,9 +17,9 @@
 package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.Analyzer
-import org.jacodb.analysis.ifds.Edge
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
+import org.jacodb.ifds.domain.Edge
 
 class UnusedVariableAnalyzer(
     private val graph: JcApplicationGraph,
@@ -33,7 +33,7 @@ class UnusedVariableAnalyzer(
         return statement in graph.exitPoints(statement.location.method)
     }
 
-    override fun handleNewEdge(edge: Edge<UnusedVariableDomainFact>): List<Event> = buildList {
+    override fun handleNewEdge(edge: Edge<JcInst, UnusedVariableDomainFact>): List<Event> = buildList {
         if (isExitPoint(edge.to.statement)) {
             add(NewSummaryEdge(edge))
         }

@@ -29,7 +29,6 @@ import org.jacodb.ifds.JcFlowFunctionsAdapter
 import org.jacodb.ifds.JcIfdsContext
 import org.jacodb.ifds.messages.NewResult
 import org.jacodb.ifds.messages.NewSummaryEdge
-import org.jacodb.ifds.toEdge
 
 fun npeIfdsContext(
     cp: JcClasspath,
@@ -58,7 +57,7 @@ fun npeIfdsContext(
                 }
 
                 is org.jacodb.analysis.taint.NewSummaryEdge -> {
-                    val summaryEdge = NewSummaryEdge(runnerId, event.edge.toEdge())
+                    val summaryEdge = NewSummaryEdge(runnerId, event.edge)
                     add(summaryEdge)
                 }
 

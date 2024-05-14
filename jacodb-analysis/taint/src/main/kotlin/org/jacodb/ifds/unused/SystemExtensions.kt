@@ -70,7 +70,7 @@ suspend fun ActorSystem<CommonMessage>.collectUnusedResult(): List<UnusedVariabl
     val vulnerabilities = used.filterValues { !it }.keys.map {
         UnusedVariableVulnerability(
             message = "Assigned value is unused",
-            sink = org.jacodb.analysis.ifds.Vertex(it, UnusedVariableZeroFact)
+            sink = Vertex(it, UnusedVariableZeroFact)
         )
     }
     return vulnerabilities
