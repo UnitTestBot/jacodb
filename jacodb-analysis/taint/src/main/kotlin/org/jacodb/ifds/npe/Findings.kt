@@ -17,7 +17,6 @@
 package org.jacodb.ifds.npe
 
 import org.jacodb.ifds.taint.TaintDomainFact
-import org.jacodb.ifds.taint.TaintVertex
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.Finding
@@ -25,7 +24,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 data class NpeVulnerability(
     val message: String,
-    val sink: TaintVertex,
+    val sink: Vertex<JcInst, TaintDomainFact>,
     val rule: TaintMethodSink? = null,
 ) : Finding<JcInst, TaintDomainFact> {
     override val vertex: Vertex<JcInst, TaintDomainFact>

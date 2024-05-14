@@ -23,7 +23,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 data class TaintVulnerability(
     val message: String,
-    val sink: TaintVertex,
+    val sink: Vertex<JcInst, TaintDomainFact>,
     val rule: TaintMethodSink? = null,
 ) : Finding<JcInst, TaintDomainFact> {
     override val vertex: Vertex<JcInst, TaintDomainFact> = sink
