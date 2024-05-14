@@ -20,7 +20,9 @@ import org.jacodb.analysis.unused.UnusedVariableAnalyzer
 import org.jacodb.analysis.unused.UnusedVariableDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkResolver
+import org.jacodb.ifds.ChunkStrategy
 import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
@@ -30,13 +32,13 @@ fun unusedIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
-    chunkStrategy: ChunkResolver = DefaultChunkResolver(ClassChunkStrategy),
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsContext<UnusedVariableDomainFact> =
     JcIfdsContext(
         cp,
         graph,
         bannedPackagePrefixes,
-        chunkStrategy
+        DefaultChunkResolver(chunkStrategy)
     ) { runnerId ->
         val analyzer = when (runnerId) {
             is SingletonRunnerId -> UnusedVariableAnalyzer(SingletonRunnerId, graph)

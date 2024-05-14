@@ -16,12 +16,13 @@
 
 package org.jacodb.cli
 
+import kotlinx.coroutines.runBlocking
 import org.jacodb.testing.analysis.NpeExamples
 import org.junit.jupiter.api.Test
 
 class CliTest {
     @Test
-    fun `test basic analysis cli api`() {
+    fun `test basic analysis cli api`() = runBlocking {
         val args = listOf(
             "-a", CliTest::class.java.getResource("/config.json")?.file ?: error("Can't find file with config"),
             "-s", NpeExamples::class.java.name

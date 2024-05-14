@@ -24,9 +24,10 @@ import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.unused.UnusedVulnerability
-import org.jacodb.ifds.unused.collectUnusedResult
+import org.jacodb.ifds.unused.collectUnusedResults
 import org.jacodb.ifds.unused.startUnusedAnalysis
 import org.jacodb.ifds.unused.unusedIfdsContext
+import org.jacodb.ifds.unused.unusedIfdsSystem
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -62,12 +63,11 @@ class IfdsUnusedTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<UnusedVulnerability> = runBlocking {
-        val ifdsContext = unusedIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
+        val system = unusedIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
 
         system.startUnusedAnalysis(method)
         system.awaitCompletion()
-        system.collectUnusedResult()
+        system.collectUnusedResults()
     }
 
     @ParameterizedTest

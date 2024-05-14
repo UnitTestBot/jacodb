@@ -27,6 +27,7 @@ import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.npe.NpeVulnerability
 import org.jacodb.ifds.npe.collectNpeResults
 import org.jacodb.ifds.npe.npeIfdsContext
+import org.jacodb.ifds.npe.npeIfdsSystem
 import org.jacodb.ifds.npe.startNpeAnalysis
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -199,8 +200,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<NpeVulnerability> = runBlocking {
-        val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
+        val system = npeIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
 
         system.startNpeAnalysis(method)
         system.awaitCompletion()

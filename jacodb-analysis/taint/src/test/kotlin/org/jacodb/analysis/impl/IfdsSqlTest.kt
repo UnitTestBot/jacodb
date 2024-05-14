@@ -34,6 +34,7 @@ import org.jacodb.ifds.taint.collectTaintComputationData
 import org.jacodb.ifds.taint.collectTaintResults
 import org.jacodb.ifds.taint.startTaintAnalysis
 import org.jacodb.ifds.taint.taintIfdsContext
+import org.jacodb.ifds.taint.taintIfdsSystem
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -83,8 +84,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<TaintVulnerability> = runBlocking {
-        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
+        val system = taintIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
 
         system.startTaintAnalysis(method)
         system.awaitCompletion()
@@ -118,6 +118,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
 
         system.startTaintAnalysis(badMethod)
         system.awaitCompletion()
+
         val data = system.collectTaintComputationData()
         val sinks = data.findings
         assertTrue(sinks.isNotEmpty())

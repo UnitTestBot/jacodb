@@ -20,7 +20,9 @@ import org.jacodb.analysis.npe.NpeAnalyzer
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkResolver
+import org.jacodb.ifds.ChunkStrategy
 import org.jacodb.ifds.ClassChunkStrategy
 import org.jacodb.ifds.DefaultChunkResolver
 import org.jacodb.ifds.JcFlowFunctionsAdapter
@@ -30,13 +32,13 @@ fun npeIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
     bannedPackagePrefixes: List<String>,
-    chunkStrategy: ChunkResolver = DefaultChunkResolver(ClassChunkStrategy),
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsContext<TaintDomainFact> =
     JcIfdsContext(
         cp,
         graph,
         bannedPackagePrefixes,
-        chunkStrategy
+        DefaultChunkResolver(chunkStrategy)
     ) { runnerId ->
         val analyzer = when (runnerId) {
             is SingletonRunnerId -> NpeAnalyzer(runnerId, graph)

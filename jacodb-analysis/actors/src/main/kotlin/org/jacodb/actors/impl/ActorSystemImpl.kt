@@ -19,6 +19,8 @@ package org.jacodb.actors.impl
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import mu.KLogger
+import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.api.options.SpawnOptions
@@ -31,6 +33,8 @@ internal class ActorSystemImpl<Message>(
     actorFactory: ActorFactory<Message>,
 ) : ActorSystem<Message> {
     private val path = root() / name
+
+    override val logger: KLogger = logger(path.toString())
 
     private val spawner = ActorSpawnerImpl(path, this)
 

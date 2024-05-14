@@ -16,10 +16,17 @@
 
 package org.jacodb.analysis.impl;
 
+import kotlin.Unit;
+import kotlin.time.DurationUnit;
+import org.jacodb.actors.api.ActorSystem;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
+import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
 import org.jacodb.api.JcDatabase;
+import org.jacodb.api.JcMethod;
 import org.jacodb.api.analysis.JcApplicationGraph;
+import org.jacodb.ifds.ChunkStrategiesKt;
+import org.jacodb.ifds.messages.CommonMessage;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.InMemoryHierarchy;
@@ -31,7 +38,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import static kotlin.time.DurationKt.toDuration;
+import static org.jacodb.analysis.graph.ApplicationGraphFactory.getDefaultBannedPackagePrefixes;
+import static org.jacodb.ifds.taint.SystemExtensionsKt.runTaintAnalysisAsync;
+import static org.jacodb.ifds.taint.SystemExtensionsKt.taintIfdsSystem;
 
 
 public class JavaAnalysisApiTest {
@@ -43,21 +56,28 @@ public class JavaAnalysisApiTest {
         classpath = instance.asyncClasspath(LibrariesMixinKt.getAllClasspath()).get();
     }
 
-// TODO: fix test
-//
-//    @Test
-//    public void testJavaAnalysisApi() throws ExecutionException, InterruptedException {
-//        JcClassOrInterface analyzedClass = classpath.findClassOrNull("org.jacodb.testing.analysis.NpeExamples");
-//        Assertions.assertNotNull(analyzedClass);
-//
-//        List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
-//        JcApplicationGraph applicationGraph = ApplicationGraphFactory
-//                .newApplicationGraphForAnalysisAsync(classpath, null)
-//                .get();
-//        UnitResolver unitResolver = UnitResolverKt.getMethodUnitResolver();
-//        TaintManager manager = new TaintManager(applicationGraph, unitResolver, false);
-//        manager.analyze(methodsToAnalyze, toDuration(30, DurationUnit.SECONDS));
-//    }
+    @Test
+    public void testJavaAnalysisApi() throws ExecutionException, InterruptedException {
+        JcClassOrInterface analyzedClass = classpath.findClassOrNull("org.jacodb.testing.analysis.NpeExamples");
+        Assertions.assertNotNull(analyzedClass);
+
+        List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
+        JcApplicationGraph applicationGraph = ApplicationGraphFactory
+            .newApplicationGraphForAnalysisAsync(classpath, null)
+            .get();
+
+        ActorSystem<CommonMessage> system = taintIfdsSystem(
+            "ifds",
+            applicationGraph.getClasspath(),
+            applicationGraph,
+            getDefaultBannedPackagePrefixes(),
+            ChunkStrategiesKt.getClassChunkStrategy());
+        CompletableFuture<Unit> future = runTaintAnalysisAsync(
+            system,
+            methodsToAnalyze,
+            toDuration(30, DurationUnit.SECONDS));
+        future.get();
+    }
 
     @Test
     public void testCustomBannedPackagesApi() throws ExecutionException, InterruptedException {

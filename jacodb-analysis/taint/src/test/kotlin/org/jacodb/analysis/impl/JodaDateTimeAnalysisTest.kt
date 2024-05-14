@@ -16,25 +16,21 @@
 
 package org.jacodb.analysis.impl
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
-import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.npe.collectNpeResults
-import org.jacodb.ifds.npe.npeIfdsContext
-import org.jacodb.ifds.npe.startNpeAnalysis
+import org.jacodb.ifds.npe.npeIfdsSystem
+import org.jacodb.ifds.npe.runNpeAnalysis
 import org.jacodb.ifds.taint.collectTaintResults
-import org.jacodb.ifds.taint.startTaintAnalysis
-import org.jacodb.ifds.taint.taintIfdsContext
-import org.jacodb.ifds.unused.collectUnusedResult
-import org.jacodb.ifds.unused.startUnusedAnalysis
-import org.jacodb.ifds.unused.unusedIfdsContext
+import org.jacodb.ifds.taint.runTaintAnalysis
+import org.jacodb.ifds.taint.taintIfdsSystem
+import org.jacodb.ifds.unused.collectUnusedResults
+import org.jacodb.ifds.unused.runUnusedAnalysis
+import org.jacodb.ifds.unused.unusedIfdsSystem
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
@@ -70,64 +66,31 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test taint analysis`() = runBlocking {
+        val system = taintIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-
-        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
-
-        for (method in methods) {
-            system.startTaintAnalysis(method)
-        }
-        val stopper = launch {
-            delay(20.seconds)
-            logger.info { "Timeout! Stopping the system..." }
-            system.stop()
-        }
-        system.awaitCompletion()
-        stopper.cancel()
-        system.resume()
-
+        system.runTaintAnalysis(methods, timeout = 20.seconds)
         val sinks = system.collectTaintResults()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
     fun `test NPE analysis`() = runBlocking {
+        val system = npeIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        val ifdsContext = npeIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
-
-        for (method in methods) {
-            system.startNpeAnalysis(method)
-        }
-        val stopper = launch {
-            delay(20.seconds)
-            logger.info { "Timeout! Stopping the system..." }
-            system.stop()
-        }
-        system.awaitCompletion()
-        stopper.cancel()
-        system.resume()
-
+        system.runNpeAnalysis(methods, timeout = 20.seconds)
         val sinks = system.collectNpeResults()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
     fun `test unused variables analysis`() = runBlocking {
+        val system = unusedIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        val ifdsContext = unusedIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
-
-        for (method in methods) {
-            system.startUnusedAnalysis(method)
-        }
-        system.awaitCompletion()
-        val sinks = system.collectUnusedResult()
-
+        system.runUnusedAnalysis(methods, timeout = 20.seconds)
+        val sinks = system.collectUnusedResults()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 }

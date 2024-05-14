@@ -17,6 +17,7 @@
 package org.jacodb.actors.api
 
 import kotlinx.coroutines.CompletableDeferred
+import mu.KLogger
 
 interface ActorSystem<Message> {
     val name: String
@@ -30,4 +31,6 @@ interface ActorSystem<Message> {
     suspend fun resume()
 
     fun stop()
+
+    val logger: KLogger
 }

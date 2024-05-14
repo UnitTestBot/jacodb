@@ -22,7 +22,6 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.ext.packageName
 import org.jacodb.ifds.domain.Chunk
 
-// TODO: consider 'SingletonChunk'
 data object SingletonChunk : Chunk
 
 val SingletonChunkStrategy = ChunkStrategy<JcInst> {
