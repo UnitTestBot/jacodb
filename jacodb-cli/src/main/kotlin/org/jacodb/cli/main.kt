@@ -48,6 +48,7 @@ import org.jacodb.ifds.taint.collectTaintComputationData
 import org.jacodb.ifds.taint.runTaintAnalysis
 import org.jacodb.ifds.taint.taintIfdsSystem
 import org.jacodb.ifds.unused.collectUnusedResults
+import org.jacodb.ifds.unused.runUnusedAnalysis
 import org.jacodb.ifds.unused.unusedIfdsSystem
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -98,7 +99,7 @@ suspend fun launchAnalysesByConfig(
 
             "Unused" -> {
                 val system = unusedIfdsSystem("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
-                system.runNpeAnalysis(methods, timeout = 60.seconds)
+                system.runUnusedAnalysis(methods, timeout = 60.seconds)
                 system.collectUnusedResults().map { it.toSarif() }
             }
 

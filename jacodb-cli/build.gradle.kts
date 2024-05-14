@@ -5,7 +5,6 @@ plugins {
 dependencies {
     api(project(":jacodb-core"))
     api(project(":jacodb-analysis:taint"))
-    api(project(":jacodb-analysis:ifds"))
     api(project(":jacodb-api"))
 
     implementation(Libs.kotlin_logging)

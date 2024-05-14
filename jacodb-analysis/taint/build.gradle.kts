@@ -8,8 +8,8 @@ dependencies {
     api(project(":jacodb-api"))
     api(project(":jacodb-taint-configuration"))
 
-    implementation(project(":jacodb-analysis:actors"))
-    implementation(project(":jacodb-analysis:ifds"))
+    api(project(":jacodb-analysis:actors"))
+    api(project(":jacodb-analysis:ifds"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)
