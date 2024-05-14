@@ -16,8 +16,8 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.ifds.domain.AccessPath
-import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBranchingInst

@@ -16,7 +16,7 @@
 
 package org.jacodb.ifds.taint
 
-import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.util.AccessPath
 import org.jacodb.taint.configuration.TaintMark
 
 sealed interface TaintDomainFact

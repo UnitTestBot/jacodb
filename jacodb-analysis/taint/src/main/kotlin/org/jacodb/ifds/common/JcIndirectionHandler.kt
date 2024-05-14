@@ -34,7 +34,7 @@ import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.UnresolvedCall
 
 context(ActorContext<IndirectionMessage>)
-class IndirectionHandler(
+class JcIndirectionHandler(
     private val hierarchy: HierarchyExtension,
     private val bannedPackagePrefixes: List<String>,
     private val parent: ActorRef<RunnerMessage>,

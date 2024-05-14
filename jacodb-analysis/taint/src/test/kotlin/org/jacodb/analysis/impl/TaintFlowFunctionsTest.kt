@@ -19,7 +19,7 @@ package org.jacodb.analysis.impl
 import io.mockk.every
 import io.mockk.mockk
 import org.jacodb.ifds.common.FlowFunctions
-import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.util.toPath
 import org.jacodb.ifds.taint.ForwardTaintFlowFunctions
 import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.ifds.taint.TaintZeroFact

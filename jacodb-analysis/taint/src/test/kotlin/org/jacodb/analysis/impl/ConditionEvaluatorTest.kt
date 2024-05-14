@@ -22,7 +22,7 @@ import org.jacodb.ifds.config.BasicConditionEvaluator
 import org.jacodb.ifds.config.FactAwareConditionEvaluator
 import org.jacodb.ifds.util.Maybe
 import org.jacodb.ifds.util.toMaybe
-import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.util.toPath
 import org.jacodb.ifds.taint.Tainted
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcPrimitiveType

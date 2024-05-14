@@ -63,6 +63,10 @@ class ChunkManager<Stmt>(
                 // TODO: explain why we do nothing here
                 // do nothing
             }
+
+            is Signal.Exception -> {
+                logger.error { signal.exception.stackTraceToString() }
+            }
         }
     }
 }

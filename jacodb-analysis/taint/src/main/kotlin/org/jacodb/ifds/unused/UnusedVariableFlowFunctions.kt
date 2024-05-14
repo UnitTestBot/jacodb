@@ -17,8 +17,8 @@
 package org.jacodb.ifds.unused
 
 import org.jacodb.ifds.common.FlowFunctions
-import org.jacodb.ifds.domain.toPath
-import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.toPath
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.ifds.util.getArgumentsOf
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph

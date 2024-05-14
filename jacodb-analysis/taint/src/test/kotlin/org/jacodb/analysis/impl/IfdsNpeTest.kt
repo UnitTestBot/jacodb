@@ -18,14 +18,11 @@ package org.jacodb.analysis.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.constructors
 import org.jacodb.api.ext.findClass
 import org.jacodb.ifds.npe.NpeVulnerability
-import org.jacodb.ifds.npe.collectNpeResults
-import org.jacodb.ifds.npe.npeIfdsSystem
-import org.jacodb.ifds.npe.startNpeAnalysis
+import org.jacodb.ifds.npe.npeIfdsFacade
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
@@ -197,11 +194,11 @@ class IfdsNpeTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<NpeVulnerability> = runBlocking {
-        val system = npeIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = npeIfdsFacade("ifds", cp, graph)
 
-        system.startNpeAnalysis(method)
-        system.awaitCompletion()
-        system.collectNpeResults()
+        ifds.startAnalysis(method)
+        ifds.awaitAnalysis()
+        ifds.collectFindings()
     }
 
     @ParameterizedTest

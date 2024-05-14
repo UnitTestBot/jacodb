@@ -21,5 +21,6 @@ import org.jacodb.actors.api.ActorRef
 sealed interface Signal {
     data object Start : Signal
     data object PostStop : Signal
+    data class Exception(val exception: java.lang.Exception) : Signal
     class Terminated(val ref: ActorRef<*>)
 }

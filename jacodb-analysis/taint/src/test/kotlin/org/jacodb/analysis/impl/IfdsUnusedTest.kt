@@ -22,9 +22,7 @@ import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
 import org.jacodb.ifds.unused.UnusedVulnerability
-import org.jacodb.ifds.unused.collectUnusedResults
-import org.jacodb.ifds.unused.startUnusedAnalysis
-import org.jacodb.ifds.unused.unusedIfdsSystem
+import org.jacodb.ifds.unused.unusedIfdsFacade
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -60,11 +58,11 @@ class IfdsUnusedTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<UnusedVulnerability> = runBlocking {
-        val system = unusedIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val system = unusedIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
 
-        system.startUnusedAnalysis(method)
-        system.awaitCompletion()
-        system.collectUnusedResults()
+        system.startAnalysis(method)
+        system.awaitAnalysis()
+        system.collectFindings()
     }
 
     @ParameterizedTest

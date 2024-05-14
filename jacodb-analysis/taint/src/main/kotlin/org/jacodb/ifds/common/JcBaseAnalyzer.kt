@@ -31,6 +31,7 @@ import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.RunnerMessage
+import org.jacodb.ifds.messages.StartAnalysis
 import org.jacodb.ifds.messages.SubscriptionOnStart
 import org.jacodb.ifds.messages.UnresolvedCall
 
@@ -42,21 +43,42 @@ abstract class JcBaseAnalyzer<Fact>(
 
     override fun handle(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
         when (message) {
+            is StartAnalysis<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                message as StartAnalysis<JcMethod>
+                processStartAnalysis(message.method)
+            }
+
             is EdgeMessage<JcInst, Fact> -> {
                 processEdge(message.edge)
             }
 
             is ResolvedCall<JcInst, Fact, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                processResolvedCall(message as ResolvedCall<JcInst, Fact, JcMethod>)
+                message as ResolvedCall<JcInst, Fact, JcMethod>
+                processResolvedCall(
+                    message.edge,
+                    message.method
+                )
             }
 
             is NotificationOnStart<JcInst, Fact> -> {
-                processNotificationOnStart(message)
+                processNotificationOnStart(message.subscribingEdge, message.summaryEdge)
             }
 
             else -> {
                 error("Unexpected message: $message")
+            }
+        }
+    }
+
+    private fun MutableList<RunnerMessage>.processStartAnalysis(method: JcMethod) {
+        for (fact in obtainPossibleStartFacts(method)) {
+            for (entryPoint in graph.entryPoints(method)) {
+                val vertex = Vertex(entryPoint, fact)
+                val edge = Edge(vertex, vertex)
+                val newEdgeMessage = NewEdge(selfRunnerId, edge, Reason.Initial)
+                add(newEdgeMessage)
             }
         }
     }
@@ -111,12 +133,12 @@ abstract class JcBaseAnalyzer<Fact>(
 
 
     private fun MutableList<RunnerMessage>.processResolvedCall(
-        resolvedCall: ResolvedCall<JcInst, Fact, JcMethod>,
+        edge: Edge<JcInst, Fact>,
+        method: JcMethod,
     ) {
-        val edge = resolvedCall.edge
         val reason = Reason.CallToStart(edge)
 
-        val entryPoints = graph.entryPoints(resolvedCall.method)
+        val entryPoints = graph.entryPoints(method)
 
         for (entryPoint in entryPoints) {
             val facts = flowFunctions.callToStart(
@@ -138,12 +160,11 @@ abstract class JcBaseAnalyzer<Fact>(
 
 
     private fun MutableList<RunnerMessage>.processNotificationOnStart(
-        message: NotificationOnStart<JcInst, Fact>
+        callerEdge: Edge<JcInst, Fact>,
+        edge: Edge<JcInst, Fact>
     ) {
-        val callerEdge = message.subscribingEdge
         val returnSites = graph.successors(callerEdge.to.statement)
 
-        val edge = message.summaryEdge
         val reason = Reason.ExitToReturnSite(callerEdge, edge)
 
         for (returnSite in returnSites) {

@@ -23,11 +23,11 @@ import org.jacodb.ifds.config.EntryPointPositionToAccessPathResolver
 import org.jacodb.ifds.config.EntryPointPositionToJcValueResolver
 import org.jacodb.ifds.config.FactAwareConditionEvaluator
 import org.jacodb.ifds.config.TaintActionEvaluator
-import org.jacodb.ifds.domain.ElementAccessor
+import org.jacodb.ifds.util.ElementAccessor
 import org.jacodb.ifds.common.FlowFunctions
 import org.jacodb.ifds.util.onSome
-import org.jacodb.ifds.domain.toPath
-import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.toPath
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.ifds.util.getArgumentsOf
 import org.jacodb.ifds.util.startsWith
 import org.jacodb.ifds.util.thisInstance

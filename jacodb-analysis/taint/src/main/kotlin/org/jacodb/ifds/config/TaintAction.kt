@@ -16,7 +16,7 @@
 
 package org.jacodb.ifds.config
 
-import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.util.AccessPath
 import org.jacodb.ifds.util.Maybe
 import org.jacodb.ifds.util.fmap
 import org.jacodb.ifds.util.map

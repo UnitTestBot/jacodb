@@ -20,5 +20,9 @@ import org.jacodb.actors.api.signal.Signal
 
 interface Actor<M> {
     suspend fun receive(message: M)
-    suspend fun receive(signal: Signal) {}
+    suspend fun receive(signal: Signal) {
+        if (signal is Signal.Exception) {
+            signal.exception.printStackTrace()
+        }
+    }
 }

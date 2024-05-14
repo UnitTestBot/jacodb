@@ -17,7 +17,6 @@
 package org.jacodb.analysis.impl;
 
 import kotlin.time.DurationUnit;
-import org.jacodb.actors.api.ActorSystem;
 import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.api.JcClassOrInterface;
 import org.jacodb.api.JcClasspath;
@@ -25,7 +24,9 @@ import org.jacodb.api.JcDatabase;
 import org.jacodb.api.JcMethod;
 import org.jacodb.api.analysis.JcApplicationGraph;
 import org.jacodb.ifds.common.ChunkStrategiesKt;
-import org.jacodb.ifds.messages.CommonMessage;
+import org.jacodb.ifds.common.JcAsyncIfdsFacade;
+import org.jacodb.ifds.taint.TaintDomainFact;
+import org.jacodb.ifds.taint.TaintVulnerability;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.InMemoryHierarchy;
@@ -40,8 +41,7 @@ import java.util.concurrent.ExecutionException;
 
 import static kotlin.time.DurationKt.toDuration;
 import static org.jacodb.analysis.graph.ApplicationGraphFactory.getDefaultBannedPackagePrefixes;
-import static org.jacodb.ifds.taint.SystemExtensionsKt.runTaintAnalysisAsync;
-import static org.jacodb.ifds.taint.SystemExtensionsKt.taintIfdsSystem;
+import static org.jacodb.ifds.taint.BuildersKt.asyncTaintIfdsFacade;
 
 
 public class JavaAnalysisApiTest {
@@ -63,14 +63,13 @@ public class JavaAnalysisApiTest {
             .newApplicationGraphForAnalysisAsync(classpath)
             .get();
 
-        ActorSystem<CommonMessage> system = taintIfdsSystem(
+        JcAsyncIfdsFacade<TaintDomainFact, TaintVulnerability> ifds = asyncTaintIfdsFacade(
             "ifds",
             applicationGraph.getClasspath(),
             applicationGraph,
             getDefaultBannedPackagePrefixes(),
             ChunkStrategiesKt.getClassChunkStrategy());
-        runTaintAnalysisAsync(
-            system,
+        ifds.runAnalysis(
             methodsToAnalyze,
             toDuration(30, DurationUnit.SECONDS))
             .get();

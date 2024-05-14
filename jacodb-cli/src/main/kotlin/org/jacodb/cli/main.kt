@@ -27,6 +27,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.ifds.taint.TaintZeroFact
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
@@ -37,19 +38,13 @@ import org.jacodb.ifds.common.ClassChunkStrategy
 import org.jacodb.ifds.common.MethodChunkStrategy
 import org.jacodb.ifds.common.PackageChunkStrategy
 import org.jacodb.ifds.common.SingletonChunkStrategy
-import org.jacodb.ifds.npe.collectNpeComputationData
-import org.jacodb.ifds.npe.npeIfdsSystem
-import org.jacodb.ifds.npe.runNpeAnalysis
+import org.jacodb.ifds.npe.npeIfdsFacade
 import org.jacodb.ifds.result.buildTraceGraph
 import org.jacodb.ifds.sarif.VulnerabilityInstance
 import org.jacodb.ifds.sarif.sarifReportFromVulnerabilities
 import org.jacodb.ifds.sarif.toSarif
-import org.jacodb.ifds.taint.collectTaintComputationData
-import org.jacodb.ifds.taint.runTaintAnalysis
-import org.jacodb.ifds.taint.taintIfdsSystem
-import org.jacodb.ifds.unused.collectUnusedResults
-import org.jacodb.ifds.unused.runUnusedAnalysis
-import org.jacodb.ifds.unused.unusedIfdsSystem
+import org.jacodb.ifds.taint.taintIfdsFacade
+import org.jacodb.ifds.unused.unusedIfdsFacade
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.features.usagesExt
@@ -87,10 +82,15 @@ suspend fun launchAnalysesByConfig(
 
         when (analysis) {
             "NPE" -> {
-                val system = npeIfdsSystem("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
-                system
-                    .runNpeAnalysis(methods, timeout = 60.seconds)
-                val data = system.collectNpeComputationData()
+                val ifds = npeIfdsFacade(
+                    "ifds",
+                    graph.classpath,
+                    graph,
+                    bannedPackagePrefixes = defaultBannedPackagePrefixes,
+                    chunkStrategy = chunkStrategy
+                )
+                ifds.runAnalysis(methods, timeout = 60.seconds)
+                val data = ifds.collectComputationData()
                 data.findings.map { vulnerability ->
                     val traceGraph = data.buildTraceGraph(vulnerability.vertex, zeroFact = TaintZeroFact)
                     vulnerability.toSarif(traceGraph)
@@ -98,16 +98,15 @@ suspend fun launchAnalysesByConfig(
             }
 
             "Unused" -> {
-                val system = unusedIfdsSystem("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
-                system.runUnusedAnalysis(methods, timeout = 60.seconds)
-                system.collectUnusedResults().map { it.toSarif() }
+                val system = unusedIfdsFacade("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
+                system.runAnalysis(methods, timeout = 60.seconds)
+                system.collectFindings().map { it.toSarif() }
             }
 
             "SQL" -> {
-                val system = taintIfdsSystem("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
-                system
-                    .runTaintAnalysis(methods, timeout = 60.seconds)
-                val data = system.collectTaintComputationData()
+                val ifds = taintIfdsFacade("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
+                ifds.runAnalysis(methods, timeout = 60.seconds)
+                val data = ifds.collectComputationData()
                 data.findings.map { vulnerability ->
                     val traceGraph = data.buildTraceGraph(vulnerability.vertex, zeroFact = TaintZeroFact)
                     vulnerability.toSarif(traceGraph)

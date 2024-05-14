@@ -21,6 +21,11 @@ import org.jacodb.ifds.domain.RunnerId
 
 interface AnalyzerMessage<Stmt, Fact> : RunnerMessage
 
+data class StartAnalysis<Method>(
+    override val runnerId: RunnerId,
+    val method: Method,
+) : AnalyzerMessage<Nothing, Nothing>
+
 data class EdgeMessage<Stmt, Fact>(
     override val runnerId: RunnerId,
     val edge: Edge<Stmt, Fact>,

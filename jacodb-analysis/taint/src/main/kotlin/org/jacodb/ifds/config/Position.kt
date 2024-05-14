@@ -16,12 +16,12 @@
 
 package org.jacodb.ifds.config
 
-import org.jacodb.ifds.domain.AccessPath
-import org.jacodb.ifds.domain.ElementAccessor
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.ElementAccessor
 import org.jacodb.ifds.util.Maybe
 import org.jacodb.ifds.util.fmap
 import org.jacodb.ifds.util.toMaybe
-import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.ifds.util.getArgument
 import org.jacodb.ifds.util.thisInstance
 import org.jacodb.api.JcClasspath

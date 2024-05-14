@@ -19,22 +19,16 @@ package org.jacodb.analysis.impl
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
-import org.jacodb.ifds.taint.TaintZeroFact
 import org.jacodb.api.JcMethod
 import org.jacodb.api.ext.findClass
 import org.jacodb.api.ext.methods
-import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.result.buildTraceGraph
 import org.jacodb.ifds.sarif.sarifReportFromVulnerabilities
 import org.jacodb.ifds.sarif.toSarif
 import org.jacodb.ifds.taint.TaintVulnerability
-import org.jacodb.ifds.taint.collectTaintComputationData
-import org.jacodb.ifds.taint.collectTaintResults
-import org.jacodb.ifds.taint.startTaintAnalysis
-import org.jacodb.ifds.taint.taintIfdsContext
-import org.jacodb.ifds.taint.taintIfdsSystem
+import org.jacodb.ifds.taint.TaintZeroFact
+import org.jacodb.ifds.taint.taintIfdsFacade
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
@@ -69,12 +63,11 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val methodName = "bad"
         val method = cp.findClass<SqlInjectionExamples>().declaredMethods.single { it.name == methodName }
 
-        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
+        val ifds = taintIfdsFacade("ifds", cp, graph)
 
-        system.startTaintAnalysis(method)
-        system.awaitCompletion()
-        val data = system.collectTaintComputationData()
+        ifds.startAnalysis(method)
+        ifds.awaitAnalysis()
+        val data = ifds.collectComputationData()
         val sinks = data.findings
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()
@@ -84,11 +77,11 @@ class IfdsSqlTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<TaintVulnerability> = runBlocking {
-        val system = taintIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val system = taintIfdsFacade("ifds", cp, graph)
 
-        system.startTaintAnalysis(method)
-        system.awaitCompletion()
-        system.collectTaintResults()
+        system.startAnalysis(method)
+        system.awaitAnalysis()
+        system.collectFindings()
     }
 
     @ParameterizedTest
@@ -113,13 +106,12 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        val ifdsContext = taintIfdsContext(cp, graph, defaultBannedPackagePrefixes)
-        val system = system("ifds") { ProjectManager(ifdsContext) }
+        val ifds = taintIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
 
-        system.startTaintAnalysis(badMethod)
-        system.awaitCompletion()
+        ifds.startAnalysis(badMethod)
+        ifds.awaitAnalysis()
 
-        val data = system.collectTaintComputationData()
+        val data = ifds.collectComputationData()
         val sinks = data.findings
         assertTrue(sinks.isNotEmpty())
         val sink = sinks.first()

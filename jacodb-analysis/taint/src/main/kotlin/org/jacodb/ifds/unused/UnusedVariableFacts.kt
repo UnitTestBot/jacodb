@@ -16,7 +16,7 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.ifds.domain.AccessPath
+import org.jacodb.ifds.util.AccessPath
 import org.jacodb.api.cfg.JcInst
 
 sealed interface UnusedVariableDomainFact

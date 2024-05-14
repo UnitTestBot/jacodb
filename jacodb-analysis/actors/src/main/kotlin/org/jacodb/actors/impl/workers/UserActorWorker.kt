@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.launch
+import mu.KLogger
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
@@ -43,10 +44,7 @@ internal class UserActorWorker<Message>(
     private var status = ActorStatus.BUSY
     private val working = AtomicBoolean(true)
 
-    override fun launchLoop(
-        coroutineContext: CoroutineContext,
-        actor: Actor<Message>,
-    ) {
+    override fun launchLoop(coroutineContext: CoroutineContext, actor: Actor<Message>) {
         scope.launch {
             sendInternal(watcher, WatcherMessage.Register(path))
             actor.receive(Signal.Start)
@@ -95,7 +93,12 @@ internal class UserActorWorker<Message>(
     ) {
         updateReceived()
         if (working.get()) {
-            actor.receive(message)
+            try {
+                actor.receive(message)
+            } catch (e: Exception) {
+                actor.receive(Signal.Exception(e))
+                working.set(false)
+            }
         }
     }
 

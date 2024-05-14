@@ -45,6 +45,6 @@ class JcIfdsContext<Fact>(
 
     override fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId) =
         ActorFactory {
-            IndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, parent, runnerId)
+            JcIndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, parent, runnerId)
         }
 }

@@ -22,15 +22,9 @@ import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.ext.findClass
-import org.jacodb.ifds.npe.collectNpeResults
-import org.jacodb.ifds.npe.npeIfdsSystem
-import org.jacodb.ifds.npe.runNpeAnalysis
-import org.jacodb.ifds.taint.collectTaintResults
-import org.jacodb.ifds.taint.runTaintAnalysis
-import org.jacodb.ifds.taint.taintIfdsSystem
-import org.jacodb.ifds.unused.collectUnusedResults
-import org.jacodb.ifds.unused.runUnusedAnalysis
-import org.jacodb.ifds.unused.unusedIfdsSystem
+import org.jacodb.ifds.npe.npeIfdsFacade
+import org.jacodb.ifds.taint.taintIfdsFacade
+import org.jacodb.ifds.unused.unusedIfdsFacade
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.testing.BaseTest
@@ -66,31 +60,31 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test taint analysis`() = runBlocking {
-        val system = taintIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = taintIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        system.runTaintAnalysis(methods, timeout = 20.seconds)
-        val sinks = system.collectTaintResults()
+        ifds.runAnalysis(methods, timeout = 20.seconds)
+        val sinks = ifds.collectFindings()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
     fun `test NPE analysis`() = runBlocking {
-        val system = npeIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = npeIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        system.runNpeAnalysis(methods, timeout = 20.seconds)
-        val sinks = system.collectNpeResults()
+        ifds.runAnalysis(methods, timeout = 20.seconds)
+        val sinks = ifds.collectFindings()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 
     @Test
     fun `test unused variables analysis`() = runBlocking {
-        val system = unusedIfdsSystem("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = unusedIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
-        system.runUnusedAnalysis(methods, timeout = 20.seconds)
-        val sinks = system.collectUnusedResults()
+        ifds.runAnalysis(methods, timeout = 20.seconds)
+        val sinks = ifds.collectFindings()
         logger.info { "Vulnerabilities found: ${sinks.size}" }
     }
 }

@@ -16,8 +16,8 @@
 
 package org.jacodb.ifds.npe
 
-import org.jacodb.ifds.domain.AccessPath
-import org.jacodb.ifds.domain.toPathOrNull
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.ifds.util.startsWith
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst

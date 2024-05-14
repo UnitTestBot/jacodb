@@ -16,11 +16,11 @@
 
 package org.jacodb.ifds.config
 
-import org.jacodb.ifds.domain.AccessPath
-import org.jacodb.ifds.domain.ElementAccessor
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.ElementAccessor
 import org.jacodb.ifds.util.Maybe
 import org.jacodb.ifds.util.onSome
-import org.jacodb.ifds.domain.toPath
+import org.jacodb.ifds.util.toPath
 import org.jacodb.ifds.taint.Tainted
 import org.jacodb.api.cfg.JcBool
 import org.jacodb.api.cfg.JcConstant
