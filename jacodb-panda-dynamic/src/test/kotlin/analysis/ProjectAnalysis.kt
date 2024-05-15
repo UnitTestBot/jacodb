@@ -95,7 +95,7 @@ class ProjectAnalysis {
         logger.info { "Failed lines: $tsLinesFailed" }
         logger.info { "Total analysis time: $analysisTime" }
         logger.info { "Total edges: $totalEdges" }
-        logger.info { "Founded sinks: ${totalSinks.size}" }
+        logger.info { "Found sinks: ${totalSinks.size}" }
 
         if (totalSinks.isNotEmpty()) {
             totalSinks.forEachIndexed { idx, sink ->
