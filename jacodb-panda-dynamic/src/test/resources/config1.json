@@ -1,0 +1,86 @@
+[
+  {
+    "_": "MethodSource",
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "requestGet"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ConstantTrue"
+    },
+    "actionsAfter": [
+      {
+        "_": "AssignMark",
+        "position": {
+          "_": "Result"
+        },
+        "mark": {
+          "name": "TAINT"
+        }
+      }
+    ]
+  },
+  {
+    "_": "MethodSink",
+    "ruleNote": "SINK",
+    "cwe": [],
+    "methodInfo": {
+      "cls": {
+        "packageMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        },
+        "classNameMatcher": {
+          "_": "NameMatches",
+          "pattern": ".*"
+        }
+      },
+      "functionName": {
+        "_": "NameMatches",
+        "pattern": "taintSink"
+      },
+      "parametersMatchers": [
+      ],
+      "returnTypeMatcher": {
+        "_": "AnyTypeMatches"
+      },
+      "applyToOverrides": true,
+      "functionLabel": null,
+      "modifier": -1,
+      "exclude": [
+      ]
+    },
+    "condition": {
+      "_": "ContainsMark",
+      "position": {
+        "_": "Argument",
+        "number": 0
+      },
+      "mark": {
+        "name": "TAINT"
+      }
+    }
+  }
+]
