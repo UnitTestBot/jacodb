@@ -874,6 +874,16 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            opcode == "Intrinsic.stsuperbyname" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            opcode == "Intrinsic.tonumber" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             opcode == "Intrinsic.stconsttoglobalrecord" -> {
                 val variableName = stringData?.takeIf { it.isNotEmpty() }
                     ?: run {
@@ -1116,7 +1126,6 @@ class IRParser(
                         findIn(className) ?: findIn("GLOBAL")
                             ?: error("Could not find method: $methodName")
                     } else {
-                        val aaa = inputs
                         PandaMethod(value.typeName)
                     }
                 },

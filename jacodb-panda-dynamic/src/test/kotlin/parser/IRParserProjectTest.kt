@@ -17,6 +17,7 @@
 package parser
 
 import org.jacodb.panda.dynamic.parser.IRParser
+import org.jacodb.panda.dynamic.parser.Program
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -62,22 +63,42 @@ class IRParserProjectTest {
             .map { baseDir.relativize(it).toString().replace("\\", "/").substringBeforeLast('.') }
             .map { filename ->
                 DynamicTest.dynamicTest("Test getProject on $filename") {
-                    val currentFileLines = countFileLines("$BASE_PATH$filename.ts")
-                    try {
-                        val parser = load(filename)
-                        val program = parser.getProgram()
-                        assertNotNull(program)
-                        tsLinesSuccess += currentFileLines
-                    } catch (e: Exception) {
-                        tsLinesFailed += currentFileLines
-                        throw e
-                    } finally {
-                        logger.info { "Processed $filename.ts with $currentFileLines lines" }
-                        logger.info { "Total lines processed: $tsLinesSuccess" }
-                        logger.info { "Failed lines: $tsLinesFailed" }
-                    }
+                    handleFile(filename)
                 }
             }
             .collect(Collectors.toList())
+    }
+
+    private fun printPandaInstructions(program: Program) {
+        program.classes.forEach { cls ->
+            cls.properties.forEach { property ->
+                val pandaMethod = property.method.pandaMethod
+                assertNotNull(pandaMethod.name)
+                assertNotNull(pandaMethod.instructions)
+                logger.info { "Panda method '$pandaMethod'" }
+                pandaMethod.instructions.forEach { inst ->
+                    logger.info { "${inst.location.index}. $inst" }
+                }
+                logger.info { "-------------------------------------" }
+            }
+        }
+    }
+
+    private fun handleFile(filename: String) {
+        val currentFileLines = countFileLines("$BASE_PATH$filename.ts")
+        try {
+            val parser = load(filename)
+            val project = parser.getProject()
+            assertNotNull(project)
+            tsLinesSuccess += currentFileLines
+            printPandaInstructions(parser.getProgram())
+        } catch (e: Exception) {
+            tsLinesFailed += currentFileLines
+            throw e
+        } finally {
+            logger.info { "Processed $filename.ts with $currentFileLines lines" }
+            logger.info { "Total lines processed: $tsLinesSuccess" }
+            logger.info { "Failed lines: $tsLinesFailed" }
+        }
     }
 }
