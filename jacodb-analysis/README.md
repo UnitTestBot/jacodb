@@ -1,3 +1,5 @@
+# OUTDATED!
+
 # Module `jacodb-analysis` 
 
 The `jacodb-analysis` module allows launching application dataflow analyses.

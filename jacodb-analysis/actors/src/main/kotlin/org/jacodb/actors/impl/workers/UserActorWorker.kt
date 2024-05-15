@@ -21,7 +21,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.launch
-import mu.KLogger
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef

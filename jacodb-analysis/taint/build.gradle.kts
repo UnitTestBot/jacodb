@@ -8,7 +8,6 @@ dependencies {
     api(project(":jacodb-api"))
     api(project(":jacodb-taint-configuration"))
 
-    api(project(":jacodb-analysis:actors"))
     api(project(":jacodb-analysis:ifds"))
 
     implementation(Libs.kotlin_logging)
