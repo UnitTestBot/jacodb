@@ -18,7 +18,9 @@ package org.jacodb.actors.impl
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import mu.KLogger
 import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorFactory
@@ -31,14 +33,14 @@ internal class ActorSystemImpl<Message>(
     override val name: String,
     options: SpawnOptions,
     actorFactory: ActorFactory<Message>,
-) : ActorSystem<Message> {
+) : ActorSystem<Message>, AutoCloseable {
     private val path = root() / name
 
     override val logger: KLogger = logger(path.toString())
 
     private val spawner = ActorSpawnerImpl(path, this)
 
-    internal val scope = CoroutineScope(SupervisorJob())
+    internal val scope = CoroutineScope(Job())
 
     internal val watcher = spawner.spawnInternalActor(WATCHER_ACTOR_NAME, SpawnOptions.default, ::WatcherActor)
 
@@ -76,6 +78,10 @@ internal class ActorSystemImpl<Message>(
     companion object {
         private const val USER_ACTOR_NAME = "usr"
         private const val WATCHER_ACTOR_NAME = "watcher"
+    }
+
+    override fun close() {
+        scope.cancel()
     }
 }
 

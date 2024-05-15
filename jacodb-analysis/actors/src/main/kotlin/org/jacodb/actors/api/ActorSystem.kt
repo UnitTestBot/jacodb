@@ -19,7 +19,7 @@ package org.jacodb.actors.api
 import kotlinx.coroutines.CompletableDeferred
 import mu.KLogger
 
-interface ActorSystem<Message> {
+interface ActorSystem<Message> : AutoCloseable {
     val name: String
 
     suspend fun send(message: Message)
