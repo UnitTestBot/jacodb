@@ -656,12 +656,12 @@ class IRParser(
             }
 
             opcode == "Intrinsic.ldlexvar" -> {
-//                val lexvar = PandaLexVar(
-//                    lexenv ?: error("No lexenv"),
-//                    lexvar ?: error("No lexvar"),
-//                    PandaAnyType
-//                )
-                val (methodName, lexvar) = env.getLexvar(lexenv ?: error("No lexenv"), lexvar ?: error("No lexvar"))
+                val lexvar = PandaLexVar(
+                    lexenv ?: error("No lexenv"),
+                    lexvar ?: error("No lexvar"),
+                    PandaAnyType
+                )
+//                val (methodName, lexvar) = env.getLexvar(lexenv ?: error("No lexenv"), lexvar ?: error("No lexvar"))
                 handle(PandaLoadedValue(lexvar))
             }
 
