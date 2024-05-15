@@ -20,6 +20,119 @@
           "id": "v1",
           "index": 1,
           "opcode": "Parameter",
+          "type": "any"
+         },
+         {
+          "id": "v2",
+          "index": 2,
+          "opcode": "Parameter",
+          "type": "any"
+         }
+        ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "successors": [
+         0
+        ]
+       },
+       {
+        "id": 0,
+        "insts": [
+         {
+          "id": "v3",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v4"
+          ]
+         },
+         {
+          "id": "v4",
+          "inputs": [
+           "v3"
+          ],
+          "opcode": "LoadString",
+          "string": "Password123",
+          "stringOffset": 326,
+          "type": "ref",
+          "users": [
+           "v5"
+          ]
+         },
+         {
+          "id": "v5",
+          "inputs": [
+           "v4"
+          ],
+          "opcode": "CastValueToAnyType",
+          "type": "any",
+          "users": [
+           "v6"
+          ]
+         },
+         {
+          "id": "v7",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v6"
+          ]
+         },
+         {
+          "id": "v6",
+          "inputs": [
+           "v5",
+           "v7"
+          ],
+          "intrinsic_id": "Intrinsic.return",
+          "opcode": "Intrinsic",
+          "type": "void"
+         }
+        ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "predecessors": [
+         1
+        ],
+        "successors": [
+         2
+        ]
+       },
+       {
+        "id": 2,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "predecessors": [
+         0
+        ]
+       }
+      ],
+      "name": "getPassword",
+      "returnType": "any",
+      "signature": ".getPassword"
+     },
+     "name": "getPassword"
+    },
+    {
+     "method": {
+      "accessFlags": 8,
+      "basicBlocks": [
+       {
+        "id": 1,
+        "insts": [
+         {
+          "id": "v0",
+          "index": 0,
+          "opcode": "Parameter",
+          "type": "any"
+         },
+         {
+          "id": "v1",
+          "index": 1,
+          "opcode": "Parameter",
           "type": "any",
           "users": [
            "v5"
@@ -125,16 +238,18 @@
           "id": "v9",
           "imms": [
            0,
-           363
+           1
           ],
           "inputs": [
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.ldglobalvar",
+          "intrinsic_id": "Intrinsic.ldlexvar",
+          "lexenv": 0,
+          "lexvar": 1,
           "opcode": "Intrinsic",
-          "string_data": "getPassword",
           "type": "any",
           "users": [
+           "v13",
            "v11"
           ]
          },
@@ -149,17 +264,19 @@
          {
           "id": "v11",
           "imms": [
-           1
+           0,
+           345
           ],
           "inputs": [
            "v9",
            "v12"
           ],
-          "intrinsic_id": "Intrinsic.callarg0",
+          "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
+          "string_data": "getPassword",
           "type": "any",
           "users": [
-           "v20"
+           "v13"
           ]
          },
          {
@@ -173,54 +290,47 @@
          {
           "id": "v13",
           "imms": [
-           3,
-           467
+           2
           ],
           "inputs": [
+           "v9",
+           "v11",
            "v14"
+          ],
+          "intrinsic_id": "Intrinsic.callthis0",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v22"
+          ]
+         },
+         {
+          "id": "v16",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v15",
+          "imms": [
+           4,
+           449
+          ],
+          "inputs": [
+           "v16"
           ],
           "intrinsic_id": "Intrinsic.ldglobalvar",
           "opcode": "Intrinsic",
           "string_data": "publishEvent",
           "type": "any",
           "users": [
-           "v20"
-          ]
-         },
-         {
-          "id": "v15",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v16"
-          ]
-         },
-         {
-          "id": "v16",
-          "inputs": [
-           "v15"
-          ],
-          "opcode": "LoadString",
-          "string": "MyCommonEvent",
-          "stringOffset": 329,
-          "type": "ref",
-          "users": [
-           "v17"
+           "v22"
           ]
          },
          {
           "id": "v17",
-          "inputs": [
-           "v16"
-          ],
-          "opcode": "CastValueToAnyType",
-          "type": "any",
-          "users": [
-           "v20"
-          ]
-         },
-         {
-          "id": "v19",
           "opcode": "SaveState",
           "type": "void",
           "users": [
@@ -228,21 +338,27 @@
           ]
          },
          {
-          "functionName": ".#2777964600072320942#",
           "id": "v18",
-          "imms": [
-           4,
-           762,
-           1
-          ],
           "inputs": [
-           "v19"
+           "v17"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
-          "opcode": "Intrinsic",
+          "opcode": "LoadString",
+          "string": "MyCommonEvent",
+          "stringOffset": 311,
+          "type": "ref",
+          "users": [
+           "v19"
+          ]
+         },
+         {
+          "id": "v19",
+          "inputs": [
+           "v18"
+          ],
+          "opcode": "CastValueToAnyType",
           "type": "any",
           "users": [
-           "v20"
+           "v22"
           ]
          },
          {
@@ -254,20 +370,22 @@
           ]
          },
          {
+          "functionName": ".#2777964600072320942#",
           "id": "v20",
           "imms": [
-           5
+           5,
+           743,
+           1
           ],
           "inputs": [
-           "v17",
-           "v11",
-           "v18",
-           "v13",
            "v21"
           ],
-          "intrinsic_id": "Intrinsic.callargs3",
+          "intrinsic_id": "Intrinsic.definefunc",
           "opcode": "Intrinsic",
-          "type": "any"
+          "type": "any",
+          "users": [
+           "v22"
+          ]
          },
          {
           "id": "v23",
@@ -279,10 +397,17 @@
          },
          {
           "id": "v22",
+          "imms": [
+           6
+          ],
           "inputs": [
+           "v19",
+           "v13",
+           "v20",
+           "v15",
            "v23"
           ],
-          "intrinsic_id": "Intrinsic.ldundefined",
+          "intrinsic_id": "Intrinsic.callargs3",
           "opcode": "Intrinsic",
           "type": "any"
          },
@@ -298,6 +423,23 @@
           "id": "v24",
           "inputs": [
            "v25"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any"
+         },
+         {
+          "id": "v27",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v26"
+          ]
+         },
+         {
+          "id": "v26",
+          "inputs": [
+           "v27"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",
@@ -380,12 +522,12 @@
           ]
          },
          {
-          "functionName": ".getPassword",
+          "functionName": ".publishEvent",
           "id": "v3",
           "imms": [
            0,
-           651,
-           0
+           660,
+           3
           ],
           "inputs": [
            "v4"
@@ -409,7 +551,7 @@
           "id": "v5",
           "imms": [
            1,
-           363
+           449
           ],
           "inputs": [
            "v3",
@@ -417,7 +559,7 @@
           ],
           "intrinsic_id": "Intrinsic.stglobalvar",
           "opcode": "Intrinsic",
-          "string_data": "getPassword",
+          "string_data": "publishEvent",
           "type": "void"
          },
          {
@@ -429,17 +571,11 @@
           ]
          },
          {
-          "functionName": ".publishEvent",
           "id": "v7",
-          "imms": [
-           2,
-           679,
-           3
-          ],
           "inputs": [
            "v8"
           ],
-          "intrinsic_id": "Intrinsic.definefunc",
+          "intrinsic_id": "Intrinsic.ldhole",
           "opcode": "Intrinsic",
           "type": "any",
           "users": [
@@ -455,19 +591,25 @@
           ]
          },
          {
+          "constructorName": ".CommonSecurity",
           "id": "v9",
           "imms": [
-           3,
-           467
+           2,
+           688,
+           830,
+           0
           ],
           "inputs": [
            "v7",
            "v10"
           ],
-          "intrinsic_id": "Intrinsic.stglobalvar",
+          "intrinsic_id": "Intrinsic.defineclasswithbuffer",
           "opcode": "Intrinsic",
-          "string_data": "publishEvent",
-          "type": "void"
+          "type": "any",
+          "users": [
+           "v13",
+           "v11"
+          ]
          },
          {
           "id": "v12",
@@ -479,15 +621,18 @@
          },
          {
           "id": "v11",
+          "imms": [
+           3,
+           373
+          ],
           "inputs": [
+           "v9",
            "v12"
           ],
-          "intrinsic_id": "Intrinsic.ldhole",
+          "intrinsic_id": "Intrinsic.ldobjbyname",
           "opcode": "Intrinsic",
-          "type": "any",
-          "users": [
-           "v13"
-          ]
+          "string_data": "prototype",
+          "type": "any"
          },
          {
           "id": "v14",
@@ -498,25 +643,19 @@
           ]
          },
          {
-          "constructorName": ".CommonSecurity",
           "id": "v13",
           "imms": [
-           4,
-           707,
-           849,
-           0
+           5,
+           295
           ],
           "inputs": [
-           "v11",
+           "v9",
            "v14"
           ],
-          "intrinsic_id": "Intrinsic.defineclasswithbuffer",
+          "intrinsic_id": "Intrinsic.sttoglobalrecord",
           "opcode": "Intrinsic",
-          "type": "any",
-          "users": [
-           "v17",
-           "v15"
-          ]
+          "string_data": "CommonSecurity",
+          "type": "void"
          },
          {
           "id": "v16",
@@ -528,17 +667,11 @@
          },
          {
           "id": "v15",
-          "imms": [
-           5,
-           391
-          ],
           "inputs": [
-           "v13",
            "v16"
           ],
-          "intrinsic_id": "Intrinsic.ldobjbyname",
+          "intrinsic_id": "Intrinsic.ldundefined",
           "opcode": "Intrinsic",
-          "string_data": "prototype",
           "type": "any"
          },
          {
@@ -551,48 +684,8 @@
          },
          {
           "id": "v17",
-          "imms": [
-           7,
-           313
-          ],
           "inputs": [
-           "v13",
            "v18"
-          ],
-          "intrinsic_id": "Intrinsic.sttoglobalrecord",
-          "opcode": "Intrinsic",
-          "string_data": "CommonSecurity",
-          "type": "void"
-         },
-         {
-          "id": "v20",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v19"
-          ]
-         },
-         {
-          "id": "v19",
-          "inputs": [
-           "v20"
-          ],
-          "intrinsic_id": "Intrinsic.ldundefined",
-          "opcode": "Intrinsic",
-          "type": "any"
-         },
-         {
-          "id": "v22",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v21"
-          ]
-         },
-         {
-          "id": "v21",
-          "inputs": [
-           "v22"
           ],
           "intrinsic_id": "Intrinsic.returnundefined",
           "opcode": "Intrinsic",
@@ -624,119 +717,6 @@
       "signature": ".func_main_0"
      },
      "name": "func_main_0"
-    },
-    {
-     "method": {
-      "accessFlags": 264,
-      "basicBlocks": [
-       {
-        "id": 1,
-        "insts": [
-         {
-          "id": "v0",
-          "index": 0,
-          "opcode": "Parameter",
-          "type": "any"
-         },
-         {
-          "id": "v1",
-          "index": 1,
-          "opcode": "Parameter",
-          "type": "any"
-         },
-         {
-          "id": "v2",
-          "index": 2,
-          "opcode": "Parameter",
-          "type": "any"
-         }
-        ],
-        "isCatchBegin": false,
-        "isTryBegin": false,
-        "isTryEnd": false,
-        "successors": [
-         0
-        ]
-       },
-       {
-        "id": 0,
-        "insts": [
-         {
-          "id": "v3",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v4"
-          ]
-         },
-         {
-          "id": "v4",
-          "inputs": [
-           "v3"
-          ],
-          "opcode": "LoadString",
-          "string": "Password123",
-          "stringOffset": 344,
-          "type": "ref",
-          "users": [
-           "v5"
-          ]
-         },
-         {
-          "id": "v5",
-          "inputs": [
-           "v4"
-          ],
-          "opcode": "CastValueToAnyType",
-          "type": "any",
-          "users": [
-           "v6"
-          ]
-         },
-         {
-          "id": "v7",
-          "opcode": "SaveState",
-          "type": "void",
-          "users": [
-           "v6"
-          ]
-         },
-         {
-          "id": "v6",
-          "inputs": [
-           "v5",
-           "v7"
-          ],
-          "intrinsic_id": "Intrinsic.return",
-          "opcode": "Intrinsic",
-          "type": "void"
-         }
-        ],
-        "isCatchBegin": false,
-        "isTryBegin": false,
-        "isTryEnd": false,
-        "predecessors": [
-         1
-        ],
-        "successors": [
-         2
-        ]
-       },
-       {
-        "id": 2,
-        "isCatchBegin": false,
-        "isTryBegin": false,
-        "isTryEnd": false,
-        "predecessors": [
-         0
-        ]
-       }
-      ],
-      "name": "getPassword",
-      "returnType": "any",
-      "signature": ".getPassword"
-     },
-     "name": "getPassword"
     },
     {
      "method": {
@@ -908,7 +888,7 @@
           ],
           "opcode": "LoadString",
           "string": "",
-          "stringOffset": 237,
+          "stringOffset": 233,
           "type": "ref",
           "users": [
            "v5"
@@ -937,7 +917,7 @@
           "id": "v6",
           "imms": [
            0,
-           402
+           384
           ],
           "inputs": [
            "v2",
@@ -1064,7 +1044,7 @@
           "id": "v4",
           "imms": [
            0,
-           357
+           339
           ],
           "inputs": [
            "v3",
@@ -1180,7 +1160,7 @@
           ],
           "opcode": "LoadString",
           "string": "publish event error: ",
-          "stringOffset": 411,
+          "stringOffset": 393,
           "type": "ref",
           "users": [
            "v15"
@@ -1209,7 +1189,7 @@
           "id": "v16",
           "imms": [
            2,
-           357
+           339
           ],
           "inputs": [
            "v3",
@@ -1263,7 +1243,7 @@
           ],
           "opcode": "LoadString",
           "string": ", ",
-          "stringOffset": 239,
+          "stringOffset": 235,
           "type": "ref",
           "users": [
            "v22"
@@ -1317,7 +1297,7 @@
           "id": "v25",
           "imms": [
            6,
-           376
+           358
           ],
           "inputs": [
            "v3",
@@ -1371,7 +1351,7 @@
           ],
           "opcode": "LoadString",
           "string": ", ",
-          "stringOffset": 239,
+          "stringOffset": 235,
           "type": "ref",
           "users": [
            "v31"
@@ -1425,7 +1405,7 @@
           "id": "v34",
           "imms": [
            10,
-           385
+           367
           ],
           "inputs": [
            "v3",
@@ -1479,7 +1459,7 @@
           ],
           "opcode": "LoadString",
           "string": ", ",
-          "stringOffset": 239,
+          "stringOffset": 235,
           "type": "ref",
           "users": [
            "v40"
@@ -1533,7 +1513,7 @@
           "id": "v43",
           "imms": [
            14,
-           481
+           463
           ],
           "inputs": [
            "v3",
@@ -1584,7 +1564,7 @@
           "id": "v47",
           "imms": [
            17,
-           402
+           384
           ],
           "inputs": [
            "v11",
@@ -1651,7 +1631,7 @@
           ],
           "opcode": "LoadString",
           "string": "publish event with data success",
-          "stringOffset": 434,
+          "stringOffset": 416,
           "type": "ref",
           "users": [
            "v53"
@@ -1680,7 +1660,7 @@
           "id": "v54",
           "imms": [
            19,
-           402
+           384
           ],
           "inputs": [
            "v49",

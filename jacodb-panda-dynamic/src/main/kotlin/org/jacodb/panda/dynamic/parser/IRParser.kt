@@ -358,7 +358,10 @@ class IRParser(
         val outputs = outputs()
 
         fun handle(expr: PandaExpr) {
-            val lv = PandaLocalVar(method.currentLocalVarId++, if (expr is PandaNewExpr) expr.type else PandaAnyType)
+            var type : PandaType = PandaAnyType
+            if (expr is PandaNewExpr) type = expr.type
+            if (expr is PandaLoadedValue) type = expr.instance.type
+            val lv = PandaLocalVar(method.currentLocalVarId++, type)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
@@ -385,8 +388,10 @@ class IRParser(
                     val argInfo = PandaParameterInfo(c, type)
                     method.parameters += argInfo
                     arg
-                } else {
+                } else if (id() == ARG_THRESHOLD - 1) {
                     PandaThis(PandaClassTypeImpl(method.clazz.name))
+                } else { // TODO(): find out what are arg0, arg1 (they are not "this" instance tho)
+                    PandaArgument(c) // to escape possible index collision
                 }
 
                 outputs.forEach { output ->
@@ -651,11 +656,12 @@ class IRParser(
             }
 
             opcode == "Intrinsic.ldlexvar" -> {
-                val lexvar = PandaLexVar(
-                    lexenv ?: error("No lexenv"),
-                    lexvar ?: error("No lexvar"),
-                    PandaAnyType
-                )
+//                val lexvar = PandaLexVar(
+//                    lexenv ?: error("No lexenv"),
+//                    lexvar ?: error("No lexvar"),
+//                    PandaAnyType
+//                )
+                val (methodName, lexvar) = env.getLexvar(lexenv ?: error("No lexenv"), lexvar ?: error("No lexvar"))
                 handle(PandaLoadedValue(lexvar))
             }
 

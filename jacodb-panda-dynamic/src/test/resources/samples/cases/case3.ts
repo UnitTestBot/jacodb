@@ -9,15 +9,15 @@ function publishEvent(event: string, password: String, callback: (err: MyError) 
     // publish event
 }
 
-function getPassword() {
-    return "Password123"
-}
-
 class CommonSecurity {
     private publish: String = ""
 
+    private getPassword() {
+        return "Password123"
+    }
+
     private publishEventWithData() {
-        let password = getPassword()
+        let password = this.getPassword()
         // SINK: send with sensitive data
         publishEvent("MyCommonEvent", password, (err) => {
             if (err.code) {
