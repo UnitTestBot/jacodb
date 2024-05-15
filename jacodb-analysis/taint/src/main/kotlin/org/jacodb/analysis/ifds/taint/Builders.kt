@@ -17,7 +17,6 @@
 package org.jacodb.analysis.ifds.taint
 
 import org.jacodb.actors.impl.system
-import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.actors.ProjectManager
 import org.jacodb.analysis.ifds.common.BackwardRunnerId
 import org.jacodb.analysis.ifds.common.ClassChunkStrategy
@@ -26,6 +25,7 @@ import org.jacodb.analysis.ifds.common.JcAsyncIfdsFacade
 import org.jacodb.analysis.ifds.common.JcChunkResolver
 import org.jacodb.analysis.ifds.common.JcIfdsContext
 import org.jacodb.analysis.ifds.common.JcIfdsFacade
+import org.jacodb.analysis.ifds.common.defaultBannedPackagePrefixes
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst

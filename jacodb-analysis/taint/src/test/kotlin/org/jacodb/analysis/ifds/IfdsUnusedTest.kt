@@ -17,7 +17,7 @@
 package org.jacodb.analysis.ifds
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
+import org.jacodb.analysis.ifds.common.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.unused.UnusedVulnerability
 import org.jacodb.analysis.ifds.unused.unusedIfdsFacade
 import org.jacodb.api.JcMethod

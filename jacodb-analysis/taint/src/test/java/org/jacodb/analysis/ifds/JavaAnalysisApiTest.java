@@ -17,7 +17,6 @@
 package org.jacodb.analysis.ifds;
 
 import kotlin.time.DurationUnit;
-import org.jacodb.analysis.graph.ApplicationGraphFactory;
 import org.jacodb.analysis.ifds.common.ChunkStrategiesKt;
 import org.jacodb.analysis.ifds.common.JcAsyncIfdsFacade;
 import org.jacodb.analysis.ifds.taint.TaintDomainFact;
@@ -40,7 +39,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static kotlin.time.DurationKt.toDuration;
-import static org.jacodb.analysis.graph.ApplicationGraphFactory.getDefaultBannedPackagePrefixes;
+import static org.jacodb.analysis.graph.JcApplicationGraphImplKt.newApplicationGraphForAnalysisAsync;
+import static org.jacodb.analysis.ifds.common.BannedPackagesKt.getDefaultBannedPackagePrefixes;
 import static org.jacodb.analysis.ifds.taint.BuildersKt.asyncTaintIfdsFacade;
 
 
@@ -59,9 +59,9 @@ public class JavaAnalysisApiTest {
         Assertions.assertNotNull(analyzedClass);
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
-        JcApplicationGraph applicationGraph = ApplicationGraphFactory
-            .newApplicationGraphForAnalysisAsync(classpath)
-            .get();
+        JcApplicationGraph applicationGraph =
+            newApplicationGraphForAnalysisAsync(classpath)
+                .get();
 
         JcAsyncIfdsFacade<TaintDomainFact, TaintVulnerability> ifds = asyncTaintIfdsFacade(
             "ifds",
@@ -70,8 +70,8 @@ public class JavaAnalysisApiTest {
             getDefaultBannedPackagePrefixes(),
             ChunkStrategiesKt.getClassChunkStrategy());
         ifds.runAnalysis(
-            methodsToAnalyze,
-            toDuration(30, DurationUnit.SECONDS))
+                methodsToAnalyze,
+                toDuration(30, DurationUnit.SECONDS))
             .get();
     }
 }

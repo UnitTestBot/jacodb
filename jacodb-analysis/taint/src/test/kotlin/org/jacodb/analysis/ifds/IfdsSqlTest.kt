@@ -19,7 +19,7 @@ package org.jacodb.analysis.ifds
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
+import org.jacodb.analysis.ifds.common.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.result.buildTraceGraph
 import org.jacodb.analysis.ifds.sarif.sarifReportFromVulnerabilities
 import org.jacodb.analysis.ifds.sarif.toSarif
