@@ -19,6 +19,7 @@ package org.jacodb.analysis.ifds.common
 import org.jacodb.analysis.ifds.domain.IndirectionHandler
 import org.jacodb.analysis.ifds.domain.RunnerId
 import org.jacodb.analysis.ifds.messages.IndirectionMessage
+import org.jacodb.analysis.ifds.messages.NoResolvedCall
 import org.jacodb.analysis.ifds.messages.ResolvedCall
 import org.jacodb.analysis.ifds.messages.RunnerMessage
 import org.jacodb.analysis.ifds.messages.UnresolvedCall
@@ -38,35 +39,31 @@ class JcIndirectionHandler(
 ) : IndirectionHandler {
     private val cache = hashMapOf<JcMethod, List<JcMethod>>()
 
-
     override fun handle(message: IndirectionMessage): Collection<RunnerMessage> {
         @Suppress("UNCHECKED_CAST")
-        message as? UnresolvedCall<JcInst, TaintDomainFact> ?: return emptyList()
+        message as? UnresolvedCall<JcInst, TaintDomainFact> ?: error("Unexpected message: $message")
 
-        val node = message.edge.to.statement
+        val edge = message.edge
+        val node = edge.to.statement
 
-        val callees = (node.callExpr?.let { listOf(it.method.method) } ?: emptyList())
-            .filterNot { callee ->
-                bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
-            }
+        val callExpr = node.callExpr ?: return emptyList()
+        val callee = callExpr.method.method
+        if (bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }) {
+            return listOf(NoResolvedCall(runnerId, edge))
+        }
 
-        val callExpr = node.callExpr as? JcVirtualCallExpr
-            ?: return callees.map { ResolvedCall(runnerId, message.edge, it) }
+        if (callExpr !is JcVirtualCallExpr) {
+            return listOf(ResolvedCall(runnerId, edge, callee))
+        }
 
         val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass
-            ?: return listOf(ResolvedCall(runnerId, message.edge, callExpr.method.method))
+            ?: return listOf(ResolvedCall(runnerId, edge, callee))
 
-        return callees
-            .flatMap { callee ->
-                val allOverrides = cache.computeIfAbsent(callee) {
-                    hierarchy.findOverrides(callee).toList()
-                }.filter {
-                    it.enclosingClass isSubClassOf instanceClass ||
-                        // TODO: use only down-most override here
-                        instanceClass isSubClassOf it.enclosingClass
-                }.asSequence()
-                // TODO: maybe filter inaccessible methods here?
-                allOverrides + sequenceOf(callee)
-            }.mapTo(mutableListOf()) { ResolvedCall(runnerId, message.edge, it) }
+
+        val overrides = cache
+            .computeIfAbsent(callee) { hierarchy.findOverrides(callee).toList() }
+            .asSequence()
+            .filter { it.enclosingClass isSubClassOf instanceClass }
+        return (overrides + callee).mapTo(mutableListOf()) { ResolvedCall(runnerId, edge, it) }
     }
 }

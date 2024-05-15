@@ -43,7 +43,7 @@ class NpeAnalyzer(
     selfRunnerId,
     graph
 ) {
-    val cp = graph.classpath
+    private val cp = graph.classpath
 
     private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         cp.features
@@ -53,11 +53,7 @@ class NpeAnalyzer(
 
 
     override val flowFunctions: ForwardNpeFlowFunctions by lazy {
-        ForwardNpeFlowFunctions(cp, graph, taintConfigurationFeature)
-    }
-
-    private fun isExitPoint(statement: JcInst): Boolean {
-        return statement in graph.exitPoints(statement.location.method)
+        ForwardNpeFlowFunctions(cp, taintConfigurationFeature)
     }
 
     override fun MutableList<RunnerMessage>.onNewEdge(newEdge: Edge<JcInst, TaintDomainFact>) {
@@ -103,4 +99,7 @@ class NpeAnalyzer(
         }
     }
 
+    private fun isExitPoint(statement: JcInst): Boolean {
+        return statement in graph.exitPoints(statement.location.method)
+    }
 }

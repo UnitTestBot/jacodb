@@ -50,16 +50,11 @@ abstract class JcBaseAnalyzer<Fact>(
             is ResolvedCall<JcInst, Fact, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 message as ResolvedCall<JcInst, Fact, JcMethod>
-                processResolvedCall(
-                    message.edge,
-                    message.method
-                )
+                processResolvedCall(message.edge, message.method)
             }
 
             is NoResolvedCall<JcInst, Fact> -> {
-                processNoResolvedCall(
-                    message.edge
-                )
+                processNoResolvedCall(message.edge)
             }
 
             is NotificationOnStart<JcInst, Fact> -> {
@@ -147,17 +142,31 @@ abstract class JcBaseAnalyzer<Fact>(
         }
     }
 
-    private fun processNoResolvedCall(edge: Edge<JcInst, Fact>) {
-        TODO("Not yet implemented")
+    private fun MutableList<RunnerMessage>.processNoResolvedCall(edge: Edge<JcInst, Fact>) {
+        val reason = Reason.Sequent(edge)
+
+        val successors = graph.successors(edge.to.statement)
+
+        for (successor in successors) {
+            val facts = flowFunctions.sequent(
+                current = edge.to.statement,
+                next = successor,
+                edge.to.fact
+            )
+            for (fact in facts) {
+                val newEdge = Edge(edge.from, Vertex(successor, fact))
+                processNewEdge(selfRunnerId, newEdge, reason)
+            }
+        }
     }
 
     private fun MutableList<RunnerMessage>.processNotificationOnStart(
         callerEdge: Edge<JcInst, Fact>,
         edge: Edge<JcInst, Fact>
     ) {
-        val returnSites = graph.successors(callerEdge.to.statement)
-
         val reason = Reason.ExitToReturnSite(callerEdge, edge)
+
+        val returnSites = graph.successors(callerEdge.to.statement)
 
         for (returnSite in returnSites) {
             val facts = flowFunctions.exitToReturnSite(

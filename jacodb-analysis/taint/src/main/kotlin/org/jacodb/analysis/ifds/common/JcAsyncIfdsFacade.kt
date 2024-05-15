@@ -18,6 +18,7 @@ package org.jacodb.analysis.ifds.common
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
 import org.jacodb.analysis.ifds.result.Finding
 import org.jacodb.api.JcMethod
@@ -58,5 +59,6 @@ class JcAsyncIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
 
     override fun close() {
         ifdsFacade.close()
+        scope.cancel()
     }
 }

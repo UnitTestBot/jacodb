@@ -32,16 +32,16 @@ class UnusedVariableAnalyzer(
     graph,
 ) {
     override val flowFunctions by lazy {
-        UnusedVariableFlowFunctions(graph)
-    }
-
-    private fun isExitPoint(statement: JcInst): Boolean {
-        return statement in graph.exitPoints(statement.location.method)
+        UnusedVariableFlowFunctions(graph.classpath)
     }
 
     override fun MutableList<RunnerMessage>.onNewEdge(newEdge: Edge<JcInst, UnusedVariableDomainFact>) {
         if (isExitPoint(newEdge.to.statement)) {
             add(NewSummaryEdge(selfRunnerId, newEdge))
         }
+    }
+
+    private fun isExitPoint(statement: JcInst): Boolean {
+        return statement in graph.exitPoints(statement.location.method)
     }
 }

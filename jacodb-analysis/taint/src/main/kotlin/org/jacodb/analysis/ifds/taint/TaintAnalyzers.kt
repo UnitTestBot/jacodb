@@ -32,6 +32,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
+
 class ForwardTaintAnalyzer(
     selfRunnerId: RunnerId,
     graph: JcApplicationGraph,
@@ -39,18 +40,16 @@ class ForwardTaintAnalyzer(
     selfRunnerId,
     graph,
 ) {
+    private val cp = graph.classpath
+
     private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
-        graph.classpath.features
+        cp.features
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
     }
 
     override val flowFunctions by lazy {
-        ForwardTaintFlowFunctions(graph.classpath, graph, taintConfigurationFeature)
-    }
-
-    private fun isExitPoint(statement: JcInst): Boolean {
-        return statement in graph.exitPoints(statement.location.method)
+        ForwardTaintFlowFunctions(cp, taintConfigurationFeature)
     }
 
     override fun MutableList<RunnerMessage>.onNewEdge(newEdge: Edge<JcInst, TaintDomainFact>) {
@@ -87,4 +86,7 @@ class ForwardTaintAnalyzer(
         }
     }
 
+    private fun isExitPoint(statement: JcInst): Boolean {
+        return statement in graph.exitPoints(statement.location.method)
+    }
 }

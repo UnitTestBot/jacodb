@@ -22,7 +22,6 @@ import org.jacodb.analysis.ifds.util.toPath
 import org.jacodb.analysis.ifds.util.toPathOrNull
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcSpecialCallExpr
@@ -30,10 +29,8 @@ import org.jacodb.api.cfg.JcStaticCallExpr
 import org.jacodb.api.ext.cfg.callExpr
 
 class UnusedVariableFlowFunctions(
-    private val graph: JcApplicationGraph,
+    private val cp: JcClasspath,
 ) : FlowFunctions<JcInst, UnusedVariableDomainFact, JcMethod> {
-    private val cp: JcClasspath
-        get() = graph.classpath
 
     override fun obtainPossibleStartFacts(method: JcMethod): Collection<UnusedVariableDomainFact> =
         setOf(UnusedVariableZeroFact)

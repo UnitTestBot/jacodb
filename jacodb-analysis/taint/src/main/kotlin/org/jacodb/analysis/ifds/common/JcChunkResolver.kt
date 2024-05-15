@@ -24,6 +24,7 @@ import org.jacodb.analysis.ifds.messages.IndirectionMessage
 import org.jacodb.analysis.ifds.messages.NewEdge
 import org.jacodb.analysis.ifds.messages.NewFinding
 import org.jacodb.analysis.ifds.messages.NewSummaryEdge
+import org.jacodb.analysis.ifds.messages.NoResolvedCall
 import org.jacodb.analysis.ifds.messages.NotificationOnEnd
 import org.jacodb.analysis.ifds.messages.NotificationOnStart
 import org.jacodb.analysis.ifds.messages.ResolvedCall
@@ -61,6 +62,11 @@ class JcChunkResolver(
 
                     is ResolvedCall<*, *, *> -> {
                         message as ResolvedCall<JcInst, *, *>
+                        chunkStrategy.chunkByStmt(message.edge.to.statement)
+                    }
+
+                    is NoResolvedCall<*, *> -> {
+                        message as NoResolvedCall<JcInst, *>
                         chunkStrategy.chunkByStmt(message.edge.to.statement)
                     }
 

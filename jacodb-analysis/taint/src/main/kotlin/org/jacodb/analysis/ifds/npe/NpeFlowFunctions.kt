@@ -38,7 +38,6 @@ import org.jacodb.analysis.ifds.util.toPathOrNull
 import org.jacodb.api.JcArrayType
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
-import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcArgument
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcCallExpr
@@ -73,7 +72,6 @@ private val logger = mu.KotlinLogging.logger {}
 
 class ForwardNpeFlowFunctions(
     private val cp: JcClasspath,
-    private val graph: JcApplicationGraph,
     private val taintConfigurationFeature: TaintConfigurationFeature?,
 ) : FlowFunctions<JcInst, TaintDomainFact, JcMethod> {
     override fun obtainPossibleStartFacts(
@@ -208,7 +206,7 @@ class ForwardNpeFlowFunctions(
     override fun sequent(
         current: JcInst,
         next: JcInst,
-        fact: TaintDomainFact
+        fact: TaintDomainFact,
     ): Collection<TaintDomainFact> {
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(current)) {
@@ -315,7 +313,7 @@ class ForwardNpeFlowFunctions(
     override fun callToReturn(
         callStatement: JcInst,
         returnSite: JcInst,
-        fact: TaintDomainFact
+        fact: TaintDomainFact,
     ): Collection<TaintDomainFact> {
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(callStatement)) {
@@ -448,35 +446,22 @@ class ForwardNpeFlowFunctions(
             return listOf(fact)
         }
 
-        // TODO: CONSIDER REFACTORING THIS
-        //   Default behavior for "analyzable" method calls is to remove ("temporarily")
-        //    all the marks from the 'instance' and arguments, in order to allow them "pass through"
-        //    the callee (when it is going to be analyzed), i.e. through "call-to-start" and
-        //    "exit-to-return" flow functions.
-        //   When we know that we are NOT going to analyze the callee, we do NOT need
-        //    to remove any marks from 'instance' and arguments.
-        //   Currently, "analyzability" of the callee depends on the fact that the callee
-        //    is "accessible" through the JcApplicationGraph::callees().
-        if (callee in graph.callees(callStatement)) {
+        if (fact.variable.isStatic) {
+            return emptyList()
+        }
 
-            if (fact.variable.isStatic) {
-                return emptyList()
+        for (actual in callExpr.args) {
+            // Possibly tainted actual parameter:
+            if (fact.variable.startsWith(actual.toPathOrNull())) {
+                return emptyList() // Will be handled by summary edge
             }
+        }
 
-            for (actual in callExpr.args) {
-                // Possibly tainted actual parameter:
-                if (fact.variable.startsWith(actual.toPathOrNull())) {
-                    return emptyList() // Will be handled by summary edge
-                }
+        if (callExpr is JcInstanceCallExpr) {
+            // Possibly tainted instance:
+            if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
+                return emptyList() // Will be handled by summary edge
             }
-
-            if (callExpr is JcInstanceCallExpr) {
-                // Possibly tainted instance:
-                if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                    return emptyList() // Will be handled by summary edge
-                }
-            }
-
         }
 
         if (callStatement is JcAssignInst) {
@@ -493,7 +478,7 @@ class ForwardNpeFlowFunctions(
     override fun callToStart(
         callStatement: JcInst,
         calleeStart: JcInst,
-        fact: TaintDomainFact
+        fact: TaintDomainFact,
     ): Collection<TaintDomainFact> {
         val callee = calleeStart.location.method
 
@@ -543,7 +528,7 @@ class ForwardNpeFlowFunctions(
         callStatement: JcInst,
         returnSite: JcInst,
         exitStatement: JcInst,
-        fact: TaintDomainFact
+        fact: TaintDomainFact,
     ): Collection<TaintDomainFact> {
         // TODO: do we even need to return non-empty list for zero fact here?
         if (fact == TaintZeroFact) {
