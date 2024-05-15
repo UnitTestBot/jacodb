@@ -14,18 +14,24 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds
+package org.jacodb.ifds.actors
 
-import org.jacodb.ifds.domain.Analyzer
-import org.jacodb.ifds.domain.Chunk
+import org.jacodb.actors.api.Actor
+import org.jacodb.actors.api.ActorContext
+import org.jacodb.actors.api.ActorRef
 import org.jacodb.ifds.domain.IndirectionHandler
-import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.RunnerMessage
 
-interface IfdsContext<Stmt> {
-    fun chunkByMessage(message: RunnerMessage): Chunk
-    fun runnerIdByMessage(message: RunnerMessage): RunnerId
-
-    fun getAnalyzer(runnerId: RunnerId): Analyzer<Stmt, *>
-    fun getIndirectionHandler(runnerId: RunnerId): IndirectionHandler
+context(ActorContext<IndirectionMessage>)
+class IndirectionHandlerActor(
+    private val parent: ActorRef<RunnerMessage>,
+    private val indirectionHandler: IndirectionHandler,
+) : Actor<IndirectionMessage> {
+    override suspend fun receive(message: IndirectionMessage) {
+        val newMessages = indirectionHandler.handle(message)
+        for (newMessage in newMessages) {
+            parent.send(newMessage)
+        }
+    }
 }

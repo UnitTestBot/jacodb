@@ -50,8 +50,10 @@ class Runner<Stmt, Fact>(
 
     private val indirectionHandler = spawn(
         "indirection",
-        actorFactory = ifdsContext.indirectionHandlerFactory(this@ActorContext.self, runnerId)
-    )
+    ) {
+        val indirectionHandler = ifdsContext.getIndirectionHandler(runnerId)
+        IndirectionHandlerActor(this@ActorContext.self, indirectionHandler)
+    }
 
     override suspend fun receive(message: RunnerMessage) {
         when {

@@ -16,9 +16,6 @@
 
 package org.jacodb.ifds.common
 
-import org.jacodb.actors.api.Actor
-import org.jacodb.actors.api.ActorContext
-import org.jacodb.actors.api.ActorRef
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
@@ -26,6 +23,7 @@ import org.jacodb.api.cfg.JcVirtualCallExpr
 import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
+import org.jacodb.ifds.domain.IndirectionHandler
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.ResolvedCall
@@ -33,41 +31,32 @@ import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.UnresolvedCall
 import org.jacodb.ifds.taint.TaintDomainFact
 
-context(ActorContext<IndirectionMessage>)
 class JcIndirectionHandler(
     private val hierarchy: HierarchyExtension,
     private val bannedPackagePrefixes: List<String>,
-    private val parent: ActorRef<RunnerMessage>,
     private val runnerId: RunnerId,
-) : Actor<IndirectionMessage> {
+) : IndirectionHandler {
     private val cache = hashMapOf<JcMethod, List<JcMethod>>()
 
-    override suspend fun receive(message: IndirectionMessage) {
-        // TODO: refactor it
+
+    override fun handle(message: IndirectionMessage): Collection<RunnerMessage> {
         @Suppress("UNCHECKED_CAST")
-        message as? UnresolvedCall<JcInst, TaintDomainFact> ?: return
+        message as? UnresolvedCall<JcInst, TaintDomainFact> ?: return emptyList()
 
         val node = message.edge.to.statement
 
-        val callees = (node.callExpr?.let { sequenceOf(it.method.method) } ?: emptySequence())
+        val callees = (node.callExpr?.let { listOf(it.method.method) } ?: emptyList())
             .filterNot { callee ->
                 bannedPackagePrefixes.any { callee.enclosingClass.name.startsWith(it) }
             }
 
         val callExpr = node.callExpr as? JcVirtualCallExpr
-        if (callExpr == null) {
-            for (override in callees) {
-                parent.send(ResolvedCall(runnerId, message.edge, override))
-            }
-            return
-        }
-        val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass
-        if (instanceClass == null) {
-            parent.send(ResolvedCall(runnerId, message.edge, callExpr.method.method))
-            return
-        }
+            ?: return callees.map { ResolvedCall(runnerId, message.edge, it) }
 
-        val overrides = callees
+        val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass
+            ?: return listOf(ResolvedCall(runnerId, message.edge, callExpr.method.method))
+
+        return callees
             .flatMap { callee ->
                 val allOverrides = cache.computeIfAbsent(callee) {
                     hierarchy.findOverrides(callee).toList()
@@ -78,10 +67,6 @@ class JcIndirectionHandler(
                 }.asSequence()
                 // TODO: maybe filter inaccessible methods here?
                 allOverrides + sequenceOf(callee)
-            }
-
-        for (override in overrides) {
-            parent.send(ResolvedCall(runnerId, message.edge, override))
-        }
+            }.mapTo(mutableListOf()) { ResolvedCall(runnerId, message.edge, it) }
     }
 }

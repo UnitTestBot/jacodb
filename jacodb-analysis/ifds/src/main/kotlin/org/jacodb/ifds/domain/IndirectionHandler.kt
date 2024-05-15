@@ -14,18 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds
+package org.jacodb.ifds.domain
 
-import org.jacodb.ifds.domain.Analyzer
-import org.jacodb.ifds.domain.Chunk
-import org.jacodb.ifds.domain.IndirectionHandler
-import org.jacodb.ifds.domain.RunnerId
+import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.RunnerMessage
 
-interface IfdsContext<Stmt> {
-    fun chunkByMessage(message: RunnerMessage): Chunk
-    fun runnerIdByMessage(message: RunnerMessage): RunnerId
-
-    fun getAnalyzer(runnerId: RunnerId): Analyzer<Stmt, *>
-    fun getIndirectionHandler(runnerId: RunnerId): IndirectionHandler
+interface IndirectionHandler {
+    fun handle(message: IndirectionMessage): Collection<RunnerMessage>
 }
