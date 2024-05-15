@@ -61,10 +61,9 @@ class IRParserSamplesTest {
     @Test
     fun getPandaMethods() {
         val parser = load(SAMPLE_NAME)
-        val program = parser.getProgram()
+        val program = parser.getProject()
         program.classes.forEach { cls ->
-            cls.properties.forEach { property ->
-                val pandaMethod = property.method.pandaMethod
+            cls.methods.forEach { pandaMethod ->
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
                 logger.info { "Panda method '$pandaMethod', instructions: ${pandaMethod.instructions}" }
@@ -109,7 +108,7 @@ class IRParserSamplesTest {
         val program = parser.getProgram()
         program.classes.forEach { cls ->
             cls.properties.forEach { property ->
-                println(property)
+                logger.info { property }
             }
         }
     }
@@ -117,10 +116,9 @@ class IRParserSamplesTest {
     @Test
     fun `test parser on TypeMismatch`() {
         val parser = load("TypeMismatch")
-        val program = parser.getProgram()
-        program.classes.forEach { cls ->
-            cls.properties.forEach { property ->
-                val pandaMethod = property.method.pandaMethod
+        val project = parser.getProject()
+        project.classes.forEach { cls ->
+            cls.methods.forEach { pandaMethod ->
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {
@@ -130,7 +128,7 @@ class IRParserSamplesTest {
                     }
 
                     "main" -> {
-                        assertEquals(6, pandaMethod.instructions.size)
+                        assertEquals(5, pandaMethod.instructions.size)
                         assertEquals(3, pandaMethod.blocks.size)
                     }
                 }

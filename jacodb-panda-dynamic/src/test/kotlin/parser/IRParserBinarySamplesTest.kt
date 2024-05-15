@@ -22,6 +22,7 @@ import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaLocalVar
 import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
+import org.jacodb.panda.dynamic.api.PandaNumberType
 import org.jacodb.panda.dynamic.api.PandaReturnInst
 import org.jacodb.panda.dynamic.api.PandaSubExpr
 import org.jacodb.panda.dynamic.parser.IRParser
@@ -43,10 +44,9 @@ class IRParserBinarySamplesTest {
     @Test
     fun `test parser on binary subtraction`() {
         val parser = load("Subtraction")
-        val program = parser.getProgram()
-        program.classes.forEach { cls ->
-            cls.properties.forEach { property ->
-                val pandaMethod = property.method.pandaMethod
+        val project = parser.getProject()
+        project.classes.forEach { cls ->
+            cls.methods.forEach { pandaMethod ->
                 Assertions.assertNotNull(pandaMethod.name)
                 Assertions.assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {
@@ -114,7 +114,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.lhv
                                     )
@@ -159,14 +160,16 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.lhv
                                     )
                                     assertEquals(
                                         PandaArgument(
                                             index = 1,
-                                            name = "arg1"
+                                            name = "arg1",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.rhv
                                     )
@@ -211,7 +214,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.rhv
                                     )
@@ -256,7 +260,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.rhv
                                     )
@@ -295,7 +300,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         negExpr.arg
                                     )
@@ -322,7 +328,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 1,
-                                            name = "arg1"
+                                            name = "arg1",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.rhv
                                     )
@@ -361,14 +368,16 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 1,
-                                            name = "arg1"
+                                            name = "arg1",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.lhv
                                     )
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.rhv
                                     )
