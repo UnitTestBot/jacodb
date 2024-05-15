@@ -125,7 +125,7 @@ class ProjectAnalysis {
         val fileLines = countFileLines("$BASE_PATH$filename.ts")
         try {
             if (filename in banFiles) return
-            logger.info { "Processing '$filename'" }
+            // logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
             when (filename) {
@@ -136,7 +136,7 @@ class ProjectAnalysis {
             analysisTime += (endTime - startTime).milliseconds
             tsLinesSuccess += fileLines
         } catch (e: Exception) {
-            logger.info { "Failed to process '$filename': $e" }
+            // logger.info { "Failed to process '$filename': $e" }
             tsLinesFailed += fileLines
         }
     }
