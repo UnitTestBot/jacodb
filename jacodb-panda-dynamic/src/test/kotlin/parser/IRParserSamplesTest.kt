@@ -29,9 +29,8 @@ class IRParserSamplesTest {
         private const val SAMPLE_NAME = "MethodCollision"
 
         private fun load(name: String): IRParser {
-            return loadIrWithTs(
+            return loadIr(
                 filePath = "/samples/$name.json",
-                tsPath = "/samples/$name.ts",
             )
         }
     }
@@ -77,10 +76,9 @@ class IRParserSamplesTest {
     @Test
     fun printPandaInstructions() {
         val parser = load(SAMPLE_NAME)
-        val program = parser.getProgram()
-        program.classes.forEach { cls ->
-            cls.properties.forEach { property ->
-                val pandaMethod = property.method.pandaMethod
+        val project = parser.getProject()
+        project.classes.forEach { cls ->
+            cls.methods.forEach { pandaMethod ->
                 assertNotNull(pandaMethod.name)
                 assertNotNull(pandaMethod.instructions)
                 logger.info { "Panda method '$pandaMethod'" }
