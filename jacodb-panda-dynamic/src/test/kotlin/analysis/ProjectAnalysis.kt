@@ -21,7 +21,9 @@ import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.util.PandaTraits
+import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
@@ -48,10 +50,15 @@ import kotlin.time.Duration.Companion.seconds
 private val logger = mu.KotlinLogging.logger {}
 
 class ProjectAnalysis {
+    private var tsLinesSuccess = 0L
+    private var tsLinesFailed = 0L
+    private var analysisTime: Duration = Duration.ZERO
+    private var totalEdges = 0
+    private var totalSinks: MutableList<TaintVulnerability<PandaMethod, PandaInst>> = mutableListOf()
 
-    companion object : PandaTraits {
-        private const val PROJECT_PATH = "/samples/project1"
-        private const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
+    companion object: PandaTraits{
+        const val PROJECT_PATH = "/samples/project1"
+        const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
 
         private fun loadProjectForSample(programName: String): PandaProject {
             val parser = loadIr("$BASE_PATH$programName.json")
@@ -83,14 +90,38 @@ class ProjectAnalysis {
             .forEach { filename ->
                 handleFile(filename)
             }
-        logger.info { "Total lines processed: $tsLinesSuccess" }
-        logger.info { "Failed lines: $tsLinesFailed" }
-        logger.info { "Analysis time: $analysisTime" }
+        makeReport()
     }
 
-    private var tsLinesSuccess = 0L
-    private var tsLinesFailed = 0L
-    private var analysisTime: Duration = Duration.ZERO
+    private fun makeReport() {
+        logger.info { "Analysis Report On $PROJECT_PATH" }
+        logger.info { "====================" }
+        logger.info { "Total files processed: ${tsLinesSuccess + tsLinesFailed}" }
+        logger.info { "Successfully processed lines: $tsLinesSuccess" }
+        logger.info { "Failed lines: $tsLinesFailed" }
+        logger.info { "Total analysis time: $analysisTime" }
+        logger.info { "Total edges: $totalEdges" }
+        logger.info { "Founded sinks: ${totalSinks.size}" }
+
+        if (totalSinks.isNotEmpty()) {
+            totalSinks.forEachIndexed { idx, sink ->
+                logger.info {
+                    """Detailed Sink Information:
+                |
+                |Sink ID: $idx
+                |Statement: ${sink.sink.statement}
+                |Fact: ${sink.sink.fact}
+                |Condition: ${sink.rule?.condition}
+                |
+                """.trimMargin()
+                }
+            }
+        } else {
+            logger.info { "No sinks found." }
+        }
+        logger.info { "====================" }
+        logger.info { "End of report" }
+    }
 
     private fun handleFile(filename: String) {
         // This files contain critical bugs
@@ -99,11 +130,12 @@ class ProjectAnalysis {
         )
         val fileLines = countFileLines("$BASE_PATH$filename.ts")
         try {
+            if (filename in banFiles) return
+            val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
             when (filename) {
-                "base/account/AccountManager" -> runAnalysisOnAccountManager(filename)
-                in banFiles -> return
-                else -> runAnalysis(filename)
+                "base/account/AccountManager" -> runAnalysisOnAccountManager(project, filename)
+                else -> runAnalysis(project, filename)
             }
             val endTime = System.currentTimeMillis()
             analysisTime += (endTime - startTime).milliseconds
@@ -113,8 +145,7 @@ class ProjectAnalysis {
         }
     }
 
-    private fun runAnalysisOnAccountManager(filename: String) {
-        val project = loadProjectForSample(filename)
+    private fun runAnalysisOnAccountManager(project: PandaProject, filename: String) {
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -153,12 +184,12 @@ class ProjectAnalysis {
 
         val methods = project.classes.flatMap { it.methods }.filter { it.name in methodNames }
         val sinks = manager.analyze(methods, timeout = 10.seconds)
-        logger.warn { "Found sink in file $filename: $sinks" }
+        totalEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
+        totalSinks.addAll(sinks)
         assertTrue(sinks.isNotEmpty())
     }
 
-    private fun runAnalysis(fileName: String) {
-        val project = loadProjectForSample(fileName)
+    private fun runAnalysis(project: PandaProject, filename: String) {
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
@@ -174,6 +205,7 @@ class ProjectAnalysis {
 
         val methods = project.classes.flatMap { it.methods }
         val sinks = manager.analyze(methods, timeout = 5.seconds)
+        totalEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
         assertTrue(sinks.isEmpty())
     }
 }

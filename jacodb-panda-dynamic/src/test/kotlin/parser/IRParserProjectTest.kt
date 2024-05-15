@@ -30,14 +30,14 @@ private val logger = mu.KotlinLogging.logger {}
 
 class IRParserProjectTest {
     companion object {
-        private const val PROJECT_PATH = "/samples/project1"
-        private const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
+        const val PROJECT_PATH = "/samples/project1"
+        const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
 
-        private fun load(name: String): IRParser {
+        fun load(name: String): IRParser {
             return loadIr(filePath = "$BASE_PATH$name.json")
         }
 
-        private fun countFileLines(path: String): Long {
+        fun countFileLines(path: String): Long {
             val stream = object {}::class.java.getResourceAsStream(path) ?: error("Resource not found")
             stream.bufferedReader().use { reader ->
                 return reader.lines().count()
