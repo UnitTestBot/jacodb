@@ -16,9 +16,30 @@
 
 package parser
 
+import io.mockk.mockk
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.jacodb.panda.dynamic.parser.TSParser
 import org.jacodb.panda.dynamic.parser.dumpDot
+import org.jacodb.taint.configuration.NameExactMatcher
+import org.jacodb.taint.configuration.NamePatternMatcher
+import org.jacodb.taint.configuration.SerializedTaintCleaner
+import org.jacodb.taint.configuration.SerializedTaintConfigurationItem
+import org.jacodb.taint.configuration.SerializedTaintEntryPointSource
+import org.jacodb.taint.configuration.SerializedTaintMethodSink
+import org.jacodb.taint.configuration.SerializedTaintMethodSource
+import org.jacodb.taint.configuration.SerializedTaintPassThrough
+import org.jacodb.taint.configuration.TaintCleaner
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintEntryPointSource
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.actionModule
+import org.jacodb.taint.configuration.conditionModule
 import java.io.File
 
 fun loadIr(filePath: String): IRParser {
@@ -35,6 +56,76 @@ fun loadIrWithTs(filePath: String, tsPath: String): IRParser {
     val tsParser = TSParser(sampleTSPath)
     val tsFunctions = tsParser.collectFunctions()
     return IRParser(sampleFilePath, tsFunctions)
+}
+
+fun loadRules(configFileName: String): List<SerializedTaintConfigurationItem> {
+    val configResource = object {}::class.java.getResourceAsStream("/$configFileName")
+        ?: error("Could not load config from '$configFileName'")
+    val configJson = configResource.bufferedReader().readText()
+    val rules: List<SerializedTaintConfigurationItem> = Json{
+        classDiscriminator = "_"
+        serializersModule = SerializersModule {
+            include(conditionModule)
+            include(actionModule)
+        }
+    }.decodeFromString(configJson)
+    // println("Loaded ${rules.size} rules from '$configFileName'")
+    // for (rule in rules) {
+    //     println(rule)
+    // }
+    return rules
+}
+
+fun getConfigForMethod(
+    method: CommonMethod<*, *>,
+    rules: List<SerializedTaintConfigurationItem>,
+): List<TaintConfigurationItem>? {
+    val res = buildList {
+        for (item in rules) {
+            val matcher = item.methodInfo.functionName
+            if (matcher is NameExactMatcher) {
+                if (method.name == matcher.name) add(item.toItem())
+            } else if (matcher is NamePatternMatcher) {
+                if (method.name.matches(matcher.pattern.toRegex())) add(item.toItem())
+            }
+        }
+    }
+    return res.ifEmpty { null }
+}
+
+fun SerializedTaintConfigurationItem.toItem(): TaintConfigurationItem {
+    return when (this) {
+        is SerializedTaintEntryPointSource -> TaintEntryPointSource(
+            method = mockk(),
+            condition = condition,
+            actionsAfter = actionsAfter
+        )
+
+        is SerializedTaintMethodSource -> TaintMethodSource(
+            method = mockk(),
+            condition = condition,
+            actionsAfter = actionsAfter
+        )
+
+        is SerializedTaintMethodSink -> TaintMethodSink(
+            method = mockk(),
+            ruleNote = ruleNote,
+            cwe = cwe,
+            condition = condition
+        )
+
+        is SerializedTaintPassThrough -> TaintPassThrough(
+            method = mockk(),
+            condition = condition,
+            actionsAfter = actionsAfter
+        )
+
+        is SerializedTaintCleaner -> TaintCleaner(
+            method = mockk(),
+            condition = condition,
+            actionsAfter = actionsAfter
+        )
+    }
 }
 
 object DumpIrToDot {

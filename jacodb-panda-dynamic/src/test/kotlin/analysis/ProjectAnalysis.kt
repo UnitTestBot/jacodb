@@ -16,7 +16,6 @@
 
 package analysis
 
-import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -28,19 +27,14 @@ import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.ConstantTrue
-import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.taint.configuration.TaintMethodSource
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
+import parser.getConfigForMethod
 import parser.loadIr
+import parser.loadRules
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.time.Duration
@@ -56,7 +50,7 @@ class ProjectAnalysis {
     private var totalEdges = 0
     private var totalSinks: MutableList<TaintVulnerability<PandaMethod, PandaInst>> = mutableListOf()
 
-    companion object: PandaTraits{
+    companion object : PandaTraits {
         const val PROJECT_PATH = "/samples/project1"
         const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
 
@@ -131,6 +125,7 @@ class ProjectAnalysis {
         val fileLines = countFileLines("$BASE_PATH$filename.ts")
         try {
             if (filename in banFiles) return
+            logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
             when (filename) {
@@ -140,7 +135,8 @@ class ProjectAnalysis {
             val endTime = System.currentTimeMillis()
             analysisTime += (endTime - startTime).milliseconds
             tsLinesSuccess += fileLines
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.info { "Failed to process '$filename': $e" }
             tsLinesFailed += fileLines
         }
     }
@@ -148,27 +144,9 @@ class ProjectAnalysis {
     private fun runAnalysisOnAccountManager(project: PandaProject, filename: String) {
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
+        val rules = loadRules("config1.json")
         val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
-            { method ->
-                val rules = buildList {
-                    if (method.name == "taintSink") add(
-                        TaintMethodSink(
-                            method = mockk(),
-                            cwe = listOf(),
-                            ruleNote = "SINK",
-                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT")),
-                        )
-                    )
-                    if (method.name == "requestGet") add(
-                        TaintMethodSource(
-                            method = mockk(),
-                            condition = ConstantTrue,
-                            actionsAfter = listOf(AssignMark(position = Result, mark = TaintMark("TAINT")))
-                        )
-                    )
-                }
-                rules.ifEmpty { null }
-            }
+            { method -> getConfigForMethod(method, rules) }
         val manager = TaintManager(
             graph = graph,
             unitResolver = unitResolver,

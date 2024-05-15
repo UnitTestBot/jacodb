@@ -34,17 +34,14 @@ import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
 import org.jacodb.taint.configuration.ContainsMark
 import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.CopyMark
 import org.jacodb.taint.configuration.RemoveMark
 import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
