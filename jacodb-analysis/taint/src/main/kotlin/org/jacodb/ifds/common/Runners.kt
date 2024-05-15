@@ -14,9 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ifds.taint
+package org.jacodb.ifds.common
 
 import org.jacodb.ifds.domain.RunnerId
+
+data object SingletonRunnerId : RunnerId
 
 data object ForwardRunnerId : RunnerId
 data object BackwardRunnerId : RunnerId

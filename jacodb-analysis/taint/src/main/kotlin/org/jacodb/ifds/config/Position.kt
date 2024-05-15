@@ -16,14 +16,6 @@
 
 package org.jacodb.ifds.config
 
-import org.jacodb.ifds.util.AccessPath
-import org.jacodb.ifds.util.ElementAccessor
-import org.jacodb.ifds.util.Maybe
-import org.jacodb.ifds.util.fmap
-import org.jacodb.ifds.util.toMaybe
-import org.jacodb.ifds.util.toPathOrNull
-import org.jacodb.ifds.util.getArgument
-import org.jacodb.ifds.util.thisInstance
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcAssignInst
@@ -31,6 +23,14 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.ElementAccessor
+import org.jacodb.ifds.util.Maybe
+import org.jacodb.ifds.util.fmap
+import org.jacodb.ifds.util.getArgument
+import org.jacodb.ifds.util.thisInstance
+import org.jacodb.ifds.util.toMaybe
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.Position

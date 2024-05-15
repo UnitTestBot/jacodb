@@ -28,6 +28,6 @@ interface IfdsContext<Stmt> {
     fun chunkByMessage(message: RunnerMessage): Chunk
     fun runnerIdByMessage(message: RunnerMessage): RunnerId
 
-    fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<Stmt, *>
+    fun getAnalyzer(runnerId: RunnerId): Analyzer<Stmt, *>
     fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId): ActorFactory<IndirectionMessage>
 }

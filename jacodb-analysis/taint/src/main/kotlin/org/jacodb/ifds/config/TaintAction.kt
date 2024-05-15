@@ -16,11 +16,11 @@
 
 package org.jacodb.ifds.config
 
+import org.jacodb.ifds.taint.Tainted
 import org.jacodb.ifds.util.AccessPath
 import org.jacodb.ifds.util.Maybe
 import org.jacodb.ifds.util.fmap
 import org.jacodb.ifds.util.map
-import org.jacodb.ifds.taint.Tainted
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

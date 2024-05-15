@@ -20,8 +20,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.ActorSystem
-import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.api.JcMethod
+import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Edge
 import org.jacodb.ifds.domain.Reason
@@ -30,22 +30,19 @@ import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.messages.CollectAllData
 import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.messages.NewEdge
-import org.jacodb.ifds.messages.StartAnalysis
-import org.jacodb.ifds.npe.NpeAnalyzer
-import org.jacodb.ifds.npe.SingletonRunnerId
 import org.jacodb.ifds.result.Finding
 import org.jacodb.ifds.result.IfdsComputationData
 import org.jacodb.ifds.result.mergeIfdsResults
-import org.jacodb.ifds.taint.ForwardRunnerId
-import org.jacodb.impl.features.usagesExt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
+open class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
+    private val graph: JcApplicationGraph,
+    private val context: JcIfdsContext<Fact>,
     private val system: ActorSystem<CommonMessage>,
     private val startingRunnerId: RunnerId,
 ) {
-    suspend fun runAnalysis(
+    open suspend fun runAnalysis(
         methods: Collection<JcMethod>,
         timeout: Duration = 60.seconds,
     ) = coroutineScope {
@@ -62,22 +59,29 @@ class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
         system.resume()
     }
 
-    suspend fun startAnalysis(
+    open suspend fun startAnalysis(
         method: JcMethod,
     ) {
-        val message = StartAnalysis(startingRunnerId, method)
-        system.send(message)
+        val analyzer = context.getAnalyzer(startingRunnerId)
+        for (fact in analyzer.obtainPossibleStartFacts(method)) {
+            for (entryPoint in graph.entryPoints(method)) {
+                val vertex = Vertex(entryPoint, fact)
+                val edge = Edge(vertex, vertex)
+                val newEdgeMessage = NewEdge(startingRunnerId, edge, Reason.Initial)
+                system.send(newEdgeMessage)
+            }
+        }
     }
 
     suspend fun awaitAnalysis() {
         system.awaitCompletion()
     }
 
-    suspend fun collectFindings(): Collection<F> =
+    open suspend fun collectFindings(): Collection<F> =
         collectComputationData().findings
 
-    suspend fun collectComputationData(): IfdsComputationData<JcInst, Fact, F> {
-        val results = system.ask { CollectAllData(SingletonRunnerId, it) }
+    open suspend fun collectComputationData(): IfdsComputationData<JcInst, Fact, F> {
+        val results = system.ask { CollectAllData(startingRunnerId, it) }
 
         @Suppress("UNCHECKED_CAST")
         val ifdsData = results.values as Collection<IfdsComputationData<JcInst, Fact, F>>

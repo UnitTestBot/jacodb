@@ -16,14 +16,14 @@
 
 package org.jacodb.ifds.npe
 
-import org.jacodb.ifds.util.AccessPath
-import org.jacodb.ifds.util.toPathOrNull
-import org.jacodb.ifds.util.startsWith
 import org.jacodb.api.cfg.JcExpr
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcInstanceCallExpr
 import org.jacodb.api.cfg.JcLengthExpr
 import org.jacodb.api.cfg.values
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.startsWith
+import org.jacodb.ifds.util.toPathOrNull
 
 fun AccessPath?.isDereferencedAt(expr: JcExpr): Boolean {
     if (this == null) {

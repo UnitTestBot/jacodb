@@ -16,10 +16,6 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.ifds.common.FlowFunctions
-import org.jacodb.ifds.util.toPath
-import org.jacodb.ifds.util.toPathOrNull
-import org.jacodb.ifds.util.getArgumentsOf
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcAssignInst
@@ -27,6 +23,10 @@ import org.jacodb.api.cfg.JcInst
 import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcStaticCallExpr
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.common.FlowFunctions
+import org.jacodb.ifds.util.getArgumentsOf
+import org.jacodb.ifds.util.toPath
+import org.jacodb.ifds.util.toPathOrNull
 
 class UnusedVariableFlowFunctions(
     private val graph: JcApplicationGraph,

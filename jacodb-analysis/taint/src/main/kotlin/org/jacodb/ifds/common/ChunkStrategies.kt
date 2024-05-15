@@ -38,7 +38,7 @@ val MethodChunkStrategy = ChunkStrategy<JcInst> { stmt ->
 }
 
 data class ClassChunk(
-    val method: JcClassOrInterface,
+    val jcClass: JcClassOrInterface,
 ) : Chunk
 
 val ClassChunkStrategy = ChunkStrategy<JcInst> { stmt ->

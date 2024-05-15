@@ -16,8 +16,6 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.ifds.util.AccessPath
-import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.api.cfg.JcArrayAccess
 import org.jacodb.api.cfg.JcAssignInst
 import org.jacodb.api.cfg.JcBranchingInst
@@ -28,6 +26,8 @@ import org.jacodb.api.cfg.JcSpecialCallExpr
 import org.jacodb.api.cfg.JcTerminatingInst
 import org.jacodb.api.cfg.values
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.toPathOrNull
 
 internal fun AccessPath.isUsedAt(expr: JcExpr): Boolean {
     return expr.values.any { it.toPathOrNull() == this }

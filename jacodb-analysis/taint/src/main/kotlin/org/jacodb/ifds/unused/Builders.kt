@@ -16,20 +16,20 @@
 
 package org.jacodb.ifds.unused
 
-import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.impl.system
 import org.jacodb.analysis.graph.defaultBannedPackagePrefixes
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkStrategy
-import org.jacodb.ifds.common.JcChunkResolver
 import org.jacodb.ifds.actors.ProjectManager
 import org.jacodb.ifds.common.ClassChunkStrategy
 import org.jacodb.ifds.common.JcAsyncIfdsFacade
+import org.jacodb.ifds.common.JcChunkResolver
 import org.jacodb.ifds.common.JcIfdsContext
 import org.jacodb.ifds.common.JcIfdsFacade
-import org.jacodb.ifds.messages.CommonMessage
+import org.jacodb.ifds.common.SingletonRunnerId
+import org.jacodb.ifds.domain.Vertex
 
 fun unusedIfdsContext(
     cp: JcClasspath,
@@ -48,24 +48,6 @@ fun unusedIfdsContext(
         }
     }
 
-fun unusedIfdsSystem(
-    name: String,
-    cp: JcClasspath,
-    graph: JcApplicationGraph,
-    bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
-): ActorSystem<CommonMessage> {
-    val context = unusedIfdsContext(
-        cp,
-        graph,
-        bannedPackagePrefixes,
-        chunkStrategy
-    )
-    return system(name) {
-        ProjectManager(context)
-    }
-}
-
 fun unusedIfdsFacade(
     name: String,
     cp: JcClasspath,
@@ -73,8 +55,40 @@ fun unusedIfdsFacade(
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
     chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability> {
-    val system = unusedIfdsSystem(name, cp, graph, bannedPackagePrefixes, chunkStrategy)
-    return JcIfdsFacade(system, SingletonRunnerId)
+    val context = unusedIfdsContext(cp, graph, bannedPackagePrefixes, chunkStrategy)
+    val system = system(name) { ProjectManager(context) }
+    return object : JcIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability>(
+        graph,
+        context,
+        system,
+        SingletonRunnerId
+    ) {
+        override suspend fun collectFindings(): Collection<UnusedVulnerability> {
+            val data = collectComputationData()
+
+            val allFacts = data.factsByStmt
+
+            val used = hashMapOf<JcInst, Boolean>()
+            for ((inst, facts) in allFacts) {
+                for (fact in facts) {
+                    if (fact is UnusedVariable) {
+                        used.putIfAbsent(fact.initStatement, false)
+                        if (fact.variable.isUsedAt(inst)) {
+                            used[fact.initStatement] = true
+                        }
+                    }
+
+                }
+            }
+            val vulnerabilities = used.filterValues { !it }.keys.map {
+                UnusedVulnerability(
+                    message = "Assigned value is unused",
+                    sink = Vertex(it, UnusedVariableZeroFact)
+                )
+            }
+            return vulnerabilities
+        }
+    }
 }
 
 fun asyncUnusedIfdsFacade(
@@ -84,6 +98,6 @@ fun asyncUnusedIfdsFacade(
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
     chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcAsyncIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability> {
-    val system = unusedIfdsSystem(name, cp, graph, bannedPackagePrefixes, chunkStrategy)
-    return JcAsyncIfdsFacade(system, SingletonRunnerId)
+    val facade = unusedIfdsFacade(name, cp, graph, bannedPackagePrefixes, chunkStrategy)
+    return JcAsyncIfdsFacade(facade)
 }

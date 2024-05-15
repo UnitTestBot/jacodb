@@ -19,21 +19,16 @@ package org.jacodb.ifds.common
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.future
-import org.jacodb.actors.api.ActorSystem
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
-import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.CommonMessage
 import org.jacodb.ifds.result.Finding
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class JcAsyncIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
-    system: ActorSystem<CommonMessage>,
-    startingRunnerId: RunnerId,
+    private val ifdsFacade: JcIfdsFacade<Fact, F>
 ) {
     private val scope = CoroutineScope(Job())
-    private val ifdsFacade = JcIfdsFacade<Fact, F>(system, startingRunnerId)
 
     @JvmName("runAnalysis")
     fun runAnalysis(

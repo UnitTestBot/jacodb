@@ -16,23 +16,23 @@
 
 package org.jacodb.ifds.common
 
-import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorFactory
+import org.jacodb.actors.api.ActorRef
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkResolver
 import org.jacodb.ifds.IfdsContext
-import org.jacodb.ifds.domain.Analyzer
 import org.jacodb.ifds.domain.Chunk
 import org.jacodb.ifds.domain.RunnerId
 import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.impl.features.HierarchyExtensionImpl
+import java.util.concurrent.ConcurrentHashMap
 
 class JcIfdsContext<Fact>(
     private val cp: JcClasspath,
     private val bannedPackagePrefixes: List<String>,
     private val chunkStrategy: ChunkResolver,
-    private val analyzerFactory: (RunnerId) -> Analyzer<JcInst, Fact>,
+    private val analyzerFactory: (RunnerId) -> JcBaseAnalyzer<Fact>,
 ) : IfdsContext<JcInst> {
     override fun chunkByMessage(message: RunnerMessage): Chunk =
         chunkStrategy.chunkByMessage(message)
@@ -40,8 +40,10 @@ class JcIfdsContext<Fact>(
     override fun runnerIdByMessage(message: RunnerMessage): RunnerId =
         message.runnerId
 
-    override fun getAnalyzer(chunk: Chunk, runnerId: RunnerId): Analyzer<JcInst, Fact> =
-        analyzerFactory(runnerId)
+    private val analyzers = ConcurrentHashMap<RunnerId, JcBaseAnalyzer<Fact>>()
+
+    override fun getAnalyzer(runnerId: RunnerId): JcBaseAnalyzer<Fact> =
+        analyzers.computeIfAbsent(runnerId, analyzerFactory)
 
     override fun indirectionHandlerFactory(parent: ActorRef<RunnerMessage>, runnerId: RunnerId) =
         ActorFactory {

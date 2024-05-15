@@ -16,21 +16,6 @@
 
 package org.jacodb.ifds.taint
 
-import org.jacodb.ifds.config.BasicConditionEvaluator
-import org.jacodb.ifds.config.CallPositionToAccessPathResolver
-import org.jacodb.ifds.config.CallPositionToJcValueResolver
-import org.jacodb.ifds.config.EntryPointPositionToAccessPathResolver
-import org.jacodb.ifds.config.EntryPointPositionToJcValueResolver
-import org.jacodb.ifds.config.FactAwareConditionEvaluator
-import org.jacodb.ifds.config.TaintActionEvaluator
-import org.jacodb.ifds.util.ElementAccessor
-import org.jacodb.ifds.common.FlowFunctions
-import org.jacodb.ifds.util.onSome
-import org.jacodb.ifds.util.toPath
-import org.jacodb.ifds.util.toPathOrNull
-import org.jacodb.ifds.util.getArgumentsOf
-import org.jacodb.ifds.util.startsWith
-import org.jacodb.ifds.util.thisInstance
 import org.jacodb.api.JcClasspath
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
@@ -44,6 +29,21 @@ import org.jacodb.api.cfg.JcReturnInst
 import org.jacodb.api.cfg.JcThis
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.cfg.callExpr
+import org.jacodb.ifds.common.FlowFunctions
+import org.jacodb.ifds.config.BasicConditionEvaluator
+import org.jacodb.ifds.config.CallPositionToAccessPathResolver
+import org.jacodb.ifds.config.CallPositionToJcValueResolver
+import org.jacodb.ifds.config.EntryPointPositionToAccessPathResolver
+import org.jacodb.ifds.config.EntryPointPositionToJcValueResolver
+import org.jacodb.ifds.config.FactAwareConditionEvaluator
+import org.jacodb.ifds.config.TaintActionEvaluator
+import org.jacodb.ifds.util.ElementAccessor
+import org.jacodb.ifds.util.getArgumentsOf
+import org.jacodb.ifds.util.onSome
+import org.jacodb.ifds.util.startsWith
+import org.jacodb.ifds.util.thisInstance
+import org.jacodb.ifds.util.toPath
+import org.jacodb.ifds.util.toPathOrNull
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

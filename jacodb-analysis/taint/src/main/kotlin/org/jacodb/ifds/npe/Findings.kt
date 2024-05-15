@@ -16,10 +16,10 @@
 
 package org.jacodb.ifds.npe
 
-import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.domain.Vertex
 import org.jacodb.ifds.result.Finding
+import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.taint.configuration.TaintMethodSink
 
 data class NpeVulnerability(

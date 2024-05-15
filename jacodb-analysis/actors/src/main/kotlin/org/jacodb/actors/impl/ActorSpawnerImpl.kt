@@ -59,11 +59,12 @@ internal class ActorSpawnerImpl(
         actorFactory: ActorFactory<ChildMessage>,
         workerFactory: WorkerFactory<ChildMessage>,
     ): ActorWorker<ChildMessage> {
-        @Suppress("UNCHECKED_CAST")
-        val channel = options.channelFactory.create() as Channel<ChildMessage>
         if (children[name] != null) {
             error("$self already has $name child")
         }
+
+        @Suppress("UNCHECKED_CAST")
+        val channel = options.channelFactory.create() as Channel<ChildMessage>
 
         val path = self / name
 

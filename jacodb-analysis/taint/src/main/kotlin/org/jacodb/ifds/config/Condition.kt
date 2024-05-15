@@ -16,18 +16,18 @@
 
 package org.jacodb.ifds.config
 
-import org.jacodb.ifds.util.AccessPath
-import org.jacodb.ifds.util.ElementAccessor
-import org.jacodb.ifds.util.Maybe
-import org.jacodb.ifds.util.onSome
-import org.jacodb.ifds.util.toPath
-import org.jacodb.ifds.taint.Tainted
 import org.jacodb.api.cfg.JcBool
 import org.jacodb.api.cfg.JcConstant
 import org.jacodb.api.cfg.JcInt
 import org.jacodb.api.cfg.JcStringConstant
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.api.ext.isAssignable
+import org.jacodb.ifds.taint.Tainted
+import org.jacodb.ifds.util.AccessPath
+import org.jacodb.ifds.util.ElementAccessor
+import org.jacodb.ifds.util.Maybe
+import org.jacodb.ifds.util.onSome
+import org.jacodb.ifds.util.toPath
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor

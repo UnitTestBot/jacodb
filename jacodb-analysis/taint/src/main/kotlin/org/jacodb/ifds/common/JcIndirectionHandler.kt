@@ -19,7 +19,6 @@ package org.jacodb.ifds.common
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
-import org.jacodb.ifds.taint.TaintDomainFact
 import org.jacodb.api.JcClassType
 import org.jacodb.api.JcMethod
 import org.jacodb.api.cfg.JcInst
@@ -28,10 +27,11 @@ import org.jacodb.api.ext.HierarchyExtension
 import org.jacodb.api.ext.cfg.callExpr
 import org.jacodb.api.ext.isSubClassOf
 import org.jacodb.ifds.domain.RunnerId
-import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.IndirectionMessage
 import org.jacodb.ifds.messages.ResolvedCall
+import org.jacodb.ifds.messages.RunnerMessage
 import org.jacodb.ifds.messages.UnresolvedCall
+import org.jacodb.ifds.taint.TaintDomainFact
 
 context(ActorContext<IndirectionMessage>)
 class JcIndirectionHandler(

@@ -16,7 +16,6 @@
 
 package org.jacodb.ifds.common
 
-import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 import org.jacodb.ifds.ChunkResolver
@@ -33,7 +32,6 @@ import org.jacodb.ifds.messages.NotificationOnEnd
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.RunnerMessage
-import org.jacodb.ifds.messages.StartAnalysis
 import org.jacodb.ifds.messages.StorageMessage
 import org.jacodb.ifds.messages.SubscriptionOnEnd
 import org.jacodb.ifds.messages.SubscriptionOnStart
@@ -66,13 +64,6 @@ class JcChunkResolver(
                     is ResolvedCall<*, *, *> -> {
                         message as ResolvedCall<JcInst, *, *>
                         chunkStrategy.chunkByStmt(message.edge.to.statement)
-                    }
-
-                    is StartAnalysis<*> -> {
-                        message as StartAnalysis<JcMethod>
-
-                        val stmt = graph.entryPoints(message.method).first()
-                        chunkStrategy.chunkByStmt(stmt)
                     }
 
                     else -> {

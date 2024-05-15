@@ -31,7 +31,6 @@ import org.jacodb.ifds.messages.NewEdge
 import org.jacodb.ifds.messages.NotificationOnStart
 import org.jacodb.ifds.messages.ResolvedCall
 import org.jacodb.ifds.messages.RunnerMessage
-import org.jacodb.ifds.messages.StartAnalysis
 import org.jacodb.ifds.messages.SubscriptionOnStart
 import org.jacodb.ifds.messages.UnresolvedCall
 
@@ -43,12 +42,6 @@ abstract class JcBaseAnalyzer<Fact>(
 
     override fun handle(message: AnalyzerMessage<JcInst, Fact>): Collection<RunnerMessage> = buildList {
         when (message) {
-            is StartAnalysis<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                message as StartAnalysis<JcMethod>
-                processStartAnalysis(message.method)
-            }
-
             is EdgeMessage<JcInst, Fact> -> {
                 processEdge(message.edge)
             }
