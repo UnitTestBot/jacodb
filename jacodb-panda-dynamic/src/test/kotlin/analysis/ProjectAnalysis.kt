@@ -90,9 +90,9 @@ class ProjectAnalysis {
     private fun makeReport() {
         logger.info { "Analysis Report On $PROJECT_PATH" }
         logger.info { "====================" }
-        logger.info { "Total files processed: ${tsLinesSuccess + tsLinesFailed}" }
+        // logger.info { "Total files processed: ${tsLinesSuccess + tsLinesFailed}" }
         logger.info { "Successfully processed lines: $tsLinesSuccess" }
-        logger.info { "Failed lines: $tsLinesFailed" }
+        // logger.info { "Failed lines: $tsLinesFailed" }
         logger.info { "Total analysis time: $analysisTime" }
         logger.info { "Total edges: $totalEdges" }
         logger.info { "Found sinks: ${totalSinks.size}" }
@@ -125,7 +125,7 @@ class ProjectAnalysis {
         val fileLines = countFileLines("$BASE_PATH$filename.ts")
         try {
             if (filename in banFiles) return
-            // logger.info { "Processing '$filename'" }
+            logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
             when (filename) {
