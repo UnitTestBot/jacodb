@@ -16,7 +16,8 @@
 
 package org.jacodb.analysis.ifds.npe
 
-import org.jacodb.analysis.ifds.common.FlowFunctions
+import org.jacodb.analysis.ifds.domain.CallAction
+import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.config.BasicConditionEvaluator
 import org.jacodb.analysis.ifds.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.ifds.config.CallPositionToJcValueResolver
@@ -310,14 +311,14 @@ class ForwardNpeFlowFunctions(
         to: JcValue,
     ): Collection<Tainted> = transmitTaint(fact, at, from, to)
 
-    override fun callToReturn(
+    override fun call(
         callStatement: JcInst,
         returnSite: JcInst,
         fact: TaintDomainFact,
-    ): Collection<TaintDomainFact> {
+    ): Collection<CallAction<TaintDomainFact>> {
         if (fact is Tainted && fact.mark == TaintMark.NULLNESS) {
             if (fact.variable.isDereferencedAt(callStatement)) {
-                return emptySet()
+                return listOf(CallAction.Start(fact))
             }
         }
 
@@ -334,30 +335,31 @@ class ForwardNpeFlowFunctions(
             for (arg in callExpr.args) {
                 if (arg.toPath() == fact.variable) {
                     return setOf(
-                        fact,
-                        fact.copy(variable = callStatement.lhv.toPath())
+                        CallAction.Return(fact),
+                        CallAction.Return(fact.copy(variable = callStatement.lhv.toPath()))
                     )
                 }
             }
-            return setOf(fact)
+            return setOf(CallAction.Return(fact))
         }
 
         val config = taintConfigurationFeature?.getConfigForMethod(callee)
 
         if (fact == TaintZeroFact) {
             return buildSet {
-                add(TaintZeroFact)
+                add(CallAction.Return(TaintZeroFact))
+                add(CallAction.Start(TaintZeroFact))
 
                 if (callStatement is JcAssignInst) {
                     val toPath = callStatement.lhv.toPath()
                     val from = callStatement.rhv
                     if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
-                        add(Tainted(toPath, TaintMark.NULLNESS))
+                        add(CallAction.Return(Tainted(toPath, TaintMark.NULLNESS)))
                     } else if (from is JcNewArrayExpr && (from.type as JcArrayType).elementType.nullable != false) {
                         val size = (from.type as JcArrayType).dimensions
                         val accessors = List(size) { ElementAccessor }
                         val path = toPath / accessors
-                        add(Tainted(path, TaintMark.NULLNESS))
+                        add(CallAction.Return(Tainted(path, TaintMark.NULLNESS)))
                     }
                 }
 
@@ -374,7 +376,7 @@ class ForwardNpeFlowFunctions(
                                     else -> error("$action is not supported for $item")
                                 }
                                 result.onSome {
-                                    addAll(it)
+                                    it.mapTo(this) { CallAction.Return(it) }
                                 }
                             }
                         }
@@ -434,45 +436,40 @@ class ForwardNpeFlowFunctions(
                     if (facts.size > 0) {
                         logger.trace { "Got ${facts.size} facts from config for $callee: $facts" }
                     }
-                    return facts
+                    return facts.map { CallAction.Return(it) }
                 } else {
                     // Fall back to the default behavior, as if there were no config at all.
                 }
             }
         }
 
-        // FIXME: adhoc for constructors:
-        if (callee.isConstructor) {
-            return listOf(fact)
-        }
-
         if (fact.variable.isStatic) {
-            return emptyList()
+            return listOf(CallAction.Start(fact))
         }
 
         for (actual in callExpr.args) {
             // Possibly tainted actual parameter:
             if (fact.variable.startsWith(actual.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
             // Possibly tainted instance:
             if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callStatement is JcAssignInst) {
             // Possibly tainted lhv:
             if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
-                return emptyList() // Overridden by rhv
+                return listOf(CallAction.Start(fact)) // Overridden by rhv
             }
         }
 
         // The "most default" behaviour is encapsulated here:
-        return transmitTaintNormal(fact, callStatement)
+        return transmitTaintNormal(fact, callStatement).map { CallAction.Return(it) }
     }
 
     override fun callToStart(

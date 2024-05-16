@@ -18,6 +18,7 @@ package org.jacodb.analysis.ifds
 
 import io.mockk.every
 import io.mockk.mockk
+import org.jacodb.analysis.ifds.domain.CallAction
 import org.jacodb.analysis.ifds.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.ifds.taint.TaintZeroFact
 import org.jacodb.analysis.ifds.taint.Tainted
@@ -122,8 +123,13 @@ class TaintFlowFunctionsTest : BaseTest() {
             configurationFeature
         )
         val xTaint = Tainted(x.toPath(), TaintMark("EXAMPLE"))
-        val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), TaintZeroFact).toList()
-        Assertions.assertEquals(listOf(TaintZeroFact, xTaint), facts)
+        val actions = flowSpace.call(callStatement, returnSite = mockk(), TaintZeroFact).toList()
+        val expectedActions = listOf(
+            CallAction.Return(TaintZeroFact),
+            CallAction.Start(TaintZeroFact),
+            CallAction.Return(xTaint)
+        )
+        Assertions.assertEquals(expectedActions, actions)
     }
 
     @Test
@@ -141,7 +147,7 @@ class TaintFlowFunctionsTest : BaseTest() {
             configurationFeature
         )
         val xTaint = Tainted(x.toPath(), TaintMark("REMOVE"))
-        val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), xTaint).toList()
+        val facts = flowSpace.call(callStatement, returnSite = mockk(), xTaint).toList()
         Assertions.assertTrue(facts.isEmpty())
     }
 
@@ -162,12 +168,18 @@ class TaintFlowFunctionsTest : BaseTest() {
         )
         val xTaint = Tainted(x.toPath(), TaintMark("COPY"))
         val yTaint = Tainted(y.toPath(), TaintMark("COPY"))
-        val facts = flowSpace.callToReturn(callStatement, returnSite = mockk(), xTaint).toList()
-        Assertions.assertEquals(listOf(xTaint, yTaint), facts) // copy from x to y
+        val actions = flowSpace.call(callStatement, returnSite = mockk(), xTaint).toList()
+        val expectedActions = listOf(
+            CallAction.Return(xTaint),
+            CallAction.Return(yTaint)
+        )
+        Assertions.assertEquals(expectedActions, actions) // copy from x to y
+
         val other: JcLocal = JcLocalVar(10, "other", stringType)
         val otherTaint = Tainted(other.toPath(), TaintMark("OTHER"))
-        val facts2 = flowSpace.callToReturn(callStatement, returnSite = mockk(), otherTaint).toList()
-        Assertions.assertEquals(listOf(otherTaint), facts2) // pass-through
+        val actions2 = flowSpace.call(callStatement, returnSite = mockk(), otherTaint).toList()
+        val expectedActions2 = listOf(CallAction.Return(otherTaint))
+        Assertions.assertEquals(expectedActions2, actions2) // pass-through
     }
 
     @Test

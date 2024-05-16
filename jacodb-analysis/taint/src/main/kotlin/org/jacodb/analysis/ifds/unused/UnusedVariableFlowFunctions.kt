@@ -16,7 +16,8 @@
 
 package org.jacodb.analysis.ifds.unused
 
-import org.jacodb.analysis.ifds.common.FlowFunctions
+import org.jacodb.analysis.ifds.domain.CallAction
+import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.util.getArgumentsOf
 import org.jacodb.analysis.ifds.util.toPath
 import org.jacodb.analysis.ifds.util.toPathOrNull
@@ -70,11 +71,19 @@ class UnusedVariableFlowFunctions(
         return default
     }
 
-    override fun callToReturn(
+    override fun call(
         callStatement: JcInst,
         returnSite: JcInst,
         fact: UnusedVariableDomainFact,
-    ): Collection<UnusedVariableDomainFact> = sequent(callStatement, returnSite, fact)
+    ): Collection<CallAction<UnusedVariableDomainFact>> =
+        sequent(callStatement, returnSite, fact)
+            .flatMap { newFact ->
+                if (newFact is UnusedVariableZeroFact) {
+                    listOf(CallAction.Return(newFact), CallAction.Start(newFact))
+                } else {
+                    listOf(CallAction.Return(newFact))
+                }
+            }
 
     override fun callToStart(
         callStatement: JcInst,

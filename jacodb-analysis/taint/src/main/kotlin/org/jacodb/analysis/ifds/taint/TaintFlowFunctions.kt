@@ -16,7 +16,8 @@
 
 package org.jacodb.analysis.ifds.taint
 
-import org.jacodb.analysis.ifds.common.FlowFunctions
+import org.jacodb.analysis.ifds.domain.CallAction
+import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.config.BasicConditionEvaluator
 import org.jacodb.analysis.ifds.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.ifds.config.CallPositionToJcValueResolver
@@ -197,11 +198,11 @@ class ForwardTaintFlowFunctions(
         to: JcValue,
     ): Collection<Tainted> = transmitTaint(fact, from, to)
 
-    override fun callToReturn(
+    override fun call(
         callStatement: JcInst,
         returnSite: JcInst,
         fact: TaintDomainFact,
-    ): Collection<TaintDomainFact> {
+    ): Collection<CallAction<TaintDomainFact>> {
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
         val callee = callExpr.method.method
@@ -215,19 +216,20 @@ class ForwardTaintFlowFunctions(
             for (arg in callExpr.args) {
                 if (arg.toPath() == fact.variable) {
                     return setOf(
-                        fact,
-                        fact.copy(variable = callStatement.lhv.toPath())
+                        CallAction.Return(fact),
+                        CallAction.Return(fact.copy(variable = callStatement.lhv.toPath()))
                     )
                 }
             }
-            return setOf(fact)
+            return setOf(CallAction.Return(fact))
         }
 
         val config = taintConfigurationFeature?.getConfigForMethod(callee)
 
         if (fact == TaintZeroFact) {
             return buildSet {
-                add(TaintZeroFact)
+                add(CallAction.Return(TaintZeroFact))
+                add(CallAction.Start(TaintZeroFact))
 
                 if (config != null) {
                     val conditionEvaluator = BasicConditionEvaluator(CallPositionToJcValueResolver(callStatement))
@@ -241,7 +243,10 @@ class ForwardTaintFlowFunctions(
                                     is AssignMark -> actionEvaluator.evaluate(action)
                                     else -> error("$action is not supported for $item")
                                 }
-                                result.onSome { addAll(it) }
+
+                                result.onSome { facts ->
+                                    facts.mapTo(this) { CallAction.Return(it) }
+                                }
                             }
                         }
                     }
@@ -296,44 +301,39 @@ class ForwardTaintFlowFunctions(
                 if (facts.size > 0) {
                     logger.trace { "Got ${facts.size} facts from config for $callee: $facts" }
                 }
-                return facts
+                return facts.map { CallAction.Return(it) }
             } else {
                 // Fall back to the default behavior, as if there were no config at all.
             }
         }
 
-        // FIXME: adhoc for constructors:
-        if (callee.isConstructor) {
-            return listOf(fact)
-        }
-
         if (fact.variable.isStatic) {
-            return emptyList()
+            return listOf(CallAction.Start(fact))
         }
 
         for (actual in callExpr.args) {
             // Possibly tainted actual parameter:
             if (fact.variable.startsWith(actual.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
             // Possibly tainted instance:
             if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callStatement is JcAssignInst) {
             // Possibly tainted lhv:
             if (fact.variable.startsWith(callStatement.lhv.toPathOrNull())) {
-                return emptyList() // Overridden by rhv
+                return listOf(CallAction.Start(fact)) // Overridden by rhv
             }
         }
 
         // The "most default" behaviour is encapsulated here:
-        return transmitTaintNormal(fact, callStatement)
+        return transmitTaintNormal(fact, callStatement).map { CallAction.Return(it) }
     }
 
     override fun callToStart(
@@ -522,15 +522,15 @@ class BackwardTaintFlowFunctions(
         to: JcValue,
     ): Collection<Tainted> = transmitTaint(fact, from, to)
 
-    override fun callToReturn(
+    override fun call(
         callStatement: JcInst,
         returnSite: JcInst,
         fact: TaintDomainFact,
-    ): Collection<TaintDomainFact> {
+    ): Collection<CallAction<TaintDomainFact>> {
         // TODO: pass-through on invokedynamic-based String concatenation
 
         if (fact == TaintZeroFact) {
-            return listOf(TaintZeroFact)
+            return listOf(CallAction.Start(TaintZeroFact), CallAction.Return(TaintZeroFact))
         }
         check(fact is Tainted)
 
@@ -538,33 +538,33 @@ class BackwardTaintFlowFunctions(
             ?: error("Call statement should have non-null callExpr")
 
         if (fact.variable.isStatic) {
-            return emptyList()
+            return listOf(CallAction.Start(fact))
         }
 
         for (actual in callExpr.args) {
             // Possibly tainted actual parameter:
             if (fact.variable.startsWith(actual.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callExpr is JcInstanceCallExpr) {
             // Possibly tainted instance:
             if (fact.variable.startsWith(callExpr.instance.toPathOrNull())) {
-                return emptyList() // Will be handled by summary edge
+                return listOf(CallAction.Start(fact)) // Will be handled by summary edge
             }
         }
 
         if (callStatement is JcAssignInst) {
             // Possibly tainted rhv:
             if (fact.variable.startsWith(callStatement.rhv.toPathOrNull())) {
-                return emptyList() // Overridden by lhv
+                return listOf(CallAction.Start(fact)) // Overridden by lhv
             }
         }
 
 
         // The "most default" behaviour is encapsulated here:
-        return transmitTaintBackwardNormal(fact, callStatement)
+        return transmitTaintBackwardNormal(fact, callStatement).map { CallAction.Return(it) }
     }
 
     override fun callToStart(

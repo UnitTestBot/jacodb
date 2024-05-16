@@ -17,7 +17,9 @@
 package org.jacodb.analysis.ifds.common
 
 import org.jacodb.analysis.ifds.domain.Analyzer
+import org.jacodb.analysis.ifds.domain.CallAction
 import org.jacodb.analysis.ifds.domain.Edge
+import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.domain.Reason
 import org.jacodb.analysis.ifds.domain.RunnerId
 import org.jacodb.analysis.ifds.domain.Vertex
@@ -81,22 +83,29 @@ abstract class JcBaseAnalyzer<Fact>(
     }
 
     private fun MutableList<RunnerMessage>.processCall(edge: Edge<JcInst, Fact>) {
-        val callMessage = UnresolvedCall(selfRunnerId, edge)
-        add(callMessage)
-
         val reason = Reason.CallToReturn(edge)
 
         val successors = graph.successors(edge.to.statement)
 
         for (successor in successors) {
-            val facts = flowFunctions.callToReturn(
+            val actions = flowFunctions.call(
                 callStatement = edge.to.statement,
                 returnSite = successor,
                 edge.to.fact
             )
-            for (fact in facts) {
-                val newEdge = Edge(edge.from, Vertex(successor, fact))
-                processNewEdge(selfRunnerId, newEdge, reason)
+
+            for (action in actions) {
+                when (action) {
+                    is CallAction.Return -> {
+                        val newEdge = Edge(edge.from, Vertex(successor, action.fact))
+                        processNewEdge(selfRunnerId, newEdge, reason)
+                    }
+                    is CallAction.Start -> {
+                        val newEdge = Edge(edge.from, Vertex(edge.to.statement, action.fact))
+                        val callMessage = UnresolvedCall(selfRunnerId, newEdge)
+                        add(callMessage)
+                    }
+                }
             }
         }
     }

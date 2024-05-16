@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds.common
+package org.jacodb.analysis.ifds.domain
 
 interface FlowFunctions<Stmt, Fact, Method> {
+
     /**
      * Method for obtaining initial domain facts at the method entrypoint.
      * Commonly, it is only `listOf(Zero)`.
@@ -51,11 +52,11 @@ interface FlowFunctions<Stmt, Fact, Method> {
      * [ RETURN FROM p ] :: returnSite
      * ```
      */
-    fun callToReturn(
+    fun call(
         callStatement: Stmt,
         returnSite: Stmt,
         fact: Fact
-    ): Collection<Fact>
+    ): Collection<CallAction<Fact>>
 
     /**
      * Call-to-start flow function.
