@@ -46,22 +46,31 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import parser.loadIr
+import parser.loadCaseTaintConfig
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
 
 class TaintSamples {
 
+    @Serializable
     data class SourceMethodConfig(
         val methodName: String?,
         val markName: String = "TAINT",
         val position: Position = Result,
     )
 
+    @Serializable
     data class SinkMethodConfig(
         val methodName: String?,
         val position: Position = Argument(0)
     )
 
+    @Serializable
     data class CaseTaintConfig(
         val sourceMethodConfig: SourceMethodConfig = SourceMethodConfig(null),
         val cleanerMethodName: String? = null,
@@ -153,6 +162,16 @@ class TaintSamples {
         }
     }
 
+    private fun saveSerializedConfig(config: CaseTaintConfig, filename: String) {
+        val serializedConfig = Json {
+            encodeDefaults = true
+            prettyPrint = true
+        }.encodeToString(config)
+        val fullPath = "C:\\Users\\bethi\\IdeaProjects\\jacodb\\jacodb-panda-dynamic\\src\\test\\resources\\samples\\taintConfigs\\${filename}"
+        val outputFile = File(fullPath)
+        outputFile.writeText(serializedConfig)
+    }
+
     @Nested
     inner class PasswordLeakTest {
 
@@ -160,33 +179,15 @@ class TaintSamples {
 
         @Test
         fun `counterexample - print unencrypted password to console`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
-                CaseTaintConfig(
-                    sourceMethodConfig = SourceMethodConfig(
-                        methodName = "getUserPassword",
-                    ),
-                    sinkMethodConfig = SinkMethodConfig(
-                        methodName = "log",
-                    ),
-                    startMethodNamesForAnalysis = listOf("case1")
-                )
-            )
+            val config = loadCaseTaintConfig("passwordLeakTaintConfig1.json")
+            val sinks = fileTaintAnalyzer.analyseOneCase(config)
             assert(sinks.size == 1)
         }
 
         @Test
         fun `positive example - print encrypted password to console (with forgotten cleaner)`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
-                CaseTaintConfig(
-                    sourceMethodConfig = SourceMethodConfig(
-                        methodName = "getUserPassword",
-                    ),
-                    sinkMethodConfig = SinkMethodConfig(
-                        methodName = "log",
-                    ),
-                    startMethodNamesForAnalysis = listOf("case2")
-                )
-            )
+            val config = loadCaseTaintConfig("passwordLeakTaintConfig2.json")
+            val sinks = fileTaintAnalyzer.analyseOneCase(config)
             assert(sinks.size == 1)
         }
 

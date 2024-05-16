@@ -16,6 +16,7 @@
 
 package parser
 
+import analysis.TaintSamples
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -150,4 +151,12 @@ object DumpIrToDot {
             println("Generated ${format.uppercase()} file: ${formatFile.absolutePath}")
         }
     }
+}
+
+fun loadCaseTaintConfig(filename: String) : TaintSamples.CaseTaintConfig {
+    val configResource = object {}::class.java.getResourceAsStream("/samples/taintConfigs/$filename")
+        ?: error("Could not load config from '$filename'")
+    val configJson = configResource.bufferedReader().readText()
+    val config: TaintSamples.CaseTaintConfig = Json.decodeFromString(configJson)
+    return config
 }
