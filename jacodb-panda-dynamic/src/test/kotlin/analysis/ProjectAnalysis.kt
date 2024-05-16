@@ -47,7 +47,7 @@ class ProjectAnalysis {
     private var tsLinesSuccess = 0L
     private var tsLinesFailed = 0L
     private var analysisTime: Duration = Duration.ZERO
-    private var totalEdges = 0
+    private var totalPathEdges = 0
     private var totalSinks: MutableList<TaintVulnerability<PandaMethod, PandaInst>> = mutableListOf()
 
     companion object : PandaTraits {
@@ -94,7 +94,7 @@ class ProjectAnalysis {
         logger.info { "Successfully processed lines: $tsLinesSuccess" }
         // logger.info { "Failed lines: $tsLinesFailed" }
         logger.info { "Total analysis time: $analysisTime" }
-        logger.info { "Total edges: $totalEdges" }
+        logger.info { "Total path edges: $totalPathEdges" }
         logger.info { "Found sinks: ${totalSinks.size}" }
 
         if (totalSinks.isNotEmpty()) {
@@ -162,7 +162,7 @@ class ProjectAnalysis {
 
         val methods = project.classes.flatMap { it.methods }.filter { it.name in methodNames }
         val sinks = manager.analyze(methods, timeout = 10.seconds)
-        totalEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
+        totalPathEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
         totalSinks.addAll(sinks)
         assertTrue(sinks.isNotEmpty())
     }
@@ -183,7 +183,7 @@ class ProjectAnalysis {
 
         val methods = project.classes.flatMap { it.methods }
         val sinks = manager.analyze(methods, timeout = 5.seconds)
-        totalEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
+        totalPathEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
         assertTrue(sinks.isEmpty())
     }
 }
