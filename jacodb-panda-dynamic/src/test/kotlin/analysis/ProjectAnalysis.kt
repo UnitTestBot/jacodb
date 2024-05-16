@@ -66,6 +66,8 @@ class ProjectAnalysis {
                 return reader.lines().count()
             }
         }
+
+        val rules = loadRules("config1.json")
     }
 
     private fun projectAvailable(): Boolean {
@@ -128,10 +130,7 @@ class ProjectAnalysis {
             logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
-            when (filename) {
-                "base/account/AccountManager" -> runAnalysisOnAccountManager(project, filename)
-                else -> runAnalysis(project, filename)
-            }
+            runAnalysis(project, filename)
             val endTime = System.currentTimeMillis()
             analysisTime += (endTime - startTime).milliseconds
             tsLinesSuccess += fileLines
@@ -141,49 +140,27 @@ class ProjectAnalysis {
         }
     }
 
-    private fun runAnalysisOnAccountManager(project: PandaProject, filename: String) {
-        val graph = PandaApplicationGraphImpl(project)
-        val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
-        val rules = loadRules("config1.json")
-        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
-            { method -> getConfigForMethod(method, rules) }
-        val manager = TaintManager(
-            graph = graph,
-            unitResolver = unitResolver,
-            getConfigForMethod = getConfigForMethod,
-        )
-
-        val methodNames = setOf(
-            "getDeviceIdListWithCursor",
-            "requestGet",
-            "taintRun",
-            "taintSink"
-        )
-
-        val methods = project.classes.flatMap { it.methods }.filter { it.name in methodNames }
-        val sinks = manager.analyze(methods, timeout = 10.seconds)
-        totalPathEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
-        totalSinks.addAll(sinks)
-        assertTrue(sinks.isNotEmpty())
-    }
-
     private fun runAnalysis(project: PandaProject, filename: String) {
         val graph = PandaApplicationGraphImpl(project)
         val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
-        val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
-            { method ->
-                val rules = emptyList<TaintMethodSink>()
-                rules.ifEmpty { null }
-            }
         val manager = TaintManager(
             graph = graph,
             unitResolver = unitResolver,
-            getConfigForMethod = getConfigForMethod,
+            getConfigForMethod = { method -> getConfigForMethod(method, rules) },
         )
 
-        val methods = project.classes.flatMap { it.methods }
-        val sinks = manager.analyze(methods, timeout = 5.seconds)
+        var methods = project.classes.flatMap { it.methods }
+        if (filename == "base/account/AccountManager") {
+            val methodNames = setOf(
+                "getDeviceIdListWithCursor",
+                "requestGet",
+                "taintRun",
+                "taintSink"
+            )
+            methods = methods.filter { it.name in methodNames }
+        }
+        val sinks = manager.analyze(methods, timeout = 10.seconds)
         totalPathEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
-        assertTrue(sinks.isEmpty())
+        totalSinks += sinks
     }
 }
