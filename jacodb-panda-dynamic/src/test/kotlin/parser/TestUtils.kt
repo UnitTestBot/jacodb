@@ -16,7 +16,6 @@
 
 package parser
 
-import io.mockk.mockk
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -62,7 +61,7 @@ fun loadRules(configFileName: String): List<SerializedTaintConfigurationItem> {
     val configResource = object {}::class.java.getResourceAsStream("/$configFileName")
         ?: error("Could not load config from '$configFileName'")
     val configJson = configResource.bufferedReader().readText()
-    val rules: List<SerializedTaintConfigurationItem> = Json{
+    val rules: List<SerializedTaintConfigurationItem> = Json {
         classDiscriminator = "_"
         serializersModule = SerializersModule {
             include(conditionModule)
@@ -84,44 +83,44 @@ fun getConfigForMethod(
         for (item in rules) {
             val matcher = item.methodInfo.functionName
             if (matcher is NameExactMatcher) {
-                if (method.name == matcher.name) add(item.toItem())
+                if (method.name == matcher.name) add(item.toItem(method))
             } else if (matcher is NamePatternMatcher) {
-                if (method.name.matches(matcher.pattern.toRegex())) add(item.toItem())
+                if (method.name.matches(matcher.pattern.toRegex())) add(item.toItem(method))
             }
         }
     }
     return res.ifEmpty { null }
 }
 
-fun SerializedTaintConfigurationItem.toItem(): TaintConfigurationItem {
+fun SerializedTaintConfigurationItem.toItem(method: CommonMethod<*, *>): TaintConfigurationItem {
     return when (this) {
         is SerializedTaintEntryPointSource -> TaintEntryPointSource(
-            method = mockk(),
+            method = method,
             condition = condition,
             actionsAfter = actionsAfter
         )
 
         is SerializedTaintMethodSource -> TaintMethodSource(
-            method = mockk(),
+            method = method,
             condition = condition,
             actionsAfter = actionsAfter
         )
 
         is SerializedTaintMethodSink -> TaintMethodSink(
-            method = mockk(),
+            method = method,
             ruleNote = ruleNote,
             cwe = cwe,
             condition = condition
         )
 
         is SerializedTaintPassThrough -> TaintPassThrough(
-            method = mockk(),
+            method = method,
             condition = condition,
             actionsAfter = actionsAfter
         )
 
         is SerializedTaintCleaner -> TaintCleaner(
-            method = mockk(),
+            method = method,
             condition = condition,
             actionsAfter = actionsAfter
         )

@@ -16,37 +16,37 @@
 
 package org.jacodb.taint.configuration
 
-import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.common.CommonMethod
 
 sealed interface TaintConfigurationItem
 
 data class TaintEntryPointSource(
-    val method: JcMethod,
+    val method: CommonMethod<*, *>,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintMethodSource(
-    val method: JcMethod,
+    val method: CommonMethod<*, *>,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintMethodSink(
-    val method: JcMethod,
+    val method: CommonMethod<*, *>,
     val ruleNote: String,
     val cwe: List<Int>,
     val condition: Condition,
 ) : TaintConfigurationItem
 
 data class TaintPassThrough(
-    val method: JcMethod,
+    val method: CommonMethod<*, *>,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
 
 data class TaintCleaner(
-    val method: JcMethod,
+    val method: CommonMethod<*, *>,
     val condition: Condition,
     val actionsAfter: List<Action>,
 ) : TaintConfigurationItem
