@@ -30,8 +30,8 @@ internal class InternalActorWorker<Message>(
     private val scope: CoroutineScope,
 ) : ActorWorker<Message>(path) {
 
-    override fun launchLoop(coroutineContext: CoroutineContext, actor: Actor<Message>) {
-        scope.launch(coroutineContext) {
+    override fun launchLoop(actor: Actor<Message>) {
+        scope.launch {
             loop(actor)
         }
     }

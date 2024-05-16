@@ -4,4 +4,5 @@ dependencies {
     implementation(Libs.kotlinx_coroutines_core)
 
     testImplementation(kotlin("test"))
+    testImplementation(Libs.mockk)
 }

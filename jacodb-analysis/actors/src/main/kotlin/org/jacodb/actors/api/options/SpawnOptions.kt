@@ -22,27 +22,18 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 class SpawnOptions(
     val channelFactory: ChannelFactory,
-    val coroutineContext: CoroutineContext,
 ) {
     fun channelFactory(channelFactory: ChannelFactory) = SpawnOptions(
         channelFactory = channelFactory,
-        coroutineContext = coroutineContext
     )
 
     fun channel(channel: Channel<Any?>) = SpawnOptions(
         channelFactory = { channel },
-        coroutineContext = coroutineContext
-    )
-
-    fun coroutineContext(coroutineContext: CoroutineContext) = SpawnOptions(
-        channelFactory = channelFactory,
-        coroutineContext = coroutineContext
     )
 
     companion object {
         val default = SpawnOptions(
             ChannelFactory.unlimited(),
-            EmptyCoroutineContext
         )
     }
 }

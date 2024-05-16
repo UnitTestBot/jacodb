@@ -50,7 +50,7 @@ class StoppingTest {
     }
 
     @Test
-    fun testStops() = runBlocking {
+    fun `Test stops`() = runBlocking {
         val system = system("test") { Repeater(null, 2) }
 
         system.send(0)

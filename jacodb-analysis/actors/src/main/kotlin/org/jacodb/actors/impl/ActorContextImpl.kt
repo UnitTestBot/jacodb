@@ -22,7 +22,6 @@ import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
 import org.jacodb.actors.impl.workers.ActorWorker
-import kotlin.coroutines.CoroutineContext
 
 internal class ActorContextImpl<Message>(
     private val spawner: ActorSpawner,
@@ -34,11 +33,10 @@ internal class ActorContextImpl<Message>(
         get() = worker
 
     fun launch(
-        coroutineContext: CoroutineContext,
         actorFactory: ActorFactory<Message>,
     ) {
         val actor = actorFactory.run { create() }
-        worker.launchLoop(coroutineContext, actor)
+        worker.launchLoop(actor)
     }
 
     override suspend fun <TargetMessage> ActorRef<TargetMessage>.send(message: TargetMessage) {

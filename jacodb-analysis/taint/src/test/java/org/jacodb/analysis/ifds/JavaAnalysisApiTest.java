@@ -73,5 +73,13 @@ public class JavaAnalysisApiTest {
                 methodsToAnalyze,
                 toDuration(30, DurationUnit.SECONDS))
             .get();
+
+        ifds.startAnalysis(methodsToAnalyze.get(0)).get();
+
+        ifds.awaitAnalysis().get();
+
+        ifds.collectComputationData().get();
+
+        ifds.collectFindings().get();
     }
 }

@@ -72,7 +72,7 @@ internal class ActorSpawnerImpl(
 
         val worker = workerFactory(path, channel, system)
         val context = ActorContextImpl(spawner, worker, logger(path.toString()))
-        context.launch(options.coroutineContext, actorFactory)
+        context.launch(actorFactory)
         children[name] = context
 
         return worker

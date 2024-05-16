@@ -43,7 +43,7 @@ internal class UserActorWorker<Message>(
     private var status = ActorStatus.BUSY
     private val working = AtomicBoolean(true)
 
-    override fun launchLoop(coroutineContext: CoroutineContext, actor: Actor<Message>) {
+    override fun launchLoop(actor: Actor<Message>) {
         scope.launch {
             sendInternal(watcher, WatcherMessage.Register(path))
             actor.receive(Signal.Start)

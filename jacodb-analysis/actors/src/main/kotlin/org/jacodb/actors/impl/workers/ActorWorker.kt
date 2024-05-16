@@ -30,7 +30,6 @@ internal abstract class ActorWorker<Message>(
     path: ActorPath,
 ) : ActorRef<Message>(path) {
     abstract fun launchLoop(
-        coroutineContext: CoroutineContext,
         actor: Actor<Message>,
     )
 

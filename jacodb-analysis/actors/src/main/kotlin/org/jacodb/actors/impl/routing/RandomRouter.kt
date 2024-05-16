@@ -20,10 +20,12 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
+import kotlin.random.Random
 
 context(ActorContext<Message>)
 internal class RandomRouter<Message>(
     size: Int,
+    private val random: Random,
     routeeSpawnOptions: SpawnOptions,
     routeeFactory: ActorFactory<Message>,
 ) : Actor<Message> {
@@ -32,6 +34,6 @@ internal class RandomRouter<Message>(
     }
 
     override suspend fun receive(message: Message) {
-        routees.random().send(message)
+        routees.random(random).send(message)
     }
 }

@@ -18,6 +18,7 @@ package org.jacodb.actors.impl.routing
 
 import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.options.SpawnOptions
+import kotlin.random.Random
 
 fun <Message> roundRobinRouter(
     size: Int = 8,
@@ -29,10 +30,11 @@ fun <Message> roundRobinRouter(
 
 fun <Message> randomRouter(
     size: Int = 8,
+    random: Random = Random,
     routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: ActorFactory<Message>,
 ) = ActorFactory {
-    RandomRouter(size, routeeSpawnOptions, routeeFactory)
+    RandomRouter(size, random, routeeSpawnOptions, routeeFactory)
 }
 
 fun <Message, Key> messageKeyRouter(
