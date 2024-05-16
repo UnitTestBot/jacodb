@@ -17,11 +17,14 @@
 package org.jacodb.actors.api
 
 import mu.KLogger
+import kotlin.time.Duration
 
 interface ActorContext<M> : ActorSpawner {
     val self: ActorRef<M>
 
     suspend fun <TargetMessage> ActorRef<TargetMessage>.send(message: TargetMessage)
+
+    suspend fun sendSelfWithDelay(message: M, waitDelay: Duration)
 
     fun stop()
     fun resume()

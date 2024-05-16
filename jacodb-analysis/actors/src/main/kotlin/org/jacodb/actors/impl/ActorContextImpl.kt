@@ -22,6 +22,7 @@ import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorSpawner
 import org.jacodb.actors.impl.workers.ActorWorker
+import kotlin.time.Duration
 
 internal class ActorContextImpl<Message>(
     private val spawner: ActorSpawner,
@@ -41,6 +42,10 @@ internal class ActorContextImpl<Message>(
 
     override suspend fun <TargetMessage> ActorRef<TargetMessage>.send(message: TargetMessage) {
         worker.send(this, message)
+    }
+
+    override suspend fun sendSelfWithDelay(message: Message, waitDelay: Duration) {
+        worker.sendSelfWithDelay(message, waitDelay)
     }
 
     override fun stop() {

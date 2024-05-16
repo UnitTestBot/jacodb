@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.actors.impl.actors
+package org.jacodb.actors.impl.actors.internal
 
 import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.actors.api.ActorPath
@@ -44,4 +44,6 @@ internal sealed interface WatcherMessage {
     data class AwaitTermination(
         val computationFinished: CompletableDeferred<Unit>,
     ) : WatcherMessage
+
+    data object Print : WatcherMessage
 }

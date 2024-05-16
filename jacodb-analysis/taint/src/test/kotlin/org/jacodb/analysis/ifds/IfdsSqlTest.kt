@@ -106,7 +106,7 @@ class IfdsSqlTest : BaseAnalysisTest() {
         val clazz = cp.findClass(className)
         val badMethod = clazz.methods.single { it.name == "bad" }
 
-        val ifds = taintIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = taintIfdsFacade("ifds", cp, graph)
 
         ifds.startAnalysis(badMethod)
         ifds.awaitAnalysis()

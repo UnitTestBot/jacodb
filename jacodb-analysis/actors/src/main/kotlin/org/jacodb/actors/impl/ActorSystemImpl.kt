@@ -25,12 +25,13 @@ import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorFactory
 import org.jacodb.actors.api.ActorSystem
 import org.jacodb.actors.api.options.SpawnOptions
-import org.jacodb.actors.impl.actors.WatcherActor
-import org.jacodb.actors.impl.actors.WatcherMessage
+import org.jacodb.actors.impl.actors.internal.WatcherActor
+import org.jacodb.actors.impl.actors.internal.WatcherMessage
 
 internal class ActorSystemImpl<Message>(
     override val name: String,
-    options: SpawnOptions,
+    systemOptions: ActorSystemOptions,
+    spawnOptions: SpawnOptions,
     actorFactory: ActorFactory<Message>,
 ) : ActorSystem<Message>, AutoCloseable {
     private val path = root() / name
@@ -41,9 +42,11 @@ internal class ActorSystemImpl<Message>(
 
     internal val scope = CoroutineScope(Job())
 
-    internal val watcher = spawner.spawnInternalActor(WATCHER_ACTOR_NAME, SpawnOptions.default, ::WatcherActor)
+    internal val watcher = spawner.spawnInternalActor(WATCHER_ACTOR_NAME, SpawnOptions.default) {
+        WatcherActor(systemOptions.printStatisticsPeriod)
+    }
 
-    private val user = spawner.spawn(USER_ACTOR_NAME, options, actorFactory)
+    private val user = spawner.spawn(USER_ACTOR_NAME, spawnOptions, actorFactory)
 
     override suspend fun send(message: Message) {
         watcher.receive(WatcherMessage.OutOfSystemSend)
@@ -86,10 +89,12 @@ internal class ActorSystemImpl<Message>(
 
 fun <Message> system(
     name: String,
-    options: SpawnOptions = SpawnOptions.default,
+    systemOptions: ActorSystemOptions = ActorSystemOptions(),
+    spawnOptions: SpawnOptions = SpawnOptions.default,
     actorFactory: ActorFactory<Message>,
 ): ActorSystem<Message> = ActorSystemImpl(
     name,
-    options,
+    systemOptions,
+    spawnOptions,
     actorFactory
 )

@@ -18,11 +18,13 @@ package org.jacodb.actors.impl.workers
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
-import kotlin.coroutines.CoroutineContext
+import org.jacodb.actors.api.signal.Signal
+import kotlin.time.Duration
 
 internal class InternalActorWorker<Message>(
     path: ActorPath,
@@ -46,6 +48,13 @@ internal class InternalActorWorker<Message>(
         destination.receive(message)
     }
 
+    override fun sendSelfWithDelay(message: Message, waitDelay: Duration) {
+        scope.launch {
+            delay(waitDelay)
+            receive(message)
+        }
+    }
+
     override suspend fun receive(message: Message): Boolean {
         channel.send(message)
         return true
@@ -54,8 +63,10 @@ internal class InternalActorWorker<Message>(
     private suspend fun loop(
         actor: Actor<Message>,
     ) {
+        actor.receive(Signal.Start)
         for (message in channel) {
             actor.receive(message)
         }
+        actor.receive(Signal.PostStop)
     }
 }

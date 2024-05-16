@@ -21,6 +21,7 @@ import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.signal.Signal
 import org.jacodb.actors.impl.routing.messageKeyRouter
+import org.jacodb.analysis.ifds.IfdsContext
 import org.jacodb.analysis.ifds.domain.Chunk
 import org.jacodb.analysis.ifds.messages.CommonMessage
 import org.jacodb.analysis.ifds.messages.NewChunk
@@ -28,7 +29,7 @@ import org.jacodb.analysis.ifds.messages.RunnerMessage
 
 context(ActorContext<RunnerMessage>)
 class ChunkManager<Stmt>(
-    private val ifdsContext: org.jacodb.analysis.ifds.IfdsContext<Stmt>,
+    private val ifdsContext: IfdsContext<Stmt>,
     private val chunk: Chunk,
     private val parent: ActorRef<CommonMessage>,
 ) : Actor<RunnerMessage> {

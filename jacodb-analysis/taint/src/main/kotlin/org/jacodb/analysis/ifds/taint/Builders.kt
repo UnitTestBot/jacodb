@@ -16,8 +16,8 @@
 
 package org.jacodb.analysis.ifds.taint
 
-import org.jacodb.actors.impl.system
-import org.jacodb.analysis.ifds.actors.ProjectManager
+import org.jacodb.analysis.ifds.ChunkStrategy
+import org.jacodb.analysis.ifds.IfdsSystemOptions
 import org.jacodb.analysis.ifds.common.BackwardRunnerId
 import org.jacodb.analysis.ifds.common.ClassChunkStrategy
 import org.jacodb.analysis.ifds.common.ForwardRunnerId
@@ -33,13 +33,15 @@ import org.jacodb.api.cfg.JcInst
 fun taintIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsContext<TaintDomainFact> =
     JcIfdsContext(
         cp,
+        ifdsSystemOptions,
         bannedPackagePrefixes,
-        JcChunkResolver(graph, chunkStrategy)
+        JcChunkResolver(chunkStrategy)
     ) { runnerId ->
         when (runnerId) {
             is ForwardRunnerId -> ForwardTaintAnalyzer(ForwardRunnerId, graph)
@@ -52,21 +54,22 @@ fun taintIfdsFacade(
     name: String,
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsFacade<TaintDomainFact, TaintVulnerability> {
-    val context = taintIfdsContext(cp, graph, bannedPackagePrefixes, chunkStrategy)
-    val system = system(name) { ProjectManager(context) }
-    return JcIfdsFacade(graph, context, system, ForwardRunnerId)
+    val context = taintIfdsContext(cp, graph, ifdsSystemOptions, bannedPackagePrefixes, chunkStrategy)
+    return JcIfdsFacade(name, graph, context, ForwardRunnerId)
 }
 
 fun asyncTaintIfdsFacade(
     name: String,
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcAsyncIfdsFacade<TaintDomainFact, TaintVulnerability> {
-    val facade = taintIfdsFacade(name, cp, graph, bannedPackagePrefixes, chunkStrategy)
+    val facade = taintIfdsFacade(name, cp, graph, ifdsSystemOptions, bannedPackagePrefixes, chunkStrategy)
     return JcAsyncIfdsFacade(facade)
 }

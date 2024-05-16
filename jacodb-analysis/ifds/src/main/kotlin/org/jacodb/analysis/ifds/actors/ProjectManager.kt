@@ -20,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.impl.routing.messageKeyRouter
+import org.jacodb.analysis.ifds.IfdsContext
 import org.jacodb.analysis.ifds.domain.Chunk
 import org.jacodb.analysis.ifds.messages.CollectAllData
 import org.jacodb.analysis.ifds.messages.CollectData
@@ -32,7 +33,7 @@ import org.jacodb.analysis.ifds.result.IfdsComputationData
 
 context(ActorContext<CommonMessage>)
 class ProjectManager<Stmt>(
-    private val ifdsContext: org.jacodb.analysis.ifds.IfdsContext<Stmt>,
+    private val ifdsContext: IfdsContext<Stmt>,
 ) : Actor<CommonMessage> {
 
     private val routerFactory = messageKeyRouter(

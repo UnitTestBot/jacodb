@@ -16,18 +16,6 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.analysis.ifds.domain.Analyzer
-import org.jacodb.analysis.ifds.domain.Chunk
-import org.jacodb.analysis.ifds.domain.IndirectionHandler
-import org.jacodb.analysis.ifds.domain.RunnerId
-import org.jacodb.analysis.ifds.messages.RunnerMessage
-
-interface IfdsContext<Stmt> {
-    val options: IfdsSystemOptions
-
-    fun chunkByMessage(message: RunnerMessage): Chunk
-    fun runnerIdByMessage(message: RunnerMessage): RunnerId
-
-    fun getAnalyzer(runnerId: RunnerId): Analyzer<Stmt, *>
-    fun getIndirectionHandler(runnerId: RunnerId): IndirectionHandler
-}
+data class IfdsSystemOptions(
+    val workersPerRunner: Int = 8,
+)

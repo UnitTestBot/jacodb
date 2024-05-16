@@ -16,6 +16,7 @@
 
 package org.jacodb.analysis.ifds.common
 
+import org.jacodb.analysis.ifds.ChunkResolver
 import org.jacodb.analysis.ifds.domain.Chunk
 import org.jacodb.analysis.ifds.messages.AnalyzerMessage
 import org.jacodb.analysis.ifds.messages.CollectData
@@ -33,13 +34,11 @@ import org.jacodb.analysis.ifds.messages.StorageMessage
 import org.jacodb.analysis.ifds.messages.SubscriptionOnEnd
 import org.jacodb.analysis.ifds.messages.SubscriptionOnStart
 import org.jacodb.analysis.ifds.messages.UnresolvedCall
-import org.jacodb.api.analysis.JcApplicationGraph
 import org.jacodb.api.cfg.JcInst
 
 class JcChunkResolver(
-    private val graph: JcApplicationGraph,
     private val chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst>,
-) : org.jacodb.analysis.ifds.ChunkResolver {
+) : ChunkResolver {
     @Suppress("UNCHECKED_CAST")
     override fun chunkByMessage(message: RunnerMessage): Chunk =
         when (message) {

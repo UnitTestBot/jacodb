@@ -16,8 +16,8 @@
 
 package org.jacodb.analysis.ifds.unused
 
-import org.jacodb.actors.impl.system
-import org.jacodb.analysis.ifds.actors.ProjectManager
+import org.jacodb.analysis.ifds.ChunkStrategy
+import org.jacodb.analysis.ifds.IfdsSystemOptions
 import org.jacodb.analysis.ifds.common.ClassChunkStrategy
 import org.jacodb.analysis.ifds.common.JcAsyncIfdsFacade
 import org.jacodb.analysis.ifds.common.JcChunkResolver
@@ -33,13 +33,15 @@ import org.jacodb.api.cfg.JcInst
 fun unusedIfdsContext(
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsContext<UnusedVariableDomainFact> =
     JcIfdsContext(
         cp,
+        ifdsSystemOptions,
         bannedPackagePrefixes,
-        JcChunkResolver(graph, chunkStrategy)
+        JcChunkResolver(chunkStrategy)
     ) { runnerId ->
         when (runnerId) {
             is SingletonRunnerId -> UnusedVariableAnalyzer(SingletonRunnerId, graph)
@@ -51,15 +53,15 @@ fun unusedIfdsFacade(
     name: String,
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability> {
-    val context = unusedIfdsContext(cp, graph, bannedPackagePrefixes, chunkStrategy)
-    val system = system(name) { ProjectManager(context) }
+    val context = unusedIfdsContext(cp, graph, ifdsSystemOptions, bannedPackagePrefixes, chunkStrategy)
     return object : JcIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability>(
+        name,
         graph,
         context,
-        system,
         SingletonRunnerId
     ) {
         override suspend fun collectFindings(): Collection<UnusedVulnerability> {
@@ -94,9 +96,10 @@ fun asyncUnusedIfdsFacade(
     name: String,
     cp: JcClasspath,
     graph: JcApplicationGraph,
+    ifdsSystemOptions: IfdsSystemOptions = IfdsSystemOptions(),
     bannedPackagePrefixes: List<String> = defaultBannedPackagePrefixes,
-    chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst> = ClassChunkStrategy,
+    chunkStrategy: ChunkStrategy<JcInst> = ClassChunkStrategy,
 ): JcAsyncIfdsFacade<UnusedVariableDomainFact, UnusedVulnerability> {
-    val facade = unusedIfdsFacade(name, cp, graph, bannedPackagePrefixes, chunkStrategy)
+    val facade = unusedIfdsFacade(name, cp, graph, ifdsSystemOptions, bannedPackagePrefixes, chunkStrategy)
     return JcAsyncIfdsFacade(facade)
 }

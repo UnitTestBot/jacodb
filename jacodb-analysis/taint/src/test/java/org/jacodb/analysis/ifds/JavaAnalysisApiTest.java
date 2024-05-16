@@ -67,6 +67,7 @@ public class JavaAnalysisApiTest {
             "ifds",
             applicationGraph.getClasspath(),
             applicationGraph,
+            new IfdsSystemOptions(),
             getDefaultBannedPackagePrefixes(),
             ChunkStrategiesKt.getClassChunkStrategy());
         ifds.runAnalysis(

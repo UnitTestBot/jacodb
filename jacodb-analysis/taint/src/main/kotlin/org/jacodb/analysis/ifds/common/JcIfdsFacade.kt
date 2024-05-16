@@ -20,6 +20,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.ActorSystem
+import org.jacodb.actors.impl.ActorSystemOptions
+import org.jacodb.actors.impl.system
+import org.jacodb.analysis.ifds.actors.ProjectManager
 import org.jacodb.analysis.ifds.domain.Edge
 import org.jacodb.analysis.ifds.domain.Reason
 import org.jacodb.analysis.ifds.domain.RunnerId
@@ -37,11 +40,15 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 open class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
+    name: String,
     private val graph: JcApplicationGraph,
     private val context: JcIfdsContext<Fact>,
-    private val system: ActorSystem<CommonMessage>,
     private val startingRunnerId: RunnerId,
 ) : AutoCloseable {
+    private val system: ActorSystem<CommonMessage> = system(name, DefaultSystemOptions) {
+        ProjectManager(context)
+    }
+
     open suspend fun runAnalysis(
         methods: Collection<JcMethod>,
         timeout: Duration = 60.seconds,
@@ -91,5 +98,9 @@ open class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
 
     override fun close() {
         system.close()
+    }
+
+    companion object {
+        val DefaultSystemOptions = ActorSystemOptions(printStatisticsPeriod = 10.seconds)
     }
 }

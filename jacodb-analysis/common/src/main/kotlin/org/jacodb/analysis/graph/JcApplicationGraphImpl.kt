@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * Possible we will need JcRawInst instead of JcInst
  */
-open class JcApplicationGraphImpl(
+class JcApplicationGraphImpl(
     override val classpath: JcClasspath,
     private val usages: SyncUsagesExtension,
 ) : JcApplicationGraph {

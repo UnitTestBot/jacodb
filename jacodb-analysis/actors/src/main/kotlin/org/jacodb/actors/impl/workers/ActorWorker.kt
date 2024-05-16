@@ -21,7 +21,7 @@ import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.impl.ActorSystemImpl
-import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
 internal typealias WorkerFactory<Message> =
         (ActorPath, Channel<Message>, ActorSystemImpl<*>) -> ActorWorker<Message>
@@ -39,5 +39,10 @@ internal abstract class ActorWorker<Message>(
     abstract suspend fun <TargetMessage> send(
         destination: ActorRef<TargetMessage>,
         message: TargetMessage,
+    )
+
+    abstract fun sendSelfWithDelay(
+        message: Message,
+        waitDelay: Duration,
     )
 }

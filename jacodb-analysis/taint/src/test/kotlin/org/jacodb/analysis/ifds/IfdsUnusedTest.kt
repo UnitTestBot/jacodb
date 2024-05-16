@@ -58,7 +58,7 @@ class IfdsUnusedTest : BaseAnalysisTest() {
     }
 
     private fun findSinks(method: JcMethod): Collection<UnusedVulnerability> = runBlocking {
-        val system = unusedIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val system = unusedIfdsFacade("ifds", cp, graph)
 
         system.startAnalysis(method)
         system.awaitAnalysis()

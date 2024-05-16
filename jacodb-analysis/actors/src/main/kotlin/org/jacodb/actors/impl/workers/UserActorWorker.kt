@@ -20,16 +20,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onSuccess
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorRef
 import org.jacodb.actors.api.ActorStatus
 import org.jacodb.actors.api.signal.Signal
-import org.jacodb.actors.impl.actors.Snapshot
-import org.jacodb.actors.impl.actors.WatcherMessage
+import org.jacodb.actors.impl.actors.internal.Snapshot
+import org.jacodb.actors.impl.actors.internal.WatcherMessage
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
 internal class UserActorWorker<Message>(
     path: ActorPath,
@@ -55,6 +56,14 @@ internal class UserActorWorker<Message>(
     override suspend fun <TargetMessage> send(destination: ActorRef<TargetMessage>, message: TargetMessage) {
         if (destination.receive(message)) {
             sent++
+        }
+    }
+
+    override fun sendSelfWithDelay(message: Message, waitDelay: Duration) {
+        sent++
+        scope.launch {
+            delay(waitDelay)
+            receive(message)
         }
     }
 

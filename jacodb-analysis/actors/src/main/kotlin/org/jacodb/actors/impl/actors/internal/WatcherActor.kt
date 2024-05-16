@@ -14,16 +14,20 @@
  *  limitations under the License.
  */
 
-package org.jacodb.actors.impl.actors
+package org.jacodb.actors.impl.actors.internal
 
 import kotlinx.coroutines.CompletableDeferred
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorContext
 import org.jacodb.actors.api.ActorPath
 import org.jacodb.actors.api.ActorStatus
+import org.jacodb.actors.api.signal.Signal
+import kotlin.time.Duration
 
 context(ActorContext<WatcherMessage>)
-internal class WatcherActor : Actor<WatcherMessage> {
+internal class WatcherActor(
+    private val printStatisticsPeriod: Duration? = null,
+) : Actor<WatcherMessage> {
     private sealed interface Status {
         data object Idle : Status
         data class DetectingTermination(
@@ -46,6 +50,14 @@ internal class WatcherActor : Actor<WatcherMessage> {
         totalReceived = 0
     )
 
+    override suspend fun receive(signal: Signal) {
+        if (signal == Signal.Start) {
+            if (printStatisticsPeriod != null) {
+                sendSelfWithDelay(WatcherMessage.Print, printStatisticsPeriod)
+            }
+        }
+    }
+
     override suspend fun receive(message: WatcherMessage) {
         when (message) {
             WatcherMessage.Idle -> {
@@ -67,6 +79,13 @@ internal class WatcherActor : Actor<WatcherMessage> {
             is WatcherMessage.UpdateSnapshot -> {
                 updateSnapshot(message.path, message.snapshot)
             }
+
+            WatcherMessage.Print -> {
+                if (!isTerminated()) {
+                    printStatistics()
+                    sendSelfWithDelay(WatcherMessage.Print, printStatisticsPeriod!!)
+                }
+            }
         }
         val status = state.status
         if (status is Status.DetectingTermination) {
@@ -74,14 +93,22 @@ internal class WatcherActor : Actor<WatcherMessage> {
         }
     }
 
+    private fun printStatistics() {
+        logger.info { "Actors:   ${state.terminatedActors}/${watchList.size}" }
+        val percent = 100.0 * state.totalReceived / state.totalSent
+        val left = state.totalSent - state.totalReceived
+        logger.info { "Messages: ${state.totalReceived}/${state.totalSent}\t${"%.2f".format(percent)}%\tLeft: $left" }
+    }
+
     private fun checkTermination(computationFinished: CompletableDeferred<Unit>) {
-        if (state.terminatedActors == watchList.size && state.totalSent == state.totalReceived) {
-            logger.info { "Actors:   ${state.terminatedActors}/${watchList.size}" }
-            logger.info { "Messages: ${state.totalReceived}/${state.totalSent}" }
+        if (isTerminated()) {
+            printStatistics()
             logger.info { "Computation finished..." }
             computationFinished.complete(Unit)
         }
     }
+
+    private fun isTerminated() = state.terminatedActors == watchList.size && state.totalSent == state.totalReceived
 
     private fun updateSnapshot(path: ActorPath, newSnapshot: Snapshot) {
         val currentSnapshot = watchList[path] ?: error("$this can't find the current snapshot of $path")

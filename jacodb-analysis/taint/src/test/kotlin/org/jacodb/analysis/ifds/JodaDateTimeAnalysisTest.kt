@@ -60,7 +60,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test taint analysis`() = runBlocking {
-        val ifds = taintIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = taintIfdsFacade("ifds", cp, graph)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         ifds.runAnalysis(methods, timeout = 20.seconds)
@@ -70,7 +70,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test NPE analysis`() = runBlocking {
-        val ifds = npeIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = npeIfdsFacade("ifds", cp, graph)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         ifds.runAnalysis(methods, timeout = 20.seconds)
@@ -80,7 +80,7 @@ class JodaDateTimeAnalysisTest : BaseTest() {
 
     @Test
     fun `test unused variables analysis`() = runBlocking {
-        val ifds = unusedIfdsFacade("ifds", cp, graph, defaultBannedPackagePrefixes)
+        val ifds = unusedIfdsFacade("ifds", cp, graph)
         val clazz = cp.findClass<DateTime>()
         val methods = clazz.declaredMethods
         ifds.runAnalysis(methods, timeout = 20.seconds)
