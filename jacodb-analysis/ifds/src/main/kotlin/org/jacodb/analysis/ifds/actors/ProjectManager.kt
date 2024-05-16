@@ -37,7 +37,7 @@ class ProjectManager<Stmt>(
 
     private val routerFactory = messageKeyRouter(
         keyExtractor = ifdsContext::chunkByMessage
-    ) { chunk -> org.jacodb.analysis.ifds.actors.ChunkManager(ifdsContext, chunk, this@ActorContext.self) }
+    ) { chunk -> ChunkManager(ifdsContext, chunk, this@ActorContext.self) }
 
     private val router = spawn("chunks", actorFactory = routerFactory)
 

@@ -36,7 +36,7 @@ class ChunkManager<Stmt>(
     private val routerFactory = messageKeyRouter(
         ifdsContext::runnerIdByMessage
     ) { runnerId ->
-        org.jacodb.analysis.ifds.actors.Runner<Stmt, Nothing>(this@ActorContext.self, ifdsContext, chunk, runnerId)
+        Runner<Stmt, Nothing>(this@ActorContext.self, ifdsContext, chunk, runnerId)
     }
 
     private val router = spawn(
@@ -59,7 +59,6 @@ class ChunkManager<Stmt>(
             }
 
             Signal.PostStop -> {
-                // TODO: explain why we do nothing here
                 // do nothing
             }
 
