@@ -52,15 +52,20 @@ private val logger = mu.KotlinLogging.logger {}
 class TaintSamples {
 
     data class SourceMethodConfig(
-        val methodName: String,
+        val methodName: String?,
         val markName: String = "TAINT",
         val position: Position = Result,
     )
 
+    data class SinkMethodConfig(
+        val methodName: String?,
+        val position: Position = Argument(0)
+    )
+
     data class CaseTaintConfig(
-        val sourceMethodConfig: SourceMethodConfig,
+        val sourceMethodConfig: SourceMethodConfig = SourceMethodConfig(null),
         val cleanerMethodName: String? = null,
-        val sinkMethodName: String? = null,
+        val sinkMethodConfig: SinkMethodConfig = SinkMethodConfig(null),
         val startMethodNamesForAnalysis: List<String>? = null,
     )
 
@@ -84,6 +89,7 @@ class TaintSamples {
         fun analyseOneCase(caseTaintConfig: CaseTaintConfig): List<TaintVulnerability<PandaMethod, PandaInst>> {
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
             val (sourceMethodName, markName, sourcePosition) = caseTaintConfig.sourceMethodConfig
+            val (sinkMethodName, sinkPosition) = caseTaintConfig.sinkMethodConfig
             val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
                 { method ->
                     val rules = buildList {
@@ -105,7 +111,7 @@ class TaintSamples {
                                 ),
                             )
                         )
-                        else if (method.name == caseTaintConfig.sinkMethodName) add(
+                        else if (method.name == sinkMethodName) add(
                             TaintMethodSink(
                                 method = mockk(),
                                 ruleNote = "CUSTOM SINK", // FIXME
@@ -159,7 +165,9 @@ class TaintSamples {
                     sourceMethodConfig = SourceMethodConfig(
                         methodName = "getUserPassword",
                     ),
-                    sinkMethodName = "log",
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "log",
+                    ),
                     startMethodNamesForAnalysis = listOf("case1")
                 )
             )
@@ -173,7 +181,9 @@ class TaintSamples {
                     sourceMethodConfig = SourceMethodConfig(
                         methodName = "getUserPassword",
                     ),
-                    sinkMethodName = "log",
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "log",
+                    ),
                     startMethodNamesForAnalysis = listOf("case2")
                 )
             )
@@ -189,7 +199,9 @@ class TaintSamples {
                         methodName = "getUserPassword",
                     ),
                     cleanerMethodName = "encryptPassword",
-                    sinkMethodName = "log",
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "log",
+                    ),
                     startMethodNamesForAnalysis = listOf("case2")
                 )
             )
@@ -316,7 +328,9 @@ class TaintSamples {
                     sourceMethodConfig = SourceMethodConfig(
                         methodName = "getNameOption",
                     ),
-                    sinkMethodName = "log"
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "log",
+                    ),
                 )
             )
             assert(sinks.size == 2)
@@ -344,6 +358,24 @@ class TaintSamples {
                         position = Argument(0)
                     ),
                     startMethodNamesForAnalysis = listOf(postHandlerMethodName)
+                )
+            )
+            assert(sinks.size == 1)
+        }
+    }
+
+    @Nested
+    inner class SQLInjectionTest {
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/SQLInjection")
+
+        @Test
+        fun `counterexample - sql injection that lead to dropping table`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfig = SourceMethodConfig("getUserName"),
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "query",
+                    ),
                 )
             )
             assert(sinks.size == 1)
