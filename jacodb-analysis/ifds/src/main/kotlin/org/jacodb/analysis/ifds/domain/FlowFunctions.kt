@@ -42,15 +42,7 @@ interface FlowFunctions<Stmt, Fact, Method> {
     ): Collection<Fact>
 
     /**
-     * Call-to-return-site flow function.
-     *
-     * ```
-     * [ CALL p ] :: callStatement
-     *   :
-     *   : (call-to-return-site edge)
-     *   :
-     * [ RETURN FROM p ] :: returnSite
-     * ```
+     * Call flow function.
      */
     fun call(
         callStatement: Stmt,

@@ -17,10 +17,37 @@
 package org.jacodb.analysis.ifds.domain
 
 sealed interface CallAction<Fact> {
+    /**
+     * Call-to-return-site action.
+     *
+     * ```
+     * [ CALL p ] :: callStatement
+     *   :
+     *   : (call-to-return-site edge)
+     *   :
+     * [ RETURN FROM p ] :: returnSite
+     * ```
+     */
     data class Return<Fact>(
         val fact: Fact
     ) : CallAction<Fact>
 
+    /**
+     * Call-to-start action.
+     *
+     * ```
+     * [ CALL p ] :: callStatement
+     *   : \
+     *   :  \ (call-to-start edge)
+     *   :   \
+     *   :  [ START p ] :: calleeStart
+     *   :    |
+     *   :  [ EXIT p ]
+     *   :   /
+     *   :  /
+     * [ RETURN FROM p ]
+     * ```
+     */
     data class Start<Fact>(
         val fact: Fact
     ) : CallAction<Fact>
