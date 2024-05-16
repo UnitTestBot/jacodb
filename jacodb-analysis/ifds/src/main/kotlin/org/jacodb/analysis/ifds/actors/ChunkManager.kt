@@ -63,7 +63,7 @@ class ChunkManager<Stmt>(
             }
 
             is Signal.Exception -> {
-                logger.error { signal.exception.stackTraceToString() }
+                logger.error(signal.exception) { "Catch exception in chunk manager:" }
             }
         }
     }
