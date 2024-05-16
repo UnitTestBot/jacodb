@@ -42,21 +42,29 @@ class PandaNamedType(
     override fun hashCode(): Int {
         return typeName.hashCode()
     }
+
+    override fun toString(): String = typeName
 }
 
 object PandaAnyType : PandaType {
     override val typeName: String
         get() = "any"
+
+    override fun toString(): String = typeName
 }
 
 object PandaVoidType : PandaType {
     override val typeName: String
         get() = "void"
+
+    override fun toString(): String = "void"
 }
 
 object PandaUndefinedType : PandaType {
     override val typeName: String
         get() = "undefined_t"
+
+    override fun toString(): String = typeName
 }
 
 interface PandaRefType : PandaType, CommonRefType
@@ -65,9 +73,7 @@ object PandaObjectType : PandaRefType {
     override val typeName: String
         get() = "object"
 
-    override fun toString(): String {
-        return "[object Object]"
-    }
+    override fun toString(): String = typeName
 }
 
 interface PandaArrayType : PandaRefType, CommonArrayType {
@@ -103,6 +109,8 @@ class PandaArrayTypeImpl(
         result = 31 * result + dimensions
         return result
     }
+
+    override fun toString(): String = typeName
 }
 
 interface PandaClassType : PandaRefType, CommonClassType
@@ -122,6 +130,8 @@ class PandaClassTypeImpl(
     override fun hashCode(): Int {
         return typeName.hashCode()
     }
+
+    override fun toString(): String = typeName
 }
 
 interface PandaPrimitiveType : PandaType
@@ -129,20 +139,28 @@ interface PandaPrimitiveType : PandaType
 object PandaBoolType : PandaPrimitiveType {
     override val typeName: String
         get() = "bool"
+
+    override fun toString(): String = typeName
 }
 
 object PandaNumberType : PandaPrimitiveType {
     override val typeName: String
         get() = "number"
+
+    override fun toString(): String = typeName
 }
 
 object PandaStringType : PandaPrimitiveType {
     override val typeName: String
         get() = "string"
+
+    override fun toString(): String = typeName
 }
 
 // ------------------------------------------------------
 
 data class PandaTypeName(
     override val typeName: String,
-) : CommonTypeName
+) : CommonTypeName {
+    override fun toString(): String = typeName
+}
