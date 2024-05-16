@@ -1043,7 +1043,7 @@ class IRParser(
 
             opcode == "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
-                val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0])
+                val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName=stringData!!)
                 method.pushInst(assignment)
                 env.setLocalAssignment(method.signature, lv, assignment)
                 env.setLocalVar(stringData!!, lv)

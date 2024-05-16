@@ -110,6 +110,7 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr,
+    val varName: String? = null
 ) : PandaInst(), CommonAssignInst<PandaMethod, PandaInst> {
 
     override val operands: List<PandaExpr>

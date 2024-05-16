@@ -178,7 +178,11 @@ class PandaApplicationGraphImpl(
     }
 
     override fun callers(method: PandaMethod): Sequence<PandaInst> {
-        TODO("Not yet implemented")
+        val result = project.classes.asSequence().flatMap { it.methods }
+            .flatMap { it.instructions }
+            .filter { inst -> inst is PandaCallInst && inst.callExpr.method == method }
+        return result
+//        TODO("Not yet implemented")
     }
 
     override fun entryPoints(method: PandaMethod): Sequence<PandaInst> {
