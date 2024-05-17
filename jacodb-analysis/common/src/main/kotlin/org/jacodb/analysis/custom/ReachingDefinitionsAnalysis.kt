@@ -23,6 +23,7 @@ import org.jacodb.api.cfg.JcInstRef
 import org.jacodb.api.cfg.JcValue
 import org.jacodb.impl.cfg.JcBlockGraphImpl
 import java.util.BitSet
+import kotlin.collections.set
 
 class ReachingDefinitionsAnalysis(val blockGraph: JcBlockGraphImpl) {
     val jcGraph get() = blockGraph.jcGraph

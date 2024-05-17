@@ -100,6 +100,7 @@ abstract class JcBaseAnalyzer<Fact>(
                         val newEdge = Edge(edge.from, Vertex(successor, action.fact))
                         processNewEdge(selfRunnerId, newEdge, reason)
                     }
+
                     is CallAction.Start -> {
                         val newEdge = Edge(edge.from, Vertex(edge.to.statement, action.fact))
                         val callMessage = UnresolvedCall(selfRunnerId, newEdge)
@@ -123,7 +124,6 @@ abstract class JcBaseAnalyzer<Fact>(
             }
         }
     }
-
 
     private fun MutableList<RunnerMessage>.processResolvedCall(
         edge: Edge<JcInst, Fact>,
@@ -171,7 +171,7 @@ abstract class JcBaseAnalyzer<Fact>(
 
     private fun MutableList<RunnerMessage>.processNotificationOnStart(
         callerEdge: Edge<JcInst, Fact>,
-        edge: Edge<JcInst, Fact>
+        edge: Edge<JcInst, Fact>,
     ) {
         val reason = Reason.ExitToReturnSite(callerEdge, edge)
 

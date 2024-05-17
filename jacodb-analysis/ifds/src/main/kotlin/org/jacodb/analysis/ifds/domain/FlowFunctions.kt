@@ -47,7 +47,7 @@ interface FlowFunctions<Stmt, Fact, Method> {
     fun call(
         callStatement: Stmt,
         returnSite: Stmt,
-        fact: Fact
+        fact: Fact,
     ): Collection<CallAction<Fact>>
 
     /**

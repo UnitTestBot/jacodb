@@ -35,7 +35,6 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
-
 class NpeAnalyzer(
     selfRunnerId: RunnerId,
     graph: JcApplicationGraph,
@@ -50,7 +49,6 @@ class NpeAnalyzer(
             ?.singleOrNull { it is TaintConfigurationFeature }
             ?.let { it as TaintConfigurationFeature }
     }
-
 
     override val flowFunctions: ForwardNpeFlowFunctions by lazy {
         ForwardNpeFlowFunctions(cp, taintConfigurationFeature)

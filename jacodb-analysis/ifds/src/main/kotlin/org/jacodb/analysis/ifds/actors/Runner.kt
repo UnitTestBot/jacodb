@@ -48,9 +48,7 @@ class Runner<Stmt, Fact>(
         RunnerStorage<Stmt, Fact>(this@ActorContext.self, runnerId)
     }
 
-    private val indirectionHandler = spawn(
-        "indirection",
-    ) {
+    private val indirectionHandler = spawn("indirection") {
         val indirectionHandler = ifdsContext.getIndirectionHandler(runnerId)
         IndirectionHandlerActor(this@ActorContext.self, indirectionHandler)
     }

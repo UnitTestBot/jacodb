@@ -29,7 +29,7 @@ sealed interface CallAction<Fact> {
      * ```
      */
     data class Return<Fact>(
-        val fact: Fact
+        val fact: Fact,
     ) : CallAction<Fact>
 
     /**
@@ -49,6 +49,6 @@ sealed interface CallAction<Fact> {
      * ```
      */
     data class Start<Fact>(
-        val fact: Fact
+        val fact: Fact,
     ) : CallAction<Fact>
 }

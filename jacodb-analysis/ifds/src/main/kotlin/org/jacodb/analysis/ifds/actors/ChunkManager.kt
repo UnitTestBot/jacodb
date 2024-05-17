@@ -35,7 +35,7 @@ class ChunkManager<Stmt>(
 ) : Actor<RunnerMessage> {
 
     private val routerFactory = messageKeyRouter(
-        ifdsContext::runnerIdByMessage
+        keyExtractor = ifdsContext::runnerIdByMessage
     ) { runnerId ->
         Runner<Stmt, Nothing>(this@ActorContext.self, ifdsContext, chunk, runnerId)
     }

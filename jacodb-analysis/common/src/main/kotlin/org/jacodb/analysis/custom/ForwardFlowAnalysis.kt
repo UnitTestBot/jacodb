@@ -18,7 +18,6 @@ package org.jacodb.analysis.custom
 
 import org.jacodb.api.cfg.JcBytecodeGraph
 
-
 abstract class ForwardFlowAnalysis<NODE, T>(graph: JcBytecodeGraph<NODE>) : FlowAnalysisImpl<NODE, T>(graph) {
 
     override val isForward = true

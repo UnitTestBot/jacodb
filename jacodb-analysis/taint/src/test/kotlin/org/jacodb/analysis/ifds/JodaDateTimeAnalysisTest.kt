@@ -18,7 +18,6 @@ package org.jacodb.analysis.ifds
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.analysis.graph.JcApplicationGraphImpl
-import org.jacodb.analysis.ifds.common.defaultBannedPackagePrefixes
 import org.jacodb.analysis.ifds.npe.npeIfdsFacade
 import org.jacodb.analysis.ifds.taint.taintIfdsFacade
 import org.jacodb.analysis.ifds.unused.unusedIfdsFacade

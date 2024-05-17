@@ -60,20 +60,20 @@ public class JavaAnalysisApiTest {
 
         List<JcMethod> methodsToAnalyze = analyzedClass.getDeclaredMethods();
         JcApplicationGraph applicationGraph =
-            newApplicationGraphForAnalysisAsync(classpath)
-                .get();
+                newApplicationGraphForAnalysisAsync(classpath)
+                        .get();
 
         JcAsyncIfdsFacade<TaintDomainFact, TaintVulnerability> ifds = asyncTaintIfdsFacade(
-            "ifds",
-            applicationGraph.getClasspath(),
-            applicationGraph,
-            new IfdsSystemOptions(),
-            getDefaultBannedPackagePrefixes(),
-            ChunkStrategiesKt.getClassChunkStrategy());
+                "ifds",
+                applicationGraph.getClasspath(),
+                applicationGraph,
+                new IfdsSystemOptions(),
+                getDefaultBannedPackagePrefixes(),
+                ChunkStrategiesKt.getClassChunkStrategy());
         ifds.runAnalysis(
-                methodsToAnalyze,
-                toDuration(30, DurationUnit.SECONDS))
-            .get();
+                        methodsToAnalyze,
+                        toDuration(30, DurationUnit.SECONDS))
+                .get();
 
         ifds.startAnalysis(methodsToAnalyze.get(0)).get();
 

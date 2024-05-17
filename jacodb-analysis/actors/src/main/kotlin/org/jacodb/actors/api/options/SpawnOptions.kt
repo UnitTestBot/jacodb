@@ -17,8 +17,6 @@
 package org.jacodb.actors.api.options
 
 import kotlinx.coroutines.channels.Channel
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 class SpawnOptions(
     val channelFactory: ChannelFactory,

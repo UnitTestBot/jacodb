@@ -59,7 +59,6 @@ class JcIndirectionHandler(
         val instanceClass = (callExpr.instance.type as? JcClassType)?.jcClass
             ?: return listOf(ResolvedCall(runnerId, edge, callee))
 
-
         val overrides = cache
             .computeIfAbsent(callee) { hierarchy.findOverrides(callee).toList() }
             .asSequence()

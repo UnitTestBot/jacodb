@@ -16,8 +16,6 @@
 
 package org.jacodb.analysis.ifds.npe
 
-import org.jacodb.analysis.ifds.domain.CallAction
-import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.config.BasicConditionEvaluator
 import org.jacodb.analysis.ifds.config.CallPositionToAccessPathResolver
 import org.jacodb.analysis.ifds.config.CallPositionToJcValueResolver
@@ -25,6 +23,8 @@ import org.jacodb.analysis.ifds.config.EntryPointPositionToAccessPathResolver
 import org.jacodb.analysis.ifds.config.EntryPointPositionToJcValueResolver
 import org.jacodb.analysis.ifds.config.FactAwareConditionEvaluator
 import org.jacodb.analysis.ifds.config.TaintActionEvaluator
+import org.jacodb.analysis.ifds.domain.CallAction
+import org.jacodb.analysis.ifds.domain.FlowFunctions
 import org.jacodb.analysis.ifds.taint.TaintDomainFact
 import org.jacodb.analysis.ifds.taint.TaintZeroFact
 import org.jacodb.analysis.ifds.taint.Tainted

@@ -104,7 +104,6 @@ class RunnerStorage<Stmt, Fact>(
                             edge,
                             subscribingEdge
                         )
-
                     }
                     sendNotificationsOnExistingSubscribers(
                         endSubscribers[edge.to].orEmpty()

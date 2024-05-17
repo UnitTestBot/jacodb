@@ -32,7 +32,6 @@ import org.jacodb.taint.configuration.TaintMethodSink
 
 private val logger = mu.KotlinLogging.logger {}
 
-
 class ForwardTaintAnalyzer(
     selfRunnerId: RunnerId,
     graph: JcApplicationGraph,
