@@ -94,10 +94,10 @@ internal class WatcherActor(
     }
 
     private fun printStatistics() {
-        logger.info { "Actors:   ${state.terminatedActors}/${watchList.size}" }
+        logger.info { "Actors (term/total)): ${state.terminatedActors}/${watchList.size}" }
         val percent = 100.0 * state.totalReceived / state.totalSent
         val left = state.totalSent - state.totalReceived
-        logger.info { "Messages: ${state.totalReceived}/${state.totalSent}\t${"%.2f".format(percent)}%\tLeft: $left" }
+        logger.info { "Messages (recv/sent): ${state.totalReceived}/${state.totalSent}\t${"%.2f".format(percent)}%\tLeft: $left" }
     }
 
     private fun checkTermination(computationFinished: CompletableDeferred<Unit>) {
