@@ -70,8 +70,8 @@ open class JcIfdsFacade<Fact, F : Finding<JcInst, Fact>>(
         method: JcMethod,
     ) {
         val analyzer = context.getAnalyzer(startingRunnerId)
-        for (fact in analyzer.flowFunctions.obtainPossibleStartFacts(method)) {
-            for (entryPoint in graph.entryPoints(method)) {
+        for (entryPoint in graph.entryPoints(method)) {
+            for (fact in analyzer.flowFunctions.obtainPossibleStartFacts(method)) {
                 val vertex = Vertex(entryPoint, fact)
                 val edge = Edge(vertex, vertex)
                 val newEdgeMessage = NewEdge(startingRunnerId, edge, Reason.Initial)
