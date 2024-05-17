@@ -382,4 +382,22 @@ class TaintSamples {
             assert(sinks.size == 1)
         }
     }
+
+    @Nested
+    inner class XSSTest {
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/XSS")
+
+        @Test
+        fun `counterexample - not validating user data lead to xss attack`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfig = SourceMethodConfig("getUserComment"),
+                    sinkMethodConfig = SinkMethodConfig(
+                        methodName = "displayComment",
+                    ),
+                )
+            )
+            assert(sinks.size == 1)
+        }
+    }
 }
