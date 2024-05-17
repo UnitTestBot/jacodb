@@ -41,6 +41,7 @@ fun unusedIfdsContext(
         cp,
         ifdsSystemOptions,
         bannedPackagePrefixes,
+        chunkStrategy,
         JcChunkResolver(chunkStrategy)
     ) { runnerId ->
         when (runnerId) {

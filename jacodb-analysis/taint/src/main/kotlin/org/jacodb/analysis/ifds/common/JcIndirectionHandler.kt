@@ -36,10 +36,35 @@ class JcIndirectionHandler(
     private val hierarchy: HierarchyExtension,
     private val bannedPackagePrefixes: List<String>,
     private val runnerId: RunnerId,
+    private val context: JcIfdsContext<*>,
 ) : IndirectionHandler {
     private val cache = hashMapOf<JcMethod, List<JcMethod>>()
 
     override fun handle(message: IndirectionMessage): Collection<RunnerMessage> {
+        val result = handleEx(message)
+        if (result.size == 1 && result.single() is NoResolvedCall<*, *>) {
+            return result
+        }
+
+        if (result.isEmpty()) return result
+
+        val calls = result.filterIsInstance<ResolvedCall<*, *, *>>()
+        val allowedCalls = calls.filter {
+            val method = it.method as JcMethod
+            val stmt = method.instList.firstOrNull() ?: return@filter false
+
+            context.strategy.chunkByStmt(stmt) != null
+        }
+
+        if (allowedCalls.isEmpty()) {
+            val proto = calls.first()
+            return listOf(NoResolvedCall(proto.runnerId, proto.edge))
+        }
+
+        return allowedCalls
+    }
+
+    private fun handleEx(message: IndirectionMessage): Collection<RunnerMessage> {
         @Suppress("UNCHECKED_CAST")
         message as? UnresolvedCall<JcInst, TaintDomainFact> ?: error("Unexpected message: $message")
 

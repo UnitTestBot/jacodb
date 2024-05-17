@@ -41,6 +41,7 @@ fun npeIfdsContext(
         cp,
         ifdsSystemOptions,
         bannedPackagePrefixes,
+        chunkStrategy,
         JcChunkResolver(chunkStrategy)
     ) { runnerId ->
         val analyzer = when (runnerId) {

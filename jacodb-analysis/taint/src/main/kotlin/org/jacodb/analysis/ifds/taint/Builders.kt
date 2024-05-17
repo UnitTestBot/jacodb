@@ -41,6 +41,7 @@ fun taintIfdsContext(
         cp,
         ifdsSystemOptions,
         bannedPackagePrefixes,
+        chunkStrategy,
         JcChunkResolver(chunkStrategy)
     ) { runnerId ->
         when (runnerId) {

@@ -24,8 +24,8 @@ import org.jacodb.actors.api.options.SpawnOptions
 internal typealias KeyRouteeFactory<Message, Key> = ActorContext<Message>.(Key) -> Actor<Message>
 
 context(ActorContext<Message>)
-internal class MessageKeyRouter<Message, Key>(
-    private val keyExtractor: (Message) -> Key,
+internal class MessageKeyRouter<Message, Key : Any>(
+    private val keyExtractor: (Message) -> Key?,
     private val routeeNameFactory: (Key) -> String,
     private val routeeSpawnOptions: SpawnOptions,
     private val routeeFactory: KeyRouteeFactory<Message, Key>,
@@ -33,7 +33,7 @@ internal class MessageKeyRouter<Message, Key>(
     private val routees = hashMapOf<Key, ActorRef<Message>>()
 
     override suspend fun receive(message: Message) {
-        val key = keyExtractor(message)
+        val key = keyExtractor(message) ?: return
         val routee = routees.computeIfAbsent(key) {
             val name = routeeNameFactory(key)
             spawn(name, routeeSpawnOptions) { routeeFactory(key) }

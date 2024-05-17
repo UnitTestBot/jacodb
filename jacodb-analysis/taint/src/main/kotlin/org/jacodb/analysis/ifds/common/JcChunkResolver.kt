@@ -40,7 +40,7 @@ class JcChunkResolver(
     private val chunkStrategy: org.jacodb.analysis.ifds.ChunkStrategy<JcInst>,
 ) : ChunkResolver {
     @Suppress("UNCHECKED_CAST")
-    override fun chunkByMessage(message: RunnerMessage): Chunk =
+    override fun chunkByMessage(message: RunnerMessage): Chunk? =
         when (message) {
             is AnalyzerMessage<*, *> -> {
                 when (message) {

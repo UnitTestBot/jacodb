@@ -17,6 +17,7 @@
 package org.jacodb.analysis.ifds.common
 
 import org.jacodb.analysis.ifds.ChunkResolver
+import org.jacodb.analysis.ifds.ChunkStrategy
 import org.jacodb.analysis.ifds.IfdsContext
 import org.jacodb.analysis.ifds.IfdsSystemOptions
 import org.jacodb.analysis.ifds.domain.Chunk
@@ -32,11 +33,12 @@ class JcIfdsContext<Fact>(
     private val cp: JcClasspath,
     override val options: IfdsSystemOptions,
     private val bannedPackagePrefixes: List<String>,
-    private val chunkStrategy: ChunkResolver,
+    val strategy: ChunkStrategy<JcInst>,
+    private val resolver: ChunkResolver,
     private val analyzerFactory: (RunnerId) -> JcBaseAnalyzer<Fact>,
 ) : IfdsContext<JcInst> {
-    override fun chunkByMessage(message: RunnerMessage): Chunk =
-        chunkStrategy.chunkByMessage(message)
+    override fun chunkByMessage(message: RunnerMessage): Chunk? =
+        resolver.chunkByMessage(message)
 
     override fun runnerIdByMessage(message: RunnerMessage): RunnerId =
         message.runnerId
@@ -47,5 +49,5 @@ class JcIfdsContext<Fact>(
         analyzers.computeIfAbsent(runnerId, analyzerFactory)
 
     override fun getIndirectionHandler(runnerId: RunnerId): IndirectionHandler =
-        JcIndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, runnerId)
+        JcIndirectionHandler(HierarchyExtensionImpl(cp), bannedPackagePrefixes, runnerId, this)
 }

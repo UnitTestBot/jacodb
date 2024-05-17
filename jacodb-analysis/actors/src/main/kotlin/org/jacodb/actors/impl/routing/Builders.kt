@@ -37,8 +37,8 @@ fun <Message> randomRouter(
     RandomRouter(size, random, routeeSpawnOptions, routeeFactory)
 }
 
-fun <Message, Key> messageKeyRouter(
-    keyExtractor: (Message) -> Key,
+fun <Message, Key : Any> messageKeyRouter(
+    keyExtractor: (Message) -> Key?,
     routeeNameFactory: (Key) -> String = { it.toString() },
     routeeSpawnOptions: SpawnOptions = SpawnOptions.default,
     routeeFactory: KeyRouteeFactory<Message, Key>,

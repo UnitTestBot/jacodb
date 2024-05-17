@@ -20,10 +20,5 @@ import org.jacodb.analysis.ifds.domain.Chunk
 import org.jacodb.analysis.ifds.messages.RunnerMessage
 
 fun interface ChunkResolver {
-    fun chunkByMessage(message: RunnerMessage): Chunk
+    fun chunkByMessage(message: RunnerMessage): Chunk?
 }
-
-fun interface ChunkStrategy<Stmt> {
-    fun chunkByStmt(stmt: Stmt): Chunk
-}
-
