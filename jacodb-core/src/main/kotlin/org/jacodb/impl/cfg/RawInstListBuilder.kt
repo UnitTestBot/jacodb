@@ -20,7 +20,6 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.JcMethod
-import org.jacodb.api.JcParameter
 import org.jacodb.api.PredefinedPrimitives
 import org.jacodb.api.TypeName
 import org.jacodb.api.cfg.BsmArg
@@ -123,7 +122,6 @@ import org.objectweb.asm.tree.JumpInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
-import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.LookupSwitchInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
@@ -684,28 +682,21 @@ class RawInstListBuilder(
         var localsRealSize = 0
 
         argCounter = 0
-        var staticInc = 0
         if (!method.isStatic) {
             locals = locals.add(argCounter, thisRef())
             localsRealSize = argCounter + 1
 
             argCounter++
-            staticInc = 1
         }
-        val variables = methodNode.localVariables.orEmpty().sortedBy(LocalVariableNode::index)
-
-        fun getName(parameter: JcParameter): String? {
-            val idx = parameter.index + staticInc
-            return if (idx < variables.size) {
-                variables[idx].name
-            } else {
-                parameter.name
-            }
-        }
+        val variables = methodNode.localVariables.orEmpty()
 
         for (parameter in method.parameters) {
-            val argument = JcRawArgument.of(parameter.index, getName(parameter), parameter.type)
-
+            val name = variables.firstOrNull { it.index == argCounter }?.name ?: parameter.name
+            val argument = JcRawArgument.of(
+                parameter.index,
+                name,
+                parameter.type
+            )
             locals = locals.add(argCounter, argument)
             localsRealSize = argCounter + 1
 
@@ -1122,12 +1113,12 @@ class RawInstListBuilder(
                     .firstOrNull { it.index == variable && curLabel.isBetween(it.start, it.end) }
 
                 val isArg = if (actualLocalFromDebugInfo == null) {
-                    variable < argCounter
+                    false
                 } else {
                     actualLocalFromDebugInfo.start == methodNode.instructions.firstOrNull { it is LabelNode }
                 }
 
-                if (variable < argCounter && isArg) {
+                if (isArg) {
                     val value = frames.values.firstOrNull {
                         val value = it.findLocal(variable)
                         value != null && (value is JcRawArgument || value is JcRawThis)

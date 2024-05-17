@@ -20,7 +20,7 @@ object Versions {
     const val jooq = "3.14.16"
     const val juliet = "1.3.2"
     const val junit = "5.9.2"
-    const val kotlin = "1.7.21"
+    const val kotlin = "1.9.0"
     const val kotlin_logging = "1.8.3"
     const val kotlinx_benchmark = "0.4.4"
     const val kotlinx_cli = "0.3.5"

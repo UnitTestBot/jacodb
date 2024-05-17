@@ -27,6 +27,7 @@ import org.jacodb.api.ext.toType
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
+import org.jacodb.testing.Example
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.InputStream
@@ -66,12 +67,6 @@ class TypesTest : BaseTypesTest() {
 
     @Test
     fun `parameters test`() {
-        class Example {
-            fun f(notNullable: String, nullable: String?): Int {
-                return 0
-            }
-        }
-
         val type = findType<Example>()
         val actualParameters = type.declaredMethods.single { it.name == "f" }.parameters
         assertEquals(listOf("notNullable", "nullable"), actualParameters.map { it.name })

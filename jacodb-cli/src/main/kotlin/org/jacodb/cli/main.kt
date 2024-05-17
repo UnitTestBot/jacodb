@@ -26,22 +26,28 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
-import org.jacodb.analysis.graph.newApplicationGraphForAnalysis
-import org.jacodb.analysis.ifds.SingletonUnitResolver
-import org.jacodb.analysis.ifds.UnitResolver
-import org.jacodb.analysis.npe.NpeManager
-import org.jacodb.analysis.sarif.VulnerabilityInstance
-import org.jacodb.analysis.sarif.sarifReportFromVulnerabilities
-import org.jacodb.analysis.taint.TaintManager
-import org.jacodb.analysis.taint.toSarif
-import org.jacodb.analysis.unused.UnusedVariableManager
-import org.jacodb.analysis.unused.toSarif
+import org.jacodb.analysis.graph.JcApplicationGraphImpl
+import org.jacodb.analysis.ifds.common.ClassChunkStrategy
+import org.jacodb.analysis.ifds.common.MethodChunkStrategy
+import org.jacodb.analysis.ifds.common.PackageChunkStrategy
+import org.jacodb.analysis.ifds.common.SingletonChunkStrategy
+import org.jacodb.analysis.ifds.common.defaultBannedPackagePrefixes
+import org.jacodb.analysis.ifds.npe.npeIfdsFacade
+import org.jacodb.analysis.ifds.result.buildTraceGraph
+import org.jacodb.analysis.ifds.sarif.VulnerabilityInstance
+import org.jacodb.analysis.ifds.sarif.sarifReportFromVulnerabilities
+import org.jacodb.analysis.ifds.sarif.toSarif
+import org.jacodb.analysis.ifds.taint.TaintZeroFact
+import org.jacodb.analysis.ifds.taint.taintIfdsFacade
+import org.jacodb.analysis.ifds.unused.unusedIfdsFacade
 import org.jacodb.api.JcClassOrInterface
 import org.jacodb.api.JcClassProcessingTask
 import org.jacodb.api.JcMethod
 import org.jacodb.api.analysis.JcApplicationGraph
+import org.jacodb.api.cfg.JcInst
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
+import org.jacodb.impl.features.usagesExt
 import org.jacodb.impl.jacodb
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -50,7 +56,7 @@ import kotlin.time.Duration.Companion.seconds
 private val logger = mu.KotlinLogging.logger {}
 
 class AnalysisMain {
-    fun run(args: List<String>) = main(args.toTypedArray())
+    suspend fun run(args: List<String>) = main(args.toTypedArray())
 }
 
 typealias AnalysesOptions = Map<String, String>
@@ -58,42 +64,65 @@ typealias AnalysesOptions = Map<String, String>
 @Serializable
 data class AnalysisConfig(val analyses: Map<String, AnalysesOptions>)
 
-fun launchAnalysesByConfig(
+suspend fun launchAnalysesByConfig(
     config: AnalysisConfig,
     graph: JcApplicationGraph,
     methods: List<JcMethod>,
-): List<List<VulnerabilityInstance<*>>> {
+): List<List<VulnerabilityInstance<JcInst, *>>> {
     return config.analyses.mapNotNull { (analysis, options) ->
-        val unitResolver = options["UnitResolver"]?.let {
-            UnitResolver.getByName(it)
-        } ?: SingletonUnitResolver
+        val chunkStrategy = options["UnitResolver"]?.let { name ->
+            when (name) {
+                "method" -> MethodChunkStrategy
+                "class" -> ClassChunkStrategy
+                "package" -> PackageChunkStrategy
+                "singleton" -> SingletonChunkStrategy
+                else -> error("Unknown unit resolver '$name'")
+            }
+        } ?: SingletonChunkStrategy
 
         when (analysis) {
             "NPE" -> {
-                val manager = NpeManager(graph, unitResolver)
-                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
+                val ifds = npeIfdsFacade(
+                    "ifds",
+                    graph.classpath,
+                    graph,
+                    bannedPackagePrefixes = defaultBannedPackagePrefixes,
+                    chunkStrategy = chunkStrategy
+                )
+                ifds.runAnalysis(methods, timeout = 60.seconds)
+                val data = ifds.collectComputationData()
+                data.findings.map { vulnerability ->
+                    val traceGraph = data.buildTraceGraph(vulnerability.vertex, zeroFact = TaintZeroFact)
+                    vulnerability.toSarif(traceGraph)
+                }
             }
 
             "Unused" -> {
-                val manager = UnusedVariableManager(graph, unitResolver)
-                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif() }
+                val system = unusedIfdsFacade("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
+                system.runAnalysis(methods, timeout = 60.seconds)
+                system.collectFindings().map { it.toSarif() }
             }
 
             "SQL" -> {
-                val manager = TaintManager(graph, unitResolver)
-                manager.analyze(methods, timeout = 60.seconds).map { it.toSarif(manager.vulnerabilityTraceGraph(it)) }
+                val ifds = taintIfdsFacade("ifds", graph.classpath, graph, chunkStrategy = chunkStrategy)
+                ifds.runAnalysis(methods, timeout = 60.seconds)
+                val data = ifds.collectComputationData()
+                data.findings.map { vulnerability ->
+                    val traceGraph = data.buildTraceGraph(vulnerability.vertex, zeroFact = TaintZeroFact)
+                    vulnerability.toSarif(traceGraph)
+                }
             }
 
             else -> {
                 logger.error { "Unknown analysis type: $analysis" }
-                return@mapNotNull null
+                null
             }
         }
     }
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun main(args: Array<String>) {
+suspend fun main(args: Array<String>) {
     val parser = ArgParser("taint-analysis")
     val configFilePath by parser.option(
         ArgType.String,
@@ -166,9 +195,7 @@ fun main(args: Array<String>) {
     }).get()
     val startJcMethods = startJcClasses.flatMap { it.declaredMethods }.filter { !it.isPrivate }
 
-    val graph = runBlocking {
-        cp.newApplicationGraphForAnalysis()
-    }
+    val graph = JcApplicationGraphImpl(cp, cp.usagesExt())
 
     val vulnerabilities = launchAnalysesByConfig(config, graph, startJcMethods).flatten()
     val report = sarifReportFromVulnerabilities(vulnerabilities)

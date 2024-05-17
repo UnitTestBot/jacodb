@@ -2,9 +2,12 @@ name: Build and run tests
 
 on:
   push:
+    branches:
+      - develop
   pull_request:
     branches:
       - develop
+  workflow_dispatch:
 
 permissions:
   contents: read

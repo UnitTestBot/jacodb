@@ -21,9 +21,12 @@ gitHooks {
 
 include("jacodb-api")
 include("jacodb-core")
-include("jacodb-analysis")
 include("jacodb-examples")
 include("jacodb-benchmarks")
 include("jacodb-cli")
 include("jacodb-approximations")
 include("jacodb-taint-configuration")
+include("jacodb-analysis:common")
+include("jacodb-analysis:actors")
+include("jacodb-analysis:ifds")
+include("jacodb-analysis:taint")
