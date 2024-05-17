@@ -49,9 +49,9 @@ class RunnerStorage<Stmt, Fact>(
     )
 
     private val startSubscribers =
-        HashMap<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
+        hashMapOf<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
     private val endSubscribers =
-        HashMap<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
+        hashMapOf<Vertex<Stmt, Fact>, HashSet<SavedSubscription<Stmt, Fact>>>()
 
     private val edges = hashSetOf<Edge<Stmt, Fact>>()
     private val reasons = hashMapOf<Edge<Stmt, Fact>, HashSet<Reason<Stmt, Fact>>>()
