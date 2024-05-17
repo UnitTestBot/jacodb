@@ -78,7 +78,7 @@ internal class ActorSystemImpl<Message>(
     }
 
     companion object {
-        private const val USER_ACTOR_NAME = "usr"
+        private const val USER_ACTOR_NAME = "user"
         private const val WATCHER_ACTOR_NAME = "watcher"
     }
 
