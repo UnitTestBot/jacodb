@@ -26,6 +26,7 @@ interface GoBytecodeGraph<out Statement> : ControlFlowGraph<@UnsafeVariance Stat
 
 class GoGraph(
     override val instructions: List<GoInst>,
+    val blocksNum: List<Int>,
 ) : GoBytecodeGraph<GoInst> {
 
     private val predecessorMap: MutableMap<GoInst, MutableSet<GoInst>> = hashMapOf()
@@ -35,7 +36,7 @@ class GoGraph(
         for (inst in instructions) {
             val successors = when (inst) {
                 is GoTerminatingInst -> emptySet()
-                is GoBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
+                is GoBranchingInst -> inst.successors.map{ instructions[blocksNum.indexOf(it.index)] }.toSet()
                 else -> setOf(next(inst))
             }
             successorMap[inst] = successors
@@ -52,10 +53,7 @@ class GoGraph(
         get() = instructions.filterIsInstance<GoTerminatingInst>()
 
     fun index(inst: GoInst): Int {
-        if (inst in instructions) {
-            return inst.location.index
-        }
-        return -1
+        return instructions.indexOf(inst)
     }
 
     fun ref(inst: GoInst): GoInstRef = GoInstRef(index(inst))
@@ -85,9 +83,9 @@ data class GoBasicBlock(
 class GoBlockGraph(
     override val instructions: List<GoBasicBlock>,
     instList: List<GoInst>,
+    blocksNum: List<Int>,
 ) : GoBytecodeGraph<GoBasicBlock> {
-
-    val graph: GoGraph = GoGraph(instList)
+    val graph: GoGraph = GoGraph(instList, blocksNum)
 
     override val entries: List<GoBasicBlock>
         get() = instructions.take(1)

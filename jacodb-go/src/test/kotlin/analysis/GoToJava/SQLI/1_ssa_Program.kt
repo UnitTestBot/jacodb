@@ -42,24 +42,10 @@ class ssa_Program : ssaToJacoProject {
 
 
         val methods = mutableListOf<GoMethod>()
-        val used = hashMapOf<ssa_Function, Boolean>()
         for (pkg in packages!!) {
             for (member in pkg.value.Members!!) {
-                val method = member.value
-                if (method is ssa_Function && used[method] == null) {
-                    methods.add(method.createJacoDBMethod())
-                    used[method] = true
-                    for (block in method.Blocks!!) {
-                        for (inst in block.Instrs!!) {
-                            if (inst is ssa_Call) {
-                                val value = inst.Call!!.Value!!
-                                if (value is ssa_Function && used[value] == null) {
-                                    methods.add(value.createJacoDBMethod())
-                                    used[value] = true
-                                }
-                            }
-                        }
-                    }
+                if (member.value is ssa_Function) {
+                    methods.add((member.value as ssa_Function).createJacoDBMethod())
                 }
             }
         }

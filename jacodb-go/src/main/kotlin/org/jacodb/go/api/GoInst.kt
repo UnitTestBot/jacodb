@@ -1803,9 +1803,16 @@ data class GoFunction(
 
     override fun flowGraph(): GoGraph {
         if (flowGraph == null) {
+            val blocksNum = mutableListOf<Int>()
+            blocks.forEachIndexed { index, b ->
+                for (i in b.insts) {
+                    blocksNum.add(index)
+                }
+            }
             flowGraph = GoBlockGraph(
                 blocks,
-                blocks.flatMap { it.insts }
+                blocks.flatMap { it.insts },
+                blocksNum,
             ).graph
         }
         return flowGraph!!

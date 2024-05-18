@@ -36,7 +36,7 @@ class ssa_Jump : ssaToJacoInst {
                 parent,
             ),
             GoInstRef(
-                anInstruction!!.block!!.Index!!.toInt()
+                anInstruction!!.block!!.Succs!![0].Index!!.toInt()
             )
         )
 		if (structToPtrMap.containsKey(this)) {

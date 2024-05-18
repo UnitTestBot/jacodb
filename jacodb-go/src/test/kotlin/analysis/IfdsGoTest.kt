@@ -115,7 +115,7 @@ class IfdsGoTest {
                             TaintMethodSink(
                                 method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
                                 cwe = listOf(), // FIXME
-                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                                condition = ContainsMark(position = Argument(1), mark = TaintMark("TAINT"))
                             )
                         )
                     }
@@ -130,6 +130,53 @@ class IfdsGoTest {
         )
         val methods = project.methods.filter {
             it.packageName == "main" || it.packageName == "fmt" || it.packageName == "sql"
+        }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.metName}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on blocklisted md5 package`() {
+        val project = loadProjectForSample("MD5")
+        val graph = GoApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<GoMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.packageName == "md5" && method.metName == "Sum") {
+                        add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ConstantTrue,
+                            )
+                        )
+                    }
+                }
+                rules.ifEmpty { null }
+            }
+
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod
+        )
+        val methods = project.methods.filter {
+            it.packageName == "main" || it.packageName == "md5"
         }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
