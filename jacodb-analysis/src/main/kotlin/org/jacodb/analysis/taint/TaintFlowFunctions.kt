@@ -50,15 +50,6 @@ import org.jacodb.api.jvm.cfg.JcBinaryExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
 import org.jacodb.api.jvm.cfg.JcNegExpr
-import org.jacodb.panda.staticvm.cfg.PandaBinaryExpr as StaticPandaBinaryExpr
-import org.jacodb.panda.dynamic.api.PandaBinaryExpr as DynamicPandaBinaryExpr
-import org.jacodb.panda.staticvm.cfg.PandaCastExpr as StaticPandaCastExpr
-import org.jacodb.panda.dynamic.api.PandaCastExpr as DynamicPandaCastExpr
-import org.jacodb.panda.staticvm.cfg.PandaNegExpr as StaticPandaNegExpr
-import org.jacodb.panda.dynamic.api.PandaNegExpr as DynamicPandaNegExpr
-import org.jacodb.panda.staticvm.cfg.PandaNotExpr as StaticPandaNotExpr
-import org.jacodb.panda.staticvm.cfg.PandaPhiExpr as StaticPandaPhiExpr
-import org.jacodb.panda.dynamic.api.PandaPhiValue as DynamicPandaPhiValue
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
@@ -70,6 +61,16 @@ import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.panda.dynamic.api.PandaBinaryExpr as DynamicPandaBinaryExpr
+import org.jacodb.panda.dynamic.api.PandaCastExpr as DynamicPandaCastExpr
+import org.jacodb.panda.dynamic.api.PandaNegExpr as DynamicPandaNegExpr
+import org.jacodb.panda.dynamic.api.PandaPhiValue as DynamicPandaPhiValue
+import org.jacodb.panda.staticvm.cfg.PandaBinaryExpr as StaticPandaBinaryExpr
+import org.jacodb.panda.staticvm.cfg.PandaCastExpr as StaticPandaCastExpr
+import org.jacodb.panda.staticvm.cfg.PandaNegExpr as StaticPandaNegExpr
+import org.jacodb.panda.staticvm.cfg.PandaNotExpr as StaticPandaNotExpr
+import org.jacodb.panda.staticvm.cfg.PandaPhiExpr as StaticPandaPhiExpr
+import org.jacodb.panda.staticvm.cfg.PandaPhiInst as StaticPandaPhiInst
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -192,8 +193,8 @@ class ForwardTaintFlowFunctions<Method, Statement>(
             when (val rhv = current.rhv) {
                 is StaticPandaPhiExpr -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
-                    for (operand in rhv.operands) {
-                        facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
+                    for (input in rhv.inputs) {
+                        facts += transmitTaintAssign(fact, from = input, to = current.lhv)
                     }
                     // For empty phi, pass-through:
                     val pass = transmitTaintNormal(fact, current)
@@ -202,8 +203,8 @@ class ForwardTaintFlowFunctions<Method, Statement>(
 
                 is DynamicPandaPhiValue -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
-                    for (operand in rhv.operands) {
-                        facts += transmitTaintAssign(fact, from = operand, to = current.lhv)
+                    for (input in rhv.inputs) {
+                        facts += transmitTaintAssign(fact, from = input, to = current.lhv)
                     }
                     // For empty phi, pass-through:
                     val pass = transmitTaintNormal(fact, current)
@@ -263,6 +264,14 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                     transmitTaintAssign(fact, from = current.rhv, to = current.lhv)
                 }
             }
+        } else if (current is StaticPandaPhiInst) {
+            val facts: MutableSet<TaintDomainFact> = mutableSetOf()
+            for (input in current.inputs) {
+                facts += transmitTaintAssign(fact, from = input, to = current.lhv)
+            }
+            // For empty phi, pass-through:
+            val pass = transmitTaintNormal(fact, current)
+            facts + pass
         } else {
             transmitTaintNormal(fact, current)
         }
