@@ -102,11 +102,6 @@
    "fields": [
     {
      "accessFlags": 0,
-     "name": "KEY_NOT_FOUND",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
      "name": "OBJECT_HAS_OWN_PROPERTY_MEMBER_NAME",
      "type": "std.core.String"
     },
@@ -122,22 +117,17 @@
     },
     {
      "accessFlags": 0,
+     "name": "KEY_NOT_FOUND",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
      "name": "ARRAY_LENGTH_MEMBER_NAME",
      "type": "std.core.String"
     },
     {
      "accessFlags": 0,
-     "name": "MAX_CONSOLE_PRINT_DEPTH",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
      "name": "OBJECT_TO_LOCALE_STRING_MEMBER_NAME",
-     "type": "std.core.String"
-    },
-    {
-     "accessFlags": 0,
-     "name": "ObjectTD",
      "type": "std.core.String"
     },
     {
@@ -147,22 +137,7 @@
     },
     {
      "accessFlags": 0,
-     "name": "coroutine",
-     "type": "std.core.Coroutine"
-    },
-    {
-     "accessFlags": 0,
-     "name": "console",
-     "type": "std.core.Console"
-    },
-    {
-     "accessFlags": 0,
-     "name": "MAX_CODE_POINT",
-     "type": "i32"
-    },
-    {
-     "accessFlags": 0,
-     "name": "MAX_CODE_UNIT",
+     "name": "MAX_CONSOLE_PRINT_DEPTH",
      "type": "i32"
     },
     {
@@ -172,8 +147,33 @@
     },
     {
      "accessFlags": 0,
+     "name": "console",
+     "type": "std.core.Console"
+    },
+    {
+     "accessFlags": 0,
+     "name": "MAX_CODE_UNIT",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
      "name": "TypeKindMask",
      "type": "i8"
+    },
+    {
+     "accessFlags": 0,
+     "name": "MAX_CODE_POINT",
+     "type": "i32"
+    },
+    {
+     "accessFlags": 0,
+     "name": "coroutine",
+     "type": "std.core.Coroutine"
+    },
+    {
+     "accessFlags": 0,
+     "name": "ObjectTD",
+     "type": "std.core.String"
     },
     {
      "accessFlags": 0,
