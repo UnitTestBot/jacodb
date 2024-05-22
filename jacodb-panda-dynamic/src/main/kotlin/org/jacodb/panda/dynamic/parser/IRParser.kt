@@ -137,7 +137,6 @@ class IRParser(
         if (this.program == null) {
             this.program = Json.decodeFromString(json)
         }
-        // mapProgramIR(this.program!!)
         return this.program!!
     }
 
@@ -191,13 +190,6 @@ class IRParser(
                     tsFunc.containingClass?.name == method.clazz.name
         }?.let { tsFunc ->
             method.paramTypes.addAll(tsFunc.arguments)
-//            method.type = tsFunc.returnType
-//            method.parameterInfos = method.parameterInfos.zip(tsFunc.arguments).map { (paramInfo, type) ->
-//                PandaParameterInfo(
-//                    index = paramInfo.index,
-//                    type
-//                )
-//            }
             // TODO: Add class constructor to GLOBAL
         } ?: logger.error("No method ${method.name} with superclass ${method.clazz.name} was found in parsed functions")
     }
@@ -317,11 +309,19 @@ class IRParser(
 
             val blocks = method.idToBB.toMap().values.sortedBy { it.start }
 
-            gotoToRemove.forEach { gotoInst ->
+            for (gotoInst in gotoToRemove) {
                 method.insts.remove(gotoInst)
+
+                // Fixing end of range for the enclosing basic block of the removed goto
+                val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
+                enclosingBB.updateRange(
+                    enclosingBB.start,
+                    PandaInstRef(enclosingBB.end.index - 1)
+                )
 
                 // Fixing range for basic blocks that are after the removed goto
                 var startIdx = blocks.indexOfFirst { it.start.index > gotoInst.location.index }
+                    .takeIf { it > 0 } ?: continue
                 while (startIdx < blocks.size) {
                     val b = blocks[startIdx]
                     b.updateRange(
@@ -330,13 +330,6 @@ class IRParser(
                     )
                     startIdx++
                 }
-
-                // Fixing end of range for the enclosing basic block of the removed goto
-                val enclosingBB = gotoToBB[gotoInst] ?: error("No basic block for $gotoInst")
-                enclosingBB.updateRange(
-                    enclosingBB.start,
-                    PandaInstRef(enclosingBB.end.index - 1)
-                )
             }
         }
     }
@@ -357,16 +350,21 @@ class IRParser(
         val inputs = inputsViaOp(this)
         val outputs = outputs()
 
+        if (catchers.isNotEmpty()) {
+            env.addTryBlockBBId(catchers[0], basicBlock.id)
+        }
+
         fun handle(expr: PandaExpr) {
             var type : PandaType = PandaAnyType
             if (expr is PandaNewExpr) type = expr.type
             if (expr is PandaLoadedValue) type = expr.instance.type
+            if (expr is PandaPhiValue) type = expr.type
             val lv = PandaLocalVar(method.currentLocalVarId++, type)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
             val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
-            env.setLocalAssignment(method.signature, lv, assignment)
+            program!!.setLocalAssignment(method.signature, lv, assignment)
             method.pushInst(assignment)
         }
 
@@ -572,7 +570,7 @@ class IRParser(
                     val lv = PandaLocalVar(method.currentLocalVarId++, expr.type)
                     val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
                     method.pushInst(assignment)
-                    env.setLocalAssignment(method.signature, lv, assignment)
+                    program!!.setLocalAssignment(method.signature, lv, assignment)
                     lv
                 } else PandaValueByInstance(inputs[0], name)
                 outputs.forEach { output ->
@@ -635,12 +633,12 @@ class IRParser(
             }
 
             opcode == "Intrinsic.newlexenv" -> {
-                env.newLexenv()
+                program!!.newLexenv()
                 method.pushInst(PandaNewLexenvInst(locationFromOp(this)))
             }
 
             opcode == "Intrinsic.poplexenv" -> {
-                env.popLexenv()
+                program!!.popLexenv()
                 method.pushInst(PandaPopLexenvInst(locationFromOp(this)))
             }
 
@@ -651,7 +649,7 @@ class IRParser(
                     PandaAnyType
                 )
                 val value = inputs[0]
-                env.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
+                program!!.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
                 method.pushInst(PandaAssignInst(locationFromOp(this), lexvar, value))
             }
 
@@ -982,7 +980,11 @@ class IRParser(
 
             opcode == "Phi" -> {
                 if ((users.size == 1 && users[0] == id) || users.isEmpty()) return@with
-                val phiExpr = PandaPhiValue(lazy { inputsViaOp(this) }, op.inputBlocks)
+                val phiExpr = PandaPhiValue(
+                    _inputs = lazy { inputsViaOp(this) },
+                    basicBlockIds = op.inputBlocks,
+                    type = inputsViaOp(this).first().type
+                )
                 handle(phiExpr)
             }
 
@@ -992,36 +994,22 @@ class IRParser(
                 val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
                 if (nextInstOpcode != "CatchPhi") {
                     val throwable = PandaCaughtError()
-                    val tryBBId = env.getTryBlockBBId(basicBlock.id)
-                    val tryBB = method.idToBB[tryBBId] ?: error("No try basic block saved in environment for $op")
-                    method.pushBuilder {
-                        fun pathToCatchBlock(
-                            currentBB: PandaBasicBlock,
-                            acc: List<PandaInstRef>,
-                            targetId: Int,
-                        ): List<PandaInstRef>? {
-                            val newList = acc + (currentBB.start.index..currentBB.end.index)
-                                .mapNotNull { if (it == -1) null else PandaInstRef(it) }
+                    val tryBlockIds = env.getTryBlocks(basicBlock.id)
+                        ?: emptySet()
 
-                            for (succBBId in currentBB.successors) {
-                                if (succBBId == targetId) return acc
-                                idToBB[succBBId]?.let { succBB ->
-                                    pathToCatchBlock(succBB, newList, targetId)?.let { return it }
-                                }
-                            }
+                    val path = tryBlockIds.flatMap { bbId ->
+                        val bb = method.idToBB[bbId]
+                            ?: error("zalupa")
+                        (bb.start.index..bb.end.index).map { PandaInstRef(it) }
+                    }
 
-                            return null
-                        }
-
-                        val path = pathToCatchBlock(tryBB, emptyList(), basicBlock.id)
-                            ?: error("No path from basic block $tryBBId to ${basicBlock.id}")
-
+                    method.pushInst(
                         PandaCatchInst(
                             location = locationFromOp(this@with),
                             throwable = throwable,
                             _throwers = path.sortedBy { it.index }
                         )
-                    }
+                    )
 
                     outputs.forEach { output ->
                         addInput(method, id(), output, throwable)
@@ -1030,22 +1018,22 @@ class IRParser(
             }
 
             opcode == "Try" -> {
-                assert(basicBlock.successors.size == 2)
-                val tryBBid = basicBlock.successors[0]
-                val catchBBid = basicBlock.successors[1]
+//                assert(basicBlock.successors.size == 2)
+//                val tryBBid = basicBlock.successors[0]
+//                val catchBBid = basicBlock.successors[1]
                 // Order is crucial for CatchPhi processor
-                assert(tryBBid < catchBBid)
+//                assert(tryBBid < catchBBid)
 
-                changeTraversalStrategy(basicBlock, TraversalType.TRY_BLOCK)
+//                changeTraversalStrategy(basicBlock, TraversalType.TRY_BLOCK)
 
-                env.setTryBlockBBId(catchBBid, tryBBid)
+//                env.setTryBlockBBId(catchBBid, tryBBid)
             }
 
             opcode == "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
                 val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName=stringData!!)
                 method.pushInst(assignment)
-                env.setLocalAssignment(method.signature, lv, assignment)
+                program!!.setLocalAssignment(method.signature, lv, assignment)
                 env.setLocalVar(stringData!!, lv)
             }
 

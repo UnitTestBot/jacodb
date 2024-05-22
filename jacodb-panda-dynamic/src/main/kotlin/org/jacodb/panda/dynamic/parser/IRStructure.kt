@@ -23,6 +23,11 @@ import org.jacodb.panda.dynamic.api.*
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {
+
+    init {
+        classes.forEach { it.program = this }
+    }
+
     override fun toString(): String {
         return classes.joinToString("\n")
     }
@@ -36,6 +41,40 @@ data class Program(val classes: List<ProgramClass>) {
         }
         return findClassOrNull(methodClassName)?.properties?.find { it.name == name }?.method
     }
+
+    private var lexenvToLexvarStorage = mutableListOf<MutableMap<Int, Pair<String, PandaValue>>>()
+
+    fun getLexvar(lexenv: Int, lexvar: Int): Pair<String, PandaValue> {
+        return lexenvToLexvarStorage[lexenv][lexvar]
+            ?: error("lexvar not set")
+    }
+
+    fun setLexvar(lexenv: Int, lexvar: Int, methodName: String, value: PandaValue) {
+        lexenvToLexvarStorage[lexenv][lexvar] = Pair(methodName, value)
+    }
+
+    fun newLexenv() {
+        lexenvToLexvarStorage.add(0, mutableMapOf())
+    }
+
+    fun popLexenv() {
+        lexenvToLexvarStorage.removeAt(0)
+    }
+
+    @Transient
+    private val localToAssignment = mutableMapOf<String, MutableMap<Int, PandaAssignInst>>()
+
+    fun setLocalAssignment(methodName: String, lv: PandaLocalVar, assn: PandaAssignInst) {
+        val methodLocals = localToAssignment.getOrPut(methodName, ::mutableMapOf)
+        methodLocals[lv.index] = assn
+    }
+
+    fun getLocalAssignment(methodName: String, lv: PandaLocalVar): PandaAssignInst {
+        val methodLocals = localToAssignment.getOrDefault(methodName, mutableMapOf())
+        return methodLocals[lv.index]
+            ?: error("No assignment")
+    }
+
 }
 
 @Serializable
@@ -45,6 +84,10 @@ data class ProgramClass(
 ) {
     @Transient
     val superClass: String = ""
+
+    @Transient
+    lateinit var program: Program
+        internal set
 
     init {
         properties.forEach { it.method.clazz = this }
@@ -123,13 +166,18 @@ class ProgramMethod(
     var paramTypes: MutableList<PandaType> = mutableListOf()
 
     @Transient
-    val localVarAssignment = mutableMapOf<PandaLocalVar, PandaAssignInst>()
+    val program: Program
+        get() = clazz.program
+
+    private fun getLexvar(lexenv: Int, lexvar: Int): Pair<String, PandaValue> {
+        return program.getLexvar(lexenv, lexvar)
+    }
 
     tailrec fun getLocalVarRoot(env: IREnvironment, methodName: String, value: PandaExpr): PandaExpr {
         return if (value is PandaLocalVar) {
-            getLocalVarRoot(env, methodName, env.getLocalAssignment(methodName, value).rhv)
+            getLocalVarRoot(env, methodName, program.getLocalAssignment(methodName, value).rhv)
         } else if (value is PandaLexVar) {
-            val (method, parent) = env.getLexvar(value.lexenvIndex, value.lexvarIndex)
+            val (method, parent) = getLexvar(value.lexenvIndex, value.lexvarIndex)
             getLocalVarRoot(env, method, parent)
         } else if (value is PandaLoadedValue) {
             getLocalVarRoot(env, methodName, value.instance)

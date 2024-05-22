@@ -16,23 +16,17 @@
 
 package org.jacodb.panda.dynamic.parser
 
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.PandaLocalVar
 
 class IREnvironment private constructor() {
 
     private var varLiteralToLocalVar = mutableMapOf<String, PandaLocalVar>()
 
-    private var catchBBIdToTryBlockBBId = mutableMapOf<Int, Int>()
-
-    private var lexenvToLexvarStorage = mutableListOf<MutableMap<Int, Pair<String, PandaValue>>>()
-
-    private var localToAssignment = mutableMapOf<String, MutableMap<Int, PandaAssignInst>>()
+    private var catchBBIdToTryBlocks = mutableMapOf<Int, Set<Int>>()
 
     fun copy(): IREnvironment = IREnvironment().apply {
-        this.varLiteralToLocalVar = this@IREnvironment.varLiteralToLocalVar
-        this.catchBBIdToTryBlockBBId = this@IREnvironment.catchBBIdToTryBlockBBId
-        this.lexenvToLexvarStorage = this@IREnvironment.lexenvToLexvarStorage
-        this.localToAssignment = this@IREnvironment.localToAssignment
+        this.varLiteralToLocalVar = this@IREnvironment.varLiteralToLocalVar.toMutableMap()
+        this.catchBBIdToTryBlocks = this@IREnvironment.catchBBIdToTryBlocks.toMutableMap()
     }
 
     fun getLocalVar(literal: String): PandaLocalVar? {
@@ -43,46 +37,24 @@ class IREnvironment private constructor() {
         varLiteralToLocalVar[literal] = lv
     }
 
-    fun getTryBlockBBId(catchBBId: Int): Int? {
-        return catchBBIdToTryBlockBBId[catchBBId]
+    fun getTryBlocks(catchBBId: Int): Set<Int>? {
+        return catchBBIdToTryBlocks[catchBBId]
     }
 
-    fun setTryBlockBBId(catchBBId: Int, tryBlockBBId: Int) {
-        catchBBIdToTryBlockBBId[catchBBId] = tryBlockBBId
-    }
-
-    fun getLexvar(lexenv: Int, lexvar: Int): Pair<String, PandaValue> {
-        return lexenvToLexvarStorage[lexenv][lexvar]
-            ?: error("lexvar not set")
-    }
-
-    fun setLexvar(lexenv: Int, lexvar: Int, methodName: String, value: PandaValue) {
-        lexenvToLexvarStorage[lexenv][lexvar] = Pair(methodName, value)
-    }
-
-    fun newLexenv() {
-        lexenvToLexvarStorage.add(0, mutableMapOf())
-    }
-
-    fun popLexenv() {
-        lexenvToLexvarStorage.removeAt(0)
-    }
-
-    fun setLocalAssignment(methodName: String, lv: PandaLocalVar, assn: PandaAssignInst) {
-        val methodLocals = localToAssignment.getOrPut(methodName, ::mutableMapOf)
-        methodLocals[lv.index] = assn
-    }
-
-    fun getLocalAssignment(methodName: String, lv: PandaLocalVar): PandaAssignInst {
-        val methodLocals = localToAssignment.getOrDefault(methodName, mutableMapOf())
-        return methodLocals[lv.index]
-            ?: error("No assignment")
+    fun addTryBlockBBId(catchBBId: Int, tryBlockBBId: Int) {
+        catchBBIdToTryBlocks[catchBBId] = catchBBIdToTryBlocks.getOrDefault(catchBBId, emptySet()) + tryBlockBBId
     }
 
     companion object {
-        val emptyEnv = IREnvironment()
+        val emptyEnv
+            get() = IREnvironment()
     }
 
+    fun <T, P> MutableList<MutableMap<T, P>>.copy(): MutableList<MutableMap<T,P>> {
+        return this.map { m -> m.toMutableMap() }.toMutableList()
+    }
+
+    fun <T, P, G> MutableMap<T, MutableMap<P, G>>.copy(): MutableMap<T, MutableMap<P, G>> {
+        return this.mapValues { (_, value) -> value.toMutableMap() }.toMutableMap()
+    }
 }
-
-

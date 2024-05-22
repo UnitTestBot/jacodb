@@ -277,12 +277,10 @@ class PandaCaughtError : PandaValue {
 class PandaPhiValue(
     private val _inputs: Lazy<List<PandaValue>>,
     val basicBlockIds: List<Int>,
+    override val type: PandaType
 ) : PandaValue {
     val inputs: List<PandaValue>
         get() = _inputs.value
-
-    override val type: PandaType
-        get() = PandaAnyType
 
     override val operands: List<PandaValue>
         get() = inputs

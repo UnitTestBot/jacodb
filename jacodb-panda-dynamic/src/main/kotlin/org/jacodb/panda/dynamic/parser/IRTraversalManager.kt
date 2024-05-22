@@ -160,13 +160,12 @@ class IRTraversalManager(
         }
         val endId = programMethod.currentId
 
-        if (startId > endId) {
+        if (startId > endId || endId == -1) {
             currentBB.start = if (startId == -1) 0 else startId
             addEmptyBlockPlaceholder(programMethod, currentBB.id)
+            addEmptyJump(programMethod)
             currentBB.end = programMethod.currentId
-        }
-
-        if (startId <= endId && endId >= 0) {
+        } else if (endId >= 0) {
             currentBB.start = if (startId == -1) 0 else startId
             addEmptyJump(programMethod)
             currentBB.end = programMethod.currentId
