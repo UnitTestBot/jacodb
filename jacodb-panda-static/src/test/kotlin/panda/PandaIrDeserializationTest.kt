@@ -36,7 +36,7 @@ class PandaIrDeserializationTest {
 
     @Test
     fun catchTest() {
-        val filePath = "try_catch_finally.abc.ir"
+        val filePath = "testCatch.ir"
         val program = loadProgram("/$filePath")
         val project = PandaProject.fromProgramIr(program, withStdLib = true)
         val applicationGraph = PandaApplicationGraph(project)
