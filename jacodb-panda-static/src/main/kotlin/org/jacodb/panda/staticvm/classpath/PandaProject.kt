@@ -119,7 +119,7 @@ class PandaProject : CommonProject {
         fun fromProgramIr(program: PandaProgramIr, withStdLib: Boolean = false): PandaProject {
             val project = PandaProject()
             if (withStdLib) {
-                project.addProgramIr(EtsStdlib.programInfo)
+                project.addProgramIr(EtsStdlib.program)
             }
             project.addProgramIr(program)
             return project

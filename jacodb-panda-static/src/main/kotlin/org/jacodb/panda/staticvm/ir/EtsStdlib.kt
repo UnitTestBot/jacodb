@@ -21,11 +21,11 @@ import kotlinx.serialization.json.decodeFromStream
 
 @OptIn(ExperimentalSerializationApi::class)
 object EtsStdlib {
-    val programInfo: PandaProgramIr
+    val program: PandaProgramIr
 
     init {
         val stream = this::class.java.getResourceAsStream("/stdlib.ir")
             ?: error("Not found stdlib")
-        programInfo = PandaProgramIr.json.decodeFromStream<PandaProgramIr>(stream)
+        program = PandaProgramIr.json.decodeFromStream(stream)
     }
 }
