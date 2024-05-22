@@ -16,7 +16,6 @@
 
 package analysis
 
-import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -140,7 +139,7 @@ class ProjectAnalysisEachFile {
                 val rules = buildList {
                     if (method.name == "taintSink") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             cwe = listOf(),
                             ruleNote = "SINK",
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT")),
@@ -148,7 +147,7 @@ class ProjectAnalysisEachFile {
                     )
                     if (method.name == "requestGet") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(AssignMark(position = Result, mark = TaintMark("TAINT")))
                         )

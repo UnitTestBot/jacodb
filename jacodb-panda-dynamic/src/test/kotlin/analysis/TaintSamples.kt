@@ -104,7 +104,7 @@ class TaintSamples {
                     val rules = buildList {
                         if (method.name == sourceMethodName) add(
                             TaintMethodSource(
-                                method = mockk(),
+                                method = method,
                                 condition = ConstantTrue,
                                 actionsAfter = listOf(
                                     AssignMark(mark = TaintMark(markName), position = sourcePosition),
@@ -113,7 +113,7 @@ class TaintSamples {
                         )
                         else if (method.name == caseTaintConfig.cleanerMethodName) add(
                             TaintPassThrough(
-                                method = mockk(),
+                                method = method,
                                 condition = ConstantTrue,
                                 actionsAfter = listOf(
                                     RemoveMark(mark = TaintMark(markName), position = Argument(0))
@@ -122,7 +122,7 @@ class TaintSamples {
                         )
                         else if (method.name == sinkMethodName) add(
                             TaintMethodSink(
-                                method = mockk(),
+                                method = method,
                                 ruleNote = "CUSTOM SINK", // FIXME
                                 cwe = listOf(), // FIXME
                                 condition = ContainsMark(position = Argument(0), mark = TaintMark(markName))
@@ -131,7 +131,7 @@ class TaintSamples {
                         // TODO(): generalize semantic
                         else add(
                             TaintPassThrough(
-                                method = mockk(),
+                                method = method,
                                 condition = ConstantTrue,
                                 actionsAfter = List(method.parameters.size) { index ->
                                     CopyAllMarks(from = Argument(index), to = Result)

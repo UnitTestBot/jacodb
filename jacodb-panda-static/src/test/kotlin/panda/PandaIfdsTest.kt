@@ -16,7 +16,6 @@
 
 package panda
 
-import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -72,7 +71,7 @@ class PandaIfdsTest {
                 val rules = buildList {
                     if (method.name == "source") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
@@ -81,7 +80,7 @@ class PandaIfdsTest {
                     )
                     if (method.name == "sink") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
@@ -89,7 +88,7 @@ class PandaIfdsTest {
                     )
                     if (method.name == "pass") add(
                         TaintPassThrough(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 CopyAllMarks(from = Argument(0), to = Result)
@@ -98,7 +97,7 @@ class PandaIfdsTest {
                     )
                     if (method.name == "validate") add(
                         TaintPassThrough(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 RemoveMark(mark = TaintMark("TAINT"), position = Argument(0))

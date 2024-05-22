@@ -16,7 +16,6 @@
 
 package analysis
 
-import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -82,7 +81,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "isSame" && method.className == "Foo") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
@@ -91,7 +90,7 @@ class PandaIfds {
                     )
                     if (method.name == "log") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             ruleNote = "CUSTOM SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
@@ -126,7 +125,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "add") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
@@ -135,7 +134,7 @@ class PandaIfds {
                     )
                     if (method.name == "log") add(
                         TaintMethodSink(
-                            method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                            method = method, ruleNote = "CUSTOM SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )
@@ -170,7 +169,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "source") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
@@ -179,7 +178,7 @@ class PandaIfds {
                     )
                     if (method.name == "sink") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
@@ -187,7 +186,7 @@ class PandaIfds {
                     )
                     if (method.name == "pass") add(
                         TaintPassThrough(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 CopyAllMarks(from = Argument(0), to = Result)
@@ -196,7 +195,7 @@ class PandaIfds {
                     )
                     if (method.name == "validate") add(
                         TaintPassThrough(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 RemoveMark(mark = TaintMark("TAINT"), position = Argument(0))
@@ -277,7 +276,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "readInt") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
@@ -314,7 +313,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "readInt") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
@@ -352,7 +351,7 @@ class PandaIfds {
                 val rules = buildList {
                     if (method.name == "getPassword") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
@@ -361,7 +360,7 @@ class PandaIfds {
                     )
                     if (method.name == "publishEvent") add(
                         TaintMethodSink(
-                            method = mockk(), ruleNote = "SINK", // FIXME
+                            method = method, ruleNote = "SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(1), mark = TaintMark("TAINT"))
                         )
@@ -397,7 +396,7 @@ class PandaIfds {
                     // adhoc taint second argument (cursor: string)
                     if (method.name == "taintSink") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             cwe = listOf(),
                             ruleNote = "SINK",
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT")),
@@ -406,7 +405,7 @@ class PandaIfds {
 //                    // encodeURI*
 //                    if (method.name.startsWith("encodeURI")) add(
 //                        TaintMethodSource(
-//                            method = mockk(),
+//                            method = method,
 //                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE")),
 //                            actionsAfter = listOf(
 //                                RemoveMark(position = Result, mark = TaintMark("UNSAFE")),
@@ -416,7 +415,7 @@ class PandaIfds {
 //                    // RequestOption.setUrl
 //                    if (method.name == "setUrl") add(
 //                        TaintMethodSource(
-//                            method = mockk(),
+//                            method = method,
 //                            condition = ConstantTrue,
 //                            actionsAfter = listOf(
 //                                CopyMark(
@@ -430,7 +429,7 @@ class PandaIfds {
 //                    // HttpManager.requestSync
 //                    if (method.name == "requestSync") add(
 //                        TaintMethodSink(
-//                            method = mockk(),
+//                            method = method,
 //                            ruleNote = "Unsafe request", // FIXME
 //                            cwe = listOf(), // FIXME
 //                            condition = ContainsMark(position = Argument(0), mark = TaintMark("UNSAFE"))
@@ -439,7 +438,7 @@ class PandaIfds {
                     // SyncUtil.requestGet
                     if (method.name == "requestGet") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(AssignMark(position = Result, mark = TaintMark("TAINT")))
                         )

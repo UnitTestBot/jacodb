@@ -16,7 +16,6 @@
 
 package panda
 
-import io.mockk.mockk
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -62,7 +61,7 @@ class PandaDemoCases {
                 val rules = buildList {
                     if (method.name == "readInt") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
@@ -100,7 +99,7 @@ class PandaDemoCases {
                 val rules = buildList {
                     if (method.name == "readInt") add(
                         TaintMethodSource(
-                            method = mockk(),
+                            method = method,
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("UNTRUSTED"), position = Result),
@@ -109,7 +108,7 @@ class PandaDemoCases {
                     )
                     if (method.isConstructor && method.enclosingClass.name == "escompat.ArrayBuffer") add(
                         TaintMethodSink(
-                            method = mockk(),
+                            method = method,
                             ruleNote = "ArrayBuffer constructor",
                             cwe = emptyList(),
                             condition = ContainsMark(position = Argument(1), mark = TaintMark("UNTRUSTED")),
