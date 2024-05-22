@@ -18,7 +18,6 @@ package analysis
 
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
-import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.util.PandaTraits
@@ -27,9 +26,6 @@ import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMethodSink
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
 import parser.getConfigForMethod

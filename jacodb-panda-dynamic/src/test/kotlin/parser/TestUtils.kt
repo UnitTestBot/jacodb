@@ -153,7 +153,7 @@ object DumpIrToDot {
     }
 }
 
-fun loadCaseTaintConfig(filename: String) : TaintSamples.CaseTaintConfig {
+fun loadCaseTaintConfig(filename: String): TaintSamples.CaseTaintConfig {
     val configResource = object {}::class.java.getResourceAsStream("/samples/taintConfigs/$filename")
         ?: error("Could not load config from '$filename'")
     val configJson = configResource.bufferedReader().readText()

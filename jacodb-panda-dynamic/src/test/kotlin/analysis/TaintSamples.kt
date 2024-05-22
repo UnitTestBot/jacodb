@@ -16,7 +16,9 @@
 
 package analysis
 
-import io.mockk.mockk
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -45,12 +47,8 @@ import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import parser.loadIr
 import parser.loadCaseTaintConfig
-
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import parser.loadIr
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -67,7 +65,7 @@ class TaintSamples {
     @Serializable
     data class SinkMethodConfig(
         val methodName: String?,
-        val position: Position = Argument(0)
+        val position: Position = Argument(0),
     )
 
     @Serializable
@@ -167,7 +165,8 @@ class TaintSamples {
             encodeDefaults = true
             prettyPrint = true
         }.encodeToString(config)
-        val fullPath = "C:\\Users\\bethi\\IdeaProjects\\jacodb\\jacodb-panda-dynamic\\src\\test\\resources\\samples\\taintConfigs\\${filename}"
+        val fullPath =
+            "C:\\Users\\bethi\\IdeaProjects\\jacodb\\jacodb-panda-dynamic\\src\\test\\resources\\samples\\taintConfigs\\${filename}"
         val outputFile = File(fullPath)
         outputFile.writeText(serializedConfig)
     }

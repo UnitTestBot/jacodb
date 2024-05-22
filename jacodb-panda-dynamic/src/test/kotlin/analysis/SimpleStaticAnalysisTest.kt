@@ -16,10 +16,20 @@
 
 package analysis
 
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.PandaApplicationGraph
+import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaCallExpr
+import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaStringConstant
+import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.callExpr
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Disabled
 import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
@@ -28,7 +38,7 @@ class SimpleStaticAnalysisTest {
     @Nested
     inner class ArgumentParameterCorrespondenceTest {
 
-        private fun analyse(programName: String, startMethods: List<String>) : List<Pair<PandaInst, PandaMethod>> {
+        private fun analyse(programName: String, startMethods: List<String>): List<Pair<PandaInst, PandaMethod>> {
             val parser = loadIr("/samples/${programName}.json")
             val project = parser.getProject()
             val graph = PandaApplicationGraphImpl(project)
@@ -37,7 +47,7 @@ class SimpleStaticAnalysisTest {
             for (method in methods) {
                 if (startMethods.contains(method.name)) {
                     for (inst in method.instructions) {
-                        var callExpr : PandaCallExpr? = null
+                        var callExpr: PandaCallExpr? = null
                         if (inst is PandaCallInst) {
                             callExpr = inst.callExpr
                         }
@@ -131,11 +141,11 @@ class SimpleStaticAnalysisTest {
             orderedInstructions.reverse()
         }
 
-        private fun getOperands(inst: PandaInst) : List<PandaValue> {
+        private fun getOperands(inst: PandaInst): List<PandaValue> {
             return inst.operands.flatMap { expr -> expr.operands }
         }
 
-        private fun analyse(programName: String, startMethods: List<String>? = null) : List<Pair<String, PandaInst>> {
+        private fun analyse(programName: String, startMethods: List<String>? = null): List<Pair<String, PandaInst>> {
             val parser = loadIr("/samples/${programName}.json")
             val project = parser.getProject()
             val graph = PandaApplicationGraphImpl(project)
