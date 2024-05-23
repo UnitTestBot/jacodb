@@ -1,0 +1,23 @@
+{
+    "sourceMethodConfigs": [
+        {
+            "methodName": "getNumber",
+            "markName": "UNTRUSTED",
+            "position": {
+                "type": "Result"
+            }
+        }
+    ],
+    "cleanerMethodConfigs": [
+    ],
+    "sinkMethodConfigs": [
+    ],
+    "startMethodNamesForAnalysis": [
+        "main"
+    ],
+    "builtInOptions": [
+        {
+            "type": "UNTRUSTED_LOOP_BOUND_SINK_CHECK"
+        }
+    ]
+}
