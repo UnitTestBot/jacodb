@@ -29,6 +29,10 @@ tasks {
     compileKotlin {
         dependsOn(generateGrammarSource)
     }
+
+    compileTestKotlin {
+        dependsOn(generateTestGrammarSource)
+    }
 }
 
 sourceSets {
