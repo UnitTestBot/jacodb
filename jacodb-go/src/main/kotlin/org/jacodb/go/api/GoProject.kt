@@ -19,8 +19,20 @@ package org.jacodb.go.api
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.Project
 
+class File(
+    val name: String,
+    val base: Int,
+    val size: Int,
+    val lines: List<Int>,
+)
+
+class FileSet(
+    val files: List<File>,
+)
+
 class GoProject(
-    val methods: List<GoMethod>
+    val methods: List<GoMethod>,
+    val fileSet: FileSet,
 ) : Project {
     override fun close() {}
 

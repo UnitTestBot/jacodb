@@ -23,7 +23,24 @@ interface GoInstLocation : CommonInstLocation<GoMethod, GoInst>
 class GoInstLocationImpl(override val index: Int, override val lineNumber: Int, override val method: GoMethod) :
     GoInstLocation {
     override fun toString(): String {
-        return "${method.metName}:$lineNumber"
+        var file: File? = null
+        for (f in method.fileSet.files) {
+            if (f.base <= lineNumber && f.base + f.size >= lineNumber) {
+                file = f
+                break
+            }
+        }
+        if (file == null) {
+            return method.name
+        }
+        var line = 0
+        for (l in file.lines) {
+            if (l + file.base >= lineNumber) {
+                break
+            }
+            line++
+        }
+        return "${file.name}:$line"
     }
 
     override fun equals(other: Any?): Boolean {

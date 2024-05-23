@@ -32,7 +32,7 @@ class ssa_MakeClosure : ssaToJacoExpr, ssaToJacoValue {
                 parent
             ),
 			(register!!.typ!! as ssaToJacoType).createJacoDBType(),
-            (Fn!! as ssa_Function).createJacoDBMethod(),
+            (Fn!! as ssa_Function).createJacoDBMethod(parent.fileSet),
 			Bindings!!.map { (it as ssaToJacoValue).createJacoDBValue(parent) },
 			"t${register!!.num!!.toInt()}",
         )

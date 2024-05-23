@@ -40,18 +40,29 @@ class ssa_Program : ssaToJacoProject {
             return ptrToJacoMap[structToPtrMap[this]] as GoProject
         }
 
+        val fSet = mutableListOf<File>()
+        for (tokenFile in Fset!!.files!!) {
+            fSet.add(File(
+                tokenFile.name!!,
+                tokenFile.base!!.toInt(),
+                tokenFile.size!!.toInt(),
+                tokenFile.lines!!.map { it.toInt() },
+            ))
+        }
+        val fileSet = FileSet(fSet)
 
         val methods = mutableListOf<GoMethod>()
         for (pkg in packages!!) {
             for (member in pkg.value.Members!!) {
                 if (member.value is ssa_Function) {
-                    methods.add((member.value as ssa_Function).createJacoDBMethod())
+                    methods.add((member.value as ssa_Function).createJacoDBMethod(fileSet))
                 }
             }
         }
 
         val res = GoProject(
-            methods.toList()
+            methods.toList(),
+            fileSet,
         )
 		if (structToPtrMap.containsKey(this)) {
             ptrToJacoMap[structToPtrMap[this]!!] = res

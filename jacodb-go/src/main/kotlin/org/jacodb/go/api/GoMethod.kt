@@ -22,5 +22,6 @@ interface GoMethod : CommonMethod<GoMethod, GoInst>, GoValue {
     val metName: String
     val packageName: String
     val blocks: List<GoBasicBlock>
+    val fileSet: FileSet
     override fun flowGraph(): GoGraph
 }

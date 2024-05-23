@@ -68,7 +68,7 @@ interface GoTraits : Traits<GoMethod, GoInst> {
     override val CommonCallExpr.callee: GoMethod
         get() {
             check(this is GoCallExpr)
-            return callee ?: GoFunction(LongType(), emptyList(), "ERROR!!!", emptyList(), emptyList(), "")
+            return callee!!
         }
 
     override fun Project.getArgument(param: CommonMethodParameter): CommonArgument {

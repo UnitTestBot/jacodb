@@ -51,7 +51,7 @@ class ssa_Function : ssaToJacoExpr, ssaToJacoValue, ssaToJacoMethod {
 	var lblocks: Map<types_Label, ssa_lblock>? = null
 	var subst: ssa_subster? = null
 
-	override fun createJacoDBMethod(): GoFunction {
+	override fun createJacoDBMethod(fileSet: FileSet): GoFunction {
 		if (structToPtrMap.containsKey(this) && ptrToJacoMap.containsKey(structToPtrMap[this])) {
             return ptrToJacoMap[structToPtrMap[this]] as GoFunction
         }
@@ -72,7 +72,8 @@ class ssa_Function : ssaToJacoExpr, ssaToJacoValue, ssaToJacoMethod {
                 name!!,
                 listOf(),
                 returns, //TODO
-                Pkg?.Pkg?.name ?: "null"
+                Pkg?.Pkg?.name ?: "null",
+                fileSet,
             )
 
 		if (structToPtrMap.containsKey(this)) {
@@ -98,7 +99,7 @@ class ssa_Function : ssaToJacoExpr, ssaToJacoValue, ssaToJacoMethod {
 		if (structToPtrMap.containsKey(this) && ptrToJacoMap.containsKey(structToPtrMap[this])) {
             return ptrToJacoMap[structToPtrMap[this]] as GoFunction
         }
-        return createJacoDBMethod()
+        return createJacoDBMethod(parent.fileSet)
     }
 
 	override fun createJacoDBExpr(parent: GoMethod): GoExpr {

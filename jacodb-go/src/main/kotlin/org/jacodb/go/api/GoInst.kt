@@ -1784,7 +1784,8 @@ data class GoFunction(
     override val metName: String,
     override var blocks: List<GoBasicBlock>,
     val returnTypes: List<GoType>,
-    override val packageName: String
+    override val packageName: String,
+    override var fileSet: FileSet,
 ) : GoMethod {
 
     private var flowGraph: GoGraph? = null

@@ -206,9 +206,11 @@ class IfdsGoTest {
                             0, "b", LongType()
                         )
                     ),
-                    blocks = listOf() // After
+                    blocks = listOf(), // After
+                    fileSet = FileSet(emptyList()),
                 )
-            )
+            ),
+            fileSet = FileSet(emptyList())
         )
         (project.methods[0] as GoFunction).blocks = listOf(
             GoBasicBlock(

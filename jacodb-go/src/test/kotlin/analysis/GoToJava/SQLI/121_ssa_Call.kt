@@ -27,7 +27,7 @@ class ssa_Call : ssaToJacoInst, ssaToJacoValue, ssaToJacoExpr {
 	override fun createJacoDBInst(parent: GoMethod): GoCallInst {
         if (CallExpr == null) {
             val callee: GoMethod = if (Call!!.Value!! is ssaToJacoMethod) {
-                (Call!!.Value!! as ssaToJacoMethod).createJacoDBMethod()
+                (Call!!.Value!! as ssaToJacoMethod).createJacoDBMethod(parent.fileSet)
             } else if (Call!!.Value!! is ssaToJacoExpr) {
                 val value = (Call!!.Value!! as ssaToJacoExpr).createJacoDBExpr(parent)
                 if (value is GoMakeClosureExpr) {
