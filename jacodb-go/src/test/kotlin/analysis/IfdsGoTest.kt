@@ -148,7 +148,7 @@ class IfdsGoTest {
         val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.packageName == "md5" && method.metName == "Sum") {
+                    if (method.packageName == "md5") {
                         add(
                             TaintMethodSource(
                                 method = mockk(),

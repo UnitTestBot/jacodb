@@ -20,12 +20,13 @@ import java.io.BufferedReader
 import org.jacodb.go.api.*
 class types_Checker {
 
+	var enableAlias: Boolean? = null
 	var conf: types_Config? = null
 	var ctxt: types_Context? = null
 	var fset: token_FileSet? = null
 	var pkg: types_Package? = null
 	var Info: types_Info? = null
-	var version: types_version? = null
+	var version: String? = null
 	var nextID: ULong? = null
 	var objMap: Map<Any, types_declInfo>? = null
 	var impMap: Map<types_importKey, types_Package>? = null
@@ -33,7 +34,7 @@ class types_Checker {
 	var pkgPathMap: Map<String, Map<String, Boolean>>? = null
 	var seenPkgMap: Map<types_Package, Boolean>? = null
 	var files: List<ast_File>? = null
-	var posVers: Map<token_File, types_version>? = null
+	var versions: Map<ast_File, String>? = null
 	var imports: List<types_PkgName>? = null
 	var dotImportMap: Map<types_dotImportKey, types_PkgName>? = null
 	var recvTParamMap: Map<ast_Ident, types_TypeParam>? = null
@@ -63,6 +64,18 @@ fun read_types_Checker(buffReader: BufferedReader, id: Int): types_Checker {
     var split: List<String>
     var id: Int
     var readType: String
+
+	line = buffReader.readLine()
+	if (line == "end") {
+        return res
+    }
+    split = line.split(" ")
+    readType = split[1]
+    id = -1
+    if (split.size > 2) {
+        id = split[2].toInt()
+    }
+    res.enableAlias = mapDec[readType]?.invoke(buffReader, id) as Boolean?
 
 	line = buffReader.readLine()
 	if (line == "end") {
@@ -134,7 +147,7 @@ fun read_types_Checker(buffReader: BufferedReader, id: Int): types_Checker {
     if (split.size > 2) {
         id = split[2].toInt()
     }
-    res.version = mapDec[readType]?.invoke(buffReader, id) as types_version?
+    res.version = mapDec[readType]?.invoke(buffReader, id) as String?
 
 	line = buffReader.readLine()
 	if (line == "end") {
@@ -230,7 +243,7 @@ fun read_types_Checker(buffReader: BufferedReader, id: Int): types_Checker {
     if (split.size > 2) {
         id = split[2].toInt()
     }
-    res.posVers = mapDec[readType]?.invoke(buffReader, id) as Map<token_File, types_version>?
+    res.versions = mapDec[readType]?.invoke(buffReader, id) as Map<ast_File, String>?
 
 	line = buffReader.readLine()
 	if (line == "end") {

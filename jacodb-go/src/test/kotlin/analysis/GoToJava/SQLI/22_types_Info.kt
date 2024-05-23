@@ -28,6 +28,7 @@ class types_Info {
 	var Selections: Map<ast_SelectorExpr, types_Selection>? = null
 	var Scopes: Map<Any, types_Scope>? = null
 	var InitOrder: List<types_Initializer>? = null
+	var FileVersions: Map<ast_File, String>? = null
 }
 
 fun read_types_Info(buffReader: BufferedReader, id: Int): types_Info {
@@ -139,6 +140,18 @@ fun read_types_Info(buffReader: BufferedReader, id: Int): types_Info {
         id = split[2].toInt()
     }
     res.InitOrder = mapDec[readType]?.invoke(buffReader, id) as List<types_Initializer>?
+
+	line = buffReader.readLine()
+	if (line == "end") {
+        return res
+    }
+    split = line.split(" ")
+    readType = split[1]
+    id = -1
+    if (split.size > 2) {
+        id = split[2].toInt()
+    }
+    res.FileVersions = mapDec[readType]?.invoke(buffReader, id) as Map<ast_File, String>?
 
 	buffReader.readLine()
 	return res

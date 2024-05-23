@@ -40,7 +40,8 @@ class ssa_Program : ssaToJacoProject {
             return ptrToJacoMap[structToPtrMap[this]] as GoProject
         }
 
-        val fSet = mutableListOf<File>()
+
+		val fSet = mutableListOf<File>()
         for (tokenFile in Fset!!.files!!) {
             fSet.add(File(
                 tokenFile.name!!,
@@ -62,7 +63,7 @@ class ssa_Program : ssaToJacoProject {
 
         val res = GoProject(
             methods.toList(),
-            fileSet,
+			fileSet,
         )
 		if (structToPtrMap.containsKey(this)) {
             ptrToJacoMap[structToPtrMap[this]!!] = res

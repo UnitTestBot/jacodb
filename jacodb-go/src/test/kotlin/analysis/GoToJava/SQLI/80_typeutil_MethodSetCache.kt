@@ -21,7 +21,7 @@ import org.jacodb.go.api.*
 class typeutil_MethodSetCache {
 
 	var mu: sync_Mutex? = null
-	var named: Map<types_Named, generatedInlineStruct_001>? = null
+	var named: Map<types_Named, generatedInlineStruct_000>? = null
 	var others: Map<Any, types_MethodSet>? = null
 }
 
@@ -61,7 +61,7 @@ fun read_typeutil_MethodSetCache(buffReader: BufferedReader, id: Int): typeutil_
     if (split.size > 2) {
         id = split[2].toInt()
     }
-    res.named = mapDec[readType]?.invoke(buffReader, id) as Map<types_Named, generatedInlineStruct_001>?
+    res.named = mapDec[readType]?.invoke(buffReader, id) as Map<types_Named, generatedInlineStruct_000>?
 
 	line = buffReader.readLine()
 	if (line == "end") {
