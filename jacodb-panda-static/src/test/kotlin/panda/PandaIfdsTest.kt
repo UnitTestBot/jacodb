@@ -39,6 +39,7 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -115,13 +116,13 @@ class PandaIfdsTest {
 
         val goodMethod = project.classes.flatMap { it.methods }.single { it.name == "good" }
         logger.info { "good() method: $goodMethod" }
-        val goodSinks = manager.analyze(listOf(goodMethod))
+        val goodSinks = manager.analyze(listOf(goodMethod), timeout = 60.seconds)
         logger.info { "Sinks in good(): $goodSinks" }
         Assertions.assertTrue(goodSinks.isEmpty())
 
         val badMethod = project.classes.flatMap { it.methods }.single { it.name == "bad" }
         logger.info { "bad() method: $badMethod" }
-        val badSinks = manager.analyze(listOf(badMethod))
+        val badSinks = manager.analyze(listOf(badMethod), timeout = 60.seconds)
         logger.info { "Sinks in bad(): $badSinks" }
         Assertions.assertTrue(badSinks.isNotEmpty())
     }

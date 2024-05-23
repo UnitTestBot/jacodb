@@ -52,6 +52,7 @@ import org.junit.jupiter.api.condition.EnabledIf
 import parser.loadIr
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -110,7 +111,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -129,12 +130,13 @@ class PandaIfds {
                             condition = ConstantTrue,
                             actionsAfter = listOf(
                                 AssignMark(mark = TaintMark("TAINT"), position = Result),
-                            ),
+                            )
                         )
                     )
                     if (method.name == "log") add(
                         TaintMethodSink(
-                            method = method, ruleNote = "CUSTOM SINK", // FIXME
+                            method = method,
+                            ruleNote = "CUSTOM SINK", // FIXME
                             cwe = listOf(), // FIXME
                             condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
                         )
@@ -153,7 +155,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -213,13 +215,13 @@ class PandaIfds {
 
         val goodMethod = project.classes.flatMap { it.methods }.single { it.name == "good" }
         logger.info { "good() method: $goodMethod" }
-        val goodSinks = manager.analyze(listOf(goodMethod))
+        val goodSinks = manager.analyze(listOf(goodMethod), timeout = 60.seconds)
         logger.info { "Sinks in good(): $goodSinks" }
         assertTrue(goodSinks.isEmpty())
 
         val badMethod = project.classes.flatMap { it.methods }.single { it.name == "bad" }
         logger.info { "bad() method: $badMethod" }
-        val badSinks = manager.analyze(listOf(badMethod))
+        val badSinks = manager.analyze(listOf(badMethod), timeout = 60.seconds)
         logger.info { "Sinks in bad(): $badSinks" }
         assertTrue(badSinks.isNotEmpty())
     }
@@ -298,7 +300,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -335,7 +337,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -379,7 +381,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -464,7 +466,7 @@ class PandaIfds {
         for (method in methods) {
             logger.info { "  ${method.name}" }
         }
-        val sinks = manager.analyze(methods)
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }

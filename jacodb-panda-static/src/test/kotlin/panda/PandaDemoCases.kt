@@ -37,6 +37,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -83,7 +84,7 @@ class PandaDemoCases {
 
         val method = project.classes.flatMap { it.methods }.single { it.name == "onRequest" }
         logger.info { "Method: $method" }
-        val sinks = manager.analyze(listOf(method))
+        val sinks = manager.analyze(listOf(method), timeout = 30.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }
@@ -133,7 +134,7 @@ class PandaDemoCases {
             it.name == "onRemoteMessageRequest"
         }
         logger.info { "Method: $method" }
-        val sinks = manager.analyze(listOf(method))
+        val sinks = manager.analyze(listOf(method), timeout = 30.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
     }

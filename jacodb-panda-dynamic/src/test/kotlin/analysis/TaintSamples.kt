@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Test
 import parser.loadCaseTaintConfig
 import parser.loadIr
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -154,7 +155,7 @@ class TaintSamples {
             for (method in filteredMethods) {
                 logger.info { "  ${method.name}" }
             }
-            val sinks = manager.analyze(filteredMethods)
+            val sinks = manager.analyze(filteredMethods, timeout = 30.seconds)
             logger.info { "Sinks: $sinks" }
             return sinks
         }
