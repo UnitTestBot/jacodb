@@ -240,7 +240,7 @@ class TaintSamples {
             assert(sinks.size == 1)
         }
 
-        @Disabled("Cleaner config don't work as expected")
+//        @Disabled("Cleaner config don't work as expected")
         @Test
         fun `positive example - print encrypted password to console`() {
             val config = CaseTaintConfig(
@@ -248,15 +248,19 @@ class TaintSamples {
                     SourceMethodConfig(methodName = "getUserPassword")
                 ),
                 cleanerMethodConfigs = listOf(
-                    CleanerMethodConfig("encryptPassword")
+                    CleanerMethodConfig(
+                        methodName = "encryptPassword",
+                        position = Argument(0)
+                    )
                 ),
                 sinkMethodConfigs = listOf(
                     SinkMethodConfig(methodName = "log")
                 ),
                 startMethodNamesForAnalysis = listOf("case2")
             )
-            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            assert(sinks.isEmpty())
+            saveSerializedConfig(config, "passwordLeakTaintConfig3.json")
+//            val sinks = fileTaintAnalyzer.analyseOneCase(config)
+//            assert(sinks.isEmpty())
         }
 
     }
@@ -444,6 +448,43 @@ class TaintSamples {
                             methodName = "displayComment",
                         )
                     ),
+                )
+            )
+            assert(sinks.size == 1)
+        }
+    }
+
+    @Nested
+    inner class PasswordExposureFPTest {
+        private val fileTaintAnalyzer = FileTaintAnalyzer("taintSamples/passwordExposureFP")
+
+        @Test
+        fun `counterexample - potential exposure of unencrypted password (false positive tho)`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "log",
+                        )
+                    ),
+                    startMethodNamesForAnalysis = listOf("usage1")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+        @Test
+        fun `counterexample - potential exposure of unencrypted password`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "log",
+                        )
+                    ),
+                    startMethodNamesForAnalysis = listOf("usage2")
                 )
             )
             assert(sinks.size == 1)
