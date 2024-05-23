@@ -292,7 +292,7 @@ class IRParser(
         val outputs = outputs()
 
         fun handle(expr: PandaExpr) {
-            val lv = PandaLocalVar(method.currentLocalVarId++, if (expr is PandaNewExpr) expr.type else PandaAnyType)
+            val lv = PandaLocalVar(method.currentLocalVarId++, if (expr is PandaNewExpr || expr is PandaPhiValue) expr.type else PandaAnyType)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
             }
@@ -726,7 +726,11 @@ class IRParser(
 
             opcode == "Phi" -> {
                 if ((users.size == 1 && users[0] == id) || users.isEmpty()) return@with
-                val phiExpr = PandaPhiValue(lazy { inputsViaOp(this) }, op.inputBlocks)
+                val phiExpr = PandaPhiValue(
+                    _inputs = lazy { inputsViaOp(this) },
+                    basicBlockIds = op.inputBlocks,
+                    type = inputsViaOp(this).first().type
+                )
                 handle(phiExpr)
             }
 
