@@ -45,6 +45,7 @@ import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -206,6 +207,14 @@ class TaintSamples {
             }
             val sinks = manager.analyze(filteredMethods, timeout = 30.seconds)
             logger.info { "Sinks: $sinks" }
+
+
+            sinks.forEach { sink ->
+                val graph = manager.vulnerabilityTraceGraph(sink)
+                val trace = graph.getAllTraces().first()
+                Assertions.assertTrue(trace.isNotEmpty())
+            }
+
             return sinks
         }
     }
