@@ -16,17 +16,7 @@
 
 package analysis
 
-import org.jacodb.panda.dynamic.api.PandaApplicationGraph
-import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaCallExpr
-import org.jacodb.panda.dynamic.api.PandaCallInst
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaStringConstant
-import org.jacodb.panda.dynamic.api.PandaValue
-import org.jacodb.panda.dynamic.api.callExpr
+import org.jacodb.panda.dynamic.api.*
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -34,7 +24,7 @@ import parser.loadIr
 
 private val logger = mu.KotlinLogging.logger {}
 
-class SimpleStaticAnalysisTest {
+class PrimaryStaticAnalysisTest {
     @Nested
     inner class ArgumentParameterCorrespondenceTest {
 
@@ -198,6 +188,54 @@ class SimpleStaticAnalysisTest {
                 programName = "codeqlSamples/unresolvedVariable",
             )
             assert(unresolvedVariables.size == 4)
+        }
+    }
+
+    @Nested
+    inner class ImplicitCastingTest {
+        private fun analyse(programName: String, startMethods: List<String>): List<PandaInst> {
+            val parser = loadIr("/samples/${programName}.json")
+            val project = parser.getProject()
+            val graph = PandaApplicationGraphImpl(project)
+            val methods = graph.project.classes.flatMap { it.methods }
+            val typeMismatches = mutableListOf<PandaInst>()
+            for (method in methods) {
+                if (startMethods.contains(method.name)) {
+                    for (inst in method.instructions) {
+                        if (inst is PandaAssignInst && inst.rhv is PandaBinaryExpr) {
+                            val (leftOp, rightOp) = inst.rhv.operands
+                            // TODO(): extend analysis for more complex scenarios
+                            if (leftOp.type == PandaAnyType || rightOp.type == PandaAnyType) {
+                                continue
+                            }
+                            if (leftOp.type != rightOp.type) {
+                                logger.info { "implicit casting in: $inst ($leftOp has ${leftOp.type} type, but $rightOp has ${rightOp.type} type)" }
+                                typeMismatches.add(inst)
+                            }
+                        }
+                    }
+                }
+            }
+            return typeMismatches
+        }
+
+        @Test
+        fun `test implicit casting in binary expressions with primitive literals`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/implicitCasting",
+                startMethods = listOf("primitiveLiteralsUsage")
+            )
+            assert(typeMismatches.size == 10)
+        }
+
+        @Disabled("No type support for arrays and objects")
+        @Test
+        fun `test implicit casting in binary expressions with complex literals`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/implicitCasting",
+                startMethods = listOf("complexLiteralsUsage")
+            )
+            assert(typeMismatches.size == 4)
         }
     }
 }

@@ -359,6 +359,7 @@ class IRParser(
             if (expr is PandaNewExpr) type = expr.type
             if (expr is PandaLoadedValue) type = expr.instance.type
             if (expr is PandaPhiValue) type = expr.type
+            if (expr is PandaConstant) type = expr.type
             val lv = PandaLocalVar(method.currentLocalVarId++, type)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)

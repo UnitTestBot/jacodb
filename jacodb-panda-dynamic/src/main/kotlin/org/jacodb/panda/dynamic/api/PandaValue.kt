@@ -116,7 +116,7 @@ data class PandaNumberConstant(val value: Int) : PandaConstant {
 
 data class PandaStringConstant(val value: String) : PandaConstant {
     override val type: PandaType
-        get() = PandaAnyType
+        get() = PandaStringType
 
     override fun toString(): String = "\"$value\""
 
@@ -142,7 +142,7 @@ object PandaNullConstant : PandaConstant {
 
     // actually "typeof null" is "object", so consider smth like PandaClassType but PandaObjectType
     override val type: PandaType
-        get() = PandaAnyType
+        get() = PandaObjectType
 
     override fun toString(): String = "null"
 
