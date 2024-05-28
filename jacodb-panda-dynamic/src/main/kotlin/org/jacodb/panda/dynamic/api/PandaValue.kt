@@ -81,7 +81,11 @@ data class PandaArgument(
 
 interface PandaConstant : PandaSimpleValue
 
-data class TODOConstant(val value: String?) : PandaConstant {
+interface PandaConstantWithValue : PandaConstant {
+    val value: Any?
+}
+
+data class TODOConstant(override val value: String?) : PandaConstantWithValue {
     override val type: PandaType
         get() = PandaAnyType
 
@@ -92,7 +96,7 @@ data class TODOConstant(val value: String?) : PandaConstant {
     }
 }
 
-data class PandaBoolConstant(val value: Boolean) : PandaConstant {
+data class PandaBoolConstant(override val value: Boolean) : PandaConstantWithValue {
     override val type: PandaType
         get() = PandaBoolType
 
@@ -103,7 +107,7 @@ data class PandaBoolConstant(val value: Boolean) : PandaConstant {
     }
 }
 
-data class PandaNumberConstant(val value: Int) : PandaConstant {
+data class PandaNumberConstant(override val value: Int) : PandaConstantWithValue {
     override val type: PandaType
         get() = PandaNumberType
 
@@ -114,7 +118,7 @@ data class PandaNumberConstant(val value: Int) : PandaConstant {
     }
 }
 
-data class PandaStringConstant(val value: String) : PandaConstant {
+data class PandaStringConstant(override val value: String) : PandaConstantWithValue {
     override val type: PandaType
         get() = PandaStringType
 

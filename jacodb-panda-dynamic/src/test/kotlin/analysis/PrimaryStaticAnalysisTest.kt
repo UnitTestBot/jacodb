@@ -191,9 +191,14 @@ class PrimaryStaticAnalysisTest {
         }
     }
 
+
+    enum class ImplicitCastAnalysisMode {
+        DETECTION,
+        POSSIBILITY_CHECK
+    }
     @Nested
     inner class ImplicitCastingTest {
-        private fun analyse(programName: String, startMethods: List<String>): List<PandaInst> {
+        private fun analyse(programName: String, startMethods: List<String>, mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION): List<PandaInst> {
             val parser = loadIr("/samples/${programName}.json")
             val project = parser.getProject()
             val graph = PandaApplicationGraphImpl(project)
@@ -203,14 +208,64 @@ class PrimaryStaticAnalysisTest {
                 if (startMethods.contains(method.name)) {
                     for (inst in method.instructions) {
                         if (inst is PandaAssignInst && inst.rhv is PandaBinaryExpr) {
-                            val (leftOp, rightOp) = inst.rhv.operands
+                            val operation = inst.rhv
+                            val (leftOp, rightOp) = operation.operands
                             // TODO(): extend analysis for more complex scenarios
                             if (leftOp.type == PandaAnyType || rightOp.type == PandaAnyType) {
                                 continue
                             }
-                            if (leftOp.type != rightOp.type) {
-                                logger.info { "implicit casting in: $inst ($leftOp has ${leftOp.type} type, but $rightOp has ${rightOp.type} type)" }
-                                typeMismatches.add(inst)
+                            if (mode == ImplicitCastAnalysisMode.DETECTION) {
+                                if (leftOp.type != rightOp.type) {
+                                    logger.info { "implicit casting in: $inst ($leftOp has ${leftOp.type} type, but $rightOp has ${rightOp.type} type)" }
+                                    typeMismatches.add(inst)
+                                }
+                            }
+                            if (mode == ImplicitCastAnalysisMode.POSSIBILITY_CHECK) {
+                                val fineOperations = listOf(
+                                    PandaAddExpr::class,
+                                    PandaCmpExpr::class,
+                                    PandaConditionExpr::class
+                                )
+                                val numberOperations = listOf(
+                                    PandaSubExpr::class,
+                                    PandaDivExpr::class,
+                                    PandaModExpr::class,
+                                    PandaExpExpr::class,
+                                    PandaMulExpr::class
+                                )
+                                val isNumeric: (Any) -> Boolean = { value ->
+                                    when (value) {
+                                        is String -> value.toDoubleOrNull() != null
+                                        is Int -> true
+                                        else -> throw IllegalArgumentException("Unexpected type")
+                                    }
+                                }
+                                val typePriority = mapOf(
+                                    PandaStringType::class to 0,
+                                    PandaNumberType::class to 1,
+                                    PandaBoolType::class to 2
+                                )
+                                val sortedOps = listOf(leftOp, rightOp)
+                                sortedOps.sortedBy { elem ->
+                                    typePriority[elem.type::class]
+                                }
+                                if (numberOperations.any { it.isInstance(operation) }) {
+                                    if (sortedOps[0] is PandaConstantWithValue && sortedOps[1] is PandaConstantWithValue) {
+                                        if (!isNumeric((sortedOps[0] as PandaConstantWithValue).value!!) || !isNumeric((sortedOps[1] as PandaConstantWithValue).value!!)) {
+                                            logger.info { "implicit cast won't work in: $inst (both operands should implicitly cast to number)" }
+                                            typeMismatches.add(inst)
+                                        }
+                                        else {
+                                            logger.info { "successful implicit cast in: $inst (both operands implicitly cast to number)" }
+                                        }
+                                    }
+                                    else {
+                                        TODO("Extend on constants with no value!")
+                                    }
+                                }
+                                else {
+                                    logger.info { "implicit cast is not needed in: $inst" }
+                                }
                             }
                         }
                     }
@@ -220,22 +275,43 @@ class PrimaryStaticAnalysisTest {
         }
 
         @Test
-        fun `test implicit casting in binary expressions with primitive literals`() {
+        fun `test implicit casting observation in binary expressions with primitive literals`() {
             val typeMismatches = analyse(
                 programName = "codeqlSamples/implicitCasting",
-                startMethods = listOf("primitiveLiteralsUsage")
+                startMethods = listOf("primitiveLiterals")
             )
             assert(typeMismatches.size == 10)
         }
 
         @Disabled("No type support for arrays and objects")
         @Test
-        fun `test implicit casting in binary expressions with complex literals`() {
+        fun `test implicit casting observation in binary expressions with complex literals`() {
             val typeMismatches = analyse(
                 programName = "codeqlSamples/implicitCasting",
-                startMethods = listOf("complexLiteralsUsage")
+                startMethods = listOf("complexLiterals")
             )
             assert(typeMismatches.size == 4)
+        }
+
+        @Test
+        fun `test implicit casting checking in binary expressions with strings`() {
+            val impossibleImplicitCasts = analyse(
+                programName = "codeqlSamples/implicitCasting",
+                startMethods = listOf("binaryOperationsWithStrings"),
+                mode = ImplicitCastAnalysisMode.POSSIBILITY_CHECK
+            )
+            assert(impossibleImplicitCasts.size == 8)
+        }
+
+        @Disabled("Not supported yet")
+        @Test
+        fun `complicate test implicit casting checking in binary expressions with strings`() {
+            val impossibleImplicitCasts = analyse(
+                programName = "codeqlSamples/implicitCasting",
+                startMethods = listOf("binaryOperationsWithStrings2"),
+                mode = ImplicitCastAnalysisMode.POSSIBILITY_CHECK
+            )
+            assert(impossibleImplicitCasts.size == 2)
         }
     }
 }
