@@ -26,7 +26,7 @@ private val logger = mu.KotlinLogging.logger {}
 class IRParserSamplesTest {
 
     companion object {
-        private const val SAMPLE_NAME = "MethodCollision"
+        private const val SAMPLE_NAME = "classes/SimpleClass"
 
         private fun load(name: String): IRParser {
             return loadIr(
@@ -123,12 +123,12 @@ class IRParserSamplesTest {
                 assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {
                     "add" -> {
-                        assertEquals(10, pandaMethod.instructions.size)
+                        assertEquals(11, pandaMethod.instructions.size)
                         assertEquals(5, pandaMethod.blocks.size)
                     }
 
                     "main" -> {
-                        assertEquals(5, pandaMethod.instructions.size)
+                        assertEquals(6, pandaMethod.instructions.size)
                         assertEquals(3, pandaMethod.blocks.size)
                     }
                 }
