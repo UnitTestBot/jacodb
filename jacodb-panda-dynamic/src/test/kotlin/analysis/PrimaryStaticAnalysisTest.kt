@@ -16,13 +16,40 @@
 
 package analysis
 
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.PandaAddExpr
+import org.jacodb.panda.dynamic.api.PandaAnyType
+import org.jacodb.panda.dynamic.api.PandaApplicationGraph
+import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
+import org.jacodb.panda.dynamic.api.PandaArrayType
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaBinaryExpr
+import org.jacodb.panda.dynamic.api.PandaBoolType
+import org.jacodb.panda.dynamic.api.PandaCallExpr
+import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaCmpExpr
+import org.jacodb.panda.dynamic.api.PandaConditionExpr
+import org.jacodb.panda.dynamic.api.PandaConstantWithValue
+import org.jacodb.panda.dynamic.api.PandaDivExpr
+import org.jacodb.panda.dynamic.api.PandaExpExpr
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaInstanceCallExpr
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaModExpr
+import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNumberType
+import org.jacodb.panda.dynamic.api.PandaPrimitiveType
+import org.jacodb.panda.dynamic.api.PandaStringConstant
+import org.jacodb.panda.dynamic.api.PandaStringType
+import org.jacodb.panda.dynamic.api.PandaSubExpr
+import org.jacodb.panda.dynamic.api.PandaUndefinedType
+import org.jacodb.panda.dynamic.api.PandaValue
+import org.jacodb.panda.dynamic.api.PandaValueByInstance
+import org.jacodb.panda.dynamic.api.callExpr
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import parser.loadIr
-import kotlin.UninitializedPropertyAccessException
-
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -30,6 +57,7 @@ class PrimaryStaticAnalysisTest {
     private fun getOperands(inst: PandaInst): List<PandaValue> {
         return inst.operands.flatMap { expr -> expr.operands }
     }
+
     @Nested
     inner class ArgumentParameterCorrespondenceTest {
 
@@ -192,14 +220,18 @@ class PrimaryStaticAnalysisTest {
         }
     }
 
-
     enum class ImplicitCastAnalysisMode {
         DETECTION,
         POSSIBILITY_CHECK
     }
+
     @Nested
     inner class ImplicitCastingTest {
-        private fun analyse(programName: String, startMethods: List<String>, mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION): List<PandaInst> {
+        private fun analyse(
+            programName: String,
+            startMethods: List<String>,
+            mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION,
+        ): List<PandaInst> {
             val parser = loadIr("/samples/${programName}.json")
             val project = parser.getProject()
             val graph = PandaApplicationGraphImpl(project)
@@ -255,16 +287,13 @@ class PrimaryStaticAnalysisTest {
                                         if (!isNumeric((sortedOps[0] as PandaConstantWithValue).value!!) || !isNumeric((sortedOps[1] as PandaConstantWithValue).value!!)) {
                                             logger.info { "implicit cast won't work in: $inst (both operands should implicitly cast to number)" }
                                             typeMismatches.add(inst)
-                                        }
-                                        else {
+                                        } else {
                                             logger.info { "successful implicit cast in: $inst (both operands implicitly cast to number)" }
                                         }
-                                    }
-                                    else {
+                                    } else {
                                         TODO("Extend on constants with no value!")
                                     }
-                                }
-                                else {
+                                } else {
                                     logger.info { "implicit cast is not needed in: $inst" }
                                 }
                             }
@@ -324,7 +353,11 @@ class PrimaryStaticAnalysisTest {
             PandaPrimitiveType::class
         )
 
-        private fun analyse(programName: String, startMethods: List<String>, mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION): List<PandaInst> {
+        private fun analyse(
+            programName: String,
+            startMethods: List<String>,
+            mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION,
+        ): List<PandaInst> {
             val parser = loadIr("/samples/${programName}.json")
             val project = parser.getProject()
             val graph = PandaApplicationGraphImpl(project)
@@ -344,8 +377,7 @@ class PrimaryStaticAnalysisTest {
                             if (noMemberTypes.any { it.isInstance(member.instance.type) }) {
                                 logger.info { "Accessing member ${member.property} on instance ${member.instance} of ${member.instance.typeName} type (inst: $inst)" }
                                 typeMismatches.add(inst)
-                            }
-                            else if (member.instance is PandaNullConstant) {
+                            } else if (member.instance is PandaNullConstant) {
                                 logger.info { "Accessing member ${member.property} on instance ${member.instance} (inst: $inst)" }
                                 typeMismatches.add(inst)
                             }
@@ -362,7 +394,7 @@ class PrimaryStaticAnalysisTest {
                         if (inst is PandaAssignInst) {
                             inst.rhv.let { right ->
                                 if (right is PandaCallExpr) {
-                                    when(right) {
+                                    when (right) {
                                         is PandaInstanceCallExpr -> callExpr = right
                                         else -> TODO("Consider that case too")
                                     }
@@ -377,12 +409,10 @@ class PrimaryStaticAnalysisTest {
                         if (noMemberTypes.any { it.isInstance(instance.type) }) {
                             logger.info { "Calling member ${callee.name} on instance $instance of ${instance.typeName} type (inst: $inst)" }
                             typeMismatches.add(inst)
-                        }
-                        else if (instance is PandaNullConstant) {
+                        } else if (instance is PandaNullConstant) {
                             logger.info { "Calling member ${callee.name} on instance $instance (inst: $inst)" }
                             typeMismatches.add(inst)
-                        }
-                        else if (instance.type is PandaClassTypeImpl || instance is PandaLoadedValue) {
+                        } else if (instance.type is PandaClassTypeImpl || instance is PandaLoadedValue) {
                             try {
                                 // TODO(): get rid off adhoc
                                 if (instance is PandaLoadedValue && instance.className == "console" && callee.name == "log") {
@@ -391,8 +421,7 @@ class PrimaryStaticAnalysisTest {
                                 if (callee.enclosingClass != null) {
                                     continue
                                 }
-                            }
-                            catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a method
+                            } catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a method
                                 logger.info { "Calling member ${callee.name} on instance $instance that have no such a member (inst: $inst)" }
                                 typeMismatches.add(inst)
                             }

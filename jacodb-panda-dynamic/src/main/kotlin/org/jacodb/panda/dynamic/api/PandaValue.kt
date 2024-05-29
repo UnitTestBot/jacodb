@@ -228,7 +228,7 @@ data class PandaValueByInstance(
         get() = PandaAnyType
 
     val className: String
-        get() = when(instance) {
+        get() = when (instance) {
             is PandaLoadedValue -> instance.className
             else -> instance.typeName
         }
@@ -264,7 +264,7 @@ data class PandaLoadedValue(
         get() = PandaAnyType
 
     val className: String
-        get() = when(instance) {
+        get() = when (instance) {
             is PandaStringConstant -> instance.value
             else -> instance.typeName
         }
@@ -309,7 +309,7 @@ class PandaCaughtError : PandaValue {
 class PandaPhiValue(
     private val _inputs: Lazy<List<PandaValue>>,
     val basicBlockIds: List<Int>,
-    override val type: PandaType
+    override val type: PandaType,
 ) : PandaValue {
     val inputs: List<PandaValue>
         get() = _inputs.value

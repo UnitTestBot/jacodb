@@ -16,9 +16,7 @@
 
 package org.jacodb.panda.dynamic.api
 
-
-import org.jacodb.impl.cfg.graphs.GraphDominators
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class PandaLoop(

@@ -94,15 +94,13 @@ class TaintSamples {
     @SerialName("UNTRUSTED_INDEX_ARRAY_ACCESS_SINK_CHECK")
     object UntrustedIndexArrayAccessSinkCheck : TaintBuiltInOption
 
-
-
     @Serializable
     data class CaseTaintConfig(
         val sourceMethodConfigs: List<SourceMethodConfig> = listOf(),
         val cleanerMethodConfigs: List<CleanerMethodConfig> = listOf(),
         val sinkMethodConfigs: List<SinkMethodConfig> = listOf(),
         val startMethodNamesForAnalysis: List<String>? = null,
-        val builtInOptions: List<TaintBuiltInOption> = listOf()
+        val builtInOptions: List<TaintBuiltInOption> = listOf(),
     )
 
     class FileTaintAnalyzer(programName: String) {
@@ -182,13 +180,20 @@ class TaintSamples {
                 }
 
             caseTaintConfig.builtInOptions.forEach { option ->
-                when(option) {
-                    is UntrustedLoopBoundSinkCheck -> TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
-                    is UntrustedArraySizeSinkCheck -> TaintAnalysisOptions.UNTRUSTED_ARRAY_SIZE_SINK = true
-                    is UntrustedIndexArrayAccessSinkCheck -> TaintAnalysisOptions.UNTRUSTED_INDEX_ARRAY_ACCESS_SINK = true
+                when (option) {
+                    is UntrustedLoopBoundSinkCheck -> {
+                        TaintAnalysisOptions.UNTRUSTED_LOOP_BOUND_SINK = true
+                    }
+
+                    is UntrustedArraySizeSinkCheck -> {
+                        TaintAnalysisOptions.UNTRUSTED_ARRAY_SIZE_SINK = true
+                    }
+
+                    is UntrustedIndexArrayAccessSinkCheck -> {
+                        TaintAnalysisOptions.UNTRUSTED_INDEX_ARRAY_ACCESS_SINK = true
+                    }
                 }
             }
-
 
             val manager = TaintManager(
                 graph = graph,
@@ -249,7 +254,7 @@ class TaintSamples {
             assert(sinks.size == 1)
         }
 
-//        @Disabled("Cleaner config don't work as expected")
+        // @Disabled("Cleaner config don't work as expected")
         @Test
         fun `positive example - print encrypted password to console`() {
             val config = CaseTaintConfig(
@@ -268,8 +273,8 @@ class TaintSamples {
                 startMethodNamesForAnalysis = listOf("case2")
             )
             saveSerializedConfig(config, "passwordLeakTaintConfig3.json")
-//            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-//            assert(sinks.isEmpty())
+            // val sinks = fileTaintAnalyzer.analyseOneCase(config)
+            // assert(sinks.isEmpty())
         }
 
     }
@@ -341,8 +346,8 @@ class TaintSamples {
                 builtInOptions = listOf(UntrustedLoopBoundSinkCheck, UntrustedArraySizeSinkCheck)
             )
             saveSerializedConfig(config, "untrustedArraySizeConfig1.json")
-//            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-//            assert(sinks.size == 2)
+            // val sinks = fileTaintAnalyzer.analyseOneCase(config)
+            // assert(sinks.size == 2)
         }
 
     }

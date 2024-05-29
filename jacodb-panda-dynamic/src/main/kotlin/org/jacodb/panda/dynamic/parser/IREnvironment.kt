@@ -50,7 +50,7 @@ class IREnvironment private constructor() {
             get() = IREnvironment()
     }
 
-    fun <T, P> MutableList<MutableMap<T, P>>.copy(): MutableList<MutableMap<T,P>> {
+    fun <T, P> MutableList<MutableMap<T, P>>.copy(): MutableList<MutableMap<T, P>> {
         return this.map { m -> m.toMutableMap() }.toMutableList()
     }
 

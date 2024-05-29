@@ -19,7 +19,18 @@ package org.jacodb.panda.dynamic.parser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jacodb.panda.dynamic.api.*
+import org.jacodb.panda.dynamic.api.Mappable
+import org.jacodb.panda.dynamic.api.PandaAssignInst
+import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaExpr
+import org.jacodb.panda.dynamic.api.PandaInst
+import org.jacodb.panda.dynamic.api.PandaLexVar
+import org.jacodb.panda.dynamic.api.PandaLoadedValue
+import org.jacodb.panda.dynamic.api.PandaLocalVar
+import org.jacodb.panda.dynamic.api.PandaMethod
+import org.jacodb.panda.dynamic.api.PandaParameterInfo
+import org.jacodb.panda.dynamic.api.PandaType
+import org.jacodb.panda.dynamic.api.PandaValue
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {

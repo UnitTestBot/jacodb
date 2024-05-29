@@ -18,7 +18,6 @@ package org.jacodb.panda.dynamic.parser
 
 import org.jacodb.panda.dynamic.api.PandaInst
 
-
 interface PandaInstBuilder {
     fun build(method: ProgramMethod): PandaInst
 }

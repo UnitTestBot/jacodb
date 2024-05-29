@@ -61,14 +61,13 @@ data class TSFunction(
     val name: String,
     val arguments: List<PandaType>,
     val returnType: PandaType,
-    val containingClass: TSClass? = null
+    val containingClass: TSClass? = null,
 )
 
 data class TSClass(
     val name: String,
-    val scopeClass: TSClass? = null
+    val scopeClass: TSClass? = null,
 )
-
 
 class Kek : TypeScriptParserBaseListener() {
 
@@ -157,7 +156,7 @@ class Kek : TypeScriptParserBaseListener() {
             "string" -> PandaStringType
             "void" -> PandaVoidType
             else -> {
-                logger.warn {  "Unknown type: $type" }
+                logger.warn { "Unknown type: $type" }
                 PandaAnyType
             }
         }

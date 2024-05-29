@@ -188,8 +188,8 @@ class IRParser(
         if (method.name == "func_main_0") return
         tsFunctions.find { tsFunc ->
             tsFunc.name == method.name &&
-                    // here comes the result of comment above
-                    tsFunc.containingClass?.name == method.clazz.name
+                // here comes the result of comment above
+                tsFunc.containingClass?.name == method.clazz.name
         }?.let { tsFunc ->
             method.paramTypes.addAll(tsFunc.arguments)
             // TODO: Add class constructor to GLOBAL
@@ -361,7 +361,7 @@ class IRParser(
         }
 
         fun handle(expr: PandaExpr) {
-            var type : PandaType = PandaAnyType
+            var type: PandaType = PandaAnyType
             if (expr is PandaNewExpr) type = expr.type
             if (expr is PandaLoadedValue) type = expr.instance.type
             if (expr is PandaPhiValue) type = expr.type
@@ -674,7 +674,7 @@ class IRParser(
                     lexvar ?: error("No lexvar"),
                     PandaAnyType
                 )
-//                val (methodName, lexvar) = env.getLexvar(lexenv ?: error("No lexenv"), lexvar ?: error("No lexvar"))
+                // val (methodName, lexvar) = env.getLexvar(lexenv ?: error("No lexenv"), lexvar ?: error("No lexvar"))
                 handle(PandaLoadedValue(lexvar))
             }
 
@@ -735,9 +735,9 @@ class IRParser(
 
             opcode == "Intrinsic.stobjbyvalue" -> {
                 val arrayAccess = PandaArrayAccess(
-                    array=inputs[0],
-                    index=inputs[1],
-                    type=PandaAnyType
+                    array = inputs[0],
+                    index = inputs[1],
+                    type = PandaAnyType
                 )
                 val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[2])
                 method.pushInst(assignment)
@@ -866,9 +866,9 @@ class IRParser(
             opcode == "Intrinsic.stownbyindex" -> {
                 val index = PandaNumberConstant(imms[1].toInt())
                 val arrayAccess = PandaArrayAccess(
-                    array=inputs[0],
-                    index=index,
-                    type=PandaAnyType
+                    array = inputs[0],
+                    index = index,
+                    type = PandaAnyType
                 )
                 val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[1])
                 method.pushInst(assignment)
@@ -1044,20 +1044,20 @@ class IRParser(
             }
 
             opcode == "Try" -> {
-//                assert(basicBlock.successors.size == 2)
-//                val tryBBid = basicBlock.successors[0]
-//                val catchBBid = basicBlock.successors[1]
+                // assert(basicBlock.successors.size == 2)
+                // val tryBBid = basicBlock.successors[0]
+                // val catchBBid = basicBlock.successors[1]
                 // Order is crucial for CatchPhi processor
-//                assert(tryBBid < catchBBid)
-
-//                changeTraversalStrategy(basicBlock, TraversalType.TRY_BLOCK)
-
-//                env.setTryBlockBBId(catchBBid, tryBBid)
+                // assert(tryBBid < catchBBid)
+                //
+                // changeTraversalStrategy(basicBlock, TraversalType.TRY_BLOCK)
+                //
+                // env.setTryBlockBBId(catchBBid, tryBBid)
             }
 
             opcode == "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
-                val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName=stringData!!)
+                val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName = stringData!!)
                 method.pushInst(assignment)
                 program!!.setLocalAssignment(method.signature, lv, assignment)
                 env.setLocalVar(stringData!!, lv)
@@ -1142,8 +1142,12 @@ class IRParser(
                     if (value is PandaMethodConstant) {
                         val methodName = value.methodName.drop(1)
                         val className = method.pandaMethod.className ?: "GLOBAL"
-                        fun findIn(className: String) = method.pandaMethod.project.findMethodOrNull(methodName, className)
-                        findIn(className) ?: findIn("GLOBAL")
+
+                        fun findIn(className: String) =
+                            method.pandaMethod.project.findMethodOrNull(methodName, className)
+
+                        findIn(className)
+                            ?: findIn("GLOBAL")
                             ?: error("Could not find method: $methodName")
                     } else {
                         PandaMethod(value.typeName)

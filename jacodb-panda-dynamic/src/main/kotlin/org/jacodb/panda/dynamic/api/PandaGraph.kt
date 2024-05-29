@@ -25,7 +25,6 @@ import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.BytecodeGraph
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.impl.cfg.graphs.GraphDominators
 import java.io.File
 import java.nio.file.Files
