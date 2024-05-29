@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test
 import org.usvm.jacodb.gen.StartDeserializer
 import org.usvm.jacodb.gen.ssaToJacoProject
 import java.util.zip.GZIPInputStream
+import kotlin.system.measureTimeMillis
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -129,7 +130,7 @@ class IfdsGoTest {
             getConfigForMethod = getConfigForMethod
         )
         val methods = project.methods.filter {
-            it.packageName == "main" || it.packageName == "fmt" || it.packageName == "sql"
+            it.packageName == "main"
         }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
@@ -176,7 +177,154 @@ class IfdsGoTest {
             getConfigForMethod = getConfigForMethod
         )
         val methods = project.methods.filter {
-            it.packageName == "main" || it.packageName == "md5"
+            it.packageName == "main"
+        }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.metName}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on file inclusion`() {
+        val project = loadProjectForSample("FileInclusion")
+        val graph = GoApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<GoMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.metName == "Getenv" && method.packageName == "os") {
+                        add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                    }
+                    if (method.metName == "ReadFile" && method.packageName == "ioutil") {
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
+                        )
+                    }
+                }
+                rules.ifEmpty { null }
+            }
+
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod
+        )
+        val methods = project.methods.filter {
+            it.packageName == "main"
+        }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.metName}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on open password`() {
+        val project = loadProjectForSample("OpenPassword")
+        val graph = GoApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<GoMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.metName == "GetPassword" && method.packageName == "main") {
+                        add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                    }
+                    if (method.metName == "printPassword" && method.packageName == "main") {
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
+                        )
+                    }
+                }
+                rules.ifEmpty { null }
+            }
+
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod
+        )
+        val methods = project.methods.filter {
+            it.packageName == "main"
+        }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.metName}" }
+        }
+        val sinks = manager.analyze(methods)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis on x509 vulnerability`() {
+        val project = loadProjectForSample("x509")
+        val graph = GoApplicationGraphImpl(project)
+        val unitResolver = UnitResolver<GoMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<GoMethod, GoInst>.(GoMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.metName == "createCustomCertificate" && method.packageName == "main") {
+                        add(
+                            TaintMethodSource(
+                                method = mockk(),
+                                condition = ConstantTrue,
+                                actionsAfter = listOf(
+                                    AssignMark(mark = TaintMark("TAINT"), position = Result),
+                                ),
+                            )
+                        )
+                    }
+                    if (method.metName == "Verify" && method.packageName == "x509") {
+                        add(
+                            TaintMethodSink(
+                                method = mockk(), ruleNote = "CUSTOM SINK", // FIXME
+                                cwe = listOf(), // FIXME
+                                condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                            )
+                        )
+                    }
+                }
+                rules.ifEmpty { null }
+            }
+
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod
+        )
+        val methods = project.methods.filter {
+            it.packageName == "main"
         }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {

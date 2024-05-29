@@ -1828,9 +1828,11 @@ data class GoFunction(
     override val name: String
         get() = metName
     override val parameters: List<CommonMethodParameter>
-        get() = TODO("Not yet implemented")
-    override val returnType: CommonTypeName
-        get() = TODO("Not yet implemented")
+        get() = emptyList()
+    override val returnType: GoType
+        get() = TupleType(
+            returnTypes.map { it.typeName }
+        )
 
     override fun equals(other: Any?): Boolean {
         return super.equals(other)
