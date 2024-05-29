@@ -335,9 +335,13 @@ class IRParser(
     }
 
     private fun addInput(method: ProgramMethod, inputId: Int, outputId: Int, input: PandaValue) {
+        // Serega 29.05.2024: had to do it because more than one entry of the same input will be overridden
+        // For example constant "2" and expression "2 + 2"
         val outputInst = method.getInstViaId(outputId)
-        val index = outputInst.inputs().indexOf(inputId)
-        method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }[index] = input
+        var index = outputInst.inputs().indexOf(inputId)
+        val list = method.idToInputs.getOrPut(outputId) { MutableList(outputInst.inputs.size) { null } }
+        while (list[index] != null) index++
+        list[index] = input
     }
 
     internal fun mapOpcode(
