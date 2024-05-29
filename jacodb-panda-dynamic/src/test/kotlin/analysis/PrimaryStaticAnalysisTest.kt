@@ -25,6 +25,9 @@ import parser.loadIr
 private val logger = mu.KotlinLogging.logger {}
 
 class PrimaryStaticAnalysisTest {
+    private fun getOperands(inst: PandaInst): List<PandaValue> {
+        return inst.operands.flatMap { expr -> expr.operands }
+    }
     @Nested
     inner class ArgumentParameterCorrespondenceTest {
 
@@ -129,10 +132,6 @@ class PrimaryStaticAnalysisTest {
                 }
             }
             orderedInstructions.reverse()
-        }
-
-        private fun getOperands(inst: PandaInst): List<PandaValue> {
-            return inst.operands.flatMap { expr -> expr.operands }
         }
 
         private fun analyse(programName: String, startMethods: List<String>? = null): List<Pair<String, PandaInst>> {
@@ -312,6 +311,80 @@ class PrimaryStaticAnalysisTest {
                 mode = ImplicitCastAnalysisMode.POSSIBILITY_CHECK
             )
             assert(impossibleImplicitCasts.size == 2)
+        }
+    }
+
+    @Nested
+    inner class MissingMembersTest {
+        private val noMemberTypes = listOf(
+            PandaUndefinedType::class,
+            PandaArrayType::class,
+            PandaPrimitiveType::class
+        )
+
+        private fun analyse(programName: String, startMethods: List<String>, mode: ImplicitCastAnalysisMode = ImplicitCastAnalysisMode.DETECTION): List<PandaInst> {
+            val parser = loadIr("/samples/${programName}.json")
+            val project = parser.getProject()
+            val graph = PandaApplicationGraphImpl(project)
+            val methods = graph.project.classes.flatMap { it.methods }
+            val typeMismatches = mutableListOf<PandaInst>()
+            for (method in methods) {
+                if (startMethods.contains(method.name)) {
+                    for (inst in method.instructions) {
+                        val probablyMissingPropertyMembers = getOperands(inst).mapNotNull { op ->
+                            when (op) {
+                                is PandaValueByInstance -> op
+                                else -> null
+                            }
+                        }
+
+                        probablyMissingPropertyMembers.forEach { member ->
+                            if (noMemberTypes.any { it.isInstance(member.instance.type) }) {
+                                logger.info { "Accessing member ${member.property} on instance ${member.instance} of ${member.instance.typeName} type (inst: $inst)" }
+                                typeMismatches.add(inst)
+                            }
+                        }
+
+                        var callExpr: PandaInstanceCallExpr? = null
+
+                        if (inst is PandaCallInst) {
+                            if (inst.callExpr !is PandaInstanceCallExpr) {
+                                TODO("Consider that case too")
+                            }
+                            callExpr = inst.callExpr as PandaInstanceCallExpr
+                        }
+                        if (inst is PandaAssignInst) {
+                            inst.rhv.let { right ->
+                                if (right is PandaCallExpr) {
+                                    when(right) {
+                                        is PandaInstanceCallExpr -> callExpr = right
+                                        else -> TODO("Consider that case too")
+                                    }
+                                }
+                            }
+                        }
+                        if (callExpr == null) {
+                            continue
+                        }
+                        val callee = callExpr!!.method
+                        val instance = callExpr!!.instance
+                        if (noMemberTypes.any { it.isInstance(instance.type) }) {
+                            logger.info { "Calling member ${callee.name} on instance $instance of ${instance.typeName} type (inst: $inst)" }
+                            typeMismatches.add(inst)
+                        }
+                    }
+                }
+            }
+            return typeMismatches
+        }
+
+        @Test
+        fun `test calling members on objects of primitive types`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers",
+                startMethods = listOf("callingMembersOnPrimitiveTypes")
+            )
+            assert(typeMismatches.size == 4)
         }
     }
 }
