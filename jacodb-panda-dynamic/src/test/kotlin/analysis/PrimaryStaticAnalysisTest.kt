@@ -382,13 +382,17 @@ class PrimaryStaticAnalysisTest {
                             logger.info { "Calling member ${callee.name} on instance $instance (inst: $inst)" }
                             typeMismatches.add(inst)
                         }
-                        else if (instance.type is PandaClassTypeImpl) {
+                        else if (instance.type is PandaClassTypeImpl || instance is PandaLoadedValue) {
                             try {
+                                // TODO(): get rid off adhoc
+                                if (instance is PandaLoadedValue && instance.className == "console" && callee.name == "log") {
+                                    continue
+                                }
                                 if (callee.enclosingClass != null) {
                                     continue
                                 }
                             }
-                            catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a m
+                            catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a method
                                 logger.info { "Calling member ${callee.name} on instance $instance that have no such a member (inst: $inst)" }
                                 typeMismatches.add(inst)
                             }
@@ -427,7 +431,7 @@ class PrimaryStaticAnalysisTest {
             assert(typeMismatches.size == 2)
         }
 
-        @Disabled("objects weakly support right now both in IR and in parser")
+        @Disabled("objects weakly supported right now both in IR and in parser")
         @Test
         fun `test calling members on objects`() {
             val typeMismatches = analyse(
@@ -461,6 +465,15 @@ class PrimaryStaticAnalysisTest {
         fun `test on child instance calling methods defined in parent class and not overrided after that in child`() {
             val typeMismatches = analyse(
                 programName = "classes/InheritanceClass",
+                startMethods = listOf("func_main_0")
+            )
+            assert(typeMismatches.isEmpty())
+        }
+
+        @Test
+        fun `test calling static methods`() {
+            val typeMismatches = analyse(
+                programName = "classes/StaticClass",
                 startMethods = listOf("func_main_0")
             )
             assert(typeMismatches.isEmpty())

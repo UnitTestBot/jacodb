@@ -206,7 +206,10 @@ data class PandaValueByInstance(
         get() = PandaAnyType
 
     val className: String
-        get() = instance.typeName
+        get() = when(instance) {
+            is PandaLoadedValue -> instance.className
+            else -> instance.typeName
+        }
 
     override val operands: List<PandaValue>
         get() = listOf(instance)
@@ -239,7 +242,10 @@ data class PandaLoadedValue(
         get() = PandaAnyType
 
     val className: String
-        get() = instance.typeName
+        get() = when(instance) {
+            is PandaStringConstant -> instance.value
+            else -> instance.typeName
+        }
 
     override val operands: List<PandaValue>
         get() = listOf(instance)
