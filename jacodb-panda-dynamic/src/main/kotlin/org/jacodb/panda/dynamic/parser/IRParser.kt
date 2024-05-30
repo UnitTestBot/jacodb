@@ -724,8 +724,13 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stobjbyvalue" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val arrayAccess = PandaArrayAccess(
+                    array=inputs[0],
+                    index=inputs[1],
+                    type=PandaAnyType
+                )
+                val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[2])
+                method.pushInst(assignment)
             }
 
             opcode == "Intrinsic.createobjectwithbuffer" -> {
@@ -849,8 +854,14 @@ class IRParser(
             }
 
             opcode == "Intrinsic.stownbyindex" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val index = PandaNumberConstant(imms[1].toInt())
+                val arrayAccess = PandaArrayAccess(
+                    array=inputs[0],
+                    index=index,
+                    type=PandaAnyType
+                )
+                val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[1])
+                method.pushInst(assignment)
             }
 
             opcode == "Intrinsic.apply" -> {
