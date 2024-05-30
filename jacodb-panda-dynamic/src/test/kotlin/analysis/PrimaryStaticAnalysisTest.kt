@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import parser.loadIr
+import kotlin.UninitializedPropertyAccessException
+
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -343,6 +345,10 @@ class PrimaryStaticAnalysisTest {
                                 logger.info { "Accessing member ${member.property} on instance ${member.instance} of ${member.instance.typeName} type (inst: $inst)" }
                                 typeMismatches.add(inst)
                             }
+                            else if (member.instance is PandaNullConstant) {
+                                logger.info { "Accessing member ${member.property} on instance ${member.instance} (inst: $inst)" }
+                                typeMismatches.add(inst)
+                            }
                         }
 
                         var callExpr: PandaInstanceCallExpr? = null
@@ -372,6 +378,21 @@ class PrimaryStaticAnalysisTest {
                             logger.info { "Calling member ${callee.name} on instance $instance of ${instance.typeName} type (inst: $inst)" }
                             typeMismatches.add(inst)
                         }
+                        else if (instance is PandaNullConstant) {
+                            logger.info { "Calling member ${callee.name} on instance $instance (inst: $inst)" }
+                            typeMismatches.add(inst)
+                        }
+                        else if (instance.type is PandaClassTypeImpl) {
+                            try {
+                                if (callee.enclosingClass != null) {
+                                    continue
+                                }
+                            }
+                            catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a m
+                                logger.info { "Calling member ${callee.name} on instance $instance that have no such a member (inst: $inst)" }
+                                typeMismatches.add(inst)
+                            }
+                        }
                     }
                 }
             }
@@ -379,12 +400,70 @@ class PrimaryStaticAnalysisTest {
         }
 
         @Test
-        fun `test calling members on objects of primitive types`() {
+        fun `test calling members on primitive types`() {
             val typeMismatches = analyse(
                 programName = "codeqlSamples/missingMembers",
                 startMethods = listOf("callingMembersOnPrimitiveTypes")
             )
+            assert(typeMismatches.size == 6)
+        }
+
+        @Disabled("createarraywithbuffer not supported yet cause have no information about its elements in IR")
+        @Test
+        fun `test calling members on non object types`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers",
+                startMethods = listOf("callingMembersOnNonObjectsTypes")
+            )
             assert(typeMismatches.size == 4)
+        }
+
+        @Test
+        fun `test calling members on null`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers",
+                startMethods = listOf("callingMembersOnNullType")
+            )
+            assert(typeMismatches.size == 2)
+        }
+
+        @Disabled("objects weakly support right now both in IR and in parser")
+        @Test
+        fun `test calling members on objects`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers",
+                startMethods = listOf("callingMembersOnObjects")
+            )
+            assert(typeMismatches.isEmpty())
+        }
+
+        @Test
+        fun `test calling methods on class instance`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers2",
+                startMethods = listOf("callingMethods")
+            )
+            assert(typeMismatches.size == 1)
+        }
+
+        @Disabled("IRParser doesn't track information about properties and IR have no information about uninitialized properties")
+        @Test
+        fun `test accessing properties on class instance`() {
+            val typeMismatches = analyse(
+                programName = "codeqlSamples/missingMembers2",
+                startMethods = listOf("accessingProperties")
+            )
+            assert(typeMismatches.size == 4)
+        }
+
+        @Disabled("IR have no information about superclasses so lack knowledge about not overrided members")
+        @Test
+        fun `test on child instance calling methods defined in parent class and not overrided after that in child`() {
+            val typeMismatches = analyse(
+                programName = "classes/InheritanceClass",
+                startMethods = listOf("func_main_0")
+            )
+            assert(typeMismatches.isEmpty())
         }
     }
 }
