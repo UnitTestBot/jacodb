@@ -140,6 +140,28 @@ object PandaUndefinedConstant : PandaConstant {
     }
 }
 
+object PandaInfinityConstant : PandaConstant {
+    override val type: PandaType
+        get() = PandaNumberType
+
+    override fun toString(): String = "Infinity"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaInfinityConstant(this)
+    }
+}
+
+object PandaNaNConstant : PandaConstant {
+    override val type: PandaType
+        get() = PandaAnyType
+
+    override fun toString(): String = "NaN"
+
+    override fun <T> accept(visitor: PandaExprVisitor<T>): T {
+        return visitor.visitPandaNaNConstant(this)
+    }
+}
+
 object PandaNullConstant : PandaConstant {
     override val operands: List<PandaValue>
         get() = emptyList()

@@ -57,6 +57,8 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaNumberConstant(expr: PandaNumberConstant): T
     fun visitPandaStringConstant(expr: PandaStringConstant): T
     fun visitPandaUndefinedConstant(expr: PandaUndefinedConstant): T
+    fun visitPandaInfinityConstant(expr: PandaInfinityConstant): T
+    fun visitPandaNaNConstant(expr: PandaNaNConstant): T
     fun visitPandaNullConstant(expr: PandaNullConstant): T
     fun visitPandaFieldRef(expr: PandaFieldRef): T
     fun visitPandaArrayAccess(expr: PandaArrayAccess): T

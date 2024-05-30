@@ -46,6 +46,7 @@ import org.jacodb.panda.dynamic.api.PandaGeExpr
 import org.jacodb.panda.dynamic.api.PandaGotoInst
 import org.jacodb.panda.dynamic.api.PandaGtExpr
 import org.jacodb.panda.dynamic.api.PandaIfInst
+import org.jacodb.panda.dynamic.api.PandaInfinityConstant
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaInstLocation
 import org.jacodb.panda.dynamic.api.PandaInstRef
@@ -60,6 +61,7 @@ import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodConstant
 import org.jacodb.panda.dynamic.api.PandaModExpr
 import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNaNConstant
 import org.jacodb.panda.dynamic.api.PandaNegExpr
 import org.jacodb.panda.dynamic.api.PandaNeqExpr
 import org.jacodb.panda.dynamic.api.PandaNewExpr
@@ -625,6 +627,14 @@ class IRParser(
 
             opcode == "Intrinsic.ldundefined" -> {
                 handle(PandaUndefinedConstant)
+            }
+
+            opcode == "Intrinsic.ldinfinity" -> {
+                handle(PandaInfinityConstant)
+            }
+
+            opcode == "Intrinsic.ldnan" -> {
+                handle(PandaNaNConstant)
             }
 
             opcode == "Intrinsic.defineclasswithbuffer" -> {
