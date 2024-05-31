@@ -26,6 +26,7 @@ import org.jacodb.panda.dynamic.api.PandaBinaryExpr
 import org.jacodb.panda.dynamic.api.PandaBoolType
 import org.jacodb.panda.dynamic.api.PandaCallExpr
 import org.jacodb.panda.dynamic.api.PandaCallInst
+import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
 import org.jacodb.panda.dynamic.api.PandaCmpExpr
 import org.jacodb.panda.dynamic.api.PandaConditionExpr
 import org.jacodb.panda.dynamic.api.PandaConstantWithValue
@@ -37,6 +38,7 @@ import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaModExpr
 import org.jacodb.panda.dynamic.api.PandaMulExpr
+import org.jacodb.panda.dynamic.api.PandaNullConstant
 import org.jacodb.panda.dynamic.api.PandaNumberType
 import org.jacodb.panda.dynamic.api.PandaPrimitiveType
 import org.jacodb.panda.dynamic.api.PandaStringConstant
@@ -418,6 +420,7 @@ class PrimaryStaticAnalysisTest {
                                 if (instance is PandaLoadedValue && instance.className == "console" && callee.name == "log") {
                                     continue
                                 }
+                                // TODO: "callee.enclosingClass" is always non-null, BUT can be non-initialized (lateinit var), which will cause an exception in runtime
                                 if (callee.enclosingClass != null) {
                                     continue
                                 }
