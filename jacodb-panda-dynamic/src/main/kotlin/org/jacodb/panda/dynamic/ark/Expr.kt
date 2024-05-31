@@ -16,13 +16,21 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Expr : Value
+interface Expr : Value {
+    fun <R> accept(visitor: ExprVisitor<R>): R {
+        return accept(visitor as ValueVisitor<R>)
+    }
+}
 
 data class NewExpr(
     override val type: ClassType,
 ) : Expr {
     override fun toString(): String {
         return "new ${type.typeName}"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -32,6 +40,10 @@ data class NewArrayExpr(
 ) : Expr {
     override fun toString(): String {
         return "new ${type.typeName}[$size]"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -43,6 +55,10 @@ data class TypeOfExpr(
 
     override fun toString(): String {
         return "typeof $arg"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -56,6 +72,10 @@ data class InstanceOfExpr(
     override fun toString(): String {
         return "$arg instanceof $checkType"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class LengthExpr(
@@ -67,6 +87,10 @@ data class LengthExpr(
     override fun toString(): String {
         return "$arg.length"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class CastExpr(
@@ -75,6 +99,10 @@ data class CastExpr(
 ) : Expr {
     override fun toString(): String {
         return "$arg as $type"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -102,6 +130,10 @@ data class PhiExpr(
     override fun toString(): String {
         return "$lhv := phi(${args.joinToString()})"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface UnaryExpr : Expr {
@@ -118,6 +150,10 @@ data class UnaryOperation(
     override fun toString(): String {
         return "$op$arg"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface BinaryExpr : Expr {
@@ -128,6 +164,16 @@ interface BinaryExpr : Expr {
         get() = TypeInference.infer(this)
 }
 
+// TODO: AddExpr and many others
+// data class AddExpr(
+//     override val left: Value,
+//     override val right: Value,
+// ) : BinaryExpr {
+//     override fun toString(): String {
+//         return "$left + $right"
+//     }
+// }
+
 data class BinaryOperation(
     val op: BinaryOp,
     override val left: Value,
@@ -136,15 +182,38 @@ data class BinaryOperation(
     override fun toString(): String {
         return "$left $op $right"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
-data class ConditionExpr(
+// data class ConditionExpr(
+//     val relop: String,
+//     override val left: Value,
+//     override val right: Value,
+// ) : BinaryExpr {
+//     override fun toString(): String {
+//         return "$left $relop $right"
+//     }
+// }
+
+interface ConditionExpr : BinaryExpr {
+    override val type: Type
+        get() = BooleanType
+}
+
+data class RelationOperation(
     val relop: String,
     override val left: Value,
     override val right: Value,
-) : BinaryExpr {
+) : ConditionExpr {
     override fun toString(): String {
         return "$left $relop $right"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -164,6 +233,10 @@ data class InstanceCallExpr(
     override fun toString(): String {
         return "$instance.${method.sub.name}(${args.joinToString()})"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class StaticCallExpr(
@@ -172,5 +245,9 @@ data class StaticCallExpr(
 ) : CallExpr {
     override fun toString(): String {
         return "${method.enclosingClass}::${method.sub.name}(${args.joinToString()})"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }

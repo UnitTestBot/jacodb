@@ -16,4 +16,8 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Immediate : Value
+interface Immediate : Value {
+    fun <R> accept(visitor: ImmediateVisitor<R>): R {
+        return accept(visitor as ValueVisitor<R>)
+    }
+}

@@ -16,11 +16,115 @@
 
 package org.jacodb.panda.dynamic.ark
 
-data class Constant(
+interface Constant : Immediate {
+    fun <R> accept(visitor: ConstantVisitor<R>): R {
+        return accept(visitor as ImmediateVisitor<R>)
+    }
+}
+
+data class StringConstant(
     val value: String,
-    override val type: Type,
-) : Immediate {
+) : Constant {
+    override val type: Type
+        get() = StringType
+
     override fun toString(): String {
-        return value
+        return "\"$value\""
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class BooleanConstant(
+    val value: Boolean,
+) : Constant {
+    override val type: Type
+        get() = BooleanType
+
+    override fun toString(): String {
+        return if (value) "true" else "false"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    companion object {
+        val TRUE = BooleanConstant(true)
+        val FALSE = BooleanConstant(false)
+    }
+}
+
+data class NumberConstant(
+    val value: Double,
+) : Constant {
+    override val type: Type
+        get() = NumberType
+
+    override fun toString(): String {
+        return value.toString()
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+object NullConstant : Constant {
+    override val type: Type
+        get() = NullType
+
+    override fun toString(): String = "null"
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+object UndefinedConstant : Constant {
+    override val type: Type
+        get() = UndefinedType
+
+    override fun toString(): String = "undefined"
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class ArrayLiteral(
+    val elements: List<Value>,
+    override val type: ArrayType,
+) : Constant {
+    init {
+        require(type.dimensions == 1) {
+            "Array type of array literal must have exactly one dimension"
+        }
+    }
+
+    override fun toString(): String {
+        return elements.joinToString(prefix = "[", postfix = "]")
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+// TODO: replace `Pair<String, Value>` with `Property`
+data class ObjectLiteral(
+    val properties: List<Pair<String, Value>>,
+    override val type: Type, // TODO: consider ClassType
+) : Constant {
+    override fun toString(): String {
+        return properties.joinToString(prefix = "{", postfix = "}") { (name, value) ->
+            "$name: $value"
+        }
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }

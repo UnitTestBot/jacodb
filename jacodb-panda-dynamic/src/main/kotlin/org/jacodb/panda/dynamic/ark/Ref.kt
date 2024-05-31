@@ -16,12 +16,20 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Ref : Value
+interface Ref : Value {
+    fun <R> accept(visitor: RefVisitor<R>): R {
+        return accept(visitor as ValueVisitor<R>)
+    }
+}
 
 data class This(
     override val type: Type, // TODO: consider ClassType
 ) : Ref {
     override fun toString(): String = "this"
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ParameterRef(
@@ -30,6 +38,10 @@ data class ParameterRef(
 ) : Ref {
     override fun toString(): String {
         return "arg$index"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -40,6 +52,10 @@ data class ArrayAccess(
 ) : Ref {
     override fun toString(): String {
         return "$array[$index]"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -57,6 +73,10 @@ data class InstanceFieldRef(
     override fun toString(): String {
         return "$instance.${field.sub.name}"
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class StaticFieldRef(
@@ -64,5 +84,9 @@ data class StaticFieldRef(
 ) : FieldRef {
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.sub.name}"
+    }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
     }
 }

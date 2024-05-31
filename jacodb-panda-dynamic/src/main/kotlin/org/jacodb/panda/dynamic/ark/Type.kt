@@ -34,6 +34,26 @@ object UnknownType : Type {
     override fun toString(): String = typeName
 }
 
+data class UnionType(
+    val types: List<Type>,
+) : Type {
+    override val typeName: String
+        get() = types.joinToString(separator = " | ") { it.typeName }
+
+    override fun toString(): String = typeName
+}
+
+data class TupleType(
+    val types: List<Type>,
+) : Type {
+    override val typeName: String
+        get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
+
+    override fun toString(): String = typeName
+}
+
+// TODO: EnumType
+
 interface PrimitiveType : Type
 
 object BooleanType : PrimitiveType {
@@ -94,24 +114,6 @@ data class LiteralType(
     override fun toString(): String = typeName
 }
 
-data class UnionType(
-    val types: List<Type>,
-) : Type {
-    override val typeName: String
-        get() = types.joinToString(separator = " | ") { it.typeName }
-
-    override fun toString(): String = typeName
-}
-
-data class TupleType(
-    val types: List<Type>,
-) : Type {
-    override val typeName: String
-        get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
-
-    override fun toString(): String = typeName
-}
-
 interface RefType : Type
 
 data class ClassType(
@@ -139,5 +141,11 @@ data class ArrayObjectType(
     override val typeName: String
         get() = "Array<${elementType.typeName}>"
 
+    override fun toString(): String = typeName
+}
+
+data class UnclearRefType(
+    override val typeName: String,
+) : RefType {
     override fun toString(): String = typeName
 }

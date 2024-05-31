@@ -18,6 +18,8 @@ package org.jacodb.panda.dynamic.ark
 
 interface Value {
     val type: Type
+
+    fun <R> accept(visitor: ValueVisitor<R>): R
 }
 
 // TODO: use LValue to mark assignable values

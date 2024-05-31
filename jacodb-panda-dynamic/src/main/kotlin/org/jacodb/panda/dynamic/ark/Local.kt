@@ -23,4 +23,8 @@ data class Local(
     override fun toString(): String {
         return name
     }
+
+    override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
 }
