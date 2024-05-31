@@ -19,7 +19,7 @@ package org.jacodb.panda.dynamic.ark
 data class Constant(
     val value: String,
     override val type: Type,
-) : Literal {
+) : Immediate {
     override fun toString(): String {
         return value
     }

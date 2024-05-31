@@ -16,25 +16,4 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Literal : Immediate
-
-data class ArkArrayLiteral(
-    val elements: List<Value>,
-    override val type: Type,
-) : Literal {
-    override fun toString(): String {
-        return elements.joinToString(prefix = "[", postfix = "]")
-    }
-}
-
-// TODO: replace `Pair<String, Value>` with `Property`
-data class ArkObjectLiteral(
-    val properties: List<Pair<String, Value>>,
-    override val type: Type, // TODO: consider ClassType
-) : Literal {
-    override fun toString(): String {
-        return properties.joinToString(prefix = "{", postfix = "}") { (name, value) ->
-            "$name: $value"
-        }
-    }
-}
+interface Immediate : Value

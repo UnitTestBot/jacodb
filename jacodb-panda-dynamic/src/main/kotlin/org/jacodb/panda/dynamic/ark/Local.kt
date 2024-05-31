@@ -16,6 +16,6 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Local : Value {
+interface Local : Immediate {
     val name: String
 }
