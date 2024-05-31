@@ -24,14 +24,14 @@ object AnyType : Type {
     override val typeName: String
         get() = "any"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object UnknownType : Type {
     override val typeName: String
         get() = "unknown"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 interface PrimitiveType : Type
@@ -40,49 +40,49 @@ object BooleanType : PrimitiveType {
     override val typeName: String
         get() = "boolean"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object NumberType : PrimitiveType {
     override val typeName: String
         get() = "number"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object StringType : PrimitiveType {
     override val typeName: String
         get() = "string"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object NullType : PrimitiveType {
     override val typeName: String
         get() = "null"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object UndefinedType : PrimitiveType {
     override val typeName: String
         get() = "undefined"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object VoidType : PrimitiveType {
     override val typeName: String
         get() = "void"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 object NeverType : PrimitiveType {
     override val typeName: String
         get() = "never"
 
-    override fun toString(): String = javaClass.simpleName
+    override fun toString(): String = typeName
 }
 
 data class LiteralType(
@@ -90,6 +90,8 @@ data class LiteralType(
 ) : PrimitiveType {
     override val typeName: String
         get() = "literal"
+
+    override fun toString(): String = typeName
 }
 
 data class UnionType(
@@ -97,6 +99,8 @@ data class UnionType(
 ) : Type {
     override val typeName: String
         get() = types.joinToString(separator = " | ") { it.typeName }
+
+    override fun toString(): String = typeName
 }
 
 data class TupleType(
@@ -104,23 +108,36 @@ data class TupleType(
 ) : Type {
     override val typeName: String
         get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
+
+    override fun toString(): String = typeName
 }
 
 interface RefType : Type
 
-interface ClassType : RefType {
-    val className: String
+data class ClassType(
+    val classSignature: ClassSignature,
+) : RefType {
+    override val typeName: String
+        get() = classSignature.name
+
+    override fun toString(): String = typeName
 }
 
-interface ArrayType : RefType {
-    val elementType: Type
-    val dimensions: Int
-}
-
-data class ArrayTypeImpl(
-    override val elementType: Type,
-    override val dimensions: Int,
-) : ArrayType {
+data class ArrayType(
+    val elementType: Type,
+    val dimensions: Int,
+) : RefType {
     override val typeName: String
         get() = elementType.typeName + "[]".repeat(dimensions)
+
+    override fun toString(): String = typeName
+}
+
+data class ArrayObjectType(
+    val elementType: Type,
+) : RefType {
+    override val typeName: String
+        get() = "Array<${elementType.typeName}>"
+
+    override fun toString(): String = typeName
 }

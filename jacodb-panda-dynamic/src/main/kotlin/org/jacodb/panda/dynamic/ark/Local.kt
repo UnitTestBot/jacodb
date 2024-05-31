@@ -16,6 +16,11 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Local : Immediate {
-    val name: String
+data class Local(
+    val name: String,
+    override val type: Type,
+) : Immediate {
+    override fun toString(): String {
+        return name
+    }
 }

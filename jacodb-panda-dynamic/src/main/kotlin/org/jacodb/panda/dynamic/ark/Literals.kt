@@ -20,8 +20,14 @@ interface Literal : Immediate
 
 data class ArkArrayLiteral(
     val elements: List<Value>,
-    override val type: Type,
+    override val type: ArrayType,
 ) : Literal {
+    init {
+        require(type.dimensions == 1) {
+            "Array type of array literal must have exactly one dimension"
+        }
+    }
+
     override fun toString(): String {
         return elements.joinToString(prefix = "[", postfix = "]")
     }
