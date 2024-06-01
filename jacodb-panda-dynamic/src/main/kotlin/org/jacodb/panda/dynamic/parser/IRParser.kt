@@ -315,8 +315,8 @@ class IRParser(
             }
         }
 
-        when {
-            opcode == "Parameter" -> {
+        when (opcode) {
+            "Parameter" -> {
                 val c = id() - ARG_THRESHOLD
 
                 val out = if (id() >= ARG_THRESHOLD) {
@@ -336,62 +336,62 @@ class IRParser(
                 }
             }
 
-            opcode == "Constant" -> {
+            "Constant" -> {
                 val c = mapConstant(this)
                 outputs.forEach { output ->
                     addInput(method, id(), output, c)
                 }
             }
 
-            opcode == "Intrinsic.typeof" -> {
+            "Intrinsic.typeof" -> {
                 val typeofExpr = PandaTypeofExpr(inputs[0])
                 handle(typeofExpr)
             }
 
-            opcode == "Intrinsic.tonumeric" -> {
+            "Intrinsic.tonumeric" -> {
                 val toNumericExpr = PandaToNumericExpr(inputs[0])
                 handle(toNumericExpr)
             }
 
-            opcode == "Intrinsic.eq" -> {
+            "Intrinsic.eq" -> {
                 val eqExpr = PandaEqExpr(inputs[0], inputs[1])
                 handle(eqExpr)
             }
 
-            opcode == "Intrinsic.noteq" -> {
+            "Intrinsic.noteq" -> {
                 val neqExpr = PandaNeqExpr(inputs[0], inputs[1])
                 handle(neqExpr)
             }
 
-            opcode == "Intrinsic.strictnoteq" -> {
+            "Intrinsic.strictnoteq" -> {
                 val neqExpr = PandaStrictNeqExpr(inputs[0], inputs[1])
                 handle(neqExpr)
             }
 
-            opcode.startsWith("Compare") -> {
+            "Compare" -> {
                 val cmpOp = operator?.let(PandaCmpOp::valueOf) ?: error("No operator")
                 val cmpExpr = PandaCmpExpr(cmpOp, inputs[0], inputs[1])
                 handle(cmpExpr)
             }
 
-            opcode.startsWith("IfImm") -> {
+            "IfImm" -> {
                 method.pushInst(mapIfInst(this, inputs))
             }
 
-            opcode == "LoadString" -> {
+            "LoadString" -> {
                 val sc = PandaStringConstant(stringData ?: error("No string data"))
                 outputs.forEach { output ->
                     addInput(method, id(), output, sc)
                 }
             }
 
-            opcode == "CastValueToAnyType" -> {
+            "CastValueToAnyType" -> {
                 outputs.forEach { output ->
                     inputs.forEach { input -> addInput(method, id(), output, input) }
                 }
             }
 
-            opcode == "Intrinsic.newobjrange" -> {
+            "Intrinsic.newobjrange" -> {
                 val input = inputs[0]
                 val stringData = when {
                     input is PandaLocalVar -> {
@@ -412,89 +412,88 @@ class IRParser(
 
                     else -> error("No string data")
                 }
-//                        as PandaStringConstant
                 val newExpr = PandaNewExpr(stringData, inputs.drop(1))
 
                 handle(newExpr)
             }
 
-            opcode == "Intrinsic.createemptyarray" -> {
+            "Intrinsic.createemptyarray" -> {
                 val createEmptyExpr = PandaCreateEmptyArrayExpr()
                 handle(createEmptyExpr)
             }
 
-            opcode == "Intrinsic.throw" -> {
+            "Intrinsic.throw" -> {
                 val throwInst = PandaThrowInst(locationFromOp(this), inputs[0])
                 method.pushInst(throwInst)
             }
 
-            opcode == "Intrinsic.throw.constassignment" -> {
+            "Intrinsic.throw.constassignment" -> {
                 val throwInst = PandaThrowInst(locationFromOp(this), PandaBuiltInError("ConstAssignmentError"))
                 method.pushInst(throwInst)
             }
 
-            opcode == "Intrinsic.return" -> {
+            "Intrinsic.return" -> {
                 val returnInst = PandaReturnInst(locationFromOp(this), inputs.getOrNull(0))
                 method.pushInst(returnInst)
             }
 
-            opcode == "Intrinsic.returnundefined" -> {
+            "Intrinsic.returnundefined" -> {
                 val returnInst = PandaReturnInst(locationFromOp(this), PandaUndefinedConstant)
                 method.pushInst(returnInst)
             }
 
-            opcode == "Intrinsic.istrue" -> {
+            "Intrinsic.istrue" -> {
                 val eqExpr = PandaEqExpr(inputs[0], PandaNumberConstant(1))
                 handle(eqExpr)
             }
 
-            opcode == "Intrinsic.isfalse" -> {
+            "Intrinsic.isfalse" -> {
                 val eqExpr = PandaEqExpr(inputs[0], PandaNumberConstant(0))
                 handle(eqExpr)
             }
 
-            opcode == "Intrinsic.ldfalse" -> {
+            "Intrinsic.ldfalse" -> {
                 val falseConstant = PandaBoolConstant(false)
                 handle(falseConstant)
             }
 
-            opcode == "Intrinsic.ldtrue" -> {
+            "Intrinsic.ldtrue" -> {
                 val trueConstant = PandaBoolConstant(true)
                 handle(trueConstant)
             }
 
-            opcode == "Intrinsic.ldnull" -> {
+            "Intrinsic.ldnull" -> {
                 outputs.forEach { output ->
                     addInput(method, id(), output, PandaNullConstant)
                 }
             }
 
-            opcode == "Intrinsic.greater" -> {
+            "Intrinsic.greater" -> {
                 val gtExpr = PandaGtExpr(inputs[0], inputs[1])
                 handle(gtExpr)
             }
 
-            opcode == "Intrinsic.greatereq" -> {
+            "Intrinsic.greatereq" -> {
                 val geExpr = PandaGeExpr(inputs[0], inputs[1])
                 handle(geExpr)
             }
 
-            opcode == "Intrinsic.less" -> {
+            "Intrinsic.less" -> {
                 val ltExpr = PandaLtExpr(inputs[0], inputs[1])
                 handle(ltExpr)
             }
 
-            opcode == "Intrinsic.lesseq" -> {
+            "Intrinsic.lesseq" -> {
                 val leExpr = PandaLeExpr(inputs[0], inputs[1])
                 handle(leExpr)
             }
 
-            opcode == "Intrinsic.stricteq" -> {
+            "Intrinsic.stricteq" -> {
                 val strictEqExpr = PandaStrictEqExpr(inputs[0], inputs[1])
                 handle(strictEqExpr)
             }
 
-            opcode == "Intrinsic.tryldglobalbyname" -> {
+            "Intrinsic.tryldglobalbyname" -> {
                 val name = stringData ?: error("No string data")
                 val out = method.nameToLocalVarId.getOrDefault(name, PandaLoadedValue(PandaStringConstant(name)))
                 outputs.forEach { output ->
@@ -502,7 +501,7 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.ldobjbyname" -> {
+            "Intrinsic.ldobjbyname" -> {
                 val name = stringData ?: error("No string data")
                 val out = if (inputs[0].type is PandaArrayType && name == "length") {
                     val expr = PandaLengthExpr(inputs[0])
@@ -519,7 +518,7 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.ldobjbyvalue" -> {
+            "Intrinsic.ldobjbyvalue" -> {
                 val out = PandaArrayAccess(
                     array = inputs[0],
                     index = inputs[1],
@@ -530,7 +529,7 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.ldglobalvar" -> {
+            "Intrinsic.ldglobalvar" -> {
                 val name = stringData ?: error("No string data")
                 val out = PandaValueByInstance(PandaThis(PandaClassTypeImpl("GLOBAL")), name)
                 outputs.forEach { output ->
@@ -538,12 +537,12 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.stglobalvar" -> {
+            "Intrinsic.stglobalvar" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stobjbyname" -> {
+            "Intrinsic.stobjbyname" -> {
                 val objectName = stringData ?: error("No string data")
                 val instance = inputs[0]
                 val value = inputs[1]
@@ -552,44 +551,44 @@ class IRParser(
                 method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
             }
 
-            opcode == "Intrinsic.ldhole" -> {
+            "Intrinsic.ldhole" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.ldundefined" -> {
+            "Intrinsic.ldundefined" -> {
                 handle(PandaUndefinedConstant)
             }
 
-            opcode == "Intrinsic.ldinfinity" -> {
+            "Intrinsic.ldinfinity" -> {
                 handle(PandaInfinityConstant)
             }
 
-            opcode == "Intrinsic.ldnan" -> {
+            "Intrinsic.ldnan" -> {
                 handle(PandaNaNConstant)
             }
 
-            opcode == "Intrinsic.defineclasswithbuffer" -> {
+            "Intrinsic.defineclasswithbuffer" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.callruntime.definefieldbyvalue" -> {
+            "Intrinsic.callruntime.definefieldbyvalue" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.newlexenv" -> {
+            "Intrinsic.newlexenv" -> {
                 program!!.newLexenv()
                 method.pushInst(PandaNewLexenvInst(locationFromOp(this)))
             }
 
-            opcode == "Intrinsic.poplexenv" -> {
+            "Intrinsic.poplexenv" -> {
                 program!!.popLexenv()
                 method.pushInst(PandaPopLexenvInst(locationFromOp(this)))
             }
 
-            opcode == "Intrinsic.stlexvar" -> {
+            "Intrinsic.stlexvar" -> {
                 val lexvar = PandaLexVar(
                     lexenv ?: error("No lexenv"),
                     lexvar ?: error("No lexvar"),
@@ -600,7 +599,7 @@ class IRParser(
                 method.pushInst(PandaAssignInst(locationFromOp(this), lexvar, value))
             }
 
-            opcode == "Intrinsic.ldlexvar" -> {
+            "Intrinsic.ldlexvar" -> {
                 val lexvar = PandaLexVar(
                     lexenv ?: error("No lexenv"),
                     lexvar ?: error("No lexvar"),
@@ -610,7 +609,7 @@ class IRParser(
                 handle(PandaLoadedValue(lexvar))
             }
 
-            opcode == "Intrinsic.definemethod" -> {
+            "Intrinsic.definemethod" -> {
                 val name = functionName ?: error("No functionName")
                 val out = PandaValueByInstance(inputs[0], name)
                 outputs.forEach { output ->
@@ -620,7 +619,7 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.definefieldbyname" -> {
+            "Intrinsic.definefieldbyname" -> {
                 val fieldName = stringData ?: error("No stringData")
 
                 val instance = inputs[0]
@@ -630,17 +629,17 @@ class IRParser(
                 method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
             }
 
-            opcode == "Intrinsic.definefunc" -> {
+            "Intrinsic.definefunc" -> {
                 val methodConstant = PandaMethodConstant(functionName ?: error("No function name"))
                 handle(methodConstant)
             }
 
-            opcode == "Intrinsic.getiterator" -> {
+            "Intrinsic.getiterator" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.createarraywithbuffer" -> {
+            "Intrinsic.createarraywithbuffer" -> {
                 /*
                 In bytecode, initialization of a literal array happens in the following order:
                 1) Until elements in the buffer ([]) are instances of certain primitive types (number, string, boolean, null) and have no gaps (no situations like [1, , 1]),
@@ -675,27 +674,27 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.ldexternalmodulevar" -> {
+            "Intrinsic.ldexternalmodulevar" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.throw.undefinedifholewithname" -> {
+            "Intrinsic.throw.undefinedifholewithname" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.createemptyobject" -> {
+            "Intrinsic.createemptyobject" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stmodulevar" -> {
+            "Intrinsic.stmodulevar" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stobjbyvalue" -> {
+            "Intrinsic.stobjbyvalue" -> {
                 val arrayAccess = PandaArrayAccess(
                     array = inputs[0],
                     index = inputs[1],
@@ -705,7 +704,7 @@ class IRParser(
                 method.pushInst(assignment)
             }
 
-            opcode == "Intrinsic.createobjectwithbuffer" -> {
+            "Intrinsic.createobjectwithbuffer" -> {
                 // TODO(): Need more intelligent processing with correct model for object; currently only demonstrates how to take into account information about fields with literal values.
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaArrayTypeImpl(PandaAnyType))
@@ -737,122 +736,122 @@ class IRParser(
                 }
             }
 
-            opcode == "Intrinsic.ldglobal" -> {
+            "Intrinsic.ldglobal" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.starrayspread" -> {
+            "Intrinsic.starrayspread" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.supercallspread" -> {
+            "Intrinsic.supercallspread" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.throw.ifsupernotcorrectcall" -> {
+            "Intrinsic.throw.ifsupernotcorrectcall" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.ldlocalmodulevar" -> {
+            "Intrinsic.ldlocalmodulevar" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.asyncfunctionenter" -> {
+            "Intrinsic.asyncfunctionenter" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.asyncfunctionawaituncaught" -> {
+            "Intrinsic.asyncfunctionawaituncaught" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.suspendgenerator" -> {
+            "Intrinsic.suspendgenerator" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.resumegenerator" -> {
+            "Intrinsic.resumegenerator" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.getresumemode" -> {
+            "Intrinsic.getresumemode" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.callthisrange" -> {
+            "Intrinsic.callthisrange" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.asyncfunctionresolve" -> {
+            "Intrinsic.asyncfunctionresolve" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.asyncfunctionreject" -> {
+            "Intrinsic.asyncfunctionreject" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.newobjapply" -> {
+            "Intrinsic.newobjapply" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.supercallthisrange" -> {
+            "Intrinsic.supercallthisrange" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.or2" -> {
+            "Intrinsic.or2" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.definegettersetterbyvalue" -> {
+            "Intrinsic.definegettersetterbyvalue" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stownbyname" -> {
+            "Intrinsic.stownbyname" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.ldsuperbyname" -> {
+            "Intrinsic.ldsuperbyname" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.instanceof" -> {
+            "Intrinsic.instanceof" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.dec" -> {
+            "Intrinsic.dec" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.throw.ifnotobject" -> {
+            "Intrinsic.throw.ifnotobject" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.copydataproperties" -> {
+            "Intrinsic.copydataproperties" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stownbyindex" -> {
+            "Intrinsic.stownbyindex" -> {
                 val index = PandaNumberConstant(imms[1].toInt())
                 val arrayAccess = PandaArrayAccess(
                     array = inputs[0],
@@ -863,47 +862,47 @@ class IRParser(
                 method.pushInst(assignment)
             }
 
-            opcode == "Intrinsic.apply" -> {
+            "Intrinsic.apply" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.callrange" -> {
+            "Intrinsic.callrange" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.getpropiterator" -> {
+            "Intrinsic.getpropiterator" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.getnextpropname" -> {
+            "Intrinsic.getnextpropname" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stownbyvalue" -> {
+            "Intrinsic.stownbyvalue" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.delobjprop" -> {
+            "Intrinsic.delobjprop" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stsuperbyname" -> {
+            "Intrinsic.stsuperbyname" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.tonumber" -> {
+            "Intrinsic.tonumber" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
             }
 
-            opcode == "Intrinsic.stconsttoglobalrecord" -> {
+            "Intrinsic.stconsttoglobalrecord" -> {
                 val variableName = stringData?.takeIf { it.isNotEmpty() }
                     ?: run {
                         logger.error("No stringData for stconsttoglobalrecord")
@@ -913,87 +912,87 @@ class IRParser(
                 method.nameToLocalVarId[variableName] = localVar
             }
 
-            opcode == "Intrinsic.callthis0" -> {
+            "Intrinsic.callthis0" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callthis1" -> {
+            "Intrinsic.callthis1" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callthis2" -> {
+            "Intrinsic.callthis2" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callthis3" -> {
+            "Intrinsic.callthis3" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callarg0" -> {
+            "Intrinsic.callarg0" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callarg1" -> {
+            "Intrinsic.callarg1" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callargs2" -> {
+            "Intrinsic.callargs2" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.callargs3" -> {
+            "Intrinsic.callargs3" -> {
                 val callExpr = getVirtualCallExprByInputs(inputs, method, env)
                 handle2(callExpr)
             }
 
-            opcode == "Intrinsic.inc" -> {
+            "Intrinsic.inc" -> {
                 val addExpr = PandaAddExpr(inputs[0], PandaNumberConstant(1))
                 handle(addExpr)
             }
 
-            opcode == "Intrinsic.add2" -> {
+            "Intrinsic.add2" -> {
                 val addExpr = PandaAddExpr(inputs[0], inputs[1])
                 handle(addExpr)
             }
 
-            opcode == "Intrinsic.sub2" -> {
+            "Intrinsic.sub2" -> {
                 val subExpr = PandaSubExpr(inputs[0], inputs[1])
                 handle(subExpr)
             }
 
-            opcode == "Intrinsic.mul2" -> {
+            "Intrinsic.mul2" -> {
                 val mulExpr = PandaMulExpr(inputs[0], inputs[1])
                 handle(mulExpr)
             }
 
-            opcode == "Intrinsic.div2" -> {
+            "Intrinsic.div2" -> {
                 val divExpr = PandaDivExpr(inputs[0], inputs[1])
                 handle(divExpr)
             }
 
-            opcode == "Intrinsic.mod2" -> {
+            "Intrinsic.mod2" -> {
                 val modExpr = PandaModExpr(inputs[0], inputs[1])
                 handle(modExpr)
             }
 
-            opcode == "Intrinsic.exp" -> {
+            "Intrinsic.exp" -> {
                 val expExpr = PandaExpExpr(inputs[0], inputs[1])
                 handle(expExpr)
             }
 
-            opcode == "Intrinsic.neg" -> {
+            "Intrinsic.neg" -> {
                 val negExpr = PandaNegExpr(inputs[0])
                 handle(negExpr)
             }
 
-            opcode == "Phi" -> {
+            "Phi" -> {
                 if ((users.size == 1 && users[0] == id) || users.isEmpty()) return@with
                 val phiExpr = PandaPhiValue(
                     _inputs = lazy { inputsViaOp(this) },
@@ -1003,7 +1002,7 @@ class IRParser(
                 handle(phiExpr)
             }
 
-            opcode == "CatchPhi" -> {
+            "CatchPhi" -> {
                 // Catch basic block contains multiple CatchPhi, but only the last one contains "error" variable.
                 // This CatchPhi is the last one, so ignoring all the other ones before it.
                 val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
@@ -1032,7 +1031,7 @@ class IRParser(
                 }
             }
 
-            opcode == "Try" -> {
+            "Try" -> {
                 // assert(basicBlock.successors.size == 2)
                 // val tryBBid = basicBlock.successors[0]
                 // val catchBBid = basicBlock.successors[1]
@@ -1044,7 +1043,7 @@ class IRParser(
                 // env.setTryBlockBBId(catchBBid, tryBBid)
             }
 
-            opcode == "Intrinsic.sttoglobalrecord" -> {
+            "Intrinsic.sttoglobalrecord" -> {
                 val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
                 val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName = stringData!!)
                 method.pushInst(assignment)
@@ -1052,7 +1051,7 @@ class IRParser(
                 env.setLocalVar(stringData!!, lv)
             }
 
-            opcode == "Intrinsic.trystglobalbyname" -> {
+            "Intrinsic.trystglobalbyname" -> {
                 val lv = env.getLocalVar(stringData!!)
                     ?: error("Can't load local var from environment for literal \"$stringData\"")
                 method.pushInst(PandaAssignInst(locationFromOp(this), lv, inputs[0]))
