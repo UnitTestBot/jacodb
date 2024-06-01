@@ -291,11 +291,13 @@ class IRParser(
         }
 
         fun handle(expr: PandaExpr) {
-            var type: PandaType = PandaAnyType
-            if (expr is PandaNewExpr) type = expr.type
-            if (expr is PandaLoadedValue) type = expr.instance.type
-            if (expr is PandaPhiValue) type = expr.type
-            if (expr is PandaConstant) type = expr.type
+            val type: PandaType = when (expr) {
+                is PandaNewExpr -> expr.type
+                is PandaLoadedValue -> expr.instance.type
+                is PandaPhiValue -> expr.type
+                is PandaConstant -> expr.type
+                else -> PandaAnyType
+            }
             val lv = PandaLocalVar(method.currentLocalVarId++, type)
             outputs.forEach { output ->
                 addInput(method, id(), output, lv)
