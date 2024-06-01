@@ -17,10 +17,6 @@
 package org.jacodb.panda.dynamic.ark
 
 interface Ref : Value {
-    fun <R> accept(visitor: RefVisitor<R>): R {
-        return accept(visitor as ValueVisitor<R>)
-    }
-
     interface Visitor<out R> {
         fun visit(ref: This): R
         fun visit(ref: ParameterRef): R
@@ -39,7 +35,7 @@ interface Ref : Value {
         }
     }
 
-    override fun <R> accept3(visitor: Value.Visitor<R>): R {
+    override fun <R> accept(visitor: Value.Visitor<R>): R {
         return accept3(visitor as Visitor<R>)
     }
 
@@ -50,10 +46,6 @@ data class This(
     override val type: Type, // TODO: consider ClassType
 ) : Ref {
     override fun toString(): String = "this"
-
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
 
     override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
@@ -68,10 +60,6 @@ data class ParameterRef(
         return "arg$index"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
     override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
@@ -84,10 +72,6 @@ data class ArrayAccess(
 ) : Ref {
     override fun toString(): String {
         return "$array[$index]"
-    }
-
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
     }
 
     override fun <R> accept3(visitor: Ref.Visitor<R>): R {
@@ -110,10 +94,6 @@ data class InstanceFieldRef(
         return "$instance.${field.sub.name}"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
     override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
@@ -124,10 +104,6 @@ data class StaticFieldRef(
 ) : FieldRef {
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.sub.name}"
-    }
-
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
     }
 
     override fun <R> accept3(visitor: Ref.Visitor<R>): R {

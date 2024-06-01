@@ -17,10 +17,6 @@
 package org.jacodb.panda.dynamic.ark
 
 interface Expr : Value {
-    fun <R> accept(visitor: ExprVisitor<R>): R {
-        return accept(visitor as ValueVisitor<R>)
-    }
-
     interface Visitor<out R> {
         fun visit(expr: NewExpr): R
         fun visit(expr: NewArrayExpr): R
@@ -53,11 +49,11 @@ interface Expr : Value {
         }
     }
 
-    override fun <R> accept3(visitor: Value.Visitor<R>): R {
-        return accept3(visitor as Visitor<R>)
+    override fun <R> accept(visitor: Value.Visitor<R>): R {
+        return accept(visitor as Visitor<R>)
     }
 
-    fun <R> accept3(visitor: Visitor<R>): R
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 data class NewExpr(
@@ -67,11 +63,7 @@ data class NewExpr(
         return "new ${type.typeName}"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -84,11 +76,7 @@ data class NewArrayExpr(
         return "new ${type.typeName}[$size]"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -103,11 +91,7 @@ data class TypeOfExpr(
         return "typeof $arg"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -123,11 +107,7 @@ data class InstanceOfExpr(
         return "$arg instanceof $checkType"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -142,11 +122,7 @@ data class LengthExpr(
         return "$arg.length"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -159,11 +135,7 @@ data class CastExpr(
         return "$arg as $type"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -193,11 +165,7 @@ data class PhiExpr(
         return "$lhv := phi(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -217,11 +185,7 @@ data class UnaryOperation(
         return "$op$arg"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -253,11 +217,7 @@ data class BinaryOperation(
         return "$left $op $right"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -286,11 +246,7 @@ data class RelationOperation(
         return "$left $relop $right"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -312,11 +268,7 @@ data class InstanceCallExpr(
         return "$instance.${method.sub.name}(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -329,11 +281,7 @@ data class StaticCallExpr(
         return "${method.enclosingClass}::${method.sub.name}(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

@@ -17,10 +17,6 @@
 package org.jacodb.panda.dynamic.ark
 
 interface Immediate : Value {
-    fun <R> accept(visitor: ImmediateVisitor<R>): R {
-        return accept(visitor as ValueVisitor<R>)
-    }
-
     interface Visitor<out R> : Constant.Visitor<R> {
         fun visit(value: Local): R
 
@@ -34,9 +30,9 @@ interface Immediate : Value {
         }
     }
 
-    override fun <R> accept3(visitor: Value.Visitor<R>): R {
-        return accept3(visitor as Visitor<R>)
+    override fun <R> accept(visitor: Value.Visitor<R>): R {
+        return this.accept(visitor as Visitor<R>)
     }
 
-    fun <R> accept3(visitor: Visitor<R>): R
+    fun <R> accept(visitor: Visitor<R>): R
 }

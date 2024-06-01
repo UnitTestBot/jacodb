@@ -37,9 +37,7 @@ interface Value {
         }
     }
 
-    fun <R> accept(visitor: ValueVisitor<R>): R
-
-    fun <R> accept3(visitor: Visitor<R>): R
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 // TODO: use LValue to mark assignable values

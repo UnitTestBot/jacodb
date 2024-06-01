@@ -17,10 +17,6 @@
 package org.jacodb.panda.dynamic.ark
 
 interface Constant : Immediate {
-    fun <R> accept(visitor: ConstantVisitor<R>): R {
-        return accept(visitor as ImmediateVisitor<R>)
-    }
-
     interface Visitor<out R> {
         fun visit(value: StringConstant): R
         fun visit(value: BooleanConstant): R
@@ -43,11 +39,11 @@ interface Constant : Immediate {
         }
     }
 
-    override fun <R> accept3(visitor: Immediate.Visitor<R>): R {
-        return accept3(visitor as Visitor<R>)
+    override fun <R> accept(visitor: Immediate.Visitor<R>): R {
+        return accept(visitor as Visitor<R>)
     }
 
-    fun <R> accept3(visitor: Visitor<R>): R
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 data class StringConstant(
@@ -60,11 +56,7 @@ data class StringConstant(
         return "\"$value\""
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -79,11 +71,7 @@ data class BooleanConstant(
         return if (value) "true" else "false"
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 
@@ -103,11 +91,7 @@ data class NumberConstant(
         return value.toString()
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -118,11 +102,7 @@ object NullConstant : Constant {
 
     override fun toString(): String = "null"
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -133,11 +113,7 @@ object UndefinedConstant : Constant {
 
     override fun toString(): String = "undefined"
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -156,11 +132,7 @@ data class ArrayLiteral(
         return elements.joinToString(prefix = "[", postfix = "]")
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -176,11 +148,7 @@ data class ObjectLiteral(
         }
     }
 
-    override fun <R> accept(visitor: ValueVisitor<R>): R {
-        return visitor.visit(this)
-    }
-
-    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
