@@ -85,7 +85,7 @@ data class TypeOfExpr(
     val arg: Value,
 ) : Expr {
     override val type: Type
-        get() = arg.type
+        get() = StringType
 
     override fun toString(): String {
         return "typeof $arg"
