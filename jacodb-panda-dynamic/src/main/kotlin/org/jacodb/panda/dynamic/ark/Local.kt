@@ -27,4 +27,8 @@ data class Local(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Immediate.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }

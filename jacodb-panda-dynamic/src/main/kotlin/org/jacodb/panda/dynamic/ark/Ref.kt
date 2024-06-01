@@ -20,6 +20,30 @@ interface Ref : Value {
     fun <R> accept(visitor: RefVisitor<R>): R {
         return accept(visitor as ValueVisitor<R>)
     }
+
+    interface Visitor<out R> {
+        fun visit(ref: This): R
+        fun visit(ref: ParameterRef): R
+        fun visit(ref: ArrayAccess): R
+        fun visit(ref: InstanceFieldRef): R
+        fun visit(ref: StaticFieldRef): R
+
+        interface Default<out R> : Visitor<R> {
+            fun defaultVisit(ref: Ref): R
+
+            override fun visit(ref: This): R = defaultVisit(ref)
+            override fun visit(ref: ParameterRef): R = defaultVisit(ref)
+            override fun visit(ref: ArrayAccess): R = defaultVisit(ref)
+            override fun visit(ref: InstanceFieldRef): R = defaultVisit(ref)
+            override fun visit(ref: StaticFieldRef): R = defaultVisit(ref)
+        }
+    }
+
+    override fun <R> accept3(visitor: Value.Visitor<R>): R {
+        return accept3(visitor as Visitor<R>)
+    }
+
+    fun <R> accept3(visitor: Visitor<R>): R
 }
 
 data class This(
@@ -28,6 +52,10 @@ data class This(
     override fun toString(): String = "this"
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -43,6 +71,10 @@ data class ParameterRef(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ArrayAccess(
@@ -55,6 +87,10 @@ data class ArrayAccess(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -77,6 +113,10 @@ data class InstanceFieldRef(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class StaticFieldRef(
@@ -87,6 +127,10 @@ data class StaticFieldRef(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

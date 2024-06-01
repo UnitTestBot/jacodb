@@ -34,10 +34,11 @@ interface ValueVisitor<out R> :
     }
 }
 
-fun <R> Value.accept2(valueVisitor: ValueVisitor<R>): R = when (this) {
-    is Immediate -> accept2(valueVisitor as ImmediateVisitor<R>)
-    is Expr -> accept2(valueVisitor as ExprVisitor<R>)
-    is Ref -> accept2(valueVisitor as RefVisitor<R>)
+fun <R> Value.accept2(valueVisitor: ValueVisitor<R>): R = when {
+    this is Immediate -> accept2(valueVisitor as ImmediateVisitor<R>)
+    this is Expr -> accept2(valueVisitor as ExprVisitor<R>)
+    this is Ref -> accept2(valueVisitor as RefVisitor<R>)
+    valueVisitor is ValueVisitor.Default<R> -> valueVisitor.defaultVisit(this)
     else -> error("No visitor for $this")
 }
 
@@ -55,9 +56,10 @@ interface ImmediateVisitor<out R> : ConstantVisitor<R> {
     }
 }
 
-fun <R> Immediate.accept2(immediateVisitor: ImmediateVisitor<R>): R = when (this) {
-    is Constant -> accept2(immediateVisitor as ConstantVisitor<R>)
-    is Local -> immediateVisitor.visit(this)
+fun <R> Immediate.accept2(immediateVisitor: ImmediateVisitor<R>): R = when {
+    this is Constant -> accept2(immediateVisitor as ConstantVisitor<R>)
+    this is Local -> immediateVisitor.visit(this)
+    immediateVisitor is ImmediateVisitor.Default<R> -> immediateVisitor.defaultVisit(this)
     else -> error("No visitor for $this")
 }
 
@@ -83,14 +85,15 @@ interface ConstantVisitor<out R> {
     }
 }
 
-fun <R> Constant.accept2(constantVisitor: ConstantVisitor<R>): R = when (this) {
-    is StringConstant -> constantVisitor.visit(this)
-    is BooleanConstant -> constantVisitor.visit(this)
-    is NumberConstant -> constantVisitor.visit(this)
-    is NullConstant -> constantVisitor.visit(this)
-    is UndefinedConstant -> constantVisitor.visit(this)
-    is ArrayLiteral -> constantVisitor.visit(this)
-    is ObjectLiteral -> constantVisitor.visit(this)
+fun <R> Constant.accept2(constantVisitor: ConstantVisitor<R>): R = when {
+    this is StringConstant -> constantVisitor.visit(this)
+    this is BooleanConstant -> constantVisitor.visit(this)
+    this is NumberConstant -> constantVisitor.visit(this)
+    this is NullConstant -> constantVisitor.visit(this)
+    this is UndefinedConstant -> constantVisitor.visit(this)
+    this is ArrayLiteral -> constantVisitor.visit(this)
+    this is ObjectLiteral -> constantVisitor.visit(this)
+    constantVisitor is ConstantVisitor.Default<R> -> constantVisitor.defaultVisit(this)
     else -> error("No visitor for $this")
 }
 
@@ -126,18 +129,19 @@ interface ExprVisitor<out R> {
     }
 }
 
-fun <R> Expr.accept2(exprVisitor: ExprVisitor<R>): R = when (this) {
-    is NewExpr -> exprVisitor.visit(this)
-    is NewArrayExpr -> exprVisitor.visit(this)
-    is TypeOfExpr -> exprVisitor.visit(this)
-    is InstanceOfExpr -> exprVisitor.visit(this)
-    is LengthExpr -> exprVisitor.visit(this)
-    is CastExpr -> exprVisitor.visit(this)
-    is PhiExpr -> exprVisitor.visit(this)
-    is UnaryOperation -> exprVisitor.visit(this)
-    is BinaryOperation -> exprVisitor.visit(this)
-    is InstanceCallExpr -> exprVisitor.visit(this)
-    is StaticCallExpr -> exprVisitor.visit(this)
+fun <R> Expr.accept2(exprVisitor: ExprVisitor<R>): R = when {
+    this is NewExpr -> exprVisitor.visit(this)
+    this is NewArrayExpr -> exprVisitor.visit(this)
+    this is TypeOfExpr -> exprVisitor.visit(this)
+    this is InstanceOfExpr -> exprVisitor.visit(this)
+    this is LengthExpr -> exprVisitor.visit(this)
+    this is CastExpr -> exprVisitor.visit(this)
+    this is PhiExpr -> exprVisitor.visit(this)
+    this is UnaryOperation -> exprVisitor.visit(this)
+    this is BinaryOperation -> exprVisitor.visit(this)
+    this is InstanceCallExpr -> exprVisitor.visit(this)
+    this is StaticCallExpr -> exprVisitor.visit(this)
+    exprVisitor is ExprVisitor.Default<R> -> exprVisitor.defaultVisit(this)
     else -> error("No visitor for $this")
 }
 
@@ -159,12 +163,12 @@ interface RefVisitor<out R> {
     }
 }
 
-fun <R> Ref.accept2(refVisitor: RefVisitor<R>): R = when (this) {
-    is This -> refVisitor.visit(this)
-    is ParameterRef -> refVisitor.visit(this)
-    is ArrayAccess -> refVisitor.visit(this)
-    is InstanceFieldRef -> refVisitor.visit(this)
-    is StaticFieldRef -> refVisitor.visit(this)
+fun <R> Ref.accept2(refVisitor: RefVisitor<R>): R = when {
+    this is This -> refVisitor.visit(this)
+    this is ParameterRef -> refVisitor.visit(this)
+    this is ArrayAccess -> refVisitor.visit(this)
+    this is InstanceFieldRef -> refVisitor.visit(this)
+    this is StaticFieldRef -> refVisitor.visit(this)
     else -> error("No visitor for $this")
 }
 
@@ -290,23 +294,240 @@ object ValuePrinter : ValueVisitor.Default<Unit> {
     }
 }
 
+object ImmediatePrinter : ImmediateVisitor.Default<Unit> {
+    override fun defaultVisit(value: Immediate) {
+        println("defaultVisit<Immediate>($value)")
+    }
+
+    override fun visit(value: Local) {
+        println("visit<Local>($value)")
+    }
+
+    override fun visit(value: StringConstant) {
+        println("visit<StringConstant>($value)")
+    }
+
+    override fun visit(value: BooleanConstant) {
+        println("visit<BooleanConstant>($value)")
+    }
+
+    override fun visit(value: NumberConstant) {
+        println("visit<NumberConstant>($value)")
+    }
+
+    override fun visit(value: NullConstant) {
+        println("visit<NullConstant>($value)")
+    }
+
+    override fun visit(value: UndefinedConstant) {
+        println("visit<UndefinedConstant>($value)")
+    }
+}
+
+object ValuePrinter3 : Value.Visitor.Default<Unit> {
+    override fun defaultVisit(value: Value) {
+        println("defaultVisit<Value>($value)")
+    }
+
+    override fun defaultVisit(value: Immediate) {
+        println("defaultVisit<Immediate>($value)")
+    }
+
+    override fun defaultVisit(expr: Expr) {
+        println("defaultVisit<Expr>($expr)")
+    }
+
+    override fun defaultVisit(ref: Ref) {
+        println("defaultVisit<Ref>($ref)")
+    }
+
+    override fun defaultVisit(value: Constant) {
+        println("defaultVisit<Constant>($value)")
+    }
+
+    override fun visit(value: Local) {
+        println("visit<Local>($value)")
+    }
+
+    override fun visit(value: StringConstant) {
+        println("visit<StringConstant>($value)")
+    }
+
+    override fun visit(value: BooleanConstant) {
+        println("visit<BooleanConstant>($value)")
+    }
+
+    override fun visit(value: NumberConstant) {
+        println("visit<NumberConstant>($value)")
+    }
+
+    override fun visit(value: NullConstant) {
+        println("visit<NullConstant>($value)")
+    }
+
+    override fun visit(value: UndefinedConstant) {
+        println("visit<UndefinedConstant>($value)")
+    }
+
+    override fun visit(value: ArrayLiteral) {
+        println("visit<ArrayLiteral>($value)")
+    }
+
+    override fun visit(value: ObjectLiteral) {
+        println("visit<ObjectLiteral>($value)")
+    }
+
+    override fun visit(expr: NewExpr) {
+        println("visit<NewExpr>($expr)")
+    }
+
+    override fun visit(expr: NewArrayExpr) {
+        println("visit<NewArrayExpr>($expr)")
+    }
+
+    override fun visit(expr: TypeOfExpr) {
+        println("visit<TypeOfExpr>($expr)")
+    }
+
+    override fun visit(expr: InstanceOfExpr) {
+        println("visit<InstanceOfExpr>($expr)")
+    }
+
+    override fun visit(expr: LengthExpr) {
+        println("visit<LengthExpr>($expr)")
+    }
+
+    override fun visit(expr: CastExpr) {
+        println("visit<CastExpr>($expr)")
+    }
+
+    override fun visit(expr: PhiExpr) {
+        println("visit<PhiExpr>($expr)")
+    }
+
+    override fun visit(expr: UnaryOperation) {
+        println("visit<UnaryOperation>($expr)")
+    }
+
+    override fun visit(expr: BinaryOperation) {
+        println("visit<BinaryOperation>($expr)")
+    }
+
+    override fun visit(expr: RelationOperation) {
+        println("visit<RelationOperation>($expr)")
+    }
+
+    override fun visit(expr: InstanceCallExpr) {
+        println("visit<InstanceCallExpr>($expr)")
+    }
+
+    override fun visit(expr: StaticCallExpr) {
+        println("visit<StaticCallExpr>($expr)")
+    }
+
+    override fun visit(ref: This) {
+        println("visit<This>($ref)")
+    }
+
+    override fun visit(ref: ParameterRef) {
+        println("visit<ParameterRef>($ref)")
+    }
+
+    override fun visit(ref: ArrayAccess) {
+        println("visit<ArrayAccess>($ref)")
+    }
+
+    override fun visit(ref: InstanceFieldRef) {
+        println("visit<InstanceFieldRef>($ref)")
+    }
+
+    override fun visit(ref: StaticFieldRef) {
+        println("visit<StaticFieldRef>($ref)")
+    }
+}
+
+object ImmediatePrinter3 : Immediate.Visitor.Default<Unit> {
+    override fun defaultVisit(value: Immediate) {
+        println("defaultVisit<Immediate>($value)")
+    }
+
+    override fun visit(value: Local) {
+        println("visit<Local>($value)")
+    }
+
+    override fun visit(value: StringConstant) {
+        println("visit<StringConstant>($value)")
+    }
+
+    override fun visit(value: BooleanConstant) {
+        println("visit<BooleanConstant>($value)")
+    }
+
+    override fun visit(value: NumberConstant) {
+        println("visit<NumberConstant>($value)")
+    }
+
+    override fun visit(value: NullConstant) {
+        println("visit<NullConstant>($value)")
+    }
+
+    override fun visit(value: UndefinedConstant) {
+        println("visit<UndefinedConstant>($value)")
+    }
+}
+
 fun main() {
-    val local = Local("kek", NumberType)
-    val stringConstant = StringConstant("lol")
+    val local: Immediate = Local("kek", NumberType)
+    val stringConstant: Constant = StringConstant("lol")
     val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArrayType(NumberType, 1))
-    val expr = BinaryOperation(BinaryOp.Add, local, stringConstant)
+    val expr: Expr = BinaryOperation(BinaryOp.Add, local, stringConstant)
+    val ref: Ref = ArrayAccess(arrayLiteral, local, NumberType)
 
     local.accept2(valueVisitor = ValuePrinter)
     local.accept2(immediateVisitor = ValuePrinter)
+    local.accept2(immediateVisitor = ImmediatePrinter)
     println("-".repeat(40))
     stringConstant.accept2(valueVisitor = ValuePrinter)
     stringConstant.accept2(immediateVisitor = ValuePrinter)
     stringConstant.accept2(constantVisitor = ValuePrinter)
+    stringConstant.accept2(immediateVisitor = ImmediatePrinter)
+    stringConstant.accept2(constantVisitor = ImmediatePrinter)
     println("-".repeat(40))
     arrayLiteral.accept2(valueVisitor = ValuePrinter)
     arrayLiteral.accept2(immediateVisitor = ValuePrinter)
     arrayLiteral.accept2(constantVisitor = ValuePrinter)
+    arrayLiteral.accept2(immediateVisitor = ImmediatePrinter)
+    arrayLiteral.accept2(constantVisitor = ImmediatePrinter)
     println("-".repeat(40))
     expr.accept2(valueVisitor = ValuePrinter)
     expr.accept2(exprVisitor = ValuePrinter)
+    println("-".repeat(40))
+    ref.accept2(valueVisitor = ValuePrinter)
+    ref.accept2(refVisitor = ValuePrinter)
+
+    println()
+    println("=".repeat(40))
+    println()
+
+    local.accept3(ValuePrinter3)
+    local.accept3(ValuePrinter3 as Immediate.Visitor<Unit>)
+    local.accept3(ImmediatePrinter3)
+    println("-".repeat(40))
+    stringConstant.accept3(ValuePrinter3)
+    stringConstant.accept3(ValuePrinter3 as Immediate.Visitor<Unit>)
+    stringConstant.accept3(ValuePrinter3 as Constant.Visitor<Unit>)
+    stringConstant.accept3(ImmediatePrinter3)
+    stringConstant.accept3(ImmediatePrinter3 as Constant.Visitor<Unit>)
+    println("-".repeat(40))
+    arrayLiteral.accept3(ValuePrinter3)
+    arrayLiteral.accept3(ValuePrinter3 as Immediate.Visitor<Unit>)
+    arrayLiteral.accept3(ValuePrinter3 as Constant.Visitor<Unit>)
+    arrayLiteral.accept3(ImmediatePrinter3)
+    arrayLiteral.accept3(ImmediatePrinter3 as Constant.Visitor<Unit>)
+    println("-".repeat(40))
+    expr.accept3(ValuePrinter3)
+    expr.accept3(ValuePrinter3 as Expr.Visitor<Unit>)
+    println("-".repeat(40))
+    ref.accept3(ValuePrinter3)
+    ref.accept3(ValuePrinter3 as Ref.Visitor<Unit>)
 }

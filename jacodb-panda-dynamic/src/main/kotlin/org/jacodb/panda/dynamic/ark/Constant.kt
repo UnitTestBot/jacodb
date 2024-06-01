@@ -20,6 +20,34 @@ interface Constant : Immediate {
     fun <R> accept(visitor: ConstantVisitor<R>): R {
         return accept(visitor as ImmediateVisitor<R>)
     }
+
+    interface Visitor<out R> {
+        fun visit(value: StringConstant): R
+        fun visit(value: BooleanConstant): R
+        fun visit(value: NumberConstant): R
+        fun visit(value: NullConstant): R
+        fun visit(value: UndefinedConstant): R
+        fun visit(value: ArrayLiteral): R
+        fun visit(value: ObjectLiteral): R
+
+        interface Default<out R> : Visitor<R> {
+            fun defaultVisit(value: Constant): R
+
+            override fun visit(value: StringConstant): R = defaultVisit(value)
+            override fun visit(value: BooleanConstant): R = defaultVisit(value)
+            override fun visit(value: NumberConstant): R = defaultVisit(value)
+            override fun visit(value: NullConstant): R = defaultVisit(value)
+            override fun visit(value: UndefinedConstant): R = defaultVisit(value)
+            override fun visit(value: ArrayLiteral): R = defaultVisit(value)
+            override fun visit(value: ObjectLiteral): R = defaultVisit(value)
+        }
+    }
+
+    override fun <R> accept3(visitor: Immediate.Visitor<R>): R {
+        return accept3(visitor as Visitor<R>)
+    }
+
+    fun <R> accept3(visitor: Visitor<R>): R
 }
 
 data class StringConstant(
@@ -35,6 +63,10 @@ data class StringConstant(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class BooleanConstant(
@@ -48,6 +80,10 @@ data class BooleanConstant(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 
@@ -70,6 +106,10 @@ data class NumberConstant(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object NullConstant : Constant {
@@ -81,6 +121,10 @@ object NullConstant : Constant {
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object UndefinedConstant : Constant {
@@ -90,6 +134,10 @@ object UndefinedConstant : Constant {
     override fun toString(): String = "undefined"
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -111,6 +159,10 @@ data class ArrayLiteral(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 // TODO: replace `Pair<String, Value>` with `Property`
@@ -125,6 +177,10 @@ data class ObjectLiteral(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Constant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

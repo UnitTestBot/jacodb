@@ -19,7 +19,27 @@ package org.jacodb.panda.dynamic.ark
 interface Value {
     val type: Type
 
+    interface Visitor<out R> :
+        Immediate.Visitor<R>,
+        Expr.Visitor<R>,
+        Ref.Visitor<R> {
+
+        interface Default<out R> : Visitor<R>,
+            Immediate.Visitor.Default<R>,
+            Expr.Visitor.Default<R>,
+            Ref.Visitor.Default<R> {
+
+            fun defaultVisit(value: Value): R
+
+            override fun defaultVisit(value: Immediate): R = defaultVisit(value as Value)
+            override fun defaultVisit(expr: Expr): R = defaultVisit(expr as Value)
+            override fun defaultVisit(ref: Ref): R = defaultVisit(ref as Value)
+        }
+    }
+
     fun <R> accept(visitor: ValueVisitor<R>): R
+
+    fun <R> accept3(visitor: Visitor<R>): R
 }
 
 // TODO: use LValue to mark assignable values

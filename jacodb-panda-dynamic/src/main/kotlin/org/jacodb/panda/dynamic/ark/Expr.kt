@@ -20,6 +20,44 @@ interface Expr : Value {
     fun <R> accept(visitor: ExprVisitor<R>): R {
         return accept(visitor as ValueVisitor<R>)
     }
+
+    interface Visitor<out R> {
+        fun visit(expr: NewExpr): R
+        fun visit(expr: NewArrayExpr): R
+        fun visit(expr: TypeOfExpr): R
+        fun visit(expr: InstanceOfExpr): R
+        fun visit(expr: LengthExpr): R
+        fun visit(expr: CastExpr): R
+        fun visit(expr: PhiExpr): R
+        fun visit(expr: UnaryOperation): R
+        fun visit(expr: BinaryOperation): R
+        fun visit(expr: RelationOperation): R
+        fun visit(expr: InstanceCallExpr): R
+        fun visit(expr: StaticCallExpr): R
+
+        interface Default<out R> : Visitor<R> {
+            fun defaultVisit(expr: Expr): R
+
+            override fun visit(expr: NewExpr): R = defaultVisit(expr)
+            override fun visit(expr: NewArrayExpr): R = defaultVisit(expr)
+            override fun visit(expr: TypeOfExpr): R = defaultVisit(expr)
+            override fun visit(expr: InstanceOfExpr): R = defaultVisit(expr)
+            override fun visit(expr: LengthExpr): R = defaultVisit(expr)
+            override fun visit(expr: CastExpr): R = defaultVisit(expr)
+            override fun visit(expr: PhiExpr): R = defaultVisit(expr)
+            override fun visit(expr: UnaryOperation): R = defaultVisit(expr)
+            override fun visit(expr: BinaryOperation): R = defaultVisit(expr)
+            override fun visit(expr: RelationOperation): R = defaultVisit(expr)
+            override fun visit(expr: InstanceCallExpr): R = defaultVisit(expr)
+            override fun visit(expr: StaticCallExpr): R = defaultVisit(expr)
+        }
+    }
+
+    override fun <R> accept3(visitor: Value.Visitor<R>): R {
+        return accept3(visitor as Visitor<R>)
+    }
+
+    fun <R> accept3(visitor: Visitor<R>): R
 }
 
 data class NewExpr(
@@ -30,6 +68,10 @@ data class NewExpr(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -45,6 +87,10 @@ data class NewArrayExpr(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class TypeOfExpr(
@@ -58,6 +104,10 @@ data class TypeOfExpr(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -76,6 +126,10 @@ data class InstanceOfExpr(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class LengthExpr(
@@ -91,6 +145,10 @@ data class LengthExpr(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class CastExpr(
@@ -102,6 +160,10 @@ data class CastExpr(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -134,6 +196,10 @@ data class PhiExpr(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface UnaryExpr : Expr {
@@ -152,6 +218,10 @@ data class UnaryOperation(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -186,6 +256,10 @@ data class BinaryOperation(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 // data class ConditionExpr(
@@ -215,6 +289,10 @@ data class RelationOperation(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface CallExpr : Expr {
@@ -237,6 +315,10 @@ data class InstanceCallExpr(
     override fun <R> accept(visitor: ValueVisitor<R>): R {
         return visitor.visit(this)
     }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class StaticCallExpr(
@@ -248,6 +330,10 @@ data class StaticCallExpr(
     }
 
     override fun <R> accept(visitor: ValueVisitor<R>): R {
+        return visitor.visit(this)
+    }
+
+    override fun <R> accept3(visitor: Expr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

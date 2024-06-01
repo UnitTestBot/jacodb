@@ -20,4 +20,23 @@ interface Immediate : Value {
     fun <R> accept(visitor: ImmediateVisitor<R>): R {
         return accept(visitor as ValueVisitor<R>)
     }
+
+    interface Visitor<out R> : Constant.Visitor<R> {
+        fun visit(value: Local): R
+
+        interface Default<out R> : Visitor<R>,
+            Constant.Visitor.Default<R> {
+
+            fun defaultVisit(value: Immediate): R
+
+            override fun defaultVisit(value: Constant): R = defaultVisit(value as Immediate)
+            override fun visit(value: Local): R = defaultVisit(value)
+        }
+    }
+
+    override fun <R> accept3(visitor: Value.Visitor<R>): R {
+        return accept3(visitor as Visitor<R>)
+    }
+
+    fun <R> accept3(visitor: Visitor<R>): R
 }
