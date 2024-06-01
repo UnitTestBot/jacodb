@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Panda IR",
+  "description": "Intermediate Representation (IR) of ArkTS Program",
+  "type": "object",
+  "properties": {
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "object",
+                  "properties": {
+                    "accessFlags": {
+                      "type": "integer"
+                    },
+                    "basicBlocks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "insts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "index": {
+                                  "type": "integer"
+                                },
+                                "imms": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "integer"
+                                  }
+                                },
+                                "inputs": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "inputBlocks": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "integer"
+                                  }
+                                },
+                                "intrinsicId": {
+                                  "type": "string"
+                                },
+                                "opcode": {
+                                  "type": "string"
+                                },
+                                "operandsType": {
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "type": "string"
+                                },
+                                "stringData": {
+                                  "type": "string"
+                                },
+                                "string": {
+                                  "type": "string"
+                                },
+                                "stringOffset": {
+                                  "type": "integer"
+                                },
+                                "type": {
+                                  "type": "string"
+                                },
+                                "users": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "value": {
+                                  "type": "integer"
+                                },
+                                "visit": {
+                                  "type": "string"
+                                },
+                                "immediate": {
+                                  "type": "integer"
+                                },
+                                "constructorName": {
+                                  "type": "string"
+                                },
+                                "functionName": {
+                                  "type": "string"
+                                },
+                                "throwers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "catchers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "integer"
+                                  }
+                                },
+                                "lexenv": {
+                                  "type": "integer"
+                                },
+                                "lexvar": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "opcode"
+                              ]
+                            }
+                          },
+                          "successors": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "predecessors": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "isCatchBegin": {
+                            "type": "boolean"
+                          },
+                          "isTryBegin": {
+                            "type": "boolean"
+                          },
+                          "isTryEnd": {
+                            "type": "boolean"
+                          },
+                          "handlerIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "programParameters": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "returnType": {
+                      "type": "string"
+                    },
+                    "signature": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "signature"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    }
+  },
+  "required": [
+    "classes"
+  ]
+}
