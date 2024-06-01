@@ -17,46 +17,44 @@
 package org.jacodb.panda.dynamic.ark
 
 fun Stmt.getUses(): Sequence<Value> {
-    return accept(GetUses)
+    return accept(StmtGetUses)
 }
 
 fun Value.getUses(): Sequence<Value> {
-    return accept(GetUses)
+    return accept(ValueGetUses)
 }
 
-object GetUses : Stmt.Visitor<Sequence<Value>>,
-    Value.Visitor<Sequence<Value>> {
-
+private object StmtGetUses : Stmt.Visitor<Sequence<Value>> {
     override fun visit(stmt: NopStmt): Sequence<Value> = sequence {
         // empty
     }
 
     override fun visit(stmt: AssignStmt): Sequence<Value> = sequence {
-        yieldAll(stmt.left.accept(this@GetUses))
+        yieldAll(stmt.left.getUses())
         yield(stmt.right)
-        yieldAll(stmt.right.accept(this@GetUses))
+        yieldAll(stmt.right.getUses())
     }
 
     override fun visit(stmt: CallStmt): Sequence<Value> = sequence {
         yield(stmt.expr)
-        yieldAll(stmt.expr.accept(this@GetUses))
+        yieldAll(stmt.expr.getUses())
     }
 
     override fun visit(stmt: ReturnStmt): Sequence<Value> = sequence {
         if (stmt.arg != null) {
             yield(stmt.arg)
-            yieldAll(stmt.arg.accept(this@GetUses))
+            yieldAll(stmt.arg.getUses())
         }
     }
 
     override fun visit(stmt: ThrowStmt): Sequence<Value> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.accept(this@GetUses))
+        yieldAll(stmt.arg.getUses())
     }
 
     override fun visit(stmt: DeleteStmt): Sequence<Value> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.accept(this@GetUses))
+        yieldAll(stmt.arg.getUses())
     }
 
     override fun visit(stmt: GotoStmt): Sequence<Value> = sequence {
@@ -65,18 +63,20 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
 
     override fun visit(stmt: IfStmt): Sequence<Value> = sequence {
         yield(stmt.condition)
-        yieldAll(stmt.condition.accept(this@GetUses))
+        yieldAll(stmt.condition.getUses())
     }
 
     override fun visit(stmt: SwitchStmt): Sequence<Value> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.accept(this@GetUses))
+        yieldAll(stmt.arg.getUses())
         for (case in stmt.cases) {
             yield(case)
-            yieldAll(case.accept(this@GetUses))
+            yieldAll(case.getUses())
         }
     }
+}
 
+private object ValueGetUses : Value.Visitor<Sequence<Value>> {
     override fun visit(value: Local): Sequence<Value> = sequence {
         // empty
     }
@@ -105,7 +105,7 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
         // TODO: check
         for (element in value.elements) {
             yield(element)
-            yieldAll(element.accept(this@GetUses))
+            yieldAll(element.getUses())
         }
     }
 
@@ -113,7 +113,7 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
         // TODO: check
         for ((_, v) in value.properties) {
             yield(v)
-            yieldAll(v.accept(this@GetUses))
+            yieldAll(v.getUses())
         }
     }
 
@@ -123,67 +123,67 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
 
     override fun visit(expr: NewArrayExpr): Sequence<Value> = sequence {
         yield(expr.size)
-        yieldAll(expr.size.accept(this@GetUses))
+        yieldAll(expr.size.getUses())
     }
 
     override fun visit(expr: TypeOfExpr): Sequence<Value> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.accept(this@GetUses))
+        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: InstanceOfExpr): Sequence<Value> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.accept(this@GetUses))
+        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: LengthExpr): Sequence<Value> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.accept(this@GetUses))
+        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: CastExpr): Sequence<Value> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.accept(this@GetUses))
+        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: PhiExpr): Sequence<Value> = sequence {
         for (arg in expr.args) {
-            yieldAll(arg.accept(this@GetUses))
+            yieldAll(arg.getUses())
         }
     }
 
     override fun visit(expr: UnaryOperation): Sequence<Value> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.accept(this@GetUses))
+        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: BinaryOperation): Sequence<Value> = sequence {
         yield(expr.left)
-        yieldAll(expr.left.accept(this@GetUses))
+        yieldAll(expr.left.getUses())
         yield(expr.right)
-        yieldAll(expr.right.accept(this@GetUses))
+        yieldAll(expr.right.getUses())
     }
 
     override fun visit(expr: RelationOperation): Sequence<Value> = sequence {
         yield(expr.left)
-        yieldAll(expr.left.accept(this@GetUses))
+        yieldAll(expr.left.getUses())
         yield(expr.right)
-        yieldAll(expr.right.accept(this@GetUses))
+        yieldAll(expr.right.getUses())
     }
 
     override fun visit(expr: InstanceCallExpr): Sequence<Value> = sequence {
         yield(expr.instance)
-        yieldAll(expr.instance.accept(this@GetUses))
+        yieldAll(expr.instance.getUses())
         for (arg in expr.args) {
             yield(arg)
-            yieldAll(arg.accept(this@GetUses))
+            yieldAll(arg.getUses())
         }
     }
 
     override fun visit(expr: StaticCallExpr): Sequence<Value> = sequence {
         for (arg in expr.args) {
             yield(arg)
-            yieldAll(arg.accept(this@GetUses))
+            yieldAll(arg.getUses())
         }
     }
 
@@ -197,14 +197,14 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
 
     override fun visit(ref: ArrayAccess): Sequence<Value> = sequence {
         yield(ref.array)
-        yieldAll(ref.array.accept(this@GetUses))
+        yieldAll(ref.array.getUses())
         yield(ref.index)
-        yieldAll(ref.index.accept(this@GetUses))
+        yieldAll(ref.index.getUses())
     }
 
     override fun visit(ref: InstanceFieldRef): Sequence<Value> = sequence {
         yield(ref.instance)
-        yieldAll(ref.instance.accept(this@GetUses))
+        yieldAll(ref.instance.getUses())
     }
 
     override fun visit(ref: StaticFieldRef): Sequence<Value> = sequence {
