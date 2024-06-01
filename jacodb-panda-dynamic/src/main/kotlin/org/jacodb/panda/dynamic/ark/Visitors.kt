@@ -16,23 +16,6 @@
 
 package org.jacodb.panda.dynamic.ark
 
-// Marker interface for all visitors
-interface Visitor<out R>
-
-// fun<R> Value.accept(visitor: ValueVisitor<R>): R = when (this) {
-//     is StringConstant -> visitor.visit(this)
-//     is BooleanConstant -> visitor.visit(this)
-//     is NumberConstant -> visitor.visit(this)
-//     is NullConstant -> visitor.visit(this)
-//     is UndefinedConstant -> visitor.visit(this)
-//     is ArrayLiteral -> visitor.visit(this)
-//     is ObjectLiteral -> visitor.visit(this)
-//     is Local -> visitor.visit(this)
-//     is Expr -> accept(visitor as ExprVisitor<R>)
-//     is Ref -> accept(visitor as RefVisitor<R>)
-//     else -> error("No visitor for $this")
-// }
-
 interface ValueVisitor<out R> :
     ImmediateVisitor<R>,
     ExprVisitor<R>,
@@ -51,11 +34,12 @@ interface ValueVisitor<out R> :
     }
 }
 
-// fun <R> Immediate.accept(visitor: ImmediateVisitor<R>): R = when (this) {
-//     is Constant -> accept(visitor as ConstantVisitor<R>)
-//     is Local -> visitor.visit(this)
-//     else -> error("No visitor for $this")
-// }
+fun <R> Value.accept2(valueVisitor: ValueVisitor<R>): R = when (this) {
+    is Immediate -> accept2(valueVisitor as ImmediateVisitor<R>)
+    is Expr -> accept2(valueVisitor as ExprVisitor<R>)
+    is Ref -> accept2(valueVisitor as RefVisitor<R>)
+    else -> error("No visitor for $this")
+}
 
 interface ImmediateVisitor<out R> : ConstantVisitor<R> {
     fun visit(value: Local): R
@@ -71,18 +55,13 @@ interface ImmediateVisitor<out R> : ConstantVisitor<R> {
     }
 }
 
-// fun <R> Constant.accept(visitor: ConstantVisitor<R>): R = when (this) {
-//     is StringConstant -> visitor.visit(this)
-//     is BooleanConstant -> visitor.visit(this)
-//     is NumberConstant -> visitor.visit(this)
-//     is NullConstant -> visitor.visit(this)
-//     is UndefinedConstant -> visitor.visit(this)
-//     is ArrayLiteral -> visitor.visit(this)
-//     is ObjectLiteral -> visitor.visit(this)
-//     else -> error("No visitor for $this")
-// }
+fun <R> Immediate.accept2(immediateVisitor: ImmediateVisitor<R>): R = when (this) {
+    is Constant -> accept2(immediateVisitor as ConstantVisitor<R>)
+    is Local -> immediateVisitor.visit(this)
+    else -> error("No visitor for $this")
+}
 
-interface ConstantVisitor<out R> : Visitor<R> {
+interface ConstantVisitor<out R> {
     fun visit(value: StringConstant): R
     fun visit(value: BooleanConstant): R
     fun visit(value: NumberConstant): R
@@ -104,22 +83,18 @@ interface ConstantVisitor<out R> : Visitor<R> {
     }
 }
 
-// fun <R> Expr.accept(visitor: ExprVisitor<R>): R = when (this) {
-//     is NewExpr -> visitor.visit(this)
-//     is NewArrayExpr -> visitor.visit(this)
-//     is TypeOfExpr -> visitor.visit(this)
-//     is InstanceOfExpr -> visitor.visit(this)
-//     is LengthExpr -> visitor.visit(this)
-//     is CastExpr -> visitor.visit(this)
-//     is PhiExpr -> visitor.visit(this)
-//     is UnaryOperation -> visitor.visit(this)
-//     is BinaryOperation -> visitor.visit(this)
-//     is InstanceCallExpr -> visitor.visit(this)
-//     is StaticCallExpr -> visitor.visit(this)
-//     else -> error("No visitor for $this")
-// }
+fun <R> Constant.accept2(constantVisitor: ConstantVisitor<R>): R = when (this) {
+    is StringConstant -> constantVisitor.visit(this)
+    is BooleanConstant -> constantVisitor.visit(this)
+    is NumberConstant -> constantVisitor.visit(this)
+    is NullConstant -> constantVisitor.visit(this)
+    is UndefinedConstant -> constantVisitor.visit(this)
+    is ArrayLiteral -> constantVisitor.visit(this)
+    is ObjectLiteral -> constantVisitor.visit(this)
+    else -> error("No visitor for $this")
+}
 
-interface ExprVisitor<out R> : Visitor<R> {
+interface ExprVisitor<out R> {
     fun visit(expr: NewExpr): R
     fun visit(expr: NewArrayExpr): R
     fun visit(expr: TypeOfExpr): R
@@ -151,16 +126,22 @@ interface ExprVisitor<out R> : Visitor<R> {
     }
 }
 
-// fun <R> Ref.accept(visitor: RefVisitor<R>): R = when (this) {
-//     is This -> visitor.visit(this)
-//     is ParameterRef -> visitor.visit(this)
-//     is ArrayAccess -> visitor.visit(this)
-//     is InstanceFieldRef -> visitor.visit(this)
-//     is StaticFieldRef -> visitor.visit(this)
-//     else -> error("No visitor for $this")
-// }
+fun <R> Expr.accept2(exprVisitor: ExprVisitor<R>): R = when (this) {
+    is NewExpr -> exprVisitor.visit(this)
+    is NewArrayExpr -> exprVisitor.visit(this)
+    is TypeOfExpr -> exprVisitor.visit(this)
+    is InstanceOfExpr -> exprVisitor.visit(this)
+    is LengthExpr -> exprVisitor.visit(this)
+    is CastExpr -> exprVisitor.visit(this)
+    is PhiExpr -> exprVisitor.visit(this)
+    is UnaryOperation -> exprVisitor.visit(this)
+    is BinaryOperation -> exprVisitor.visit(this)
+    is InstanceCallExpr -> exprVisitor.visit(this)
+    is StaticCallExpr -> exprVisitor.visit(this)
+    else -> error("No visitor for $this")
+}
 
-interface RefVisitor<out R> : Visitor<R> {
+interface RefVisitor<out R> {
     fun visit(ref: This): R
     fun visit(ref: ParameterRef): R
     fun visit(ref: ArrayAccess): R
@@ -176,6 +157,15 @@ interface RefVisitor<out R> : Visitor<R> {
         override fun visit(ref: InstanceFieldRef): R = defaultVisit(ref)
         override fun visit(ref: StaticFieldRef): R = defaultVisit(ref)
     }
+}
+
+fun <R> Ref.accept2(refVisitor: RefVisitor<R>): R = when (this) {
+    is This -> refVisitor.visit(this)
+    is ParameterRef -> refVisitor.visit(this)
+    is ArrayAccess -> refVisitor.visit(this)
+    is InstanceFieldRef -> refVisitor.visit(this)
+    is StaticFieldRef -> refVisitor.visit(this)
+    else -> error("No visitor for $this")
 }
 
 object ValuePrinter : ValueVisitor.Default<Unit> {
@@ -306,17 +296,17 @@ fun main() {
     val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArrayType(NumberType, 1))
     val expr = BinaryOperation(BinaryOp.Add, local, stringConstant)
 
-    local.accept(ValuePrinter)
-    local.accept(ValuePrinter as ImmediateVisitor<Unit>)
+    local.accept2(valueVisitor = ValuePrinter)
+    local.accept2(immediateVisitor = ValuePrinter)
     println("-".repeat(40))
-    stringConstant.accept(ValuePrinter)
-    stringConstant.accept(ValuePrinter as ImmediateVisitor<Unit>)
-    stringConstant.accept(ValuePrinter as ConstantVisitor<Unit>)
+    stringConstant.accept2(valueVisitor = ValuePrinter)
+    stringConstant.accept2(immediateVisitor = ValuePrinter)
+    stringConstant.accept2(constantVisitor = ValuePrinter)
     println("-".repeat(40))
-    arrayLiteral.accept(ValuePrinter)
-    arrayLiteral.accept(ValuePrinter as ImmediateVisitor<Unit>)
-    arrayLiteral.accept(ValuePrinter as ConstantVisitor<Unit>)
+    arrayLiteral.accept2(valueVisitor = ValuePrinter)
+    arrayLiteral.accept2(immediateVisitor = ValuePrinter)
+    arrayLiteral.accept2(constantVisitor = ValuePrinter)
     println("-".repeat(40))
-    expr.accept(ValuePrinter)
-    expr.accept(ValuePrinter as ExprVisitor<Unit>)
+    expr.accept2(valueVisitor = ValuePrinter)
+    expr.accept2(exprVisitor = ValuePrinter)
 }
