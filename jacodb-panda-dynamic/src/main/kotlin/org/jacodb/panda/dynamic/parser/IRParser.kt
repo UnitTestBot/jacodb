@@ -662,14 +662,7 @@ class IRParser(
                     // 0 - ?, 1 - bool, 2 - int, 3 - ?, 4 - long double, 5 - string, 255 - null
                     val literalType = literals[i].content.toInt()
                     val literalValue = literals[i + 1].content
-                    val value = when(literalType) {
-                        1 -> PandaBoolConstant(literalValue.toBoolean())
-                        2 -> PandaNumberConstant(literalValue.toInt())
-                        5 -> PandaStringConstant(literalValue)
-                        255 -> PandaNullConstant
-                        4 -> TODO("extend number constant for float, double, long types")
-                        else -> throw IllegalArgumentException("unexpected literal type: $literalType")
-                    }
+                    val value = handleLiteralValue(literalType, literalValue)
                     val arrayAccess = PandaArrayAccess(
                         array=lv,
                         index=PandaNumberConstant(i / 2),
@@ -711,8 +704,35 @@ class IRParser(
             }
 
             opcode == "Intrinsic.createobjectwithbuffer" -> {
+                // TODO(): Need more intelligent processing with correct model for object; currently only demonstrates how to take into account information about fields with literal values.
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                val lv = PandaLocalVar(method.currentLocalVarId++, PandaArrayTypeImpl(PandaAnyType))
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                val assignment = PandaAssignInst(locationFromOp(this), lv, todoExpr)
+                program!!.setLocalAssignment(method.signature, lv, assignment)
+                method.pushInst(assignment)
+                val literals = literals ?: run {
+                    logger.error("No literals found for createobjectwithbuffer; update es2abc for the latest version.")
+                    listOf()
+                }
+                // for each field 4 values: fieldNameType (always string most likely), fieldName, fieldValueType, fieldValue
+                for (i in literals.indices step 4) {
+                    // 0 - ?, 1 - bool, 2 - int, 3 - ?, 4 - long double, 5 - string, 255 - null
+                    val fieldNameType = literals[i].content
+                    val fieldName = literals[i + 1].content
+                    val literalType = literals[i + 2].content.toInt()
+                    val literalValue = literals[i + 3].content
+                    val value = handleLiteralValue(literalType, literalValue)
+                    /* TODO("get rid of reductant assignments")
+                    (currently if field initialized with `definefieldbyname`,
+                    its values still stored in literals as null,
+                    need to find out how to distinguish real null value from null value as placeholder)
+                    */
+                    val property = PandaValueByInstance(lv, fieldName)
+                    method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
+                }
             }
 
             opcode == "Intrinsic.ldglobal" -> {
@@ -1190,5 +1210,16 @@ class IRParser(
     private fun mapConstant(op: ProgramInst): PandaConstant = when (mapType(op.type)) {
         is PandaNumberType -> PandaNumberConstant(Integer.decode(op.value.toString()))
         else -> TODOConstant(op.value.toString())
+    }
+
+    private fun handleLiteralValue(literalType: Int, literalValue: String) : PandaValue {
+        return when(literalType) {
+            1 -> PandaBoolConstant(literalValue.toBoolean())
+            2 -> PandaNumberConstant(literalValue.toInt())
+            5 -> PandaStringConstant(literalValue)
+            255 -> PandaNullConstant
+            4 -> TODO("extend number constant for float, double, long types")
+            else -> throw IllegalArgumentException("unexpected literal type: $literalType")
+        }
     }
 }
