@@ -18,6 +18,48 @@ package org.jacodb.panda.dynamic.ark
 
 interface Type {
     val typeName: String
+
+    interface Visitor<out R> {
+        fun visit(type: AnyType): R
+        fun visit(type: UnknownType): R
+        fun visit(type: UnionType): R
+        fun visit(type: TupleType): R
+        fun visit(type: BooleanType): R
+        fun visit(type: NumberType): R
+        fun visit(type: StringType): R
+        fun visit(type: NullType): R
+        fun visit(type: UndefinedType): R
+        fun visit(type: VoidType): R
+        fun visit(type: NeverType): R
+        fun visit(type: LiteralType): R
+        fun visit(type: ClassType): R
+        fun visit(type: ArrayType): R
+        fun visit(type: ArrayObjectType): R
+        fun visit(type: UnclearRefType): R
+
+        interface Default<R> : Visitor<R> {
+            override fun visit(type: AnyType): R = defaultVisit(type)
+            override fun visit(type: UnknownType): R = defaultVisit(type)
+            override fun visit(type: UnionType): R = defaultVisit(type)
+            override fun visit(type: TupleType): R = defaultVisit(type)
+            override fun visit(type: BooleanType): R = defaultVisit(type)
+            override fun visit(type: NumberType): R = defaultVisit(type)
+            override fun visit(type: StringType): R = defaultVisit(type)
+            override fun visit(type: NullType): R = defaultVisit(type)
+            override fun visit(type: UndefinedType): R = defaultVisit(type)
+            override fun visit(type: VoidType): R = defaultVisit(type)
+            override fun visit(type: NeverType): R = defaultVisit(type)
+            override fun visit(type: LiteralType): R = defaultVisit(type)
+            override fun visit(type: ClassType): R = defaultVisit(type)
+            override fun visit(type: ArrayType): R = defaultVisit(type)
+            override fun visit(type: ArrayObjectType): R = defaultVisit(type)
+            override fun visit(type: UnclearRefType): R = defaultVisit(type)
+
+            fun defaultVisit(type: Type): R
+        }
+    }
+
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 object AnyType : Type {
@@ -25,6 +67,10 @@ object AnyType : Type {
         get() = "any"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object UnknownType : Type {
@@ -32,6 +78,10 @@ object UnknownType : Type {
         get() = "unknown"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class UnionType(
@@ -41,6 +91,10 @@ data class UnionType(
         get() = types.joinToString(separator = " | ") { it.typeName }
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class TupleType(
@@ -50,6 +104,10 @@ data class TupleType(
         get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 // TODO: EnumType
@@ -61,6 +119,10 @@ object BooleanType : PrimitiveType {
         get() = "boolean"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object NumberType : PrimitiveType {
@@ -68,6 +130,10 @@ object NumberType : PrimitiveType {
         get() = "number"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object StringType : PrimitiveType {
@@ -75,6 +141,10 @@ object StringType : PrimitiveType {
         get() = "string"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object NullType : PrimitiveType {
@@ -82,6 +152,10 @@ object NullType : PrimitiveType {
         get() = "null"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object UndefinedType : PrimitiveType {
@@ -89,6 +163,10 @@ object UndefinedType : PrimitiveType {
         get() = "undefined"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object VoidType : PrimitiveType {
@@ -96,6 +174,10 @@ object VoidType : PrimitiveType {
         get() = "void"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 object NeverType : PrimitiveType {
@@ -103,6 +185,10 @@ object NeverType : PrimitiveType {
         get() = "never"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class LiteralType(
@@ -112,6 +198,10 @@ data class LiteralType(
         get() = "literal"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface RefType : Type
@@ -123,6 +213,10 @@ data class ClassType(
         get() = classSignature.name
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ArrayType(
@@ -133,6 +227,10 @@ data class ArrayType(
         get() = elementType.typeName + "[]".repeat(dimensions)
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ArrayObjectType(
@@ -142,10 +240,18 @@ data class ArrayObjectType(
         get() = "Array<${elementType.typeName}>"
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class UnclearRefType(
     override val typeName: String,
 ) : RefType {
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: Type.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
