@@ -25,13 +25,13 @@ interface Ref : Value {
         fun visit(ref: StaticFieldRef): R
 
         interface Default<out R> : Visitor<R> {
-            fun defaultVisit(ref: Ref): R
-
             override fun visit(ref: This): R = defaultVisit(ref)
             override fun visit(ref: ParameterRef): R = defaultVisit(ref)
             override fun visit(ref: ArrayAccess): R = defaultVisit(ref)
             override fun visit(ref: InstanceFieldRef): R = defaultVisit(ref)
             override fun visit(ref: StaticFieldRef): R = defaultVisit(ref)
+
+            fun defaultVisit(ref: Ref): R
         }
     }
 
