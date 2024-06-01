@@ -16,7 +16,33 @@
 
 package org.jacodb.panda.dynamic.ark
 
-interface Stmt
+interface Stmt {
+    interface Visitor<out R> {
+        fun visit(stmt: NopStmt): R
+        fun visit(stmt: AssignStmt): R
+        fun visit(stmt: CallStmt): R
+        fun visit(stmt: ReturnStmt): R
+        fun visit(stmt: ThrowStmt): R
+        fun visit(stmt: DeleteStmt): R
+        fun visit(stmt: GotoStmt): R
+        fun visit(stmt: IfStmt): R
+        fun visit(stmt: SwitchStmt): R
+
+        interface Default<out R> : Visitor<R> {
+            override fun visit(stmt: NopStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: AssignStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: CallStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ReturnStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ThrowStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: DeleteStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: GotoStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: IfStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: SwitchStmt): R = defaultVisit(stmt)
+
+            fun defaultVisit(stmt: Stmt): R
+        }
+    }
+}
 
 object NopStmt : Stmt {
     override fun toString(): String = "nop"
