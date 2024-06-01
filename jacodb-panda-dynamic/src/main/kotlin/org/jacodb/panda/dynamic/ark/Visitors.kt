@@ -195,5 +195,5 @@ fun main() {
     expr.accept(ValuePrinter as Expr.Visitor<Unit>)
     println("-".repeat(40))
     ref.accept(ValuePrinter)
-    ref.accept3(ValuePrinter as Ref.Visitor<Unit>)
+    ref.accept(ValuePrinter as Ref.Visitor<Unit>)
 }

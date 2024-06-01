@@ -36,10 +36,10 @@ interface Ref : Value {
     }
 
     override fun <R> accept(visitor: Value.Visitor<R>): R {
-        return accept3(visitor as Visitor<R>)
+        return accept(visitor as Visitor<R>)
     }
 
-    fun <R> accept3(visitor: Visitor<R>): R
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 data class This(
@@ -47,7 +47,7 @@ data class This(
 ) : Ref {
     override fun toString(): String = "this"
 
-    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -60,7 +60,7 @@ data class ParameterRef(
         return "arg$index"
     }
 
-    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -74,7 +74,7 @@ data class ArrayAccess(
         return "$array[$index]"
     }
 
-    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -94,7 +94,7 @@ data class InstanceFieldRef(
         return "$instance.${field.sub.name}"
     }
 
-    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -106,7 +106,7 @@ data class StaticFieldRef(
         return "${field.enclosingClass.name}.${field.sub.name}"
     }
 
-    override fun <R> accept3(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: Ref.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
