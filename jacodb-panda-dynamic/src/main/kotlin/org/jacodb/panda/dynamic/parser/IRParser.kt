@@ -18,77 +18,7 @@ package org.jacodb.panda.dynamic.parser
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.api.PandaAddExpr
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaArgument
-import org.jacodb.panda.dynamic.api.PandaArrayAccess
-import org.jacodb.panda.dynamic.api.PandaArrayType
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaBasicBlock
-import org.jacodb.panda.dynamic.api.PandaBoolConstant
-import org.jacodb.panda.dynamic.api.PandaBuiltInError
-import org.jacodb.panda.dynamic.api.PandaCallExpr
-import org.jacodb.panda.dynamic.api.PandaCallInst
-import org.jacodb.panda.dynamic.api.PandaCatchInst
-import org.jacodb.panda.dynamic.api.PandaCaughtError
-import org.jacodb.panda.dynamic.api.PandaClass
-import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
-import org.jacodb.panda.dynamic.api.PandaCmpExpr
-import org.jacodb.panda.dynamic.api.PandaCmpOp
-import org.jacodb.panda.dynamic.api.PandaConditionExpr
-import org.jacodb.panda.dynamic.api.PandaConstant
-import org.jacodb.panda.dynamic.api.PandaCreateEmptyArrayExpr
-import org.jacodb.panda.dynamic.api.PandaDivExpr
-import org.jacodb.panda.dynamic.api.PandaEqExpr
-import org.jacodb.panda.dynamic.api.PandaExpExpr
-import org.jacodb.panda.dynamic.api.PandaExpr
-import org.jacodb.panda.dynamic.api.PandaGeExpr
-import org.jacodb.panda.dynamic.api.PandaGotoInst
-import org.jacodb.panda.dynamic.api.PandaGtExpr
-import org.jacodb.panda.dynamic.api.PandaIfInst
-import org.jacodb.panda.dynamic.api.PandaInfinityConstant
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaInstLocation
-import org.jacodb.panda.dynamic.api.PandaInstRef
-import org.jacodb.panda.dynamic.api.PandaInstanceVirtualCallExpr
-import org.jacodb.panda.dynamic.api.PandaLeExpr
-import org.jacodb.panda.dynamic.api.PandaLengthExpr
-import org.jacodb.panda.dynamic.api.PandaLexVar
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
-import org.jacodb.panda.dynamic.api.PandaLocalVar
-import org.jacodb.panda.dynamic.api.PandaLtExpr
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaMethodConstant
-import org.jacodb.panda.dynamic.api.PandaModExpr
-import org.jacodb.panda.dynamic.api.PandaMulExpr
-import org.jacodb.panda.dynamic.api.PandaNaNConstant
-import org.jacodb.panda.dynamic.api.PandaNegExpr
-import org.jacodb.panda.dynamic.api.PandaNeqExpr
-import org.jacodb.panda.dynamic.api.PandaNewExpr
-import org.jacodb.panda.dynamic.api.PandaNewLexenvInst
-import org.jacodb.panda.dynamic.api.PandaNullConstant
-import org.jacodb.panda.dynamic.api.PandaNumberConstant
-import org.jacodb.panda.dynamic.api.PandaNumberType
-import org.jacodb.panda.dynamic.api.PandaParameterInfo
-import org.jacodb.panda.dynamic.api.PandaPhiValue
-import org.jacodb.panda.dynamic.api.PandaPopLexenvInst
-import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.panda.dynamic.api.PandaReturnInst
-import org.jacodb.panda.dynamic.api.PandaStrictEqExpr
-import org.jacodb.panda.dynamic.api.PandaStrictNeqExpr
-import org.jacodb.panda.dynamic.api.PandaStringConstant
-import org.jacodb.panda.dynamic.api.PandaSubExpr
-import org.jacodb.panda.dynamic.api.PandaThis
-import org.jacodb.panda.dynamic.api.PandaThrowInst
-import org.jacodb.panda.dynamic.api.PandaToNumericExpr
-import org.jacodb.panda.dynamic.api.PandaType
-import org.jacodb.panda.dynamic.api.PandaTypeofExpr
-import org.jacodb.panda.dynamic.api.PandaUndefinedConstant
-import org.jacodb.panda.dynamic.api.PandaValue
-import org.jacodb.panda.dynamic.api.PandaValueByInstance
-import org.jacodb.panda.dynamic.api.PandaVirtualCallExpr
-import org.jacodb.panda.dynamic.api.TODOConstant
-import org.jacodb.panda.dynamic.api.TODOExpr
+import org.jacodb.panda.dynamic.api.*
 import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
@@ -709,8 +639,45 @@ class IRParser(
             }
 
             opcode == "Intrinsic.createarraywithbuffer" -> {
-                val todoExpr = TODOExpr(opcode, inputs) // TODO
-                handle(todoExpr)
+                /*
+                In bytecode, initialization of a literal array happens in the following order:
+                1) Until elements in the buffer ([]) are instances of certain primitive types (number, string, boolean, null) and have no gaps (no situations like [1, , 1]),
+                they are stored in the buffer (`createarraywithbuffer` is responsible for extracting information about them and the field `literals` contains it).
+                2) Initialization continues with `stownbyindex` instruction for each new element after encountering
+                either the first gap or a non-primitive type element.
+                 */
+                val createEmptyExpr = PandaCreateEmptyArrayExpr()
+                val lv = PandaLocalVar(method.currentLocalVarId++, PandaArrayTypeImpl(PandaAnyType))
+                outputs.forEach { output ->
+                    addInput(method, id(), output, lv)
+                }
+                val assignment = PandaAssignInst(locationFromOp(this), lv, createEmptyExpr)
+                program!!.setLocalAssignment(method.signature, lv, assignment)
+                method.pushInst(assignment)
+                val literals = literals ?: run {
+                    logger.error("No literals found for createarraywithbuffer; update es2abc for the latest version.")
+                    listOf()
+                }
+                for (i in literals.indices step 2) {
+                    // 0 - ?, 1 - bool, 2 - int, 3 - ?, 4 - long double, 5 - string, 255 - null
+                    val literalType = literals[i].content.toInt()
+                    val literalValue = literals[i + 1].content
+                    val value = when(literalType) {
+                        1 -> PandaBoolConstant(literalValue.toBoolean())
+                        2 -> PandaNumberConstant(literalValue.toInt())
+                        5 -> PandaStringConstant(literalValue)
+                        255 -> PandaNullConstant
+                        4 -> TODO("extend number constant for float, double, long types")
+                        else -> throw IllegalArgumentException("unexpected literal type: $literalType")
+                    }
+                    val arrayAccess = PandaArrayAccess(
+                        array=lv,
+                        index=PandaNumberConstant(i / 2),
+                        type=PandaAnyType
+                    )
+                    val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, value)
+                    method.pushInst(assignment)
+                }
             }
 
             opcode == "Intrinsic.ldexternalmodulevar" -> {
