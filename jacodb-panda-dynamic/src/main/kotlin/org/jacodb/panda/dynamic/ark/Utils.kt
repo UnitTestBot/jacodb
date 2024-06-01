@@ -20,6 +20,10 @@ fun Stmt.getUses(): Sequence<Value> {
     return accept(GetUses)
 }
 
+fun Value.getUses(): Sequence<Value> {
+    return accept(GetUses)
+}
+
 object GetUses : Stmt.Visitor<Sequence<Value>>,
     Value.Visitor<Sequence<Value>> {
 
