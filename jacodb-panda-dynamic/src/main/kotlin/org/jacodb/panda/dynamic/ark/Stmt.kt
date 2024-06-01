@@ -63,15 +63,15 @@ data class DeleteStmt(
     }
 }
 
-interface BranchStmt : Stmt
+interface BranchingStmt : Stmt
 
-object GotoStmt : BranchStmt {
+object GotoStmt : BranchingStmt {
     override fun toString(): String = "goto"
 }
 
 data class IfStmt(
     val condition: ConditionExpr,
-) : BranchStmt {
+) : BranchingStmt {
     override fun toString(): String {
         return "if ($condition)"
     }
@@ -80,7 +80,7 @@ data class IfStmt(
 data class SwitchStmt(
     val arg: Value,
     val cases: List<Value>,
-) : BranchStmt {
+) : BranchingStmt {
     override fun toString(): String {
         return "switch ($arg)"
     }
