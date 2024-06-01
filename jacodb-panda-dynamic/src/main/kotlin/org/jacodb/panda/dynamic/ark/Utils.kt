@@ -77,11 +77,11 @@ object GetUses : Stmt.Visitor<Sequence<Value>>,
         }
     }
 
-    override fun visit(value: StringConstant): Sequence<Value> = sequence {
+    override fun visit(value: Local): Sequence<Value> = sequence {
         // empty
     }
 
-    override fun visit(value: Local): Sequence<Value> = sequence {
+    override fun visit(value: StringConstant): Sequence<Value> = sequence {
         // empty
     }
 
