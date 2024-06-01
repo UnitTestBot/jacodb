@@ -72,6 +72,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
 
 interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitTODOInst(inst: TODOInst): T
+    fun visitPandaNopInst(inst: PandaNopInst): T
     fun visitPandaThrowInst(inst: PandaThrowInst): T
     fun visitPandaReturnInst(inst: PandaReturnInst): T
     fun visitPandaAssignInst(inst: PandaAssignInst): T
