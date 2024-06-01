@@ -59,7 +59,11 @@ data class AssignStmt(
 
 data class CallStmt(
     val expr: CallExpr,
-) : Stmt
+) : Stmt {
+    override fun toString(): String {
+        return expr.toString()
+
+}
 
 data class ReturnStmt(
     val arg: Value?,
