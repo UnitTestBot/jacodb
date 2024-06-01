@@ -154,15 +154,12 @@ data class CastExpr(
 // }
 
 data class PhiExpr(
-    val lhv: Value,
     val args: List<Value>,
     // TODO: blocks
+    override    val type: Type,
 ) : Expr {
-    override val type: Type
-        get() = lhv.type
-
     override fun toString(): String {
-        return "$lhv := phi(${args.joinToString()})"
+        return "phi(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: Expr.Visitor<R>): R {
