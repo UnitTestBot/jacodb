@@ -42,10 +42,16 @@ interface Stmt {
             fun defaultVisit(stmt: Stmt): R
         }
     }
+
+    fun <R> accept(visitor: Visitor<R>): R
 }
 
 object NopStmt : Stmt {
     override fun toString(): String = "nop"
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class AssignStmt(
@@ -55,6 +61,10 @@ data class AssignStmt(
     override fun toString(): String {
         return "$left := $right"
     }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class CallStmt(
@@ -62,7 +72,11 @@ data class CallStmt(
 ) : Stmt {
     override fun toString(): String {
         return expr.toString()
+    }
 
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ReturnStmt(
@@ -75,6 +89,10 @@ data class ReturnStmt(
             "return"
         }
     }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class ThrowStmt(
@@ -82,6 +100,10 @@ data class ThrowStmt(
 ) : Stmt {
     override fun toString(): String {
         return "throw $arg"
+    }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -91,12 +113,20 @@ data class DeleteStmt(
     override fun toString(): String {
         return "delete $arg"
     }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 interface BranchingStmt : Stmt
 
 object GotoStmt : BranchingStmt {
     override fun toString(): String = "goto"
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
 }
 
 data class IfStmt(
@@ -104,6 +134,10 @@ data class IfStmt(
 ) : BranchingStmt {
     override fun toString(): String {
         return "if ($condition)"
+    }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
     }
 }
 
@@ -113,5 +147,9 @@ data class SwitchStmt(
 ) : BranchingStmt {
     override fun toString(): String {
         return "switch ($arg)"
+    }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
     }
 }
