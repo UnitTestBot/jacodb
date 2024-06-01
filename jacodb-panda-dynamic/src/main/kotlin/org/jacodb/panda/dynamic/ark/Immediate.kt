@@ -23,10 +23,11 @@ interface Immediate : Value {
         interface Default<out R> : Visitor<R>,
             Constant.Visitor.Default<R> {
 
-            fun defaultVisit(value: Immediate): R
+            override fun visit(value: Local): R = defaultVisit(value)
 
             override fun defaultVisit(value: Constant): R = defaultVisit(value as Immediate)
-            override fun visit(value: Local): R = defaultVisit(value)
+
+            fun defaultVisit(value: Immediate): R
         }
     }
 

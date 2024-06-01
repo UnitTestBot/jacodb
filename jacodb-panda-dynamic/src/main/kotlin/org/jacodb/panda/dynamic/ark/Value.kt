@@ -29,11 +29,11 @@ interface Value {
             Expr.Visitor.Default<R>,
             Ref.Visitor.Default<R> {
 
-            fun defaultVisit(value: Value): R
-
             override fun defaultVisit(value: Immediate): R = defaultVisit(value as Value)
             override fun defaultVisit(expr: Expr): R = defaultVisit(expr as Value)
             override fun defaultVisit(ref: Ref): R = defaultVisit(ref as Value)
+
+            fun defaultVisit(value: Value): R
         }
     }
 

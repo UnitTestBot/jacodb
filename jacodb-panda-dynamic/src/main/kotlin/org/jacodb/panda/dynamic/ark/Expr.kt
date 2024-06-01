@@ -32,8 +32,6 @@ interface Expr : Value {
         fun visit(expr: StaticCallExpr): R
 
         interface Default<out R> : Visitor<R> {
-            fun defaultVisit(expr: Expr): R
-
             override fun visit(expr: NewExpr): R = defaultVisit(expr)
             override fun visit(expr: NewArrayExpr): R = defaultVisit(expr)
             override fun visit(expr: TypeOfExpr): R = defaultVisit(expr)
@@ -46,6 +44,8 @@ interface Expr : Value {
             override fun visit(expr: RelationOperation): R = defaultVisit(expr)
             override fun visit(expr: InstanceCallExpr): R = defaultVisit(expr)
             override fun visit(expr: StaticCallExpr): R = defaultVisit(expr)
+
+            fun defaultVisit(expr: Expr): R
         }
     }
 

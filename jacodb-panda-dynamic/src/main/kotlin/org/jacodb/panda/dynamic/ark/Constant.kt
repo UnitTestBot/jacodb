@@ -27,8 +27,6 @@ interface Constant : Immediate {
         fun visit(value: ObjectLiteral): R
 
         interface Default<out R> : Visitor<R> {
-            fun defaultVisit(value: Constant): R
-
             override fun visit(value: StringConstant): R = defaultVisit(value)
             override fun visit(value: BooleanConstant): R = defaultVisit(value)
             override fun visit(value: NumberConstant): R = defaultVisit(value)
@@ -36,6 +34,8 @@ interface Constant : Immediate {
             override fun visit(value: UndefinedConstant): R = defaultVisit(value)
             override fun visit(value: ArrayLiteral): R = defaultVisit(value)
             override fun visit(value: ObjectLiteral): R = defaultVisit(value)
+
+            fun defaultVisit(value: Constant): R
         }
     }
 
