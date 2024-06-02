@@ -91,9 +91,11 @@ data class DeleteStmt(
     }
 }
 
+interface TerminatingStmt : Stmt
+
 data class ReturnStmt(
     val arg: Value?,
-) : Stmt {
+) : TerminatingStmt {
     override fun toString(): String {
         return if (arg != null) {
             "return $arg"
@@ -109,7 +111,7 @@ data class ReturnStmt(
 
 data class ThrowStmt(
     val arg: Value,
-) : Stmt {
+) : TerminatingStmt {
     override fun toString(): String {
         return "throw $arg"
     }
