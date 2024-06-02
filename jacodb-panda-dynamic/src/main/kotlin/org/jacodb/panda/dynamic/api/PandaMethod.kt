@@ -59,7 +59,7 @@ open class PandaMethod(
         get() = parameterInfos.map {
             PandaMethodParameter(
                 PandaTypeName(it.type.typeName),
-                "arg ${it.index}",
+                "arg${it.index}",
                 it.index,
                 this
             )

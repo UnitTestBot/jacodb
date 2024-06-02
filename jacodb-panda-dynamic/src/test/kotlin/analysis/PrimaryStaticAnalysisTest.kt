@@ -16,38 +16,7 @@
 
 package analysis
 
-import org.jacodb.panda.dynamic.api.PandaAddExpr
-import org.jacodb.panda.dynamic.api.PandaAnyType
-import org.jacodb.panda.dynamic.api.PandaApplicationGraph
-import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
-import org.jacodb.panda.dynamic.api.PandaArrayType
-import org.jacodb.panda.dynamic.api.PandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaBinaryExpr
-import org.jacodb.panda.dynamic.api.PandaBoolType
-import org.jacodb.panda.dynamic.api.PandaCallExpr
-import org.jacodb.panda.dynamic.api.PandaCallInst
-import org.jacodb.panda.dynamic.api.PandaClassTypeImpl
-import org.jacodb.panda.dynamic.api.PandaCmpExpr
-import org.jacodb.panda.dynamic.api.PandaConditionExpr
-import org.jacodb.panda.dynamic.api.PandaConstantWithValue
-import org.jacodb.panda.dynamic.api.PandaDivExpr
-import org.jacodb.panda.dynamic.api.PandaExpExpr
-import org.jacodb.panda.dynamic.api.PandaInst
-import org.jacodb.panda.dynamic.api.PandaInstanceCallExpr
-import org.jacodb.panda.dynamic.api.PandaLoadedValue
-import org.jacodb.panda.dynamic.api.PandaMethod
-import org.jacodb.panda.dynamic.api.PandaModExpr
-import org.jacodb.panda.dynamic.api.PandaMulExpr
-import org.jacodb.panda.dynamic.api.PandaNullConstant
-import org.jacodb.panda.dynamic.api.PandaNumberType
-import org.jacodb.panda.dynamic.api.PandaPrimitiveType
-import org.jacodb.panda.dynamic.api.PandaStringConstant
-import org.jacodb.panda.dynamic.api.PandaStringType
-import org.jacodb.panda.dynamic.api.PandaSubExpr
-import org.jacodb.panda.dynamic.api.PandaUndefinedType
-import org.jacodb.panda.dynamic.api.PandaValue
-import org.jacodb.panda.dynamic.api.PandaValueByInstance
-import org.jacodb.panda.dynamic.api.callExpr
+import org.jacodb.panda.dynamic.api.*
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -90,7 +59,50 @@ class PrimaryStaticAnalysisTest {
                         if (callee.name == "log") {
                             continue
                         }
-                        if (callExpr.args.size != callee.parameters.size) {
+                        var isError = false
+                        if (callExpr.args.size == callee.parameters.size) {
+                            continue
+                        }
+                        if (callExpr.args.size > callee.parameters.size) {
+                            isError = true
+                        }
+                        if (callExpr.args.size < callee.parameters.size) {
+                            val diff = callee.parameters.size - callExpr.args.size
+                            val paramsWithDefaultValue = callee.parameters.takeLast(diff)
+
+                            val findDefaultValueBlock: (PandaMethodParameter) -> Boolean = { param ->
+                                var found = false
+                                for (index in callee.instructions.indices) {
+                                    if (index == callee.instructions.size - 1) {
+                                        break
+                                    }
+                                    val inst = callee.instructions[index]
+                                    if (inst is PandaAssignInst && inst.rhv is PandaStrictEqExpr) {
+                                        val operands = inst.rhv.operands
+                                        if (operands[0] is PandaArgument && (operands[0] as PandaArgument).index == param.index && operands[1].type is PandaUndefinedType) {
+                                            val leftOp = inst.lhv
+                                            val nextInst = callee.instructions[index + 1]
+                                            if (nextInst is PandaAssignInst && nextInst.rhv is PandaCmpExpr) {
+                                                val nextOperands = nextInst.rhv.operands
+                                                if (nextOperands[0] == leftOp && nextOperands[1] == PandaNumberConstant(0)) {
+                                                    found = true
+                                                    break
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                found
+                            }
+
+                            for (param in paramsWithDefaultValue) {
+                                if (!findDefaultValueBlock(param)) {
+                                    isError = true
+                                    break
+                                }
+                            }
+                        }
+                        if (isError) {
                             mismatches.add(Pair(inst, callee))
                             logger.info { "parameter-argument count mismatch for call: $inst (expected ${callee.parameters.size} arguments, but got ${callExpr.args.size})" }
                         }
@@ -106,9 +118,26 @@ class PrimaryStaticAnalysisTest {
                 programName = "codeqlSamples/parametersArgumentsMismatch",
                 startMethods = listOf("foo")
             )
+            assert(mismatches.size == 2)
+        }
+
+        @Test
+        fun `test for mismatch detection in call of function with default arguments 1`() {
+            val mismatches = analyse(
+                programName = "codeqlSamples/parametersArgumentsMismatch",
+                startMethods = listOf("foo1")
+            )
             assert(mismatches.size == 1)
         }
 
+        @Test
+        fun `test for mismatch detection in call of function with default arguments 2`() {
+            val mismatches = analyse(
+                programName = "codeqlSamples/parametersArgumentsMismatch",
+                startMethods = listOf("foo2")
+            )
+            assert(mismatches.isEmpty())
+        }
         @Disabled("reconcile arguments number for class methods (is 'this' count?)")
         @Test
         fun `positive example - test for mismatch detection in class method call`() {

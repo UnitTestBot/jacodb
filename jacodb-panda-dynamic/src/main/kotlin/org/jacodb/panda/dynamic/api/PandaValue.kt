@@ -72,7 +72,7 @@ data class PandaArgument(
     override val type: PandaType = PandaAnyType,
 ) : PandaLocal, CommonArgument {
 
-    override fun toString(): String = "arg $index"
+    override fun toString(): String = "arg$index"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaArgument(this)
