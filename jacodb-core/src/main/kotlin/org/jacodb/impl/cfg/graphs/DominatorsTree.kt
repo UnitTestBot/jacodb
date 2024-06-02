@@ -65,7 +65,7 @@ open class DominatorsTree<NODE>(private val dominators: GraphDominators<NODE>) :
     }
 
     protected open fun buildTree() {
-        for (inst in graph) {
+        for (inst in graph.instructions) {
             val node = findOrNewChild(inst)
             val parent = findOrNewParent(inst)
             if (parent == null) {
@@ -127,7 +127,7 @@ class CytronDominanceFrontier<NODE>(val tree: DominatorsTree<NODE>) {
 
     init {
         tree.heads.forEach { bottomUpDispatch(it) }
-        tree.graph.forEach {
+        tree.graph.instructions.forEach {
             val dominatorNode = tree.findOrNewChild(it)
             if (!isFrontierKnown(dominatorNode)) {
                 throw RuntimeException("Frontier not defined for node: $it")

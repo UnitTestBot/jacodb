@@ -26,7 +26,7 @@ import org.jacodb.api.jvm.cfg.JcTerminatingInst
 
 class JcBlockGraphImpl(
     override val jcGraph: JcGraph,
-) : Iterable<JcBasicBlock>, JcBlockGraph {
+) : JcBlockGraph {
 
     private val _basicBlocks = mutableListOf<JcBasicBlock>()
     private val predecessorMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
@@ -34,17 +34,17 @@ class JcBlockGraphImpl(
     private val catchersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
     private val throwersMap = mutableMapOf<JcBasicBlock, MutableSet<JcBasicBlock>>()
 
+    override val instructions: List<JcBasicBlock>
+        get() = _basicBlocks
+
     override val entry: JcBasicBlock
-        get() = first()
+        get() = instructions.first()
 
     override val entries: List<JcBasicBlock>
         get() = listOf(entry)
 
     override val exits: List<JcBasicBlock>
-        get() = filter { successors(it).isEmpty() }
-
-    override val instructions: List<JcBasicBlock>
-        get() = _basicBlocks.toList()
+        get() = instructions.filter { successors(it).isEmpty() }
 
     init {
         val inst2Block = mutableMapOf<JcInst, JcBasicBlock>()
@@ -123,14 +123,12 @@ class JcBlockGraphImpl(
     /**
      * `successors` and `predecessors` represent normal control flow
      */
-    override fun predecessors(node: JcBasicBlock): Set<JcBasicBlock> = predecessorMap.getOrDefault(node, emptySet())
-    override fun successors(node: JcBasicBlock): Set<JcBasicBlock> = successorMap.getOrDefault(node, emptySet())
+    override fun predecessors(node: JcBasicBlock): Set<JcBasicBlock> = predecessorMap[node].orEmpty()
+    override fun successors(node: JcBasicBlock): Set<JcBasicBlock> = successorMap[node].orEmpty()
 
     /**
      * `throwers` and `catchers` represent control flow when an exception occurs
      */
-    override fun catchers(node: JcBasicBlock): Set<JcBasicBlock> = catchersMap.getOrDefault(node, emptySet())
-    override fun throwers(node: JcBasicBlock): Set<JcBasicBlock> = throwersMap.getOrDefault(node, emptySet())
-
-    override fun iterator(): Iterator<JcBasicBlock> = _basicBlocks.iterator()
+    override fun catchers(node: JcBasicBlock): Set<JcBasicBlock> = catchersMap[node].orEmpty()
+    override fun throwers(node: JcBasicBlock): Set<JcBasicBlock> = throwersMap[node].orEmpty()
 }

@@ -19,7 +19,6 @@ package org.jacodb.impl.cfg.graphs
 import org.jacodb.api.common.cfg.BytecodeGraph
 import org.jacodb.api.jvm.cfg.JcBasicBlock
 import org.jacodb.api.jvm.cfg.JcBlockGraph
-import org.jacodb.api.jvm.cfg.JcBytecodeGraph
 import org.jacodb.api.jvm.cfg.JcCatchInst
 import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
@@ -33,7 +32,7 @@ import java.util.*
  */
 open class GraphDominators<NODE>(val graph: BytecodeGraph<NODE>) {
 
-    private val nodes = graph.toList()
+    private val nodes = graph.instructions
     private val size = nodes.size
 
     private val heads = graph.entries
@@ -80,7 +79,7 @@ open class GraphDominators<NODE>(val graph: BytecodeGraph<NODE>) {
 
     private val NODE.indexOf: Int
         get() {
-            val index = graph.indexOf(this)
+            val index = nodes.indexOf(this)
             return index.takeIf { it >= 0 } ?: error("No node with index $this in the graph")
         }
 

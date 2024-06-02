@@ -18,14 +18,21 @@ package org.jacodb.panda.staticvm.utils
 
 import org.jacodb.api.common.cfg.Graph
 
-fun <T> search(start: T, successors: (T) -> List<T>, visitor: (T) -> Unit): Set<T> {
+fun <T> search(
+    start: T,
+    successors: (T) -> Iterable<T>,
+    visitor: (T) -> Unit,
+): Set<T> {
     val visited = hashSetOf<T>()
     fun dfs(node: T) = node.takeIf(visited::add)?.also(visitor)?.let { successors(it).forEach(::dfs) }
     dfs(start)
     return visited
 }
 
-fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<Set<T>> {
+fun <T> components(
+    starts: Iterable<T>,
+    successors: (T) -> Iterable<T>,
+): List<Set<T>> {
     val visited = hashSetOf<T>()
     return starts.mapNotNull { start ->
         if (start !in visited) search(start, { successors(it).filter { it !in visited } }, visited::add)
@@ -33,7 +40,10 @@ fun <T> components(starts: Iterable<T>, successors: (T) -> Collection<T>): List<
     }
 }
 
-fun <T> reachable(starts: Iterable<T>, successors: (T) -> Collection<T>): Set<T> =
+fun <T> reachable(
+    starts: Iterable<T>,
+    successors: (T) -> Iterable<T>,
+): Set<T> =
     starts.applyFold(hashSetOf()) { start ->
         if (!contains(start))
             addAll(search(start, { successors(it).filterNot(this::contains) }, {}))
@@ -50,8 +60,7 @@ fun <T> Graph<T>.rpo(): List<T> {
         order.add(it)
     }
 
-    val nodes = iterator().asSequence().toSet()
-    nodes.forEach { if (it !in visited) dfs(it) }
+    this.forEach { if (it !in visited) dfs(it) }
     return order.reversed()
 }
 
@@ -65,8 +74,9 @@ fun <T> Graph<T>.inTopsortOrder(): List<T>? {
         if (visited.add(node)) {
             stack.add(node)
             for (next in successors(node)) {
-                if (next in stack)
+                if (next in stack) {
                     foundCycle = true
+                }
                 dfs(next)
             }
             stack.remove(node)
@@ -74,7 +84,7 @@ fun <T> Graph<T>.inTopsortOrder(): List<T>? {
         }
     }
 
-    val nodes = iterator().asSequence().toHashSet()
+    val nodes = this.toHashSet()
     for (node in nodes) {
         dfs(node)
     }
@@ -82,7 +92,7 @@ fun <T> Graph<T>.inTopsortOrder(): List<T>? {
 }
 
 fun <T> Graph<T>.SCCs(): OneDirectionGraph<Set<T>> {
-    val components = components(rpo(), this::predecessors)
+    val components = components(rpo()) { predecessors(it) }
     val colorMap = components.applyFold(hashMapOf<T, Set<T>>()) { nodes ->
         nodes.forEach { put(it, nodes) }
     }

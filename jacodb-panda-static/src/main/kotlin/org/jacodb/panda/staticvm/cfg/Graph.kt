@@ -63,8 +63,6 @@ class PandaGraph private constructor(
     override fun throwers(node: PandaInst): Set<PandaInst> = throwGraph.predecessors(node)
     override fun catchers(node: PandaInst): Set<PandaInst> = throwGraph.successors(node)
 
-    override fun iterator(): Iterator<PandaInst> = instList.iterator()
-
     companion object {
         fun empty(): PandaGraph {
             return PandaGraph(

@@ -33,7 +33,7 @@ import java.util.Collections.singleton
 class JcGraphImpl(
     override val method: JcMethod,
     override val instructions: List<JcInst>,
-) : Iterable<JcInst>, JcGraph {
+) : JcGraph {
 
     override val classpath: JcClasspath get() = method.enclosingClass.classpath
 
@@ -136,8 +136,6 @@ class JcGraphImpl(
     override fun blockGraph(): JcBlockGraphImpl = JcBlockGraphImpl(this)
 
     override fun toString(): String = instructions.joinToString("\n")
-
-    override fun iterator(): Iterator<JcInst> = instructions.iterator()
 
 
     private fun <KEY, VALUE> MutableMap<KEY, Set<VALUE>>.add(key: KEY, value: VALUE) {

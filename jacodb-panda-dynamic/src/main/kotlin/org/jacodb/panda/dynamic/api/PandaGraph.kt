@@ -77,8 +77,6 @@ class PandaGraph(
     // TODO: throwers and catchers
     override fun throwers(node: PandaInst): Set<PandaInst> = emptySet()
     override fun catchers(node: PandaInst): Set<PandaInst> = emptySet()
-
-    override fun iterator(): Iterator<PandaInst> = instructions.iterator()
 }
 
 data class PandaBasicBlock(
@@ -133,8 +131,6 @@ class PandaBlockGraph(
     // TODO: throwers and catchers
     override fun throwers(node: PandaBasicBlock): Set<PandaBasicBlock> = emptySet()
     override fun catchers(node: PandaBasicBlock): Set<PandaBasicBlock> = emptySet()
-
-    override fun iterator(): Iterator<PandaBasicBlock> = instructions.iterator()
 }
 
 interface PandaApplicationGraph : ApplicationGraph<PandaMethod, PandaInst> {
