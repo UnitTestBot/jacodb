@@ -40,6 +40,11 @@ private object StmtGetUses : Stmt.Visitor<Sequence<Value>> {
         yieldAll(stmt.expr.getUses())
     }
 
+    override fun visit(stmt: DeleteStmt): Sequence<Value> = sequence {
+        yield(stmt.arg)
+        yieldAll(stmt.arg.getUses())
+    }
+
     override fun visit(stmt: ReturnStmt): Sequence<Value> = sequence {
         if (stmt.arg != null) {
             yield(stmt.arg)
@@ -48,11 +53,6 @@ private object StmtGetUses : Stmt.Visitor<Sequence<Value>> {
     }
 
     override fun visit(stmt: ThrowStmt): Sequence<Value> = sequence {
-        yield(stmt.arg)
-        yieldAll(stmt.arg.getUses())
-    }
-
-    override fun visit(stmt: DeleteStmt): Sequence<Value> = sequence {
         yield(stmt.arg)
         yieldAll(stmt.arg.getUses())
     }

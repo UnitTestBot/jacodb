@@ -21,9 +21,9 @@ interface Stmt {
         fun visit(stmt: NopStmt): R
         fun visit(stmt: AssignStmt): R
         fun visit(stmt: CallStmt): R
+        fun visit(stmt: DeleteStmt): R
         fun visit(stmt: ReturnStmt): R
         fun visit(stmt: ThrowStmt): R
-        fun visit(stmt: DeleteStmt): R
         fun visit(stmt: GotoStmt): R
         fun visit(stmt: IfStmt): R
         fun visit(stmt: SwitchStmt): R
@@ -32,9 +32,9 @@ interface Stmt {
             override fun visit(stmt: NopStmt): R = defaultVisit(stmt)
             override fun visit(stmt: AssignStmt): R = defaultVisit(stmt)
             override fun visit(stmt: CallStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: DeleteStmt): R = defaultVisit(stmt)
             override fun visit(stmt: ReturnStmt): R = defaultVisit(stmt)
             override fun visit(stmt: ThrowStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: DeleteStmt): R = defaultVisit(stmt)
             override fun visit(stmt: GotoStmt): R = defaultVisit(stmt)
             override fun visit(stmt: IfStmt): R = defaultVisit(stmt)
             override fun visit(stmt: SwitchStmt): R = defaultVisit(stmt)
@@ -79,6 +79,18 @@ data class CallStmt(
     }
 }
 
+data class DeleteStmt(
+    val arg: FieldRef,
+) : Stmt {
+    override fun toString(): String {
+        return "delete $arg"
+    }
+
+    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
 data class ReturnStmt(
     val arg: Value?,
 ) : Stmt {
@@ -100,18 +112,6 @@ data class ThrowStmt(
 ) : Stmt {
     override fun toString(): String {
         return "throw $arg"
-    }
-
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class DeleteStmt(
-    val arg: FieldRef,
-) : Stmt {
-    override fun toString(): String {
-        return "delete $arg"
     }
 
     override fun <R> accept(visitor: Stmt.Visitor<R>): R {
