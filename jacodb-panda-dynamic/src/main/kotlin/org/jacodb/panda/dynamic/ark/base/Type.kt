@@ -14,7 +14,9 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
+
+import org.jacodb.panda.dynamic.ark.model.ClassSignature
 
 interface Type {
     val typeName: String

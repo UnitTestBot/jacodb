@@ -14,17 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.graph
 
-data class Local(
-    val name: String,
-    override val type: Type,
-) : Immediate {
-    override fun toString(): String {
-        return name
-    }
+import org.jacodb.panda.dynamic.ark.base.Stmt
 
-    override fun <R> accept(visitor: Immediate.Visitor<R>): R {
-        return visitor.visit(this)
-    }
+data class BasicBlock(
+    val stmts: List<Stmt>,
+) {
+    val head: Stmt?
+        get() = stmts.firstOrNull()
+    val last: Stmt?
+        get() = stmts.lastOrNull()
 }

@@ -14,13 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.model
 
-data class BasicBlock(
-    val stmts: List<Stmt>,
-) {
-    val head: Stmt?
-        get() = stmts.firstOrNull()
-    val last: Stmt?
-        get() = stmts.lastOrNull()
-}
+data class ArkClass(
+    val name: String,
+    val fields: List<ArkField>,
+    val methods: List<ArkMethod>,
+    val superClass: ArkClass? = null,
+)

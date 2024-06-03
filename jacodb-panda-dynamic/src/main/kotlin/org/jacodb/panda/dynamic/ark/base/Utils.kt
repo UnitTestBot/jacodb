@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
 
 fun Stmt.getUses(): Sequence<Value> {
     return accept(StmtGetUses)

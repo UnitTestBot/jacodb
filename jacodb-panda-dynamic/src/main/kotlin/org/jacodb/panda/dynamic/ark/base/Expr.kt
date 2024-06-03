@@ -14,7 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
+
+import org.jacodb.panda.dynamic.ark.graph.BasicBlock
+import org.jacodb.panda.dynamic.ark.model.MethodSignature
 
 interface Expr : Value {
     interface Visitor<out R> {
@@ -155,8 +158,8 @@ data class CastExpr(
 
 data class PhiExpr(
     val args: List<Value>,
-    // TODO: blocks
-    override    val type: Type,
+    val argToBlock: Map<Value, BasicBlock>,
+    override val type: Type,
 ) : Expr {
     override fun toString(): String {
         return "phi(${args.joinToString()})"

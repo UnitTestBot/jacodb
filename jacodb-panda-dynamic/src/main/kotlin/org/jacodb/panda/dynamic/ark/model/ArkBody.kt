@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.model
 
-object TypeInference {
-    fun commonType(type1: Type, type2: Type): Type {
-        TODO()
-    }
+import org.jacodb.panda.dynamic.ark.graph.Cfg
+import org.jacodb.panda.dynamic.ark.base.Local
 
-    fun infer(expr: BinaryExpr): Type {
-        TODO()
-    }
-}
+class ArkBody(
+    val method: MethodSignature,
+    val cfg: Cfg,
+    val locals: List<Local>,
+)

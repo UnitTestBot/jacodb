@@ -14,11 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
 
-data class Method(
-    val signature: MethodSignature,
-    val body: List<Stmt>,
-) {
-    override fun toString(): String = signature.toString()
+object TypeInference {
+    fun commonType(type1: Type, type2: Type): Type {
+        TODO()
+    }
+
+    fun infer(expr: BinaryExpr): Type {
+        TODO()
+    }
 }

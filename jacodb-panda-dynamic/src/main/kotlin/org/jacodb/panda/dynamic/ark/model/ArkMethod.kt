@@ -14,26 +14,13 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.model
 
-interface Immediate : Value {
-    interface Visitor<out R> : Constant.Visitor<R> {
-        fun visit(value: Local): R
-
-        interface Default<out R> : Visitor<R>,
-            Constant.Visitor.Default<R> {
-
-            override fun visit(value: Local): R = defaultVisit(value)
-
-            override fun defaultVisit(value: Constant): R = defaultVisit(value as Immediate)
-
-            fun defaultVisit(value: Immediate): R
-        }
+data class ArkMethod (
+    val signature: MethodSignature,
+    val body: ArkBody,
+) {
+    override fun toString(): String {
+        return signature.toString()
     }
-
-    override fun <R> accept(visitor: Value.Visitor<R>): R {
-        return this.accept(visitor as Visitor<R>)
-    }
-
-    fun <R> accept(visitor: Visitor<R>): R
 }

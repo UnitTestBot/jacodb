@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
 
 object ValuePrinter : Value.Visitor.Default<Unit> {
     override fun defaultVisit(value: Value) {

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark
+package org.jacodb.panda.dynamic.ark.base
 
 /**
  * Information about the position of a statement.
