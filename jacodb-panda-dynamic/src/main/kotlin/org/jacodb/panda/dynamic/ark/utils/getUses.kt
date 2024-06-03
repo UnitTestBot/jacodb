@@ -14,7 +14,44 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark.base
+package org.jacodb.panda.dynamic.ark.utils
+
+import org.jacodb.panda.dynamic.ark.base.ArrayAccess
+import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
+import org.jacodb.panda.dynamic.ark.base.AssignStmt
+import org.jacodb.panda.dynamic.ark.base.BinaryOperation
+import org.jacodb.panda.dynamic.ark.base.BooleanConstant
+import org.jacodb.panda.dynamic.ark.base.CallStmt
+import org.jacodb.panda.dynamic.ark.base.CastExpr
+import org.jacodb.panda.dynamic.ark.base.DeleteStmt
+import org.jacodb.panda.dynamic.ark.base.GotoStmt
+import org.jacodb.panda.dynamic.ark.base.IfStmt
+import org.jacodb.panda.dynamic.ark.base.InstanceCallExpr
+import org.jacodb.panda.dynamic.ark.base.InstanceFieldRef
+import org.jacodb.panda.dynamic.ark.base.InstanceOfExpr
+import org.jacodb.panda.dynamic.ark.base.LengthExpr
+import org.jacodb.panda.dynamic.ark.base.Local
+import org.jacodb.panda.dynamic.ark.base.NewArrayExpr
+import org.jacodb.panda.dynamic.ark.base.NewExpr
+import org.jacodb.panda.dynamic.ark.base.NopStmt
+import org.jacodb.panda.dynamic.ark.base.NullConstant
+import org.jacodb.panda.dynamic.ark.base.NumberConstant
+import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
+import org.jacodb.panda.dynamic.ark.base.ParameterRef
+import org.jacodb.panda.dynamic.ark.base.PhiExpr
+import org.jacodb.panda.dynamic.ark.base.RelationOperation
+import org.jacodb.panda.dynamic.ark.base.ReturnStmt
+import org.jacodb.panda.dynamic.ark.base.StaticCallExpr
+import org.jacodb.panda.dynamic.ark.base.StaticFieldRef
+import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.StringConstant
+import org.jacodb.panda.dynamic.ark.base.SwitchStmt
+import org.jacodb.panda.dynamic.ark.base.This
+import org.jacodb.panda.dynamic.ark.base.ThrowStmt
+import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
+import org.jacodb.panda.dynamic.ark.base.UnaryOperation
+import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
+import org.jacodb.panda.dynamic.ark.base.Value
 
 fun Stmt.getUses(): Sequence<Value> {
     return accept(StmtGetUses)
