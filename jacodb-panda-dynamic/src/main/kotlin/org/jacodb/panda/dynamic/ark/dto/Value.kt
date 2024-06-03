@@ -145,7 +145,7 @@ data class TypeOfExpr(
 @SerialName("InstanceOfExpr")
 data class InstanceOfExpr(
     val arg: Value,
-    val checkType: Type,
+    val checkType: String,
 ) : Expr {
     override val type: String
         get() = "boolean"
