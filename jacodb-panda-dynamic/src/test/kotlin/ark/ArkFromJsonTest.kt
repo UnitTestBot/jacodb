@@ -16,7 +16,7 @@
 
 package ark
 
-import org.jacodb.panda.dynamic.ark.dto.loadArkFromJson
+import org.jacodb.panda.dynamic.ark.dto.Ark
 import org.junit.jupiter.api.Test
 
 class ArkFromJsonTest {
@@ -25,7 +25,7 @@ class ArkFromJsonTest {
         val path = "basic.ts.json"
         val stream = object {}::class.java.getResourceAsStream("/$path")
             ?: error("Resource not found: $path")
-        val ark = loadArkFromJson(stream)
+        val ark = Ark.loadFromJson(stream)
         println(ark)
     }
 }

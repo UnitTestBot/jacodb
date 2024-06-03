@@ -16,7 +16,12 @@
 
 package org.jacodb.panda.dynamic.ark.dto
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import java.io.InputStream
 
 @Serializable
 data class Ark(
@@ -28,7 +33,23 @@ data class Ark(
     val classes: List<Class>,
     val importInfos: List<ImportInfo>,
     val exportInfos: List<ExportInfo>,
-)
+) {
+    companion object{
+        private val json = Json {
+            classDiscriminator = "_"
+            prettyPrint = true
+        }
+
+        fun loadFromJson(jsonString: String): Ark {
+            return json.decodeFromString(jsonString)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun loadFromJson(stream: InputStream): Ark {
+            return json.decodeFromStream(stream)
+        }
+    }
+}
 
 @Serializable
 data class Namespace(
